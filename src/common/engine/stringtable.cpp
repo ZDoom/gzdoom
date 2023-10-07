@@ -241,7 +241,7 @@ bool FStringTable::ParseLanguageCSV(int lumpnum, const char* buffer, size_t size
 						auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
 						for (auto& entry : filter)
 						{
-							if (sysCallbacks.CheckGame(entry))
+							if (sysCallbacks.CheckGame(entry.GetChars()))
 							{
 								ok = true;
 								break;
@@ -639,7 +639,7 @@ bool FStringTable::MatchDefaultString(const char *name, const char *content) con
 
 	// Check a secondary key, in case the text comparison cannot be done due to needed orthographic fixes (see Harmony's exit text)
 	FStringf checkkey("%s_CHECK", name);
-	auto cc = GetLanguageString(checkkey, FStringTable::default_table);
+	auto cc = GetLanguageString(checkkey.GetChars(), FStringTable::default_table);
 	if (cc) c = cc;
 
 	return (c && !strnicmp(c, content, strcspn(content, "\n\r\t")));

@@ -213,12 +213,12 @@ static void PrecacheLevel(FLevelLocals *Level)
 
 	for (auto n : gameinfo.PrecachedTextures)
 	{
-		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, checkForTextureFlags);
+		FTextureID tex = TexMan.CheckForTexture(n.GetChars(), ETextureType::Wall, checkForTextureFlags);
 		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 	for (unsigned i = 0; i < Level->info->PrecacheTextures.Size(); i++)
 	{
-		FTextureID tex = TexMan.CheckForTexture(Level->info->PrecacheTextures[i], ETextureType::Wall, checkForTextureFlags);
+		FTextureID tex = TexMan.CheckForTexture(Level->info->PrecacheTextures[i].GetChars(), ETextureType::Wall, checkForTextureFlags);
 		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 
@@ -451,7 +451,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	// Free all level data from the previous map
 	P_FreeLevelData();
 
-	MapData *map = P_OpenMapData(Level->MapName, true);
+	MapData *map = P_OpenMapData(Level->MapName.GetChars(), true);
 	if (map == nullptr)
 	{
 		I_Error("Unable to open map '%s'\n", Level->MapName.GetChars());

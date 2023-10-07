@@ -759,7 +759,7 @@ int V_GetColor(const char* str, FScriptPosition* sc)
 
 	if (!string.IsEmpty())
 	{
-		res = V_GetColorFromString(string, sc);
+		res = V_GetColorFromString(string.GetChars(), sc);
 	}
 	else
 	{

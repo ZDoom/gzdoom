@@ -75,7 +75,7 @@ CVAR (String, snd_alresampler, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 #define OPENALLIB1 "libopenal.1.dylib"
 #define OPENALLIB2 "OpenAL.framework/OpenAL"
 #else // !__APPLE__
-#define OPENALLIB1 NicePath("$PROGDIR/" OPENALLIB)
+#define OPENALLIB1 NicePath("$PROGDIR/" OPENALLIB).GetChars()
 #define OPENALLIB2 OPENALLIB
 #endif
 

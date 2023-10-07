@@ -570,8 +570,8 @@ void FStartScreen::CreateHeader()
 	fcolor.rgbBlue = BPART(GameStartupInfo.FgColor);
 	fcolor.rgbReserved = 255;
 	ClearBlock(HeaderBitmap, bcolor, 0, 0, HeaderBitmap.GetWidth(), HeaderBitmap.GetHeight());
-	int textlen = SizeOfText(GameStartupInfo.Name);
-	DrawString(HeaderBitmap, (HeaderBitmap.GetWidth() >> 4) - (textlen >> 1), 0.5, GameStartupInfo.Name, fcolor, bcolor);
+	int textlen = SizeOfText(GameStartupInfo.Name.GetChars());
+	DrawString(HeaderBitmap, (HeaderBitmap.GetWidth() >> 4) - (textlen >> 1), 0.5, GameStartupInfo.Name.GetChars(), fcolor, bcolor);
 	NetBitmap.Create(StartupBitmap.GetWidth() * Scale, 16);
 }
 
@@ -588,7 +588,7 @@ void FStartScreen::DrawNetStatus(int found, int total)
 	RgbQuad black = { 0, 0, 0, 255 };
 	RgbQuad gray = { 100, 100, 100, 255 };
 	ClearBlock(NetBitmap, black, 0, NetBitmap.GetHeight() - 16, NetBitmap.GetWidth(), 16);
-	DrawString(NetBitmap, 0, 0, NetMessageString, gray, black);
+	DrawString(NetBitmap, 0, 0, NetMessageString.GetChars(), gray, black);
 	char of[10];
 	mysnprintf(of, 10, "%d/%d", found, total);
 	int siz = SizeOfText(of);

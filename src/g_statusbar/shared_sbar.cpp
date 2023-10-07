@@ -157,45 +157,45 @@ void V_DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height, bo
 	if (!scalemode)
 	{
 		// Draw top and bottom sides.
-		p = TexMan.GetGameTextureByName(border->t);
+		p = TexMan.GetGameTextureByName(border->t.GetChars());
 		drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
-		p = TexMan.GetGameTextureByName(border->b);
+		p = TexMan.GetGameTextureByName(border->b.GetChars());
 		drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
 
 		// Draw left and right sides.
-		p = TexMan.GetGameTextureByName(border->l);
+		p = TexMan.GetGameTextureByName(border->l.GetChars());
 		drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
-		p = TexMan.GetGameTextureByName(border->r);
+		p = TexMan.GetGameTextureByName(border->r.GetChars());
 		drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
 
 		// Draw beveled corners.
-		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
-		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
-		DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
-		DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl.GetChars()), left - offset, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr.GetChars()), left + width, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl.GetChars()), left - offset, top + height, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->br.GetChars()), left + width, top + height, TAG_DONE);
 	}
 	else
 	{
 		// Draw top and bottom sides.
-		p = TexMan.GetGameTextureByName(border->t);
+		p = TexMan.GetGameTextureByName(border->t.GetChars());
 		drawer->AddFlatFill(left, top - (int)(p->GetDisplayHeight() / sh), right, top, p, -2);
-		p = TexMan.GetGameTextureByName(border->b);
+		p = TexMan.GetGameTextureByName(border->b.GetChars());
 		drawer->AddFlatFill(left, bottom, right, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
 
 		// Draw left and right sides.
-		p = TexMan.GetGameTextureByName(border->l);
+		p = TexMan.GetGameTextureByName(border->l.GetChars());
 		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top, left, bottom, p, -2);
-		p = TexMan.GetGameTextureByName(border->r);
+		p = TexMan.GetGameTextureByName(border->r.GetChars());
 		drawer->AddFlatFill(right, top, right + (int)(p->GetDisplayWidth() / sw), bottom, p, -2);
 
 		// Draw beveled corners.
-		p = TexMan.GetGameTextureByName(border->tl);
+		p = TexMan.GetGameTextureByName(border->tl.GetChars());
 		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top - (int)(p->GetDisplayHeight() / sh), left, top, p, -2);
-		p = TexMan.GetGameTextureByName(border->tr);
+		p = TexMan.GetGameTextureByName(border->tr.GetChars());
 		drawer->AddFlatFill(right, top - (int)(p->GetDisplayHeight() / sh), right + (int)(p->GetDisplayWidth() / sw), top, p, -2);
-		p = TexMan.GetGameTextureByName(border->bl);
+		p = TexMan.GetGameTextureByName(border->bl.GetChars());
 		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), bottom, left, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
-		p = TexMan.GetGameTextureByName(border->br);
+		p = TexMan.GetGameTextureByName(border->br.GetChars());
 		drawer->AddFlatFill(right, bottom, right + (int)(p->GetDisplayWidth() / sw), bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
 	}
 }
@@ -553,7 +553,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	{
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer.GetChars(), DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
 			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 		y += fheight;
 	}
@@ -562,7 +562,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	{
 		sec = Tics2Seconds(primaryLevel->totaltime);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer.GetChars(), DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
 			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 	}
 
@@ -572,14 +572,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showmonsters)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
-			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
 		if (am_showsecrets)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
-			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
@@ -587,7 +587,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showitems)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
-			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
@@ -627,7 +627,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	for (unsigned i = 0; i < numlines; i++)
 	{
 		int x = (vwidth - font->StringWidth(lines[i].Text)) / 2;
-		DrawText(twod, font, highlight, x, y, lines[i].Text, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DrawText(twod, font, highlight, x, y, lines[i].Text.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 		y += fheight;
 	}
 }
@@ -876,10 +876,10 @@ static FTextureID GetBorderTexture(FLevelLocals *Level)
 {
 	if (Level != nullptr && Level->info != nullptr && Level->info->BorderTexture.Len() != 0)
 	{
-		auto picnum = TexMan.CheckForTexture (Level->info->BorderTexture, ETextureType::Flat);
+		auto picnum = TexMan.CheckForTexture (Level->info->BorderTexture.GetChars(), ETextureType::Flat);
 		if (picnum.isValid()) return picnum;
 	}
-	return TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
+	return TexMan.CheckForTexture (gameinfo.BorderFlat.GetChars(), ETextureType::Flat);
 }
 
 //==========================================================================
@@ -958,7 +958,7 @@ void DBaseStatusBar::RefreshBackground () const
 
 		if (setblocks >= 10)
 		{
-			FGameTexture *p = TexMan.GetGameTextureByName(gameinfo.Border.b);
+			FGameTexture *p = TexMan.GetGameTextureByName(gameinfo.Border.b.GetChars());
 			if (p != NULL)
 			{
 				if (!ui_screenborder_classic_scaling)
@@ -1143,7 +1143,7 @@ void DBaseStatusBar::DrawLog ()
 		y+=10;
 		for (const FBrokenLines &line : lines)
 		{
-			DrawText(twod, font, CPlayer->SubtitleCounter? CR_CYAN : CR_UNTRANSLATED, x, y, line.Text,
+			DrawText(twod, font, CPlayer->SubtitleCounter? CR_CYAN : CR_UNTRANSLATED, x, y, line.Text.GetChars(),
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 			y += font->GetHeight ();

@@ -503,7 +503,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			// No, you don't. Say so and let the NPC animate negatively.
 			if (reply->QuickNo.IsNotEmpty() && isconsole)
 			{
-				TerminalResponse(reply->QuickNo);
+				TerminalResponse(reply->QuickNo.GetChars());
 			}
 			npc->ConversationAnimation(2);
 			if (!(npc->flags8 & MF8_DONTFACETALKER))
@@ -576,7 +576,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		{
 			TakeStrifeItem (player, reply->ItemCheck[i].Item, reply->ItemCheck[i].Amount);
 		}
-		replyText = reply->QuickYes;
+		replyText = reply->QuickYes.GetChars();
 	}
 	else
 	{
@@ -586,7 +586,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	// Update the quest log, if needed.
 	if (reply->LogString.IsNotEmpty())
 	{
-		const char *log = reply->LogString;
+		const char *log = reply->LogString.GetChars();
 		if (log[0] == '$')
 		{
 			log = GStrings(log + 1);

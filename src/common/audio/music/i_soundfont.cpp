@@ -68,7 +68,7 @@ std::pair<FileReader, FString> FSoundFontReader::LookupFile(const char *name)
 		for(int i = mPaths.Size()-1; i>=0; i--)
 		{
 			FString fullname = mPaths[i] + name;
-			auto fr = OpenFile(fullname);
+			auto fr = OpenFile(fullname.GetChars());
 			if (fr.isOpen()) return std::make_pair(std::move(fr), fullname);
 		}
 	}
@@ -93,7 +93,7 @@ void FSoundFontReader::AddPath(const char *strp)
 	if (str.Back() != '/') str += '/';	// always let it end with a slash.
 	for (auto &s : mPaths)
 	{
-		if (pathcmp(s.GetChars(), str) == 0)
+		if (pathcmp(s.GetChars(), str.GetChars()) == 0)
 		{
 			// move string to the back.
 			mPaths.Delete(i);
@@ -122,13 +122,13 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 	if (name == nullptr)
 	{
 		fr = OpenMainConfigFile();
-		filename = MainConfigFileName();
+		filename = MainConfigFileName().GetChars();
 	}
 	else
 	{
 		auto res = LookupFile(name);
 		fr = std::move(res.first);
-		filename = res.second;
+		filename = res.second.GetChars();
 	}
 	return fr;
 }
@@ -244,7 +244,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	const char *paths[] = {
 		"C:/TIMIDITY",
 		"/TIMIDITY",
-		progdir
+		progdir.GetChars()
 	};
 #endif
 	mAllowAbsolutePaths = true;
@@ -258,7 +258,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 		for(auto c : paths)
 		{
 			FStringf fullname("%s/%s", c, filename);
-			if (fr.OpenFile(fullname))
+			if (fr.OpenFile(fullname.GetChars()))
 			{
 				mFullPathToConfig = fullname;
 			}
@@ -267,7 +267,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	if (mFullPathToConfig.Len() > 0)
 	{
 		FixPathSeperator(mFullPathToConfig);
-		mBasePath = ExtractFilePath(mFullPathToConfig);
+		mBasePath = ExtractFilePath(mFullPathToConfig.GetChars());
 		if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
 	}
 }
@@ -276,7 +276,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 FileReader FPatchSetReader::OpenMainConfigFile()
 {
 	FileReader fr;
-	fr.OpenFile(mFullPathToConfig);
+	fr.OpenFile(mFullPathToConfig.GetChars());
 	return fr;
 }
 
@@ -286,7 +286,7 @@ FileReader FPatchSetReader::OpenFile(const char *name)
 	if (IsAbsPath(name)) path = name;
 	else path = mBasePath + name;
 	FileReader fr;
-	fr.OpenFile(path);
+	fr.OpenFile(path.GetChars());
 	return fr;
 }
 
@@ -302,7 +302,7 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 
 	mBasePath = filename;
 	FixPathSeperator(mBasePath);
-	mBasePath = ExtractFilePath(mBasePath);
+	mBasePath = ExtractFilePath(mBasePath.GetChars());
 	if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
 }
 
@@ -523,8 +523,8 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	auto sfi = FindSoundFont(name, allowed);
 	if (sfi != nullptr)
 	{
-		if (sfi->type == SF_SF2) return new FSF2Reader(sfi->mFilename);
-		else return new FZipPatReader(sfi->mFilename);
+		if (sfi->type == SF_SF2) return new FSF2Reader(sfi->mFilename.GetChars());
+		else return new FZipPatReader(sfi->mFilename.GetChars());
 	}
 	return nullptr;
 

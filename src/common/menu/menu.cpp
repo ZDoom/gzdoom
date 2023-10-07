@@ -1209,7 +1209,7 @@ bool DMenuItemBase::GetString(int i, char *s, int len)
 		FString retstr;
 		VMReturn ret[2]; ret[0].IntAt(&retval); ret[1].StringAt(&retstr);
 		VMCall(func, params, countof(params), ret, 2);
-		strncpy(s, retstr, len);
+		strncpy(s, retstr.GetChars(), len);
 		return !!retval;
 	}
 	return false;

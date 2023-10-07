@@ -335,7 +335,7 @@ void R_InitSpriteDefs ()
 	for (i = 0; i < smax; ++i)
 	{
 		auto tex = TexMan.GameByIndex(i);
-		if (tex->GetUseType() == ETextureType::Sprite && strlen(tex->GetName()) >= 6)
+		if (tex->GetUseType() == ETextureType::Sprite && strlen(tex->GetName().GetChars()) >= 6)
 		{
 			size_t bucket = TEX_DWNAME(tex) % smax;
 			hashes[i].Next = hashes[bucket].Head;
@@ -721,11 +721,11 @@ void R_InitSkins (void)
 				{
 					if (stricmp (key, "*pain") == 0)
 					{ // Replace all pain sounds in one go
-						aliasid = S_AddPlayerSound (Skins[i].Name, Skins[i].gender,
+						aliasid = S_AddPlayerSound (Skins[i].Name.GetChars(), Skins[i].gender,
 							playersoundrefs[0], lump, true);
 						for (int l = 3; l > 0; --l)
 						{
-							S_AddPlayerSoundExisting (Skins[i].Name, Skins[i].gender,
+							S_AddPlayerSoundExisting (Skins[i].Name.GetChars(), Skins[i].gender,
 								playersoundrefs[l], aliasid, true);
 						}
 					}
@@ -734,7 +734,7 @@ void R_InitSkins (void)
 						auto sndref = soundEngine->FindSoundNoHash (key);
 						if (sndref.isvalid())
 						{
-							S_AddPlayerSound (Skins[i].Name, Skins[i].gender, sndref, lump, true);
+							S_AddPlayerSound (Skins[i].Name.GetChars(), Skins[i].gender, sndref, lump, true);
 						}
 					}
 				}
@@ -888,12 +888,12 @@ void R_InitSkins (void)
 			{
 				if (j == 0 || sndlumps[j] != sndlumps[j-1])
 				{
-					aliasid = S_AddPlayerSound (Skins[i].Name, Skins[i].gender,
+					aliasid = S_AddPlayerSound (Skins[i].Name.GetChars(), Skins[i].gender,
 						playersoundrefs[j], sndlumps[j], true);
 				}
 				else
 				{
-					S_AddPlayerSoundExisting (Skins[i].Name, Skins[i].gender,
+					S_AddPlayerSoundExisting (Skins[i].Name.GetChars(), Skins[i].gender,
 						playersoundrefs[j], aliasid, true);
 				}
 			}

@@ -72,7 +72,7 @@ static void DoSaveKeys (FConfigFile *config, const char *section, FKeySection *k
 	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	for (unsigned i = 0; i < keysection->mActions.Size(); ++i)
 	{
-		bindings->ArchiveBindings (config, keysection->mActions[i].mAction);
+		bindings->ArchiveBindings (config, keysection->mActions[i].mAction.GetChars());
 	}
 }
 

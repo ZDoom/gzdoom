@@ -109,7 +109,7 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 		bool addedDialogues = false;
 		for (const FString &addd : gameinfo.AddDialogues)
 		{
-			if (!LoadScriptFile(addd, true, 0))
+			if (!LoadScriptFile(addd.GetChars(), true, 0))
 			{
 				continue;
 			}
@@ -133,7 +133,7 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 
 		if (gameinfo.Dialogue.IsNotEmpty())
 		{
-			if (LoadScriptFile(gameinfo.Dialogue, false, 0))
+			if (LoadScriptFile(gameinfo.Dialogue.GetChars(), false, 0))
 			{
 				if (addedDialogues)
 				{

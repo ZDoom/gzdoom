@@ -252,7 +252,7 @@ void FSavegameManagerBase::DoSave(int Selected, const char *savegamestring)
 				break;
 			}
 		}
-		PerformSaveGame(filename, savegamestring);
+		PerformSaveGame(filename.GetChars(), savegamestring);
 	}
 	M_ClearMenus();
 }
@@ -262,7 +262,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
 	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManagerBase);
 	PARAM_INT(sel);
 	PARAM_STRING(name);
-	self->DoSave(sel, name);
+	self->DoSave(sel, name.GetChars());
 	return 0;
 }
 
@@ -559,7 +559,7 @@ FString G_GetSavegamesFolder()
 	}
 	else
 	{
-		name = **save_dir ? save_dir : M_GetSavegamesPath();
+		name = **save_dir ? FString(save_dir) : M_GetSavegamesPath();
 		usefilter = true;
 	}
 
@@ -574,8 +574,8 @@ FString G_GetSavegamesFolder()
 	if (usefilter && SavegameFolder.IsNotEmpty())
 		name << SavegameFolder << '/';
 
-	name = NicePath(name);
-	CreatePath(name);
+	name = NicePath(name.GetChars());
+	CreatePath(name.GetChars());
 	return name;
 }
 
@@ -589,7 +589,7 @@ FString G_BuildSaveName(const char* prefix)
 {
 	FString name = G_GetSavegamesFolder() + prefix;
 	DefaultExtension(name, "." SAVEGAME_EXT); // only add an extension if the prefix doesn't have one already.
-	name = NicePath(name);
+	name = NicePath(name.GetChars());
 	name.Substitute("\\", "/");
 	return name;
 }

@@ -384,7 +384,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVar)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self->player ? int(self->player - players) : -1, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player ? int(self->player - players) : -1, cvarname.GetChars());
 		if (cvar == nullptr)
 		{
 			ret->SetFloat(0);
@@ -414,7 +414,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVarString)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self->player? int(self->player - players) : -1, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player? int(self->player - players) : -1, cvarname.GetChars());
 		if (cvar == nullptr)
 		{
 			ret->SetString("");
@@ -1306,7 +1306,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 		{
 			con_midtime = float(time);
 		}
-		FString formatted = strbin1(text);
+		FString formatted = strbin1(text.GetChars());
 		C_MidPrint(font, formatted.GetChars());
 		con_midtime = saved;
 	}
@@ -1338,7 +1338,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PrintBold)
 	{
 		con_midtime = float(time);
 	}
-	FString formatted = strbin1(text);
+	FString formatted = strbin1(text.GetChars());
 	C_MidPrint(font, formatted.GetChars(), true);
 	con_midtime = saved;
 	return 0;
@@ -1359,7 +1359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Log)
 	if (local && !self->CheckLocalView()) return 0;
 
 	if (text[0] == '$') text = GStrings(&text[1]);
-	FString formatted = strbin1(text);
+	FString formatted = strbin1(text.GetChars());
 	Printf("%s\n", formatted.GetChars());
 	return 0;
 }
@@ -2686,7 +2686,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFlag)
 	PARAM_INT	(checkpointer);
 
 	AActor *owner = COPY_AAPTR(self, checkpointer);
-	ACTION_RETURN_BOOL(owner != nullptr && CheckActorFlag(owner, flagname));
+	ACTION_RETURN_BOOL(owner != nullptr && CheckActorFlag(owner, flagname.GetChars()));
 }
 
 
@@ -5080,7 +5080,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 	PARAM_FLOAT(direction_z);
 	PARAM_BOOL(useBloodColor);
 	PARAM_COLOR(decalColor);
-	SprayDecal(self, name, dist, DVector3(offset_x, offset_y, offset_z), DVector3(direction_x, direction_y, direction_z), useBloodColor, decalColor);
+	SprayDecal(self, name.GetChars(), dist, DVector3(offset_x, offset_y, offset_z), DVector3(direction_x, direction_y, direction_z), useBloodColor, decalColor);
 	return 0;
 }
 
@@ -5089,7 +5089,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
 	if (self->CheckLocalView())
-		StatusBar->SetMugShotState(name);
+		StatusBar->SetMugShotState(name.GetChars());
 	return 0;
 }
 

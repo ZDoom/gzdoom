@@ -281,7 +281,7 @@ bool M_SaveDefaults (const char *filename)
 	GameConfig->ArchiveGlobalData ();
 	if (gameinfo.ConfigName.IsNotEmpty())
 	{
-		GameConfig->ArchiveGameData (gameinfo.ConfigName);
+		GameConfig->ArchiveGameData (gameinfo.ConfigName.GetChars());
 	}
 	success = GameConfig->WriteConfigFile ();
 	if (filename != nullptr)
@@ -318,7 +318,7 @@ UNSAFE_CCMD (writeini)
 CCMD(openconfig)
 {
 	M_SaveDefaults(nullptr);
-	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()));
+	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()).GetChars());
 }
 
 //
@@ -537,7 +537,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 	for (i = 0; i <= 9999; i++)
 	{
-		const char *gamename = gameinfo.ConfigName;
+		const char *gamename = gameinfo.ConfigName.GetChars();
 
 		time_t now;
 		tm *tm;
@@ -601,8 +601,8 @@ void M_ScreenShot (const char *filename)
 				autoname += '/';
 			}
 		}
-		autoname = NicePath(autoname);
-		CreatePath(autoname);
+		autoname = NicePath(autoname.GetChars());
+		CreatePath(autoname.GetChars());
 		if (!FindFreeName (autoname, writepcx ? "pcx" : "png"))
 		{
 			Printf ("M_ScreenShot: Delete some screenshots\n");
@@ -623,7 +623,7 @@ void M_ScreenShot (const char *filename)
 	auto buffer = screen->GetScreenshotBuffer(pitch, color_type, gamma);
 	if (buffer.Size() > 0)
 	{
-		file = FileWriter::Open(autoname);
+		file = FileWriter::Open(autoname.GetChars());
 		if (file == NULL)
 		{
 			Printf ("Could not open %s\n", autoname.GetChars());
@@ -687,9 +687,9 @@ CCMD(openscreenshots)
 			autoname += '/';
 		}
 	}
-	autoname = NicePath(autoname);
+	autoname = NicePath(autoname.GetChars());
 
-	CreatePath(autoname);
+	CreatePath(autoname.GetChars());
 
 	I_OpenShellFolder(autoname.GetChars());
 }

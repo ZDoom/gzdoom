@@ -463,7 +463,7 @@ static void SaveGains()
 {
 	auto path = M_GetAppDataPath(true);
 	path << "/replaygain.ini";
-	FConfigFile gains(path);
+	FConfigFile gains(path.GetChars());
 	TMap<FString, float>::Iterator it(gainMap);
 	TMap<FString, float>::Pair* pair;
 
@@ -471,7 +471,7 @@ static void SaveGains()
 	{
 		while (it.NextPair(pair))
 		{
-			gains.SetValueForKey(pair->Key, std::to_string(pair->Value).c_str());
+			gains.SetValueForKey(pair->Key.GetChars(), std::to_string(pair->Value).c_str());
 		}
 	}
 	gains.WriteConfigFile();
@@ -484,7 +484,7 @@ static void ReadGains()
 	done = true;
 	auto path = M_GetAppDataPath(true);
 	path << "/replaygain.ini";
-	FConfigFile gains(path);
+	FConfigFile gains(path.GetChars());
 	if (gains.SetSection("Gains"))
 	{
 		const char* key;
@@ -669,7 +669,7 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 
 	if (!mus_playing.name.IsEmpty() &&
 		mus_playing.handle != nullptr &&
-		stricmp(mus_playing.name, musicname) == 0 &&
+		mus_playing.name.CompareNoCase(musicname) == 0 &&
 		ZMusic_IsLooping(mus_playing.handle) == zmusic_bool(looping))
 	{
 		if (order != mus_playing.baseorder)
@@ -768,7 +768,7 @@ void S_RestartMusic ()
 	{
 		FString song = mus_playing.LastSong;
 		mus_playing.LastSong = "";
-		S_ChangeMusic (song, mus_playing.baseorder, mus_playing.loop, true);
+		S_ChangeMusic (song.GetChars(), mus_playing.baseorder, mus_playing.loop, true);
 	}
 	else
 	{
@@ -791,7 +791,7 @@ void S_MIDIDeviceChanged(int newdev)
 		// Reload the song to change the device
 		auto mi = mus_playing;
 		S_StopMusic(true);
-		S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
+		S_ChangeMusic(mi.name.GetChars(), mi.baseorder, mi.loop);
 	}
 }
 
@@ -807,7 +807,7 @@ int S_GetMusic (const char **name)
 
 	if (mus_playing.name.IsNotEmpty())
 	{
-		*name = mus_playing.name;
+		*name = mus_playing.name.GetChars();
 		order = mus_playing.baseorder;
 	}
 	else

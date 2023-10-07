@@ -408,13 +408,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
 
 static void StringFilter(FString *self, FString *result)
 {
-	*result = strbin1(*self);
+	*result = strbin1(self->GetChars());
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(strbin1(*self));
+	ACTION_RETURN_STRING(strbin1(self->GetChars()));
 }
 
 static int StringIndexOf(FString *self, const FString &substr, int startIndex)

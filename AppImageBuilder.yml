@@ -18,8 +18,12 @@ AppDir:
     include: []
   files:
     include:
-    - /usr/lib/x86_64-linux-gnu/libbz2.*
-    - /usr/lib/x86_64-linux-gnu/libopenal.*
+    - /usr/lib/x86_64-linux-gnu/libbz2.so.1
+    - /usr/lib/x86_64-linux-gnu/libbz2.so.1.0
+    - /usr/lib/x86_64-linux-gnu/libbz2.so.1.0.*
+    - /usr/lib/x86_64-linux-gnu/libopenal.so
+    - /usr/lib/x86_64-linux-gnu/libopenal.so.1
+    - /usr/lib/x86_64-linux-gnu/libopenal.so.1.*
     exclude:
     - usr/share/man
     - usr/share/doc/*/README.*

@@ -905,7 +905,7 @@ FString NicePath(const char *path)
 			slash = path + strlen(path);
 		}
 		FString who(path, slash - path);
-		pwstruct = getpwnam(who);
+		pwstruct = getpwnam(who.GetChars());
 	}
 	if (pwstruct == NULL)
 	{

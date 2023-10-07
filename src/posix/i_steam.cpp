@@ -202,7 +202,7 @@ TArray<FString> I_GetSteamPath()
 
 		try
 		{
-			SteamInstallFolders = ParseSteamRegistry(regPath);
+			SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 		}
 		catch(class CRecoverableError &error)
 		{
@@ -221,7 +221,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
-			if(DirExists(candidate))
+			if(DirExists(candidate.GetChars()))
 				result.Push(candidate);
 		}
 	}

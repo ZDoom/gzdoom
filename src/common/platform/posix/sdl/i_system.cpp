@@ -118,7 +118,7 @@ void Unix_I_FatalError(const char* errortext)
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
 			<< "\" --msgbox \"" << errortext << "\"";
-		popen(cmd, "r");
+		popen(cmd.GetChars(), "r");
 	}
 #ifndef NO_GTK
 	else if (I_GtkAvailable())
@@ -131,7 +131,7 @@ void Unix_I_FatalError(const char* errortext)
 		FString title;
 		title << GAMENAME " " << GetVersionString();
 
-		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
+		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.GetChars(), errortext, NULL) < 0)
 		{
 			printf("\n%s\n", errortext);
 		}
@@ -316,9 +316,9 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 
 		for(i = 0; i < numwads; ++i)
 		{
-			const char *filepart = strrchr(wads[i].Path, '/');
+			const char *filepart = strrchr(wads[i].Path.GetChars(), '/');
 			if(filepart == NULL)
-				filepart = wads[i].Path;
+				filepart = wads[i].Path.GetChars();
 			else
 				filepart++;
 			// Menu entries are specified in "tag" "item" pairs, where when a
@@ -329,9 +329,9 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 
 		if(defaultiwad >= 0 && defaultiwad < numwads)
 		{
-			const char *filepart = strrchr(wads[defaultiwad].Path, '/');
+			const char *filepart = strrchr(wads[defaultiwad].Path.GetChars(), '/');
 			if(filepart == NULL)
-				filepart = wads[defaultiwad].Path;
+				filepart = wads[defaultiwad].Path.GetChars();
 			else
 				filepart++;
 			cmd.AppendFormat(" --default \"%s (%s)\"", wads[defaultiwad].Name.GetChars(), filepart);
@@ -377,9 +377,9 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 	printf ("Please select a game wad (or 0 to exit):\n");
 	for (i = 0; i < numwads; ++i)
 	{
-		const char *filepart = strrchr (wads[i].Path, '/');
+		const char *filepart = strrchr (wads[i].Path.GetChars(), '/');
 		if (filepart == NULL)
-			filepart = wads[i].Path;
+			filepart = wads[i].Path.GetChars();
 		else
 			filepart++;
 		printf ("%d. %s (%s)\n", i+1, wads[i].Name.GetChars(), filepart);

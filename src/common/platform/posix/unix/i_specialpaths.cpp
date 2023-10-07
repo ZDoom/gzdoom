@@ -50,15 +50,15 @@ FString GetUserFile (const char *file)
 
 	path = NicePath("$HOME/" GAME_DIR "/");
 
-	if (stat (path, &info) == -1)
+	if (stat (path.GetChars(), &info) == -1)
 	{
 		struct stat extrainfo;
 
 		// Sanity check for $HOME/.config
 		FString configPath = NicePath("$HOME/.config/");
-		if (stat (configPath, &extrainfo) == -1)
+		if (stat (configPath.GetChars(), &extrainfo) == -1)
 		{
-			if (mkdir (configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+			if (mkdir (configPath.GetChars(), S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 			{
 				I_FatalError ("Failed to create $HOME/.config directory:\n%s", strerror(errno));
 			}
@@ -72,9 +72,9 @@ FString GetUserFile (const char *file)
 		// Transfer the old zdoom directory to the new location
 		bool moved = false;
 		FString oldpath = NicePath("$HOME/." GAMENAMELOWERCASE "/");
-		if (stat (oldpath, &extrainfo) != -1)
+		if (stat (oldpath.GetChars(), &extrainfo) != -1)
 		{
-			if (rename(oldpath, path) == -1)
+			if (rename(oldpath.GetChars(), path) == -1)
 			{
 				I_Error ("Failed to move old " GAMENAMELOWERCASE " directory (%s) to new location (%s).",
 					oldpath.GetChars(), path.GetChars());
@@ -115,7 +115,7 @@ FString M_GetAppDataPath(bool create)
 	FString path = NicePath("$HOME/.config/" GAMENAMELOWERCASE);
 	if (create)
 	{
-		CreatePath(path);
+		CreatePath(path.GetChars());
 	}
 	return path;
 }
@@ -135,7 +135,7 @@ FString M_GetCachePath(bool create)
 	FString path = NicePath("$HOME/.config/zdoom/cache");
 	if (create)
 	{
-		CreatePath(path);
+		CreatePath(path.GetChars());
 	}
 	return path;
 }
@@ -231,7 +231,7 @@ FString M_GetDemoPath()
 FString M_GetNormalizedPath(const char* path)
 {
 	char *actualpath;
-	actualpath = realpath(path, NULL);
+	actualpath = realpath(path.GetChars(), NULL);
 	if (!actualpath) // error ?
 		return nullptr;
 	FString fullpath = actualpath;

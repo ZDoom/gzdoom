@@ -152,18 +152,18 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 	if (actor != NULL)
 	{
 		auto Level = actor->Level;
-		const char *dot = strchr(flagname, '.');
+		const char *dot = strchr(flagname.GetChars(), '.');
 		FFlagDef *fd;
 		PClassActor *cls = actor->GetClass();
 
 		if (dot != NULL)
 		{
-			FString part1(flagname.GetChars(), dot - flagname);
-			fd = FindFlag(cls, part1, dot + 1);
+			FString part1(flagname.GetChars(), dot - flagname.GetChars());
+			fd = FindFlag(cls, part1.GetChars(), dot + 1);
 		}
 		else
 		{
-			fd = FindFlag(cls, flagname, NULL);
+			fd = FindFlag(cls, flagname.GetChars(), NULL);
 		}
 
 		if (fd != NULL)
@@ -245,7 +245,7 @@ INTBOOL CheckActorFlag(AActor *owner, const char *flagname, bool printerror)
 	if (dot != NULL)
 	{
 		FString part1(flagname, dot-flagname);
-		fd = FindFlag (cls, part1, dot+1);
+		fd = FindFlag (cls, part1.GetChars(), dot+1);
 	}
 	else
 	{
@@ -1377,7 +1377,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 		{
 			FString st;
 			st.Format("%s%s", strnicmp(str, "power", 5) ? "Power" : "", str);
-			cls = FindClassTentative(st, pow);
+			cls = FindClassTentative(st.GetChars(), pow);
 		}
 		else
 		{

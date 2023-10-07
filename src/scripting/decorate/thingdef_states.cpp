@@ -170,7 +170,7 @@ do_goto:
 				statestring += '+';
 				statestring += sc.String;
 			}
-			if (!bag.statedef.SetGotoLabel(statestring))
+			if (!bag.statedef.SetGotoLabel(statestring.GetChars()))
 			{
 				sc.ScriptError("GOTO before first state");
 			}
@@ -207,7 +207,7 @@ do_stop:
 			{
 				do
 				{
-					bag.statedef.AddStateLabel(statestring);
+					bag.statedef.AddStateLabel(statestring.GetChars());
 					statestring = ParseStateString(sc);
 					if (!statestring.CompareNoCase("GOTO"))
 					{
@@ -230,7 +230,7 @@ do_stop:
 			}
 
 			scp = sc;
-			state.sprite = GetSpriteIndex(statestring);
+			state.sprite = GetSpriteIndex(statestring.GetChars());
 			state.Misc1 = state.Misc2 = 0;
 			sc.MustGetString();
 			statestring = sc.String;
@@ -334,7 +334,7 @@ endofstate:
 				auto funcsym = CreateAnonymousFunction(actor->VMType, nullptr, state.UseFlags);
 				state.ActionFunc = FunctionBuildList.AddFunction(bag.Namespace, bag.Version, funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true, bag.statedef.GetStateCount(), int(statestring.Len()), sc.LumpNum);
 			}
-			int count = bag.statedef.AddStates(&state, statestring, scp);
+			int count = bag.statedef.AddStates(&state, statestring.GetChars(), scp);
 			if (count < 0)
 			{
 				sc.ScriptError("Invalid frame character string '%s'", statestring.GetChars());

@@ -158,7 +158,7 @@ static FString LookupMusic(const char* musicname, int& order)
 		if (mus_string != nullptr)
 		{
 			DEH_Music << "D_" << mus_string;
-			musicname = DEH_Music;
+			musicname = DEH_Music.GetChars();
 		}
 	}
 
@@ -314,7 +314,7 @@ void S_Start()
 			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
-				int j = fileSystem.CheckNumForFullName(LocalSndInfo, true);
+				int j = fileSystem.CheckNumForFullName(LocalSndInfo.GetChars(), true);
 				if (j >= 0) S_AddLocalSndInfo(j);
 			}
 
@@ -328,7 +328,7 @@ void S_Start()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? fileSystem.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? fileSystem.CheckNumForFullName(LocalSndSeq.GetChars(), true) : -1);
 		}
 
 		LastLocalSndInfo = LocalSndInfo;

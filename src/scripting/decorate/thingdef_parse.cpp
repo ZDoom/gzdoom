@@ -458,7 +458,7 @@ static void ParseActorFlag (FScanner &sc, Baggage &bag, int mod)
 		sc.MustGetString ();
 		part2 = sc.String;
 	}
-	HandleActorFlag(sc, bag, part1, part2, mod);
+	HandleActorFlag(sc, bag, part1.GetChars(), part2, mod);
 }
 
 //==========================================================================
@@ -722,12 +722,12 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 
 			case 'S':
 				sc.MustGetString();
-				conv.s = strings[strings.Reserve(1)] = sc.String;
+				conv.s = (strings[strings.Reserve(1)] = sc.String).GetChars();
 				break;
 
 			case 'T':
 				sc.MustGetString();
-				conv.s = strings[strings.Reserve(1)] = strbin1(sc.String);
+				conv.s = (strings[strings.Reserve(1)] = strbin1(sc.String)).GetChars();
 				break;
 
 			case 'C':
@@ -747,7 +747,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 				else
 				{
 					sc.MustGetString ();
-					conv.s = strings[strings.Reserve(1)] = sc.String;
+					conv.s = (strings[strings.Reserve(1)] = sc.String).GetChars();
 					pref.i = 1;
 				}
 				break;
@@ -775,7 +775,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 					do
 					{
 						sc.MustGetString ();
-						conv.s = strings[strings.Reserve(1)] = sc.String;
+						conv.s = (strings[strings.Reserve(1)] = sc.String).GetChars();
 						params.Push(conv);
 						params[0].i++;
 					}
@@ -961,7 +961,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		sc.UnGet ();
 	}
 
-	FPropertyInfo *prop = FindProperty(propname);
+	FPropertyInfo *prop = FindProperty(propname.GetChars());
 
 	if (prop != NULL)
 	{
@@ -976,9 +976,9 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 			FScriptPosition::ErrorCounter++;
 		}
 	}
-	else if (MatchString(propname, statenames) != -1)
+	else if (MatchString(propname.GetChars(), statenames) != -1)
 	{
-		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info));
+		bag.statedef.SetStateLabel(propname.GetChars(), CheckState (sc, bag.Info));
 	}
 	else
 	{

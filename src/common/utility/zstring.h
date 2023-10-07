@@ -163,8 +163,6 @@ public:
 	explicit operator bool() = delete; // this is needed to render the operator const char * ineffective when used in boolean constructs.
 	bool operator !() = delete;
 
-	operator const char *() const { return Chars; }
-
 	const char *GetChars() const { return Chars; }
 
 	const char &operator[] (int index) const { return Chars[index]; }

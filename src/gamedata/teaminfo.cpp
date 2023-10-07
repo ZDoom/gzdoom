@@ -260,7 +260,7 @@ bool FTeam::IsValidTeam (unsigned int uiTeam)
 
 const char *FTeam::GetName () const
 {
-	return m_Name;
+	return m_Name.GetChars();
 }
 
 //==========================================================================

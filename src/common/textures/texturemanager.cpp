@@ -178,7 +178,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		auto tex = Textures[i].Texture;
 
 
-		if (stricmp (tex->GetName(), name) == 0 )
+		if (tex->GetName().CompareNoCase(name) == 0 )
 		{
 			// If we look for short names, we must ignore any long name texture.
 			if ((flags & TEXMAN_ShortNameOnly) && tex->isFullNameTexture())
@@ -306,7 +306,7 @@ int FTextureManager::ListTextures (const char *name, TArray<FTextureID> &list, b
 	{
 		auto tex = Textures[i].Texture;
 
-		if (stricmp (tex->GetName(), name) == 0)
+		if (tex->GetName().CompareNoCase(name) == 0)
 		{
 			auto texUseType = tex->GetUseType();
 			// NULL textures must be ignored.
@@ -422,7 +422,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohas
 	// Textures without name can't be looked for
 	if (addtohash && texture->GetName().IsNotEmpty())
 	{
-		bucket = int(MakeKey (texture->GetName()) % HASH_SIZE);
+		bucket = int(MakeKey (texture->GetName().GetChars()) % HASH_SIZE);
 		hash = HashFirst[bucket];
 	}
 	else
@@ -460,7 +460,7 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 			auto fn = fileSystem.GetFileFullName(lumpnum);
 			str = ExtractFileBase(fn);
 		}
-		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str, usetype);
+		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str.GetChars(), usetype);
 
 		if (out != NULL)
 		{
@@ -514,7 +514,7 @@ void FTextureManager::ReplaceTexture (FTextureID texid, FGameTexture *newtexture
 
 	auto oldtexture = Textures[index].Texture;
 
-	newtexture->SetName(oldtexture->GetName());
+	newtexture->SetName(oldtexture->GetName().GetChars());
 	newtexture->SetUseType(oldtexture->GetUseType());
 	Textures[index].Texture = newtexture;
 	newtexture->SetID(oldtexture->GetID());
@@ -793,7 +793,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 				if (lumpnum>=0)
 				{
-					auto newtex = MakeGameTexture(CreateTextureFromLump(lumpnum), src, ETextureType::Override);
+					auto newtex = MakeGameTexture(CreateTextureFromLump(lumpnum), src.GetChars(), ETextureType::Override);
 
 					if (newtex != NULL)
 					{
@@ -801,7 +801,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						newtex->SetWorldPanning(true);
 						newtex->SetDisplaySize((float)width, (float)height);
 
-						FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
+						FTextureID oldtex = TexMan.CheckForTexture(src.GetChars(), ETextureType::MiscPatch);
 						if (oldtex.isValid()) 
 						{
 							ReplaceTexture(oldtex, newtex, true);
@@ -1127,8 +1127,8 @@ void FTextureManager::AddLocalizedVariants()
 		}
 		if (tokens.Size() >= 2)
 		{
-			FString base = ExtractFileBase(tokens[0]);
-			FTextureID origTex = CheckForTexture(base, ETextureType::MiscPatch);
+			FString base = ExtractFileBase(tokens[0].GetChars());
+			FTextureID origTex = CheckForTexture(base.GetChars(), ETextureType::MiscPatch);
 			if (origTex.isValid())
 			{
 				FTextureID tex = CheckForTexture(entry.name, ETextureType::MiscPatch);
@@ -1367,7 +1367,7 @@ FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
 	// But do not link the new texture into the hash chain!
 	auto itex = new FImageTexture(image);
 	itex->SetNoRemap0();
-	auto FrontSkyLayer = MakeGameTexture(itex, tex->GetName(), ETextureType::Wall);
+	auto FrontSkyLayer = MakeGameTexture(itex, tex->GetName().GetChars(), ETextureType::Wall);
 	FrontSkyLayer->SetUseType(tex->GetUseType());
 	texid = TexMan.AddGameTexture(FrontSkyLayer, false);
 	Textures[texidx].FrontSkyLayer = texid.GetIndex();

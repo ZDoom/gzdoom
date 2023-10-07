@@ -80,7 +80,7 @@ bool FPlayList::ChangeList (const char *path)
 		// For a .PLS file, skip anything that doesn't start with File[0-9]+=
 		if (pls)
 		{
-			if (strncmp(song, "File", 4) != 0)
+			if (strncmp(song.GetChars(), "File", 4) != 0)
 			{
 				continue;
 			}
@@ -205,5 +205,5 @@ const char *FPlayList::GetSong (int position) const
 	if ((unsigned)position >= Songs.Size())
 		return NULL;
 
-	return Songs[position];
+	return Songs[position].GetChars();
 }

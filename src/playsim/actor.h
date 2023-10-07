@@ -960,14 +960,14 @@ public:
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
-		return (Pos().XY() - otherpos).LengthSquared();
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos().XY() - otherpos.XY()).LengthSquared();
 	}
 
 	double Distance2D(AActor *other, bool absolute = false) const
 	{
-		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
-		return (Pos().XY() - otherpos).Length();
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos().XY() - otherpos.XY()).Length();
 	}
 
 	double Distance2D(double x, double y) const
@@ -997,14 +997,14 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
-		return VecToAngle(otherpos - Pos().XY());
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos.XY() - Pos().XY());
 	}
 
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
-		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
-		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos.XY() - Pos().XY() + DVector2(oxofs, oyofs));
 	}
 
 	DVector2 Vec2To(AActor *other) const

@@ -366,7 +366,7 @@ CCMD(listmaps)
 	for (unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
-		MapData *map = P_OpenMapData(info->MapName, true);
+		MapData *map = P_OpenMapData(info->MapName.GetChars(), true);
 
 		if (map != NULL)
 		{

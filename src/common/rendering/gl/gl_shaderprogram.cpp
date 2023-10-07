@@ -107,7 +107,7 @@ void FShaderProgram::CompileShader(ShaderType type)
 
 	const auto &handle = mShaders[type];
 
-	FGLDebug::LabelObject(GL_SHADER, handle, mShaderNames[type]);
+	FGLDebug::LabelObject(GL_SHADER, handle, mShaderNames[type].GetChars());
 
 	const FString &patchedCode = mShaderSources[type];
 	int lengths[1] = { (int)patchedCode.Len() };
@@ -186,7 +186,7 @@ void FShaderProgram::Link(const char *name)
 		glUseProgram(mProgram);
 		for (auto &uni : samplerstobind)
 		{
-			auto index = glGetUniformLocation(mProgram, uni.first);
+			auto index = glGetUniformLocation(mProgram, uni.first.GetChars());
 			if (index >= 0)
 			{
 				glUniform1i(index, uni.second);
@@ -300,8 +300,8 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	FString prolog = Uniforms.CreateDeclaration("Uniforms", PresentUniforms::Desc());
 
 	mShader.reset(new FShaderProgram());
-	mShader->Compile(FShaderProgram::Vertex, "shaders/pp/screenquad.vp", prolog, 330);
-	mShader->Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
+	mShader->Compile(FShaderProgram::Vertex, "shaders/pp/screenquad.vp", prolog.GetChars(), 330);
+	mShader->Compile(FShaderProgram::Fragment, vtx_shader_name, prolog.GetChars(), 330);
 	mShader->Link(program_name);
 	mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 	Uniforms.Init();
@@ -355,7 +355,7 @@ void FShadowMapShader::Bind()
 
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/pp/screenquad.vp", "", 430);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/pp/shadowmap.fp", prolog, 430);
+		mShader->Compile(FShaderProgram::Fragment, "shaders/pp/shadowmap.fp", prolog.GetChars(), 430);
 		mShader->Link("shaders/glsl/shadowmap");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();

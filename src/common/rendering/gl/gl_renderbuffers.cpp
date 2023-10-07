@@ -836,8 +836,8 @@ FShaderProgram *GLPPRenderState::GetGLShader(PPShader *shader)
 			prolog = UniformBlockDecl::Create("Uniforms", shader->Uniforms, POSTPROCESS_BINDINGPOINT);
 		prolog += shader->Defines;
 
-		glshader->Compile(FShaderProgram::Vertex, shader->VertexShader, "", shader->Version);
-		glshader->Compile(FShaderProgram::Fragment, shader->FragmentShader, prolog, shader->Version);
+		glshader->Compile(FShaderProgram::Vertex, shader->VertexShader.GetChars(), "", shader->Version);
+		glshader->Compile(FShaderProgram::Fragment, shader->FragmentShader.GetChars(), prolog.GetChars(), shader->Version);
 		glshader->Link(shader->FragmentShader.GetChars());
 		if (!shader->Uniforms.empty())
 			glshader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");

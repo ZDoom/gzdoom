@@ -212,10 +212,10 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		FString color = sc.String; \
-		FString colorName = V_GetColorStringByName(color); \
+		FString colorName = V_GetColorStringByName(color.GetChars()); \
 		if(!colorName.IsEmpty()) \
 			color = colorName; \
-		gameinfo.key = V_GetColorFromString(color); \
+		gameinfo.key = V_GetColorFromString(color.GetChars()); \
 	}
 
 #define GAMEINFOKEY_BOOL(key, variable) \

@@ -161,7 +161,7 @@ int D_PlayerClassToInt (const char *classname)
 		{
 			auto type = PlayerClasses[i].Type;
 
-			if (type->GetDisplayName().IsNotEmpty() && stricmp(type->GetDisplayName(), classname) == 0)
+			if (type->GetDisplayName().IsNotEmpty() && type->GetDisplayName().CompareNoCase(classname) == 0)
 			{
 				return i;
 			}
@@ -786,7 +786,7 @@ FString D_GetUserInfoStrings(int pnum, bool compact)
 				break;
 
 			case NAME_Skin:
-				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name).GetChars());
+				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name.GetChars()).GetChars());
 				break;
 
 			default:
@@ -870,15 +870,15 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
-				info->GenderChanged(value);
+				info->GenderChanged(value.GetChars());
 				break;
 
 			case NAME_PlayerClass:
-				info->PlayerClassChanged(value);
+				info->PlayerClassChanged(value.GetChars());
 				break;
 
 			case NAME_Skin:
-				info->SkinChanged(value, players[pnum].CurrentPlayerClass);
+				info->SkinChanged(value.GetChars(), players[pnum].CurrentPlayerClass);
 				if (players[pnum].mo != NULL)
 				{
 					if (players[pnum].cls != NULL &&
@@ -895,11 +895,11 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 				break;
 
 			case NAME_Team:
-				UpdateTeam(pnum, atoi(value), update);
+				UpdateTeam(pnum, atoi(value.GetChars()), update);
 				break;
 
 			case NAME_Color:
-				info->ColorChanged(value);
+				info->ColorChanged(value.GetChars());
 				break;
 
 			default:
@@ -956,7 +956,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 			switch (pair->Key.GetIndex())
 			{
 			case NAME_Skin:
-				string = Skins[info.GetSkin()].Name;
+				string = Skins[info.GetSkin()].Name.GetChars();
 				break;
 
 			case NAME_PlayerClass:
@@ -969,7 +969,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 				string = val.String;
 				break;
 			}
-			arc.StringPtr(name, string);
+			arc.StringPtr(name.GetChars(), string);
 		}
 		arc.EndObject();
 	}

@@ -109,7 +109,7 @@ static FString CalcProgramBinaryChecksum(const FString &vertex, const FString &f
 static FString CreateProgramCacheName(bool create)
 {
 	FString path = M_GetCachePath(create);
-	if (create) CreatePath(path);
+	if (create) CreatePath(path.GetChars());
 	path << "/shadercache.zdsc";
 	return path;
 }
@@ -125,7 +125,7 @@ static void LoadShaders()
 	{
 		FString path = CreateProgramCacheName(false);
 		FileReader fr;
-		if (!fr.OpenFile(path))
+		if (!fr.OpenFile(path.GetChars()))
 			I_Error("Could not open shader file");
 
 		char magic[4];
@@ -166,7 +166,7 @@ static void LoadShaders()
 static void SaveShaders()
 {
 	FString path = CreateProgramCacheName(true);
-	std::unique_ptr<FileWriter> fw(FileWriter::Open(path));
+	std::unique_ptr<FileWriter> fw(FileWriter::Open(path.GetChars()));
 	if (fw)
 	{
 		uint32_t count = (uint32_t)ShaderCache.size();
@@ -837,9 +837,9 @@ bool FShaderCollection::CompileNextShader()
 	}
 	else if (mCompileState == 2)
 	{
-		FString name = ExtractFileBase(usershaders[i].shader);
+		FString name = ExtractFileBase(usershaders[i].shader.GetChars());
 		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
-		FShader *shc = Compile(name, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, mPassType);
+		FShader *shc = Compile(name.GetChars(), usershaders[i].shader.GetChars(), defaultshaders[usershaders[i].shaderType].lightfunc, defines.GetChars(), true, mPassType);
 		mMaterialShaders.Push(shc);
 		mCompileIndex++;
 		if (mCompileIndex >= (int)usershaders.Size())

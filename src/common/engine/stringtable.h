@@ -97,6 +97,7 @@ public:
 	bool MatchDefaultString(const char *name, const char *content) const;
 	const char *GetString(const char *name, uint32_t *langtable, int gender = -1) const;
 	const char *operator() (const char *name) const;	// Never returns NULL
+	const char* operator() (const FString& name) const { return operator()(name.GetChars()); }
 	const char *operator[] (const char *name) const
 	{
 		return GetString(name, nullptr);

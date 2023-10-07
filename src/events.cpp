@@ -166,7 +166,7 @@ bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, 
 		return false;
 
 	Net_WriteByte(DEM_NETEVENT);
-	Net_WriteString(name);
+	Net_WriteString(name.GetChars());
 	Net_WriteByte(3);
 	Net_WriteLong(arg1);
 	Net_WriteLong(arg2);

@@ -312,8 +312,8 @@ static ZMusic_MidiSource GetMIDISource(const char *fn)
 	FString src = fn;
 	if (src.Compare("*") == 0) src = mus_playing.name;
 
-	auto lump = fileSystem.CheckNumForName(src, ns_music);
-	if (lump < 0) lump = fileSystem.CheckNumForFullName(src);
+	auto lump = fileSystem.CheckNumForName(src.GetChars(), ns_music);
+	if (lump < 0) lump = fileSystem.CheckNumForFullName(src.GetChars());
 	if (lump < 0)
 	{
 		Printf("Cannot find MIDI lump %s.\n", src.GetChars());
@@ -391,7 +391,7 @@ UNSAFE_CCMD (writewave)
 			Printf("MIDI dump of %s failed: %s\n",argv[1], ZMusic_GetLastError());
 		}
 
-		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
+		S_ChangeMusic(savedsong.name.GetChars(), savedsong.baseorder, savedsong.loop, true);
 	}
 	else
 	{

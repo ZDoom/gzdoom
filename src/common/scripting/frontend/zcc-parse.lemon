@@ -1285,6 +1285,26 @@ func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
 	X = parm;
 }
 
+func_param(X) ::= func_param_flags(A) type(B) AND IDENTIFIER(C).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int | ZCC_Out;
+	parm->Default = nullptr;
+	X = parm;
+}
+
+func_param(X) ::= func_param_flags(A) type(B) AND IDENTIFIER(C) EQ expr(D).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int | ZCC_Out;
+	parm->Default = D;
+	X = parm;
+}
+
 func_param_flags(X) ::= .									{ X.Int = 0; X.SourceLoc = 0; }
 func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc =  T.SourceLoc; }
 func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc =  T.SourceLoc; }

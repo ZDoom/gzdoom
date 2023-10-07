@@ -1045,6 +1045,14 @@ func_ptr_param(X) ::= func_param_flags(A) type(B).
 	X = parm;
 }
 
+func_ptr_param(X) ::= func_param_flags(A) type(B) AND.
+{
+	NEW_AST_NODE(FuncPtrParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Flags = A.Int | ZCC_Out;
+	X = parm;
+}
+
 aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
 {
 	NEW_AST_NODE(ClassType,cls,T);

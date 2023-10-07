@@ -337,7 +337,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 			cmd.AppendFormat(" --default \"%s (%s)\"", wads[defaultiwad].Name.GetChars(), filepart);
 		}
 
-		FILE *f = popen(cmd, "r");
+		FILE *f = popen(cmd.GetChars(), "r");
 		if(f != NULL)
 		{
 			char gotstr[16];

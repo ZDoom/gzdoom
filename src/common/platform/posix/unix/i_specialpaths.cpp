@@ -74,7 +74,7 @@ FString GetUserFile (const char *file)
 		FString oldpath = NicePath("$HOME/." GAMENAMELOWERCASE "/");
 		if (stat (oldpath.GetChars(), &extrainfo) != -1)
 		{
-			if (rename(oldpath.GetChars(), path) == -1)
+			if (rename(oldpath.GetChars(), path.GetChars()) == -1)
 			{
 				I_Error ("Failed to move old " GAMENAMELOWERCASE " directory (%s) to new location (%s).",
 					oldpath.GetChars(), path.GetChars());
@@ -83,7 +83,7 @@ FString GetUserFile (const char *file)
 				moved = true;
 		}
 
-		if (!moved && mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+		if (!moved && mkdir (path.GetChars(), S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 		{
 			I_FatalError ("Failed to create %s directory:\n%s",
 				path.GetChars(), strerror (errno));
@@ -231,7 +231,7 @@ FString M_GetDemoPath()
 FString M_GetNormalizedPath(const char* path)
 {
 	char *actualpath;
-	actualpath = realpath(path.GetChars(), NULL);
+	actualpath = realpath(path, NULL);
 	if (!actualpath) // error ?
 		return nullptr;
 	FString fullpath = actualpath;

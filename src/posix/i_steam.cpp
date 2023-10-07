@@ -179,7 +179,7 @@ TArray<FString> I_GetSteamPath()
 	FString regPath = appSupportPath + "/Steam/config/config.vdf";
 	try
 	{
-		SteamInstallFolders = ParseSteamRegistry(regPath);
+		SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 	}
 	catch(class CRecoverableError &error)
 	{

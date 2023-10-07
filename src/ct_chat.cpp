@@ -193,7 +193,7 @@ bool CT_Responder (event_t *ev)
 #ifdef __unix__
 		else if (ev->subtype == EV_GUI_MButtonDown)
 		{
-			CT_PasteChat(I_GetFromClipboard(true));
+			CT_PasteChat(I_GetFromClipboard(true).GetChars());
 		}
 #endif
 	}

@@ -2489,7 +2489,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 			if (btype->isDynArray())
 			{
-				if(ctx.Version >= MakeVersion(4, 11, 0))
+				if(ctx.Version >= MakeVersion(4, 11, 1))
 				{
 					FArgumentList args;
 					args.Push(Right);
@@ -2502,12 +2502,14 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				{
 					if(Base->ValueType->isRealPointer() && Right->ValueType->isRealPointer())
 					{
-						ScriptPosition.Message(MSG_WARNING, "Dynamic Array assignments not allowed in ZScript versions below 4.11, use the Copy() or Move() functions instead\n"
-											  TEXTCOLOR_RED "!! Assigning an out array pointer to another out array pointer does not alter either of the underlying arrays' values below ZScript version 4.11 !!");
+						ScriptPosition.Message(MSG_WARNING, "Dynamic Array assignments not allowed in ZScript versions below 4.11.1, use the Copy() or Move() functions instead\n"
+											  TEXTCOLOR_RED "  Assigning an out array pointer to another out array pointer\n"
+															"  does not alter either of the underlying arrays' values\n"
+															"  it only swaps the pointers below ZScript version 4.11.1!!");
 					}
 					else
 					{
-						ScriptPosition.Message(MSG_ERROR, "Dynamic Array assignments not allowed in ZScript versions below 4.11, use the Copy() or Move() functions instead");
+						ScriptPosition.Message(MSG_ERROR, "Dynamic Array assignments not allowed in ZScript versions below 4.11.1, use the Copy() or Move() functions instead");
 						delete this;
 						return nullptr;
 					}
@@ -2515,7 +2517,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 			}
 			else if (btype->isMap())
 			{
-				if(ctx.Version >= MakeVersion(4, 11, 0))
+				if(ctx.Version >= MakeVersion(4, 11, 1))
 				{
 					FArgumentList args;
 					args.Push(Right);
@@ -2528,12 +2530,14 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				{
 					if(Base->ValueType->isRealPointer() && Right->ValueType->isRealPointer())
 					{ // don't break existing code, but warn that it's a no-op
-						ScriptPosition.Message(MSG_WARNING, "Map assignments not allowed in ZScript versions below 4.11, use the Copy() or Move() functions instead\n"
-											  TEXTCOLOR_RED "!! Assigning an out map pointer to another out map pointer does not alter either of the underlying maps' values below ZScript version 4.11 !!");
+						ScriptPosition.Message(MSG_WARNING, "Map assignments not allowed in ZScript versions below 4.11.1, use the Copy() or Move() functions instead\n"
+											  TEXTCOLOR_RED "  Assigning an out map pointer to another out map pointer\n"
+															"  does not alter either of the underlying maps' values\n"
+															"  it only swaps the pointers below ZScript version 4.11.1!!");
 					}
 					else
 					{
-						ScriptPosition.Message(MSG_ERROR, "Map assignments not allowed in ZScript versions below 4.11, use the Copy() or Move() functions instead");
+						ScriptPosition.Message(MSG_ERROR, "Map assignments not allowed in ZScript versions below 4.11.1, use the Copy() or Move() functions instead");
 						delete this;
 						return nullptr;
 					}
@@ -2550,7 +2554,9 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				if(Base->ValueType->isRealPointer() && Right->ValueType->isRealPointer())
 				{ // don't break existing code, but warn that it's a no-op
 					ScriptPosition.Message(MSG_WARNING, "Struct assignment not implemented yet\n"
-										  TEXTCOLOR_RED "!! Assigning an out struct pointer to another out struct pointer does not alter either of the underlying structs' values !!");
+										  TEXTCOLOR_RED "  Assigning an out struct pointer to another out struct pointer\n"
+														"  does not alter either of the underlying structs' values\n"
+														"  it only swaps the pointers!!");
 				}
 				else
 				{

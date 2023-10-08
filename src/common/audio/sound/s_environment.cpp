@@ -538,7 +538,7 @@ void S_ReadReverbDef (FScanner &sc)
 
 	while (sc.GetString ())
 	{
-		name = strdup (sc.String);
+		name = copystring(sc.String);
 		sc.MustGetNumber ();
 		id1 = sc.Number;
 		sc.MustGetNumber ();

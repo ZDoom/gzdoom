@@ -40,6 +40,7 @@
 #include "thingdef.h"
 #include "r_state.h"
 #include "templates.h"
+#include "codegen.h"
 
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
@@ -702,7 +703,7 @@ void FStateDefinitions::RetargetStatePointers (intptr_t count, const char *targe
 			}
 			else
 			{
-				statelist[i].State = (FState *)copystring (target);
+				statelist[i].State = (FState *)FxAlloc.Strdup(target);
 				statelist[i].DefineFlags = SDF_LABEL;
 			}
 		}
@@ -803,7 +804,6 @@ FState *FStateDefinitions::ResolveGotoLabel (PClassActor *mytype, char *name)
 	{
 		Printf (TEXTCOLOR_RED "Attempt to get invalid state %s from actor %s.\n", label, type->TypeName.GetChars());
 	}
-	delete[] namestart;		// free the allocated string buffer
 	return state;
 }
 
@@ -867,7 +867,7 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 	// copy the text - this must be resolved later!
 	if (laststate != NULL)
 	{ // Following a state definition: Modify it.
-		laststate->NextState = (FState*)copystring(string);	
+		laststate->NextState = (FState*)FxAlloc.Strdup(string);
 		laststate->DefineFlags = SDF_LABEL;
 		laststatebeforelabel = NULL;
 		return true;
@@ -877,7 +877,7 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 		RetargetStates (lastlabel+1, string);
 		if (laststatebeforelabel != NULL)
 		{
-			laststatebeforelabel->NextState = (FState*)copystring(string);	
+			laststatebeforelabel->NextState = (FState*)FxAlloc.Strdup(string);
 			laststatebeforelabel->DefineFlags = SDF_LABEL;
 			laststatebeforelabel = NULL;
 		}

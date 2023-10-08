@@ -176,6 +176,7 @@ public:
 	
 
 	DZSprite();
+	void Construct();
 	void CallPostBeginPlay() override;
 	void OnDestroy() override;
 

@@ -1564,7 +1564,7 @@ class GLDefsParser
 					if (is_cvar)
 					{
 						addedcvars = true;
-						if (!shaderdesc.Name.GetChars())
+						if (shaderdesc.Name.IsEmpty())
 							sc.ScriptError("Shader must have a name to use cvar uniforms");
 
 						ECVarType cvartype = CVAR_Dummy;

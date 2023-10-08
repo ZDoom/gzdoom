@@ -33,6 +33,7 @@
 #include "d_player.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include <p_maputl.h>
 
 static FRandom pr_quake ("Quake");

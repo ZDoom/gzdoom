@@ -991,13 +991,13 @@ void P_DisconnectEffect (AActor *actor)
 // 
 //===========================================================================
 
-DZSprite::DZSprite()
+void DZSprite::Construct()
 {
 	PT = {};
 	PT.sprite = this;
-	Pos = Vel = {0,0,0};
-	Offset = {0,0};
-	Scale = {1,1};
+	Pos = Vel = { 0,0,0 };
+	Offset = { 0,0 };
+	Scale = { 1,1 };
 	Roll = 0.0;
 	Alpha = 1.0;
 	LightLevel = -1;
@@ -1009,6 +1009,11 @@ DZSprite::DZSprite()
 	scolor = 0xffffff;
 }
 
+DZSprite::DZSprite()
+{
+	Construct();
+}
+
 void DZSprite::CallPostBeginPlay()
 {
 	PT.texture = Texture;
@@ -1018,7 +1023,7 @@ void DZSprite::CallPostBeginPlay()
 void DZSprite::OnDestroy()
 {
 	PT.alpha = 0.0; // stops all rendering.
-	spr = nullptr;
+	if (spr) delete spr;
 	Super::OnDestroy();
 }
 
@@ -1038,7 +1043,7 @@ DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
 	}
 
 	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
-
+	zs->Construct();
 	return zs;
 }
 

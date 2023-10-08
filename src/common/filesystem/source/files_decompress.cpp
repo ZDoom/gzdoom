@@ -540,7 +540,6 @@ public:
 		}
 
 		uint8_t header[12];
-		int err;
 		File = file;
 
 		Size = uncompressed_size;
@@ -553,7 +552,7 @@ public:
 			return false;
 		}
 
-		File->Seek(-sizeof(header), FileReader::SeekCur);
+		File->Seek(-(ptrdiff_t)sizeof(header), FileReader::SeekCur);
 
 		FillBuffer();
 

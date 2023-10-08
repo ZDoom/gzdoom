@@ -1326,13 +1326,13 @@ CCMD (mapinfo)
 
 		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
 
-	if (myLevel->RedirectType.GetChars())
+	if (myLevel->RedirectType != NAME_None)
 		Printf("     Redirect (Item): %s\n", myLevel->RedirectType.GetChars());
 
 	if (myLevel->RedirectMapName.IsNotEmpty())
 		Printf("      Redirect (Map): %s\n", myLevel->RedirectMapName.GetChars());
 
-	if (myLevel->RedirectCVAR.GetChars())
+	if (myLevel->RedirectCVAR != NAME_None)
 		Printf("CVAR_Redirect (CVAR): %s\n", myLevel->RedirectCVAR.GetChars());
 
 	if (myLevel->RedirectCVARMapName.IsNotEmpty())

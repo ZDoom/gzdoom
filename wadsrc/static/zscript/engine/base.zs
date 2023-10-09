@@ -934,3 +934,8 @@ struct QuatStruct native
 	// native double LengthSquared();
 	// native Quat Unit();
 }
+
+// this struct does not exist. It is just a type for being referenced by an opaque pointer.
+struct VMFunction native version("4.10")
+{
+}

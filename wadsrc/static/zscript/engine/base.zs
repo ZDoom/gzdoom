@@ -755,7 +755,6 @@ class Object native
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native static Function<void> FindFunction(Class<Object> cls, Name fn);
-	//native static Method<void> FindMethod(Class<Object> cls, Name fn);
 
 	native virtualscope void Destroy();
 

@@ -149,6 +149,24 @@ VMFunction *FindVMFunction(PClass *cls, const char *name)
 
 //==========================================================================
 //
+// Find an action function in AActor's table from a qualified name
+// This cannot search in structs. sorry. :(
+//
+//==========================================================================
+
+VMFunction* FindVMFunction( const char* name)
+{
+	auto p = strchr(name, '.');
+	if (p == nullptr) return nullptr;
+	std::string clsname(name, p - name);
+	auto cls = PClass::FindClass(clsname.c_str());
+	if (cls == nullptr) return nullptr;
+	return FindVMFunction(cls, p + 1);
+}
+
+
+//==========================================================================
+//
 // Sorting helpers
 //
 //==========================================================================

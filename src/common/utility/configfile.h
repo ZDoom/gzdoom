@@ -66,6 +66,10 @@ public:
 	bool NextInSection (const char *&key, const char *&value);
 	const char *GetValueForKey (const char *key) const;
 	void SetValueForKey (const char *key, const char *value, bool duplicates=false);
+	void SetValueForKey(const char* key, const FString& value, bool duplicates = false)
+	{
+		SetValueForKey(key, value.GetChars(), duplicates);
+	}
 
 	const char *GetPathName () const { return PathName.GetChars(); }
 	void ChangePathName (const char *path);

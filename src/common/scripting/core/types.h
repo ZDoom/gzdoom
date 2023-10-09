@@ -697,6 +697,8 @@ extern PPointer *TypeFont;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;
 extern PPointer *TypeVoidPtr;
+extern PPointer* TypeVMFunction;
+
 
 inline FString &DObject::StringVar(FName field)
 {

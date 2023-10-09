@@ -43,6 +43,7 @@
 #include "v_draw.h"
 #include "c_cvars.h"
 
+class AActor;
 
 EXTERN_CVAR(Int, con_scaletext);
 inline int active_con_scaletext(F2DDrawer* drawer, bool newconfont = false)

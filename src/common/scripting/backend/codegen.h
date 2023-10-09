@@ -506,6 +506,13 @@ public:
 		isresolved = true;
 	}
 
+	FxConstant(VMFunction* state, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.pointer = state;
+		ValueType = value.Type = TypeVMFunction;
+		isresolved = true;
+	}
+
 	FxConstant(const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = nullptr;

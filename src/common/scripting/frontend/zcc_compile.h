@@ -6,7 +6,6 @@
 
 struct Baggage;
 struct FPropertyInfo;
-class AActor;
 class FxExpression;
 typedef TDeletingArray<FxExpression*> FArgumentList;
 

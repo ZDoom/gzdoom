@@ -75,6 +75,7 @@ PStruct *TypeStringStruct;
 PStruct* TypeQuaternionStruct;
 PPointer *TypeNullPtr;
 PPointer *TypeVoidPtr;
+PPointer* TypeVMFunction;
 
 
 // CODE --------------------------------------------------------------------
@@ -322,6 +323,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeTextureID = new PTextureID, NAME_TextureID);
 
 	TypeVoidPtr = NewPointer(TypeVoid, false);
+	TypeVMFunction = NewPointer(NewStruct("VMFunction", nullptr, true));
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 	TypeStringStruct = NewStruct("Stringstruct", nullptr, true);
 	TypeQuaternionStruct = NewStruct("QuatStruct", nullptr, true);

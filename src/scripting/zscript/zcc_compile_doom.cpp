@@ -50,6 +50,7 @@ bool isActor(PContainerType *type);
 void AddActorInfo(PClass *cls);
 int GetIntConst(FxExpression* ex, FCompileContext& ctx);
 double GetFloatConst(FxExpression* ex, FCompileContext& ctx);
+VMFunction* GetFuncConst(FxExpression* ex, FCompileContext& ctx);
 
 //==========================================================================
 //
@@ -280,6 +281,10 @@ void ZCCDoomCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pr
 
 			case 'F':
 				conv.d = GetFloatConst(ex, ctx);
+				break;
+
+			case 'G':
+				conv.fu = GetFuncConst(ex, ctx);
 				break;
 
 			case 'Z':	// an optional string. Does not allow any numeric value.

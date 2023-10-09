@@ -797,6 +797,7 @@ class AActor;
 class PFunction;
 
 VMFunction *FindVMFunction(PClass *cls, const char *name);
+VMFunction* FindVMFunction(const char* name);
 #define DECLARE_VMFUNC(cls, name) static VMFunction *name; if (name == nullptr) name = FindVMFunction(RUNTIME_CLASS(cls), #name);
 
 FString FStringFormat(VM_ARGS, int offset = 0);

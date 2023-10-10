@@ -831,7 +831,7 @@ FString ExpandEnvVars(const char *searchpathstring)
 		if (length != 0)
 		{
 			FString varname = FString(dollar + 1, length);
-			if (varname.Compare("progdir") == 0)
+			if (varname.CompareNoCase("progdir") == 0)
 			{
 				out += progdir;
 			}

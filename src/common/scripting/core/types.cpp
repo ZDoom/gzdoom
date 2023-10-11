@@ -2973,7 +2973,7 @@ bool PFunctionPointer::ReadValue(FSerializer &ar, const char *key, void *addr) c
 		if(!p)
 		{
 			*fn = nullptr;
-			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): symbol '%s' in class '%s' is a variable, not a function\n",
+			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): '%s' in class '%s' is a variable, not a function\n",
 				val.ClassName.GetChars(),
 				val.FunctionName.GetChars(),
 				val.FunctionName.GetChars(),
@@ -2982,29 +2982,30 @@ bool PFunctionPointer::ReadValue(FSerializer &ar, const char *key, void *addr) c
 			ar.mErrors++;
 			return false;
 		}
-		else if(p->GetImplicitArgs() > 0)
-		{
-			*fn = nullptr;
-			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): function '%s' in class '%s' is %s, not a static function\n",
-				val.ClassName.GetChars(),
-				val.FunctionName.GetChars(),
-				val.FunctionName.GetChars(),
-				val.ClassName.GetChars(),
-				(p->GetImplicitArgs() == 1 ? "a method" : "an action function")
-			);
-			ar.mErrors++;
-			return false;
-		}
 		*fn = NativeFunctionPointerCast(p, this);
 		if(!*fn)
 		{
-			FString fn_name = MakeFunctionPointerDescriptiveName(p->Variants[0].Proto,p->Variants[0].ArgFlags, FScopeBarrier::SideFromFlags(p->Variants[0].Flags));
-			Printf(TEXTCOLOR_RED "Function Pointer (%s::%s) has incompatible type (Pointer is '%s', Function is '%s')\n",
-						val.ClassName.GetChars(),
-						val.FunctionName.GetChars(),
-						fn_name.GetChars(),
-						mDescriptiveName.GetChars()
-			);
+			if((p->Variants[0].Flags & (VARF_Action | VARF_Virtual)) != 0)
+			{
+				*fn = nullptr;
+				Printf(TEXTCOLOR_RED "Function Pointer (%s::%s): function '%s' in class '%s' is %s, not a static function\n",
+					val.ClassName.GetChars(),
+					val.FunctionName.GetChars(),
+					val.FunctionName.GetChars(),
+					val.ClassName.GetChars(),
+					(p->GetImplicitArgs() == 1 ? "a virtual function" : "an action function")
+				);
+			}
+			else
+			{
+				FString fn_name = MakeFunctionPointerDescriptiveName(p->Variants[0].Proto,p->Variants[0].ArgFlags, FScopeBarrier::SideFromFlags(p->Variants[0].Flags));
+				Printf(TEXTCOLOR_RED "Function Pointer (%s::%s) has incompatible type (Pointer is '%s', Function is '%s')\n",
+							val.ClassName.GetChars(),
+							val.FunctionName.GetChars(),
+							fn_name.GetChars(),
+							mDescriptiveName.GetChars()
+				);
+			}
 			ar.mErrors++;
 			return false;
 		}

@@ -605,6 +605,8 @@ public:
 	//PointedType = PPrototype or TypeVoid
 	PFunctionPointer(PPrototype * proto, TArray<uint32_t> &&argflags, int scope);
 
+	static FString GenerateNameForError(const PFunction * from);
+
 	TArray<uint32_t> ArgFlags;
 	int Scope;
 

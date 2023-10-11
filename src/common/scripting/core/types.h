@@ -727,6 +727,7 @@ extern PPointer *TypeFont;
 extern PStateLabel *TypeStateLabel;
 extern PPointer *TypeNullPtr;
 extern PPointer *TypeVoidPtr;
+extern PPointer* TypeRawFunction;
 extern PPointer* TypeVMFunction;
 
 

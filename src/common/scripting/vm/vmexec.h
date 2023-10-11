@@ -1937,6 +1937,15 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		CMPJMP(reg.a[B] == konsta[C].v);
 		NEXTOP;
 
+	OP(NULLCHECK):
+		ASSERTA(a);
+		if (PA == nullptr)
+		{
+			ThrowAbortException(X_WRITE_NIL, nullptr);
+			return 0;
+		}
+		NEXTOP;
+
 	OP(NOP):
 		NEXTOP;
 	}

@@ -2883,6 +2883,12 @@ static FString MakeFunctionPointerDescriptiveName(PPrototype * proto,const TArra
 	return mDescriptiveName;
 }
 
+
+FString PFunctionPointer::GenerateNameForError(const PFunction * from)
+{
+	return MakeFunctionPointerDescriptiveName(from->Variants[0].Proto, from->Variants[0].ArgFlags, FScopeBarrier::SideFromFlags(from->Variants[0].Flags));
+}
+
 PFunctionPointer::PFunctionPointer(PPrototype * proto, TArray<uint32_t> && argflags, int scope)
 	: PPointer(proto ? (PType*) proto : TypeVoid, false), ArgFlags(std::move(argflags)), Scope(scope)
 {

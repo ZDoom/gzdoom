@@ -268,6 +268,8 @@ PFunction *FindBuiltinFunction(FName funcname)
 //
 //==========================================================================
 
+static bool AreCompatibleFnPtrTypes(PPrototype *to, PPrototype *from);
+
 bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 {
 	if (dest->isPointer() && source->isPointer())
@@ -301,8 +303,9 @@ bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 		{
 			auto from = static_cast<PFunctionPointer*>(source);
 			auto to = static_cast<PFunctionPointer*>(dest);
-			return to->PointedType == TypeVoid || (from->PointedType == to->PointedType && from->ArgFlags == to->ArgFlags && FScopeBarrier::CheckSidesForFunctionPointer(from->Scope, to->Scope));
-			// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
+			if(from->PointedType == TypeVoid) return false;
+
+			return to->PointedType == TypeVoid || (AreCompatibleFnPtrTypes((PPrototype *)to->PointedType, (PPrototype *)from->PointedType) && from->ArgFlags == to->ArgFlags && FScopeBarrier::CheckSidesForFunctionPointer(from->Scope, to->Scope));
 		}
 	}
 	return false;
@@ -1615,6 +1618,35 @@ FxTypeCast::~FxTypeCast()
 //
 //==========================================================================
 
+FxConstant * FxTypeCast::convertRawFunctionToFunctionPointer(FxExpression * in, FScriptPosition &ScriptPosition)
+{
+	assert(in->isConstant() && in->ValueType == TypeRawFunction);
+	FxConstant *val = static_cast<FxConstant*>(in);
+	PFunction * fn  = static_cast<PFunction*>(val->value.pointer);
+	if(fn && (fn->Variants[0].Flags & (VARF_Virtual | VARF_Action | VARF_Method)) == 0)
+	{
+		val->ValueType = val->value.Type = NewFunctionPointer(fn->Variants[0].Proto, TArray<uint32_t>(fn->Variants[0].ArgFlags), FScopeBarrier::SideFromFlags(fn->Variants[0].Flags));
+		return val;
+	}
+	else if(fn && (fn->Variants[0].Flags & (VARF_Virtual | VARF_Action | VARF_Method)) == VARF_Method)
+	{
+		TArray<uint32_t> flags(fn->Variants[0].ArgFlags);
+		flags[0] = 0;
+		val->ValueType = val->value.Type = NewFunctionPointer(fn->Variants[0].Proto, std::move(flags), FScopeBarrier::SideFromFlags(fn->Variants[0].Flags));
+		return val;
+	}
+	else if(!fn)
+	{
+		val->ValueType = val->value.Type = NewFunctionPointer(nullptr, {}, -1); // Function<void>
+		return val;
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "virtual/action function pointers are not allowed");
+		return nullptr;
+	}
+}
+
 FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
@@ -1624,6 +1656,22 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		auto result = compileEnvironment.SpecialTypeCast(this, ctx);
 		if (result != this) return result;
+	}
+
+	if (basex->isConstant() && basex->ValueType == TypeRawFunction && ValueType->isFunctionPointer())
+	{
+		FxConstant *val = convertRawFunctionToFunctionPointer(basex, ScriptPosition);
+		if(!val)
+		{
+			delete this;
+			return nullptr;
+		}
+	}
+	else if (basex->isConstant() && basex->ValueType == TypeRawFunction && ValueType == TypeVMFunction)
+	{
+		FxConstant *val = static_cast<FxConstant*>(basex);
+		val->ValueType = val->value.Type = TypeVMFunction;
+		val->value.pointer = static_cast<PFunction*>(val->value.pointer)->Variants[0].Implementation;
 	}
 
 	// first deal with the simple types
@@ -6370,9 +6418,8 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			if (ctx.Version >= MakeVersion(4, 11, 100))
 			{
 				// VMFunction is only supported since 4.12 and Raze 1.8.
-				newex = new FxConstant(static_cast<PFunction*>(sym)->Variants[0].Implementation, ScriptPosition);
+				newex = new FxConstant(static_cast<PFunction*>(sym), ScriptPosition);
 				goto foundit;
-
 			}
 		}
 	}
@@ -6391,7 +6438,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			if (ctx.Version >= MakeVersion(4, 11, 100))
 			{
 				// VMFunction is only supported since 4.12 and Raze 1.8.
-				newex = new FxConstant(static_cast<PFunction*>(sym)->Variants[0].Implementation, ScriptPosition);
+				newex = new FxConstant(static_cast<PFunction*>(sym), ScriptPosition);
 				goto foundit;
 			}
 		}
@@ -6538,7 +6585,6 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 		auto result = compileEnvironment.ResolveSpecialIdentifier(this, object, objtype, ctx);
 		if (result != this) return result;
 	}
-
 
 	if (objtype != nullptr && (sym = objtype->Symbols.FindSymbolInTable(Identifier, symtbl)) != nullptr)
 	{
@@ -6755,7 +6801,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 
 	SAFE_RESOLVE(Object, ctx);
 
-	// check for class or struct constants if the left side is a type name.
+	// check for class or struct constants/functions if the left side is a type name.
 	if (Object->ValueType == TypeError)
 	{
 		if (ccls != nullptr)
@@ -6768,6 +6814,16 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s.%s' as constant\n", ccls->TypeName.GetChars(), Identifier.GetChars());
 					delete this;
 					return FxConstant::MakeConstant(sym, ScriptPosition);
+				}
+				else if(sym->IsKindOf(RUNTIME_CLASS(PFunction)))
+				{
+					if (ctx.Version >= MakeVersion(4, 11, 100))
+					{
+						// VMFunction is only supported since 4.12 and Raze 1.8.
+						auto x = new FxConstant(static_cast<PFunction*>(sym), ScriptPosition);
+						delete this;
+						return x->Resolve(ctx);
+					}
 				}
 				else
 				{
@@ -9604,6 +9660,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
 		assert(selfemit.RegType == REGT_POINTER);
+		build->Emit(OP_NULLCHECK, selfemit.RegNum, 0, 0);
 		staticcall = false;
 	}
 	else staticcall = true;
@@ -11704,10 +11761,117 @@ FxFunctionPtrCast::~FxFunctionPtrCast()
 //
 //==========================================================================
 
+static bool AreCompatibleFnPtrs(PFunctionPointer * to, PFunctionPointer * from);
+
+bool CanNarrowTo(PClass * from, PClass * to)
+{
+	return from->IsAncestorOf(to);
+}
+
+bool CanWidenTo(PClass * from, PClass * to)
+{
+	return to->IsAncestorOf(from);
+}
+
+static bool AreCompatibleFnPtrTypes(PPrototype *to, PPrototype *from)
+{
+	if(to->ArgumentTypes.Size() != from->ArgumentTypes.Size()
+	|| to->ReturnTypes.Size() != from->ReturnTypes.Size()) return false;
+	int n = to->ArgumentTypes.Size();
+
+	//allow narrowing of arguments
+	for(int i = 0; i < n; i++)
+	{
+		PType * fromType = from->ArgumentTypes[i];
+		PType * toType = to->ArgumentTypes[i];
+		if(fromType->isFunctionPointer() && toType->isFunctionPointer())
+		{
+			if(!AreCompatibleFnPtrs(static_cast<PFunctionPointer *>(toType), static_cast<PFunctionPointer *>(fromType))) return false;
+		}
+		else if(fromType->isClassPointer() && toType->isClassPointer())
+		{
+			PClassPointer * fromClass = static_cast<PClassPointer *>(fromType);
+			PClassPointer * toClass = static_cast<PClassPointer *>(toType);
+			//allow narrowing parameters
+			if(!CanNarrowTo(fromClass->ClassRestriction, toClass->ClassRestriction)) return false;
+		}
+		else if(fromType->isObjectPointer() && toType->isObjectPointer())
+		{
+			PObjectPointer * fromObj = static_cast<PObjectPointer *>(fromType);
+			PObjectPointer * toObj = static_cast<PObjectPointer *>(toType);
+			//allow narrowing parameters
+			if(!CanNarrowTo(fromObj->PointedClass(), toObj->PointedClass())) return false;
+		}
+		else if(fromType != toType)
+		{
+			return false;
+		}
+	}
+
+	n = to->ReturnTypes.Size();
+
+	for(int i = 0; i < n; i++)
+	{
+		PType * fromType = from->ReturnTypes[i];
+		PType * toType = to->ReturnTypes[i];
+		if(fromType->isFunctionPointer() && toType->isFunctionPointer())
+		{
+			if(!AreCompatibleFnPtrs(static_cast<PFunctionPointer *>(toType), static_cast<PFunctionPointer *>(fromType))) return false;
+		}
+		else if(fromType->isClassPointer() && toType->isClassPointer())
+		{
+			PClassPointer * fromClass = static_cast<PClassPointer *>(fromType);
+			PClassPointer * toClass = static_cast<PClassPointer *>(toType);
+			//allow widening returns
+			if(!CanWidenTo(fromClass->ClassRestriction, toClass->ClassRestriction)) return false;
+		}
+		else if(fromType->isObjectPointer() && toType->isObjectPointer())
+		{
+			PObjectPointer * fromObj = static_cast<PObjectPointer *>(fromType);
+			PObjectPointer * toObj = static_cast<PObjectPointer *>(toType);
+			//allow widening returns
+			if(!CanWidenTo(fromObj->PointedClass(), toObj->PointedClass())) return false;
+		}
+		else if(fromType != toType)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+static bool AreCompatibleFnPtrs(PFunctionPointer * to, PFunctionPointer * from)
+{
+	if(to->PointedType == TypeVoid) return true;
+	else if(from->PointedType == TypeVoid) return false;
+
+	PPrototype * toProto = (PPrototype *)to->PointedType;
+	PPrototype * fromProto = (PPrototype *)from->PointedType;
+	return
+    (	FScopeBarrier::CheckSidesForFunctionPointer(from->Scope, to->Scope)
+		/*
+	 && toProto->ArgumentTypes == fromProto->ArgumentTypes
+	 && toProto->ReturnTypes == fromProto->ReturnTypes
+		*/
+	 && AreCompatibleFnPtrTypes(toProto, fromProto)
+	 && to->ArgFlags == from->ArgFlags
+	);
+}
+
 FxExpression *FxFunctionPtrCast::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->isConstant() && basex->ValueType == TypeRawFunction)
+	{
+		FxConstant *val = FxTypeCast::convertRawFunctionToFunctionPointer(basex, ScriptPosition);
+		if(!val)
+		{
+			delete this;
+			return nullptr;
+		}
+	}
 
 	if (!(basex->ValueType && basex->ValueType->isFunctionPointer()))
 	{
@@ -11717,21 +11881,20 @@ FxExpression *FxFunctionPtrCast::Resolve(FCompileContext &ctx)
 	auto to = static_cast<PFunctionPointer *>(ValueType);
 	auto from = static_cast<PFunctionPointer *>(basex->ValueType);
 
-	if(to->PointedType == TypeVoid)
-	{	// no need to do anything for (Function<void)(...) casts
+	if(from->PointedType == TypeVoid)
+	{	// nothing to check at compile-time for casts from Function<void>
+		return this;
+	}
+	else if(AreCompatibleFnPtrs(to, from))
+	{	// no need to do anything for (Function<void>)(...) or compatible casts
 		basex->ValueType = ValueType;
 		auto x = basex;
 		basex = nullptr;
 		delete this;
 		return x;
 	}
-	else if(from->PointedType == TypeVoid)
-	{	// nothing to check at compile-time for casts from Function<void>
-		return this;
-	}
 	else
 	{
-		// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
 		ScriptPosition.Message(MSG_ERROR, "Cannot cast %s to %s. The types are incompatible.", basex->ValueType->DescriptiveName(), to->DescriptiveName());
 		delete this;
 		return nullptr;
@@ -11746,12 +11909,27 @@ FxExpression *FxFunctionPtrCast::Resolve(FCompileContext &ctx)
 
 PFunction *NativeFunctionPointerCast(PFunction *from, const PFunctionPointer *to)
 {
-	// TODO allow narrowing argument types and widening return types via cast, ex.: Function<Actor(Object or Class<Object>)> to Function<Object(Actor or Class<Actor>)>
-	return (to->PointedType == TypeVoid || (from &&
-				(  from->Variants[0].Proto == static_cast<PPrototype*>(to->PointedType)
-				&& from->Variants[0].ArgFlags == to->ArgFlags
-				&& FScopeBarrier::CheckSidesForFunctionPointer(FScopeBarrier::SideFromFlags(from->Variants[0].Flags), to->Scope)
-				))) ? from : nullptr;
+	if(to->PointedType == TypeVoid)
+	{
+		return from;
+	}
+	else if(from && ((from->Variants[0].Flags & (VARF_Virtual | VARF_Action)) == 0) && FScopeBarrier::CheckSidesForFunctionPointer(FScopeBarrier::SideFromFlags(from->Variants[0].Flags), to->Scope))
+	{
+		if(to->ArgFlags.Size() != from->Variants[0].ArgFlags.Size()) return nullptr;
+		int n = to->ArgFlags.Size();
+		for(int i = from->GetImplicitArgs(); i < n; i++) // skip checking flags for implicit self
+		{
+			if(from->Variants[0].ArgFlags[i] != to->ArgFlags[i])
+			{
+				return nullptr;
+			}
+		}
+		return AreCompatibleFnPtrTypes(static_cast<PPrototype*>(to->PointedType), from->Variants[0].Proto) ? from : nullptr;
+	}
+	else
+	{ // cannot cast virtual/action functions to anything
+		return nullptr;
+	}
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinFunctionPtrCast, NativeFunctionPointerCast)
@@ -11841,6 +12019,17 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 			return nullptr;
 		}
 		SAFE_RESOLVE(Init, ctx);
+
+		if(Init->isConstant() && Init->ValueType == TypeRawFunction)
+		{
+			FxConstant *val = FxTypeCast::convertRawFunctionToFunctionPointer(Init, ScriptPosition);
+			if(!val)
+			{
+				delete this;
+				return nullptr;
+			}
+		}
+
 		ValueType = Init->ValueType;
 		if (ValueType->RegType == REGT_NIL)
 		{

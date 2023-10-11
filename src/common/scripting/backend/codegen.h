@@ -513,6 +513,13 @@ public:
 		ValueType = value.Type = TypeVMFunction;
 		isresolved = true;
 	}
+	
+	FxConstant(PFunction* rawptr, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.pointer = rawptr;
+		ValueType = value.Type = TypeRawFunction;
+		isresolved = true;
+	}
 
 	FxConstant(const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
@@ -558,6 +565,8 @@ public:
 		return value;
 	}
 	ExpEmit Emit(VMFunctionBuilder *build);
+
+	friend class FxTypeCast;
 };
 
 //==========================================================================
@@ -736,6 +745,8 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
+
+	static FxConstant * convertRawFunctionToFunctionPointer(FxExpression * in, FScriptPosition &ScriptPosition);
 };
 
 //==========================================================================

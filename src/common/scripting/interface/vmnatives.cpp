@@ -54,6 +54,7 @@
 #include "i_time.h"
 
 #include "maps.h"
+#include "types.h"
 
 static ZSMap<FName, DObject*> AllServices;
 
@@ -1352,7 +1353,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Inverse, QuatInverse)
 PFunction * FindFunctionPointer(PClass * cls, int fn_name)
 {
 	auto fn = dyn_cast<PFunction>(cls->FindSymbol(ENamedName(fn_name), true));
-	return (fn && fn->GetImplicitArgs() == 0) ? fn : nullptr;
+	return (fn && (fn->Variants[0].Flags & (VARF_Action | VARF_Virtual)) == 0 ) ? fn : nullptr;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, FindFunction, FindFunctionPointer)

@@ -61,7 +61,7 @@ void FHWModelRenderer::BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf
 	// This solves a few of the problems caused by the lack of depth sorting.
 	// [Nash] Don't do back face culling if explicitly specified in MODELDEF
 	// TO-DO: Implement proper depth sorting.
-	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
+	if ((smf->flags & MDL_FORCECULLBACKFACES) || (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES)))
 	{
 		state.SetCulling((mirrored ^ portalState.isMirrored()) ? Cull_CCW : Cull_CW);
 	}
@@ -75,7 +75,7 @@ void FHWModelRenderer::EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf)
 	state.SetBoneIndexBase(-1);
 	state.EnableModelMatrix(false);
 	state.SetDepthFunc(DF_Less);
-	if (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
+	if ((smf->flags & MDL_FORCECULLBACKFACES) || (!(style == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES)))
 		state.SetCulling(Cull_None);
 }
 

@@ -931,6 +931,10 @@ static void ParseModelDefLump(int Lump)
 				{
 					smf.flags |= MDL_CORRECTPIXELSTRETCH;
 				}
+				else if (sc.Compare("forcecullbackfaces"))
+				{
+					smf.flags |= MDL_FORCECULLBACKFACES;
+				}
 				else
 				{
 					sc.ScriptMessage("Unrecognized string \"%s\"", sc.String);

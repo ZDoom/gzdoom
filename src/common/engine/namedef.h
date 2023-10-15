@@ -134,6 +134,8 @@ xx(FVector3)
 xx(FVector4)
 xx(FQuat)
 xx(let)
+xx(BlockThingsIterator)
+xx(BlockLinesIterator)
 
 xx(Min)
 xx(Max)

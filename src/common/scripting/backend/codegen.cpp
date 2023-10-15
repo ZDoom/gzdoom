@@ -11249,6 +11249,16 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 		delete this;
 		return mapLoop->Resolve(ctx);
 	}
+	else if(Array->ValueType->isObjectPointer() && (((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator))
+	{
+		auto blockIt = new FxBlockIteratorForEachLoop(loopVarName, NAME_None, NAME_None, Array, Code, ScriptPosition);
+		delete Array2;
+		delete Array3;
+		delete Array4;
+		Array = Array2 = Array3 = Array4 = Code = nullptr;
+		delete this;
+		return blockIt->Resolve(ctx);
+	}
 
 	// Instead of writing a new code generator for this, convert this into
 	//
@@ -11327,14 +11337,24 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(MapExpr4, ctx);
 
 	bool is_iterator = false;
-	
-	if(!(MapExpr->ValueType->isMap() || (is_iterator = MapExpr->ValueType->isMapIterator())))
+
+	if(MapExpr->ValueType->isObjectPointer() && (((PObjectPointer*)MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator))
+	{
+		auto blockIt = new FxBlockIteratorForEachLoop(keyVarName, valueVarName, NAME_None, MapExpr, Code, ScriptPosition);
+		delete MapExpr2;
+		delete MapExpr3;
+		delete MapExpr4;
+		MapExpr = MapExpr2 = MapExpr3 = MapExpr4 = Code = nullptr;
+		delete this;
+		return blockIt->Resolve(ctx);
+	}
+	else if(!(MapExpr->ValueType->isMap() || (is_iterator = MapExpr->ValueType->isMapIterator())))
 	{
 		ScriptPosition.Message(MSG_ERROR, "foreach( k, v : m ) - 'm' must be a map or a map iterator, but is a %s",MapExpr->ValueType->DescriptiveName());
 		delete this;
 		return nullptr;
 	}
-	if(valueVarName == NAME_None)
+	else if(valueVarName == NAME_None)
 	{
 		ScriptPosition.Message(MSG_ERROR, "missing value for foreach( k, v : m )");
 		delete this;
@@ -11433,6 +11453,122 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 		delete this;
 		return block->Resolve(ctx);
 	}
+}
+
+
+//==========================================================================
+//
+// FxBlockIteratorForEachLoop
+//
+//==========================================================================
+
+FxBlockIteratorForEachLoop::FxBlockIteratorForEachLoop(FName vv, FName pv, FName fv, FxExpression* blockiteartorexpr, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_BlockForEachLoop,pos), varVarName(vv), posVarName(pv), flagsVarName(fv), BlockIteratorExpr(blockiteartorexpr), Code(code)
+{
+	ValueType = TypeVoid;
+	if (BlockIteratorExpr != nullptr) BlockIteratorExpr->NeedResult = false;
+	if (Code != nullptr) Code->NeedResult = false;
+}
+
+FxBlockIteratorForEachLoop::~FxBlockIteratorForEachLoop()
+{
+	SAFE_DELETE(BlockIteratorExpr);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxBlockIteratorForEachLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(BlockIteratorExpr, ctx);
+
+
+	if(!(BlockIteratorExpr->ValueType->isObjectPointer()))
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( v, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+	else if(varVarName == NAME_None)
+	{
+		ScriptPosition.Message(MSG_ERROR, "missing var for foreach( v, p, f : b )");
+		delete this;
+		return nullptr;
+	}
+
+	PType * varType = nullptr;
+	PClass * itType = ((PObjectPointer*)BlockIteratorExpr->ValueType)->PointedClass();
+
+	FName fieldName = NAME_None;
+
+	if(itType->TypeName == NAME_BlockThingsIterator)
+	{
+		fieldName = "Thing";
+	}
+	else if(itType->TypeName == NAME_BlockLinesIterator)
+	{
+		fieldName = "CurLine";
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( t, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+
+	auto var = itType->FindSymbol(fieldName, false);
+	if(var && var->IsKindOf(RUNTIME_CLASS(PField)))
+	{
+		varType = static_cast<PField*>(var)->Type;
+	}
+
+	/*
+	{
+		Line|Actor var;
+		Vector3 pos;
+		int flags;
+		BlockLinesIterator|BlockThingsIterator @it = expr;
+		while(@it.Next())
+		{
+			var = @it.CurLine|@it.Thing;
+			pos = @it.position;
+			flags = @it.portalflags;
+			body
+		}
+	}
+	*/
+
+	auto block = new FxCompoundStatement(ScriptPosition);
+
+	block->Add(new FxLocalVariableDeclaration(varType, varVarName, nullptr, 0, ScriptPosition));
+	if(posVarName != NAME_None)
+	{
+		block->Add(new FxLocalVariableDeclaration(TypeVector3, posVarName, nullptr, 0, ScriptPosition));
+	}
+	if(flagsVarName != NAME_None)
+	{
+		block->Add(new FxLocalVariableDeclaration(TypeSInt32, flagsVarName, nullptr, 0, ScriptPosition));
+	}
+
+	block->Add(new FxLocalVariableDeclaration(BlockIteratorExpr->ValueType, "@it", BlockIteratorExpr, 0, ScriptPosition));
+
+	auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+	inner_block->Add(new FxAssign(new FxIdentifier(varVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), fieldName, ScriptPosition), true));
+	if(posVarName != NAME_None)
+	{
+		inner_block->Add(new FxAssign(new FxIdentifier(posVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "position", ScriptPosition), true));
+	}
+	if(flagsVarName != NAME_None)
+	{
+		inner_block->Add(new FxAssign(new FxIdentifier(flagsVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "portalflags", ScriptPosition), true));
+	}
+	inner_block->Add(Code);
+
+	block->Add(new FxWhileLoop(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition), inner_block, ScriptPosition));
+
+	BlockIteratorExpr = Code = nullptr;
+	delete this;
+	return block->Resolve(ctx);
 }
 
 //==========================================================================

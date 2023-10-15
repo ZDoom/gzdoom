@@ -45,21 +45,21 @@ enum
 {
 	// [BB] Color translations for the model skin are ignored. This is
 	// useful if the skin texture is not using the game palette.
-	MDL_IGNORETRANSLATION			= 1>>0,
-	MDL_PITCHFROMMOMENTUM			= 1>>1,
-	MDL_ROTATING					= 1>>2,
-	MDL_INTERPOLATEDOUBLEDFRAMES	= 1>>3,
-	MDL_NOINTERPOLATION				= 1>>4,
-	MDL_USEACTORPITCH				= 1>>5,
-	MDL_USEACTORROLL				= 1>>6,
-	MDL_BADROTATION					= 1>>7,
-	MDL_DONTCULLBACKFACES			= 1>>8,
-	MDL_USEROTATIONCENTER			= 1>>9,
-	MDL_NOPERPIXELLIGHTING			= 1>>10, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
-	MDL_SCALEWEAPONFOV				= 1>11,	// scale weapon view model with higher user FOVs
-	MDL_MODELSAREATTACHMENTS		= 1>>12,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
-	MDL_CORRECTPIXELSTRETCH			= 1>>13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
-	MDL_FORCECULLBACKFACES			= 1>>14,
+	MDL_IGNORETRANSLATION			= 1<<0,
+	MDL_PITCHFROMMOMENTUM			= 1<<1,
+	MDL_ROTATING					= 1<<2,
+	MDL_INTERPOLATEDOUBLEDFRAMES	= 1<<3,
+	MDL_NOINTERPOLATION				= 1<<4,
+	MDL_USEACTORPITCH				= 1<<5,
+	MDL_USEACTORROLL				= 1<<6,
+	MDL_BADROTATION					= 1<<7,
+	MDL_DONTCULLBACKFACES			= 1<<8,
+	MDL_USEROTATIONCENTER			= 1<<9,
+	MDL_NOPERPIXELLIGHTING			= 1<<10, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
+	MDL_SCALEWEAPONFOV				= 1<<11,	// scale weapon view model with higher user FOVs
+	MDL_MODELSAREATTACHMENTS		= 1<<12,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
+	MDL_CORRECTPIXELSTRETCH			= 1<<13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
+	MDL_FORCECULLBACKFACES			= 1<<14,
 };
 
 FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);

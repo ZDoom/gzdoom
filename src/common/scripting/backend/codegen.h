@@ -273,6 +273,7 @@ enum EFxType
 	EFX_DoWhileLoop,
 	EFX_ForLoop,
 	EFX_ForEachLoop,
+	EFX_MapForEachLoop,
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
@@ -1599,7 +1600,7 @@ public:
 	FName MethodName;
 	FArgumentList ArgList;
 
-	FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos);
+	FxFunctionCall(FName methodname, FName rngname, FArgumentList &&args, const FScriptPosition &pos);
 	~FxFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -1616,10 +1617,11 @@ class FxMemberFunctionCall : public FxExpression
 	FxExpression *Self;
 	FName MethodName;
 	FArgumentList ArgList;
+	bool ResolveSelf;
 
 public:
 
-	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &args, const FScriptPosition &pos);
+	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &&args, const FScriptPosition &pos);
 	~FxMemberFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -2056,6 +2058,29 @@ public:
 	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos);
 	~FxForEachLoop();
 	FxExpression* DoResolve(FCompileContext&);
+};
+
+//==========================================================================
+//
+// FxMapForEachLoop
+//
+//==========================================================================
+
+class FxMapForEachLoop : public FxExpression
+{
+	FName keyVarName;
+	FName valueVarName;
+	FxExpression* MapExpr;
+	FxExpression* MapExpr2;
+	FxExpression* MapExpr3;
+	FxExpression* MapExpr4;
+	FxExpression* Code;
+
+public:
+	FxMapForEachLoop(FName kv, FName vv, FxExpression* mapexpr, FxExpression* mapexpr2, FxExpression* mapexpr3, FxExpression* mapexpr4, FxExpression* code, const FScriptPosition& pos);
+	~FxMapForEachLoop();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
 };
 
 //==========================================================================

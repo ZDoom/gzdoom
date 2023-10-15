@@ -983,6 +983,21 @@ static void PrintArrayIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintMapIterationStmt(FLispString &out, const ZCC_TreeNode *node)
+{
+	auto inode = (ZCC_MapIterationStmt *)node;
+	out.Break();
+	out.Open("map-iteration-stmt");
+	PrintVarName(out, inode->ItKey);
+	out.Break();
+	PrintVarName(out, inode->ItValue);
+	out.Break();
+	PrintNodes(out, inode->ItMap);
+	out.Break();
+	PrintNodes(out, inode->LoopStatement);
+	out.Close();
+}
+
 static const NodePrinterFunc TreeNodePrinter[] =
 {
 	PrintIdentifier,
@@ -1050,6 +1065,7 @@ static const NodePrinterFunc TreeNodePrinter[] =
 	PrintMixinDef,
 	PrintMixinStmt,
 	PrintArrayIterationStmt,
+	PrintMapIterationStmt,
 };
 
 FString ZCC_PrintAST(const ZCC_TreeNode *root)

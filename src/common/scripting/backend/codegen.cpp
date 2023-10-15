@@ -2597,7 +2597,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				{
 					FArgumentList args;
 					args.Push(Right);
-					auto call = new FxMemberFunctionCall(Base, NAME_Copy, args, ScriptPosition);
+					auto call = new FxMemberFunctionCall(Base, NAME_Copy, std::move(args), ScriptPosition);
 					Right = Base = nullptr;
 					delete this;
 					return call->Resolve(ctx);
@@ -2625,7 +2625,7 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 				{
 					FArgumentList args;
 					args.Push(Right);
-					auto call = new FxMemberFunctionCall(Base, NAME_Copy, args, ScriptPosition);
+					auto call = new FxMemberFunctionCall(Base, NAME_Copy, std::move(args), ScriptPosition);
 					Right = Base = nullptr;
 					delete this;
 					return call->Resolve(ctx);
@@ -8035,7 +8035,7 @@ static bool CheckFunctionCompatiblity(FScriptPosition &ScriptPosition, PFunction
 //
 //==========================================================================
 
-FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos)
+FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &&args, const FScriptPosition &pos)
 : FxExpression(EFX_FunctionCall, pos)
 {
 	MethodName = methodname;
@@ -8461,7 +8461,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &args, const FScriptPosition &pos)
+FxMemberFunctionCall::FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &&args, const FScriptPosition &pos)
 	: FxExpression(EFX_MemberFunctionCall, pos)
 {
 	Self = self;
@@ -9006,7 +9006,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			if (a->IsMap())
 			{
 				// Copy and Move must turn their parameter into a pointer to the backing struct type.
-				auto o = static_cast<PMapIterator*>(a->ValueType);
+				auto o = static_cast<PMap*>(a->ValueType);
 				auto backingtype = o->BackingType;
 				if (mapKeyType != o->KeyType || mapValueType != o->ValueType)
 				{
@@ -11248,9 +11248,9 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 
 	FName sizevar = "@size";
 	FName itvar = "@i";
-	FArgumentList al;
+
 	auto block = new FxCompoundStatement(ScriptPosition);
-	auto arraysize = new FxMemberFunctionCall(Array, NAME_Size, al, ScriptPosition);
+	auto arraysize = new FxMemberFunctionCall(Array, NAME_Size, {}, ScriptPosition);
 	auto size = new FxLocalVariableDeclaration(TypeSInt32, sizevar, arraysize, 0, ScriptPosition);
 	auto it = new FxLocalVariableDeclaration(TypeSInt32, itvar, new FxConstant(0, ScriptPosition), 0, ScriptPosition);
 	block->Add(size);
@@ -11278,6 +11278,130 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 	return block->Resolve(ctx);
 }
 
+//==========================================================================
+//
+// FxMapForEachLoop
+//
+//==========================================================================
+
+FxMapForEachLoop::FxMapForEachLoop(FName kv, FName vv, FxExpression* mapexpr, FxExpression* mapexpr2, FxExpression* mapexpr3, FxExpression* mapexpr4, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_MapForEachLoop,pos), keyVarName(kv), valueVarName(vv), MapExpr(mapexpr), MapExpr2(mapexpr2), MapExpr3(mapexpr3), MapExpr4(mapexpr4), Code(code)
+{
+	ValueType = TypeVoid;
+	if (MapExpr != nullptr) MapExpr->NeedResult = false;
+	if (MapExpr2 != nullptr) MapExpr2->NeedResult = false;
+	if (MapExpr3 != nullptr) MapExpr3->NeedResult = false;
+	if (MapExpr4 != nullptr) MapExpr4->NeedResult = false;
+	if (Code != nullptr) Code->NeedResult = false;
+}
+
+FxMapForEachLoop::~FxMapForEachLoop()
+{
+	SAFE_DELETE(MapExpr);
+	SAFE_DELETE(MapExpr2);
+	SAFE_DELETE(MapExpr3);
+	SAFE_DELETE(MapExpr4);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(MapExpr, ctx);
+	SAFE_RESOLVE(MapExpr2, ctx);
+	SAFE_RESOLVE(MapExpr3, ctx);
+	SAFE_RESOLVE(MapExpr4, ctx);
+
+	bool is_iterator = false;
+	
+	if(!(MapExpr->ValueType->isMap() || (is_iterator = MapExpr->ValueType->isMapIterator())))
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( k, v : m ) - 'm' must be a map or a map iterator, but is a %s",MapExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+
+
+	auto keyType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->KeyType : static_cast<PMap*>(MapExpr->ValueType)->KeyType;
+	auto valType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->ValueType : static_cast<PMap*>(MapExpr->ValueType)->ValueType;
+	
+	auto block = new FxCompoundStatement(ScriptPosition);
+	auto k = new FxLocalVariableDeclaration(keyType, keyVarName, nullptr, 0, ScriptPosition);
+	auto v = new FxLocalVariableDeclaration(valType, valueVarName, nullptr, 0, ScriptPosition);
+	
+	block->Add(k);
+	block->Add(v);
+
+	if(MapExpr->ValueType->isMapIterator())
+	{
+		/*
+		{
+			KeyType k;
+			ValueType v;
+			if(it.ReInit()) while(it.Next())
+			{
+				k = it.GetKey();
+				v = it.GetValue();
+				body
+			}
+		}
+		*/
+
+		auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+		inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(MapExpr, "GetKey", {}, ScriptPosition), true));
+		inner_block->Add(new FxAssign(new FxIdentifier(valueVarName, ScriptPosition), new FxMemberFunctionCall(MapExpr2, "GetValue", {}, ScriptPosition), true));
+		inner_block->Add(Code);
+
+		auto reInit = new FxMemberFunctionCall(MapExpr3, "ReInit", {}, ScriptPosition);
+		block->Add(new FxIfStatement(reInit, new FxWhileLoop(new FxMemberFunctionCall(MapExpr4, "Next", {}, ScriptPosition), inner_block, ScriptPosition), nullptr, ScriptPosition));
+
+		MapExpr = MapExpr2 = MapExpr3 = MapExpr4 = Code = nullptr;
+		delete this;
+		return block->Resolve(ctx);
+	}
+	else
+	{
+		/*
+		{
+			KeyType k;
+			ValueType v;
+			MapIterator<KeyType, ValueType> @it;
+			@it.Init(map);
+			while(@it.Next())
+			{
+				k = @it.GetKey();
+				v = @it.GetValue();
+				body
+			}
+		}
+		*/
+
+		PType * itType = NewMapIterator(keyType, valType);
+		auto it = new FxLocalVariableDeclaration(itType, "@it", nullptr, 0, ScriptPosition);
+		block->Add(it);
+
+		FArgumentList al_map;
+		al_map.Push(MapExpr);
+
+		block->Add(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Init", std::move(al_map), ScriptPosition));
+
+		auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+		inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "GetKey", {}, ScriptPosition), true));
+		inner_block->Add(new FxAssign(new FxIdentifier(valueVarName, ScriptPosition), new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "GetValue", {}, ScriptPosition), true));
+		inner_block->Add(Code);
+
+		block->Add(new FxWhileLoop(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition), inner_block, ScriptPosition));
+
+		delete MapExpr2;
+		delete MapExpr3;
+		delete MapExpr4;
+		MapExpr = MapExpr2 = MapExpr3 = MapExpr4 = Code = nullptr;
+		delete this;
+		return block->Resolve(ctx);
+	}
+}
 
 //==========================================================================
 //
@@ -12120,8 +12244,7 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 	if (IsDynamicArray())
 	{
 		auto stackVar = new FxStackVariable(ValueType, StackOffset, ScriptPosition);
-		FArgumentList argsList;
-		clearExpr = new FxMemberFunctionCall(stackVar, "Clear", argsList, ScriptPosition);
+		clearExpr = new FxMemberFunctionCall(stackVar, "Clear", {}, ScriptPosition);
 		SAFE_RESOLVE(clearExpr, ctx);
 	}
 
@@ -12439,10 +12562,9 @@ FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
 		else
 		{
 			FArgumentList argsList;
-			argsList.Clear();
 			argsList.Push(v);
 
-			FxExpression *funcCall = new FxMemberFunctionCall(stackVar, NAME_Push, argsList, (const FScriptPosition) v->ScriptPosition);
+			FxExpression *funcCall = new FxMemberFunctionCall(stackVar, NAME_Push, std::move(argsList), (const FScriptPosition) v->ScriptPosition);
 			SAFE_RESOLVE(funcCall, ctx);
 
 			v = funcCall;

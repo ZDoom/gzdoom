@@ -1956,6 +1956,7 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= array_iteration_statement(X).
+statement(X) ::= map_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= assign_decl_statement(A) SEMICOLON.{ X = A; /*X-overwrites-A*/ }
@@ -2121,6 +2122,18 @@ array_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(IN) COLON expr(
 	NEW_AST_NODE(ArrayIterationStmt, iter, T);
 	iter->ItName = IN;
 	iter->ItArray = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
+%type map_iteration_statement{ZCC_Statement *}
+
+map_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(KEY) COMMA variable_name(VAL) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(MapIterationStmt, iter, T);
+	iter->ItKey = KEY;
+	iter->ItValue = VAL;
+	iter->ItMap = EX;
 	iter->LoopStatement = ST;
 	X = iter;
 }

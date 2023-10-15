@@ -1958,6 +1958,7 @@ statement(X) ::= iteration_statement(X).
 statement(X) ::= array_iteration_statement(X).
 statement(X) ::= map_iteration_statement(X).
 statement(X) ::= block_iteration_statement(X).
+statement(X) ::= cast_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= assign_decl_statement(A) SEMICOLON.{ X = A; /*X-overwrites-A*/ }
@@ -2148,6 +2149,18 @@ block_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(VAR) COMMA vari
 	iter->ItPos = POS;
 	iter->ItFlags = FLAGS;
 	iter->ItBlock = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
+%type cast_iteration_statement{ZCC_Statement *}
+
+cast_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(CAST) variable_name(VAR) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(CastIterationStmt, iter, T);
+	iter->ItCast = CAST;
+	iter->ItVar = VAR;
+	iter->ItIterator = EX;
 	iter->LoopStatement = ST;
 	X = iter;
 }

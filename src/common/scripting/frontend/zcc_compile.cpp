@@ -3413,6 +3413,16 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		return new FxBlockIteratorForEachLoop(var, pos, flags, itBlock, body, *ast);
 	}
 
+	case AST_CastIterationStmt:
+	{
+		auto iter = static_cast<ZCC_CastIterationStmt*>(ast);
+		auto cls = iter->ItCast->Name;
+		auto var = iter->ItVar->Name;
+		FxExpression* const itIterator = ConvertNode(iter->ItIterator);
+		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+		return new FxCastForEachLoop(cls, var, itIterator, body, *ast);
+	}
+
 	case AST_IterationStmt:
 	{
 		auto iter = static_cast<ZCC_IterationStmt *>(ast);

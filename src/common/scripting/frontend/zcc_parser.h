@@ -147,6 +147,7 @@ enum EZCCTreeNodeType
 	AST_ArrayIterationStmt,
 	AST_MapIterationStmt,
 	AST_BlockIterationStmt,
+	AST_CastIterationStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -548,6 +549,14 @@ struct ZCC_BlockIterationStmt : ZCC_Statement
 	ZCC_VarName* ItPos;
 	ZCC_VarName* ItFlags;
 	ZCC_Expression* ItBlock;
+	ZCC_Statement* LoopStatement;
+};
+
+struct ZCC_CastIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItCast;
+	ZCC_VarName* ItVar;
+	ZCC_Expression* ItIterator;
 	ZCC_Statement* LoopStatement;
 };
 

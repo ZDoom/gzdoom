@@ -11259,6 +11259,16 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 		delete this;
 		return blockIt->Resolve(ctx);
 	}
+	else if(Array->ValueType->isObjectPointer() && (((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator))
+	{
+		auto castIt = new FxCastForEachLoop(NAME_None, loopVarName, Array, Code, ScriptPosition);
+		delete Array2;
+		delete Array3;
+		delete Array4;
+		Array = Array2 = Array3 = Array4 = Code = nullptr;
+		delete this;
+		return castIt->Resolve(ctx);
+	}
 
 	// Instead of writing a new code generator for this, convert this into
 	//
@@ -11567,6 +11577,112 @@ FxExpression *FxBlockIteratorForEachLoop::Resolve(FCompileContext &ctx)
 	block->Add(new FxWhileLoop(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition), inner_block, ScriptPosition));
 
 	BlockIteratorExpr = Code = nullptr;
+	delete this;
+	return block->Resolve(ctx);
+}
+
+//==========================================================================
+//
+// FxCastForEachLoop
+//
+//==========================================================================
+
+FxCastForEachLoop::FxCastForEachLoop(FName cv, FName vv, FxExpression* castiteartorexpr, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_BlockForEachLoop, pos), castClassName(cv), varVarName(vv), CastIteratorExpr(castiteartorexpr), Code(code)
+{
+	ValueType = TypeVoid;
+	if (CastIteratorExpr != nullptr) CastIteratorExpr->NeedResult = false;
+	if (Code != nullptr) Code->NeedResult = false;
+}
+
+FxCastForEachLoop::~FxCastForEachLoop()
+{
+	SAFE_DELETE(CastIteratorExpr);
+	SAFE_DELETE(Code);
+}
+
+FxExpression *FxCastForEachLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(CastIteratorExpr, ctx);
+
+	if(!(CastIteratorExpr->ValueType->isObjectPointer()))
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",CastIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+	else if(varVarName == NAME_None)
+	{
+		ScriptPosition.Message(MSG_ERROR, "missing var for foreach(Type var : it )");
+		delete this;
+		return nullptr;
+	}
+
+	PType * varType = nullptr;
+	PClass * itType = ((PObjectPointer*)CastIteratorExpr->ValueType)->PointedClass();
+
+	FName fieldName = NAME_None;
+
+	if(itType->TypeName == NAME_ActorIterator)
+	{
+		fieldName = "Actor";
+	}
+	else if(itType->TypeName == NAME_ThinkerIterator)
+	{
+		fieldName = "Thinker";
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",CastIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+
+	if(castClassName != NAME_None)
+	{
+		fieldName = castClassName;
+	}
+
+	PClass * varTypeClass = PClass::FindClass(fieldName);
+	varType = varTypeClass->VMType;
+
+	if(!varType)
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - could not find class '%s'",castClassName.GetChars());
+		delete this;
+		return nullptr;
+	}
+
+	varType = NewPointer(varType, false);
+
+	/*
+	{
+		CastType var;
+		ActorIterator|ThinkerIterator @it = expr;
+		while(var = CastType(@it.Next()))
+			body
+	}
+	*/
+
+	auto block = new FxCompoundStatement(ScriptPosition);
+
+	block->Add(new FxLocalVariableDeclaration(varType, varVarName, nullptr, 0, ScriptPosition));
+
+	block->Add(new FxLocalVariableDeclaration(CastIteratorExpr->ValueType, "@it", CastIteratorExpr, 0, ScriptPosition));
+
+	auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+	FxExpression * nextCallCast = new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition);
+
+	if(castClassName != NAME_None)
+	{
+		nextCallCast = new FxDynamicCast(varTypeClass, nextCallCast);
+	}
+
+	block->Add(new FxWhileLoop(new FxAssign(new FxIdentifier(varVarName, ScriptPosition), nextCallCast), Code, ScriptPosition));
+
+	CastIteratorExpr = Code = nullptr;
 	delete this;
 	return block->Resolve(ctx);
 }

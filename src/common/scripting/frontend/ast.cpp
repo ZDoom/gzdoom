@@ -1015,6 +1015,21 @@ static void PrintBlockIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
+static void PrintCastIterationStmt(FLispString &out, const ZCC_TreeNode *node)
+{
+	auto inode = (ZCC_CastIterationStmt *)node;
+	out.Break();
+	out.Open("cast-iteration-stmt");
+	PrintVarName(out, inode->ItCast);
+	out.Break();
+	PrintVarName(out, inode->ItVar);
+	out.Break();
+	PrintNodes(out, inode->ItIterator);
+	out.Break();
+	PrintNodes(out, inode->LoopStatement);
+	out.Close();
+}
+
 static const NodePrinterFunc TreeNodePrinter[] =
 {
 	PrintIdentifier,
@@ -1084,6 +1099,7 @@ static const NodePrinterFunc TreeNodePrinter[] =
 	PrintArrayIterationStmt,
 	PrintMapIterationStmt,
 	PrintBlockIterationStmt,
+	PrintCastIterationStmt,
 };
 
 FString ZCC_PrintAST(const ZCC_TreeNode *root)

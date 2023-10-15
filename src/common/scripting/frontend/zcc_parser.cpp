@@ -1177,6 +1177,19 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		break;
 	}
 
+	case AST_MapIterationStmt:
+	{
+		TreeNodeDeepCopy_Start(MapIterationStmt);
+
+		// ZCC_MapIterationStmt
+		copy->ItKey = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItKey, true, copiedNodesList));
+		copy->ItValue = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItValue, true, copiedNodesList));
+		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
+		copy->ItMap = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItMap, true, copiedNodesList));
+
+		break;
+	}
+
 	case AST_IfStmt:
 	{
 		TreeNodeDeepCopy_Start(IfStmt);

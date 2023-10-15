@@ -2999,12 +2999,12 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		{
 		case AST_ExprID:
 			// The function name is a simple identifier.
-			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, ConvertNodeList(args, fcall->Parameters), *ast);
+			return new FxFunctionCall(static_cast<ZCC_ExprID *>(fcall->Function)->Identifier, NAME_None, std::move(ConvertNodeList(args, fcall->Parameters)), *ast);
 
 		case AST_ExprMemberAccess:
 		{
 			auto ema = static_cast<ZCC_ExprMemberAccess *>(fcall->Function);
-			return new FxMemberFunctionCall(ConvertNode(ema->Left, true), ema->Right, ConvertNodeList(args, fcall->Parameters), *ast);
+			return new FxMemberFunctionCall(ConvertNode(ema->Left, true), ema->Right, std::move(ConvertNodeList(args, fcall->Parameters)), *ast);
 		}
 
 		case AST_ExprBinary:
@@ -3014,7 +3014,7 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 				auto binary = static_cast<ZCC_ExprBinary *>(fcall->Function);
 				if (binary->Left->NodeType == AST_ExprID && binary->Right->NodeType == AST_ExprID)
 				{
-					return new FxFunctionCall(static_cast<ZCC_ExprID *>(binary->Left)->Identifier, static_cast<ZCC_ExprID *>(binary->Right)->Identifier, ConvertNodeList(args, fcall->Parameters), *ast);
+					return new FxFunctionCall(static_cast<ZCC_ExprID *>(binary->Left)->Identifier, static_cast<ZCC_ExprID *>(binary->Right)->Identifier, std::move(ConvertNodeList(args, fcall->Parameters)), *ast);
 				}
 			}
 			// fall through if this isn't an array access node.
@@ -3391,7 +3391,19 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		FxExpression* const itArray2 = ConvertNode(iter->ItArray);	// the handler needs two copies of this - here's the easiest place to create them.
 		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
 		return new FxForEachLoop(iter->ItName->Name, itArray, itArray2, body, *ast);
+	}
 
+	case AST_MapIterationStmt:
+	{
+		auto iter = static_cast<ZCC_MapIterationStmt*>(ast);
+		auto key = iter->ItKey->Name;
+		auto var = iter->ItValue->Name;
+		FxExpression* const itMap = ConvertNode(iter->ItMap);
+		FxExpression* const itMap2 = ConvertNode(iter->ItMap);
+		FxExpression* const itMap3 = ConvertNode(iter->ItMap);
+		FxExpression* const itMap4 = ConvertNode(iter->ItMap);
+		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+		return new FxMapForEachLoop(key, var, itMap, itMap2, itMap3, itMap4, body, *ast);
 	}
 
 	case AST_IterationStmt:

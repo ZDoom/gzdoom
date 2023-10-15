@@ -578,7 +578,7 @@ FxExpression* ParseAction(FScanner &sc, FState state, FString statestring, Bagga
 	{
 		FArgumentList args;
 		ParseFunctionParameters(sc, bag.Info, args, afd, statestring, &bag.statedef);
-		call = new FxFunctionCall(symname, NAME_None, args, sc);
+		call = new FxFunctionCall(symname, NAME_None, std::move(args), sc);
 		return call;
 	}
 	sc.ScriptError("Invalid parameter '%s'\n", sc.String);

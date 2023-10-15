@@ -11124,7 +11124,7 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 		}
 		else if (protoRetCount > retCount)
 		{ // also warn when returning less values then the return count
-			mismatchSeverity = MSG_WARNING;
+			mismatchSeverity = ctx.Version >= MakeVersion(4, 12) ? MSG_ERROR : MSG_WARNING;
 		}
 	}
 

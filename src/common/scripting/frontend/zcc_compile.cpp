@@ -3408,6 +3408,17 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		return new FxMapForEachLoop(key, var, itMap, itMap2, itMap3, itMap4, body, *ast);
 	}
 
+	case AST_BlockIterationStmt:
+	{
+		auto iter = static_cast<ZCC_BlockIterationStmt*>(ast);
+		auto var = iter->ItVar->Name;
+		auto pos = iter->ItPos->Name;
+		auto flags = iter->ItFlags->Name;
+		FxExpression* const itBlock = ConvertNode(iter->ItBlock);
+		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+		return new FxBlockIteratorForEachLoop(var, pos, flags, itBlock, body, *ast);
+	}
+
 	case AST_IterationStmt:
 	{
 		auto iter = static_cast<ZCC_IterationStmt *>(ast);

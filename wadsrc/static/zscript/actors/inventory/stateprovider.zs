@@ -210,7 +210,7 @@ class StateProvider : Inventory
 	action Actor, Actor A_FireProjectile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)	
 	{
 		let player = self.player;
-		if (!player) return null;
+		if (!player) return null, null;
 
 		let weapon = player.ReadyWeapon;
 
@@ -220,7 +220,7 @@ class StateProvider : Inventory
 		if (useammo && weapon && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{
 			if (!weapon.DepleteAmmo(weapon.bAltFire, true))
-				return null;	// out of ammo
+				return null, null;	// out of ammo
 		}
 
 		if (missiletype) 

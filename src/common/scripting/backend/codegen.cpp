@@ -11330,6 +11330,10 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 		{
 			mismatchSeverity = MSG_ERROR;
 		}
+		else if (protoRetCount > retCount)
+		{ // also warn when returning less values then the return count
+			mismatchSeverity = MSG_WARNING;
+		}
 	}
 
 	if (mismatchSeverity != -1)

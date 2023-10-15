@@ -44,6 +44,7 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "texturemanager.h"
+#include "vm.h"
 
 
 //============================================================================
@@ -256,6 +257,20 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 		*ptexbot = *ptextop - textureheight;
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(_Line, GetMidTexturePosition)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	PARAM_INT(side);
+	double top = 0.0;
+	double bottom = 0.0;
+
+	bool res = P_GetMidTexturePosition(self,side,&top,&bottom);
+	if (numret > 2) ret[2].SetFloat(bottom);
+	if (numret > 1) ret[1].SetFloat(top);
+	if (numret > 0) ret[0].SetInt(int(res));
+	return numret;
 }
 
 //============================================================================

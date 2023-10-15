@@ -2074,10 +2074,12 @@ class FxForEachLoop : public FxLoopStatement
 	FName loopVarName;
 	FxExpression* Array;
 	FxExpression* Array2;
+	FxExpression* Array3;
+	FxExpression* Array4;
 	FxExpression* Code;
 
 public:
-	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos);
+	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* arrayvar3, FxExpression* arrayvar4, FxExpression* code, const FScriptPosition& pos);
 	~FxForEachLoop();
 	FxExpression* DoResolve(FCompileContext&);
 };

@@ -3382,9 +3382,11 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		auto iter = static_cast<ZCC_ArrayIterationStmt*>(ast);
 		auto var = iter->ItName->Name;
 		FxExpression* const itArray = ConvertNode(iter->ItArray);
-		FxExpression* const itArray2 = ConvertNode(iter->ItArray);	// the handler needs two copies of this - here's the easiest place to create them.
+		FxExpression* const itArray2 = ConvertNode(iter->ItArray);
+		FxExpression* const itArray3 = ConvertNode(iter->ItArray);
+		FxExpression* const itArray4 = ConvertNode(iter->ItArray);	// the handler needs copies of this - here's the easiest place to create them.
 		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
-		return new FxForEachLoop(iter->ItName->Name, itArray, itArray2, body, *ast);
+		return new FxForEachLoop(iter->ItName->Name, itArray, itArray2, itArray3, itArray4, body, *ast);
 	}
 
 	case AST_MapIterationStmt:

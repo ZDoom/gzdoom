@@ -11214,12 +11214,14 @@ ExpEmit FxForLoop::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxForEachLoop::FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos)
-	: FxLoopStatement(EFX_ForEachLoop, pos), loopVarName(vn), Array(arrayvar), Array2(arrayvar2), Code(code)
+FxForEachLoop::FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* arrayvar3, FxExpression* arrayvar4, FxExpression* code, const FScriptPosition& pos)
+	: FxLoopStatement(EFX_ForEachLoop, pos), loopVarName(vn), Array(arrayvar), Array2(arrayvar2), Array3(arrayvar3), Array4(arrayvar4), Code(code)
 {
 	ValueType = TypeVoid;
 	if (Array != nullptr) Array->NeedResult = false;
 	if (Array2 != nullptr) Array2->NeedResult = false;
+	if (Array3 != nullptr) Array3->NeedResult = false;
+	if (Array4 != nullptr) Array4->NeedResult = false;
 	if (Code != nullptr) Code->NeedResult = false;
 }
 
@@ -11227,6 +11229,8 @@ FxForEachLoop::~FxForEachLoop()
 {
 	SAFE_DELETE(Array);
 	SAFE_DELETE(Array2);
+	SAFE_DELETE(Array3);
+	SAFE_DELETE(Array4);
 	SAFE_DELETE(Code);
 }
 
@@ -11235,6 +11239,16 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 	CHECKRESOLVED();
 	SAFE_RESOLVE(Array, ctx);
 	SAFE_RESOLVE(Array2, ctx);
+	SAFE_RESOLVE(Array3, ctx);
+	SAFE_RESOLVE(Array4, ctx);
+
+	if(Array->ValueType->isMap() || Array->ValueType->isMapIterator())
+	{
+		auto mapLoop = new FxMapForEachLoop(NAME_None, loopVarName, Array, Array2, Array3, Array4, Code, ScriptPosition);
+		Array = Array2 = Array3 = Array4 = Code = nullptr;
+		delete this;
+		return mapLoop->Resolve(ctx);
+	}
 
 	// Instead of writing a new code generator for this, convert this into
 	//
@@ -11320,17 +11334,28 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 		delete this;
 		return nullptr;
 	}
+	if(valueVarName == NAME_None)
+	{
+		ScriptPosition.Message(MSG_ERROR, "missing value for foreach( k, v : m )");
+		delete this;
+		return nullptr;
+	}
 
 
-	auto keyType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->KeyType : static_cast<PMap*>(MapExpr->ValueType)->KeyType;
-	auto valType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->ValueType : static_cast<PMap*>(MapExpr->ValueType)->ValueType;
-	
 	auto block = new FxCompoundStatement(ScriptPosition);
-	auto k = new FxLocalVariableDeclaration(keyType, keyVarName, nullptr, 0, ScriptPosition);
+
+	auto valType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->ValueType : static_cast<PMap*>(MapExpr->ValueType)->ValueType;
+	auto keyType = is_iterator ? static_cast<PMapIterator*>(MapExpr->ValueType)->KeyType : static_cast<PMap*>(MapExpr->ValueType)->KeyType;
+
 	auto v = new FxLocalVariableDeclaration(valType, valueVarName, nullptr, 0, ScriptPosition);
-	
-	block->Add(k);
 	block->Add(v);
+
+	if(keyVarName != NAME_None)
+	{
+		auto k = new FxLocalVariableDeclaration(keyType, keyVarName, nullptr, 0, ScriptPosition);
+		block->Add(k);
+	}
+	
 
 	if(MapExpr->ValueType->isMapIterator())
 	{
@@ -11349,7 +11374,11 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 
 		auto inner_block = new FxCompoundStatement(ScriptPosition);
 
-		inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(MapExpr, "GetKey", {}, ScriptPosition), true));
+		if(keyVarName != NAME_None)
+		{
+			inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(MapExpr, "GetKey", {}, ScriptPosition), true));
+		}
+
 		inner_block->Add(new FxAssign(new FxIdentifier(valueVarName, ScriptPosition), new FxMemberFunctionCall(MapExpr2, "GetValue", {}, ScriptPosition), true));
 		inner_block->Add(Code);
 
@@ -11388,7 +11417,10 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 
 		auto inner_block = new FxCompoundStatement(ScriptPosition);
 
-		inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "GetKey", {}, ScriptPosition), true));
+		if(keyVarName != NAME_None)
+		{
+			inner_block->Add(new FxAssign(new FxIdentifier(keyVarName, ScriptPosition), new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "GetKey", {}, ScriptPosition), true));
+		}
 		inner_block->Add(new FxAssign(new FxIdentifier(valueVarName, ScriptPosition), new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "GetValue", {}, ScriptPosition), true));
 		inner_block->Add(Code);
 

@@ -277,6 +277,7 @@ enum EFxType
 	EFX_ForEachLoop,
 	EFX_MapForEachLoop,
 	EFX_BlockForEachLoop,
+	EFX_CastForEachLoop,
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
@@ -2125,6 +2126,26 @@ class FxBlockIteratorForEachLoop : public FxExpression
 public:
 	FxBlockIteratorForEachLoop(FName vv, FName pv, FName fv, FxExpression* blockiteartorexpr, FxExpression* code, const FScriptPosition& pos);
 	~FxBlockIteratorForEachLoop();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
+};
+
+//==========================================================================
+//
+// FxCastForEachLoop
+//
+//==========================================================================
+
+class FxCastForEachLoop : public FxExpression
+{
+	FName castClassName;
+	FName varVarName;
+	FxExpression* CastIteratorExpr;
+	FxExpression* Code;
+
+public:
+	FxCastForEachLoop(FName cv, FName vv, FxExpression* castiteartorexpr, FxExpression* code, const FScriptPosition& pos);
+	~FxCastForEachLoop();
 	FxExpression *Resolve(FCompileContext&);
 	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
 };

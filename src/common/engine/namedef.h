@@ -137,6 +137,8 @@ xx(FQuat)
 xx(let)
 xx(BlockThingsIterator)
 xx(BlockLinesIterator)
+xx(ActorIterator)
+xx(ThinkerIterator)
 
 xx(Min)
 xx(Max)

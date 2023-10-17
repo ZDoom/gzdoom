@@ -441,6 +441,13 @@ public:
 		return start;
 	}
 
+	unsigned AddUnique(const T& obj)
+	{
+		auto f = Find(obj);
+		if (f == Size()) Push(obj);
+		return f;
+	}
+
 	bool Pop ()
 	{
 		if (Count > 0)

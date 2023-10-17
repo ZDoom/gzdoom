@@ -232,3 +232,4 @@ inline bool BoxInRange(const DVector2& boxtl, const DVector2& boxbr, const DVect
 		boxtl.Y < max(start.Y, end.Y) &&
 		boxbr.Y > min(start.Y, end.Y);
 }
+

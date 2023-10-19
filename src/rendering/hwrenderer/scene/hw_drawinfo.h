@@ -214,7 +214,6 @@ private:
 	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
 	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
 	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
-	bool CheckFog(sector_t *frontsector, sector_t *backsector);
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
 
 	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area);

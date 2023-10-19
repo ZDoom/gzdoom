@@ -42,6 +42,7 @@
 #include "hw_clock.h"
 #include "flatvertices.h"
 #include "hw_vertexbuilder.h"
+#include "hw_walldispatcher.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>
@@ -105,6 +106,7 @@ static RenderJobQueue jobQueue;	// One static queue is sufficient here. This cod
 void HWDrawInfo::WorkerThread()
 {
 	sector_t *front, *back;
+	HWWallDispatcher disp(this);
 
 	WTTotal.Clock();
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
@@ -169,7 +171,7 @@ void HWDrawInfo::WorkerThread()
 			}
 			else back = nullptr;
 
-			wall.Process(this, job->seg, front, back);
+			wall.Process(&disp, job->seg, front, back);
 			rendered_lines++;
 			SetupWall.Unclock();
 			break;
@@ -348,9 +350,10 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 			else
 			{
 				HWWall wall;
+				HWWallDispatcher disp(this);
 				SetupWall.Clock();
 				wall.sub = seg->Subsector;
-				wall.Process(this, seg, currentsector, backsector);
+				wall.Process(&disp, seg, currentsector, backsector);
 				rendered_lines++;
 				SetupWall.Unclock();
 			}

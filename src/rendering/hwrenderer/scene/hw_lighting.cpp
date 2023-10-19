@@ -227,7 +227,7 @@ float HWDrawInfo::GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfog
 //
 //==========================================================================
 
-bool HWDrawInfo::CheckFog(sector_t *frontsector, sector_t *backsector)
+bool CheckFog(FLevelLocals* Level, sector_t *frontsector, sector_t *backsector, ELightMode lightmode)
 {
 	if (frontsector == backsector) return false;	// there can't be a boundary if both sides are in the same sector.
 

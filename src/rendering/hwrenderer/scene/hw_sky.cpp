@@ -33,6 +33,7 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_lighting.h"
 #include "hw_material.h"
+#include "hw_walldispatcher.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 
@@ -111,7 +112,7 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 //
 //==========================================================================
 
-void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowreflect)
+void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
 
@@ -121,10 +122,13 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	// Either a regular sky or a skybox with skyboxes disabled
 	if ((sportal == nullptr && sector->GetTexture(plane) == skyflatnum) || (gl_noskyboxes && sportal != nullptr && sportal->mType == PORTS_SKYVIEWPOINT))
 	{
-		HWSkyInfo skyinfo;
-		skyinfo.init(di, sector->sky, Colormap.FadeColor);
-		ptype = PORTALTYPE_SKY;
-		sky = &skyinfo;
+		if (di->di)
+		{
+			HWSkyInfo skyinfo;
+			skyinfo.init(di->di, sector->sky, Colormap.FadeColor);
+			ptype = PORTALTYPE_SKY;
+			sky = &skyinfo;
+		}
 		PutPortal(di, ptype, plane);
 	}
 	else if (sportal != nullptr)
@@ -140,7 +144,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 			{
 				if (sector->PortalBlocksView(plane)) return;
 
-				if (screen->instack[1 - plane]) return;
+				if (di->di && screen->instack[1 - plane]) return;
 				ptype = PORTALTYPE_SECTORSTACK;
 				portal = glport;
 			}
@@ -157,11 +161,14 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	}
 	else if (allowreflect && sector->GetReflect(plane) > 0 && !(di->Level->ib_compatflags & BCOMPATF_NOMIRRORS))
 	{
-        auto vpz = di->Viewpoint.Pos.Z;
-		if ((plane == sector_t::ceiling && vpz > sector->ceilingplane.fD()) ||
-			(plane == sector_t::floor && vpz < -sector->floorplane.fD())) return;
+		if (di->di)
+		{
+			auto vpz = di->di->Viewpoint.Pos.Z;
+			if ((plane == sector_t::ceiling && vpz > sector->ceilingplane.fD()) ||
+				(plane == sector_t::floor && vpz < -sector->floorplane.fD())) return;
+			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
+		}
 		ptype = PORTALTYPE_PLANEMIRROR;
-		planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 	}
 	if (ptype != -1)
 	{
@@ -176,7 +183,7 @@ void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 //
 //==========================================================================
 
-void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
+void HWWall::SkyLine(HWWallDispatcher *di, sector_t *fs, line_t *line)
 {
 	FSectorPortal *secport = line->GetTransferredPortal();
 	HWSkyInfo skyinfo;
@@ -192,7 +199,7 @@ void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 	}
 	else
 	{
-		skyinfo.init(di, fs->sky, Colormap.FadeColor);
+		if (di->di) skyinfo.init(di->di, fs->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
 	}
@@ -210,7 +217,7 @@ void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 //
 //==========================================================================
 
-void HWWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyNormal(HWWallDispatcher *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
 {
 	ztop[0]=ztop[1]=32768.0f;
 	zbottom[0]=zceil[0];
@@ -229,7 +236,7 @@ void HWWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2
 //
 //==========================================================================
 
-void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyTop(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
@@ -323,7 +330,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 //
 //==========================================================================
 
-void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyBottom(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
@@ -343,8 +350,8 @@ void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 			}
 			else
 			{
-				// Special hack for Vrack2b
-				if (bs->floorplane.ZatPoint(di->Viewpoint.Pos) > di->Viewpoint.Pos.Z) return;
+				// Special hack for Vrack2b. For mesh based rendering this check needs to be done in the actual render pass!
+				if (di->di && bs->floorplane.ZatPoint(di->di->Viewpoint.Pos) > di->di->Viewpoint.Pos.Z) return;
 			}
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;

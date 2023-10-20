@@ -104,6 +104,24 @@ static char HexenSectorSpecialOk[256]={
 	1,1,1,1,1,
 };
 
+static const char* udmfsolidskewtypes[] =
+{
+   "none",
+   "front",
+   "back",
+   nullptr
+};
+
+static const char* udmfmaskedskewtypes[] =
+{
+   "none",
+   "front_floor",
+   "front_ceiling",
+   "back_floor",
+   "back_ceiling",
+   nullptr
+};
+
 static inline bool P_IsThingSpecial(int specnum)
 {
 	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
@@ -280,6 +298,20 @@ const char *UDMFParserBase::CheckString(FName key)
 		sc.ScriptMessage("String value expected for key '%s'", key.GetChars());
 	}
 	return parsedString.GetChars();
+}
+
+int UDMFParserBase::MatchString(FName key, const char* const* strings, int defval)
+{
+	const char* string = CheckString(key);
+	for (int i = 0; *strings != nullptr; i++, strings++)
+	{
+		if (!stricmp(string, *strings))
+		{
+			return i;
+		}
+	}
+	sc.ScriptMessage("Unknown value %s for key '%s'", string, key.GetChars());
+	return defval;
 }
 
 //===========================================================================
@@ -1484,6 +1516,22 @@ public:
 				CHECK_N(Zd | Zdt)
 					break;
 
+			case NAME_skew_top_type:
+				CHECK_N(Zd | Zdt)
+				sd->textures[side_t::top].skew = MatchString(key, udmfsolidskewtypes, 0);
+				break;
+
+			case NAME_skew_middle_type:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::mid].skew = MatchString(key, udmfmaskedskewtypes, 0);
+				break;
+
+			case NAME_skew_bottom_type:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::bottom].skew = MatchString(key, udmfsolidskewtypes, 0);
+				break;
+
+
 			default:
 				if (strnicmp("user_", key.GetChars(), 5))
 					DPrintf(DMSG_WARNING, "Unknown UDMF sidedef key %s\n", key.GetChars());
@@ -2199,6 +2247,17 @@ public:
 						sides[side].linedef = &lines[line];
 						sides[side].sector = &Level->sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
+
+						if (sd == 1)
+						{
+							// fix flags for backside. The definition is linedef relative, not sidedef relative.
+							static const uint8_t swaps[] = { 0, side_t::skew_back, side_t::skew_front };
+							static const uint8_t swapsm[] = {0, side_t::skew_back_floor, side_t::skew_back_ceiling, side_t::skew_front_floor, side_t::skew_front_ceiling};
+
+							sides[side].textures[side_t::top].skew = swaps[sides[side].textures[side_t::top].skew];
+							sides[side].textures[side_t::bottom].skew = swaps[sides[side].textures[side_t::bottom].skew];
+							sides[side].textures[side_t::mid].skew = swapsm[sides[side].textures[side_t::mid].skew];
+						}
 
 						loader->ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);

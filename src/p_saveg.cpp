@@ -140,6 +140,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, si
 			("texture", part.texture, def->texture)
 			("interpolation", part.interpolation)
 			("flags", part.flags, def->flags)
+			("skew", part.skew, def->skew)
 			("color1", part.SpecialColors[0], def->SpecialColors[0])
 			("color2", part.SpecialColors[1], def->SpecialColors[1])
 			("addcolor", part.AdditiveColor, def->AdditiveColor)

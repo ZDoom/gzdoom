@@ -237,19 +237,19 @@ public:
 	bool DoHorizon(HWWallDispatcher* di, seg_t* seg, sector_t* fs, vertex_t* v1, vertex_t* v2);
 
 	bool SetWallCoordinates(seg_t* seg, FTexCoordInfo* tci, float ceilingrefheight,
-		float topleft, float topright, float bottomleft, float bottomright, float t_ofs);
+		float topleft, float topright, float bottomleft, float bottomright, float t_ofs, float skew);
 
 	void DoTexture(HWWallDispatcher* di, int type, seg_t* seg, int peg,
 		float ceilingrefheight, float floorrefheight,
 		float CeilingHeightstart, float CeilingHeightend,
 		float FloorHeightstart, float FloorHeightend,
-		float v_offset);
+		float v_offset, float skew);
 
 	void DoMidTexture(HWWallDispatcher* di, seg_t* seg, bool drawfogboundary,
 		sector_t* front, sector_t* back,
 		sector_t* realfront, sector_t* realback,
 		float fch1, float fch2, float ffh1, float ffh2,
-		float bch1, float bch2, float bfh1, float bfh2, float zalign);
+		float bch1, float bch2, float bfh1, float bfh2, float zalign, float skew);
 
 	void GetPlanePos(F3DFloor::planeref* planeref, float& left, float& right);
 

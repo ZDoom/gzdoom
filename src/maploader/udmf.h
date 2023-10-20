@@ -21,6 +21,7 @@ protected:
 	DAngle CheckAngle(FName key);
 	bool CheckBool(FName key);
 	const char *CheckString(FName key);
+	int MatchString(FName key, const char* const* strings, int defval);
 
 	template<typename T>
 	bool Flag(T &value, int mask, FName key)

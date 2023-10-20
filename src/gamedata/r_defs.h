@@ -1194,6 +1194,19 @@ struct side_t
 		walltop = 0,
 		wallbottom = 1,
 	};
+	enum ESkew
+	{
+		skew_none = 0,
+		skew_front = 1,
+		skew_back = 2,
+		// for mid textures there's 4 options
+		skew_front_floor = 1,
+		skew_front_ceiling = 2,
+		skew_back_floor = 3,
+		skew_back_ceiling = 4
+
+	};
+
 	struct part
 	{
 		enum EPartFlags
@@ -1209,7 +1222,8 @@ struct side_t
 		double xScale;
 		double yScale;
 		TObjPtr<DInterpolation*> interpolation;
-		int flags;
+		int16_t flags;
+		int8_t skew;
 		FTextureID texture;
 		TextureManipulation TextureFx;
 		PalEntry SpecialColors[2];

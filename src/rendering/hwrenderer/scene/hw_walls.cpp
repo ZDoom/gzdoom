@@ -2280,11 +2280,27 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 				if (texture && texture->isValid())
 				{
 					int skewflag = seg->sidedef->textures[side_t::top].skew;
+					float skew;
 					if (skewflag == 0) skewflag = topskew;
-					float skew =
-						skewflag == side_t::skew_front ? fch2 - fch1 :
-						skewflag == side_t::skew_back ? bch2 - bch1 : 0.;
 
+					switch (skewflag)
+					{
+					default:
+						skew = 0;
+						break;
+					case side_t::skew_front_ceiling:
+						skew = fch2 - fch1;
+						break;
+					case side_t::skew_back_ceiling:
+						skew = bch2 - bch1;
+						break;
+					case side_t::skew_front_floor:
+						skew = bfh2 - bfh1;
+						break;
+					case side_t::skew_back_floor:
+						skew = ffh2 - ffh1;
+						break;
+					}
 					DoTexture(di, RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
 						crefz, realback->GetPlaneTexZ(sector_t::ceiling),
 						fch1, fch2, bch1a, bch2a, 0, skew);
@@ -2407,9 +2423,25 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 			{
 				int skewflag = seg->sidedef->textures[side_t::bottom].skew;
 				if (skewflag == 0) skewflag = bottomskew;
-				float skew =
-					skewflag == side_t::skew_back ? bfh2a - bfh1a :
-					skewflag == side_t::skew_front ? ffh2 - ffh1 : 0.;
+				float skew;
+				switch (skewflag)
+				{
+				default:
+					skew = 0;
+					break;
+				case side_t::skew_front_ceiling:
+					skew = fch2 - fch1;
+					break;
+				case side_t::skew_back_ceiling:
+					skew = bch2 - bch1;
+					break;
+				case side_t::skew_front_floor:
+					skew = bfh2a - bfh1a;
+					break;
+				case side_t::skew_back_floor:
+					skew = ffh2 - ffh1;
+					break;
+				}
 
 				DoTexture(di, RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
 					realback->GetPlaneTexZ(sector_t::floor), frefz,

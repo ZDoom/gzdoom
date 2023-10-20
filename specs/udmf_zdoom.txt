@@ -233,6 +233,12 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       lm_sampledist_top = <int>;    // ZDRay customizable sampling distance for this sidedef's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_mid = <int>;    // ZDRay customizable sampling distance for this sidedef's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_bot = <int>;    // ZDRay customizable sampling distance for this sidedef's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0	  
+	  
+	  skew_top = <int>;             // enables skewing of wall textures, the skewing angle will be aligned to one of the 4 planes touching the floor. 
+      skew_middle = <int>;          // Vertical texture alignment defines the position at the leftmost point of the wall.
+      skew_bottom = <int>;          // Possible values: 0 = no skewing, 1 = align to front floor, 2 = align to front ceiling, 3 = align to back floor, 4 = align to back ceiling.
+	                                // Front/Back are relative to the sidedef, not the owning linedef. Default = 0.
+
    }
 
    sector
@@ -541,6 +547,9 @@ Added/updated ZDRay/lightmap-related properties.
 
 1.35 15.09.2023
 fixed omissions: Blocklandmonsters and Blockfloaters line flags.
+
+1.36 20.10.2023
+Sidedef skewing properties
 
 ===============================================================================
 EOF

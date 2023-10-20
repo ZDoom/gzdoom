@@ -1197,14 +1197,10 @@ struct side_t
 	enum ESkew
 	{
 		skew_none = 0,
-		skew_front = 1,
-		skew_back = 2,
-		// for mid textures there's 4 options
 		skew_front_floor = 1,
 		skew_front_ceiling = 2,
 		skew_back_floor = 3,
 		skew_back_ceiling = 4
-
 	};
 
 	struct part

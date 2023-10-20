@@ -104,6 +104,7 @@ static char HexenSectorSpecialOk[256]={
 	1,1,1,1,1,
 };
 
+#if 0
 static const char* udmfsolidskewtypes[] =
 {
    "none",
@@ -121,6 +122,7 @@ static const char* udmfmaskedskewtypes[] =
    "back_ceiling",
    nullptr
 };
+#endif
 
 static inline bool P_IsThingSpecial(int specnum)
 {
@@ -1516,6 +1518,7 @@ public:
 				CHECK_N(Zd | Zdt)
 					break;
 
+#if 0		// specs are to rough and too vague - needs to be cleared first how this works.
 			case NAME_skew_top_type:
 				CHECK_N(Zd | Zdt)
 				sd->textures[side_t::top].skew = MatchString(key, udmfsolidskewtypes, 0);
@@ -1530,7 +1533,22 @@ public:
 				CHECK_N(Zd | Zdt)
 					sd->textures[side_t::bottom].skew = MatchString(key, udmfsolidskewtypes, 0);
 				break;
+#endif
 
+			case NAME_skew_top:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::top].skew = CheckInt(key);
+				break;
+
+			case NAME_skew_middle:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::mid].skew = CheckInt(key);
+				break;
+
+			case NAME_skew_bottom:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::bottom].skew = CheckInt(key);
+				break;
 
 			default:
 				if (strnicmp("user_", key.GetChars(), 5))
@@ -2248,6 +2266,7 @@ public:
 						sides[side].sector = &Level->sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
 
+#if 0
 						if (sd == 1)
 						{
 							// fix flags for backside. The definition is linedef relative, not sidedef relative.
@@ -2258,6 +2277,7 @@ public:
 							sides[side].textures[side_t::bottom].skew = swaps[sides[side].textures[side_t::bottom].skew];
 							sides[side].textures[side_t::mid].skew = swapsm[sides[side].textures[side_t::mid].skew];
 						}
+#endif
 
 						loader->ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);

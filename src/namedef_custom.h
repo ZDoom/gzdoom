@@ -861,5 +861,8 @@ xx(lm_sampledistance)
 xx(skew_bottom_type)
 xx(skew_middle_type)
 xx(skew_top_type)
+xx(skew_bottom)
+xx(skew_middle)
+xx(skew_top)
 
 xx(Corona)

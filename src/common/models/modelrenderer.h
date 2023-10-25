@@ -17,8 +17,8 @@ public:
 
 	virtual VSMatrix GetViewToWorldMatrix() = 0;
 
-	virtual void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
-	virtual void EndDrawHUDModel(FRenderStyle style) = 0;
+	virtual void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored, FSpriteModelFrame *smf) = 0;
+	virtual void EndDrawHUDModel(FRenderStyle style, FSpriteModelFrame *smf) = 0;
 
 	virtual void SetInterpolation(double interpolation) = 0;
 	virtual void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) = 0;

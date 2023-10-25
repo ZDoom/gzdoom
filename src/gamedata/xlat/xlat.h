@@ -82,7 +82,7 @@ struct FBoomTranslator
 {
 	uint16_t FirstLinetype = 0;
 	uint16_t LastLinetype = 0;
-	uint8_t NewSpecial = 0;
+	uint16_t NewSpecial = 0;
 	TArray<FBoomArg> Args;
 } ;
 

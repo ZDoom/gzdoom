@@ -37,6 +37,7 @@
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hw_fakeflat.h"
+#include "hw_walldispatcher.h"
 
 FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
 
@@ -304,8 +305,8 @@ void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, SortNode * head, SortNode * s
 				w->tcs[HWWall::UPLFT].v = ws->tcs[HWWall::LOLFT].v = w->tcs[HWWall::UPRGT].v = ws->tcs[HWWall::LORGT].v = newtexv;
 				w->lightuv[HWWall::UPLFT].v = ws->lightuv[HWWall::LOLFT].v = w->lightuv[HWWall::UPRGT].v = ws->lightuv[HWWall::LORGT].v = newlmv;
 			}
-			w->MakeVertices(di, false);
-			ws->MakeVertices(di, false);
+			w->MakeVertices(false);
+			ws->MakeVertices(false);
 		}
 
 		SortNode * sort2 = SortNodes.GetNew();
@@ -451,8 +452,8 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[HWWall::LOLFT].u = w->tcs[HWWall::UPLFT].u = ws->tcs[HWWall::LORGT].u = ws->tcs[HWWall::UPRGT].u = iu;
 		w->lightuv[HWWall::LOLFT].u = w->lightuv[HWWall::UPLFT].u = ws->lightuv[HWWall::LORGT].u = ws->lightuv[HWWall::UPRGT].u = iu;
-		ws->MakeVertices(di, false);
-		w->MakeVertices(di, false);
+		ws->MakeVertices(false);
+		w->MakeVertices(false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -808,8 +809,9 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 	case DrawType_WALL:
 		{
 			HWWall * w= walls[drawitems[i].index];
+			HWWallDispatcher dis(di);
 			RenderWall.Clock();
-			w->DrawWall(di, state, translucent);
+			w->DrawWall(&dis, state, translucent);
 			RenderWall.Unclock();
 		}
 		break;
@@ -845,10 +847,11 @@ void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent)
 //==========================================================================
 void HWDrawList::DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
+	HWWallDispatcher dis(di);
 	RenderWall.Clock();
 	for (auto &item : drawitems)
 	{
-		walls[item.index]->DrawWall(di, state, translucent);
+		walls[item.index]->DrawWall(&dis, state, translucent);
 	}
 	RenderWall.Unclock();
 }

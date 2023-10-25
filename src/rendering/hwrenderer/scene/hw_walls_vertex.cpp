@@ -282,7 +282,7 @@ int HWWall::CountVertices()
 //
 //==========================================================================
 
-void HWWall::MakeVertices(HWDrawInfo *di, bool nosplit)
+void HWWall::MakeVertices(bool nosplit)
 {
 	if (vertcount == 0)
 	{

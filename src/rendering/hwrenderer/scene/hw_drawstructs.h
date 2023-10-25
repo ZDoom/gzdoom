@@ -226,7 +226,7 @@ public:
 
 	void SetupLights(HWDrawInfo* di, FDynLightData& lightdata);
 
-	void MakeVertices(HWDrawInfo* di, bool nosplit);
+	void MakeVertices(bool nosplit);
 
 	void SkyPlane(HWWallDispatcher* di, sector_t* sector, int plane, bool allowmirror);
 	void SkyLine(HWWallDispatcher* di, sector_t* sec, line_t* line);
@@ -280,11 +280,11 @@ public:
 
 	int CountVertices();
 
-	void RenderWall(HWDrawInfo* di, FRenderState& state, int textured);
-	void RenderFogBoundary(HWDrawInfo* di, FRenderState& state);
-	void RenderMirrorSurface(HWDrawInfo* di, FRenderState& state);
-	void RenderTexturedWall(HWDrawInfo* di, FRenderState& state, int rflags);
-	void RenderTranslucentWall(HWDrawInfo* di, FRenderState& state);
+	void RenderWall(FRenderState& state, int textured);
+	void RenderFogBoundary(HWWallDispatcher* di, FRenderState& state);
+	void RenderMirrorSurface(HWWallDispatcher* di, FRenderState& state);
+	void RenderTexturedWall(HWWallDispatcher* di, FRenderState& state, int rflags);
+	void RenderTranslucentWall(HWWallDispatcher* di, FRenderState& state);
 	void DrawDecalsForMirror(HWDrawInfo* di, FRenderState& state, TArray<HWDecal*>& decals);
 
 public:
@@ -296,7 +296,7 @@ public:
 		return -((y - glseg.y1) * (glseg.x2 - glseg.x1) - (x - glseg.x1) * (glseg.y2 - glseg.y1));
 	}
 
-	void DrawWall(HWDrawInfo* di, FRenderState& state, bool translucent);
+	void DrawWall(HWWallDispatcher* di, FRenderState& state, bool translucent);
 
 };
 

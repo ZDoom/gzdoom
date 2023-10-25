@@ -81,7 +81,7 @@ void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t
 //
 //==========================================================================
 
-void HWWall::RenderWall(HWDrawInfo*di, FRenderState &state, int textured)
+void HWWall::RenderWall(FRenderState &state, int textured)
 {
 	assert(vertcount > 0);
 	state.SetLightIndex(dynlightindex);
@@ -95,7 +95,7 @@ void HWWall::RenderWall(HWDrawInfo*di, FRenderState &state, int textured)
 //
 //==========================================================================
 
-void HWWall::RenderFogBoundary(HWDrawInfo*di, FRenderState &state)
+void HWWall::RenderFogBoundary(HWWallDispatcher*di, FRenderState &state)
 {
 	if (gl_fogmode && !di->isFullbrightScene())
 	{
@@ -105,7 +105,7 @@ void HWWall::RenderFogBoundary(HWDrawInfo*di, FRenderState &state)
 		state.SetEffect(EFF_FOGBOUNDARY);
 		state.AlphaFunc(Alpha_GEqual, 0.f);
 		state.SetDepthBias(-1, -128);
-		RenderWall(di, state, HWWall::RWF_BLANK);
+		RenderWall(state, HWWall::RWF_BLANK);
 		state.ClearDepthBias();
 		state.SetEffect(EFF_NONE);
 		state.EnableDrawBufferAttachments(true);
@@ -118,7 +118,7 @@ void HWWall::RenderFogBoundary(HWDrawInfo*di, FRenderState &state)
 // 
 //
 //==========================================================================
-void HWWall::RenderMirrorSurface(HWDrawInfo*di, FRenderState &state)
+void HWWall::RenderMirrorSurface(HWWallDispatcher*di, FRenderState &state)
 {
 	if (!TexMan.mirrorTexture.isValid()) return;
 
@@ -138,7 +138,7 @@ void HWWall::RenderMirrorSurface(HWDrawInfo*di, FRenderState &state)
 	state.SetMaterial(tex, UF_None, 0, CLAMP_NONE, 0, -1); // do not upscale the mirror texture.
 
 	flags &= ~HWWall::HWF_GLOW;
-	RenderWall(di, state, HWWall::RWF_BLANK);
+	RenderWall(state, HWWall::RWF_BLANK);
 
 	state.EnableTextureMatrix(false);
 	state.SetEffect(EFF_NONE);
@@ -149,9 +149,9 @@ void HWWall::RenderMirrorSurface(HWDrawInfo*di, FRenderState &state)
 	// This is drawn in the translucent pass which is done after the decal pass
 	// As a result the decals have to be drawn here, right after the wall they are on,
 	// because the depth buffer won't get set by translucent items.
-	if (seg->sidedef->AttachedDecals)
+	if (di->di && seg->sidedef->AttachedDecals)
 	{
-		DrawDecalsForMirror(di, state, di->Decals[1]);
+		DrawDecalsForMirror(di->di, state, di->di->Decals[1]);
 	}
 	state.SetRenderStyle(STYLE_Translucent);
 }
@@ -180,7 +180,7 @@ static const uint8_t renderwalltotier[] =
 CVAR(Bool, hw_npottest, false, 0)
 #endif
 
-void HWWall::RenderTexturedWall(HWDrawInfo*di, FRenderState &state, int rflags)
+void HWWall::RenderTexturedWall(HWWallDispatcher*di, FRenderState &state, int rflags)
 {
 	int tmode = state.GetTextureMode();
 	int rel = rellight + getExtraLight();
@@ -266,7 +266,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo*di, FRenderState &state, int rflags)
 	{
 		if (type != RENDERWALL_M2SNF) SetFog(state, di->Level, di->lightmode, lightlevel, rel, di->isFullbrightScene(), &Colormap, RenderStyle == STYLE_Add);
 		SetColor(state, di->Level, di->lightmode, lightlevel, rel, di->isFullbrightScene(), Colormap, absalpha);
-		RenderWall(di, state, rflags);
+		RenderWall(state, rflags);
 	}
 	else
 	{
@@ -289,7 +289,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo*di, FRenderState &state, int rflags)
 				SetColor(state, di->Level, di->lightmode, thisll, rel, false, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) SetFog(state, di->Level, di->lightmode, thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
 				SetSplitPlanes(state, (*lightlist)[i].plane, lowplane);
-				RenderWall(di, state, rflags);
+				RenderWall(state, rflags);
 			}
 			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
 		}
@@ -313,7 +313,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo*di, FRenderState &state, int rflags)
 //
 //==========================================================================
 
-void HWWall::RenderTranslucentWall(HWDrawInfo*di, FRenderState &state)
+void HWWall::RenderTranslucentWall(HWWallDispatcher*di, FRenderState &state)
 {
 	state.SetRenderStyle(RenderStyle);
 	if (texture)
@@ -328,7 +328,7 @@ void HWWall::RenderTranslucentWall(HWDrawInfo*di, FRenderState &state)
 		SetColor(state, di->Level, di->lightmode, lightlevel, 0, false, Colormap, fabsf(alpha));
 		SetFog(state, di->Level, di->lightmode, lightlevel, 0, false, &Colormap, RenderStyle == STYLE_Add);
 		state.EnableTexture(false);
-		RenderWall(di, state, HWWall::RWF_NOSPLIT);
+		RenderWall(state, HWWall::RWF_NOSPLIT);
 		state.EnableTexture(true);
 	}
 	state.SetRenderStyle(STYLE_Translucent);
@@ -339,15 +339,15 @@ void HWWall::RenderTranslucentWall(HWDrawInfo*di, FRenderState &state)
 // 
 //
 //==========================================================================
-void HWWall::DrawWall(HWDrawInfo*di, FRenderState &state, bool translucent)
+void HWWall::DrawWall(HWWallDispatcher*di, FRenderState &state, bool translucent)
 {
 	if (screen->BuffersArePersistent())
 	{
-		if (di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
+		if (di->di && di->Level->HasDynamicLights && !di->isFullbrightScene() && texture != nullptr)
 		{
-			SetupLights(di, lightdata);
+			SetupLights(di->di, lightdata);
 		}
-		MakeVertices(di, !!(flags & HWWall::HWF_TRANSLUCENT));
+		MakeVertices(!!(flags & HWWall::HWF_TRANSLUCENT));
 	}
 
 	state.SetNormal(glseg.Normal());
@@ -532,7 +532,7 @@ void HWWall::PutWall(HWWallDispatcher *di, bool translucent)
 			{
 				SetupLights(ddi, lightdata);
 			}
-			MakeVertices(ddi, translucent);
+			MakeVertices(translucent);
 		}
 
 
@@ -580,7 +580,7 @@ void HWWall::PutPortal(HWWallDispatcher *di, int ptype, int plane)
 	auto ddi = di->di;
 	if (ddi)
 	{
-		MakeVertices(ddi, false);
+		MakeVertices(false);
 		switch (ptype)
 		{
 			// portals don't go into the draw list.

@@ -443,11 +443,13 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.partime > 0) levelinfo->partime = map.partime;
 		if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
 		if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
+		/* UMAPINFO's intermusic is for the text screen, not the summary.
 		if (map.intermusic[0])
 		{
 			levelinfo->InterMusic = map.intermusic;
 			levelinfo->intermusicorder = 0;
 		}
+		*/
 		if (map.BossActions.Size() > 0 || map.BossCleared)
 		{
 			// Setting a boss action will deactivate the flag based monster actions.

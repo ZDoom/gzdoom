@@ -43,7 +43,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	auto oldlightmode = di->lightmode;
-	if (di->isSoftwareLighting())
+	if (isSoftwareLighting(oldlightmode))
 	{
 		di->SetFallbackLightMode();
 		state.SetNoSoftLightLevel();

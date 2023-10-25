@@ -84,7 +84,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 	else state.AlphaFunc(Alpha_Greater, 0.f);
 
 
-	di->SetColor(state, lightlevel, rellight, di->isFullbrightScene(), Colormap, alpha);
+	SetColor(state, di->Level, di->lightmode, lightlevel, rellight, di->isFullbrightScene(), Colormap, alpha);
 	// for additively drawn decals we must temporarily set the fog color to black.
 	PalEntry fc = state.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -115,9 +115,9 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				CopyFrom3DLight(thiscm, &lightlist[k]);
-				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
+				SetColor(state, di->Level, di->lightmode, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
-				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
+				SetFog(state, di->Level, di->lightmode, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
 				SetSplitPlanes(state, lightlist[k].plane, lowplane);
 
 				state.Draw(DT_TriangleStrip, vertindex, 4);
@@ -156,7 +156,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<HWDecal *> &decals)
 			else
 			{
 				state.EnableSplit(false);
-				SetFog(state, gldecal->lightlevel, gldecal->rellight, isFullbrightScene(), &gldecal->Colormap, false);
+				SetFog(state, Level, lightmode, gldecal->lightlevel, gldecal->rellight, isFullbrightScene(), &gldecal->Colormap, false);
 			}
 		}
 		gldecal->DrawDecal(this, state);
@@ -178,7 +178,7 @@ void HWWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWD
 {
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
-	di->SetFog(state, lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
+	SetFog(state, di->Level, di->lightmode, lightlevel, rellight + getExtraLight(), di->isFullbrightScene(), &Colormap, false);
 	for (auto gldecal : decals)
 	{
 		if (gldecal->decal->Side == seg->sidedef)

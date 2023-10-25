@@ -38,20 +38,20 @@
 // set current light color
 //
 //==========================================================================
-void HWDrawInfo::SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
+void SetColor(FRenderState &state, FLevelLocals* Level, ELightMode lightmode, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
 {
 	if (fullbright)
 	{
 		state.SetColorAlpha(0xffffff, alpha, 0);
-		if (isSoftwareLighting()) state.SetSoftLightLevel(255);
+		if (isSoftwareLighting(lightmode)) state.SetSoftLightLevel(255);
 		else state.SetNoSoftLightLevel();
 	}
 	else
 	{
-		int hwlightlevel = CalcLightLevel(sectorlightlevel, rellight, weapon, cm.BlendFactor);
-		PalEntry pe = CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
+		int hwlightlevel = CalcLightLevel(lightmode, sectorlightlevel, rellight, weapon, cm.BlendFactor);
+		PalEntry pe = CalcLightColor(lightmode, hwlightlevel, cm.LightColor, cm.BlendFactor);
 		state.SetColorAlpha(pe, alpha, cm.Desaturation);
-		if (isSoftwareLighting()) state.SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight), cm.BlendFactor);
+		if (isSoftwareLighting(lightmode)) state.SetSoftLightLevel(hw_ClampLight(sectorlightlevel + rellight), cm.BlendFactor);
 		else state.SetNoSoftLightLevel();
 	}
 }
@@ -62,7 +62,7 @@ void HWDrawInfo::SetColor(FRenderState &state, int sectorlightlevel, int relligh
 //
 //==========================================================================
 
-void HWDrawInfo::SetShaderLight(FRenderState &state, float level, float olight)
+void SetShaderLight(FRenderState &state, FLevelLocals* Level, float level, float olight)
 {
 	const float MAXDIST = 256.f;
 	const float THRESHOLD = 96.f;
@@ -96,7 +96,7 @@ void HWDrawInfo::SetShaderLight(FRenderState &state, float level, float olight)
 //
 //==========================================================================
 
-void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
+void SetFog(FRenderState &state, FLevelLocals* Level, ELightMode lightmode, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
 {
 	PalEntry fogcolor;
 	float fogdensity;
@@ -109,7 +109,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	else if (cmap != nullptr && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = GetFogDensity(lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
+		fogdensity = GetFogDensity(Level, lightmode, lightlevel, fogcolor, cmap->FogDensity, cmap->BlendFactor);
 		fogcolor.a = 0;
 	}
 	else
@@ -130,10 +130,10 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	}
 	else
 	{
-		if ((lightmode == ELightMode::Doom || (isSoftwareLighting() && cmap && cmap->BlendFactor > 0)) && fogcolor == 0)
+		if ((lightmode == ELightMode::Doom || (isSoftwareLighting(lightmode) && cmap && cmap->BlendFactor > 0)) && fogcolor == 0)
 		{
-			float light = (float)CalcLightLevel(lightlevel, rellight, false, cmap->BlendFactor);
-			SetShaderLight(state, light, lightlevel);
+			float light = (float)CalcLightLevel(lightmode, lightlevel, rellight, false, cmap->BlendFactor);
+			SetShaderLight(state, Level, light, lightlevel);
 		}
 		else if (lightmode == ELightMode::Build)
 		{
@@ -155,7 +155,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 		state.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (isSoftwareLighting() && cmap && cmap->BlendFactor == 0 && Level->brightfog && fogdensity != 0 && fogcolor != 0)
+		if (isSoftwareLighting(lightmode) && cmap && cmap->BlendFactor == 0 && Level->brightfog && fogdensity != 0 && fogcolor != 0)
 		{
 			state.SetSoftLightLevel(255);
 		}

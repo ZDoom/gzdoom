@@ -1892,9 +1892,9 @@ bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 	bool printRequires = false;
 	FString text;
 
-	arc("Game WAD", text);
+	text = arc.GetString("Game WAD");
 	CheckSingleWad (text.GetChars(), printRequires, printwarn);
-	arc("Map WAD", text);
+	text = arc.GetString("Map WAD");
 	CheckSingleWad (text.GetChars(), printRequires, printwarn);
 
 	if (printRequires)

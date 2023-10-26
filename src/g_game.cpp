@@ -1890,12 +1890,12 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 {
 	bool printRequires = false;
-	const char* text;
 
-	text = arc.GetString("Game WAD");
+	const char *text = arc.GetString("Game WAD");
 	CheckSingleWad (text, printRequires, printwarn);
-	text = arc.GetString("Map WAD");
-	if (text != nullptr) CheckSingleWad (text, printRequires, printwarn);
+	const char *text2 = arc.GetString("Map WAD");
+	// do not validate the same file twice.
+	if (text != nullptr && text2 != nullptr && stricmp(text, text2) != 0) CheckSingleWad (text2, printRequires, printwarn);
 
 	if (printRequires)
 	{
@@ -2268,11 +2268,8 @@ static void PutSaveWads (FSerializer &arc)
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (fileSystem.GetFileContainer (primaryLevel->lumpnum) > fileSystem.GetIwadNum())
-	{
-		name = fileSystem.GetResourceFileName (fileSystem.GetFileContainer (primaryLevel->lumpnum));
-		arc.AddString("Map WAD", name);
-	}
+	name = fileSystem.GetResourceFileName (fileSystem.GetFileContainer (primaryLevel->lumpnum));
+	arc.AddString("Map WAD", name);
 }
 
 static void PutSaveComment (FSerializer &arc)

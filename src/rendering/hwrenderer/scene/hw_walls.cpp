@@ -2407,7 +2407,7 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 
 		/* bottom texture */
 		// the back sector's ceiling obstructs part of this wall (specially important for sky sectors)
-		float bfh1a = bch1, bfh2a = bch2;
+		float bfh1a = bfh1, bfh2a = bfh2;
 		if (fch1 < bfh1 && fch2 < bfh2 && (seg->linedef->flags & ML_DRAWFULLHEIGHT) == 0)
 		{
 			bfh1 = fch1;

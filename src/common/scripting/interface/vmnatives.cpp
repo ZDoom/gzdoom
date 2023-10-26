@@ -847,6 +847,13 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 	ACTION_RETURN_STRING(isLumpValid ? GetStringFromLump(lump, false) : FString());
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, GetLumpLength)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	ACTION_RETURN_INT(fileSystem.FileLength(lump));
+}
+
 //==========================================================================
 //
 // CVARs

@@ -859,6 +859,7 @@ struct Wads	// todo: make FileSystem an alias to 'Wads'
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
 	native static int FindLumpFullName(string name, int startlump = 0, bool noext = false);
 	native static string ReadLump(int lump);
+	native static int GetLumpLength(int lump);
 
 	native static int GetNumLumps();
 	native static string GetLumpName(int lump);

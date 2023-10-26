@@ -1890,12 +1890,12 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 {
 	bool printRequires = false;
-	FString text;
+	const char* text;
 
 	text = arc.GetString("Game WAD");
 	CheckSingleWad (text, printRequires, printwarn);
 	text = arc.GetString("Map WAD");
-	CheckSingleWad (text, printRequires, printwarn);
+	if (text != nullptr) CheckSingleWad (text, printRequires, printwarn);
 
 	if (printRequires)
 	{

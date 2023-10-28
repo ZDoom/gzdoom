@@ -1821,6 +1821,12 @@ void FLevelLocals::Init()
 			flags |= LEVEL_HASFADETABLE;
 		}
 	}
+
+	if (strnicmp (info->CustomColorMap.GetChars(), "COLORMAP", 8) != 0)
+	{
+		flags3 |= LEVEL3_HAS_CUSTOM_COLORMAP;
+	}
+
 	airsupply = info->airsupply*TICRATE;
 	outsidefog = info->outsidefog;
 	WallVertLight = info->WallVertLight*2;

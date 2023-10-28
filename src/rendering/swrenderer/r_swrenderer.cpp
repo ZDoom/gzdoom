@@ -271,7 +271,11 @@ void FSoftwareRenderer::SetColormap(FLevelLocals *Level)
 	NormalLight.Maps = realcolormaps.Maps;
 	NormalLight.ChangeColor(PalEntry(255, 255, 255), 0);
 	NormalLight.ChangeFade(Level->fadeto);
-	if (Level->fadeto == 0)
+	if(Level->info->flags3 & LEVEL3_HAS_CUSTOM_COLORMAP)
+	{
+		SetDefaultColormap(Level->info->CustomColorMap.GetChars());
+	}
+	else if (Level->fadeto == 0)
 	{
 		SetDefaultColormap(Level->info->FadeTable.GetChars());
 	}

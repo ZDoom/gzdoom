@@ -161,17 +161,14 @@ bool ZCCDoomCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Pr
 
 bool ZCCDoomCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Properties, FName prefix)
 {
-	if (!type->IsDescendantOf(RUNTIME_CLASS(AActor)))
-	{
-		Error(Properties[0], "Flags can only be defined for actors");
-		return false;
-	}
+	//[RL0] allow property-less flagdefs for non-actors
+	bool isActor = type->IsDescendantOf(RUNTIME_CLASS(AActor));
 	for (auto p : Properties)
 	{
 		PField *field;
 		FName referenced = FName(p->RefName);
 
-		if (FName(p->NodeName) == FName("prefix") && fileSystem.GetFileContainer(Lump) == 0)
+		if (isActor && FName(p->NodeName) == FName("prefix") && fileSystem.GetFileContainer(Lump) == 0)
 		{
 			// only for internal definitions: Allow setting a prefix. This is only for compatiblity with the old DECORATE property parser, but not for general use.
 			prefix = referenced;
@@ -191,24 +188,28 @@ bool ZCCDoomCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Prope
 				}
 			}
 			else field = nullptr;
-
-
-			FString qualifiedname;
-			// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
-			// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
+			
 			FName name = FName(p->NodeName);
-			for (int i = 0; i < 2; i++)
-			{
-				if (i == 0) qualifiedname.Format("@flagdef@%s", name.GetChars());
-				else
-				{
-					if (prefix == NAME_None) continue;
-					qualifiedname.Format("@flagdef@%s.%s", prefix.GetChars(), name.GetChars());
-				}
 
-				if (!type->VMType->Symbols.AddSymbol(Create<PPropFlag>(qualifiedname, field, p->BitValue, i == 0 && prefix != NAME_None)))
+			if(isActor)
+			{
+				FString qualifiedname;
+				// Store the full qualified name and prepend some 'garbage' to the name so that no conflicts with other symbol types can happen.
+				// All these will be removed from the symbol table after the compiler finishes to free up the allocated space.
+				
+				for (int i = 0; i < 2; i++)
 				{
-					Error(p, "Unable to add flag definition %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
+					if (i == 0) qualifiedname.Format("@flagdef@%s", name.GetChars());
+					else
+					{
+						if (prefix == NAME_None) continue;
+						qualifiedname.Format("@flagdef@%s.%s", prefix.GetChars(), name.GetChars());
+					}
+
+					if (!type->VMType->Symbols.AddSymbol(Create<PPropFlag>(qualifiedname, field, p->BitValue, i == 0 && prefix != NAME_None)))
+					{
+						Error(p, "Unable to add flag definition %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
+					}
 				}
 			}
 

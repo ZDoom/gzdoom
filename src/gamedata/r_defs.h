@@ -693,7 +693,7 @@ struct sector_t
 	int			sky;						// MBF sky transfer info.
 	int 		validcount;					// if == validcount, already checked
 
-	uint32_t bottommap, midmap, topmap;		// killough 4/4/98: dynamic colormaps
+	uint32_t selfmap, bottommap, midmap, topmap;		// killough 4/4/98: dynamic colormaps
 											// [RH] these can also be blend values if
 											//		the alpha mask is non-zero
 

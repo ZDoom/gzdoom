@@ -642,6 +642,7 @@ public:
 	double		sky1pos, sky2pos;
 	float		hw_sky1pos, hw_sky2pos;
 	bool		skystretch;
+	uint32_t	globalcolormap;
 
 	int			total_secrets;
 	int			found_secrets;

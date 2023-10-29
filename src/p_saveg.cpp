@@ -303,6 +303,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			//("bottommap", p.bottommap)
 			//("midmap", p.midmap)
 			//("topmap", p.topmap)
+			//("selfmap", p.selfmap) // todo: if this becomes changeable we need a colormap serializer.
 			("damageamount", p.damageamount, def->damageamount)
 			("damageinterval", p.damageinterval, def->damageinterval)
 			("leakydamage", p.leakydamage, def->leakydamage)

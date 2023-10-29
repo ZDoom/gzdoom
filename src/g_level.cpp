@@ -1822,11 +1822,8 @@ void FLevelLocals::Init()
 		}
 	}
 
-	if (strnicmp (info->CustomColorMap.GetChars(), "COLORMAP", 8) != 0)
-	{
-		flags3 |= LEVEL3_HAS_CUSTOM_COLORMAP;
-	}
 
+	globalcolormap = R_ColormapNumForName(info->CustomColorMap.GetChars());
 	airsupply = info->airsupply*TICRATE;
 	outsidefog = info->outsidefog;
 	WallVertLight = info->WallVertLight*2;

@@ -574,7 +574,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
+		CreateScroller(EScroll::sc_floor, -4., 0, sector, nullptr, 0);
 		keepspecial = true;
 		break;
 
@@ -631,13 +631,13 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
+			CreateScroller(EScroll::sc_floor, dx, dy, sector, nullptr, 0);
 		}
 		else if (sector->special >= Carry_East5 && sector->special <= Carry_East35)
 		{ 
 			// Heretic scroll special
 			// Only east scrollers also scroll the texture
-			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
+			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, nullptr, 0);
 		}
 		keepspecial = true;
 		break;
@@ -1466,7 +1466,8 @@ void MapLoader::SpawnScrollers()
 }
 
 
-void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos, int scrollmode)
+void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *sect, side_t* side, int accel, EScrollPos scrollpos, int scrollmode)
 {
-	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos, scrollmode);
+	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, sect, side, accel, scrollpos, scrollmode);
 }
+

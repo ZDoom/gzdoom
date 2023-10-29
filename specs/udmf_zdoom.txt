@@ -238,6 +238,16 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       skew_middle = <int>;          // Vertical texture alignment defines the position at the leftmost point of the wall.
       skew_bottom = <int>;          // Possible values: 0 = no skewing, 1 = align to front floor, 2 = align to front ceiling, 3 = align to back floor, 4 = align to back ceiling.
 	                                // Front/Back are relative to the sidedef, not the owning linedef. Default = 0.
+									
+      xscroll  = <float>;           // wall scrolling X speed in map units per tic.
+      yscroll  = <float>;           // wall scrolling Y speed in map units per tic.
+      xscrolltop  = <float>;        // upper wall scrolling X speed in map units per tic.
+      yscrolltop  = <float>;        // upper wall scrolling Y speed in map units per tic.
+      xscrollmid  = <float>;        // mid wall scrolling X speed in map units per tic.
+      yscrollmid  = <float>;        // mid wall scrolling Y speed in map units per tic.
+      xscrollbottom  = <float>;     // lower wall scrolling X speed in map units per tic.
+      yscrollbottom  = <float>;     // lower wall scrolling Y speed in map units per tic.
+									
 
    }
 

@@ -365,6 +365,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  friction = <float>;             // sets the sector's friction factor. Must be between 0 and 1.
 	  movefactor = <float>            // sets the sector's movement acceleration factor. Must be > 0.
 	  
+	  skyfloor = <string>             // defines lower sky for this sector.
+	  skyceiling = <string>           // defines upper sky for this sector.
+	  skyfloor2 = <string>             // defines secondary lower sky for this sector. (for lightning or transparent layers)
+	  skyceiling2 = <string>           // defines secondary upper sky for this sector.
+	  
 	  colormap = <string>;            // only provided for backwards compatibility. Do not use in GZDoom projects.
 
       * Note about dropactors

@@ -886,6 +886,8 @@ xx(thrustlocation)
 xx(colormap)
 xx(skyfloor)
 xx(skyceiling)
+xx(skyfloor2)
+xx(skyceiling2)
 xx(frictionfactor)
 xx(movefactor)
 

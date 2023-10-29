@@ -2124,6 +2124,22 @@ public:
 					movefactor = CheckFloat(key);
 					break;
 
+				case NAME_skyfloor:
+					sec->planes[sector_t::floor].skytexture[0] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyfloor2:
+					sec->planes[sector_t::floor].skytexture[1] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyceiling:
+					sec->planes[sector_t::ceiling].skytexture[0] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyceiling2:
+					sec->planes[sector_t::ceiling].skytexture[1] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
 					// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:

@@ -308,7 +308,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("damageinterval", p.damageinterval, def->damageinterval)
 			("leakydamage", p.leakydamage, def->leakydamage)
 			("damagetype", p.damagetype, def->damagetype)
-			("sky", p.sky, def->sky)
+			("sky", p.skytransfer, def->skytransfer)
 			("moreflags", p.MoreFlags, def->MoreFlags)
 			("flags", p.Flags, def->Flags)
 			.Array("portals", p.Portals, def->Portals, 2, true)

@@ -186,6 +186,10 @@ static void PrecacheLevel(FLevelLocals *Level)
 	{
 		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::floor), FTextureManager::HIT_Flat);
 		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::ceiling), FTextureManager::HIT_Flat);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[0].skytexture[0], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[0].skytexture[1], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[1].skytexture[0], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[1].skytexture[1], FTextureManager::HIT_Wall);
 	}
 
 	for (i = Level->sides.Size() - 1; i >= 0; i--)

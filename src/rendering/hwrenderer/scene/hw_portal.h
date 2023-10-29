@@ -30,7 +30,7 @@ struct HWSkyInfo
 	{
 		return !!memcmp(this, &inf, sizeof(*this));
 	}
-	void init(HWDrawInfo *di, int sky1, PalEntry fadecolor);
+	void init(HWDrawInfo *di, sector_t* sec, int skypos, int sky1, PalEntry fadecolor);
 };
 
 struct HWHorizonInfo

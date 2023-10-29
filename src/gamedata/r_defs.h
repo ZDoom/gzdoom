@@ -667,6 +667,7 @@ struct sector_t
 		float GlowHeight;
 		FTextureID Texture;
 		TextureManipulation TextureFx;
+		FTextureID skytexture[2];
 	};
 
 
@@ -690,7 +691,7 @@ struct sector_t
 
 	int		special;					// map-defined sector special type
 
-	int			sky;						// MBF sky transfer info.
+	int			skytransfer;						// MBF sky transfer info.
 	int 		validcount;					// if == validcount, already checked
 
 	uint32_t selfmap, bottommap, midmap, topmap;		// killough 4/4/98: dynamic colormaps
@@ -825,7 +826,6 @@ public:
 
 	int CheckSpriteGlow(int lightlevel, const DVector3 &pos);
 	bool GetWallGlow(float *topglowcolor, float *bottomglowcolor);
-
 
 	void SetXOffset(int pos, double o)
 	{

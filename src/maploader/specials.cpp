@@ -609,7 +609,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case Sky2:
-		sector->sky = PL_SKYFLAT;
+		sector->skytransfer = PL_SKYFLAT;
 		break;
 
 	default:
@@ -872,7 +872,7 @@ void MapLoader::SpawnSpecials ()
 				{
 					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
-						Level->sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
+						Level->sectors[s].skytransfer = (line.Index() + 1) | PL_SKYFLAT;
 					break;
 				}
 			}

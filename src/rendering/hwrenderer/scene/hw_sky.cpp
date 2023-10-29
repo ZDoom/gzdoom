@@ -37,13 +37,26 @@
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+FTextureID GetSkyTexture(sector_t* sec, int plane, int second)
+{
+	auto tex = sec->planes[plane].skytexture[second];
+	if (tex.isValid()) return tex;
+	return second ? sec->Level->skytexture2 : sec->Level->skytexture1;
+}
+
 //==========================================================================
 //
 //  Set up the skyinfo struct
 //
 //==========================================================================
 
-void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
+void HWSkyInfo::init(HWDrawInfo *di, sector_t* sec, int skypos, int sky1, PalEntry FadeColor)
 {
 	memset(this, 0, sizeof(*this));
 	if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT - 1)))
@@ -73,25 +86,27 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 	else
 	{
 	normalsky:
+		auto skytex1 = GetSkyTexture(sec, skypos, false);
+		auto skytex2 = GetSkyTexture(sec, skypos, true);
 		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
-			auto tex1 = TexMan.GetGameTexture(di->Level->skytexture1, true);
+			auto tex1 = TexMan.GetGameTexture(skytex1);
 			texture[1] = tex1;
 			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}
 
 		if ((di->Level->flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (di->Level->flags&LEVEL_DOUBLESKY)) &&
-			di->Level->skytexture2 != di->Level->skytexture1)	// If both skies are equal use the scroll offset of the first!
+			skytex2 != skytex1)	// If both skies are equal use the scroll offset of the first!
 		{
-			texture[0] = TexMan.GetGameTexture(di->Level->skytexture2, true);
-			skytexno1 = di->Level->skytexture2;
+			texture[0] = TexMan.GetGameTexture(skytex2, true);
+			skytexno1 = skytex2;
 			sky2 = true;
 			x_offset[0] = di->Level->hw_sky2pos;
 		}
 		else if (!doublesky)
 		{
-			texture[0] = TexMan.GetGameTexture(di->Level->skytexture1, true);
+			texture[0] = TexMan.GetGameTexture(skytex1, true);
 			skytexno1 = di->Level->skytexture1;
 			x_offset[0] = di->Level->hw_sky1pos;
 		}
@@ -125,7 +140,7 @@ void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool al
 		if (di->di)
 		{
 			HWSkyInfo skyinfo;
-			skyinfo.init(di->di, sector->sky, Colormap.FadeColor);
+			skyinfo.init(di->di, sector, plane, sector->skytransfer, Colormap.FadeColor);
 			ptype = PORTALTYPE_SKY;
 			sky = &skyinfo;
 		}
@@ -199,7 +214,7 @@ void HWWall::SkyLine(HWWallDispatcher *di, sector_t *fs, line_t *line)
 	}
 	else
 	{
-		if (di->di) skyinfo.init(di->di, fs->sky, Colormap.FadeColor);
+		if (di->di) skyinfo.init(di->di, fs, sector_t::ceiling, fs->skytransfer, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
 	}

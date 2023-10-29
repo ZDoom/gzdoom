@@ -371,6 +371,12 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  skyceiling2 = <string>           // defines secondary upper sky for this sector.
 	  
 	  colormap = <string>;            // only provided for backwards compatibility. Do not use in GZDoom projects.
+	  
+      xthrust = <float>;              // applies thrust to actors - x-magnitude
+      ythrust = <float>;              // applies thrust to actors - y-magnitude
+      thrustgroup = <int>;            // specifies which actors get thrusted. Bitfield with (1 = static objects, 2 = player, 4 = monsters, 8 = projectiles, 16 = actors with +WINDTHRUST)
+      thrustlocation = <int>;         // specifies where in the sector actors get thrusted: (1 = on the ground, 2 = in the air, 4 = on the ceiling)
+	  
 
       * Note about dropactors
 

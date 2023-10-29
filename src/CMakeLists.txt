@@ -872,6 +872,7 @@ set (PCH_SOURCES
 	playsim/mapthinkers/a_pillar.cpp
 	playsim/mapthinkers/a_plats.cpp
 	playsim/mapthinkers/a_pusher.cpp
+	playsim/mapthinkers/a_thruster.cpp
 	playsim/mapthinkers/a_scroll.cpp
 	playsim/mapthinkers/dsectoreffect.cpp
 	playsim/a_pickups.cpp

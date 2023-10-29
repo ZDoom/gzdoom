@@ -53,6 +53,7 @@
 #include "maploader.h"
 #include "texturemanager.h"
 #include "a_scroll.h"
+#include "p_spec_thinkers.h"
 
 //===========================================================================
 //
@@ -450,6 +451,7 @@ class UDMFParser : public UDMFParserBase
 	TArray<vertex_t> ParsedVertices;
 	TArray<UDMFScroll> UDMFSectorScrollers;
 	TArray<UDMFScroll> UDMFWallScrollers;
+	TArray<UDMFScroll> UDMFThrusters;
 
 	FDynamicColormap	*fogMap = nullptr, *normMap = nullptr;
 	FMissingTextureTracker &missingTex;
@@ -1639,6 +1641,10 @@ public:
 
 		double friction = -FLT_MAX, movefactor = -FLT_MAX;
 
+		DVector2 thrust = { 0,0 };
+		int thrustgroup = 0;
+		int thrustlocation = 0;
+
 		const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 
 		memset(sec, 0, sizeof(*sec));
@@ -2140,6 +2146,22 @@ public:
 					sec->planes[sector_t::ceiling].skytexture[1] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
 					break;
 
+				case NAME_xthrust:
+					thrust.X = CheckFloat(key);
+					break;
+
+				case NAME_ythrust:
+					thrust.Y = CheckFloat(key);
+					break;
+
+				case NAME_thrustgroup:
+					thrustgroup = CheckInt(key);
+					break;
+
+				case NAME_thrustlocation:
+					thrustlocation = CheckInt(key);
+					break;
+
 					// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:
@@ -2205,7 +2227,7 @@ public:
 			sec->Flags &= ~SECF_DAMAGEFLAGS;
 		}
 
-		// Cannot be initialized yet because they need the final sector array.
+		// These cannot be initialized yet because they need the final sector array.
 		if (scroll_ceil_type != NAME_None)
 		{
 			UDMFSectorScrollers.Push({ true, index, scroll_ceil_x, scroll_ceil_y, scroll_ceil_type });
@@ -2213,6 +2235,10 @@ public:
 		if (scroll_floor_type != NAME_None)
 		{
 			UDMFSectorScrollers.Push({ false, index, scroll_floor_x, scroll_floor_y, scroll_floor_type });
+		}
+		if (!thrust.isZero())
+		{
+			UDMFThrusters.Push({ thrustlocation, index, thrust.X, thrust.Y, thrustgroup });
 		}
 
 		
@@ -2612,6 +2638,10 @@ public:
 			{
 				loader->CreateScroller(EScroll::sc_side, scroll.x, scroll.y, nullptr, &Level->sides[sd], 0);
 			}
+		}
+		for (auto& scroll : UDMFThrusters)
+		{
+			Level->CreateThinker<DThruster>(&Level->sectors[scroll.index], scroll.x, scroll.y, scroll.scrolltype, scroll.where);
 		}
 	}
 };

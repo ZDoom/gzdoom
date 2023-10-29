@@ -105,8 +105,11 @@ void DScroller::Serialize(FSerializer &arc)
 		("vdx", m_vdx)
 		("vdy", m_vdy)
 		("accel", m_Accel)
+		("affect", m_Affect)
 		.Enum("parts", m_Parts)
 		.Array("interpolations", m_Interpolations, 3);
+
+	if (arc.isReading() && m_Affect == 0) m_Affect = SCROLL_All;
 }
 
 //-----------------------------------------------------------------------------
@@ -218,11 +221,55 @@ void DScroller::Tick ()
 			// mark all potentially affected things here so that the very expensive calculation loop in AActor::Tick does not need to run for actors which do not touch a scrolling sector.
 			for (auto n = m_Sector->touching_thinglist; n; n = n->m_snext)
 			{
+				AActor* actor = n->m_thing;
+				if (actor->player)
+				{
+					if (!(m_Affect & SCROLL_Players))
+						continue;
+				}
+				else if (actor->flags3 & MF3_ISMONSTER)
+				{
+					if (!(m_Affect & SCROLL_Monsters))
+						continue;
+				}
+				else if (!(m_Affect & SCROLL_StaticObjects))
+					continue;
+
 				n->m_thing->flags8 |= MF8_INSCROLLSEC;
 			}
 			break;
 
-		case EScroll::sc_carry_ceiling:       // to be added later
+		case EScroll::sc_carry_ceiling:
+			// this just copies DSDA's implementation. Usability is limited.
+			for (auto n = m_Sector->touching_thinglist; n; n = n->m_snext)
+			{
+				AActor* actor = n->m_thing;
+
+				if (
+					!(actor->flags & MF_NOCLIP) &&
+					actor->flags & MF_SPAWNCEILING &&
+					actor->flags & MF_NOGRAVITY &&
+					actor->Top() == m_Sector->ceilingplane.ZatPoint(actor->Pos().XY())
+					)
+				{
+
+					if (actor->player)
+					{
+						if (!(m_Affect & SCROLL_Players))
+							continue;
+					}
+					else if (actor->flags3 & MF3_ISMONSTER)
+					{
+						if (!(m_Affect & SCROLL_Monsters))
+							continue;
+					}
+					else if (!(m_Affect & SCROLL_StaticObjects))
+						continue;
+
+					n->m_thing->Vel.X = m_dx;
+					n->m_thing->Vel.Y = m_dy;
+				}
+			}
 			break;
 	}
 }
@@ -247,7 +294,7 @@ void DScroller::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-void DScroller::Construct (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos)
+void DScroller::Construct (EScroll type, double dx, double dy,  sector_t *ctrl, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos, int aff)
 {
 	m_Type = type;
 	m_dx = dx;
@@ -256,6 +303,7 @@ void DScroller::Construct (EScroll type, double dx, double dy,  sector_t *ctrl, 
 	m_Parts = scrollpos;
 	m_vdx = m_vdy = 0;
 	m_LastHeight = 0;
+	m_Affect = aff;
 	if ((m_Controller = ctrl) != nullptr)
 	{
 		m_LastHeight = m_Controller->CenterFloor() + m_Controller->CenterCeiling();
@@ -344,6 +392,7 @@ void DScroller::Construct(double dx, double dy, const line_t *l, sector_t * cont
 	m_Accel = accel;
 	m_Parts = scrollpos;
 	m_LastHeight = 0;
+	m_Affect = SCROLL_All; // not really relevant, so use the default.
 	if ((m_Controller = control) != nullptr)
 	{
 		m_LastHeight = m_Controller->CenterFloor() + m_Controller->CenterCeiling();

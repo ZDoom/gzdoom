@@ -1466,7 +1466,7 @@ void MapLoader::SpawnScrollers()
 }
 
 
-void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
+void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos, int scrollmode)
 {
-	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
+	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos, scrollmode);
 }

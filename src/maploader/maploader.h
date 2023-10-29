@@ -194,7 +194,7 @@ private:
 	void SpawnSpecials();
 	void InitSectorSpecial(sector_t *sector, int special);
 	void SpawnLights(sector_t *sector);
-	void CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	void CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all, int scrollmode = 15/*SCROLL_All*/);
 	void SpawnScrollers();
 	void SpawnFriction();
 	void SpawnPushers();

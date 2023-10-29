@@ -337,6 +337,20 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       healthfloorgroup = <int>;       // ID of destructible object to synchronize hitpoints (optional, default is 0)
       healthceiling = <int>;          // Amount of hitpoints for this sector (includes ceiling and top-outside linedef sides)
       healthceilinggroup = <int>;     // ID of destructible object to synchronize hitpoints (optional, default is 0)
+	  
+      xscrollfloor = <float>;         // X map units per frame to scroll the floor.
+      yscrollfloor = <float>;         // Y map units per frame to scroll the floor.
+      scrollfloormode = <int>;        // Floor scroll mode bit mask (1 = scroll textures, 2 = carry static objects, 4 = carry players, 8 = carry monsters.
+      xscrollceiling = <float>;       // X map units per frame to scroll the ceiling.
+      yscrollceiling = <float>;       // Y map units per frame to scroll the ceiling.
+      scrollceilingmode = <int>;      // ceiling scroll mode bit mask (1 = scroll textures, 2 = carry static objects, 4 = carry players, 8 = carry monsters.
+	  
+	  scroll_ceil_x = <float>;        // deprecated Eternity based alternatives for the above. 
+	  scroll_ceil_y = <float>;        // Due to using unintuitive units of measurement and a more limited feature set they should not be used anymore.	
+	  scroll_ceil_type = <string>;
+	  scroll_floor_x = <float>;
+	  scroll_floor_y = <float>;
+	  scroll_floor_type = <string>;
 
       * Note about dropactors
 

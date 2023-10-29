@@ -52,6 +52,7 @@
 #include "xlat/xlat.h"
 #include "maploader.h"
 #include "texturemanager.h"
+#include "a_scroll.h"
 
 //===========================================================================
 //
@@ -431,7 +432,7 @@ struct UDMFScroll
 	bool ceiling;
 	int index;
 	double x, y;
-	FName type;
+	int scrolltype;
 };
 
 class UDMFParser : public UDMFParserBase
@@ -1589,11 +1590,13 @@ public:
 		// Brand new UDMF scroller properties
 		double scroll_ceil_x = 0;
 		double scroll_ceil_y = 0;
-		FName scroll_ceil_type = NAME_None;
+		int scroll_ceil_type = 0;
 
 		double scroll_floor_x = 0;
 		double scroll_floor_y = 0;
-		FName scroll_floor_type = NAME_None;
+		int scroll_floor_type = 0;
+
+		const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 
 		memset(sec, 0, sizeof(*sec));
 		sec->Level = Level;
@@ -2007,28 +2010,64 @@ public:
 					break;
 
 				case NAME_scroll_ceil_x:
+					scroll_ceil_x = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_xscrollceiling:
 					scroll_ceil_x = CheckFloat(key);
 					break;
 
 				case NAME_scroll_ceil_y:
+					scroll_ceil_y = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_yscrollceiling:
 					scroll_ceil_y = CheckFloat(key);
 					break;
 
-				case NAME_scroll_ceil_type:
-					scroll_ceil_type = CheckString(key);
+				case NAME_scrollceilingmode:
+					scroll_ceil_type = CheckInt(key);
 					break;
 
+				case NAME_scroll_ceil_type:
+				{
+					const char* val = CheckString(key);
+					if (!stricmp(val, "both")) scroll_ceil_type = SCROLL_All;
+					else if (!stricmp(val, "visual")) scroll_ceil_type = SCROLL_Textures;
+					if (!stricmp(val, "physical")) scroll_ceil_type = SCROLL_All & ~SCROLL_Textures;
+					else scroll_ceil_type = 0;
+					break;
+				}
+
 				case NAME_scroll_floor_x:
+					scroll_floor_x = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_xscrollfloor:
 					scroll_floor_x = CheckFloat(key);
 					break;
 
 				case NAME_scroll_floor_y:
+					scroll_floor_y = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_yscrollfloor:
 					scroll_floor_y = CheckFloat(key);
 					break;
 
-				case NAME_scroll_floor_type:
-					scroll_floor_type = CheckString(key);
+				case NAME_scrollfloormode:
+					scroll_floor_type = CheckInt(key);
 					break;
+
+				case NAME_scroll_floor_type:
+				{
+					const char* val = CheckString(key);
+					if (!stricmp(val, "both")) scroll_floor_type = SCROLL_All;
+					else if (!stricmp(val, "visual")) scroll_floor_type = SCROLL_Textures;
+					if (!stricmp(val, "physical")) scroll_floor_type = SCROLL_All & ~SCROLL_Textures;
+					else scroll_floor_type = 0;
+					break;
+				}
 
 				// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
@@ -2470,15 +2509,13 @@ public:
 		// Now create the scrollers.
 		for (auto &scroll : UDMFScrollers)
 		{
-			const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
-			if (scroll.type == NAME_Both || scroll.type == NAME_Visual)
+			if (scroll.scrolltype & SCROLL_Textures)
 			{
-				loader->CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
+				loader->CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, -scroll.x, scroll.y, &Level->sectors[scroll.index], 0);
 			}
-			if (scroll.type == NAME_Both || scroll.type == NAME_Physical)
+			if (scroll.scrolltype & (SCROLL_StaticObjects | SCROLL_Players | SCROLL_Monsters))
 			{
-				// sc_carry_ceiling doesn't do anything yet.
-				loader->CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
+				loader->CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x, scroll.y, &Level->sectors[scroll.index], 0, scw_all, scroll.scrolltype);
 			}
 		}
 

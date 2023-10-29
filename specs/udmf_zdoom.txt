@@ -361,6 +361,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  scroll_floor_x = <float>;
 	  scroll_floor_y = <float>;
 	  scroll_floor_type = <string>;
+	  
+	  friction = <float>;             // sets the sector's friction factor. Must be between 0 and 1.
+	  movefactor = <float>            // sets the sector's movement acceleration factor. Must be > 0.
+	  
+	  colormap = <string>;            // only provided for backwards compatibility. Do not use in GZDoom projects.
 
       * Note about dropactors
 

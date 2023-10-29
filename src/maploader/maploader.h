@@ -197,6 +197,7 @@ private:
 	void CreateScroller(EScroll type, double dx, double dy, sector_t *sect, side_t* side, int accel, EScrollPos scrollpos = EScrollPos::scw_all, int scrollmode = 15/*SCROLL_All*/);
 	void SpawnScrollers();
 	void SpawnFriction();
+	void SpawnUDMFFriction(double friction_factor, double move_factor, sector_t* sec);
 	void SpawnPushers();
 	AActor *GetPushThing (int s);
 	void SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked);

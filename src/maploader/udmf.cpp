@@ -1637,6 +1637,8 @@ public:
 		double scroll_floor_y = 0;
 		int scroll_floor_type = 0;
 
+		double friction = -FLT_MAX, movefactor = -FLT_MAX;
+
 		const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 
 		memset(sec, 0, sizeof(*sec));
@@ -2110,7 +2112,19 @@ public:
 					break;
 				}
 
-				// These two are used by Eternity for something I do not understand.
+				case NAME_colormap:
+					sec->selfmap = R_ColormapNumForName(CheckString(key));
+					break;
+
+				case NAME_frictionfactor:
+					friction = CheckFloat(key);
+					break;
+
+				case NAME_movefactor:
+					movefactor = CheckFloat(key);
+					break;
+
+					// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:
 
@@ -2235,6 +2249,16 @@ public:
 			sec->Colormap.FadeColor.SetRGB(fadecolor);
 			sec->Colormap.Desaturation = clamp(desaturation, 0, 255);
 			sec->Colormap.FogDensity = clamp(fogdensity, 0, 512) / 2;
+		}
+		if (friction > -FLT_MAX)
+		{
+			sec->friction = clamp(friction, 0., 1.);
+			sec->movefactor = FrictionToMoveFactor(sec->friction);
+			sec->Flags |= SECF_FRICTION;
+		}
+		if (movefactor > -FLT_MAX)
+		{
+			sec->movefactor = max(movefactor, 1 / 2048.);
 		}
 	}
 

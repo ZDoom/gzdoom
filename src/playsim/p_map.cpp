@@ -6652,12 +6652,6 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 {
-	if ((thing->Level->i_compatflags2 & COMPATF2_FLOORMOVE) && (thing->Top() > thing->ceilingz))
-	{
-		cpos->nofit = true;
-		return;
-	}
-
 	double oldfloorz = thing->floorz;
 	double oldz = thing->Z();
 
@@ -7033,6 +7027,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 		}
 
 	}
+
 	return cpos.nofit;
 }
 

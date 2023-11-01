@@ -916,6 +916,17 @@ FxExpression *FxBoolCast::Resolve(FCompileContext &ctx)
 ExpEmit FxBoolCast::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit from = basex->Emit(build);
+	
+	if(from.Konst && from.RegType == REGT_INT)
+	{ // this is needed here because the int const assign optimization returns a constant
+		ExpEmit to;
+		to.Konst = true;
+		to.RegType = REGT_INT;
+		to.RegNum = build->GetConstantInt(!!build->FindConstantInt(from.RegNum));
+		return to;
+	}
+	
+
 	assert(!from.Konst);
 	assert(basex->ValueType->GetRegType() == REGT_INT || basex->ValueType->GetRegType() == REGT_FLOAT || basex->ValueType->GetRegType() == REGT_POINTER);
 
@@ -1140,7 +1151,15 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit from = basex->Emit(build);
-	//assert(!from.Konst);
+	if(from.Konst && from.RegType == REGT_INT)
+	{ // this is needed here because the int const assign optimization returns a constant
+		ExpEmit to;
+		to.Konst = true;
+		to.RegType = REGT_FLOAT;
+		to.RegNum = build->GetConstantFloat(build->FindConstantInt(from.RegNum));
+		return to;
+	}
+
 	assert(basex->ValueType->GetRegType() == REGT_INT);
 	from.Free(build);
 	ExpEmit to(build, REGT_FLOAT);
@@ -1973,7 +1992,17 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 {
 	//assert(ValueType == Operand->ValueType);
 	ExpEmit from = Operand->Emit(build);
+	if(from.Konst && from.RegType == REGT_INT)
+	{ // this is needed here because the int const assign optimization returns a constant
+		ExpEmit to;
+		to.Konst = true;
+		to.RegType = REGT_INT;
+		to.RegNum = build->GetConstantInt(-build->FindConstantInt(from.RegNum));
+		return to;
+	}
+
 	ExpEmit to;
+
 	assert(from.Konst == 0);
 	assert(ValueType->GetRegCount() == from.RegCount);
 	// Do it in-place, unless a local variable
@@ -2093,6 +2122,16 @@ ExpEmit FxUnaryNotBitwise::Emit(VMFunctionBuilder *build)
 {
 	assert(Operand->ValueType->GetRegType() == REGT_INT);
 	ExpEmit from = Operand->Emit(build);
+
+	if(from.Konst && from.RegType == REGT_INT)
+	{ // this is needed here because the int const assign optimization returns a constant
+		ExpEmit to;
+		to.Konst = true;
+		to.RegType = REGT_INT;
+		to.RegNum = build->GetConstantInt(~build->FindConstantInt(from.RegNum));
+		return to;
+	}
+
 	from.Free(build);
 	ExpEmit to(build, REGT_INT);
 	assert(!from.Konst);
@@ -2164,6 +2203,16 @@ ExpEmit FxUnaryNotBoolean::Emit(VMFunctionBuilder *build)
 	assert(Operand->ValueType == TypeBool);
 	assert(ValueType == TypeBool || IsInteger());	// this may have been changed by an int cast.
 	ExpEmit from = Operand->Emit(build);
+	
+	if(from.Konst && from.RegType == REGT_INT)
+	{ // this is needed here because the int const assign optimization returns a constant
+		ExpEmit to;
+		to.Konst = true;
+		to.RegType = REGT_INT;
+		to.RegNum = build->GetConstantInt(!build->FindConstantInt(from.RegNum));
+		return to;
+	}
+
 	from.Free(build);
 	ExpEmit to(build, REGT_INT);
 	assert(!from.Konst);

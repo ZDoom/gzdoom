@@ -290,6 +290,24 @@ unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 	}
 }
 
+
+//==========================================================================
+//
+// VMFunctionBuilder :: FindConstantInt
+//
+// Returns a constant register initialized with the given value.
+//
+//==========================================================================
+
+int VMFunctionBuilder::FindConstantInt(unsigned index)
+{
+	if(IntConstantList.Size() < index)
+	{
+		return IntConstantList[index];
+	}
+	return 0;
+}
+
 //==========================================================================
 //
 // VMFunctionBuilder :: AllocConstants*
@@ -298,7 +316,7 @@ unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 //
 //==========================================================================
 
-unsigned VMFunctionBuilder::AllocConstantsInt(unsigned count, int *values)
+unsigned VMFunctionBuilder::AllocConstantsInt(unsigned int count, int *values)
 {
 	unsigned addr = IntConstantList.Reserve(count);
 	memcpy(&IntConstantList[addr], values, count * sizeof(int));
@@ -309,7 +327,7 @@ unsigned VMFunctionBuilder::AllocConstantsInt(unsigned count, int *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
+unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned int count, double *values)
 {
 	unsigned addr = FloatConstantList.Reserve(count);
 	memcpy(&FloatConstantList[addr], values, count * sizeof(double));
@@ -320,7 +338,7 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned int count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
@@ -331,7 +349,7 @@ unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsString(unsigned count, FString *ptrs)
+unsigned VMFunctionBuilder::AllocConstantsString(unsigned int count, FString *ptrs)
 {
 	unsigned addr = StringConstantList.Reserve(count);
 	for (unsigned i = 0; i < count; i++)

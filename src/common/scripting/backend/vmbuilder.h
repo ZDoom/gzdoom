@@ -65,6 +65,11 @@ public:
 	unsigned GetConstantAddress(void *ptr);
 	unsigned GetConstantString(FString str);
 
+	int FindConstantInt(unsigned index);
+	//double FindConstantFloat(unsigned index);
+	//void * FindConstantAddress(unsigned index);
+	//const FString& FindConstantString(unsigned index);
+
 	unsigned AllocConstantsInt(unsigned int count, int *values);
 	unsigned AllocConstantsFloat(unsigned int count, double *values);
 	unsigned AllocConstantsAddress(unsigned int count, void **ptrs);

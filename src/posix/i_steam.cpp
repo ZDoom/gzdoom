@@ -163,7 +163,8 @@ static struct SteamAppInfo
 	{"Strife", 317040},
 	{"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets", 2280},
 	{"Doom 2/rerelease/DOOM II_Data/StreamingAssets", 2300},
-	{"Doom 2/finaldoombase", 2300}
+	{"Doom 2/finaldoombase", 2300},
+    {"Master Levels of Doom/doom2", 9160}
 };
 
 TArray<FString> I_GetSteamPath()

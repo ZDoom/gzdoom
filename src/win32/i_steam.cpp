@@ -295,7 +295,8 @@ TArray<FString> I_GetSteamPath()
 		"Strife",
 		"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets",
 		"Doom 2/rerelease/DOOM II_Data/StreamingAssets",
-		"Doom 2/finaldoombase"
+		"Doom 2/finaldoombase",
+        "Master Levels of Doom/doom2"
 	};
 
 	FString steamPath;

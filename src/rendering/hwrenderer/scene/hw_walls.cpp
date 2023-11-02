@@ -2295,10 +2295,10 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 						skew = bch2 - bch1;
 						break;
 					case side_t::skew_front_floor:
-						skew = bfh2 - bfh1;
+						skew = ffh2 - ffh1;
 						break;
 					case side_t::skew_back_floor:
-						skew = ffh2 - ffh1;
+						skew = bfh2 - bfh1;
 						break;
 					}
 					DoTexture(di, RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
@@ -2366,10 +2366,10 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 			skew = bch2 - bch1;
 			break;
 		case side_t::skew_front_floor:
-			skew = bfh2 - bfh1;
+			skew = ffh2 - ffh1;
 			break;
 		case side_t::skew_back_floor:
-			skew = ffh2 - ffh1;
+			skew = bfh2 - bfh1;
 			break;
 		}
 
@@ -2436,10 +2436,10 @@ void HWWall::Process(HWWallDispatcher *di, seg_t *seg, sector_t * frontsector, s
 					skew = bch2 - bch1;
 					break;
 				case side_t::skew_front_floor:
-					skew = bfh2a - bfh1a;
+					skew = ffh2 - ffh1;
 					break;
 				case side_t::skew_back_floor:
-					skew = ffh2 - ffh1;
+					skew = bfh2a - bfh1a;
 					break;
 				}
 

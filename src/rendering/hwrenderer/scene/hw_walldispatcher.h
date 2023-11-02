@@ -51,7 +51,7 @@ struct HWWallDispatcher
 	}
 	void AddLowerMissingTexture(side_t* side, subsector_t* sub, float height)
 	{
-		if (di) di->AddUpperMissingTexture(side, sub, height);
+		if (di) di->AddLowerMissingTexture(side, sub, height);
 		else
 		{
 			mh->lower.Reserve(1);

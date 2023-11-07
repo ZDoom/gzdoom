@@ -668,7 +668,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
 	ACTION_RETURN_FLOAT(GetBottomAlignOffset(self, code));
 }
 
-static int StringWidth(FFont *font, const FString &str, bool localize)
+static int StringWidth(FFont *font, const FString &str, int localize)
 {
 	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
 	return font->StringWidth(txt);
@@ -682,7 +682,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 	ACTION_RETURN_INT(StringWidth(self, str, localize));
 }
 
-static int GetMaxAscender(FFont* font, const FString& str, bool localize)
+static int GetMaxAscender(FFont* font, const FString& str, int localize)
 {
 	const char* txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
 	return font->GetMaxAscender(txt);
@@ -696,7 +696,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
 	ACTION_RETURN_INT(GetMaxAscender(self, str, localize));
 }
 
-static int CanPrint(FFont *font, const FString &str, bool localize)
+static int CanPrint(FFont *font, const FString &str, int localize)
 {
 	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
 	return font->CanPrint(txt);

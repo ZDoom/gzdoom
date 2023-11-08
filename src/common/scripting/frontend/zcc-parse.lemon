@@ -1956,9 +1956,9 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= array_iteration_statement(X).
-statement(X) ::= map_iteration_statement(X).
-statement(X) ::= block_iteration_statement(X).
-statement(X) ::= cast_iteration_statement(X).
+statement(X) ::= two_arg_iteration_statement(X).
+statement(X) ::= three_arg_iteration_statement(X).
+statement(X) ::= typed_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= assign_decl_statement(A) SEMICOLON.{ X = A; /*X-overwrites-A*/ }
@@ -2128,11 +2128,11 @@ array_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(IN) COLON expr(
 	X = iter;
 }
 
-%type map_iteration_statement{ZCC_Statement *}
+%type two_arg_iteration_statement{ZCC_Statement *}
 
-map_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(KEY) COMMA variable_name(VAL) COLON expr(EX) RPAREN statement(ST).
+two_arg_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(KEY) COMMA variable_name(VAL) COLON expr(EX) RPAREN statement(ST).
 {
-	NEW_AST_NODE(MapIterationStmt, iter, T);
+	NEW_AST_NODE(TwoArgIterationStmt, iter, T);
 	iter->ItKey = KEY;
 	iter->ItValue = VAL;
 	iter->ItMap = EX;
@@ -2140,11 +2140,11 @@ map_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(KEY) COMMA variab
 	X = iter;
 }
 
-%type block_iteration_statement{ZCC_Statement *}
+%type three_arg_iteration_statement{ZCC_Statement *}
 
-block_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(VAR) COMMA variable_name(POS) COMMA variable_name(FLAGS) COLON expr(EX) RPAREN statement(ST).
+three_arg_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(VAR) COMMA variable_name(POS) COMMA variable_name(FLAGS) COLON expr(EX) RPAREN statement(ST).
 {
-	NEW_AST_NODE(BlockIterationStmt, iter, T);
+	NEW_AST_NODE(ThreeArgIterationStmt, iter, T);
 	iter->ItVar = VAR;
 	iter->ItPos = POS;
 	iter->ItFlags = FLAGS;
@@ -2153,14 +2153,14 @@ block_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(VAR) COMMA vari
 	X = iter;
 }
 
-%type cast_iteration_statement{ZCC_Statement *}
+%type typed_iteration_statement{ZCC_Statement *}
 
-cast_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(CAST) variable_name(VAR) COLON expr(EX) RPAREN statement(ST).
+typed_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(TYPE) variable_name(VAR) COLON expr(EX) RPAREN statement(ST).
 {
-	NEW_AST_NODE(CastIterationStmt, iter, T);
-	iter->ItCast = CAST;
+	NEW_AST_NODE(TypedIterationStmt, iter, T);
+	iter->ItType = TYPE;
 	iter->ItVar = VAR;
-	iter->ItIterator = EX;
+	iter->ItExpr = EX;
 	iter->LoopStatement = ST;
 	X = iter;
 }

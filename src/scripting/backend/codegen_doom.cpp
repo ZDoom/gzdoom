@@ -972,3 +972,349 @@ void SetDoomCompileEnvironment()
 	compileEnvironment.CheckCustomGlobalFunctions = ResolveGlobalCustomFunction;
 	compileEnvironment.CustomBuiltinNew = "BuiltinNewDoom";
 }
+
+
+//==========================================================================
+//
+// FxCastForEachLoop
+//
+//==========================================================================
+
+
+class FxCastForEachLoop : public FxTypedForEachLoop
+{
+public:
+	using FxTypedForEachLoop::FxTypedForEachLoop;
+
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
+};
+
+FxExpression *FxCastForEachLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(Expr, ctx);
+
+	if(varName == NAME_None)
+	{
+		ScriptPosition.Message(MSG_ERROR, "missing var for foreach(Type var : it )");
+		delete this;
+		return nullptr;
+	}
+
+	PType * varType = nullptr;
+	PClass * itType = ((PObjectPointer*)Expr->ValueType)->PointedClass();
+
+	FName fieldName = NAME_None;
+
+	if(itType->TypeName == NAME_ActorIterator)
+	{
+		fieldName = "Actor";
+	}
+	else if(itType->TypeName == NAME_ThinkerIterator)
+	{
+		fieldName = "Thinker";
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",Expr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+
+	if(className != NAME_None)
+	{
+		fieldName = className;
+	}
+
+	PClass * varTypeClass = PClass::FindClass(fieldName);
+	varType = varTypeClass->VMType;
+
+	if(!varType)
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - could not find class '%s'",className.GetChars());
+		delete this;
+		return nullptr;
+	}
+
+	varType = NewPointer(varType, false);
+
+	/*
+	{
+	CastType var;
+	ActorIterator|ThinkerIterator @it = expr;
+	while(var = CastType(@it.Next()))
+	body
+	}
+	*/
+
+	auto block = new FxCompoundStatement(ScriptPosition);
+
+	block->Add(new FxLocalVariableDeclaration(varType, varName, nullptr, 0, ScriptPosition));
+
+	block->Add(new FxLocalVariableDeclaration(Expr->ValueType, "@it", Expr, 0, ScriptPosition));
+
+	auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+	FxExpression * nextCallCast = new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition);
+
+	if(className != NAME_None)
+	{
+		nextCallCast = new FxDynamicCast(varTypeClass, nextCallCast);
+	}
+
+	block->Add(new FxWhileLoop(new FxAssign(new FxIdentifier(varName, ScriptPosition), nextCallCast), Code, ScriptPosition));
+
+	Expr = Code = nullptr;
+	delete this;
+	return block->Resolve(ctx);
+}
+
+
+
+//==========================================================================
+//
+// FxBlockIteratorForEachLoop
+//
+//==========================================================================
+
+class FxBlockIteratorForEachLoop : public FxThreeArgForEachLoop
+{
+public:
+	using FxThreeArgForEachLoop::FxThreeArgForEachLoop;
+	
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
+};
+
+FxExpression *FxBlockIteratorForEachLoop::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(BlockIteratorExpr, ctx);
+
+
+	if(!(BlockIteratorExpr->ValueType->isObjectPointer()))
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( v, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+	else if(varVarName == NAME_None)
+	{
+		ScriptPosition.Message(MSG_ERROR, "missing var for foreach( v, p, f : b )");
+		delete this;
+		return nullptr;
+	}
+
+	PType * varType = nullptr;
+	PClass * itType = ((PObjectPointer*)BlockIteratorExpr->ValueType)->PointedClass();
+
+	FName fieldName = NAME_None;
+
+	if(itType->TypeName == NAME_BlockThingsIterator)
+	{
+		fieldName = "Thing";
+	}
+	else if(itType->TypeName == NAME_BlockLinesIterator)
+	{
+		fieldName = "CurLine";
+	}
+	else
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( t, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
+		delete this;
+		return nullptr;
+	}
+
+	auto var = itType->FindSymbol(fieldName, false);
+	if(var && var->IsKindOf(RUNTIME_CLASS(PField)))
+	{
+		varType = static_cast<PField*>(var)->Type;
+	}
+
+	/*
+	{
+	Line|Actor var;
+	Vector3 pos;
+	int flags;
+	BlockLinesIterator|BlockThingsIterator @it = expr;
+	while(@it.Next())
+	{
+	var = @it.CurLine|@it.Thing;
+	pos = @it.position;
+	flags = @it.portalflags;
+	body
+	}
+	}
+	*/
+
+	auto block = new FxCompoundStatement(ScriptPosition);
+
+	block->Add(new FxLocalVariableDeclaration(varType, varVarName, nullptr, 0, ScriptPosition));
+	if(posVarName != NAME_None)
+	{
+		block->Add(new FxLocalVariableDeclaration(TypeVector3, posVarName, nullptr, 0, ScriptPosition));
+	}
+	if(flagsVarName != NAME_None)
+	{
+		block->Add(new FxLocalVariableDeclaration(TypeSInt32, flagsVarName, nullptr, 0, ScriptPosition));
+	}
+
+	block->Add(new FxLocalVariableDeclaration(BlockIteratorExpr->ValueType, "@it", BlockIteratorExpr, 0, ScriptPosition));
+
+	auto inner_block = new FxCompoundStatement(ScriptPosition);
+
+	inner_block->Add(new FxAssign(new FxIdentifier(varVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), fieldName, ScriptPosition), true));
+	if(posVarName != NAME_None)
+	{
+		inner_block->Add(new FxAssign(new FxIdentifier(posVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "position", ScriptPosition), true));
+	}
+	if(flagsVarName != NAME_None)
+	{
+		inner_block->Add(new FxAssign(new FxIdentifier(flagsVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "portalflags", ScriptPosition), true));
+	}
+	inner_block->Add(Code);
+
+	block->Add(new FxWhileLoop(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition), inner_block, ScriptPosition));
+
+	BlockIteratorExpr = Code = nullptr;
+	delete this;
+	return block->Resolve(ctx);
+}
+
+
+
+
+
+
+
+
+
+
+bool IsGameSpecificForEachLoop(FxForEachLoop * loop)
+{
+	auto * vt = loop->Array->ValueType;
+	return (vt->isObjectPointer() && (
+			    ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BlockLinesIterator
+			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BlockThingsIterator
+			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
+			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+			));
+}
+
+FxExpression * ResolveGameSpecificForEachLoop(FxForEachLoop * loop)
+{
+	FName cname = ((PObjectPointer*)loop->Array->ValueType)->PointedClass()->TypeName;
+	assert(loop->Array->ValueType->isObjectPointer());
+	if(cname == NAME_BlockLinesIterator || cname == NAME_BlockThingsIterator)
+	{
+		auto blockIt = new FxBlockIteratorForEachLoop(loop->loopVarName, NAME_None, NAME_None, loop->Array, loop->Code, loop->ScriptPosition);
+		loop->Array = loop->Code = nullptr;
+		delete loop;
+		return blockIt;
+	}
+	else if(cname == NAME_ActorIterator || cname == NAME_ThinkerIterator)
+	{
+		auto castIt = new FxCastForEachLoop(NAME_None, loop->loopVarName, loop->Array, loop->Code, loop->ScriptPosition);
+		loop->Array = loop->Code = nullptr;
+		delete loop;
+		return castIt;
+	}
+	else
+	{
+		delete loop;
+		return nullptr;
+	}
+}
+
+
+bool HasGameSpecificTwoArgForEachLoopTypeNames()
+{
+	return true;
+}
+
+const char * GetGameSpecificTwoArgForEachLoopTypeNames()
+{
+	return "a BlockLinesIterator, a BlockThingsIterator,";
+}
+
+bool IsGameSpecificTwoArgForEachLoop(FxTwoArgForEachLoop * loop)
+{
+	return (loop->MapExpr->ValueType->isObjectPointer()
+		&& (((PObjectPointer*)loop->MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator
+			|| ((PObjectPointer*)loop->MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator));
+}
+
+FxExpression * ResolveGameSpecificTwoArgForEachLoop(FxTwoArgForEachLoop * loop)
+{
+	assert(loop->MapExpr->ValueType->isObjectPointer());
+	assert(((PObjectPointer*)loop->MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)loop->MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator);
+
+	auto blockIt = new FxBlockIteratorForEachLoop(loop->keyVarName, loop->valueVarName, NAME_None, loop->MapExpr, loop->Code, loop->ScriptPosition);
+	loop->MapExpr = loop->Code = nullptr;
+	delete loop;
+	return blockIt;
+}
+
+
+bool HasGameSpecificThreeArgForEachLoopTypeNames()
+{
+	return true;
+}
+
+const char * GetGameSpecificThreeArgForEachLoopTypeNames()
+{
+	return "a BlockLinesIterator or a BlockThingsIterator";
+}
+
+bool IsGameSpecificThreeArgForEachLoop(FxThreeArgForEachLoop * loop)
+{
+	return (loop->BlockIteratorExpr->ValueType->isObjectPointer()
+		&& (((PObjectPointer*)loop->BlockIteratorExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator
+			|| ((PObjectPointer*)loop->BlockIteratorExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator));
+}
+
+FxExpression * ResolveGameSpecificThreeArgForEachLoop(FxThreeArgForEachLoop * loop)
+{
+	assert(loop->BlockIteratorExpr->ValueType->isObjectPointer());
+	assert(((PObjectPointer*)loop->BlockIteratorExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)loop->BlockIteratorExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator);
+
+	auto blockIt = new FxBlockIteratorForEachLoop(loop->varVarName, loop->posVarName, loop->flagsVarName, loop->BlockIteratorExpr, loop->Code, loop->ScriptPosition);
+	loop->BlockIteratorExpr = loop->Code = nullptr;
+	delete loop;
+	return blockIt;
+}
+
+
+
+
+
+bool HasGameSpecificTypedForEachLoopTypeNames()
+{
+	return true;
+}
+
+const char * GetGameSpecificTypedForEachLoopTypeNames()
+{
+	return "an ActorIterator or a ThinkerIterator";
+}
+
+bool IsGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
+{
+	auto * vt = loop->Expr->ValueType;
+	return (vt->isObjectPointer() && (
+		((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
+		|| ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+		));
+}
+
+FxExpression * ResolveGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
+{
+	assert(loop->Expr->ValueType->isObjectPointer());
+	assert(((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator);
+
+	FxExpression * castIt = new FxCastForEachLoop(loop->className, loop->varName, loop->Expr, loop->Code, loop->ScriptPosition);
+	loop->Expr = loop->Code = nullptr;
+	delete loop;
+	return castIt;
+}

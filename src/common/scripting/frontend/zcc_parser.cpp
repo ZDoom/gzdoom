@@ -1177,15 +1177,42 @@ ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool c
 		break;
 	}
 
-	case AST_MapIterationStmt:
+	case AST_TwoArgIterationStmt:
 	{
-		TreeNodeDeepCopy_Start(MapIterationStmt);
+		TreeNodeDeepCopy_Start(TwoArgIterationStmt);
 
-		// ZCC_MapIterationStmt
+		// ZCC_TwoArgIterationStmt
 		copy->ItKey = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItKey, true, copiedNodesList));
 		copy->ItValue = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItValue, true, copiedNodesList));
 		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
 		copy->ItMap = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItMap, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ThreeArgIterationStmt:
+	{
+		TreeNodeDeepCopy_Start(ThreeArgIterationStmt);
+
+		// ZCC_TwoArgIterationStmt
+		copy->ItVar = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItVar, true, copiedNodesList));
+		copy->ItPos = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItPos, true, copiedNodesList));
+		copy->ItFlags = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItFlags, true, copiedNodesList));
+		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
+		copy->ItBlock = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItBlock, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_TypedIterationStmt:
+	{
+		TreeNodeDeepCopy_Start(TypedIterationStmt);
+
+		// ZCC_TwoArgIterationStmt
+		copy->ItType = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItType, true, copiedNodesList));
+		copy->ItVar = static_cast<ZCC_VarName*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItVar, true, copiedNodesList));
+		copy->LoopStatement = static_cast<ZCC_Statement*>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
+		copy->ItExpr = static_cast<ZCC_Expression*>(TreeNodeDeepCopy_Internal(ast, origCasted->ItExpr, true, copiedNodesList));
 
 		break;
 	}

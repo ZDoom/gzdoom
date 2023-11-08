@@ -3395,9 +3395,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		return new FxForEachLoop(iter->ItName->Name, itArray, itArray2, itArray3, itArray4, body, *ast);
 	}
 
-	case AST_MapIterationStmt:
+	case AST_TwoArgIterationStmt:
 	{
-		auto iter = static_cast<ZCC_MapIterationStmt*>(ast);
+		auto iter = static_cast<ZCC_TwoArgIterationStmt*>(ast);
 		auto key = iter->ItKey->Name;
 		auto var = iter->ItValue->Name;
 		FxExpression* const itMap = ConvertNode(iter->ItMap);
@@ -3405,28 +3405,28 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 		FxExpression* const itMap3 = ConvertNode(iter->ItMap);
 		FxExpression* const itMap4 = ConvertNode(iter->ItMap);
 		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
-		return new FxMapForEachLoop(key, var, itMap, itMap2, itMap3, itMap4, body, *ast);
+		return new FxTwoArgForEachLoop(key, var, itMap, itMap2, itMap3, itMap4, body, *ast);
 	}
 
-	case AST_BlockIterationStmt:
+	case AST_ThreeArgIterationStmt:
 	{
-		auto iter = static_cast<ZCC_BlockIterationStmt*>(ast);
+		auto iter = static_cast<ZCC_ThreeArgIterationStmt*>(ast);
 		auto var = iter->ItVar->Name;
 		auto pos = iter->ItPos->Name;
 		auto flags = iter->ItFlags->Name;
 		FxExpression* const itBlock = ConvertNode(iter->ItBlock);
 		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
-		return new FxBlockIteratorForEachLoop(var, pos, flags, itBlock, body, *ast);
+		return new FxThreeArgForEachLoop(var, pos, flags, itBlock, body, *ast);
 	}
 
-	case AST_CastIterationStmt:
+	case AST_TypedIterationStmt:
 	{
-		auto iter = static_cast<ZCC_CastIterationStmt*>(ast);
-		auto cls = iter->ItCast->Name;
+		auto iter = static_cast<ZCC_TypedIterationStmt*>(ast);
+		auto cls = iter->ItType->Name;
 		auto var = iter->ItVar->Name;
-		FxExpression* const itIterator = ConvertNode(iter->ItIterator);
+		FxExpression* const itExpr = ConvertNode(iter->ItExpr);
 		FxExpression* const body = ConvertImplicitScopeNode(ast, iter->LoopStatement);
-		return new FxCastForEachLoop(cls, var, itIterator, body, *ast);
+		return new FxTypedForEachLoop(cls, var, itExpr, body, *ast);
 	}
 
 	case AST_IterationStmt:

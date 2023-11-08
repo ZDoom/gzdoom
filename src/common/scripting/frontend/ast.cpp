@@ -983,9 +983,9 @@ static void PrintArrayIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
-static void PrintMapIterationStmt(FLispString &out, const ZCC_TreeNode *node)
+static void PrintTwoArgIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 {
-	auto inode = (ZCC_MapIterationStmt *)node;
+	auto inode = (ZCC_TwoArgIterationStmt *)node;
 	out.Break();
 	out.Open("map-iteration-stmt");
 	PrintVarName(out, inode->ItKey);
@@ -998,9 +998,9 @@ static void PrintMapIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
-static void PrintBlockIterationStmt(FLispString &out, const ZCC_TreeNode *node)
+static void PrintThreeArgIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 {
-	auto inode = (ZCC_BlockIterationStmt *)node;
+	auto inode = (ZCC_ThreeArgIterationStmt *)node;
 	out.Break();
 	out.Open("block-iteration-stmt");
 	PrintVarName(out, inode->ItVar);
@@ -1015,16 +1015,16 @@ static void PrintBlockIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 	out.Close();
 }
 
-static void PrintCastIterationStmt(FLispString &out, const ZCC_TreeNode *node)
+static void PrintTypedIterationStmt(FLispString &out, const ZCC_TreeNode *node)
 {
-	auto inode = (ZCC_CastIterationStmt *)node;
+	auto inode = (ZCC_TypedIterationStmt *)node;
 	out.Break();
 	out.Open("cast-iteration-stmt");
-	PrintVarName(out, inode->ItCast);
+	PrintVarName(out, inode->ItType);
 	out.Break();
 	PrintVarName(out, inode->ItVar);
 	out.Break();
-	PrintNodes(out, inode->ItIterator);
+	PrintNodes(out, inode->ItExpr);
 	out.Break();
 	PrintNodes(out, inode->LoopStatement);
 	out.Close();
@@ -1097,9 +1097,9 @@ static const NodePrinterFunc TreeNodePrinter[] =
 	PrintMixinDef,
 	PrintMixinStmt,
 	PrintArrayIterationStmt,
-	PrintMapIterationStmt,
-	PrintBlockIterationStmt,
-	PrintCastIterationStmt,
+	PrintTwoArgIterationStmt,
+	PrintThreeArgIterationStmt,
+	PrintTypedIterationStmt,
 };
 
 FString ZCC_PrintAST(const ZCC_TreeNode *root)

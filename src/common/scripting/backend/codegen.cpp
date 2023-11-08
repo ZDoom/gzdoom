@@ -11402,6 +11402,9 @@ FxForEachLoop::~FxForEachLoop()
 	SAFE_DELETE(Code);
 }
 
+extern bool IsGameSpecificForEachLoop(FxForEachLoop *);
+extern FxExpression * ResolveGameSpecificForEachLoop(FxForEachLoop *);
+
 FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
@@ -11410,74 +11413,61 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 	SAFE_RESOLVE(Array3, ctx);
 	SAFE_RESOLVE(Array4, ctx);
 
+
 	if(Array->ValueType->isMap() || Array->ValueType->isMapIterator())
 	{
-		auto mapLoop = new FxMapForEachLoop(NAME_None, loopVarName, Array, Array2, Array3, Array4, Code, ScriptPosition);
+		auto mapLoop = new FxTwoArgForEachLoop(NAME_None, loopVarName, Array, Array2, Array3, Array4, Code, ScriptPosition);
 		Array = Array2 = Array3 = Array4 = Code = nullptr;
 		delete this;
 		return mapLoop->Resolve(ctx);
 	}
-	else if(Array->ValueType->isObjectPointer() && (((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator))
+	else if(IsGameSpecificForEachLoop(this))
 	{
-		auto blockIt = new FxBlockIteratorForEachLoop(loopVarName, NAME_None, NAME_None, Array, Code, ScriptPosition);
-		delete Array2;
-		delete Array3;
-		delete Array4;
-		Array = Array2 = Array3 = Array4 = Code = nullptr;
-		delete this;
-		return blockIt->Resolve(ctx);
+		return ResolveGameSpecificForEachLoop(this)->Resolve(ctx);
 	}
-	else if(Array->ValueType->isObjectPointer() && (((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)Array->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator))
+	else
 	{
-		auto castIt = new FxCastForEachLoop(NAME_None, loopVarName, Array, Code, ScriptPosition);
-		delete Array2;
-		delete Array3;
-		delete Array4;
-		Array = Array2 = Array3 = Array4 = Code = nullptr;
+		// Instead of writing a new code generator for this, convert this into
+		//
+		// int @size = array.Size();
+		// for(int @i = 0; @i < @size; @i++)
+		// {
+		//    let var = array[i];
+		//    body
+		// }
+		// and let the existing 'for' loop code sort out the rest.
+
+		FName sizevar = "@size";
+		FName itvar = "@i";
+
+		auto block = new FxCompoundStatement(ScriptPosition);
+		auto arraysize = new FxMemberFunctionCall(Array, NAME_Size, {}, ScriptPosition);
+		auto size = new FxLocalVariableDeclaration(TypeSInt32, sizevar, arraysize, 0, ScriptPosition);
+		auto it = new FxLocalVariableDeclaration(TypeSInt32, itvar, new FxConstant(0, ScriptPosition), 0, ScriptPosition);
+		block->Add(size);
+		block->Add(it);
+
+		auto cit = new FxLocalVariable(it, ScriptPosition);
+		auto csiz = new FxLocalVariable(size, ScriptPosition);
+		auto comp = new FxCompareRel('<', cit, csiz); // new FxIdentifier(itvar, ScriptPosition), new FxIdentifier(sizevar, ScriptPosition));
+
+		auto iit = new FxLocalVariable(it, ScriptPosition);
+		auto bump = new FxPreIncrDecr(iit, TK_Incr);
+
+		auto ait = new FxLocalVariable(it, ScriptPosition);
+		auto access = new FxArrayElement(Array2, ait, true); // Note: Array must be a separate copy because these nodes cannot share the same element.
+
+		auto assign = new FxLocalVariableDeclaration(TypeAuto, loopVarName, access, 0, ScriptPosition);
+		auto body = new FxCompoundStatement(ScriptPosition);
+		body->Add(assign);
+		body->Add(Code);
+		auto forloop = new FxForLoop(nullptr, comp, bump, body, ScriptPosition);
+		block->Add(forloop);
+		Array2 = Array = nullptr;
+		Code = nullptr;
 		delete this;
-		return castIt->Resolve(ctx);
+		return block->Resolve(ctx);
 	}
-
-	// Instead of writing a new code generator for this, convert this into
-	//
-	// int @size = array.Size();
-	// for(int @i = 0; @i < @size; @i++)
-	// {
-	//    let var = array[i];
-	//    body
-	// }
-	// and let the existing 'for' loop code sort out the rest.
-
-	FName sizevar = "@size";
-	FName itvar = "@i";
-
-	auto block = new FxCompoundStatement(ScriptPosition);
-	auto arraysize = new FxMemberFunctionCall(Array, NAME_Size, {}, ScriptPosition);
-	auto size = new FxLocalVariableDeclaration(TypeSInt32, sizevar, arraysize, 0, ScriptPosition);
-	auto it = new FxLocalVariableDeclaration(TypeSInt32, itvar, new FxConstant(0, ScriptPosition), 0, ScriptPosition);
-	block->Add(size);
-	block->Add(it);
-
-	auto cit = new FxLocalVariable(it, ScriptPosition);
-	auto csiz = new FxLocalVariable(size, ScriptPosition);
-	auto comp = new FxCompareRel('<', cit, csiz); // new FxIdentifier(itvar, ScriptPosition), new FxIdentifier(sizevar, ScriptPosition));
-
-	auto iit = new FxLocalVariable(it, ScriptPosition);
-	auto bump = new FxPreIncrDecr(iit, TK_Incr);
-
-	auto ait = new FxLocalVariable(it, ScriptPosition);
-	auto access = new FxArrayElement(Array2, ait, true); // Note: Array must be a separate copy because these nodes cannot share the same element.
-
-	auto assign = new FxLocalVariableDeclaration(TypeAuto, loopVarName, access, 0, ScriptPosition);
-	auto body = new FxCompoundStatement(ScriptPosition);
-	body->Add(assign);
-	body->Add(Code);
-	auto forloop = new FxForLoop(nullptr, comp, bump, body, ScriptPosition);
-	block->Add(forloop);
-	Array2 = Array = nullptr;
-	Code = nullptr;
-	delete this;
-	return block->Resolve(ctx);
 }
 
 //==========================================================================
@@ -11486,8 +11476,8 @@ FxExpression* FxForEachLoop::DoResolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-FxMapForEachLoop::FxMapForEachLoop(FName kv, FName vv, FxExpression* mapexpr, FxExpression* mapexpr2, FxExpression* mapexpr3, FxExpression* mapexpr4, FxExpression* code, const FScriptPosition& pos)
-	: FxExpression(EFX_MapForEachLoop,pos), keyVarName(kv), valueVarName(vv), MapExpr(mapexpr), MapExpr2(mapexpr2), MapExpr3(mapexpr3), MapExpr4(mapexpr4), Code(code)
+FxTwoArgForEachLoop::FxTwoArgForEachLoop(FName kv, FName vv, FxExpression* mapexpr, FxExpression* mapexpr2, FxExpression* mapexpr3, FxExpression* mapexpr4, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_TwoArgForEachLoop,pos), keyVarName(kv), valueVarName(vv), MapExpr(mapexpr), MapExpr2(mapexpr2), MapExpr3(mapexpr3), MapExpr4(mapexpr4), Code(code)
 {
 	ValueType = TypeVoid;
 	if (MapExpr != nullptr) MapExpr->NeedResult = false;
@@ -11497,7 +11487,7 @@ FxMapForEachLoop::FxMapForEachLoop(FName kv, FName vv, FxExpression* mapexpr, Fx
 	if (Code != nullptr) Code->NeedResult = false;
 }
 
-FxMapForEachLoop::~FxMapForEachLoop()
+FxTwoArgForEachLoop::~FxTwoArgForEachLoop()
 {
 	SAFE_DELETE(MapExpr);
 	SAFE_DELETE(MapExpr2);
@@ -11506,7 +11496,12 @@ FxMapForEachLoop::~FxMapForEachLoop()
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
+extern bool HasGameSpecificTwoArgForEachLoopTypeNames();
+extern const char * GetGameSpecificTwoArgForEachLoopTypeNames();
+extern bool IsGameSpecificTwoArgForEachLoop(FxTwoArgForEachLoop *);
+extern FxExpression * ResolveGameSpecificTwoArgForEachLoop(FxTwoArgForEachLoop *);
+
+FxExpression *FxTwoArgForEachLoop::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(MapExpr, ctx);
@@ -11516,21 +11511,24 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 
 	bool is_iterator = false;
 
-	if(MapExpr->ValueType->isObjectPointer() && (((PObjectPointer*)MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockLinesIterator || ((PObjectPointer*)MapExpr->ValueType)->PointedClass()->TypeName == NAME_BlockThingsIterator))
+	if(IsGameSpecificTwoArgForEachLoop(this))
 	{
-		auto blockIt = new FxBlockIteratorForEachLoop(keyVarName, valueVarName, NAME_None, MapExpr, Code, ScriptPosition);
-		delete MapExpr2;
-		delete MapExpr3;
-		delete MapExpr4;
-		MapExpr = MapExpr2 = MapExpr3 = MapExpr4 = Code = nullptr;
-		delete this;
-		return blockIt->Resolve(ctx);
+		return ResolveGameSpecificTwoArgForEachLoop(this)->Resolve(ctx);
 	}
 	else if(!(MapExpr->ValueType->isMap() || (is_iterator = MapExpr->ValueType->isMapIterator())))
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach( k, v : m ) - 'm' must be a map or a map iterator, but is a %s",MapExpr->ValueType->DescriptiveName());
-		delete this;
-		return nullptr;
+		if(HasGameSpecificTwoArgForEachLoopTypeNames())
+		{
+			ScriptPosition.Message(MSG_ERROR, "foreach( k, v : m ) - 'm' must be %s a map, or a map iterator, but is a %s", GetGameSpecificTwoArgForEachLoopTypeNames(), MapExpr->ValueType->DescriptiveName());
+			delete this;
+			return nullptr;
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "foreach( k, v : m ) - 'm' must be a map or a map iterator, but is a %s", MapExpr->ValueType->DescriptiveName());
+			delete this;
+			return nullptr;
+		}
 	}
 	else if(valueVarName == NAME_None)
 	{
@@ -11636,117 +11634,56 @@ FxExpression *FxMapForEachLoop::Resolve(FCompileContext &ctx)
 
 //==========================================================================
 //
-// FxBlockIteratorForEachLoop
+// FxThreeArgForEachLoop
 //
 //==========================================================================
 
-FxBlockIteratorForEachLoop::FxBlockIteratorForEachLoop(FName vv, FName pv, FName fv, FxExpression* blockiteartorexpr, FxExpression* code, const FScriptPosition& pos)
-	: FxExpression(EFX_BlockForEachLoop,pos), varVarName(vv), posVarName(pv), flagsVarName(fv), BlockIteratorExpr(blockiteartorexpr), Code(code)
+FxThreeArgForEachLoop::FxThreeArgForEachLoop(FName vv, FName pv, FName fv, FxExpression* blockiteartorexpr, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_ThreeArgForEachLoop, pos), varVarName(vv), posVarName(pv), flagsVarName(fv), BlockIteratorExpr(blockiteartorexpr), Code(code)
 {
 	ValueType = TypeVoid;
 	if (BlockIteratorExpr != nullptr) BlockIteratorExpr->NeedResult = false;
 	if (Code != nullptr) Code->NeedResult = false;
 }
 
-FxBlockIteratorForEachLoop::~FxBlockIteratorForEachLoop()
+FxThreeArgForEachLoop::~FxThreeArgForEachLoop()
 {
 	SAFE_DELETE(BlockIteratorExpr);
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxBlockIteratorForEachLoop::Resolve(FCompileContext &ctx)
+extern bool HasGameSpecificThreeArgForEachLoopTypeNames();
+extern const char * GetGameSpecificThreeArgForEachLoopTypeNames();
+extern bool IsGameSpecificThreeArgForEachLoop(FxThreeArgForEachLoop *);
+extern FxExpression * ResolveGameSpecificThreeArgForEachLoop(FxThreeArgForEachLoop *);
+
+FxExpression *FxThreeArgForEachLoop::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
 	SAFE_RESOLVE(BlockIteratorExpr, ctx);
 
 
-	if(!(BlockIteratorExpr->ValueType->isObjectPointer()))
+	if(IsGameSpecificThreeArgForEachLoop(this))
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach( v, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
-		delete this;
-		return nullptr;
-	}
-	else if(varVarName == NAME_None)
-	{
-		ScriptPosition.Message(MSG_ERROR, "missing var for foreach( v, p, f : b )");
-		delete this;
-		return nullptr;
-	}
-
-	PType * varType = nullptr;
-	PClass * itType = ((PObjectPointer*)BlockIteratorExpr->ValueType)->PointedClass();
-
-	FName fieldName = NAME_None;
-
-	if(itType->TypeName == NAME_BlockThingsIterator)
-	{
-		fieldName = "Thing";
-	}
-	else if(itType->TypeName == NAME_BlockLinesIterator)
-	{
-		fieldName = "CurLine";
+		return ResolveGameSpecificThreeArgForEachLoop(this)->Resolve(ctx);
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach( t, p, f : b ) - 'b' must be a block things or block lines iterator, but is a %s",BlockIteratorExpr->ValueType->DescriptiveName());
+		//put any non-game-specific typed for-each loops here
+	}
+
+	if(HasGameSpecificThreeArgForEachLoopTypeNames())
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach( a, b, c : it ) - 'it' must be % but is a %s", GetGameSpecificThreeArgForEachLoopTypeNames(), BlockIteratorExpr->ValueType->DescriptiveName());
 		delete this;
 		return nullptr;
 	}
-
-	auto var = itType->FindSymbol(fieldName, false);
-	if(var && var->IsKindOf(RUNTIME_CLASS(PField)))
+	else
 	{
-		varType = static_cast<PField*>(var)->Type;
+		ScriptPosition.Message(MSG_ERROR, "foreach( a, b, c : it ) - three-arg foreach loops not supported");
+		delete this;
+		return nullptr;
 	}
-
-	/*
-	{
-		Line|Actor var;
-		Vector3 pos;
-		int flags;
-		BlockLinesIterator|BlockThingsIterator @it = expr;
-		while(@it.Next())
-		{
-			var = @it.CurLine|@it.Thing;
-			pos = @it.position;
-			flags = @it.portalflags;
-			body
-		}
-	}
-	*/
-
-	auto block = new FxCompoundStatement(ScriptPosition);
-
-	block->Add(new FxLocalVariableDeclaration(varType, varVarName, nullptr, 0, ScriptPosition));
-	if(posVarName != NAME_None)
-	{
-		block->Add(new FxLocalVariableDeclaration(TypeVector3, posVarName, nullptr, 0, ScriptPosition));
-	}
-	if(flagsVarName != NAME_None)
-	{
-		block->Add(new FxLocalVariableDeclaration(TypeSInt32, flagsVarName, nullptr, 0, ScriptPosition));
-	}
-
-	block->Add(new FxLocalVariableDeclaration(BlockIteratorExpr->ValueType, "@it", BlockIteratorExpr, 0, ScriptPosition));
-
-	auto inner_block = new FxCompoundStatement(ScriptPosition);
-
-	inner_block->Add(new FxAssign(new FxIdentifier(varVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), fieldName, ScriptPosition), true));
-	if(posVarName != NAME_None)
-	{
-		inner_block->Add(new FxAssign(new FxIdentifier(posVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "position", ScriptPosition), true));
-	}
-	if(flagsVarName != NAME_None)
-	{
-		inner_block->Add(new FxAssign(new FxIdentifier(flagsVarName, ScriptPosition), new FxMemberIdentifier(new FxIdentifier("@it", ScriptPosition), "portalflags", ScriptPosition), true));
-	}
-	inner_block->Add(Code);
-
-	block->Add(new FxWhileLoop(new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition), inner_block, ScriptPosition));
-
-	BlockIteratorExpr = Code = nullptr;
-	delete this;
-	return block->Resolve(ctx);
 }
 
 //==========================================================================
@@ -11755,104 +11692,51 @@ FxExpression *FxBlockIteratorForEachLoop::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-FxCastForEachLoop::FxCastForEachLoop(FName cv, FName vv, FxExpression* castiteartorexpr, FxExpression* code, const FScriptPosition& pos)
-	: FxExpression(EFX_BlockForEachLoop, pos), castClassName(cv), varVarName(vv), CastIteratorExpr(castiteartorexpr), Code(code)
+FxTypedForEachLoop::FxTypedForEachLoop(FName cv, FName vv, FxExpression* castiteartorexpr, FxExpression* code, const FScriptPosition& pos)
+	: FxExpression(EFX_TypedForEachLoop, pos), className(cv), varName(vv), Expr(castiteartorexpr), Code(code)
 {
 	ValueType = TypeVoid;
-	if (CastIteratorExpr != nullptr) CastIteratorExpr->NeedResult = false;
+	if (Expr != nullptr) Expr->NeedResult = false;
 	if (Code != nullptr) Code->NeedResult = false;
 }
 
-FxCastForEachLoop::~FxCastForEachLoop()
+FxTypedForEachLoop::~FxTypedForEachLoop()
 {
-	SAFE_DELETE(CastIteratorExpr);
+	SAFE_DELETE(Expr);
 	SAFE_DELETE(Code);
 }
 
-FxExpression *FxCastForEachLoop::Resolve(FCompileContext &ctx)
+extern bool HasGameSpecificTypedForEachLoopTypeNames();
+extern const char * GetGameSpecificTypedForEachLoopTypeNames();
+extern bool IsGameSpecificTypedForEachLoop(FxTypedForEachLoop *);
+extern FxExpression * ResolveGameSpecificTypedForEachLoop(FxTypedForEachLoop *);
+
+FxExpression *FxTypedForEachLoop::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	SAFE_RESOLVE(CastIteratorExpr, ctx);
+	SAFE_RESOLVE(Expr, ctx);
 
-	if(!(CastIteratorExpr->ValueType->isObjectPointer()))
+	if(IsGameSpecificTypedForEachLoop(this))
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",CastIteratorExpr->ValueType->DescriptiveName());
-		delete this;
-		return nullptr;
-	}
-	else if(varVarName == NAME_None)
-	{
-		ScriptPosition.Message(MSG_ERROR, "missing var for foreach(Type var : it )");
-		delete this;
-		return nullptr;
-	}
-
-	PType * varType = nullptr;
-	PClass * itType = ((PObjectPointer*)CastIteratorExpr->ValueType)->PointedClass();
-
-	FName fieldName = NAME_None;
-
-	if(itType->TypeName == NAME_ActorIterator)
-	{
-		fieldName = "Actor";
-	}
-	else if(itType->TypeName == NAME_ThinkerIterator)
-	{
-		fieldName = "Thinker";
+		return ResolveGameSpecificTypedForEachLoop(this)->Resolve(ctx);
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",CastIteratorExpr->ValueType->DescriptiveName());
+		//put any non-game-specific typed for-each loops here
+	}
+
+	if(HasGameSpecificTypedForEachLoopTypeNames())
+	{
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be % but is a %s",GetGameSpecificTypedForEachLoopTypeNames(), Expr->ValueType->DescriptiveName());
 		delete this;
 		return nullptr;
 	}
-
-	if(castClassName != NAME_None)
+	else
 	{
-		fieldName = castClassName;
-	}
-
-	PClass * varTypeClass = PClass::FindClass(fieldName);
-	varType = varTypeClass->VMType;
-
-	if(!varType)
-	{
-		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - could not find class '%s'",castClassName.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - typed foreach loops not supported");
 		delete this;
 		return nullptr;
 	}
-
-	varType = NewPointer(varType, false);
-
-	/*
-	{
-		CastType var;
-		ActorIterator|ThinkerIterator @it = expr;
-		while(var = CastType(@it.Next()))
-			body
-	}
-	*/
-
-	auto block = new FxCompoundStatement(ScriptPosition);
-
-	block->Add(new FxLocalVariableDeclaration(varType, varVarName, nullptr, 0, ScriptPosition));
-
-	block->Add(new FxLocalVariableDeclaration(CastIteratorExpr->ValueType, "@it", CastIteratorExpr, 0, ScriptPosition));
-
-	auto inner_block = new FxCompoundStatement(ScriptPosition);
-
-	FxExpression * nextCallCast = new FxMemberFunctionCall(new FxIdentifier("@it", ScriptPosition), "Next", {}, ScriptPosition);
-
-	if(castClassName != NAME_None)
-	{
-		nextCallCast = new FxDynamicCast(varTypeClass, nextCallCast);
-	}
-
-	block->Add(new FxWhileLoop(new FxAssign(new FxIdentifier(varVarName, ScriptPosition), nextCallCast), Code, ScriptPosition));
-
-	CastIteratorExpr = Code = nullptr;
-	delete this;
-	return block->Resolve(ctx);
 }
 
 //==========================================================================

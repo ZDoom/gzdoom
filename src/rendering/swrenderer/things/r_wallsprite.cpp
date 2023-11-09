@@ -128,7 +128,7 @@ namespace swrenderer
 		if (thing->flags5 & MF5_BRIGHT) vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
-		vis->Translation = thing->Translation.index();
+		vis->Translation = thing->Translation;
 		vis->FakeFlatStat = WaterFakeSide::Center;
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = NULL;

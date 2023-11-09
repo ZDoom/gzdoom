@@ -1208,6 +1208,11 @@ DEFINE_MAP_OPTION(gravity, true)
 	info->gravity = parse.sc.Float;
 }
 
+DEFINE_MAP_OPTION(nogravity, true)
+{
+	info->gravity = DBL_MAX;
+}
+
 DEFINE_MAP_OPTION(aircontrol, true)
 {
 	parse.ParseAssign();

@@ -141,12 +141,12 @@ class BlackScreen : ScreenJob
 class ImageScreen : SkippableScreenJob
 {
 	int tilenum;
-	int trans;
+	TranslationID trans;
 	int waittime; // in ms.
 	bool cleared;
 	TextureID texid;
 
-	ScreenJob Init(TextureID tile, int fade = fadein | fadeout, int wait = 3000, int translation = 0)
+	ScreenJob Init(TextureID tile, int fade = fadein | fadeout, int wait = 3000, TranslationID translation = 0)
 	{
 		Super.Init(fade);
 		waittime = wait;
@@ -156,7 +156,7 @@ class ImageScreen : SkippableScreenJob
 		return self;
 	}
 
-	ScreenJob InitNamed(String tex, int fade = fadein | fadeout, int wait = 3000, int translation = 0)
+	ScreenJob InitNamed(String tex, int fade = fadein | fadeout, int wait = 3000, TranslationID translation = 0)
 	{
 		Super.Init(fade);
 		waittime = wait;
@@ -166,12 +166,12 @@ class ImageScreen : SkippableScreenJob
 		return self;
 	}
 
-	static ScreenJob Create(TextureID tile, int fade = fadein | fadeout, int wait = 3000, int translation = 0)
+	static ScreenJob Create(TextureID tile, int fade = fadein | fadeout, int wait = 3000, TranslationID translation = 0)
 	{
 		return new("ImageScreen").Init(tile, fade, wait, translation);
 	}
 
-	static ScreenJob CreateNamed(String tex, int fade = fadein | fadeout, int wait = 3000, int translation = 0)
+	static ScreenJob CreateNamed(String tex, int fade = fadein | fadeout, int wait = 3000, TranslationID translation = 0)
 	{
 		return new("ImageScreen").InitNamed(tex, fade, wait, translation);
 	}

@@ -167,7 +167,7 @@ std2:
 		'vector2'					{ RET(TK_Vector2); }
 		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
-		'mapiterator'				{ RET(TK_MapIterator); }
+		'mapiterator'				{ RET(ParseVersion >= MakeVersion(4, 10, 0)? TK_MapIterator : TK_Identifier); }
 		'array'						{ RET(TK_Array); }
 		'function'					{ RET(ParseVersion >= MakeVersion(4, 12, 0)? TK_FunctionType : TK_Identifier); }
 		'in'						{ RET(TK_In); }

@@ -1886,6 +1886,12 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				retval = TypeTextureID;
 				break;
 
+			case NAME_TranslationID:
+				retval = TypeTranslationID;
+				break;
+
+
+
 			default:
 				retval = ResolveUserType(btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
 				break;

@@ -755,7 +755,7 @@ class BaseStatusBar : StatusBarCore native
 	//
 	//============================================================================
 	
-	int GetTranslation() const
+	TranslationID GetTranslation() const
 	{
 		if(gameinfo.gametype & GAME_Raven)
 			return Translation.MakeID(TRANSLATION_PlayersExtra, CPlayer.mo.PlayerNumber());

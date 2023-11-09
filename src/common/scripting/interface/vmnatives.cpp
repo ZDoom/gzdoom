@@ -1372,3 +1372,38 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, FindFunction, FindFunctionPointer)
 	ACTION_RETURN_POINTER(FindFunctionPointer(cls, fn.GetIndex()));
 }
 
+int R_FindCustomTranslation(FName name);
+
+static int ZFindTranslation(int intname)
+{
+	return R_FindCustomTranslation(ENamedName(intname));
+}
+
+static int MakeTransID(int g, int s)
+{
+	return TRANSLATION(g, s);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Translation, GetID, ZFindTranslation)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(t);
+	ACTION_RETURN_INT(ZFindTranslation(t));
+}
+
+// same as above for the compiler which needs a class to look this up.
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinFindTranslation, ZFindTranslation)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(t);
+	ACTION_RETURN_INT(ZFindTranslation(t));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Translation, MakeID, MakeTransID)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(g);
+	PARAM_INT(t);
+	ACTION_RETURN_INT(MakeTransID(g, t));
+}
+

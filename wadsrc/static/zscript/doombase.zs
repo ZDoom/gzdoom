@@ -51,25 +51,21 @@ extend struct Console
 
 extend struct Translation
 {
-	Color colors[256];
-	
-	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
-	native static int GetID(Name transname);
 }
 
 // This is needed because Actor contains a field named 'translation' which shadows the above.
 struct Translate version("4.5")
 {
-	static int MakeID(int group, int num)
+	static TranslationID MakeID(int group, int num)
 	{
-		return (group << 16) + num;
+		return Translation.MakeID(group, num);
 	}
 	static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass)
 	{
 		return Translation.SetPlayerTranslation(group, num, plrnum, pclass);
 	}
-	static int GetID(Name transname)
+	static TranslationID GetID(Name transname)
 	{
 		return Translation.GetID(transname);
 	}
@@ -115,6 +111,7 @@ extend struct GameInfoStruct
 extend class Object
 {
 	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
+	private native static TranslationID BuiltinFindTranslation(Name nm);
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
 	// These really should be global functions...
 	native static String G_SkillName();

@@ -383,6 +383,15 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key, void *addr) const override;
 };
 
+class PTranslationID : public PInt
+{
+public:
+	PTranslationID();
+
+	void WriteValue(FSerializer& ar, const char* key, const void* addr) const override;
+	bool ReadValue(FSerializer& ar, const char* key, void* addr) const override;
+};
+
 class PColor : public PInt
 {
 public:
@@ -712,6 +721,7 @@ extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
 extern PTextureID *TypeTextureID;
+extern PTranslationID* TypeTranslationID;
 extern PSpriteID *TypeSpriteID;
 extern PStruct* TypeVector2;
 extern PStruct* TypeVector3;

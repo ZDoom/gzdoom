@@ -41,6 +41,7 @@
 #include "printf.h"
 #include "textureid.h"
 #include "maps.h"
+#include "palettecontainer.h"
 
 
 FTypeTable TypeTable;
@@ -58,6 +59,7 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PTextureID *TypeTextureID;
+PTranslationID* TypeTranslationID;
 PSpriteID *TypeSpriteID;
 PStatePointer *TypeState;
 PPointer *TypeFont;
@@ -322,6 +324,7 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeNullPtr = new PPointer, NAME_Pointer);
 	TypeTable.AddType(TypeSpriteID = new PSpriteID, NAME_SpriteID);
 	TypeTable.AddType(TypeTextureID = new PTextureID, NAME_TextureID);
+	TypeTable.AddType(TypeTranslationID = new PTranslationID, NAME_TranslationID);
 
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeRawFunction = new PPointer;
@@ -1318,6 +1321,48 @@ bool PTextureID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 	FTextureID val;
 	ar(key, val);
 	*(FTextureID*)addr = val;
+	return true;
+}
+
+/* PTranslationID ******************************************************************/
+
+//==========================================================================
+//
+// PTranslationID Default Constructor
+//
+//==========================================================================
+
+PTranslationID::PTranslationID()
+	: PInt(sizeof(FTranslationID), true, false)
+{
+	mDescriptiveName = "TranslationID";
+	Flags |= TYPE_IntNotInt;
+	static_assert(sizeof(FTranslationID) == alignof(FTranslationID), "TranslationID not properly aligned");
+}
+
+//==========================================================================
+//
+// PTranslationID :: WriteValue
+//
+//==========================================================================
+
+void PTranslationID::WriteValue(FSerializer& ar, const char* key, const void* addr) const
+{
+	FTranslationID val = *(FTranslationID*)addr;
+	ar(key, val);
+}
+
+//==========================================================================
+//
+// PTranslationID :: ReadValue
+//
+//==========================================================================
+
+bool PTranslationID::ReadValue(FSerializer& ar, const char* key, void* addr) const
+{
+	FTranslationID val;
+	ar(key, val);
+	*(FTranslationID*)addr = val;
 	return true;
 }
 

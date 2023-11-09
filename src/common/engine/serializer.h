@@ -20,6 +20,7 @@ class FSoundID;
 union FRenderStyle;
 class DObject;
 class FTextureID;
+struct FTranslationID;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -240,6 +241,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &sid, struct ModelOverride *def);
+FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
 
 void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);
 

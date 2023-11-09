@@ -919,10 +919,11 @@ struct StringStruct native
 
 struct Translation version("2.4")
 {
-	static int MakeID(int group, int num)
-	{
-		return (group << 16) + num;
-	}
+	Color colors[256];
+	
+	native TranslationID AddTranslation();
+	native static TranslationID MakeID(int group, int num);
+	native static TranslationID GetID(Name transname);
 }
 
 // Convenient way to attach functions to Quat

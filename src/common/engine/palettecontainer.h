@@ -42,6 +42,46 @@ struct FRemapTable
 private:
 };
 
+
+struct FTranslationID
+{
+public:
+	FTranslationID() = default;
+
+private:
+	constexpr FTranslationID(int id) : ID(id)
+	{
+	}
+public:
+	static constexpr FTranslationID fromInt(int i)
+	{
+		return FTranslationID(i);
+	}
+	FTranslationID(const FTranslationID& other) = default;
+	FTranslationID& operator=(const FTranslationID& other) = default;
+	bool operator !=(FTranslationID other) const
+	{
+		return ID != other.ID;
+	}
+	bool operator ==(FTranslationID other) const
+	{
+		return ID == other.ID;
+	}
+	bool operator ==(int other) const = delete;
+	bool operator !=(int other) const = delete;
+	constexpr int index() const
+	{
+		return ID;
+	}
+	constexpr bool isvalid() const
+	{
+		return ID > 0;
+	}
+private:
+
+	int ID;
+};
+
 // A class that initializes unusued pointers to NULL. This is used so that when
 // the TAutoGrowArray below is expanded, the new elements will be NULLed.
 class FRemapTablePtr

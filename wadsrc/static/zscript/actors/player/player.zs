@@ -2667,7 +2667,7 @@ class PSprite : Object native play
 	native Bool firstTic;
 	native bool InterpolateTic;
 	native int Tics;
-	native uint Translation;
+	native TranslationID Translation;
 	native bool bAddWeapon;
 	native bool bAddBob;
 	native bool bPowDouble;

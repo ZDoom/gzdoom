@@ -43,11 +43,13 @@
 #include "texturemanager.h"
 #include "m_random.h"
 #include "v_font.h"
+#include "palettecontainer.h"
 
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
 CompileEnvironment compileEnvironment;
+int R_FindCustomTranslation(FName name);
 
 struct FLOP
 {
@@ -161,6 +163,12 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 			PType* expected = ReturnProto->ReturnTypes[i];
 			PType* actual = proto->ReturnTypes[i];
 			if (swapped) std::swap(expected, actual);
+			// this must pass for older ZScripts.
+			if (Version < MakeVersion(4, 12, 0))
+			{
+				if (expected == TypeTranslationID) expected = TypeSInt32;
+				if (actual == TypeTranslationID) actual = TypeSInt32;
+			}
 
 			if (expected != actual && !AreCompatiblePointerTypes(expected, actual))
 			{ // Incompatible
@@ -993,6 +1001,19 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{
+		if (basex->ValueType == TypeTranslationID)
+		{
+			// translation IDs must be entirely incompatible with ints, not even allowing an explicit conversion, 
+			// but since the type was only introduced in version 4.12, older ZScript versions must allow this conversion.
+			if (ctx.Version < MakeVersion(4, 12, 0))
+			{
+				FxExpression* x = basex;
+				x->ValueType = ValueType;
+				basex = nullptr;
+				delete this;
+				return x;
+			}
+		}
 		if (basex->ValueType->isNumeric() || Explicit)	// names can be converted to int, but only with an explicit type cast.
 		{
 			FxExpression *x = basex;
@@ -1006,7 +1027,7 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this serious error needs to be reduced to a warning. :(
 			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
 			if (!basex->isConstant())	
-				ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
+				ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a %s", basex->ValueType->DescriptiveName());
 			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression * x = new FxConstant(0, ScriptPosition);
 			delete this;
@@ -1127,7 +1148,8 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
 			// At least in ZScript, MSG_OPTERROR always means to report an error, not a warning so the problem only exists in DECORATE.
-			if (!basex->isConstant()) ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
+			if (!basex->isConstant()) 
+				ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a %s", basex->ValueType->DescriptiveName());
 			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression *x = new FxConstant(0.0, ScriptPosition);
 			delete this;
@@ -1540,6 +1562,107 @@ ExpEmit FxSoundCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxTranslationCast::FxTranslationCast(FxExpression* x)
+	: FxExpression(EFX_TranslationCast, x->ScriptPosition)
+{
+	basex = x;
+	ValueType = TypeTranslationID;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxTranslationCast::~FxTranslationCast()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression* FxTranslationCast::Resolve(FCompileContext& ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	if (basex->ValueType->isInt())
+	{
+		// 0 is a valid constant for translations, meaning 'no translation at all'. note that this conversion ONLY allows a constant!
+		if (basex->isConstant() && static_cast<FxConstant*>(basex)->GetValue().GetInt() == 0)
+		{
+			FxExpression* x = basex;
+			x->ValueType = TypeTranslationID;
+			basex = nullptr;
+			delete this;
+			return x;
+		}
+		if (ctx.Version < MakeVersion(4, 12, 0))
+		{
+			// only allow this conversion as a fallback
+			FxExpression* x = basex;
+			x->ValueType = TypeTranslationID;
+			basex = nullptr;
+			delete this;
+			return x;
+		}
+	}
+	else if (basex->ValueType == TypeString || basex->ValueType == TypeName)
+	{
+		if (basex->isConstant())
+		{
+			ExpVal constval = static_cast<FxConstant*>(basex)->GetValue();
+			FxExpression* x = new FxConstant(R_FindCustomTranslation(constval.GetName()), ScriptPosition);
+			x->ValueType = TypeTranslationID;
+			delete this;
+			return x;
+		}
+		else if (basex->ValueType == TypeString)
+		{
+			basex = new FxNameCast(basex, true);
+			basex = basex->Resolve(ctx);
+		}
+		return this;
+	}
+	ScriptPosition.Message(MSG_ERROR, "Cannot convert to translation ID");
+	delete this;
+	return nullptr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxTranslationCast::Emit(VMFunctionBuilder* build)
+{
+	ExpEmit to(build, REGT_POINTER);
+
+	VMFunction* callfunc;
+	auto sym = FindBuiltinFunction(NAME_BuiltinFindTranslation);
+
+	assert(sym);
+	callfunc = sym->Variants[0].Implementation;
+
+	FunctionCallEmitter emitters(callfunc);
+	emitters.AddParameter(build, basex);
+	emitters.AddReturn(REGT_INT);
+	return emitters.EmitCall(build);
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxFontCast::FxFontCast(FxExpression *x)
 	: FxExpression(EFX_FontCast, x->ScriptPosition)
 {
@@ -1761,6 +1884,14 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	else if (ValueType == TypeSound)
 	{
 		FxExpression *x = new FxSoundCast(basex);
+		x = x->Resolve(ctx);
+		basex = nullptr;
+		delete this;
+		return x;
+	}
+	else if (ValueType == TypeTranslationID)
+	{
+		FxExpression* x = new FxTranslationCast(basex);
 		x = x->Resolve(ctx);
 		basex = nullptr;
 		delete this;
@@ -4639,6 +4770,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 		else if (left->ValueType == TypeColor) cast = CAST_Co2S;
 		else if (left->ValueType == TypeSpriteID) cast = CAST_SID2S;
 		else if (left->ValueType == TypeTextureID) cast = CAST_TID2S;
+		else if (left->ValueType == TypeTranslationID) cast = CAST_U2S;
 		else if (op1.RegType == REGT_POINTER) cast = CAST_P2S;
 		else if (op1.RegType == REGT_INT) cast = CAST_I2S;
 		else assert(false && "Bad type for string concatenation");
@@ -4672,6 +4804,7 @@ ExpEmit FxConcat::Emit(VMFunctionBuilder *build)
 		else if (right->ValueType == TypeColor) cast = CAST_Co2S;
 		else if (right->ValueType == TypeSpriteID) cast = CAST_SID2S;
 		else if (right->ValueType == TypeTextureID) cast = CAST_TID2S;
+		else if (right->ValueType == TypeTranslationID) cast = CAST_U2S;
 		else if (op2.RegType == REGT_POINTER) cast = CAST_P2S;
 		else if (op2.RegType == REGT_INT) cast = CAST_I2S;
 		else assert(false && "Bad type for string concatenation");
@@ -5143,11 +5276,24 @@ FxExpression *FxConditional::Resolve(FCompileContext& ctx)
 		ValueType = truex->ValueType;
 	else if (falsex->IsPointer() && truex->ValueType == TypeNullPtr)
 		ValueType = falsex->ValueType;
+	// translation IDs need a bit of glue for compatibility and the 0 literal.
+	else if (truex->IsInteger() && falsex->ValueType == TypeTranslationID)
+	{
+		truex = new FxTranslationCast(truex);
+		truex = truex->Resolve(ctx);
+		ValueType = ctx.Version < MakeVersion(4, 12, 0)? TypeSInt32 : TypeTranslationID;
+	}
+	else if (falsex->IsInteger() && truex->ValueType == TypeTranslationID)
+	{
+		falsex = new FxTranslationCast(falsex);
+		falsex = falsex->Resolve(ctx);
+		ValueType = ctx.Version < MakeVersion(4, 12, 0) ? TypeSInt32 : TypeTranslationID;
+	}
+
 	else
 		ValueType = TypeVoid;
-	//else if (truex->ValueType != falsex->ValueType)
 
-	if (ValueType->GetRegType() == REGT_NIL)
+	if (truex == nullptr || falsex == nullptr || ValueType->GetRegType() == REGT_NIL)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Incompatible types for ?: operator");
 		delete this;
@@ -8279,6 +8425,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 				MethodName == NAME_Name ? TypeName :
 				MethodName == NAME_SpriteID ? TypeSpriteID :
 				MethodName == NAME_TextureID ? TypeTextureID :
+				MethodName == NAME_TranslationID ? TypeTranslationID :
 				MethodName == NAME_State ? TypeState :
 				MethodName == NAME_Color ? TypeColor : (PType*)TypeSound;
 

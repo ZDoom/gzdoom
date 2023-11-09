@@ -368,7 +368,7 @@ public:
 	FRenderStyle RenderStyle;
 	int OverrideShader;
 
-	int translation;
+	FTranslationID translation;
 	int index;
 	float depth;
 	int vertexindex;

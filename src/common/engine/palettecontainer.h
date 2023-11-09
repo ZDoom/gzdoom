@@ -187,6 +187,11 @@ public:
 	void CopyTranslation(FTranslationID dest, FTranslationID src);
 	FTranslationID StoreTranslation(int slot, FRemapTable* remap);
 	FRemapTable* TranslationToTable(int translation) const;
+	FRemapTable* TranslationToTable(FTranslationID translation) const
+	{
+		return TranslationToTable(translation.index());
+	}
+
 	void GenerateGlobalBrightmapFromColormap(const uint8_t* cmapdata, int numlevels);
 
 	void PushIdentityTable(int slot)

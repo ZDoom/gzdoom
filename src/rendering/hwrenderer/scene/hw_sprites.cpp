@@ -1077,7 +1077,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 	}
 
-	translation = thing->Translation.index();
+	translation = thing->Translation;
 
 	OverrideShader = -1;
 	trans = thing->Alpha;
@@ -1326,7 +1326,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 
 		if (lump.isValid())
 		{
-			translation = 0;
+			translation = NO_TRANSLATION;
 			//auto tex = TexMan.GetGameTexture(lump, false);
 
 			ul = 0;

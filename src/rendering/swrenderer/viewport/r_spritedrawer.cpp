@@ -469,7 +469,7 @@ namespace swrenderer
 		SetTranslationMap(nullptr);
 		if (translation != NO_TRANSLATION)
 		{
-			FRemapTable *table = GPalette.TranslationToTable(translation.index());
+			FRemapTable *table = GPalette.TranslationToTable(translation);
 			if (table != NULL)
 			{
 				if (viewport->RenderTarget->IsBgra())

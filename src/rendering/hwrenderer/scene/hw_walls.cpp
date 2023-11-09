@@ -135,7 +135,7 @@ void HWWall::RenderMirrorSurface(HWWallDispatcher*di, FRenderState &state)
 	state.AlphaFunc(Alpha_Greater, 0);
 
 	auto tex = TexMan.GetGameTexture(TexMan.mirrorTexture, false);
-	state.SetMaterial(tex, UF_None, 0, CLAMP_NONE, 0, -1); // do not upscale the mirror texture.
+	state.SetMaterial(tex, UF_None, 0, CLAMP_NONE, NO_TRANSLATION, -1); // do not upscale the mirror texture.
 
 	flags &= ~HWWall::HWF_GLOW;
 	RenderWall(state, HWWall::RWF_BLANK);
@@ -191,7 +191,7 @@ void HWWall::RenderTexturedWall(HWWallDispatcher*di, FRenderState &state, int rf
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
 		SetGlowPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 	}
-	state.SetMaterial(texture, UF_Texture, 0, flags & 3, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, flags & 3, NO_TRANSLATION, -1);
 #ifdef NPOT_EMULATION
 	// Test code, could be reactivated as a compatibility option in the unlikely event that some old vanilla map eve needs it.
 	if (hw_npottest)

@@ -667,12 +667,12 @@ static void CreateLuminosityTranslationRanges()
 //
 //==========================================================================
 
-void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size)
+void V_ApplyLuminosityTranslation(const LuminosityTranslationDesc& lum, uint8_t* pixel, int size)
 {
-	int colorrange = (translation >> 16) & 0x3fff;
+	int colorrange = lum.colorrange;
 	if (colorrange >= NumTextColors * 2) return;
-	int lum_min = (translation >> 8) & 0xff;
-	int lum_max = translation & 0xff;
+	int lum_min = lum.lum_min;
+	int lum_max = lum.lum_max;
 	int lum_range = (lum_max - lum_min + 1);
 	PalEntry* remap = paletteptr + colorrange * 256;
 
@@ -892,10 +892,11 @@ void V_LoadTranslations()
 		CalcDefaultTranslation(BigFont, CR_UNTRANSLATED * 2 + 1);
 		if (OriginalBigFont != nullptr && OriginalBigFont != BigFont)
 		{
-			int sometrans = OriginalBigFont->Translations[0];
+			assert(IsLuminosityTranslation(OriginalBigFont->Translations[0]));
+			int sometrans = OriginalBigFont->Translations[0].index();
 			sometrans &= ~(0x3fff << 16);
 			sometrans |= (CR_UNTRANSLATED * 2 + 1) << 16;
-			OriginalBigFont->Translations[CR_UNTRANSLATED] = sometrans;
+			OriginalBigFont->Translations[CR_UNTRANSLATED] = FTranslationID::fromInt(sometrans);
 			OriginalBigFont->forceremap = true;
 		}
 	}
@@ -904,18 +905,20 @@ void V_LoadTranslations()
 		CalcDefaultTranslation(SmallFont, CR_UNTRANSLATED * 2);
 		if (OriginalSmallFont != nullptr && OriginalSmallFont != SmallFont)
 		{
-			int sometrans = OriginalSmallFont->Translations[0];
+			assert(IsLuminosityTranslation(OriginalSmallFont->Translations[0]));
+			int sometrans = OriginalSmallFont->Translations[0].index();
 			sometrans &= ~(0x3fff << 16);
 			sometrans |= (CR_UNTRANSLATED * 2) << 16;
-			OriginalSmallFont->Translations[CR_UNTRANSLATED] = sometrans;
+			OriginalSmallFont->Translations[CR_UNTRANSLATED] = FTranslationID::fromInt(sometrans);
 			OriginalSmallFont->forceremap = true;
 		}
 		if (NewSmallFont != nullptr)
 		{
-			int sometrans = NewSmallFont->Translations[0];
+			assert(IsLuminosityTranslation(NewSmallFont->Translations[0]));
+			int sometrans = NewSmallFont->Translations[0].index();
 			sometrans &= ~(0x3fff << 16);
 			sometrans |= (CR_UNTRANSLATED * 2) << 16;
-			NewSmallFont->Translations[CR_UNTRANSLATED] = sometrans;
+			NewSmallFont->Translations[CR_UNTRANSLATED] = FTranslationID::fromInt(sometrans);
 			NewSmallFont->forceremap = true;
 		}
 	}

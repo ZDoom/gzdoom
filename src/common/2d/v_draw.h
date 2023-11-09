@@ -176,7 +176,7 @@ struct DrawParms
 	double left;
 	float Alpha;
 	PalEntry fillcolor;
-	int TranslationId;
+	FTranslationID TranslationId;
 	PalEntry colorOverlay;
 	PalEntry color;
 	int alphaChannel;

@@ -131,7 +131,7 @@ public:
 		int mIndexCount;
 
 		FGameTexture *mTexture;
-		int mTranslationId;
+		FTranslationID mTranslationId;
 		PalEntry mSpecialColormap[2];
 		int mScissor[4];
 		int mDesaturate;
@@ -216,7 +216,7 @@ public:
 	void AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double lightlevel, uint32_t *indices, size_t indexcount);
-	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, const unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, const IntRect* clip);
+	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, const unsigned int *ind, size_t idxcount, FTranslationID translation, PalEntry color, FRenderStyle style, const IntRect* clip);
 	void FillPolygon(int* rx1, int* ry1, int* xb1, int32_t npoints, int pic, int palette, int shade, int props, const FVector2& xtex, const FVector2& ytex, const FVector2& otex,
 		int clipx1, int clipy1, int clipx2, int clipy2);
 	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin = false, double flatscale = 1.0, PalEntry color = 0xffffffff, ERenderStyle rs = STYLE_Normal);

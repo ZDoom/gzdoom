@@ -114,10 +114,10 @@ inline constexpr FTranslationID TRANSLATION(uint8_t a, uint32_t b)
 {
 	return FTranslationID::fromInt((a << TRANSLATION_SHIFT) | b);
 }
-inline constexpr int MakeLuminosityTranslation(int range, uint8_t min, uint8_t max)
+inline constexpr FTranslationID MakeLuminosityTranslation(int range, uint8_t min, uint8_t max)
 {
 	// ensure that the value remains positive.
-	return ( (1 << 30) | ((range&0x3fff) << 16) | (min << 8) | max );
+	return FTranslationID::fromInt( (1 << 30) | ((range&0x3fff) << 16) | (min << 8) | max );
 }
 
 inline constexpr bool IsLuminosityTranslation(FTranslationID trans)

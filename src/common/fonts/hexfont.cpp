@@ -323,7 +323,7 @@ public:
 		Translations.Resize(NumTextColors);
 		for (int i = 0; i < NumTextColors; i++)
 		{
-			if (i == CR_UNTRANSLATED) Translations[i] = 0;
+			if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
 			else Translations[i] = MakeLuminosityTranslation(i * 2 + 1, minlum, maxlum);
 		}
 	}
@@ -387,7 +387,7 @@ public:
 		Translations.Resize(NumTextColors);
 		for (int i = 0; i < NumTextColors; i++)
 		{
-			if (i == CR_UNTRANSLATED) Translations[i] = 0;
+			if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
 			else Translations[i] = MakeLuminosityTranslation(i * 2, minlum, maxlum);
 		}
 	}

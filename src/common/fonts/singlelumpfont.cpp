@@ -194,7 +194,7 @@ void FSingleLumpFont::LoadTranslations()
 	Translations.Resize(NumTextColors);
 	for (int i = 0; i < NumTextColors; i++)
 	{
-		if (i == CR_UNTRANSLATED) Translations[i] = 0;
+		if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
 		else Translations[i] = MakeLuminosityTranslation(i * 2 + (FontType == FONT1 ? 1 : 0), minlum, maxlum);
 	}
 }

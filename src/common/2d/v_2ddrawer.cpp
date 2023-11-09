@@ -443,7 +443,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	if (img->isWarped()) dg.mFlags |= DTF_Wrap;
 	if (parms.indexed) dg.mFlags |= DTF_Indexed;
 
-	dg.mTranslationId = 0;
+	dg.mTranslationId = NO_TRANSLATION;
 	SetStyle(img, parms, vertexcolor, dg);
 	if (parms.indexed)
 	{
@@ -451,7 +451,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 		vertexcolor = 0xffffffff;
 	}
 
-	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
+	if (!img->isHardwareCanvas() && parms.TranslationId != INVALID_TRANSLATION)
 	{
 		dg.mTranslationId = parms.TranslationId;
 	}
@@ -607,7 +607,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	dg.mFlags |= DTF_Wrap;
 	dg.mTexture = img;
 
-	dg.mTranslationId = 0;
+	dg.mTranslationId = NO_TRANSLATION;
 	SetStyle(img, parms, vertexcolor, dg);
 
 	if (shape->lastParms == nullptr) {
@@ -624,7 +624,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 		shape->lastParms = new DrawParms(parms);
 	}
 
-	if (!(img != nullptr && img->isHardwareCanvas()) && parms.TranslationId != -1)
+	if (!(img != nullptr && img->isHardwareCanvas()) && parms.TranslationId != INVALID_TRANSLATION)
 		dg.mTranslationId = parms.TranslationId;
 
 	auto osave = offset;
@@ -796,7 +796,7 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, const IntRect* clip)
+void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, const unsigned int* ind, size_t idxcount, FTranslationID translation, PalEntry color, FRenderStyle style, const IntRect* clip)
 {
 	RenderCommand dg;
 

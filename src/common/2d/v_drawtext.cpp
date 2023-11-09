@@ -185,7 +185,7 @@ void DrawChar(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double 
 		{
 			return;
 		}
-		bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != 0);
+		bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != NO_TRANSLATION);
 		PalEntry color = 0xffffffff;
 		if (!palettetrans) parms.TranslationId = font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
@@ -210,7 +210,7 @@ void DrawChar(F2DDrawer *drawer,  FFont *font, int normalcolor, double x, double
 		uint32_t tag = ListGetInt(args);
 		bool res = ParseDrawTextureTags(drawer, pic, x, y, tag, args, &parms, DrawTexture_Normal);
 		if (!res) return;
-		bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != 0);
+		bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != NO_TRANSLATION);
 		PalEntry color = 0xffffffff;
 		if (!palettetrans) parms.TranslationId = font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
@@ -272,7 +272,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 	double 		cx;
 	double 		cy;
 	int			boldcolor;
-	int			trans = -1;
+	FTranslationID			trans = INVALID_TRANSLATION;
 	int			kerning;
 	FGameTexture *pic;
 
@@ -282,7 +282,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly = int (parms.celly * scaley);
 
-	bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != 0);
+	bool palettetrans = (normalcolor == CR_NATIVEPAL && parms.TranslationId != NO_TRANSLATION);
 
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
@@ -290,7 +290,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 
 	PalEntry colorparm = parms.color;
 	PalEntry color = 0xffffffff;
-	trans = palettetrans? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
+	trans = palettetrans? INVALID_TRANSLATION : font->GetColorTranslation((EColorRange)normalcolor, &color);
 	parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 
 	kerning = font->GetDefaultKerning();

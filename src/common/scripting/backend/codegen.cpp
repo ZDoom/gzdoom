@@ -49,7 +49,7 @@
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);
 CompileEnvironment compileEnvironment;
-int R_FindCustomTranslation(FName name);
+FTranslationID R_FindCustomTranslation(FName name);
 
 struct FLOP
 {

@@ -996,7 +996,7 @@ class DAutomap :public DAutomapBase
 	void calcMinMaxMtoF();
 
 	void DrawMarker(FGameTexture *tex, double x, double y, int yadjust,
-		INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
+		INTBOOL flip, double xscale, double yscale, FTranslationID translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
 
 	void rotatePoint(double *x, double *y);
 	void rotate(double *x, double *y, DAngle an);
@@ -3074,7 +3074,7 @@ void DAutomap::drawThings ()
 //=============================================================================
 
 void DAutomap::DrawMarker (FGameTexture *tex, double x, double y, int yadjust,
-	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
+	INTBOOL flip, double xscale, double yscale, FTranslationID translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == nullptr || !tex->isValid())
 	{
@@ -3097,7 +3097,7 @@ void DAutomap::DrawMarker (FGameTexture *tex, double x, double y, int yadjust,
 		DTA_ClipLeft, f_x,
 		DTA_ClipRight, f_x + f_w,
 		DTA_FlipX, flip,
-		DTA_TranslationIndex, translation,
+		DTA_TranslationIndex, translation.index(),
 		DTA_Alpha, alpha,
 		DTA_FillColor, fillcolor,
 		DTA_RenderStyle, renderstyle.AsDWORD,
@@ -3128,7 +3128,7 @@ void DAutomap::drawMarks ()
 			if (font == nullptr)
 			{
 				DrawMarker(TexMan.GetGameTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
-					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+					1, 1, NO_TRANSLATION, 1, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
 			else
 			{

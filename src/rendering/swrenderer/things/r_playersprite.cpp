@@ -307,8 +307,8 @@ namespace swrenderer
 		vis.yscale = float(pspriteyscale / stex->GetScale().Y);
 		vis.pic = stex;
 
-		uint32_t trans = pspr->GetTranslation() != 0 ? pspr->GetTranslation() : 0;
-		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) trans = owner->Translation;
+		uint32_t trans = pspr->GetTranslation().index();
+		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) trans = owner->Translation.index();
 		vis.Translation = trans;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)

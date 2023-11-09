@@ -79,7 +79,7 @@ void StaticSerializeTranslations(FSerializer &arc)
 			auto size = GPalette.NumTranslations(TRANSLATION_LevelScripted);
 			for (unsigned int i = 0; i < size; ++i)
 			{
-				trans = GPalette.TranslationToTable(TRANSLATION(TRANSLATION_LevelScripted, i));
+				trans = GPalette.GetTranslation(TRANSLATION_LevelScripted, i);
 				if (trans != NULL && !trans->IsIdentity())
 				{
 					if (arc.BeginObject(nullptr))
@@ -114,7 +114,7 @@ void StaticSerializeTranslations(FSerializer &arc)
 
 static TArray<PalEntry> BloodTranslationColors;
 
-int CreateBloodTranslation(PalEntry color)
+FTranslationID CreateBloodTranslation(PalEntry color)
 {
 	unsigned int i;
 
@@ -132,7 +132,7 @@ int CreateBloodTranslation(PalEntry color)
 			color.b == BloodTranslationColors[i].b)
 		{
 			// A duplicate of this translation already exists
-			return i;
+			return TRANSLATION(TRANSLATION_Blood, i);
 		}
 	}
 	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
@@ -152,7 +152,7 @@ int CreateBloodTranslation(PalEntry color)
 		trans.Remap[i] = entry;
 	}
 	GPalette.AddTranslation(TRANSLATION_Blood, &trans);
-	return BloodTranslationColors.Push(color);
+	return TRANSLATION(TRANSLATION_Blood, BloodTranslationColors.Push(color));
 }
 
 //----------------------------------------------------------------------------
@@ -628,9 +628,9 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 //
 //
 //----------------------------------------------------------------------------
-static TMap<FName, int> customTranslationMap;
+static TMap<FName, FTranslationID> customTranslationMap;
 
-int R_FindCustomTranslation(FName name)
+FTranslationID R_FindCustomTranslation(FName name)
 {
 	switch (name.GetIndex())
 	{
@@ -639,7 +639,7 @@ int R_FindCustomTranslation(FName name)
 		return TRANSLATION(TRANSLATION_Standard, 7);
 
 	case NAME_None:
-		return 0;
+		return NO_TRANSLATION;
 
 	case NAME_RainPillar1:
 	case NAME_RainPillar2:
@@ -662,8 +662,8 @@ int R_FindCustomTranslation(FName name)
 		return TRANSLATION(TRANSLATION_Players, name.GetIndex() - NAME_Player1);
 
 	}
-	int *t = customTranslationMap.CheckKey(name);
-	return (t != nullptr)? *t : -1;
+	auto t = customTranslationMap.CheckKey(name);
+	return (t != nullptr)? *t : INVALID_TRANSLATION;
 }
 
 //----------------------------------------------------------------------------
@@ -698,16 +698,16 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Translation must be in the range [0,%d]", max);
 					}
-					NewTranslation = *GPalette.TranslationToTable(TRANSLATION(TRANSLATION_Standard, sc.Number));
+					NewTranslation = *GPalette.GetTranslation(TRANSLATION_Standard, sc.Number);
 				}
 				else if (sc.TokenType == TK_Identifier)
 				{
-					int tnum = R_FindCustomTranslation(sc.String);
-					if (tnum == -1)
+					auto tnum = R_FindCustomTranslation(sc.String);
+					if (tnum == INVALID_TRANSLATION)
 					{
 						sc.ScriptError("Base translation '%s' not found in '%s'", sc.String, newtrans.GetChars());
 					}
-					NewTranslation = *GPalette.TranslationToTable(tnum);
+					NewTranslation = *GPalette.TranslationToTable(tnum.index());
 				}
 				else
 				{
@@ -746,7 +746,7 @@ void R_ParseTrnslate()
 				}
 			} while (sc.CheckToken(','));
 
-			int trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
+			auto trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
 			customTranslationMap[newtrans] = trans;
 		}
 	}
@@ -773,7 +773,7 @@ DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
 	{
 		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
 	}
-	int trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
-	ACTION_RETURN_INT(trans);
+	auto trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
+	ACTION_RETURN_INT(trans.index());
 }
 

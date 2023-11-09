@@ -1877,7 +1877,7 @@ FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
 	auto iterator = Level->GetActorIterator(arg0);
-	int range;
+	FTranslationID range;
 	AActor *target;
 	bool ok = false;
 
@@ -1895,7 +1895,7 @@ FUNC(LS_Thing_SetTranslation)
 	}
 	else
 	{
-		range = 0;
+		range = NO_TRANSLATION;
 	}
 
 	if (arg0 == 0)
@@ -1903,7 +1903,7 @@ FUNC(LS_Thing_SetTranslation)
 		if (it != NULL)
 		{
 			ok = true;
-			it->Translation = range==0? it->GetDefault()->Translation : range;
+			it->Translation = range == NO_TRANSLATION ? it->GetDefault()->Translation : range;
 		}
 	}
 	else
@@ -1911,7 +1911,7 @@ FUNC(LS_Thing_SetTranslation)
 		while ( (target = iterator.Next ()) )
 		{
 			ok = true;
-			target->Translation = range==0? target->GetDefault()->Translation : range;
+			target->Translation = range == NO_TRANSLATION ? target->GetDefault()->Translation : range;
 		}
 	}
 

@@ -10,6 +10,7 @@ class FGameTexture;
 class FTextureID;
 enum EUpscaleFlags : int;
 class FConfigFile;
+struct FTranslationID;
 
 struct SystemCallbacks
 {

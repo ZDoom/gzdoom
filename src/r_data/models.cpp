@@ -64,7 +64,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 
 	int translation = 0;
 	if (!(smf->flags & MDL_IGNORETRANSLATION))
-		translation = actor->Translation;
+		translation = actor->Translation.index();
 
 	// y scale for a sprite means height, i.e. z in the world!
 	float scaleFactorX = actor->Scale.X * smf->xscale;
@@ -245,8 +245,8 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
 	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0, smf);
-	uint32_t trans = psp->GetTranslation() != 0 ? psp->GetTranslation() : 0;
-	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
+	uint32_t trans = psp->GetTranslation().index();
+	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation.index();
 	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), trans, psp->Caller);
 	renderer->EndDrawHUDModel(playermo->RenderStyle, smf);
 }

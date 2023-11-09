@@ -1247,7 +1247,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(min<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(min<double>(INT_MAX, dcb)),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1264,7 +1264,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(min<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(min<double>(INT_MAX, dcb)),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1319,7 +1319,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1336,7 +1336,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1467,11 +1467,16 @@ public:
 		}
 	}
 
-	uint32_t GetTranslation() const
+	FTranslationID GetTranslation() const
 	{
 		if(gameinfo.gametype & GAME_Raven)
 			return TRANSLATION(TRANSLATION_PlayersExtra, int(CPlayer - players));
 		return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
+	}
+
+	int GetTranslationIndex(bool translate) const
+	{
+		return translate? GetTranslation().index() : 0;
 	}
 
 	PClassActor *AmmoType(int no) const

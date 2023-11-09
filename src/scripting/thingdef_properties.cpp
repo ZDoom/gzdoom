@@ -747,8 +747,8 @@ DEFINE_PROPERTY(translation, L, Actor)
 		for(int i = 1; i < PROP_PARM_COUNT; i++)
 		{
 			PROP_STRING_PARM(str, i);
-			int tnum;
-			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != -1)
+			FTranslationID tnum;
+			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != INVALID_TRANSLATION)
 			{
 				defaults->Translation = tnum;
 				return;
@@ -789,7 +789,7 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 
 	defaults->BloodColor = color;
 	defaults->BloodColor.a = 255;	// a should not be 0.
-	defaults->BloodTranslation = TRANSLATION(TRANSLATION_Blood,  CreateBloodTranslation(color));
+	defaults->BloodTranslation = CreateBloodTranslation(color);
 }
 
 //==========================================================================

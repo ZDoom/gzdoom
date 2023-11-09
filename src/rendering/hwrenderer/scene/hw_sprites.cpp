@@ -1077,7 +1077,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 	}
 
-	translation = thing->Translation;
+	translation = thing->Translation.index();
 
 	OverrideShader = -1;
 	trans = thing->Alpha;

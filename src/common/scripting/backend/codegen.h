@@ -48,6 +48,7 @@
 #include "types.h"
 #include "vmintern.h"
 #include "c_cvars.h"
+#include "palettecontainer.h"
 
 struct FState; // needed for FxConstant. Maybe move the state constructor to a subclass later?
 
@@ -505,6 +506,13 @@ public:
 	{
 		value.pointer = state;
 		ValueType = value.Type = TypeVoidPtr;
+		isresolved = true;
+	}
+
+	FxConstant(FTranslationID state, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.Int = state.index();
+		ValueType = value.Type = TypeTranslationID;
 		isresolved = true;
 	}
 

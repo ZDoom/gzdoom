@@ -402,7 +402,7 @@ public:
 	virtual bool MustDrawLog(EHudState state);
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
-	uint32_t GetTranslation() const override;
+	FTranslationID GetTranslation() const override;
 
 	void CreateAltHUD();
 	void DrawAltHUD();

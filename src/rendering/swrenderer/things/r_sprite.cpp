@@ -173,7 +173,7 @@ namespace swrenderer
 				vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];
 		}
 		vis->FillColor = thing->fillcolor;
-		vis->Translation = thing->Translation;		// [RH] thing translation table
+		vis->Translation = thing->Translation.index();		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;

@@ -31,6 +31,7 @@
 #define __P_PSPR_H__
 
 #include "renderstyle.h"
+#include "palettecontainer.h"
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
@@ -104,7 +105,7 @@ public:
 	int			GetSprite()						const { return Sprite; }
 	int			GetFrame()						const { return Frame; }
 	int			GetTics()						const {	return Tics; }
-	uint32_t	GetTranslation()					  { return Translation; }
+	FTranslationID	GetTranslation()					  { return Translation; }
 	FState*		GetState()						const { return State; }
 	DPSprite*	GetNext()							  { return Next; }
 	AActor*		GetCaller()							  { return Caller; }
@@ -127,7 +128,7 @@ public:
 	WeaponInterp Vert;		// Current Position
 	bool firstTic;
 	int Tics;
-	uint32_t Translation;
+	FTranslationID Translation;
 	int Flags;
 	FRenderStyle Renderstyle;
 

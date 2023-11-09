@@ -1082,7 +1082,7 @@ public:
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	FTextureID		picnum;				// Draw this instead of sprite if valid
 	uint32_t			fillcolor;			// Color to draw when STYLE_Shaded
-	uint32_t			Translation;
+	FTranslationID			Translation;
 
 	uint32_t			RenderRequired;		// current renderer must have this feature set
 	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
@@ -1262,7 +1262,7 @@ public:
 	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	double FloatBobStrength;
 	PalEntry BloodColor;
-	uint32_t BloodTranslation;
+	FTranslationID BloodTranslation;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	FSoundID SeeSound;

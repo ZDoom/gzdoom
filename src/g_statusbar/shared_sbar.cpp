@@ -1376,7 +1376,7 @@ AActor *DBaseStatusBar::ValidateInvFirst (int numVisible) const
 	return nullptr;
 }
 
-uint32_t DBaseStatusBar::GetTranslation() const
+FTranslationID DBaseStatusBar::GetTranslation() const
 {
 	if (gameinfo.gametype & GAME_Raven)
 		return TRANSLATION(TRANSLATION_PlayersExtra, int(CPlayer - players));

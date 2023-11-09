@@ -38,6 +38,7 @@
 
 #include "doomtype.h"
 #include "renderstyle.h"
+#include "palettecontainer.h"
 
 class FScanner;
 class FDecalTemplate;
@@ -67,7 +68,7 @@ class FDecalTemplate : public FDecalBase
 {
 	friend class FDecalLib;
 public:
-	FDecalTemplate () : Translation (0) {}
+	FDecalTemplate () : Translation (NO_TRANSLATION) {}
 
 	void ApplyToDecal (DBaseDecal *actor, side_t *wall) const;
 	const FDecalTemplate *GetDecal () const;
@@ -75,7 +76,7 @@ public:
 
 	double ScaleX, ScaleY;
 	uint32_t ShadeColor;
-	uint32_t Translation;
+	FTranslationID Translation;
 	FRenderStyle RenderStyle;
 	FTextureID PicNum;
 	uint16_t RenderFlags;

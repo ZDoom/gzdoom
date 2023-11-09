@@ -157,7 +157,7 @@ namespace swrenderer
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
 		vis->FillColor = thing->fillcolor;
-		vis->Translation = thing->Translation;		// [RH] thing translation table
+		vis->Translation = thing->Translation.index();		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;
 		vis->Alpha = float(thing->Alpha);
 		vis->fakefloor = fakefloor;

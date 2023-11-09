@@ -1390,7 +1390,7 @@ static int PatchThing (int thingy)
 			if (val > 8 || val < 0) val = 0;
 			unsigned color = bloodcolor[val];
 			info->BloodColor = color;
-			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
+			info->BloodTranslation = val == 0? NO_TRANSLATION : CreateBloodTranslation(color);
 		}
 		else if (linelen == 10 && stricmp(Line1, "MBF21 Bits") == 0)
 		{
@@ -3966,10 +3966,9 @@ bool CheckTranslucent(AActor* a)
 	return !(a->renderflags & RF_ZDOOMTRANS) && a->Alpha < 1 - FLT_EPSILON;
 }
 
-constexpr int t0 = 0;
-constexpr int t1 = TRANSLATION(TRANSLATION_Standard, 0);
-constexpr int t2 = TRANSLATION(TRANSLATION_Standard, 1);
-constexpr int t3 = TRANSLATION(TRANSLATION_Standard, 2);
+constexpr FTranslationID t1 = TRANSLATION(TRANSLATION_Standard, 0);
+constexpr FTranslationID t2 = TRANSLATION(TRANSLATION_Standard, 1);
+constexpr FTranslationID t3 = TRANSLATION(TRANSLATION_Standard, 2);
 
 void SetTranslation1(AActor* a)
 {
@@ -3980,7 +3979,7 @@ void SetTranslation1(AActor* a)
 void ClearTranslation1(AActor* a)
 {
 	if (a->Translation == t3 || a->Translation == t2) a->Translation = t2;
-	else a->Translation = t0;
+	else a->Translation = NO_TRANSLATION;
 }
 
 bool CheckTranslation1(AActor* a)
@@ -3997,7 +3996,7 @@ void SetTranslation2(AActor* a)
 void ClearTranslation2(AActor* a)
 {
 	if (a->Translation == t3 || a->Translation == t1) a->Translation = t1;
-	else a->Translation = t0;
+	else a->Translation = NO_TRANSLATION;
 }
 
 bool CheckTranslation2(AActor* a)

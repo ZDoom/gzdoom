@@ -241,7 +241,7 @@ namespace swrenderer
 			cmlight.SetColormap(thread, MINZ, light.GetLightLevel(), light.GetFoggy(), usecolormap, decal->RenderFlags & RF_FULLBRIGHT, false, false, false, false);
 
 			SpriteDrawerArgs drawerargs;
-			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, cmlight);
+			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation.index(), decal->AlphaColor, cmlight);
 			if (visible)
 			{
 				drawerargs.DrawMasked(thread, zpos + WallSpriteTile->GetTopOffset(0) * decal->ScaleY, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, WallC, clipper->x1, clipper->x2, light, WallSpriteTile, mfloorclip, mceilingclip, decal->RenderStyle);

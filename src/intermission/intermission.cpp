@@ -514,8 +514,8 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	else
 	{
 		advplayerstate = NULL;
-		casttranslation = 0;
-		if (mDefaults->Translation != 0)
+		casttranslation = NO_TRANSLATION;
+		if (mDefaults->Translation != NO_TRANSLATION)
 		{
 			casttranslation = mDefaults->Translation;
 		}
@@ -707,7 +707,7 @@ void DIntermissionScreenCast::Drawer ()
 			DTA_DestWidthF, pic->GetDisplayWidth() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
 			DTA_Alpha, mDefaults->Alpha,
-			DTA_TranslationIndex, casttranslation,
+			DTA_TranslationIndex, casttranslation.index(),
 			TAG_DONE);
 	}
 }

@@ -195,7 +195,7 @@ void FSingleLumpFont::LoadTranslations()
 	for (int i = 0; i < NumTextColors; i++)
 	{
 		if (i == CR_UNTRANSLATED) Translations[i] = 0;
-		else Translations[i] = LuminosityTranslation(i * 2 + (FontType == FONT1 ? 1 : 0), minlum, maxlum);
+		else Translations[i] = MakeLuminosityTranslation(i * 2 + (FontType == FONT1 ? 1 : 0), minlum, maxlum);
 	}
 }
 

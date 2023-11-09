@@ -38,9 +38,9 @@ void R_InitTranslationTables (void);
 void R_BuildPlayerTranslation (int player);		// [RH] Actually create a player's translation table.
 void R_GetPlayerTranslation (int color, const struct FPlayerColorSet *colorset, class FPlayerSkin *skin, struct FRemapTable *table);
 
-int CreateBloodTranslation(PalEntry color);
+FTranslationID CreateBloodTranslation(PalEntry color);
 
-int R_FindCustomTranslation(FName name);
+FTranslationID R_FindCustomTranslation(FName name);
 void R_ParseTrnslate();
 void StaticSerializeTranslations(FSerializer& arc);
 

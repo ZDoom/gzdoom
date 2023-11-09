@@ -7558,8 +7558,8 @@ void AActor::SetTranslation(FName trname)
 		return;
 	}
 
-	int tnum = R_FindCustomTranslation(trname);
-	if (tnum >= 0)
+	auto tnum = R_FindCustomTranslation(trname);
+	if (tnum != INVALID_TRANSLATION)
 	{
 		Translation = tnum;
 	}

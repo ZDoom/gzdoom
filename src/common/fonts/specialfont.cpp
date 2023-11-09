@@ -196,7 +196,7 @@ void FSpecialFont::LoadTranslations()
 				remap.Remap[i] = i;
 			}
 		}
-		trans = GPalette.StoreTranslation(TRANSLATION_Internal, &remap);
+		trans = GPalette.StoreTranslation(TRANSLATION_Internal, &remap).index();
 	}
 }
 

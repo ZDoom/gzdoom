@@ -1372,16 +1372,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, FindFunction, FindFunctionPointer)
 	ACTION_RETURN_POINTER(FindFunctionPointer(cls, fn.GetIndex()));
 }
 
-int R_FindCustomTranslation(FName name);
+FTranslationID R_FindCustomTranslation(FName name);
 
 static int ZFindTranslation(int intname)
 {
-	return R_FindCustomTranslation(ENamedName(intname));
+	return R_FindCustomTranslation(ENamedName(intname)).index();
 }
 
 static int MakeTransID(int g, int s)
 {
-	return TRANSLATION(g, s);
+	return TRANSLATION(g, s).index();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Translation, GetID, ZFindTranslation)

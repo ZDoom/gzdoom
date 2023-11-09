@@ -1830,7 +1830,8 @@ void FLevelLocals::Init()
 	WallHorizLight = info->WallHorizLight*2;
 	if (info->gravity != 0.f)
 	{
-		gravity = info->gravity * 35/TICRATE;
+		if (info->gravity == DBL_MAX) gravity = 0;
+		else gravity = info->gravity * 35/TICRATE;
 	}
 	if (info->aircontrol != 0.f)
 	{

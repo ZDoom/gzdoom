@@ -45,7 +45,7 @@
 #include "version.h"
 
 #ifdef HAVE_VM_JIT
-#ifdef __DragonFly__
+#if defined(__DragonFly__) || defined(__OpenBSD__)
 CUSTOM_CVAR(Bool, vm_jit, false, CVAR_NOINITCALL)
 #else
 CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)

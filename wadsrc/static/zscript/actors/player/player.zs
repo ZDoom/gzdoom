@@ -888,7 +888,7 @@ class PlayerPawn : Actor
 			// inventory amount.
 			let defitem = FindInventory (item.GetClass());
 
-			if (sv_cooplosekeys && defitem == NULL && item is 'Key')
+			if ((sv_cooplosekeys && !sv_coopsharekeys) && defitem == NULL && item is 'Key')
 			{
 				item.Destroy();
 			}

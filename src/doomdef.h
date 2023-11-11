@@ -180,6 +180,7 @@ enum : unsigned
 enum : unsigned
 {
 	DF3_NO_PLAYER_CLIP		= 1 << 0,	// Players can walk through and shoot through each other
+	DF3_COOP_SHARE_KEYS		= 1 << 1,	// Keys will be given to all players in coop
 };
 
 // [RH] Compatibility flags.

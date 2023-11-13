@@ -2541,19 +2541,40 @@ static void PMapValueWriter(FSerializer &ar, const M *map, const PMap *m)
 {
 	TMapConstIterator<typename M::KeyType, typename M::ValueType> it(*map);
 	const typename M::Pair * p;
-	while(it.NextPair(p))
+	if(m->KeyType == TypeName)
 	{
-		if constexpr(std::is_same_v<typename M::KeyType,FString>)
+		while(it.NextPair(p))
 		{
-			m->ValueType->WriteValue(ar,p->Key.GetChars(),static_cast<const void *>(&p->Value));
+			if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			{
+				m->ValueType->WriteValue(ar,FName(ENamedName(p->Key)).GetChars(),static_cast<const void *>(&p->Value));
+			}
+			else
+			{
+				#ifdef __GNUC__
+					__builtin_unreachable();
+				#elif defined(_MSC_VER)
+					__assume(0);
+				#endif
+			}
 		}
-		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+	}
+	else
+	{
+		while(it.NextPair(p))
 		{
-			FString key;
-			key.Format("%u",p->Key);
-			m->ValueType->WriteValue(ar,key.GetChars(),static_cast<const void *>(&p->Value));
+			if constexpr(std::is_same_v<typename M::KeyType,FString>)
+			{
+				m->ValueType->WriteValue(ar,p->Key.GetChars(),static_cast<const void *>(&p->Value));
+			}
+			else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			{
+				FString key;
+				key.Format("%u",p->Key);
+				m->ValueType->WriteValue(ar,key.GetChars(),static_cast<const void *>(&p->Value));
+			}
+			//else unknown key type
 		}
-		//else unknown key type
 	}
 }
 
@@ -2582,27 +2603,51 @@ template<typename M>
 static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
 {
 	const char * k;
-	while((k = ar.GetKey()))
+	if(m->KeyType == TypeName)
 	{
 		typename M::ValueType * val;
-		if constexpr(std::is_same_v<typename M::KeyType,FString>)
+		if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
 		{
-			val = &map->InsertNew(k);
+			val = &map->InsertNew(FName(k).GetIndex());
 		}
-		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		else
 		{
-			FString s(k);
-			if(!s.IsInt())
-			{
-				ar.EndObject();
-				return false;
-			}
-			val = &map->InsertNew(static_cast<uint32_t>(s.ToULong()));
+			#ifdef __GNUC__
+				__builtin_unreachable();
+			#elif defined(_MSC_VER)
+				__assume(0);
+			#endif
 		}
 		if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
 		{
 			ar.EndObject();
 			return false;
+		}
+	}
+	else
+	{
+		while((k = ar.GetKey()))
+		{
+			typename M::ValueType * val;
+			if constexpr(std::is_same_v<typename M::KeyType,FString>)
+			{
+				val = &map->InsertNew(k);
+			}
+			else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			{
+				FString s(k);
+				if(!s.IsInt())
+				{
+					ar.EndObject();
+					return false;
+				}
+				val = &map->InsertNew(static_cast<uint32_t>(s.ToULong()));
+			}
+			if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
+			{
+				ar.EndObject();
+				return false;
+			}
 		}
 	}
 	ar.EndObject();

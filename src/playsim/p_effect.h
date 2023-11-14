@@ -37,6 +37,7 @@
 #include "doomdef.h"
 #include "renderstyle.h"
 #include "dthinker.h"
+#include "palettecontainer.h"
 
 enum
 {
@@ -146,6 +147,7 @@ void P_DisconnectEffect (AActor *actor);
 // 
 //===========================================================================
 class HWSprite;
+struct FTranslationID;
 class DZSprite : public DThinker
 {
 	DECLARE_CLASS(DZSprite, DThinker);
@@ -159,7 +161,7 @@ public:
 
 	FRenderStyle	Style;
 	FTextureID		Texture;
-	uint32_t		Translation;
+	FTranslationID	Translation;
 
 	uint16_t		Flags;
 	sector_t		*cursector;

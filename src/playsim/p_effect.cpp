@@ -1003,7 +1003,8 @@ void DZSprite::Construct()
 	LightLevel = -1;
 	Texture = FTextureID();
 	Style = STYLE_Normal;
-	Translation = Flags = 0;
+	Flags = 0;
+	Translation = NO_TRANSLATION;
 	sub = nullptr;
 	cursector = nullptr;
 	scolor = 0xffffff;
@@ -1164,12 +1165,12 @@ void DZSprite::SetTranslation(FName trname)
 	if (trname.GetChars()[0] == 0)
 	{
 		// '' removes it
-		Translation = 0;
+		Translation = NO_TRANSLATION;
 		return;
 	}
 
-	int tnum = R_FindCustomTranslation(trname);
-	if (tnum >= 0)
+	auto tnum = R_FindCustomTranslation(trname);
+	if (tnum != INVALID_TRANSLATION)
 	{
 		Translation = tnum;
 	}

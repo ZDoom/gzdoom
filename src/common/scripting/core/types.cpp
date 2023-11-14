@@ -2605,23 +2605,26 @@ static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
 	const char * k;
 	if(m->KeyType == TypeName)
 	{
-		typename M::ValueType * val;
-		if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		while((k = ar.GetKey()))
 		{
-			val = &map->InsertNew(FName(k).GetIndex());
-		}
-		else
-		{
-			#ifdef __GNUC__
-				__builtin_unreachable();
-			#elif defined(_MSC_VER)
-				__assume(0);
-			#endif
-		}
-		if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
-		{
-			ar.EndObject();
-			return false;
+			typename M::ValueType * val;
+			if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			{
+				val = &map->InsertNew(FName(k).GetIndex());
+			}
+			else
+			{
+				#ifdef __GNUC__
+					__builtin_unreachable();
+				#elif defined(_MSC_VER)
+					__assume(0);
+				#endif
+			}
+			if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
+			{
+				ar.EndObject();
+				return false;
+			}
 		}
 	}
 	else

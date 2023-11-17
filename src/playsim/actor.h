@@ -695,12 +695,17 @@ struct ModelOverride
 	TArray<FTextureID> surfaceSkinIDs;
 };
 
+enum ModelDataFlags
+{
+	MODELDATA_HADMODEL =		1 << 0,
+};
+
 class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
 	FName					modelDef;
-	bool					hasModel;
+	int						flags;
 	TArray<ModelOverride>	models;
 	TArray<FTextureID>		skinIDs;
 	TArray<int>				animationIDs;

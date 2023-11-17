@@ -1345,7 +1345,7 @@ void DActorModelData::Serialize(FSerializer& arc)
 		//("surfaceSkinIDs", surfaceSkinIDs)
 		("animationIDs", animationIDs)
 		("modelFrameGenerators", modelFrameGenerators)
-		("hasModel", hasModel);
+		("flags", flags);
 }
 
 void DActorModelData::OnDestroy()

@@ -43,6 +43,7 @@
 #include "i_time.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "actor.h"
 
 
 #ifdef _MSC_VER
@@ -55,7 +56,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
-void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame *smf, const FState* curState, const int curTics, const PClass* ti, FTranslationID translation, AActor* actor);
+void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame *smf, const FState* curState, const int curTics, FTranslationID translation, AActor* actor);
 
 
 void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
@@ -189,7 +190,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
 	renderer->BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, actor->modelData != nullptr ? actor->modelData->modelDef != NAME_None ? PClass::FindActor(actor->modelData->modelDef) : actor->GetClass() : actor->GetClass(), translation, actor);
+	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, translation, actor);
 	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
@@ -248,14 +249,11 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	auto trans = psp->GetTranslation();
 	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
 
-	auto callerclass = psp->Caller->modelData != nullptr && psp->Caller->modelData->modelDef != NAME_None ?
-		PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass();
-
-	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), callerclass, trans, psp->Caller);
+	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), trans, psp->Caller);
 	renderer->EndDrawHUDModel(playermo->RenderStyle, smf);
 }
 
-void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, FTranslationID translation, AActor* actor)
+void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -298,7 +296,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 					}
 				}
 				if (nextState && inter != 0.0)
-					smfNext = FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
+					smfNext = FindModelFrame(actor, nextState->sprite, nextState->Frame, false);
 			}
 		}
 	}
@@ -969,7 +967,7 @@ static void ParseModelDefLump(int Lump)
 //
 //===========================================================================
 
-FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
+FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped)
 {
 	if (GetDefaultByType(ti)->hasmodel)
 	{
@@ -1008,6 +1006,11 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 	return nullptr;
 }
 
+FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped)
+{
+	return FindModelFrameRaw((thing->modelData != nullptr && thing->modelData->modelDef != NAME_None) ? PClass::FindActor(thing->modelData->modelDef) : thing->GetClass(), sprite, frame, dropped);
+}
+
 //===========================================================================
 //
 // IsHUDModelForPlayerAvailable
@@ -1022,7 +1025,7 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 	// [MK] check that at least one psprite uses models
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller, psp->GetSprite(), psp->GetFrame(), false) : nullptr;
 		if ( smf != nullptr ) return true;
 	}
 	return false;

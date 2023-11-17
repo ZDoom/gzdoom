@@ -5100,6 +5100,35 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 // This function allows the changing of an actor's modeldef, or models and/or skins at a given index
 //==========================================================================
 
+static void EnsureModelData(AActor * mobj)
+{
+	if (mobj->modelData == nullptr)
+	{
+		auto ptr = Create<DActorModelData>();
+		
+		ptr->flags = (mobj->hasmodel ? MODELDATA_HADMODEL : 0);
+		ptr->modelDef = NAME_None;
+		
+		mobj->modelData = ptr;
+		mobj->hasmodel = true;
+		GC::WriteBarrier(mobj, ptr);
+	}
+}
+
+static void CleanupModelData(AActor * mobj)
+{
+	if (   mobj->modelData->models.Size() == 0
+		&& mobj->modelData->modelFrameGenerators.Size() == 0
+		&& mobj->modelData->skinIDs.Size() == 0
+		&& mobj->modelData->animationIDs.Size() == 0
+		&& mobj->modelData->modelDef == NAME_None)
+	{
+		mobj->hasmodel = mobj->modelData->flags & MODELDATA_HADMODEL;
+		mobj->modelData->Destroy();
+		mobj->modelData = nullptr;
+	}
+}
+
 enum ChangeModelFlags
 {
 	CMDL_WEAPONTOPLAYER = 1,
@@ -5151,17 +5180,7 @@ void ChangeModelNative(
 	if (skinpath.Len() != 0 && skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';
 	if (animationpath.Len() != 0 && animationpath[(int)animationpath.Len() - 1] != '/') animationpath += '/';
 
-	if (mobj->modelData == nullptr)
-	{
-		auto ptr = Create<DActorModelData>();
-
-		ptr->hasModel = mobj->hasmodel;
-		ptr->modelDef = NAME_None;
-
-		mobj->modelData = ptr;
-		mobj->hasmodel = true;
-		GC::WriteBarrier(mobj, ptr);
-	};
+	EnsureModelData(mobj);
 
 	int queryModel = !(flags & CMDL_HIDEMODEL) ? model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1 : -2;
 	int queryAnimation = animation != NAME_None ? FindModel(animationpath.GetChars(), animation.GetChars()) : -1;
@@ -5302,12 +5321,7 @@ void ChangeModelNative(
 		if(!found) savedModelFiles.Push(fullName);
 	}
 
-	if (mobj->modelData->models.Size() == 0 && mobj->modelData->modelFrameGenerators.Size() == 0 && mobj->modelData->skinIDs.Size() == 0 && mobj->modelData->animationIDs.Size() == 0 && modeldef == NAME_None)
-	{
-		mobj->hasmodel = mobj->modelData->hasModel;
-		mobj->modelData->Destroy();
-		mobj->modelData = nullptr;
-	}
+	CleanupModelData(mobj);
 
 	return;
 }

@@ -773,20 +773,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (fabs(viewpos.X - vp.Pos.X) < 32 && fabs(viewpos.Y - vp.Pos.Y) < 32) return;
 	}
 
+	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing, spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2)
+	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2
+		&& vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2
+		&& !thing->Vel.isZero() && !modelframe) // exclude vertically moving objects from this check.
 	{
-		if (vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2)
-		{
-			// exclude vertically moving objects from this check.
-			if (!thing->Vel.isZero())
-			{
-				if (!FindModelFrame(thing->GetClass(), spritenum, thing->frame, false))
-				{
-					return;
-				}
-			}
-		}
+		return;
 	}
 
 	// don't draw first frame of a player missile
@@ -845,8 +839,6 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		float fz = thing->GetBobOffset(vp.TicFrac);
 		z += fz;
 	}
-
-	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->modelData != nullptr ? thing->modelData->modelDef != NAME_None ? PClass::FindActor(thing->modelData->modelDef) : thing->GetClass() : thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 
 	// don't bother drawing sprite shadows if this is a model (it will never look right)
 	if (modelframe && isSpriteShadow)

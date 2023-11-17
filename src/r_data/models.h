@@ -62,7 +62,8 @@ enum
 	MDL_FORCECULLBACKFACES			= 1<<14,
 };
 
-FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped);
 bool IsHUDModelForPlayerAvailable(player_t * player);
 
 // Check if circle potentially intersects with node AABB

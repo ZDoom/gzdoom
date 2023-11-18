@@ -1224,6 +1224,7 @@ void DZSprite::Serialize(FSerializer& arc)
 		("prev", Prev)
 		("scale", Scale)
 		("roll", Roll)
+		("prevroll", PrevRoll)
 		("offset", Offset)
 		("alpha", Alpha)
 		("texture", Texture)
@@ -1247,6 +1248,7 @@ DEFINE_FIELD(DZSprite, Prev);
 DEFINE_FIELD(DZSprite, Scale);
 DEFINE_FIELD(DZSprite, Offset);
 DEFINE_FIELD(DZSprite, Roll);
+DEFINE_FIELD(DZSprite, PrevRoll);
 DEFINE_FIELD(DZSprite, Alpha);
 DEFINE_FIELD(DZSprite, Texture);
 DEFINE_FIELD(DZSprite, Translation);

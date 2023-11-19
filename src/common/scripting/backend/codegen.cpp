@@ -3861,7 +3861,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		}
 		ValueType = TypeString;
 	}
-	if (left->IsNumeric() && right->IsNumeric())
+	else if (left->IsNumeric() && right->IsNumeric())
 	{
 		if (left->IsInteger() && right->IsInteger())
 		{

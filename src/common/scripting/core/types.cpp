@@ -1659,7 +1659,8 @@ PClassPointer::PClassPointer(PClass *restrict)
 	loadOp = OP_LP;
 	storeOp = OP_SP;
 	Flags |= TYPE_ClassPointer;
-	mVersion = restrict->VMType->mVersion;
+	if (restrict) mVersion = restrict->VMType->mVersion;
+	else mVersion = 0;
 }
 
 //==========================================================================

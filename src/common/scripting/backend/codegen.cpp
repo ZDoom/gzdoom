@@ -3826,6 +3826,16 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		delete left;
 		left = x;
 	}
+	else if (left->IsNumeric() && right->ValueType == TypeTranslationID && ctx.Version < MakeVersion(4, 12))
+	{
+		right = new FxTypeCast(right, TypeSInt32, true);
+		SAFE_RESOLVE(right, ctx);
+	}
+	else if (right->IsNumeric() && left->ValueType == TypeTranslationID && ctx.Version < MakeVersion(4, 12))
+	{
+		left = new FxTypeCast(left, TypeSInt32, true);
+		SAFE_RESOLVE(left, ctx);
+	}
 
 	if (left->ValueType == TypeString || right->ValueType == TypeString)
 	{
@@ -3851,7 +3861,7 @@ FxExpression *FxCompareRel::Resolve(FCompileContext& ctx)
 		}
 		ValueType = TypeString;
 	}
-	else if (left->IsNumeric() && right->IsNumeric())
+	if (left->IsNumeric() && right->IsNumeric())
 	{
 		if (left->IsInteger() && right->IsInteger())
 		{
@@ -4118,6 +4128,17 @@ FxExpression *FxCompareEq::Resolve(FCompileContext& ctx)
 			delete left;
 			left = x;
 		}
+		else if (left->IsNumeric() && right->ValueType == TypeTranslationID && ctx.Version < MakeVersion(4, 12))
+		{
+			right = new FxIntCast(right, true, true);
+			SAFE_RESOLVE(right, ctx);
+		}
+		else if (right->IsNumeric() && left->ValueType == TypeTranslationID && ctx.Version < MakeVersion(4, 12))
+		{
+			left = new FxTypeCast(left, TypeSInt32, true);
+			SAFE_RESOLVE(left, ctx);
+		}
+
 		// Special cases: Compare strings and names with names, sounds, colors, state labels and class types.
 		// These are all types a string can be implicitly cast into, so for convenience, so they should when doing a comparison.
 		if ((left->ValueType == TypeString || left->ValueType == TypeName) &&

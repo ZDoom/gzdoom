@@ -19,6 +19,7 @@ enum
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
 	TRANSLATION_Custom,
+	TRANSLATION_User,
 
 	NUM_TRANSLATION_TABLES
 };
@@ -42,8 +43,11 @@ FTranslationID CreateBloodTranslation(PalEntry color);
 
 FTranslationID R_FindCustomTranslation(FName name);
 void R_ParseTrnslate();
-void StaticSerializeTranslations(FSerializer& arc);
 
+// serialization stuff.
+void StaticSerializeTranslations(FSerializer& arc);
+void StaticClearSerializeTranslationsData();
+FTranslationID RemapUserTranslation(FTranslationID trans);
 
 
 #endif // __R_TRANSLATE_H

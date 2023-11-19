@@ -56,6 +56,14 @@
 
 //----------------------------------------------------------------------------
 //
+// helper stuff for serializing TRANSLATION_User
+//
+//----------------------------------------------------------------------------
+
+static TArray<std::pair<FTranslationID, FRemapTable>> usertransmap;
+
+//----------------------------------------------------------------------------
+//
 //
 //
 //----------------------------------------------------------------------------
@@ -69,6 +77,7 @@ static void SerializeRemap(FSerializer &arc, FRemapTable &remap)
 
 void StaticSerializeTranslations(FSerializer &arc)
 {
+	usertransmap.Clear();
 	if (arc.BeginArray("translations"))
 	{
 		// Does this level have custom translations?
@@ -104,6 +113,60 @@ void StaticSerializeTranslations(FSerializer &arc)
 		}
 		arc.EndArray();
 	}
+	if (arc.BeginArray("usertranslations"))
+	{
+		// Does this level have custom translations?
+		FRemapTable* trans;
+		int w;
+		if (arc.isWriting())
+		{
+			auto size = GPalette.NumTranslations(TRANSLATION_User);
+			for (unsigned int i = 0; i < size; ++i)
+			{
+				trans = GPalette.GetTranslation(TRANSLATION_User, i);
+				if (trans != NULL && !trans->IsIdentity())
+				{
+					if (arc.BeginObject(nullptr))
+					{
+						arc("index", i);
+						SerializeRemap(arc, *trans);
+						arc.EndObject();
+					}
+				}
+			}
+		}
+		else
+		{
+			while (arc.BeginObject(nullptr))
+			{
+				arc("index", w);
+				FRemapTable remap;
+				SerializeRemap(arc, remap);
+				// do not add the translation to the global list yet. We want to avoid adding tables that are not needed anymore.
+				usertransmap.Push(std::make_pair(TRANSLATION(TRANSLATION_User, w), remap));
+				arc.EndObject();
+			}
+		}
+		arc.EndArray();
+	}
+}
+
+void StaticClearSerializeTranslationsData()
+{
+	usertransmap.Reset();
+}
+
+FTranslationID RemapUserTranslation(FTranslationID trans)
+{
+	if (GetTranslationType(trans) == TRANSLATION_User)
+	{
+		for (auto& check : usertransmap)
+		{
+			if (trans == check.first)
+				return GPalette.AddTranslation(TRANSLATION_User, &check.second);
+		}
+	}
+	return trans;
 }
 
 //----------------------------------------------------------------------------
@@ -773,7 +836,7 @@ DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
 	{
 		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
 	}
-	auto trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
+	auto trans = GPalette.StoreTranslation(TRANSLATION_User, &NewTranslation);
 	ACTION_RETURN_INT(trans.index());
 }
 

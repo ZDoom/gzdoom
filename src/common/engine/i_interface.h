@@ -48,6 +48,7 @@ struct SystemCallbacks
 	bool (*OkForLocalization)(FTextureID, const char*);
 	FConfigFile* (*GetConfig)();
 	bool (*WantEscape)();
+	FTranslationID(*RemapTranslation)(FTranslationID trans);
 };
 
 extern SystemCallbacks sysCallbacks;

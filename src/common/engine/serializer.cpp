@@ -56,6 +56,7 @@
 #include "texturemanager.h"
 #include "base64.h"
 #include "vm.h"
+#include "i_interface.h"
 
 using namespace FileSys;
 
@@ -1207,7 +1208,14 @@ FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value,
 	int v = value.index();
 	int* defv = (int*)defval;
 	Serialize(arc, key, v, defv);
-	value = FTranslationID::fromInt(v);
+	
+	if (arc.isReading())
+	{
+		// allow games to alter the loaded value to handle dynamic lists.
+		if (sysCallbacks.RemapTranslation) value = sysCallbacks.RemapTranslation(FTranslationID::fromInt(v));
+		else value = FTranslationID::fromInt(v);
+	}
+		
 	return arc;
 }
 

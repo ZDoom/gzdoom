@@ -28,6 +28,7 @@ class FTextureID
 
 public:
 	FTextureID() = default;
+	FTextureID(nullptr_t) : texnum(0) {}
 	bool isNull() const { return texnum == 0; }
 	bool isValid() const { return texnum > 0; }
 	bool Exists() const { return texnum >= 0; }

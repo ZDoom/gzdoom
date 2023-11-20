@@ -368,6 +368,13 @@ enum ERadiusGiveFlags
 	RGF_EITHER		=	1 << 17,
 };
 
+// SetAnimation flags
+enum ESetAnimationFlags
+{
+	SAF_INSTANT = 1 << 0,
+	SAF_LOOP = 1 << 1,
+};
+
 // Change model flags
 enum ChangeModelFlags
 {

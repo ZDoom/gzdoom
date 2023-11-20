@@ -1327,11 +1327,27 @@ bool AActor::Massacre ()
 //
 //----------------------------------------------------------------------------
 
-FSerializer &Serialize(FSerializer &arc, const char *key, ModelOverride &sid, ModelOverride *def)
+FSerializer &Serialize(FSerializer &arc, const char *key, ModelOverride &mo, ModelOverride *def)
 {
 	arc.BeginObject(key);
-	arc("modelID", sid.modelID);
-	arc("surfaceSkinIDs", sid.surfaceSkinIDs);
+	arc("modelID", mo.modelID);
+	arc("surfaceSkinIDs", mo.surfaceSkinIDs);
+	arc.EndObject();
+	return arc;
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def)
+{
+	//TODO
+	arc.BeginObject(key);
+	arc("firstFrame", ao.firstFrame);
+	arc("lastFrame", ao.lastFrame);
+	arc("loopFrame", ao.loopFrame);
+	arc("startFrame", ao.startFrame);
+	arc("flags", ao.flags);
+	arc("framerate", ao.framerate);
+	arc("startTic", ao.startTic);
+	arc("switchTic", ao.switchTic);
 	arc.EndObject();
 	return arc;
 }
@@ -1342,10 +1358,11 @@ void DActorModelData::Serialize(FSerializer& arc)
 	arc("modelDef", modelDef)
 		("models", models)
 		("skinIDs", skinIDs)
-		//("surfaceSkinIDs", surfaceSkinIDs)
 		("animationIDs", animationIDs)
 		("modelFrameGenerators", modelFrameGenerators)
-		("flags", flags);
+		("flags", flags)
+		("curAnim", curAnim)
+		("prevAnim", prevAnim);
 }
 
 void DActorModelData::OnDestroy()

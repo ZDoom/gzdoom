@@ -438,10 +438,11 @@ enum ActorFlag8
 // --- mobj.flags9 ---
 enum ActorFlag9
 {
-	MF9_SHADOWAIM = 0x00000001,	// [inkoalawetrust] Monster still gets aim penalty from aiming at shadow actors even with MF6_SEEINVISIBLE on.
-	MF9_DOSHADOWBLOCK = 0x00000002,	// [inkoalawetrust] Should the monster look for SHADOWBLOCK actors ?
-	MF9_SHADOWBLOCK = 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
-	MF9_SHADOWAIMVERT = 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
+	MF9_SHADOWAIM				= 0x00000001,	// [inkoalawetrust] Monster still gets aim penalty from aiming at shadow actors even with MF6_SEEINVISIBLE on.
+	MF9_DOSHADOWBLOCK			= 0x00000002,	// [inkoalawetrust] Should the monster look for SHADOWBLOCK actors ?
+	MF9_SHADOWBLOCK				= 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
+	MF9_SHADOWAIMVERT			= 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
+	MF9_DECOUPLEDANIMATIONS	= 0x00000010,	// [RL0] Decouple model animations from states
 };
 
 // --- mobj.renderflags ---
@@ -689,13 +690,31 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
 };
 
+enum EAnimOverrideFlags
+{
+	ANIMOVERRIDE_NONE	= 1 << 0, // no animation
+	ANIMOVERRIDE_LOOP	= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
+};
+
+struct AnimOverride
+{
+	int firstFrame;
+	int lastFrame;
+	int loopFrame;
+	double startFrame;
+	int flags = ANIMOVERRIDE_NONE;
+	float framerate;
+	double startTic; // when the animation starts if interpolating from previous animation
+	double switchTic; // when the animation was changed -- where to interpolate the switch from
+};
+
 struct ModelOverride
 {
 	int modelID;
 	TArray<FTextureID> surfaceSkinIDs;
 };
 
-enum ModelDataFlags
+enum EModelDataFlags
 {
 	MODELDATA_HADMODEL =		1 << 0,
 };
@@ -705,11 +724,14 @@ class DActorModelData : public DObject
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
 	FName					modelDef;
-	int						flags;
 	TArray<ModelOverride>	models;
 	TArray<FTextureID>		skinIDs;
 	TArray<int>				animationIDs;
 	TArray<int>				modelFrameGenerators;
+	int						flags;
+
+	AnimOverride curAnim;
+	AnimOverride prevAnim; // used for interpolation when switching anims
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;

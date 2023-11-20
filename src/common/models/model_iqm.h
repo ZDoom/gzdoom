@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "common/rendering/i_modelvertexbuffer.h"
 #include "m_swap.h"
+#include "name.h"
 
 class DBoneComponents;
 
@@ -112,11 +113,14 @@ public:
 
 	bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
 	int FindFrame(const char* name, bool nodefault) override;
+	int FindFirstFrame(FName name) override;
+	int FindLastFrame(FName name) override;
+	double FindFramerate(FName name) override;
 	void RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame, int frame2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition) override;
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
 	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
 	const TArray<TRS>* AttachAnimationData() override;
-	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
+	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
 
 private:
 	void LoadGeometry();
@@ -129,6 +133,9 @@ private:
 	void LoadBlendWeights(IQMFileReader& reader, const IQMVertexArray& vertexArray);
 
 	int mLumpNum = -1;
+
+	TMap<FName, int> NamedAnimations;
+
 	TArray<IQMMesh> Meshes;
 	TArray<IQMTriangle> Triangles;
 	TArray<IQMAdjacency> Adjacency;

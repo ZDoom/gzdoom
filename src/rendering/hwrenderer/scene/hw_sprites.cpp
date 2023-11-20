@@ -1368,6 +1368,9 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		float yvf = (particle->Vel.Y) * timefrac;
 		float zvf = (particle->Vel.Z) * timefrac;
 
+		offx = 0.f;
+		offy = 0.f;
+
 		x = float(particle->Pos.X) + xvf;
 		y = float(particle->Pos.Y) + yvf;
 		z = float(particle->Pos.Z) + zvf;

@@ -628,9 +628,14 @@ static int P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || CanJump(actor))
-			&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+			&& !(actor->flags2 & MF2_ONMOBJ))
+
 	{
-		if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
+		// account for imprecisions with slopes. A walking actor should never be below its own floorz.
+		if (actor->Z() < actor->floorz)
+			actor->SetZ(actor->floorz);
+
+		else if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
 		{
 			double savedz = actor->Z();
 			actor->SetZ(actor->floorz);
@@ -755,6 +760,10 @@ int P_SmartMove(AActor* actor)
 		)
 		actor->movedir = DI_NODIR;    // avoid the area (most of the time anyway)
 
+	if (actor->flags2 & MF2_FLOORCLIP)
+	{
+		actor->AdjustFloorClip();
+	}
 	return true;
 }
 

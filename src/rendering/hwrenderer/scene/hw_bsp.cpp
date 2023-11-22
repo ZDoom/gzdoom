@@ -599,7 +599,7 @@ void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 	SetupSprite.Clock();
 	for (uint32_t i = 0; i < sub->sprites.Size(); i++)
 	{
-		DZSprite *sp = sub->sprites[i];
+		DVisualThinker *sp = sub->sprites[i];
 		if (!sp || sp->ObjectFlags & OF_EuthanizeMe)
 			continue;
 		if (mClipPortal)

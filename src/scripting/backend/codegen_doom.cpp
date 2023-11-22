@@ -926,9 +926,9 @@ static DObject *BuiltinNewDoom(PClass *cls, int outerside, int backwardscompatib
 		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
 		return nullptr;
 	}
-	if (cls->IsDescendantOf(NAME_ZSprite)) // Same for ZSprites.
+	if (cls->IsDescendantOf(NAME_VisualThinker)) // Same for ZSprites.
 	{
-		ThrowAbortException(X_OTHER, "Cannot create ZSprite or inheriting classes with 'new'. Use 'ZSprite.Spawn' instead.");
+		ThrowAbortException(X_OTHER, "Cannot create VisualThinker or inheriting classes with 'new'. Use 'ZSprite.Spawn' instead.");
 		return nullptr;
 	}
 	if ((vm_warnthinkercreation || !backwardscompatible) && cls->IsDescendantOf(NAME_Thinker))

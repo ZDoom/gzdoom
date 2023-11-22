@@ -207,19 +207,19 @@ void P_ClearParticles (FLevelLocals *Level)
 // Group particles by subsectors. Because particles are always
 // in motion, there is little benefit to caching this information
 // from one frame to the next.
-// [MC] ZSprites hitches a ride here
+// [MC] VisualThinkers hitches a ride here
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
-	// [MC] Hitch a ride on particle subsectors since ZSprites are effectively using the same kind of system.
+	// [MC] Hitch a ride on particle subsectors since VisualThinkers are effectively using the same kind of system.
 	for (uint32_t i = 0; i < Level->subsectors.Size(); i++)
 	{
 		Level->subsectors[i].sprites.Clear();
 	}
 	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
 	// At least it's on its own statnum for maximum efficiency.
-	auto it = Level->GetThinkerIterator<DZSprite>(NAME_None, STAT_SPRITE);
-	DZSprite* sp;
+	auto it = Level->GetThinkerIterator<DVisualThinker>(NAME_None, STAT_SPRITE);
+	DVisualThinker* sp;
 	while (sp = it.Next())
 	{
 		if (sp->sub == nullptr)
@@ -227,7 +227,7 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 
 		sp->sub->sprites.Push(sp);
 	}
-	// End ZSprite hitching. Now onto the particles. 
+	// End VisualThinker hitching. Now onto the particles. 
 	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
 	{
 		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
@@ -985,13 +985,13 @@ void P_DisconnectEffect (AActor *actor)
 
 //===========================================================================
 // 
-// ZScript Sprite (DZSprite)
+// ZScript Sprite (DVisualThinker)
 // Concept by Major Cooke
 // Most code borrowed by Actor and particles above
 // 
 //===========================================================================
 
-void DZSprite::Construct()
+void DVisualThinker::Construct()
 {
 	PT = {};
 	PT.sprite = this;
@@ -1010,58 +1010,58 @@ void DZSprite::Construct()
 	scolor = 0xffffff;
 }
 
-DZSprite::DZSprite()
+DVisualThinker::DZSprite()
 {
 	Construct();
 }
 
-void DZSprite::CallPostBeginPlay()
+void DVisualThinker::CallPostBeginPlay()
 {
 	PT.texture = Texture;
 	Super::CallPostBeginPlay();
 }
 
-void DZSprite::OnDestroy()
+void DVisualThinker::OnDestroy()
 {
 	PT.alpha = 0.0; // stops all rendering.
 	if (spr) delete spr;
 	Super::OnDestroy();
 }
 
-DZSprite* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
+DVisualThinker* DZSprite::NewZSprite(FLevelLocals* Level, PClass* type)
 {
 	if (type == nullptr)
 		return nullptr;
 	else if (type->bAbstract)
 	{
-		Printf("Attempt to spawn an instance of abstract ZSprite class %s\n", type->TypeName.GetChars());
+		Printf("Attempt to spawn an instance of abstract VisualThinker class %s\n", type->TypeName.GetChars());
 		return nullptr;
 	}
-	else if (!type->IsDescendantOf(RUNTIME_CLASS(DZSprite)))
+	else if (!type->IsDescendantOf(RUNTIME_CLASS(DVisualThinker)))
 	{
-		Printf("Attempt to spawn class not inherent to ZSprite: %s\n", type->TypeName.GetChars());
+		Printf("Attempt to spawn class not inherent to VisualThinker: %s\n", type->TypeName.GetChars());
 		return nullptr;
 	}
 
-	DZSprite *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
+	DVisualThinker *zs = static_cast<DZSprite*>(Level->CreateThinker(type, STAT_SPRITE));
 	zs->Construct();
 	return zs;
 }
 
-static DZSprite* SpawnZSprite(FLevelLocals* Level, PClass* type)
+static DVisualThinker* SpawnZSprite(FLevelLocals* Level, PClass* type)
 {
-	return DZSprite::NewZSprite(Level, type);
+	return DVisualThinker::NewZSprite(Level, type);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnZSprite, SpawnZSprite)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnZSprite)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_CLASS_NOT_NULL(type, DZSprite);
-	DZSprite* zs = SpawnZSprite(self, type);
+	PARAM_CLASS_NOT_NULL(type, DVisualThinker);
+	DVisualThinker* zs = SpawnZSprite(self, type);
 	ACTION_RETURN_OBJECT(zs);
 }
 
-void DZSprite::UpdateSpriteInfo()
+void DVisualThinker::UpdateSpriteInfo()
 {
 	PT.color = scolor;
 	PT.Pos = Pos;
@@ -1076,7 +1076,7 @@ void DZSprite::UpdateSpriteInfo()
 }
 
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.
-void DZSprite::Tick()
+void DVisualThinker::Tick()
 {
 	if (ObjectFlags & OF_EuthanizeMe)
 		return;
@@ -1126,7 +1126,7 @@ void DZSprite::Tick()
 	UpdateSpriteInfo();
 }
 
-int DZSprite::GetLightLevel(sector_t* rendersector) const
+int DVisualThinker::GetLightLevel(sector_t* rendersector) const
 {
 	int lightlevel = rendersector->GetSpriteLight();
 
@@ -1141,7 +1141,7 @@ int DZSprite::GetLightLevel(sector_t* rendersector) const
 	return lightlevel;
 }
 
-FVector3 DZSprite::InterpolatedPosition(double ticFrac) const
+FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
 {
 	if (bDontInterpolate) return FVector3(Pos);
 
@@ -1150,7 +1150,7 @@ FVector3 DZSprite::InterpolatedPosition(double ticFrac) const
 
 }
 
-float DZSprite::InterpolatedRoll(double ticFrac) const
+float DVisualThinker::InterpolatedRoll(double ticFrac) const
 {
 	if (bDontInterpolate) return Roll;
 
@@ -1159,7 +1159,7 @@ float DZSprite::InterpolatedRoll(double ticFrac) const
 
 
 
-void DZSprite::SetTranslation(FName trname)
+void DVisualThinker::SetTranslation(FName trname)
 {
 	// There is no constant for the empty name...
 	if (trname.GetChars()[0] == 0)
@@ -1177,35 +1177,35 @@ void DZSprite::SetTranslation(FName trname)
 	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
 }
 
-DEFINE_ACTION_FUNCTION(DZSprite, SetTranslation)
+DEFINE_ACTION_FUNCTION(DVisualThinker, SetTranslation)
 {
-	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_SELF_PROLOGUE(DVisualThinker);
 	PARAM_NAME(trans);
 	self->SetTranslation(trans);
 	return 0;
 }
 
-bool DZSprite::isFrozen()
+bool DVisualThinker::isFrozen()
 {
 	return (Level->isFrozen() && !(Flags & SPF_NOTIMEFREEZE));
 }
 
-DEFINE_ACTION_FUNCTION(DZSprite, IsFrozen)
+DEFINE_ACTION_FUNCTION(DVisualThinker, IsFrozen)
 {
-	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_SELF_PROLOGUE(DVisualThinker);
 	ACTION_RETURN_BOOL(self->isFrozen());
 }
 
-DEFINE_ACTION_FUNCTION(DZSprite, SetRenderStyle)
+DEFINE_ACTION_FUNCTION(DVisualThinker, SetRenderStyle)
 {
-	PARAM_SELF_PROLOGUE(DZSprite);
+	PARAM_SELF_PROLOGUE(DVisualThinker);
 	PARAM_INT(mode);
 
 	self->Style = ERenderStyle(mode);
 	return 0;
 }
 
-int DZSprite::GetRenderStyle()
+int DVisualThinker::GetRenderStyle()
 {
 	for (unsigned i = 0; i < STYLE_Count; i++)
 	{
@@ -1214,7 +1214,7 @@ int DZSprite::GetRenderStyle()
 	return -1;
 }
 
-void DZSprite::Serialize(FSerializer& arc)
+void DVisualThinker::Serialize(FSerializer& arc)
 {
 	Super::Serialize(arc);
 
@@ -1241,22 +1241,22 @@ void DZSprite::Serialize(FSerializer& arc)
 		
 }
 
-IMPLEMENT_CLASS(DZSprite, false, false);
-DEFINE_FIELD(DZSprite, Pos);
-DEFINE_FIELD(DZSprite, Vel);
-DEFINE_FIELD(DZSprite, Prev);
-DEFINE_FIELD(DZSprite, Scale);
-DEFINE_FIELD(DZSprite, Offset);
-DEFINE_FIELD(DZSprite, Roll);
-DEFINE_FIELD(DZSprite, PrevRoll);
-DEFINE_FIELD(DZSprite, Alpha);
-DEFINE_FIELD(DZSprite, Texture);
-DEFINE_FIELD(DZSprite, Translation);
-DEFINE_FIELD(DZSprite, Flags);
-DEFINE_FIELD(DZSprite, LightLevel);
-DEFINE_FIELD(DZSprite, scolor);
-DEFINE_FIELD(DZSprite, cursector);
-DEFINE_FIELD(DZSprite, bXFlip);
-DEFINE_FIELD(DZSprite, bYFlip);
-DEFINE_FIELD(DZSprite, bDontInterpolate);
-DEFINE_FIELD(DZSprite, bAddLightLevel);
+IMPLEMENT_CLASS(DVisualThinker, false, false);
+DEFINE_FIELD(DVisualThinker, Pos);
+DEFINE_FIELD(DVisualThinker, Vel);
+DEFINE_FIELD(DVisualThinker, Prev);
+DEFINE_FIELD(DVisualThinker, Scale);
+DEFINE_FIELD(DVisualThinker, Offset);
+DEFINE_FIELD(DVisualThinker, Roll);
+DEFINE_FIELD(DVisualThinker, PrevRoll);
+DEFINE_FIELD(DVisualThinker, Alpha);
+DEFINE_FIELD(DVisualThinker, Texture);
+DEFINE_FIELD(DVisualThinker, Translation);
+DEFINE_FIELD(DVisualThinker, Flags);
+DEFINE_FIELD(DVisualThinker, LightLevel);
+DEFINE_FIELD(DVisualThinker, scolor);
+DEFINE_FIELD(DVisualThinker, cursector);
+DEFINE_FIELD(DVisualThinker, bXFlip);
+DEFINE_FIELD(DVisualThinker, bYFlip);
+DEFINE_FIELD(DVisualThinker, bDontInterpolate);
+DEFINE_FIELD(DVisualThinker, bAddLightLevel);

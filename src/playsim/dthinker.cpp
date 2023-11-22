@@ -809,7 +809,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 	PARAM_INT(stat);
 
 	// do not allow ZScript to reposition thinkers in or out of particle ticking.
-	if (stat != STAT_SPRITE && !dynamic_cast<DZSprite*>(self))
+	if (stat != STAT_SPRITE && !dynamic_cast<DVisualThinker*>(self))
 	{
 		ChangeStatNum(self, stat);
 	}

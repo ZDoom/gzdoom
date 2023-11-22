@@ -64,7 +64,7 @@ enum EParticleFlags
 	SPF_REPLACE =			1 << 7,
 	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
-class DZSprite;
+class DVisualThinker;
 struct particle_t
 {
     DVector3 Pos;
@@ -81,7 +81,7 @@ struct particle_t
     uint16_t    tnext, snext, tprev;
     bool    bright;
 	uint16_t flags;
-	DZSprite *sprite;
+	DVisualThinker *sprite;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -141,16 +141,16 @@ void P_DisconnectEffect (AActor *actor);
 
 //===========================================================================
 // 
-// ZSprites
+// VisualThinkers
 // by Major Cooke
 // Credit to phantombeta, RicardoLuis0 & RaveYard for aid
 // 
 //===========================================================================
 class HWSprite;
 struct FTranslationID;
-class DZSprite : public DThinker
+class DVisualThinker : public DThinker
 {
-	DECLARE_CLASS(DZSprite, DThinker);
+	DECLARE_CLASS(DVisualThinker, DThinker);
 public:
 	DVector3		Pos, Vel, Prev;
 	DVector2		Scale, Offset;
@@ -177,12 +177,12 @@ public:
 
 	
 
-	DZSprite();
+	DVisualThinker();
 	void Construct();
 	void CallPostBeginPlay() override;
 	void OnDestroy() override;
 
-	static DZSprite* NewZSprite(FLevelLocals* Level, PClass* type);
+	static DVisualThinker* NewZSprite(FLevelLocals* Level, PClass* type);
 	void SetTranslation(FName trname);
 	int GetRenderStyle();
 	bool isFrozen();

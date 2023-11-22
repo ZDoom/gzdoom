@@ -427,7 +427,7 @@ public:
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
-		if (thinker->IsKindOf(RUNTIME_CLASS(DZSprite))) // [MC] This absolutely must happen for this class!
+		if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker))) // [MC] This absolutely must happen for this class!
 			statnum = STAT_SPRITE;
 		Thinkers.Link(thinker, statnum);
 		thinker->Level = this;

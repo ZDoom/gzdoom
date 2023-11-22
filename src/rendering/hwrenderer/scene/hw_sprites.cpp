@@ -1252,7 +1252,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	if (!particle || particle->alpha <= 0)
 		return;
 
-	DZSprite *spr = particle->sprite;
+	DVisualThinker *spr = particle->sprite;
 	if (spr && spr->Texture.isNull())
 		return;
 
@@ -1318,7 +1318,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	const auto& vp = di->Viewpoint;
 
 	if (spr)
-		AdjustZSprite(di, spr, sector);
+		AdjustVisualThinker(di, spr, sector);
 	else
 	{
 		bool has_texture = !particle->texture.isNull();
@@ -1405,10 +1405,10 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	rendered_sprites++;
 }
 
-// [MC] ZSprites are to be rendered akin to actor sprites. The reason this whole system
+// [MC] VisualThinkers are to be rendered akin to actor sprites. The reason this whole system
 // is hitching a ride on particle_t is because of the large number of checks with 
 // HWSprite elsewhere in the draw lists.
-void HWSprite::AdjustZSprite(HWDrawInfo* di, DZSprite* spr, sector_t* sector)
+void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t* sector)
 {
 	translation = spr->Translation;
 	texture = TexMan.GetGameTexture(spr->Texture, true);

@@ -1663,7 +1663,7 @@ struct subsector_t
 	int Index() const { return subsectornum; }
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
-	TArray<DZSprite *> sprites;
+	TArray<DVisualThinker *> sprites;
 	LightmapSurface *lightmap[2];
 };
 

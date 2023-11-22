@@ -545,7 +545,7 @@ struct LevelLocals native
 	native String GetEpisodeName();
 
 	native void SpawnParticle(FSpawnParticleParams p);
-	native ZSprite SpawnZSprite(Class<ZSprite> type);
+	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
 }
 
 // a few values of this need to be readable by the play code.

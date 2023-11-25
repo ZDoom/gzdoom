@@ -227,6 +227,7 @@ IWad
 	Config = "Heretic"
 	IWADName = "blasphemer.wad"
 	Mapinfo = "mapinfo/heretic.txt"
+	Compatibility = "Extended"
 	MustContain = "E1M1", "E2M1", "TITLE", "BLASPHEM"
 	BannerColors = "73 00 00", "00 00 00"
 }

@@ -1757,6 +1757,19 @@ void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointer
 	}
 }
 
+bool FSerializer::ReadOptionalInt(const char * key, int &into)
+{
+	if(!isReading()) return false;
+
+	auto val = r->FindKey(key);
+	if(val && val->IsInt())
+	{
+		into = val->GetInt();
+		return true;
+	}
+	return false;
+}
+
 #include "renderstyle.h"
 FSerializer& Serialize(FSerializer& arc, const char* key, FRenderStyle& style, FRenderStyle* def)
 {

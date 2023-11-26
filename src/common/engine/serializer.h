@@ -108,6 +108,10 @@ public:
 	FSerializer &AddString(const char *key, const char *charptr);
 	const char *GetString(const char *key);
 	FSerializer &ScriptNum(const char *key, int &num);
+
+
+	bool ReadOptionalInt(const char * key, int &into);
+
 	bool isReading() const
 	{
 		return r != nullptr;

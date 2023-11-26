@@ -393,7 +393,7 @@ void D_SetupUserInfo ()
 	// Reset everybody's userinfo to a default state.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].userinfo.Reset();
+		players[i].userinfo.Reset(i);
 	}
 	// Initialize the console player's user info
 	coninfo = &players[consoleplayer].userinfo;
@@ -426,7 +426,7 @@ void D_SetupUserInfo ()
 	R_BuildPlayerTranslation(consoleplayer);
 }
 
-void userinfo_t::Reset()
+void userinfo_t::Reset(int pnum)
 {
 	// Clear this player's userinfo.
 	TMapIterator<FName, FBaseCVar *> it(*this);
@@ -468,6 +468,9 @@ void userinfo_t::Reset()
 			{
 				newcvar->SetExtraDataPointer(cvar); // store backing cvar
 			}
+
+			newcvar->pnum = pnum;
+			newcvar->userinfoName = cvarname;
 
 			Insert(cvarname, newcvar);
 		}
@@ -981,7 +984,6 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *key;
 	const char *str;
 
-	info.Reset();
 	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{

@@ -269,7 +269,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 		return *static_cast<FBoolCVar *>(*CheckKey(NAME_Wi_NoAutostartMap));
 	}
 
-	void Reset();
+	void Reset(int pnum);
 	int TeamChanged(int team);
 	int SkinChanged(const char *skinname, int playerclass);
 	int SkinNumChanged(int skinnum);

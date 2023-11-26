@@ -1981,8 +1981,12 @@ void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter)
 }
 
 
+void SetupLoadingCVars();
+void FinishLoadingCVars();
+
 void G_DoLoadGame ()
 {
+	SetupLoadingCVars();
 	bool hidecon;
 
 	if (gameaction != ga_autoloadgame)
@@ -2125,6 +2129,7 @@ void G_DoLoadGame ()
 	// load a base level
 	bool demoplaybacksave = demoplayback;
 	G_InitNew(map.GetChars(), false);
+	FinishLoadingCVars();
 	demoplayback = demoplaybacksave;
 	savegamerestore = false;
 

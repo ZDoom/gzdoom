@@ -42,6 +42,8 @@
 #include "textureid.h"
 #include "maps.h"
 #include "palettecontainer.h"
+#include "texturemanager.h"
+#include "i_interface.h"
 
 
 FTypeTable TypeTable;
@@ -2542,40 +2544,73 @@ static void PMapValueWriter(FSerializer &ar, const M *map, const PMap *m)
 {
 	TMapConstIterator<typename M::KeyType, typename M::ValueType> it(*map);
 	const typename M::Pair * p;
-	if(m->KeyType == TypeName)
+	while(it.NextPair(p))
 	{
-		while(it.NextPair(p))
+		if constexpr(std::is_same_v<typename M::KeyType,FString>)
 		{
-			if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			m->ValueType->WriteValue(ar,p->Key.GetChars(),static_cast<const void *>(&p->Value));
+		}
+		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		{
+			if(m->KeyType->Flags & 8 /*TYPE_IntNotInt*/)
 			{
-				m->ValueType->WriteValue(ar,FName(ENamedName(p->Key)).GetChars(),static_cast<const void *>(&p->Value));
+				if(m->KeyType == TypeName)
+				{
+					m->ValueType->WriteValue(ar,FName(ENamedName(p->Key)).GetChars(),static_cast<const void *>(&p->Value));
+				}
+				else if(m->KeyType == TypeSound)
+				{
+					m->ValueType->WriteValue(ar,soundEngine->GetSoundName(FSoundID::fromInt(p->Key)),static_cast<const void *>(&p->Value));
+				}
+				else if(m->KeyType == TypeTextureID)
+				{
+					if(!!(p->Key & 0x8000000))
+					{ // invalid
+						m->ValueType->WriteValue(ar,"invalid",static_cast<const void *>(&p->Value));
+					}
+					else if(p->Key == 0 || p->Key >= TexMan.NumTextures())
+					{ // null
+						m->ValueType->WriteValue(ar,"null",static_cast<const void *>(&p->Value));
+					}
+					else
+					{
+						FTextureID tid;
+						tid.SetIndex(p->Key);
+						FGameTexture *tex = TexMan.GetGameTexture(tid);
+						int lump = tex->GetSourceLump();
+						unsigned useType = static_cast<unsigned>(tex->GetUseType());
+
+						FString name;
+
+						if (TexMan.GetLinkedTexture(lump) == tex)
+						{
+							name = fileSystem.GetFileFullName(lump);
+						}
+						else
+						{
+							name = tex->GetName().GetChars();
+						}
+
+						name.AppendFormat(":%u",useType);
+
+						m->ValueType->WriteValue(ar,name.GetChars(),static_cast<const void *>(&p->Value));
+					}
+				}
+				else
+				{ // bool/color/enum/sprite/translationID
+					FString key;
+					key.Format("%u",p->Key);
+					m->ValueType->WriteValue(ar,key.GetChars(),static_cast<const void *>(&p->Value));
+				}
 			}
 			else
-			{
-				#ifdef __GNUC__
-					__builtin_unreachable();
-				#elif defined(_MSC_VER)
-					__assume(0);
-				#endif
-			}
-		}
-	}
-	else
-	{
-		while(it.NextPair(p))
-		{
-			if constexpr(std::is_same_v<typename M::KeyType,FString>)
-			{
-				m->ValueType->WriteValue(ar,p->Key.GetChars(),static_cast<const void *>(&p->Value));
-			}
-			else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
 			{
 				FString key;
 				key.Format("%u",p->Key);
 				m->ValueType->WriteValue(ar,key.GetChars(),static_cast<const void *>(&p->Value));
 			}
-			//else unknown key type
 		}
+		//else unknown key type
 	}
 }
 
@@ -2604,40 +2639,78 @@ template<typename M>
 static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
 {
 	const char * k;
-	if(m->KeyType == TypeName)
+	while((k = ar.GetKey()))
 	{
-		while((k = ar.GetKey()))
+		typename M::ValueType * val = nullptr;
+		if constexpr(std::is_same_v<typename M::KeyType,FString>)
 		{
-			typename M::ValueType * val;
-			if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+			val = &map->InsertNew(k);
+		}
+		else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
+		{
+			if(m->KeyType->Flags & 8 /*TYPE_IntNotInt*/)
 			{
-				val = &map->InsertNew(FName(k).GetIndex());
+				if(m->KeyType == TypeName)
+				{
+					val = &map->InsertNew(FName(k).GetIndex());
+				}
+				else if(m->KeyType == TypeSound)
+				{
+					val = &map->InsertNew(S_FindSound(k).index());
+				}
+				else if(m->KeyType == TypeTextureID)
+				{
+					FString s(k);
+					FTextureID tex;
+					if(s.Compare("invalid") == 0)
+					{
+						tex.SetInvalid();
+					}
+					else if(s.Compare("null") == 0)
+					{
+						tex.SetNull();
+					}
+					else
+					{
+						ptrdiff_t sep = s.LastIndexOf(":");
+						if(sep < 0)
+						{
+							ar.EndObject();
+							return false;
+						}
+						FString texName = s.Left(sep);
+						FString useType = s.Mid(sep + 1);
+
+						tex = TexMan.GetTextureID(texName.GetChars(), (ETextureType) useType.ToULong());
+					}
+					val = &map->InsertNew(tex.GetIndex());
+				}
+				else if(m->KeyType == TypeTranslationID)
+				{
+					FString s(k);
+					if(!s.IsInt())
+					{
+						ar.EndObject();
+						return false;
+					}
+					int v = s.ToULong();
+
+					if (sysCallbacks.RemapTranslation) v = sysCallbacks.RemapTranslation(FTranslationID::fromInt(v)).index();
+
+					val = &map->InsertNew(v);
+				}
+				else
+				{ // bool/color/enum/sprite
+					FString s(k);
+					if(!s.IsInt())
+					{
+						ar.EndObject();
+						return false;
+					}
+					val = &map->InsertNew(static_cast<uint32_t>(s.ToULong()));
+				}
 			}
 			else
-			{
-				#ifdef __GNUC__
-					__builtin_unreachable();
-				#elif defined(_MSC_VER)
-					__assume(0);
-				#endif
-			}
-			if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
-			{
-				ar.EndObject();
-				return false;
-			}
-		}
-	}
-	else
-	{
-		while((k = ar.GetKey()))
-		{
-			typename M::ValueType * val;
-			if constexpr(std::is_same_v<typename M::KeyType,FString>)
-			{
-				val = &map->InsertNew(k);
-			}
-			else if constexpr(std::is_same_v<typename M::KeyType,uint32_t>)
 			{
 				FString s(k);
 				if(!s.IsInt())
@@ -2647,11 +2720,11 @@ static bool PMapValueReader(FSerializer &ar, M *map, const PMap *m)
 				}
 				val = &map->InsertNew(static_cast<uint32_t>(s.ToULong()));
 			}
-			if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
-			{
-				ar.EndObject();
-				return false;
-			}
+		}
+		if (!m->ValueType->ReadValue(ar,nullptr,static_cast<void*>(val)))
+		{
+			ar.EndObject();
+			return false;
 		}
 	}
 	ar.EndObject();

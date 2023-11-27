@@ -107,7 +107,7 @@ extend class StateProvider
 		if (invoker != weap || stateinfo == null || stateinfo.mStateType != STATE_Psprite) weap = null;
 		if (weap != null)
 		{
-			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
+			if (!weap.DepleteAmmo (weap.bAltFire, true))
 				return;
 
 			doesautoaim = weap.bNoAutoaim;

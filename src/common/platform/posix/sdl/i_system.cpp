@@ -218,20 +218,21 @@ void RedrawProgressBar(int CurPos, int MaxPos)
 	CleanProgressBar();
 	struct winsize sizeOfWindow;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizeOfWindow);
+	int windowColClamped = std::min((int)sizeOfWindow.ws_col, 512);
 	double progVal = std::clamp((double)CurPos / (double)MaxPos,0.0,1.0);
-	int curProgVal = std::clamp(int(sizeOfWindow.ws_col * progVal),0,(int)sizeOfWindow.ws_col);
+	int curProgVal = std::clamp(int(windowColClamped * progVal),0,windowColClamped);
 
 	char progressBuffer[512];
 	memset(progressBuffer,'.',512);
-	progressBuffer[sizeOfWindow.ws_col - 1] = 0;
+	progressBuffer[windowColClamped - 1] = 0;
 	int lengthOfStr = 0;
 
 	while (curProgVal-- > 0)
 	{
 		progressBuffer[lengthOfStr++] = '=';
-		if (lengthOfStr >= sizeOfWindow.ws_col - 1) break;
+		if (lengthOfStr >= windowColClamped - 1) break;
 	}
-	fprintf(stdout, "\0337\033[%d;%dH\033[2K[%s\033[%d;%dH]\0338", sizeOfWindow.ws_row, 0, progressBuffer, sizeOfWindow.ws_row, sizeOfWindow.ws_col);
+	fprintf(stdout, "\0337\033[%d;%dH\033[2K[%s\033[%d;%dH]\0338", sizeOfWindow.ws_row, 0, progressBuffer, sizeOfWindow.ws_row, windowColClamped);
 	fflush(stdout);
 	ProgressBarCurPos = CurPos;
 	ProgressBarMaxPos = MaxPos;

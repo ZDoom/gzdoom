@@ -100,7 +100,6 @@ void M_FindResponseFile (void)
 			char	**argv;
 			FileSys::ResourceData file;
 			int		argc = 0;
-			int 	size;
 			size_t	argsize = 0;
 			int 	index;
 
@@ -117,7 +116,6 @@ void M_FindResponseFile (void)
 				else
 				{
 					Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
-					size = (int)fr.GetLength();
 					file = fr.ReadPadded(1);
 					argsize = ParseCommandLine (file.string(), &argc, nullptr);
 				}

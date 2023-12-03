@@ -171,6 +171,7 @@ public:
 		memcpy(frameTicks, frameticks, 3 * sizeof(int));
 		flags = flags_;
 		buffer = fr.ReadPadded(1);
+		if (buffer.size() < 4) return;
 		fr.Close();
 
 		if (ANIM_LoadAnim(&anim, buffer.bytes(), buffer.size() - 1) < 0)

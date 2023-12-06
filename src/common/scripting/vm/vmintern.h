@@ -481,4 +481,6 @@ public:
 
 private:
 	static int FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+	void JitCompile();
+	friend class FFunctionBuildList;
 };

@@ -41,6 +41,9 @@
 
 CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
+EXTERN_CVAR(Bool, vm_jit)
+EXTERN_CVAR(Bool, vm_jit_aot)
+
 struct VMRemap
 {
 	uint8_t altOp, kReg, kType;
@@ -928,6 +931,13 @@ void FFunctionBuildList::Build()
 				disasmdump.Write(sfunc, item.PrintableName);
 
 				sfunc->Unsafe = ctx.Unsafe;
+
+				#if HAVE_VM_JIT
+					if(vm_jit && vm_jit_aot)
+					{
+						sfunc->JitCompile();
+					}
+				#endif
 			}
 			catch (CRecoverableError &err)
 			{
@@ -1093,8 +1103,6 @@ void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 		return 1;
 	});
 }
-
-EXTERN_CVAR(Bool, vm_jit)
 
 ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs)
 {

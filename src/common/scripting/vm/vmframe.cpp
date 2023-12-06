@@ -54,8 +54,14 @@ CUSTOM_CVAR(Bool, vm_jit, true, CVAR_NOINITCALL)
 	Printf("You must restart " GAMENAME " for this change to take effect.\n");
 	Printf("This cvar is currently not saved. You must specify it on the command line.");
 }
+CUSTOM_CVAR(Bool, vm_jit_aot, true, CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " for this change to take effect.\n");
+	Printf("This cvar is currently not saved. You must specify it on the command line.");
+}
 #else
 CVAR(Bool, vm_jit, false, CVAR_NOINITCALL|CVAR_NOSET)
+CVAR(Bool, vm_jit_aot, false, CVAR_NOINITCALL|CVAR_NOSET)
 FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames, int maxFrames) { return FString(); }
 void JitRelease() {}
 #endif
@@ -282,6 +288,25 @@ static bool CanJit(VMScriptFunction *func)
 	return false;
 }
 
+void VMScriptFunction::JitCompile()
+{
+	if(!(VarFlags & VARF_Abstract))
+	{
+	#ifdef HAVE_VM_JIT
+		if (vm_jit && CanJit(this))
+		{
+			ScriptCall = ::JitCompile(this);
+			if (!ScriptCall)
+				ScriptCall = VMExec;
+		}
+		else
+	#endif // HAVE_VM_JIT
+		{
+			ScriptCall = VMExec;
+		}
+	}
+}
+
 int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret)
 {
 	// [Player701] Check that we aren't trying to call an abstract function.
@@ -291,18 +316,8 @@ int VMScriptFunction::FirstScriptCall(VMFunction *func, VMValue *params, int num
 	{
 		ThrowAbortException(X_OTHER, "attempt to call abstract function %s.", func->PrintableName);
 	}
-#ifdef HAVE_VM_JIT
-	if (vm_jit && CanJit(static_cast<VMScriptFunction*>(func)))
-	{
-		func->ScriptCall = JitCompile(static_cast<VMScriptFunction*>(func));
-		if (!func->ScriptCall)
-			func->ScriptCall = VMExec;
-	}
-	else
-#endif // HAVE_VM_JIT
-	{
-		func->ScriptCall = VMExec;
-	}
+	
+	static_cast<VMScriptFunction*>(func)->JitCompile();
 
 	return func->ScriptCall(func, params, numparams, ret, numret);
 }

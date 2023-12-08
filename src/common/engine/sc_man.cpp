@@ -50,6 +50,9 @@
 #include <inttypes.h>
 #include "filesystem.h"
 
+#include "vm.h"
+#include "dobject.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -1089,13 +1092,14 @@ void FScanner::ScriptError (const char *message, ...)
 		va_end (arglist);
 	}
 
+	ParseError = true;
 	if (NoFatalErrors)
 	{
 		Printf(TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
 			AlreadyGot ? AlreadyGotLine : Line, composed.GetChars());
 		return;
 	}
-	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+	I_Error ("%sScript error, \"%s\" line %d:\n%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1121,7 +1125,8 @@ void FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf (TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
+	ParseError = true;
+	Printf (TEXTCOLOR_RED "%sScript error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1383,4 +1388,353 @@ int ParseHex(const char* hex, FScriptPosition* sc)
 	return num;
 }
 
+// DObject-based wrapper around FScanner, for ZScript.
+class DScriptScanner : public DObject
+{
+	DECLARE_CLASS(DScriptScanner, DObject)
+public:
+	FScanner wrapped;
 
+	void OpenLumpNum(int lump) { return wrapped.OpenLumpNum(lump); }
+	void OpenString(const char* name, FString script) { return wrapped.OpenString(name, script); }
+	const FScanner::SavedPos SavePos() { return wrapped.SavePos(); }
+	void RestorePos(const FScanner::SavedPos& pos) { return wrapped.RestorePos(pos); }
+	FString GetStringContents() { return FString(wrapped.String); }
+	void UnGet() { return wrapped.UnGet(); }
+	bool isText() { return wrapped.isText(); }
+	int GetMessageLine() { return wrapped.GetMessageLine(); }
+	void Close() { return wrapped.Close(); }
+	void SetCMode(bool cmode) { return wrapped.SetCMode(cmode); }
+	void SetNoOctals(bool cmode) { return wrapped.SetNoOctals(cmode); }
+	void SetEscape(bool esc) { return wrapped.SetNoOctals(esc); }
+
+	void AddSymbol(const char* name, uint32_t value) { return wrapped.AddSymbol(name, value); }
+	void AddSymbol(const char* name, int32_t value) { return wrapped.AddSymbol(name, value); }
+	void AddSymbol(const char* name, double value) { return wrapped.AddSymbol(name, value); }
+
+	bool GetString() { return wrapped.GetString(); }
+	bool GetNumber(bool evaluate) { return wrapped.GetNumber(evaluate); }
+	bool GetFloat(bool evaluate) { return wrapped.GetFloat(evaluate); }
+
+	bool CheckValue(bool allowfloat, bool evaluate) { return wrapped.CheckValue(allowfloat, evaluate); }
+	bool CheckNumber(bool evaluate) { return wrapped.CheckNumber(evaluate); }
+	bool CheckBoolToken() { return wrapped.CheckBoolToken(); }
+	bool CheckString(const char* name) { return wrapped.CheckString(name); }
+	bool CheckFloat(bool evaluate) { return wrapped.CheckFloat(evaluate); }
+	void SetPrependMessage(const FString message) { return wrapped.SetPrependMessage(message); }
+	void SkipToEndOfBlock() { return wrapped.SkipToEndOfBlock(); }
+	int StartBraces(FScanner::SavedPos* braceend) { return wrapped.StartBraces(braceend); }
+	bool FoundEndBrace(FScanner::SavedPos& braceend) { return wrapped.FoundEndBrace(braceend); }
+
+	void MustGetValue(bool allowfloat, bool evaluate) { return wrapped.MustGetValue(allowfloat, evaluate); }
+	void MustGetFloat(bool evaluate) { return wrapped.MustGetFloat(evaluate); }
+	void MustGetNumber(bool evaluate) { return wrapped.MustGetNumber(evaluate); }
+	void MustGetString() { return wrapped.MustGetString(); }
+	void MustGetStringName(const char* name) { return wrapped.MustGetStringName(name); }
+	void MustGetBoolToken() { return wrapped.MustGetBoolToken(); }
+};
+
+IMPLEMENT_CLASS(DScriptScanner, false, false);
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, OpenLumpNum)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_INT(lump);
+
+	self->OpenLumpNum(lump);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, OpenString)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+	PARAM_STRING_VAL(script);
+
+	self->OpenString(name.GetChars(), script);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SavePos)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_POINTER(pos, FScanner::SavedPos);
+
+	*pos = self->SavePos();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, RestorePos)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_POINTER(pos, FScanner::SavedPos);
+
+	self->RestorePos(*pos);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, GetStringContents)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	
+	ACTION_RETURN_STRING(self->GetStringContents());
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, UnGet)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	self->UnGet();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, isText)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	ACTION_RETURN_BOOL(self->isText());
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, GetMessageLine)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	ACTION_RETURN_INT(self->GetMessageLine());
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, AddSymbol)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+	PARAM_INT(value);
+
+	self->AddSymbol(name.GetChars(), value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, AddSymbolUnsigned)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+	PARAM_UINT(value);
+
+	self->AddSymbol(name.GetChars(), value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, AddSymbolFloat)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+	PARAM_FLOAT(value);
+
+	self->AddSymbol(name.GetChars(), value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, GetString)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	ACTION_RETURN_BOOL(self->GetString());
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, GetNumber)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	ACTION_RETURN_BOOL(self->GetNumber(evaluate));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, GetFloat)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	ACTION_RETURN_BOOL(self->GetFloat(evaluate));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, CheckValue)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(allowfloat);
+	PARAM_BOOL(evaluate);
+
+	ACTION_RETURN_BOOL(self->CheckValue(allowfloat, evaluate));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, CheckBoolToken)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	ACTION_RETURN_BOOL(self->CheckBoolToken());
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, CheckNumber)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	ACTION_RETURN_BOOL(self->CheckNumber(evaluate));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, CheckString)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+
+	ACTION_RETURN_STRING(self->CheckString(name.GetChars()));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, CheckFloat)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	ACTION_RETURN_BOOL(self->CheckFloat(evaluate));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SetPrependMessage)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(message);
+
+	self->SetPrependMessage(message);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SetCMode)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(cmode);
+
+	self->SetCMode(cmode);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SetNoOctals)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(cmode);
+
+	self->SetNoOctals(cmode);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SetEscape)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(esc);
+
+	self->SetEscape(esc);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SkipToEndOfBlock)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	self->SkipToEndOfBlock();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, StartBraces)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_POINTER(braceend, FScanner::SavedPos);
+
+	(void)self->StartBraces(braceend);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, FoundEndBrace)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_POINTER(braceend, FScanner::SavedPos);
+
+	ACTION_RETURN_BOOL(self->FoundEndBrace(*braceend));
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, ScriptError)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	FString s = FStringFormat(VM_ARGS_NAMES);
+	self->wrapped.ScriptError("%s", s.GetChars());
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, ScriptMessage)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	FString s = FStringFormat(VM_ARGS_NAMES);
+	self->wrapped.ScriptMessage("%s", s.GetChars());
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetValue)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(allowfloat);
+	PARAM_BOOL(evaluate);
+
+	self->MustGetValue(allowfloat, evaluate);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetNumber)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	self->MustGetNumber(evaluate);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetFloat)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(evaluate);
+
+	self->MustGetFloat(evaluate);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetString)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	self->MustGetString();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetStringName)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_STRING(name);
+
+	self->MustGetStringName(name.GetChars());
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, MustGetBoolToken)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	self->MustGetBoolToken();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, Close)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+
+	self->Close();
+	return 0;
+}
+
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Line, Line);
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Float, Float);
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Number, Number);
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.End, End);
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Crossed, Crossed);
+DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.ParseError, ParseError);

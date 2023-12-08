@@ -194,6 +194,7 @@ public:
 
 	void ScriptError(const char *message, ...) GCCPRINTF(2,3);
 	void ScriptMessage(const char *message, ...) GCCPRINTF(2,3);
+	void SetPrependMessage(const FString& message) { PrependMessage = message; }
 
 	bool isText();
 
@@ -240,6 +241,7 @@ protected:
 	bool StateOptions;
 	bool Escape;
 	VersionInfo ParseVersion = { 0, 0, 0 };	// no ZScript extensions by default
+	FString PrependMessage = "";
 
 
 	bool ScanValue(bool allowfloat, bool evaluate);

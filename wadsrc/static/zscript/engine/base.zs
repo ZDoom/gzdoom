@@ -940,6 +940,68 @@ struct QuatStruct native
 	// native Quat Unit();
 }
 
+struct ScriptSavedPos
+{
+	voidptr SavedScriptPtr;
+	int SavedScriptLine;
+}
+
+class ScriptScanner native
+{
+	native void OpenString(String name, String script);
+	native void OpenLumpNum(int lump);
+	native void Close();
+
+	native void SavePos(out ScriptSavedPos pos);
+	native void RestorePos(out ScriptSavedPos pos);
+	native void UnGet();
+	native bool isText();
+	native int GetMessageLine();
+	native void SetPrependMessage(String message);
+
+	native vararg void ScriptError(String fmt, ...);
+	native vararg void ScriptMessage(String fmt, ...);
+
+	native void SetCMode(bool cmode);
+	native void SetNoOctals(bool cmode);
+	native void SetEscape(bool esc);
+	native void SetNoFatalErrors(bool cmode);
+	native void SkipToEndOfBlock();
+	native void StartBraces(out ScriptSavedPos braceend);
+	native bool FoundEndBrace(out ScriptSavedPos braceend);
+
+	native bool CheckValue(bool allowfloat, bool evaluate = true);
+	native bool CheckBoolToken();
+	native bool CheckNumber(bool evaluate = false);
+	native bool CheckString(String name);
+	native bool CheckFloat(bool evaluate = false);
+
+	native bool GetNumber(bool evaluate = false);
+	native bool GetString();
+	native bool GetFloat(bool evaluate = false);
+
+	native void AddSymbol(String name, int value);
+	native void AddSymbolUnsigned(String name, uint value);
+	native void AddSymbolFloat(String name, double value);
+
+	native void MustGetValue(bool allowfloat, bool evaluate = true);
+	native void MustGetFloat(bool evaluate = false);
+	native void MustGetNumber(bool evaluate = false);
+	native void MustGetString();
+	native void MustGetStringName(String name);
+	native void MustGetBoolToken();
+	
+	// This DOES NOT advance the parser! This returns the string the parser got.
+	native String GetStringContents();
+
+	native readonly bool End;
+	native readonly bool ParseError;
+	native readonly bool Crossed;
+	native readonly int Line;
+	native readonly int Number;
+	native readonly double Float;
+}
+
 // this struct does not exist. It is just a type for being referenced by an opaque pointer.
 struct VMFunction native version("4.10")
 {

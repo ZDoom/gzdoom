@@ -481,7 +481,7 @@ enum ActorRenderFlag
 	RF_MASKROTATION		= 0x00200000, // [MC] Only draw the actor when viewed from a certain angle range.
 	RF_ABSMASKANGLE		= 0x00400000, // [MC] The mask rotation does not offset by the actor's angle.
 	RF_ABSMASKPITCH		= 0x00800000, // [MC] The mask rotation does not offset by the actor's pitch.
-	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
+	RF_INTERPOLATEANGLES = 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
 	RF_DONTINTERPOLATE	= 0x04000000,	// no render interpolation ever!
 
@@ -489,13 +489,14 @@ enum ActorRenderFlag
 	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
 	RF_CASTSPRITESHADOW = 0x20000000,	// actor will cast a sprite shadow
 	RF_NOINTERPOLATEVIEW = 0x40000000,	// don't interpolate the view next frame if this actor is a camera.
-	RF_NOSPRITESHADOW = 0x80000000,		// actor will not cast a sprite shadow
+	RF_NOSPRITESHADOW	= 0x80000000,	// actor will not cast a sprite shadow
 };
 
 enum ActorRenderFlag2
 {
 	RF2_INVISIBLEINMIRRORS		= 0x0001,	// [Nash] won't render in mirrors
 	RF2_ONLYVISIBLEINMIRRORS	= 0x0002,	// [Nash] only renders in mirrors
+	RF2_BILLBOARDFACECAMERA		= 0x0004,	// Sprite billboard face camera (override gl_billboard_faces_camera)
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

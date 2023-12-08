@@ -386,7 +386,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		//&& di->mViewActor != nullptr
 		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
 
-	const bool drawBillboardFacingCamera = gl_billboard_faces_camera || !!(actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
+	const bool drawBillboardFacingCamera = gl_billboard_faces_camera || !!(actor && actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 

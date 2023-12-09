@@ -523,7 +523,9 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * s
 		const bool drawWithXYBillboard = ((ss->particle && gl_billboard_particles) || (!(ss->actor && ss->actor->renderflags & RF_FORCEYBILLBOARD)
 			&& (gl_billboard_mode == 1 || (ss->actor && ss->actor->renderflags & RF_FORCEXYBILLBOARD))));
 
-		const bool drawBillboardFacingCamera = gl_billboard_faces_camera || (ss->actor && ss->actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
+		const bool drawBillboardFacingCamera = (gl_billboard_faces_camera && (ss->actor && !(ss->actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA)))
+			|| (ss->actor && ss->actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
+
 		// [Nash] has +ROLLSPRITE
 		const bool rotated = (ss->actor != nullptr && ss->actor->renderflags & (RF_ROLLSPRITE | RF_WALLSPRITE | RF_FLATSPRITE));
 

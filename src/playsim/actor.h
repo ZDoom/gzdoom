@@ -497,6 +497,7 @@ enum ActorRenderFlag2
 	RF2_INVISIBLEINMIRRORS		= 0x0001,	// [Nash] won't render in mirrors
 	RF2_ONLYVISIBLEINMIRRORS	= 0x0002,	// [Nash] only renders in mirrors
 	RF2_BILLBOARDFACECAMERA		= 0x0004,	// Sprite billboard face camera (override gl_billboard_faces_camera)
+	RF2_BILLBOARDNOFACECAMERA	= 0x0008,	// Sprite billboard face camera angle (override gl_billboard_faces_camera)
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

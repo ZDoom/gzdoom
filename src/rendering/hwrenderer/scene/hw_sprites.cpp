@@ -85,6 +85,7 @@ CVAR(Float, gl_sclipfactor, 1.8f, CVAR_ARCHIVE)
 CVAR(Int, gl_particles_style, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // 0 = square, 1 = round, 2 = smooth
 CVAR(Int, gl_billboard_mode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_billboard_faces_camera, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, hw_force_cambbpref, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_billboard_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Int, gl_fuzztype, 0, CVAR_ARCHIVE)
 {
@@ -386,7 +387,8 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		//&& di->mViewActor != nullptr
 		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
 
-	const bool drawBillboardFacingCamera = (gl_billboard_faces_camera && (actor && !(actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA)))
+	const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
+		(gl_billboard_faces_camera && (actor && !(actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA)))
 		|| !!(actor && actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
 
 	// [Nash] has +ROLLSPRITE
@@ -1139,8 +1141,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		if (!gl_sprite_blend || modelframe ||
 			(thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) ||
+			(hw_force_cambbpref ? gl_billboard_faces_camera :
 			(gl_billboard_faces_camera && !(thing->renderflags2 & RF2_BILLBOARDNOFACECAMERA)) ||
-			thing->renderflags2 & RF2_BILLBOARDFACECAMERA)
+			thing->renderflags2 & RF2_BILLBOARDFACECAMERA))
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;

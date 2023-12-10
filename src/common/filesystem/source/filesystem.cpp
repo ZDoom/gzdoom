@@ -906,8 +906,6 @@ void FileSystem::RenameFile(int num, const char* newfn)
 //
 //==========================================================================
 
-static FResourceLump placeholderLump;
-
 void FileSystem::MoveLumpsInFolder(const char *path)
 {
 	if (FileInfo.size() == 0)

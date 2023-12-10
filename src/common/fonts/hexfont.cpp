@@ -63,7 +63,7 @@ struct HexDataSource
 		FScanner sc;
 
 		auto data = resf->Read(index);
-		sc.OpenMem("newconsolefont.hex", data.string(), data.size());
+		sc.OpenMem("newconsolefont.hex", data.string(), (int)data.size());
 		sc.SetCMode(true);
 		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
 		while (sc.GetString())

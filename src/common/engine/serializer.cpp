@@ -762,9 +762,9 @@ FCompressedBuffer FSerializer::GetCompressedOutput()
 	int err;
 
 	stream.next_in = (Bytef *)w->mOutString.GetString();
-	stream.avail_in = buff.mSize;
+	stream.avail_in = (unsigned)buff.mSize;
 	stream.next_out = (Bytef*)compressbuf;
-	stream.avail_out = buff.mSize;
+	stream.avail_out = (unsigned)buff.mSize;
 	stream.zalloc = (alloc_func)0;
 	stream.zfree = (free_func)0;
 	stream.opaque = (voidpf)0;

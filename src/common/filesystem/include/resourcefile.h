@@ -176,9 +176,9 @@ protected:
 class FResourceFile
 {
 public:
+protected:
 	FileReader Reader;
 	const char* FileName;
-protected:
 	uint32_t NumLumps;
 	char Hash[48];
 	StringPool* stringpool;
@@ -206,6 +206,7 @@ public:
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
 	FileReader *GetContainerReader() { return Reader.isOpen()? &Reader : nullptr; }
+	const char* GetFileName() const { return FileName; }
 	[[deprecated]] uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstEntry() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
@@ -245,6 +246,13 @@ public:
 		auto l = GetLump(entry);
 		if (!l) return {};
 		return l->GetRawData();
+	}
+
+	FileReader Destroy()
+	{
+		auto fr = std::move(Reader);
+		delete this;
+		return fr;
 	}
 
 

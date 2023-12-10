@@ -147,8 +147,7 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* 
 			}
 			auto ssi = new FSSIFile(filename, file, sp);
 			if (ssi->Open(version, numfiles, filter)) return ssi;
-			file = std::move(ssi->Reader); // to avoid destruction of reader
-			delete ssi;
+			file = ssi->Destroy();
 		}
 	}
 	return nullptr;

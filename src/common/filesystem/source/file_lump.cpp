@@ -89,8 +89,7 @@ FResourceFile *CheckLump(const char *filename, FileReader &file, LumpFilterInfo*
 	// always succeeds
 	auto rf = new FLumpFile(filename, file, sp);
 	if (rf->Open(filter)) return rf;
-	file = std::move(rf->Reader); // to avoid destruction of reader
-	delete rf;
+	file = rf->Destroy();
 	return NULL;
 }
 

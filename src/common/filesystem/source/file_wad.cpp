@@ -76,8 +76,8 @@ public:
 	{
 		if(!Compressed)
 		{
-			Owner->Reader.Seek(Position, FileReader::SeekSet);
-			return &Owner->Reader;
+			Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
+			return Owner->GetContainerReader();
 		}
 		return NULL;
 	}
@@ -85,7 +85,7 @@ public:
 	{
 		if(!Compressed)
 		{
-			const char * buffer = Owner->Reader.GetBuffer();
+			const char * buffer = Owner->GetContainerReader()->GetBuffer();
 
 			if (buffer != NULL)
 			{
@@ -96,20 +96,20 @@ public:
 			}
 		}
 
-		Owner->Reader.Seek(Position, FileReader::SeekSet);
+		Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
 		Cache = new char[LumpSize];
 
 		if(Compressed)
 		{
 			FileReader lzss;
-			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, true))
+			if (lzss.OpenDecompressor(*Owner->GetContainerReader(), LumpSize, METHOD_LZSS, false, true))
 			{
 				lzss.Read(Cache, LumpSize);
 			}
 		}
 		else
 		{
-			auto read = Owner->Reader.Read(Cache, LumpSize);
+			auto read = Owner->GetContainerReader()->Read(Cache, LumpSize);
 			if (read != LumpSize)
 			{
 				throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
@@ -478,8 +478,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* 
 			auto rf = new FWadFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

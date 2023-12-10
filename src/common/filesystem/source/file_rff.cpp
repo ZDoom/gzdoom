@@ -252,9 +252,7 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* 
 		{
 			auto rf = new FRFFFile(filename, file, sp);
 			if (rf->Open(filter)) return rf;
-
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

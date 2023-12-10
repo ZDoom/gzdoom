@@ -445,8 +445,8 @@ FCompressedBuffer FZipLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
 	if (NeedFileStart) SetLumpAddress();
-	Owner->Reader.Seek(Position, FileReader::SeekSet);
-	Owner->Reader.Read(cbuf.mBuffer, CompressedSize);
+	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
+	Owner->GetContainerReader()->Read(cbuf.mBuffer, CompressedSize);
 	return cbuf;
 }
 
@@ -464,8 +464,8 @@ void FZipLump::SetLumpAddress()
 	FZipLocalFileHeader localHeader;
 	int skiplen;
 
-	Owner->Reader.Seek(Position, FileReader::SeekSet);
-	Owner->Reader.Read(&localHeader, sizeof(localHeader));
+	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
+	Owner->GetContainerReader()->Read(&localHeader, sizeof(localHeader));
 	skiplen = LittleShort(localHeader.NameLength) + LittleShort(localHeader.ExtraLength);
 	Position += sizeof(localHeader) + skiplen;
 	NeedFileStart = false;
@@ -484,8 +484,8 @@ FileReader *FZipLump::GetReader()
 	if (Method == METHOD_STORED)
 	{
 		if (NeedFileStart) SetLumpAddress();
-		Owner->Reader.Seek(Position, FileReader::SeekSet);
-		return &Owner->Reader;
+		Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
+		return Owner->GetContainerReader();
 	}
 	else return NULL;	
 }
@@ -501,7 +501,7 @@ int FZipLump::FillCache()
 	if (NeedFileStart) SetLumpAddress();
 	const char *buffer;
 
-	if (Method == METHOD_STORED && (buffer = Owner->Reader.GetBuffer()) != NULL)
+	if (Method == METHOD_STORED && (buffer = Owner->GetContainerReader()->GetBuffer()) != NULL)
 	{
 		// This is an in-memory file so the cache can point directly to the file's data.
 		Cache = const_cast<char*>(buffer) + Position;
@@ -509,9 +509,9 @@ int FZipLump::FillCache()
 		return -1;
 	}
 
-	Owner->Reader.Seek(Position, FileReader::SeekSet);
+	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
-	UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags, true);
+	UncompressZipLump(Cache, *Owner->GetContainerReader(), Method, LumpSize, CompressedSize, GPFlags, true);
 	RefCount = 1;
 	return 1;
 }
@@ -548,9 +548,7 @@ FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* 
 		{
 			auto rf = new FZipFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
-
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

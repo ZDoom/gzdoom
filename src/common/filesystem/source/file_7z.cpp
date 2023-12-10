@@ -367,8 +367,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* f
 			auto rf = new F7ZFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

@@ -157,7 +157,7 @@ static bool IsWadInFolder(const FResourceFile* const archive, const char* const 
 		return false;
 	}
 
-    const auto dirName = ExtractBaseName(archive->FileName);
+    const auto dirName = ExtractBaseName(archive->GetFileName());
 	const auto fileName = ExtractBaseName(resPath, true);
 	const std::string filePath = dirName + '/' + fileName;
 
@@ -242,7 +242,7 @@ void *FResourceLump::Lock()
 		catch (const FileSystemException& err)
 		{
 			// enrich the message with info about this lump.
-			throw FileSystemException("%s, file '%s': %s", getName(), Owner->FileName, err.what());
+			throw FileSystemException("%s, file '%s': %s", getName(), Owner->GetFileName(), err.what());
 		}
 	}
 	return Cache;
@@ -638,8 +638,8 @@ int FResourceFile::FindEntry(const char *name)
 
 FileReader *FUncompressedLump::GetReader()
 {
-	Owner->Reader.Seek(Position, FileReader::SeekSet);
-	return &Owner->Reader;
+	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
+	return Owner->GetContainerReader();
 }
 
 //==========================================================================
@@ -650,7 +650,7 @@ FileReader *FUncompressedLump::GetReader()
 
 int FUncompressedLump::FillCache()
 {
-	const char * buffer = Owner->Reader.GetBuffer();
+	const char * buffer = Owner->GetContainerReader()->GetBuffer();
 
 	if (buffer != NULL)
 	{
@@ -660,10 +660,10 @@ int FUncompressedLump::FillCache()
 		return -1;
 	}
 
-	Owner->Reader.Seek(Position, FileReader::SeekSet);
+	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
 
-	auto read = Owner->Reader.Read(Cache, LumpSize);
+	auto read = Owner->GetContainerReader()->Read(Cache, LumpSize);
 	if (read != LumpSize)
 	{
 		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);

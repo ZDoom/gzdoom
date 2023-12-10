@@ -90,6 +90,84 @@ enum
 
 class FileReader;
 
+// an opaque memory buffer to the file's content. Can either own the memory or just point to an external buffer.
+class ResourceData
+{
+	void* memory;
+	size_t length;
+	bool owned;
+
+public:
+	using value_type = uint8_t;
+	ResourceData() { memory = nullptr; length = 0; owned = true; }
+	const void* data() const { return memory; }
+	size_t size() const { return length; }
+	const char* string() const { return (const char*)memory; }
+	const uint8_t* bytes() const { return (const uint8_t*)memory; }
+
+	ResourceData& operator = (const ResourceData& copy)
+	{
+		if (owned && memory) free(memory);
+		length = copy.length;
+		owned = copy.owned;
+		if (owned)
+		{
+			memory = malloc(length);
+			memcpy(memory, copy.memory, length);
+		}
+		else memory = copy.memory;
+		return *this;
+	}
+
+	ResourceData& operator = (ResourceData&& copy) noexcept
+	{
+		if (owned && memory) free(memory);
+		length = copy.length;
+		owned = copy.owned;
+		memory = copy.memory;
+		copy.memory = nullptr;
+		copy.length = 0;
+		copy.owned = true;
+		return *this;
+	}
+
+	ResourceData(const ResourceData& copy)
+	{
+		memory = nullptr;
+		*this = copy;
+	}
+
+	~ResourceData()
+	{
+		if (owned && memory) free(memory);
+	}
+
+	void* allocate(size_t len)
+	{
+		if (!owned) memory = nullptr;
+		length = len;
+		owned = true;
+		memory = realloc(memory, length);
+		return memory;
+	}
+
+	void set(const void* mem, size_t len)
+	{
+		memory = (void*)mem;
+		length = len;
+		owned = false;
+	}
+
+	void clear()
+	{
+		if (owned && memory) free(memory);
+		memory = nullptr;
+		length = 0;
+		owned = true;
+	}
+
+};
+
 class FileReaderInterface
 {
 public:
@@ -171,10 +249,12 @@ public:
 		mReader = nullptr;
 	}
 
-	bool OpenFile(const char *filename, Size start = 0, Size length = -1);
+	bool OpenFile(const char *filename, Size start = 0, Size length = -1, bool buffered = false);
 	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
+	bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
+	bool OpenMemoryArray(ResourceData& data);	// take the given array
 	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
 	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
@@ -193,33 +273,34 @@ public:
 		return mReader->Read(buffer, len);
 	}
 
-	std::vector<uint8_t> Read(size_t len)
+	ResourceData Read(size_t len)
 	{
-		std::vector<uint8_t> buffer(len);
+		ResourceData buffer;
 		if (len > 0)
 		{
-			Size length = mReader->Read(&buffer[0], len);
-			buffer.resize((size_t)length);
+			Size length = mReader->Read(buffer.allocate(len), len);
+			if (length < len) buffer.allocate(length);
 		}
 		return buffer;
 	}
 
-	std::vector<uint8_t> Read()
+	ResourceData Read()
 	{
 		return Read(GetLength());
 	}
 
-	std::vector<uint8_t> ReadPadded(size_t padding)
+	ResourceData ReadPadded(size_t padding)
 	{
 		auto len = GetLength();
-		std::vector<uint8_t> buffer(len + padding);
+		ResourceData buffer;
+
 		if (len > 0)
 		{
-			Size length = mReader->Read(&buffer[0], len);
+			auto p = (char*)buffer.allocate(len + padding);
+			Size length = mReader->Read(p, len);
 			if (length < len) buffer.clear();
-			else memset(buffer.data() + len, 0, padding);
+			else memset(p + len, 0, padding);
 		}
-		else buffer[0] = 0;
 		return buffer;
 	}
 
@@ -353,13 +434,13 @@ protected:
 class BufferWriter : public FileWriter
 {
 protected:
-	TArray<unsigned char> mBuffer;
+	std::vector<unsigned char> mBuffer;
 public:
 
 	BufferWriter() {}
 	virtual size_t Write(const void *buffer, size_t len) override;
-	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
-	TArray<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
+	std::vector<unsigned char> *GetBuffer() { return &mBuffer; }
+	std::vector<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
 };
 
 }

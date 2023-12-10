@@ -337,7 +337,7 @@ static ZMusic_MidiSource GetMIDISource(const char *fn)
 	}
 
 	auto data = wlump.Read();
-	auto source = ZMusic_CreateMIDISource(data.data(), data.size(), type);
+	auto source = ZMusic_CreateMIDISource(data.bytes(), data.size(), type);
 
 	if (source == nullptr)
 	{

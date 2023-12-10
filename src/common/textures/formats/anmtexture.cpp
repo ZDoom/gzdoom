@@ -72,9 +72,10 @@ FImageSource *AnmImage_TryCreate(FileReader & file, int lumpnum)
 	if (memcmp(check, "LPF ", 4)) return nullptr;
 	file.Seek(0, FileReader::SeekSet);
 	auto buffer = file.ReadPadded(1);
+	if (buffer.size() < 4) return nullptr;
 
 	std::unique_ptr<anim_t> anim = std::make_unique<anim_t>(); // note that this struct is very large and should not go onto the stack!
-	if (ANIM_LoadAnim(anim.get(), buffer.data(), buffer.size() - 1) < 0)
+	if (ANIM_LoadAnim(anim.get(), buffer.bytes(), buffer.size() - 1) < 0)
 	{
 		return nullptr;
 	}

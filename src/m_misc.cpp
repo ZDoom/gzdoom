@@ -98,7 +98,7 @@ void M_FindResponseFile (void)
 		else
 		{
 			char	**argv;
-			std::vector<uint8_t> file;
+			FileSys::ResourceData file;
 			int		argc = 0;
 			int 	size;
 			size_t	argsize = 0;
@@ -118,9 +118,8 @@ void M_FindResponseFile (void)
 				{
 					Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
 					size = (int)fr.GetLength();
-					file = fr.Read (size);
-					file.push_back(0);
-					argsize = ParseCommandLine ((char*)file.data(), &argc, NULL);
+					file = fr.ReadPadded(1);
+					argsize = ParseCommandLine (file.string(), &argc, nullptr);
 				}
 			}
 			else
@@ -132,7 +131,7 @@ void M_FindResponseFile (void)
 			{
 				argv = (char **)M_Malloc (argc*sizeof(char *) + argsize);
 				argv[0] = (char *)argv + argc*sizeof(char *);
-				ParseCommandLine ((char*)file.data(), NULL, argv);
+				ParseCommandLine (file.string(), nullptr, argv);
 
 				// Create a new argument vector
 				FArgs *newargs = new FArgs;

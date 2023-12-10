@@ -88,8 +88,8 @@ enum ELumpFlags
 // This holds a compresed Zip entry with all needed info to decompress it.
 struct FCompressedBuffer
 {
-	unsigned mSize;
-	unsigned mCompressedSize;
+	size_t mSize;
+	size_t mCompressedSize;
 	int mMethod;
 	int mZipFlags;
 	unsigned mCRC32;

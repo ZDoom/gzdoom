@@ -596,6 +596,7 @@ file( GLOB HEADER_FILES
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math/*h
 	common/thirdparty/libsmackerdec/include/*.h
+	common/thirdparty/utf8proc/*.h
 	common/rendering/*.h
 	common/rendering/gl_load/*.h
 	common/rendering/gles/*.h
@@ -1185,6 +1186,7 @@ set( GAME_SOURCES
 	${PCH_SOURCES}
 	common/utility/x86.cpp
 	common/thirdparty/strnatcmp.c
+	common/thirdparty/utf8proc/utf8proc.c
 	common/thirdparty/stb/stb_sprintf.c
 	common/utility/zstring.cpp
 	common/utility/findfile.cpp
@@ -1224,6 +1226,7 @@ set( GAME_SOURCES
 	common/filesystem/source/files_decompress.cpp
 	common/filesystem/source/fs_findfile.cpp
 	common/filesystem/source/fs_stringpool.cpp
+	common/filesystem/source/unicode.cpp
 
 )
 
@@ -1265,6 +1268,7 @@ include_directories(
 	common/thirdparty/libsmackerdec/include
 	common/thirdparty
 	common/thirdparty/stb
+	common/thirdparty/utf8proc
 	common/textures
 	common/textures/formats
 	common/textures/hires
@@ -1508,6 +1512,7 @@ source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SO
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")
 source_group("Common\\Third Party\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/sfmt/.+")
 source_group("Common\\Third Party\\stb" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/stb/.+")
+source_group("Common\\Third Party\\utf8proc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/utf8proc/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
 source_group("Utility\\Smackerdec" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/smackerdec/.+")

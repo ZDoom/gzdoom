@@ -52,7 +52,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags, bool exceptions)
+static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, ptrdiff_t LumpSize, ptrdiff_t CompressedSize, int GPFlags, bool exceptions)
 {
 	switch (Method)
 	{
@@ -79,7 +79,7 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 	case METHOD_IMPLODE:
 	{
 		FZipExploder exploder;
-		if (exploder.Explode((unsigned char*)Cache, LumpSize, Reader, CompressedSize, GPFlags) == -1)
+		if (exploder.Explode((unsigned char*)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize, GPFlags) == -1)
 		{
 			// decompression failed so zero the cache.
 			memset(Cache, 0, LumpSize);
@@ -89,7 +89,7 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 
 	case METHOD_SHRINK:
 	{
-		ShrinkLoop((unsigned char *)Cache, LumpSize, Reader, CompressedSize);
+		ShrinkLoop((unsigned char *)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize);
 		break;
 	}
 
@@ -604,8 +604,8 @@ static int AppendToZip(FileWriter *zip_file, const FCompressedBuffer &content, s
 	local.ModDate = LittleShort(dostime.first);
 	local.ModTime = LittleShort(dostime.second);
 	local.CRC32 = content.mCRC32;
-	local.UncompressedSize = LittleLong(content.mSize);
-	local.CompressedSize = LittleLong(content.mCompressedSize);
+	local.UncompressedSize = LittleLong((unsigned)content.mSize);
+	local.CompressedSize = LittleLong((unsigned)content.mCompressedSize);
 	local.NameLength = LittleShort((unsigned short)strlen(content.filename));
 	local.ExtraLength = 0;
 
@@ -646,8 +646,8 @@ int AppendCentralDirectory(FileWriter *zip_file, const FCompressedBuffer &conten
 	dir.ModTime = LittleShort(dostime.first);
 	dir.ModDate = LittleShort(dostime.second);
 	dir.CRC32 = content.mCRC32;
-	dir.CompressedSize32 = LittleLong(content.mCompressedSize);
-	dir.UncompressedSize32 = LittleLong(content.mSize);
+	dir.CompressedSize32 = LittleLong((unsigned)content.mCompressedSize);
+	dir.UncompressedSize32 = LittleLong((unsigned)content.mSize);
 	dir.NameLength = LittleShort((unsigned short)strlen(content.filename));
 	dir.ExtraLength = 0;
 	dir.CommentLength = 0;

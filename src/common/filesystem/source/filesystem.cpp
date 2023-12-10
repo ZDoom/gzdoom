@@ -409,9 +409,9 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 		uint32_t lumpstart = (uint32_t)FileInfo.size();
 
 		resfile->SetFirstLump(lumpstart);
-		for (uint32_t i=0; i < resfile->EntryCount(); i++)
+		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
-			FResourceLump *lump = resfile->GetLump(i);
+			FResourceLump* lump = resfile->GetLump(i);
 			FileInfo.resize(FileInfo.size() + 1);
 			FileSystem::LumpRecord* lump_p = &FileInfo.back();
 			lump_p->SetFromLump((int)Files.size(), lump, stringpool);
@@ -419,7 +419,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 		Files.push_back(resfile);
 
-		for (uint32_t i=0; i < resfile->EntryCount(); i++)
+		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
 			int flags = resfile->GetEntryFlags(i);
 			if (flags & LUMPF_EMBEDDED)
@@ -454,7 +454,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			else
 				fprintf(hashfile, "file: %s, Directory structure\n", filename);
 
-			for (uint32_t i = 0; i < resfile->EntryCount(); i++)
+			for (int i = 0; i < resfile->EntryCount(); i++)
 			{
 				int flags = resfile->GetEntryFlags(i);
 				if (!(flags & LUMPF_EMBEDDED))

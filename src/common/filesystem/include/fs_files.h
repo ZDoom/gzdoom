@@ -279,7 +279,7 @@ public:
 		if (len > 0)
 		{
 			Size length = mReader->Read(buffer.allocate(len), len);
-			if (length < len) buffer.allocate(length);
+			if ((size_t)length < len) buffer.allocate(length);
 		}
 		return buffer;
 	}

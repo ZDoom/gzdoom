@@ -323,7 +323,7 @@ char *MemoryReader::Gets(char *strbuf, ptrdiff_t len)
 	return strbuf;
 }
 
-int BufferingReader::FillBuffer(size_t newpos)
+int BufferingReader::FillBuffer(ptrdiff_t newpos)
 {
 	if (newpos > Length) newpos = Length;
 	if (newpos < bufferpos) return 0;

@@ -35,7 +35,7 @@ class BufferingReader : public MemoryReader
 	std::unique_ptr<FileReaderInterface> baseReader;
 	ptrdiff_t bufferpos = 0;
 
-	int FillBuffer(size_t newpos);
+	int FillBuffer(ptrdiff_t newpos);
 public:
 	BufferingReader(FileReaderInterface* base)
 		: baseReader(base)

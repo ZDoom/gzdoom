@@ -301,21 +301,6 @@ void FileSystem::AddLump(FResourceLump *lump)
 	FileInfo.back().SetFromLump(-1, lump, stringpool);
 }
 
-//-----------------------------------------------------------------------
-//
-// Adds an external file to the lump list but not to the hash chains
-// It's just a simple means to assign a lump number to some file so that
-// the texture manager can read from it.
-//
-//-----------------------------------------------------------------------
-
-int FileSystem::AddExternalFile(const char *filename)
-{
-	FResourceLump *lump = new FExternalLump(filename, -1, stringpool);
-	AddLump(lump);
-	return (int)FileInfo.size() - 1;	// later
-}
-
 //==========================================================================
 //
 // AddFromBuffer

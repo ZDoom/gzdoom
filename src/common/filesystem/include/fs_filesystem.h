@@ -170,7 +170,6 @@ public:
 	}
 
 	void AddLump(FResourceLump* lump);
-	int AddExternalFile(const char *filename);
 	int AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags);
 	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 	void InitHashChains();

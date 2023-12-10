@@ -219,6 +219,11 @@ public:
 		auto l = GetLump(entry);
 		return l ? l->LumpSize : -1;
 	}
+	size_t Offset(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->GetFileOffset() : -1;
+	}
 
 	FileReader GetEntryReader(int entry, bool newreader = true)
 	{
@@ -230,6 +235,18 @@ public:
 	{
 		auto l = GetLump(entry);
 		return l ? l->Flags : 0;
+	}
+
+	int GetEntryNamespace(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->GetNamespace() : 0;
+	}
+
+	int GetEntryResourceID(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->GetIndexNum() : 0;
 	}
 
 	ResourceData Read(int entry)

@@ -206,11 +206,6 @@ void FileSystem::DeleteAll ()
 	Hashes.clear();
 	NumEntries = 0;
 
-	// explicitly delete all manually added lumps.
-	for (auto &frec : FileInfo)
-	{
-		if (frec.rfnum == -1) delete frec.lump;
-	}
 	FileInfo.clear();
 	for (int i = (int)Files.size() - 1; i >= 0; --i)
 	{

@@ -74,7 +74,7 @@ public:
 	template<class T>
 	void OpenMem(const char* name, const T& buffer)
 	{
-		static_assert(sizeof(T::value_type) == 1);
+		static_assert(sizeof(typename T::value_type) == 1);
 		OpenMem(name, (const char*)buffer.data(), (int)buffer.size());
 	}
 	void OpenString(const char *name, FString buffer);

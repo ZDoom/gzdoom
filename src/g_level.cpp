@@ -146,7 +146,7 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 	}
 }
 
-CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL) // this is just for testing. -1 means 'inactive'
+CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL | CVAR_CHEAT) // this is just for testing. -1 means 'inactive'
 {
 	if (self > 5 || self < -1) self = -1;
 }

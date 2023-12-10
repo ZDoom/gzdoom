@@ -618,17 +618,16 @@ bool FResourceFile::FindPrefixRange(const char* filter, void *lumps, size_t lump
 //
 //==========================================================================
 
-FResourceLump *FResourceFile::FindLump(const char *name)
+int FResourceFile::FindEntry(const char *name)
 {
 	for (unsigned i = 0; i < NumLumps; i++)
 	{
-		FResourceLump *lump = GetLump(i);
-		if (!stricmp(name, lump->FullName))
+		if (!stricmp(name, getName(i)))
 		{
-			return lump;
+			return i;
 		}
 	}
-	return nullptr;
+	return -1;
 }
 
 //==========================================================================

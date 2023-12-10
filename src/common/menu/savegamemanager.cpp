@@ -297,37 +297,26 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		!node->bOldVersion &&
 		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
 	{
-		auto info = resf->FindLump("info.json");
-		if (info == nullptr)
+		auto info = resf->FindEntry("info.json");
+		if (info < 0)
 		{
 			// this should not happen because the file has already been verified.
 			return index;
 		}
 
-		void* data = info->Lock();
+		auto data = resf->Read(info);
 		FSerializer arc;
-		if (!arc.OpenReader((const char*)data, info->LumpSize))
+		if (!arc.OpenReader((const char*)data.data(), data.size()))
 		{
-			info->Unlock();
 			return index;
 		}
-		info->Unlock();
 
 		SaveCommentString = ExtractSaveComment(arc);
 
-		auto pic = resf->FindLump("savepic.png");
-		if (pic != nullptr)
+		auto pic = resf->FindEntry("savepic.png");
+		if (pic >= 0)
 		{
-			FileReader picreader;
-
-			picreader.OpenMemoryArray([=](std::vector<uint8_t> &array)
-			{
-				auto cache = pic->Lock();
-				array.resize(pic->LumpSize);
-				memcpy(&array[0], cache, pic->LumpSize);
-				pic->Unlock();
-				return true;
-			});
+			FileReader picreader = resf->GetEntryReader(pic);
 			PNGHandle *png = M_VerifyPNG(picreader);
 			if (png != nullptr)
 			{

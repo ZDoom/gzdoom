@@ -2002,8 +2002,8 @@ void G_DoLoadGame ()
 		LoadGameError("TXT_COULDNOTREAD");
 		return;
 	}
-	auto info = resfile->FindLump("info.json");
-	if (info == nullptr)
+	auto info = resfile->FindEntry("info.json");
+	if (info < 0)
 	{
 		LoadGameError("TXT_NOINFOJSON");
 		return;
@@ -2011,9 +2011,9 @@ void G_DoLoadGame ()
 
 	SaveVersion = 0;
 
-	void *data = info->Lock();
+	auto data = resfile->Read(info);
 	FSerializer arc;
-	if (!arc.OpenReader((const char *)data, info->LumpSize))
+	if (!arc.OpenReader((char*)data.data(), data.size()))
 	{
 		LoadGameError("TXT_FAILEDTOREADSG");
 		return;
@@ -2080,15 +2080,15 @@ void G_DoLoadGame ()
 	// we are done with info.json.
 	arc.Close();
 
-	info = resfile->FindLump("globals.json");
-	if (info == nullptr)
+	info = resfile->FindEntry("globals.json");
+	if (info < 0)
 	{
 		LoadGameError("TXT_NOGLOBALSJSON");
 		return;
 	}
 
-	data = info->Lock();
-	if (!arc.OpenReader((const char *)data, info->LumpSize))
+	data = resfile->Read(info);
+	if (!arc.OpenReader((char*)data.data(), data.size()))
 	{
 		LoadGameError("TXT_SGINFOERR");
 		return;

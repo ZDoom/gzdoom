@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
-** Copyright 2005-2008 Christoph Oelckers
+** Copyright 2005-2023 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

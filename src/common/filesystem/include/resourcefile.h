@@ -110,18 +110,34 @@ struct FCompressedBuffer
 
 struct FResourceLump
 {
+protected:
 	friend class FResourceFile;
 	friend class FWadFile;	// this still needs direct access.
+	friend class FileData;
+	friend class FileSystem;
+	friend class FLumpFile;
+	friend class FLumpReader;
+	friend class FGrpFile;
+	friend class F7ZFile;
+	friend class FSSIFile;
+	friend class FWHResFile;
+	friend class FZipFile;
+	friend class FPakFile;
+	friend class FRFFFile;
+	friend class FDirectory;
+	friend int lumpcmp(const void* a, const void* b);
+
 
 	int				LumpSize;
 	int				RefCount;
-protected:
+//protected:
 	const char*		FullName;
-public:
+//public:
 	uint8_t			Flags;
 	char *			Cache;
 	FResourceFile *	Owner;
 
+public:
 	FResourceLump()
 	{
 		Cache = NULL;
@@ -129,9 +145,12 @@ public:
 		Flags = 0;
 		RefCount = 0;
 		FullName = "";
+		LumpSize = 0;
 	}
-
 	virtual ~FResourceLump();
+
+protected:
+
 	virtual FileReader *GetReader();
 	virtual FileReader NewReader();
 	virtual int GetFileOffset() { return -1; }
@@ -186,15 +205,49 @@ public:
 	static FResourceFile *OpenDirectory(const char *filename, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
-    FileReader *GetReader() { return Reader.isOpen()? &Reader : nullptr; }
-	uint32_t LumpCount() const { return NumLumps; }
+	FileReader *GetContainerReader() { return Reader.isOpen()? &Reader : nullptr; }
+	[[deprecated]] uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstEntry() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }
 
-
 	virtual FResourceLump *GetLump(int no) = 0;
-	FResourceLump *FindLump(const char *name);
+
+	int EntryCount() const { return NumLumps; }
+	int FindEntry(const char* name);
+
+	size_t Length(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->LumpSize : -1;
+	}
+
+	FileReader GetEntryReader(int entry, bool newreader = true)
+	{
+		auto l = GetLump(entry);
+		return l ? l->NewReader() : FileReader();
+
+	}
+
+	ResourceData Read(int entry)
+	{
+		auto fr = GetEntryReader(entry, false);
+		return fr.Read();
+	}
+
+	const char* getName(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->FullName : nullptr;
+	}
+	FCompressedBuffer GetRawData(int entry)
+	{
+		auto l = GetLump(entry);
+		if (!l) return {};
+		return l->GetRawData();
+	}
+
+
 };
 
 

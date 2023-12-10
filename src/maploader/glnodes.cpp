@@ -780,7 +780,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 	FString glheader;
 	bool mustcheck=false;
-	uint32_t numentries = f->LumpCount();
+	uint32_t numentries = f->EntryCount();
 
 	glheader.Format("GL_%.8s", label);
 	if (glheader.Len()>8)
@@ -793,13 +793,13 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 	{
 		for(uint32_t i=0;i<numentries-4;i++)
 		{
-			if (!strnicmp(f->GetLump(i)->getName(), glheader.GetChars(), 8))
+			if (!strnicmp(f->getName(i), glheader.GetChars(), 8))
 			{
 				if (mustcheck)
 				{
 					char check[16]={0};
-					auto fr = f->GetLump(i)->GetReader();
-					fr->Read(check, 16);
+					auto fr = f->GetEntryReader(i, false);
+					fr.Read(check, 16);
 					if (MatchHeader(label, check)) return i;
 				}
 				else return i;
@@ -900,13 +900,13 @@ bool MapLoader::LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(li+i+1)->getName(), check[i], 8))
+				if (strnicmp(f_gwa->getName(li + i + 1), check[i], 8))
 				{
 					result=false;
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetLump(li+i+1)->NewReader();
+					gwalumps[i] = f_gwa->GetEntryReader(li + i + 1);
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}

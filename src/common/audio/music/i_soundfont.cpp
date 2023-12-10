@@ -215,10 +215,10 @@ FileReader FZipPatReader::OpenFile(const char *name)
 	FileReader fr;
 	if (resf != nullptr)
 	{
-		auto lump = resf->FindLump(name);
-		if (lump != nullptr)
+		auto lump = resf->FindEntry(name);
+		if (lump >= 0)
 		{
-			return lump->NewReader();
+			return resf->GetEntryReader(lump);
 		}
 	}
 	fr.OpenFile(name);
@@ -369,8 +369,8 @@ void FSoundFontManager::ProcessOneFile(const char* fn)
 			{
 				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
 				{
-					auto zipl = zip->FindLump("timidity.cfg");
-					if (zipl != nullptr)
+					auto zipl = zip->FindEntry("timidity.cfg");
+					if (zipl >= 0)
 					{
 						// It seems like this is what we are looking for
 						FSoundFontInfo sft = { fb, fbe, fn, SF_GUS };

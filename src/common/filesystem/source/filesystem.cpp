@@ -1421,7 +1421,7 @@ FileReader *FileSystem::GetFileReader(int rfnum)
 		return NULL;
 	}
 
-	return Files[rfnum]->GetReader();
+	return Files[rfnum]->GetContainerReader();
 }
 
 //==========================================================================

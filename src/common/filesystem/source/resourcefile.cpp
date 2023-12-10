@@ -407,21 +407,22 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterI
 	if (!filter) return;
 
 	// Filter out lumps using the same names as the Autoload.* sections
-	// in the ini file use. We reduce the maximum lump concidered after
+	// in the ini file. We reduce the maximum lump concidered after
 	// each one so that we don't risk refiltering already filtered lumps.
 	uint32_t max = NumLumps;
-	max -= FilterLumpsByGameType(filter, lumps, lumpsize, max);
 
-	ptrdiff_t len;
-	ptrdiff_t lastpos = -1;
-	std::string file;
-	std::string& LumpFilter = filter->dotFilter;
-	while (size_t(len = LumpFilter.find_first_of('.', lastpos+1)) != LumpFilter.npos)
+	for (auto& LumpFilter : filter->gameTypeFilter)
 	{
-		max -= FilterLumps(std::string(LumpFilter, 0, len), lumps, lumpsize, max);
-		lastpos = len;
+		ptrdiff_t len;
+		ptrdiff_t lastpos = -1;
+		std::string file;
+		while (size_t(len = LumpFilter.find_first_of('.', lastpos + 1)) != LumpFilter.npos)
+		{
+			max -= FilterLumps(std::string(LumpFilter, 0, len), lumps, lumpsize, max);
+			lastpos = len;
+		}
+		max -= FilterLumps(LumpFilter, lumps, lumpsize, max);
 	}
-	max -= FilterLumps(LumpFilter, lumps, lumpsize, max);
 
 	JunkLeftoverFilters(lumps, lumpsize, max);
 }
@@ -447,13 +448,6 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 	std::string filter = "filter/" + filtername + '/';
 
 	bool found = FindPrefixRange(filter.c_str(), lumps, lumpsize, max, start, end);
-
-	// Workaround for old Doom filter names (todo: move out of here.)
-	if (!found && filtername.find("doom.id.doom") == 0)
-	{
-		strReplace(filter, "doom.id.doom", "doom.doom");
-		found = FindPrefixRange(filter.c_str(), lumps, lumpsize, max, start, end);
-	}
 
 	if (found)
 	{
@@ -489,29 +483,6 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 		}
 	}
 	return end - start;
-}
-
-//==========================================================================
-//
-// FResourceFile :: FilterLumpsByGameType
-//
-// Matches any lumps that match "filter/game-<gametype>/*". Includes
-// inclusive gametypes like Raven.
-//
-//==========================================================================
-
-int FResourceFile::FilterLumpsByGameType(LumpFilterInfo *filter, void *lumps, size_t lumpsize, uint32_t max)
-{
-	if (filter == nullptr)
-	{
-		return 0;
-	}
-	int count = 0;
-	for (auto &fstring : filter->gameTypeFilter)
-	{
-		count += FilterLumps(fstring, lumps, lumpsize, max);
-	}
-	return count;
 }
 
 //==========================================================================

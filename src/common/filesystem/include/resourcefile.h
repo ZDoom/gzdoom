@@ -18,7 +18,6 @@ void strReplace(std::string& str, const char* from, const char* to);
 struct LumpFilterInfo
 {
 	std::vector<std::string> gameTypeFilter;	// this can contain multiple entries
-	std::string dotFilter;
 
 	// The following are for checking if the root directory of a zip can be removed.
 	std::vector<std::string> reservedFolders;
@@ -194,7 +193,6 @@ private:
 	uint32_t FirstLump;
 
 	int FilterLumps(const std::string& filtername, void *lumps, size_t lumpsize, uint32_t max);
-	int FilterLumpsByGameType(LumpFilterInfo *filter, void *lumps, size_t lumpsize, uint32_t max);
 	bool FindPrefixRange(const char* filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
 	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);

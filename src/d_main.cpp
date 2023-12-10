@@ -3145,7 +3145,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
 
 	LumpFilterInfo lfi;
-	lfi.dotFilter = LumpFilterIWAD.GetChars();
 
 	static const struct { int match; const char* name; } blanket[] =
 	{
@@ -3160,6 +3159,15 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.push_back(inf.name);
 	}
 	lfi.gameTypeFilter.push_back(FStringf("game-%s", GameTypeName()).GetChars());
+
+	lfi.gameTypeFilter.push_back(LumpFilterIWAD.GetChars());
+	// Workaround for old Doom filter names.
+	if (LumpFilterIWAD.Compare("doom.id.doom") == 0)
+	{
+		lfi.gameTypeFilter.push_back("doom.doom");
+	}
+
+
 
 	GetReserved(lfi);
 

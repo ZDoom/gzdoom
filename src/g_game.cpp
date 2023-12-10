@@ -2013,7 +2013,7 @@ void G_DoLoadGame ()
 
 	auto data = resfile->Read(info);
 	FSerializer arc;
-	if (!arc.OpenReader((char*)data.data(), data.size()))
+	if (!arc.OpenReader(data.string(), data.size()))
 	{
 		LoadGameError("TXT_FAILEDTOREADSG");
 		return;
@@ -2088,7 +2088,7 @@ void G_DoLoadGame ()
 	}
 
 	data = resfile->Read(info);
-	if (!arc.OpenReader((char*)data.data(), data.size()))
+	if (!arc.OpenReader(data.string(), data.size()))
 	{
 		LoadGameError("TXT_SGINFOERR");
 		return;

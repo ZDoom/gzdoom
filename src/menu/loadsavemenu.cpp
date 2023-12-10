@@ -84,7 +84,7 @@ void FSavegameManager::ReadSaveStrings()
 					}
 					auto data = savegame->Read(info);
 					FSerializer arc;
-					if (arc.OpenReader((const char*)data.data(), data.size()))
+					if (arc.OpenReader(data.string(), data.size()))
 					{
 						int savever = 0;
 						arc("Save Version", savever);

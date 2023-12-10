@@ -306,7 +306,7 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 
 		auto data = resf->Read(info);
 		FSerializer arc;
-		if (!arc.OpenReader((const char*)data.data(), data.size()))
+		if (!arc.OpenReader(data.string(), data.size()))
 		{
 			return index;
 		}

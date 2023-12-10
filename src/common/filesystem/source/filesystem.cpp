@@ -90,29 +90,33 @@ static void md5Hash(FileReader& reader, uint8_t* digest)
 
 struct FileSystem::LumpRecord
 {
-	FResourceLump *lump;
+	FResourceFile *resfile;
 	LumpShortName shortName;
 	const char*	LongName;
-	int			rfnum;
-	int			Namespace;
+	int			resindex;
+	int16_t		rfnum;		// this is not necessarily the same as resfile's index!
+	int16_t		Namespace;
 	int			resourceId;
 	int			flags;
 
-	void SetFromLump(int filenum, FResourceLump* lmp, StringPool* sp)
+	void SetFromLump(FResourceFile* file, int fileindex, int filenum, StringPool* sp, const char* name = nullptr)
 	{
-		lump = lmp;
+		resfile = file;
+		resindex = fileindex;
 		rfnum = filenum;
 		flags = 0;
 
-		if (lump->Flags & LUMPF_SHORTNAME)
+		auto lflags = file->GetEntryFlags(fileindex);
+		if (!name) name = file->getName(fileindex);
+		if (lflags & LUMPF_SHORTNAME)
 		{
-			UpperCopy(shortName.String, lump->getName());
+			UpperCopy(shortName.String, name);
 			shortName.String[8] = 0;
 			LongName = "";
-			Namespace = lump->GetNamespace();
+			Namespace = file->GetEntryNamespace(fileindex);
 			resourceId = -1;
 		}
-		else if ((lump->Flags & LUMPF_EMBEDDED) || !lump->getName() || !*lump->getName())
+		else if ((lflags & LUMPF_EMBEDDED) || !name || !*name)
 		{
 			shortName.qword = 0;
 			LongName = "";
@@ -121,8 +125,8 @@ struct FileSystem::LumpRecord
 		}
 		else
 		{
-			LongName = lump->getName();
-			resourceId = lump->GetIndexNum();
+			LongName = name;
+			resourceId = file->GetEntryResourceID(fileindex);
 
 			// Map some directories to WAD namespaces.
 			// Note that some of these namespaces don't exist in WADS.
@@ -305,7 +309,7 @@ int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, in
 		FResourceLump* lump = rf->GetLump(0);
 		FileInfo.resize(FileInfo.size() + 1);
 		FileSystem::LumpRecord* lump_p = &FileInfo.back();
-		lump_p->SetFromLump((int)Files.size(), lump, stringpool);
+		lump_p->SetFromLump(rf, 0, (int)Files.size() - 1, stringpool);
 	}
 	return (int)FileInfo.size() - 1;
 }
@@ -372,15 +376,14 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 		uint32_t lumpstart = (uint32_t)FileInfo.size();
 
 		resfile->SetFirstLump(lumpstart);
+		Files.push_back(resfile);
 		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
 			FResourceLump* lump = resfile->GetLump(i);
 			FileInfo.resize(FileInfo.size() + 1);
 			FileSystem::LumpRecord* lump_p = &FileInfo.back();
-			lump_p->SetFromLump((int)Files.size(), lump, stringpool);
+			lump_p->SetFromLump(resfile, i, (int)Files.size() - 1, stringpool);
 		}
-
-		Files.push_back(resfile);
 
 		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
@@ -524,8 +527,9 @@ int FileSystem::CheckNumForName (const char *name, int space) const
 			// If we find a lump with this name in the global namespace that does not come
 			// from a Zip return that. WADs don't know these namespaces and single lumps must
 			// work as well.
+			auto lflags = lump.resfile->GetEntryFlags(lump.resindex);
 			if (space > ns_specialzipdirectory && lump.Namespace == ns_global && 
-				!((lump.lump->Flags ^lump.flags) & LUMPF_FULLPATH)) break;
+				!((lflags ^lump.flags) & LUMPF_FULLPATH)) break;
 		}
 		i = NextLumpIndex[i];
 	}
@@ -771,7 +775,8 @@ int FileSystem::FileLength (int lump) const
 	{
 		return -1;
 	}
-	return FileInfo[lump].lump->LumpSize;
+	const auto &lump_p = FileInfo[lump];
+	return lump_p.resfile->Length(lump_p.resindex);
 }
 
 //==========================================================================
@@ -789,7 +794,8 @@ int FileSystem::GetFileOffset (int lump)
 	{
 		return -1;
 	}
-	return FileInfo[lump].lump->GetFileOffset();
+	const auto &lump_p = FileInfo[lump];
+	return lump_p.resfile->Offset(lump_p.resindex);
 }
 
 //==========================================================================
@@ -805,7 +811,8 @@ int FileSystem::GetFileFlags (int lump)
 		return 0;
 	}
 
-	return FileInfo[lump].lump->Flags ^ FileInfo[lump].flags;
+	const auto& lump_p = FileInfo[lump];
+	return lump_p.resfile->GetEntryFlags(lump_p.resindex) ^ lump_p.flags;
 }
 
 //==========================================================================
@@ -920,11 +927,12 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 		if (li.rfnum >= GetIwadNum()) break;
 		if (strnicmp(li.LongName, path, len) == 0)
 		{
-			FileInfo.push_back(li);
-			li.lump = &placeholderLump;			// Make the old entry point to something empty. We cannot delete the lump record here because it'd require adjustment of all indices in the list.
+			auto lic = li;	// make a copy before pushing.
+			FileInfo.push_back(lic);
+			li.LongName = "";	//nuke the name of the old record.
+			li.shortName.qword = 0;
 			auto &ln = FileInfo.back();
-			ln.lump->LumpNameSetup(ln.LongName + len, stringpool); // may be able to avoid the string allocation!
-			ln.SetFromLump(rfnum, ln.lump, stringpool);
+			ln.SetFromLump(li.resfile, li.resindex, rfnum, stringpool, ln.LongName + len);
 		}
 	}
 }
@@ -1304,8 +1312,9 @@ FileData FileSystem::ReadFile (int lump)
 	{
 		throw FileSystemException("ReadFile: %u >= NumEntries", lump);
 	}
-	auto lumpp = FileInfo[lump].lump;
 
+	auto file = FileInfo[lump].resfile;
+	auto lumpp = file->GetLump(FileInfo[lump].resindex);
 	return FileData(lumpp);
 }
 
@@ -1325,16 +1334,8 @@ FileReader FileSystem::OpenFileReader(int lump)
 		throw FileSystemException("OpenFileReader: %u >= NumEntries", lump);
 	}
 
-	auto rl = FileInfo[lump].lump;
-	auto rd = rl->GetReader();
-
-	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !(rl->Flags & LUMPF_COMPRESSED))
-	{
-		FileReader rdr;
-		rdr.OpenFilePart(*rd, rl->GetFileOffset(), rl->LumpSize);
-		return rdr;
-	}
-	return rl->NewReader();	// This always gets a reader to the cache
+	auto file = FileInfo[lump].resfile;
+	return file->GetEntryReader(FileInfo[lump].resindex, false);
 }
 
 FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
@@ -1344,20 +1345,8 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 		throw FileSystemException("ReopenFileReader: %u >= NumEntries", lump);
 	}
 
-	auto rl = FileInfo[lump].lump;
-	auto rd = rl->GetReader();
-
-	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
-	{
-		int fileno = GetFileContainer(lump);
-		const char *filename = GetResourceFileFullName(fileno);
-		FileReader fr;
-		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
-		{
-			return fr;
-		}
-	}
-	return rl->NewReader();	// This always gets a reader to the cache
+	auto file = FileInfo[lump].resfile;
+	return file->GetEntryReader(FileInfo[lump].resindex, true);
 }
 
 FileReader FileSystem::OpenFileReader(const char* name)

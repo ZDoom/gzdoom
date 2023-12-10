@@ -72,12 +72,7 @@ inline void* M_Calloc_Dbg(size_t v1, size_t v2, const char* file, int lineno)
 #else
 void *M_Malloc (size_t size);
 void *M_Realloc (void *memblock, size_t size);
-inline void* M_Calloc(size_t v1, size_t v2)
-{
-	auto p = M_Malloc(v1 * v2);
-	memset(p, 0, v1 * v2);
-	return p;
-}
+void* M_Calloc(size_t v1, size_t v2);
 
 #endif
 

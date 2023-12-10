@@ -421,13 +421,13 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 		for (uint32_t i=0; i < resfile->EntryCount(); i++)
 		{
-			FResourceLump *lump = resfile->GetLump(i);
-			if (lump->Flags & LUMPF_EMBEDDED)
+			int flags = resfile->GetEntryFlags(i);
+			if (flags & LUMPF_EMBEDDED)
 			{
 				std::string path = filename;
 				path += ':';
-				path += lump->getName();
-				auto embedded = lump->NewReader();
+				path += resfile->getName(i);
+				auto embedded = resfile->GetEntryReader(i, true);
 				AddFile(path.c_str(), &embedded, filter, Printf, hashfile);
 			}
 		}
@@ -456,11 +456,10 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 			for (uint32_t i = 0; i < resfile->EntryCount(); i++)
 			{
-				FResourceLump *lump = resfile->GetLump(i);
-
-				if (!(lump->Flags & LUMPF_EMBEDDED))
+				int flags = resfile->GetEntryFlags(i);
+				if (!(flags & LUMPF_EMBEDDED))
 				{
-					auto reader = lump->NewReader();
+					auto reader = resfile->GetEntryReader(i, true);
 					md5Hash(filereader, cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -468,7 +467,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 						snprintf(cksumout + (j * 2), 3, "%02X", cksum[j]);
 					}
 
-					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %d\n", filename, lump->getName(), cksumout, lump->LumpSize);
+					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %llu\n", filename, resfile->getName(i), cksumout, (uint64_t)resfile->Length(i));
 				}
 			}
 		}
@@ -1592,15 +1591,5 @@ static void PrintLastError (FileSystemMessageFunc Printf)
 }
 #endif
 
-//==========================================================================
-//
-// NBlood style lookup functions
-//
-//==========================================================================
-
-FResourceLump* FileSystem::GetFileAt(int no)
-{
-	return FileInfo[no].lump;
-}
 
 }

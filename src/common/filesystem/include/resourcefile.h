@@ -226,7 +226,12 @@ public:
 	{
 		auto l = GetLump(entry);
 		return l ? l->NewReader() : FileReader();
+	}
 
+	int GetEntryFlags(int entry)
+	{
+		auto l = GetLump(entry);
+		return l ? l->Flags : 0;
 	}
 
 	ResourceData Read(int entry)

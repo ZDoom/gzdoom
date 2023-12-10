@@ -360,13 +360,13 @@ int lumpcmp(const void * a, const void * b)
 //
 // Generates a hash identifier for use in file identification.
 // Potential uses are mod-wide compatibility settings or localization add-ons.
-// This only hashes the lump directory but not the actual content
+// This only hashes the directory but not the actual content
 //
 //==========================================================================
 
 void FResourceFile::GenerateHash()
 {
-	// hash the lump directory after sorting
+	// hash the directory after sorting
 	using namespace FileSys::md5;
 
 	auto n = snprintf(Hash, 48, "%08X-%04X-", (unsigned)Reader.GetLength(), NumLumps);
@@ -377,9 +377,10 @@ void FResourceFile::GenerateHash()
 	uint8_t digest[16];
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
-		auto lump = GetLump(i);
-		md5_append(&state, (const uint8_t*)lump->FullName, (unsigned)strlen(lump->FullName) + 1);
-		md5_append(&state, (const uint8_t*)&lump->LumpSize, 4);
+		auto name = getName(i);
+		auto size = Length(i);
+		md5_append(&state, (const uint8_t*)name, (unsigned)strlen(name) + 1);
+		md5_append(&state, (const uint8_t*)&size, sizeof(size));
 	}
 	md5_finish(&state, digest);
 	for (auto c : digest)

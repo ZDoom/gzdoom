@@ -289,47 +289,30 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 
 //==========================================================================
 //
-// AddLump
-//
-// Adds a given lump to the directory. Does not perform rehashing
-//
-//==========================================================================
-
-void FileSystem::AddLump(FResourceLump *lump)
-{
-	FileInfo.resize(FileInfo.size() + 1);
-	FileInfo.back().SetFromLump(-1, lump, stringpool);
-}
-
-//==========================================================================
-//
 // AddFromBuffer
 //
 // Adds an in-memory resource to the virtual directory
 //
 //==========================================================================
 
-struct FMemoryLump : public FResourceLump
-{
-	FMemoryLump(const void* data, int length)
-	{
-		RefCount = -1;
-		LumpSize = length;
-		Cache = new char[length];
-		memcpy(Cache, data, length);
-	}
-};
+FResourceFile* CheckLump(const char* filename, FileReader& file, LumpFilterInfo*, FileSystemMessageFunc Printf, StringPool* sp);
 
-int FileSystem::AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags)
+int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, int flags)
 {
-	std::string fullname = name;
-	fullname += '.';
-	fullname += type;
-	auto newlump = new FMemoryLump(data, size);
-	newlump->LumpNameSetup(fullname.c_str(), stringpool);
-	AddLump(newlump);
-	FileInfo.back().resourceId = id;
-	return (int)FileInfo.size()-1;
+	FileReader fr;
+	fr.OpenMemoryArray((uint8_t*)data, size);
+
+	// just wrap this into a single lump resource file (should be done a little better later.)
+	auto rf = CheckLump(name, fr, nullptr, nullptr, stringpool);
+	if (rf)
+	{
+		Files.push_back(rf);
+		FResourceLump* lump = rf->GetLump(0);
+		FileInfo.resize(FileInfo.size() + 1);
+		FileSystem::LumpRecord* lump_p = &FileInfo.back();
+		lump_p->SetFromLump((int)Files.size(), lump, stringpool);
+	}
+	return (int)FileInfo.size() - 1;
 }
 
 //==========================================================================

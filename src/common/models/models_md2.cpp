@@ -178,7 +178,7 @@ void FDMDModel::LoadGeometry()
 {
 	static int axis[3] = { VX, VY, VZ };
 	auto lumpdata = fileSystem.ReadFile(mLumpNum);
-	auto buffer = lumpdata.GetString();
+	auto buffer = lumpdata.string();
 	texCoords = new FTexCoord[info.numTexCoords];
 	memcpy(texCoords, buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));
 
@@ -502,7 +502,7 @@ void FMD2Model::LoadGeometry()
 	static int axis[3] = { VX, VY, VZ };
 	uint8_t   *md2_frames;
 	auto lumpdata = fileSystem.ReadFile(mLumpNum);
-	auto buffer = lumpdata.GetString();
+	auto buffer = lumpdata.string();
 
 	texCoords = new FTexCoord[info.numTexCoords];
 	memcpy(texCoords, (uint8_t*)buffer + info.offsetTexCoords, info.numTexCoords * sizeof(FTexCoord));

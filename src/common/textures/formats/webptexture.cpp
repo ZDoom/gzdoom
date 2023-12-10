@@ -142,7 +142,7 @@ int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 	config.output.u.RGBA.stride = bmp->GetPitch();
 	config.output.is_external_memory = 1;
 
-	(void)WebPDecode(bytes.GetBytes(), bytes.GetSize(), &config);
+	(void)WebPDecode(bytes.bytes(), bytes.size(), &config);
 
 	return 0;
 }

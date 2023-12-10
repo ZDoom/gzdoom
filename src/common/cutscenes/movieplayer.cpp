@@ -153,7 +153,7 @@ class AnmPlayer : public MoviePlayer
 {
 	// This doesn't need its own class type
 	anim_t anim;
-	FileSys::ResourceData buffer;
+	FileSys::FileData buffer;
 	int numframes = 0;
 	int curframe = 1;
 	int frametime = 0;

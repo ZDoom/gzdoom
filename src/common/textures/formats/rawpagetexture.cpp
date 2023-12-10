@@ -183,7 +183,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 PalettedPixels FRawPageTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	auto lump =  fileSystem.ReadFile (SourceLump);
-	auto source = lump.GetBytes();
+	auto source = lump.bytes();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
@@ -216,8 +216,8 @@ int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 	{
 		auto lump =  fileSystem.ReadFile(SourceLump);
 		auto plump = fileSystem.ReadFile(mPaletteLump);
-		auto source = lump.GetBytes();
-		auto psource = plump.GetBytes();
+		auto source = lump.bytes();
+		auto psource = plump.bytes();
 		PalEntry paldata[256];
 		for (auto & pe : paldata)
 		{

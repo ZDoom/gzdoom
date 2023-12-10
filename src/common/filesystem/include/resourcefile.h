@@ -249,7 +249,7 @@ public:
 		return l ? l->GetIndexNum() : 0;
 	}
 
-	ResourceData Read(int entry)
+	FileData Read(int entry)
 	{
 		auto fr = GetEntryReader(entry, false);
 		return fr.Read();

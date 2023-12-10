@@ -406,10 +406,10 @@ bool FileReader::OpenMemoryArray(std::vector<uint8_t>& data)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(ResourceData& data)
+bool FileReader::OpenMemoryArray(FileData& data)
 {
 	Close();
-	if (data.size() > 0) mReader = new MemoryArrayReader<ResourceData>(data);
+	if (data.size() > 0) mReader = new MemoryArrayReader<FileData>(data);
 	return true;
 }
 

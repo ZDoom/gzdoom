@@ -398,12 +398,12 @@ void FMultipatchTextureBuilder::AddTexturesLumps(int lump1, int lump2, int patch
 	if (lump1 >= 0)
 	{
 		auto texdir = fileSystem.ReadFile(lump1);
-		AddTexturesLump(texdir.GetMem(), fileSystem.FileLength(lump1), lump1, patcheslump, firstdup, true);
+		AddTexturesLump(texdir.data(), fileSystem.FileLength(lump1), lump1, patcheslump, firstdup, true);
 	}
 	if (lump2 >= 0)
 	{
 		auto texdir = fileSystem.ReadFile(lump2);
-		AddTexturesLump(texdir.GetMem(), fileSystem.FileLength(lump2), lump2, patcheslump, firstdup, false);
+		AddTexturesLump(texdir.data(), fileSystem.FileLength(lump2), lump2, patcheslump, firstdup, false);
 	}
 }
 

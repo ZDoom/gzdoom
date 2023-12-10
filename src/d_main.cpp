@@ -1940,7 +1940,7 @@ static FString CheckGameInfo(std::vector<std::string> & pwads)
 			// Found one!
 			auto data = check.ReadFile(num);
 			auto wadname = check.GetResourceFileName(check.GetFileContainer(num));
-			return ParseGameInfo(pwads, wadname, data.GetString(), (int)data.GetSize());
+			return ParseGameInfo(pwads, wadname, data.string(), (int)data.size());
 		}
 	}
 	return "";

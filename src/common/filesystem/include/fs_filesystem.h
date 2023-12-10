@@ -22,42 +22,6 @@ union LumpShortName
 };
 
 
-// A lump in memory.
-class FileData
-{
-public:
-	FileData() { lump = nullptr; }
-	const void *GetMem () { return lump->Cache; }
-	size_t GetSize () { return lump->LumpSize; }
-	const char* GetString () const { return (const char*)lump->Cache; }
-	const uint8_t* GetBytes() const { return (const uint8_t*)lump->Cache; }
-
-	FileData& operator = (const FileData& copy) = delete;
-
-	FileData(const FileData& copy)
-	{
-		lump = copy.lump;
-		lump->Lock();
-	}
-
-	~FileData()
-	{
-		if (lump) lump->Unlock();
-	}
-
-
-private:
-	FileData(FResourceLump* nlump)
-	{
-		lump = nlump;
-		if (lump) lump->Lock();
-	}
-
-	FResourceLump* lump;
-
-	friend class FileSystem;
-};
-
 struct FolderEntry
 {
 	const char *name;

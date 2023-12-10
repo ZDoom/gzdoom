@@ -315,7 +315,7 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 		if (num >= 0)
 		{
 			auto data = check.ReadFile(num);
-			ParseIWadInfo("IWADINFO", data.GetString(), (int)data.GetSize());
+			ParseIWadInfo("IWADINFO", data.string(), (int)data.size());
 		}
 	}
 }
@@ -399,7 +399,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 
 				FIWADInfo result;
 				auto data = check.ReadFile(num);
-				ParseIWadInfo(fn, data.GetString(), (int)data.GetSize(), &result);
+				ParseIWadInfo(fn, data.string(), (int)data.size(), &result);
 
 				for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
 				{

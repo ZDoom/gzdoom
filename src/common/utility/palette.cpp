@@ -681,8 +681,8 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 	}
 
 	auto rgbNames = fileSystem.ReadFile(rgblump);
-	rgb = rgbNames.GetString();
-	rgbEnd = rgb + rgbNames.GetSize();
+	rgb = rgbNames.string();
+	rgbEnd = rgb + rgbNames.size();
 	step = 0;
 	namelen = strlen(name);
 
@@ -930,11 +930,11 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 		return 0;
 	}
 	auto lump =  fileSystem.ReadFile(lumpnum);
-	auto lumpmem = lump.GetBytes();
+	auto lumpmem = lump.bytes();
 	memset(buffer, 0, 768);
 
 	FileReader fr;
-	fr.OpenMemory(lumpmem, lump.GetSize());
+	fr.OpenMemory(lumpmem, lump.size());
 	auto png = M_VerifyPNG(fr);
 	if (png)
 	{
@@ -964,7 +964,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 	{
 		FScanner sc;
 
-		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
+		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.size()));
 		sc.MustGetString();
 		sc.MustGetNumber();	// version - ignore
 		sc.MustGetNumber();
@@ -982,7 +982,7 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 	}
 	else
 	{
-		memcpy(buffer, lumpmem, min<size_t>(768, lump.GetSize()));
+		memcpy(buffer, lumpmem, min<size_t>(768, lump.size()));
 		return 256;
 	}
 }

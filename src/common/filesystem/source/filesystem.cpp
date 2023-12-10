@@ -306,7 +306,6 @@ int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, in
 	if (rf)
 	{
 		Files.push_back(rf);
-		FResourceLump* lump = rf->GetLump(0);
 		FileInfo.resize(FileInfo.size() + 1);
 		FileSystem::LumpRecord* lump_p = &FileInfo.back();
 		lump_p->SetFromLump(rf, 0, (int)Files.size() - 1, stringpool);
@@ -379,7 +378,6 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 		Files.push_back(resfile);
 		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
-			FResourceLump* lump = resfile->GetLump(i);
 			FileInfo.resize(FileInfo.size() + 1);
 			FileSystem::LumpRecord* lump_p = &FileInfo.back();
 			lump_p->SetFromLump(resfile, i, (int)Files.size() - 1, stringpool);
@@ -1312,10 +1310,7 @@ FileData FileSystem::ReadFile (int lump)
 	{
 		throw FileSystemException("ReadFile: %u >= NumEntries", lump);
 	}
-
-	auto file = FileInfo[lump].resfile;
-	auto lumpp = file->GetLump(FileInfo[lump].resindex);
-	return FileData(lumpp);
+	return FileInfo[lump].resfile->Read(FileInfo[lump].resindex);
 }
 
 //==========================================================================

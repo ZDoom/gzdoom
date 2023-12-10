@@ -125,7 +125,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 	FontName = name;
 
 	auto data1 = fileSystem.ReadFile (lump);
-	auto data = data1.GetBytes();
+	auto data = data1.bytes();
 
 	if (data[0] == 0xE1 && data[1] == 0xE6 && data[2] == 0xD5 && data[3] == 0x1A)
 	{
@@ -475,7 +475,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 void FSingleLumpFont::CheckFON1Chars()
 {
 	auto memLump = fileSystem.ReadFile(Lump);
-	auto data = memLump.GetBytes();
+	auto data = memLump.bytes();
 	const uint8_t* data_p;
 
 	data_p = data + 8;

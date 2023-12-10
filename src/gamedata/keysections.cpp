@@ -166,8 +166,8 @@ void D_LoadWadSettings ()
 	while ((lump = fileSystem.FindLump ("KEYCONF", &lastlump)) != -1)
 	{
 		auto data = fileSystem.ReadFile (lump);
-		const char* conf = data.GetString();
-		const char *eof = conf + data.GetSize();
+		const char* conf = data.string();
+		const char *eof = conf + data.size();
 
 		while (conf < eof)
 		{

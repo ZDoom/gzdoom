@@ -274,7 +274,7 @@ void IQMModel::LoadGeometry()
 	try
 	{
 		auto lumpdata = fileSystem.ReadFile(mLumpNum);
-		IQMFileReader reader(lumpdata.GetMem(), (int)lumpdata.GetSize());
+		IQMFileReader reader(lumpdata.data(), (int)lumpdata.size());
 
 		Vertices.Resize(NumVertices);
 		for (IQMVertexArray& vertexArray : VertexArrays)

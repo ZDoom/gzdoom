@@ -106,10 +106,10 @@ FAnmTexture::FAnmTexture (int lumpnum, int w, int h)
 void FAnmTexture::ReadFrame(uint8_t *pixels, uint8_t *palette)
 {
 	auto lump = fileSystem.ReadFile (SourceLump);
-	auto source = lump.GetBytes(); 
+	auto source = lump.bytes(); 
 
 	std::unique_ptr<anim_t> anim = std::make_unique<anim_t>(); // note that this struct is very large and should not go onto the stack!
-	if (ANIM_LoadAnim(anim.get(), source, (int)lump.GetSize()) >= 0)
+	if (ANIM_LoadAnim(anim.get(), source, (int)lump.size()) >= 0)
 	{
 		int numframes = ANIM_NumFrames(anim.get());
 		if (numframes >= 1)

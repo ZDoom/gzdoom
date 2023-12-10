@@ -1045,7 +1045,7 @@ void uppercopy(char* to, const char* from)
 FString GetStringFromLump(int lump, bool zerotruncate)
 {
 	auto fd = fileSystem.ReadFile(lump);
-	FString ScriptBuffer(fd.GetString(), fd.GetSize());
+	FString ScriptBuffer(fd.string(), fd.size());
 	if (zerotruncate) ScriptBuffer.Truncate(strlen(ScriptBuffer.GetChars()));	// this is necessary to properly truncate the generated string to not contain 0 bytes.
 	return ScriptBuffer;
 }

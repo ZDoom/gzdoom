@@ -98,7 +98,7 @@ void M_FindResponseFile (void)
 		else
 		{
 			char	**argv;
-			FileSys::ResourceData file;
+			FileSys::FileData file;
 			int		argc = 0;
 			size_t	argsize = 0;
 			int 	index;

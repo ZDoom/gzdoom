@@ -186,7 +186,7 @@ PalettedPixels FPatchTexture::CreatePalettedPixels(int conversion, int frame)
 	int x;
 
 	auto lump =  fileSystem.ReadFile (SourceLump);
-	const patch_t *patch = (const patch_t *)lump.GetMem();
+	const patch_t *patch = (const patch_t *)lump.data();
 
 	maxcol = (const column_t *)((const uint8_t *)patch + fileSystem.FileLength (SourceLump) - 3);
 
@@ -296,7 +296,7 @@ void FPatchTexture::DetectBadPatches ()
 	// It must be 256 pixels tall, and all its columns must have exactly
 	// one post, where each post has a supposed length of 0.
 	auto lump =  fileSystem.ReadFile (SourceLump);
-	const patch_t *realpatch = (patch_t *)lump.GetMem();
+	const patch_t *realpatch = (patch_t *)lump.data();
 	const uint32_t *cofs = realpatch->columnofs;
 	int x, x2 = LittleShort(realpatch->width);
 

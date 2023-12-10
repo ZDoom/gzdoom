@@ -71,9 +71,9 @@ void FUE1Model::LoadGeometry()
 {
 	const char *buffer, *buffer2;
 	auto lump =  fileSystem.ReadFile(mDataLump);
-	buffer = lump.GetString();
+	buffer = lump.string();
 	auto lump2 =  fileSystem.ReadFile(mAnivLump);
-	buffer2 = lump2.GetString();
+	buffer2 = lump2.string();
 	// map structures
 	dhead = (const d3dhead*)(buffer);
 	dpolys = (const d3dpoly*)(buffer+sizeof(d3dhead));

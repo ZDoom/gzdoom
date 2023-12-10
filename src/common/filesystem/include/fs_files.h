@@ -91,7 +91,7 @@ enum
 class FileReader;
 
 // an opaque memory buffer to the file's content. Can either own the memory or just point to an external buffer.
-class ResourceData
+class FileData
 {
 	void* memory;
 	size_t length;
@@ -99,13 +99,13 @@ class ResourceData
 
 public:
 	using value_type = uint8_t;
-	ResourceData() { memory = nullptr; length = 0; owned = true; }
+	FileData() { memory = nullptr; length = 0; owned = true; }
 	const void* data() const { return memory; }
 	size_t size() const { return length; }
 	const char* string() const { return (const char*)memory; }
 	const uint8_t* bytes() const { return (const uint8_t*)memory; }
 
-	ResourceData& operator = (const ResourceData& copy)
+	FileData& operator = (const FileData& copy)
 	{
 		if (owned && memory) free(memory);
 		length = copy.length;
@@ -119,7 +119,7 @@ public:
 		return *this;
 	}
 
-	ResourceData& operator = (ResourceData&& copy) noexcept
+	FileData& operator = (FileData&& copy) noexcept
 	{
 		if (owned && memory) free(memory);
 		length = copy.length;
@@ -131,13 +131,13 @@ public:
 		return *this;
 	}
 
-	ResourceData(const ResourceData& copy)
+	FileData(const FileData& copy)
 	{
 		memory = nullptr;
 		*this = copy;
 	}
 
-	~ResourceData()
+	~FileData()
 	{
 		if (owned && memory) free(memory);
 	}
@@ -254,7 +254,7 @@ public:
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
 	bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
-	bool OpenMemoryArray(ResourceData& data);	// take the given array
+	bool OpenMemoryArray(FileData& data);	// take the given array
 	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
 	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
@@ -273,9 +273,9 @@ public:
 		return mReader->Read(buffer, len);
 	}
 
-	ResourceData Read(size_t len)
+	FileData Read(size_t len)
 	{
-		ResourceData buffer;
+		FileData buffer;
 		if (len > 0)
 		{
 			Size length = mReader->Read(buffer.allocate(len), len);
@@ -284,15 +284,15 @@ public:
 		return buffer;
 	}
 
-	ResourceData Read()
+	FileData Read()
 	{
 		return Read(GetLength());
 	}
 
-	ResourceData ReadPadded(size_t padding)
+	FileData ReadPadded(size_t padding)
 	{
 		auto len = GetLength();
-		ResourceData buffer;
+		FileData buffer;
 
 		if (len > 0)
 		{

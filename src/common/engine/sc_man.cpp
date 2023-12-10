@@ -150,7 +150,7 @@ bool FScanner::OpenFile (const char *name)
 	auto filebuff = fr.Read();
 	if (filebuff.size() == 0 && filesize > 0) return false;
 
-	ScriptBuffer = FString((const char *)filebuff.data(), filesize);
+	ScriptBuffer = FString(filebuff.string(), filesize);
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	LumpNum = -1;
 	PrepareScript ();

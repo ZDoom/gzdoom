@@ -657,6 +657,44 @@ public:
 		std::swap(Most, other.Most);
 	}
 
+	// aliases with STL compliant names to allow using TArrays with templates designed for STL containers
+
+	size_t size() const
+	{
+		return Count;
+	}
+
+	T* data() const
+	{
+		return Data();
+	}
+
+	T& front() const
+	{
+		return *Data();
+	}
+
+	T& back() const
+	{
+		return Last();
+	}
+
+	void resize(size_t i)
+	{
+		Resize(i);
+	}
+
+	void push_back(T& elem)
+	{
+		Push(elem);
+	}
+
+	void clear()
+	{
+		Clear();
+	}
+
+
 private:
 	T *Array;
 	unsigned int Count;

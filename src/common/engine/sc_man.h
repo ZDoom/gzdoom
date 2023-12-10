@@ -71,12 +71,10 @@ public:
 	void Open(const char *lumpname);
 	bool OpenFile(const char *filename);
 	void OpenMem(const char *name, const char *buffer, int size);
-	void OpenMem(const char *name, const TArray<uint8_t> &buffer)
+	template<class T>
+	void OpenMem(const char* name, const T& buffer)
 	{
-		OpenMem(name, (const char*)buffer.Data(), buffer.Size());
-	}
-	void OpenMem(const char* name, const std::vector<uint8_t>& buffer)
-	{
+		static_assert(sizeof(T::value_type) == 1);
 		OpenMem(name, (const char*)buffer.data(), (int)buffer.size());
 	}
 	void OpenString(const char *name, FString buffer);

@@ -1141,7 +1141,7 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, int def
 		return retval;
 	}
 
-	std::vector<uint8_t> data;
+	TArray<uint8_t> data;
 	unsigned total = 0;
 	unsigned got;
 

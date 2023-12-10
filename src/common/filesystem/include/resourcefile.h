@@ -207,7 +207,6 @@ public:
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
 	FileReader *GetContainerReader() { return Reader.isOpen()? &Reader : nullptr; }
 	const char* GetFileName() const { return FileName; }
-	[[deprecated]] uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstEntry() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }

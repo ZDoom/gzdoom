@@ -404,12 +404,12 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 	if (resfile != NULL)
 	{
 		if (Printf) 
-			Printf(FSMessageLevel::Message, "adding %s, %d lumps\n", filename, resfile->LumpCount());
+			Printf(FSMessageLevel::Message, "adding %s, %d lumps\n", filename, resfile->EntryCount());
 
 		uint32_t lumpstart = (uint32_t)FileInfo.size();
 
 		resfile->SetFirstLump(lumpstart);
-		for (uint32_t i=0; i < resfile->LumpCount(); i++)
+		for (uint32_t i=0; i < resfile->EntryCount(); i++)
 		{
 			FResourceLump *lump = resfile->GetLump(i);
 			FileInfo.resize(FileInfo.size() + 1);
@@ -419,7 +419,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 
 		Files.push_back(resfile);
 
-		for (uint32_t i=0; i < resfile->LumpCount(); i++)
+		for (uint32_t i=0; i < resfile->EntryCount(); i++)
 		{
 			FResourceLump *lump = resfile->GetLump(i);
 			if (lump->Flags & LUMPF_EMBEDDED)
@@ -454,7 +454,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			else
 				fprintf(hashfile, "file: %s, Directory structure\n", filename);
 
-			for (uint32_t i = 0; i < resfile->LumpCount(); i++)
+			for (uint32_t i = 0; i < resfile->EntryCount(); i++)
 			{
 				FResourceLump *lump = resfile->GetLump(i);
 
@@ -1473,7 +1473,7 @@ int FileSystem::GetLastEntry (int rfnum) const noexcept
 		return 0;
 	}
 
-	return Files[rfnum]->GetFirstEntry() + Files[rfnum]->LumpCount() - 1;
+	return Files[rfnum]->GetFirstEntry() + Files[rfnum]->EntryCount() - 1;
 }
 
 //==========================================================================
@@ -1488,7 +1488,7 @@ int FileSystem::GetEntryCount (int rfnum) const noexcept
 		return 0;
 	}
 
-	return Files[rfnum]->LumpCount();
+	return Files[rfnum]->EntryCount();
 }
 
 

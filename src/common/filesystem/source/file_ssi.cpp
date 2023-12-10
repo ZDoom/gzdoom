@@ -46,7 +46,7 @@ class FSSIFile : public FUncompressedFile
 {
 public:
 	FSSIFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(int version, int lumpcount, LumpFilterInfo* filter);
+	bool Open(int version, int EntryCount, LumpFilterInfo* filter);
 };
 
 
@@ -68,13 +68,13 @@ FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
 //
 //==========================================================================
 
-bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
+bool FSSIFile::Open(int version, int EntryCount, LumpFilterInfo*)
 {
-	NumLumps = lumpcount*2;
-	Lumps.Resize(lumpcount*2);
+	NumLumps = EntryCount*2;
+	Lumps.Resize(EntryCount*2);
 
 
-	int32_t j = (version == 2 ? 267 : 254) + (lumpcount * 121);
+	int32_t j = (version == 2 ? 267 : 254) + (EntryCount * 121);
 	for (uint32_t i = 0; i < NumLumps; i+=2)
 	{
 		char fn[13];

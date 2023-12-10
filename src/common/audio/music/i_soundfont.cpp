@@ -367,7 +367,7 @@ void FSoundFontManager::ProcessOneFile(const char* fn)
 			auto zip = FResourceFile::OpenResourceFile(fn, true);
 			if (zip != nullptr)
 			{
-				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
+				if (zip->EntryCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
 				{
 					auto zipl = zip->FindEntry("timidity.cfg");
 					if (zipl >= 0)

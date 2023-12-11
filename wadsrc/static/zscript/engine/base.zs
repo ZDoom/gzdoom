@@ -965,6 +965,7 @@ class ScriptScanner native
 	native void SetCMode(bool cmode);
 	native void SetNoOctals(bool cmode);
 	native void SetEscape(bool esc);
+	native void SetNoFatalErrors(bool cmode);
 	native void SkipToEndOfBlock();
 	native void StartBraces(out ScriptSavedPos braceend);
 	native bool FoundEndBrace(out ScriptSavedPos braceend);

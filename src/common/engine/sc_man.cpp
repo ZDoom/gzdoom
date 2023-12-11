@@ -263,6 +263,7 @@ void FScanner::PrepareScript ()
 	StateOptions = false;
 	StringBuffer[0] = '\0';
 	BigStringBuffer = "";
+	ParseError = false;
 }
 
 //==========================================================================
@@ -1095,7 +1096,7 @@ void FScanner::ScriptError (const char *message, ...)
 	ParseError = true;
 	if (NoFatalErrors)
 	{
-		Printf(TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
+		Printf(TEXTCOLOR_RED "%sScript error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 			AlreadyGot ? AlreadyGotLine : Line, composed.GetChars());
 		return;
 	}
@@ -1407,6 +1408,7 @@ public:
 	void SetCMode(bool cmode) { return wrapped.SetCMode(cmode); }
 	void SetNoOctals(bool cmode) { return wrapped.SetNoOctals(cmode); }
 	void SetEscape(bool esc) { return wrapped.SetNoOctals(esc); }
+	void SetNoFatalErrors(bool cmode) { return wrapped.SetNoFatalErrors(cmode); }
 
 	void AddSymbol(const char* name, uint32_t value) { return wrapped.AddSymbol(name, value); }
 	void AddSymbol(const char* name, int32_t value) { return wrapped.AddSymbol(name, value); }
@@ -1729,6 +1731,15 @@ DEFINE_ACTION_FUNCTION(DScriptScanner, Close)
 	PARAM_SELF_PROLOGUE(DScriptScanner);
 
 	self->Close();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DScriptScanner, SetNoFatalErrors)
+{
+	PARAM_SELF_PROLOGUE(DScriptScanner);
+	PARAM_BOOL(cmode);
+
+	self->SetNoFatalErrors(cmode);
 	return 0;
 }
 

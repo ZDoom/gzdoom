@@ -1711,7 +1711,7 @@ void FBaseCVar::ListVars (const char *filter, int listtype)
 
 		bool ismatch;
 
-		if (includedesc)
+		if (filter && includedesc)
 		{
 			// search always allow partial matches
 			// also allow matching to cvar name, localised description, and description language-id

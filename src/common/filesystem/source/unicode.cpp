@@ -121,7 +121,7 @@ void ibm437_to_utf8(const char* in, std::vector<char>& buffer)
 
 	while (int char1 = (uint8_t)*in++)
 	{
-		if (char1 >= 0x80) char1 = ibm437map[char1];
+		if (char1 >= 0x80) char1 = ibm437map[char1 - 0x80];
 		utf8_encode(char1, buffer);
 	}
 	buffer.push_back(0);
@@ -139,5 +139,23 @@ char *tolower_normalize(const char *str)
 	utf8proc_map((const uint8_t*)str, 0, &retval, (utf8proc_option_t)(UTF8PROC_NULLTERM | UTF8PROC_STABLE | UTF8PROC_COMPOSE | UTF8PROC_CASEFOLD));
 	return (char*)retval;
 }
+
+//==========================================================================
+//
+// validates the string for proper UTF-8
+//
+//==========================================================================
+
+bool unicode_validate(const char* str)
+{
+	while (*str != 0)
+	{
+		int cp;
+		int result = utf8proc_iterate((const uint8_t*)str, -1, &cp);
+		if (result < 0) return false;
+	}
+	return true;
+}
+
 
 }

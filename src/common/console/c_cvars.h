@@ -89,6 +89,13 @@ enum ECVarType
 	CVAR_Dummy,			// Unknown
 };
 
+enum ListCCMDType
+{
+	LCT_Default,
+	LCT_Plain,
+	LCT_FullSearch,
+};
+
 
 class FIntCVarRef;
 union UCVarValue
@@ -201,7 +208,7 @@ public:
 	static void MarkZSCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
-	static void ListVars (const char *filter, bool plain);
+	static void ListVars (const char *filter, int listtype);
 
 	const FString &GetDescription() const { return Description; };
 	const FString& GetToggleMessage(int which) { return ToggleMessages[which]; }

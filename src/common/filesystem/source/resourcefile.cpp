@@ -709,7 +709,7 @@ FileReader FUncompressedFile::GetEntryReader(uint32_t entry, bool newreader)
 	FileReader fr;
 	if (entry < NumLumps)
 	{
-		if (!Entries[entry].Flags & RESFF_COMPRESSED)
+		if (!(Entries[entry].Flags & RESFF_COMPRESSED))
 		{
 			if (!newreader)
 			{

@@ -38,6 +38,7 @@
 #include "fs_filesystem.h"
 #include "fs_swap.h"
 #include "fs_stringpool.h"
+#include "resourcefile_internal.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -59,86 +60,18 @@ struct wadlump_t
 
 //==========================================================================
 //
-// Wad Lump (with console doom LZSS support)
-//
-//==========================================================================
-
-class FWadFileLump : public FResourceLump
-{
-public:
-	bool Compressed;
-	int	Position;
-	int Namespace;
-
-	int GetNamespace() const override { return Namespace; }
-
-	int GetFileOffset() override { return Position; }
-	FileReader *GetReader() override
-	{
-		if(!Compressed)
-		{
-			Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
-			return Owner->GetContainerReader();
-		}
-		return NULL;
-	}
-	int FillCache() override
-	{
-		if(!Compressed)
-		{
-			const char * buffer = Owner->GetContainerReader()->GetBuffer();
-
-			if (buffer != NULL)
-			{
-				// This is an in-memory file so the cache can point directly to the file's data.
-				Cache = const_cast<char*>(buffer) + Position;
-				RefCount = -1;
-				return -1;
-			}
-		}
-
-		Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
-		Cache = new char[LumpSize];
-
-		if(Compressed)
-		{
-			FileReader lzss;
-			if (lzss.OpenDecompressor(*Owner->GetContainerReader(), LumpSize, METHOD_LZSS, false, true))
-			{
-				lzss.Read(Cache, LumpSize);
-			}
-		}
-		else
-		{
-			auto read = Owner->GetContainerReader()->Read(Cache, LumpSize);
-			if (read != LumpSize)
-			{
-				throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
-			}
-		}
-
-		RefCount = 1;
-		return 1;
-	}
-};
-
-//==========================================================================
-//
 // Wad file
 //
 //==========================================================================
 
-class FWadFile : public FResourceFile
+class FWadFile : public FUncompressedFile
 {
-	TArray<FWadFileLump> Lumps;
-
 	bool IsMarker(int lump, const char *marker);
 	void SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, FileSystemMessageFunc Printf, bool flathack=false);
 	void SkinHack (FileSystemMessageFunc Printf);
 
 public:
 	FWadFile(const char * filename, FileReader &file, StringPool* sp);
-	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 };
 
@@ -152,7 +85,7 @@ public:
 //==========================================================================
 
 FWadFile::FWadFile(const char *filename, FileReader &file, StringPool* sp)
-	: FResourceFile(filename, file, sp)
+	: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -194,7 +127,6 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	Reader.Read (fileinfo.Data(), NumLumps * sizeof(wadlump_t));
 
 	AllocateEntries(NumLumps);
-	Lumps.Resize(NumLumps);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
@@ -211,7 +143,7 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 		else if (ishigh > 1)
 		{
 			// This may not end up printing something proper because we do not know what encoding might have been used.
-			Printf(FSMessageLevel::Warning, "%s: Lump name %s contains invalid characters\n", FileName, Lumps[i].getName());
+			Printf(FSMessageLevel::Warning, "%s: Lump name %.8s contains invalid characters\n", FileName, fileinfo[i].Name);
 		}
 
 		Entries[i].FileName = nullptr;
@@ -224,38 +156,6 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 		// This doesn't set up the namespace yet.
 	}
 
-	for(uint32_t i = 0; i < NumLumps; i++)
-	{
-		char n[9];
-		for(int j = 0; j < 8; j++) n[j] = toupper(fileinfo[i].Name[j]);
-		n[8] = 0;
-		// This needs to be done differently. We cannot simply assume that all lumps where the first character's high bit is set are compressed without verification.
-		// This requires explicit toggling for precisely the files that need it.
-#if 0
-		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (n[0] & 0x80) == 0x80;
-		n[0] &= ~0x80;
-#else
-		Lumps[i].Compressed = false;
-#endif
-		Lumps[i].LumpNameSetup(n, stringpool);
-
-		Lumps[i].Owner = this;
-		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
-		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
-		Lumps[i].Namespace = ns_global;
-		Lumps[i].Flags = Lumps[i].Compressed ? LUMPF_COMPRESSED | LUMPF_SHORTNAME : LUMPF_SHORTNAME;
-
-		// Check if the lump is within the WAD file and print a warning if not.
-		if (Lumps[i].Position + Lumps[i].LumpSize > wadSize || Lumps[i].Position < 0 || Lumps[i].LumpSize < 0)
-		{
-			if (Lumps[i].LumpSize != 0)
-			{
-				Printf(FSMessageLevel::Warning, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName, Lumps[i].getName());
-				Lumps[i].clearName();
-			}
-			Lumps[i].LumpSize = Lumps[i].Position = 0;
-		}
-	}
 
 	GenerateHash(); // Do this before the lump processing below.
 
@@ -269,10 +169,6 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	SetNamespace("VX_START", "VX_END", ns_voxels, Printf);
 	SkinHack(Printf);
 
-	for (uint32_t i = 0; i < NumLumps; i++)
-	{
-		Entries[i].Namespace = Lumps[i].Namespace;
-	}
 	return true;
 }
 
@@ -286,10 +182,10 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 
 inline bool FWadFile::IsMarker(int lump, const char *marker)
 {
-	if (Lumps[lump].getName()[0] == marker[0])
+	if (Entries[lump].FileName[0] == marker[0])
 	{
-		return (!strcmp(Lumps[lump].getName(), marker) ||
-			(marker[1] == '_' && !strcmp(Lumps[lump].getName() +1, marker)));
+		return (!strcmp(Entries[lump].FileName, marker) ||
+			(marker[1] == '_' && !strcmp(Entries[lump].FileName +1, marker)));
 	}
 	else return false;
 }
@@ -350,12 +246,12 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 			unsigned int end = markers[markers.Size()-1].index;
 			for(unsigned int ii = 0; ii < end; ii++)
 			{
-				if (Lumps[ii].LumpSize == 4096)
+				if (Entries[ii].Length == 4096)
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					Printf(FSMessageLevel::DebugNotify, "%s: Marking %s as potential flat\n", FileName, Lumps[ii].getName());
-					Lumps[ii].Flags |= LUMPF_MAYBEFLAT;
+					Printf(FSMessageLevel::DebugNotify, "%s: Marking %s as potential flat\n", FileName, Entries[ii].FileName);
+					Entries[ii].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
 		}
@@ -403,7 +299,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		Printf(FSMessageLevel::DebugNotify, "%s: Found %s block at (%d-%d)\n", FileName, startmarker, markers[start].index, end);
 		for(int j = markers[start].index + 1; j < end; j++)
 		{
-			if (Lumps[j].Namespace != ns_global)
+			if (Entries[j].Namespace != ns_global)
 			{
 				if (!warned)
 				{
@@ -411,17 +307,17 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				}
 				warned = true;
 			}
-			else if (space == ns_sprites && Lumps[j].LumpSize < 8)
+			else if (space == ns_sprites && Entries[j].Length < 8)
 			{
 				// sf 26/10/99:
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				Printf(FSMessageLevel::DebugWarn, "%s: Skipped empty sprite %s (lump %d)\n", FileName, Lumps[j].getName(), j);
+				Printf(FSMessageLevel::DebugWarn, "%s: Skipped empty sprite %s (lump %d)\n", FileName, Entries[j].FileName, j);
 			}
 			else
 			{
-				Lumps[j].Namespace = space;
+				Entries[j].Namespace = space;
 			}
 		}
 	}
@@ -451,11 +347,11 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 
 	for (i = 0; i < NumLumps; i++)
 	{
-		FResourceLump *lump = &Lumps[i];
+		auto lump = &Entries[i];
 
-		if (!strnicmp(lump->getName(), "S_SKIN", 6))
+		if (!strnicmp(lump->FileName, "S_SKIN", 6))
 		{ // Wad has at least one skin.
-			lump->LumpNameSetup("S_SKIN", nullptr);
+			lump->FileName = "S_SKIN";
 			if (!skinned)
 			{
 				skinned = true;
@@ -463,24 +359,24 @@ void FWadFile::SkinHack (FileSystemMessageFunc Printf)
 
 				for (j = 0; j < NumLumps; j++)
 				{
-					Lumps[j].Namespace = namespc;
+					Entries[j].Namespace = namespc;
 				}
 				namespc++;
 			}
 		}
 		// needless to say, this check is entirely useless these days as map names can be more diverse..
-		if ((lump->getName()[0] == 'M' &&
-			 lump->getName()[1] == 'A' &&
-			 lump->getName()[2] == 'P' &&
-			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
-			 lump->getName()[4] >= '0' && lump->getName()[4] <= '9' &&
-			 lump->getName()[5] == '\0')
+		if ((lump->FileName[0] == 'M' &&
+			 lump->FileName[1] == 'A' &&
+			 lump->FileName[2] == 'P' &&
+			 lump->FileName[3] >= '0' && lump->FileName[3] <= '9' &&
+			 lump->FileName[4] >= '0' && lump->FileName[4] <= '9' &&
+			 lump->FileName[5] == '\0')
 			||
-			(lump->getName()[0] == 'E' &&
-			 lump->getName()[1] >= '0' && lump->getName()[1] <= '9' &&
-			 lump->getName()[2] == 'M' &&
-			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
-			 lump->getName()[4] == '\0'))
+			(lump->FileName[0] == 'E' &&
+			 lump->FileName[1] >= '0' && lump->FileName[1] <= '9' &&
+			 lump->FileName[2] == 'M' &&
+			 lump->FileName[3] >= '0' && lump->FileName[3] <= '9' &&
+			 lump->FileName[4] == '\0'))
 		{
 			hasmap = true;
 		}

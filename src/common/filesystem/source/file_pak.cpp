@@ -103,8 +103,6 @@ bool FPakFile::Open(LumpFilterInfo* filter)
 	Reader.Seek (header.dirofs, FileReader::SeekSet);
 	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
 
-	Lumps.Resize(NumLumps);
-
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		Entries[i].Position = LittleLong(fileinfo[i].filepos);
@@ -114,16 +112,8 @@ bool FPakFile::Open(LumpFilterInfo* filter)
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].FileName = NormalizeFileName(fileinfo[i].name);
-	
-		Lumps[i].LumpNameSetup(fileinfo[i].name, stringpool);
-		Lumps[i].Flags = LUMPF_FULLPATH;
-		Lumps[i].Owner = this;
-		Lumps[i].Position = LittleLong(fileinfo[i].filepos);
-		Lumps[i].LumpSize = LittleLong(fileinfo[i].filelen);
-		Lumps[i].CheckEmbedded(filter);
 	}
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(Lumps[0]), filter);
 	return true;
 }
 

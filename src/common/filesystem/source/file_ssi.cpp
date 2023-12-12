@@ -72,8 +72,7 @@ bool FSSIFile::Open(int version, int EntryCount, LumpFilterInfo*)
 {
 	AllocateEntries(EntryCount*2);
 	NumLumps = EntryCount*2;
-	Lumps.Resize(EntryCount*2);
-
+	
 
 	int32_t j = (version == 2 ? 267 : 254) + (EntryCount * 121);
 	for (uint32_t i = 0; i < NumLumps; i+=2)
@@ -107,23 +106,6 @@ bool FSSIFile::Open(int version, int EntryCount, LumpFilterInfo*)
 		Entries[i + 1].FileName = NormalizeFileName(fn);
 		Entries[i + 1].Method = METHOD_STORED;
 		if (strstr(fn, ".GRP")) Entries[i + 1].Flags |= RESFF_EMBEDDED;
-
-		// swap back...
-		std::swap(fn[strlength - 1], fn[strlength - 3]);
-		Lumps[i].LumpNameSetup(fn, stringpool);
-		Lumps[i].Position = j;
-		Lumps[i].LumpSize = flength;
-		Lumps[i].Owner = this;
-		if (strstr(fn, ".GRP")) Lumps[i].Flags |= LUMPF_EMBEDDED;
-
-		// SSI files can swap the order of the extension's characters - but there's no reliable detection for this and it can be mixed inside the same container, 
-		// so we have no choice but to create another file record for the altered name.
-		std::swap(fn[strlength - 1], fn[strlength - 3]);
-		Lumps[i+1].LumpNameSetup(fn, stringpool);
-		Lumps[i+1].Position = j;
-		Lumps[i+1].LumpSize = flength;
-		Lumps[i+1].Owner = this;
-		if (strstr(fn, ".GRP")) Lumps[i+1].Flags |= LUMPF_EMBEDDED;
 
 		j += flength;
 

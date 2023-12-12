@@ -82,8 +82,7 @@ bool FWHResFile::Open(LumpFilterInfo*)
 	Reader.Read(directory, 4096);
 
 	int nl =1024/3;
-	Lumps.Resize(nl);
-
+	
 	int k;
 	for (k = 0; k < nl; k++)
 	{
@@ -114,15 +113,8 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].FileName = NormalizeFileName(synthname.c_str());
-		
-		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);
-		Lumps[i].Owner = this;
-		Lumps[i].Position = offset;
-		Lumps[i].LumpSize = length;
 		i++;
 	}
-	Lumps.Clamp(NumLumps);
-	Lumps.ShrinkToFit();
 	return true;
 }
 

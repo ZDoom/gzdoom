@@ -76,13 +76,6 @@ bool FLumpFile::Open(LumpFilterInfo*)
 	Entries[0].Length = Reader.GetLength();
 	Entries[0].Method = METHOD_STORED;
 	Entries[0].Flags = 0;
-
-	Lumps.Resize(1);
-	Lumps[0].LumpNameSetup(ExtractBaseName(FileName, true).c_str(), stringpool);
-	Lumps[0].Owner = this;
-	Lumps[0].Position = 0;
-	Lumps[0].LumpSize = (int)Reader.GetLength();
-	Lumps[0].Flags = 0;
 	NumLumps = 1;
 	return true;
 }

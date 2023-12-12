@@ -107,8 +107,6 @@ bool FGrpFile::Open(LumpFilterInfo* filter)
 	GrpLump *fileinfo = new GrpLump[NumLumps];
 	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 
-	Lumps.Resize(NumLumps);
-
 	int Position = sizeof(GrpHeader) + NumLumps * sizeof(GrpLump);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
@@ -122,13 +120,6 @@ bool FGrpFile::Open(LumpFilterInfo* filter)
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].FileName = NormalizeFileName(fileinfo[i].Name);
-	
-		Lumps[i].Owner = this;
-		Lumps[i].Position = Position;
-		Lumps[i].LumpSize = Entries[i].Length;
-		Position += fileinfo[i].Size;
-		Lumps[i].Flags = 0;
-		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero, stringpool);
 	}
 	GenerateHash();
 	delete[] fileinfo;

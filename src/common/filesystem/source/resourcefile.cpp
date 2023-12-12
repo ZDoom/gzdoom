@@ -683,48 +683,6 @@ int FResourceFile::FindEntry(const char *name)
 	return -1;
 }
 
-//==========================================================================
-//
-// Caches a lump's content and increases the reference counter
-//
-//==========================================================================
-
-FileReader *FUncompressedLump::GetReader()
-{
-	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
-	return Owner->GetContainerReader();
-}
-
-//==========================================================================
-//
-// Caches a lump's content and increases the reference counter
-//
-//==========================================================================
-
-int FUncompressedLump::FillCache()
-{
-	const char * buffer = Owner->GetContainerReader()->GetBuffer();
-
-	if (buffer != NULL)
-	{
-		// This is an in-memory file so the cache can point directly to the file's data.
-		Cache = const_cast<char*>(buffer) + Position;
-		RefCount = -1;
-		return -1;
-	}
-
-	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
-	Cache = new char[LumpSize];
-
-	auto read = Owner->GetContainerReader()->Read(Cache, LumpSize);
-	if (read != LumpSize)
-	{
-		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
-	}
-
-	RefCount = 1;
-	return 1;
-}
 
 //==========================================================================
 //
@@ -739,6 +697,38 @@ FUncompressedFile::FUncompressedFile(const char *filename, StringPool* sp)
 FUncompressedFile::FUncompressedFile(const char *filename, FileReader &r, StringPool* sp)
 	: FResourceFile(filename, r, sp)
 {}
+
+//==========================================================================
+//
+// Caches a lump's content and increases the reference counter
+//
+//==========================================================================
+
+FileReader FUncompressedFile::GetEntryReader(uint32_t entry, bool newreader)
+{
+	FileReader fr;
+	if (entry < NumLumps)
+	{
+		if (!Entries[entry].Flags & RESFF_COMPRESSED)
+		{
+			if (!newreader)
+			{
+				fr.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].Length);
+			}
+			else
+			{
+				fr.OpenFile(FileName, Entries[entry].Position, Entries[entry].Length);
+			}
+		}
+		else
+		{
+			FileReader fri;
+			fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
+			fr.OpenDecompressor(fri, Entries[entry].Length, Entries[entry].Method | METHOD_TRANSFEROWNER, true, true);
+		}
+	}
+	return fr;
+}
 
 
 //==========================================================================

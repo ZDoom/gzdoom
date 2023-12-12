@@ -232,7 +232,7 @@ public:
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }
 
-	virtual FResourceLump *GetLump(int no) = 0;
+	virtual FResourceLump* GetLump(int no) { throw FileSystemException("GetLump base function called."); }
 
 	int EntryCount() const { return NumLumps; }
 	int FindEntry(const char* name);
@@ -246,7 +246,7 @@ public:
 		return (entry < NumLumps) ? Entries[entry].Position : 0;
 	}
 
-	FileReader GetEntryReader(int entry, bool newreader = true)
+	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true)
 	{
 		auto l = GetLump(entry);
 		return l ? l->NewReader() : FileReader();

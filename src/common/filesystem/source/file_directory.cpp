@@ -50,38 +50,21 @@ std::wstring toWide(const char* str);
 
 //==========================================================================
 //
-// Zip Lump
-//
-//==========================================================================
-
-struct FDirectoryLump : public FResourceLump
-{
-	const char* mBasePath;
-	FileReader NewReader() override;
-	int FillCache() override;
-
-};
-
-
-//==========================================================================
-//
 // Zip file
 //
 //==========================================================================
 
 class FDirectory : public FResourceFile
 {
-	TArray<FDirectoryLump> Lumps;
 	const bool nosubdir;
 	const char* mBasePath;
 
 	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	void AddEntry(const char* relpath, int size);
 
 public:
 	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
+	FileReader GetEntryReader(uint32_t entry, bool newreader = true) override;
 };
 
 
@@ -146,17 +129,13 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
 						continue;
 					}
-					AddEntry(entry.FilePathRel.c_str(), (int)entry.Length);
-					int index = count;
 					// for internal access we use the normalized form of the relative path.
-					Entries[index].FileName = NormalizeFileName(entry.FilePathRel.c_str());
-					Entries[index].Length = entry.Length;
-					Entries[index].Flags = RESFF_FULLPATH;
-					Entries[index].ResourceID = -1;
-					Entries[index].Method = METHOD_STORED;
-					Entries[index].Namespace = ns_global;
-					index++;
-
+					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
+					Entries[count].Length = entry.Length;
+					Entries[count].Flags = RESFF_FULLPATH;
+					Entries[count].ResourceID = -1;
+					Entries[count].Method = METHOD_STORED;
+					Entries[count].Namespace = ns_global;
 					count++;
 				}
 			}
@@ -174,7 +153,6 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	NumLumps = AddDirectory(FileName, filter, Printf);
-	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
 
@@ -184,59 +162,15 @@ bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-void FDirectory::AddEntry(const char* relpath, int size)
-{
-	FDirectoryLump *lump_p = &Lumps[Lumps.Reserve(1)];
-
-	// [mxd] Convert name to lowercase
-	std::string name = relpath;
-	for (auto& c : name) c = tolower(c);
-
-	// The lump's name is only the part relative to the main directory
-	lump_p->LumpNameSetup(name.c_str(), stringpool);
-	lump_p->LumpSize = size;
-	lump_p->Owner = this;
-	lump_p->Flags = 0;
-	lump_p->CheckEmbedded(nullptr);
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FileReader FDirectoryLump::NewReader()
+FileReader FDirectory::GetEntryReader(uint32_t entry, bool newreader)
 {
 	FileReader fr;
-	std::string fn = mBasePath; fn += this->FullName;
-	fr.OpenFile(fn.c_str());
+	if (entry < NumLumps)
+	{
+		std::string fn = mBasePath; fn += Entries[entry].FileName;
+		fr.OpenFile(fn.c_str());
+	}
 	return fr;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int FDirectoryLump::FillCache()
-{
-	FileReader fr;
-	Cache = new char[LumpSize];
-	std::string fn = mBasePath; fn += this->FullName;
-	if (!fr.OpenFile(fn.c_str()))
-	{
-		throw FileSystemException("unable to open file");
-	}
-	auto read = fr.Read(Cache, LumpSize);
-	if (read != LumpSize)
-	{
-		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
-	}
-	RefCount = 1;
-	return 1;
 }
 
 //==========================================================================

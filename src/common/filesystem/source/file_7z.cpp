@@ -159,20 +159,6 @@ struct C7zArchive
 		return res;
 	}
 };
-//==========================================================================
-//
-// Zip Lump
-//
-//==========================================================================
-
-struct F7ZLump : public FResourceLump
-{
-	int		Position;
-
-	virtual int FillCache() override;
-
-};
-
 
 //==========================================================================
 //
@@ -184,14 +170,14 @@ class F7ZFile : public FResourceFile
 {
 	friend struct F7ZLump;
 
-	F7ZLump *Lumps;
 	C7zArchive *Archive;
 
 public:
 	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
+	FileData Read(int entry) override;
+	FileReader GetEntryReader(uint32_t entry, bool) override;
 };
 
 
@@ -205,8 +191,7 @@ public:
 F7ZFile::F7ZFile(const char * filename, FileReader &filer, StringPool* sp)
 	: FResourceFile(filename, filer, sp) 
 {
-	Lumps = NULL;
-	Archive = NULL;
+	Archive = nullptr;
 }
 
 
@@ -250,9 +235,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 	AllocateEntries(archPtr->NumFiles);
 	NumLumps = archPtr->NumFiles;
-	Lumps = new F7ZLump[NumLumps];
 
-	F7ZLump *lump_p = Lumps;
 	std::u16string nameUTF16;
 	std::vector<char> nameASCII;
 
@@ -286,14 +269,6 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		Entries[i].Namespace = ns_global;
 		Entries[i].Method = METHOD_INVALID;
 		Entries[i].Position = i;
-
-		lump_p->LumpNameSetup(nameASCII.data(), stringpool);
-		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
-		lump_p->Owner = this;
-		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
-		lump_p->Position = i;
-		lump_p->CheckEmbedded(filter);
-		lump_p++;
 	}
 	// Resize the lump record array to its actual size
 	NumLumps -= skipped;
@@ -303,9 +278,9 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		// Quick check for unsupported compression method
 
 		TArray<char> temp;
-		temp.Resize(Lumps[0].LumpSize);
+		temp.Resize(Entries[0].Length);
 
-		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
+		if (SZ_OK != Archive->Extract(Entries[0].Position, &temp[0]))
 		{
 			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName);
 			return false;
@@ -313,7 +288,6 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	}
 
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(F7ZLump), filter);
 	return true;
 }
 
@@ -325,11 +299,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 F7ZFile::~F7ZFile()
 {
-	if (Lumps != NULL)
-	{
-		delete[] Lumps;
-	}
-	if (Archive != NULL)
+	if (Archive != nullptr)
 	{
 		delete Archive;
 	}
@@ -337,21 +307,40 @@ F7ZFile::~F7ZFile()
 
 //==========================================================================
 //
-// Fills the lump cache and performs decompression
+// Reads data for one entry into a buffer
 //
 //==========================================================================
 
-int F7ZLump::FillCache()
+FileData F7ZFile::Read(int entry)
 {
-	Cache = new char[LumpSize];
-	SRes code = static_cast<F7ZFile*>(Owner)->Archive->Extract(Position, Cache);
-	if (code != SZ_OK)
+	FileData buffer;
+	if ((entry >= 0 || entry < NumLumps) && Entries[entry].Length > 0)
 	{
-		throw FileSystemException("Error %d reading from 7z archive", code);
+		auto p = buffer.allocate(Entries[entry].Length);
+		// There is no realistic way to keep multiple references to a 7z file open without massive overhead so to make this thread-safe a mutex is the only option.
+		//std::lock_guard<FCriticalSection> lock(critsec); // activate later
+		SRes code = Archive->Extract(Entries[entry].Position, (char*)p);
+		if (code != SZ_OK) buffer.clear();
 	}
-	RefCount = 1;
-	return 1;
+	return buffer;
 }
+
+//==========================================================================
+//
+// This can only return a FileReader to a memory buffer.
+//
+//==========================================================================
+
+FileReader F7ZFile::GetEntryReader(uint32_t entry, bool)
+{
+	FileReader fr;
+	if (entry < 0 || entry >= NumLumps) return fr;
+	auto buffer = Read(entry);
+	if (buffer.size() > 0)
+		fr.OpenMemoryArray(buffer);
+	return fr;
+}
+
 
 //==========================================================================
 //

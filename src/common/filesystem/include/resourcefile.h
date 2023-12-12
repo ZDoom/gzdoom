@@ -272,7 +272,7 @@ public:
 		return (entry < NumLumps) ? Entries[entry].FileName : nullptr;
 	}
 
-	FileData Read(int entry)
+	virtual FileData Read(int entry)
 	{
 		auto fr = GetEntryReader(entry, false);
 		return fr.Read();

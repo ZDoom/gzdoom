@@ -45,6 +45,8 @@
 #include <stdexcept>
 
 #include "fs_files.h"
+#include "files_internal.h"
+#include "ancientzip.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -53,6 +55,7 @@ namespace FileSys {
 class DecompressorBase : public FileReaderInterface
 {
 	bool exceptions = false;
+
 public:
 	// These do not work but need to be defined to satisfy the FileReaderInterface.
 	// They will just error out when called.
@@ -64,6 +67,10 @@ public:
 	void EnableExceptions(bool on) { exceptions = on; }
 
 protected:
+	DecompressorBase()
+	{
+		//seekable = false;
+	}
 	FileReader* File = nullptr;
 	FileReader OwnedFile;
 };
@@ -843,6 +850,7 @@ public:
 
 bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions)
 {
+	FileReaderInterface* fr = nullptr;
 	DecompressorBase* dec = nullptr;
 	try
 	{
@@ -853,7 +861,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_ZLIB:
 		{
 			auto idec = new DecompressorZ;
-			dec = idec;
+			fr = dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p, method == METHOD_DEFLATE))
 			{
@@ -865,7 +873,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_BZIP2:
 		{
 			auto idec = new DecompressorBZ2;
-			dec = idec;
+			fr = dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p))
 			{
@@ -877,7 +885,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_LZMA:
 		{
 			auto idec = new DecompressorLZMA;
-			dec = idec;
+			fr = dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p, length))
 			{
@@ -889,7 +897,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_XZ:
 		{
 			auto idec = new DecompressorXZ;
-			dec = idec;
+			fr = dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p, length))
 			{
@@ -901,7 +909,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		case METHOD_LZSS:
 		{
 			auto idec = new DecompressorLZSS;
-			dec = idec;
+			fr = dec = idec;
 			idec->EnableExceptions(exceptions);
 			if (!idec->Open(p))
 			{
@@ -911,34 +919,85 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 			break;
 		}
 
-		// todo: METHOD_IMPLODE, METHOD_SHRINK
+		// The decoders for these legacy formats can only handle the full data in one go so we have to perform the entire decompression here.
+		case METHOD_IMPLODE:
+		case METHOD_IMPLODE_2:
+		case METHOD_IMPLODE_4:
+		case METHOD_IMPLODE_6:
+		{
+			auto idec = new MemoryArrayReader<FileData>;
+			fr = idec;
+			auto& buffer = idec->GetArray();
+			auto bufr = (uint8_t*)buffer.allocate(length);
+			FZipExploder exploder;
+			if (exploder.Explode(bufr, length, *p, p->GetLength(), method) == -1)
+			{
+				if (exceptions)
+				{
+					throw FileSystemException("DecompressImplode failed");
+				}
+				delete idec;
+				return false;
+			}
+			break;
+		}
+
+		case METHOD_SHRINK:
+		{
+			auto idec = new MemoryArrayReader<FileData>;
+			fr = idec;
+			auto& buffer = idec->GetArray();
+			auto bufr = (uint8_t*)buffer.allocate(length);
+			ShrinkLoop(bufr, length, *p, p->GetLength()); // this never fails.
+			break;
+		}
+
 		default:
 			return false;
 		}
-		if (method & METHOD_TRANSFEROWNER)
+		if (dec)
 		{
-			dec->SetOwnsReader();
+			if (method & METHOD_TRANSFEROWNER)
+			{
+				dec->SetOwnsReader();
+			}
+			dec->Length = length;
 		}
-
-		dec->Length = length;
 		if (!seekable)
 		{
 			Close();
-			mReader = dec;
-			return true;
+			mReader = fr;
 		}
 		else
 		{
-			// todo: create a wrapper. for now this fails
-			delete dec;
-			return false;
+			// create a wrapper that can buffer the content so that seeking is possible
+			mReader = new BufferingReader(fr);
 		}
+		return true;
 	}
 	catch (...)
 	{
-		if (dec) delete dec;
+		if (fr) delete fr;
 		throw;
 	}
 }
 
+
+bool FCompressedBuffer::Decompress(char* destbuffer)
+{
+	FileReader mr;
+	mr.OpenMemory(mBuffer, mCompressedSize);
+	if (mMethod == METHOD_STORED)
+	{
+		return mr.Read(destbuffer, mSize) != mSize;
+	}
+	else
+	{
+		FileReader frz;
+		if (frz.OpenDecompressor(mr, mSize, mMethod, false, false))
+		{
+			return frz.Read(destbuffer, mSize) != mSize;
+		}
+	}
+	return false;
 }

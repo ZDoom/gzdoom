@@ -108,8 +108,7 @@ void *StringPool::Alloc(size_t size)
 {
 	Block *block;
 
-	size = ((size)+8) & ~7;
-
+	size = (size + 7) & ~7;
 	for (block = TopBlock; block != nullptr; block = block->NextBlock)
 	{
 		void *res = block->Alloc(size);
@@ -124,7 +123,7 @@ void *StringPool::Alloc(size_t size)
 
 const char* StringPool::Strdup(const char* str)
 {
-	char* p = (char*)Alloc(strlen(str));
+	char* p = (char*)Alloc(strlen(str) + 1);
 	strcpy(p, str);
 	return p;
 }

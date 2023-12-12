@@ -39,6 +39,8 @@
 #include "resourcefile.h"
 #include "fs_findfile.h"
 #include "unicode.h"
+#include "critsec.h"
+#include <mutex>
 
 
 namespace FileSys {
@@ -171,6 +173,7 @@ class F7ZFile : public FResourceFile
 	friend struct F7ZLump;
 
 	C7zArchive *Archive;
+	FCriticalSection critsec;
 
 public:
 	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
@@ -318,7 +321,7 @@ FileData F7ZFile::Read(int entry)
 	{
 		auto p = buffer.allocate(Entries[entry].Length);
 		// There is no realistic way to keep multiple references to a 7z file open without massive overhead so to make this thread-safe a mutex is the only option.
-		//std::lock_guard<FCriticalSection> lock(critsec); // activate later
+		std::lock_guard<FCriticalSection> lock(critsec);
 		SRes code = Archive->Extract(Entries[entry].Position, (char*)p);
 		if (code != SZ_OK) buffer.clear();
 	}

@@ -83,7 +83,7 @@ public:
 		UpdateBuffer();
 	}
 
-	std::vector<uint8_t>& GetArray() { return buf; }
+	T& GetArray() { return buf; }
 
 	void UpdateBuffer()
 	{

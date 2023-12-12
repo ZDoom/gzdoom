@@ -175,6 +175,29 @@ public:
 
 };
 
+// This holds a compresed Zip entry with all needed info to decompress it.
+struct FCompressedBuffer
+{
+	size_t mSize;
+	size_t mCompressedSize;
+	int mMethod;
+	unsigned mCRC32;
+	char* mBuffer;
+	const char* filename;
+
+	bool Decompress(char* destbuffer);
+	void Clean()
+	{
+		mSize = mCompressedSize = 0;
+		if (mBuffer != nullptr)
+		{
+			delete[] mBuffer;
+			mBuffer = nullptr;
+		}
+	}
+};
+
+
 class FileReaderInterface
 {
 public:

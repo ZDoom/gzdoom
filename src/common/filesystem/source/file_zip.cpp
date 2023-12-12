@@ -67,6 +67,11 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, ptrdi
 	case METHOD_BZIP2:
 	case METHOD_LZMA:
 	case METHOD_XZ:
+	case METHOD_IMPLODE_0:
+	case METHOD_IMPLODE_2:
+	case METHOD_IMPLODE_4:
+	case METHOD_IMPLODE_6:
+	case METHOD_SHRINK:
 	{
 		FileReader frz;
 		if (frz.OpenDecompressor(Reader, LumpSize, Method, false, exceptions))
@@ -76,50 +81,11 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, ptrdi
 		break;
 	}
 
-	case METHOD_IMPLODE_0:
-	case METHOD_IMPLODE_2:
-	case METHOD_IMPLODE_4:
-	case METHOD_IMPLODE_6:
-	{
-		FZipExploder exploder;
-		if (exploder.Explode((unsigned char*)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize, Method - METHOD_IMPLODE_MIN) == -1)
-		{
-			// decompression failed so zero the cache.
-			memset(Cache, 0, LumpSize);
-		}
-		break;
-	}
-
-	// This can go away once we are done with FResourceLump
-	case METHOD_IMPLODE:
-	{
-		FZipExploder exploder;
-		if (exploder.Explode((unsigned char*)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize, GPFlags) == -1)
-		{
-			// decompression failed so zero the cache.
-			memset(Cache, 0, LumpSize);
-		}
-		break;
-	}
-
-	case METHOD_SHRINK:
-	{
-		ShrinkLoop((unsigned char *)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize);
-		break;
-	}
-
 	default:
 		assert(0);
 		return false;
 	}
 	return true;
-}
-
-bool FCompressedBuffer::Decompress(char *destbuffer)
-{
-	FileReader mr;
-	mr.OpenMemory(mBuffer, mCompressedSize);
-	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, 0, false);
 }
 
 //-----------------------------------------------------------------------

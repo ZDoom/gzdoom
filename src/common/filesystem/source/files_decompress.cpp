@@ -952,6 +952,24 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 			break;
 		}
 
+		// While this could be msde a buffering reader it isn't worth the effort because only stock RFFs are encrypted and they do not contain large files.
+		case METHOD_RFFCRYPT:
+		{
+			auto idec = new MemoryArrayReader<FileData>;
+			fr = idec;
+			auto& buffer = idec->GetArray();
+			auto bufr = (uint8_t*)buffer.allocate(length);
+			p->Read(bufr, length);
+
+			Size cryptlen = std::min<Size>(length, 256);
+
+			for (Size i = 0; i < cryptlen; ++i)
+			{
+				bufr[i] ^= i >> 1;
+			}
+			break;
+		}
+
 		default:
 			return false;
 		}
@@ -974,13 +992,13 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 			mReader = new BufferingReader(fr);
 		}
 		return true;
-	}
+			}
 	catch (...)
 	{
 		if (fr) delete fr;
 		throw;
 	}
-}
+		}
 
 
 bool FCompressedBuffer::Decompress(char* destbuffer)
@@ -1000,4 +1018,5 @@ bool FCompressedBuffer::Decompress(char* destbuffer)
 		}
 	}
 	return false;
+}
 }

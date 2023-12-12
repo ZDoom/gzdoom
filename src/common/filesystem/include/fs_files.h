@@ -83,8 +83,9 @@ enum
 	METHOD_LZMA = 14,
 	METHOD_XZ = 95,
 	METHOD_PPMD = 98,
-	METHOD_LZSS = 1337,	// not used in Zips - this is for Console Doom compression
-	METHOD_ZLIB = 1338,	// Zlib stream with header, used by compressed nodes.
+	METHOD_LZSS = 1337,			// not used in Zips - this is for Console Doom compression
+	METHOD_ZLIB = 1338,			// Zlib stream with header, used by compressed nodes.
+	METHOD_RFFCRYPT = 1339,		// not actual compression but can be put in here to make handling easier.
 	METHOD_IMPLODE_MIN = 1000, // having discrete types for these avoids keeping around the GPFlags word in Zips.
 	METHOD_IMPLODE_0 = 1000,
 	METHOD_IMPLODE_2 = 1002,

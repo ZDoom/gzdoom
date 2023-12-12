@@ -90,7 +90,7 @@ void BloodCrypt (void *data, int key, int len)
 //
 //==========================================================================
 
-class FRFFFile : public FResourceFile
+class FRFFFile : public FUncompressedFile
 {
 
 public:
@@ -106,7 +106,7 @@ public:
 //==========================================================================
 
 FRFFFile::FRFFFile(const char *filename, FileReader &file, StringPool* sp)
-: FResourceFile(filename, file, sp)
+: FUncompressedFile(filename, file, sp)
 {
 }
 
@@ -139,8 +139,8 @@ bool FRFFFile::Open(LumpFilterInfo*)
 		Entries[i].Method = METHOD_STORED;
 		if (lumps[i].Flags & 0x10)
 		{
-			Entries[i].Flags = RESFF_COMPRESSED;	// flags the lump as not directly usable
-			Entries[i].Method = METHOD_INVALID;
+			Entries[i].Flags = RESFF_COMPRESSED;	// for purposes of decoding, compression and encryption are equivalent.
+			Entries[i].Method = METHOD_RFFCRYPT;
 		}
 		else
 		{
@@ -167,31 +167,6 @@ bool FRFFFile::Open(LumpFilterInfo*)
 	GenerateHash();
 	return true;
 }
-
-//==========================================================================
-//
-// Fills the lump cache and performs decryption
-//
-//==========================================================================
-#if 0
-int FRFFLump::FillCache()
-{
-	int res = FUncompressedLump::FillCache();
-
-	if (Flags & LUMPF_COMPRESSED)
-	{
-		int cryptlen = std::min<int> (LumpSize, 256);
-		uint8_t *data = (uint8_t *)Cache;
-
-		for (int i = 0; i < cryptlen; ++i)
-		{
-			data[i] ^= i >> 1;
-		}
-	}
-	return res;
-}
-#endif
-
 
 //==========================================================================
 //

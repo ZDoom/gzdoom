@@ -4,45 +4,7 @@
 #include "resourcefile.h"
 
 namespace FileSys {
-//==========================================================================
-//
-// Zip Lump
-//
-//==========================================================================
 
-struct FZipLump : public FResourceLump
-{
-	uint16_t	GPFlags;
-	uint8_t	Method;
-	bool	NeedFileStart;
-	int		CompressedSize;
-	int64_t		Position;
-	unsigned CRC32;
-
-	virtual FileReader *GetReader();
-	virtual int FillCache() override;
-
-	void SetLumpAddress();
-	virtual int GetFileOffset();
-};
-
-//==========================================================================
-//
-// Zip file
-//
-//==========================================================================
-
-class FZipFile : public FResourceFile
-{
-	FZipLump *Lumps;
-
-public:
-	FZipFile(const char * filename, FileReader &file, StringPool* sp);
-	virtual ~FZipFile();
-	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-	FCompressedBuffer GetRawData(uint32_t entry) override;
-};
 
 }
 

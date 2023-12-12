@@ -783,25 +783,6 @@ int FileSystem::FileLength (int lump) const
 
 //==========================================================================
 //
-// GetFileOffset
-//
-// Returns the offset from the beginning of the file to the lump.
-// Returns -1 if the lump is compressed or can't be read directly
-//
-//==========================================================================
-
-int FileSystem::GetFileOffset (int lump)
-{
-	if ((size_t)lump >= NumEntries)
-	{
-		return -1;
-	}
-	const auto &lump_p = FileInfo[lump];
-	return lump_p.resfile->Offset(lump_p.resindex);
-}
-
-//==========================================================================
-//
 // 
 //
 //==========================================================================

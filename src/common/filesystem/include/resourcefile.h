@@ -137,7 +137,6 @@ protected:
 
 	virtual FileReader *GetReader();
 	virtual FileReader NewReader();
-	virtual int GetFileOffset() { return -1; }
 	virtual int GetIndexNum() const { return -1; }
 	virtual int GetNamespace() const { return 0; }
 	void LumpNameSetup(const char* iname, StringPool* allocator);
@@ -189,6 +188,10 @@ protected:
 	// for archives that can contain directories
 	void GenerateHash();
 	void PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter);
+	virtual void SetEntryAddress(uint32_t entry)
+	{
+		Entries[entry].Flags &= ~RESFF_NEEDFILESTART;
+	}
 
 private:
 	uint32_t FirstLump;

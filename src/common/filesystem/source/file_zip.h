@@ -22,10 +22,8 @@ struct FZipLump : public FResourceLump
 	virtual FileReader *GetReader();
 	virtual int FillCache() override;
 
-private:
 	void SetLumpAddress();
 	virtual int GetFileOffset();
-	FCompressedBuffer GetRawData();
 };
 
 //==========================================================================
@@ -43,6 +41,7 @@ public:
 	virtual ~FZipFile();
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
+	FCompressedBuffer GetRawData(uint32_t entry) override;
 };
 
 }

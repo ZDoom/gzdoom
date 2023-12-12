@@ -119,7 +119,7 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 {
 	FileReader mr;
 	mr.OpenMemory(mBuffer, mCompressedSize);
-	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, mZipFlags, false);
+	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, 0, false);
 }
 
 //-----------------------------------------------------------------------
@@ -485,12 +485,24 @@ FZipFile::~FZipFile()
 //
 //==========================================================================
 
-FCompressedBuffer FZipLump::GetRawData()
+FCompressedBuffer FZipFile::GetRawData(uint32_t entry)
 {
-	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
-	if (NeedFileStart) SetLumpAddress();
-	Owner->GetContainerReader()->Seek(Position, FileReader::SeekSet);
-	Owner->GetContainerReader()->Read(cbuf.mBuffer, CompressedSize);
+	FCompressedBuffer cbuf;
+
+	if (entry >= NumLumps >> Entries[entry].Length == 0)
+	{
+		cbuf = { 0, 0, METHOD_STORED, 0, 0, nullptr };
+	}
+	else
+	{
+		auto& e = Entries[entry];
+		cbuf = { e.Length, e.CompressedSize, e.Method, e.CRC32, new char[e.CompressedSize] };
+		if (e.Flags & RESFF_NEEDFILESTART) Lumps[entry].SetLumpAddress();
+		e.Position = Lumps[entry].Position;
+		Reader.Seek(e.Position, FileReader::SeekSet);
+		Reader.Read(cbuf.mBuffer, e.CompressedSize);
+	}
+	
 	return cbuf;
 }
 
@@ -502,6 +514,7 @@ FCompressedBuffer FZipLump::GetRawData()
 
 void FZipLump::SetLumpAddress()
 {
+	if (!NeedFileStart) return;
 	// This file is inside a zip and has not been opened before.
 	// Position points to the start of the local file header, which we must
 	// read and skip so that we can get to the actual file data.
@@ -640,11 +653,25 @@ static int AppendToZip(FileWriter *zip_file, const FCompressedBuffer &content, s
 	FZipLocalFileHeader local;
 	int position;
 
+	int flags = 0;
+	int method = content.mMethod;
+	if (method >= METHOD_IMPLODE_MIN && method <= METHOD_IMPLODE_MAX)
+	{
+		flags = method - METHOD_IMPLODE_MIN;
+		method = METHOD_IMPLODE;
+	}
+	else if (method == METHOD_DEFLATE)
+	{
+		flags = 2;
+	}
+	else if (method >= 1337)
+		return -1;
+
 	local.Magic = ZIP_LOCALFILE;
 	local.VersionToExtract[0] = 20;
 	local.VersionToExtract[1] = 0;
-	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
-	local.Method = LittleShort((uint16_t)content.mMethod);
+	local.Flags = LittleShort((uint16_t)flags);
+	local.Method = LittleShort((uint16_t)method);
 	local.ModDate = LittleShort(dostime.first);
 	local.ModTime = LittleShort(dostime.second);
 	local.CRC32 = content.mCRC32;
@@ -680,13 +707,27 @@ int AppendCentralDirectory(FileWriter *zip_file, const FCompressedBuffer &conten
 {
 	FZipCentralDirectoryInfo dir;
 
+	int flags = 0;
+	int method = content.mMethod;
+	if (method >= METHOD_IMPLODE_MIN && method <= METHOD_IMPLODE_MAX)
+	{
+		flags = method - METHOD_IMPLODE_MIN;
+		method = METHOD_IMPLODE;
+	}
+	else if (method == METHOD_DEFLATE)
+	{
+		flags = 2;
+	}
+	else if (method >= 1337)
+		return -1;
+
 	dir.Magic = ZIP_CENTRALFILE;
 	dir.VersionMadeBy[0] = 20;
 	dir.VersionMadeBy[1] = 0;
 	dir.VersionToExtract[0] = 20;
 	dir.VersionToExtract[1] = 0;
-	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
-	dir.Method = LittleShort((uint16_t)content.mMethod);
+	dir.Flags = LittleShort((uint16_t)flags);
+	dir.Method = LittleShort((uint16_t)method);
 	dir.ModTime = LittleShort(dostime.first);
 	dir.ModDate = LittleShort(dostime.second);
 	dir.CRC32 = content.mCRC32;

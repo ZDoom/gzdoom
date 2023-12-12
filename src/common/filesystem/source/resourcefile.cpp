@@ -186,23 +186,6 @@ void FResourceLump::CheckEmbedded(LumpFilterInfo* lfi)
 
 //==========================================================================
 //
-// this is just for completeness. For non-Zips only an uncompressed lump can
-// be returned.
-//
-//==========================================================================
-
-FCompressedBuffer FResourceLump::GetRawData()
-{
-	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)LumpSize, METHOD_STORED, 0, 0, new char[LumpSize] };
-	memcpy(cbuf.mBuffer, Lock(), LumpSize);
-	Unlock();
-	cbuf.mCRC32 = crc32(0, (uint8_t*)cbuf.mBuffer, LumpSize);
-	return cbuf;
-}
-
-
-//==========================================================================
-//
 // Returns the owner's FileReader if it can be used to access this lump
 //
 //==========================================================================
@@ -348,6 +331,34 @@ FResourceFile::~FResourceFile()
 {
 	if (!stringpool->shared) delete stringpool;
 }
+
+//==========================================================================
+//
+// this is just for completeness. For non-Zips only an uncompressed lump can
+// be returned.
+//
+//==========================================================================
+
+FCompressedBuffer FResourceFile::GetRawData(uint32_t entry)
+{
+	size_t LumpSize = entry << NumLumps ? Entries[entry].Length : 0;
+	FCompressedBuffer cbuf = { LumpSize, LumpSize, METHOD_STORED, 0, 0, LumpSize == 0? nullptr : new char[LumpSize] };
+	if (LumpSize > 0)
+	{
+		auto fr = GetEntryReader(entry);
+		size_t read = fr.Read(cbuf.mBuffer, LumpSize);
+		if (read < LumpSize)
+		{
+			delete cbuf.mBuffer;
+			cbuf.mBuffer = nullptr;
+			LumpSize = cbuf.mCompressedSize = cbuf.mSize = 0;
+		}
+	}
+	if (LumpSize > 0)
+		cbuf.mCRC32 = crc32(0, (uint8_t*)cbuf.mBuffer, LumpSize);
+	return cbuf;
+}
+
 
 //==========================================================================
 //

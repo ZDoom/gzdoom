@@ -98,7 +98,6 @@ struct FCompressedBuffer
 	size_t mSize;
 	size_t mCompressedSize;
 	int mMethod;
-	int mZipFlags;
 	unsigned mCRC32;
 	char *mBuffer;
 	const char* filename;
@@ -165,7 +164,6 @@ protected:
 	virtual int GetNamespace() const { return 0; }
 	void LumpNameSetup(const char* iname, StringPool* allocator);
 	void CheckEmbedded(LumpFilterInfo* lfi);
-	virtual FCompressedBuffer GetRawData();
 
 	void *Lock(); // validates the cache and increases the refcount.
 	int Unlock(); // decreases the refcount and frees the buffer
@@ -280,12 +278,7 @@ public:
 		return fr.Read();
 	}
 
-	FCompressedBuffer GetRawData(int entry)
-	{
-		auto l = GetLump(entry);
-		if (!l) return {};
-		return l->GetRawData();
-	}
+	virtual FCompressedBuffer GetRawData(uint32_t entry);
 
 	FileReader Destroy()
 	{

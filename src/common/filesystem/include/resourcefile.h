@@ -92,69 +92,6 @@ enum ELumpFlags
 	
 };
 
-struct FResourceLump
-{
-protected:
-	friend class FResourceFile;
-	friend class FWadFile;	// this still needs direct access.
-	friend class FileData;
-	friend class FileSystem;
-	friend class FLumpFile;
-	friend class FLumpReader;
-	friend class FGrpFile;
-	friend class F7ZFile;
-	friend class FSSIFile;
-	friend class FWHResFile;
-	friend class FZipFile;
-	friend class FPakFile;
-	friend class FRFFFile;
-	friend class FDirectory;
-	friend int lumpcmp(const void* a, const void* b);
-
-
-	int				LumpSize;
-	int				RefCount;
-//protected:
-	const char*		FullName;
-//public:
-	uint8_t			Flags;
-	char *			Cache;
-	FResourceFile *	Owner;
-
-public:
-	FResourceLump()
-	{
-		Cache = NULL;
-		Owner = NULL;
-		Flags = 0;
-		RefCount = 0;
-		FullName = "";
-		LumpSize = 0;
-	}
-	virtual ~FResourceLump();
-
-protected:
-
-	virtual FileReader *GetReader();
-	virtual FileReader NewReader();
-	virtual int GetIndexNum() const { return -1; }
-	virtual int GetNamespace() const { return 0; }
-	void LumpNameSetup(const char* iname, StringPool* allocator);
-	void CheckEmbedded(LumpFilterInfo* lfi);
-
-	void *Lock(); // validates the cache and increases the refcount.
-	int Unlock(); // decreases the refcount and frees the buffer
-
-	unsigned Size() const{ return LumpSize; }
-	int LockCount() const { return RefCount; }
-	const char* getName() { return FullName; }
-	void clearName() { FullName = ""; }
-
-protected:
-	virtual int FillCache() { return -1; }
-
-};
-
 struct FResourceEntry
 {
 	size_t Length;
@@ -187,18 +124,20 @@ protected:
 
 	// for archives that can contain directories
 	void GenerateHash();
-	void PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter);
+	void PostProcessArchive(LumpFilterInfo *filter);
 	virtual void SetEntryAddress(uint32_t entry)
 	{
 		Entries[entry].Flags &= ~RESFF_NEEDFILESTART;
 	}
+	bool IsFileInFolder(const char* const resPath);
+	void CheckEmbedded(uint32_t entry, LumpFilterInfo* lfi);
 
 private:
 	uint32_t FirstLump;
 
-	int FilterLumps(const std::string& filtername, void *lumps, size_t lumpsize, uint32_t max);
-	bool FindPrefixRange(const char* filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
-	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
+	int FilterLumps(const std::string& filtername, uint32_t max);
+	bool FindPrefixRange(const char* filter, uint32_t max, uint32_t &start, uint32_t &end);
+	void JunkLeftoverFilters(uint32_t max);
 	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
 public:
@@ -213,8 +152,6 @@ public:
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }
 
-	virtual FResourceLump* GetLump(int no) { throw FileSystemException("GetLump base function called."); }
-
 	int EntryCount() const { return NumLumps; }
 	int FindEntry(const char* name);
 
@@ -227,11 +164,7 @@ public:
 		return (entry < NumLumps) ? Entries[entry].Position : 0;
 	}
 
-	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true)
-	{
-		auto l = GetLump(entry);
-		return l ? l->NewReader() : FileReader();
-	}
+	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true) = 0;
 
 	int GetEntryFlags(uint32_t entry)
 	{

@@ -212,12 +212,8 @@ public:
 	ptrdiff_t GetLength () const { return Length; }
 };
 
-struct FResourceLump;
-
 class FileReader
 {
-	friend struct FResourceLump;	// needs access to the private constructor.
-
 	FileReaderInterface *mReader = nullptr;
 
 	FileReader(const FileReader &r) = delete;

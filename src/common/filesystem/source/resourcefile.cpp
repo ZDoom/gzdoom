@@ -82,175 +82,40 @@ void strReplace(std::string& str, const char *from, const char* to)
 
 //==========================================================================
 //
-// File reader that reads from a lump's cache
-//
-//==========================================================================
-
-class FLumpReader : public MemoryReader
-{
-	FResourceLump *source;
-
-public:
-	FLumpReader(FResourceLump *src)
-		: MemoryReader(NULL, src->LumpSize), source(src)
-	{
-		src->Lock();
-		bufptr = src->Cache;
-	}
-
-	~FLumpReader()
-	{
-		source->Unlock();
-	}
-};
-
-
-//==========================================================================
-//
-// Base class for resource lumps
-//
-//==========================================================================
-
-FResourceLump::~FResourceLump()
-{
-	if (Cache != NULL && RefCount >= 0)
-	{
-		delete [] Cache;
-		Cache = NULL;
-	}
-	Owner = NULL;
-}
-
-
-//==========================================================================
-//
-// Sets up the lump name information for anything not coming from a WAD file.
-//
-//==========================================================================
-
-void FResourceLump::LumpNameSetup(const char *iname, StringPool* allocator)
-{
-	// this causes interference with real Dehacked lumps.
-	if (!stricmp(iname, "dehacked.exe"))
-	{
-		iname = "";
-	}
-	else if (allocator)
-	{
-		iname = allocator->Strdup(iname);
-	}
-
-	FullName = iname;
-}
-
-//==========================================================================
-//
 // Checks for embedded resource files
 //
 //==========================================================================
 
-static bool IsWadInFolder(const FResourceFile* const archive, const char* const resPath)
+bool FResourceFile::IsFileInFolder(const char* const resPath)
 {
 	// Checks a special case when <somefile.wad> was put in
 	// <myproject> directory inside <myproject.zip>
 
-	if (NULL == archive)
-	{
-		return false;
-	}
-
-    const auto dirName = ExtractBaseName(archive->GetFileName());
+    const auto dirName = ExtractBaseName(FileName);
 	const auto fileName = ExtractBaseName(resPath, true);
 	const std::string filePath = dirName + '/' + fileName;
 
 	return 0 == stricmp(filePath.c_str(), resPath);
 }
 
-void FResourceLump::CheckEmbedded(LumpFilterInfo* lfi)
+void FResourceFile::CheckEmbedded(uint32_t entry, LumpFilterInfo* lfi)
 {
 	// Checks for embedded archives
-	const char *c = strstr(FullName, ".wad");
-	if (c && strlen(c) == 4 && (!strchr(FullName, '/') || IsWadInFolder(Owner, FullName)))
+	auto FullName = Entries[entry].FileName;
+	const char *c = strstr(FullName, ".wad"); // fixme: Use lfi for this.
+	if (c && strlen(c) == 4 && (!strchr(FullName, '/') || IsFileInFolder(FullName)))
 	{
-		Flags |= LUMPF_EMBEDDED;
+		Entries[entry].Flags |= LUMPF_EMBEDDED;
 	}
 	else if (lfi) for (auto& fstr : lfi->embeddings)
 	{
 		if (!stricmp(FullName, fstr.c_str()))
 		{
-			Flags |= LUMPF_EMBEDDED;
+			Entries[entry].Flags |= LUMPF_EMBEDDED;
 		}
 	}
 }
 
-
-//==========================================================================
-//
-// Returns the owner's FileReader if it can be used to access this lump
-//
-//==========================================================================
-
-FileReader *FResourceLump::GetReader()
-{
-	return NULL;
-}
-
-//==========================================================================
-//
-// Returns a file reader to the lump's cache
-//
-//==========================================================================
-
-FileReader FResourceLump::NewReader()
-{
-	return FileReader(new FLumpReader(this));
-}
-
-//==========================================================================
-//
-// Caches a lump's content and increases the reference counter
-//
-//==========================================================================
-
-void *FResourceLump::Lock()
-{
-	if (Cache != NULL)
-	{
-		if (RefCount > 0) RefCount++;
-	}
-	else if (LumpSize > 0)
-	{
-		try
-		{
-			FillCache();
-		}
-		catch (const FileSystemException& err)
-		{
-			// enrich the message with info about this lump.
-			throw FileSystemException("%s, file '%s': %s", getName(), Owner->GetFileName(), err.what());
-		}
-	}
-	return Cache;
-}
-
-//==========================================================================
-//
-// Decrements reference counter and frees lump if counter reaches 0
-//
-//==========================================================================
-
-int FResourceLump::Unlock()
-{
-	if (LumpSize > 0 && RefCount > 0)
-	{
-		if (--RefCount == 0)
-		{
-			delete [] Cache;
-			Cache = NULL;
-		}
-	}
-	return RefCount;
-}
 
 //==========================================================================
 //
@@ -413,13 +278,6 @@ void FResourceFile::AllocateEntries(int count)
 
 
 //---------------------------------------------------
-int lumpcmp(const void * a, const void * b)
-{
-	FResourceLump * rec1 = (FResourceLump *)a;
-	FResourceLump * rec2 = (FResourceLump *)b;
-	return stricmp(rec1->getName(), rec2->getName());
-}
-
 int entrycmp(const void* a, const void* b)
 {
 	FResourceEntry* rec1 = (FResourceEntry*)a;
@@ -474,7 +332,7 @@ void FResourceFile::GenerateHash()
 //
 //==========================================================================
 
-void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter)
+void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 {
 	// only do this for archive types which contain full file names. All others are assumed to be pre-sorted.
 	//if (NumLumps < 2 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
@@ -496,13 +354,13 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterI
 		std::string file;
 		while (size_t(len = LumpFilter.find_first_of('.', lastpos + 1)) != LumpFilter.npos)
 		{
-			max -= FilterLumps(std::string(LumpFilter, 0, len), lumps, lumpsize, max);
+			max -= FilterLumps(std::string(LumpFilter, 0, len), max);
 			lastpos = len;
 		}
-		max -= FilterLumps(LumpFilter, lumps, lumpsize, max);
+		max -= FilterLumps(LumpFilter, max);
 	}
 
-	JunkLeftoverFilters(lumps, lumpsize, max);
+	JunkLeftoverFilters(max);
 }
 
 //==========================================================================
@@ -515,7 +373,7 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterI
 //
 //==========================================================================
 
-int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_t lumpsize, uint32_t max)
+int FResourceFile::FilterLumps(const std::string& filtername, uint32_t max)
 {
 	uint32_t start, end;
 
@@ -525,43 +383,38 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 	}
 	std::string filter = "filter/" + filtername + '/';
 
-	bool found = FindPrefixRange(filter.c_str(), lumps, lumpsize, max, start, end);
+	bool found = FindPrefixRange(filter.c_str(), max, start, end);
 
 	if (found)
 	{
-		void *from = (uint8_t *)lumps + start * lumpsize;
 
 		// Remove filter prefix from every name
-		void *lump_p = from;
-		for (uint32_t i = start; i < end; ++i, lump_p = (uint8_t *)lump_p + lumpsize)
+		for (uint32_t i = start; i < end; ++i)
 		{
-			FResourceLump *lump = (FResourceLump *)lump_p;
-			assert(strnicmp(lump->FullName, filter.c_str(), filter.length()) == 0);
-			lump->LumpNameSetup(lump->FullName + filter.length(), nullptr);
+			assert(strnicmp(Entries[i].FileName, filter.c_str(), filter.length()) == 0);
 			Entries[i].FileName += filter.length();
 		}
 
-#if 0 // disabled until everything is clean again
 		// Move filtered lumps to the end of the lump list.
-		size_t count = (end - start) * lumpsize;
-		void *to = (uint8_t *)lumps + NumLumps * lumpsize - count;
+		size_t count = (end - start);
+		auto from = Entries + start;
+		auto to = Entries + NumLumps - count;
 		assert (to >= from);
 
 		if (from != to)
 		{
 			// Copy filtered lumps to a temporary buffer.
-			uint8_t *filteredlumps = new uint8_t[count];
-			memcpy(filteredlumps, from, count);
+			auto filteredlumps = new FResourceEntry[count];
+			memcpy(filteredlumps, from, count * sizeof(*Entries));
 
 			// Shift lumps left to make room for the filtered ones at the end.
-			memmove(from, (uint8_t *)from + count, (NumLumps - end) * lumpsize);
+			memmove(from, from + count, (NumLumps - end) * sizeof(*Entries));
 
 			// Copy temporary buffer to newly freed space.
-			memcpy(to, filteredlumps, count);
+			memcpy(to, filteredlumps, count * sizeof(*Entries));
 
 			delete[] filteredlumps;
 		}
-#endif
 	}
 	return end - start;
 }
@@ -574,19 +427,17 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 //
 //==========================================================================
 
-void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max)
+void FResourceFile::JunkLeftoverFilters(uint32_t max)
 {
 	uint32_t start, end;
-	if (FindPrefixRange("filter/", lumps, lumpsize, max, start, end))
+	if (FindPrefixRange("filter/", max, start, end))
 	{
 		// Since the resource lumps may contain non-POD data besides the
 		// full name, we "delete" them by erasing their names so they
 		// can't be found.
-		void *stop = (uint8_t *)lumps + end * lumpsize;
-		for (void *p = (uint8_t *)lumps + start * lumpsize; p < stop; p = (uint8_t *)p + lumpsize)
+		for (uint32_t i = start; i < end; i++)
 		{
-			FResourceLump *lump = (FResourceLump *)p;
-			lump->clearName();
+			Entries[i].FileName = "";
 		}
 	}
 }
@@ -601,25 +452,24 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t m
 //
 //==========================================================================
 
-bool FResourceFile::FindPrefixRange(const char* filter, void *lumps, size_t lumpsize, uint32_t maxlump, uint32_t &start, uint32_t &end)
+bool FResourceFile::FindPrefixRange(const char* filter, uint32_t maxlump, uint32_t &start, uint32_t &end)
 {
 	uint32_t min, max, mid, inside;
-	FResourceLump *lump;
 	int cmp = 0;
 
 	end = start = 0;
 
 	// Pretend that our range starts at 1 instead of 0 so that we can avoid
 	// unsigned overflow if the range starts at the first lump.
-	lumps = (uint8_t *)lumps - lumpsize;
+	auto lumps = &Entries[-1];
 
 	// Binary search to find any match at all.
 	mid = min = 1, max = maxlump;
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
-		cmp = strnicmp(lump->FullName, filter, (int)strlen(filter));
+		auto lump = &Entries[mid];
+		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		if (cmp == 0)
 			break;
 		else if (cmp < 0)
@@ -638,8 +488,8 @@ bool FResourceFile::FindPrefixRange(const char* filter, void *lumps, size_t lump
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
-		cmp = strnicmp(lump->FullName, filter, (int)strlen(filter));
+		auto lump = &Entries[mid];
+		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		// Go left on matches and right on misses.
 		if (cmp == 0)
 			max = mid - 1;
@@ -653,8 +503,8 @@ bool FResourceFile::FindPrefixRange(const char* filter, void *lumps, size_t lump
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		lump = (FResourceLump *)((uint8_t *)lumps + mid * lumpsize);
-		cmp = strnicmp(lump->FullName, filter, (int)strlen(filter));
+		auto lump = &Entries[mid];
+		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		// Go right on matches and left on misses.
 		if (cmp == 0)
 			min = mid + 1;
@@ -735,63 +585,6 @@ FileReader FUncompressedFile::GetEntryReader(uint32_t entry, bool newreader)
 }
 
 
-//==========================================================================
-//
-// external lump
-//
-//==========================================================================
-
-FExternalLump::FExternalLump(const char *_filename, int filesize, StringPool* stringpool)
-{
-	FileName = stringpool->Strdup(_filename);
-
-	if (filesize == -1)
-	{
-		FileReader f;
-
-		if (f.OpenFile(_filename))
-		{
-			LumpSize = (int)f.GetLength();
-		}
-		else
-		{
-			LumpSize = 0;
-		}
-	}
-	else
-	{
-		LumpSize = filesize;
-	}
-}
-
-
-//==========================================================================
-//
-// Caches a lump's content and increases the reference counter
-// For external lumps this reopens the file each time it is accessed
-//
-//==========================================================================
-
-int FExternalLump::FillCache()
-{
-	Cache = new char[LumpSize];
-	FileReader f;
-
-	if (f.OpenFile(FileName))
-	{
-		auto read = f.Read(Cache, LumpSize);
-		if (read != LumpSize)
-		{
-			throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
-		}
-	}
-	else
-	{
-		throw FileSystemException("unable to open file");
-	}
-	RefCount = 1;
-	return 1;
-}
 
 
 }

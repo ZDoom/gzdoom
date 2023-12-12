@@ -15,15 +15,4 @@ protected:
 	FileReader GetEntryReader(uint32_t entry, bool) override;
 };
 
-
-// should only be used internally.
-struct FExternalLump : public FResourceLump
-{
-	const char* FileName;
-
-	FExternalLump(const char *_filename, int filesize, StringPool* sp);
-	virtual int FillCache() override;
-
-};
-
 }

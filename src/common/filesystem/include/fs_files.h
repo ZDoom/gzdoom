@@ -85,6 +85,13 @@ enum
 	METHOD_PPMD = 98,
 	METHOD_LZSS = 1337,	// not used in Zips - this is for Console Doom compression
 	METHOD_ZLIB = 1338,	// Zlib stream with header, used by compressed nodes.
+	METHOD_IMPLODE_MIN = 1000, // having discrete types for these avoids keeping around the GPFlags word in Zips.
+	METHOD_IMPLODE_0 = 1000,
+	METHOD_IMPLODE_2 = 1002,
+	METHOD_IMPLODE_4 = 1004,
+	METHOD_IMPLODE_6 = 1006,
+	METHOD_IMPLODE_MAX = 1006,
+	METHOD_INVALID = 0x7fff,
 	METHOD_TRANSFEROWNER = 0x8000,
 };
 

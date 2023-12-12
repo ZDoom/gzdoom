@@ -82,6 +82,14 @@ enum ELumpFlags
 	LUMPF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
 	LUMPF_SHORTNAME = 8,	// the stored name is a short extension-less name
 	LUMPF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
+	
+	RESFF_MAYBEFLAT = 1,	// might be a flat inside a WAD outside F_START/END
+	RESFF_FULLPATH = 2,		// contains a full path. This will trigger extended namespace checks when looking up short names.
+	RESFF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
+	RESFF_SHORTNAME = 8,	// the stored name is a short extension-less name
+	RESFF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
+	RESFF_NEEDFILESTART = 32,	// The real position is not known yet and needs to be calculated on access
+	
 };
 
 // This holds a compresed Zip entry with all needed info to decompress it.
@@ -172,18 +180,35 @@ protected:
 
 };
 
+struct FResourceEntry
+{
+	size_t Length;
+	size_t CompressedSize;
+	const char* FileName;
+	size_t Position;
+	int ResourceID;
+	uint32_t CRC32;
+	uint16_t Flags;
+	uint16_t Method;
+	int16_t Namespace;
+};
+
 class FResourceFile
 {
 public:
 protected:
 	FileReader Reader;
 	const char* FileName;
+	FResourceEntry* Entries = nullptr;
 	uint32_t NumLumps;
 	char Hash[48];
 	StringPool* stringpool;
 
 	FResourceFile(const char *filename, StringPool* sp);
 	FResourceFile(const char *filename, FileReader &r, StringPool* sp);
+
+	const char* NormalizeFileName(const char* fn, int fallbackcp = 0);
+	void AllocateEntries(int count);
 
 	// for archives that can contain directories
 	void GenerateHash();
@@ -214,15 +239,13 @@ public:
 	int EntryCount() const { return NumLumps; }
 	int FindEntry(const char* name);
 
-	size_t Length(int entry)
+	size_t Length(uint32_t entry)
 	{
-		auto l = GetLump(entry);
-		return l ? l->LumpSize : -1;
+		return (entry < NumLumps) ? Entries[entry].Length : 0;
 	}
-	size_t Offset(int entry)
+	size_t Offset(uint32_t entry)
 	{
-		auto l = GetLump(entry);
-		return l ? l->GetFileOffset() : -1;
+		return (entry < NumLumps) ? Entries[entry].Position : 0;
 	}
 
 	FileReader GetEntryReader(int entry, bool newreader = true)
@@ -231,22 +254,24 @@ public:
 		return l ? l->NewReader() : FileReader();
 	}
 
-	int GetEntryFlags(int entry)
+	int GetEntryFlags(uint32_t entry)
 	{
-		auto l = GetLump(entry);
-		return l ? l->Flags : 0;
+		return (entry < NumLumps) ? Entries[entry].Flags : 0;
 	}
 
-	int GetEntryNamespace(int entry)
+	int GetEntryNamespace(uint32_t entry)
 	{
-		auto l = GetLump(entry);
-		return l ? l->GetNamespace() : 0;
+		return (entry < NumLumps) ? Entries[entry].Namespace : ns_hidden;
 	}
 
-	int GetEntryResourceID(int entry)
+	int GetEntryResourceID(uint32_t entry)
 	{
-		auto l = GetLump(entry);
-		return l ? l->GetIndexNum() : 0;
+		return (entry < NumLumps) ? Entries[entry].ResourceID : -1;
+	}
+
+	const char* getName(uint32_t entry)
+	{
+		return (entry < NumLumps) ? Entries[entry].FileName : nullptr;
 	}
 
 	FileData Read(int entry)
@@ -255,11 +280,6 @@ public:
 		return fr.Read();
 	}
 
-	const char* getName(int entry)
-	{
-		auto l = GetLump(entry);
-		return l ? l->FullName : nullptr;
-	}
 	FCompressedBuffer GetRawData(int entry)
 	{
 		auto l = GetLump(entry);

@@ -70,6 +70,7 @@ FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
 
 bool FSSIFile::Open(int version, int EntryCount, LumpFilterInfo*)
 {
+	AllocateEntries(EntryCount*2);
 	NumLumps = EntryCount*2;
 	Lumps.Resize(EntryCount*2);
 
@@ -85,7 +86,30 @@ bool FSSIFile::Open(int version, int EntryCount, LumpFilterInfo*)
 		fn[strlength] = 0;
 		int flength = Reader.ReadInt32();
 
+		Entries[i].Position = j;
+		Entries[i].Length = flength;
+		Entries[i].Flags = 0;
+		Entries[i].Namespace = ns_global;
+		Entries[i].Method = METHOD_STORED;
+		Entries[i].ResourceID = -1;
+		Entries[i].FileName = NormalizeFileName(fn);
+		if (strstr(fn, ".GRP")) Entries[i].Flags |= RESFF_EMBEDDED;
 
+		// SSI files can swap the order of the extension's characters - but there's no reliable detection for this and it can be mixed inside the same container, 
+		// so we have no choice but to create another file record for the altered name.
+		std::swap(fn[strlength - 1], fn[strlength - 3]);
+
+		Entries[i + 1].Position = j;
+		Entries[i + 1].Length = flength;
+		Entries[i + 1].Flags = 0;
+		Entries[i + 1].Namespace = ns_global;
+		Entries[i + 1].ResourceID = -1;
+		Entries[i + 1].FileName = NormalizeFileName(fn);
+		Entries[i + 1].Method = METHOD_STORED;
+		if (strstr(fn, ".GRP")) Entries[i + 1].Flags |= RESFF_EMBEDDED;
+
+		// swap back...
+		std::swap(fn[strlength - 1], fn[strlength - 3]);
 		Lumps[i].LumpNameSetup(fn, stringpool);
 		Lumps[i].Position = j;
 		Lumps[i].LumpSize = flength;

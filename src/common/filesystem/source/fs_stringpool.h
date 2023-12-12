@@ -12,12 +12,12 @@ private:
 public:
 	~StringPool();
 	const char* Strdup(const char*);
+	void* Alloc(size_t size);
 
 protected:
 	struct Block;
 
 	Block *AddBlock(size_t size);
-	void *iAlloc(size_t size);
 
 	Block *TopBlock;
 	Block *FreeBlocks;

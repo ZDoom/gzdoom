@@ -143,6 +143,7 @@ bool FRFFFile::Open(LumpFilterInfo*)
 
 	Reader.Read(&header, sizeof(header));
 
+	AllocateEntries(LittleLong(header.NumLumps));
 	NumLumps = LittleLong(header.NumLumps);
 	header.DirOfs = LittleLong(header.DirOfs);
 	lumps = new RFFLump[header.NumLumps];
@@ -154,6 +155,23 @@ bool FRFFFile::Open(LumpFilterInfo*)
 
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
+		Entries[i].Position = LittleLong(lumps[i].FilePos);
+		Entries[i].Length = LittleLong(lumps[i].Size);
+		Entries[i].Flags = 0;
+		Entries[i].Method = METHOD_STORED;
+		if (lumps[i].Flags & 0x10)
+		{
+			Entries[i].Flags = RESFF_COMPRESSED;	// flags the lump as not directly usable
+			Entries[i].Method = METHOD_INVALID;
+		}
+		else
+		{
+			Entries[i].Flags = 0;
+			Entries[i].Method = METHOD_STORED;
+		}
+		Entries[i].Namespace = ns_global;
+		Entries[i].ResourceID = LittleLong(lumps[i].IndexNum);
+	
 		Lumps[i].Position = LittleLong(lumps[i].FilePos);
 		Lumps[i].LumpSize = LittleLong(lumps[i].Size);
 		Lumps[i].Owner = this;
@@ -174,6 +192,7 @@ bool FRFFFile::Open(LumpFilterInfo*)
 		name[len+3] = lumps[i].Extension[2];
 		name[len+4] = 0;
 		Lumps[i].LumpNameSetup(name, stringpool);
+		Entries[i].FileName = NormalizeFileName(name);
 	}
 	delete[] lumps;
 	GenerateHash();

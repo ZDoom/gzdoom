@@ -40,6 +40,7 @@
 #include "ancientzip.h"
 #include "fs_findfile.h"
 #include "fs_swap.h"
+#include "fs_stringpool.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -75,7 +76,21 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, ptrdi
 		break;
 	}
 
-	// Fixme: These should also use a stream
+	case METHOD_IMPLODE_0:
+	case METHOD_IMPLODE_2:
+	case METHOD_IMPLODE_4:
+	case METHOD_IMPLODE_6:
+	{
+		FZipExploder exploder;
+		if (exploder.Explode((unsigned char*)Cache, (unsigned)LumpSize, Reader, (unsigned)CompressedSize, Method - METHOD_IMPLODE_MIN) == -1)
+		{
+			// decompression failed so zero the cache.
+			memset(Cache, 0, LumpSize);
+		}
+		break;
+	}
+
+	// This can go away once we are done with FResourceLump
 	case METHOD_IMPLODE:
 	{
 		FZipExploder exploder;
@@ -311,6 +326,8 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 
 	dirptr = (char*)directory;
 	lump_p = Lumps;
+	AllocateEntries(NumLumps);
+	auto Entry = Entries;
 	for (uint32_t i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
@@ -399,6 +416,26 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			}
 		}
 
+		Entry->FileName = NormalizeFileName(name.c_str());
+		Entry->Length = UncompressedSize;
+		// The start of the Reader will be determined the first time it is accessed.
+		Entry->Flags = RESFF_FULLPATH | RESFF_NEEDFILESTART;
+		Entry->Method = uint8_t(zip_fh->Method);
+		if (Entry->Method != METHOD_STORED) Entry->Flags |= RESFF_COMPRESSED;
+		if (Entry->Method == METHOD_IMPLODE)
+		{
+			// merge the flags into the compression method to tag less data around.
+			if ((zip_fh->Flags & 6) == 2) Entry->Method = METHOD_IMPLODE_2;
+			else if ((zip_fh->Flags & 6) == 4) Entry->Method = METHOD_IMPLODE_4;
+			else if ((zip_fh->Flags & 6) == 6) Entry->Method = METHOD_IMPLODE_6;
+			else Entry->Method = METHOD_IMPLODE_0;
+		}
+		Entry->CRC32 = zip_fh->CRC32;
+		Entry->CompressedSize = CompressedSize;
+		Entry->Position = LocalHeaderOffset;
+
+		Entry++;
+
 		lump_p->LumpNameSetup(name.c_str(), stringpool);
 		lump_p->LumpSize = UncompressedSize;
 		lump_p->Owner = this;
@@ -407,6 +444,13 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		lump_p->NeedFileStart = true;
 		lump_p->Method = uint8_t(zip_fh->Method);
 		if (lump_p->Method != METHOD_STORED) lump_p->Flags |= LUMPF_COMPRESSED;
+		/*if (lump_p->Method == METHOD_IMPLODE)
+		{
+			// merge the flags into the compression method to tag less data around.
+			if ((zip_fh->Flags & 6) == 2) lump_p->Method = METHOD_IMPLODE_2;
+			if ((zip_fh->Flags & 6) == 4) lump_p->Method = METHOD_IMPLODE_4;
+			if ((zip_fh->Flags & 6) == 6) lump_p->Method = METHOD_IMPLODE_6;
+		}*/
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = CompressedSize;

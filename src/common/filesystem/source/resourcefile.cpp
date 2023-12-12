@@ -39,6 +39,8 @@
 #include "md5.hpp"
 #include "fs_stringpool.h"
 #include "files_internal.h"
+#include "unicode.h"
+#include "fs_findfile.h"
 
 namespace FileSys {
 	
@@ -347,11 +349,72 @@ FResourceFile::~FResourceFile()
 	if (!stringpool->shared) delete stringpool;
 }
 
+//==========================================================================
+//
+// normalize the visible file name in the system
+// to lowercase canonical precomposed Unicode.
+//
+//==========================================================================
+
+const char* FResourceFile::NormalizeFileName(const char* fn, int fallbackcp)
+{
+	if (!fn || !*fn) return "";
+	auto norm = tolower_normalize(fn);
+	if (!norm)
+	{
+		if (fallbackcp == 437)
+		{
+			std::vector<char> buffer;
+			ibm437_to_utf8(fn, buffer);
+			norm = tolower_normalize(buffer.data());
+		}
+		// maybe handle other codepages
+		else
+		{
+			// if the filename is not valid UTF-8, nuke all bytes larger than 0x80 so that we still got something semi-usable
+			std::string ffn = fn;
+			for (auto& c : ffn)
+			{
+				if (c & 0x80) c = '@';
+			}
+			norm = tolower_normalize(&ffn.front());
+		}
+	}
+	FixPathSeparator(norm);
+	auto pooled = stringpool->Strdup(norm);
+	free(norm);
+	return pooled;
+
+}
+
+//==========================================================================
+//
+// allocate the Entries array
+// this also uses the string pool to reduce maintenance
+//
+//==========================================================================
+
+void FResourceFile::AllocateEntries(int count)
+{
+	NumLumps = count;
+	Entries = (FResourceEntry*)stringpool->Alloc(count * sizeof(FResourceEntry));
+}
+
+
+//---------------------------------------------------
 int lumpcmp(const void * a, const void * b)
 {
 	FResourceLump * rec1 = (FResourceLump *)a;
 	FResourceLump * rec2 = (FResourceLump *)b;
 	return stricmp(rec1->getName(), rec2->getName());
+}
+
+int entrycmp(const void* a, const void* b)
+{
+	FResourceEntry* rec1 = (FResourceEntry*)a;
+	FResourceEntry* rec2 = (FResourceEntry*)b;
+	// we are comparing lowercase UTF-8 here 
+	return strcmp(rec1->FileName, rec2->FileName);
 }
 
 //==========================================================================
@@ -402,8 +465,12 @@ void FResourceFile::GenerateHash()
 
 void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter)
 {
-	// Entries in archives are sorted alphabetically
-	qsort(lumps, NumLumps, lumpsize, lumpcmp);
+	// only do this for archive types which contain full file names. All others are assumed to be pre-sorted.
+	//if (NumLumps < 2 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
+
+	// Entries in archives are sorted alphabetically (for now skip the sorting because both arrays might disagree due to file name postprocessing.)
+	//qsort(lumps, NumLumps, lumpsize, lumpcmp);
+	//qsort(Entries, NumLumps, sizeof(Entries[0]), entrycmp);
 	if (!filter) return;
 
 	// Filter out lumps using the same names as the Autoload.* sections
@@ -460,8 +527,10 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 			FResourceLump *lump = (FResourceLump *)lump_p;
 			assert(strnicmp(lump->FullName, filter.c_str(), filter.length()) == 0);
 			lump->LumpNameSetup(lump->FullName + filter.length(), nullptr);
+			Entries[i].FileName += filter.length();
 		}
 
+#if 0 // disabled until everything is clean again
 		// Move filtered lumps to the end of the lump list.
 		size_t count = (end - start) * lumpsize;
 		void *to = (uint8_t *)lumps + NumLumps * lumpsize - count;
@@ -481,6 +550,7 @@ int FResourceFile::FilterLumps(const std::string& filtername, void *lumps, size_
 
 			delete[] filteredlumps;
 		}
+#endif
 	}
 	return end - start;
 }

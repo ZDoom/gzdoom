@@ -37,6 +37,7 @@
 #include "resourcefile.h"
 #include "fs_filesystem.h"
 #include "fs_swap.h"
+#include "fs_stringpool.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -192,7 +193,36 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	Reader.Seek (InfoTableOfs, FileReader::SeekSet);
 	Reader.Read (fileinfo.Data(), NumLumps * sizeof(wadlump_t));
 
+	AllocateEntries(NumLumps);
 	Lumps.Resize(NumLumps);
+
+	for(uint32_t i = 0; i < NumLumps; i++)
+	{
+		// WAD only supports ASCII. It is also the only format which can use valid backslashes in its names.
+		char n[9];
+		int ishigh = 0;
+		for (int j = 0; j < 8; j++)
+		{
+			if (fileinfo[i].Name[j] & 0x80) ishigh |= 1 << j;
+			n[j] = tolower(fileinfo[i].Name[j]);
+		}
+		n[8] = 0;
+		if (ishigh == 1) n[0] &= 0x7f;
+		else if (ishigh > 1)
+		{
+			// This may not end up printing something proper because we do not know what encoding might have been used.
+			Printf(FSMessageLevel::Warning, "%s: Lump name %s contains invalid characters\n", FileName, Lumps[i].getName());
+		}
+
+		Entries[i].FileName = nullptr;
+		Entries[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
+		Entries[i].Length = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
+		Entries[i].Namespace = ns_global;
+		Entries[i].Flags = ishigh? RESFF_SHORTNAME | RESFF_COMPRESSED : RESFF_SHORTNAME;
+		Entries[i].Method = ishigh == 1? METHOD_LZSS : METHOD_STORED;
+		Entries[i].FileName = stringpool->Strdup(n);
+		// This doesn't set up the namespace yet.
+	}
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
@@ -238,6 +268,11 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 	SetNamespace("HI_START", "HI_END", ns_hires, Printf);
 	SetNamespace("VX_START", "VX_END", ns_voxels, Printf);
 	SkinHack(Printf);
+
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		Entries[i].Namespace = Lumps[i].Namespace;
+	}
 	return true;
 }
 

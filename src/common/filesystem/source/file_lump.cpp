@@ -68,6 +68,15 @@ FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
 
 bool FLumpFile::Open(LumpFilterInfo*)
 {
+	AllocateEntries(1);
+	Entries[0].FileName = NormalizeFileName(ExtractBaseName(FileName, true).c_str());
+	Entries[0].Namespace = ns_global;
+	Entries[0].ResourceID = -1;
+	Entries[0].Position = 0;
+	Entries[0].Length = Reader.GetLength();
+	Entries[0].Method = METHOD_STORED;
+	Entries[0].Flags = 0;
+
 	Lumps.Resize(1);
 	Lumps[0].LumpNameSetup(ExtractBaseName(FileName, true).c_str(), stringpool);
 	Lumps[0].Owner = this;

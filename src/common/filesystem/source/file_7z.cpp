@@ -38,6 +38,7 @@
 #include "7zCrc.h"
 #include "resourcefile.h"
 #include "fs_findfile.h"
+#include "unicode.h"
 
 
 namespace FileSys {
@@ -247,12 +248,13 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 	CSzArEx* const archPtr = &Archive->DB;
 
+	AllocateEntries(archPtr->NumFiles);
 	NumLumps = archPtr->NumFiles;
 	Lumps = new F7ZLump[NumLumps];
 
 	F7ZLump *lump_p = Lumps;
 	std::u16string nameUTF16;
-	std::string nameASCII;
+	std::vector<char> nameASCII;
 
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
@@ -273,15 +275,19 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		nameUTF16.resize((unsigned)nameLength);
 		nameASCII.resize((unsigned)nameLength);
-		// note that the file system is not equipped to handle non-ASCII, so don't bother with proper Unicode conversion here.
-		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
-		for (size_t c = 0; c < nameLength; ++c)
-		{
-			nameASCII[c] = tolower(static_cast<char>(nameUTF16[c]));
-		}
-		FixPathSeparator(&nameASCII.front());
 
-		lump_p->LumpNameSetup(nameASCII.c_str(), stringpool);
+		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
+		utf16_to_utf8((uint16_t*)nameUTF16.data(), nameASCII);
+
+		Entries[i].FileName = NormalizeFileName(nameASCII.data());
+		Entries[i].Length = SzArEx_GetFileSize(archPtr, i);
+		Entries[i].Flags = RESFF_FULLPATH|RESFF_COMPRESSED;
+		Entries[i].ResourceID = -1;
+		Entries[i].Namespace = ns_global;
+		Entries[i].Method = METHOD_INVALID;
+		Entries[i].Position = i;
+
+		lump_p->LumpNameSetup(nameASCII.data(), stringpool);
 		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
 		lump_p->Owner = this;
 		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;

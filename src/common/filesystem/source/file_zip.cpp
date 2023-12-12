@@ -37,7 +37,7 @@
 #include <stdexcept>
 #include "w_zip.h"
 #include "ancientzip.h"
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_findfile.h"
 #include "fs_swap.h"
 #include "fs_stringpool.h"
@@ -106,7 +106,7 @@ static uint32_t Zip_FindCentralDir(FileReader &fin, bool* zip64)
 //
 //==========================================================================
 
-class FZipFile : public FUncompressedFile
+class FZipFile : public FResourceFile
 {
 	void SetEntryAddress(uint32_t entry) override;
 
@@ -123,7 +123,7 @@ public:
 //==========================================================================
 
 FZipFile::FZipFile(const char * filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
+: FResourceFile(filename, file, sp)
 {
 }
 
@@ -376,6 +376,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 	free(directory);
 
 	GenerateHash();
+	PostProcessArchive(filter);
 	return true;
 }
 

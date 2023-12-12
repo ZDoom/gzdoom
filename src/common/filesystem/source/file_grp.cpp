@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_swap.h"
 
 namespace FileSys {
@@ -71,7 +71,7 @@ struct GrpLump
 //
 //==========================================================================
 
-class FGrpFile : public FUncompressedFile
+class FGrpFile : public FResourceFile
 {
 public:
 	FGrpFile(const char * filename, FileReader &file, StringPool* sp);
@@ -86,7 +86,7 @@ public:
 //==========================================================================
 
 FGrpFile::FGrpFile(const char *filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
+: FResourceFile(filename, file, sp)
 {
 }
 

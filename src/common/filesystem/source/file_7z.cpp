@@ -291,6 +291,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	}
 
 	GenerateHash();
+	PostProcessArchive(filter);
 	return true;
 }
 

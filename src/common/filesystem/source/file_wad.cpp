@@ -38,7 +38,7 @@
 #include "fs_filesystem.h"
 #include "fs_swap.h"
 #include "fs_stringpool.h"
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -64,7 +64,7 @@ struct wadlump_t
 //
 //==========================================================================
 
-class FWadFile : public FUncompressedFile
+class FWadFile : public FResourceFile
 {
 	bool IsMarker(int lump, const char *marker);
 	void SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, FileSystemMessageFunc Printf, bool flathack=false);
@@ -85,7 +85,7 @@ public:
 //==========================================================================
 
 FWadFile::FWadFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
+	: FResourceFile(filename, file, sp)
 {
 }
 

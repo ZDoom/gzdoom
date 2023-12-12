@@ -32,7 +32,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
 //==========================================================================
@@ -41,7 +41,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-class FLumpFile : public FUncompressedFile
+class FLumpFile : public FResourceFile
 {
 public:
 	FLumpFile(const char * filename, FileReader &file, StringPool* sp);
@@ -56,7 +56,7 @@ public:
 //==========================================================================
 
 FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
+	: FResourceFile(filename, file, sp)
 {
 }
 

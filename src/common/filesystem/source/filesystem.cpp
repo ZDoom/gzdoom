@@ -41,7 +41,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_filesystem.h"
 #include "fs_findfile.h"
 #include "md5.hpp"

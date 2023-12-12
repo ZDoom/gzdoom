@@ -34,7 +34,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_stringpool.h"
 #include "fs_swap.h"
 
@@ -47,7 +47,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-class FWHResFile : public FUncompressedFile
+class FWHResFile : public FResourceFile
 {
 	const char* BaseName;
 public:
@@ -63,7 +63,7 @@ public:
 //==========================================================================
 
 FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
+	: FResourceFile(filename, file, sp)
 {
 	BaseName = stringpool->Strdup(ExtractBaseName(filename, false).c_str());
 }

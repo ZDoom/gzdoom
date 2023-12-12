@@ -164,7 +164,7 @@ public:
 		return (entry < NumLumps) ? Entries[entry].Position : 0;
 	}
 
-	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true) = 0;
+	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true);
 
 	int GetEntryFlags(uint32_t entry)
 	{

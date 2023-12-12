@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
 //==========================================================================
@@ -42,7 +42,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-class FSSIFile : public FUncompressedFile
+class FSSIFile : public FResourceFile
 {
 public:
 	FSSIFile(const char * filename, FileReader &file, StringPool* sp);
@@ -57,7 +57,7 @@ public:
 //==========================================================================
 
 FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
+: FResourceFile(filename, file, sp)
 {
 }
 

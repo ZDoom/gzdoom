@@ -32,7 +32,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
 
@@ -63,7 +63,7 @@ struct dpackheader_t
 //
 //==========================================================================
 
-class FPakFile : public FUncompressedFile
+class FPakFile : public FResourceFile
 {
 public:
 	FPakFile(const char * filename, FileReader &file, StringPool* sp);
@@ -80,7 +80,7 @@ public:
 //==========================================================================
 
 FPakFile::FPakFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
+	: FResourceFile(filename, file, sp)
 {
 }
 
@@ -114,6 +114,7 @@ bool FPakFile::Open(LumpFilterInfo* filter)
 		Entries[i].FileName = NormalizeFileName(fileinfo[i].name);
 	}
 	GenerateHash();
+	PostProcessArchive(filter);
 	return true;
 }
 

@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_swap.h"
 
 namespace FileSys {
@@ -90,7 +90,7 @@ void BloodCrypt (void *data, int key, int len)
 //
 //==========================================================================
 
-class FRFFFile : public FUncompressedFile
+class FRFFFile : public FResourceFile
 {
 
 public:
@@ -106,7 +106,7 @@ public:
 //==========================================================================
 
 FRFFFile::FRFFFile(const char *filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
+: FResourceFile(filename, file, sp)
 {
 }
 

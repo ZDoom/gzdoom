@@ -35,7 +35,7 @@
 */
 
 #include <miniz.h>
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "md5.hpp"
 #include "fs_stringpool.h"
 #include "files_internal.h"
@@ -335,11 +335,10 @@ void FResourceFile::GenerateHash()
 void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 {
 	// only do this for archive types which contain full file names. All others are assumed to be pre-sorted.
-	//if (NumLumps < 2 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
+	if (NumLumps < 2 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
 
-	// Entries in archives are sorted alphabetically (for now skip the sorting because both arrays might disagree due to file name postprocessing.)
-	//qsort(lumps, NumLumps, lumpsize, lumpcmp);
-	//qsort(Entries, NumLumps, sizeof(Entries[0]), entrycmp);
+	// Entries in archives are sorted alphabetically.
+	qsort(Entries, NumLumps, sizeof(Entries[0]), entrycmp);
 	if (!filter) return;
 
 	// Filter out lumps using the same names as the Autoload.* sections
@@ -536,25 +535,11 @@ int FResourceFile::FindEntry(const char *name)
 
 //==========================================================================
 //
-// Base class for uncompressed resource files
-//
-//==========================================================================
-
-FUncompressedFile::FUncompressedFile(const char *filename, StringPool* sp)
-: FResourceFile(filename, sp)
-{}
-
-FUncompressedFile::FUncompressedFile(const char *filename, FileReader &r, StringPool* sp)
-	: FResourceFile(filename, r, sp)
-{}
-
-//==========================================================================
-//
 // Caches a lump's content and increases the reference counter
 //
 //==========================================================================
 
-FileReader FUncompressedFile::GetEntryReader(uint32_t entry, bool newreader)
+FileReader FResourceFile::GetEntryReader(uint32_t entry, bool newreader)
 {
 	FileReader fr;
 	if (entry < NumLumps)

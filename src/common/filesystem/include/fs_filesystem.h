@@ -96,6 +96,7 @@ public:
 	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
 	FileReader OpenFileReader(const char* name);
+	FileReader ReopenFileReader(const char* name, bool alwayscache = false);
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names

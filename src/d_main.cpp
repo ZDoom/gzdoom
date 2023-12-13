@@ -4009,3 +4009,14 @@ CCMD(fs_dir)
 		Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s%-64s %-15s (%5d) %10d %s %s\n", hidden ? TEXTCOLOR_RED : TEXTCOLOR_UNTRANSLATED, fn1, fns, fnid, length, container, hidden ? "(h)" : "");
 	}
 }
+
+CCMD(type)
+{
+	if (argv.argc() < 2) return;
+	int lump = fileSystem.CheckNumForFullName(argv[1]);
+	if (lump >= 0)
+	{
+		auto data = fileSystem.ReadFile(lump);
+		Printf("%.*s\n", data.size(), data.string());
+	}
+}

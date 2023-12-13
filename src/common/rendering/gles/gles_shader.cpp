@@ -383,11 +383,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump.GetChars(), 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump.GetChars());
-	auto vp_data = fileSystem.ReadFile(vp_lump);
 
 	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump.GetChars(), 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump.GetChars());
-	auto fp_data = fileSystem.ReadFile(fp_lump);
 
 
 
@@ -422,7 +420,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		{
 			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump.GetChars());
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump.GetChars());
-			auto ppf = fileSystem.ReadFile(pp_lump);
 			FString pp_data = GetStringFromLump(pp_lump);
 
 			if (pp_data.IndexOf("ProcessMaterial") < 0 && pp_data.IndexOf("SetupMaterial") < 0)

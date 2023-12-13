@@ -475,7 +475,6 @@ FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 {
 	int lump = fileSystem.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	auto data = fileSystem.ReadFile(lump);
 	return GetStringFromLump(lump);
 }
 

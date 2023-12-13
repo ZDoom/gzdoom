@@ -515,7 +515,7 @@ public:
 		}
 		else if (soundtrack >= 0)
 		{
-			FileReader reader = fileSystem.OpenFileReader(soundtrack);
+			FileReader reader = fileSystem.ReopenFileReader(soundtrack);
 			if (reader.isOpen())
 			{
 				MusicStream = ZMusic_OpenSong(GetMusicReader(reader), MDEV_DEFAULT, nullptr);
@@ -838,10 +838,10 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 	{
 		auto fn = StripExtension(filename);
 		DefaultExtension(fn, ".ivf");
-		fr = fileSystem.OpenFileReader(fn.GetChars());
+		fr = fileSystem.ReopenFileReader(fn.GetChars());
 	}
 
-	if (!fr.isOpen()) fr = fileSystem.OpenFileReader(filename);
+	if (!fr.isOpen()) fr = fileSystem.ReopenFileReader(filename);
 	if (!fr.isOpen())
 	{
 		size_t nLen = strlen(filename);
@@ -849,7 +849,7 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 		if (nLen >= 3 && isalpha(filename[0]) && filename[1] == ':' && filename[2] == '/')
 		{
 			filename += 3;
-			fr = fileSystem.OpenFileReader(filename);
+			fr = fileSystem.ReopenFileReader(filename);
 		}
 		if (!fr.isOpen())
 		{

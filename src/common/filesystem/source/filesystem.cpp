@@ -1329,9 +1329,18 @@ FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 
 FileReader FileSystem::OpenFileReader(const char* name)
 {
+	FileReader fr;
 	auto lump = CheckNumForFullName(name);
-	if (lump < 0) return FileReader();
-	else return OpenFileReader(lump);
+	if (lump >= 0) fr = OpenFileReader(lump);
+	return fr;
+}
+
+FileReader FileSystem::ReopenFileReader(const char* name, bool alwayscache)
+{
+	FileReader fr;
+	auto lump = CheckNumForFullName(name);
+	if (lump >= 0) fr = ReopenFileReader(lump, alwayscache);
+	return fr;
 }
 
 //==========================================================================

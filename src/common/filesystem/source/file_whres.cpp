@@ -43,43 +43,18 @@ namespace FileSys {
 
 //==========================================================================
 //
-// WH resource file
-//
-//==========================================================================
-
-class FWHResFile : public FResourceFile
-{
-	const char* BaseName;
-public:
-	FWHResFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
-	: FResourceFile(filename, file, sp)
-{
-	BaseName = stringpool->Strdup(ExtractBaseName(filename, false).c_str());
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FWHResFile::Open(LumpFilterInfo*)
+bool OpenWHRes(FResourceFile* file, LumpFilterInfo*)
 {
 	uint32_t directory[1024];
 
-	Reader.Seek(-4096, FileReader::SeekEnd);
-	Reader.Read(directory, 4096);
+	auto BaseName = ExtractBaseName(file->GetFileName());
+	auto Reader = file->GetContainerReader();
+	Reader->Seek(-4096, FileReader::SeekEnd);
+	Reader->Read(directory, 4096);
 
 	int nl =1024/3;
 	
@@ -93,8 +68,8 @@ bool FWHResFile::Open(LumpFilterInfo*)
 			break;
 		}
 	}
-	AllocateEntries(k);
-	NumLumps = k;
+	auto Entries = file->AllocateEntries(k);
+	auto NumLumps = k;
 
 	int i = 0;
 	for(k = 0; k < NumLumps; k++)
@@ -103,8 +78,7 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		uint32_t length = LittleLong(directory[k*3+1]);
 		char num[6];
 		snprintf(num, 6, "/%04d", k);
-		std::string synthname = BaseName;
-		synthname += num;
+		std::string synthname = BaseName + num;
 		
 		Entries[i].Position = offset;
 		Entries[i].Length = length;
@@ -112,7 +86,7 @@ bool FWHResFile::Open(LumpFilterInfo*)
 		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
-		Entries[i].FileName = NormalizeFileName(synthname.c_str());
+		Entries[i].FileName = file->NormalizeFileName(synthname.c_str());
 		i++;
 	}
 	return true;
@@ -145,8 +119,8 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo
 			if (offset != checkpos || length == 0 || offset + length >= (size_t)size - 4096 ) return nullptr;
 			checkpos += (length+4095) / 4096;
 		}
-		auto rf = new FWHResFile(filename, file, sp);
-		if (rf->Open(filter)) return rf;
+		auto rf = new FResourceFile(filename, file, sp);
+		if (OpenWHRes(rf, filter)) return rf;
 		file = rf->Destroy();
 	}
 	return NULL;

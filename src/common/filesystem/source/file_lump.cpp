@@ -37,46 +37,20 @@
 namespace FileSys {
 //==========================================================================
 //
-// Single lump
-//
-//==========================================================================
-
-class FLumpFile : public FResourceFile
-{
-public:
-	FLumpFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// FLumpFile::FLumpFile
-//
-//==========================================================================
-
-FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
-	: FResourceFile(filename, file, sp)
-{
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FLumpFile::Open(LumpFilterInfo*)
+static bool OpenLump(FResourceFile* file, LumpFilterInfo*)
 {
-	AllocateEntries(1);
-	Entries[0].FileName = NormalizeFileName(ExtractBaseName(FileName, true).c_str());
+	auto Entries = file->AllocateEntries(1);
+	Entries[0].FileName = file->NormalizeFileName(ExtractBaseName(file->GetFileName(), true).c_str());
 	Entries[0].Namespace = ns_global;
 	Entries[0].ResourceID = -1;
 	Entries[0].Position = 0;
-	Entries[0].Length = Reader.GetLength();
+	Entries[0].Length = file->GetContainerReader()->GetLength();
 	Entries[0].Method = METHOD_STORED;
 	Entries[0].Flags = 0;
-	NumLumps = 1;
 	return true;
 }
 
@@ -89,8 +63,8 @@ bool FLumpFile::Open(LumpFilterInfo*)
 FResourceFile *CheckLump(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	// always succeeds
-	auto rf = new FLumpFile(filename, file, sp);
-	if (rf->Open(filter)) return rf;
+	auto rf = new FResourceFile(filename, file, sp);
+	if (OpenLump(rf, filter)) return rf;
 	file = rf->Destroy();
 	return NULL;
 }

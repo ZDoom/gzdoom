@@ -298,22 +298,22 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 //
 //==========================================================================
 
-FResourceFile* CheckLump(const char* filename, FileReader& file, LumpFilterInfo*, FileSystemMessageFunc Printf, StringPool* sp);
-
 int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, int flags)
 {
 	FileReader fr;
 	fr.OpenMemoryArray((uint8_t*)data, size);
 
-	// just wrap this into a single lump resource file (should be done a little better later.)
-	auto rf = CheckLump(name, fr, nullptr, nullptr, stringpool);
-	if (rf)
-	{
-		Files.push_back(rf);
-		FileInfo.resize(FileInfo.size() + 1);
-		FileSystem::LumpRecord* lump_p = &FileInfo.back();
-		lump_p->SetFromLump(rf, 0, (int)Files.size() - 1, stringpool);
-	}
+	// wrap this into a single lump resource file (should be done a little better later.)
+	auto rf = new FResourceFile(name, fr, stringpool);
+	auto Entries = rf->AllocateEntries(1);
+	Entries[0].FileName = rf->NormalizeFileName(ExtractBaseName(name, true).c_str());
+	Entries[0].ResourceID = -1;
+	Entries[0].Length = size;
+
+	Files.push_back(rf);
+	FileInfo.resize(FileInfo.size() + 1);
+	FileSystem::LumpRecord* lump_p = &FileInfo.back();
+	lump_p->SetFromLump(rf, 0, (int)Files.size() - 1, stringpool);
 	return (int)FileInfo.size() - 1;
 }
 

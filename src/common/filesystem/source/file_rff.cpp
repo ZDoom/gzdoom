@@ -86,50 +86,25 @@ void BloodCrypt (void *data, int key, int len)
 
 //==========================================================================
 //
-// Blood RFF file
-//
-//==========================================================================
-
-class FRFFFile : public FResourceFile
-{
-
-public:
-	FRFFFile(const char * filename, FileReader &file, StringPool* sp);
-	virtual bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
 // Initializes a Blood RFF file
 //
 //==========================================================================
 
-FRFFFile::FRFFFile(const char *filename, FileReader &file, StringPool* sp)
-: FResourceFile(filename, file, sp)
-{
-}
-
-//==========================================================================
-//
-// Initializes a Blood RFF file
-//
-//==========================================================================
-
-bool FRFFFile::Open(LumpFilterInfo*)
+static bool OpenRFF(FResourceFile* file, LumpFilterInfo*)
 {
 	RFFLump *lumps;
 	RFFInfo header;
 
-	Reader.Read(&header, sizeof(header));
+	auto Reader = file->GetContainerReader();
+	Reader->Read(&header, sizeof(header));
 
-	AllocateEntries(LittleLong(header.NumLumps));
-	NumLumps = LittleLong(header.NumLumps);
+	uint32_t NumLumps = LittleLong(header.NumLumps);
+	auto Entries = file->AllocateEntries(NumLumps);
 	header.DirOfs = LittleLong(header.DirOfs);
 	lumps = new RFFLump[header.NumLumps];
-	Reader.Seek (header.DirOfs, FileReader::SeekSet);
-	Reader.Read (lumps, header.NumLumps * sizeof(RFFLump));
-	BloodCrypt (lumps, header.DirOfs, header.NumLumps * sizeof(RFFLump));
+	Reader->Seek (LittleLong(header.DirOfs), FileReader::SeekSet);
+	Reader->Read (lumps, NumLumps * sizeof(RFFLump));
+	BloodCrypt (lumps, LittleLong(header.DirOfs), NumLumps * sizeof(RFFLump));
 
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
@@ -161,10 +136,10 @@ bool FRFFFile::Open(LumpFilterInfo*)
 		name[len+2] = lumps[i].Extension[1];
 		name[len+3] = lumps[i].Extension[2];
 		name[len+4] = 0;
-		Entries[i].FileName = NormalizeFileName(name);
+		Entries[i].FileName = file->NormalizeFileName(name);
 	}
 	delete[] lumps;
-	GenerateHash();
+	file->GenerateHash();
 	return true;
 }
 
@@ -185,8 +160,8 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
-			auto rf = new FRFFFile(filename, file, sp);
-			if (rf->Open(filter)) return rf;
+			auto rf = new FResourceFile(filename, file, sp);
+			if (OpenRFF(rf, filter)) return rf;
 			file = rf->Destroy();
 		}
 	}

@@ -59,49 +59,23 @@ struct dpackheader_t
 
 //==========================================================================
 //
-// Wad file
-//
-//==========================================================================
-
-class FPakFile : public FResourceFile
-{
-public:
-	FPakFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// FWadFile::FWadFile
-//
-// Initializes a WAD file
-//
-//==========================================================================
-
-FPakFile::FPakFile(const char *filename, FileReader &file, StringPool* sp)
-	: FResourceFile(filename, file, sp)
-{
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FPakFile::Open(LumpFilterInfo* filter)
+static bool OpenPak(FResourceFile* file, LumpFilterInfo* filter)
 {
 	dpackheader_t header;
 
-	Reader.Read(&header, sizeof(header));
-	AllocateEntries(header.dirlen / sizeof(dpackfile_t));
-	NumLumps = LittleLong(header.dirlen) / sizeof(dpackfile_t);
+	auto Reader = file->GetContainerReader();
+	Reader->Read(&header, sizeof(header));
+	uint32_t NumLumps = header.dirlen / sizeof(dpackfile_t);
+	auto Entries = file->AllocateEntries(NumLumps);
 	header.dirofs = LittleLong(header.dirofs);
 
 	TArray<dpackfile_t> fileinfo(NumLumps, true);
-	Reader.Seek (header.dirofs, FileReader::SeekSet);
-	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
+	Reader->Seek (header.dirofs, FileReader::SeekSet);
+	Reader->Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
@@ -111,10 +85,10 @@ bool FPakFile::Open(LumpFilterInfo* filter)
 		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
-		Entries[i].FileName = NormalizeFileName(fileinfo[i].name);
+		Entries[i].FileName = file->NormalizeFileName(fileinfo[i].name);
 	}
-	GenerateHash();
-	PostProcessArchive(filter);
+	file->GenerateHash();
+	file->PostProcessArchive(filter);
 	return true;
 }
 
@@ -136,8 +110,8 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
-			auto rf = new FPakFile(filename, file, sp);
-			if (rf->Open(filter)) return rf;
+			auto rf = new FResourceFile(filename, file, sp);
+			if (OpenPak(rf, filter)) return rf;
 			file = rf->Destroy();
 		}
 	}

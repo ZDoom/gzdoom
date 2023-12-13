@@ -270,11 +270,12 @@ const char* FResourceFile::NormalizeFileName(const char* fn, int fallbackcp)
 //
 //==========================================================================
 
-void FResourceFile::AllocateEntries(int count)
+FResourceEntry* FResourceFile::AllocateEntries(int count)
 {
 	NumLumps = count;
 	Entries = (FResourceEntry*)stringpool->Alloc(count * sizeof(FResourceEntry));
 	memset(Entries, 0, count * sizeof(FResourceEntry));
+	return Entries;
 }
 
 

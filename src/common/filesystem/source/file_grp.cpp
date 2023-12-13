@@ -67,45 +67,21 @@ struct GrpLump
 
 //==========================================================================
 //
-// Build GRP file
-//
-//==========================================================================
-
-class FGrpFile : public FResourceFile
-{
-public:
-	FGrpFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// Initializes a Build GRP file
-//
-//==========================================================================
-
-FGrpFile::FGrpFile(const char *filename, FileReader &file, StringPool* sp)
-: FResourceFile(filename, file, sp)
-{
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FGrpFile::Open(LumpFilterInfo* filter)
+static bool OpenGrp(FResourceFile* file, LumpFilterInfo* filter)
 {
 	GrpHeader header;
 
-	Reader.Read(&header, sizeof(header));
-	AllocateEntries(header.NumLumps);
-	NumLumps = LittleLong(header.NumLumps);
+	auto Reader = file->GetContainerReader();
+	Reader->Read(&header, sizeof(header));
+	uint32_t NumLumps = LittleLong(header.NumLumps);
+	auto Entries = file->AllocateEntries(NumLumps);
 
 	GrpLump *fileinfo = new GrpLump[NumLumps];
-	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
+	Reader->Read (fileinfo, NumLumps * sizeof(GrpLump));
 
 	int Position = sizeof(GrpHeader) + NumLumps * sizeof(GrpLump);
 
@@ -119,9 +95,9 @@ bool FGrpFile::Open(LumpFilterInfo* filter)
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
-		Entries[i].FileName = NormalizeFileName(fileinfo[i].Name);
+		Entries[i].FileName = file->NormalizeFileName(fileinfo[i].Name);
 	}
-	GenerateHash();
+	file->GenerateHash();
 	delete[] fileinfo;
 	return true;
 }
@@ -144,12 +120,12 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
-			auto rf = new FGrpFile(filename, file, sp);
-			if (rf->Open(filter)) return rf;
+			auto rf = new FResourceFile(filename, file, sp);
+			if (OpenGrp(rf, filter)) return rf;
 			file = rf->Destroy();
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 }

@@ -108,6 +108,12 @@ struct FResourceEntry
 class FResourceFile
 {
 public:
+	FResourceFile(const char* filename, StringPool* sp);
+	FResourceFile(const char* filename, FileReader& r, StringPool* sp);
+	const char* NormalizeFileName(const char* fn, int fallbackcp = 0);
+	FResourceEntry* AllocateEntries(int count);
+	void GenerateHash();
+	void PostProcessArchive(LumpFilterInfo* filter);
 protected:
 	FileReader Reader;
 	const char* FileName;
@@ -116,15 +122,7 @@ protected:
 	char Hash[48];
 	StringPool* stringpool;
 
-	FResourceFile(const char *filename, StringPool* sp);
-	FResourceFile(const char *filename, FileReader &r, StringPool* sp);
-
-	const char* NormalizeFileName(const char* fn, int fallbackcp = 0);
-	void AllocateEntries(int count);
-
 	// for archives that can contain directories
-	void GenerateHash();
-	void PostProcessArchive(LumpFilterInfo *filter);
 	virtual void SetEntryAddress(uint32_t entry)
 	{
 		Entries[entry].Flags &= ~RESFF_NEEDFILESTART;

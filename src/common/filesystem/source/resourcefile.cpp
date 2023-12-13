@@ -45,6 +45,18 @@
 
 namespace FileSys {
 	
+// this is for restricting shared file readers to the main thread.
+thread_local bool mainThread;
+void SetMainThread()
+{
+	// only set the global flag on the first thread calling this.
+	static bool done = false;
+	if (!done)
+	{
+		mainThread = done = true;
+	}
+}
+
 std::string ExtractBaseName(const char* path, bool include_extension)
 {
 	const char* src, * dot;
@@ -553,6 +565,8 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 		}
 		if (!(Entries[entry].Flags & RESFF_COMPRESSED))
 		{
+			if (readertype == READER_SHARED && mainThread)
+				readertype = READER_NEW;
 			if (readertype == READER_SHARED)
 			{
 				fr.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].Length);
@@ -571,7 +585,7 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 		else
 		{
 			FileReader fri;
-			if (readertype == READER_NEW) fri.OpenFile(FileName, Entries[entry].Position, Entries[entry].CompressedSize);
+			if (readertype == READER_NEW || !mainThread) fri.OpenFile(FileName, Entries[entry].Position, Entries[entry].CompressedSize);
 			else fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
 			int flags = DCF_TRANSFEROWNER | DCF_EXCEPTIONS;
 			if (readertype == READER_CACHED) flags |= DCF_CACHED;

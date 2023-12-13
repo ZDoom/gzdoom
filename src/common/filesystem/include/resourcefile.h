@@ -107,6 +107,8 @@ struct FResourceEntry
 	int16_t Namespace;
 };
 
+void SetMainThread();
+
 class FResourceFile
 {
 public:

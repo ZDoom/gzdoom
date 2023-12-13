@@ -245,6 +245,8 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 {
 	int numfiles;
 
+	// the first call here will designate a main thread which may use shared file readers. All other thewads have to open new file handles.
+	SetMainThread();
 	// open all the files, load headers, and count lumps
 	DeleteAll();
 	numfiles = 0;

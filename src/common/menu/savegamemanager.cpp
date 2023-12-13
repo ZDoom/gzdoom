@@ -317,14 +317,9 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		if (pic >= 0)
 		{
 			FileReader picreader;
-
-			picreader.OpenMemoryArray([=](std::vector<uint8_t>& array)
-				{
-					auto rd = resf->GetEntryReader(pic, false);
-					array.resize(resf->Length(pic));
-					rd.Read(array.data(), array.size());
-					return true;
-				});
+			// we must create a memory reader copy of the PNG if we want to close the savegame file here.
+			auto rd = resf->Read(pic);
+			picreader.OpenMemoryArray(rd);
 			PNGHandle *png = M_VerifyPNG(picreader);
 			if (png != nullptr)
 			{

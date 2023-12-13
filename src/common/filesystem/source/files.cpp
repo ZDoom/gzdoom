@@ -399,13 +399,6 @@ bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(std::vector<uint8_t>& data)
-{
-	Close();
-	if (data.size() > 0) mReader = new MemoryArrayReader<std::vector<uint8_t>>(data);
-	return true;
-}
-
 bool FileReader::OpenMemoryArray(FileData& data)
 {
 	Close();
@@ -413,23 +406,6 @@ bool FileReader::OpenMemoryArray(FileData& data)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter)
-{
-	auto reader = new MemoryArrayReader<std::vector<uint8_t>>(nullptr, 0);
-	if (getter(reader->GetArray()))
-	{
-		Close();
-		reader->UpdateBuffer();
-		mReader = reader;
-		return true;
-	}
-	else
-	{
-		// This will keep the old buffer, if one existed
-		delete reader;
-		return false;
-	}
-}
 
 
 //==========================================================================

@@ -236,7 +236,6 @@ public:
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
 	bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
 	bool OpenMemoryArray(FileData& data);	// take the given array
-	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
 
 	Size Tell() const
 	{

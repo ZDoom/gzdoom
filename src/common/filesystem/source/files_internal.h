@@ -40,6 +40,8 @@ public:
 	BufferingReader(FileReaderInterface* base)
 		: baseReader(base)
 	{
+		Length = base->Length;
+		buf.resize(Length);
 	}
 
 	ptrdiff_t Seek(ptrdiff_t offset, int origin) override;

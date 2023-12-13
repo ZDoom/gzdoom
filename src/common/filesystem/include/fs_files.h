@@ -73,7 +73,7 @@ public:
 };
 
 // Zip compression methods, extended by some internal types to be passed to OpenDecompressor
-enum
+enum ECompressionMethod
 {
 	METHOD_STORED = 0,
 	METHOD_SHRINK = 1,
@@ -94,6 +94,13 @@ enum
 	METHOD_IMPLODE_MAX = 1006,
 	METHOD_INVALID = 0x7fff,
 	METHOD_TRANSFEROWNER = 0x8000,
+};
+
+enum EDecompressFlags
+{
+	DCF_TRANSFEROWNER = 1,
+	DCF_SEEKABLE = 2,
+	DCF_EXCEPTIONS = 4
 };
 
 class FileReader;
@@ -283,7 +290,7 @@ public:
 	bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
 	bool OpenMemoryArray(FileData& data);	// take the given array
 	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenDecompressor(FileReader &parent, Size length, int method, int flags = 0);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const
 	{

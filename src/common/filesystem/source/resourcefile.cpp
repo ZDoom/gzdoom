@@ -564,7 +564,7 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, bool newreader)
 		{
 			FileReader fri;
 			fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
-			fr.OpenDecompressor(fri, Entries[entry].Length, Entries[entry].Method | METHOD_TRANSFEROWNER, true, true);
+			fr.OpenDecompressor(fri, Entries[entry].Length, Entries[entry].Method, FileSys::DCF_TRANSFEROWNER | FileSys::DCF_SEEKABLE | FileSys::DCF_EXCEPTIONS);
 		}
 	}
 	return fr;

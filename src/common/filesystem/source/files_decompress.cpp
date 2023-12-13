@@ -848,14 +848,16 @@ public:
 };
 
 
-bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions)
+bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, int flags)
 {
 	FileReaderInterface* fr = nullptr;
 	DecompressorBase* dec = nullptr;
 	try
 	{
 		FileReader* p = &parent;
-		switch (method & ~METHOD_TRANSFEROWNER)
+		bool exceptions = !!(flags & DCF_EXCEPTIONS);
+
+		switch (method)
 		{
 		case METHOD_DEFLATE:
 		case METHOD_ZLIB:
@@ -975,13 +977,13 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 		}
 		if (dec)
 		{
-			if (method & METHOD_TRANSFEROWNER)
+			if (flags & DCF_TRANSFEROWNER)
 			{
 				dec->SetOwnsReader();
 			}
 			dec->Length = length;
 		}
-		if (!seekable)
+		if (!(flags & DCF_SEEKABLE))
 		{
 			Close();
 			mReader = fr;
@@ -1003,16 +1005,17 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, b
 
 bool FCompressedBuffer::Decompress(char* destbuffer)
 {
-	FileReader mr;
-	mr.OpenMemory(mBuffer, mCompressedSize);
 	if (mMethod == METHOD_STORED)
 	{
-		return mr.Read(destbuffer, mSize) != mSize;
+		memcpy(destbuffer, mBuffer, mSize);
+		return true;
 	}
 	else
 	{
+		FileReader mr;
+		mr.OpenMemory(mBuffer, mCompressedSize);
 		FileReader frz;
-		if (frz.OpenDecompressor(mr, mSize, mMethod, false, false))
+		if (frz.OpenDecompressor(mr, mSize, mMethod))
 		{
 			return frz.Read(destbuffer, mSize) != mSize;
 		}

@@ -64,7 +64,7 @@ class FDirectory : public FResourceFile
 public:
 	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	FileReader GetEntryReader(uint32_t entry, bool newreader = true) override;
+	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
 
@@ -162,13 +162,18 @@ bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-FileReader FDirectory::GetEntryReader(uint32_t entry, bool newreader)
+FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 {
 	FileReader fr;
 	if (entry < NumLumps)
 	{
 		std::string fn = mBasePath; fn += Entries[entry].FileName;
 		fr.OpenFile(fn.c_str());
+		if (readertype == READER_CACHED)
+		{
+			auto data = fr.Read();
+			fr.OpenMemoryArray(data);
+		}
 	}
 	return fr;
 }

@@ -86,6 +86,14 @@ enum ELumpFlags
 	RESFF_NEEDFILESTART = 32,	// The real position is not known yet and needs to be calculated on access
 };
 
+enum EReaderType
+{
+	READER_SHARED = 0,	// returns a view into the parent's reader.
+	READER_NEW = 1,		// opens a new file handle
+	READER_CACHED = 2,	// returns a MemoryArrayReader
+	READERFLAG_SEEKABLE = 1	// ensure the reader is seekable.
+};
+
 struct FResourceEntry
 {
 	size_t Length;
@@ -156,7 +164,8 @@ public:
 		return (entry < NumLumps) ? Entries[entry].Position : 0;
 	}
 
-	virtual FileReader GetEntryReader(uint32_t entry, bool newreader = true);
+	// default is the safest reader type.
+	virtual FileReader GetEntryReader(uint32_t entry, int readertype = READER_NEW, int flags = READERFLAG_SEEKABLE);
 
 	int GetEntryFlags(uint32_t entry)
 	{
@@ -180,8 +189,8 @@ public:
 
 	virtual FileData Read(int entry)
 	{
-		auto fr = GetEntryReader(entry, false);
-		return fr.Read();
+		auto fr = GetEntryReader(entry, READER_SHARED, 0);
+		return fr.Read(entry < NumLumps ? Entries[entry].Length : 0);
 	}
 
 	virtual FCompressedBuffer GetRawData(uint32_t entry);

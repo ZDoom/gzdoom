@@ -218,7 +218,7 @@ FileReader FZipPatReader::OpenFile(const char *name)
 		auto lump = resf->FindEntry(name);
 		if (lump >= 0)
 		{
-			return resf->GetEntryReader(lump);
+			return resf->GetEntryReader(lump, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
 		}
 	}
 	fr.OpenFile(name);

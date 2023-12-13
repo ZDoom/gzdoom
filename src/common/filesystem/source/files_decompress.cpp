@@ -940,7 +940,7 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 				return false;
 			}
 			fr = new MemoryArrayReader(buffer);
-			flags &= ~DCF_SEEKABLE;
+			flags &= ~(DCF_SEEKABLE | DCF_CACHED);
 			break;
 		}
 
@@ -949,7 +949,7 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 			FileData buffer(nullptr, length);
 			ShrinkLoop(buffer.writable(), length, *p, p->GetLength()); // this never fails.
 			fr = new MemoryArrayReader(buffer);
-			flags &= ~DCF_SEEKABLE;
+			flags &= ~(DCF_SEEKABLE | DCF_CACHED);
 			break;
 		}
 
@@ -965,7 +965,7 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 				bufr[i] ^= i >> 1;
 			}
 			fr = new MemoryArrayReader(buffer);
-			flags &= ~DCF_SEEKABLE;
+			flags &= ~(DCF_SEEKABLE | DCF_CACHED);
 			break;
 		}
 
@@ -980,7 +980,14 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 			}
 			dec->Length = length;
 		}
-		if ((flags & DCF_SEEKABLE))
+		if ((flags & DCF_CACHED))
+		{
+			// read everything into a MemoryArrayReader.
+			FileData data(nullptr, length);
+			fr->Read(data.writable(), length);
+			fr = new MemoryArrayReader(data);
+		}
+		else if ((flags & DCF_SEEKABLE))
 		{
 			// create a wrapper that can buffer the content so that seeking is possible
 			fr = new BufferingReader(fr);

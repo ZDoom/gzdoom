@@ -31,7 +31,8 @@ enum EDecompressFlags
 {
 	DCF_TRANSFEROWNER = 1,
 	DCF_SEEKABLE = 2,
-	DCF_EXCEPTIONS = 4
+	DCF_EXCEPTIONS = 4,
+	DCF_CACHED = 8,
 };
 
 bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size length, int method, int flags = 0);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.

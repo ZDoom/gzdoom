@@ -180,7 +180,7 @@ public:
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
 	FileData Read(int entry) override;
-	FileReader GetEntryReader(uint32_t entry, bool) override;
+	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
 
@@ -335,7 +335,7 @@ FileData F7ZFile::Read(int entry)
 //
 //==========================================================================
 
-FileReader F7ZFile::GetEntryReader(uint32_t entry, bool)
+FileReader F7ZFile::GetEntryReader(uint32_t entry, int, int)
 {
 	FileReader fr;
 	if (entry < 0 || entry >= NumLumps) return fr;

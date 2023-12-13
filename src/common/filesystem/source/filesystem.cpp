@@ -396,7 +396,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 				std::string path = filename;
 				path += ':';
 				path += resfile->getName(i);
-				auto embedded = resfile->GetEntryReader(i, true);
+				auto embedded = resfile->GetEntryReader(i, READER_NEW, READERFLAG_SEEKABLE);
 				AddFile(path.c_str(), &embedded, filter, Printf, hashfile);
 			}
 		}
@@ -428,7 +428,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 				int flags = resfile->GetEntryFlags(i);
 				if (!(flags & RESFF_EMBEDDED))
 				{
-					auto reader = resfile->GetEntryReader(i, true);
+					auto reader = resfile->GetEntryReader(i, READER_SHARED, 0);
 					md5Hash(filereader, cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -1306,7 +1306,7 @@ FileData FileSystem::ReadFile (int lump)
 //==========================================================================
 
 
-FileReader FileSystem::OpenFileReader(int lump)
+FileReader FileSystem::OpenFileReader(int lump, int readertype, int readerflags)
 {
 	if ((unsigned)lump >= (unsigned)FileInfo.size())
 	{
@@ -1314,18 +1314,7 @@ FileReader FileSystem::OpenFileReader(int lump)
 	}
 
 	auto file = FileInfo[lump].resfile;
-	return file->GetEntryReader(FileInfo[lump].resindex, false);
-}
-
-FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
-{
-	if ((unsigned)lump >= (unsigned)FileInfo.size())
-	{
-		throw FileSystemException("ReopenFileReader: %u >= NumEntries", lump);
-	}
-
-	auto file = FileInfo[lump].resfile;
-	return file->GetEntryReader(FileInfo[lump].resindex, true);
+	return file->GetEntryReader(FileInfo[lump].resindex, readertype, readerflags);
 }
 
 FileReader FileSystem::OpenFileReader(const char* name)

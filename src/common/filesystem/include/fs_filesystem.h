@@ -93,10 +93,19 @@ public:
 	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
 	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
 
-	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
-	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
+	FileReader OpenFileReader(int lump, int readertype, int readerflags);		// opens a reader that redirects to the containing file's one.
 	FileReader OpenFileReader(const char* name);
 	FileReader ReopenFileReader(const char* name, bool alwayscache = false);
+	FileReader OpenFileReader(int lump)
+	{
+		return OpenFileReader(lump, READER_SHARED, READERFLAG_SEEKABLE);
+	}
+
+	FileReader ReopenFileReader(int lump, bool alwayscache = false)
+	{
+		return OpenFileReader(lump, alwayscache ? READER_CACHED : READER_NEW, READERFLAG_SEEKABLE);
+	}
+
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names

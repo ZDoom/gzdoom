@@ -211,7 +211,7 @@ FCompressedBuffer FResourceFile::GetRawData(uint32_t entry)
 	FCompressedBuffer cbuf = { LumpSize, LumpSize, METHOD_STORED, 0, 0, LumpSize == 0? nullptr : new char[LumpSize] };
 	if (LumpSize > 0)
 	{
-		auto fr = GetEntryReader(entry);
+		auto fr = GetEntryReader(entry, READER_SHARED, 0);
 		size_t read = fr.Read(cbuf.mBuffer, LumpSize);
 		if (read < LumpSize)
 		{
@@ -542,7 +542,7 @@ int FResourceFile::FindEntry(const char *name)
 //
 //==========================================================================
 
-FileReader FResourceFile::GetEntryReader(uint32_t entry, bool newreader)
+FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int readerflags)
 {
 	FileReader fr;
 	if (entry < NumLumps)
@@ -553,20 +553,30 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, bool newreader)
 		}
 		if (!(Entries[entry].Flags & RESFF_COMPRESSED))
 		{
-			if (!newreader)
+			if (readertype == READER_SHARED)
 			{
 				fr.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].Length);
 			}
-			else
+			else if (readertype == READER_NEW)
 			{
 				fr.OpenFile(FileName, Entries[entry].Position, Entries[entry].Length);
+			}
+			else if (readertype == READER_CACHED)
+			{
+				Reader.Seek(Entries[entry].Position, FileReader::SeekSet);
+				auto data = Reader.Read(Entries[entry].Length);
+				fr.OpenMemoryArray(data);
 			}
 		}
 		else
 		{
 			FileReader fri;
-			fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
-			OpenDecompressor(fr, fri, Entries[entry].Length, Entries[entry].Method, FileSys::DCF_TRANSFEROWNER | FileSys::DCF_SEEKABLE | FileSys::DCF_EXCEPTIONS);
+			if (readertype == READER_NEW) fri.OpenFile(FileName, Entries[entry].Position, Entries[entry].CompressedSize);
+			else fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
+			int flags = DCF_TRANSFEROWNER | DCF_EXCEPTIONS;
+			if (readertype == READER_CACHED) flags |= DCF_CACHED;
+			else if (readerflags & READERFLAG_SEEKABLE) flags |= DCF_SEEKABLE;
+			OpenDecompressor(fr, fri, Entries[entry].Length, Entries[entry].Method, flags);
 		}
 	}
 	return fr;

@@ -280,7 +280,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		char maplabel[9]="";
 		int index=0;
 
-		map->MapLumps[0].Reader = map->resource->GetEntryReader(0);
+		map->MapLumps[0].Reader = map->resource->GetEntryReader(0, FileSys::READER_SHARED);
 		uppercopy(map->MapLumps[0].Name, map->resource->getName(0));
 
 		for(uint32_t i = 1; i < map->resource->EntryCount(); i++)
@@ -290,7 +290,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
-				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetEntryReader(i);
+				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetEntryReader(i, FileSys::READER_SHARED);
 				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
@@ -326,7 +326,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						return map;
 					}
 					else continue;
-					map->MapLumps[index].Reader = map->resource->GetEntryReader(i);
+					map->MapLumps[index].Reader = map->resource->GetEntryReader(i, FileSys::READER_SHARED);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -358,7 +358,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				maplabel[8]=0;
 			}
 
-			map->MapLumps[index].Reader = map->resource->GetEntryReader(i);
+			map->MapLumps[index].Reader = map->resource->GetEntryReader(i, FileSys::READER_SHARED);
 			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}

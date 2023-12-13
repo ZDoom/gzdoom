@@ -798,7 +798,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 				if (mustcheck)
 				{
 					char check[16]={0};
-					auto fr = f->GetEntryReader(i, false);
+					auto fr = f->GetEntryReader(i, FileSys::READER_SHARED);
 					fr.Read(check, 16);
 					if (MatchHeader(label, check)) return i;
 				}
@@ -906,7 +906,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetEntryReader(li + i + 1);
+					gwalumps[i] = f_gwa->GetEntryReader(li + i + 1, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}

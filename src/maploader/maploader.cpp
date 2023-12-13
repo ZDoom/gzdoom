@@ -84,6 +84,7 @@
 #include "texturemanager.h"
 #include "hw_vertexbuilder.h"
 #include "version.h"
+#include "fs_decompress.h"
 
 enum
 {
@@ -738,7 +739,7 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			if (zip.OpenDecompressor(dalump, -1, FileSys::METHOD_ZLIB, FileSys::DCF_EXCEPTIONS))
+			if (OpenDecompressor(zip, dalump, -1, FileSys::METHOD_ZLIB, FileSys::DCF_EXCEPTIONS))
 			{
 				LoadZNodes(zip, type);
 				return true;
@@ -3344,7 +3345,7 @@ void MapLoader::LoadLightmap(MapData *map)
 		return;
 
 	FileReader fr;
-	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB))
+	if (!OpenDecompressor(fr, map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB))
 		return;
 
 

@@ -47,6 +47,7 @@
 #include "fs_files.h"
 #include "files_internal.h"
 #include "ancientzip.h"
+#include "fs_decompress.h"
 
 namespace FileSys {
 	using namespace byteswap;
@@ -849,7 +850,7 @@ public:
 };
 
 
-bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, int flags)
+bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size length, int method, int flags)
 {
 	FileReaderInterface* fr = nullptr;
 	DecompressorBase* dec = nullptr;
@@ -923,7 +924,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, i
 		}
 
 		// The decoders for these legacy formats can only handle the full data in one go so we have to perform the entire decompression here.
-		case METHOD_IMPLODE:
+		case METHOD_IMPLODE_0:
 		case METHOD_IMPLODE_2:
 		case METHOD_IMPLODE_4:
 		case METHOD_IMPLODE_6:
@@ -933,7 +934,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, i
 			auto& buffer = idec->GetArray();
 			auto bufr = (uint8_t*)buffer.allocate(length);
 			FZipExploder exploder;
-			if (exploder.Explode(bufr, length, *p, p->GetLength(), method) == -1)
+			if (exploder.Explode(bufr, length, *p, p->GetLength(), method - METHOD_IMPLODE_MIN) == -1)
 			{
 				if (exceptions)
 				{
@@ -964,9 +965,9 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, i
 			auto bufr = (uint8_t*)buffer.allocate(length);
 			p->Read(bufr, length);
 
-			Size cryptlen = std::min<Size>(length, 256);
+			FileReader::Size cryptlen = std::min<FileReader::Size>(length, 256);
 
-			for (Size i = 0; i < cryptlen; ++i)
+			for (FileReader::Size i = 0; i < cryptlen; ++i)
 			{
 				bufr[i] ^= i >> 1;
 			}
@@ -984,16 +985,12 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, i
 			}
 			dec->Length = length;
 		}
-		if (!(flags & DCF_SEEKABLE))
-		{
-			Close();
-			mReader = fr;
-		}
-		else
+		if ((flags & DCF_SEEKABLE))
 		{
 			// create a wrapper that can buffer the content so that seeking is possible
-			mReader = new BufferingReader(fr);
+			fr = new BufferingReader(fr);
 		}
+		self = FileReader(fr);
 		return true;
 			}
 	catch (...)
@@ -1001,7 +998,7 @@ bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, i
 		if (fr) delete fr;
 		throw;
 	}
-		}
+}
 
 
 bool FCompressedBuffer::Decompress(char* destbuffer)
@@ -1016,7 +1013,7 @@ bool FCompressedBuffer::Decompress(char* destbuffer)
 		FileReader mr;
 		mr.OpenMemory(mBuffer, mCompressedSize);
 		FileReader frz;
-		if (frz.OpenDecompressor(mr, mSize, mMethod))
+		if (OpenDecompressor(frz, mr, mSize, mMethod))
 		{
 			return frz.Read(destbuffer, mSize) != mSize;
 		}

@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "fs_files.h"
+#include "fs_decompress.h"
 
 namespace FileSys {
 	

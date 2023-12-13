@@ -112,7 +112,7 @@ struct FileSystem::LumpRecord
 
 		auto lflags = file->GetEntryFlags(fileindex);
 		if (!name) name = file->getName(fileindex);
-		if (lflags & LUMPF_SHORTNAME)
+		if (lflags & RESFF_SHORTNAME)
 		{
 			UpperCopy(shortName.String, name);
 			shortName.String[8] = 0;
@@ -120,7 +120,7 @@ struct FileSystem::LumpRecord
 			Namespace = file->GetEntryNamespace(fileindex);
 			resourceId = -1;
 		}
-		else if ((lflags & LUMPF_EMBEDDED) || !name || !*name)
+		else if ((lflags & RESFF_EMBEDDED) || !name || !*name)
 		{
 			shortName.qword = 0;
 			LongName = "";
@@ -391,7 +391,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
 			int flags = resfile->GetEntryFlags(i);
-			if (flags & LUMPF_EMBEDDED)
+			if (flags & RESFF_EMBEDDED)
 			{
 				std::string path = filename;
 				path += ':';
@@ -426,7 +426,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 			for (int i = 0; i < resfile->EntryCount(); i++)
 			{
 				int flags = resfile->GetEntryFlags(i);
-				if (!(flags & LUMPF_EMBEDDED))
+				if (!(flags & RESFF_EMBEDDED))
 				{
 					auto reader = resfile->GetEntryReader(i, true);
 					md5Hash(filereader, cksum);
@@ -532,7 +532,7 @@ int FileSystem::CheckNumForName (const char *name, int space) const
 			// work as well.
 			auto lflags = lump.resfile->GetEntryFlags(lump.resindex);
 			if (space > ns_specialzipdirectory && lump.Namespace == ns_global && 
-				!((lflags ^lump.flags) & LUMPF_FULLPATH)) break;
+				!((lflags ^lump.flags) & RESFF_FULLPATH)) break;
 		}
 		i = NextLumpIndex[i];
 	}
@@ -1470,7 +1470,7 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 
 	if (slash == nullptr)
 	{
-		FileInfo[lump].flags = LUMPF_FULLPATH;
+		FileInfo[lump].flags = RESFF_FULLPATH;
 		return true;	// already is pathless.
 	}
 
@@ -1478,7 +1478,7 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 	// just create a new reference to the original data with a different name.
 	oldlump.LongName = slash + 1;
 	oldlump.resourceId = id;
-	oldlump.flags = LUMPF_FULLPATH;
+	oldlump.flags = RESFF_FULLPATH;
 	FileInfo.push_back(oldlump);
 	return true;
 }

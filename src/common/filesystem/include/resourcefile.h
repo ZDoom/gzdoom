@@ -78,19 +78,12 @@ typedef enum {
 
 enum ELumpFlags
 {
-	LUMPF_MAYBEFLAT = 1,	// might be a flat outside F_START/END
-	LUMPF_FULLPATH = 2,		// contains a full path. This will trigger extended namespace checks when looking up short names.
-	LUMPF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
-	LUMPF_SHORTNAME = 8,	// the stored name is a short extension-less name
-	LUMPF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
-	
 	RESFF_MAYBEFLAT = 1,	// might be a flat inside a WAD outside F_START/END
 	RESFF_FULLPATH = 2,		// contains a full path. This will trigger extended namespace checks when looking up short names.
 	RESFF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
 	RESFF_SHORTNAME = 8,	// the stored name is a short extension-less name
 	RESFF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
 	RESFF_NEEDFILESTART = 32,	// The real position is not known yet and needs to be calculated on access
-	
 };
 
 struct FResourceEntry

@@ -585,7 +585,7 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 				}
 				progressFunc();
 			}
-			else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
+			else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & RESFF_MAYBEFLAT)
 			{
 				if (fileSystem.CheckNumForName(Name, ns) < firsttx)
 				{
@@ -971,7 +971,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (fileSystem.GetFileFlags(i) & LUMPF_FULLPATH) continue;
+			if (fileSystem.GetFileFlags(i) & RESFF_FULLPATH) continue;
 
 			// Ignore lumps with empty names.
 			if (fileSystem.CheckFileName(i, "")) continue;
@@ -1425,7 +1425,7 @@ int FTextureManager::GuesstimateNumTextures ()
 			break;
 
 		default:
-			if (fileSystem.GetFileFlags(i) & LUMPF_MAYBEFLAT) numtex++;
+			if (fileSystem.GetFileFlags(i) & RESFF_MAYBEFLAT) numtex++;
 
 			break;
 		}

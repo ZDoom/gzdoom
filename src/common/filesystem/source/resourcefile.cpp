@@ -106,13 +106,13 @@ void FResourceFile::CheckEmbedded(uint32_t entry, LumpFilterInfo* lfi)
 	const char *c = strstr(FullName, ".wad"); // fixme: Use lfi for this.
 	if (c && strlen(c) == 4 && (!strchr(FullName, '/') || IsFileInFolder(FullName)))
 	{
-		Entries[entry].Flags |= LUMPF_EMBEDDED;
+		Entries[entry].Flags |= RESFF_EMBEDDED;
 	}
 	else if (lfi) for (auto& fstr : lfi->embeddings)
 	{
 		if (!stricmp(FullName, fstr.c_str()))
 		{
-			Entries[entry].Flags |= LUMPF_EMBEDDED;
+			Entries[entry].Flags |= RESFF_EMBEDDED;
 		}
 	}
 }

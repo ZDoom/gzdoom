@@ -181,7 +181,7 @@ public:
 		inflateEnd (&Stream);
 	}
 
-	ptrdiff_t Read (void *buffer, ptrdiff_t len) override
+	ptrdiff_t Read (void *buffer, ptrdiff_t olen) override
 	{
 		int err = 0;
 
@@ -190,6 +190,7 @@ public:
 			DecompressionError("File not open");
 			return 0;
 		}
+		auto len = olen;
 		if (len == 0) return 0;
 
 		while (len > 0)
@@ -222,7 +223,7 @@ public:
 			return 0;
 		}
 
-		return len - Stream.avail_out;
+		return olen - Stream.avail_out;
 	}
 
 	void FillBuffer ()

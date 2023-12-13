@@ -334,7 +334,7 @@ int BufferingReader::FillBuffer(ptrdiff_t newpos)
 		// we have read the entire file, so delete our data provider.
 		baseReader.reset();
 	}
-	return read == newpos - bufferpos ? 0 : -1;
+	return newpos == bufferpos ? 0 : -1;
 }
 
 ptrdiff_t BufferingReader::Seek(ptrdiff_t offset, int origin)

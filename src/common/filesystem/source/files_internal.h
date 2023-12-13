@@ -42,6 +42,7 @@ public:
 	{
 		Length = base->Length;
 		buf.resize(Length);
+		bufptr = (const char*)buf.data();
 	}
 
 	ptrdiff_t Seek(ptrdiff_t offset, int origin) override;

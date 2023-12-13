@@ -274,6 +274,7 @@ void FResourceFile::AllocateEntries(int count)
 {
 	NumLumps = count;
 	Entries = (FResourceEntry*)stringpool->Alloc(count * sizeof(FResourceEntry));
+	memset(Entries, 0, count * sizeof(FResourceEntry));
 }
 
 

@@ -159,14 +159,14 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 
 	GenerateHash(); // Do this before the lump processing below.
 
-	SetNamespace("S_START", "S_END", ns_sprites, Printf);
-	SetNamespace("F_START", "F_END", ns_flats, Printf, true);
-	SetNamespace("C_START", "C_END", ns_colormaps, Printf);
-	SetNamespace("A_START", "A_END", ns_acslibrary, Printf);
-	SetNamespace("TX_START", "TX_END", ns_newtextures, Printf);
-	SetNamespace("V_START", "V_END", ns_strifevoices, Printf);
-	SetNamespace("HI_START", "HI_END", ns_hires, Printf);
-	SetNamespace("VX_START", "VX_END", ns_voxels, Printf);
+	SetNamespace("s_start", "s_end", ns_sprites, Printf);
+	SetNamespace("f_start", "f_end", ns_flats, Printf, true);
+	SetNamespace("c_start", "c_end", ns_colormaps, Printf);
+	SetNamespace("a_start", "a_end", ns_acslibrary, Printf);
+	SetNamespace("tx_start", "tx_end", ns_newtextures, Printf);
+	SetNamespace("v_start", "v_end", ns_strifevoices, Printf);
+	SetNamespace("hi_start", "hi_end", ns_hires, Printf);
+	SetNamespace("vx_start", "vx_end", ns_voxels, Printf);
 	SkinHack(Printf);
 
 	return true;

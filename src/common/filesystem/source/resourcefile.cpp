@@ -468,7 +468,7 @@ bool FResourceFile::FindPrefixRange(const char* filter, uint32_t maxlump, uint32
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		auto lump = &Entries[mid];
+		auto lump = &lumps[mid];
 		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		if (cmp == 0)
 			break;
@@ -488,7 +488,7 @@ bool FResourceFile::FindPrefixRange(const char* filter, uint32_t maxlump, uint32
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		auto lump = &Entries[mid];
+		auto lump = &lumps[mid];
 		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		// Go left on matches and right on misses.
 		if (cmp == 0)
@@ -503,7 +503,7 @@ bool FResourceFile::FindPrefixRange(const char* filter, uint32_t maxlump, uint32
 	while (min <= max)
 	{
 		mid = min + (max - min) / 2;
-		auto lump = &Entries[mid];
+		auto lump = &lumps[mid];
 		cmp = strnicmp(lump->FileName, filter, strlen(filter));
 		// Go right on matches and left on misses.
 		if (cmp == 0)

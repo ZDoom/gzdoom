@@ -326,7 +326,7 @@ char *MemoryReader::Gets(char *strbuf, ptrdiff_t len)
 int BufferingReader::FillBuffer(ptrdiff_t newpos)
 {
 	if (newpos > Length) newpos = Length;
-	if (newpos < bufferpos) return 0;
+	if (newpos <= bufferpos) return 0;
 	auto read = baseReader->Read(&buf[bufferpos], newpos - bufferpos);
 	bufferpos += read;
 	if (bufferpos == Length)

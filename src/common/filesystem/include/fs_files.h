@@ -84,6 +84,13 @@ class FileData
 public:
 	using value_type = uint8_t;
 	FileData() { memory = nullptr; length = 0; owned = true; }
+	FileData(const void* memory_, size_t len)
+	{
+		length = len;
+		memory = allocate(len);
+		if (memory_) memcpy(memory, memory_, len);
+	}
+	uint8_t* writable() const { return owned? (uint8_t*)memory : nullptr; }
 	const void* data() const { return memory; }
 	size_t size() const { return length; }
 	const char* string() const { return (const char*)memory; }
@@ -233,8 +240,6 @@ public:
 	bool OpenFile(const char *filename, Size start = 0, Size length = -1, bool buffered = false);
 	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
-	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
-	bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
 	bool OpenMemoryArray(FileData& data);	// take the given array
 
 	Size Tell() const

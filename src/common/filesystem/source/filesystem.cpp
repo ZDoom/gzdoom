@@ -301,7 +301,8 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, int flags)
 {
 	FileReader fr;
-	fr.OpenMemoryArray((uint8_t*)data, size);
+	FileData blob(data, size);
+	fr.OpenMemoryArray(blob);
 
 	// wrap this into a single lump resource file (should be done a little better later.)
 	auto rf = new FResourceFile(name, fr, stringpool);

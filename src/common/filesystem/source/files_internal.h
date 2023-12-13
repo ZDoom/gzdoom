@@ -31,7 +31,7 @@ public:
 
 class BufferingReader : public MemoryReader
 {
-	std::vector<uint8_t> buf;
+	FileData buf;
 	std::unique_ptr<FileReaderInterface> baseReader;
 	ptrdiff_t bufferpos = 0;
 
@@ -41,7 +41,7 @@ public:
 		: baseReader(base)
 	{
 		Length = base->Length;
-		buf.resize(Length);
+		buf.allocate(Length);
 		bufptr = (const char*)buf.data();
 	}
 
@@ -58,10 +58,9 @@ public:
 //
 //==========================================================================
 
-template<class T>
 class MemoryArrayReader : public MemoryReader
 {
-	T buf;
+	FileData buf;
 
 public:
 	MemoryArrayReader()
@@ -70,23 +69,17 @@ public:
 		Length = 0;
 	}
 
-	MemoryArrayReader(const char* buffer, ptrdiff_t length)
+	MemoryArrayReader(size_t len)
 	{
-		if (length > 0)
-		{
-			buf.resize(length);
-			memcpy(&buf[0], buffer, length);
-		}
+		buf.allocate(len);
 		UpdateBuffer();
 	}
 
-	MemoryArrayReader(T& buffer)
+	MemoryArrayReader(FileData& buffer)
 	{
 		buf = std::move(buffer);
 		UpdateBuffer();
 	}
-
-	T& GetArray() { return buf; }
 
 	void UpdateBuffer()
 	{
@@ -95,8 +88,5 @@ public:
 		Length = buf.size();
 	}
 };
-
-bool OpenMemoryArray(std::vector<uint8_t>& data);	// take the given array
-
 
 }

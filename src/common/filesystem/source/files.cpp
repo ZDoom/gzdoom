@@ -327,7 +327,7 @@ int BufferingReader::FillBuffer(ptrdiff_t newpos)
 {
 	if (newpos > Length) newpos = Length;
 	if (newpos <= bufferpos) return 0;
-	auto read = baseReader->Read(&buf[bufferpos], newpos - bufferpos);
+	auto read = baseReader->Read(&buf.writable()[bufferpos], newpos - bufferpos);
 	bufferpos += read;
 	if (bufferpos == Length)
 	{
@@ -392,17 +392,10 @@ bool FileReader::OpenMemory(const void *mem, FileReader::Size length)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
-{
-	Close();
-	mReader = new MemoryArrayReader<std::vector<uint8_t>>((const char *)mem, length);
-	return true;
-}
-
 bool FileReader::OpenMemoryArray(FileData& data)
 {
 	Close();
-	if (data.size() > 0) mReader = new MemoryArrayReader<FileData>(data);
+	if (data.size() > 0) mReader = new MemoryArrayReader(data);
 	return true;
 }
 

@@ -929,48 +929,43 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 		case METHOD_IMPLODE_4:
 		case METHOD_IMPLODE_6:
 		{
-			auto idec = new MemoryArrayReader<FileData>;
-			fr = idec;
-			auto& buffer = idec->GetArray();
-			auto bufr = (uint8_t*)buffer.allocate(length);
+			FileData buffer(nullptr, length);
 			FZipExploder exploder;
-			if (exploder.Explode(bufr, length, *p, p->GetLength(), method - METHOD_IMPLODE_MIN) == -1)
+			if (exploder.Explode(buffer.writable(), length, *p, p->GetLength(), method - METHOD_IMPLODE_MIN) == -1)
 			{
 				if (exceptions)
 				{
 					throw FileSystemException("DecompressImplode failed");
 				}
-				delete idec;
 				return false;
 			}
+			fr = new MemoryArrayReader(buffer);
+			flags &= ~DCF_SEEKABLE;
 			break;
 		}
 
 		case METHOD_SHRINK:
 		{
-			auto idec = new MemoryArrayReader<FileData>;
-			fr = idec;
-			auto& buffer = idec->GetArray();
-			auto bufr = (uint8_t*)buffer.allocate(length);
-			ShrinkLoop(bufr, length, *p, p->GetLength()); // this never fails.
+			FileData buffer(nullptr, length);
+			ShrinkLoop(buffer.writable(), length, *p, p->GetLength()); // this never fails.
+			fr = new MemoryArrayReader(buffer);
+			flags &= ~DCF_SEEKABLE;
 			break;
 		}
 
-		// While this could be msde a buffering reader it isn't worth the effort because only stock RFFs are encrypted and they do not contain large files.
+		// While this could be made a buffering reader it isn't worth the effort because only stock RFFs are encrypted and they do not contain large files.
 		case METHOD_RFFCRYPT:
 		{
-			auto idec = new MemoryArrayReader<FileData>;
-			fr = idec;
-			auto& buffer = idec->GetArray();
-			auto bufr = (uint8_t*)buffer.allocate(length);
-			p->Read(bufr, length);
-
+			FileData buffer = p->Read(length);
+			auto bufr = buffer.writable();
 			FileReader::Size cryptlen = std::min<FileReader::Size>(length, 256);
 
 			for (FileReader::Size i = 0; i < cryptlen; ++i)
 			{
 				bufr[i] ^= i >> 1;
 			}
+			fr = new MemoryArrayReader(buffer);
+			flags &= ~DCF_SEEKABLE;
 			break;
 		}
 

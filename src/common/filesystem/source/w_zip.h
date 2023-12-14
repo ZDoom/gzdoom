@@ -7,6 +7,8 @@
 #define FORCE_PACKED
 #endif
 
+#include <stdint.h>
+
 namespace FileSys {
 	
 #pragma pack(1)

@@ -356,27 +356,18 @@ void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 	if (NumLumps == 0 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
 
 	// First eliminate all unwanted files
-	for (uint32_t i = 0; i < NumLumps; i++)
+	if (filter)
 	{
-		std::string name = Entries[i].FileName;
-		// remove Apple garbage unconditionally.
-		if (name.find("__macosx") == 0 || name.find("/__macosx") != std::string::npos)
+		for (uint32_t i = 0; i < NumLumps; i++)
 		{
-			Entries[i].FileName = "";
-			continue;
-		}
-		// Skip executables as well.
-		if (wildcards::match(name, "*.bat") || wildcards::match(name, "*.exe"))
-		{
-			Entries[i].FileName = "";
-			continue;
-		}
-		if (filter) for (auto& pattern : filter->blockednames)
-		{
-			if (wildcards::match(name, pattern))
+			std::string name = Entries[i].FileName;
+			for (auto& pattern : filter->blockednames)
 			{
-				Entries[i].FileName = "";
-				continue;
+				if (wildcards::match(name, pattern))
+				{
+					Entries[i].FileName = "";
+					continue;
+				}
 			}
 		}
 	}

@@ -209,55 +209,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", FileName);
 			return false;
 		}
-
-		for (auto& c : name) c = tolower(c);
-
-		auto vv = name.find("__macosx");
-		if (name.find("filter/") == 0)
-			continue; // 'filter' is a reserved name of the file system.
-		if (name.find("__macosx") == 0) 
-			continue; // skip Apple garbage. At this stage only the root folder matters.
-		if (name.find(".bat") != std::string::npos || name.find(".exe") != std::string::npos)
-			continue; // also ignore executables for this.
-		if (!foundprefix)
-		{
-			// check for special names, if one of these gets found this must be treated as a normal zip.
-			bool isspecial = name.find("/") == std::string::npos ||
-				(filter && std::find(filter->reservedFolders.begin(), filter->reservedFolders.end(), name) != filter->reservedFolders.end());
-			if (isspecial) break;
-			name0 = std::string(name, 0, name.rfind("/")+1);
-			name1 = std::string(name, 0, name.find("/") + 1);
-			foundprefix = true;
-		}
-
-		if (name.find(name0) != 0)
-		{
-			if (!name1.empty())
-			{
-				name0 = name1;
-				if (name.find(name0) != 0)
-				{
-					name0 = "";
-				}
-			}
-			if (name0.empty()) 
-				break;
-		}
-		if (!foundspeciallump && filter)
-		{
-			// at least one of the more common definition lumps must be present.
-			for (auto &p : filter->requiredPrefixes)
-			{ 
-				if (name.find(name0 + p) == 0 || name.rfind(p) == size_t(name.length() - p.length()))
-				{
-					foundspeciallump = true;
-					break;
-				}
-			}
-		}
 	}
-	// If it ran through the list without finding anything it should not attempt any path remapping.
-	if (!foundspeciallump) name0 = "";
 
 	dirptr = (char*)directory;
 	AllocateEntries(NumLumps);
@@ -279,13 +231,6 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			Printf(FSMessageLevel::Error, "%s: Central directory corrupted.", FileName);
 			return false;
 		}
-
-		if (name.find("__macosx") == 0 || name.find("__MACOSX") == 0)
-		{
-			skipped++;
-			continue; // Weed out Apple's resource fork garbage right here because it interferes with safe operation.
-		}
-		if (!name0.empty()) name = std::string(name, name0.length());
 
 		// skip Directories
 		if (name.empty() || (name.back() == '/' && LittleLong(zip_fh->UncompressedSize32) == 0))
@@ -316,9 +261,6 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 			skipped++;
 			continue;
 		}
-
-		FixPathSeparator(&name.front());
-		for (auto& c : name) c = tolower(c);
 
 		uint32_t UncompressedSize =LittleLong(zip_fh->UncompressedSize32);
 		uint32_t CompressedSize = LittleLong(zip_fh->CompressedSize32);
@@ -358,7 +300,7 @@ bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 		if (Entry->Method != METHOD_STORED) Entry->Flags |= RESFF_COMPRESSED;
 		if (Entry->Method == METHOD_IMPLODE)
 		{
-			// merge the flags into the compression method to tag less data around.
+			// for Implode merge the flags into the compression method to make handling in the file system easier and save one variable.
 			if ((zip_fh->Flags & 6) == 2) Entry->Method = METHOD_IMPLODE_2;
 			else if ((zip_fh->Flags & 6) == 4) Entry->Method = METHOD_IMPLODE_4;
 			else if ((zip_fh->Flags & 6) == 6) Entry->Method = METHOD_IMPLODE_6;

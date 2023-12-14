@@ -140,6 +140,7 @@ private:
 	int FilterLumps(const std::string& filtername, uint32_t max);
 	bool FindPrefixRange(const char* filter, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(uint32_t max);
+	void FindCommonFolder(LumpFilterInfo* filter);
 	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
 public:

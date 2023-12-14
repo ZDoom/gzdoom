@@ -1220,6 +1220,8 @@ set( GAME_SOURCES
 	common/filesystem/source/file_pak.cpp
 	common/filesystem/source/file_whres.cpp
 	common/filesystem/source/file_ssi.cpp
+	common/filesystem/source/file_hog.cpp
+	common/filesystem/source/file_mvl.cpp
 	common/filesystem/source/file_directory.cpp
 	common/filesystem/source/resourcefile.cpp
 	common/filesystem/source/files.cpp

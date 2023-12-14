@@ -42,6 +42,7 @@
 #include "unicode.h"
 #include "fs_findfile.h"
 #include "fs_decompress.h"
+#include "wildcards.hpp"
 
 namespace FileSys {
 	
@@ -145,11 +146,13 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* 
 FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 FResourceFile *Check7Z(const char *filename,  FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckHog(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckMvl(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 FResourceFile* CheckWHRes(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 FResourceFile *CheckLump(const char *filename,FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 FResourceFile *CheckDir(const char *filename, bool nosub, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
-static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckSSI, CheckWHRes, CheckLump };
+static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckSSI, CheckHog, CheckMvl, CheckWHRes, CheckLump };
 
 static int nulPrintf(FSMessageLevel msg, const char* fmt, ...)
 {
@@ -350,10 +353,37 @@ void FResourceFile::GenerateHash()
 void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 {
 	// only do this for archive types which contain full file names. All others are assumed to be pre-sorted.
-	if (NumLumps < 2 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
+	if (NumLumps == 0 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
+
+	// First eliminate all unwanted files
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		std::string name = Entries[i].FileName;
+		// remove Apple garbage unconditionally.
+		if (name.find("__macosx") == 0 || name.find("/__macosx") != std::string::npos)
+		{
+			Entries[i].FileName = "";
+			continue;
+		}
+		// Skip executables as well.
+		if (wildcards::match(name, "*.bat") || wildcards::match(name, "*.exe"))
+		{
+			Entries[i].FileName = "";
+			continue;
+		}
+		if (filter) for (auto& pattern : filter->blockednames)
+		{
+			if (wildcards::match(name, pattern))
+			{
+				Entries[i].FileName = "";
+				continue;
+			}
+		}
+	}
 
 	// Entries in archives are sorted alphabetically.
 	qsort(Entries, NumLumps, sizeof(Entries[0]), entrycmp);
+	FindCommonFolder(filter);
 	if (!filter) return;
 
 	// Filter out lumps using the same names as the Autoload.* sections
@@ -375,6 +405,80 @@ void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 	}
 
 	JunkLeftoverFilters(max);
+}
+
+//==========================================================================
+//
+// FResourceFile :: FindCommonFolder
+//
+// Checks if all content is in a common folder that can be stripped out.
+//
+//==========================================================================
+
+void FResourceFile::FindCommonFolder(LumpFilterInfo* filter)
+{
+	std::string name0, name1;
+	bool foundspeciallump = false;
+	bool foundprefix = false;
+
+	// try to find a path prefix.
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		if (*Entries[i].FileName == 0) continue;
+		std::string name = Entries[i].FileName;
+
+		// first eliminate files we do not want to have.
+		// Some, like MacOS resource forks and executables are eliminated unconditionally, but the calling code can alsp pass a list of invalid content.
+		if (name.find("filter/") == 0)
+			return; // 'filter' is a reserved name of the file system. If this appears in the root we got no common folder, and 'filter' cannot be it.
+
+		if (!foundprefix)
+		{
+			// check for special names, if one of these gets found this must be treated as a normal zip.
+			bool isspecial = name.find("/") == std::string::npos ||
+				(filter && std::find(filter->reservedFolders.begin(), filter->reservedFolders.end(), name) != filter->reservedFolders.end());
+			if (isspecial) break;
+			name0 = std::string(name, 0, name.rfind("/") + 1);
+			name1 = std::string(name, 0, name.find("/") + 1);
+			foundprefix = true;
+		}
+
+		if (name.find(name0) != 0)
+		{
+			if (!name1.empty())
+			{
+				name0 = name1;
+				if (name.find(name0) != 0)
+				{
+					name0 = "";
+				}
+			}
+			if (name0.empty())
+				break;
+		}
+		if (!foundspeciallump && filter)
+		{
+			// at least one of the more common definition lumps must be present.
+			for (auto& p : filter->requiredPrefixes)
+			{
+				if (name.find(name0 + p) == 0 || name.rfind(p) == size_t(name.length() - p.length()))
+				{
+					foundspeciallump = true;
+					break;
+				}
+			}
+		}
+	}
+	// If it ran through the list without finding anything it should not attempt any path remapping.
+	if (!foundspeciallump || name0.empty()) return;
+
+	size_t pathlen = name0.length();
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		if (Entries[i].FileName[0] == 0) continue;
+		Entries[i].FileName += pathlen;
+
+	}
 }
 
 //==========================================================================
@@ -537,13 +641,16 @@ bool FResourceFile::FindPrefixRange(const char* filter, uint32_t maxlump, uint32
 
 int FResourceFile::FindEntry(const char *name)
 {
+	auto norm_fn = tolower_normalize(name);
 	for (unsigned i = 0; i < NumLumps; i++)
 	{
-		if (!stricmp(name, getName(i)))
+		if (!strcmp(norm_fn, getName(i)))
 		{
+			free(norm_fn);
 			return i;
 		}
 	}
+	free(norm_fn);
 	return -1;
 }
 

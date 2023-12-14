@@ -703,6 +703,8 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	// opening the music must be done by the game because it's different depending on the game's file system use.
 	FileReader reader = mus_cb.OpenMusic(musicname);
 	if (!reader.isOpen()) return false;
+	auto m = reader.Read();
+	reader.Seek(0, FileReader::SeekSet);
 
 	// shutdown old music
 	S_StopMusic(true);

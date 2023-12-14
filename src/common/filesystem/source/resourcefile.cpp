@@ -383,8 +383,8 @@ void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 
 	// Entries in archives are sorted alphabetically.
 	qsort(Entries, NumLumps, sizeof(Entries[0]), entrycmp);
-	FindCommonFolder(filter);
 	if (!filter) return;
+	FindCommonFolder(filter);
 
 	// Filter out lumps using the same names as the Autoload.* sections
 	// in the ini file. We reduce the maximum lump concidered after

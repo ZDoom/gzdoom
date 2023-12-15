@@ -125,7 +125,7 @@ static const unsigned char BitReverse4[] = {
 #define FIRST_BIT_LEN	8
 #define REST_BIT_LEN	4
 
-void FZipExploder::InsertCode(TArray<HuffNode> &decoder, unsigned int pos, int bits, unsigned short code, int len, unsigned char value)
+void FZipExploder::InsertCode(std::vector<HuffNode> &decoder, unsigned int pos, int bits, unsigned short code, int len, unsigned char value)
 {
 	assert(len > 0);
 	unsigned int node = pos + (code & ((1 << bits) - 1));
@@ -161,10 +161,10 @@ void FZipExploder::InsertCode(TArray<HuffNode> &decoder, unsigned int pos, int b
 	}
 }
 
-unsigned int FZipExploder::InitTable(TArray<HuffNode> &decoder, int numspots)
+unsigned int FZipExploder::InitTable(std::vector<HuffNode> &decoder, int numspots)
 {
-	unsigned int start = decoder.Size();
-	decoder.Reserve(numspots);
+	size_t start = decoder.size();
+	decoder.resize(decoder.size() + numspots);
 	memset(&decoder[start], 0, sizeof(HuffNode)*numspots);
 	return start;
 }
@@ -180,7 +180,7 @@ int FZipExploder::buildercmp(const void *a, const void *b)
 	return d;
 }
 
-int FZipExploder::BuildDecoder(TArray<HuffNode> &decoder, TableBuilder *values, int numvals)
+int FZipExploder::BuildDecoder(std::vector<HuffNode> &decoder, TableBuilder *values, int numvals)
 {
 	int i;
 
@@ -218,7 +218,7 @@ int FZipExploder::BuildDecoder(TArray<HuffNode> &decoder, TableBuilder *values, 
 }
 
 
-int FZipExploder::DecodeSFValue(const TArray<HuffNode> &decoder)
+int FZipExploder::DecodeSFValue(const std::vector<HuffNode> &decoder)
 {
 	unsigned int bits = FIRST_BIT_LEN, table = 0, code;
 	const HuffNode *pos;
@@ -236,7 +236,7 @@ int FZipExploder::DecodeSFValue(const TArray<HuffNode> &decoder)
 }
 
 
-int FZipExploder::DecodeSF(TArray<HuffNode> &decoder, int numvals)
+int FZipExploder::DecodeSF(std::vector<HuffNode> &decoder, int numvals)
 {
 	TableBuilder builder[256];
 	unsigned char a, c;

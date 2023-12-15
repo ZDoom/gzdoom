@@ -44,8 +44,6 @@
 #include <vector>
 #include "fs_swap.h"
 
-#include "tarray.h"
-
 namespace FileSys {
 	
 class FileSystemException : public std::exception

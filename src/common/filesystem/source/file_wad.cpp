@@ -122,9 +122,9 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 		}
 	}
 
-	TArray<wadlump_t> fileinfo(NumLumps, true);
-	Reader.Seek (InfoTableOfs, FileReader::SeekSet);
-	Reader.Read (fileinfo.Data(), NumLumps * sizeof(wadlump_t));
+	Reader.Seek(InfoTableOfs, FileReader::SeekSet);
+	auto fd = Reader.Read(NumLumps * sizeof(wadlump_t));
+	auto fileinfo = (const wadlump_t*)fd.data();
 
 	AllocateEntries(NumLumps);
 
@@ -214,20 +214,20 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	bool warned = false;
 	int numstartmarkers = 0, numendmarkers = 0;
 	unsigned int i;
-	TArray<Marker> markers;
+	std::vector<Marker> markers;
 
 	for(i = 0; i < NumLumps; i++)
 	{
 		if (IsMarker(i, startmarker))
 		{
 			Marker m = { 0, i };
-			markers.Push(m);
+			markers.push_back(m);
 			numstartmarkers++;
 		}
 		else if (IsMarker(i, endmarker))
 		{
 			Marker m = { 1, i };
-			markers.Push(m);
+			markers.push_back(m);
 			numendmarkers++;
 		}
 	}
@@ -243,7 +243,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		{
 			// We have found no F_START but one or more F_END markers.
 			// mark all lumps before the last F_END marker as potential flats.
-			unsigned int end = markers[markers.Size()-1].index;
+			unsigned int end = markers[markers.size()-1].index;
 			for(unsigned int ii = 0; ii < end; ii++)
 			{
 				if (Entries[ii].Length == 4096)
@@ -259,7 +259,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 	}
 
 	i = 0;
-	while (i < markers.Size())
+	while (i < markers.size())
 	{
 		int start, end;
 		if (markers[i].markertype != 0)
@@ -271,21 +271,21 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 		start = i++;
 
 		// skip over subsequent x_START markers
-		while (i < markers.Size() && markers[i].markertype == 0)
+		while (i < markers.size() && markers[i].markertype == 0)
 		{
 			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName, startmarker);
 			i++;
 			continue;
 		}
 		// same for x_END markers
-		while (i < markers.Size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
+		while (i < markers.size()-1 && (markers[i].markertype == 1 && markers[i+1].markertype == 1))
 		{
 			Printf(FSMessageLevel::Warning, "%s: duplicate %s marker found.\n", FileName, endmarker);
 			i++;
 			continue;
 		}
 		// We found a starting marker but no end marker. Ignore this block.
-		if (i >= markers.Size())
+		if (i >= markers.size())
 		{
 			Printf(FSMessageLevel::Warning, "%s: %s marker without corresponding %s found.\n", FileName, startmarker, endmarker);
 			end = NumLumps;

@@ -280,10 +280,9 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	{
 		// Quick check for unsupported compression method
 
-		TArray<char> temp;
-		temp.Resize(Entries[0].Length);
+		FileData temp(nullptr, Entries[0].Length);
 
-		if (SZ_OK != Archive->Extract(Entries[0].Position, &temp[0]))
+		if (SZ_OK != Archive->Extract(Entries[0].Position, (char*)temp.writable()))
 		{
 			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName);
 			return false;

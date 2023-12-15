@@ -73,9 +73,9 @@ static bool OpenPak(FResourceFile* file, LumpFilterInfo* filter)
 	auto Entries = file->AllocateEntries(NumLumps);
 	header.dirofs = LittleLong(header.dirofs);
 
-	TArray<dpackfile_t> fileinfo(NumLumps, true);
 	Reader->Seek (header.dirofs, FileReader::SeekSet);
-	Reader->Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
+	auto fd = Reader->Read (NumLumps * sizeof(dpackfile_t));
+	auto fileinfo = (const dpackfile_t*)fd.data();
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{

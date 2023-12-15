@@ -9,7 +9,6 @@
 
 #include <stdint.h>
 
-namespace FileSys {
 	
 #pragma pack(1)
 // FZipCentralInfo
@@ -109,5 +108,4 @@ struct FZipLocalFileHeader
 // File header flags.
 #define ZF_ENCRYPTED			0x1
 
-}
 #endif

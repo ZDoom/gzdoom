@@ -396,6 +396,12 @@ void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 	}
 
 	JunkLeftoverFilters(max);
+
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		CheckEmbedded(i, filter);
+	}
+
 }
 
 //==========================================================================
@@ -663,21 +669,30 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 		}
 		if (!(Entries[entry].Flags & RESFF_COMPRESSED))
 		{
-			if (readertype == READER_SHARED && mainThread)
-				readertype = READER_NEW;
-			if (readertype == READER_SHARED)
+			auto buf = Reader.GetBuffer();
+			// if this is backed by a memory buffer, create a new reader directly referencing it.
+			if (buf != nullptr)
 			{
-				fr.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].Length);
+				fr.OpenMemory(buf + Entries[entry].Position, Entries[entry].Length);
 			}
-			else if (readertype == READER_NEW)
+			else
 			{
-				fr.OpenFile(FileName, Entries[entry].Position, Entries[entry].Length);
-			}
-			else if (readertype == READER_CACHED)
-			{
-				Reader.Seek(Entries[entry].Position, FileReader::SeekSet);
-				auto data = Reader.Read(Entries[entry].Length);
-				fr.OpenMemoryArray(data);
+				if (readertype == READER_SHARED && !mainThread)
+					readertype = READER_NEW;
+				if (readertype == READER_SHARED)
+				{
+					fr.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].Length);
+				}
+				else if (readertype == READER_NEW)
+				{
+					fr.OpenFile(FileName, Entries[entry].Position, Entries[entry].Length);
+				}
+				else if (readertype == READER_CACHED)
+				{
+					Reader.Seek(Entries[entry].Position, FileReader::SeekSet);
+					auto data = Reader.Read(Entries[entry].Length);
+					fr.OpenMemoryArray(data);
+				}
 			}
 		}
 		else

@@ -308,8 +308,10 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 	std::vector<std::string> fns;
 	fns.push_back(firstfn);
 	if (optfn) fns.push_back(optfn);
+	FileSys::LumpFilterInfo lfi;
+	GetReserved(lfi);
 
-	if (check.InitMultipleFiles(fns, nullptr, nullptr))
+	if (check.InitMultipleFiles(fns, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)

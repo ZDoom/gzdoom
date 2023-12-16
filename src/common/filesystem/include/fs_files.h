@@ -206,13 +206,13 @@ public:
 
 	FileReader() {}
 
-	FileReader(FileReader &&r)
+	FileReader(FileReader &&r) noexcept
 	{
 		mReader = r.mReader;
 		r.mReader = nullptr;
 	}
 
-	FileReader& operator =(FileReader &&r)
+	FileReader& operator =(FileReader &&r) noexcept
 	{
 		Close();
 		mReader = r.mReader;

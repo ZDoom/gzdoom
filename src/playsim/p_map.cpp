@@ -170,6 +170,25 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	return true;
 }
 
+void P_CollidedWith(AActor* const collider, AActor* const collidee)
+{
+	{
+		IFVIRTUALPTR(collider, AActor, CollidedWith)
+		{
+			VMValue params[] = { collider, collidee, false };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+
+	{
+		IFVIRTUALPTR(collidee, AActor, CollidedWith)
+		{
+			VMValue params[] = { collidee, collider, true };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+}
+
 //==========================================================================
 // 
 // CanCrossLine
@@ -2046,8 +2065,15 @@ AActor *P_CheckOnmobj(AActor *thing)
 	oldz = thing->Z();
 	P_FakeZMovement(thing);
 	good = P_TestMobjZ(thing, false, &onmobj);
-	thing->SetZ(oldz);
 
+	// Make sure we don't double call a collision with it.
+	if (!good && onmobj != nullptr && onmobj != thing->BlockingMobj
+		&& (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
+	{
+		P_CollidedWith(thing, onmobj);
+	}
+
+	thing->SetZ(oldz);
 	return good ? NULL : onmobj;
 }
 
@@ -2253,25 +2279,6 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 			{
 				P_ActivateLine(line, mobj->target, side, SPAC_Impact);
 			}
-		}
-	}
-}
-
-static void P_CollidedWith(AActor* const collider, AActor* const collidee)
-{
-	{
-		IFVIRTUALPTR(collider, AActor, CollidedWith)
-		{
-			VMValue params[] = { collider, collidee, false };
-			VMCall(func, params, 3, nullptr, 0);
-		}
-	}
-
-	{
-		IFVIRTUALPTR(collidee, AActor, CollidedWith)
-		{
-			VMValue params[] = { collidee, collider, true };
-			VMCall(func, params, 3, nullptr, 0);
 		}
 	}
 }

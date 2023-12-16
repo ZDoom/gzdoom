@@ -44,6 +44,7 @@
 
 
 #include <stdlib.h>
+#include <assert.h>
 #include "ancientzip.h"
 
 namespace FileSys {

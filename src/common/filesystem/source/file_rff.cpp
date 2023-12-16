@@ -33,6 +33,7 @@
 **
 */
 
+#include <assert.h>
 #include "resourcefile.h"
 #include "fs_swap.h"
 

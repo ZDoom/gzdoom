@@ -402,6 +402,32 @@ bool FileReader::OpenMemoryArray(FileData& data)
 	return true;
 }
 
+FileData FileReader::Read(size_t len)
+{
+	FileData buffer;
+	if (len > 0)
+	{
+		Size length = mReader->Read(buffer.allocate(len), len);
+		if ((size_t)length < len) buffer.allocate(length);
+	}
+	return buffer;
+}
+
+FileData FileReader::ReadPadded(size_t padding)
+{
+	auto len = GetLength();
+	FileData buffer;
+
+	if (len > 0)
+	{
+		auto p = (char*)buffer.allocate(len + padding);
+		Size length = mReader->Read(p, len);
+		if (length < len) buffer.clear();
+		else memset(p + len, 0, padding);
+	}
+	return buffer;
+}
+
 
 
 //==========================================================================

@@ -2257,6 +2257,25 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 	}
 }
 
+static void P_CollidedWith(AActor* const collider, AActor* const collidee)
+{
+	{
+		IFVIRTUALPTR(collider, AActor, CollidedWith)
+		{
+			VMValue params[] = { collider, collidee, false };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+
+	{
+		IFVIRTUALPTR(collidee, AActor, CollidedWith)
+		{
+			VMValue params[] = { collidee, collider, true };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+}
+
 //==========================================================================
 //
 // P_TryMove
@@ -2289,6 +2308,11 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (!P_CheckPosition(thing, pos, tm))
 	{
 		AActor *BlockingMobj = thing->BlockingMobj;
+		// This gets called regardless of whether or not the following checks allow the thing to pass. This is because a player
+		// could step on top of an enemy but we still want it to register as a collision.
+		if (BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
+			P_CollidedWith(thing, BlockingMobj);
+
 		// Solid wall or thing
 		if (!BlockingMobj || BlockingMobj->player || !thing->player)
 		{
@@ -2567,6 +2591,9 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				thing->SetXYZ(thingpos.X, thingpos.Y, pos.Z);
 				if (!P_CheckPosition(thing, pos.XY(), true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
+					if (thing->BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats && CF_PREDICTING)))
+						P_CollidedWith(thing, thing->BlockingMobj);
+
 					thing->SetXYZ(oldthingpos);
 					thing->flags6 &= ~MF6_INTRYMOVE;
 					return false;
@@ -2744,6 +2771,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 
 pushline:
 	thing->flags6 &= ~MF6_INTRYMOVE;
+	thing->SetZ(oldz);
 
 	// [RH] Don't activate anything if just predicting
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -2751,7 +2779,6 @@ pushline:
 		return false;
 	}
 
-	thing->SetZ(oldz);
 	if (!(thing->flags&(MF_TELEPORT | MF_NOCLIP)))
 	{
 		int numSpecHitTemp;

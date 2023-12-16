@@ -510,6 +510,10 @@ class Actor : Thinker native
 		return true;
 	}
 
+	// Called in TryMove if the mover ran into another Actor. This isn't called on players
+	// if they're currently predicting. Guarantees collisions unlike CanCollideWith.
+	virtual void CollidedWith(Actor other, bool passive) {}
+
 	// Called by PIT_CheckThing to check if two actors actually can collide.
 	virtual bool CanCollideWith(Actor other, bool passive)
 	{

@@ -37,6 +37,7 @@
 #include <memory>
 #include <algorithm>
 #include <assert.h>
+#include <string.h>
 #include "files_internal.h"
 
 namespace FileSys {

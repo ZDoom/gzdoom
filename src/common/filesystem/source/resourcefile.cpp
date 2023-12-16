@@ -709,6 +709,21 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 	return fr;
 }
 
+FileData FResourceFile::Read(int entry)
+{
+	if (!(Entries[entry].Flags & RESFF_COMPRESSED))
+	{
+		auto buf = Reader.GetBuffer();
+		// if this is backed by a memory buffer, we can just return a reference to the backing store.
+		if (buf != nullptr)
+		{
+			return FileData(buf + Entries[entry].Position, Entries[entry].Length, false);
+		}
+	}
+
+	auto fr = GetEntryReader(entry, READER_SHARED, 0);
+	return fr.Read(entry < NumLumps ? Entries[entry].Length : 0);
+}
 
 
 

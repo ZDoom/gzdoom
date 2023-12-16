@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 #include <functional>
 #include <vector>
 #include "fs_swap.h"
@@ -82,11 +83,20 @@ class FileData
 public:
 	using value_type = uint8_t;
 	FileData() { memory = nullptr; length = 0; owned = true; }
-	FileData(const void* memory_, size_t len)
+	FileData(const void* memory_, size_t len, bool own = true)
 	{
 		length = len;
-		memory = allocate(len);
-		if (memory_) memcpy(memory, memory_, len);
+		if (own)
+		{
+			length = len;
+			memory = allocate(len);
+			if (memory_) memcpy(memory, memory_, len);
+		}
+		else
+		{
+			memory = (void*)memory_;
+			owned = false;
+		}
 	}
 	uint8_t* writable() const { return owned? (uint8_t*)memory : nullptr; }
 	const void* data() const { return memory; }

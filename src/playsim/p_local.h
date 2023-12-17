@@ -250,10 +250,10 @@ extern TArray<spechit_t> portalhit;
 
 int	P_TestMobjLocation (AActor *mobj);
 int	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false);
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false, const bool checkUnblock = true);
 void P_DoMissileDamage(AActor* inflictor, AActor* target);
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
-AActor	*P_CheckOnmobj (AActor *thing);
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false, const bool checkUnblock = true);
+bool	P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL, bool missilecheck = false);

@@ -1363,7 +1363,7 @@ DEFINE_ACTION_FUNCTION(AActor, DoMissileDamage)
 //
 //==========================================================================
 
-bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
+bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm, const bool checkUnblock)
 {
 	AActor *thing = cres.thing;
 	double topz;
@@ -1423,7 +1423,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			}
 		}
 
-		if (((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID))
+		// Z movements from falling don't check unblocking.
+		if (checkUnblock && (thing->flags & MF_SOLID) && (tm.FromPMove || tm.thing->player != nullptr))
 		{
 			DVector3 oldpos = tm.thing->PosRelative(thing);
 			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
@@ -1778,7 +1779,7 @@ MOVEMENT CLIPPING
 //
 //==========================================================================
 
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly, const bool checkUnblock)
 {
 	sector_t *newsec;
 	AActor *thingblocker;
@@ -1880,7 +1881,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	if (!(thing->flags2 & MF2_THRUACTORS))
 	while ((it2.Next(&tcres)))
 	{
-		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm))
+		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm, checkUnblock))
 		{ // [RH] If a thing can be stepped up on, we need to continue checking
 			// other things in the blocks and see if we hit something that is
 			// definitely blocking. Otherwise, we need to check the lines, or we
@@ -1995,10 +1996,10 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	return (thing->BlockingMobj = thingblocker) == NULL;
 }
 
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly, const bool checkUnblock)
 {
 	FCheckPosition tm;
-	return P_CheckPosition(thing, pos, tm, actorsonly);
+	return P_CheckPosition(thing, pos, tm, actorsonly, checkUnblock);
 }
 
 
@@ -2037,18 +2038,17 @@ int P_TestMobjLocation(AActor *mobj)
 //				Checks if the new Z position is legal
 //=============================================================================
 
-AActor *P_CheckOnmobj(AActor *thing)
+bool P_CheckOnmobj(AActor *thing)
 {
-	double oldz;
-	int good;
-	AActor *onmobj;
-
-	oldz = thing->Z();
+	const double oldZ = thing->Z();
 	P_FakeZMovement(thing);
-	good = P_TestMobjZ(thing, false, &onmobj);
-	thing->SetZ(oldz);
+	AActor* const prevBlocking = thing->BlockingMobj;
+	const bool good = P_CheckPosition(thing, thing->Pos().XY(), true, false);
+	thing->SetZ(oldZ);
+	thing->GroundMobj = thing->BlockingMobj;
+	thing->BlockingMobj = prevBlocking;
 
-	return good ? NULL : onmobj;
+	return good;
 }
 
 //=============================================================================
@@ -2158,7 +2158,12 @@ void P_FakeZMovement(AActor *mo)
 	//
 	// adjust height
 	//
-	mo->AddZ(mo->Vel.Z);
+	// If we're standing on something, check if it's still there.
+	double zVel = mo->Vel.Z;
+	if ((mo->flags2 & MF2_ONMOBJ) && !zVel)
+		zVel = -EQUAL_EPSILON;
+
+	mo->AddZ(zVel);
 	if ((mo->flags&MF_FLOAT) && mo->target)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))

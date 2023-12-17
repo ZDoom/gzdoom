@@ -201,6 +201,7 @@ class Actor : Thinker native
 	native int lastbump;
 	native int DesignatedTeam;
 	native Actor BlockingMobj;
+	native Actor GroundMobj;
 	native Line BlockingLine;
 	native Line MovementBlockingLine;
 	native Sector Blocking3DFloor;
@@ -708,7 +709,7 @@ class Actor : Thinker native
 	native int CheckMonsterUseSpecials(Line blocking = null);
 	
 	native bool CheckMissileSpawn(double maxdist);
-	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null);
+	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null, bool checkUnblock = true);
 	native bool TestMobjLocation();
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
@@ -762,7 +763,7 @@ class Actor : Thinker native
 
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
-	native bool, Actor TestMobjZ(bool quick = false);
+	deprecated("4.12", "Use CheckPosition with checkUnblock set to false instead.") native bool, Actor TestMobjZ(bool quick = false);
 	native clearscope static bool InStateSequence(State newstate, State basestate);
 	
 	bool TryWalk ()

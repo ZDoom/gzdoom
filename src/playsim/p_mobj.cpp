@@ -309,6 +309,7 @@ void AActor::Serialize(FSerializer &arc)
 		("master", master)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
+		("groundmobj", GroundMobj)
 		A("blockingline", BlockingLine)
 		A("movementblockingline", MovementBlockingLine)
 		A("blocking3dfloor", Blocking3DFloor)
@@ -3730,8 +3731,6 @@ void AActor::Tick ()
 		return;
 	}
 
-	AActor *onmo;
-
 	//assert (state != NULL);
 	if (state == NULL)
 	{
@@ -4133,72 +4132,68 @@ void AActor::Tick ()
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
-				if (!(onmo = P_CheckOnmobj (this)))
+				if (P_CheckOnmobj (this))
 				{
-					P_ZMovement (this, oldfloorz);
 					flags2 &= ~MF2_ONMOBJ;
+					P_ZMovement (this, oldfloorz);
 				}
 				else
 				{
+					flags2 |= MF2_ONMOBJ;
 					if (player)
 					{
 						if (Vel.Z < Level->gravity * Sector->gravity * (-1./100)// -655.36f)
 							&& !(flags&MF_NOGRAVITY))
 						{
-							PlayerLandedOnThing (this, onmo);
+							PlayerLandedOnThing (this, GroundMobj);
 						}
 					}
-					if (onmo->Top() - Z() <= MaxStepHeight)
+					if (GroundMobj->Top() - Z() <= MaxStepHeight)
 					{
 						if (player && player->mo == this)
 						{
-							player->viewheight -= onmo->Top() - Z();
+							player->viewheight -= GroundMobj->Top() - Z();
 							double deltaview = player->GetDeltaViewHeight();
 							if (deltaview > player->deltaviewheight)
 							{
 								player->deltaviewheight = deltaview;
 							}
 						} 
-						SetZ(onmo->Top());
+						SetZ(GroundMobj->Top());
 					}
-					// Check for MF6_BUMPSPECIAL
-					// By default, only players can activate things by bumping into them
-					// We trigger specials as long as we are on top of it and not just when
-					// we land on it. This could be considered as gravity making us continually
-					// bump into it, but it also avoids having to worry about walking on to
-					// something without dropping and not triggering anything.
-					if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
-						|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
-						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
-						) && (Level->maptime > onmo->lastbump)) // Leave the bumper enough time to go away
+
+					if (!(flags & MF_MISSILE) && (BounceFlags & BOUNCE_MBF) && P_BounceActor(this, GroundMobj, true))
 					{
-						if (player == NULL || !(player->cheats & CF_PREDICTING))
-						{
-							if (P_ActivateThingSpecial(onmo, this))
-								onmo->lastbump = Level->maptime + TICRATE;
-						}
+						// Do nothing, relevant actions already done in the condition.
+						// This allows to avoid setting velocities to 0 in the final else of this series.
 					}
-					if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
+					else if (flags & MF_MISSILE)
 					{
-						bool res = P_BounceActor(this, onmo, true);
-						// If the bouncer is a missile and has hit the other actor it needs to be exploded here
-						// to be in line with the case when an actor's side is hit.
-						if (!res && (flags & MF_MISSILE))
+						bool checkReflect = true;
+						bool explode = false;
+						if (BounceFlags & BOUNCE_Actors)
 						{
-							P_DoMissileDamage(this, onmo);
-							P_ExplodeMissile(this, nullptr, onmo);
-						}
+							checkReflect = false;
+							explode = !P_BounceActor(this, GroundMobj, true);
+						}	
+
+						if (checkReflect)
+							explode = !P_ReflectOffActor(this, GroundMobj);
+
+						if (explode)
+							P_ExplodeMissile(this, nullptr, GroundMobj);
 					}
 					else
 					{
-						flags2 |= MF2_ONMOBJ;
-						Vel.Z = 0;
+						Vel.Z = 0.0;
 						Crash();
 					}
 				}
 			}
 			else
 			{
+				GroundMobj = nullptr;
+				flags2 &= ~MF2_ONMOBJ;
 				P_ZMovement (this, oldfloorz);
 			}
 
@@ -4207,6 +4202,8 @@ void AActor::Tick ()
 		}
 		else if (Z() <= floorz)
 		{
+			GroundMobj = nullptr;
+			flags2 &= ~MF2_ONMOBJ;
 			Crash();
 			if (ObjectFlags & OF_EuthanizeMe)
 				return;		// actor was destroyed

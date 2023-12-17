@@ -292,7 +292,7 @@ void FTextureAnimator::InitAnimated (void)
 
 void FTextureAnimator::InitAnimatedTextures()
 {
-	auto AnimatedTextures = TexMan.AnimatedTextures;
+	auto& AnimatedTextures = TexMan.AnimatedTextures;
 
 	for (int i = 0; i < AnimatedTextures.Size(); i++)
 	{

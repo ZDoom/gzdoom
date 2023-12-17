@@ -48,7 +48,7 @@ static bool OpenLump(FResourceFile* file, LumpFilterInfo*)
 	Entries[0].Namespace = ns_global;
 	Entries[0].ResourceID = -1;
 	Entries[0].Position = 0;
-	Entries[0].Length = file->GetContainerReader()->GetLength();
+	Entries[0].CompressedSize = Entries[0].Length = file->GetContainerReader()->GetLength();
 	Entries[0].Method = METHOD_STORED;
 	Entries[0].Flags = 0;
 	return true;

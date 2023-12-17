@@ -63,7 +63,7 @@ static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilter
 		int flength = Reader->ReadInt32();
 
 		Entries[i].Position = j;
-		Entries[i].Length = flength;
+		Entries[i].CompressedSize = Entries[i].Length = flength;
 		Entries[i].Flags = 0;
 		Entries[i].Namespace = ns_global;
 		Entries[i].Method = METHOD_STORED;
@@ -76,7 +76,7 @@ static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilter
 		std::swap(fn[strlength - 1], fn[strlength - 3]);
 
 		Entries[i + 1].Position = j;
-		Entries[i + 1].Length = flength;
+		Entries[i + 1].CompressedSize = Entries[i + 1].Length = flength;
 		Entries[i + 1].Flags = 0;
 		Entries[i + 1].Namespace = ns_global;
 		Entries[i + 1].ResourceID = -1;

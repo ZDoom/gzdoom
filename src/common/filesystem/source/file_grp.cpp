@@ -88,7 +88,7 @@ static bool OpenGrp(FResourceFile* file, LumpFilterInfo* filter)
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		Entries[i].Position = Position;
-		Entries[i].Length = LittleLong(fileinfo[i].Size);
+		Entries[i].CompressedSize = Entries[i].Length = LittleLong(fileinfo[i].Size);
 		Position += fileinfo[i].Size;
 		Entries[i].Flags = 0;
 		Entries[i].Namespace = ns_global;

@@ -81,7 +81,7 @@ bool OpenWHRes(FResourceFile* file, LumpFilterInfo*)
 		std::string synthname = BaseName + num;
 		
 		Entries[i].Position = offset;
-		Entries[i].Length = length;
+		Entries[i].CompressedSize = Entries[i].Length = length;
 		Entries[i].Flags = RESFF_FULLPATH;
 		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;

@@ -148,12 +148,21 @@ bool FWadFile::Open(LumpFilterInfo*, FileSystemMessageFunc Printf)
 
 		Entries[i].FileName = nullptr;
 		Entries[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
-		Entries[i].Length = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
+		Entries[i].CompressedSize = Entries[i].Length = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
+
 		Entries[i].Namespace = ns_global;
 		Entries[i].Flags = ishigh? RESFF_SHORTNAME | RESFF_COMPRESSED : RESFF_SHORTNAME;
 		Entries[i].Method = ishigh == 1? METHOD_LZSS : METHOD_STORED;
 		Entries[i].FileName = stringpool->Strdup(n);
 		// This doesn't set up the namespace yet.
+	}
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		if (Entries[i].Method == METHOD_LZSS)
+		{
+			// compressed size is implicit.
+			Entries[i].CompressedSize = (i == NumLumps - 1 ? Reader.GetLength() : Entries[i + 1].Position) - Entries[i].Position;
+		}
 	}
 
 

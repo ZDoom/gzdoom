@@ -80,7 +80,7 @@ static bool OpenPak(FResourceFile* file, LumpFilterInfo* filter)
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		Entries[i].Position = LittleLong(fileinfo[i].filepos);
-		Entries[i].Length = LittleLong(fileinfo[i].filelen);
+		Entries[i].CompressedSize = Entries[i].Length = LittleLong(fileinfo[i].filelen);
 		Entries[i].Flags = RESFF_FULLPATH;
 		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;

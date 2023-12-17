@@ -63,7 +63,7 @@ static bool OpenHog(FResourceFile* rf, LumpFilterInfo* filter)
 
         FResourceEntry Entry;
         Entry.Position = Reader->Tell();
-        Entry.Length = elength;
+        Entry.CompressedSize = Entry.Length = elength;
         Entry.Flags = 0;
         Entry.CRC32 = 0;
         Entry.Namespace = ns_global;

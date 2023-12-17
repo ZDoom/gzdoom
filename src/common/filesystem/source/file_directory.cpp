@@ -101,7 +101,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 	else
 	{
 		mBasePath = nullptr;
-		AllocateEntries(list.size());
+		AllocateEntries((int)list.size());
 		for(auto& entry : list)
 		{
 			if (mBasePath == nullptr)
@@ -122,7 +122,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 				}
 
 
-				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
+				if (filter == nullptr || filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
 				{
 					if (entry.Length > 0x7fffffff)
 					{
@@ -131,7 +131,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					}
 					// for internal access we use the normalized form of the relative path.
 					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
-					Entries[count].Length = entry.Length;
+					Entries[count].CompressedSize = Entries[count].Length = entry.Length;
 					Entries[count].Flags = RESFF_FULLPATH;
 					Entries[count].ResourceID = -1;
 					Entries[count].Method = METHOD_STORED;

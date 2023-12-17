@@ -58,7 +58,7 @@ static bool OpenMvl(FResourceFile* rf, LumpFilterInfo* filter)
         uint32_t elength = Reader->ReadUInt32();
 
         Entries[i].Position = pos;
-        Entries[i].Length = elength;
+        Entries[i].CompressedSize = Entries[i].Length = elength;
         Entries[i].ResourceID = -1;
         Entries[i].FileName = rf->NormalizeFileName(name);
 

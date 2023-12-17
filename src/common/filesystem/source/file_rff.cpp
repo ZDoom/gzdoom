@@ -110,7 +110,7 @@ static bool OpenRFF(FResourceFile* file, LumpFilterInfo*)
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
 		Entries[i].Position = LittleLong(lumps[i].FilePos);
-		Entries[i].Length = LittleLong(lumps[i].Size);
+		Entries[i].CompressedSize = Entries[i].Length = LittleLong(lumps[i].Size);
 		Entries[i].Flags = 0;
 		Entries[i].Method = METHOD_STORED;
 		if (lumps[i].Flags & 0x10)

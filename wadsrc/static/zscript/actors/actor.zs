@@ -89,13 +89,6 @@ class Actor : Thinker native
 	const DEFMORPHTICS = 40 * TICRATE;
 	const MELEEDELTA = 20;
 
-	enum EMissileHitResult
-	{
-		MHIT_DEFAULT = -1,
-		MHIT_DESTROY = 0,
-		MHIT_PASS = 1,
-	}
-
 	// flags are not defined here, the native fields for those get synthesized from the internal tables.
 	
 	// for some comments on these fields, see their native representations in actor.h.

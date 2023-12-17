@@ -612,6 +612,13 @@ enum EPickStart
 }
 
 
+enum EMissileHitResult
+{
+	MHIT_DEFAULT = -1,
+	MHIT_DESTROY = 0,
+	MHIT_PASS = 1,
+}
+
 class SectorEffect : Thinker native
 {
 	native protected Sector m_Sector;

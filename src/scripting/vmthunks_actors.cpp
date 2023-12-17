@@ -1117,6 +1117,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjZ, P_TestMobjZ)
 	return numret;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjCollision, P_TestMobjCollision)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	AActor* hitMobj = nullptr;
+	const int res = P_TestMobjCollision(self, &hitMobj);
+	if (numret > 1)
+		ret[1].SetObject(hitMobj);
+	if (numret > 0)
+		ret[0].SetInt(res);
+
+	return numret;
+}
+
 static int TryMove(AActor *self ,double x, double y, int dropoff, bool missilecheck, FCheckPosition *tm)
 {
 	if (tm == nullptr)

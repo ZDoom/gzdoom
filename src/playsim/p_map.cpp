@@ -2038,16 +2038,19 @@ int P_TestMobjLocation(AActor *mobj)
 //				Checks if the new Z position is legal
 //=============================================================================
 
-bool P_CheckOnmobj(AActor *thing)
+bool P_CheckOnmobj(AActor *thing, AActor** hitMobj)
 {
+	thing->GroundMobj = nullptr;
 	const double oldZ = thing->Z();
 	P_FakeZMovement(thing);
-	AActor* const prevBlocking = thing->BlockingMobj;
-	const bool good = P_CheckPosition(thing, thing->Pos().XY(), true, false);
-	thing->SetZ(oldZ);
-	thing->GroundMobj = thing->BlockingMobj;
-	thing->BlockingMobj = prevBlocking;
 
+	const bool good = P_TestMobjCollision(thing, hitMobj);
+	thing->SetZ(oldZ);
+
+	// Only consider the thing on top of something if moving downward.
+	if (thing->Vel.Z <= 0.0)
+		thing->GroundMobj = *hitMobj;
+	
 	return good;
 }
 
@@ -2145,6 +2148,25 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	return onmobj == NULL;
 }
 
+//=============================================================================
+//
+// P_CheckMobjBlocked
+//
+//=============================================================================
+int P_TestMobjCollision(AActor* const mobj, AActor** blocking)
+{
+	if (blocking != nullptr)
+		*blocking = nullptr;
+
+	AActor* const curBlocking = mobj->BlockingMobj;
+	const int res = P_CheckPosition(mobj, mobj->Pos().XY(), true, false);
+
+	if (blocking != nullptr)
+		*blocking = mobj->BlockingMobj;
+
+	mobj->BlockingMobj = curBlocking;
+	return res;
+}
 
 //=============================================================================
 //
@@ -2155,13 +2177,12 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 
 void P_FakeZMovement(AActor *mo)
 {
+	constexpr double BottomCheck = -EQUAL_EPSILON;
 	//
 	// adjust height
 	//
-	// If we're standing on something, check if it's still there.
-	double zVel = mo->Vel.Z;
-	if ((mo->flags2 & MF2_ONMOBJ) && !zVel)
-		zVel = -EQUAL_EPSILON;
+	// Check if we're standing on something, even if we have no velocity.
+	const double zVel = !mo->Vel.Z && mo->Z() > mo->floorz ? BottomCheck : mo->Vel.Z;
 
 	mo->AddZ(zVel);
 	if ((mo->flags&MF_FLOAT) && mo->target)
@@ -2383,7 +2404,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
 				thing->SetZ(tm.floorz);
-				auto good = P_TestMobjZ(thing);
+				auto good = P_TestMobjCollision(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -2860,7 +2881,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int fla
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
 				thing->SetZ(newz = tm.floorz);
-				int good = P_TestMobjZ(thing);
+				int good = P_TestMobjCollision(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -3112,7 +3133,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		{ // [RH] Check to make sure there's nothing in the way for the step up
 			double savedz = slidemo->Z();
 			slidemo->SetZ(open.bottom);
-			int good = P_TestMobjZ(slidemo);
+			int good = P_TestMobjCollision(slidemo);
 			slidemo->SetZ(savedz);
 			if (!good)
 			{
@@ -6856,7 +6877,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 	else if ((thing->flags2 & MF2_PASSMOBJ) && !isgood && thing->Top() < thing->ceilingz)
 	{
 		AActor *onmobj;
-		if (!P_TestMobjZ(thing, true, &onmobj) && onmobj->Z() <= thing->Z())
+		if (!P_TestMobjCollision(thing, &onmobj) && onmobj && onmobj->Z() <= thing->Z())
 		{
 			thing->SetZ(min(thing->ceilingz - thing->Height, onmobj->Top()));
 			thing->UpdateRenderSectorList();

@@ -1836,7 +1836,7 @@ bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise
 #define STOPSPEED			(0x1000/65536.)
 #define CARRYSTOPSPEED		((0x1000*32/3)/65536.)
 
-static double P_XYMovement (AActor *mo, DVector2 scroll) 
+static double P_XYMovement (AActor *mo, DVector2 scroll, bool& stepUp) 
 {
 	static int pushtime = 0;
 	bool bForceSlide = !scroll.isZero();
@@ -2191,6 +2191,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 		}
 		else
 		{
+			stepUp = mo->BlockingMobj != nullptr;
 			if (mo->Pos().XY() != ptry)
 			{
 				// If the new position does not match the desired position, the player
@@ -4106,7 +4107,9 @@ void AActor::Tick ()
 		Blocking3DFloor = nullptr;
 		BlockingFloor = nullptr;
 		BlockingCeiling = nullptr;
-		double oldfloorz = P_XYMovement (this, cumm);
+
+		bool stepUp = false;
+		double oldfloorz = P_XYMovement (this, cumm, stepUp);
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
@@ -4128,65 +4131,84 @@ void AActor::Tick ()
 			}
 
 		}
-		if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
+
+		AActor* const stepThing = stepUp ? BlockingMobj : nullptr;
+		if (Vel.Z != 0 || stepThing != nullptr || Z() != floorz)
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
-				if (P_CheckOnmobj (this))
+				int res = false;
+				AActor* hitMobj = nullptr;
+				if (stepThing != nullptr)
+					hitMobj = GroundMobj = stepThing;
+				else
+					res = P_CheckOnmobj(this, &hitMobj);
+
+				if (res)
 				{
 					flags2 &= ~MF2_ONMOBJ;
 					P_ZMovement (this, oldfloorz);
 				}
 				else
 				{
-					flags2 |= MF2_ONMOBJ;
-					if (player)
+					if (GroundMobj != nullptr)
 					{
-						if (Vel.Z < Level->gravity * Sector->gravity * (-1./100)// -655.36f)
-							&& !(flags&MF_NOGRAVITY))
+						flags2 |= MF2_ONMOBJ;
+						if (player)
 						{
-							PlayerLandedOnThing (this, GroundMobj);
+							if (Vel.Z < Level->gravity * Sector->gravity * (-1. / 100)// -655.36f)
+								&& !(flags & MF_NOGRAVITY))
+							{
+								PlayerLandedOnThing(this, GroundMobj);
+							}
+						}
+						if (GroundMobj->Top() - Z() <= MaxStepHeight)
+						{
+							if (player && player->mo == this)
+							{
+								player->viewheight -= GroundMobj->Top() - Z();
+								double deltaview = player->GetDeltaViewHeight();
+								if (deltaview > player->deltaviewheight)
+								{
+									player->deltaviewheight = deltaview;
+								}
+							}
+							SetZ(GroundMobj->Top());
 						}
 					}
-					if (GroundMobj->Top() - Z() <= MaxStepHeight)
+					else
 					{
-						if (player && player->mo == this)
-						{
-							player->viewheight -= GroundMobj->Top() - Z();
-							double deltaview = player->GetDeltaViewHeight();
-							if (deltaview > player->deltaviewheight)
-							{
-								player->deltaviewheight = deltaview;
-							}
-						} 
-						SetZ(GroundMobj->Top());
+						flags2 &= ~MF2_ONMOBJ;
+						if (hitMobj != nullptr)
+							SetZ(hitMobj->Z() - Height);
 					}
 
-					if (!(flags & MF_MISSILE) && (BounceFlags & BOUNCE_MBF) && P_BounceActor(this, GroundMobj, true))
+					if ((BounceFlags & BOUNCE_MBF) && !(flags & MF_MISSILE) && hitMobj != nullptr && P_BounceActor(this, hitMobj, true))
 					{
 						// Do nothing, relevant actions already done in the condition.
 						// This allows to avoid setting velocities to 0 in the final else of this series.
 					}
-					else if (flags & MF_MISSILE)
+					else if ((flags & MF_MISSILE) && hitMobj != nullptr)
 					{
 						bool checkReflect = true;
 						bool explode = false;
 						if (BounceFlags & BOUNCE_Actors)
 						{
 							checkReflect = false;
-							explode = !P_BounceActor(this, GroundMobj, true);
+							explode = !P_BounceActor(this, hitMobj, true);
 						}	
 
 						if (checkReflect)
-							explode = !P_ReflectOffActor(this, GroundMobj);
+							explode = !P_ReflectOffActor(this, hitMobj);
 
 						if (explode)
-							P_ExplodeMissile(this, nullptr, GroundMobj);
+							P_ExplodeMissile(this, nullptr, hitMobj);
 					}
 					else
 					{
 						Vel.Z = 0.0;
-						Crash();
+						if (flags2 & MF2_ONMOBJ)
+							Crash();
 					}
 				}
 			}

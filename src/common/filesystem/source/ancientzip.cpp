@@ -167,7 +167,7 @@ unsigned int FZipExploder::InitTable(std::vector<HuffNode> &decoder, int numspot
 	size_t start = decoder.size();
 	decoder.resize(decoder.size() + numspots);
 	memset(&decoder[start], 0, sizeof(HuffNode)*numspots);
-	return start;
+	return (unsigned)start;
 }
 
 int FZipExploder::buildercmp(const void *a, const void *b)

@@ -774,14 +774,14 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 //
 //==========================================================================
 
-int FileSystem::FileLength (int lump) const
+ptrdiff_t FileSystem::FileLength (int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 	{
 		return -1;
 	}
 	const auto &lump_p = FileInfo[lump];
-	return lump_p.resfile->Length(lump_p.resindex);
+	return (int)lump_p.resfile->Length(lump_p.resindex);
 }
 
 //==========================================================================

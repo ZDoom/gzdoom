@@ -151,7 +151,7 @@ bool unicode_validate(const char* str)
 	while (*str != 0)
 	{
 		int cp;
-		int result = utf8proc_iterate((const uint8_t*)str, -1, &cp);
+		auto result = utf8proc_iterate((const uint8_t*)str, -1, &cp);
 		if (result < 0) return false;
 	}
 	return true;

@@ -73,7 +73,7 @@ static bool OpenHog(FResourceFile* rf, LumpFilterInfo* filter)
         entries.push_back(Entry);
         Reader->Seek(elength, FileReader::SeekCur);
     }
-    auto Entries = rf->AllocateEntries(entries.size());
+    auto Entries = rf->AllocateEntries((int)entries.size());
     memcpy(Entries, entries.data(), entries.size() * sizeof(Entries[0]));
     rf->GenerateHash();
     return true;

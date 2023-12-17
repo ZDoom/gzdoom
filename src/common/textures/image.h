@@ -57,37 +57,6 @@ public:
 
 };
 
-// Allocator for std::vector that allocates from ImageArena.
-template <class T>
-class FImageArenaAllocator
-{
-public:
-	typedef T value_type;
-
-	FImageArenaAllocator() = default;
-
-	template <class U>
-	constexpr FImageArenaAllocator(const FImageArenaAllocator<U>&) noexcept {}
-
-    [[nodiscard]] T* allocate(std::size_t n) {
-        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
-            throw std::bad_array_new_length();
-
-        if (auto p = static_cast<T*>(ImageArena.Alloc(n * sizeof(T))))
-		{
-            return p;
-        }
-
-        throw std::bad_alloc();
-    }
-
-	void deallocate(T* p, std::size_t n) noexcept
-	{
-		// FMemArena can't deallocate, only allocate.
-		memset(p, 0, sizeof(T) * n);
-	}
-};
-
 // This represents a naked image. It has no high level logic attached to it.
 // All it can do is provide raw image data to its users.
 class FImageSource
@@ -101,8 +70,6 @@ protected:
 	int SourceLump;
 	int Width = 0, Height = 0;
 	int LeftOffset = 0, TopOffset = 0;				// Global offsets stored in the image.
-	// Per-frame, non-global offsets stored in animated images.
-	std::vector<std::pair<int, int>, FImageArenaAllocator<std::pair<int, int>>> FrameOffsets;
 	bool bUseGamePalette = false;					// true if this is an image without its own color set.
 	int ImageID = -1;
 	int NumOfFrames = 1;
@@ -195,14 +162,6 @@ public:
 	std::pair<int, int> GetOffsets() const
 	{
 		return std::make_pair(LeftOffset, TopOffset);
-	}
-
-	std::pair<int, int> GetOffsets(int frame)
-	{
-		if (frame == 0 || (frame - 1) >= FrameOffsets.size())
-			return std::make_pair(LeftOffset, TopOffset);
-		
-		return FrameOffsets[frame - 1];
 	}
 
 	void SetOffsets(int x, int y)

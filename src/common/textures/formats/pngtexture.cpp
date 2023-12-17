@@ -89,9 +89,8 @@ protected:
 	int PaletteSize = 0;
 	uint32_t StartOfIDAT = 0;
 	uint32_t StartOfPalette = 0;
-	std::vector<int, FImageArenaAllocator<int>> Durations;
-	std::vector<int, FImageArenaAllocator<int>> fdATCountsPerFrame;
-	std::vector<fcTL, FImageArenaAllocator<fcTL>> FramesInfo;
+	int* fdATCountsPerFrame;
+	fcTL* FramesInfo;
 	bool IDATIsFirstFrame = false;
 };
 
@@ -222,6 +221,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 	uint8_t trans[256];
 	uint32_t len, id;
 	int i;
+	int frame_info_count = 0;
 
 	bMasked = false;
 
@@ -281,14 +281,15 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 
 		case MAKE_ID('a', 'c', 'T', 'L'):
 			NumOfFrames = lump.ReadUInt32BE();
-			fdATCountsPerFrame.resize(NumOfFrames);
+			fdATCountsPerFrame = (int*)ImageArena.Calloc(NumOfFrames * sizeof(int));
+			FramesInfo = (fcTL*)ImageArena.Calloc(NumOfFrames * sizeof(fcTL));
 			lump.Seek(4, FileReader::SeekCur);
 			break;
 		
 		case MAKE_ID('f', 'c', 'T', 'L'):
 			fcTL frameInfo = SetupfcTL(lump);
 			IDATIsFirstFrame = true;
-			FramesInfo.push_back(frameInfo);
+			FramesInfo[frame_info_count++] = frameInfo;
 			break;
 		}
 		lump.Seek(4, FileReader::SeekCur);		// Skip CRC
@@ -317,8 +318,8 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 				break;
 
 			case MAKE_ID('f', 'c', 'T', 'L'):
-				FramesInfo.push_back(SetupfcTL(lump));
-				framenum = FramesInfo.size() - 1;
+				FramesInfo[frame_info_count++] = SetupfcTL(lump);
+				framenum = frame_info_count - 1;
 				break;
 			
 			case MAKE_ID('f', 'd', 'A', 'T'):
@@ -685,7 +686,7 @@ int FPNGTexture::GetDurationOfFrame(int frame)
 	if (frame == 0)
 		return 1000;
 	
-	if ((frame - 1) >= FramesInfo.size())
+	if ((frame - 1) >= NumOfFrames)
 		return 1000;
 
 	return (FramesInfo[frame - 1].delay_num * 1000) / (!FramesInfo[frame - 1].delay_den ? 100 : FramesInfo[frame - 1].delay_den);
@@ -889,7 +890,7 @@ int FPNGTexture::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, i
 			blitToBitmap(FramesInfo[frameindex].x_offset, FramesInfo[frameindex].y_offset,
 						FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType]);
 
-			if ((frameindex + 1) < FramesInfo.size() && FramesInfo[frameindex + 1].dispose_op == 2)
+			if ((frameindex + 1) < NumOfFrames && FramesInfo[frameindex + 1].dispose_op == 2)
 			{
 				prev_bmp.Blit(0, 0, bmp, &overwriteinf);
 			}
@@ -1145,7 +1146,7 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 			blitToBitmap(FramesInfo[frameindex].x_offset, FramesInfo[frameindex].y_offset,
 						FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType]);
 
-			if ((frameindex + 1) < FramesInfo.size() && FramesInfo[frameindex + 1].dispose_op == 2)
+			if ((frameindex + 1) < NumOfFrames && FramesInfo[frameindex + 1].dispose_op == 2)
 			{
 				prev_bmp.Blit(0, 0, *bmp, &overwriteinf);
 			}

@@ -55,7 +55,7 @@ public:
 	void CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion) override;
 
 private:
-	std::vector<int, FImageArenaAllocator<int>> durations;
+	int* durations;
 };
 
 
@@ -124,9 +124,9 @@ FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff, bool t
 	Height = h;
 	LeftOffset = xoff;
 	TopOffset = yoff;
-	durations.resize(FrameDurations.size());
-	std::copy(FrameDurations.begin(), FrameDurations.end(), durations.begin());
-	NumOfFrames = durations.size();
+	durations = (int*)ImageArena.Calloc(FrameDurations.size() * sizeof(int));
+	memcpy(durations, FrameDurations.data(), FrameDurations.size() * sizeof(int));
+	NumOfFrames = FrameDurations.size();
 	if (!NumOfFrames)
 		NumOfFrames = 1;
 	
@@ -138,7 +138,7 @@ int FWebPTexture::GetDurationOfFrame(int frame)
 	if (frame == 0)
 		return 1000;
 	
-	if ((frame - 1) >= durations.size())
+	if ((frame - 1) >= NumOfFrames)
 		return 1000;
 
 	return durations[frame - 1];
@@ -234,8 +234,8 @@ int FWebPTexture::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, 
 		animDecoderOptions.use_threads = true;
 		animDecoderOptions.color_mode = MODE_BGRA;
 		WebPData data;
-		data.bytes = bytes.GetBytes();
-		data.size = bytes.GetSize();
+		data.bytes = bytes.bytes();
+		data.size = bytes.size();
 		decoder = WebPAnimDecoderNew(&data, &animDecoderOptions);
 		if (!decoder)
 			return 0;
@@ -273,8 +273,8 @@ int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 		animDecoderOptions.use_threads = true;
 		animDecoderOptions.color_mode = MODE_BGRA;
 		WebPData data;
-		data.bytes = bytes.GetBytes();
-		data.size = bytes.GetSize();
+		data.bytes = bytes.bytes();
+		data.size = bytes.size();
 		decoder = WebPAnimDecoderNew(&data, &animDecoderOptions);
 		if (!decoder)
 			return 0;

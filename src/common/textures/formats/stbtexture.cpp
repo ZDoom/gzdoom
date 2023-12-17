@@ -63,11 +63,15 @@
 
 class FStbTexture : public FImageSource
 {
+private:
+	std::vector<int, FImageArenaAllocator<int>> durations;
 
 public:
-	FStbTexture (int lumpnum, int w, int h);
+	FStbTexture (int lumpnum, int w, int h, int frames, int* delays);
 	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	int GetDurationOfFrame(int frame) override;
+	int CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion) override;
 };
 
 
@@ -86,10 +90,25 @@ FImageSource *StbImage_TryCreate(FileReader & file, int lumpnum)
 {
 	int x, y, comp;
 	file.Seek(0, FileReader::SeekSet);
+	// Test GIF first.
+	stbi__context ctx;
+	stbi__start_callbacks(&ctx, &callbacks, &file);
+	if (stbi__gif_test(&ctx))
+	{
+		int frames;
+		int* delays = nullptr;
+		// Of course the entire damn file will have to be loaded because of the API.
+		auto images = stbi__load_gif_main(&ctx, &delays, &x, &y, &frames, &comp, STBI_rgb_alpha);
+		if (images)
+		{
+			STBI_FREE(images);
+			return new FStbTexture(lumpnum, x, y, frames, delays);
+		}
+	}
 	int result = stbi_info_from_callbacks(&callbacks, &file, &x, &y, &comp);
 	if (result == 1)
 	{
-		return new FStbTexture(lumpnum, x, y);
+		return new FStbTexture(lumpnum, x, y, 0, nullptr);
 	}
 
 	return nullptr;
@@ -101,13 +120,30 @@ FImageSource *StbImage_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FStbTexture::FStbTexture (int lumpnum, int w, int h)
+FStbTexture::FStbTexture (int lumpnum, int w, int h, int frames, int* delays)
 	: FImageSource(lumpnum)
 {
 	Width = w;
 	Height = h;
 	LeftOffset = 0;
 	TopOffset = 0;
+	if (frames > 1)
+	{
+		for (int i = 0; i < frames; i++)
+		{
+			durations.push_back(delays[i]);
+		}
+		STBI_FREE(delays);
+		NumOfFrames = frames;
+	}
+}
+
+int FStbTexture::GetDurationOfFrame(int frame)
+{
+	if (frame == 0 || (frame - 1) >= durations.size())
+		return 1000;
+
+	return durations[frame - 1];
 }
 
 //==========================================================================
@@ -120,7 +156,7 @@ PalettedPixels FStbTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FBitmap bitmap;
 	bitmap.Create(Width, Height);
-	CopyPixels(&bitmap, conversion);
+	CopyPixels(&bitmap, conversion, frame);
 	const uint8_t *data = bitmap.GetPixels();
 
 	uint8_t *dest_p;
@@ -155,10 +191,62 @@ PalettedPixels FStbTexture::CreatePalettedPixels(int conversion, int frame)
 //
 //==========================================================================
 
+int FStbTexture::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion)
+{
+	auto lump = fileSystem.OpenFileReader (SourceLump); 
+	int x, y, chan;
+	if (NumOfFrames > 1)
+	{
+		// Animated GIF image.
+		stbi__context ctx;
+		stbi__start_callbacks(&ctx, &callbacks, &lump);
+		if (stbi__gif_test(&ctx))
+		{
+			int frames;
+			int* delays = nullptr;
+			auto images = stbi__load_gif_main(&ctx, &delays, &x, &y, &frames, &chan, STBI_rgb_alpha);
+			if (images)
+			{
+				for (int frame = 0; frame < frames; frame++)
+				{
+					GetBitmap(frame)->CopyPixelDataRGB(0, 0, (uint8_t*)(images) + ((frame) * x * y * STBI_rgb_alpha), x, y, 4, x*4, 0, CF_RGBA);
+				}
+				STBI_FREE(images);
+				return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 int FStbTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	auto lump = fileSystem.OpenFileReader (SourceLump); 
 	int x, y, chan;
+	if (NumOfFrames > 1 && frame > 0)
+	{
+		// Animated GIF image.
+		stbi__context ctx;
+		stbi__start_callbacks(&ctx, &callbacks, &lump);
+		if (stbi__gif_test(&ctx))
+		{
+			int frames;
+			int* delays = nullptr;
+			auto images = stbi__load_gif_main(&ctx, &delays, &x, &y, &frames, &chan, STBI_rgb_alpha);
+			if (images)
+			{
+				bmp->CopyPixelDataRGB(0, 0, (uint8_t*)(images) + ((frame - 1) * x * y * STBI_rgb_alpha), x, y, 4, x*4, 0, CF_RGBA);
+				STBI_FREE(images);
+				return -1;
+			}
+		}
+	}
 	auto image = stbi_load_from_callbacks(&callbacks, &lump, &x, &y, &chan, STBI_rgb_alpha); 	
 	if (image)
 		bmp->CopyPixelDataRGB(0, 0, image, x, y, 4, x*4, 0, CF_RGBA); 	

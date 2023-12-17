@@ -219,6 +219,7 @@ protected:
 	bool bHdr = false; 				// only canvas textures for now.
 	int8_t bTranslucent = -1;
 	int8_t areacount = 0;			// this is capped at 4 sections.
+	int TexFrame = 0;
 
 
 public:
@@ -378,7 +379,6 @@ class FImageTexture : public FTexture
 {
 	FImageSource* mImage;
 	bool bNoRemap0 = false;
-	int TexFrame = 0;
 protected:
 	void SetFromImage();
 public:

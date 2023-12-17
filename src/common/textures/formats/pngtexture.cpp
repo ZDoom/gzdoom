@@ -34,6 +34,8 @@
 **
 */
 
+#include <deque>
+
 #include "files.h"
 
 #include "m_png.h"
@@ -44,6 +46,16 @@
 #include "texturemanager.h"
 #include "filesystem.h"
 #include "m_swap.h"
+
+#pragma pack(1)
+typedef struct fcTL
+{
+	uint32_t sequence_number;
+	uint32_t width, height, x_offset, y_offset;
+	uint16_t delay_num, delay_den;
+	uint8_t dispose_op, blend_op;
+} fcTL;
+#pragma pack(pop)
 
 //==========================================================================
 //
@@ -58,10 +70,14 @@ public:
 
 	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
 	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
+	int GetDurationOfFrame(int frame) override;
+	int CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion) override;
+	void CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion) override;
 
 protected:
 	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
 	void SetupPalette(FileReader &lump);
+	fcTL SetupfcTL(FileReader &lump);
 
 	uint8_t BitDepth;
 	uint8_t ColorType;
@@ -73,6 +89,10 @@ protected:
 	int PaletteSize = 0;
 	uint32_t StartOfIDAT = 0;
 	uint32_t StartOfPalette = 0;
+	std::vector<int, FImageArenaAllocator<int>> Durations;
+	std::vector<int, FImageArenaAllocator<int>> fdATCountsPerFrame;
+	std::vector<fcTL, FImageArenaAllocator<fcTL>> FramesInfo;
+	bool IDATIsFirstFrame = false;
 };
 
 FImageSource* StbImage_TryCreate(FileReader& file, int lumpnum);
@@ -258,6 +278,18 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 			NonPaletteTrans[1] = uint16_t(trans[2] * 256 + trans[3]);
 			NonPaletteTrans[2] = uint16_t(trans[4] * 256 + trans[5]);
 			break;
+
+		case MAKE_ID('a', 'c', 'T', 'L'):
+			NumOfFrames = lump.ReadUInt32BE();
+			fdATCountsPerFrame.resize(NumOfFrames);
+			lump.Seek(4, FileReader::SeekCur);
+			break;
+		
+		case MAKE_ID('f', 'c', 'T', 'L'):
+			fcTL frameInfo = SetupfcTL(lump);
+			IDATIsFirstFrame = true;
+			FramesInfo.push_back(frameInfo);
+			break;
 		}
 		lump.Seek(4, FileReader::SeekCur);		// Skip CRC
 		lump.Read(&len, 4);
@@ -265,6 +297,51 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		lump.Read(&id, 4);
 	}
 	StartOfIDAT = (uint32_t)lump.Tell() - 8;
+
+	// Continue for APNG images.
+	if (NumOfFrames > 1 && id != MAKE_ID('I','E','N','D'))
+	{
+		int framenum = -1;
+		bool invalid = false;
+		lump.Seek(StartOfIDAT, FileReader::SeekSet);
+
+		lump.Read(&len, 4);
+		lump.Read(&id, 4);
+		while (id != MAKE_ID('I','E','N','D'))
+		{
+			len = BigLong((unsigned int)len);
+			switch (id)
+			{
+			default:
+				lump.Seek (len, FileReader::SeekCur);
+				break;
+
+			case MAKE_ID('f', 'c', 'T', 'L'):
+				FramesInfo.push_back(SetupfcTL(lump));
+				framenum = FramesInfo.size() - 1;
+				break;
+			
+			case MAKE_ID('f', 'd', 'A', 'T'):
+				if (framenum == -1)
+				{
+					invalid = true;
+					break;
+				}
+				fdATCountsPerFrame[framenum]++;
+				lump.Seek (len, FileReader::SeekCur);
+				break;
+			}
+			/* Check if we encountered an invalid APNG chunk. */
+			if (invalid) {
+				NumOfFrames = 1;
+				break;
+			}
+			lump.Seek(4, FileReader::SeekCur);		// Skip CRC
+			lump.Read(&len, 4);
+			id = MAKE_ID('I','E','N','D');
+			lump.Read(&id, 4);
+		}
+	}
 
 	switch (colortype)
 	{
@@ -302,6 +379,24 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 		bMasked = HaveTrans;
 		break;
 	}
+}
+
+fcTL FPNGTexture::SetupfcTL(FileReader &lump)
+{
+	fcTL out;
+	lump.Read((void*)&out, sizeof(out));
+	out.sequence_number = BigLong(out.sequence_number);
+	out.width = BigLong(out.width);
+	out.height = BigLong(out.height);
+	out.x_offset = BigLong(out.x_offset);
+	out.y_offset = BigLong(out.y_offset);
+	out.delay_num = BigShort(out.delay_num);
+	out.delay_den = BigShort(out.delay_den);
+	
+	if (out.delay_num == 0)
+		out.delay_num = 1;
+
+	return out;
 }
 
 void FPNGTexture::SetupPalette(FileReader &lump)
@@ -421,6 +516,38 @@ PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion, int frame)
 	lump = &lfr;
 
 	PalettedPixels Pixels(Width*Height);
+
+	if (NumOfFrames > 1 && frame >= (IDATIsFirstFrame ? 2 : 1))
+	{
+		// Paletted pixels on animated images can't be blended directly.
+		FBitmap bitmap;
+		bitmap.Create(Width, Height);
+		CopyPixels(&bitmap, conversion, frame);
+		const uint8_t *data = bitmap.GetPixels();
+
+		uint8_t *dest_p = Pixels.Data();
+		int dest_adv = Height;
+		int dest_rew = Width * Height - 1;
+
+		bool doalpha = conversion == luminance; 
+		// Convert the source image from row-major to column-major format and remap it
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; --x)
+			{
+				int b = *data++;
+				int g = *data++;
+				int r = *data++;
+				int a = *data++;
+				if (a < 128) *dest_p = 0;
+				else *dest_p = ImageHelpers::RGBToPalette(doalpha, r, g, b); 
+				dest_p += dest_adv;
+			}
+			dest_p -= dest_rew;
+		}
+		return Pixels;
+	}
+
 	if (StartOfIDAT == 0)
 	{
 		memset (Pixels.Data(), 0x99, Width*Height);
@@ -549,6 +676,283 @@ PalettedPixels FPNGTexture::CreatePalettedPixels(int conversion, int frame)
 
 //===========================================================================
 //
+// FPNGTexture::GetDurationOfFrame
+//
+//===========================================================================
+
+int FPNGTexture::GetDurationOfFrame(int frame)
+{
+	if (frame == 0)
+		return 1000;
+	
+	if ((frame - 1) >= FramesInfo.size())
+		return 1000;
+
+	return (FramesInfo[frame - 1].delay_num * 1000) / (!FramesInfo[frame - 1].delay_den ? 100 : FramesInfo[frame - 1].delay_den);
+}
+
+//===========================================================================
+//
+// FPNGTexture::CopyPixelsIntoFrames
+//
+//===========================================================================
+
+int FPNGTexture::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion)
+{
+	FBitmap bmp;
+	
+	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
+	PalEntry pe[256];
+	uint32_t len, id;
+	static char bpp[] = {1, 0, 3, 1, 2, 0, 4};
+	int pixwidth = Width * bpp[ColorType];
+	int transpal = false;
+	uint32_t destindex = 0;
+
+	FileReader *lump;
+	FileReader lfr;
+	
+	std::deque<uint32_t> StartOffdAT;
+
+	bmp.Create(Width, Height);
+	lfr = fileSystem.OpenFileReader(SourceLump);
+	lump = &lfr;
+
+	lump->Seek(33, FileReader::SeekSet);
+	for(int i = 0; i < 256; i++)	// default to a gray map
+		pe[i] = PalEntry(255,i,i,i);
+
+	lump->Read(&len, 4);
+	lump->Read(&id, 4);
+	while (id != MAKE_ID('I','D','A','T') && id != MAKE_ID('I','E','N','D'))
+	{
+		len = BigLong((unsigned int)len);
+		switch (id)
+		{
+		default:
+			lump->Seek (len, FileReader::SeekCur);
+			break;
+
+		case MAKE_ID('P','L','T','E'):
+			for(int i = 0; i < PaletteSize; i++)
+			{
+				pe[i].r = lump->ReadUInt8();
+				pe[i].g = lump->ReadUInt8();
+				pe[i].b = lump->ReadUInt8();
+			}
+			break;
+
+		case MAKE_ID('t','R','N','S'):
+			if (ColorType == 3)
+			{
+				for(uint32_t i = 0; i < len; i++)
+				{
+					pe[i].a = lump->ReadUInt8();
+					if (pe[i].a != 0 && pe[i].a != 255)
+						transpal = true;
+				}
+			}
+			else
+			{
+				lump->Seek(len, FileReader::SeekCur);
+			}
+			break;
+		}
+		lump->Seek(4, FileReader::SeekCur);	// Skip CRC
+		lump->Read(&len, 4);
+		id = MAKE_ID('I','E','N','D');
+		lump->Read(&id, 4);
+	}
+
+	// Continue for APNG images.
+	if (NumOfFrames > 1 && id != MAKE_ID('I','E','N','D'))
+	{
+		lump->Seek(StartOfIDAT, FileReader::SeekSet);
+
+		lump->Read(&len, 4);
+		lump->Read(&id, 4);
+		while (id != MAKE_ID('I','E','N','D'))
+		{
+			len = BigLong((unsigned int)len);
+			switch (id)
+			{
+			default:
+				lump->Seek (len, FileReader::SeekCur);
+				break;
+
+			case MAKE_ID('f', 'd', 'A', 'T'):
+				StartOffdAT.push_back(lump->Tell() - 8);
+				lump->Seek (len, FileReader::SeekCur);
+				break;
+			}
+			lump->Seek(4, FileReader::SeekCur);		// Skip CRC
+			lump->Read(&len, 4);
+			id = MAKE_ID('I','E','N','D');
+			lump->Read(&id, 4);
+		}
+	}
+
+	if (ColorType == 0 && HaveTrans && NonPaletteTrans[0] < 256)
+	{
+		pe[NonPaletteTrans[0]].a = 0;
+		transpal = true;
+	}
+
+	uint8_t * Pixels = new uint8_t[pixwidth * Height];
+	FCopyInfo info{};
+	info.op = OP_COPY;
+	info.blend = BLEND_NONE;
+	info.palette = nullptr;
+
+	auto blitToBitmap = [this, &bmp, &pe, &Pixels, &pixwidth, &transpal, &info](int originx, int originy, int width, int height, int pixelwidth)
+	{
+		switch (ColorType)
+		{
+		case 0:
+		case 3:
+			bmp.CopyPixelData(originx, originy, Pixels, width, height, 1, width, 0, pe, &info);
+			break;
+
+		case 2:
+			if (!HaveTrans)
+			{
+				bmp.CopyPixelDataRGB(originx, originy, Pixels, width, height, 3, pixelwidth, 0, CF_RGB, &info);
+			}
+			else
+			{
+				bmp.CopyPixelDataRGB(originx, originy, Pixels, width, height, 3, pixelwidth, 0, CF_RGBT, &info,
+					NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
+				transpal = true;
+			}
+			break;
+
+		case 4:
+			bmp.CopyPixelDataRGB(originx, originy, Pixels, width, height, 2, pixelwidth, 0, CF_IA, &info);
+			transpal = -1;
+			break;
+
+		case 6:
+			bmp.CopyPixelDataRGB(originx, originy, Pixels, width, height, 4, pixelwidth, 0, CF_RGBA, &info);
+			transpal = -1;
+			break;
+
+		default:
+			break;
+
+		}
+	};
+
+	if (NumOfFrames > 1)
+	{
+		int frameindex = IDATIsFirstFrame ? 1 : 0;
+
+		FBitmap prev_bmp;
+		prev_bmp.Create(Width, Height);
+
+		if (IDATIsFirstFrame)
+		{
+			// Read the IDAT before doing anything.
+			lump->Seek (StartOfIDAT, FileReader::SeekSet);
+			lump->Read(&len, 4);
+			lump->Read(&id, 4);
+			M_ReadIDAT (*lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+			info.op = OP_COPYALPHA;
+			blitToBitmap(0, 0, Width, Height, pixwidth);
+			GetBitmap(destindex++)->Blit(0, 0, bmp);
+		}
+
+		for (; frameindex < NumOfFrames; frameindex++)
+		{
+			FCopyInfo overwriteinf{};
+			overwriteinf.op = OP_OVERWRITE;
+			if (frameindex && FramesInfo[frameindex - 1].dispose_op == 2)
+			{
+				bmp.Blit(0, 0, prev_bmp, &overwriteinf);
+			}
+			else if (frameindex && FramesInfo[frameindex - 1].dispose_op == 1)
+			{
+				bmp.Zero();
+			}
+
+			if (FramesInfo[frameindex].blend_op == 0)
+			{
+				uint8_t* data = bmp.GetPixels() + 4 * FramesInfo[frameindex].x_offset + bmp.GetPitch() * FramesInfo[frameindex].y_offset;
+				for (int y = 0; y < FramesInfo[frameindex].height; y++)
+				{
+					memset(data, 0, FramesInfo[frameindex].width * 4);
+					data += bmp.GetPitch();
+				}
+			}
+
+			M_ReadfdAT(*lump, Pixels, FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType], BitDepth, ColorType, Interlace, StartOffdAT, fdATCountsPerFrame[frameindex]);
+			info.op = OP_COMPOSEALPHA;
+			blitToBitmap(FramesInfo[frameindex].x_offset, FramesInfo[frameindex].y_offset,
+						FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType]);
+
+			if ((frameindex + 1) < FramesInfo.size() && FramesInfo[frameindex + 1].dispose_op == 2)
+			{
+				prev_bmp.Blit(0, 0, bmp, &overwriteinf);
+			}
+
+			GetBitmap(destindex++)->Blit(0, 0, bmp, &overwriteinf);
+		}
+		delete[] Pixels;
+		return transpal;
+	}
+	delete[] Pixels;
+	return transpal;
+}
+
+//===========================================================================
+//
+// FPNGTexture::CreatePalettedPixelsOfFrames
+//
+//===========================================================================
+
+void FPNGTexture::CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion)
+{
+	TArray<FBitmap> bitmaps(GetNumOfFrames(), true);
+	CopyPixelsIntoFrames([&bitmaps, this](int index) -> FBitmap*
+	{
+		bitmaps[index].Create(Width, Height);
+		return &bitmaps[index];
+	}, conversion);
+
+	for (int i = 0; i < GetNumOfFrames(); i++)
+	{
+		FBitmap& bitmap = bitmaps[i];
+		const uint8_t *data = bitmap.GetPixels();
+
+		uint8_t *dest_p;
+		int dest_adv = Height;
+		int dest_rew = Width * Height - 1;
+
+		PalettedPixels Pixels(Width*Height);
+		dest_p = Pixels.Data();
+
+		bool doalpha = conversion == luminance; 
+		// Convert the source image from row-major to column-major format and remap it
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; --x)
+			{
+				int b = *data++;
+				int g = *data++;
+				int r = *data++;
+				int a = *data++;
+				if (a < 128) *dest_p = 0;
+				else *dest_p = ImageHelpers::RGBToPalette(doalpha, r, g, b); 
+				dest_p += dest_adv;
+			}
+			dest_p -= dest_rew;
+		}
+
+		GetPixels(i) = Pixels;
+	}
+}
+
+//===========================================================================
+//
 // FPNGTexture::CopyPixels
 //
 //===========================================================================
@@ -564,6 +968,8 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 
 	FileReader *lump;
 	FileReader lfr;
+	
+	std::deque<uint32_t> StartOffdAT;
 
 	lfr = fileSystem.OpenFileReader(SourceLump);
 	lump = &lfr;
@@ -614,6 +1020,34 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 		lump->Read(&id, 4);
 	}
 
+	// Continue for APNG images.
+	if (NumOfFrames > 1 && frame >= (IDATIsFirstFrame ? 2 : 1) && id != MAKE_ID('I','E','N','D'))
+	{
+		lump->Seek(StartOfIDAT, FileReader::SeekSet);
+
+		lump->Read(&len, 4);
+		lump->Read(&id, 4);
+		while (id != MAKE_ID('I','E','N','D'))
+		{
+			len = BigLong((unsigned int)len);
+			switch (id)
+			{
+			default:
+				lump->Seek (len, FileReader::SeekCur);
+				break;
+
+			case MAKE_ID('f', 'd', 'A', 'T'):
+				StartOffdAT.push_back(lump->Tell() - 8);
+				lump->Seek (len, FileReader::SeekCur);
+				break;
+			}
+			lump->Seek(4, FileReader::SeekCur);		// Skip CRC
+			lump->Read(&len, 4);
+			id = MAKE_ID('I','E','N','D');
+			lump->Read(&id, 4);
+		}
+	}
+
 	if (ColorType == 0 && HaveTrans && NonPaletteTrans[0] < 256)
 	{
 		pe[NonPaletteTrans[0]].a = 0;
@@ -621,46 +1055,111 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 	}
 
 	uint8_t * Pixels = new uint8_t[pixwidth * Height];
+	FCopyInfo info{};
+	info.op = OP_COPY;
+	info.blend = BLEND_NONE;
+	info.palette = nullptr;
+
+	auto blitToBitmap = [this, &bmp, &pe, &Pixels, &pixwidth, &transpal, &info](int originx, int originy, int width, int height, int pixelwidth)
+	{
+		switch (ColorType)
+		{
+		case 0:
+		case 3:
+			bmp->CopyPixelData(originx, originy, Pixels, width, height, 1, width, 0, pe, &info);
+			break;
+
+		case 2:
+			if (!HaveTrans)
+			{
+				bmp->CopyPixelDataRGB(originx, originy, Pixels, width, height, 3, pixelwidth, 0, CF_RGB, &info);
+			}
+			else
+			{
+				bmp->CopyPixelDataRGB(originx, originy, Pixels, width, height, 3, pixelwidth, 0, CF_RGBT, &info,
+					NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
+				transpal = true;
+			}
+			break;
+
+		case 4:
+			bmp->CopyPixelDataRGB(originx, originy, Pixels, width, height, 2, pixelwidth, 0, CF_IA, &info);
+			transpal = -1;
+			break;
+
+		case 6:
+			bmp->CopyPixelDataRGB(originx, originy, Pixels, width, height, 4, pixelwidth, 0, CF_RGBA, &info);
+			transpal = -1;
+			break;
+
+		default:
+			break;
+
+		}
+	};
+
+	if (NumOfFrames > 1 && frame >= (IDATIsFirstFrame ? 2 : 1))
+	{
+		int frameindex = IDATIsFirstFrame ? 1 : 0;
+
+		FBitmap prev_bmp;
+		prev_bmp.Create(Width, Height);
+
+		if (IDATIsFirstFrame && frame >= 2)
+		{
+			// Read the IDAT before doing anything.
+			lump->Seek (StartOfIDAT, FileReader::SeekSet);
+			lump->Read(&len, 4);
+			lump->Read(&id, 4);
+			M_ReadIDAT (*lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
+			info.op = OP_COPYALPHA;
+			blitToBitmap(0, 0, Width, Height, pixwidth);
+		}
+
+		for (; frameindex < frame; frameindex++)
+		{
+			FCopyInfo overwriteinf{};
+			overwriteinf.op = OP_OVERWRITE;
+
+			if (frameindex && FramesInfo[frameindex - 1].dispose_op == 2)
+			{
+				bmp->Blit(0, 0, prev_bmp, &overwriteinf);
+			}
+			else if (frameindex && FramesInfo[frameindex - 1].dispose_op == 1)
+			{
+				bmp->Zero();
+			}
+
+			if (FramesInfo[frameindex].blend_op == 0)
+			{
+				uint8_t* data = bmp->GetPixels() + 4 * FramesInfo[frameindex].x_offset + bmp->GetPitch() * FramesInfo[frameindex].y_offset;
+				for (int y = 0; y < FramesInfo[frameindex].height; y++)
+				{
+					memset(data, 0, FramesInfo[frameindex].width * 4);
+					data += bmp->GetPitch();
+				}
+			}
+
+			M_ReadfdAT(*lump, Pixels, FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType], BitDepth, ColorType, Interlace, StartOffdAT, fdATCountsPerFrame[frameindex]);
+			info.op = OP_COMPOSEALPHA;
+			blitToBitmap(FramesInfo[frameindex].x_offset, FramesInfo[frameindex].y_offset,
+						FramesInfo[frameindex].width, FramesInfo[frameindex].height, FramesInfo[frameindex].width * bpp[ColorType]);
+
+			if ((frameindex + 1) < FramesInfo.size() && FramesInfo[frameindex + 1].dispose_op == 2)
+			{
+				prev_bmp.Blit(0, 0, *bmp, &overwriteinf);
+			}
+		}
+		delete[] Pixels;
+		return transpal;
+	}
 
 	lump->Seek (StartOfIDAT, FileReader::SeekSet);
 	lump->Read(&len, 4);
 	lump->Read(&id, 4);
 	M_ReadIDAT (*lump, Pixels, Width, Height, pixwidth, BitDepth, ColorType, Interlace, BigLong((unsigned int)len));
 
-	switch (ColorType)
-	{
-	case 0:
-	case 3:
-		bmp->CopyPixelData(0, 0, Pixels, Width, Height, 1, Width, 0, pe);
-		break;
-
-	case 2:
-		if (!HaveTrans)
-		{
-			bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, pixwidth, 0, CF_RGB);
-		}
-		else
-		{
-			bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 3, pixwidth, 0, CF_RGBT, nullptr,
-				NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
-			transpal = true;
-		}
-		break;
-
-	case 4:
-		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 2, pixwidth, 0, CF_IA);
-		transpal = -1;
-		break;
-
-	case 6:
-		bmp->CopyPixelDataRGB(0, 0, Pixels, Width, Height, 4, pixwidth, 0, CF_RGBA);
-		transpal = -1;
-		break;
-
-	default:
-		break;
-
-	}
+	blitToBitmap(0, 0, Width, Height, pixwidth);
 	delete[] Pixels;
 	return transpal;
 }

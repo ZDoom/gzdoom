@@ -102,6 +102,7 @@ void FTextureManager::DeleteAll()
 
 	BuildTileData.Clear();
 	tmanips.Clear();
+	AnimatedTextures.Clear();
 }
 
 //==========================================================================
@@ -410,6 +411,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohas
 {
 	int bucket;
 	int hash;
+	FImageSource* img = nullptr;
 
 	if (texture == NULL) return FTextureID(-1);
 
@@ -437,6 +439,15 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohas
 	if (bucket >= 0) HashFirst[bucket] = trans;
 	auto id = FTextureID(trans);
 	texture->SetID(id);
+
+	if (!texture->GetTexture())
+		return id;
+	
+	img = texture->GetTexture()->GetImage();
+	if (texture->GetTexture()->TexFrame == 0 && img && img->GetNumOfFrames() > 1)
+	{
+		AnimatedTextures.Push(id);
+	}
 	return id;
 }
 

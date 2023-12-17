@@ -696,6 +696,234 @@ bool M_ReadIDAT (FileReader &file, uint8_t *buffer, int width, int height, int p
 	return true;
 }
 
+//==========================================================================
+//
+// ReadfdAT
+//
+// Reads APNG image data out of a PNG
+//
+//==========================================================================
+
+bool M_ReadfdAT (FileReader &file, uint8_t *buffer, int width, int height, int pitch,
+				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, std::deque<uint32_t>& StartsOffdATs,
+				 int fdATCount)
+{
+	// Uninterlaced images are treated as a conceptual eighth pass by these tables.
+	static const uint8_t passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
+	static const uint8_t passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
+	static const uint8_t passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
+	static const uint8_t passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
+
+	Byte *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
+	Byte chunkbuffer[4096];
+	z_stream stream;
+	int err;
+	int i, pass, passbuff, passpitch, passwidth;
+	int bytesPerRowIn, bytesPerRowOut;
+	int bytesPerPixel;
+	unsigned int chunklen;
+	bool initpass;
+
+	switch (colortype)
+	{
+	case 2:		bytesPerPixel = 3;		break;		// RGB
+	case 4:		bytesPerPixel = 2;		break;		// LA
+	case 6:		bytesPerPixel = 4;		break;		// RGBA
+	default:	bytesPerPixel = 1;		break;
+	}
+
+	bytesPerRowOut = width * bytesPerPixel;
+	i = 4 + bytesPerRowOut * 2;
+	if (interlace)
+	{
+		i += bytesPerRowOut * 2;
+	}
+	inputLine = (Byte *)alloca (i);
+	adam7buff[0] = inputLine + 4 + bytesPerRowOut;
+	adam7buff[1] = adam7buff[0] + bytesPerRowOut;
+	adam7buff[2] = adam7buff[1] + bytesPerRowOut;
+	bufferend = buffer + pitch * height;
+
+	stream.next_in = Z_NULL;
+	stream.avail_in = 0;
+	stream.zalloc = Z_NULL;
+	stream.zfree = Z_NULL;
+	err = inflateInit (&stream);
+	if (err != Z_OK)
+	{
+		return false;
+	}
+	initpass = true;
+	pass = interlace ? 0 : 7;
+
+	// Silence GCC warnings. Due to initpass being true, these will be set
+	// before they're used, but it doesn't know that.
+	curr = prev = 0;
+	passwidth = passpitch = bytesPerRowIn = 0;
+	passbuff = 0;
+
+	{
+		auto offset = StartsOffdATs.front();
+		StartsOffdATs.pop_front();
+		file.Seek(offset, FileReader::SeekSet);
+		chunklen = file.ReadUInt32BE() - 4;
+		file.Seek(8, FileReader::SeekCur);
+		fdATCount--;
+	}
+
+	while (err != Z_STREAM_END && pass < 8 - interlace)
+	{
+		if (initpass)
+		{
+			int rowoffset, coloffset;
+
+			initpass = false;
+			pass--;
+			do
+			{
+				pass++;
+				rowoffset = passrowoffset[pass];
+				coloffset = passcoloffset[pass];
+			}
+			while ((rowoffset >= height || coloffset >= width) && pass < 7);
+			if (pass == 7 && interlace)
+			{
+				break;
+			}
+			passwidth = (width + (1 << passwidthshift[pass]) - 1 - coloffset) >> passwidthshift[pass];
+			prev = adam7buff[0];
+			passbuff = 1;
+			memset (prev, 0, passwidth * bytesPerPixel);
+			switch (bitdepth)
+			{
+			case 8:		bytesPerRowIn = passwidth * bytesPerPixel;	break;
+			case 4:		bytesPerRowIn = (passwidth+1)/2;			break;
+			case 2:		bytesPerRowIn = (passwidth+3)/4;			break;
+			case 1:		bytesPerRowIn = (passwidth+7)/8;			break;
+			default:	return false;
+			}
+			curr = buffer + rowoffset*pitch + coloffset*bytesPerPixel;
+			passpitch = pitch << passheightshift[pass];
+			stream.next_out = inputLine;
+			stream.avail_out = bytesPerRowIn + 1;
+		}
+		if (stream.avail_in == 0 && chunklen > 0)
+		{
+			stream.next_in = chunkbuffer;
+			stream.avail_in = (uInt)file.Read (chunkbuffer, min<uint32_t>(chunklen,sizeof(chunkbuffer)));
+			chunklen -= stream.avail_in;
+		}
+
+		err = inflate (&stream, Z_SYNC_FLUSH);
+		if (err != Z_OK && err != Z_STREAM_END)
+		{ // something unexpected happened
+			inflateEnd (&stream);
+			return false;
+		}
+
+		if (stream.avail_out == 0)
+		{
+			if (pass >= 6)
+			{
+				// Store pixels directly into the output buffer
+				UnfilterRow (bytesPerRowIn, curr, inputLine, prev, bytesPerPixel);
+				prev = curr;
+			}
+			else
+			{
+				const uint8_t *in;
+				uint8_t *out;
+				int colstep, x;
+
+				// Store pixels into a temporary buffer
+				UnfilterRow (bytesPerRowIn, adam7buff[passbuff], inputLine, prev, bytesPerPixel);
+				prev = adam7buff[passbuff];
+				passbuff ^= 1;
+				in = prev;
+				if (bitdepth < 8)
+				{
+					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], colortype == 0);
+					in = adam7buff[2];
+				}
+				// Distribute pixels into the output buffer
+				out = curr;
+				colstep = bytesPerPixel << passwidthshift[pass];
+				switch (bytesPerPixel)
+				{
+				case 1:
+					for (x = passwidth; x > 0; --x)
+					{
+						*out = *in;
+						out += colstep;
+						in += 1;
+					}
+					break;
+
+				case 2:
+					for (x = passwidth; x > 0; --x)
+					{
+						*(uint16_t *)out = *(uint16_t *)in;
+						out += colstep;
+						in += 2;
+					}
+					break;
+
+				case 3:
+					for (x = passwidth; x > 0; --x)
+					{
+						out[0] = in[0];
+						out[1] = in[1];
+						out[2] = in[2];
+						out += colstep;
+						in += 3;
+					}
+					break;
+
+				case 4:
+					for (x = passwidth; x > 0; --x)
+					{
+						*(uint32_t *)out = *(uint32_t *)in;
+						out += colstep;
+						in += 4;
+					}
+					break;
+				}
+			}
+			if ((curr += passpitch) >= bufferend)
+			{
+				++pass;
+				initpass = true;
+			}
+			stream.next_out = inputLine;
+			stream.avail_out = bytesPerRowIn + 1;
+		}
+
+		if (chunklen == 0 && fdATCount)
+		{
+			auto offset = StartsOffdATs.front();
+			StartsOffdATs.pop_front();
+			file.Seek(offset, FileReader::SeekSet);
+			chunklen = file.ReadUInt32BE() - 4;
+			file.Seek(8, FileReader::SeekCur);
+			fdATCount--;
+		}
+	}
+
+	inflateEnd (&stream);
+
+	if (bitdepth < 8)
+	{
+		// Noninterlaced images must be unpacked completely.
+		// Interlaced images only need their final pass unpacked.
+		passpitch = pitch << interlace;
+		for (curr = buffer + pitch * interlace; curr <= prev; curr += passpitch)
+		{
+			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr, colortype == 0);
+		}
+	}
+	return true;
+}
+
 // PRIVATE CODE ------------------------------------------------------------
 
 

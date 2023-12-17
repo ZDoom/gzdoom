@@ -44,6 +44,7 @@
 #include "animations.h"
 #include "texturemanager.h"
 #include "image.h"
+#include "md5.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -287,6 +288,39 @@ void FTextureAnimator::InitAnimated (void)
 			}
 		}
 	}
+}
+
+void FTextureAnimator::InitAnimatedTextures()
+{
+	auto AnimatedTextures = TexMan.AnimatedTextures;
+
+	for (int i = 0; i < AnimatedTextures.Size(); i++)
+	{
+		FTextureID picnum = AnimatedTextures[i];
+		FGameTexture* gametex = TexMan.GetGameTexture(picnum);
+		FTexture* basetexture = gametex->GetTexture();
+		FImageSource* image = basetexture->GetImage();
+		TArray<FAnimDef::FAnimFrame> frames (32);
+
+		for (int i = 0; i < image->GetNumOfFrames(); i++)
+		{
+			FTexture* texture = CreateImageTexture(image, i + 1);
+			FGameTexture* newtex = MakeGameTexture(texture, "", gametex->GetUseType());
+			if (i == 0)
+			{
+				TexMan.ReplaceTexture(picnum, newtex, true);
+				picnum = newtex->GetID();
+			}
+			FTextureID textureId = (i == 0) ? newtex->GetID() : TexMan.AddGameTexture(newtex);
+			FAnimDef::FAnimFrame animFrame;
+			animFrame.SpeedMin = image->GetDurationOfFrame(i + 1);
+			animFrame.SpeedRange = 0;
+			animFrame.FramePic = textureId;
+			frames.Push(animFrame);
+		}
+		(void)AddComplexAnim(picnum, frames);
+	}
+	TexMan.AnimatedTextures.Clear();
 }
 
 //==========================================================================

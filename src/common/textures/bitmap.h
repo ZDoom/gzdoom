@@ -424,7 +424,8 @@ enum ECopyOp
 	OP_COPYALPHA,
 	OP_COPYNEWALPHA,
 	OP_OVERLAY,
-	OP_OVERWRITE
+	OP_OVERWRITE,
+	OP_COMPOSEALPHA		// Only intended for internal use.
 };
 
 struct FCopyInfo
@@ -507,5 +508,11 @@ struct bModulate
 	static __forceinline bool ProcessAlpha0() { return false; }
 };
 
+struct bComposeAlpha
+{
+	static __forceinline void OpC(uint8_t &d, uint8_t s, uint8_t a, FCopyInfo *i) { d = (s*a + d*(255-a))/255; }
+	static __forceinline void OpA(uint8_t &d, uint8_t s, FCopyInfo *i) { d = (s*255 + d*(255-s))/255; }
+	static __forceinline bool ProcessAlpha0() { return false; }
+};
 
 #endif

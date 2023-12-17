@@ -34,6 +34,7 @@
 */
 #include "webp/decode.h"
 #include "webp/mux.h"
+#include "webp/demux.h"
 
 #include "files.h"
 #include "filesystem.h"
@@ -46,9 +47,15 @@ class FWebPTexture : public FImageSource
 {
 
 public:
-	FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff);
+	FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff, bool translucent, std::vector<int>& FrameDurations);
 	PalettedPixels CreatePalettedPixels(int conversion, int frame = 0) override;
 	int CopyPixels(FBitmap *bmp, int conversion, int frame = 0) override;
+	int GetDurationOfFrame(int frame) override;
+	int CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion) override;
+	void CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion) override;
+
+private:
+	std::vector<int, FImageArenaAllocator<int>> durations;
 };
 
 
@@ -56,6 +63,9 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 {
 	int width = 0, height = 0;
 	int xoff = 0, yoff = 0;
+	int NumOfFrames = 1;
+	std::vector<int> durations;
+	std::vector<std::pair<int, int>> offsets;
 	file.Seek(0, FileReader::SeekSet);
 
 	uint8_t header[12];
@@ -67,6 +77,7 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 
 	if (WebPGetInfo(bytes.bytes(), bytes.size(), &width, &height))
 	{
+		WebPBitstreamFeatures features{ 0, 0, 0, 0, 0 };
 		WebPData data{ bytes.bytes(), bytes.size() };
 		WebPData chunk_data;
 		auto mux = WebPMuxCreate(&data, 0);
@@ -80,25 +91,64 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 			}
 			WebPMuxDelete(mux);
 		}
-		return new FWebPTexture(lumpnum, width, height, xoff, yoff);
+
+		WebPGetFeatures(data.bytes, data.size, &features);
+		if (features.has_animation)
+		{
+			auto demuxer = WebPDemux(&data);
+			if (demuxer)
+			{
+				NumOfFrames = WebPDemuxGetI(demuxer, WEBP_FF_FRAME_COUNT);
+				WebPIterator iter;
+				if (NumOfFrames > 1)
+				{
+					WebPDemuxGetFrame(demuxer, 1, &iter);
+					do
+					{
+						durations.push_back(iter.duration);
+						offsets.push_back(std::make_pair(iter.x_offset, iter.y_offset));
+					} while(WebPDemuxNextFrame(&iter));
+				}
+				WebPDemuxDelete(demuxer);
+			}
+		}
+		return new FWebPTexture(lumpnum, width, height, xoff, yoff, !!features.has_alpha, durations);
 	}
 	return nullptr;
 }
 
-FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff)
+FWebPTexture::FWebPTexture(int lumpnum, int w, int h, int xoff, int yoff, bool translucent, std::vector<int>& FrameDurations)
 	: FImageSource(lumpnum)
 {
 	Width = w;
 	Height = h;
 	LeftOffset = xoff;
 	TopOffset = yoff;
+	durations.resize(FrameDurations.size());
+	std::copy(FrameDurations.begin(), FrameDurations.end(), durations.begin());
+	NumOfFrames = durations.size();
+	if (!NumOfFrames)
+		NumOfFrames = 1;
+	
+	bMasked = bTranslucent = translucent;
+}
+
+int FWebPTexture::GetDurationOfFrame(int frame)
+{
+	if (frame == 0)
+		return 1000;
+	
+	if ((frame - 1) >= durations.size())
+		return 1000;
+
+	return durations[frame - 1];
 }
 
 PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion, int frame)
 {
 	FBitmap bitmap;
 	bitmap.Create(Width, Height);
-	CopyPixels(&bitmap, conversion);
+	CopyPixels(&bitmap, conversion, frame);
 	const uint8_t *data = bitmap.GetPixels();
 
 	uint8_t *dest_p;
@@ -127,10 +177,125 @@ PalettedPixels FWebPTexture::CreatePalettedPixels(int conversion, int frame)
 	return Pixels;
 }
 
+void FWebPTexture::CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion)
+{
+	TArray<FBitmap> bitmaps(GetNumOfFrames(), true);
+	CopyPixelsIntoFrames([&bitmaps, this](int index) -> FBitmap*
+	{
+		bitmaps[index].Create(Width, Height);
+		return &bitmaps[index];
+	}, conversion);
+
+	for (int i = 0; i < GetNumOfFrames(); i++)
+	{
+		FBitmap& bitmap = bitmaps[i];
+		const uint8_t *data = bitmap.GetPixels();
+
+		uint8_t *dest_p;
+		int dest_adv = Height;
+		int dest_rew = Width * Height - 1;
+
+		PalettedPixels Pixels(Width*Height);
+		dest_p = Pixels.Data();
+
+		bool doalpha = conversion == luminance; 
+		// Convert the source image from row-major to column-major format and remap it
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; --x)
+			{
+				int b = *data++;
+				int g = *data++;
+				int r = *data++;
+				int a = *data++;
+				if (a < 128) *dest_p = 0;
+				else *dest_p = ImageHelpers::RGBToPalette(doalpha, r, g, b); 
+				dest_p += dest_adv;
+			}
+			dest_p -= dest_rew;
+		}
+
+		GetPixels(i) = Pixels;
+	}
+}
+
+int FWebPTexture::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion)
+{
+	auto bytes = fileSystem.ReadFile(SourceLump);
+
+	if (NumOfFrames > 1)
+	{
+		WebPAnimDecoderOptions animDecoderOptions;
+		WebPAnimDecoder* decoder = nullptr;
+		if (!!WebPAnimDecoderOptionsInit(&animDecoderOptions) == false)
+		{
+			return 0;
+		}
+		animDecoderOptions.use_threads = true;
+		animDecoderOptions.color_mode = MODE_BGRA;
+		WebPData data;
+		data.bytes = bytes.GetBytes();
+		data.size = bytes.GetSize();
+		decoder = WebPAnimDecoderNew(&data, &animDecoderOptions);
+		if (!decoder)
+			return 0;
+		
+		int iteratedFrames = 0;
+		while (WebPAnimDecoderHasMoreFrames(decoder))
+		{
+			uint8_t* buf = NULL;
+			int timestamp = 0;
+			if (WebPAnimDecoderGetNext(decoder, &buf, &timestamp))
+			{
+				GetBitmap(iteratedFrames)->CopyPixelDataRGB(0, 0, buf, Width, Height, 4, Width * 4, 0, CF_BGRA);
+				iteratedFrames++;
+			}
+		}
+		WebPAnimDecoderDelete(decoder);
+	}
+
+	return bMasked ? -1 : 0;
+}
+
 int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 {
 	WebPDecoderConfig config;
 	auto bytes = fileSystem.ReadFile(SourceLump);
+
+	if (NumOfFrames > 1 && frame != 0)
+	{
+		WebPAnimDecoderOptions animDecoderOptions;
+		WebPAnimDecoder* decoder = nullptr;
+		if (!!WebPAnimDecoderOptionsInit(&animDecoderOptions) == false)
+		{
+			return 0;
+		}
+		animDecoderOptions.use_threads = true;
+		animDecoderOptions.color_mode = MODE_BGRA;
+		WebPData data;
+		data.bytes = bytes.GetBytes();
+		data.size = bytes.GetSize();
+		decoder = WebPAnimDecoderNew(&data, &animDecoderOptions);
+		if (!decoder)
+			return 0;
+		
+		int iteratedFrames = 0;
+		while (WebPAnimDecoderHasMoreFrames(decoder))
+		{
+			uint8_t* buf = NULL;
+			int timestamp = 0;
+			if (WebPAnimDecoderGetNext(decoder, &buf, &timestamp))
+			{
+				iteratedFrames++;
+				if (iteratedFrames == frame)
+				{
+					bmp->CopyPixelDataRGB(0, 0, buf, Width, Height, 4, Width * 4, 0, CF_BGRA); 
+					WebPAnimDecoderDelete(decoder);
+					return bMasked ? -1 : 0;
+				}
+			}
+		}
+	}
 
 	if (WebPInitDecoderConfig(&config) == false)
 		return 0;
@@ -144,5 +309,5 @@ int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 
 	(void)WebPDecode(bytes.bytes(), bytes.size(), &config);
 
-	return 0;
+	return bMasked ? -1 : 0;
 }

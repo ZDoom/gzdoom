@@ -123,13 +123,47 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion, int frame)
 		{
 			//Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->second);
 			// This is the first time it gets accessed and needs to be placed in the cache.
-			PrecacheDataPaletted *pdp = &precacheDataPaletted[precacheDataPaletted.Reserve(1)];
+			if (frame >= 1)
+			{
+				// Share reference count with the default frame.
+				int RefCount = (info && info->second) ? (info->second - 1) : 1;
 
-			pdp->ImageID = imageID;
-			pdp->RefCount = info->second - 1;
-			info->second = 0;
-			pdp->Pixels = CreatePalettedPixels(normal, frame);
-			ret.Pixels.Set(pdp->Pixels.Data(), pdp->Pixels.Size());
+				// Cache ALL frames, and I mean, ALL frames, to avoid massive overhead when loading animated images.
+				PrecacheDataPaletted *pdp = &precacheDataPaletted[precacheDataPaletted.Reserve(GetNumOfFrames())];
+
+				for (int i = 0; i < GetNumOfFrames(); i++)
+				{
+					pdp[i].ImageID = imageID;
+					pdp[i].Frame = i + 1;
+					pdp[i].RefCount = RefCount;
+				}
+
+				CreatePalettedPixelsOfFrames([&pdp](int idx) -> PalettedPixels&
+				{
+					return pdp[idx].Pixels;
+				}, normal);
+
+				if (info && info->second)
+				{
+					info->second = 0;
+					ret.Pixels.Set(pdp[frame - 1].Pixels.Data(), pdp[frame - 1].Pixels.Size());
+				}
+				else
+				{
+					ret = std::move(pdp[frame - 1].Pixels);
+					precacheDataPaletted.Delete(frame - 1);
+				}
+			}
+			else
+			{
+				PrecacheDataPaletted *pdp = &precacheDataPaletted[precacheDataPaletted.Reserve(1)];
+
+				pdp->ImageID = imageID;
+				pdp->RefCount = info->second - 1;
+				info->second = 0;
+				pdp->Pixels = CreatePalettedPixels(normal, frame);
+				ret.Pixels.Set(pdp->Pixels.Data(), pdp->Pixels.Size());
+			}
 		}
 	}
 	return ret;
@@ -182,6 +216,37 @@ int FImageSource::CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap, int 
 	auto ppix = CreatePalettedPixels(normal, frame);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int FImageSource::CopyPixelsIntoFrames(std::function<FBitmap* (int)> GetBitmap, int conversion)
+{
+	int trans = -1;
+	for (int i = 0; i < NumOfFrames; i++)
+	{
+		trans = CopyPixels(GetBitmap(i), conversion, i + 1);
+	}
+	return trans;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FImageSource::CreatePalettedPixelsOfFrames(std::function<PalettedPixels& (int)> GetPixels, int conversion)
+{
+	for (int i = 0; i < NumOfFrames; i++)
+	{
+		GetPixels(i) = CreatePalettedPixels(conversion, i + 1);
+	}
+	return;
 }
 
 //==========================================================================
@@ -244,7 +309,7 @@ FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int
 		{
 			// The image wasn't cached. Now there's two possibilities:
 			auto info = precacheInfo.CheckKey(ImageID);
-			if (!info || info->first <= 1 || conversion != normal)
+			if ((!info || info->first <= 1 || conversion != normal) && !frame)
 			{
 				// This is either the only copy needed or some access outside the caching block. In these cases create a new one and directly return it.
 				//Printf("returning fresh copy of %s\n", name.GetChars());
@@ -255,15 +320,55 @@ FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int
 			{
 				//Printf("creating cached entry for %s, refcount = %d\n", name.GetChars(), info->first);
 				// This is the first time it gets accessed and needs to be placed in the cache.
-				PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(1)];
+				if (frame >= 1)
+				{
+					// Share reference count with the default frame.
+					int RefCount = (info && info->first) ? (info->first - 1) : 1;
 
-				pdr->ImageID = imageID;
-				pdr->Frame = frame;
-				pdr->RefCount = info->first - 1;
-				info->first = 0;
-				pdr->Pixels.Create(Width, Height);
-				trans = pdr->TransInfo = CopyPixels(&pdr->Pixels, normal, frame);
-				ret.Copy(pdr->Pixels, false);
+					// Cache ALL frames, and I mean, ALL frames, to avoid massive overhead when loading animated images.
+					PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(GetNumOfFrames())];
+
+					for (int i = 0; i < GetNumOfFrames(); i++)
+					{
+						pdr[i].ImageID = imageID;
+						pdr[i].Frame = i + 1;
+						pdr[i].RefCount = RefCount;
+						pdr[i].Pixels.Create(Width, Height);
+					}
+
+					trans = CopyPixelsIntoFrames([&pdr](int index) -> FBitmap*
+					{
+						return &pdr[index].Pixels;
+					}, normal);
+
+					for (int i = 0; i < GetNumOfFrames(); i++)
+					{
+						pdr[i].TransInfo = trans;
+					}
+
+					if (info && info->first)
+					{
+						info->first = 0;
+						ret.Copy(pdr[frame - 1].Pixels, false);
+					}
+					else
+					{
+						ret = std::move(pdr[frame - 1].Pixels);
+						precacheDataRgba.Delete(frame - 1);
+					}
+				}
+				else
+				{
+					PrecacheDataRgba *pdr = &precacheDataRgba[precacheDataRgba.Reserve(1)];
+
+					pdr->ImageID = imageID;
+					pdr->Frame = frame;
+					pdr->RefCount = info->first - 1;
+					info->first = 0;
+					pdr->Pixels.Create(Width, Height);
+					trans = pdr->TransInfo = CopyPixels(&pdr->Pixels, normal, frame);
+					ret.Copy(pdr->Pixels, false);
+				}
 			}
 		}
 	}

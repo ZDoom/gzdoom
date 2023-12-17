@@ -77,6 +77,7 @@ class FTextureAnimator
 
 	void FixAnimations();
 	void InitAnimated();
+	void InitAnimatedTextures();
 	void InitAnimDefs();
 	void InitSwitchList();
 	void ProcessSwitchDef(FScanner& sc);
@@ -107,6 +108,7 @@ public:
 	void Init()
 	{
 		DeleteAll();
+		InitAnimatedTextures();
 		InitAnimated();
 		InitAnimDefs();
 		FixAnimations();

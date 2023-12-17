@@ -226,7 +226,8 @@ static const CopyFunc copyfuncs[][12]={
 	COPY_FUNCS(bCopyAlpha),
 	COPY_FUNCS(bCopyNewAlpha),
 	COPY_FUNCS(bOverlay),
-	COPY_FUNCS(bOverwrite)
+	COPY_FUNCS(bOverwrite),
+	COPY_FUNCS(bComposeAlpha)
 };
 #undef COPY_FUNCS
 
@@ -257,21 +258,21 @@ bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
 		step_y = pstep_y;
 		break;
 
-	case 1: // rotate 90° right
+	case 1: // rotate 90Â° right
 		pixxoffset = 0;
 		pixyoffset = srcheight - 1;
 		step_x = -pstep_y;
 		step_y = pstep_x;
 		break;
 
-	case 2:	// rotate 180°
+	case 2:	// rotate 180Â°
 		pixxoffset = srcwidth - 1;
 		pixyoffset = srcheight - 1;
 		step_x = -pstep_x;
 		step_y = -pstep_y;
 		break;
 
-	case 3: // rotate 90° left
+	case 3: // rotate 90Â° left
 		pixxoffset = srcwidth - 1;
 		pixyoffset = 0;
 		step_x = pstep_y;
@@ -285,7 +286,7 @@ bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
 		step_y = pstep_y;
 		break;
 
-	case 5:	// flip horizontally and rotate 90° right
+	case 5:	// flip horizontally and rotate 90Â° right
 		pixxoffset = srcwidth - 1;
 		pixyoffset = srcheight - 1;
 		step_x = -pstep_y;
@@ -299,7 +300,7 @@ bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,
 		step_y = -pstep_y;
 		break;
 
-	case 7:	// flip horizontally and rotate 90° left
+	case 7:	// flip horizontally and rotate 90Â° left
 		pixxoffset = 0;
 		pixyoffset = 0;
 		step_x = pstep_y;
@@ -443,7 +444,8 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 	iCopyPaletted<cBGRA, bCopyAlpha>,
 	iCopyPaletted<cBGRA, bCopyNewAlpha>,
 	iCopyPaletted<cBGRA, bOverlay>,
-	iCopyPaletted<cBGRA, bOverwrite>
+	iCopyPaletted<cBGRA, bOverwrite>,
+	iCopyPaletted<cBGRA, bComposeAlpha>
 };
 
 //===========================================================================

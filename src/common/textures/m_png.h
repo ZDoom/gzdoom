@@ -34,6 +34,7 @@
 */
 
 #include <stdio.h>
+#include <deque>
 #include "zstring.h"
 #include "files.h"
 #include "palentry.h"
@@ -115,6 +116,11 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 // image data into the provided buffer. Returns true on success.
 bool M_ReadIDAT (FileSys::FileReader &file, uint8_t *buffer, int width, int height, int pitch,
 				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int idatlen);
+
+// Reads scattered fdAT chunks of a frame.
+bool M_ReadfdAT (FileReader &file, uint8_t *buffer, int width, int height, int pitch,
+				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, std::deque<uint32_t>& StartsOffdATs,
+				 int fdATCount);
 
 
 class FGameTexture;

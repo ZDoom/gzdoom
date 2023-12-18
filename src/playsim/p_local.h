@@ -250,7 +250,7 @@ extern TArray<spechit_t> portalhit;
 
 int	P_TestMobjLocation (AActor *mobj);
 int	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
-int P_TestMobjCollision(AActor* const mobj, AActor** blocking = nullptr);
+int P_TestMobjCollision(AActor* const mobj, AActor** blocking = nullptr, const int checkCompat = -1);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false, const bool zMove = false);
 void P_DoMissileDamage(AActor* inflictor, AActor* target);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false, const bool zMove = false);

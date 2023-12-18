@@ -4179,7 +4179,7 @@ void AActor::Tick ()
 					else
 					{
 						flags2 &= ~MF2_ONMOBJ;
-						if (hitMobj != nullptr)
+						if (hitMobj != nullptr && !(Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK))
 							SetZ(hitMobj->Z() - Height);
 					}
 

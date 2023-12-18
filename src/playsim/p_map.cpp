@@ -2171,13 +2171,21 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 // P_CheckMobjBlocked
 //
 //=============================================================================
-int P_TestMobjCollision(AActor* const mobj, AActor** blocking)
+int P_TestMobjCollision(AActor* const mobj, AActor** blocking, const int checkCompat)
 {
 	if (blocking != nullptr)
 		*blocking = nullptr;
 
 	AActor* const curBlocking = mobj->BlockingMobj;
-	const int res = P_CheckPosition(mobj, mobj->Pos().XY(), true, true);
+	int useSimple = checkCompat;
+	if (useSimple < 0)
+		useSimple = (mobj->Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK);
+
+	int res = true;
+	if (useSimple)
+		res = P_TestMobjZ(mobj, true, &mobj->BlockingMobj);
+	else
+		res = P_CheckPosition(mobj, mobj->Pos().XY(), true, true);
 
 	if (blocking != nullptr)
 		*blocking = mobj->BlockingMobj;
@@ -2200,7 +2208,7 @@ void P_FakeZMovement(AActor *mo)
 	// adjust height
 	//
 	// Check if we're standing on something, even if we have no velocity.
-	const double zVel = !mo->Vel.Z && mo->Z() > mo->floorz ? BottomCheck : mo->Vel.Z;
+	const double zVel = !mo->Vel.Z && mo->Z() > mo->floorz && !(mo->Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK) ? BottomCheck : mo->Vel.Z;
 
 	mo->AddZ(zVel);
 	if ((mo->flags&MF_FLOAT) && mo->target)

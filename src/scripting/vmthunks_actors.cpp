@@ -1120,9 +1120,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjZ, P_TestMobjZ)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjCollision, P_TestMobjCollision)
 {
 	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(useSimple);
 
 	AActor* hitMobj = nullptr;
-	const int res = P_TestMobjCollision(self, &hitMobj);
+	const int res = P_TestMobjCollision(self, &hitMobj, useSimple);
 	if (numret > 1)
 		ret[1].SetObject(hitMobj);
 	if (numret > 0)

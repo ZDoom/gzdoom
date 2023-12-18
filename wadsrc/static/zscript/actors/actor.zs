@@ -764,7 +764,7 @@ class Actor : Thinker native
 	native void FindFloorCeiling(int flags = 0);
 	native double, double GetFriction();
 	deprecated("4.12", "Use TestMobjCollision instead.") native bool, Actor TestMobjZ(bool quick = false);
-	native bool, Actor TestMobjCollision();
+	native bool, Actor TestMobjCollision(int simpleZCheck = -1);
 	native clearscope static bool InStateSequence(State newstate, State basestate);
 	
 	bool TryWalk ()

@@ -2065,9 +2065,11 @@ bool P_CheckOnmobj(AActor *thing, AActor** hitMobj)
 	const bool good = P_TestMobjCollision(thing, hitMobj);
 	thing->SetZ(oldZ);
 
-	// Only consider the thing on top of something if moving downward.
-	if (thing->Vel.Z <= 0.0)
-		thing->GroundMobj = *hitMobj;
+	// Only consider the thing on top of something if it can be stepped up
+	// on top of.
+	AActor* const hit = hitMobj != nullptr ? *hitMobj : nullptr;
+	if (hit != nullptr && thing->Z() >= hit->Top() - thing->MaxStepHeight)
+		thing->GroundMobj = hit;
 	
 	return good;
 }

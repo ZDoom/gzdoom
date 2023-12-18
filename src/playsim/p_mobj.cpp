@@ -4154,33 +4154,44 @@ void AActor::Tick ()
 					if (GroundMobj != nullptr)
 					{
 						flags2 |= MF2_ONMOBJ;
-						if (player)
+						if (player != nullptr)
 						{
-							if (Vel.Z < Level->gravity * Sector->gravity * (-1. / 100)// -655.36f)
-								&& !(flags & MF_NOGRAVITY))
-							{
+							if (!(flags & MF_NOGRAVITY) && Vel.Z < Level->gravity * Sector->gravity * -0.01)
 								PlayerLandedOnThing(this, GroundMobj);
-							}
-						}
-						if (GroundMobj->Top() - Z() <= MaxStepHeight)
-						{
-							if (player && player->mo == this)
+
+							if (player->mo == this)
 							{
 								player->viewheight -= GroundMobj->Top() - Z();
-								double deltaview = player->GetDeltaViewHeight();
-								if (deltaview > player->deltaviewheight)
-								{
-									player->deltaviewheight = deltaview;
-								}
+								player->deltaviewheight = max(player->GetDeltaViewHeight(), player->deltaviewheight);
 							}
-							SetZ(GroundMobj->Top());
 						}
+
+						SetZ(min(GroundMobj->Top(), ceilingz - Height));
 					}
 					else
 					{
 						flags2 &= ~MF2_ONMOBJ;
-						if (hitMobj != nullptr && !(Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK))
-							SetZ(hitMobj->Z() - Height);
+						// If we're too high inside of it, just leave the thing at its current elevation.
+						if (hitMobj != nullptr && !(Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK) && Top() <= hitMobj->Z() + MaxStepHeight)
+							SetZ(max(hitMobj->Z() - Height, floorz));
+					}
+
+					// Normally this is ran in P_CheckPosition but if using the old simple z checking,
+					// it has to be done manually here like the old way.
+					if (hitMobj != nullptr && (Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK))
+					{
+						if ((hitMobj->flags6 & MF6_BUMPSPECIAL)
+							&& (player != nullptr
+								|| ((hitMobj->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
+								|| ((hitMobj->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE)))
+							&& Level->maptime > hitMobj->lastbump) // Leave the bumper enough time to go away
+						{
+							if (player == nullptr || !(player->cheats & CF_PREDICTING))
+							{
+								if (P_ActivateThingSpecial(hitMobj, this))
+									hitMobj->lastbump = Level->maptime + TICRATE;
+							}
+						}
 					}
 
 					if ((BounceFlags & BOUNCE_MBF) && !(flags & MF_MISSILE) && hitMobj != nullptr && P_BounceActor(this, hitMobj, true))

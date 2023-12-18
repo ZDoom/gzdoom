@@ -4137,9 +4137,10 @@ void AActor::Tick ()
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
+				const bool simpleZ = (Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK);
 				int res = false;
 				AActor* hitMobj = nullptr;
-				if (stepThing != nullptr)
+				if (stepThing != nullptr && !simpleZ)
 					hitMobj = GroundMobj = stepThing;
 				else
 					res = P_CheckOnmobj(this, &hitMobj);
@@ -4172,13 +4173,13 @@ void AActor::Tick ()
 					{
 						flags2 &= ~MF2_ONMOBJ;
 						// If we're too high inside of it, just leave the thing at its current elevation.
-						if (hitMobj != nullptr && !(Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK) && Top() <= hitMobj->Z() + MaxStepHeight)
+						if (hitMobj != nullptr && !simpleZ && Top() <= hitMobj->Z() + MaxStepHeight)
 							SetZ(max(hitMobj->Z() - Height, floorz));
 					}
 
 					// Normally this is ran in P_CheckPosition but if using the old simple z checking,
 					// it has to be done manually here like the old way.
-					if (hitMobj != nullptr && (Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK))
+					if (hitMobj != nullptr && simpleZ)
 					{
 						if ((hitMobj->flags6 & MF6_BUMPSPECIAL)
 							&& (player != nullptr

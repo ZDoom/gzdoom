@@ -332,7 +332,7 @@ FCompressedBuffer FZipFile::GetRawData(uint32_t entry)
 {
 	FCompressedBuffer cbuf;
 
-	if (entry >= NumLumps >> Entries[entry].Length == 0)
+	if (entry >= NumLumps || Entries[entry].Length == 0)
 	{
 		cbuf = { 0, 0, METHOD_STORED, 0, 0, nullptr };
 	}

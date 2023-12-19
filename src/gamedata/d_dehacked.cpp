@@ -2545,7 +2545,7 @@ static int PatchMisc (int dummy)
 	auto health = GetDefaultByName ("HealthBonus");
 	if (health!=NULL) 
 	{
-		health->IntVar(NAME_MaxAmount) = 2 * deh.MaxHealth;
+		health->IntVar(NAME_MaxAmount) = -1;	// needs to be evaluated at run time due to the compat flag.
 	}
 
 	health = GetDefaultByName ("Soulsphere");

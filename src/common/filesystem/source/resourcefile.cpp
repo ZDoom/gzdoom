@@ -711,7 +711,7 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 
 FileData FResourceFile::Read(int entry)
 {
-	if (!(Entries[entry].Flags & RESFF_COMPRESSED))
+	if (!(Entries[entry].Flags & RESFF_COMPRESSED) && Reader.isOpen())
 	{
 		auto buf = Reader.GetBuffer();
 		// if this is backed by a memory buffer, we can just return a reference to the backing store.

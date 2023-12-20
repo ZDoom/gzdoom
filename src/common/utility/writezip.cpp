@@ -61,8 +61,8 @@ static std::pair<uint16_t, uint16_t> time_to_dos(struct tm *time)
 	}
 	else
 	{
-		val.first = (time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday;
-		val.second= time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2;
+		val.first = time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2;
+		val.second = (time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday;
 	}
 	return val;
 }

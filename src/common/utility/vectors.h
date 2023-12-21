@@ -60,12 +60,12 @@ namespace pi
 #if __has_include("math/cmath.h")
 #include "math/cmath.h"
 #else
-double g_cosdeg(double v) { return cos(v * (pi::pi() / 180.)); }
-double g_sindeg(double v) { return sin(v * (pi::pi() / 180.)); }
-double g_cos(double v) { return cos(v); }
-double g_sin(double v) { return sin(v); }
-double g_sqrt(double v) { return sqrt(v); }
-double g_atan2(double v, double w) { return atan2(v, w); }
+inline double g_cosdeg(double v) { return cos(v * (pi::pi() / 180.)); }
+inline double g_sindeg(double v) { return sin(v * (pi::pi() / 180.)); }
+inline double g_cos(double v) { return cos(v); }
+inline double g_sin(double v) { return sin(v); }
+inline double g_sqrt(double v) { return sqrt(v); }
+inline double g_atan2(double v, double w) { return atan2(v, w); }
 #endif
 
 

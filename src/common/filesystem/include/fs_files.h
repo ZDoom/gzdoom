@@ -89,7 +89,8 @@ public:
 		if (own)
 		{
 			length = len;
-			memory = allocate(len);
+			memory = malloc(len);
+			owned = true;
 			if (memory_) memcpy(memory, memory_, len);
 		}
 		else

@@ -365,19 +365,36 @@ object TechLamp2
 }
 
 // Tall tech lamp
-pulselight BIGLAMP
+pointlight BIGLAMP1
 {
-    color 1.0 0.4 0.4
+    color 1.0 0.9 0.4
     size 100
-    secondarySize 80
-    interval 0.4
+    offset 0 72 0
+	attenuate 1
+}
+
+pointlight BIGLAMP2
+{
+    color 0.97 0.87 0.37
+    size 99
+    offset 0 72 0
+	attenuate 1
+}
+
+pointlight BIGLAMP3
+{
+    color 0.94 0.84 0.34
+    size 98
     offset 0 72 0
 	attenuate 1
 }
 
 object TechLamp
 {
-    frame TLMP { light BIGLAMP }
+    frame TLMPA { light BIGLAMP1 }
+    frame TLMPB { light BIGLAMP2 }
+    frame TLMPC { light BIGLAMP3 }
+    frame TLMPD { light BIGLAMP2 }
 }
 
 // Tall red torch

@@ -2178,7 +2178,7 @@ class LevelCompatibility : LevelPostProcessor
 				// Emulate the effect of the hidden Commander Keen's death
 				// since the Keen actor is modified by DEHACKED and doesn't work as intended:
 
-				// 1) Replace the Keen with an imp
+				// 1) Replace the Keen with a zombieman
 				SetThingEdNum(101, 3004);
 
 				// 2) Set its special to emulate A_KeenDie

@@ -131,6 +131,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					}
 					// for internal access we use the normalized form of the relative path.
 					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
+					Entries[count].SystemFilePath = stringpool->Strdup(Entries[count].FileName);
 					Entries[count].CompressedSize = Entries[count].Length = entry.Length;
 					Entries[count].Flags = RESFF_FULLPATH;
 					Entries[count].ResourceID = -1;
@@ -153,6 +154,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	NumLumps = AddDirectory(FileName, filter, Printf);
+	PostProcessArchive(filter);
 	return true;
 }
 
@@ -167,7 +169,10 @@ FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 	FileReader fr;
 	if (entry < NumLumps)
 	{
-		std::string fn = mBasePath; fn += Entries[entry].FileName;
+		std::string fn = mBasePath;
+		fn += Entries[entry].SystemFilePath ?
+			Entries[entry].SystemFilePath :
+	        Entries[entry].FileName;
 		fr.OpenFile(fn.c_str());
 		if (readertype == READER_CACHED)
 		{

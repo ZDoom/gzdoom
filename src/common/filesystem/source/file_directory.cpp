@@ -172,7 +172,7 @@ FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 		std::string fn = mBasePath;
 		fn += Entries[entry].SystemFilePath ?
 			Entries[entry].SystemFilePath :
-	        Entries[entry].FileName;
+			Entries[entry].FileName;
 		fr.OpenFile(fn.c_str());
 		if (readertype == READER_CACHED)
 		{

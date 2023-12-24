@@ -57,6 +57,7 @@
 #include "c_cvars.h"
 #include "md5.h"
 
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern int nomusic;
@@ -94,11 +95,6 @@ EXTERN_CVAR(Float, fluid_gain)
 
 CVAR(Bool, mus_calcgain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
 CVAR(Bool, mus_usereplaygain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
-CUSTOM_CVAR(Float, mus_gainoffset, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // for customizing the base volume
-{
-	if (self > 10.f) self = 10.f;
-	mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
-}
 
 // CODE --------------------------------------------------------------------
 
@@ -167,12 +163,12 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 	if (mus_playing.isfloat)
 	{
 		written = ZMusic_FillStream(mus_playing.handle, buff, len);
-		if (mus_playing.replayGainFactor != 1.f)
+		if (mus_playing.musicVolume != 1.f)
 		{
 			float* fbuf = (float*)buff;
 			for (int i = 0; i < len / 4; i++)
 			{
-				fbuf[i] *= mus_playing.replayGainFactor;
+				fbuf[i] *= mus_playing.musicVolume;
 			}
 		}
 	}
@@ -184,7 +180,7 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 		float* fbuf = (float*)buff;
 		for (int i = 0; i < len / 4; i++)
 		{
-			fbuf[i] = convert[i] * mus_playing.replayGainFactor * (1.f/32768.f);
+			fbuf[i] = convert[i] * mus_playing.musicVolume * (1.f/32768.f);
 		}
 	}
 
@@ -508,21 +504,19 @@ CCMD(setreplaygain)
 	if (argv.argc() < 2)
 	{
 		Printf("Usage: setreplaygain {dB}\n");
-		Printf("Current replay gain is %f dB\n", mus_playing.replayGain);
+		Printf("Current replay gain is %f dB\n", AmplitudeTodB(mus_playing.musicVolume));
 		return;
 	}
 	float dB = (float)strtod(argv[1], nullptr);
 	if (dB > 10) dB = 10; // don't blast the speakers. Values above 2 or 3 are very rare.
 	gainMap.Insert(mus_playing.hash, dB);
 	SaveGains();
-	mus_playing.replayGain = dB;
-	mus_playing.replayGainFactor = (float)dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+	mus_playing.musicVolume = (float)dBToAmplitude(dB);
 }
 
 static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const char *playparam)
 {
-	mus_playing.replayGain = 0.f;
-	mus_playing.replayGainFactor = dBToAmplitude(mus_gainoffset);
+	mus_playing.musicVolume = 1;
 	fluid_gain->Callback();
 	mod_dumb_mastervolume->Callback();
 	if (!mus_usereplaygain) return;
@@ -539,8 +533,7 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 	auto entry = gainMap.CheckKey(hash);
 	if (entry)
 	{
-		mus_playing.replayGain = *entry;
-		mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+		mus_playing.musicVolume = dBToAmplitude(*entry);
 		return;
 	}
 	if (!mus_calcgain) return;
@@ -624,19 +617,18 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 	}
 	ZMusic_Close(handle);
 
-	GainAnalyzer analyzer;
-	int result = analyzer.InitGainAnalysis(fmt.mSampleRate);
+	auto analyzer = std::make_unique<GainAnalyzer>();
+	int result = analyzer->InitGainAnalysis(fmt.mSampleRate);
 	if (result == GAIN_ANALYSIS_OK)
 	{
-		result = analyzer.AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0 ? 1 : 2);
+		result = analyzer->AnalyzeSamples(lbuffer.Data(), rbuffer.Size() == 0 ? nullptr : rbuffer.Data(), lbuffer.Size(), rbuffer.Size() == 0 ? 1 : 2);
 		if (result == GAIN_ANALYSIS_OK)
 		{
-			auto gain = analyzer.GetTitleGain();
-			Printf("Calculated replay gain for %s at %f dB\n", hash.GetChars(), gain);
+			auto gain = analyzer->GetTitleGain();
+			Printf("Calculated replay gain for %s (%s) at %f dB\n", musicname, hash.GetChars(), gain);
 
 			gainMap.Insert(hash, gain);
-			mus_playing.replayGain = gain;
-			mus_playing.replayGainFactor = dBToAmplitude(mus_playing.replayGain + mus_gainoffset);
+			mus_playing.musicVolume = dBToAmplitude(gain);
 			SaveGains();
 		}
 	}
@@ -726,8 +718,16 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	}
 	else
 	{
+		auto volp = MusicVolumes.CheckKey(musicname);
+		if (volp)
+		{
+			mus_playing.musicVolume = *volp;
 
-		CheckReplayGain(musicname, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
+		}
+		else
+		{
+			CheckReplayGain(musicname, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
+		}
 		auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
 		mus_playing.handle = ZMusic_OpenSong(mreader, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
 		if (mus_playing.handle == nullptr)
@@ -743,13 +743,12 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		auto volp = MusicVolumes.CheckKey(musicname);
-		float vol = volp ? *volp : 1.f;
-		if (!S_StartMusicPlaying(mus_playing.handle, looping, vol, order))
+		if (!S_StartMusicPlaying(mus_playing.handle, looping, 1.f, order))
 		{
 			Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 			return false;
 		}
+
 		S_CreateStream();
 		mus_playing.baseorder = order;
 		return true;

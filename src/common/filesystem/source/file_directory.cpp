@@ -58,6 +58,8 @@ class FDirectory : public FResourceFile
 {
 	const bool nosubdir;
 	const char* mBasePath;
+	const char** SystemFilePath;
+
 
 	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 
@@ -102,6 +104,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 	{
 		mBasePath = nullptr;
 		AllocateEntries((int)list.size());
+		SystemFilePath = (const char**)stringpool->Alloc(list.size() * sizeof(const char*));
 		for(auto& entry : list)
 		{
 			if (mBasePath == nullptr)
@@ -131,7 +134,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					}
 					// for internal access we use the normalized form of the relative path.
 					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
-					Entries[count].SystemFilePath = stringpool->Strdup(Entries[count].FileName);
+					SystemFilePath[count] = Entries[count].FileName;
 					Entries[count].CompressedSize = Entries[count].Length = entry.Length;
 					Entries[count].Flags = RESFF_FULLPATH;
 					Entries[count].ResourceID = -1;
@@ -170,9 +173,7 @@ FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 	if (entry < NumLumps)
 	{
 		std::string fn = mBasePath;
-		fn += Entries[entry].SystemFilePath ?
-			Entries[entry].SystemFilePath :
-			Entries[entry].FileName;
+		fn += SystemFilePath[entry];
 		fr.OpenFile(fn.c_str());
 		if (readertype == READER_CACHED)
 		{

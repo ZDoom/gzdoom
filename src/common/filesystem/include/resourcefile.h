@@ -105,7 +105,6 @@ struct FResourceEntry
 	uint16_t Flags;
 	uint16_t Method;
 	int16_t Namespace;
-	const char* SystemFilePath;
 };
 
 void SetMainThread();

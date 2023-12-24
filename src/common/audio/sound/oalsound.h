@@ -21,7 +21,7 @@
 #include "alc.h"
 #endif
 
-#include "alext.h"
+#include "thirdparty/alext.h"
 
 
 class OpenALSoundStream;

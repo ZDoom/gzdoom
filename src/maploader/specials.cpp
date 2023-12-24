@@ -508,7 +508,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 	{
 		if ((sector->special & DAMAGE_MASK) == 0x100)
 		{
-			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 0, 0, NAME_InstantDeath, 0);
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
 		}
 		else if ((sector->special & DAMAGE_MASK) == 0x200)
 		{

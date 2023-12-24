@@ -326,3 +326,9 @@ F50C91A05E1A1E646690517641F0D1DD // daedalus.wad map19
 {
 	nomirrors
 }
+
+F1EB6927F53047F219A54997DAD9DC81 // mm2.wad map20
+{
+	rebuildnodes
+	trace
+}

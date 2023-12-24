@@ -44,10 +44,6 @@ namespace FileSys {
 	
 std::string FS_FullPath(const char* directory);
 
-#ifdef _WIN32
-std::wstring toWide(const char* str);
-#endif
-
 //==========================================================================
 //
 // Zip file

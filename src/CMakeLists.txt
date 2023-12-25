@@ -987,6 +987,7 @@ set (PCH_SOURCES
 	common/2d/v_drawtext.cpp
 	common/2d/v_draw.cpp
 	common/2d/wipe.cpp
+	common/thirdparty/animlib.cpp
 	common/thirdparty/gain_analysis.cpp
 	common/thirdparty/sfmt/SFMT.cpp
 	common/startscreen/startscreen.cpp
@@ -1015,7 +1016,6 @@ set (PCH_SOURCES
 	common/textures/skyboxtexture.cpp
 	common/textures/animtexture.cpp
 	common/textures/v_collection.cpp
-	common/textures/animlib.cpp
 	common/textures/formats/automaptexture.cpp
 	common/textures/formats/brightmaptexture.cpp
 	common/textures/formats/buildtexture.cpp

@@ -852,7 +852,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpLength)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_INT(fileSystem.FileLength(lump));
+	ACTION_RETURN_INT((int)fileSystem.FileLength(lump));
 }
 
 //==========================================================================

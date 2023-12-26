@@ -101,10 +101,6 @@ struct FileSystem::LumpRecord
 
 	void SetFromLump(FResourceFile* file, int fileindex, int filenum, StringPool* sp, const char* name = nullptr)
 	{
-		if (fileindex == 649 && filenum == 0)
-		{
-			int a = 0;
-		}
 		resfile = file;
 		resindex = fileindex;
 		rfnum = filenum;

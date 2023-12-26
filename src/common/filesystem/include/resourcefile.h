@@ -190,7 +190,7 @@ public:
 		return (entry < NumLumps) ? Entries[entry].FileName : nullptr;
 	}
 
-	virtual FileData Read(int entry);
+	virtual FileData Read(uint32_t entry);
 
 	virtual FCompressedBuffer GetRawData(uint32_t entry);
 

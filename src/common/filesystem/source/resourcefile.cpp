@@ -709,7 +709,7 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 	return fr;
 }
 
-FileData FResourceFile::Read(int entry)
+FileData FResourceFile::Read(uint32_t entry)
 {
 	if (!(Entries[entry].Flags & RESFF_COMPRESSED) && Reader.isOpen())
 	{

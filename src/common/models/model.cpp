@@ -163,7 +163,13 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 		if (!Models[i]->mFileName.CompareNoCase(fullname)) return i;
 	}
 
-	int len = fileSystem.FileLength(lump);
+	auto len = fileSystem.FileLength(lump);
+	if (len >= 0x80000000ll)
+	{
+		Printf(PRINT_HIGH, "LoadModel: File to large: '%s'\n", fullname.GetChars());
+		return -1;
+	}
+
 	auto lumpd = fileSystem.ReadFile(lump);
 	const char * buffer = lumpd.string();
 
@@ -208,7 +214,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 
 	if (model != nullptr)
 	{
-		if (!model->Load(path, lump, buffer, len))
+		if (!model->Load(path, lump, buffer, (int)len))
 		{
 			delete model;
 			return -1;

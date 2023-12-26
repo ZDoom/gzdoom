@@ -179,7 +179,7 @@ public:
 	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
-	FileData Read(int entry) override;
+	FileData Read(uint32_t entry) override;
 	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
@@ -282,7 +282,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		FileData temp(nullptr, Entries[0].Length);
 
-		if (SZ_OK != Archive->Extract(Entries[0].Position, (char*)temp.writable()))
+		if (SZ_OK != Archive->Extract((UInt32)Entries[0].Position, (char*)temp.writable()))
 		{
 			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName);
 			return false;
@@ -314,15 +314,15 @@ F7ZFile::~F7ZFile()
 //
 //==========================================================================
 
-FileData F7ZFile::Read(int entry)
+FileData F7ZFile::Read(uint32_t entry)
 {
 	FileData buffer;
-	if ((entry >= 0 || entry < NumLumps) && Entries[entry].Length > 0)
+	if (entry < NumLumps && Entries[entry].Length > 0)
 	{
 		auto p = buffer.allocate(Entries[entry].Length);
 		// There is no realistic way to keep multiple references to a 7z file open without massive overhead so to make this thread-safe a mutex is the only option.
 		std::lock_guard<FCriticalSection> lock(critsec);
-		SRes code = Archive->Extract(Entries[entry].Position, (char*)p);
+		SRes code = Archive->Extract((UInt32)Entries[entry].Position, (char*)p);
 		if (code != SZ_OK) buffer.clear();
 	}
 	return buffer;

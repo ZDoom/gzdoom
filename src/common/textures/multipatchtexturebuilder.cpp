@@ -285,7 +285,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 		}
 
 		// Check whether the amount of names reported is correct.
-		int lumplength = fileSystem.FileLength(patcheslump);
+		uint32_t lumplength = (uint32_t)fileSystem.FileLength(patcheslump);
 		if (numpatches > uint32_t((lumplength - 4) / 8))
 		{
 			Printf("PNAMES lump is shorter than required (%u entries reported but only %d bytes (%d entries) long\n",
@@ -398,12 +398,12 @@ void FMultipatchTextureBuilder::AddTexturesLumps(int lump1, int lump2, int patch
 	if (lump1 >= 0)
 	{
 		auto texdir = fileSystem.ReadFile(lump1);
-		AddTexturesLump(texdir.data(), fileSystem.FileLength(lump1), lump1, patcheslump, firstdup, true);
+		AddTexturesLump(texdir.data(), (int)fileSystem.FileLength(lump1), lump1, patcheslump, firstdup, true);
 	}
 	if (lump2 >= 0)
 	{
 		auto texdir = fileSystem.ReadFile(lump2);
-		AddTexturesLump(texdir.data(), fileSystem.FileLength(lump2), lump2, patcheslump, firstdup, false);
+		AddTexturesLump(texdir.data(), (int)fileSystem.FileLength(lump2), lump2, patcheslump, firstdup, false);
 	}
 }
 

@@ -74,10 +74,9 @@ FImageSource *FlatImage_TryCreate(FileReader & file, int lumpnum)
 FFlatTexture::FFlatTexture (int lumpnum)
 : FImageSource(lumpnum)
 {
-	int area;
 	int bits;
 
-	area = fileSystem.FileLength (lumpnum);
+	auto area = fileSystem.FileLength (lumpnum);
 
 	switch (area)
 	{

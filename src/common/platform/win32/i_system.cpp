@@ -87,6 +87,8 @@
 #include "i_interface.h"
 #include "i_mainwindow.h"
 
+#include "common/widgets/launcherwindow.h"
+
 // MACROS ------------------------------------------------------------------
 
 #ifdef _MSC_VER
@@ -493,12 +495,15 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& 
 	}
 	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
 	{
+		/*
 		WadList = wads;
 		NumWads = numwads;
 		DefaultWad = defaultiwad;
 
 		return (int)DialogBox(g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
 			(HWND)mainwindow.GetHandle(), (DLGPROC)IWADBoxCallback);
+		*/
+		return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags);
 	}
 	return defaultiwad;
 }

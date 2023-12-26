@@ -14,6 +14,9 @@
 #include <richedit.h>
 #include <shellapi.h>
 #include <commctrl.h>
+#include <dwmapi.h>
+
+#pragma comment(lib, "dwmapi.lib")
 
 #ifdef _M_X64
 #define X64 " 64-bit"
@@ -67,6 +70,15 @@ void MainWindow::Create(const FString& caption, int x, int y, int width, int hei
 		MessageBoxA(nullptr, "Unable to create main window", "Fatal", MB_ICONEXCLAMATION | MB_OK);
 		exit(-1);
 	}
+
+	uint32_t bordercolor = RGB(51, 51, 51);
+	uint32_t captioncolor = RGB(33, 33, 33);
+	uint32_t textcolor = RGB(226, 223, 219);
+
+	// Don't error check these as they only exist on Windows 11, and if they fail then that is OK.
+	DwmSetWindowAttribute(Window, 34/*DWMWA_BORDER_COLOR*/, &bordercolor, sizeof(uint32_t));
+	DwmSetWindowAttribute(Window, 35/*DWMWA_CAPTION_COLOR*/, &captioncolor, sizeof(uint32_t));
+	DwmSetWindowAttribute(Window, 36/*DWMWA_TEXT_COLOR*/, &textcolor, sizeof(uint32_t));
 }
 
 void MainWindow::HideGameTitleWindow()

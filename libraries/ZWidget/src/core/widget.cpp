@@ -141,7 +141,7 @@ void Widget::SetFrameGeometry(const Rect& geometry)
 		double right = FrameGeometry.right() - Noncontent.Right;
 		double bottom = FrameGeometry.bottom() - Noncontent.Bottom;
 		left = std::min(left, FrameGeometry.right());
-		top = std::min(top, FrameGeometry.right());
+		top = std::min(top, FrameGeometry.bottom());
 		right = std::max(right, FrameGeometry.left());
 		bottom = std::max(bottom, FrameGeometry.top());
 		ContentGeometry = Rect::ltrb(left, top, right, bottom);
@@ -268,7 +268,7 @@ void Widget::Repaint()
 {
 	Widget* w = Window();
 	w->DispCanvas->begin(WindowBackground);
-	w->Paint(DispCanvas.get());
+	w->Paint(w->DispCanvas.get());
 	w->DispCanvas->end();
 }
 

@@ -22,7 +22,7 @@ void ListView::OnPaint(Canvas* canvas)
 	int index = 0;
 	for (const std::string& item : items)
 	{
-		if (index == 0)
+		if (index == selectedItem)
 		{
 			canvas->fillRect(Rect::xywh(x - 2.0, y + 5.0 - h, w, h), Colorf::fromRgba8(100, 100, 100));
 		}
@@ -42,4 +42,33 @@ void ListView::OnPaintFrame(Canvas* canvas)
 	canvas->fillRect(Rect::xywh(0.0, h - 1.0, w, 1.0), bordercolor);
 	canvas->fillRect(Rect::xywh(0.0, 0.0, 1.0, h - 0.0), bordercolor);
 	canvas->fillRect(Rect::xywh(w - 1.0, 0.0, 1.0, h - 0.0), bordercolor);
+}
+
+void ListView::OnMouseDown(const Point& pos, int key)
+{
+	SetFocus();
+}
+
+void ListView::OnMouseDoubleclick(const Point& pos, int key)
+{
+}
+
+void ListView::OnKeyDown(EInputKey key)
+{
+	if (key == IK_Down)
+	{
+		if (selectedItem + 1 < (int)items.size())
+		{
+			selectedItem++;
+			Update();
+		}
+	}
+	else if (key == IK_Up)
+	{
+		if (selectedItem > 0)
+		{
+			selectedItem--;
+			Update();
+		}
+	}
 }

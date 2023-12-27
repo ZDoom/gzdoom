@@ -3691,7 +3691,13 @@ void AActor::CheckPortalTransition(bool islinked)
 			else break;
 		}
 	}
-	if (islinked && moved) LinkToWorld(&ctx);
+	if (moved) 
+	{
+		if (islinked)
+			LinkToWorld(&ctx);
+		if (player)
+			player->crossingPortal = true;
+	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, CheckPortalTransition)

@@ -375,6 +375,7 @@ public:
 	int			chickenPeck = 0;			// chicken peck countdown
 	int			jumpTics = 0;				// delay the next jump for a moment
 	bool		onground = 0;				// Identifies if this player is on the ground or other object
+	bool		crossingPortal = 0;			// Crossing a portal, used only to disable interpolation.
 
 	int			respawn_time = 0;			// [RH] delay respawning until this tic
 	TObjPtr<AActor*>	camera = MakeObjPtr<AActor*>(nullptr);			// [RH] Whose eyes this player sees through

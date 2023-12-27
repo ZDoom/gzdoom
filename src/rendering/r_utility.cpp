@@ -465,6 +465,11 @@ bool P_NoInterpolation(player_t const *player, AActor const *actor)
 
 void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Frac, InterpolationViewer *iview)
 {
+	if (player && player->crossingPortal)
+	{
+		NoInterpolateView = true;
+		player->crossingPortal = false;
+	}
 	if (NoInterpolateView)
 	{
 		InterpolationPath.Clear();

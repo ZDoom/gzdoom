@@ -2602,13 +2602,19 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 					auto p = thing->Level->GetConsolePlayer();
 					if (p) p->viewz += hit.pos.Z;	// needs to be done here because otherwise the renderer will not catch the change.
 					P_TranslatePortalAngle(ld, hit.angle);
+
+					if (port->mType == PORTT_INTERACTIVE || port->mType == PORTT_TELEPORT)
+					{
+						if (thing->player)
+							thing->player->crossingPortal = true;
+					}
 				}
 				R_AddInterpolationPoint(hit);
 			}
 			if (port->mType == PORTT_LINKED)
 			{
 				continue;
-		}
+			}
 		}
 		break;
 	}

@@ -1034,7 +1034,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicVolume: {
 				sc.MustGetString();
-				FName musname (sc.String);
+				int lumpnum = mus_cb.FindMusic(sc.String);
 				if (!sc.CheckFloat())
 				{
 					sc.MustGetString();
@@ -1043,7 +1043,7 @@ static void S_AddSNDINFO (int lump)
 					if (!stricmp(p, "db")) sc.Float = dBToAmplitude((float)sc.Float);
 					else sc.ScriptError("Bad value for music volume: %s", sc.String);
 				}
-				MusicVolumes[musname] = (float)sc.Float;
+				if (lumpnum >= 0) MusicVolumes[lumpnum] = (float)sc.Float;
 				}
 				break;
 

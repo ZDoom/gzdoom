@@ -75,14 +75,12 @@ float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS Fa
 MusicVolumeMap MusicVolumes;
 MidiDeviceMap MidiDevices;
 
-static FileReader DefaultOpenMusic(const char* fn)
+static int DefaultFindMusic(const char* fn)
 {
-	// This is the minimum needed to make the music system functional.
-	FileReader fr;
-	fr.OpenFile(fn);
-	return fr;
+	return -1;
 }
-static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
+
+MusicCallbacks mus_cb = { nullptr, DefaultFindMusic };
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -98,10 +96,44 @@ CVAR(Bool, mus_usereplaygain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changi
 
 // CODE --------------------------------------------------------------------
 
+//==========================================================================
+//
+// OpenMusic
+//
+// opens a FileReader for the music - used as a callback to keep
+// implementation details out of the core player.
+//
+//==========================================================================
+
+static FileReader OpenMusic(const char* musicname)
+{
+	FileReader reader;
+	if (!FileExists(musicname))
+	{
+		int lumpnum;
+		lumpnum = mus_cb.FindMusic(musicname);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, FileSys::ns_music);
+		if (lumpnum == -1)
+		{
+			Printf("Music \"%s\" not found\n", musicname);
+		}
+		else if (fileSystem.FileLength(lumpnum) != 0)
+		{
+			reader = fileSystem.ReopenFileReader(lumpnum);
+		}
+	}
+	else
+	{
+		// Load an external file.
+		reader.OpenFile(musicname);
+	}
+	return reader;
+}
+
 void S_SetMusicCallbacks(MusicCallbacks* cb)
 {
 	mus_cb = *cb;
-	if (mus_cb.OpenMusic == nullptr) mus_cb.OpenMusic = DefaultOpenMusic;	// without this we are dead in the water.
+	if (mus_cb.FindMusic == nullptr) mus_cb.FindMusic = DefaultFindMusic;	// without this we are dead in the water.
 }
 
 int MusicEnabled() // int return is for scripting
@@ -521,7 +553,7 @@ static void CheckReplayGain(const char *musicname, EMidiDevice playertype, const
 	mod_dumb_mastervolume->Callback();
 	if (!mus_usereplaygain) return;
 
-	FileReader reader = mus_cb.OpenMusic(musicname);
+	FileReader reader = OpenMusic(musicname);
 	if (!reader.isOpen()) return;
 	int flength = (int)reader.GetLength();
 	auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
@@ -693,7 +725,7 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	}
 
 	// opening the music must be done by the game because it's different depending on the game's file system use.
-	FileReader reader = mus_cb.OpenMusic(musicname);
+	FileReader reader = OpenMusic(musicname);
 	if (!reader.isOpen()) return false;
 	auto m = reader.Read();
 	reader.Seek(0, FileReader::SeekSet);
@@ -718,7 +750,8 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	}
 	else
 	{
-		auto volp = MusicVolumes.CheckKey(musicname);
+		int lumpnum = mus_cb.FindMusic(musicname);
+		auto volp = MusicVolumes.CheckKey(lumpnum);
 		if (volp)
 		{
 			mus_playing.musicVolume = *volp;

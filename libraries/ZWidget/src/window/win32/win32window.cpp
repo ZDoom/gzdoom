@@ -481,5 +481,16 @@ void Win32Window::ExitLoop()
 	ExitRunLoop = true;
 }
 
+Size Win32Window::GetScreenSize()
+{
+	HDC screenDC = GetDC(0);
+	int screenWidth = GetDeviceCaps(screenDC, HORZRES);
+	int screenHeight = GetDeviceCaps(screenDC, VERTRES);
+	double dpiScale = GetDeviceCaps(screenDC, LOGPIXELSX) / 96.0;
+	ReleaseDC(0, screenDC);
+
+	return Size(screenWidth / dpiScale, screenHeight / dpiScale);
+}
+
 std::list<Win32Window*> Win32Window::Windows;
 bool Win32Window::ExitRunLoop;

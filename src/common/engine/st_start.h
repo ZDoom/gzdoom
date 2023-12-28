@@ -39,7 +39,7 @@
 class FStartupScreen
 {
 public:
-	static FStartupScreen *CreateInstance(int max_progress, bool showprogress);
+	static FStartupScreen *CreateInstance(int max_progress);
 
 	FStartupScreen(int max_progress)
 	{
@@ -66,7 +66,7 @@ protected:
 class FBasicStartupScreen : public FStartupScreen
 {
 public:
-	FBasicStartupScreen(int max_progress, bool show_bar);
+	FBasicStartupScreen(int max_progress);
 	~FBasicStartupScreen();
 
 	void Progress();

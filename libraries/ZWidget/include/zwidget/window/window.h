@@ -141,6 +141,8 @@ public:
 	static void RunLoop();
 	static void ExitLoop();
 
+	static Size GetScreenSize();
+
 	virtual ~DisplayWindow() = default;
 
 	virtual void SetWindowTitle(const std::string& text) = 0;

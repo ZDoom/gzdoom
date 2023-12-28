@@ -1000,6 +1000,9 @@ set (PCH_SOURCES
 	common/startscreen/startscreen_generic.cpp
 	common/startscreen/endoom.cpp
 	common/widgets/launcherwindow.cpp
+	common/widgets/errorwindow.cpp
+	common/widgets/netstartwindow.cpp
+	common/widgets/widgetresourcedata.cpp
 	common/fonts/singlelumpfont.cpp
 	common/fonts/singlepicfont.cpp
 	common/fonts/specialfont.cpp

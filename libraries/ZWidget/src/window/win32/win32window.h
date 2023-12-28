@@ -49,6 +49,7 @@ public:
 	static void ProcessEvents();
 	static void RunLoop();
 	static void ExitLoop();
+	static Size GetScreenSize();
 
 	static bool ExitRunLoop;
 	static std::list<Win32Window*> Windows;

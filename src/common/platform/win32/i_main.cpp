@@ -132,8 +132,6 @@ bool			FancyStdOut, AttachedStdOut;
 
 void I_SetIWADInfo()
 {
-	// Make the startup banner show itself
-	mainwindow.UpdateLayout();
 }
 
 //==========================================================================
@@ -266,7 +264,14 @@ int DoMain (HINSTANCE hInstance)
 	atexit ([](){ CoUninitialize(); }); // beware of calling convention.
 
 	int ret = GameMain ();
-	mainwindow.CheckForRestart();
+
+	if (mainwindow.CheckForRestart())
+	{
+		HMODULE hModule = GetModuleHandleW(NULL);
+		WCHAR path[MAX_PATH];
+		GetModuleFileNameW(hModule, path, MAX_PATH);
+		ShellExecuteW(NULL, L"open", path, GetCommandLineW(), NULL, SW_SHOWNORMAL);
+	}
 
 	DestroyCustomCursor();
 	if (ret == 1337) // special exit code for 'norun'.

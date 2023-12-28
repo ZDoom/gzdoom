@@ -25,6 +25,11 @@ void DisplayWindow::ExitLoop()
 	Win32Window::ExitLoop();
 }
 
+Size DisplayWindow::GetScreenSize()
+{
+	return Win32Window::GetScreenSize();
+}
+
 #else
 
 std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
@@ -45,6 +50,11 @@ void DisplayWindow::RunLoop()
 void DisplayWindow::ExitLoop()
 {
 	throw std::runtime_error("DisplayWindow::ExitLoop not implemented");
+}
+
+Size DisplayWindow::GetScreenSize()
+{
+	throw std::runtime_error("DisplayWindow::GetScreenSize not implemented");
 }
 
 #endif

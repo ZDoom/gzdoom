@@ -76,9 +76,9 @@ extern HINSTANCE g_hInst;
 //
 //==========================================================================
 
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress, bool showprogress)
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
-	return new FBasicStartupScreen(max_progress, showprogress);
+	return new FBasicStartupScreen(max_progress);
 }
 
 //==========================================================================
@@ -89,13 +89,9 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress, bool showprogre
 //
 //==========================================================================
 
-FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
+FBasicStartupScreen::FBasicStartupScreen(int max_progress)
 : FStartupScreen(max_progress)
 {
-	if (show_bar)
-	{
-		mainwindow.ShowProgressBar(MaxPos);
-	}
 	NetMaxPos = 0;
 	NetCurPos = 0;
 }
@@ -111,8 +107,6 @@ FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 
 FBasicStartupScreen::~FBasicStartupScreen()
 {
-	mainwindow.HideProgressBar();
-	KillTimer(mainwindow.GetHandle(), 1337);
 }
 
 //==========================================================================
@@ -128,7 +122,6 @@ void FBasicStartupScreen::Progress()
 	if (CurPos < MaxPos)
 	{
 		CurPos++;
-		mainwindow.SetProgressPos(CurPos);
 	}
 }
 

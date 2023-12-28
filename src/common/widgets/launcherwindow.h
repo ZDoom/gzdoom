@@ -34,6 +34,4 @@ private:
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
-
-	static Size GetScreenSize();
 };

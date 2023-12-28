@@ -592,3 +592,8 @@ void Widget::OnWindowDeactivated()
 void Widget::OnWindowDpiScaleChanged()
 {
 }
+
+Size Widget::GetScreenSize()
+{
+	return DisplayWindow::GetScreenSize();
+}

@@ -95,7 +95,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 		GamesList->AddItem(work.GetChars());
 	}
 
-	Logo->SetImage(Image::LoadResource("banner.png"));
+	Logo->SetImage(Image::LoadResource("widgets/banner.png"));
 }
 
 void LauncherWindow::OnGeometryChanged()

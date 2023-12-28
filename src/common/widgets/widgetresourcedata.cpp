@@ -14,7 +14,7 @@ void InitWidgetResources(const char* filename)
 
 std::vector<uint8_t> LoadWidgetFontData(const std::string& name)
 {
-	auto lump = WidgetResources->FindLump("newmenufont.ttf");
+	auto lump = WidgetResources->FindLump("widgets/poppins/poppins-regular.ttf");
 	if (!lump)
 		I_FatalError("Unable to find %s", name.c_str());
 

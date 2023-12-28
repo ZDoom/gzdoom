@@ -80,7 +80,6 @@ public:
 
 		int w = (glyph->metrics.minWidth + 3) & ~3;
 		int h = glyph->metrics.minHeight;
-		int maxw = w - 1;
 
 		int destwidth = (w + 2) / 3;
 
@@ -108,11 +107,11 @@ public:
 			{
 				uint32_t values[5] =
 				{
-					sline[std::max(x - 1, 0)],
+					x > 0 ? sline[x - 1] : 0U,
 					sline[x],
-					sline[std::min(x + 1, maxw)],
-					sline[std::min(x + 2, maxw)],
-					sline[std::min(x + 3, maxw)],
+					x + 1 < w ? sline[x + 1] : 0U,
+					x + 2 < w ? sline[x + 2] : 0U,
+					x + 3 < w ? sline[x + 3] : 0U
 				};
 
 				uint32_t red = (values[0] + values[1] + values[1] + values[2] + 2) >> 2;

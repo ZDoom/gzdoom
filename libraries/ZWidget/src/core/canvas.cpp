@@ -80,6 +80,7 @@ public:
 
 		int w = (glyph->metrics.minWidth + 3) & ~3;
 		int h = glyph->metrics.minHeight;
+		int maxw = w - 1;
 
 		int destwidth = (w + 2) / 3;
 
@@ -103,44 +104,23 @@ public:
 		{
 			uint8_t* sline = grayscale + y * w;
 			uint32_t* dline = dest + y * destwidth;
-			for (int x = 2; x < w; x += 3)
+			for (int x = 0; x < w; x += 3)
 			{
-				uint32_t red = sline[x - 2];
-				uint32_t green = sline[x - 1];
-				uint32_t blue = sline[x];
+				uint32_t values[5] =
+				{
+					sline[std::max(x - 1, 0)],
+					sline[x],
+					sline[std::min(x + 1, maxw)],
+					sline[std::min(x + 2, maxw)],
+					sline[std::min(x + 3, maxw)],
+				};
+
+				uint32_t red = (values[0] + values[1] + values[1] + values[2] + 2) >> 2;
+				uint32_t green = (values[1] + values[2] + values[2] + values[3] + 2) >> 2;
+				uint32_t blue = (values[2] + values[3] + values[3] + values[4] + 2) >> 2;
 				uint32_t alpha = (red | green | blue) ? 255 : 0;
 
-				//red = (red + green) / 2;
-				//green = (red + green + blue) / 3;
-				//blue = (green + blue) / 2;
-
-				dline[x / 3] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-			}
-			if (w % 3 == 1)
-			{
-				uint32_t red = sline[w - 1];
-				uint32_t green = 0;
-				uint32_t blue = 0;
-				uint32_t alpha = (red | green | blue) ? 255 : 0;
-
-				//red = (red + green) / 2;
-				//green = (red + green + blue) / 3;
-				//blue = (green + blue) / 2;
-
-				dline[(w - 1) / 3] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-			}
-			else if (w % 3 == 2)
-			{
-				uint32_t red = sline[w - 2];
-				uint32_t green = sline[w - 1];
-				uint32_t blue = 0;
-				uint32_t alpha = (red | green | blue) ? 255 : 0;
-
-				//red = (red + green) / 2;
-				//green = (red + green + blue) / 3;
-				//blue = (green + blue) / 2;
-
-				dline[(w - 1) / 3] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+				*(dline++) = (alpha << 24) | (red << 16) | (green << 8) | blue;
 			}
 		}
 

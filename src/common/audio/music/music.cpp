@@ -716,7 +716,6 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	}
 
 	ZMusic_MusicStream handle = nullptr;
-	MidiDeviceSetting* devp = MidiDevices.CheckKey(musicname);
 
 	// Strip off any leading file:// component.
 	if (strncmp(musicname, "file://", 7) == 0)
@@ -751,6 +750,8 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = mus_cb.FindMusic(musicname);
+		MidiDeviceSetting* devp = MidiDevices.CheckKey(lumpnum);
+
 		auto volp = MusicVolumes.CheckKey(lumpnum);
 		if (volp)
 		{

@@ -1077,7 +1077,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MidiDevice: {
 				sc.MustGetString();
-				FName nm = sc.String;
+				int lumpnum = mus_cb.FindMusic(sc.String);
 				FScanner::SavedPos save = sc.SavePos();
 				
 				sc.SetCMode(true);
@@ -1109,7 +1109,7 @@ static void S_AddSNDINFO (int lump)
 					sc.RestorePos(save);
 					sc.MustGetString();
 				}
-				MidiDevices[nm] = devset;
+				if (lumpnum >= 0) MidiDevices[lumpnum] = devset;
 				}
 				break;
 

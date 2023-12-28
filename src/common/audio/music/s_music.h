@@ -68,7 +68,7 @@ struct MidiDeviceSetting
 	FString args;
 };
 
-typedef TMap<FName, MidiDeviceSetting> MidiDeviceMap;
+typedef TMap<int, MidiDeviceSetting> MidiDeviceMap;
 typedef TMap<int, float> MusicVolumeMap;
 
 extern MidiDeviceMap MidiDevices;

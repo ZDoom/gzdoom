@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 enum class ImageFormat
 {
@@ -19,4 +20,5 @@ public:
 	virtual void* GetData() const = 0;
 
 	static std::shared_ptr<Image> Create(int width, int height, ImageFormat format, const void* data);
+	static std::shared_ptr<Image> LoadResource(const std::string& resourcename);
 };

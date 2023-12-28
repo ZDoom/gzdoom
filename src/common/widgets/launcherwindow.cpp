@@ -95,20 +95,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 		GamesList->AddItem(work.GetChars());
 	}
 
-	/*try
-	{
-		auto filedata = ReadAllBytes("C:/Development/ZWidget/example/banner.png");
-		std::vector<unsigned char> pixels;
-		unsigned long width = 0, height = 0;
-		int result = decodePNG(pixels, width, height, (const unsigned char*)filedata.data(), filedata.size(), true);
-		if (result == 0)
-		{
-			Logo->SetImage(Image::Create(width, height, ImageFormat::R8G8B8A8, pixels.data()));
-		}
-	}
-	catch (...)
-	{
-	}*/
+	Logo->SetImage(Image::LoadResource("banner.png"));
 }
 
 void LauncherWindow::OnGeometryChanged()

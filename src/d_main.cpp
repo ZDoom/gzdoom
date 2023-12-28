@@ -159,6 +159,7 @@ void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const cha
 bool M_SetSpecialMenu(FName& menu, int param);	// game specific checks
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
+void InitWidgetResources(const char* basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -3672,6 +3673,7 @@ static int D_DoomMain_Internal (void)
 		I_FatalError("Cannot find " BASEWAD);
 	}
 	LoadHexFont(wad);	// load hex font early so we have it during startup.
+	InitWidgetResources(wad);
 
 	C_InitConsole(80*8, 25*8, false);
 	I_DetectOS();

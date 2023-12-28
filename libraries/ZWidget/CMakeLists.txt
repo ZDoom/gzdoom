@@ -11,6 +11,8 @@ set(ZWIDGET_SOURCES
 	src/core/utf8reader.cpp
 	src/core/schrift/schrift.cpp
 	src/core/schrift/schrift.h
+	src/core/picopng/picopng.cpp
+	src/core/picopng/picopng.h
 	src/widgets/lineedit/lineedit.cpp
 	src/widgets/mainwindow/mainwindow.cpp
 	src/widgets/menubar/menubar.cpp
@@ -65,6 +67,7 @@ set(ZWIDGET_UNIX_SOURCES
 source_group("src" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/.+")
 source_group("src\\core" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/core/.+")
 source_group("src\\core\\schrift" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/core/schrift/.+")
+source_group("src\\core\\picopng" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/core/picopng/.+")
 source_group("src\\widgets" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/.+")
 source_group("src\\widgets\\lineedit" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/lineedit/.+")
 source_group("src\\widgets\\mainwindow" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/mainwindow/.+")

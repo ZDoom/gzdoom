@@ -435,7 +435,7 @@ IWad
 	Autoname = "doom.id.doom2.tnt.unity"
 	Game = "Doom"
 	Config = "Doom"
-	IWADName = "tnt.wad"
+	IWADName = "tntunity.wad", 2
 	Mapinfo = "mapinfo/tnt.txt"
 	Compatibility = "Shorttex", "Stairs"
 	MustContain = "MAP01", "REDTNT2", "DMAPINFO"
@@ -463,7 +463,7 @@ IWad
 	Autoname = "doom.id.doom2.plutonia.unity"
 	Game = "Doom"
 	Config = "Doom"
-	IWADName = "plutonia.wad"
+	IWADName = "plutoniaunity.wad", 2
 	Mapinfo = "mapinfo/plutonia.txt"
 	Compatibility = "Shorttex"
 	MustContain = "MAP01", "CAMO1", "DMAPINFO"
@@ -506,7 +506,7 @@ IWad
 	Autoname = "doom.id.doom2.unity"
 	Game = "Doom"
 	Config = "Doom"
-	IWADName = "doom2unity.wad"
+	IWADName = "doom2unity.wad", 2
 	Mapinfo = "mapinfo/doom2unity.txt"
 	Compatibility = "Shorttex", "nosectionmerge"
 	MustContain = "MAP01", "DMENUPIC"

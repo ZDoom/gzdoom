@@ -578,7 +578,6 @@ Names
 	"doom2xbox.wad"
 	"doomunity.wad"
 	"doom2unity.wad"
-	"doom2f.wad"
 	"tntunity.wad"
 	"plutoniaunity.wad"
 	"freedoom1.wad"

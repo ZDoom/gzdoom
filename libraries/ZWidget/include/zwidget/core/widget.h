@@ -175,6 +175,7 @@ private:
 	std::unique_ptr<Canvas> DispCanvas;
 	Widget* FocusWidget = nullptr;
 	Widget* CaptureWidget = nullptr;
+	Widget* HoverWidget = nullptr;
 
 	Widget(const Widget&) = delete;
 	Widget& operator=(const Widget&) = delete;

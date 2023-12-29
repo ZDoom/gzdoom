@@ -75,6 +75,19 @@ void Widget::MoveBefore(Widget* sibling)
 
 void Widget::DetachFromParent()
 {
+	for (Widget* cur = ParentObj; cur; cur = cur->ParentObj)
+	{
+		if (cur->FocusWidget == this)
+			cur->FocusWidget = nullptr;
+		if (cur->CaptureWidget == this)
+			cur->CaptureWidget = nullptr;
+		if (cur->HoverWidget == this)
+			cur->HoverWidget = nullptr;
+
+		if (cur->DispWindow)
+			break;
+	}
+
 	if (PrevSiblingObj)
 		PrevSiblingObj->NextSiblingObj = NextSiblingObj;
 	if (NextSiblingObj)
@@ -474,6 +487,14 @@ void Widget::OnWindowMouseMove(const Point& pos)
 		Widget* widget = ChildAt(pos);
 		if (!widget)
 			widget = this;
+
+		if (HoverWidget != widget)
+		{
+			if (HoverWidget)
+				HoverWidget->OnMouseLeave();
+			HoverWidget = widget;
+		}
+
 		widget->OnMouseMove(widget->MapFrom(this, pos));
 	}
 }

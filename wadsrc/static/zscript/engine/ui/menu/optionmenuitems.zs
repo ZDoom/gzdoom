@@ -1176,9 +1176,9 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	String TextNegOne;
 	int mClickVal;
 
-	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "")
+	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "", CVar graycheck = null)
 	{
-		Super.Init(label, command, min, max, step, 0);
+		Super.Init(label, command, min, max, step, 0, graycheck);
 		mCVar =CVar.FindCVar(command);
 		TextZero = zero;
 		TextNEgOne = negone;
@@ -1189,18 +1189,18 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, isGrayed());
 
 		int Selection = int(GetSliderValue());
 		if ((Selection == 0 || Selection == -1) && mClickVal <= 0)
 		{
 			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
-			drawValue(indent, y, OptionMenuSettings.mFontColorValue, text);
+			drawValue(indent, y, OptionMenuSettings.mFontColorValue, text, isGrayed());
 		}
 		else
 		{
 			mDrawX = indent + CursorSpace();
-			DrawSlider (mDrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent);
+			DrawSlider (mDrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent, isGrayed());
 		}
 		return indent;
 	}

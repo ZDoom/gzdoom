@@ -770,13 +770,23 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		return;
 	}
-
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (viewmaster == camera && !vp.showviewer)
 	{
+		if (vp.noviewer || (viewmaster->player && viewmaster->player->crossingPortal)) return;
 		DVector3 vieworigin = viewmaster->Pos();
 		if (thruportal == 1) vieworigin += di->Level->Displacements.getOffset(viewmaster->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2) return;
+
+		// Necessary in order to prevent sprite pop-ins with viewpos and models. 
+		auto* sec = viewmaster->Sector;
+		if (sec && !sec->PortalBlocksMovement(sector_t::ceiling))
+		{
+			double zh = sec->GetPortalPlaneZ(sector_t::ceiling);
+			double top = (viewmaster->player ? max<double>(viewmaster->player->viewz, viewmaster->Top()) + 1 : viewmaster->Top());
+			if (viewmaster->Z() < zh && top >= zh)
+				return;
+		}
 	}
 	// Thing is invisible if close to the camera.
 	if (viewmaster->renderflags & RF_MAYBEINVISIBLE)
@@ -858,7 +868,6 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		return;
 	}
-
 	if (!modelframe)
 	{
 		bool mirror = false;

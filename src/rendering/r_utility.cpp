@@ -600,6 +600,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			else break;
 		}
 	}
+	if (moved) viewpoint.noviewer = true;
 }
 
 //==========================================================================
@@ -947,7 +948,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 					// Interpolation still happens with everything else though and seems to work fine.
 					DefaultDraw = false;
 					viewpoint.NoPortalPath = true;
-					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP);
+					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP, &viewpoint);
 					
 					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
 					{

@@ -2602,13 +2602,15 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 					auto p = thing->Level->GetConsolePlayer();
 					if (p) p->viewz += hit.pos.Z;	// needs to be done here because otherwise the renderer will not catch the change.
 					P_TranslatePortalAngle(ld, hit.angle);
+					if (thing->player && (port->mType == PORTT_INTERACTIVE || port->mType == PORTT_TELEPORT))
+						thing->player->crossingPortal = true;
 				}
 				R_AddInterpolationPoint(hit);
 			}
 			if (port->mType == PORTT_LINKED)
 			{
 				continue;
-		}
+			}
 		}
 		break;
 	}
@@ -5566,24 +5568,47 @@ void P_AimCamera(AActor *t1, DVector3 &campos, DAngle &camangle, sector_t *&Came
 	camangle = trace.SrcAngleFromTarget - DAngle::fromDeg(180.);
 }
 
+struct ViewPosPortal
+{
+	int counter;
+};
+
+static ETraceStatus VPos_CheckPortal(FTraceResults &res, void *userdata)
+{
+	//[MC] Mirror how third person works.
+	ViewPosPortal *pc = (ViewPosPortal *)userdata;
+
+	if (res.HitType == TRACE_CrossingPortal)
+	{
+		res.HitType = TRACE_HitNone; // Needed to force the trace to continue appropriately.
+		pc->counter++;
+		return TRACE_Skip;
+	}
+	if (res.HitType == TRACE_HitActor)
+	{
+		return TRACE_Skip;
+	}
+	return TRACE_Stop;
+}
+
 // [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
-void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP)
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP, FRenderViewpoint *view)
 {
 	FTraceResults trace;
+	ViewPosPortal pc;
+	pc.counter = 0;
 	const DVector3 vvec = campos - orig;
 	const double distance = vvec.Length();
 
 	// Trace handles all of the portal crossing, which is why there is no usage of Vec#Offset(Z).
-	if (Trace(orig, t1->Sector, vvec.Unit(), distance, 0, 0, t1, trace) &&
+	if (Trace(orig, CameraSector, vvec.Unit(), distance, 0, 0, t1, trace, TRACE_ReportPortals, VPos_CheckPortal, &pc) && 
 		trace.Distance > 5)
-	{
-		// Position camera slightly in front of hit thing
 		campos = orig + vvec.Unit() * (trace.Distance - 5);
-	}
 	else
-	{
 		campos = trace.HitPos - trace.HitVector * 1 / 256.;
-	}
+	
+
+	if (pc.counter > 2) view->noviewer = true;
 	CameraSector = trace.Sector;
 	unlinked = trace.unlinked;
 }

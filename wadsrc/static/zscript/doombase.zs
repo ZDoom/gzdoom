@@ -8,7 +8,8 @@ extend struct _
 	native readonly Array<@TerrainDef> Terrains;
 	native int validcount;
 	native play @DehInfo deh;
-	native readonly bool automapactive;
+	native readonly ui bool automapactive;	// is automap enabled?
+	native readonly ui bool viewactive;		// if automap is active, true = main automap, false = overlay automap.
 	native readonly TextureID skyflatnum;
 	native readonly int gametic;
 	native readonly int Net_Arbitrator;

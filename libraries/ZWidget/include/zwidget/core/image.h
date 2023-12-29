@@ -20,5 +20,5 @@ public:
 	virtual void* GetData() const = 0;
 
 	static std::shared_ptr<Image> Create(int width, int height, ImageFormat format, const void* data);
-	static std::shared_ptr<Image> LoadResource(const std::string& resourcename);
+	static std::shared_ptr<Image> LoadResource(const std::string& resourcename, double dpiscale = 1.0);
 };

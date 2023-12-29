@@ -14,9 +14,14 @@ class LauncherWindow : public Widget
 public:
 	static int ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags);
 
-private:
 	LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags);
 
+private:
+	void OnPlayButtonClicked();
+	void OnExitButtonClicked();
+	void OnGamesListActivated();
+
+	void OnClose() override;
 	void OnGeometryChanged() override;
 
 	ImageBox* Logo = nullptr;
@@ -34,4 +39,7 @@ private:
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
+
+	int* AutoloadFlags = nullptr;
+	int ExecResult = -1;
 };

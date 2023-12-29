@@ -12,6 +12,12 @@ void ListView::AddItem(const std::string& text)
 	Update();
 }
 
+void ListView::Activate()
+{
+	if (OnActivated)
+		OnActivated();
+}
+
 void ListView::OnPaint(Canvas* canvas)
 {
 	double y = 20.0;
@@ -47,10 +53,24 @@ void ListView::OnPaintFrame(Canvas* canvas)
 void ListView::OnMouseDown(const Point& pos, int key)
 {
 	SetFocus();
+
+	if (key == IK_LeftMouse)
+	{
+		int index = (int)((pos.y - 5.0) / 20.0);
+		if (index >= 0 && (size_t)index < items.size())
+		{
+			selectedItem = index;
+			Update();
+		}
+	}
 }
 
 void ListView::OnMouseDoubleclick(const Point& pos, int key)
 {
+	if (key == IK_LeftMouse)
+	{
+		Activate();
+	}
 }
 
 void ListView::OnKeyDown(EInputKey key)
@@ -70,5 +90,9 @@ void ListView::OnKeyDown(EInputKey key)
 			selectedItem--;
 			Update();
 		}
+	}
+	else if (key == IK_Enter)
+	{
+		Activate();
 	}
 }

@@ -69,7 +69,12 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	classdesc.lpfnWndProc = &Win32Window::WndProc;
 	RegisterClassEx(&classdesc);
 
-	CreateWindowEx(WS_EX_APPWINDOW, L"ZWidgetWindow", L"", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
+	// Microsoft logic at its finest:
+	// WS_EX_DLGMODALFRAME hides the sysmenu icon
+	// WS_CAPTION shows the caption (yay! actually a flag that does what it says it does!)
+	// WS_SYSMENU shows the min/max/close buttons
+	// WS_THICKFRAME makes the window resizable
+	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, L"ZWidgetWindow", L"", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
 
 	/*
 	RAWINPUTDEVICE rid;

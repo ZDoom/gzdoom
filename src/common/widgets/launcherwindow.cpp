@@ -20,16 +20,16 @@ int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int*
 	double windowWidth = 615.0;
 	double windowHeight = 668.0;
 
-	auto launcher = new LauncherWindow(wads, numwads, defaultiwad, autoloadflags);
+	auto launcher = std::make_unique<LauncherWindow>(wads, numwads, defaultiwad, autoloadflags);
 	launcher->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
 	launcher->Show();
 
 	DisplayWindow::RunLoop();
 
-	return 0;
+	return launcher->ExecResult;
 }
 
-LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window)
+LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window), AutoloadFlags(autoloadflags)
 {
 	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
 	SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
@@ -53,6 +53,10 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	ExitButton = new PushButton(this);
 	GamesList = new ListView(this);
 
+	PlayButton->OnClick = [=]() { OnPlayButtonClicked(); };
+	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
+	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
+
 	SelectLabel->SetText("Select which game file (IWAD) to run.");
 	PlayButton->SetText("Play Game");
 	ExitButton->SetText("Exit");
@@ -72,10 +76,11 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	WelcomeLabel->SetText(welcomeText.GetChars());
 	VersionLabel->SetText(versionText.GetChars());
 
-	int flags = *autoloadflags;
 	FullscreenCheckbox->SetChecked(vid_fullscreen);
-	DisableAutoloadCheckbox->SetChecked(flags & 1);
 	DontAskAgainCheckbox->SetChecked(!queryiwad);
+
+	int flags = *autoloadflags;
+	DisableAutoloadCheckbox->SetChecked(flags & 1);
 	LightsCheckbox->SetChecked(flags & 2);
 	BrightmapsCheckbox->SetChecked(flags & 4);
 	WidescreenCheckbox->SetChecked(flags & 8);
@@ -96,6 +101,40 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	}
 
 	Logo->SetImage(Image::LoadResource("widgets/banner.png"));
+
+	GamesList->SetFocus();
+}
+
+void LauncherWindow::OnClose()
+{
+	OnExitButtonClicked();
+}
+
+void LauncherWindow::OnPlayButtonClicked()
+{
+	vid_fullscreen = FullscreenCheckbox->GetChecked();
+	queryiwad = !DontAskAgainCheckbox->GetChecked();
+
+	int flags = 0;
+	if (DisableAutoloadCheckbox->GetChecked()) flags |= 1;
+	if (LightsCheckbox->GetChecked()) flags |= 2;
+	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
+	if (WidescreenCheckbox->GetChecked()) flags |= 8;
+	*AutoloadFlags = flags;
+
+	ExecResult = GamesList->GetSelectedItem();
+	DisplayWindow::ExitLoop();
+}
+
+void LauncherWindow::OnExitButtonClicked()
+{
+	ExecResult = -1;
+	DisplayWindow::ExitLoop();
+}
+
+void LauncherWindow::OnGamesListActivated()
+{
+	OnPlayButtonClicked();
 }
 
 void LauncherWindow::OnGeometryChanged()

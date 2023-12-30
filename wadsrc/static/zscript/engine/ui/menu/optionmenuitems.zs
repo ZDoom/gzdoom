@@ -900,22 +900,24 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 class OptionMenuItemColorPicker : OptionMenuItem
 {
 	CVar mCVar;
+	CVar mGrayCheck;
 
 	const CPF_RESET = 0x20001;
 
-	OptionMenuItemColorPicker Init(String label, Name command)
+	OptionMenuItemColorPicker Init(String label, Name command, CVar graycheck = null)
 	{
 		Super.Init(label, command);
 		CVar cv = CVar.FindCVar(command);
 		if (cv != null && cv.GetRealType() != CVar.CVAR_Color) cv = null;
 		mCVar = cv;
+		mGrayCheck = graycheck;
 		return self;
 	}
 
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor,  isGrayed());
 
 		if (mCVar != null)
 		{
@@ -962,6 +964,16 @@ class OptionMenuItemColorPicker : OptionMenuItem
 			}
 		}
 		return false;
+	}
+
+	virtual bool IsGrayed(void)
+	{
+		return mGrayCheck != NULL && !mGrayCheck.GetInt();
+	}
+
+	override bool Selectable()
+	{
+		return !isGrayed();
 	}
 }
 

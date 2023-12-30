@@ -104,7 +104,7 @@ void MainWindow::ShowErrorPane(const char* text)
 		I_NetDone();
 	}
 
-	PrintStr(text);
+	// PrintStr(text);
 
 	size_t totalsize = 0;
 	for (const FString& line : bufferedConsoleStuff)
@@ -115,7 +115,7 @@ void MainWindow::ShowErrorPane(const char* text)
 	for (const FString& line : bufferedConsoleStuff)
 		alltext.append(line.GetChars(), line.Len());
 
-	ErrorWindow::ExecModal(alltext);
+	restartrequest = ErrorWindow::ExecModal(text, alltext);
 }
 
 void MainWindow::ShowNetStartPane(const char* message, int maxpos)

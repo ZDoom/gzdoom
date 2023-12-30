@@ -1,20 +1,25 @@
 
 #include "errorwindow.h"
 #include "version.h"
-#include <zwidget/widgets/textedit/textedit.h>
+#include "v_font.h"
+#include "printf.h"
+#include <zwidget/core/image.h>
+#include <zwidget/widgets/pushbutton/pushbutton.h>
 
-void ErrorWindow::ExecModal(const std::string& text)
+bool ErrorWindow::ExecModal(const std::string& text, const std::string& log)
 {
 	Size screenSize = GetScreenSize();
 	double windowWidth = 1200.0;
 	double windowHeight = 700.0;
 
-	auto window = new ErrorWindow();
-	window->SetText(text);
+	auto window = std::make_unique<ErrorWindow>();
+	window->SetText(text, log);
 	window->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
 	window->Show();
 
 	DisplayWindow::RunLoop();
+
+	return window->Restart;
 }
 
 ErrorWindow::ErrorWindow() : Widget(nullptr, WidgetType::Window)
@@ -26,19 +31,175 @@ ErrorWindow::ErrorWindow() : Widget(nullptr, WidgetType::Window)
 	SetWindowCaptionColor(Colorf::fromRgba8(33, 33, 33));
 	SetWindowCaptionTextColor(Colorf::fromRgba8(226, 223, 219));
 
-	LogView = new TextEdit(this);
+	LogView = new LogViewer(this);
+	ClipboardButton = new PushButton(this);
+	RestartButton = new PushButton(this);
+
+	ClipboardButton->OnClick = [=]() { OnClipboardButtonClicked(); };
+	RestartButton->OnClick = [=]() { OnRestartButtonClicked(); };
+
+	ClipboardButton->SetText("Copy to clipboard");
+	RestartButton->SetText("Restart");
 
 	LogView->SetFocus();
 }
 
-void ErrorWindow::SetText(const std::string& text)
+void ErrorWindow::SetText(const std::string& text, const std::string& log)
 {
-	LogView->SetText(text);
+	LogView->SetText(text, log);
+
+	clipboardtext.clear();
+	clipboardtext.reserve(log.size() + text.size() + 100);
+
+	// Strip the color escapes from the log
+	const uint8_t* cptr = (const uint8_t*)log.data();
+	while (int chr = GetCharFromString(cptr))
+	{
+		if (chr != TEXTCOLOR_ESCAPE)
+		{
+			// The bar characters, most commonly used to indicate map changes
+			if (chr >= 0x1D && chr <= 0x1F)
+			{
+				chr = 0x2550;	// Box Drawings Double Horizontal
+			}
+			clipboardtext += MakeUTF8(chr);
+		}
+	}
+
+	clipboardtext += "\nExecution could not continue.\n";
+	clipboardtext += text;
+	clipboardtext += "\n";
+}
+
+void ErrorWindow::OnClipboardButtonClicked()
+{
+	SetClipboardText(clipboardtext);
+}
+
+void ErrorWindow::OnRestartButtonClicked()
+{
+	Restart = true;
+	DisplayWindow::ExitLoop();
+}
+
+void ErrorWindow::OnClose()
+{
+	Restart = false;
+	DisplayWindow::ExitLoop();
 }
 
 void ErrorWindow::OnGeometryChanged()
 {
 	double w = GetWidth();
 	double h = GetHeight();
-	LogView->SetFrameGeometry(Rect::xywh(20.0, 20.0, w - 40.0, h - 40.0));
+
+	double y = GetHeight() - 15.0 - ClipboardButton->GetPreferredHeight();
+	ClipboardButton->SetFrameGeometry(20.0, y, 170.0, ClipboardButton->GetPreferredHeight());
+	RestartButton->SetFrameGeometry(GetWidth() - 20.0 - 100.0, y, 100.0, RestartButton->GetPreferredHeight());
+	y -= 20.0;
+
+	LogView->SetFrameGeometry(Rect::xywh(0.0, 0.0, w, y));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+LogViewer::LogViewer(Widget* parent) : Widget(parent)
+{
+	SetNoncontentSizes(8.0, 8.0, 8.0, 8.0);
+}
+
+void LogViewer::SetText(const std::string& text, const std::string& log)
+{
+	lines.clear();
+
+	std::string::size_type start = 0;
+	std::string::size_type end = log.find('\n');
+	while (end != std::string::npos)
+	{
+		lines.push_back(CreateLineLayout(log.substr(start, end - start)));
+		start = end + 1;
+		end = log.find('\n', start);
+	}
+
+	lines.push_back(CreateLineLayout(log.substr(start)));
+
+	// Add an empty line as a bit of spacing
+	lines.push_back(CreateLineLayout({}));
+
+	SpanLayout layout;
+	//layout.AddImage(Image::LoadResource("widgets/erroricon.svg"), -8.0);
+	layout.AddText("Execution could not continue.", largefont, Colorf::fromRgba8(255, 170, 170));
+	lines.push_back(layout);
+
+	layout.Clear();
+	layout.AddText(text, largefont, Colorf::fromRgba8(255, 255, 170));
+	lines.push_back(layout);
+
+	Update();
+}
+
+SpanLayout LogViewer::CreateLineLayout(const std::string& text)
+{
+	SpanLayout layout;
+
+	Colorf curcolor = Colorf::fromRgba8(255, 255, 255);
+	std::string curtext;
+
+	const uint8_t* cptr = (const uint8_t*)text.data();
+	while (int chr = GetCharFromString(cptr))
+	{
+		if (chr != TEXTCOLOR_ESCAPE)
+		{
+			// The bar characters, most commonly used to indicate map changes
+			if (chr >= 0x1D && chr <= 0x1F)
+			{
+				chr = 0x2550;	// Box Drawings Double Horizontal
+			}
+			curtext += MakeUTF8(chr);
+		}
+		else
+		{
+			EColorRange range = V_ParseFontColor(cptr, CR_UNTRANSLATED, CR_YELLOW);
+			if (range != CR_UNDEFINED)
+			{
+				if (!curtext.empty())
+					layout.AddText(curtext, font, curcolor);
+				curtext.clear();
+
+				PalEntry color = V_LogColorFromColorRange(range);
+				curcolor = Colorf::fromRgba8(color.r, color.g, color.b);
+			}
+		}
+	}
+
+	curtext.push_back(' ');
+	layout.AddText(curtext, font, curcolor);
+
+	return layout;
+}
+
+void LogViewer::OnPaintFrame(Canvas* canvas)
+{
+	double w = GetFrameGeometry().width;
+	double h = GetFrameGeometry().height;
+	Colorf bordercolor = Colorf::fromRgba8(100, 100, 100);
+	canvas->fillRect(Rect::xywh(0.0, 0.0, w, h), Colorf::fromRgba8(38, 38, 38));
+	//canvas->fillRect(Rect::xywh(0.0, 0.0, w, 1.0), bordercolor);
+	//canvas->fillRect(Rect::xywh(0.0, h - 1.0, w, 1.0), bordercolor);
+	//canvas->fillRect(Rect::xywh(0.0, 0.0, 1.0, h - 0.0), bordercolor);
+	//canvas->fillRect(Rect::xywh(w - 1.0, 0.0, 1.0, h - 0.0), bordercolor);
+}
+
+void LogViewer::OnPaint(Canvas* canvas)
+{
+	double width = GetWidth();
+	double y = GetHeight();
+	for (size_t i = lines.size(); i > 0 && y > 0.0; i--)
+	{
+		SpanLayout& layout = lines[i - 1];
+		layout.Layout(canvas, width);
+		layout.SetPosition(Point(0.0, y - layout.GetSize().height));
+		layout.DrawLayout(canvas);
+		y -= layout.GetSize().height;
+	}
 }

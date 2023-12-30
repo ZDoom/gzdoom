@@ -379,11 +379,18 @@ void Widget::ReleaseMouseCapture()
 
 std::string Widget::GetClipboardText()
 {
-	return {};
+	Widget* w = Window();
+	if (w)
+		return w->DispWindow->GetClipboardText();
+	else
+		return {};
 }
 
 void Widget::SetClipboardText(const std::string& text)
 {
+	Widget* w = Window();
+	if (w)
+		w->DispWindow->SetClipboardText(text);
 }
 
 Widget* Widget::Window()

@@ -44,6 +44,9 @@ public:
 	void SetCaptionColor(uint32_t bgra8) override;
 	void SetCaptionTextColor(uint32_t bgra8) override;
 
+	std::string GetClipboardText() override;
+	void SetClipboardText(const std::string& text) override;
+
 	Point GetLParamPos(LPARAM lparam) const;
 
 	static void ProcessEvents();

@@ -172,4 +172,7 @@ public:
 	virtual void SetCaptionTextColor(uint32_t bgra8) = 0;
 
 	virtual void PresentBitmap(int width, int height, const uint32_t* pixels) = 0;
+
+	virtual std::string GetClipboardText() = 0;
+	virtual void SetClipboardText(const std::string& text) = 0;
 };

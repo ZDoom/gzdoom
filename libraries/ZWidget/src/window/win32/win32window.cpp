@@ -254,6 +254,77 @@ double Win32Window::GetDpiScale() const
 	return GetDpiForWindow(WindowHandle) / 96.0;
 }
 
+std::string Win32Window::GetClipboardText()
+{
+	BOOL result = OpenClipboard(WindowHandle);
+	if (result == FALSE)
+		throw std::runtime_error("Unable to open clipboard");
+
+	HANDLE handle = GetClipboardData(CF_UNICODETEXT);
+	if (handle == 0)
+	{
+		CloseClipboard();
+		return std::string();
+	}
+
+	std::wstring::value_type* data = (std::wstring::value_type*)GlobalLock(handle);
+	if (data == 0)
+	{
+		CloseClipboard();
+		return std::string();
+	}
+	std::string str = from_utf16(data);
+	GlobalUnlock(handle);
+
+	CloseClipboard();
+	return str;
+}
+
+void Win32Window::SetClipboardText(const std::string& text)
+{
+	std::wstring text16 = to_utf16(text);
+
+	BOOL result = OpenClipboard(WindowHandle);
+	if (result == FALSE)
+		throw std::runtime_error("Unable to open clipboard");
+
+	result = EmptyClipboard();
+	if (result == FALSE)
+	{
+		CloseClipboard();
+		throw std::runtime_error("Unable to empty clipboard");
+	}
+
+	unsigned int length = (text16.length() + 1) * sizeof(std::wstring::value_type);
+	HANDLE handle = GlobalAlloc(GMEM_MOVEABLE, length);
+	if (handle == 0)
+	{
+		CloseClipboard();
+		throw std::runtime_error("Unable to allocate clipboard memory");
+	}
+
+	void* data = GlobalLock(handle);
+	if (data == 0)
+	{
+		GlobalFree(handle);
+		CloseClipboard();
+		throw std::runtime_error("Unable to lock clipboard memory");
+	}
+	memcpy(data, text16.c_str(), length);
+	GlobalUnlock(handle);
+
+	HANDLE data_result = SetClipboardData(CF_UNICODETEXT, handle);
+
+	if (data_result == 0)
+	{
+		GlobalFree(handle);
+		CloseClipboard();
+		throw std::runtime_error("Unable to set clipboard data");
+	}
+
+	CloseClipboard();
+}
+
 void Win32Window::PresentBitmap(int width, int height, const uint32_t* pixels)
 {
 	BITMAPV5HEADER header = {};

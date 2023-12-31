@@ -30,6 +30,16 @@ Size DisplayWindow::GetScreenSize()
 	return Win32Window::GetScreenSize();
 }
 
+void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+{
+	return Win32Window::StartTimer(timeoutMilliseconds, std::move(onTimer));
+}
+
+void DisplayWindow::StopTimer(void* timerID)
+{
+	Win32Window::StopTimer(timerID);
+}
+
 #else
 
 std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
@@ -55,6 +65,16 @@ void DisplayWindow::ExitLoop()
 Size DisplayWindow::GetScreenSize()
 {
 	throw std::runtime_error("DisplayWindow::GetScreenSize not implemented");
+}
+
+int DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+{
+	throw std::runtime_error("DisplayWindow::StartTimer not implemented");
+}
+
+void DisplayWindow::StopTimer(int timerID)
+{
+	throw std::runtime_error("DisplayWindow::StopTimer not implemented");
 }
 
 #endif

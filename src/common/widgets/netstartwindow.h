@@ -16,8 +16,9 @@ public:
 	static bool RunMessageLoop(bool (*timer_callback)(void*), void* userdata);
 
 private:
-	NetStartWindow(const std::string& message, int maxpos);
+	NetStartWindow();
 
+	void SetMessage(const std::string& message, int maxpos);
 	void SetProgress(int pos);
 
 protected:

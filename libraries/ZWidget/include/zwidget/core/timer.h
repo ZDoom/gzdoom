@@ -20,5 +20,7 @@ private:
 	Timer* PrevTimerObj = nullptr;
 	Timer* NextTimerObj = nullptr;
 
+	void* TimerId = nullptr;
+
 	friend class Widget;
 };

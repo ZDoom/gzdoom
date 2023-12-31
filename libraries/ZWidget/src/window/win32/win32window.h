@@ -8,6 +8,7 @@
 #include <Windows.h>
 
 #include <list>
+#include <unordered_map>
 #include <zwidget/window/window.h>
 
 class Win32Window : public DisplayWindow
@@ -54,9 +55,14 @@ public:
 	static void ExitLoop();
 	static Size GetScreenSize();
 
+	static void* StartTimer(int timeoutMilliseconds, std::function<void()> onTimer);
+	static void StopTimer(void* timerID);
+
 	static bool ExitRunLoop;
 	static std::list<Win32Window*> Windows;
 	std::list<Win32Window*>::iterator WindowsIterator;
+
+	static std::unordered_map<UINT_PTR, std::function<void()>> Timers;
 
 	LRESULT OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam);
 	static LRESULT CALLBACK WndProc(HWND windowhandle, UINT msg, WPARAM wparam, LPARAM lparam);

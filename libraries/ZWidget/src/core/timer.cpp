@@ -1,6 +1,7 @@
 
 #include "core/timer.h"
 #include "core/widget.h"
+#include "window/window.h"
 
 Timer::Timer(Widget* owner) : OwnerObj(owner)
 {
@@ -22,8 +23,21 @@ Timer::~Timer()
 
 void Timer::Start(int timeoutMilliseconds, bool repeat)
 {
+	Stop();
+
+	TimerId = DisplayWindow::StartTimer(timeoutMilliseconds, [=]() {
+		if (!repeat)
+			Stop();
+		if (FuncExpired)
+			FuncExpired();
+	});
 }
 
 void Timer::Stop()
 {
+	if (TimerId != 0)
+	{
+		DisplayWindow::StopTimer(TimerId);
+		TimerId = 0;
+	}
 }

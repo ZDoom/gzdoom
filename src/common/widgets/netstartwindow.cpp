@@ -10,15 +10,18 @@ NetStartWindow* NetStartWindow::Instance = nullptr;
 
 void NetStartWindow::ShowNetStartPane(const char* message, int maxpos)
 {
-	HideNetStartPane();
-
 	Size screenSize = GetScreenSize();
 	double windowWidth = 300.0;
 	double windowHeight = 150.0;
 
-	Instance = new NetStartWindow(message, maxpos);
-	Instance->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
-	Instance->Show();
+	if (!Instance)
+	{
+		Instance = new NetStartWindow();
+		Instance->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
+		Instance->Show();
+	}
+
+	Instance->SetMessage(message, maxpos);
 }
 
 void NetStartWindow::HideNetStartPane()
@@ -60,7 +63,7 @@ bool NetStartWindow::RunMessageLoop(bool (*newtimer_callback)(void*), void* newu
 	return Instance->exitreason;
 }
 
-NetStartWindow::NetStartWindow(const std::string& message, int maxpos) : Widget(nullptr, WidgetType::Window)
+NetStartWindow::NetStartWindow() : Widget(nullptr, WidgetType::Window)
 {
 	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
 	SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
@@ -78,11 +81,16 @@ NetStartWindow::NetStartWindow(const std::string& message, int maxpos) : Widget(
 	AbortButton->OnClick = [=]() { OnClose(); };
 
 	AbortButton->SetText("Abort Network Game");
-	MessageLabel->SetText(message);
 
 	CallbackTimer = new Timer(this);
 	CallbackTimer->FuncExpired = [=]() { OnCallbackTimerExpired(); };
 	CallbackTimer->Start(500);
+}
+
+void NetStartWindow::SetMessage(const std::string& message, int newmaxpos)
+{
+	MessageLabel->SetText(message);
+	maxpos = newmaxpos;
 }
 
 void NetStartWindow::SetProgress(int newpos)

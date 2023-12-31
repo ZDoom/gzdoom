@@ -568,5 +568,35 @@ Size Win32Window::GetScreenSize()
 	return Size(screenWidth / dpiScale, screenHeight / dpiScale);
 }
 
+static void CALLBACK Win32TimerCallback(HWND handle, UINT message, UINT_PTR timerID, DWORD timestamp)
+{
+	auto it = Win32Window::Timers.find(timerID);
+	if (it != Win32Window::Timers.end())
+	{
+		it->second();
+	}
+}
+
+void* Win32Window::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+{
+	UINT_PTR result = SetTimer(0, 0, timeoutMilliseconds, Win32TimerCallback);
+	if (result == 0)
+		throw std::runtime_error("Could not create timer");
+	Timers[result] = std::move(onTimer);
+	return (void*)result;
+}
+
+void Win32Window::StopTimer(void* timerID)
+{
+	auto it = Timers.find((UINT_PTR)timerID);
+	if (it != Timers.end())
+	{
+		Timers.erase(it);
+		KillTimer(0, (UINT_PTR)timerID);
+	}
+}
+
 std::list<Win32Window*> Win32Window::Windows;
 bool Win32Window::ExitRunLoop;
+
+std::unordered_map<UINT_PTR, std::function<void()>> Win32Window::Timers;

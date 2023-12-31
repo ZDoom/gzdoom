@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 #include "../core/rect.h"
 
 class Engine;
@@ -140,6 +141,9 @@ public:
 	static void ProcessEvents();
 	static void RunLoop();
 	static void ExitLoop();
+
+	static void* StartTimer(int timeoutMilliseconds, std::function<void()> onTimer);
+	static void StopTimer(void* timerID);
 
 	static Size GetScreenSize();
 

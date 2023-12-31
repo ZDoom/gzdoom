@@ -1091,6 +1091,8 @@ void DVisualThinker::Tick()
 
 	if (isFrozen())
 	{	// needed here because it won't retroactively update like actors do.
+		sub = Level->PointInRenderSubsector(Pos);
+		cursector = sub->sector;
 		UpdateSpriteInfo(); 
 		return;
 	}

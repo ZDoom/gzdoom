@@ -1,5 +1,6 @@
 
 #include "window/window.h"
+#include <stdexcept>
 
 #ifdef WIN32
 
@@ -67,12 +68,12 @@ Size DisplayWindow::GetScreenSize()
 	throw std::runtime_error("DisplayWindow::GetScreenSize not implemented");
 }
 
-int DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
 	throw std::runtime_error("DisplayWindow::StartTimer not implemented");
 }
 
-void DisplayWindow::StopTimer(int timerID)
+void DisplayWindow::StopTimer(void* timerID)
 {
 	throw std::runtime_error("DisplayWindow::StopTimer not implemented");
 }

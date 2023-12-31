@@ -10,6 +10,7 @@
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
+#include <cstring>
 
 class CanvasTexture
 {

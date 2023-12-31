@@ -1,6 +1,7 @@
 
 #include "netstartwindow.h"
 #include "version.h"
+#include "engineerrors.h"
 #include <zwidget/core/timer.h>
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/pushbutton/pushbutton.h>
@@ -39,11 +40,22 @@ bool NetStartWindow::RunMessageLoop(bool (*newtimer_callback)(void*), void* newu
 
 	Instance->timer_callback = newtimer_callback;
 	Instance->userdata = newuserdata;
+	Instance->CallbackException = {};
 
 	DisplayWindow::RunLoop();
 
 	Instance->timer_callback = nullptr;
 	Instance->userdata = nullptr;
+
+	if (Instance->CallbackException)
+		std::rethrow_exception(Instance->CallbackException);
+
+	// Even though the comment in FBasicStartupScreen::NetLoop says we should return false, the old code actually throws an exception!
+	// This effectively also means the function always returns true...
+	if (!Instance->exitreason)
+	{
+		throw CExitEvent(0);
+	}
 
 	return Instance->exitreason;
 }
@@ -75,7 +87,7 @@ NetStartWindow::NetStartWindow(const std::string& message, int maxpos) : Widget(
 
 void NetStartWindow::SetProgress(int newpos)
 {
-	if (pos != newpos)
+	if (pos != newpos && maxpos > 1)
 	{
 		pos = newpos;
 		FString message;
@@ -110,9 +122,22 @@ void NetStartWindow::OnGeometryChanged()
 
 void NetStartWindow::OnCallbackTimerExpired()
 {
-	if (timer_callback && timer_callback(userdata))
+	if (timer_callback)
 	{
-		exitreason = true;
-		DisplayWindow::ExitLoop();
+		bool result = false;
+		try
+		{
+			result = timer_callback(userdata);
+		}
+		catch (...)
+		{
+			CallbackException = std::current_exception();
+		}
+
+		if (result)
+		{
+			exitreason = true;
+			DisplayWindow::ExitLoop();
+		}
 	}
 }

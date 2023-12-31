@@ -1,6 +1,7 @@
 #pragma once
 
 #include <zwidget/core/widget.h>
+#include <stdexcept>
 
 class TextLabel;
 class PushButton;
@@ -38,6 +39,8 @@ private:
 	void* userdata = nullptr;
 
 	bool exitreason = false;
+
+	std::exception_ptr CallbackException;
 
 	static NetStartWindow* Instance;
 };

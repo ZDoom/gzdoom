@@ -19,6 +19,20 @@ const std::string& TextLabel::GetText() const
 	return text;
 }
 
+void TextLabel::SetTextAlignment(TextLabelAlignment alignment)
+{
+	if (textAlignment != alignment)
+	{
+		textAlignment = alignment;
+		Update();
+	}
+}
+
+TextLabelAlignment TextLabel::GetTextAlignment() const
+{
+	return textAlignment;
+}
+
 double TextLabel::GetPreferredHeight() const
 {
 	return 20.0;
@@ -26,5 +40,15 @@ double TextLabel::GetPreferredHeight() const
 
 void TextLabel::OnPaint(Canvas* canvas)
 {
-	canvas->drawText(Point(0.0, GetHeight() - 5.0), Colorf::fromRgba8(255, 255, 255), text);
+	double x = 0.0;
+	if (textAlignment == TextLabelAlignment::Center)
+	{
+		x = (GetWidth() - canvas->measureText(text).width) * 0.5;
+	}
+	else if (textAlignment == TextLabelAlignment::Right)
+	{
+		x = GetWidth() - canvas->measureText(text).width;
+	}
+
+	canvas->drawText(Point(x, GetHeight() - 5.0), Colorf::fromRgba8(255, 255, 255), text);
 }

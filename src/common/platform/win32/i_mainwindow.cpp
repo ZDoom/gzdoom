@@ -120,21 +120,22 @@ void MainWindow::ShowErrorPane(const char* text)
 
 void MainWindow::ShowNetStartPane(const char* message, int maxpos)
 {
+	NetStartWindow::ShowNetStartPane(message, maxpos);
 }
 
 void MainWindow::HideNetStartPane()
 {
+	NetStartWindow::HideNetStartPane();
 }
 
 void MainWindow::SetNetStartProgress(int pos)
 {
+	NetStartWindow::SetNetStartProgress(pos);
 }
 
 bool MainWindow::RunMessageLoop(bool (*timer_callback)(void*), void* userdata)
 {
-	// To do: pump messages while showing the netstart window and calling timer_callback every 500 ms
-	// To do: return true if timer_callback returns true and stop pumping.
-	return false;
+	return NetStartWindow::RunMessageLoop(timer_callback, userdata);
 }
 
 bool MainWindow::CheckForRestart()

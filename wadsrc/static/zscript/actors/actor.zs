@@ -499,7 +499,7 @@ class Actor : Thinker native
 	virtual native bool Slam(Actor victim);
 	virtual void Touch(Actor toucher) {}
 	virtual native void FallAndSink(double grav, double oldfloorz);
-	private native void Substitute(Actor replacement);
+	native bool MorphInto(Actor morph);
 	native ui void DisplayNameTag();
 
 	// Called by inventory items to see if this actor is capable of touching them.

@@ -43,7 +43,7 @@ class ArtiTeleport : Inventory
 		Playerinfo p = Owner.player;
 		if (p && p.morphTics && (p.MorphStyle & MRF_UNDOBYCHAOSDEVICE))
 		{ // Teleporting away will undo any morph effects (pig)
-			if (!p.mo.UndoPlayerMorph (p, MRF_UNDOBYCHAOSDEVICE) && (p.MorphStyle & MRF_FAILNOLAUGH))
+			if (!p.mo.Unmorph(p.mo, MRF_UNDOBYCHAOSDEVICE) && (p.MorphStyle & MRF_FAILNOLAUGH))
 			{
 				canlaugh = false;
 			}

@@ -65,6 +65,8 @@ set(ZWIDGET_WIN32_SOURCES
 )
 
 set(ZWIDGET_UNIX_SOURCES
+	src/window/sdl2/sdl2displaywindow.cpp
+	src/window/sdl2/sdl2displaywindow.h
 )
 
 source_group("src" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/.+")

@@ -41,7 +41,7 @@ void DisplayWindow::StopTimer(void* timerID)
 	Win32Window::StopTimer(timerID);
 }
 
-#else
+#elif defined(__APPLE__)
 
 std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
 {
@@ -76,6 +76,45 @@ void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> o
 void DisplayWindow::StopTimer(void* timerID)
 {
 	throw std::runtime_error("DisplayWindow::StopTimer not implemented");
+}
+
+#else
+
+#include "sdl2/sdl2displaywindow.h"
+
+std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
+{
+	return std::make_unique<SDL2DisplayWindow>(windowHost);
+}
+
+void DisplayWindow::ProcessEvents()
+{
+	SDL2DisplayWindow::ProcessEvents();
+}
+
+void DisplayWindow::RunLoop()
+{
+	SDL2DisplayWindow::RunLoop();
+}
+
+void DisplayWindow::ExitLoop()
+{
+	SDL2DisplayWindow::ExitLoop();
+}
+
+Size DisplayWindow::GetScreenSize()
+{
+	return SDL2DisplayWindow::GetScreenSize();
+}
+
+void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+{
+	return SDL2DisplayWindow::StartTimer(timeoutMilliseconds, std::move(onTimer));
+}
+
+void DisplayWindow::StopTimer(void* timerID)
+{
+	SDL2DisplayWindow::StopTimer(timerID);
 }
 
 #endif

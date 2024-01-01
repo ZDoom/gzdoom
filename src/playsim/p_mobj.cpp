@@ -817,7 +817,7 @@ int P_GetRealMaxHealth(AActor *actor, int max)
 	{
 		max = actor->GetMaxHealth(true);
 		// [MH] First step in predictable generic morph effects
-		if (player->morphTics)
+		if (actor->alternative != nullptr)
 		{
 			if (player->MorphStyle & MORPH_FULLHEALTH)
 			{
@@ -839,7 +839,7 @@ int P_GetRealMaxHealth(AActor *actor, int max)
 	else
 	{
 		// Bonus health should be added on top of the item's limit.
-		if (player->morphTics == 0 || (player->MorphStyle & MORPH_ADDSTAMINA))
+		if (actor->alternative == nullptr || (player->MorphStyle & MORPH_ADDSTAMINA))
 		{
 			max += actor->IntVar(NAME_BonusHealth);
 		}
@@ -5180,14 +5180,6 @@ void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer)
 		return;
 	}
 
-	// Swap over the inventory.
-	auto func = dyn_cast<PFunction>(newPlayer->GetClass()->FindSymbol(NAME_ObtainInventory, true));
-	if (func)
-	{
-		VMValue params[] = { newPlayer, oldPlayer };
-		VMCall(func->Variants[0].Implementation, params, 2, nullptr, 0);
-	}
-
 	// Go through player infos.
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -5269,11 +5261,10 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 	// Since the check is good, move the inventory items over. This should always be done when
 	// morphing to emulate Heretic/Hexen's behavior since those stored the inventory in their
 	// player structs.
-	auto func = dyn_cast<PFunction>(to->GetClass()->FindSymbol(NAME_ObtainInventory, true));
-	if (func)
+	IFVM(Actor, ObtainInventory)
 	{
 		VMValue params[] = { to, from };
-		VMCall(func->Variants[0].Implementation, params, 2, nullptr, 0);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 
 	// Only change some gameplay-related pointers that we know we can safely swap to whatever

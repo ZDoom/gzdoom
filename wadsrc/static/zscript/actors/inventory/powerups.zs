@@ -1933,7 +1933,7 @@ class PowerMorph : Powerup
 
 		EMorphFlags mStyle = MorphedPlayer ? MorphedPlayer.MorphStyle : MorphStyle;
 		
-		Owner.Unmorph(Owner, 0, mStyle & MRF_UNDOALWAYS);
+		Owner.Unmorph(Owner, force: mStyle & MRF_UNDOALWAYS);
 		MorphedPlayer = null;
 	}
 }

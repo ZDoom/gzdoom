@@ -1139,7 +1139,7 @@ void FLevelLocals::UnSnapshotLevel(bool hubLoad)
 				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
 				for (i = 0; i < MAXPLAYERS; ++i)
 				{
-					if (PlayerInGame(i) && Players[i]->morphTics && Players[i]->mo->alternative == pawn)
+					if (PlayerInGame(i) && Players[i]->mo->alternative == pawn)
 					{
 						break;
 					}

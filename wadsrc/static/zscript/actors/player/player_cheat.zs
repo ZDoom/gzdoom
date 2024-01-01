@@ -434,7 +434,7 @@ extend class PlayerPawn
 		int style = MRF_UNDOBYTOMEOFPOWER;
 		if (gameinfo.gametype == GAME_Hexen) style |= MRF_UNDOBYCHAOSDEVICE;
 
-		if (player.morphTics)
+		if (Alternative)
 		{
 			if (Unmorph (self))
 			{
@@ -454,7 +454,7 @@ extend class PlayerPawn
 	
 	virtual void CheatTakeWeaps()
 	{
-		if (player.morphTics || health <= 0)
+		if (Alternative || health <= 0)
 		{
 			return;
 		}

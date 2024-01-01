@@ -94,7 +94,7 @@ extend class Actor
 
 	virtual bool CheckUnmorph()
 	{
-		return UnmorphTime <= Level.Time && Unmorph(self);
+		return UnmorphTime && UnmorphTime <= Level.Time && Unmorph(self, MRF_UNDOBYTIMEOUT);
 	}
 	
 	//---------------------------------------------------------------------------

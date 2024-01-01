@@ -1349,7 +1349,7 @@ class Actor : Thinker native
 		bool grunted;
 
 		// [RH] only make noise if alive
-		if (self.health > 0 && self.player.morphTics == 0)
+		if (self.health > 0 && !Alternative)
 		{
 			grunted = false;
 			// Why should this number vary by gravity?

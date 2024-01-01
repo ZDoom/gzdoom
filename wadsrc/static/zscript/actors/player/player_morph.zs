@@ -97,8 +97,11 @@ extend class PlayerPawn
 
 	virtual bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
-		if (!spawnType || bDontMorph || player.Health <= 0 || (bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE))))
+		if (!player || !spawnType || bDontMorph || player.Health <= 0
+			|| (bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE))))
+		{
 			return false;
+		}
 
 		if (!duration)
 			duration = DEFMORPHTICS;
@@ -210,7 +213,7 @@ extend class PlayerPawn
 
 	virtual bool UndoPlayerMorph(PlayerInfo activator, EMorphFlags unmorphFlags = 0, bool force = false)
 	{
-		if (!Alternative)
+		if (!Alternative || bStayMorphed || Alternative.bStayMorphed)
 			return false;
 
 		if (bInvulnerable
@@ -222,18 +225,20 @@ extend class PlayerPawn
 		let alt = PlayerPawn(Alternative);
 		alt.SetOrigin(Pos, false);
 		// Test if there's room to unmorph.
-		if (!force && (special2 & MPROP_SOLID))
+		if (!force && (PremorphProperties & MPROP_SOLID))
 		{
 			bool altSolid = alt.bSolid;
 			bool isSolid = bSolid;
+			bool isTouchy = bTouchy;
 
 			alt.bSolid = true;
-			bSolid = false;
+			bSolid = bTouchy = false;
 
 			bool res = alt.TestMobjLocation();
 
 			alt.bSolid = altSolid;
 			bSolid = isSolid;
+			bTouchy = isTouchy;
 
 			if (!res)
 			{

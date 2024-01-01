@@ -330,7 +330,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 			VMCall(func, params, 1, nullptr, 0);
 
 			// Always kill the dummy Actor if it didn't unmorph, otherwise checking the morph flags.
-			if (realMo != nullptr && (alternative != nullptr || !(morphStyle & MORPH_UNDOBYDEATHSAVES)))
+			if (realMo != nullptr && (!(morphStyle & MORPH_UNDOBYDEATH) || !(morphStyle & MORPH_UNDOBYDEATHSAVES)))
 			{
 				if (wasgibbed)
 				{

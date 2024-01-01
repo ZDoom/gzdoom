@@ -40,8 +40,9 @@ extend class Actor
 	// when a morphed Actor dies.
 	virtual Actor, int, int MorphedDeath()
 	{
-		if (MorphFlags & MRF_UNDOBYDEATH)
-			Unmorph(self, force: MorphFlags & MRF_UNDOBYDEATHFORCED);
+		EMorphFlags mStyle = player ? player.MorphStyle : MorphFlags;
+		if (mStyle & MRF_UNDOBYDEATH)
+			Unmorph(self, force: mStyle & MRF_UNDOBYDEATHFORCED);
 
 		return null, 0, 0;
 	}
@@ -106,7 +107,7 @@ extend class Actor
 
 	virtual bool MorphMonster(class<Actor> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
-		if (player || !spawnType || bDontMorph || !bIsMonster)
+		if (player || !bIsMonster || !spawnType || bDontMorph || Health <= 0 || spawnType == GetClass())
 			return false;
 
 		Actor morphed = Spawn(spawnType, Pos, ALLOW_REPLACE);
@@ -130,12 +131,29 @@ extend class Actor
 		morphed.bShadow |= bShadow;
 		morphed.bGhost |= bGhost;
 		morphed.Score = Score;
-		morphed.ChangeTID(TID);
 		morphed.Special = Special;
 		for (int i; i < 5; ++i)
 			morphed.Args[i] = Args[i];
 
+		if (TID && (style & MRF_NEWTIDBEHAVIOUR))
+		{
+			morphed.ChangeTID(TID);
+			ChangeTID(0);
+		}
+
+		morphed.Tracer = Tracer;
+		morphed.Master = Master;
 		morphed.CopyFriendliness(self, true);
+
+		// Remove all armor.
+		for (Inventory item = morphed.Inv; item;)
+		{
+			Inventory next = item.Inv;
+			if (item is "Armor")
+				item.DepleteOrDestroy();
+
+			item = next;
+		}
 
 		morphed.UnmorphTime = Level.Time + (duration ? duration : DEFMORPHTICS) + Random[morphmonst]();
 		morphed.MorphFlags = style;
@@ -147,10 +165,10 @@ extend class Actor
 		if (morphMon)
 		{
 			morphMon.UnmorphedMe = morphMon.Alternative;
+			morphMon.MorphStyle = morphMon.MorphFlags;
 			morphMon.FlagsSave = morphMon.PremorphProperties;
 		}
 
-		ChangeTID(0);
 		Special = 0;
 		bInvisible = true;
 		bSolid = bShootable = false;
@@ -178,22 +196,23 @@ extend class Actor
 
 	virtual bool UndoMonsterMorph(bool force = false)
 	{
-		if (!UnmorphTime || !Alternative || bStayMorphed || Alternative.bStayMorphed)
+		if (!Alternative || bStayMorphed || Alternative.bStayMorphed)
 			return false;
 
-		Alternative.SetOrigin(Pos, false);
+		Actor alt = Alternative;
+		alt.SetOrigin(Pos, false);
 		if (!force && (PremorphProperties & MPROP_SOLID))
 		{
-			bool altSolid = Alternative.bSolid;
+			bool altSolid = alt.bSolid;
 			bool isSolid = bSolid;
 			bool isTouchy = bTouchy;
 
-			Alternative.bSolid = true;
+			alt.bSolid = true;
 			bSolid = bTouchy = false;
 
-			bool res = Alternative.TestMobjLocation();
+			bool res = alt.TestMobjLocation();
 
-			Alternative.bSolid = altSolid;
+			alt.bSolid = altSolid;
 			bSolid = isSolid;
 			bTouchy = isTouchy;
 
@@ -205,44 +224,64 @@ extend class Actor
 			}
 		}
 
-		Actor unmorphed = Alternative;
-		if (!MorphInto(unmorphed))
+		if (!MorphInto(alt))
 			return false;
 
-		PreUnmorph(unmorphed, false);
-		unmorphed.PreUnmorph(self, true);
+		PreUnmorph(alt, false);
+		alt.PreUnmorph(self, true);
 
-		unmorphed.Angle = Angle;
-		unmorphed.bShadow = bShadow;
-		unmorphed.bGhost = bGhost;
-		unmorphed.bSolid = (PremorphProperties & MPROP_SOLID);
-		unmorphed.bShootable = (PremorphProperties & MPROP_SHOOTABLE);
-		unmorphed.bInvisible = (PremorphProperties & MPROP_INVIS);
-		unmorphed.Vel = Vel;
-		unmorphed.Score = Score;
+		// Check to see if it had a powerup that caused it to morph.
+		for (Inventory item = alt.Inv; item;)
+		{
+			Inventory next = item.Inv;
+			if (item is "PowerMorph")
+				item.Destroy();
 
-		unmorphed.ChangeTID(TID);
-		unmorphed.Special = Special;
+			item = next;
+		}
+
+		alt.Angle = Angle;
+		alt.bShadow = bShadow;
+		alt.bGhost = bGhost;
+		alt.bSolid = (PremorphProperties & MPROP_SOLID);
+		alt.bShootable = (PremorphProperties & MPROP_SHOOTABLE);
+		alt.bInvisible = (PremorphProperties & MPROP_INVIS);
+		alt.Vel = Vel;
+		alt.Score = Score;
+
+		if (TID && (MorphFlags & MRF_NEWTIDBEHAVIOUR))
+		{
+			alt.ChangeTID(TID);
+			ChangeTID(0);
+		}
+
+		alt.Special = Special;
 		for (int i; i < 5; ++i)
-			unmorphed.Args[i] = Args[i];
+			alt.Args[i] = Args[i];
 
-		unmorphed.CopyFriendliness(self, true);
+		alt.Tracer = Tracer;
+		alt.Master = Master;
+		alt.CopyFriendliness(self, true, false);
+		if (Health > 0 || (MorphFlags & MRF_UNDOBYDEATHSAVES))
+			alt.Health = alt.SpawnHealth();
+		else
+			alt.Health = Health;
 
-		ChangeTID(0);
 		Special = 0;
 		bInvisible = true;
 		bSolid = bShootable = false;
 
-		PostUnmorph(unmorphed, false);		// From is false here: Leaving the caller's body.
-		unmorphed.PostUnmorph(self, true);	// True here: Entering this body from here.
+		PostUnmorph(alt, false);		// From is false here: Leaving the caller's body.
+		alt.PostUnmorph(self, true);	// True here: Entering this body from here.
 		
 		if (MorphExitFlash)
 		{
-			Actor fog = Spawn(MorphExitFlash, unmorphed.Pos.PlusZ(GameInfo.TELEFOGHEIGHT), ALLOW_REPLACE);
+			Actor fog = Spawn(MorphExitFlash, alt.Pos.PlusZ(GameInfo.TELEFOGHEIGHT), ALLOW_REPLACE);
 			if (fog)
-				fog.Target = unmorphed;
+				fog.Target = alt;
 		}
 
+		ClearCounters();
 		Destroy();
 		return true;
 	}

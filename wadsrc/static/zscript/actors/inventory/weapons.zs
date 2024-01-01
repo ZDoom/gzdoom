@@ -262,7 +262,7 @@ class Weapon : StateProvider
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
 		if (!psp) return;
-		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
+		if (Alternative || player.cheats & CF_INSTANTWEAPSWITCH)
 		{
 			psp.y = WEAPONBOTTOM;
 		}

@@ -106,7 +106,7 @@ extend class PlayerPawn
 		if (!duration)
 			duration = DEFMORPHTICS;
 
-		if (player.MorphTics)
+		if (Alternative)
 		{
 			// Player is already a beast.
 			if (bCanSuperMorph && spawnType == GetClass()

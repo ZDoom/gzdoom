@@ -477,7 +477,7 @@ class PlayerPawn : Actor
 		let player = self.player;
 		if (!player) return;	
 		if ((player.WeaponState & WF_DISABLESWITCH) || // Weapon changing has been disabled.
-			player.morphTics != 0)					// Morphed classes cannot change weapons.
+			Alternative)					// Morphed classes cannot change weapons.
 		{ // ...so throw away any pending weapon requests.
 			player.PendingWeapon = WP_NOCHANGE;
 		}
@@ -651,7 +651,7 @@ class PlayerPawn : Actor
 			}
 		}
 
-		if (player.morphTics)
+		if (Alternative)
 		{
 			bob = 0;
 		}
@@ -1072,7 +1072,7 @@ class PlayerPawn : Actor
 
 	virtual bool CanCrouch() const
 	{
-		return player.morphTics == 0 || bCrouchableMorph;
+		return !Alternative || bCrouchableMorph;
 	}
 
 	//----------------------------------------------------------------------------
@@ -1238,7 +1238,7 @@ class PlayerPawn : Actor
 			side *= SideMove2;
 		}
 
-		if (!player.morphTics)
+		if (!Alternative)
 		{
 			double factor = 1.;
 			for(let it = Inv; it != null; it = it.Inv)
@@ -1528,13 +1528,13 @@ class PlayerPawn : Actor
 	{
 		let player = self.player;
 		// Morph counter
-		if (player.morphTics)
+		if (Alternative)
 		{
 			if (player.chickenPeck)
 			{ // Chicken attack counter
 				player.chickenPeck -= 3;
 			}
-			if (!--player.morphTics)
+			if (player.MorphTics && !--player.MorphTics)
 			{ // Attempt to undo the chicken/pig
 				Unmorph(self, MRF_UNDOBYTIMEOUT);
 			}
@@ -1661,7 +1661,7 @@ class PlayerPawn : Actor
 				player.jumpTics = 0;
 			}
 		}
-		if (player.morphTics && !(player.cheats & CF_PREDICTING))
+		if (Alternative && !(player.cheats & CF_PREDICTING))
 		{
 			MorphPlayerThink ();
 		}
@@ -2042,9 +2042,9 @@ class PlayerPawn : Actor
 		Inventory item, next;
 		let p = player;
 
-		if (p.morphTics != 0)
+		if (Alternative)
 		{ // Undo morph
-			Unmorph(self, 0, true);
+			Unmorph(self, force: true);
 		}
 		// 'self' will be no longer valid from here on in case of an unmorph
 		let me = p.mo;

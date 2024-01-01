@@ -313,36 +313,38 @@ EXTERN_CVAR (Int, fraglimit)
 
 void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath)
 {
-	// Handle possible unmorph on death
 	bool wasgibbed = (health < GetGibHealth());
 
+	// Check to see if unmorph Actors need to be killed as well. Originally this was always
+	// called but that puts an unnecessary burden on the modder to determine whether it's
+	// a valid call or not.
+	if (alternative != nullptr && !(flags & MF_UNMORPHED))
 	{
 		IFVIRTUAL(AActor, MorphedDeath)
 		{
-			AActor *realthis = NULL;
-			int realstyle = 0;
-			int realhealth = 0;
+			// Return values are no longer used to ensure things stay properly managed.
+			AActor* const realMo = alternative;
+			const int morphStyle = player != nullptr ? player->MorphStyle : IntVar(NAME_MorphFlags);
 
 			VMValue params[] = { this };
-			VMReturn returns[3];
-			returns[0].PointerAt((void**)&realthis);
-			returns[1].IntAt(&realstyle);
-			returns[2].IntAt(&realhealth);
-			VMCall(func, params, 1, returns, 3);
+			VMCall(func, params, 1, nullptr, 0);
 
-			if (realthis && !(realstyle & MORPH_UNDOBYDEATHSAVES))
+			// Always kill the dummy Actor if it didn't unmorph, otherwise checking the morph flags.
+			if (realMo != nullptr && (alternative != nullptr || !(morphStyle & MORPH_UNDOBYDEATHSAVES)))
 			{
 				if (wasgibbed)
 				{
-					int realgibhealth = realthis->GetGibHealth();
-					if (realthis->health >= realgibhealth)
-					{
-						realthis->health = realgibhealth - 1; // if morphed was gibbed, so must original be (where allowed)l
-					}
+					const int realGibHealth = realMo->GetGibHealth();
+					if (realMo->health >= realGibHealth)
+						realMo->health = realGibHealth - 1; // If morphed was gibbed, so must original be (where allowed).
 				}
-				realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
-			}
+				else if (realMo->health > 0)
+				{
+					realMo->health = 0;
+				}
 
+				realMo->CallDie(source, inflictor, dmgflags, MeansOfDeath);
+			}
 		}
 	}
 

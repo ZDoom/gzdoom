@@ -23,8 +23,26 @@
 
 extend class Actor
 {
+	enum EPremorphProperty
+	{
+		MPROP_SOLID 	= 1 << 1,
+		MPROP_SHOOTABLE = 1 << 2,
+		MPROP_INVIS 	= 1 << 6,
+	}
+
+	int UnmorphTime;
+	EMorphFlags MorphFlags;
+	class<Actor> MorphExitFlash;
+	EPremorphProperty PremorphProperties;
+
+	// This function doesn't return anything anymore since allowing so would be too volatile
+	// for morphing management. Instead it's now a function that lets special actions occur
+	// when a morphed Actor dies.
 	virtual Actor, int, int MorphedDeath()
 	{
+		if (MorphFlags & MRF_UNDOBYDEATH)
+			Unmorph(self, force: MorphFlags & MRF_UNDOBYDEATHFORCED);
+
 		return null, 0, 0;
 	}
 
@@ -40,16 +58,12 @@ extend class Actor
 	//
 	//===========================================================================
 
-	virtual bool Morph(Actor activator, class<PlayerPawn> playerclass, class<MorphedMonster> monsterclass, int duration = 0, int style = 0, class<Actor> morphflash = null, class<Actor>unmorphflash = null)
+	virtual bool Morph(Actor activator, class<PlayerPawn> playerClass, class<Actor> monsterClass, int duration = 0, EMorphFlags style = 0, class<Actor> morphFlash = "TeleportFog", class<Actor> unmorphFlash = "TeleportFog")
 	{
-		if (player != null && player.mo != null && playerclass != null)
-		{
-			return player.mo.MorphPlayer(activator? activator.player : null, playerclass, duration, style, morphflash, unmorphflash);
-		}
-		else
-		{
-			return MorphMonster(monsterclass, duration, style, morphflash, unmorphflash);
-		}
+		if (player)
+			return player.mo.MorphPlayer(activator ? activator.player : null, playerClass, duration, style, morphFlash, unmorphFlash);
+
+		return MorphMonster(monsterClass, duration, style, morphFlash, unmorphFlash);
 	}
 	
 	//===========================================================================
@@ -58,18 +72,9 @@ extend class Actor
 	//
 	//===========================================================================
 
-	bool A_Morph(class<Actor> type, int duration = 0, int style = 0, class<Actor> morphflash = null, class<Actor>unmorphflash = null)
+	bool A_Morph(class<Actor> type, int duration = 0, EMorphFlags style = 0, class<Actor> morphFlash = "TeleportFog", class<Actor> unmorphFlash = "TeleportFog")
 	{
-		if (self.player != null)
-		{
-			let playerclass = (class<PlayerPawn>)(type);
-			if (playerclass && self.player.mo != null) return player.mo.MorphPlayer(self.player, playerclass, duration, style, morphflash, unmorphflash);
-		}
-		else
-		{
-			return MorphMonster(type, duration, style, morphflash, unmorphflash);
-		}
-		return false;
+		return Morph(self, (class<PlayerPawn>)(type), type, duration, style, morphFlash, unmorphFlash);
 	}
 
 	//===========================================================================
@@ -78,21 +83,18 @@ extend class Actor
 	//
 	//===========================================================================
 
-	virtual bool UnMorph(Actor activator, int flags, bool force)
+	virtual bool Unmorph(Actor activator, EMorphFlags flags = 0, bool force = false)
 	{
 		if (player)
-		{
-			return player.mo.UndoPlayerMorph(activator? activator.player : null, flags, force);
-		}
-		else 
-		{
-			let morphed = MorphedMonster(self);
-			if (morphed)
-				return morphed.UndoMonsterMorph(force);
-		}
-		return false;
+			return player.mo.UndoPlayerMorph(activator ? activator.player : null, flags, force);
+
+		return UndoMonsterMorph(force);
 	}
 
+	virtual bool CheckUnmorph()
+	{
+		return UnmorphTime <= Level.Time && Unmorph(self);
+	}
 	
 	//---------------------------------------------------------------------------
 	//
@@ -102,57 +104,212 @@ extend class Actor
 	//
 	//---------------------------------------------------------------------------
 
-	virtual bool MorphMonster (Class<Actor> spawntype, int duration, int style, Class<Actor> enter_flash, Class<Actor> exit_flash)
+	virtual bool MorphMonster(class<Actor> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
-		if (player || spawntype == NULL || bDontMorph || !bIsMonster || !(spawntype is 'MorphedMonster'))
+		if (player || !spawnType || bDontMorph || !bIsMonster)
+			return false;
+
+		Actor morphed = Spawn(spawnType, Pos, ALLOW_REPLACE);
+		if (!MorphInto(morphed))
 		{
+			morphed.ClearCounters();
+			morphed.Destroy();
 			return false;
 		}
-
-		let morphed = MorphedMonster(Spawn (spawntype, Pos, NO_REPLACE));
 
 		// [MC] Notify that we're just about to start the transfer.
 		PreMorph(morphed, false);		// False: No longer the current.
 		morphed.PreMorph(self, true);	// True: Becoming this actor.
 
-		Substitute (morphed);
 		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
-		{
 			morphed.Translation = Translation;
-		}
-		morphed.ChangeTid(tid);
-		ChangeTid(0);
+
 		morphed.Angle = Angle;
-		morphed.UnmorphedMe = self;
 		morphed.Alpha = Alpha;
 		morphed.RenderStyle = RenderStyle;
-		morphed.Score = Score;
-
-		morphed.UnmorphTime = level.time + ((duration) ? duration : DEFMORPHTICS) + random[morphmonst]();
-		morphed.MorphStyle = style;
-		morphed.MorphExitFlash = (exit_flash) ? exit_flash : (class<Actor>)("TeleportFog");
-		morphed.FlagsSave = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
-		
-		morphed.special = special;
-		morphed.args[0] = args[0];
-		morphed.args[1] = args[1];
-		morphed.args[2] = args[2];
-		morphed.args[3] = args[3];
-		morphed.args[4] = args[4];
-		morphed.CopyFriendliness (self, true);
 		morphed.bShadow |= bShadow;
 		morphed.bGhost |= bGhost;
-		special = 0;
-		bSolid = false;
-		bShootable = false;
-		bUnmorphed = true;
+		morphed.Score = Score;
+		morphed.ChangeTID(TID);
+		morphed.Special = Special;
+		for (int i; i < 5; ++i)
+			morphed.Args[i] = Args[i];
+
+		morphed.CopyFriendliness(self, true);
+
+		morphed.UnmorphTime = Level.Time + (duration ? duration : DEFMORPHTICS) + Random[morphmonst]();
+		morphed.MorphFlags = style;
+		morphed.MorphExitFlash = exitFlash;
+		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE) | (bInvisible * MPROP_INVIS);
+
+		// This is just here for backwards compatibility as MorphedMonster used to be required.
+		let morphMon = MorphedMonster(morphed);
+		if (morphMon)
+		{
+			morphMon.UnmorphedMe = morphMon.Alternative;
+			morphMon.FlagsSave = morphMon.PremorphProperties;
+		}
+
+		ChangeTID(0);
+		Special = 0;
 		bInvisible = true;
-		let eflash = Spawn(enter_flash ? enter_flash : (class<Actor>)("TeleportFog"), Pos + (0, 0, gameinfo.TELEFOGHEIGHT), ALLOW_REPLACE);
-		if (eflash)
-			eflash.target = morphed;
+		bSolid = bShootable = false;
+
 		PostMorph(morphed, false);
 		morphed.PostMorph(self, true);
+		
+		if (enterFlash)
+		{
+			Actor fog = Spawn(enterFlash, morphed.Pos.PlusZ(GameInfo.TELEFOGHEIGHT), ALLOW_REPLACE);
+			if (fog)
+				fog.Target = morphed;
+		}
+		
+		return true;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// FUNC P_UndoMonsterMorph
+	//
+	// Returns true if the monster unmorphs.
+	//
+	//----------------------------------------------------------------------------
+
+	virtual bool UndoMonsterMorph(bool force = false)
+	{
+		if (!UnmorphTime || !Alternative || bStayMorphed || Alternative.bStayMorphed)
+			return false;
+
+		Alternative.SetOrigin(Pos, false);
+		if (!force && (PremorphProperties & MPROP_SOLID))
+		{
+			bool altSolid = Alternative.bSolid;
+			bool isSolid = bSolid;
+			bool isTouchy = bTouchy;
+
+			Alternative.bSolid = true;
+			bSolid = bTouchy = false;
+
+			bool res = Alternative.TestMobjLocation();
+
+			Alternative.bSolid = altSolid;
+			bSolid = isSolid;
+			bTouchy = isTouchy;
+
+			// Didn't fit.
+			if (!res)
+			{
+				UnmorphTime = Level.Time + 5*TICRATE; // Next try in 5 seconds.
+				return false;
+			}
+		}
+
+		Actor unmorphed = Alternative;
+		if (!MorphInto(unmorphed))
+			return false;
+
+		PreUnmorph(unmorphed, false);
+		unmorphed.PreUnmorph(self, true);
+
+		unmorphed.Angle = Angle;
+		unmorphed.bShadow = bShadow;
+		unmorphed.bGhost = bGhost;
+		unmorphed.bSolid = (PremorphProperties & MPROP_SOLID);
+		unmorphed.bShootable = (PremorphProperties & MPROP_SHOOTABLE);
+		unmorphed.bInvisible = (PremorphProperties & MPROP_INVIS);
+		unmorphed.Vel = Vel;
+		unmorphed.Score = Score;
+
+		unmorphed.ChangeTID(TID);
+		unmorphed.Special = Special;
+		for (int i; i < 5; ++i)
+			unmorphed.Args[i] = Args[i];
+
+		unmorphed.CopyFriendliness(self, true);
+
+		ChangeTID(0);
+		Special = 0;
+		bInvisible = true;
+		bSolid = bShootable = false;
+
+		PostUnmorph(unmorphed, false);		// From is false here: Leaving the caller's body.
+		unmorphed.PostUnmorph(self, true);	// True here: Entering this body from here.
+		
+		if (MorphExitFlash)
+		{
+			Actor fog = Spawn(MorphExitFlash, unmorphed.Pos.PlusZ(GameInfo.TELEFOGHEIGHT), ALLOW_REPLACE);
+			if (fog)
+				fog.Target = unmorphed;
+		}
+
+		Destroy();
 		return true;
 	}
 }
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+class MorphProjectile : Actor
+{
+	class<PlayerPawn> PlayerClass;
+	class<Actor> MonsterClass, MorphFlash, UnmorphFlash;
+	int Duration, MorphStyle;
+
+	Default
+	{
+		Damage 1;
+		Projectile;
+		MorphProjectile.MorphFlash "TeleportFog";
+		MorphProjectile.UnmorphFlash "TeleportFog";
+
+		-ACTIVATEIMPACT
+		-ACTIVATEPCROSS
+	}
+	
+	override int DoSpecialDamage(Actor victim, int dmg, Name dmgType)
+	{
+		victim.Morph(Target, PlayerClass, MonsterClass, Duration, MorphStyle, MorphFlash, UnmorphFlash);
+		return -1;
+	}
+}
+
+//===========================================================================
+//
+// This class is redundant as it's no longer necessary for monsters to
+// morph but is kept here for compatibility. Its previous fields either exist
+// in the base Actor now or are just a shell for the actual fields
+// which either already existed and weren't used for some reason or needed a
+// better name.
+//
+//===========================================================================
+
+class MorphedMonster : Actor
+{
+	Actor UnmorphedMe;
+	EMorphFlags MorphStyle;
+	EPremorphProperty FlagsSave;
+
+	Default
+	{
+		Monster;
+
+		+FLOORCLIP
+		-COUNTKILL
+	}
+
+	// Make sure changes to these are propogated correctly when unmorphing. This is only
+	// set for monsters since originally players and this class were the only ones
+	// that were considered valid for morphing.
+	override bool UndoMonsterMorph(bool force)
+	{
+		Alternative = UnmorphedMe;
+		MorphFlags = MorphStyle;
+		PremorphProperties = FlagsSave;
+		return super.UndoMonsterMorph(force);
+	}
+}

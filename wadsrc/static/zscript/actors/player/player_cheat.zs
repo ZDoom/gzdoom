@@ -436,16 +436,16 @@ extend class PlayerPawn
 
 		if (player.morphTics)
 		{
-			if (UndoPlayerMorph (player))
+			if (Unmorph (self))
 			{
-				if (!quickundo && oldclass != morphclass && MorphPlayer (player, morphclass, 0, style))
+				if (!quickundo && oldclass != morphclass && Morph(self, morphclass, null, 0, style))
 				{
 					return StringTable.Localize("$TXT_STRANGER");
 				}
 				return StringTable.Localize("$TXT_NOTSTRANGE");
 			}
 		}
-		else if (MorphPlayer (player, morphclass, 0, style))
+		else if (Morph (self, morphclass, null, 0, style))
 		{
 			return StringTable.Localize("$TXT_STRANGE");
 		}

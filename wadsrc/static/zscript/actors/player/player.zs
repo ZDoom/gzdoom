@@ -40,7 +40,7 @@ class PlayerPawn : Actor
 	double		SideMove1, SideMove2;
 	TextureID	ScoreIcon;
 	int			SpawnMask;
-	Name			MorphWeapon;
+	Name			MorphWeapon;		// This should really be a class<Weapon> but it's too late to change now.
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
@@ -1536,7 +1536,7 @@ class PlayerPawn : Actor
 			}
 			if (!--player.morphTics)
 			{ // Attempt to undo the chicken/pig
-				player.mo.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
+				Unmorph(self, MRF_UNDOBYTIMEOUT);
 			}
 		}
 	}
@@ -2851,23 +2851,15 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
-	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
-		if (mo != null)
-		{
-			return mo.MorphPlayer(p, spawntype, duration, style, enter_flash, exit_flash);
-		}
-		return false;
+		return mo ? mo.MorphPlayer(activator, spawnType, duration, style, enterFlash, exitFlash) : false;
 	}
 	
 	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
-	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
+	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(PlayerInfo player, EMorphFlags unmorphFlags = 0, bool force = false)
 	{
-		if (player.mo != null)
-		{
- 			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
-		}
-		return false;
+		return player.mo ? player.mo.UndoPlayerMorph(self, unmorphFlags, force) : false;
 	}
 
 	deprecated("3.7", "DropWeapon() should be used on a PlayerPawn object") void DropWeapon()

@@ -1363,7 +1363,7 @@ DEFINE_ACTION_FUNCTION(AActor, DoMissileDamage)
 //
 //==========================================================================
 
-bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
+bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm, const bool zMove)
 {
 	AActor *thing = cres.thing;
 	double topz;
@@ -1423,7 +1423,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			}
 		}
 
-		if (((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID))
+		// Z movements from falling don't check unblocking.
+		if (!zMove && (thing->flags & MF_SOLID) && (tm.FromPMove || tm.thing->player != nullptr))
 		{
 			DVector3 oldpos = tm.thing->PosRelative(thing);
 			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
@@ -1483,14 +1484,14 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	}
 
 
-	if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
+	if (tm.thing->player == nullptr || !(tm.thing->player->cheats & CF_PREDICTING))
 	{
 		// touchy object is alive, toucher is solid
-		if (thing->flags6 & MF6_TOUCHY && tm.thing->flags & MF_SOLID && thing->health > 0 &&
+		if ((thing->flags6 & MF6_TOUCHY) && (tm.thing->flags & MF_SOLID) && thing->health > 0 &&
 			// Thing is an armed mine or a sentient thing
-			(thing->flags6 & MF6_ARMED || thing->IsSentient()) &&
+			((thing->flags6 & MF6_ARMED) || thing->IsSentient()) &&
 			// either different classes or players
-			(thing->player || thing->GetClass() != tm.thing->GetClass()) &&
+			(thing->player != nullptr || thing->GetClass() != tm.thing->GetClass()) &&
 			// or different species if DONTHARMSPECIES
 			(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
 			// touches vertically
@@ -1501,13 +1502,13 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			// but different classes trigger the touchiness, but that seems less straightforwards.
 		{
 			thing->flags6 &= ~MF6_ARMED; // Disarm
-			P_DamageMobj(thing, NULL, NULL, thing->health, NAME_None, DMG_FORCED);  // kill object
+			P_DamageMobj(thing, nullptr, nullptr, thing->health, NAME_None, DMG_FORCED);  // kill object
 			return true;
 		}
 
 		// Check for MF6_BUMPSPECIAL
 		// By default, only players can activate things by bumping into them
-		if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != NULL)
+		if ((thing->flags6 & MF6_BUMPSPECIAL) && ((tm.thing->player != nullptr)
 			|| ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
 			|| ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
 			) && (thing->Level->maptime > thing->lastbump)) // Leave the bumper enough time to go away
@@ -1521,12 +1522,12 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (tm.thing->flags & MF_SKULLFLY)
 	{
 		bool res = tm.thing->CallSlam(tm.thing->BlockingMobj);
-		tm.thing->BlockingMobj = NULL;
+		tm.thing->BlockingMobj = nullptr;
 		return res;
 	}
 
 	// [ED850] Player Prediction ends here. There is nothing else they could/should do.
-	if (tm.thing->player != NULL && (tm.thing->player->cheats & CF_PREDICTING))
+	if (tm.thing->player != nullptr && (tm.thing->player->cheats & CF_PREDICTING))
 	{
 		solid = (thing->flags & MF_SOLID) &&
 			!(thing->flags & MF_NOCLIP) &&
@@ -1541,8 +1542,19 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER) && !(thing->flags3 & MF3_DONTBLAST))
 		{
 			// ideally this should take the mass factor into account
-			thing->Vel += tm.thing->Vel.XY();
-			if (fabs(thing->Vel.X) + fabs(thing->Vel.Y) > 3.)
+			bool strongEnough = false;
+			if (zMove)
+			{
+				thing->Vel.Z += tm.thing->Vel.Z;
+				strongEnough = fabs(thing->Vel.Z) > 3.0;
+			}
+			else
+			{
+				thing->Vel += tm.thing->Vel.XY();
+				strongEnough = fabs(thing->Vel.X) + fabs(thing->Vel.Y) > 3.0;
+			}
+
+			if (strongEnough)
 			{
 				int newdam;
 				damage = (tm.thing->Mass / 100) + 1;
@@ -1556,7 +1568,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		}
 	}
 	// Check for missile or non-solid MBF bouncer
-	if (tm.thing->flags & MF_MISSILE || ((tm.thing->BounceFlags & BOUNCE_MBF) && !(tm.thing->flags & MF_SOLID)))
+	if ((tm.thing->flags & MF_MISSILE) || ((tm.thing->BounceFlags & BOUNCE_MBF) && !(tm.thing->flags & MF_SOLID)))
 	{
 		// Check for a non-shootable mobj
 		if (thing->flags2 & MF2_NONSHOOTABLE)
@@ -1570,7 +1582,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		}
 
 		if ((tm.thing->flags6 & MF6_MTHRUSPECIES)
-			&& tm.thing->target // NULL pointer check
+			&& tm.thing->target != nullptr
 			&& (tm.thing->target->GetSpecies() == thing->GetSpecies()))
 			return true;
 
@@ -1580,8 +1592,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			return true;
 		}
 
-		if (tm.thing->target && tm.thing->target != thing &&
-			tm.thing->target->player && P_ShouldPassThroughPlayer(tm.thing->target, thing))
+		if (tm.thing->target != nullptr && tm.thing->target != thing
+			&& tm.thing->target->player != nullptr && P_ShouldPassThroughPlayer(tm.thing->target, thing))
 		{
 			return true;
 		}
@@ -1630,7 +1642,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] Extend DeHacked infighting to allow for monsters
 		// to never fight each other
 
-		if (tm.thing->target != NULL)
+		if (tm.thing->target != nullptr)
 		{
 			if (thing == tm.thing->target && !(tm.thing->flags8 & MF8_HITOWNER))
 			{ // Don't missile self -- [MK] unless explicitly allowed
@@ -1708,7 +1720,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		}
 		return false;		// don't traverse any more
 	}
-	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
+
+	if (!zMove && (thing->flags2 & MF2_PUSHABLE) && !(tm.thing->flags2 & MF2_CANNOTPUSH))
 	{ // Push thing
 		if (thing->lastpush != tm.PushTime)
 		{
@@ -1726,7 +1739,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thing->Z() < tm.thing->Top() - tm.thing->MaxStepHeight)
+		&& (tm.thing->player == nullptr || thing->Z() < tm.thing->Top() - tm.thing->MaxStepHeight))
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing(thing, tm.thing);	// can remove thing
 	}
@@ -1778,7 +1791,7 @@ MOVEMENT CLIPPING
 //
 //==========================================================================
 
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly, const bool zMove)
 {
 	sector_t *newsec;
 	AActor *thingblocker;
@@ -1880,44 +1893,50 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	if (!(thing->flags2 & MF2_THRUACTORS))
 	while ((it2.Next(&tcres)))
 	{
-		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm))
-		{ // [RH] If a thing can be stepped up on, we need to continue checking
+		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm, zMove))
+		{
+			// [RH] If a thing can be stepped up on, we need to continue checking
 			// other things in the blocks and see if we hit something that is
 			// definitely blocking. Otherwise, we need to check the lines, or we
 			// could end up stuck inside a wall.
 			AActor *BlockingMobj = thing->BlockingMobj;
 
 			// If this blocks through a restricted line portal, it will always completely block.
-			if (BlockingMobj == NULL || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
-			{ // Thing slammed into something; don't let it move now.
+			if (BlockingMobj == nullptr || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
+			{
+				// Thing slammed into something; don't let it move now.
 				thing->Height = realHeight;
 				return false;
 			}
-			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
-				BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
+			else if (BlockingMobj->player == nullptr && (thing->player != nullptr || !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY | MF_NOGRAVITY)))
+				&& BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
 			{
-				if (thingblocker == NULL ||
-					BlockingMobj->Z() > thingblocker->Z())
+				// If we can step up it, don't consider it blocking just yet. Make sure to get
+				// the highest one up. Non-players check this as well since some Actors need to
+				// be able to walk on bridge Actors.
+				if (thingblocker == nullptr ||
+					BlockingMobj->Top() > thingblocker->Top())
 				{
 					thingblocker = BlockingMobj;
 				}
-				thing->BlockingMobj = NULL;
+				thing->BlockingMobj = nullptr;
 			}
-			else if (thing->player &&
-				thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
+			else if (thing->player != nullptr
+				&& thing->Z() + realHeight < BlockingMobj->Z())
 			{
+				// Since players are made taller to account for stepping up Actors, make
+				// sure they're not actually moving under it. If they were stepping up on
+				// something else, prevent them from doing so.
 				if (thingblocker)
-				{ // There is something to step up on. Return this thing as
-					// the blocker so that we don't step up.
+				{
 					thing->Height = realHeight;
 					return false;
 				}
-				// Nothing is blocking us, but this actor potentially could
-				// if there is something else to step on.
-				thing->BlockingMobj = NULL;
+				thing->BlockingMobj = nullptr;
 			}
 			else
-			{ // Definitely blocking
+			{
+				// Definitely blocking.
 				thing->Height = realHeight;
 				return false;
 			}
@@ -1995,10 +2014,10 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	return (thing->BlockingMobj = thingblocker) == NULL;
 }
 
-bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly, const bool zMove)
 {
 	FCheckPosition tm;
-	return P_CheckPosition(thing, pos, tm, actorsonly);
+	return P_CheckPosition(thing, pos, tm, actorsonly, zMove);
 }
 
 
@@ -2037,18 +2056,22 @@ int P_TestMobjLocation(AActor *mobj)
 //				Checks if the new Z position is legal
 //=============================================================================
 
-AActor *P_CheckOnmobj(AActor *thing)
+bool P_CheckOnmobj(AActor *thing, AActor** hitMobj)
 {
-	double oldz;
-	int good;
-	AActor *onmobj;
-
-	oldz = thing->Z();
+	thing->GroundMobj = nullptr;
+	const double oldZ = thing->Z();
 	P_FakeZMovement(thing);
-	good = P_TestMobjZ(thing, false, &onmobj);
-	thing->SetZ(oldz);
 
-	return good ? NULL : onmobj;
+	const bool good = P_TestMobjCollision(thing, hitMobj);
+	thing->SetZ(oldZ);
+
+	// Only consider the thing on top of something if it can be stepped up
+	// on top of.
+	AActor* const hit = hitMobj != nullptr ? *hitMobj : nullptr;
+	if (hit != nullptr && thing->Z() >= hit->Top() - thing->MaxStepHeight)
+		thing->GroundMobj = hit;
+	
+	return good;
 }
 
 //=============================================================================
@@ -2145,6 +2168,33 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	return onmobj == NULL;
 }
 
+//=============================================================================
+//
+// P_CheckMobjBlocked
+//
+//=============================================================================
+int P_TestMobjCollision(AActor* const mobj, AActor** blocking, const int checkCompat)
+{
+	if (blocking != nullptr)
+		*blocking = nullptr;
+
+	AActor* const curBlocking = mobj->BlockingMobj;
+	int useSimple = checkCompat;
+	if (useSimple < 0)
+		useSimple = (mobj->Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK);
+
+	int res = true;
+	if (useSimple)
+		res = P_TestMobjZ(mobj, true, &mobj->BlockingMobj);
+	else
+		res = P_CheckPosition(mobj, mobj->Pos().XY(), true, true);
+
+	if (blocking != nullptr)
+		*blocking = mobj->BlockingMobj;
+
+	mobj->BlockingMobj = curBlocking;
+	return res;
+}
 
 //=============================================================================
 //
@@ -2155,10 +2205,14 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 
 void P_FakeZMovement(AActor *mo)
 {
+	constexpr double BottomCheck = -EQUAL_EPSILON;
 	//
 	// adjust height
 	//
-	mo->AddZ(mo->Vel.Z);
+	// Check if we're standing on something, even if we have no velocity.
+	const double zVel = !mo->Vel.Z && mo->Z() > mo->floorz && !(mo->Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK) ? BottomCheck : mo->Vel.Z;
+
+	mo->AddZ(zVel);
 	if ((mo->flags&MF_FLOAT) && mo->target)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
@@ -2378,7 +2432,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
 				thing->SetZ(tm.floorz);
-				auto good = P_TestMobjZ(thing);
+				auto good = P_TestMobjCollision(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -2855,7 +2909,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int fla
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				double savedz = thing->Z();
 				thing->SetZ(newz = tm.floorz);
-				int good = P_TestMobjZ(thing);
+				int good = P_TestMobjCollision(thing);
 				thing->SetZ(savedz);
 				if (!good)
 				{
@@ -3107,7 +3161,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		{ // [RH] Check to make sure there's nothing in the way for the step up
 			double savedz = slidemo->Z();
 			slidemo->SetZ(open.bottom);
-			int good = P_TestMobjZ(slidemo);
+			int good = P_TestMobjCollision(slidemo);
 			slidemo->SetZ(savedz);
 			if (!good)
 			{
@@ -6851,7 +6905,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 	else if ((thing->flags2 & MF2_PASSMOBJ) && !isgood && thing->Top() < thing->ceilingz)
 	{
 		AActor *onmobj;
-		if (!P_TestMobjZ(thing, true, &onmobj) && onmobj->Z() <= thing->Z())
+		if (!P_TestMobjCollision(thing, &onmobj) && onmobj && onmobj->Z() <= thing->Z())
 		{
 			thing->SetZ(min(thing->ceilingz - thing->Height, onmobj->Top()));
 			thing->UpdateRenderSectorList();

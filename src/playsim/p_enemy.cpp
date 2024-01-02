@@ -641,7 +641,7 @@ static int P_Move (AActor *actor)
 			actor->SetZ(actor->floorz);
 			// Make sure that there isn't some other actor between us and
 			// the floor we could get stuck in. The old code did not do this.
-			if (!P_TestMobjZ(actor))
+			if (!P_TestMobjCollision(actor))
 			{
 				actor->SetZ(savedz);
 			}
@@ -670,7 +670,7 @@ static int P_Move (AActor *actor)
 
 
 			// [RH] Check to make sure there's nothing in the way of the float
-			if (P_TestMobjZ(actor))
+			if (P_TestMobjCollision(actor))
 			{
 				actor->flags |= MF_INFLOAT;
 				return true;

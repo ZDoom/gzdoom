@@ -1076,15 +1076,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFriction, ZS_GetFriction)
 	return numret;
 }
 
-static int CheckPosition(AActor *self, double x, double y, bool actorsonly, FCheckPosition *tm)
+static int CheckPosition(AActor *self, double x, double y, bool actorsonly, FCheckPosition *tm, const bool zMove)
 {
 	if (tm)
 	{
-		return (P_CheckPosition(self, DVector2(x, y), *tm, actorsonly));
+		return (P_CheckPosition(self, DVector2(x, y), *tm, actorsonly, zMove));
 	}
 	else
 	{
-		return (P_CheckPosition(self, DVector2(x, y), actorsonly));
+		return (P_CheckPosition(self, DVector2(x, y), actorsonly, zMove));
 	}
 }
 
@@ -1095,7 +1095,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckPosition, CheckPosition)
 	PARAM_FLOAT(y);
 	PARAM_BOOL(actorsonly);
 	PARAM_POINTER(tm, FCheckPosition);
-	ACTION_RETURN_BOOL(CheckPosition(self, x, y, actorsonly, tm));
+	PARAM_BOOL(zMove);
+	ACTION_RETURN_BOOL(CheckPosition(self, x, y, actorsonly, tm, zMove));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjLocation, P_TestMobjLocation)
@@ -1113,6 +1114,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjZ, P_TestMobjZ)
 	bool retv = P_TestMobjZ(self, quick, &on);
 	if (numret > 1) ret[1].SetObject(on);
 	if (numret > 0) ret[0].SetInt(retv);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TestMobjCollision, P_TestMobjCollision)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(useSimple);
+
+	AActor* hitMobj = nullptr;
+	const int res = P_TestMobjCollision(self, &hitMobj, useSimple);
+	if (numret > 1)
+		ret[1].SetObject(hitMobj);
+	if (numret > 0)
+		ret[0].SetInt(res);
+
 	return numret;
 }
 
@@ -2056,6 +2072,7 @@ DEFINE_FIELD(AActor, activationtype)
 DEFINE_FIELD(AActor, lastbump)
 DEFINE_FIELD(AActor, DesignatedTeam)
 DEFINE_FIELD(AActor, BlockingMobj)
+DEFINE_FIELD(AActor, GroundMobj)
 DEFINE_FIELD(AActor, BlockingLine)
 DEFINE_FIELD(AActor, MovementBlockingLine)
 DEFINE_FIELD(AActor, Blocking3DFloor)

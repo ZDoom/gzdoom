@@ -1796,6 +1796,7 @@ OptionMenu "CompatPhysicsMenu" protected
 	Option "$CMPTMNU_MISSILECLIP",					"compat_MISSILECLIP", "YesNo"
 	Option "$CMPTMNU_EXPLODE1",						"compat_explode1", "YesNo"
 	Option "$CMPTMNU_EXPLODE2",						"compat_explode2", "YesNo"
+	Option "$CMPTMNU_ZCHECK",						"compat_simplezcheck", "YesNo"
 	Class "CompatibilityMenu"
 }
 

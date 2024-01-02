@@ -309,6 +309,7 @@ void AActor::Serialize(FSerializer &arc)
 		("master", master)
 		A("smokecounter", smokecounter)
 		("blockingmobj", BlockingMobj)
+		("groundmobj", GroundMobj)
 		A("blockingline", BlockingLine)
 		A("movementblockingline", MovementBlockingLine)
 		A("blocking3dfloor", Blocking3DFloor)
@@ -1835,7 +1836,7 @@ bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise
 #define STOPSPEED			(0x1000/65536.)
 #define CARRYSTOPSPEED		((0x1000*32/3)/65536.)
 
-static double P_XYMovement (AActor *mo, DVector2 scroll) 
+static double P_XYMovement (AActor *mo, DVector2 scroll, bool& stepUp) 
 {
 	static int pushtime = 0;
 	bool bForceSlide = !scroll.isZero();
@@ -2190,6 +2191,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 		}
 		else
 		{
+			stepUp = mo->BlockingMobj != nullptr;
 			if (mo->Pos().XY() != ptry)
 			{
 				// If the new position does not match the desired position, the player
@@ -3730,8 +3732,6 @@ void AActor::Tick ()
 		return;
 	}
 
-	AActor *onmo;
-
 	//assert (state != NULL);
 	if (state == NULL)
 	{
@@ -4107,7 +4107,9 @@ void AActor::Tick ()
 		Blocking3DFloor = nullptr;
 		BlockingFloor = nullptr;
 		BlockingCeiling = nullptr;
-		double oldfloorz = P_XYMovement (this, cumm);
+
+		bool stepUp = false;
+		double oldfloorz = P_XYMovement (this, cumm, stepUp);
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
@@ -4129,76 +4131,103 @@ void AActor::Tick ()
 			}
 
 		}
-		if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
+
+		AActor* const stepThing = stepUp ? BlockingMobj : nullptr;
+		if (Vel.Z != 0 || stepThing != nullptr || Z() != floorz)
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
-				if (!(onmo = P_CheckOnmobj (this)))
+				const bool simpleZ = (Level->i_compatflags2 & COMPATF2_SIMPLE_Z_CHECK);
+				int res = false;
+				AActor* hitMobj = nullptr;
+				if (stepThing != nullptr && !simpleZ)
+					hitMobj = GroundMobj = stepThing;
+				else
+					res = P_CheckOnmobj(this, &hitMobj);
+
+				if (res)
 				{
-					P_ZMovement (this, oldfloorz);
 					flags2 &= ~MF2_ONMOBJ;
+					P_ZMovement (this, oldfloorz);
 				}
 				else
 				{
-					if (player)
+					if (GroundMobj != nullptr)
 					{
-						if (Vel.Z < Level->gravity * Sector->gravity * (-1./100)// -655.36f)
-							&& !(flags&MF_NOGRAVITY))
+						flags2 |= MF2_ONMOBJ;
+						if (player != nullptr)
 						{
-							PlayerLandedOnThing (this, onmo);
-						}
-					}
-					if (onmo->Top() - Z() <= MaxStepHeight)
-					{
-						if (player && player->mo == this)
-						{
-							player->viewheight -= onmo->Top() - Z();
-							double deltaview = player->GetDeltaViewHeight();
-							if (deltaview > player->deltaviewheight)
+							if (!(flags & MF_NOGRAVITY) && Vel.Z < Level->gravity * Sector->gravity * -0.01)
+								PlayerLandedOnThing(this, GroundMobj);
+
+							if (player->mo == this)
 							{
-								player->deltaviewheight = deltaview;
+								player->viewheight -= GroundMobj->Top() - Z();
+								player->deltaviewheight = max(player->GetDeltaViewHeight(), player->deltaviewheight);
 							}
-						} 
-						SetZ(onmo->Top());
-					}
-					// Check for MF6_BUMPSPECIAL
-					// By default, only players can activate things by bumping into them
-					// We trigger specials as long as we are on top of it and not just when
-					// we land on it. This could be considered as gravity making us continually
-					// bump into it, but it also avoids having to worry about walking on to
-					// something without dropping and not triggering anything.
-					if ((onmo->flags6 & MF6_BUMPSPECIAL) && ((player != NULL)
-						|| ((onmo->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
-						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
-						) && (Level->maptime > onmo->lastbump)) // Leave the bumper enough time to go away
-					{
-						if (player == NULL || !(player->cheats & CF_PREDICTING))
-						{
-							if (P_ActivateThingSpecial(onmo, this))
-								onmo->lastbump = Level->maptime + TICRATE;
 						}
-					}
-					if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
-					{
-						bool res = P_BounceActor(this, onmo, true);
-						// If the bouncer is a missile and has hit the other actor it needs to be exploded here
-						// to be in line with the case when an actor's side is hit.
-						if (!res && (flags & MF_MISSILE))
-						{
-							P_DoMissileDamage(this, onmo);
-							P_ExplodeMissile(this, nullptr, onmo);
-						}
+
+						SetZ(min(GroundMobj->Top(), ceilingz - Height));
 					}
 					else
 					{
-						flags2 |= MF2_ONMOBJ;
-						Vel.Z = 0;
-						Crash();
+						flags2 &= ~MF2_ONMOBJ;
+						// If we're too high inside of it, just leave the thing at its current elevation.
+						if (hitMobj != nullptr && !simpleZ && Top() <= hitMobj->Z() + MaxStepHeight)
+							SetZ(max(hitMobj->Z() - Height, floorz));
+					}
+
+					// Normally this is ran in P_CheckPosition but if using the old simple z checking,
+					// it has to be done manually here like the old way.
+					if (hitMobj != nullptr && simpleZ)
+					{
+						if ((hitMobj->flags6 & MF6_BUMPSPECIAL)
+							&& (player != nullptr
+								|| ((hitMobj->activationtype & THINGSPEC_MonsterTrigger) && (flags3 & MF3_ISMONSTER))
+								|| ((hitMobj->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE)))
+							&& Level->maptime > hitMobj->lastbump) // Leave the bumper enough time to go away
+						{
+							if (player == nullptr || !(player->cheats & CF_PREDICTING))
+							{
+								if (P_ActivateThingSpecial(hitMobj, this))
+									hitMobj->lastbump = Level->maptime + TICRATE;
+							}
+						}
+					}
+
+					if ((BounceFlags & BOUNCE_MBF) && !(flags & MF_MISSILE) && hitMobj != nullptr && P_BounceActor(this, hitMobj, true))
+					{
+						// Do nothing, relevant actions already done in the condition.
+						// This allows to avoid setting velocities to 0 in the final else of this series.
+					}
+					else if ((flags & MF_MISSILE) && hitMobj != nullptr)
+					{
+						bool checkReflect = true;
+						bool explode = false;
+						if (BounceFlags & BOUNCE_Actors)
+						{
+							checkReflect = false;
+							explode = !P_BounceActor(this, hitMobj, true);
+						}	
+
+						if (checkReflect)
+							explode = !P_ReflectOffActor(this, hitMobj);
+
+						if (explode)
+							P_ExplodeMissile(this, nullptr, hitMobj);
+					}
+					else
+					{
+						Vel.Z = 0.0;
+						if (flags2 & MF2_ONMOBJ)
+							Crash();
 					}
 				}
 			}
 			else
 			{
+				GroundMobj = nullptr;
+				flags2 &= ~MF2_ONMOBJ;
 				P_ZMovement (this, oldfloorz);
 			}
 
@@ -4207,6 +4236,8 @@ void AActor::Tick ()
 		}
 		else if (Z() <= floorz)
 		{
+			GroundMobj = nullptr;
+			flags2 &= ~MF2_ONMOBJ;
 			Crash();
 			if (ObjectFlags & OF_EuthanizeMe)
 				return;		// actor was destroyed

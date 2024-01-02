@@ -1256,6 +1256,7 @@ public:
 	int				friendlyseeblocks;	// allow to override friendly search distance calculation
 
 	AActor			*BlockingMobj;	// Actor that blocked the last move
+	AActor			*GroundMobj;    // Actor currently being stood on top of
 	line_t			*BlockingLine;	// Line that blocked the last move
 	line_t			*MovementBlockingLine; // Line that stopped the Actor's movement in P_XYMovement
 	sector_t		*Blocking3DFloor;	// 3D floor that blocked the last move (if any)

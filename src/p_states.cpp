@@ -67,15 +67,20 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 	PARAM_INT(skin);
 	PARAM_FLOAT(scalex);
 	PARAM_FLOAT(scaley);
+	PARAM_INT(spritenum);
+	PARAM_INT(framenum);
+
+	int sprnum = (spritenum == -1) ? self->sprite : spritenum;
+	int frnum = (framenum == -1) ? self->GetFrame() : framenum;
 
 	spriteframe_t *sprframe;
 	if (skin == 0)
 	{
-		sprframe = &SpriteFrames[sprites[self->sprite].spriteframes + self->GetFrame()];
+		sprframe = &SpriteFrames[sprites[sprnum].spriteframes + frnum];
 	}
 	else
 	{
-		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + self->GetFrame()];
+		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + frnum];
 		scalex = Skins[skin].Scale.X;
 		scaley = Skins[skin].Scale.Y;
 	}

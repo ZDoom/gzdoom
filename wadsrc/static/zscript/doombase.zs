@@ -581,7 +581,7 @@ struct State native
 	
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();
-	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
+	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0), int spritenum = -1, int framenum = -1);
 	native bool InStateSequence(State base);
 }
 

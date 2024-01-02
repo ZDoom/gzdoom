@@ -52,7 +52,7 @@ void MainWindow::Create(const FString& caption, int x, int y, int width, int hei
 		WS_EX_APPWINDOW,
 		WinClassName,
 		wcaption.c_str(),
-		WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		x, y, width, height,
 		(HWND)NULL,
 		(HMENU)NULL,

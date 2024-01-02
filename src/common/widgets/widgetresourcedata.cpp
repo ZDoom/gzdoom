@@ -19,8 +19,7 @@ std::vector<uint8_t> LoadWidgetFontData(const std::string& name)
 		I_FatalError("Unable to find %s", name.c_str());
 
 	auto reader = WidgetResources->GetEntryReader(lump, FileSys::READER_SHARED);
-	std::vector<uint8_t> buffer;
-	buffer.resize(reader.GetLength());
+	std::vector<uint8_t> buffer(reader.GetLength());
 	reader.Read(buffer.data(), buffer.size());
 	return buffer;
 }
@@ -32,8 +31,7 @@ std::vector<uint8_t> LoadWidgetImageData(const std::string& name)
 		I_FatalError("Unable to find %s", name.c_str());
 
 	auto reader = WidgetResources->GetEntryReader(lump, FileSys::READER_SHARED);
-	std::vector<uint8_t> buffer;
-	buffer.resize(reader.GetLength());
+	std::vector<uint8_t> buffer(reader.GetLength());
 	reader.Read(buffer.data(), buffer.size());
 	return buffer;
 }

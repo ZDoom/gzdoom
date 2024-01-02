@@ -1,5 +1,6 @@
 
 #include "sdl2displaywindow.h"
+#include <stdexcept>
 
 Uint32 SDL2DisplayWindow::PaintEventNumber = 0xffffffff;
 bool SDL2DisplayWindow::ExitRunLoop;

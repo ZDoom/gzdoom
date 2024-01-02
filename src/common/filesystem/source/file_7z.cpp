@@ -242,12 +242,12 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	std::u16string nameUTF16;
 	std::vector<char> nameASCII;
 
+	uint32_t j = 0;
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
 		// skip Directories
 		if (SzArEx_IsDir(archPtr, i))
 		{
-			skipped++;
 			continue;
 		}
 
@@ -255,7 +255,6 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		if (0 == nameLength)
 		{
-			++skipped;
 			continue;
 		}
 
@@ -265,16 +264,17 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
 		utf16_to_utf8((uint16_t*)nameUTF16.data(), nameASCII);
 
-		Entries[i].FileName = NormalizeFileName(nameASCII.data());
-		Entries[i].Length = SzArEx_GetFileSize(archPtr, i);
-		Entries[i].Flags = RESFF_FULLPATH|RESFF_COMPRESSED;
-		Entries[i].ResourceID = -1;
-		Entries[i].Namespace = ns_global;
-		Entries[i].Method = METHOD_INVALID;
-		Entries[i].Position = i;
+		Entries[j].FileName = NormalizeFileName(nameASCII.data());
+		Entries[j].Length = SzArEx_GetFileSize(archPtr, i);
+		Entries[j].Flags = RESFF_FULLPATH|RESFF_COMPRESSED;
+		Entries[j].ResourceID = -1;
+		Entries[j].Namespace = ns_global;
+		Entries[j].Method = METHOD_INVALID;
+		Entries[j].Position = i;
+		j++;
 	}
 	// Resize the lump record array to its actual size
-	NumLumps -= skipped;
+	NumLumps = j;
 
 	if (NumLumps > 0)
 	{

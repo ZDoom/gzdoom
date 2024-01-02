@@ -14,28 +14,26 @@ void InitWidgetResources(const char* filename)
 
 std::vector<uint8_t> LoadWidgetFontData(const std::string& name)
 {
-	auto lump = WidgetResources->FindLump("widgets/poppins/poppins-regular.ttf");
-	if (!lump)
+	auto lump = WidgetResources->FindEntry("widgets/poppins/poppins-regular.ttf");
+	if (lump == -1)
 		I_FatalError("Unable to find %s", name.c_str());
 
-	auto data = lump->Lock();
+	auto reader = WidgetResources->GetEntryReader(lump, FileSys::READER_SHARED);
 	std::vector<uint8_t> buffer;
-	buffer.resize(lump->Size());
-	memcpy(buffer.data(), data, buffer.size());
-	lump->Unlock();
+	buffer.resize(reader.GetLength());
+	reader.Read(buffer.data(), buffer.size());
 	return buffer;
 }
 
 std::vector<uint8_t> LoadWidgetImageData(const std::string& name)
 {
-	auto lump = WidgetResources->FindLump(name.c_str());
-	if (!lump)
+	auto lump = WidgetResources->FindEntry(name.c_str());
+	if (lump == -1)
 		I_FatalError("Unable to find %s", name.c_str());
 
-	auto data = lump->Lock();
+	auto reader = WidgetResources->GetEntryReader(lump, FileSys::READER_SHARED);
 	std::vector<uint8_t> buffer;
-	buffer.resize(lump->Size());
-	memcpy(buffer.data(), data, buffer.size());
-	lump->Unlock();
+	buffer.resize(reader.GetLength());
+	reader.Read(buffer.data(), buffer.size());
 	return buffer;
 }

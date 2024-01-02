@@ -289,7 +289,7 @@ BitmapCanvas::BitmapCanvas(DisplayWindow* window) : window(window)
 	uiscale = window->GetDpiScale();
 	uint32_t white = 0xffffffff;
 	whiteTexture = createTexture(1, 1, &white);
-	font = std::make_unique<CanvasFontGroup>("NotoSans", 13.0*uiscale);
+	font = std::make_unique<CanvasFontGroup>("NotoSans", 16.0 * uiscale);
 }
 
 BitmapCanvas::~BitmapCanvas()

@@ -40,16 +40,17 @@ double CheckboxLabel::GetPreferredHeight() const
 
 void CheckboxLabel::OnPaint(Canvas* canvas)
 {
+
 	if (checked)
 	{
-		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 5.0, 10.0, 10.0), Colorf::fromRgba8(100, 100, 100));
-		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 4.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
-		canvas->fillRect(Rect::xywh(2.0, GetHeight() * 0.5 - 3.0, 6.0, 6.0), Colorf::fromRgba8(226, 223, 219));
+		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 6.0, 10.0, 10.0), Colorf::fromRgba8(100, 100, 100));
+		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 5.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
+		canvas->fillRect(Rect::xywh(2.0, GetHeight() * 0.5 - 4.0, 6.0, 6.0), Colorf::fromRgba8(226, 223, 219));
 	}
 	else
 	{
-		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 5.0, 10.0, 10.0), Colorf::fromRgba8(68, 68, 68));
-		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 4.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
+		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 6.0, 10.0, 10.0), Colorf::fromRgba8(99, 99, 99));
+		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 5.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
 	}
 
 	canvas->drawText(Point(14.0, GetHeight() - 5.0), Colorf::fromRgba8(255, 255, 255), text);

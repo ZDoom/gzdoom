@@ -78,6 +78,9 @@ public:
 	DisplayWindowHost* WindowHost = nullptr;
 	SDL_Window* WindowHandle = nullptr;
 	SDL_Renderer* RendererHandle = nullptr;
+	SDL_Texture* BackBufferTexture = nullptr;
+	int BackBufferWidth = 0;
+	int BackBufferHeight = 0;
 
 	static bool ExitRunLoop;
 	static Uint32 PaintEventNumber;

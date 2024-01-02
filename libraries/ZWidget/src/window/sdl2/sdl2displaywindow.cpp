@@ -18,9 +18,14 @@ public:
 	}
 };
 
-SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost) : WindowHost(windowHost)
+static void CheckInitSDL()
 {
 	static InitSDL initsdl;
+}
+
+SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost) : WindowHost(windowHost)
+{
+	CheckInitSDL();
 
 	int result = SDL_CreateWindowAndRenderer(320, 200, SDL_WINDOW_HIDDEN /*| SDL_WINDOW_ALLOW_HIGHDPI*/, &WindowHandle, &RendererHandle);
 	if (result != 0)
@@ -32,6 +37,13 @@ SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost) : WindowHost
 SDL2DisplayWindow::~SDL2DisplayWindow()
 {
 	WindowList.erase(WindowList.find(SDL_GetWindowID(WindowHandle)));
+
+	if (BackBufferTexture)
+	{
+		SDL_DestroyTexture(BackBufferTexture);
+		BackBufferTexture = nullptr;
+	}
+
 	SDL_DestroyRenderer(RendererHandle);
 	SDL_DestroyWindow(WindowHandle);
 	RendererHandle = nullptr;
@@ -182,6 +194,36 @@ double SDL2DisplayWindow::GetDpiScale() const
 
 void SDL2DisplayWindow::PresentBitmap(int width, int height, const uint32_t* pixels)
 {
+	if (!BackBufferTexture || BackBufferWidth != width || BackBufferHeight != height)
+	{
+		if (BackBufferTexture)
+		{
+			SDL_DestroyTexture(BackBufferTexture);
+			BackBufferTexture = nullptr;
+		}
+
+		BackBufferTexture = SDL_CreateTexture(RendererHandle, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+		if (!BackBufferTexture)
+			return;
+
+		BackBufferWidth = width;
+		BackBufferHeight = height;
+	}
+
+	int destpitch = 0;
+	void* dest = nullptr;
+	int result = SDL_LockTexture(BackBufferTexture, nullptr, &dest, &destpitch);
+	if (result != 0) return;
+	for (int y = 0; y < height; y++)
+	{
+		const void* sline = pixels + y * width;
+		void* dline = (uint8_t*)dest + y * destpitch;
+		memcpy(dline, sline, width << 2);
+	}
+	SDL_UnlockTexture(BackBufferTexture);
+
+	SDL_RenderCopy(RendererHandle, BackBufferTexture, nullptr, nullptr);
+	SDL_RenderPresent(RendererHandle);
 }
 
 void SDL2DisplayWindow::SetBorderColor(uint32_t bgra8)
@@ -216,6 +258,8 @@ void SDL2DisplayWindow::SetClipboardText(const std::string& text)
 
 void SDL2DisplayWindow::ProcessEvents()
 {
+	CheckInitSDL();
+
 	SDL_Event event;
 	while (SDL_PollEvent(&event) != 0)
 	{
@@ -225,6 +269,8 @@ void SDL2DisplayWindow::ProcessEvents()
 
 void SDL2DisplayWindow::RunLoop()
 {
+	CheckInitSDL();
+
 	while (!ExitRunLoop)
 	{
 		SDL_Event event;
@@ -237,11 +283,15 @@ void SDL2DisplayWindow::RunLoop()
 
 void SDL2DisplayWindow::ExitLoop()
 {
+	CheckInitSDL();
+
 	ExitRunLoop = true;
 }
 
 Size SDL2DisplayWindow::GetScreenSize()
 {
+	CheckInitSDL();
+
 	SDL_Rect rect = {};
 	int result = SDL_GetDisplayBounds(0, &rect);
 	if (result != 0)
@@ -253,11 +303,18 @@ Size SDL2DisplayWindow::GetScreenSize()
 
 void* SDL2DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
+	CheckInitSDL();
+
+	// To do: implement timers
+
 	return nullptr;
 }
 
 void SDL2DisplayWindow::StopTimer(void* timerID)
 {
+	CheckInitSDL();
+
+	// To do: implement timers
 }
 
 SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)

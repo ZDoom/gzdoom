@@ -64,7 +64,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	WNDCLASSEX classdesc = {};
 	classdesc.cbSize = sizeof(WNDCLASSEX);
 	classdesc.hInstance = GetModuleHandle(0);
-	classdesc.style = CS_VREDRAW | CS_HREDRAW;
+	classdesc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS;
 	classdesc.lpszClassName = L"ZWidgetWindow";
 	classdesc.lpfnWndProc = &Win32Window::WndProc;
 	RegisterClassEx(&classdesc);
@@ -420,6 +420,10 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 	{
 		WindowHost->OnWindowMouseDown(GetLParamPos(lparam), IK_LeftMouse);
 	}
+	else if (msg == WM_LBUTTONDBLCLK)
+	{
+		WindowHost->OnWindowMouseDoubleclick(GetLParamPos(lparam), IK_LeftMouse);
+	}
 	else if (msg == WM_LBUTTONUP)
 	{
 		WindowHost->OnWindowMouseUp(GetLParamPos(lparam), IK_LeftMouse);
@@ -428,6 +432,10 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 	{
 		WindowHost->OnWindowMouseDown(GetLParamPos(lparam), IK_MiddleMouse);
 	}
+	else if (msg == WM_MBUTTONDBLCLK)
+	{
+		WindowHost->OnWindowMouseDoubleclick(GetLParamPos(lparam), IK_MiddleMouse);
+	}
 	else if (msg == WM_MBUTTONUP)
 	{
 		WindowHost->OnWindowMouseUp(GetLParamPos(lparam), IK_MiddleMouse);
@@ -435,6 +443,10 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 	else if (msg == WM_RBUTTONDOWN)
 	{
 		WindowHost->OnWindowMouseDown(GetLParamPos(lparam), IK_RightMouse);
+	}
+	else if (msg == WM_RBUTTONDBLCLK)
+	{
+		WindowHost->OnWindowMouseDoubleclick(GetLParamPos(lparam), IK_RightMouse);
 	}
 	else if (msg == WM_RBUTTONUP)
 	{

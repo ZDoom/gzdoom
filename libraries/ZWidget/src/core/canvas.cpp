@@ -36,9 +36,9 @@ public:
 class CanvasFont
 {
 public:
-	CanvasFont(const std::string& fontname, double height) : fontname(fontname), height(height)
+	CanvasFont(const std::string& fontname, double height, std::vector<uint8_t>& _data) : fontname(fontname), height(height)
 	{
-		data = LoadWidgetFontData(fontname);
+		data = std::move(_data);
 		loadFont(data.data(), data.size());
 
 		try
@@ -152,6 +152,65 @@ private:
 	std::vector<uint8_t> data;
 };
 
+class CanvasFontGroup
+{
+public:
+	struct SingleFont
+	{
+		std::unique_ptr<CanvasFont> font;
+		std::vector<std::pair<uint32_t, uint32_t>> ranges;
+		int language;	// mainly useful if we start supporting Chinese so that we can use another font there than for Japanese.
+	};
+	CanvasFontGroup(const std::string& fontname, double height) : height(height)
+	{
+		auto fontdata = LoadWidgetFontData(fontname);
+		fonts.resize(fontdata.size());
+		for (size_t i = 0; i < fonts.size(); i++)
+		{
+			fonts[i].font = std::make_unique<CanvasFont>(fontname, height, fontdata[i].fontdata);
+			fonts[i].ranges = std::move(fontdata[i].ranges);
+			fonts[i].language = fontdata[i].language;
+		}
+	}
+
+	CanvasGlyph* getGlyph(uint32_t utfchar)
+	{
+		if (utfchar >= 0x530 && utfchar < 0x590)
+		{
+			int a = 0;
+		}
+		for (auto& fd : fonts)
+		{
+			bool get = false;
+			if (fd.ranges.size() == 0) get = true;
+			else for (auto r : fd.ranges)
+			{
+				if (utfchar >= r.first && utfchar <= r.second)
+				{
+					get = true;
+					break;
+				}
+			}
+			if (get)
+			{
+				auto g = fd.font->getGlyph(utfchar);
+				if (g) return g;
+			}
+		}
+
+		return nullptr;
+	}
+
+	SFT_LMetrics& GetTextMetrics()
+	{
+		return fonts[0].font->textmetrics;
+	}
+
+	double height;
+	std::vector<SingleFont> fonts;
+
+};
+
 class BitmapCanvas : public Canvas
 {
 public:
@@ -211,7 +270,7 @@ public:
 
 	DisplayWindow* window = nullptr;
 
-	std::unique_ptr<CanvasFont> font;
+	std::unique_ptr<CanvasFontGroup> font;
 	std::unique_ptr<CanvasTexture> whiteTexture;
 
 	Point origin;
@@ -230,7 +289,7 @@ BitmapCanvas::BitmapCanvas(DisplayWindow* window) : window(window)
 	uiscale = window->GetDpiScale();
 	uint32_t white = 0xffffffff;
 	whiteTexture = createTexture(1, 1, &white);
-	font = std::make_unique<CanvasFont>("Segoe UI", 13.0*uiscale);
+	font = std::make_unique<CanvasFontGroup>("NotoSans", 13.0*uiscale);
 }
 
 BitmapCanvas::~BitmapCanvas()
@@ -411,7 +470,7 @@ void BitmapCanvas::drawText(const Point& pos, const Colorf& color, const std::st
 Rect BitmapCanvas::measureText(const std::string& text)
 {
 	double x = 0.0;
-	double y = font->textmetrics.ascender - font->textmetrics.descender;
+	double y = font->GetTextMetrics().ascender - font->GetTextMetrics().descender;
 
 	UTF8Reader reader(text.data(), text.size());
 	while (!reader.is_end())
@@ -433,8 +492,9 @@ VerticalTextPosition BitmapCanvas::verticalTextAlign()
 {
 	VerticalTextPosition align;
 	align.top = 0.0f;
-	align.baseline = font->textmetrics.ascender / uiscale;
-	align.bottom = (font->textmetrics.ascender - font->textmetrics.descender) / uiscale;
+	auto tm = font->GetTextMetrics();
+	align.baseline = tm.ascender / uiscale;
+	align.bottom = (tm.ascender - tm.descender) / uiscale;
 	return align;
 }
 

@@ -256,7 +256,7 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /permissive-" )
+	set( ALL_C_FLAGS "/GF /Gy /permissive- /utf-8" )
 
 	if ( HAVE_VULKAN )
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_VULKAN" )

@@ -46,6 +46,15 @@ public:
 	static Rect xywh(double x, double y, double width, double height) { return Rect(x, y, width, height); }
 	static Rect ltrb(double left, double top, double right, double bottom) { return Rect(left, top, right - left, bottom - top); }
 
+	static Rect shrink(Rect box, double left, double top, double right, double bottom)
+	{
+		box.x += left;
+		box.y += top;
+		box.width = std::max(box.width - left - right, 0.0);
+		box.height = std::max(box.height - bottom - top, 0.0);
+		return box;
+	}
+
 	bool contains(const Point& p) const { return (p.x >= x && p.x < x + width) && (p.y >= y && p.y < y + height); }
 
 	double x = 0;

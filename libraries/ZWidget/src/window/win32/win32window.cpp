@@ -455,7 +455,15 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 	else if (msg == WM_MOUSEWHEEL)
 	{
 		double delta = GET_WHEEL_DELTA_WPARAM(wparam) / (double)WHEEL_DELTA;
-		WindowHost->OnWindowMouseWheel(GetLParamPos(lparam), delta < 0.0 ? IK_MouseWheelDown : IK_MouseWheelUp);
+
+		// Note: WM_MOUSEWHEEL uses screen coordinates. GetLParamPos assumes client coordinates.
+		double dpiscale = GetDpiScale();
+		POINT pos;
+		pos.x = GET_X_LPARAM(lparam);
+		pos.y = GET_Y_LPARAM(lparam);
+		ScreenToClient(WindowHandle, &pos);
+
+		WindowHost->OnWindowMouseWheel(Point(pos.x / dpiscale, pos.y / dpiscale), delta < 0.0 ? IK_MouseWheelDown : IK_MouseWheelUp);
 	}
 	else if (msg == WM_CHAR)
 	{

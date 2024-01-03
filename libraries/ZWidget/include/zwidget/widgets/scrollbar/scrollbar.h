@@ -13,24 +13,27 @@ public:
 
 	bool IsVertical() const;
 	bool IsHorizontal() const;
-	int GetMin() const;
-	int GetMax() const;
-	int GetLineStep() const;
-	int GetPageStep() const;
-	int GetPosition() const;
+	double GetMin() const;
+	double GetMax() const;
+	double GetLineStep() const;
+	double GetPageStep() const;
+	double GetPosition() const;
 
 	void SetVertical();
 	void SetHorizontal();
 
-	void SetMin(int scroll_min);
-	void SetMax(int scroll_max);
-	void SetLineStep(int step);
-	void SetPageStep(int step);
+	void SetMin(double scroll_min);
+	void SetMax(double scroll_max);
+	void SetLineStep(double step);
+	void SetPageStep(double step);
 
-	void SetRanges(int scroll_min, int scroll_max, int line_step, int page_step);
-	void SetRanges(int view_size, int total_size);
+	void SetRanges(double scroll_min, double scroll_max, double line_step, double page_step);
+	void SetRanges(double view_size, double total_size);
 
-	void SetPosition(int pos);
+	void SetPosition(double pos);
+
+	double GetPreferredWidth() const { return 16.0; }
+	double GetPreferredHeight() const { return 16.0; }
 
 	std::function<void()> FuncScroll;
 	std::function<void()> FuncScrollMin;
@@ -54,18 +57,20 @@ protected:
 
 private:
 	bool UpdatePartPositions();
-	int CalculateThumbSize(int track_size);
-	int CalculateThumbPosition(int thumb_size, int track_size);
-	Rect CreateRect(int start, int end);
+	double CalculateThumbSize(double track_size);
+	double CalculateThumbPosition(double thumb_size, double track_size);
+	Rect CreateRect(double start, double end);
 	void InvokeScrollEvent(std::function<void()>* event_ptr);
 	void OnTimerExpired();
 
-	bool vertical = false;
-	int scroll_min = 0;
-	int scroll_max = 1;
-	int line_step = 1;
-	int page_step = 10;
-	int position = 0;
+	bool vertical = true;
+	double scroll_min = 0.0;
+	double scroll_max = 1.0;
+	double line_step = 1.0;
+	double page_step = 10.0;
+	double position = 0.0;
+
+	bool showbuttons = false;
 
 	enum MouseDownMode
 	{
@@ -77,12 +82,12 @@ private:
 		mouse_down_thumb_drag
 	} mouse_down_mode = mouse_down_none;
 
-	int thumb_start_position = 0;
+	double thumb_start_position = 0.0;
 	Point mouse_drag_start_pos;
-	int thumb_start_pixel_position = 0;
+	double thumb_start_pixel_position = 0.0;
 
 	Timer* mouse_down_timer = nullptr;
-	int last_step_size = 0;
+	double last_step_size = 0.0;
 
 	Rect rect_button_decrement;
 	Rect rect_track_decrement;
@@ -91,7 +96,4 @@ private:
 	Rect rect_button_increment;
 
 	std::function<void()>* FuncScrollOnMouseDown = nullptr;
-
-	static const int decr_height = 16;
-	static const int incr_height = 16;
 };

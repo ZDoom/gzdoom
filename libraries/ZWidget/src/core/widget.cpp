@@ -419,7 +419,7 @@ Widget* Widget::ChildAt(const Point& pos)
 	{
 		if (cur->FrameGeometry.contains(pos))
 		{
-			Widget* cur2 = cur->ChildAt(pos - cur->FrameGeometry.topLeft());
+			Widget* cur2 = cur->ChildAt(pos - cur->ContentGeometry.topLeft());
 			return cur2 ? cur2 : cur;
 		}
 	}

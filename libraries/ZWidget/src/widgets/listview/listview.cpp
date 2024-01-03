@@ -1,9 +1,13 @@
 
 #include "widgets/listview/listview.h"
+#include "widgets/scrollbar/scrollbar.h"
 
 ListView::ListView(Widget* parent) : Widget(parent)
 {
-	SetNoncontentSizes(10.0, 5.0, 10.0, 5.0);
+	SetNoncontentSizes(10.0, 10.0, 3.0, 10.0);
+
+	scrollbar = new Scrollbar(this);
+	scrollbar->FuncScroll = [=]() { OnScrollbarScroll(); };
 }
 
 void ListView::AddItem(const std::string& text)
@@ -18,21 +22,53 @@ void ListView::Activate()
 		OnActivated();
 }
 
+void ListView::ScrollToItem(int index)
+{
+	double itemHeight = 20.0;
+	double y = itemHeight * index;
+	if (y < scrollbar->GetPosition())
+	{
+		scrollbar->SetPosition(y);
+	}
+	else if (y + itemHeight > scrollbar->GetPosition() + GetHeight())
+	{
+		scrollbar->SetPosition(std::max(y + itemHeight - GetHeight(), 0.0));
+	}
+}
+
+void ListView::OnScrollbarScroll()
+{
+	Update();
+}
+
+void ListView::OnGeometryChanged()
+{
+	double w = GetWidth();
+	double h = GetHeight();
+	double sw = scrollbar->GetPreferredWidth();
+	scrollbar->SetFrameGeometry(Rect::xywh(w - sw, 0.0, sw, h));
+	scrollbar->SetRanges(h, items.size() * 20.0);
+}
+
 void ListView::OnPaint(Canvas* canvas)
 {
-	double y = 20.0;
+	double y = -scrollbar->GetPosition();
 	double x = 2.0;
-	double w = GetFrameGeometry().width;
+	double w = GetWidth() - scrollbar->GetPreferredWidth() - 2.0;
 	double h = 20.0;
 
 	int index = 0;
 	for (const std::string& item : items)
 	{
-		if (index == selectedItem)
+		double itemY = y;
+		if (itemY + h >= 0.0 && itemY < GetHeight())
 		{
-			canvas->fillRect(Rect::xywh(x - 2.0, y + 5.0 - h, w, h), Colorf::fromRgba8(100, 100, 100));
+			if (index == selectedItem)
+			{
+				canvas->fillRect(Rect::xywh(x - 2.0, itemY, w, h), Colorf::fromRgba8(100, 100, 100));
+			}
+			canvas->drawText(Point(x, y + 15.0), Colorf::fromRgba8(255, 255, 255), item);
 		}
-		canvas->drawText(Point(x, y), Colorf::fromRgba8(255, 255, 255), item);
 		y += h;
 		index++;
 	}
@@ -56,11 +92,12 @@ void ListView::OnMouseDown(const Point& pos, int key)
 
 	if (key == IK_LeftMouse)
 	{
-		int index = (int)((pos.y - 5.0) / 20.0);
+		int index = (int)((pos.y - 5.0 + scrollbar->GetPosition()) / 20.0);
 		if (index >= 0 && (size_t)index < items.size())
 		{
 			selectedItem = index;
 			Update();
+			ScrollToItem(selectedItem);
 		}
 	}
 }
@@ -73,6 +110,18 @@ void ListView::OnMouseDoubleclick(const Point& pos, int key)
 	}
 }
 
+void ListView::OnMouseWheel(const Point& pos, EInputKey key)
+{
+	if (key == IK_MouseWheelUp)
+	{
+		scrollbar->SetPosition(std::max(scrollbar->GetPosition() - 20.0, 0.0));
+	}
+	else if (key == IK_MouseWheelDown)
+	{
+		scrollbar->SetPosition(std::max(scrollbar->GetPosition() + 20.0, scrollbar->GetMax()));
+	}
+}
+
 void ListView::OnKeyDown(EInputKey key)
 {
 	if (key == IK_Down)
@@ -82,6 +131,7 @@ void ListView::OnKeyDown(EInputKey key)
 			selectedItem++;
 			Update();
 		}
+		ScrollToItem(selectedItem);
 	}
 	else if (key == IK_Up)
 	{
@@ -90,6 +140,7 @@ void ListView::OnKeyDown(EInputKey key)
 			selectedItem--;
 			Update();
 		}
+		ScrollToItem(selectedItem);
 	}
 	else if (key == IK_Enter)
 	{

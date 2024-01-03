@@ -199,7 +199,7 @@ void LogViewer::OnPaintFrame(Canvas* canvas)
 
 void LogViewer::OnPaint(Canvas* canvas)
 {
-	double width = GetWidth();
+	double width = GetWidth() - scrollbar->GetFrameGeometry().width;
 	double y = GetHeight();
 	size_t start = std::min((size_t)std::round(scrollbar->GetPosition() + 1.0), lines.size());
 	for (size_t i = start; i > 0 && y > 0.0; i--)

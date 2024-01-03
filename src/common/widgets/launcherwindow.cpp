@@ -10,6 +10,7 @@
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/pushbutton/pushbutton.h>
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
+#include <zwidget/widgets/lineedit/lineedit.h>
 
 EXTERN_CVAR(Bool, queryiwad);
 
@@ -42,6 +43,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	SelectLabel = new TextLabel(this);
 	GeneralLabel = new TextLabel(this);
 	ExtrasLabel = new TextLabel(this);
+	ParametersLabel = new TextLabel(this);
 	FullscreenCheckbox = new CheckboxLabel(this);
 	DisableAutoloadCheckbox = new CheckboxLabel(this);
 	DontAskAgainCheckbox = new CheckboxLabel(this);
@@ -51,6 +53,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	PlayButton = new PushButton(this);
 	ExitButton = new PushButton(this);
 	GamesList = new ListView(this);
+	ParametersEdit = new LineEdit(this);
 
 	PlayButton->OnClick = [=]() { OnPlayButtonClicked(); };
 	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
@@ -68,6 +71,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	LightsCheckbox->SetText("Lights");
 	BrightmapsCheckbox->SetText("Brightmaps");
 	WidescreenCheckbox->SetText("Widescreen");
+	ParametersLabel->SetText("Additional Parameters:");
 
 	FString welcomeText, versionText;
 	welcomeText.Format("Welcome to %s!", GAMENAME);
@@ -121,6 +125,12 @@ void LauncherWindow::OnPlayButtonClicked()
 	if (WidescreenCheckbox->GetChecked()) flags |= 8;
 	*AutoloadFlags = flags;
 
+	std::string extraargs = ParametersEdit->GetText();
+	if (!extraargs.empty())
+	{
+		// To do: restart the process like the cocoa backend is doing?
+	}
+
 	ExecResult = GamesList->GetSelectedItem();
 	DisplayWindow::ExitLoop();
 }
@@ -163,6 +173,16 @@ void LauncherWindow::OnGeometryChanged()
 	ExitButton->SetFrameGeometry(GetWidth() - 20.0 - 120.0, y, 120.0, PlayButton->GetPreferredHeight());
 
 	y -= 20.0;
+
+	double editHeight = 24.0;
+	y -= editHeight;
+	ParametersEdit->SetFrameGeometry(20.0, y, GetWidth() - 40.0, editHeight);
+	y -= 5.0;
+
+	double labelHeight = ParametersLabel->GetPreferredHeight();
+	y -= labelHeight;
+	ParametersLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, labelHeight);
+	y -= 10.0;
 
 	double panelWidth = 150.0;
 	y -= DontAskAgainCheckbox->GetPreferredHeight();

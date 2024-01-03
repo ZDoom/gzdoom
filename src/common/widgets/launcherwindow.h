@@ -7,6 +7,7 @@ class TextLabel;
 class CheckboxLabel;
 class PushButton;
 class ListView;
+class LineEdit;
 struct WadStuff;
 
 class LauncherWindow : public Widget
@@ -30,6 +31,7 @@ private:
 	TextLabel* SelectLabel = nullptr;
 	TextLabel* GeneralLabel = nullptr;
 	TextLabel* ExtrasLabel = nullptr;
+	TextLabel* ParametersLabel = nullptr;
 	CheckboxLabel* FullscreenCheckbox = nullptr;
 	CheckboxLabel* DisableAutoloadCheckbox = nullptr;
 	CheckboxLabel* DontAskAgainCheckbox = nullptr;
@@ -39,6 +41,7 @@ private:
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
+	LineEdit* ParametersEdit = nullptr;
 
 	int* AutoloadFlags = nullptr;
 	int ExecResult = -1;

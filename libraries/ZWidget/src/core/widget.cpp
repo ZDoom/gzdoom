@@ -367,14 +367,38 @@ void Widget::UnlockCursor()
 
 void Widget::SetCursor(StandardCursor cursor)
 {
+	if (CurrentCursor != cursor)
+	{
+		CurrentCursor = cursor;
+		if (HoverWidget == this || CaptureWidget == this)
+		{
+			Widget* w = Window();
+			if (w)
+			{
+				w->DispWindow->SetCursor(CurrentCursor);
+			}
+		}
+	}
 }
 
 void Widget::CaptureMouse()
 {
+	Widget* w = Window();
+	if (w && w->CaptureWidget != this)
+	{
+		w->CaptureWidget = this;
+		w->DispWindow->CaptureMouse();
+	}
 }
 
 void Widget::ReleaseMouseCapture()
 {
+	Widget* w = Window();
+	if (w && w->CaptureWidget != nullptr)
+	{
+		w->CaptureWidget = nullptr;
+		w->DispWindow->ReleaseMouseCapture();
+	}
 }
 
 std::string Widget::GetClipboardText()
@@ -487,6 +511,7 @@ void Widget::OnWindowMouseMove(const Point& pos)
 {
 	if (CaptureWidget)
 	{
+		DispWindow->SetCursor(CaptureWidget->CurrentCursor);
 		CaptureWidget->OnMouseMove(CaptureWidget->MapFrom(this, pos));
 	}
 	else
@@ -502,6 +527,7 @@ void Widget::OnWindowMouseMove(const Point& pos)
 			HoverWidget = widget;
 		}
 
+		DispWindow->SetCursor(widget->CurrentCursor);
 		widget->OnMouseMove(widget->MapFrom(this, pos));
 	}
 }

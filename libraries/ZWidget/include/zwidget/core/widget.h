@@ -177,6 +177,8 @@ private:
 	Widget* CaptureWidget = nullptr;
 	Widget* HoverWidget = nullptr;
 
+	StandardCursor CurrentCursor = StandardCursor::arrow;
+
 	Widget(const Widget&) = delete;
 	Widget& operator=(const Widget&) = delete;
 

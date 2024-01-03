@@ -162,8 +162,12 @@ public:
 	virtual void ShowCursor(bool enable) = 0;
 	virtual void LockCursor() = 0;
 	virtual void UnlockCursor() = 0;
+	virtual void CaptureMouse() = 0;
+	virtual void ReleaseMouseCapture() = 0;
 	virtual void Update() = 0;
 	virtual bool GetKeyState(EInputKey key) = 0;
+
+	virtual void SetCursor(StandardCursor cursor) = 0;
 
 	virtual Rect GetWindowFrame() const = 0;
 	virtual Size GetClientSize() const = 0;

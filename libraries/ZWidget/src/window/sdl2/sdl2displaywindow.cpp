@@ -132,6 +132,18 @@ void SDL2DisplayWindow::UnlockCursor()
 	SDL_ShowCursor(1);
 }
 
+void SDL2DisplayWindow::CaptureMouse()
+{
+}
+
+void SDL2DisplayWindow::ReleaseMouseCapture()
+{
+}
+
+void SDL2DisplayWindow::SetCursor(StandardCursor cursor)
+{
+}
+
 void SDL2DisplayWindow::Update()
 {
 	SDL_Event event = {};

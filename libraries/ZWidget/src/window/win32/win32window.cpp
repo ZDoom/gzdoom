@@ -209,6 +209,16 @@ void Win32Window::UnlockCursor()
 	}
 }
 
+void Win32Window::CaptureMouse()
+{
+	SetCapture(WindowHandle);
+}
+
+void Win32Window::ReleaseMouseCapture()
+{
+	ReleaseCapture();
+}
+
 void Win32Window::Update()
 {
 	InvalidateRect(WindowHandle, nullptr, FALSE);
@@ -217,6 +227,15 @@ void Win32Window::Update()
 bool Win32Window::GetKeyState(EInputKey key)
 {
 	return ::GetKeyState((int)key) & 0x8000; // High bit (0x8000) means key is down, Low bit (0x0001) means key is sticky on (like Caps Lock, Num Lock, etc.)
+}
+
+void Win32Window::SetCursor(StandardCursor cursor)
+{
+	if (cursor != CurrentCursor)
+	{
+		CurrentCursor = cursor;
+		UpdateCursor();
+	}
 }
 
 Rect Win32Window::GetWindowFrame() const
@@ -411,7 +430,7 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 		}
 		else
 		{
-			SetCursor((HCURSOR)LoadImage(0, IDC_ARROW, IMAGE_CURSOR, LR_DEFAULTSIZE, LR_DEFAULTSIZE, LR_SHARED));
+			UpdateCursor();
 		}
 
 		WindowHost->OnWindowMouseMove(GetLParamPos(lparam));
@@ -509,6 +528,30 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 	}*/
 
 	return DefWindowProc(WindowHandle, msg, wparam, lparam);
+}
+
+void Win32Window::UpdateCursor()
+{
+	LPCWSTR cursor = IDC_ARROW;
+	switch (CurrentCursor)
+	{
+	case StandardCursor::arrow: cursor = IDC_ARROW; break;
+	case StandardCursor::appstarting: cursor = IDC_APPSTARTING; break;
+	case StandardCursor::cross: cursor = IDC_CROSS; break;
+	case StandardCursor::hand: cursor = IDC_HAND; break;
+	case StandardCursor::ibeam: cursor = IDC_IBEAM; break;
+	case StandardCursor::no: cursor = IDC_NO; break;
+	case StandardCursor::size_all: cursor = IDC_SIZEALL; break;
+	case StandardCursor::size_nesw: cursor = IDC_SIZENESW; break;
+	case StandardCursor::size_ns: cursor = IDC_SIZENS; break;
+	case StandardCursor::size_nwse: cursor = IDC_SIZENWSE; break;
+	case StandardCursor::size_we: cursor = IDC_SIZEWE; break;
+	case StandardCursor::uparrow: cursor = IDC_UPARROW; break;
+	case StandardCursor::wait: cursor = IDC_WAIT; break;
+	default: break;
+	}
+
+	::SetCursor((HCURSOR)LoadImage(0, cursor, IMAGE_CURSOR, LR_DEFAULTSIZE, LR_DEFAULTSIZE, LR_SHARED));
 }
 
 Point Win32Window::GetLParamPos(LPARAM lparam) const

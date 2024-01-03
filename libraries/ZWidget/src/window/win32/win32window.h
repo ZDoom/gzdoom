@@ -30,8 +30,13 @@ public:
 	void ShowCursor(bool enable) override;
 	void LockCursor() override;
 	void UnlockCursor() override;
+	void CaptureMouse() override;
+	void ReleaseMouseCapture() override;
 	void Update() override;
 	bool GetKeyState(EInputKey key) override;
+
+	void SetCursor(StandardCursor cursor) override;
+	void UpdateCursor();
 
 	Rect GetWindowFrame() const override;
 	Size GetClientSize() const override;
@@ -76,4 +81,6 @@ public:
 	POINT MouseLockPos = {};
 
 	HDC PaintDC = 0;
+
+	StandardCursor CurrentCursor = StandardCursor::arrow;
 };

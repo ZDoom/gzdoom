@@ -5,6 +5,7 @@
 #include "printf.h"
 #include <zwidget/core/image.h>
 #include <zwidget/widgets/pushbutton/pushbutton.h>
+#include <zwidget/widgets/scrollbar/scrollbar.h>
 
 bool ErrorWindow::ExecModal(const std::string& text, const std::string& log)
 {
@@ -105,7 +106,10 @@ void ErrorWindow::OnGeometryChanged()
 
 LogViewer::LogViewer(Widget* parent) : Widget(parent)
 {
-	SetNoncontentSizes(8.0, 8.0, 8.0, 8.0);
+	SetNoncontentSizes(8.0, 8.0, 3.0, 8.0);
+
+	scrollbar = new Scrollbar(this);
+	scrollbar->FuncScroll = [=]() { OnScrollbarScroll(); };
 }
 
 void LogViewer::SetText(const std::string& text, const std::string& log)
@@ -134,6 +138,9 @@ void LogViewer::SetText(const std::string& text, const std::string& log)
 	layout.Clear();
 	layout.AddText(text, largefont, Colorf::fromRgba8(255, 255, 170));
 	lines.push_back(layout);
+
+	scrollbar->SetRanges(0.0, (double)lines.size(), 1.0, 100.0);
+	scrollbar->SetPosition((double)lines.size() - 1.0);
 
 	Update();
 }
@@ -194,7 +201,8 @@ void LogViewer::OnPaint(Canvas* canvas)
 {
 	double width = GetWidth();
 	double y = GetHeight();
-	for (size_t i = lines.size(); i > 0 && y > 0.0; i--)
+	size_t start = std::min((size_t)std::round(scrollbar->GetPosition() + 1.0), lines.size());
+	for (size_t i = start; i > 0 && y > 0.0; i--)
 	{
 		SpanLayout& layout = lines[i - 1];
 		layout.Layout(canvas, width);
@@ -202,4 +210,71 @@ void LogViewer::OnPaint(Canvas* canvas)
 		layout.DrawLayout(canvas);
 		y -= layout.GetSize().height;
 	}
+}
+
+void LogViewer::OnMouseWheel(const Point& pos, EInputKey key)
+{
+	if (key == IK_MouseWheelUp)
+	{
+		ScrollUp(4);
+	}
+	else if (key == IK_MouseWheelDown)
+	{
+		ScrollDown(4);
+	}
+}
+
+void LogViewer::OnKeyDown(EInputKey key)
+{
+	if (key == IK_Home)
+	{
+		scrollbar->SetPosition(0.0f);
+		Update();
+	}
+	if (key == IK_End)
+	{
+		scrollbar->SetPosition(scrollbar->GetMax());
+		Update();
+	}
+	else if (key == IK_PageUp)
+	{
+		ScrollUp(20);
+	}
+	else if (key == IK_PageDown)
+	{
+		ScrollDown(20);
+	}
+	else if (key == IK_Up)
+	{
+		ScrollUp(4);
+	}
+	else if (key == IK_Down)
+	{
+		ScrollDown(4);
+	}
+}
+
+void LogViewer::OnScrollbarScroll()
+{
+	Update();
+}
+
+void LogViewer::OnGeometryChanged()
+{
+	double w = GetWidth();
+	double h = GetHeight();
+	double sw = scrollbar->GetPreferredWidth();
+	scrollbar->SetFrameGeometry(Rect::xywh(w - sw, 0.0, sw, h));
+}
+
+void LogViewer::ScrollUp(int lines)
+{
+	scrollbar->SetPosition(std::max(scrollbar->GetPosition() - (double)lines, 0.0));
+	Update();
+}
+
+void LogViewer::ScrollDown(int lines)
+{
+	scrollbar->SetPosition(std::min(scrollbar->GetPosition() + (double)lines, scrollbar->GetMax()));
+	Update();
 }

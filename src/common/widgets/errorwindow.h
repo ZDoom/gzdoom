@@ -5,6 +5,7 @@
 
 class LogViewer;
 class PushButton;
+class Scrollbar;
 
 class ErrorWindow : public Widget
 {
@@ -42,9 +43,18 @@ public:
 protected:
 	void OnPaintFrame(Canvas* canvas) override;
 	void OnPaint(Canvas* canvas) override;
+	void OnMouseWheel(const Point& pos, EInputKey key) override;
+	void OnKeyDown(EInputKey key) override;
+	void OnGeometryChanged() override;
 
 private:
+	void OnScrollbarScroll();
+	void ScrollUp(int lines);
+	void ScrollDown(int lines);
+
 	SpanLayout CreateLineLayout(const std::string& text);
+
+	Scrollbar* scrollbar = nullptr;
 
 	std::shared_ptr<Font> largefont = Font::Create("Poppins", 16.0);
 	std::shared_ptr<Font> font = Font::Create("Poppins", 12.0);

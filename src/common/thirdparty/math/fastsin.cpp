@@ -57,7 +57,7 @@ __forceinline double FFastTrig::sinq1(unsigned bangle)
 {
 	unsigned int index = bangle >> BITSHIFT;
 
-	if ((bangle &= (REMAINDER)) == 0)	// This is to avoid precision problems at 180°
+	if ((bangle &= (REMAINDER)) == 0)	// This is to avoid precision problems at 180Â°
 	{
 		return double(sinetable[index]);
 	}

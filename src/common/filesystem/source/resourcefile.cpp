@@ -329,6 +329,8 @@ void FResourceFile::GenerateHash()
 	{
 		auto name = getName(i);
 		auto size = Length(i);
+		if (name == nullptr) 
+			continue;
 		md5_append(&state, (const uint8_t*)name, (unsigned)strlen(name) + 1);
 		md5_append(&state, (const uint8_t*)&size, sizeof(size));
 	}

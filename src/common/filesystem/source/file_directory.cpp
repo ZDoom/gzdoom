@@ -136,6 +136,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					Entries[count].ResourceID = -1;
 					Entries[count].Method = METHOD_STORED;
 					Entries[count].Namespace = ns_global;
+					Entries[count].Position = count;
 					count++;
 				}
 			}
@@ -169,7 +170,7 @@ FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 	if (entry < NumLumps)
 	{
 		std::string fn = mBasePath;
-		fn += SystemFilePath[entry];
+		fn += SystemFilePath[Entries[entry].Position];
 		fr.OpenFile(fn.c_str());
 		if (readertype == READER_CACHED)
 		{

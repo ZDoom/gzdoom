@@ -485,120 +485,6 @@ public:
 	}
 };
 
-static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
-{
-	char caption[100];
-	mysnprintf(caption, countof(caption), GAMENAME " %s: Select an IWAD to use", GetVersionString());
-
-	ZUIWindow window(caption);
-
-	ZUIVBox vbox;
-
-	ZUILabel label(GAMENAME " found more than one IWAD\nSelect from the list below to determine which one to use:");
-	ZUIListView listview(wads, numwads, defaultiwad);
-	ZUIScrolledWindow scroll((ZUIWidget*)&listview);
-
-	ZUIHBox hboxOptions;
-
-	ZUIVBox vboxVideo;
-	ZUILabel videoSettings("Video settings");
-	ZUIRadioButton opengl("OpenGL");
-	ZUIRadioButton vulkan(&opengl, "Vulkan");
-	ZUIRadioButton openglES(&opengl, "OpenGL ES");
-	ZUICheckButton fullscreen("Full screen");
-
-	ZUIVBox vboxMisc;
-	ZUICheckButton noautoload("Disable autoload");
-	ZUICheckButton dontAskAgain("Don't ask me this again");
-
-	ZUIVBox vboxExtra;
-	ZUILabel extraGraphics("Extra graphics");
-	ZUICheckButton lights("Lights");
-	ZUICheckButton brightmaps("Brightmaps");
-	ZUICheckButton widescreen("Widescreen");
-
-	ZUIHBox hboxButtons;
-
-	ZUIButtonBox bbox;
-	ZUIButton playButton("Play Game!", true);
-	ZUIButton exitButton("Exit", false);
-
-	window.AddWidget(&vbox);
-	vbox.PackStart(&label, false, false, 0);
-	vbox.PackStart(&scroll, true, true, 0);
-	vbox.PackEnd(&hboxButtons, false, false, 0);
-	vbox.PackEnd(&hboxOptions, false, false, 0);
-	hboxOptions.PackStart(&vboxVideo, false, false, 15);
-	hboxOptions.PackStart(&vboxMisc, true, false, 15);
-	hboxOptions.PackStart(&vboxExtra, false, false, 15);
-	vboxVideo.PackStart(&videoSettings, false, false, 0);
-	vboxVideo.PackStart(&opengl, false, false, 0);
-	vboxVideo.PackStart(&vulkan, false, false, 0);
-	vboxVideo.PackStart(&openglES, false, false, 0);
-	vboxVideo.PackStart(&fullscreen, false, false, 15);
-	vboxMisc.PackStart(&noautoload, false, false, 0);
-	vboxMisc.PackStart(&dontAskAgain, false, false, 0);
-	vboxExtra.PackStart(&extraGraphics, false, false, 0);
-	vboxExtra.PackStart(&lights, false, false, 0);
-	vboxExtra.PackStart(&brightmaps, false, false, 0);
-	vboxExtra.PackStart(&widescreen, false, false, 0);
-	hboxButtons.PackStart(&bbox, true, true, 0);
-	bbox.PackStart(&playButton, false, false, 0);
-	bbox.PackEnd(&exitButton, false, false, 0);
-
-	dontAskAgain.SetChecked(!showwin);
-
-	switch (vid_preferbackend)
-	{
-	case 0: opengl.SetChecked(true); break;
-	case 1: vulkan.SetChecked(true); break;
-	case 2: openglES.SetChecked(true); break;
-	default: break;
-	}
-
-	if (vid_fullscreen) fullscreen.SetChecked(true);
-
-	if (autoloadflags & 1) noautoload.SetChecked(true);
-	if (autoloadflags & 2) lights.SetChecked(true);
-	if (autoloadflags & 4) brightmaps.SetChecked(true);
-	if (autoloadflags & 8) widescreen.SetChecked(true);
-
-	int close_style = 0;
-	listview.ConnectButtonPress(&close_style);
-	listview.ConnectKeyPress(&window);
-	playButton.ConnectClickedOK(&close_style);
-	exitButton.ConnectClickedExit(&window);
-
-	playButton.GrabDefault();
-
-	window.RunModal();
-
-	if (close_style == 1)
-	{
-		int i = listview.GetSelectedIndex();
-
-		// Set state of queryiwad based on the checkbox.
-		queryiwad = !dontAskAgain.GetChecked();
-
-		if (opengl.GetChecked()) vid_preferbackend = 0;
-		if (vulkan.GetChecked()) vid_preferbackend = 1;
-		if (openglES.GetChecked()) vid_preferbackend = 2;
-
-		vid_fullscreen = fullscreen.GetChecked();
-
-		autoloadflags = 0;
-		if (noautoload.GetChecked()) autoloadflags |= 1;
-		if (lights.GetChecked()) autoloadflags |= 2;
-		if (brightmaps.GetChecked()) autoloadflags |= 4;
-		if (widescreen.GetChecked()) autoloadflags |= 8;
-
-		return i;
-	}
-	else
-	{
-		return -1;
-	}
-}
 
 static void ShowError(const char* errortext)
 {
@@ -620,11 +506,6 @@ static void ShowError(const char* errortext)
 }
 
 } // namespace Gtk
-
-int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
-{
-	return Gtk::PickIWad (wads, numwads, showwin, defaultiwad, autoloadflags);
-}
 
 void I_ShowFatalError_Gtk(const char* errortext) {
 	Gtk::ShowError(errortext);

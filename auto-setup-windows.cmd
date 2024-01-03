@@ -49,8 +49,8 @@ goto aftercopyright
 
 :aftercopyright
 
+setlocal enableextensions
 
-setlocal
 rem -- Always operate within the build folder
 if not exist "%~dp0\build" mkdir "%~dp0\build"
 pushd "%~dp0\build"
@@ -61,8 +61,8 @@ if not exist vcpkg git clone https://github.com/microsoft/vcpkg
 if exist zmusic if exist vcpkg\* git -C ./zmusic pull
 if not exist zmusic git clone https://github.com/zdoom/zmusic
 
-mkdir "%~dp0\build\zmusic\build"
-mkdir "%~dp0\build\vcpkg_installed"
+if not exist "%~dp0\build\zmusic\build" mkdir "%~dp0\build\zmusic\build"
+if not exist "%~dp0\build\vcpkg_installed" mkdir "%~dp0\build\vcpkg_installed"
 
 cmake -A x64 -S ./zmusic -B ./zmusic/build ^
 	-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ^
@@ -78,5 +78,5 @@ cmake -A x64 -S .. -B . ^
 cmake --build . --config RelWithDebInfo -- -maxcpucount -verbosity:minimal
 
 rem -- If successful, show the build
-if exist RelWithDebInfo\gzdoom.exe explorer.exe RelWithDebInfo
+if not errorlevel 1 if exist RelWithDebInfo\gzdoom.exe explorer.exe RelWithDebInfo
 

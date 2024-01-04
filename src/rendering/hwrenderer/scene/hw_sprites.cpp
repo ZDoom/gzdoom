@@ -427,7 +427,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			FQuaternion quat = FQuaternion::FromAngles(FAngle::fromDeg(270) - di->Viewpoint.HWAngles.Yaw, di->Viewpoint.HWAngles.Pitch, FAngle::fromDeg(0));
 			FVector3 sideVec = quat * FVector3(0, 1, 0);
 			FVector3 upVec = quat * FVector3(0, 0, 1);
-			FVector3 res = sideVec * -offx + upVec * offy;
+			FVector3 res = sideVec * -offx + upVec * -offy;
 			mat.Translate(res.X, res.Z, res.Y);
 		}
 

@@ -22,6 +22,9 @@ struct NetworkCommand native play version("4.12")
     native Name ReadName();
     native Vector2 ReadVector2();
     native Vector3 ReadVector3();
+    native void ReadIntArray(out Array<int> values, ENetCmd intSize = NET_LONG);
+    native void ReadFloatArray(out Array<double> values);
+    native void ReadStringArray(out Array<string> values, bool skipEmpty = false);
 }
 
 struct NetworkBuffer native version("4.12")
@@ -36,6 +39,9 @@ struct NetworkBuffer native version("4.12")
     native void AddName(Name value);
     native void AddVector2(Vector2 value);
     native void AddVector3(Vector3 value);
+    native void AddIntArray(Array<int> values, ENetCmd intSize = NET_LONG);
+    native void AddFloatArray(Array<double> values);
+    native void AddStringArray(Array<string> values);
 }
 
 struct RenderEvent native ui version("2.4")

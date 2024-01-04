@@ -934,6 +934,67 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector3)
 	ACTION_RETURN_VEC3(vec);
 }
 
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadIntArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<int>);
+	PARAM_INT(type)
+
+	unsigned int size = self->ReadLong();
+	for (unsigned int i = 0u; i < size; ++i)
+	{
+		switch (type)
+		{
+			case NET_BYTE:
+				values->Push(self->ReadByte());
+				break;
+
+			case NET_WORD:
+				values->Push(self->ReadWord());
+				break;
+
+			default:
+				values->Push(self->ReadLong());
+				break;
+		}
+	}
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloatArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<double>);
+
+	unsigned int size = self->ReadLong();
+	for (unsigned int i = 0u; i < size; ++i)
+		values->Push(self->ReadFloat());
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadStringArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<FString>);
+	PARAM_BOOL(skipEmpty);
+
+	unsigned int size = self->ReadLong();
+	for (unsigned int i = 0u; i < size; ++i)
+	{
+		FString res = {};
+		auto str = self->ReadString();
+		if (str != nullptr)
+			res = str;
+
+		if (!skipEmpty || !res.IsEmpty())
+			values->Push(res);
+	}
+
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddByte)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
@@ -1001,6 +1062,61 @@ DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddVector3)
 	self->AddFloat(x);
 	self->AddFloat(y);
 	self->AddFloat(z);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddIntArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_POINTER(values, TArray<int>);
+	PARAM_INT(type);
+
+	unsigned int size = values->Size();
+	self->AddLong(size);
+	for (unsigned int i = 0u; i < size; ++i)
+	{
+		switch (type)
+		{
+			case NET_BYTE:
+				self->AddByte((*values)[i]);
+				break;
+
+			case NET_WORD:
+				self->AddWord((*values)[i]);
+				break;
+
+			default:
+				self->AddLong((*values)[i]);
+				break;
+		}
+	}
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddFloatArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_POINTER(values, TArray<double>);
+
+	unsigned int size = values->Size();
+	self->AddLong(size);
+	for (unsigned int i = 0u; i < size; ++i)
+		self->AddFloat((*values)[i]);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddStringArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_POINTER(values, TArray<FString>);
+
+	unsigned int size = values->Size();
+	self->AddLong(size);
+	for (unsigned int i = 0u; i < size; ++i)
+		self->AddString((*values)[i]);
+
 	return 0;
 }
 

@@ -65,7 +65,7 @@
 #include "palutil.h"
 #include "st_start.h"
 #include "printf.h"
-#include "common/widgets/launcherwindow.h"
+#include "launcherwindow.h"
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();

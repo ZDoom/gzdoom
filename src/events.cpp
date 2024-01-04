@@ -45,6 +45,51 @@
 
 EventManager staticEventManager;
 
+static int ListGetInt(VMVa_List& tags)
+{
+	if (tags.curindex < tags.numargs)
+	{
+		if (tags.reginfo[tags.curindex] == REGT_FLOAT)
+			return static_cast<int>(tags.args[tags.curindex++].f);
+
+		if (tags.reginfo[tags.curindex] == REGT_INT)
+			return tags.args[tags.curindex++].i;
+
+		ThrowAbortException(X_OTHER, "Invalid parameter in network command function, int expected");
+	}
+
+	return TAG_DONE;
+}
+
+static double ListGetDouble(VMVa_List& tags)
+{
+	if (tags.curindex < tags.numargs)
+	{
+		if (tags.reginfo[tags.curindex] == REGT_FLOAT)
+			return tags.args[tags.curindex++].f;
+
+		if (tags.reginfo[tags.curindex] == REGT_INT)
+			return tags.args[tags.curindex++].i;
+
+		ThrowAbortException(X_OTHER, "Invalid parameter in network command function, float expected");
+	}
+
+	return TAG_DONE;
+}
+
+static const FString* ListGetString(VMVa_List& tags)
+{
+	if (tags.curindex < tags.numargs)
+	{
+		if (tags.reginfo[tags.curindex] == REGT_STRING)
+			return &tags.args[tags.curindex++].s();
+
+		ThrowAbortException(X_OTHER, "Invalid parameter in network command function, string expected");
+	}
+
+	return nullptr;
+}
+
 void EventManager::CallOnRegister()
 {
 	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
@@ -172,6 +217,92 @@ bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, 
 	Net_WriteLong(arg2);
 	Net_WriteLong(arg3);
 	Net_WriteByte(manual);
+
+	return true;
+}
+
+bool EventManager::SendNetworkCommand(int cmd, VMVa_List args)
+{
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+		return false;
+
+	// Calculate the size of the message so we know where it ends.
+	unsigned int bytes = 0u;
+	int tag = ListGetInt(args);
+	while (tag != TAG_DONE)
+	{
+		switch (tag)
+		{
+			case NET_BYTE:
+				++bytes;
+				break;
+
+			case NET_WORD:
+				bytes += 2u;
+				break;
+
+			case NET_LONG:
+			case NET_FLOAT:
+				bytes += 4u;
+				break;
+
+			case NET_STRING:
+				++bytes; // Strings will always consume at least one byte.
+				const FString* str = ListGetString(args);
+				if (str != nullptr)
+					bytes += str->Len();
+				break;
+		}
+
+		if (tag != NET_STRING)
+			++args.curindex;
+
+		tag = ListGetInt(args);
+	}
+
+	Net_WriteByte(DEM_ZSC_CMD);
+	Net_WriteLong(cmd); // Using a full int here to allow better prevention of overlapping command ids.
+	Net_WriteWord(bytes);
+
+	constexpr char Default[] = "";
+
+	args.curindex = 0;
+	tag = ListGetInt(args);
+	while (tag != TAG_DONE)
+	{
+		switch (tag)
+		{
+			default:
+				++args.curindex;
+				break;
+
+			case NET_BYTE:
+				Net_WriteByte(ListGetInt(args));
+				break;
+
+			case NET_WORD:
+				Net_WriteWord(ListGetInt(args));
+				break;
+
+			case NET_LONG:
+				Net_WriteLong(ListGetInt(args));
+				break;
+
+			case NET_FLOAT:
+				Net_WriteFloat(ListGetDouble(args));
+				break;
+
+			case NET_STRING:
+				const FString* str = ListGetString(args);
+				if (str != nullptr)
+					Net_WriteString(str->GetChars());
+				else
+					Net_WriteString(Default); // Still have to send something here to be read correctly.
+				break;
+		}
+
+		tag = ListGetInt(args);
+	}
 
 	return true;
 }
@@ -524,6 +655,14 @@ bool EventManager::Responder(const event_t* ev)
 	return false;
 }
 
+void EventManager::NetCommand(FNetworkCommand& cmd)
+{
+	if (ShouldCallStatic(false)) staticEventManager.NetCommand(cmd);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->NetCommandProcess(cmd);
+}
+
 void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui)
 {
 	if (ShouldCallStatic(false)) staticEventManager.Console(player, name, arg1, arg2, arg3, manual, ui);
@@ -673,6 +812,49 @@ DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacee)
 DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacement)
 DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, IsFinal)
 
+DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Player)
+DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Command)
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadByte)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_INT(self->ReadByte());
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadWord)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_INT(self->ReadWord());
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadLong)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_INT(self->ReadLong());
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_FLOAT(self->ReadFloat());
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	FString res = {};
+	auto str = self->ReadString();
+	if (str != nullptr)
+		res = str;
+
+	ACTION_RETURN_STRING(res);
+}
+
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
 	PARAM_SELF_PROLOGUE(DStaticEventHandler);
@@ -680,6 +862,16 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 
 	self->Order = order;
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkCommand)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(cmd);
+	PARAM_VA_POINTER(va_reginfo);
+
+	VMVa_List args = { param + 1, 0, numparam - 2, va_reginfo + 1 };
+	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkCommand(cmd, args));
 }
 
 DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
@@ -1175,6 +1367,20 @@ void DStaticEventHandler::PostUiTick()
 		if (isEmpty(func)) return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::NetCommandProcess(FNetworkCommand& cmd)
+{
+	IFVIRTUAL(DStaticEventHandler, NetworkCommandProcess)
+	{
+		if (isEmpty(func))
+			return;
+
+		VMValue params[] = { this, &cmd };
+		VMCall(func, params, 2, nullptr, 0);
+
+		cmd.Reset();
 	}
 }
 

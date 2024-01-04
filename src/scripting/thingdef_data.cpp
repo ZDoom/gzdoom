@@ -57,6 +57,7 @@
 #include "a_dynlight.h"
 #include "types.h"
 #include "dictionary.h"
+#include "events.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -806,6 +807,10 @@ void InitThingdef()
 	auto frp = NewStruct("FRailParams", nullptr);
 	frp->Size = sizeof(FRailParams);
 	frp->Align = alignof(FRailParams);
+
+	auto netcmdstruct = NewStruct("NetworkCommand", nullptr, true);
+	netcmdstruct->Size = sizeof(FNetworkCommand);
+	netcmdstruct->Align = alignof(FNetworkCommand);
 
 	auto fltd = NewStruct("FLineTraceData", nullptr);
 	fltd->Size = sizeof(FLineTraceData);

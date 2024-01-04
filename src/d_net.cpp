@@ -2705,6 +2705,21 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_ENDSCREENJOB:
 		EndScreenJob();
 		break;
+
+	case DEM_ZSC_CMD:
+		{
+			int cmd = ReadLong(stream);
+			unsigned int size = ReadWord(stream);
+
+			TArray<uint8_t> buffer = {};
+			buffer.Grow(size);
+			for (unsigned int i = 0u; i < size; ++i)
+				buffer.Push(ReadByte(stream));
+
+			FNetworkCommand netCmd = { player, cmd, buffer };
+			primaryLevel->localEventManager->NetCommand(netCmd);
+		}
+	break;
 		
 	default:
 		I_Error ("Unknown net command: %d", type);
@@ -2761,6 +2776,10 @@ void Net_SkipCommand (int type, uint8_t **stream)
 
 		case DEM_NETEVENT:
 			skip = strlen((char *)(*stream)) + 15;
+			break;
+
+		case DEM_ZSC_CMD:
+			skip = 6 + (((*stream)[4] << 8) | (*stream)[5]);
 			break;
 
 		case DEM_SUMMON2:

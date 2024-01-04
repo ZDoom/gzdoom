@@ -238,6 +238,7 @@ struct Line native play
 	native clearscope int Index() const;
 	native bool Activate(Actor activator, int side, int type);
 	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);
+	native bool, double, double GetMidTexturePosition (int side);
 	
 	clearscope int GetUDMFInt(Name nm) const
 	{

@@ -23,7 +23,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.action-games</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.12</string>
+	<string>10.13</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

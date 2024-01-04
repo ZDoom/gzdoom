@@ -1097,7 +1097,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						DVector2 pos = mobj->PosRelative(ld);
+						DVector2 pos = mobj->PosRelative(ld).XY();
 						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
 						if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
@@ -1108,7 +1108,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (ld->isLinePortal())
 						{
 							// Fixme: this still needs to figure out if the polyobject move made the player cross the portal line.
-							if (P_TryMove(mobj, mobj->Pos(), false))
+							if (P_TryMove(mobj, mobj->Pos().XY(), false))
 							{
 								continue;
 							}

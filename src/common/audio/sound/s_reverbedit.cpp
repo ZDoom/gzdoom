@@ -227,7 +227,7 @@ void ExportEnvironments(const char *filename, uint32_t count, const ReverbContai
 {
 	FString dest = M_GetDocumentsPath() + filename;
 
-	FileWriter *f = FileWriter::Open(dest);
+	FileWriter *f = FileWriter::Open(dest.GetChars());
 
 	if (f != nullptr)
 	{
@@ -509,13 +509,13 @@ CCMD(createenvironment)
 {
 	if (S_FindEnvironment(reverbedit_name))
 	{
-		M_StartMessage(FStringf("An environment with the name '%s' already exists", *reverbedit_name), 1);
+		M_StartMessage(FStringf("An environment with the name '%s' already exists", *reverbedit_name).GetChars(), 1);
 		return;
 	}
 	int id = (reverbedit_id1 << 8) + reverbedit_id2;
 	if (S_FindEnvironment(id))
 	{
-		M_StartMessage(FStringf("An environment with the ID (%d, %d) already exists", *reverbedit_id1, *reverbedit_id2), 1);
+		M_StartMessage(FStringf("An environment with the ID (%d, %d) already exists", *reverbedit_id1, *reverbedit_id2).GetChars(), 1);
 		return;
 	}
 

@@ -129,7 +129,7 @@ void DrawFullscreenSubtitle(FFont* font, const char *text)
 	y += 10;
 	for (const FBrokenLines &line : lines)
 	{
-		DrawText(twod, font, CR_UNTRANSLATED, x, y, line.Text,
+		DrawText(twod, font, CR_UNTRANSLATED, x, y, line.Text.GetChars(),
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 		y += font->GetHeight();
@@ -146,11 +146,11 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
 	if (!first && desc->mMusic.IsNotEmpty())
 	{
-		S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
+		S_ChangeMusic (desc->mMusic.GetChars(), desc->mMusicOrder, desc->mMusicLooping);
 	}
 	mDuration = desc->mDuration;
 
-	const char *texname = desc->mBackground;
+	const char *texname = desc->mBackground.GetChars();
 	if (*texname == '@')
 	{
 		char *pp;
@@ -184,7 +184,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mOverlays[i].x = desc->mOverlays[i].x;
 		mOverlays[i].y = desc->mOverlays[i].y;
 		mOverlays[i].mCondition = desc->mOverlays[i].mCondition;
-		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, ETextureType::MiscPatch);
+		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName.GetChars(), ETextureType::MiscPatch);
 	}
 	mTicker = 0;
 	mSubtitle = desc->mSubtitle;
@@ -201,11 +201,11 @@ void DIntermissionScreen::Start()
 	{
 		if (mMusic.IsEmpty())
 		{
-			S_ChangeMusic(gameinfo.finaleMusic, gameinfo.finaleOrder, mMusicLooping);
+			S_ChangeMusic(gameinfo.finaleMusic.GetChars(), gameinfo.finaleOrder, mMusicLooping);
 		}
 		else
 		{
-			S_ChangeMusic(mMusic, mMusicOrder, mMusicLooping);
+			S_ChangeMusic(mMusic.GetChars(), mMusicOrder, mMusicLooping);
 		}
 	}
 }
@@ -261,7 +261,7 @@ void DIntermissionScreen::Drawer ()
 			DrawTexture(twod, mOverlays[i].mPic, false, mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	FFont* font = generic_ui ? NewSmallFont : SmallFont;
-	DrawFullscreenSubtitle(font, mSubtitle);
+	DrawFullscreenSubtitle(font, mSubtitle.GetChars());
 }
 
 void DIntermissionScreen::OnDestroy()
@@ -488,7 +488,7 @@ void DIntermissionScreenText::Drawer ()
 void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
-	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
+	mName = static_cast<FIntermissionActionCast*>(desc)->mName.GetChars();
 	mClass = PClass::FindActor(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
 	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
 	else
@@ -514,8 +514,8 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	else
 	{
 		advplayerstate = NULL;
-		casttranslation = 0;
-		if (mDefaults->Translation != 0)
+		casttranslation = NO_TRANSLATION;
+		if (mDefaults->Translation != NO_TRANSLATION)
 		{
 			casttranslation = mDefaults->Translation;
 		}
@@ -707,7 +707,7 @@ void DIntermissionScreenCast::Drawer ()
 			DTA_DestWidthF, pic->GetDisplayWidth() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
 			DTA_Alpha, mDefaults->Alpha,
-			DTA_TranslationIndex, casttranslation,
+			DTA_TranslationIndex, casttranslation.index(),
 			TAG_DONE);
 	}
 }
@@ -722,7 +722,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mFirstPic = mBackground;
-	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic, ETextureType::MiscPatch);
+	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic.GetChars(), ETextureType::MiscPatch);
 	mScrollDelay = static_cast<FIntermissionActionScroller*>(desc)->mScrollDelay;
 	mScrollTime = static_cast<FIntermissionActionScroller*>(desc)->mScrollTime;
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;

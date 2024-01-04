@@ -432,7 +432,7 @@ namespace swrenderer
 		}
 	}
 
-	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, const ColormapLight &light)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, FTranslationID translation, uint32_t color, const ColormapLight &light)
 	{
 		if (light.BaseColormap)
 			SetLight(light);
@@ -466,19 +466,16 @@ namespace swrenderer
 			alpha = clamp<fixed_t>(alpha, 0, OPAQUE);
 		}
 		
-		if (translation != -1)
+		SetTranslationMap(nullptr);
+		if (translation != NO_TRANSLATION)
 		{
-			SetTranslationMap(nullptr);
-			if (translation != 0)
+			FRemapTable *table = GPalette.TranslationToTable(translation);
+			if (table != NULL)
 			{
-				FRemapTable *table = GPalette.TranslationToTable(translation);
-				if (table != NULL && !table->Inactive)
-				{
-					if (viewport->RenderTarget->IsBgra())
-						SetTranslationMap((uint8_t*)table->Palette);
-					else
-						SetTranslationMap(table->Remap);
-				}
+				if (viewport->RenderTarget->IsBgra())
+					SetTranslationMap((uint8_t*)table->Palette);
+				else
+					SetTranslationMap(table->Remap);
 			}
 		}
 
@@ -547,7 +544,7 @@ namespace swrenderer
 		return SpriteDrawerArgs::SetBlendFunc(style.BlendOp, fglevel, bglevel, style.Flags);
 	}
 
-	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, const ColormapLight &light)
+	bool SpriteDrawerArgs::SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, FTranslationID translation, uint32_t color, const ColormapLight &light)
 	{
 		return SetStyle(viewport, style, FLOAT2FIXED(alpha), translation, color, light);
 	}

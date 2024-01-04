@@ -64,6 +64,7 @@ enum
 	ZCC_VirtualScope	= 1 << 20,
 	ZCC_Version			= 1 << 21,
 	ZCC_Internal		= 1 << 22,
+	ZCC_Sealed			= 1 << 23,
 };
 
 // Function parameter modifiers
@@ -100,6 +101,8 @@ enum EZCCTreeNodeType
 	AST_MapType,
 	AST_MapIteratorType,
 	AST_DynArrayType,
+	AST_FuncPtrParamDecl,
+	AST_FuncPtrType,
 	AST_ClassType,
 	AST_Expression,
 	AST_ExprID,
@@ -135,12 +138,16 @@ enum EZCCTreeNodeType
 	AST_VectorValue,
 	AST_DeclFlags,
 	AST_ClassCast,
+	AST_FunctionPtrCast,
 	AST_StaticArrayStatement,
 	AST_Property,
 	AST_FlagDef,
 	AST_MixinDef,
 	AST_MixinStmt,
 	AST_ArrayIterationStmt,
+	AST_TwoArgIterationStmt,
+	AST_ThreeArgIterationStmt,
+	AST_TypedIterationStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -251,6 +258,7 @@ struct ZCC_Class : ZCC_Struct
 {
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
+	ZCC_Identifier *Sealed;
 
 	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
 };
@@ -380,6 +388,19 @@ struct ZCC_DynArrayType : ZCC_Type
 	ZCC_Type *ElementType;
 };
 
+struct ZCC_FuncPtrParamDecl : ZCC_TreeNode
+{
+	ZCC_Type *Type;
+	int Flags;
+};
+
+struct ZCC_FuncPtrType : ZCC_Type
+{
+	ZCC_Type *RetType;
+	ZCC_FuncPtrParamDecl *Params;
+	int Scope;
+};
+
 struct ZCC_ClassType : ZCC_Type
 {
 	ZCC_Identifier *Restriction;
@@ -424,6 +445,12 @@ struct ZCC_ClassCast : ZCC_Expression
 {
 	ENamedName ClassName;
 	ZCC_FuncParm *Parameters;
+};
+
+struct ZCC_FunctionPtrCast : ZCC_Expression
+{
+	ZCC_FuncPtrType *PtrType;
+	ZCC_Expression *Expr;
 };
 
 struct ZCC_ExprMemberAccess : ZCC_Expression
@@ -505,6 +532,31 @@ struct ZCC_ArrayIterationStmt : ZCC_Statement
 {
 	ZCC_VarName* ItName;
 	ZCC_Expression* ItArray;
+	ZCC_Statement* LoopStatement;
+};
+
+struct ZCC_TwoArgIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItKey;
+	ZCC_VarName* ItValue;
+	ZCC_Expression* ItMap;
+	ZCC_Statement* LoopStatement;
+};
+
+struct ZCC_ThreeArgIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItVar;
+	ZCC_VarName* ItPos;
+	ZCC_VarName* ItFlags;
+	ZCC_Expression* ItBlock;
+	ZCC_Statement* LoopStatement;
+};
+
+struct ZCC_TypedIterationStmt : ZCC_Statement
+{
+	ZCC_VarName* ItType;
+	ZCC_VarName* ItVar;
+	ZCC_Expression* ItExpr;
 	ZCC_Statement* LoopStatement;
 };
 

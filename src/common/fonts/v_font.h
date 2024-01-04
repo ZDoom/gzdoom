@@ -37,6 +37,7 @@
 #include "vectors.h"
 #include "palentry.h"
 #include "name.h"
+#include "palettecontainer.h"
 
 class FGameTexture;
 struct FRemapTable;
@@ -104,7 +105,7 @@ public:
 
 	virtual FGameTexture *GetChar (int code, int translation, int *const width) const;
 	virtual int GetCharWidth (int code) const;
-	int GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
+	FTranslationID GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
@@ -197,7 +198,7 @@ protected:
 		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
-	TArray<int> Translations;
+	TArray<FTranslationID> Translations;
 
 	int Lump;
 	FName FontName = NAME_None;
@@ -219,7 +220,7 @@ PalEntry V_LogColorFromColorRange (EColorRange range);
 EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int boldcolor);
 void V_InitFontColors();
 char* CleanseString(char* str);
-void V_ApplyLuminosityTranslation(int translation, uint8_t* pixel, int size);
+void V_ApplyLuminosityTranslation(const LuminosityTranslationDesc& lum, uint8_t* pixel, int size);
 void V_LoadTranslations();
 class FBitmap;
 

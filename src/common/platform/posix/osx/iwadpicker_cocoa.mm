@@ -86,13 +86,13 @@ static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 	for(int i = 0;i < numwads;i++)
 	{
 		NSMutableDictionary *record = [[NSMutableDictionary alloc] initWithCapacity:NUM_COLUMNS];
-		const char* filename = strrchr(wads[i].Path, '/');
+		const char* filename = strrchr(wads[i].Path.GetChars(), '/');
 		if(filename == NULL)
-			filename = wads[i].Path;
+			filename = wads[i].Path.GetChars();
 		else
 			filename++;
 		[record setObject:[NSString stringWithUTF8String:filename] forKey:[NSString stringWithUTF8String:tableHeaders[COLUMN_IWAD]]];
-		[record setObject:[NSString stringWithUTF8String:wads[i].Name] forKey:[NSString stringWithUTF8String:tableHeaders[COLUMN_GAME]]];
+		[record setObject:[NSString stringWithUTF8String:wads[i].Name.GetChars()] forKey:[NSString stringWithUTF8String:tableHeaders[COLUMN_GAME]]];
 		[data addObject:record];
 		[record release];
 	}
@@ -397,9 +397,9 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 		[arguments addObject:GetArchitectureString()];
 		[arguments addObject:executablePath];
 		[arguments addObject:@"-iwad"];
-		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
+		[arguments addObject:[NSString stringWithUTF8String:wad.Path.GetChars()]];
 		[arguments addObject:@"+defaultiwad"];
-		[arguments addObject:[NSString stringWithUTF8String:wad.Name]];
+		[arguments addObject:[NSString stringWithUTF8String:wad.Name.GetChars()]];
 		[arguments addObject:cvarArgument];
 
 		for (int i = 1, count = Args->NumArgs(); i < count; ++i)

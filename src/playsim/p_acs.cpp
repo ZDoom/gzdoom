@@ -979,7 +979,7 @@ int ACSStringPool::AddString(FString &str)
 {
 	unsigned int h = SuperFastHash(str.GetChars(), str.Len());
 	unsigned int bucketnum = h % NUM_BUCKETS;
-	int i = FindString(str, str.Len(), h, bucketnum);
+	int i = FindString(str.GetChars(), str.Len(), h, bucketnum);
 	if (i >= 0)
 	{
 		return i | STRPOOL_LIBRARYID_OR;
@@ -999,7 +999,7 @@ const char *ACSStringPool::GetString(int strnum)
 	strnum &= ~LIBRARYID_MASK;
 	if ((unsigned)strnum < Pool.Size() && Pool[strnum].Next != FREE_ENTRY)
 	{
-		return Pool[strnum].Str;
+		return Pool[strnum].Str.GetChars();
 	}
 	return NULL;
 }
@@ -1299,7 +1299,7 @@ void ACSStringPool::ReadStrings(FSerializer &file, const char *key)
 						file("string", Pool[ii].Str)
 							("locks", Pool[ii].Locks);
 
-						unsigned h = SuperFastHash(Pool[ii].Str, Pool[ii].Str.Len());
+						unsigned h = SuperFastHash(Pool[ii].Str.GetChars(), Pool[ii].Str.Len());
 						unsigned bucketnum = h % NUM_BUCKETS;
 						Pool[ii].Hash = h;
 						Pool[ii].Next = PoolBuckets[bucketnum];
@@ -1595,7 +1595,7 @@ static void WriteArrayVars (FSerializer &file, FWorldGlobalArray *vars, unsigned
 					FString arraykey;
 
 					arraykey.Format("%d", i);
-					if (file.BeginObject(arraykey))
+					if (file.BeginObject(arraykey.GetChars()))
 					{
 						FWorldGlobalArray::ConstIterator it(vars[i]);
 						const FWorldGlobalArray::Pair *pair;
@@ -3248,7 +3248,7 @@ const char *FBehavior::LookupString (uint32_t index, bool forprint) const
 			token.Truncate(5);
 
 			FStringf label("TXT_ACS_%s_%d_%.5s", Level->MapName.GetChars(), index, token.GetChars());
-			auto p = GStrings[label];
+			auto p = GStrings[label.GetChars()];
 			if (p) return p;
 		}
 
@@ -6093,7 +6093,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				{
 					newlen = oldlen - pos;
 				}
-				return GlobalACSStrings.AddString(FString(oldstr + pos, newlen));
+				return GlobalACSStrings.AddString(FString(oldstr + pos, newlen).GetChars());
 			}
 			break;
 
@@ -6674,7 +6674,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			auto a = Level->SingleActorFromTID(args[0], activator);
 			if (a != nullptr)
 			{
-				return GlobalACSStrings.AddString(TexMan.GetGameTexture(a->floorpic)->GetName());
+				return GlobalACSStrings.AddString(TexMan.GetGameTexture(a->floorpic)->GetName().GetChars());
 			}
 			else
 			{
@@ -8729,7 +8729,7 @@ scriptwait:
 				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
 					screen->CheckLocalView())
 				{
-					C_MidPrint (activefont, work, pcd == PCD_ENDPRINTBOLD && (gameinfo.correctprintbold || (Level->flags2 & LEVEL2_HEXENHACK)));
+					C_MidPrint (activefont, work.GetChars(), pcd == PCD_ENDPRINTBOLD && (gameinfo.correctprintbold || (Level->flags2 & LEVEL2_HEXENHACK)));
 				}
 				STRINGBUILDER_FINISH(work);
 			}
@@ -8784,13 +8784,13 @@ scriptwait:
 					{
 					default:	// normal
 						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
-						msg = Create<DHUDMessage> (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
+						msg = Create<DHUDMessage> (activefont, work.GetChars(), x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
-							msg = Create<DHUDMessageFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
+							msg = Create<DHUDMessageFadeOut> (activefont, work.GetChars(), x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
@@ -8798,7 +8798,7 @@ scriptwait:
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
-							msg = Create<DHUDMessageTypeOnFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+							msg = Create<DHUDMessageTypeOnFadeOut> (activefont, work.GetChars(), x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
@@ -8806,7 +8806,7 @@ scriptwait:
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
-							msg = Create<DHUDMessageFadeInOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
+							msg = Create<DHUDMessageFadeInOut> (activefont, work.GetChars(), x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
@@ -10504,7 +10504,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 
 int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
-	if (map == NULL || 0 == strnicmp (Level->MapName, map, 8))
+	if (map == NULL || 0 == strnicmp (Level->MapName.GetChars(), map, 8))
 	{
 		FBehavior *module = NULL;
 		const ScriptPtr *scriptdata;
@@ -10559,7 +10559,7 @@ int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, 
 
 void P_SuspendScript (FLevelLocals *Level, int script, const char *map)
 {
-	if (strnicmp (Level->MapName, map, 8))
+	if (strnicmp (Level->MapName.GetChars(), map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defsuspend, script, NULL, 0, NULL);
 	else
 		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_Suspended);
@@ -10567,7 +10567,7 @@ void P_SuspendScript (FLevelLocals *Level, int script, const char *map)
 
 void P_TerminateScript (FLevelLocals *Level, int script, const char *map)
 {
-	if (strnicmp (Level->MapName, map, 8))
+	if (strnicmp (Level->MapName.GetChars(), map, 8))
 		addDefered (FindLevelInfo (map), acsdefered_t::defterminate, script, NULL, 0, NULL);
 	else
 		SetScriptState (Level->ACSThinker, script, DLevelScript::SCRIPT_PleaseRemove);
@@ -10741,7 +10741,7 @@ static int sort_by_runs(const void *a_, const void *b_)
 	return b->ProfileData->NumRuns - a->ProfileData->NumRuns;
 }
 
-static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
+static void ShowProfileData(TArray<ProfileCollector> &profiles, int ilimit,
 	int (*sorter)(const void *, const void *), bool functions)
 {
 	static const char *const typelabels[2] = { "script", "function" };
@@ -10759,7 +10759,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, long ilimit,
 
 	if (ilimit > 0)
 	{
-		Printf(TEXTCOLOR_ORANGE "Top %ld %ss:\n", ilimit, typelabels[functions]);
+		Printf(TEXTCOLOR_ORANGE "Top %lld %ss:\n", ilimit, typelabels[functions]);
 		limit = (unsigned int)ilimit;
 	}
 	else
@@ -10825,7 +10825,7 @@ void ACSProfile(FLevelLocals *Level, FCommandLine &argv)
 	static const uint8_t sort_match_len[] = {   1,     2,     2,     1,      1 };
 
 		TArray<ProfileCollector> ScriptProfiles, FuncProfiles;
-		long limit = 10;
+		int limit = 10;
 	int (*sorter)(const void *, const void *) = sort_by_total_instr;
 
 	assert(countof(sort_names) == countof(sort_match_len));
@@ -10847,7 +10847,7 @@ void ACSProfile(FLevelLocals *Level, FCommandLine &argv)
 		{
 			// If it's a number, set the display limit.
 			char *endptr;
-			long num = strtol(argv[i], &endptr, 0);
+			int num = (int)strtoll(argv[i], &endptr, 0);
 			if (endptr != argv[i])
 			{
 				limit = num;

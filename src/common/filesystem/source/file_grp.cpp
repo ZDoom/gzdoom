@@ -33,7 +33,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_swap.h"
 
 namespace FileSys {
@@ -67,60 +67,37 @@ struct GrpLump
 
 //==========================================================================
 //
-// Build GRP file
-//
-//==========================================================================
-
-class FGrpFile : public FUncompressedFile
-{
-public:
-	FGrpFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// Initializes a Build GRP file
-//
-//==========================================================================
-
-FGrpFile::FGrpFile(const char *filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
-{
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FGrpFile::Open(LumpFilterInfo* filter)
+static bool OpenGrp(FResourceFile* file, LumpFilterInfo* filter)
 {
 	GrpHeader header;
 
-	Reader.Read(&header, sizeof(header));
-	NumLumps = LittleLong(header.NumLumps);
+	auto Reader = file->GetContainerReader();
+	Reader->Read(&header, sizeof(header));
+	uint32_t NumLumps = LittleLong(header.NumLumps);
+	auto Entries = file->AllocateEntries(NumLumps);
 
 	GrpLump *fileinfo = new GrpLump[NumLumps];
-	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
-
-	Lumps.Resize(NumLumps);
+	Reader->Read (fileinfo, NumLumps * sizeof(GrpLump));
 
 	int Position = sizeof(GrpHeader) + NumLumps * sizeof(GrpLump);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
-		Lumps[i].Owner = this;
-		Lumps[i].Position = Position;
-		Lumps[i].LumpSize = LittleLong(fileinfo[i].Size);
+		Entries[i].Position = Position;
+		Entries[i].CompressedSize = Entries[i].Length = LittleLong(fileinfo[i].Size);
 		Position += fileinfo[i].Size;
-		Lumps[i].Flags = 0;
+		Entries[i].Flags = 0;
+		Entries[i].Namespace = ns_global;
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
-		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero, stringpool);
+		Entries[i].ResourceID = -1;
+		Entries[i].Method = METHOD_STORED;
+		Entries[i].FileName = file->NormalizeFileName(fileinfo[i].Name);
 	}
-	GenerateHash();
+	file->GenerateHash();
 	delete[] fileinfo;
 	return true;
 }
@@ -143,14 +120,12 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
-			auto rf = new FGrpFile(filename, file, sp);
-			if (rf->Open(filter)) return rf;
-
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			auto rf = new FResourceFile(filename, file, sp);
+			if (OpenGrp(rf, filter)) return rf;
+			file = rf->Destroy();
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 }

@@ -307,9 +307,9 @@ namespace swrenderer
 		vis.yscale = float(pspriteyscale / stex->GetScale().Y);
 		vis.pic = stex;
 
-		uint32_t trans = pspr->GetTranslation() != 0 ? pspr->GetTranslation() : 0;
-		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) trans = owner->Translation;
-		vis.Translation = trans;
+		auto itrans = pspr->GetTranslation();
+		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) itrans = owner->Translation;
+		vis.Translation = itrans;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
@@ -432,7 +432,7 @@ namespace swrenderer
 				accelSprite.x1 = x1;
 				accelSprite.flip = vis.xiscale < 0;
 
-				accelSprite.Translation = trans;
+				accelSprite.Translation = itrans;
 
 				if (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
 					vis.Light.BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
@@ -468,7 +468,7 @@ namespace swrenderer
 				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),
 				DTA_DestHeightF, sprite.pic->GetHeight() * sprite.yscale,
-				DTA_TranslationIndex, sprite.Translation,
+				DTA_TranslationIndex, sprite.Translation.index(),
 				DTA_FlipX, sprite.flip,
 				DTA_TopOffset, 0,
 				DTA_LeftOffset, 0,

@@ -28,8 +28,8 @@ namespace swrenderer
 	public:
 		SpriteDrawerArgs();
 
-		bool SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, const ColormapLight &light);
-		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, const ColormapLight &light);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, FTranslationID translation, uint32_t color, const ColormapLight &light);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, FTranslationID translation, uint32_t color, const ColormapLight &light);
 		void SetSolidColor(int color) { dc_color = color; dc_color_bgra = GPalette.BaseColors[color]; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 

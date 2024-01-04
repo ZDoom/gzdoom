@@ -87,6 +87,8 @@
 #include "i_interface.h"
 #include "i_mainwindow.h"
 
+#include "common/widgets/launcherwindow.h"
+
 // MACROS ------------------------------------------------------------------
 
 #ifdef _MSC_VER
@@ -128,7 +130,7 @@ double PerfToSec, PerfToMillisec;
 
 UINT TimerPeriod;
 
-int sys_ostype = 0;
+const char* sys_ostype = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -168,12 +170,10 @@ void I_DetectOS(void)
 			if (info.dwMinorVersion == 0)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "Vista" : "Server 2008";
-				sys_ostype = 2; // legacy OS
 			}
 			else if (info.dwMinorVersion == 1)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "7" : "Server 2008 R2";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 2)	
 			{
@@ -181,12 +181,10 @@ void I_DetectOS(void)
 				// the highest version of Windows you support, which will also be the
 				// highest version of Windows this function returns.
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8" : "Server 2012";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 3)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8.1" : "Server 2012 R2";
-				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 4)
 			{
@@ -196,7 +194,6 @@ void I_DetectOS(void)
 		else if (info.dwMajorVersion == 10)
 		{
 			osname = (info.wProductType == VER_NT_WORKSTATION) ? (info.dwBuildNumber >= 22000 ? "11 (or higher)" : "10") : "Server 2016 (or higher)";
-			sys_ostype = 3; // modern OS
 		}
 		break;
 
@@ -209,6 +206,8 @@ void I_DetectOS(void)
 			osname,
 			info.dwMajorVersion, info.dwMinorVersion,
 			info.dwBuildNumber, info.szCSDVersion);
+
+	sys_ostype = osname;
 }
 
 //==========================================================================
@@ -412,9 +411,9 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
-			const char *filepart = strrchr(WadList[i].Path, '/');
+			const char *filepart = strrchr(WadList[i].Path.GetChars(), '/');
 			if (filepart == NULL)
-				filepart = WadList[i].Path;
+				filepart = WadList[i].Path.GetChars();
 			else
 				filepart++;
 
@@ -496,12 +495,15 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& 
 	}
 	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
 	{
+		/*
 		WadList = wads;
 		NumWads = numwads;
 		DefaultWad = defaultiwad;
 
 		return (int)DialogBox(g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
 			(HWND)mainwindow.GetHandle(), (DLGPROC)IWADBoxCallback);
+		*/
+		return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags);
 	}
 	return defaultiwad;
 }
@@ -853,37 +855,6 @@ FString I_GetLongPathName(const FString &shortpath)
 	return longpath;
 }
 
-#ifdef _USING_V110_SDK71_
-//==========================================================================
-//
-// _stat64i32
-//
-// Work around an issue where stat() function doesn't work 
-// with Windows XP compatible toolset.
-// It uses GetFileInformationByHandleEx() which requires Windows Vista.
-//
-//==========================================================================
-
-int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
-{
-	WIN32_FILE_ATTRIBUTE_DATA data;
-	if(!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
-		return -1;
-
-	buffer->st_ino = 0;
-	buffer->st_mode = ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR : S_IFREG)|
-	                  ((data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD|S_IWRITE);
-	buffer->st_dev = buffer->st_rdev = 0;
-	buffer->st_nlink = 1;
-	buffer->st_uid = 0;
-	buffer->st_gid = 0;
-	buffer->st_size = data.nFileSizeLow;
-	buffer->st_atime = (*(uint64_t*)&data.ftLastAccessTime) / 10000000 - 11644473600LL;
-	buffer->st_mtime = (*(uint64_t*)&data.ftLastWriteTime) / 10000000 - 11644473600LL;
-	buffer->st_ctime = (*(uint64_t*)&data.ftCreationTime) / 10000000 - 11644473600LL;
-	return 0;
-}
-#endif
 
 struct NumaNode
 {

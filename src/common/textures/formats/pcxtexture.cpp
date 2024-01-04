@@ -161,7 +161,7 @@ void FPCXTexture::ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	uint8_t rle_value = 0;
 
 	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp.data();
+	const uint8_t * src = srcp.bytes();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -211,7 +211,7 @@ void FPCXTexture::ReadPCX4bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	TArray<uint8_t> colorIndex(Width, true);
 
 	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp.data();
+	const uint8_t * src = srcp.bytes();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -265,7 +265,7 @@ void FPCXTexture::ReadPCX8bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 	int y, bytes;
 
 	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp.data();
+	const uint8_t * src = srcp.bytes();
 
 	for (y = 0; y < Height; ++y)
 	{
@@ -306,7 +306,7 @@ void FPCXTexture::ReadPCX24bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr
 	int bytes;
 
 	auto srcp = lump.Read(lump.GetLength() - sizeof(PCXHeader));
-	uint8_t * src = srcp.data();
+	const uint8_t * src = srcp.bytes();
 
 	for (y = 0; y < Height; ++y)
 	{

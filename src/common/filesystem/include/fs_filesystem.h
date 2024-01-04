@@ -22,42 +22,6 @@ union LumpShortName
 };
 
 
-// A lump in memory.
-class FileData
-{
-public:
-	FileData() { lump = nullptr; }
-	const void *GetMem () { return lump->Cache; }
-	size_t GetSize () { return lump->LumpSize; }
-	const char* GetString () const { return (const char*)lump->Cache; }
-	const uint8_t* GetBytes() const { return (const uint8_t*)lump->Cache; }
-
-	FileData& operator = (const FileData& copy) = delete;
-
-	FileData(const FileData& copy)
-	{
-		lump = copy.lump;
-		lump->Lock();
-	}
-
-	~FileData()
-	{
-		if (lump) lump->Unlock();
-	}
-
-
-private:
-	FileData(FResourceLump* nlump)
-	{
-		lump = nlump;
-		if (lump) lump->Lock();
-	}
-
-	FResourceLump* lump;
-
-	friend class FileSystem;
-};
-
 struct FolderEntry
 {
 	const char *name;
@@ -129,9 +93,19 @@ public:
 	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
 	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
 
-	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
-	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
+	FileReader OpenFileReader(int lump, int readertype, int readerflags);		// opens a reader that redirects to the containing file's one.
 	FileReader OpenFileReader(const char* name);
+	FileReader ReopenFileReader(const char* name, bool alwayscache = false);
+	FileReader OpenFileReader(int lump)
+	{
+		return OpenFileReader(lump, READER_SHARED, READERFLAG_SEEKABLE);
+	}
+
+	FileReader ReopenFileReader(int lump, bool alwayscache = false)
+	{
+		return OpenFileReader(lump, alwayscache ? READER_CACHED : READER_NEW, READERFLAG_SEEKABLE);
+	}
+
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
@@ -145,8 +119,7 @@ public:
 
 	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
 
-	int FileLength (int lump) const;
-	int GetFileOffset (int lump);					// [RH] Returns offset of lump in the wadfile
+	ptrdiff_t FileLength (int lump) const;
 	int GetFileFlags (int lump);					// Return the flags for this lump
 	const char* GetFileShortName(int lump) const;
 	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
@@ -169,12 +142,9 @@ public:
 		return (int)Files.size();
 	}
 
-	void AddLump(FResourceLump* lump);
-	int AddExternalFile(const char *filename);
-	int AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags);
+	int AddFromBuffer(const char* name, char* data, int size, int id, int flags);
 	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 	void InitHashChains();
-	FResourceLump* GetFileAt(int no);
 
 protected:
 

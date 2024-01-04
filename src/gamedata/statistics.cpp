@@ -202,7 +202,7 @@ int compare_episode_names(const void *a, const void *b)
 	FStatistics *A = (FStatistics*)a;
 	FStatistics *B = (FStatistics*)b;
 
-	return strnatcasecmp(A->epi_header, B->epi_header);
+	return strnatcasecmp(A->epi_header.GetChars(), B->epi_header.GetChars());
 }
 
 int compare_dates(const void *a, const void *b)
@@ -291,7 +291,7 @@ static FStatistics *GetStatisticsList(TArray<FStatistics> &statlist, const char 
 {
 	for(unsigned int i=0;i<statlist.Size();i++)
 	{
-		if (!stricmp(section, statlist[i].epi_header)) 
+		if (!stricmp(section, statlist[i].epi_header.GetChars()))
 		{
 			return &statlist[i];
 		}
@@ -385,7 +385,7 @@ int compare_level_names(const void* a, const void* b)
 	OneLevel* A = (OneLevel*)a;
 	OneLevel* B = (OneLevel*)b;
 
-	return strnatcasecmp(A->Levelname, B->Levelname);
+	return strnatcasecmp(A->Levelname.GetChars(), B->Levelname.GetChars());
 }
 
 
@@ -458,7 +458,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 		{
 			// we reached the end of this episode
 			int wad = 0;
-			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap, false);
+			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap.GetChars(), false);
 			if (map != NULL)
 			{
 				wad = fileSystem.GetFileContainer(map->lumpnum);
@@ -468,9 +468,9 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			FString section = ExtractFileBase(name) + "." + StartEpisode->mEpisodeMap;
 			section.ToUpper();
 
-			const char *ep_name = StartEpisode->mEpisodeName;
+			const char *ep_name = StartEpisode->mEpisodeName.GetChars();
 			if (*ep_name == '$') ep_name = GStrings(ep_name+1);
-			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section, ep_name);
+			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section.GetChars(), ep_name);
 
 			int statvals[6] = {0,0,0,0,0,0};
 			FString infostring;
@@ -486,7 +486,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			}
 
 			infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], statvals[4], statvals[5], validlevels);
-			FSessionStatistics *es = StatisticsEntry(sl, infostring, Level->totaltime);
+			FSessionStatistics *es = StatisticsEntry(sl, infostring.GetChars(), Level->totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
@@ -495,7 +495,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 				infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d",
 					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].itemcount, LevelData[i].totalitems, LevelData[i].secretcount, LevelData[i].totalsecrets);
 
-				LevelStatEntry(es, lsection, infostring, LevelData[i].leveltime);
+				LevelStatEntry(es, lsection.GetChars(), infostring.GetChars(), LevelData[i].leveltime);
 			}
 			SaveStatistics(statfile, EpisodeStatistics);
 		}

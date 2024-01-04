@@ -158,7 +158,7 @@ namespace OpenGLESRenderer
 		Printf(PRINT_LOG, "GL_EXTENSIONS:\n");
 		for (unsigned i = 0; i < m_Extensions.Size(); i++)
 		{
-			Printf(" %s\n", m_Extensions[i].GetChars());
+			Printf(PRINT_LOG, " %s\n", m_Extensions[i].GetChars());
 		}
 		const char* glVersionStr = (const char*)glGetString(GL_VERSION);
 		double glVersion = strtod(glVersionStr, NULL);

@@ -379,6 +379,11 @@ public:
 		return PointInSubsector(pos.X, pos.Y)->sector;
 	}
 
+	sector_t* PointInSector(const DVector3& pos)
+	{
+		return PointInSubsector(pos.X, pos.Y)->sector;
+	}
+
 	sector_t *PointInSector(double x, double y)
 	{
 		return PointInSubsector(x, y)->sector;
@@ -389,6 +394,11 @@ public:
 		return PointInRenderSubsector(FloatToFixed(pos.X), FloatToFixed(pos.Y));
 	}
 
+	subsector_t* PointInRenderSubsector(const DVector3& pos)
+	{
+		return PointInRenderSubsector(FloatToFixed(pos.X), FloatToFixed(pos.Y));
+	}
+	
 	FPolyObj *GetPolyobj (int polyNum)
 	{
 		auto index = Polyobjects.FindEx([=](const auto &poly) { return poly.tag == polyNum; });
@@ -417,6 +427,8 @@ public:
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
+		if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker))) // [MC] This absolutely must happen for this class!
+			statnum = STAT_VISUALTHINKER;
 		Thinkers.Link(thinker, statnum);
 		thinker->Level = this;
 		return thinker;
@@ -632,6 +644,7 @@ public:
 	double		sky1pos, sky2pos;
 	float		hw_sky1pos, hw_sky2pos;
 	bool		skystretch;
+	uint32_t	globalcolormap;
 
 	int			total_secrets;
 	int			found_secrets;
@@ -654,7 +667,7 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with PS_REPLACE
+	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with SPF_REPLACE
 	uint32_t			ActiveParticles;
 	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;
@@ -873,7 +886,7 @@ inline bool line_t::hitSkyWall(AActor* mo) const
 {
 	return backsector &&
 		backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this));
+		mo->Z() >= backsector->ceilingplane.ZatPoint(mo->PosRelative(this).XY());
 }
 
 // This must later be extended to return an array with all levels.

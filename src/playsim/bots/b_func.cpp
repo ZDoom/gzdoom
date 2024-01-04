@@ -541,7 +541,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	Level->BotInfo.SetBodyAt(Level, DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	Level->BotInfo.SetBodyAt(Level, DVector3((enemy->Pos().XY() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, Level->BotInfo.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile

@@ -56,10 +56,10 @@ TArray<int> LevelAABBTree::FindNodePath(unsigned int line, unsigned int node)
 double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
 {
 	// Precalculate some of the variables used by the ray/line intersection test
-	DVector2 raydelta = ray_end - ray_start;
+	DVector2 raydelta = (ray_end - ray_start).XY();
 	double raydist2 = raydelta | raydelta;
 	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
-	double rayd = raynormal | ray_start;
+	double rayd = raynormal | ray_start.XY();
 	if (raydist2 < 1.0)
 		return 1.0f;
 
@@ -73,7 +73,7 @@ double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end
 	{
 		int node_index = stack[stack_pos - 1];
 
-		if (!OverlapRayAABB(ray_start, ray_end, nodes[node_index]))
+		if (!OverlapRayAABB(ray_start.XY(), ray_end.XY(), nodes[node_index]))
 		{
 			// If the ray doesn't overlap this node's AABB we're done for this subtree
 			stack_pos--;
@@ -81,7 +81,7 @@ double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end
 		else if (nodes[node_index].line_index != -1) // isLeaf(node_index)
 		{
 			// We reached a leaf node. Do a ray/line intersection test to see if we hit the line.
-			hit_fraction = std::min(IntersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), hit_fraction);
+			hit_fraction = std::min(IntersectRayLine(ray_start.XY(), ray_end.XY(), nodes[node_index].line_index, raydelta, rayd, raydist2), hit_fraction);
 			stack_pos--;
 		}
 		else if (stack_pos == 32)

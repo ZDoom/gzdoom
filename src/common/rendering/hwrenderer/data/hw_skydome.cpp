@@ -66,7 +66,7 @@
 
 //-----------------------------------------------------------------------------
 //
-// Shamelessly lifted from Doomsday (written by Jaakko Ker‰nen)
+// Shamelessly lifted from Doomsday (written by Jaakko Ker√§nen)
 // also shamelessly lifted from ZDoomGL! ;)
 //
 //-----------------------------------------------------------------------------

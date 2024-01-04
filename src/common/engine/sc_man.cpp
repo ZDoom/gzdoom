@@ -150,7 +150,7 @@ bool FScanner::OpenFile (const char *name)
 	auto filebuff = fr.Read();
 	if (filebuff.size() == 0 && filesize > 0) return false;
 
-	ScriptBuffer = FString((const char *)filebuff.data(), filesize);
+	ScriptBuffer = FString(filebuff.string(), filesize);
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	LumpNum = -1;
 	PrepareScript ();
@@ -200,10 +200,10 @@ void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
-		auto mem = fileSystem.OpenFileReader(lump);
-		auto buff = ScriptBuffer.LockNewBuffer(mem.GetLength());
-		mem.Read(buff, mem.GetLength());
-		buff[mem.GetLength()] = 0;
+		auto len = fileSystem.FileLength(lump);
+		auto buff = ScriptBuffer.LockNewBuffer(len);
+		fileSystem.ReadFile(lump, buff);
+		buff[len] = 0;
 		ScriptBuffer.UnlockBuffer();
 	}
 	ScriptName = fileSystem.GetFileFullPath(lump).c_str();
@@ -260,6 +260,7 @@ void FScanner::PrepareScript ()
 	StateOptions = false;
 	StringBuffer[0] = '\0';
 	BigStringBuffer = "";
+	ParseError = false;
 }
 
 //==========================================================================
@@ -1089,13 +1090,14 @@ void FScanner::ScriptError (const char *message, ...)
 		va_end (arglist);
 	}
 
+	ParseError = true;
 	if (NoFatalErrors)
 	{
-		Printf(TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
+		Printf(TEXTCOLOR_RED "%sScript error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 			AlreadyGot ? AlreadyGotLine : Line, composed.GetChars());
 		return;
 	}
-	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName.GetChars(),
+	I_Error ("%sScript error, \"%s\" line %d:\n%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1121,7 +1123,8 @@ void FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf (TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
+	ParseError = true;
+	Printf (TEXTCOLOR_RED "%sScript error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", PrependMessage.GetChars(), ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1382,5 +1385,4 @@ int ParseHex(const char* hex, FScriptPosition* sc)
 
 	return num;
 }
-
 

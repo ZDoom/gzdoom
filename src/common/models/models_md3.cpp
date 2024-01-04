@@ -190,7 +190,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 void FMD3Model::LoadGeometry()
 {
 	auto lumpdata = fileSystem.ReadFile(mLumpNum);
-	auto buffer = lumpdata.GetString();
+	auto buffer = lumpdata.string();
 	md3_header_t * hdr = (md3_header_t *)buffer;
 	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));
 
@@ -345,7 +345,7 @@ int FMD3Model::FindFrame(const char* name, bool nodefault)
 //
 //===========================================================================
 
-void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
+void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	if ((unsigned)frameno >= Frames.Size() || (unsigned)frameno2 >= Frames.Size()) return;
 

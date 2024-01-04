@@ -1,4 +1,4 @@
-version "4.10"
+version "4.12"
 
 // Generic engine code
 #include "zscript/engine/base.zs"
@@ -42,6 +42,7 @@ version "4.10"
 #include "zscript/destructible.zs"
 #include "zscript/level_postprocessor.zs"
 #include "zscript/level_compatibility.zs"
+#include "zscript/visualthinker.zs"
 
 #include "zscript/actors/actor.zs"
 #include "zscript/actors/checks.zs"

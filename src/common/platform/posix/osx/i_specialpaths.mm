@@ -105,7 +105,7 @@ FString M_GetAppDataPath(bool create)
 	}
 
 	path += "/" GAMENAMELOWERCASE;
-	if (create) CreatePath(path);
+	if (create) CreatePath(path.GetChars());
 	return path;
 }
 
@@ -127,7 +127,7 @@ FString M_GetCachePath(bool create)
 	}
 
 	path += "/zdoom/cache";
-	if (create) CreatePath(path);
+	if (create) CreatePath(path.GetChars());
 	return path;
 }
 
@@ -169,9 +169,9 @@ FString M_GetConfigPath(bool for_reading)
 	{
 		// There seems to be no way to get Preferences path via NSFileManager
 		path += "/Preferences/";
-		CreatePath(path);
+		CreatePath(path.GetChars());
 
-		if (!DirExists(path))
+		if (!DirExists(path.GetChars()))
 		{
 			path = FString();
 		}
@@ -200,7 +200,7 @@ FString M_GetScreenshotsPath()
 	{
 		path += "/" GAME_DIR "/Screenshots/";
 	}
-	CreatePath(path);
+	CreatePath(path.GetChars());
 	return path;
 }
 
@@ -241,7 +241,7 @@ FString M_GetDocumentsPath()
 		path += "/" GAME_DIR "/";
 	}
 
-	CreatePath(path);
+	CreatePath(path.GetChars());
 	return path;
 }
 

@@ -281,7 +281,7 @@ void MapLoader::SetupPortals()
 	{
 		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
 		{
-			s.mDisplacement = s.mSkybox->Pos() - s.mSkybox->target->Pos();
+			s.mDisplacement = s.mSkybox->Pos().XY() - s.mSkybox->target->Pos().XY();
 			s.mSkybox = nullptr;
 		}
 	}
@@ -508,7 +508,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 	{
 		if ((sector->special & DAMAGE_MASK) == 0x100)
 		{
-			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 0, 0, NAME_InstantDeath, 0);
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
 		}
 		else if ((sector->special & DAMAGE_MASK) == 0x200)
 		{
@@ -574,7 +574,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
+		CreateScroller(EScroll::sc_floor, -4., 0, sector, nullptr, 0);
 		keepspecial = true;
 		break;
 
@@ -609,7 +609,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case Sky2:
-		sector->sky = PL_SKYFLAT;
+		sector->skytransfer = PL_SKYFLAT;
 		break;
 
 	default:
@@ -631,13 +631,13 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
+			CreateScroller(EScroll::sc_floor, dx, dy, sector, nullptr, 0);
 		}
 		else if (sector->special >= Carry_East5 && sector->special <= Carry_East35)
 		{ 
 			// Heretic scroll special
 			// Only east scrollers also scroll the texture
-			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
+			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, nullptr, 0);
 		}
 		keepspecial = true;
 		break;
@@ -872,7 +872,7 @@ void MapLoader::SpawnSpecials ()
 				{
 					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
-						Level->sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
+						Level->sectors[s].skytransfer = (line.Index() + 1) | PL_SKYFLAT;
 					break;
 				}
 			}
@@ -1466,7 +1466,8 @@ void MapLoader::SpawnScrollers()
 }
 
 
-void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
+void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *sect, side_t* side, int accel, EScrollPos scrollpos, int scrollmode)
 {
-	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
+	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, sect, side, accel, scrollpos, scrollmode);
 }
+

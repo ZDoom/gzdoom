@@ -37,8 +37,12 @@
 #include "m_argv.h"
 #include "c_cvars.h"
 #include "jit.h"
+#include "filesystem.h"
 
 CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+
+EXTERN_CVAR(Bool, vm_jit)
+EXTERN_CVAR(Bool, vm_jit_aot)
 
 struct VMRemap
 {
@@ -289,6 +293,24 @@ unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 	}
 }
 
+
+//==========================================================================
+//
+// VMFunctionBuilder :: FindConstantInt
+//
+// Returns a constant register initialized with the given value.
+//
+//==========================================================================
+
+int VMFunctionBuilder::FindConstantInt(unsigned index)
+{
+	if(IntConstantList.Size() < index)
+	{
+		return IntConstantList[index];
+	}
+	return 0;
+}
+
 //==========================================================================
 //
 // VMFunctionBuilder :: AllocConstants*
@@ -297,7 +319,7 @@ unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 //
 //==========================================================================
 
-unsigned VMFunctionBuilder::AllocConstantsInt(unsigned count, int *values)
+unsigned VMFunctionBuilder::AllocConstantsInt(unsigned int count, int *values)
 {
 	unsigned addr = IntConstantList.Reserve(count);
 	memcpy(&IntConstantList[addr], values, count * sizeof(int));
@@ -308,7 +330,7 @@ unsigned VMFunctionBuilder::AllocConstantsInt(unsigned count, int *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
+unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned int count, double *values)
 {
 	unsigned addr = FloatConstantList.Reserve(count);
 	memcpy(&FloatConstantList[addr], values, count * sizeof(double));
@@ -319,7 +341,7 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned int count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
@@ -330,7 +352,7 @@ unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsString(unsigned count, FString *ptrs)
+unsigned VMFunctionBuilder::AllocConstantsString(unsigned int count, FString *ptrs)
 {
 	unsigned addr = StringConstantList.Reserve(count);
 	for (unsigned i = 0; i < count; i++)
@@ -790,7 +812,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 	it.PrintableName = name;
 	it.Function = new VMScriptFunction;
 	it.Function->Name = functype->SymbolName;
-	it.Function->QualifiedName = it.Function->PrintableName = ClassDataAllocator.Strdup(name);
+	it.Function->QualifiedName = it.Function->PrintableName = ClassDataAllocator.Strdup(name.GetChars());
 	it.Function->ImplicitArgs = functype->GetImplicitArgs();
 	it.Proto = nullptr;
 	it.FromDecorate = fromdecorate;
@@ -909,6 +931,13 @@ void FFunctionBuildList::Build()
 				disasmdump.Write(sfunc, item.PrintableName);
 
 				sfunc->Unsafe = ctx.Unsafe;
+
+				#if HAVE_VM_JIT
+					if(vm_jit && vm_jit_aot)
+					{
+						sfunc->JitCompile();
+					}
+				#endif
 			}
 			catch (CRecoverableError &err)
 			{
@@ -922,13 +951,17 @@ void FFunctionBuildList::Build()
 	VMFunction::CreateRegUseInfo();
 	FScriptPosition::StrictErrors = strictdecorate;
 
-	if (FScriptPosition::ErrorCounter == 0 && Args->CheckParm("-dumpjit")) DumpJit();
+	if (FScriptPosition::ErrorCounter == 0)
+	{
+		if (Args->CheckParm("-dumpjit")) DumpJit(true);
+		else if (Args->CheckParm("-dumpjitmod")) DumpJit(false);
+	}
 	mItems.Clear();
 	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();
 }
 
-void FFunctionBuildList::DumpJit()
+void FFunctionBuildList::DumpJit(bool include_gzdoom_pk3)
 {
 #ifdef HAVE_VM_JIT
 	FILE *dump = fopen("dumpjit.txt", "w");
@@ -937,11 +970,23 @@ void FFunctionBuildList::DumpJit()
 
 	for (auto &item : mItems)
 	{
-		JitDumpLog(dump, item.Function);
+		if(include_gzdoom_pk3 || fileSystem.GetFileContainer(item.Lump)) JitDumpLog(dump, item.Function);
 	}
 
 	fclose(dump);
 #endif // HAVE_VM_JIT
+}
+
+FunctionCallEmitter::FunctionCallEmitter(VMFunction *func)
+{
+	target = func;
+	is_vararg = target->VarFlags & VARF_VarArg;
+}
+
+FunctionCallEmitter::FunctionCallEmitter(class PFunctionPointer *func)
+{
+	fnptr = func;
+	is_vararg = false; // function pointers cannot point to vararg functions
 }
 
 
@@ -954,7 +999,7 @@ void FunctionCallEmitter::AddParameter(VMFunctionBuilder *build, FxExpression *o
 		operand->ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
 	}
 	numparams += where.RegCount;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		for (unsigned i = 0; i < where.RegCount; i++) reginfo.Push(where.RegType & REGT_TYPE);
 
 	emitters.push_back([=](VMFunctionBuilder *build) -> int
@@ -977,7 +1022,7 @@ void FunctionCallEmitter::AddParameter(VMFunctionBuilder *build, FxExpression *o
 void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 {
 	numparams += emit.RegCount;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 	{
 		if (reference) reginfo.Push(REGT_POINTER);
 		else for (unsigned i = 0; i < emit.RegCount; i++) reginfo.Push(emit.RegType & REGT_TYPE);
@@ -994,7 +1039,7 @@ void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 void FunctionCallEmitter::AddParameterPointerConst(void *konst)
 {
 	numparams++;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		reginfo.Push(REGT_POINTER);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
@@ -1006,7 +1051,7 @@ void FunctionCallEmitter::AddParameterPointerConst(void *konst)
 void FunctionCallEmitter::AddParameterPointer(int index, bool konst)
 {
 	numparams++;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		reginfo.Push(REGT_POINTER);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
@@ -1018,7 +1063,7 @@ void FunctionCallEmitter::AddParameterPointer(int index, bool konst)
 void FunctionCallEmitter::AddParameterFloatConst(double konst)
 {
 	numparams++;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		reginfo.Push(REGT_FLOAT);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
@@ -1030,7 +1075,7 @@ void FunctionCallEmitter::AddParameterFloatConst(double konst)
 void FunctionCallEmitter::AddParameterIntConst(int konst)
 {
 	numparams++;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		reginfo.Push(REGT_INT);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
@@ -1050,7 +1095,7 @@ void FunctionCallEmitter::AddParameterIntConst(int konst)
 void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 {
 	numparams++;
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 		reginfo.Push(REGT_STRING);
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
@@ -1058,8 +1103,6 @@ void FunctionCallEmitter::AddParameterStringConst(const FString &konst)
 		return 1;
 	});
 }
-
-EXTERN_CVAR(Bool, vm_jit)
 
 ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> *ReturnRegs)
 {
@@ -1069,7 +1112,7 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 		paramcount += func(build);
 	}
 	assert(paramcount == numparams);
-	if (target->VarFlags & VARF_VarArg)
+	if (is_vararg)
 	{
 		// Pass a hidden type information parameter to vararg functions.
 		// It would really be nicer to actually pass real types but that'd require a far more complex interface on the compiler side than what we have.
@@ -1079,9 +1122,24 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 		paramcount++;
 	}
 
+	if(fnptr)
+	{
+		ExpEmit reg(build, REGT_POINTER);
 
+		assert(fnptr->Scope != -1);
+		assert(fnptr->PointedType != TypeVoid);
+		
+		// OP_LP , Load from memory. rA = *(rB + rkC)
+		// reg = &PFunction->Variants[0] -- PFunction::Variant*
+		build->Emit(OP_LP, reg.RegNum, virtualselfreg, build->GetConstantInt(offsetof(PFunction, Variants) + offsetof(FArray, Array)));
+		// reg = (&PFunction->Variants[0])->Implementation -- VMFunction*
+		build->Emit(OP_LP, reg.RegNum, reg.RegNum, build->GetConstantInt(offsetof(PFunction::Variant, Implementation)));
 
-	if (virtualselfreg == -1)
+		build->Emit(OP_CALL, reg.RegNum, paramcount, vm_jit? static_cast<PPrototype*>(fnptr->PointedType)->ReturnTypes.Size() : returns.Size());
+
+		reg.Free(build);
+	}
+	else if (virtualselfreg == -1)
 	{
 		build->Emit(OP_CALL_K, build->GetConstantAddress(target), paramcount, vm_jit ? target->Proto->ReturnTypes.Size() : returns.Size());
 	}
@@ -1105,9 +1163,13 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 	}
 	if (vm_jit)	// The JIT compiler needs this, but the VM interpreter does not.
 	{
-		for (unsigned i = returns.Size(); i < target->Proto->ReturnTypes.Size(); i++)
+		assert(!fnptr || fnptr->PointedType != TypeVoid);
+
+		PPrototype * proto = fnptr ? static_cast<PPrototype*>(fnptr->PointedType) : target->Proto;
+
+		for (unsigned i = returns.Size(); i < proto->ReturnTypes.Size(); i++)
 		{
-			ExpEmit reg(build, target->Proto->ReturnTypes[i]->RegType, target->Proto->ReturnTypes[i]->RegCount);
+			ExpEmit reg(build, proto->ReturnTypes[i]->RegType, proto->ReturnTypes[i]->RegCount);
 			build->Emit(OP_RESULT, 0, EncodeRegType(reg), reg.RegNum);
 			reg.Free(build);
 		}
@@ -1148,7 +1210,7 @@ void VMDisassemblyDumper::Write(VMScriptFunction *sfunc, const FString &fname)
 
 		assert(sfunc != nullptr);
 
-		DumpFunction(dump, sfunc, fname, (int)fname.Len());
+		DumpFunction(dump, sfunc, fname.GetChars(), (int)fname.Len());
 		codesize += sfunc->CodeSize;
 		datasize += sfunc->LineInfoCount * sizeof(FStatementInfo) + sfunc->ExtraSpace + sfunc->NumKonstD * sizeof(int) +
 			sfunc->NumKonstA * sizeof(void*) + sfunc->NumKonstF * sizeof(double) + sfunc->NumKonstS * sizeof(FString);

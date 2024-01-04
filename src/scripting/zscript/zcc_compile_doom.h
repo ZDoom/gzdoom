@@ -25,6 +25,7 @@ private:
 	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *prop, Baggage &bag);
 	void ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg);
 	void InitDefaults() override final;
+	void InitDefaultFunctionPointers();
 	FxExpression *SetupActionFunction(PClass *cls, ZCC_TreeNode *af, int StateFlags);
 	void CompileStates();
 	int CheckActionKeyword(ZCC_FuncDeclarator *f, uint32_t &varflags, int useflags, ZCC_StructWork *c);

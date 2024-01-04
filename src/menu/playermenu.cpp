@@ -81,7 +81,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(s);
-	const char *pp = s;
+	const char *pp = s.GetChars();
 	FString command("name \"");
 
 	if (DMenu::InMenu)
@@ -96,7 +96,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 			command << *p;
 		}
 		command << '"';
-		C_DoCommand(command);
+		C_DoCommand(command.GetChars());
 	}
 	return 0;
 }
@@ -155,7 +155,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 	if (DMenu::InMenu)
 	{
 		players[consoleplayer].userinfo.SkinNumChanged(sel);
-		cvar_set("skin", Skins[sel].Name);
+		cvar_set("skin", Skins[sel].Name.GetChars());
 	}
 	return 0;
 }

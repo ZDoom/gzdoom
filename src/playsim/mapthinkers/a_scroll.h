@@ -1,5 +1,14 @@
 #pragma once
 
+enum EScrollAffect
+{
+	SCROLL_Textures = 1,
+	SCROLL_StaticObjects = 2,
+	SCROLL_Players = 4,
+	SCROLL_Monsters = 8,
+	SCROLL_All = 15
+};
+
 //-----------------------------------------------------------------------------
 //
 // killough 3/7/98: Add generalized scroll effects
@@ -13,7 +22,7 @@ class DScroller : public DThinker
 public:
 	static const int DEFAULT_STAT = STAT_SCROLLER;
 
-	void Construct(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	void Construct(EScroll type, double dx, double dy, sector_t *control, sector_t *sec, side_t *side, int accel, EScrollPos scrollpos = EScrollPos::scw_all, int aff = SCROLL_All);
 	void Construct(double dx, double dy, const line_t *l, sector_t *control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void OnDestroy() override;
 
@@ -29,6 +38,7 @@ public:
 
 protected:
 	EScroll m_Type;		// Type of scroll effect
+	int m_Affect;
 	double m_dx, m_dy;		// (dx,dy) scroll speeds
 	sector_t *m_Sector;		// Affected sector
 	side_t *m_Side;			// ... or side

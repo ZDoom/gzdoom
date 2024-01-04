@@ -47,6 +47,7 @@
 #include "printf.h"
 #include "s_music.h"
 #include "engineerrors.h"
+#include "zstring.h"
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
@@ -130,6 +131,7 @@ static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 	return false;
 }
 
+FString sys_ostype;
 void I_DetectOS()
 {
 	NSOperatingSystemVersion version = {};
@@ -192,6 +194,8 @@ void I_DetectOS()
 	Printf("%s running macOS %s %d.%d.%d (%s) %s\n", model, name,
 		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
 		   release, architecture);
+
+	sys_ostype.Format("macOS %d.%d %s", int(version.majorVersion), int(version.minorVersion), name);
 }
 
 
@@ -344,7 +348,7 @@ extern bool AppActive;
 
 	for (size_t i = 0, count = s_argv.Size(); i < count; ++i)
 	{
-		if (0 == strcmp(s_argv[i], charFileName))
+		if (0 == strcmp(s_argv[i].GetChars(), charFileName))
 		{
 			return FALSE;
 		}

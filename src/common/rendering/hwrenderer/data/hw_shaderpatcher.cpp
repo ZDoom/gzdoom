@@ -188,7 +188,7 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 						FString type = NextGlslToken(chars, len, pos);
 						FString identifier = NextGlslToken(chars, len, pos);
 
-						isSamplerUniformName = uniform.Compare("uniform") == 0 && isShaderType(type);
+						isSamplerUniformName = uniform.Compare("uniform") == 0 && isShaderType(type.GetChars());
 						if (isSamplerUniformName)
 						{
 							samplerstobind.Push(std::make_pair(identifier, val));
@@ -246,7 +246,7 @@ FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
 
 		// keyword following the declaration?
 		bool keywordFound = true;
-		long i;
+		ptrdiff_t i;
 		for (i = 0; inoutkeyword[i] != 0; i++)
 		{
 			if (chars[endIndex + i] != inoutkeyword[i])

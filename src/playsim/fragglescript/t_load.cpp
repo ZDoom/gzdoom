@@ -137,7 +137,7 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			sc.MustGetString();
 			if (!FS_ChangeMusic(sc.String))
 			{
-				S_ChangeMusic(Level->Music, Level->musicorder);
+				S_ChangeMusic(Level->Music.GetChars(), Level->musicorder);
 			}
 		}
 		else if (sc.Compare("skyname"))

@@ -32,49 +32,25 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
-//==========================================================================
-//
-// Single lump
-//
-//==========================================================================
-
-class FLumpFile : public FUncompressedFile
-{
-public:
-	FLumpFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// FLumpFile::FLumpFile
-//
-//==========================================================================
-
-FLumpFile::FLumpFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
-{
-}
-
 //==========================================================================
 //
 // Open it
 //
 //==========================================================================
 
-bool FLumpFile::Open(LumpFilterInfo*)
+static bool OpenLump(FResourceFile* file, LumpFilterInfo*)
 {
-	Lumps.Resize(1);
-	Lumps[0].LumpNameSetup(ExtractBaseName(FileName, true).c_str(), stringpool);
-	Lumps[0].Owner = this;
-	Lumps[0].Position = 0;
-	Lumps[0].LumpSize = (int)Reader.GetLength();
-	Lumps[0].Flags = 0;
-	NumLumps = 1;
+	auto Entries = file->AllocateEntries(1);
+	Entries[0].FileName = file->NormalizeFileName(ExtractBaseName(file->GetFileName(), true).c_str());
+	Entries[0].Namespace = ns_global;
+	Entries[0].ResourceID = -1;
+	Entries[0].Position = 0;
+	Entries[0].CompressedSize = Entries[0].Length = file->GetContainerReader()->GetLength();
+	Entries[0].Method = METHOD_STORED;
+	Entries[0].Flags = 0;
 	return true;
 }
 
@@ -87,10 +63,9 @@ bool FLumpFile::Open(LumpFilterInfo*)
 FResourceFile *CheckLump(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	// always succeeds
-	auto rf = new FLumpFile(filename, file, sp);
-	if (rf->Open(filter)) return rf;
-	file = std::move(rf->Reader); // to avoid destruction of reader
-	delete rf;
+	auto rf = new FResourceFile(filename, file, sp);
+	if (OpenLump(rf, filter)) return rf;
+	file = rf->Destroy();
 	return NULL;
 }
 

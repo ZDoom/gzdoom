@@ -20,6 +20,7 @@ class Demon1 : Actor
 		DeathSound "DemonDeath";
 		ActiveSound "DemonActive";
 		Obituary "$OB_DEMON1";
+		HitObituary "$OB_DEMON1HIT";
 		Tag "$FN_DEMON1";
 	}
 	
@@ -230,6 +231,7 @@ class Demon2 : Demon1
 	Default
 	{
 		Obituary "$OB_DEMON2";
+		HitObituary "$OB_DEMON2HIT";
 		Species "Demon2";
 	}
 	States

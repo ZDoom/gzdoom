@@ -665,7 +665,7 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 
 void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *buffer, int pixelmode)
 {
-	const long blocklinelen = ((Width + 3) >> 2) << 4;
+	const size_t blocklinelen = ((Width + 3) >> 2) << 4;
 	uint8_t *blockbuff = new uint8_t[blocklinelen];
 	uint8_t *block;
 	PalEntry color[4];

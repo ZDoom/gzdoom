@@ -44,6 +44,7 @@
 #include "printf.h"
 #include "palutil.h"
 #include "i_interface.h"
+#include "gstrings.h"
 
 #include "dobject.h"
 #include "dobjtype.h"
@@ -209,12 +210,12 @@ FBaseCVar::~FBaseCVar ()
 	{
 		FBaseCVar *var, *prev;
 
-		var = FindCVar (VarName, &prev);
+		var = FindCVar (VarName.GetChars(), &prev);
 
 		if (var == this)
 		{
 			cvarMap.Remove(var->VarName);
-			C_RemoveTabCommand(VarName);
+			C_RemoveTabCommand(VarName.GetChars());
 		}
 	}
 }
@@ -864,27 +865,27 @@ ECVarType FStringCVar::GetRealType () const
 
 UCVarValue FStringCVar::GetGenericRep (ECVarType type) const
 {
-	return FromString (mValue, type);
+	return FromString (mValue.GetChars(), type);
 }
 
 UCVarValue FStringCVar::GetFavoriteRep (ECVarType *type) const
 {
 	UCVarValue ret;
 	*type = CVAR_String;
-	ret.String = mValue;
+	ret.String = mValue.GetChars();
 	return ret;
 }
 
 UCVarValue FStringCVar::GetGenericRepDefault (ECVarType type) const
 {
-	return FromString (mDefaultValue, type);
+	return FromString (mDefaultValue.GetChars(), type);
 }
 
 UCVarValue FStringCVar::GetFavoriteRepDefault (ECVarType *type) const
 {
 	UCVarValue ret;
 	*type = CVAR_String;
-	ret.String = mDefaultValue;
+	ret.String = mDefaultValue.GetChars();
 	return ret;
 }
 
@@ -969,7 +970,7 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 
 		if (string.IsNotEmpty())
 		{
-			ret = V_GetColorFromString (string);
+			ret = V_GetColorFromString (string.GetChars());
 		}
 		else
 		{
@@ -1394,7 +1395,7 @@ void C_RestoreCVars (void)
 {
 	for (unsigned int i = 0; i < CVarBackups.Size(); ++i)
 	{
-		cvar_set(CVarBackups[i].Name, CVarBackups[i].String);
+		cvar_set(CVarBackups[i].Name.GetChars(), CVarBackups[i].String.GetChars());
 	}
 	C_ForgetCVars();
 }
@@ -1695,16 +1696,37 @@ CCMD (toggle)
 	}
 }
 
-void FBaseCVar::ListVars (const char *filter, bool plain)
+void FBaseCVar::ListVars (const char *filter, int listtype)
 {
 	int count = 0;
+
+	bool plain = listtype == LCT_Plain;
+	bool includedesc = listtype == LCT_FullSearch;
 
 	decltype(cvarMap)::Iterator it(cvarMap);
 	decltype(cvarMap)::Pair *pair;
 	while (it.NextPair(pair))
 	{
 		auto var = pair->Value;
-		if (CheckWildcards (filter, var->GetName()))
+
+		bool ismatch;
+
+		if (filter && includedesc)
+		{
+			// search always allow partial matches
+			// also allow matching to cvar name, localised description, and description language-id
+
+			FString SearchString = FString("*") + filter + "*";
+			ismatch = CheckWildcards (SearchString.GetChars(), var->GetName()) ||
+				CheckWildcards (SearchString.GetChars(), var->GetDescription().GetChars()) ||
+				CheckWildcards (SearchString.GetChars(), GStrings.localize(var->GetDescription().GetChars()));
+		}
+		else
+		{
+			ismatch = CheckWildcards (filter, var->GetName());
+		}
+
+		if (ismatch)
 		{
 			uint32_t flags = var->GetFlags();
 			if (plain)
@@ -1718,7 +1740,8 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 			else
 			{
 				++count;
-				Printf ("%c%c%c%c%c %s = %s\n",
+
+				Printf ("%c%c%c%c%c %s = %s",
 					flags & CVAR_ARCHIVE ? 'A' : ' ',
 					flags & CVAR_USERINFO ? 'U' :
 						flags & CVAR_SERVERINFO ? 'S' :
@@ -1730,6 +1753,16 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 					flags & CVAR_IGNORE ? 'X' : ' ',
 					var->GetName(),
 					var->GetHumanString());
+
+				if (includedesc)
+					if (var->GetDescription().Len())
+						Printf(" // \"%s\"\n", GStrings.localize(var->GetDescription().GetChars()));
+					else
+						Printf("\n");
+				else
+					Printf("\n");
+				
+
 			}
 		}
 	}
@@ -1740,17 +1773,29 @@ CCMD (cvarlist)
 {
 	if (argv.argc() == 1)
 	{
-		FBaseCVar::ListVars (NULL, false);
+		FBaseCVar::ListVars (NULL, LCT_Default);
 	}
 	else
 	{
-		FBaseCVar::ListVars (argv[1], false);
+		FBaseCVar::ListVars (argv[1], LCT_Default);
 	}
 }
 
 CCMD (cvarlistplain)
 {
-	FBaseCVar::ListVars (NULL, true);
+	FBaseCVar::ListVars (NULL, LCT_Plain);
+}
+
+CCMD (cvarsearch)
+{
+	if (argv.argc() == 1)
+	{
+		FBaseCVar::ListVars (NULL, LCT_FullSearch);
+	}
+	else
+	{
+		FBaseCVar::ListVars (argv[1], LCT_FullSearch);
+	}
 }
 
 CCMD (archivecvar)

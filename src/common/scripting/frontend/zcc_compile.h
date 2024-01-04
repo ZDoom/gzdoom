@@ -6,7 +6,6 @@
 
 struct Baggage;
 struct FPropertyInfo;
-class AActor;
 class FxExpression;
 typedef TDeletingArray<FxExpression*> FArgumentList;
 
@@ -23,6 +22,7 @@ struct ZCC_StructWork
 	TArray<ZCC_VarDeclarator *> Fields;
 	TArray<ZCC_FuncDeclarator *> Functions;
 	TArray<ZCC_StaticArrayStatement *> Arrays;
+	TArray<ZCC_FlagDef*> FlagDefs;
 
 	ZCC_StructWork()
 	{

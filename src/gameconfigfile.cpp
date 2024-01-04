@@ -92,14 +92,14 @@ FGameConfigFile::FGameConfigFile ()
 	OkayToWrite = false;	// Do not allow saving of the config before DoKeySetup()
 	bModSetup = false;
 	pathname = GetConfigPath (true);
-	ChangePathName (pathname);
+	ChangePathName (pathname.GetChars());
 	LoadConfigFile ();
 
 	// If zdoom.ini was read from the program directory, switch
 	// to the user directory now. If it was read from the user
 	// directory, this effectively does nothing.
 	pathname = GetConfigPath (false);
-	ChangePathName (pathname);
+	ChangePathName (pathname.GetChars());
 
 	// Set default IWAD search paths if none present
 	if (!SetSection ("IWADSearch.Directories"))
@@ -108,10 +108,10 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", ".", true);
 		SetValueForKey ("Path", "$DOOMWADDIR", true);
 #ifdef __APPLE__
-		SetValueForKey ("Path", user_docs, true);
-		SetValueForKey ("Path", user_app_support, true);
+		SetValueForKey ("Path", user_docs.GetChars(), true);
+		SetValueForKey ("Path", user_app_support.GetChars(), true);
 		SetValueForKey ("Path", "$PROGDIR", true);
-		SetValueForKey ("Path", local_app_support, true);
+		SetValueForKey ("Path", local_app_support.GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
@@ -133,10 +133,10 @@ FGameConfigFile::FGameConfigFile ()
 	{
 		SetSection ("FileSearch.Directories", true);
 #ifdef __APPLE__
-		SetValueForKey ("Path", user_docs, true);
-		SetValueForKey ("Path", user_app_support, true);
+		SetValueForKey ("Path", user_docs.GetChars(), true);
+		SetValueForKey ("Path", user_app_support.GetChars(), true);
 		SetValueForKey ("Path", "$PROGDIR", true);
-		SetValueForKey ("Path", local_app_support, true);
+		SetValueForKey ("Path", local_app_support.GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
@@ -156,14 +156,14 @@ FGameConfigFile::FGameConfigFile ()
 	{
 		SetSection("SoundfontSearch.Directories", true);
 #ifdef __APPLE__
-		SetValueForKey("Path", user_docs + "/soundfonts", true);
-		SetValueForKey("Path", user_docs + "/fm_banks", true);
-		SetValueForKey("Path", user_app_support + "/soundfonts", true);
-		SetValueForKey("Path", user_app_support + "/fm_banks", true);
+		SetValueForKey("Path", (user_docs + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (user_docs + "/fm_banks").GetChars(), true);
+		SetValueForKey("Path", (user_app_support + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (user_app_support + "/fm_banks").GetChars(), true);
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
-		SetValueForKey("Path", local_app_support + "/soundfonts", true);
-		SetValueForKey("Path", local_app_support + "/fm_banks", true);
+		SetValueForKey("Path", (local_app_support + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (local_app_support + "/fm_banks").GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);

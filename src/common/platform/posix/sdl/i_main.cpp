@@ -77,6 +77,7 @@ int GameMain();
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+FString sys_ostype;
 
 // The command line arguments.
 FArgs *Args;
@@ -136,6 +137,7 @@ void I_DetectOS()
 	{
 		const char* const separator = operatingSystem.Len() > 0 ? ", " : "";
 		operatingSystem.AppendFormat("%s%s %s on %s", separator, unameInfo.sysname, unameInfo.release, unameInfo.machine);
+		sys_ostype.Format("%s %s on %s", unameInfo.sysname, unameInfo.release, unameInfo.machine);
 	}
 
 	if (operatingSystem.Len() > 0)

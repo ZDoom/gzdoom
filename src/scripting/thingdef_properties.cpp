@@ -152,18 +152,18 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 	if (actor != NULL)
 	{
 		auto Level = actor->Level;
-		const char *dot = strchr(flagname, '.');
+		const char *dot = strchr(flagname.GetChars(), '.');
 		FFlagDef *fd;
 		PClassActor *cls = actor->GetClass();
 
 		if (dot != NULL)
 		{
-			FString part1(flagname.GetChars(), dot - flagname);
-			fd = FindFlag(cls, part1, dot + 1);
+			FString part1(flagname.GetChars(), dot - flagname.GetChars());
+			fd = FindFlag(cls, part1.GetChars(), dot + 1);
 		}
 		else
 		{
-			fd = FindFlag(cls, flagname, NULL);
+			fd = FindFlag(cls, flagname.GetChars(), NULL);
 		}
 
 		if (fd != NULL)
@@ -245,7 +245,7 @@ INTBOOL CheckActorFlag(AActor *owner, const char *flagname, bool printerror)
 	if (dot != NULL)
 	{
 		FString part1(flagname, dot-flagname);
-		fd = FindFlag (cls, part1, dot+1);
+		fd = FindFlag (cls, part1.GetChars(), dot+1);
 	}
 	else
 	{
@@ -747,8 +747,8 @@ DEFINE_PROPERTY(translation, L, Actor)
 		for(int i = 1; i < PROP_PARM_COUNT; i++)
 		{
 			PROP_STRING_PARM(str, i);
-			int tnum;
-			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != -1)
+			FTranslationID tnum;
+			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != INVALID_TRANSLATION)
 			{
 				defaults->Translation = tnum;
 				return;
@@ -789,7 +789,7 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 
 	defaults->BloodColor = color;
 	defaults->BloodColor.a = 255;	// a should not be 0.
-	defaults->BloodTranslation = TRANSLATION(TRANSLATION_Blood,  CreateBloodTranslation(color));
+	defaults->BloodTranslation = CreateBloodTranslation(color);
 }
 
 //==========================================================================
@@ -1377,7 +1377,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 		{
 			FString st;
 			st.Format("%s%s", strnicmp(str, "power", 5) ? "Power" : "", str);
-			cls = FindClassTentative(st, pow);
+			cls = FindClassTentative(st.GetChars(), pow);
 		}
 		else
 		{

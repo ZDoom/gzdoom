@@ -13,6 +13,8 @@
 #pragma warning(disable:4244)
 #endif
 
+bool CheckFog(FLevelLocals* Level, sector_t* frontsector, sector_t* backsector, ELightMode lightmode);
+
 struct HWHorizonInfo;
 struct HWSkyInfo;
 struct F3DFloor;
@@ -113,6 +115,11 @@ struct texcoord
 };
 
 struct HWDrawInfo;
+class HWWall;
+
+// this only exists to keep HWWallDispatcher trivial
+
+struct HWWallDispatcher;
 
 class HWWall
 {
@@ -121,13 +128,13 @@ public:
 
 	enum
 	{
-		HWF_CLAMPX=1,
-		HWF_CLAMPY=2,
-		HWF_SKYHACK=4,
-		HWF_GLOW=8,		// illuminated by glowing flats
-		HWF_NOSPLITUPPER=16,
-		HWF_NOSPLITLOWER=32,
-		HWF_NOSPLIT=64,
+		HWF_CLAMPX = 1,
+		HWF_CLAMPY = 2,
+		HWF_SKYHACK = 4,
+		HWF_GLOW = 8,		// illuminated by glowing flats
+		HWF_NOSPLITUPPER = 16,
+		HWF_NOSPLITLOWER = 32,
+		HWF_NOSPLIT = 64,
 		HWF_TRANSLUCENT = 128,
 		HWF_NOSLICE = 256
 	};
@@ -151,13 +158,13 @@ public:
 	friend struct HWDrawList;
 	friend class HWPortal;
 
-	vertex_t * vertexes[2];				// required for polygon splitting
-	FGameTexture *texture;
-	TArray<lightlist_t> *lightlist;
-	LightmapSurface *lightmap;
+	vertex_t* vertexes[2];				// required for polygon splitting
+	FGameTexture* texture;
+	TArray<lightlist_t>* lightlist;
+	LightmapSurface* lightmap;
 
 	HWSeg glseg;
-	float ztop[2],zbottom[2];
+	float ztop[2], zbottom[2];
 	texcoord tcs[4];
 	texcoord lightuv[4];
 	float lindex;
@@ -165,7 +172,7 @@ public:
 
 	FColormap Colormap;
 	ERenderStyle RenderStyle;
-	
+
 	float ViewDistance;
 
 	short lightlevel;
@@ -181,12 +188,17 @@ public:
 	union
 	{
 		// it's either one of them but never more!
-		FSectorPortal *secportal;	// sector portal (formerly skybox)
-		HWSkyInfo * sky;			// for normal sky
-		HWHorizonInfo * horizon;	// for horizon information
-		FSectorPortalGroup * portal;			// stacked sector portals
-		secplane_t * planemirror;	// for plane mirrors
-		FLinePortalSpan *lineportal;	// line-to-line portals
+		FSectorPortal* secportal;	// sector portal (formerly skybox)
+		HWSkyInfo* sky;			// for normal sky
+		HWHorizonInfo* horizon;	// for horizon information
+		FSectorPortalGroup* portal;			// stacked sector portals
+		secplane_t* planemirror;	// for plane mirrors
+		FLinePortalSpan* lineportal;	// line-to-line portals
+		struct
+		{
+			int portaltype;				// for the mesh builder. Real portals can only be assigned when being rendered.
+			int portalplane;
+		};
 	};
 
 
@@ -199,92 +211,92 @@ public:
 	unsigned int vertcount;
 
 public:
-	seg_t * seg;			// this gives the easiest access to all other structs involved
-	subsector_t * sub;		// For polyobjects
-	sector_t *frontsector, *backsector;
-//private:
+	seg_t* seg;			// this gives the easiest access to all other structs involved
+	subsector_t* sub;		// For polyobjects
+	sector_t* frontsector, * backsector;
+	//private:
 
-	void PutWall(HWDrawInfo *di, bool translucent);
-	void PutPortal(HWDrawInfo *di, int ptype, int plane);
-	void CheckTexturePosition(FTexCoordInfo *tci);
+	void PutWall(HWWallDispatcher* di, bool translucent);
+	void PutPortal(HWWallDispatcher* di, int ptype, int plane);
+	void CheckTexturePosition(FTexCoordInfo* tci);
 
-	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
-	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
-	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void Put3DWall(HWWallDispatcher* di, lightlist_t* lightlist, bool translucent);
+	bool SplitWallComplex(HWWallDispatcher* di, sector_t* frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
+	void SplitWall(HWWallDispatcher* di, sector_t* frontsector, bool translucent);
 
-	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
+	void SetupLights(HWDrawInfo* di, FDynLightData& lightdata);
 
-	void MakeVertices(HWDrawInfo *di, bool nosplit);
+	void MakeVertices(bool nosplit);
 
-	void SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(HWDrawInfo *di, sector_t *sec, line_t *line);
-	void SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2);
-	void SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
-	void SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
+	void SkyPlane(HWWallDispatcher* di, sector_t* sector, int plane, bool allowmirror);
+	void SkyLine(HWWallDispatcher* di, sector_t* sec, line_t* line);
+	void SkyNormal(HWWallDispatcher* di, sector_t* fs, vertex_t* v1, vertex_t* v2);
+	void SkyTop(HWWallDispatcher* di, seg_t* seg, sector_t* fs, sector_t* bs, vertex_t* v1, vertex_t* v2);
+	void SkyBottom(HWWallDispatcher* di, seg_t* seg, sector_t* fs, sector_t* bs, vertex_t* v1, vertex_t* v2);
 
-	bool DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
+	bool DoHorizon(HWWallDispatcher* di, seg_t* seg, sector_t* fs, vertex_t* v1, vertex_t* v2);
 
-	bool SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float ceilingrefheight,
-		float topleft, float topright, float bottomleft, float bottomright, float t_ofs);
+	bool SetWallCoordinates(seg_t* seg, FTexCoordInfo* tci, float ceilingrefheight,
+		float topleft, float topright, float bottomleft, float bottomright, float t_ofs, float skew);
 
-	void DoTexture(HWDrawInfo *di, int type,seg_t * seg,int peg,
-						   float ceilingrefheight, float floorrefheight,
-						   float CeilingHeightstart,float CeilingHeightend,
-						   float FloorHeightstart,float FloorHeightend,
-						   float v_offset);
+	void DoTexture(HWWallDispatcher* di, int type, seg_t* seg, int peg,
+		float ceilingrefheight, float floorrefheight,
+		float CeilingHeightstart, float CeilingHeightend,
+		float FloorHeightstart, float FloorHeightend,
+		float v_offset, float skew);
 
-	void DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
-					  sector_t * front, sector_t * back,
-					  sector_t * realfront, sector_t * realback,
-					  float fch1, float fch2, float ffh1, float ffh2,
-					  float bch1, float bch2, float bfh1, float bfh2, float zalign);
+	void DoMidTexture(HWWallDispatcher* di, seg_t* seg, bool drawfogboundary,
+		sector_t* front, sector_t* back,
+		sector_t* realfront, sector_t* realback,
+		float fch1, float fch2, float ffh1, float ffh2,
+		float bch1, float bch2, float bfh1, float bfh2, float zalign, float skew);
 
-	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
+	void GetPlanePos(F3DFloor::planeref* planeref, float& left, float& right);
 
-	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover, int roverIndex,
-					  float ff_topleft, float ff_topright, 
-					  float ff_bottomleft, float ff_bottomright);
-	void InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
-					   float topleft, float topright, 
-					   float bottomleft, float bottomright);
-	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, int ffloorIndex, sector_t * frontsector,
-					float topleft, float topright, 
-					float bottomleft, float bottomright);
-	void DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector, sector_t * backsector,
-					  float fch1, float fch2, float ffh1, float ffh2,
-					  float bch1, float bch2, float bfh1, float bfh2);
+	void BuildFFBlock(HWWallDispatcher* di, seg_t* seg, F3DFloor* rover, int roverIndex,
+		float ff_topleft, float ff_topright,
+		float ff_bottomleft, float ff_bottomright);
+	void InverseFloors(HWWallDispatcher* di, seg_t* seg, sector_t* frontsector,
+		float topleft, float topright,
+		float bottomleft, float bottomright);
+	void ClipFFloors(HWWallDispatcher* di, seg_t* seg, F3DFloor* ffloor, int ffloorIndex, sector_t* frontsector,
+		float topleft, float topright,
+		float bottomleft, float bottomright);
+	void DoFFloorBlocks(HWWallDispatcher* di, seg_t* seg, sector_t* frontsector, sector_t* backsector,
+		float fch1, float fch2, float ffh1, float ffh2,
+		float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
-    void ProcessDecals(HWDrawInfo *di);
+	void ProcessDecal(HWDrawInfo* di, DBaseDecal* decal, const FVector3& normal);
+	void ProcessDecals(HWDrawInfo* di);
 
-	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
-	void SplitLeftEdge (FFlatVertex *&ptr);
-	void SplitRightEdge(FFlatVertex *&ptr);
-	void SplitUpperEdge(FFlatVertex *&ptr);
-	void SplitLowerEdge(FFlatVertex *&ptr);
+	int CreateVertices(FFlatVertex*& ptr, bool nosplit);
+	void SplitLeftEdge(FFlatVertex*& ptr);
+	void SplitRightEdge(FFlatVertex*& ptr);
+	void SplitUpperEdge(FFlatVertex*& ptr);
+	void SplitLowerEdge(FFlatVertex*& ptr);
 
-	void CountLeftEdge (unsigned &ptr);
-	void CountRightEdge(unsigned &ptr);
+	void CountLeftEdge(unsigned& ptr);
+	void CountRightEdge(unsigned& ptr);
 
 	int CountVertices();
 
-	void RenderWall(HWDrawInfo *di, FRenderState &state, int textured);
-	void RenderFogBoundary(HWDrawInfo *di, FRenderState &state);
-	void RenderMirrorSurface(HWDrawInfo *di, FRenderState &state);
-	void RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags);
-	void RenderTranslucentWall(HWDrawInfo *di, FRenderState &state);
-	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWDecal *> &decals);
+	void RenderWall(FRenderState& state, int textured);
+	void RenderFogBoundary(HWWallDispatcher* di, FRenderState& state);
+	void RenderMirrorSurface(HWWallDispatcher* di, FRenderState& state);
+	void RenderTexturedWall(HWWallDispatcher* di, FRenderState& state, int rflags);
+	void RenderTranslucentWall(HWWallDispatcher* di, FRenderState& state);
+	void DrawDecalsForMirror(HWDrawInfo* di, FRenderState& state, TArray<HWDecal*>& decals);
 
 public:
-	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
-	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
+	void Process(HWWallDispatcher* di, seg_t* seg, sector_t* frontsector, sector_t* backsector);
+	void ProcessLowerMiniseg(HWWallDispatcher* di, seg_t* seg, sector_t* frontsector, sector_t* backsector);
 
-	float PointOnSide(float x,float y)
+	float PointOnSide(float x, float y)
 	{
-		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
+		return -((y - glseg.y1) * (glseg.x2 - glseg.x1) - (x - glseg.x1) * (glseg.y2 - glseg.y1));
 	}
 
-	void DrawWall(HWDrawInfo *di, FRenderState &state, bool translucent);
+	void DrawWall(HWWallDispatcher* di, FRenderState& state, bool translucent);
 
 };
 
@@ -356,7 +368,7 @@ public:
 	FRenderStyle RenderStyle;
 	int OverrideShader;
 
-	int translation;
+	FTranslationID translation;
 	int index;
 	float depth;
 	int vertexindex;
@@ -370,6 +382,7 @@ public:
 	float vt,vb;
 	float x1,y1,z1;
 	float x2,y2,z2;
+	float offx, offy;
 	float trans;
 	int dynlightindex;
 
@@ -390,6 +403,7 @@ public:
 	void PutSprite(HWDrawInfo *di, bool translucent);
 	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false, bool isSpriteShadow = false);
 	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
+	void AdjustVisualThinker(HWDrawInfo *di, DVisualThinker *spr, sector_t *sector);
 
 	void DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent);
 };

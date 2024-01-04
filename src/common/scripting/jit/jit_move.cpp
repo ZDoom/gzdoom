@@ -58,7 +58,7 @@ static int CastS2I(FString *b) { return (int)b->ToLong(); }
 static double CastS2F(FString *b) { return b->ToDouble(); }
 static int CastS2N(FString *b) { return b->Len() == 0 ? NAME_None : FName(*b).GetIndex(); }
 static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; }
-static int CastS2Co(FString *b) { return V_GetColor(*b); }
+static int CastS2Co(FString *b) { return V_GetColor(b->GetChars()); }
 static void CastCo2S(FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }
 static int CastS2So(FString *b) { return S_FindSound(*b).index(); }
 static void CastSo2S(FString* a, int b) { *a = soundEngine->GetSoundName(FSoundID::fromInt(b)); }

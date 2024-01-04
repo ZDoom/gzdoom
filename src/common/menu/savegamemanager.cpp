@@ -252,7 +252,7 @@ void FSavegameManagerBase::DoSave(int Selected, const char *savegamestring)
 				break;
 			}
 		}
-		PerformSaveGame(filename, savegamestring);
+		PerformSaveGame(filename.GetChars(), savegamestring);
 	}
 	M_ClearMenus();
 }
@@ -262,7 +262,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
 	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManagerBase);
 	PARAM_INT(sel);
 	PARAM_STRING(name);
-	self->DoSave(sel, name);
+	self->DoSave(sel, name.GetChars());
 	return 0;
 }
 
@@ -297,37 +297,26 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		!node->bOldVersion &&
 		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
 	{
-		auto info = resf->FindLump("info.json");
-		if (info == nullptr)
+		auto info = resf->FindEntry("info.json");
+		if (info < 0)
 		{
 			// this should not happen because the file has already been verified.
 			return index;
 		}
 
-		void* data = info->Lock();
+		auto data = resf->Read(info);
 		FSerializer arc;
-		if (!arc.OpenReader((const char*)data, info->LumpSize))
+		if (!arc.OpenReader(data.string(), data.size()))
 		{
-			info->Unlock();
 			return index;
 		}
-		info->Unlock();
 
 		SaveCommentString = ExtractSaveComment(arc);
 
-		auto pic = resf->FindLump("savepic.png");
-		if (pic != nullptr)
+		auto pic = resf->FindEntry("savepic.png");
+		if (pic >= 0)
 		{
-			FileReader picreader;
-
-			picreader.OpenMemoryArray([=](std::vector<uint8_t> &array)
-			{
-				auto cache = pic->Lock();
-				array.resize(pic->LumpSize);
-				memcpy(&array[0], cache, pic->LumpSize);
-				pic->Unlock();
-				return true;
-			});
+			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
 			PNGHandle *png = M_VerifyPNG(picreader);
 			if (png != nullptr)
 			{
@@ -559,7 +548,7 @@ FString G_GetSavegamesFolder()
 	}
 	else
 	{
-		name = **save_dir ? save_dir : M_GetSavegamesPath();
+		name = **save_dir ? FString(save_dir) : M_GetSavegamesPath();
 		usefilter = true;
 	}
 
@@ -574,8 +563,8 @@ FString G_GetSavegamesFolder()
 	if (usefilter && SavegameFolder.IsNotEmpty())
 		name << SavegameFolder << '/';
 
-	name = NicePath(name);
-	CreatePath(name);
+	name = NicePath(name.GetChars());
+	CreatePath(name.GetChars());
 	return name;
 }
 
@@ -589,7 +578,7 @@ FString G_BuildSaveName(const char* prefix)
 {
 	FString name = G_GetSavegamesFolder() + prefix;
 	DefaultExtension(name, "." SAVEGAME_EXT); // only add an extension if the prefix doesn't have one already.
-	name = NicePath(name);
+	name = NicePath(name.GetChars());
 	name.Substitute("\\", "/");
 	return name;
 }

@@ -173,7 +173,7 @@ bool CT_Responder (event_t *ev)
 			else if (ev->data1 == 'V' && (ev->data3 & GKM_CTRL))
 #endif // __APPLE__
 			{
-				CT_PasteChat(I_GetFromClipboard(false));
+				CT_PasteChat(I_GetFromClipboard(false).GetChars());
 			}
 		}
 		else if (ev->subtype == EV_GUI_Char)
@@ -193,7 +193,7 @@ bool CT_Responder (event_t *ev)
 #ifdef __unix__
 		else if (ev->subtype == EV_GUI_MButtonDown)
 		{
-			CT_PasteChat(I_GetFromClipboard(true));
+			CT_PasteChat(I_GetFromClipboard(true).GetChars());
 		}
 #endif
 	}
@@ -291,7 +291,7 @@ void CT_Drawer (void)
 
 		DrawText(drawer, displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr,
+		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr.GetChars(),
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 	}
 }

@@ -146,7 +146,7 @@ void FNotifyBuffer::Draw()
 
 			int scale = active_con_scaletext(twod, generic_ui);
 			if (!center)
-				DrawText(twod, font, color, 0, line, notify.Text,
+				DrawText(twod, font, color, 0, line, notify.Text.GetChars(),
 					DTA_VirtualWidth, twod->GetWidth() / scale,
 					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,
@@ -154,7 +154,7 @@ void FNotifyBuffer::Draw()
 			else
 				DrawText(twod, font, color, (twod->GetWidth() -
 					font->StringWidth (notify.Text) * scale) / 2 / scale,
-					line, notify.Text,
+					line, notify.Text.GetChars(),
 					DTA_VirtualWidth, twod->GetWidth() / scale,
 					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,

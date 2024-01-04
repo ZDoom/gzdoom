@@ -238,8 +238,7 @@ extern double INFINITY;
 #endif
 
 
-double c_sin(x)
-double x;
+double c_sin(double x)
 {
 double y, z, zz;
 int j, sign;
@@ -318,8 +317,7 @@ return(y);
 
 
 
-double c_cos(x)
-double x;
+double c_cos(double x)
 {
 double y, z, zz;
 int i;
@@ -403,8 +401,7 @@ static unsigned short P648[] = {034513,054170,0176773,0116043,};
 static double P64800 = 4.8481368110953599358991410e-5;
 #endif
 
-double radian(d,m,s)
-double d,m,s;
+double radian(double d, double m, double s)
 {
 
 return( ((d*60.0 + m)*60.0 + s)*P64800 );

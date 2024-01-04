@@ -59,6 +59,28 @@ class Key : Inventory
 		return false;
 	}
 
+	override void AttachToOwner(Actor other)
+	{
+		Super.AttachToOwner(other);
+
+		if (multiplayer && !deathmatch && sv_coopsharekeys)
+		{
+			for (int i = 0; i < MAXPLAYERS; i++)
+			{
+				if (playeringame[i])
+				{
+					let pmo = players[i].mo;
+
+					if (pmo == other)
+						continue;
+
+					if (!pmo.FindInventory(GetClass()))
+						pmo.GiveInventoryType(GetClass());
+				}
+			}
+		}
+	}
+
 	override bool ShouldStay ()
 	{
 		return !!multiplayer;

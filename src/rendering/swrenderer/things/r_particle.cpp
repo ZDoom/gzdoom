@@ -90,7 +90,7 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
-		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
+		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos.XY(), renderportal->CurrentPortal->dst))
 			return;
 
 		// transform the origin point

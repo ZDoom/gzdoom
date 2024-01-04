@@ -58,12 +58,12 @@ struct HexDataSource
 	//
 	//==========================================================================
 
-	void ParseDefinition(FileSys::FResourceLump* font)
+	void ParseDefinition(FResourceFile* resf, int index)
 	{
 		FScanner sc;
 
-		auto data = font->Lock();
-		sc.OpenMem("newconsolefont.hex", (const char*)data, font->Size());
+		auto data = resf->Read(index);
+		sc.OpenMem("newconsolefont.hex", data.string(), (int)data.size());
 		sc.SetCMode(true);
 		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
 		while (sc.GetString())
@@ -97,7 +97,6 @@ struct HexDataSource
 			lumb = i * 255 / 17;
 			SmallPal[i] = PalEntry(255, lumb, lumb, lumb);
 		}
-		font->Unlock();
 	}
 };
 
@@ -323,8 +322,8 @@ public:
 		Translations.Resize(NumTextColors);
 		for (int i = 0; i < NumTextColors; i++)
 		{
-			if (i == CR_UNTRANSLATED) Translations[i] = 0;
-			else Translations[i] = LuminosityTranslation(i * 2 + 1, minlum, maxlum);
+			if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
+			else Translations[i] = MakeLuminosityTranslation(i * 2 + 1, minlum, maxlum);
 		}
 	}
 
@@ -387,8 +386,8 @@ public:
 		Translations.Resize(NumTextColors);
 		for (int i = 0; i < NumTextColors; i++)
 		{
-			if (i == CR_UNTRANSLATED) Translations[i] = 0;
-			else Translations[i] = LuminosityTranslation(i * 2, minlum, maxlum);
+			if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
+			else Translations[i] = MakeLuminosityTranslation(i * 2, minlum, maxlum);
 		}
 	}
 };
@@ -440,8 +439,8 @@ void LoadHexFont(const char* filename)
 {
 	auto resf = FResourceFile::OpenResourceFile(filename);
 	if (resf == nullptr) I_FatalError("Unable to open %s", filename);
-	auto hexfont = resf->FindLump("newconsolefont.hex");
-	if (hexfont == nullptr) I_FatalError("Unable to find newconsolefont.hex in %s", filename);
-	hexdata.ParseDefinition(hexfont);
+	auto hexfont = resf->FindEntry("newconsolefont.hex");
+	if (hexfont < 0) I_FatalError("Unable to find newconsolefont.hex in %s", filename);
+	hexdata.ParseDefinition(resf, hexfont);
 	delete resf;
 }

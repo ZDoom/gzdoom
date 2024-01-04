@@ -351,6 +351,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF9, DOSHADOWBLOCK, AActor, flags9),
 	DEFINE_FLAG(MF9, SHADOWBLOCK, AActor, flags9),
 	DEFINE_FLAG(MF9, SHADOWAIMVERT, AActor, flags9),
+	DEFINE_FLAG(MF9, DECOUPLEDANIMATIONS, AActor, flags9),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -377,6 +378,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, NOSPRITESHADOW, AActor, renderflags),
 	DEFINE_FLAG(RF2, INVISIBLEINMIRRORS, AActor, renderflags2),
 	DEFINE_FLAG(RF2, ONLYVISIBLEINMIRRORS, AActor, renderflags2),
+	DEFINE_FLAG(RF2, BILLBOARDFACECAMERA, AActor, renderflags2),
+	DEFINE_FLAG(RF2, BILLBOARDNOFACECAMERA, AActor, renderflags2),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -645,6 +648,15 @@ static int propcmp(const void * a, const void * b)
 //==========================================================================
 void InitImports();
 
+struct UserInfoCVarNamePlayer
+{
+	FBaseCVar** addr;
+	FString name;
+	int pnum;
+};
+
+TArray<UserInfoCVarNamePlayer> LoadGameUserInfoCVars;
+
 void InitThingdef()
 {
 	// Some native types need size and serialization information added before the scripts get compiled.
@@ -802,6 +814,79 @@ void InitThingdef()
 	auto fspp = NewStruct("FSpawnParticleParams", nullptr);
 	fspp->Size = sizeof(FSpawnParticleParams);
 	fspp->Align = alignof(FSpawnParticleParams);
+
+	auto cvst = NewStruct("CVar", nullptr, true);
+	NewPointer(cvst, false)->InstallHandlers(
+		[](FSerializer &arc, const char *key, const void *addr)
+		{
+			const FBaseCVar * self = *(const FBaseCVar**)addr;
+			
+			if(self)
+			{
+				arc.BeginObject(key);
+
+
+				if(self->pnum != -1)
+				{
+					int32_t pnum = self->pnum;
+					FName name = self->userinfoName;
+					arc("name", name);
+					arc("player", pnum);
+				}
+				else
+				{
+					FString name = self->GetName();
+					arc("name", name);
+				}
+
+				arc.EndObject();
+			}
+		},
+		[](FSerializer &arc, const char *key, void *addr)
+		{
+			FBaseCVar ** self = (FBaseCVar**)addr;
+
+			FString name;
+			arc.BeginObject(key);
+
+			arc("name", name);
+
+			FBaseCVar * backing = FindCVar(name.GetChars(), nullptr);
+			if(!backing)
+			{
+				I_Error("Attempt to load pointer to inexisted CVar '%s'", name.GetChars());
+			}
+			else if((backing->GetFlags()  & (CVAR_USERINFO|CVAR_IGNORE)) == CVAR_USERINFO)
+			{
+				if(int pnum; arc.ReadOptionalInt("player", pnum))
+				{
+					*self = nullptr;
+					LoadGameUserInfoCVars.Push({self, name, pnum}); // this needs to be done later, since userinfo isn't loaded yet
+					arc.EndObject();
+					return true;
+				}
+			}
+			
+			*self = backing;
+
+			arc.EndObject();
+
+			return true;
+		}
+	);
+}
+
+void SetupLoadingCVars()
+{
+	LoadGameUserInfoCVars.Clear();
+}
+
+void FinishLoadingCVars()
+{
+	for(UserInfoCVarNamePlayer &cvar : LoadGameUserInfoCVars)
+	{
+		(*cvar.addr) = GetCVar(cvar.pnum, cvar.name.GetChars());
+	}
 }
 
 void SynthesizeFlagFields()

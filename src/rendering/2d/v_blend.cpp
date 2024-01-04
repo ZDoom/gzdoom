@@ -250,6 +250,8 @@ FVector4 V_CalcBlend(sector_t* viewsector, PalEntry* modulateColor)
 				auto s = viewsector->heightsec;
 				blendv = s->floorplane.PointOnSide(vpp) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(vpp) < 0 ? s->topmap : s->midmap;
 			}
+			else if (viewsector->selfmap != 0) blendv = viewsector->selfmap;
+			else blendv = viewsector->Level->globalcolormap;
 		}
 		else
 		{

@@ -132,8 +132,7 @@ double fabs(), c_exp(), polevl(), p1evl();
 #endif
 extern double INFINITY, MINLOG, MAXLOG, LOGE2;
 
-double c_sinh(x)
-double x;
+double c_sinh(double x)
 {
 double a;
 

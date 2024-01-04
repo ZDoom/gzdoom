@@ -171,7 +171,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   InterpolateTic(false),
   firstTic(true),
   Tics(0),
-  Translation(0),
+  Translation(NO_TRANSLATION),
   Flags(0),
   Owner(owner),
   State(nullptr),
@@ -1023,12 +1023,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayTranslation)
 		{
 			// an empty string resets to the default
 			// (unlike AActor::SetTranslation, there is no Default block for PSprites, so just set the translation to 0)
-			pspr->Translation = 0;
+			pspr->Translation = NO_TRANSLATION;
 			return 0;
 		}
 
-		int tnum = R_FindCustomTranslation(trname);
-		if (tnum >= 0)
+		auto tnum = R_FindCustomTranslation(trname);
+		if (tnum != INVALID_TRANSLATION)
 		{
 			pspr->Translation = tnum;
 		}

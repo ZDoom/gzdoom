@@ -276,8 +276,7 @@ double c_asin();
 #endif
 extern double PIO2, PIO4, NAN;
 
-double c_asin(x)
-double x;
+double c_asin(double x)
 {
 double a, p, z, zz;
 short sign;
@@ -327,8 +326,7 @@ return(z);
 
 
 
-double c_acos(x)
-double x;
+double c_acos(double x)
 {
 if( (x < -1.0) || (x > 1.0) )
 	{

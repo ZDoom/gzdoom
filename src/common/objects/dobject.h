@@ -179,8 +179,6 @@ public: \
 
 #include "dobjgc.h"
 
-class AActor;
-
 class DObject
 {
 public:
@@ -245,6 +243,7 @@ public:
 	inline DAngle &AngleVar(FName field);
 	inline FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
+	inline int* IntArray(FName field);
 
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
@@ -433,6 +432,11 @@ inline bool &DObject::BoolVar(FName field)
 inline int &DObject::IntVar(FName field)
 {
 	return *(int*)ScriptVar(field, nullptr);
+}
+
+inline int* DObject::IntArray(FName field)
+{
+	return (int*)ScriptVar(field, nullptr);
 }
 
 inline FTextureID &DObject::TextureIDVar(FName field)

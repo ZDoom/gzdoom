@@ -229,7 +229,7 @@ struct CPUInfo	// 92 bytes
 extern CPUInfo CPU;
 
 void CheckCPUID (CPUInfo *cpu);
-FString DumpCPUInfo (const CPUInfo *cpu);
+FString DumpCPUInfo (const CPUInfo *cpu, bool brief = false);
 
 #endif
 

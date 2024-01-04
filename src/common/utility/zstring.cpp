@@ -603,7 +603,7 @@ ptrdiff_t FString::LastIndexOfAny (const FString &charset) const
 
 ptrdiff_t FString::LastIndexOfAny (const char *charset) const
 {
-	return LastIndexOfAny (charset, long(Len()));
+	return LastIndexOfAny (charset, ptrdiff_t(Len()));
 }
 
 ptrdiff_t FString::LastIndexOfAny (const FString &charset, ptrdiff_t endIndex) const
@@ -842,12 +842,12 @@ void FString::StripLeftRight ()
 	if (max == 0) return;
 	for (i = 0; i < max; ++i)
 	{
-		if (Chars[i] < 0 || !isspace((unsigned char)Chars[i]))
+		if ((signed char)Chars[i] < 0 || !isspace((unsigned char)Chars[i]))
 			break;
 	}
 	for (j = max - 1; j >= i; --j)
 	{
-		if (Chars[j] < 0 || !isspace((unsigned char)Chars[j]))
+		if ((signed char)Chars[j] < 0 || !isspace((unsigned char)Chars[j]))
 			break;
 	}
 	if (i == 0 && j == max - 1)

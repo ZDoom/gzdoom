@@ -42,6 +42,7 @@
 #include "hw_clock.h"
 #include "flatvertices.h"
 #include "hw_vertexbuilder.h"
+#include "hw_walldispatcher.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>
@@ -105,6 +106,7 @@ static RenderJobQueue jobQueue;	// One static queue is sufficient here. This cod
 void HWDrawInfo::WorkerThread()
 {
 	sector_t *front, *back;
+	HWWallDispatcher disp(this);
 
 	WTTotal.Clock();
 	isWorkerThread = true;	// for adding asserts in GL API code. The worker thread may never call any GL API.
@@ -169,7 +171,7 @@ void HWDrawInfo::WorkerThread()
 			}
 			else back = nullptr;
 
-			wall.Process(this, job->seg, front, back);
+			wall.Process(&disp, job->seg, front, back);
 			rendered_lines++;
 			SetupWall.Unclock();
 			break;
@@ -348,9 +350,10 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 			else
 			{
 				HWWall wall;
+				HWWallDispatcher disp(this);
 				SetupWall.Clock();
 				wall.sub = seg->Subsector;
-				wall.Process(this, seg, currentsector, backsector);
+				wall.Process(&disp, seg, currentsector, backsector);
 				rendered_lines++;
 				SetupWall.Unclock();
 			}
@@ -594,11 +597,26 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 {
 	SetupSprite.Clock();
+	for (uint32_t i = 0; i < sub->sprites.Size(); i++)
+	{
+		DVisualThinker *sp = sub->sprites[i];
+		if (!sp || sp->ObjectFlags & OF_EuthanizeMe)
+			continue;
+		if (mClipPortal)
+		{
+			int clipres = mClipPortal->ClipPoint(sp->PT.Pos.XY());
+			if (clipres == PClip_InFront) continue;
+		}
+		if (!sp->spr)
+			sp->spr = new HWSprite();
+		
+		sp->spr->ProcessParticle(this, &sp->PT, front);
+	}
 	for (int i = Level->ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Level->Particles[i].snext)
 	{
 		if (mClipPortal)
 		{
-			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos);
+			int clipres = mClipPortal->ClipPoint(Level->Particles[i].Pos.XY());
 			if (clipres == PClip_InFront) continue;
 		}
 
@@ -666,7 +684,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	}
 
 	// [RH] Add particles
-	if (gl_render_things && Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE)
+	if (gl_render_things && (sub->sprites.Size() > 0 || Level->ParticlesInSubsec[sub->Index()] != NO_PARTICLE))
 	{
 		if (multithread)
 		{

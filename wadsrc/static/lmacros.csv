@@ -32,7 +32,9 @@ adj_3_rus,ru,ён,на,но,но
 irreg_1_rus,ru,ёл,ла,ло,ло
 irreg_2_rus,ru,,ла,ло,ло
 irreg_3_rus,ru,ёг,егла,егло,егло
-pron_rus,ru,него,неё,него,него
+irreg_4_rus,ru,ёк,екла,екло,екло
+pron_rus,ru,него,неё,,
+cheatpron_rus,ru,щик,щица,,
 ao_1_sr,sr,о,ла,ло,ло
 ao_2_sr,sr,ао,ла,ло,ло
 ao_3_sr,sr,ог,у,ог,ог
@@ -44,4 +46,11 @@ pro2_gr,el,Τον,Την,Τον,Το
 pro3_gr,el,στον,στην,στο,στο
 art_gr,el,Ο,Η,Το,Το
 pro4_gr,el,του,της,του,του
-pro_dk,da,han,hun,han,det
+pro_dk,"da, no",han,hun,han,det
+pro_sv,sv,han,hon,han,den
+ref_sv,sv,honom,henne,honom,den
+ao_ua,ua,ий,а,о,о
+adj_1_ua,ua,в,ла,ло,ло
+adj_2_ua,ua,вся,лась,лось,лось
+adj_3_ua,ua,,ла,ло,ло
+adj_4_ua,ua,ий,та,то,то

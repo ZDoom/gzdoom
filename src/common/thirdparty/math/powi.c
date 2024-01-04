@@ -78,9 +78,7 @@ int signbit();
 #endif
 extern double NEGZERO, INFINITY, MAXNUM, MAXLOG, MINLOG, LOGE2;
 
-double c_powi( x, nn )
-double x;
-int nn;
+double c_powi(double x, int nn)
 {
 int n, e, sign, asign, lx;
 double w, y, s;

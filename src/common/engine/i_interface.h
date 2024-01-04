@@ -10,6 +10,7 @@ class FGameTexture;
 class FTextureID;
 enum EUpscaleFlags : int;
 class FConfigFile;
+struct FTranslationID;
 
 struct SystemCallbacks
 {
@@ -47,6 +48,7 @@ struct SystemCallbacks
 	bool (*OkForLocalization)(FTextureID, const char*);
 	FConfigFile* (*GetConfig)();
 	bool (*WantEscape)();
+	FTranslationID(*RemapTranslation)(FTranslationID trans);
 };
 
 extern SystemCallbacks sysCallbacks;

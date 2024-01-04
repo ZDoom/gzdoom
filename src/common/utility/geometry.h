@@ -150,7 +150,7 @@ inline double InterceptLineSegments(double v2x, double v2y, double v2dx, double 
 	den = 1 / den;
 
 	double factor1 = ((v2x - v1x) * v2dy + (v1y - v2y) * v2dx) * -den;
-	if (factor1 < 0 || factor1 > 1) return -FLT_MAX; // no intersection
+	if (factor1 < 0 || factor1 >= 1) return -FLT_MAX; // no intersection
 	if (pfactor1) *pfactor1 = factor1;
 
 	return ((v1x - v2x) * v1dy + (v2y - v1y) * v1dx) * den; // this one's for the line segment where we want to get the intercept factor for so it needs to be last.

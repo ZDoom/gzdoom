@@ -134,15 +134,15 @@ static PClassActor* FindInfoName(int index, bool mustexist = false)
 	{
 		FStringf name("~Dsdhacked~%d", index);
 		auto cls = PClass::FindActor(name);
-		if (cls)
-		{
-			GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM; // This flag is not a ZDoom default, but it must be a Dehacked default.
-			return cls;
-		}
 		if (!mustexist)
 		{
 			cls = static_cast<PClassActor*>(RUNTIME_CLASS(AActor)->CreateDerivedClass(name.GetChars(), (unsigned)sizeof(AActor)));
 			NewClassType(cls, -1);	// This needs a VM type to work as intended.
+			cls->InitializeDefaults();
+		}
+		if (cls)
+		{
+			GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM; // This flag is not a ZDoom default, but it must be a Dehacked default.
 			return cls;
 		}
 	}
@@ -152,9 +152,12 @@ static PClassActor* FindInfoName(int index, bool mustexist = false)
 static FSoundID DehFindSound(int index,bool mustexist = false)
 {
 	if (index < 0) return NO_SOUND;
-	if (index < (int) SoundMap.Size()) return SoundMap[index];
-	FStringf name("~dsdhacked/#%d", index);
-	if (dsdhacked && !mustexist) return soundEngine->FindSoundTentative(name);
+	if (index < (int) SoundMap.Size() && SoundMap[index].isvalid()) return SoundMap[index];
+	if (dsdhacked && !mustexist)
+	{
+		FStringf name("~dsdhacked/#%d", index);
+		return soundEngine->FindSoundTentative(name.GetChars());
+	}
 	return NO_SOUND;
 }
 
@@ -165,7 +168,7 @@ static void ReplaceSoundName(int index, const char* newname)
 	if (snd == NO_SOUND) return;
 	auto sfx = soundEngine->GetWritableSfx(snd);
 	FStringf dsname("ds%s", newname);
-	sfx->lumpnum = fileSystem.CheckNumForName(dsname, FileSys::ns_sounds);
+	sfx->lumpnum = fileSystem.CheckNumForName(dsname.GetChars(), FileSys::ns_sounds);
 	sfx->bTentative = false;
 	sfx->bRandomHeader = false;
 	sfx->bLoadRAW = false;
@@ -557,7 +560,7 @@ static FState *FindState (int statenum, bool mustexist)
 	{
 		if (stateacc <= statenum && stateacc + StateMap[i].StateSpan > statenum)
 		{
-			if (StateMap[i].State != NULL)
+			if (StateMap[i].State != nullptr)
 			{
 				if (StateMap[i].OwnerIsPickup)
 				{
@@ -565,23 +568,28 @@ static FState *FindState (int statenum, bool mustexist)
 				}
 				return StateMap[i].State + statenum - stateacc;
 			}
-			else return NULL;
+			else break;
 		}
 		stateacc += StateMap[i].StateSpan;
 	}
-	if (dsdhacked && !mustexist)
+	if (dsdhacked)
 	{
 		auto p = dehExtStates.CheckKey(statenum);
 		if (p) return *p;
-		auto state = (FState*)ClassDataAllocator.Alloc(sizeof(FState));
-		dehExtStates.Insert(statenum, state);
-		memset(state, 0, sizeof(*state));
-		state->Tics = -1;
-		state->NextState = state;
-		state->DehIndex = statenum;
+		if (!mustexist)
+		{
+			auto state = (FState*)ClassDataAllocator.Alloc(sizeof(FState));
+			dehExtStates.Insert(statenum, state);
+			memset(state, 0, sizeof(*state));
+			state->Tics = -1;
+			state->NextState = state;
+			state->DehIndex = statenum;
+			state->UseFlags = SUF_ACTOR | SUF_OVERLAY | SUF_WEAPON | SUF_ITEM; 
+			return state;
+		}
 
 	}
-	return NULL;
+	return nullptr;
 }
 
 int FindStyle (const char *namestr)
@@ -1113,7 +1121,7 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 		sfunc->NumArgs = numargs;
 		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
-		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2));
+		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2).GetChars());
 
 		disasmdump.Write(sfunc, sfunc->PrintableName);
 
@@ -1382,7 +1390,7 @@ static int PatchThing (int thingy)
 			if (val > 8 || val < 0) val = 0;
 			unsigned color = bloodcolor[val];
 			info->BloodColor = color;
-			info->BloodTranslation = val == 0? 0 : TRANSLATION(TRANSLATION_Blood, CreateBloodTranslation(color));
+			info->BloodTranslation = val == 0? NO_TRANSLATION : CreateBloodTranslation(color);
 		}
 		else if (linelen == 10 && stricmp(Line1, "MBF21 Bits") == 0)
 		{
@@ -1395,7 +1403,7 @@ static int PatchThing (int thingy)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -1471,7 +1479,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				FSoundID snd = DehFindSound(val - 1);
+				FSoundID snd = DehFindSound(val - 1, false);
 				
 				if (snd == NO_SOUND) // This won't trigger for dsdhacked patches!
 				{
@@ -1521,7 +1529,7 @@ static int PatchThing (int thingy)
 				{
 					if (IsNum (strval))
 					{
-						value[0] |= (unsigned long)strtoll(strval, NULL, 10);
+						value[0] |= (uint32_t)strtoll(strval, NULL, 10);
 						vchanged[0] = true;
 					}
 					else
@@ -1832,7 +1840,7 @@ static int PatchFrame (int frameNum)
 	int tics, misc1, frame;
 	FState *info, dummy;
 
-	info = FindState (frameNum);
+	info = FindState (frameNum, false);
 	if (info)
 	{
 		DPrintf (DMSG_SPAMMY, "Frame %d\n", frameNum);
@@ -1913,7 +1921,7 @@ static int PatchFrame (int frameNum)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -2218,7 +2226,7 @@ static int PatchWeapon (int weapNum)
 			{
 				if (IsNum(strval))
 				{
-					value |= (unsigned long)strtoll(strval, NULL, 10);
+					value |= (uint32_t)strtoll(strval, NULL, 10);
 					vchanged = true;
 				}
 				else
@@ -2537,7 +2545,7 @@ static int PatchMisc (int dummy)
 	auto health = GetDefaultByName ("HealthBonus");
 	if (health!=NULL) 
 	{
-		health->IntVar(NAME_MaxAmount) = 2 * deh.MaxHealth;
+		health->IntVar(NAME_MaxAmount) = -1;	// needs to be evaluated at run time due to the compat flag.
 	}
 
 	health = GetDefaultByName ("Soulsphere");
@@ -2934,7 +2942,7 @@ static int PatchSoundNames (int dummy)
 	{
 		stripwhite(Line2);
 		FString newname = skipwhite (Line2);
-		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname);
+		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname.GetChars());
 		DPrintf (DMSG_SPAMMY, "Sound %d set to:\n%s\n", Line1, newname.GetChars());
 	}
 
@@ -2967,7 +2975,7 @@ static int PatchSpriteNames (int dummy)
 					OrgSprNames[o] = nulname;
 				}
 			}
-			int v = GetSpriteIndex(newname);
+			int v = GetSpriteIndex(newname.GetChars());
 			memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
 
 			DPrintf (DMSG_SPAMMY, "Sprite %d set to:\n%s\n", Line1, newname.GetChars());
@@ -3023,15 +3031,15 @@ static int DoInclude (int dummy)
 
 		// Try looking for the included file in the same directory
 		// as the patch before looking in the current file.
-		const char *lastSlash = strrchr(savepatchname, '/');
+		const char *lastSlash = strrchr(savepatchname.GetChars(), '/');
 		char *path = data;
 
 		if (lastSlash != NULL)
 		{
-			size_t pathlen = lastSlash - savepatchname + strlen (data) + 2;
+			size_t pathlen = lastSlash - savepatchname.GetChars() + strlen (data) + 2;
 			path = new char[pathlen];
-			strncpy (path, savepatchname, (lastSlash - savepatchname) + 1);
-			strcpy (path + (lastSlash - savepatchname) + 1, data);
+			strncpy (path, savepatchname.GetChars(), (lastSlash - savepatchname.GetChars()) + 1);
+			strcpy (path + (lastSlash - savepatchname.GetChars()) + 1, data);
 			if (!FileExists (path))
 			{
 				delete[] path;
@@ -3166,7 +3174,7 @@ bool D_LoadDehFile(const char *patchfile)
 			// some WAD may need it. Should be deleted if it can
 			// be confirmed that nothing uses this case.
 			FString filebase(ExtractFileBase(patchfile));
-			lumpnum = fileSystem.CheckNumForName(filebase);
+			lumpnum = fileSystem.CheckNumForName(filebase.GetChars());
 		}
 		if (lumpnum >= 0)
 		{
@@ -3250,7 +3258,7 @@ static bool DoDehPatch()
 		dversion = 3;
 	}
 
-	if (!LoadDehSupp ())
+	if (StateMap.Size() == 0 && !LoadDehSupp ()) // only load this once.
 	{
 		Printf ("Could not load DEH support data\n");
 		UnloadDehSupp ();
@@ -3272,7 +3280,6 @@ static bool DoDehPatch()
 		}
 	} while (cont);
 
-	UnloadDehSupp ();
 	PatchName = "";
 	delete[] PatchFile;
 	if (!batchrun) Printf ("Patch installed\n");
@@ -3284,43 +3291,34 @@ static inline bool CompareLabel (const char *want, const uint8_t *have)
 	return *(uint32_t *)want == *(uint32_t *)have;
 }
 
-static int DehUseCount;
-
 static void UnloadDehSupp ()
 {
-	if (--DehUseCount <= 0)
-	{
-		VMDisassemblyDumper disasmdump(VMDisassemblyDumper::Append);
+	VMDisassemblyDumper disasmdump(VMDisassemblyDumper::Append);
 
-		// Handle MBF params here, before the required arrays are cleared
-		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
-		{
-			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump, &MBFParamStates[i]);
-		}
-		stateargs.Clear();
-		MBFParamStates.Clear();
-		MBFParamStates.ShrinkToFit();
-		MBFCodePointers.Clear();
-		MBFCodePointers.ShrinkToFit();
-		// OrgSprNames and StateMap are not freed here, because if you load a second
-		// dehacked patch through some means other than including it
-		// in the first patch, it won't see the state/sprite information
-		// that was altered by the first. So we need to keep the
-		// StateMap around until all patches have been applied.
-		DehUseCount = 0;
-		Actions.Reset();
-		OrgHeights.Reset();
-		CodePConv.Reset();
-		SoundMap.Reset();
-		InfoNames.Reset();
-		BitNames.Reset();
-		StyleNames.Reset();
-		AmmoNames.Reset();
-		UnchangedSpriteNames.Reset();
+	// Handle MBF params here, before the required arrays are cleared
+	for (unsigned int i=0; i < MBFParamStates.Size(); i++)
+	{
+		SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump, &MBFParamStates[i]);
 	}
+	stateargs.Clear();
+	MBFParamStates.Clear();
+	MBFParamStates.ShrinkToFit();
+	MBFCodePointers.Clear();
+	MBFCodePointers.ShrinkToFit();
+	OrgSprNames.Reset();
+	StateMap.Reset();
+	Actions.Reset();
+	OrgHeights.Reset();
+	CodePConv.Reset();
+	SoundMap.Reset();
+	InfoNames.Reset();
+	BitNames.Reset();
+	StyleNames.Reset();
+	AmmoNames.Reset();
+	UnchangedSpriteNames.Reset();
 }
 
-static bool LoadDehSupp ()
+bool LoadDehSupp ()
 {
 	try
 	{
@@ -3339,12 +3337,6 @@ static bool LoadDehSupp ()
 			return false;
 		}
 		bool gotnames = false;
-
-
-		if (++DehUseCount > 1)
-		{
-			return true;
-		}
 
 		if (EnglishStrings.CountUsed() == 0)
 			EnglishStrings = GStrings.GetDefaultStrings();
@@ -3498,6 +3490,7 @@ static bool LoadDehSupp ()
 					// This mapping is mainly for P_SetSafeFlash.
 					for (int i = 0; i < s.StateSpan; i++)
 					{
+						assert(FState::StaticFindStateOwner(s.State + i));
 						dehExtStates.Insert(dehcount, s.State + i);
 						s.State[i].DehIndex = dehcount;
 						dehcount++;
@@ -3708,8 +3701,10 @@ void FinishDehPatch ()
 
 		type->ActorInfo()->Replacement = subclass;
 		subclass->ActorInfo()->Replacee = type;
+		subclass->ActorInfo()->LightAssociations = type->ActorInfo()->LightAssociations;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
+
 		if (old_replacement != NULL)
 		{
 			subclass->ActorInfo()->Replacement = old_replacement;
@@ -3729,9 +3724,7 @@ void FinishDehPatch ()
 			}
 		}
 	}
-	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
-	StateMap.Reset();
-	OrgSprNames.Reset();
+	UnloadDehSupp();
 	TouchedActors.Reset();
 	EnglishStrings.Clear();
 	GStrings.SetOverrideStrings(DehStrings);
@@ -3973,10 +3966,9 @@ bool CheckTranslucent(AActor* a)
 	return !(a->renderflags & RF_ZDOOMTRANS) && a->Alpha < 1 - FLT_EPSILON;
 }
 
-constexpr int t0 = 0;
-constexpr int t1 = TRANSLATION(TRANSLATION_Standard, 0);
-constexpr int t2 = TRANSLATION(TRANSLATION_Standard, 1);
-constexpr int t3 = TRANSLATION(TRANSLATION_Standard, 2);
+constexpr FTranslationID t1 = TRANSLATION(TRANSLATION_Standard, 0);
+constexpr FTranslationID t2 = TRANSLATION(TRANSLATION_Standard, 1);
+constexpr FTranslationID t3 = TRANSLATION(TRANSLATION_Standard, 2);
 
 void SetTranslation1(AActor* a)
 {
@@ -3987,7 +3979,7 @@ void SetTranslation1(AActor* a)
 void ClearTranslation1(AActor* a)
 {
 	if (a->Translation == t3 || a->Translation == t2) a->Translation = t2;
-	else a->Translation = t0;
+	else a->Translation = NO_TRANSLATION;
 }
 
 bool CheckTranslation1(AActor* a)
@@ -4004,7 +3996,7 @@ void SetTranslation2(AActor* a)
 void ClearTranslation2(AActor* a)
 {
 	if (a->Translation == t3 || a->Translation == t1) a->Translation = t1;
-	else a->Translation = t0;
+	else a->Translation = NO_TRANSLATION;
 }
 
 bool CheckTranslation2(AActor* a)

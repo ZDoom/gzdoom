@@ -419,12 +419,12 @@ void BuildAddress (sockaddr_in *address, const char *name)
 
 	if (!isnamed)
 	{
-		address->sin_addr.s_addr = inet_addr (target);
+		address->sin_addr.s_addr = inet_addr (target.GetChars());
 		Printf ("Node number %d, address %s\n", doomcom.numnodes, target.GetChars());
 	}
 	else
 	{
-		hostentry = gethostbyname (target);
+		hostentry = gethostbyname (target.GetChars());
 		if (!hostentry)
 			I_FatalError ("gethostbyname: couldn't find %s\n%s", target.GetChars(), neterror());
 		address->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];

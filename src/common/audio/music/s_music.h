@@ -24,7 +24,7 @@ void S_PauseAllCustomStreams(bool on);
 struct MusicCallbacks
 {
 	FString(*LookupFileName)(const char* fn, int &order);
-	FileReader(*OpenMusic)(const char* fn);
+	int(*FindMusic)(const char* fn);
 };
 void S_SetMusicCallbacks(MusicCallbacks* cb);
 
@@ -68,19 +68,20 @@ struct MidiDeviceSetting
 	FString args;
 };
 
-typedef TMap<FName, MidiDeviceSetting> MidiDeviceMap;
-typedef TMap<FName, float> MusicVolumeMap;
+typedef TMap<int, MidiDeviceSetting> MidiDeviceMap;
+typedef TMap<int, float> MusicVolumeMap;
 
 extern MidiDeviceMap MidiDevices;
 extern MusicVolumeMap MusicVolumes;
+extern MusicCallbacks mus_cb;
 
 struct MusPlayingInfo
 {
 	FString name;
 	ZMusic_MusicStream handle;
+	int   lumpnum;
 	int   baseorder;
-	float replayGain;
-	float replayGainFactor;
+	float musicVolume;
 	bool  loop;
 	bool isfloat;
 	FString	 LastSong;			// last music that was played

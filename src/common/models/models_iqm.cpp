@@ -137,9 +137,12 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		}
 
 		reader.SeekTo(ofs_anims);
-		for (IQMAnim& anim : Anims)
+		for(unsigned i = 0; i < Anims.Size(); i++)
 		{
+			IQMAnim& anim = Anims[i];
 			anim.Name = reader.ReadName(text);
+			NamedAnimations.Insert(anim.Name, i);
+
 			anim.FirstFrame = reader.ReadUInt32();
 			anim.NumFrames = reader.ReadUInt32();
 			anim.Framerate = reader.ReadFloat();
@@ -271,7 +274,7 @@ void IQMModel::LoadGeometry()
 	try
 	{
 		auto lumpdata = fileSystem.ReadFile(mLumpNum);
-		IQMFileReader reader(lumpdata.GetMem(), (int)lumpdata.GetSize());
+		IQMFileReader reader(lumpdata.data(), (int)lumpdata.size());
 
 		Vertices.Resize(NumVertices);
 		for (IQMVertexArray& vertexArray : VertexArrays)
@@ -445,7 +448,28 @@ int IQMModel::FindFrame(const char* name, bool nodefault)
 	return FErr_NotFound;
 }
 
-void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
+int IQMModel::FindFirstFrame(FName name)
+{
+	int * nam = NamedAnimations.CheckKey(name);
+	if(nam) return Anims[*nam].FirstFrame;
+	return FErr_NotFound;
+}
+
+int IQMModel::FindLastFrame(FName name)
+{
+	int * nam = NamedAnimations.CheckKey(name);
+	if(nam) return Anims[*nam].FirstFrame + Anims[*nam].NumFrames;
+	return FErr_NotFound;
+}
+
+double IQMModel::FindFramerate(FName name)
+{
+	int * nam = NamedAnimations.CheckKey(name);
+	if(nam) return Anims[*nam].Framerate;
+	return FErr_NotFound;
+}
+
+void IQMModel::RenderFrame(FModelRenderer* renderer, FGameTexture* skin, int frame1, int frame2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	renderer->SetupFrame(this, 0, 0, NumVertices, boneData, boneStartPosition);
 
@@ -517,7 +541,26 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 	return &TRSData;
 }
 
-const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double inter, const TArray<TRS>* animationData, DBoneComponents* boneComponentData, int index)
+static TRS InterpolateBone(const TRS &from, const TRS &to, float t, float invt)
+{
+	TRS bone;
+
+	bone.translation = from.translation * invt + to.translation * t;
+	bone.rotation = from.rotation * invt;
+
+	if ((bone.rotation | to.rotation * t) < 0)
+	{
+		bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
+	}
+
+	bone.rotation += to.rotation * t;
+	bone.rotation.MakeUnit();
+	bone.scaling = from.scaling * invt + to.scaling * t;
+
+	return bone;
+}
+
+const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const TArray<TRS>* animationData, DBoneComponents* boneComponentData, int index)
 {
 	const TArray<TRS>& animationFrames = animationData ? *animationData : TRSData;
 	if (Joints.Size() > 0)
@@ -534,8 +577,13 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 
 		int offset1 = frame1 * numbones;
 		int offset2 = frame2 * numbones;
-		float t = (float)inter;
-		float invt = 1.0f - t;
+
+		int offset1_1 = frame1_prev * numbones;
+		int offset2_1 = frame2_prev * numbones;
+
+		float invt = 1.0f - inter;
+		float invt1 = 1.0f - inter1_prev;
+		float invt2 = 1.0f - inter2_prev;
 
 		float swapYZ[16] = { 0.0f };
 		swapYZ[0 + 0 * 4] = 1.0f;
@@ -547,19 +595,26 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, double i
 		TArray<bool> modifiedBone(numbones, true);
 		for (int i = 0; i < numbones; i++)
 		{
-			TRS bone;
-			TRS from = animationFrames[offset1 + i];
-			TRS to = animationFrames[offset2 + i];
+			TRS prev;
 
-			bone.translation = from.translation * invt + to.translation * t;
-			bone.rotation = from.rotation * invt;
-			if ((bone.rotation | to.rotation * t) < 0)
+			if(frame1 >= 0 && (frame1_prev >= 0 || inter1_prev < 0))
 			{
-				bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
+				prev = inter1_prev < 0 ? animationFrames[offset1 + i] : InterpolateBone(animationFrames[offset1_1 + i], animationFrames[offset1 + i], inter1_prev, invt1);
 			}
-			bone.rotation += to.rotation * t;
-			bone.rotation.MakeUnit();
-			bone.scaling = from.scaling * invt + to.scaling * t;
+
+			TRS next;
+
+			if(frame2 >= 0 && (frame2_prev >= 0 || inter2_prev < 0))
+			{
+				next = inter2_prev < 0 ? animationFrames[offset2 + i] : InterpolateBone(animationFrames[offset2_1 + i], animationFrames[offset2 + i], inter2_prev, invt2);
+			}
+
+			TRS bone;
+
+			if(frame1 >= 0 || inter < 0)
+			{
+				bone = inter < 0 ? animationFrames[offset1 + i] : InterpolateBone(prev, next , inter, invt);
+			}
 
 			if (Joints[i].Parent >= 0 && modifiedBone[Joints[i].Parent])
 			{

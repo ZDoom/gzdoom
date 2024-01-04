@@ -1856,12 +1856,18 @@ CCMD(snd_listdrivers)
 	GSnd->PrintDriversList();
 }
 
+//==========================================================================
+//
+// CCMD listsounds
+//
+//==========================================================================
+
 CCMD(listsounds)
 {
 	for (unsigned i = 1; i < soundEngine->GetNumSounds(); i++)
 	{
-		auto S_sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
-		Printf("%04d: %s\n", i, S_sfx->name.GetChars());
+		auto sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
+		Printf("%4d: name = %s, resId = %d, lumpnum = %d\n", i, sfx->name.GetChars(), sfx->ResourceId, sfx->lumpnum);
 	}
 }
 

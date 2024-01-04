@@ -44,25 +44,6 @@ namespace FileSys {
 	
 std::string FS_FullPath(const char* directory);
 
-#ifdef _WIN32
-std::wstring toWide(const char* str);
-#endif
-
-//==========================================================================
-//
-// Zip Lump
-//
-//==========================================================================
-
-struct FDirectoryLump : public FResourceLump
-{
-	FileReader NewReader() override;
-	int FillCache() override;
-
-	const char* mFullPath;
-};
-
-
 //==========================================================================
 //
 // Zip file
@@ -71,16 +52,17 @@ struct FDirectoryLump : public FResourceLump
 
 class FDirectory : public FResourceFile
 {
-	TArray<FDirectoryLump> Lumps;
 	const bool nosubdir;
+	const char* mBasePath;
+	const char** SystemFilePath;
+
 
 	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	void AddEntry(const char *fullpath, const char* relpath, int size);
 
 public:
 	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
+	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
 
@@ -116,8 +98,18 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 	}
 	else
 	{
+		mBasePath = nullptr;
+		AllocateEntries((int)list.size());
+		SystemFilePath = (const char**)stringpool->Alloc(list.size() * sizeof(const char*));
 		for(auto& entry : list)
 		{
+			if (mBasePath == nullptr)
+			{
+				// extract the base path from the first entry to cover changes made in ScanDirectory.
+				auto full = entry.FilePath.find(entry.FilePathRel);
+				std::string path(entry.FilePath, 0, full);
+				mBasePath = stringpool->Strdup(path.c_str());
+			}
 			if (!entry.isDirectory)
 			{
 				auto fi = entry.FileName;
@@ -128,14 +120,23 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					continue;
 				}
 
-				if (filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
+
+				if (filter == nullptr || filter->filenamecheck == nullptr || filter->filenamecheck(fi.c_str(), entry.FilePath.c_str()))
 				{
 					if (entry.Length > 0x7fffffff)
 					{
 						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
 						continue;
 					}
-					AddEntry(entry.FilePath.c_str(), entry.FilePathRel.c_str(), (int)entry.Length);
+					// for internal access we use the normalized form of the relative path.
+					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
+					SystemFilePath[count] = Entries[count].FileName;
+					Entries[count].CompressedSize = Entries[count].Length = entry.Length;
+					Entries[count].Flags = RESFF_FULLPATH;
+					Entries[count].ResourceID = -1;
+					Entries[count].Method = METHOD_STORED;
+					Entries[count].Namespace = ns_global;
+					Entries[count].Position = count;
 					count++;
 				}
 			}
@@ -153,7 +154,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	NumLumps = AddDirectory(FileName, filter, Printf);
-	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
+	PostProcessArchive(filter);
 	return true;
 }
 
@@ -163,60 +164,21 @@ bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 //
 //==========================================================================
 
-void FDirectory::AddEntry(const char *fullpath, const char* relpath, int size)
-{
-	FDirectoryLump *lump_p = &Lumps[Lumps.Reserve(1)];
-
-	// Store the full path here so that we can access the file later, even if it is from a filter directory.
-	lump_p->mFullPath = stringpool->Strdup(fullpath);
-
-	// [mxd] Convert name to lowercase
-	std::string name = relpath;
-	for (auto& c : name) c = tolower(c);
-
-	// The lump's name is only the part relative to the main directory
-	lump_p->LumpNameSetup(name.c_str(), stringpool);
-	lump_p->LumpSize = size;
-	lump_p->Owner = this;
-	lump_p->Flags = 0;
-	lump_p->CheckEmbedded(nullptr);
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FileReader FDirectoryLump::NewReader()
+FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 {
 	FileReader fr;
-	fr.OpenFile(mFullPath);
+	if (entry < NumLumps)
+	{
+		std::string fn = mBasePath;
+		fn += SystemFilePath[Entries[entry].Position];
+		fr.OpenFile(fn.c_str());
+		if (readertype == READER_CACHED)
+		{
+			auto data = fr.Read();
+			fr.OpenMemoryArray(data);
+		}
+	}
 	return fr;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int FDirectoryLump::FillCache()
-{
-	FileReader fr;
-	Cache = new char[LumpSize];
-	if (!fr.OpenFile(mFullPath))
-	{
-		throw FileSystemException("unable to open file");
-	}
-	auto read = fr.Read(Cache, LumpSize);
-	if (read != LumpSize)
-	{
-		throw FileSystemException("only read %d of %d bytes", (int)read, (int)LumpSize);
-	}
-	RefCount = 1;
-	return 1;
 }
 
 //==========================================================================

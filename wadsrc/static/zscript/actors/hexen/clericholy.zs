@@ -346,7 +346,7 @@ class HolySpirit : Actor
 	{
 		if (thing.bShootable && thing != target)
 		{
-			if (multiplayer && !deathmatch && thing.player && target.player)
+			if (multiplayer && !deathmatch && thing.player && target && target.player)
 			{ // don't attack other co-op players
 				return true;
 			}

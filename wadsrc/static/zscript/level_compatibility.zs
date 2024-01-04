@@ -2171,7 +2171,21 @@ class LevelCompatibility : LevelPostProcessor
 				// fix bad skill flags for a monster that's required to be killed.
 				SetThingSkills(1184, 1);
 				break;
-			}			
+			}
+
+			case '3B4AAD34E46443BD505CC6053FCD842A': // pc_cp2.wad map38
+			{
+				// Emulate the effect of the hidden Commander Keen's death
+				// since the Keen actor is modified by DEHACKED and doesn't work as intended:
+
+				// 1) Replace the Keen with a zombieman
+				SetThingEdNum(101, 3004);
+
+				// 2) Set its special to emulate A_KeenDie
+				SetThingSpecial(101, Door_Open);
+				SetThingArgument(101, 0, 666);
+				SetThingArgument(101, 1, 16);
+			}
 		}
 	}
 }

@@ -16,8 +16,9 @@ void D_ConfirmSendStats()
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
-extern int sys_ostype;
+extern const char* sys_ostype;
 #else
+extern FString sys_ostype;
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 #else // !__APPLE__
@@ -47,6 +48,7 @@ CVAR(Int, anonstats_port, 80, CVAR_NOSET)
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
+extern int vkversion;
 
 
 
@@ -67,6 +69,12 @@ FString URLencode(const char *s)
 		}
 	}
 	return out;
+}
+
+// accept FString inputs too
+FString URLencode(FString s)
+{
+	return URLencode(s.GetChars());
 }
 
 #ifdef _WIN32
@@ -168,48 +176,28 @@ bool I_HTTPRequest(const char* request)
 }
 #endif
 
-static int GetOSVersion()
+static FString GetOSVersion()
 {
 #ifdef _WIN32
 #ifndef _M_ARM64
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		BOOL res;
-		if (IsWow64Process(GetCurrentProcess(), &res) && res)
-		{
-			return 1;
-		}
-		return 0;
-	}
-	else
-	{
-		if (sys_ostype == 2) return 2;
-		else return 3;
-	}
+	return FStringf("Windows %s", sys_ostype);
 #else
-	return 4;
+	return FStringf("Windows %s ARM", sys_ostype);
 #endif
 
 #elif defined __APPLE__
 
 #if defined(__aarch64__)
-	return 6;
+	return sys_ostype + " ARM";
 #else
-	return 5;
+	return sys_ostype + " x64";
 #endif
 
 #else // fall-through linux stuff here
 #ifdef __arm__
-	return 9;
+	return sys_ostype + " ARM";
 #else
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		return 7;
-	}
-	else
-	{
-		return 8;
-	}
+	return sys_ostype;
 #endif
 
 
@@ -262,7 +250,7 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
-	if (screen->Backend() == 0) return 1;
+	if (screen->Backend() == 2) return 1;
 	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
@@ -274,7 +262,7 @@ static int GetRenderInfo()
 
 static int GetGLVersion()
 {
-	if (screen->Backend() == 1) return 50;
+	if (screen->Backend() == 1) return vkversion;
 	auto info = gl_getInfo();
 	return int(info.first * 10);
 }
@@ -287,6 +275,52 @@ static void D_DoHTTPRequest(const char *request)
 	}
 }
 
+
+static FString GetDeviceName()
+{
+	FString device = screen->DeviceName();
+	if (device.Compare("AMD Radeon(TM) Graphics") == 0 ||
+		device.Compare("Intel(R) UHD Graphics") == 0 ||
+		//device.Compare("Intel(R) HD Graphics") == 0 || these are not that interesting so leave them alone
+		device.Compare("Intel(R) Iris(R) Plus Graphics") == 0 ||
+		device.Compare("Intel(R) Iris(R) Xe Graphics") == 0 ||
+		device.Compare("Radeon RX Vega") == 0 ||
+		device.Compare("AMD Radeon Series") == 0)
+	{
+		// for these anonymous series names add the CPU name to get an idea what GPU we really have
+		auto ci = DumpCPUInfo(&CPU, true);
+		device.AppendFormat(" * %s", ci.GetChars());
+	}
+	// cleanse the GPU info string to allow better searches on the database.
+	device.Substitute("/SSE2", "");
+	device.Substitute("/PCIe", "");
+	device.Substitute("/PCI", "");
+	device.Substitute("(TM) ", "");
+	device.Substitute("Mesa ", "");
+	device.Substitute("DRI ", "");
+	auto pos = device.IndexOf("Intel(R)");
+	if (pos >= 0)
+	{
+		device.Substitute("(R) ", "");
+		auto pos = device.IndexOf("(");
+		if (pos >= 0) device.Truncate(pos);
+	}
+
+	pos = device.IndexOf("(LLVM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(DRM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(RADV");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf(", LLVM");
+	if (pos >= 0)
+	{
+		device.Truncate(pos);
+		device << ')';
+	}
+	device.StripLeftRight();
+	return device;
+}
 void D_DoAnonStats()
 {
 #ifndef _DEBUG
@@ -303,8 +337,8 @@ void D_DoAnonStats()
 
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%s&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+		GetRenderInfo(), GetCoreInfo(), URLencode(GetOSVersion()).GetChars(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(GetDeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #if 1//ndef _DEBUG
 	// Don't send info in debug builds

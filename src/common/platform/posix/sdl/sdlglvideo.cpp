@@ -139,7 +139,7 @@ namespace Priv
 		caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
 
 		const uint32_t windowFlags = (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_RESIZABLE | extraFlags;
-		Priv::window = SDL_CreateWindow(caption,
+		Priv::window = SDL_CreateWindow(caption.GetChars(),
 			(win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x,
 			(win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y,
 			win_w, win_h, windowFlags);
@@ -315,7 +315,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	if (fb == nullptr)
 	{
 #ifdef HAVE_GLES2
-		if (V_GetBackend() == 2)
+		if (V_GetBackend() != 0)
 			fb = new OpenGLESRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		else
 #endif
@@ -585,7 +585,7 @@ void I_SetWindowTitle(const char* caption)
 	{
 		FString default_caption;
 		default_caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
-		SDL_SetWindowTitle(Priv::window, default_caption);
+		SDL_SetWindowTitle(Priv::window, default_caption.GetChars());
 	}
 }
 

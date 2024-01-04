@@ -161,7 +161,7 @@ int D_PlayerClassToInt (const char *classname)
 		{
 			auto type = PlayerClasses[i].Type;
 
-			if (type->GetDisplayName().IsNotEmpty() && stricmp(type->GetDisplayName(), classname) == 0)
+			if (type->GetDisplayName().IsNotEmpty() && type->GetDisplayName().CompareNoCase(classname) == 0)
 			{
 				return i;
 			}
@@ -393,7 +393,7 @@ void D_SetupUserInfo ()
 	// Reset everybody's userinfo to a default state.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].userinfo.Reset();
+		players[i].userinfo.Reset(i);
 	}
 	// Initialize the console player's user info
 	coninfo = &players[consoleplayer].userinfo;
@@ -426,7 +426,7 @@ void D_SetupUserInfo ()
 	R_BuildPlayerTranslation(consoleplayer);
 }
 
-void userinfo_t::Reset()
+void userinfo_t::Reset(int pnum)
 {
 	// Clear this player's userinfo.
 	TMapIterator<FName, FBaseCVar *> it(*this);
@@ -468,6 +468,9 @@ void userinfo_t::Reset()
 			{
 				newcvar->SetExtraDataPointer(cvar); // store backing cvar
 			}
+
+			newcvar->pnum = pnum;
+			newcvar->userinfoName = cvarname;
 
 			Insert(cvarname, newcvar);
 		}
@@ -786,7 +789,7 @@ FString D_GetUserInfoStrings(int pnum, bool compact)
 				break;
 
 			case NAME_Skin:
-				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name).GetChars());
+				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name.GetChars()).GetChars());
 				break;
 
 			default:
@@ -870,15 +873,15 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
-				info->GenderChanged(value);
+				info->GenderChanged(value.GetChars());
 				break;
 
 			case NAME_PlayerClass:
-				info->PlayerClassChanged(value);
+				info->PlayerClassChanged(value.GetChars());
 				break;
 
 			case NAME_Skin:
-				info->SkinChanged(value, players[pnum].CurrentPlayerClass);
+				info->SkinChanged(value.GetChars(), players[pnum].CurrentPlayerClass);
 				if (players[pnum].mo != NULL)
 				{
 					if (players[pnum].cls != NULL &&
@@ -895,11 +898,11 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 				break;
 
 			case NAME_Team:
-				UpdateTeam(pnum, atoi(value), update);
+				UpdateTeam(pnum, atoi(value.GetChars()), update);
 				break;
 
 			case NAME_Color:
-				info->ColorChanged(value);
+				info->ColorChanged(value.GetChars());
 				break;
 
 			default:
@@ -956,7 +959,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 			switch (pair->Key.GetIndex())
 			{
 			case NAME_Skin:
-				string = Skins[info.GetSkin()].Name;
+				string = Skins[info.GetSkin()].Name.GetChars();
 				break;
 
 			case NAME_PlayerClass:
@@ -969,7 +972,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 				string = val.String;
 				break;
 			}
-			arc.StringPtr(name, string);
+			arc.StringPtr(name.GetChars(), string);
 		}
 		arc.EndObject();
 	}
@@ -981,7 +984,6 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *key;
 	const char *str;
 
-	info.Reset();
 	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{

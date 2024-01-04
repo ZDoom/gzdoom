@@ -84,6 +84,7 @@
 #include "texturemanager.h"
 #include "hw_vertexbuilder.h"
 #include "version.h"
+#include "fs_decompress.h"
 
 enum
 {
@@ -738,7 +739,7 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			if (zip.OpenDecompressor(dalump, -1, FileSys::METHOD_ZLIB, false, true))
+			if (OpenDecompressor(zip, dalump, -1, FileSys::METHOD_ZLIB, FileSys::DCF_EXCEPTIONS))
 			{
 				LoadZNodes(zip, type);
 				return true;
@@ -2058,9 +2059,9 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 		  //	  instead of figuring something out from the colormap.
 		if (sec != nullptr)
 		{
-			SetTexture (sd, side_t::bottom, &sec->bottommap, msd->bottomtexture);
-			SetTexture (sd, side_t::mid, &sec->midmap, msd->midtexture);
-			SetTexture (sd, side_t::top, &sec->topmap, msd->toptexture);
+			SetTexture (sd, side_t::bottom, &sec->bottommap, msd->bottomtexture.GetChars());
+			SetTexture (sd, side_t::mid, &sec->midmap, msd->midtexture.GetChars());
+			SetTexture (sd, side_t::top, &sec->topmap, msd->toptexture.GetChars());
 		}
 		break;
 
@@ -2072,9 +2073,9 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 			uint32_t color = MAKERGB(255,255,255), fog = 0;
 			bool colorgood, foggood;
 
-			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture, &foggood, true);
-			SetTextureNoErr (sd, side_t::top, &color, msd->toptexture, &colorgood, false);
-			SetTexture(sd, side_t::mid, msd->midtexture, missingtex);
+			SetTextureNoErr (sd, side_t::bottom, &fog, msd->bottomtexture.GetChars(), &foggood, true);
+			SetTextureNoErr (sd, side_t::top, &color, msd->toptexture.GetChars(), &colorgood, false);
+			SetTexture(sd, side_t::mid, msd->midtexture.GetChars(), missingtex);
 
 			if (colorgood | foggood)
 			{
@@ -2114,12 +2115,12 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 		{
 			int lumpnum;
 
-			if (strnicmp ("TRANMAP", msd->midtexture, 8) == 0)
+			if (strnicmp ("TRANMAP", msd->midtexture.GetChars(), 8) == 0)
 			{
 				// The translator set the alpha argument already; no reason to do it again.
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
-			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture)) > 0 &&
+			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture.GetChars())) > 0 &&
 				fileSystem.FileLength (lumpnum) == 65536)
 			{
 				auto fr = fileSystem.OpenFileReader(lumpnum);
@@ -3344,7 +3345,7 @@ void MapLoader::LoadLightmap(MapData *map)
 		return;
 
 	FileReader fr;
-	if (!fr.OpenDecompressor(map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB, false, false))
+	if (!OpenDecompressor(fr, map->Reader(ML_LIGHTMAP), -1, FileSys::METHOD_ZLIB))
 		return;
 
 

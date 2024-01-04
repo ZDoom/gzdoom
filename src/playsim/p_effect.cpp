@@ -49,6 +49,11 @@
 #include "vm.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "serializer_doom.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable: 6011) // dereference null pointer in thinker iterator
+#endif
 
 CVAR (Int, cl_rockettrails, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_rail_smartspiral, false, CVAR_ARCHIVE);
@@ -202,9 +207,27 @@ void P_ClearParticles (FLevelLocals *Level)
 // Group particles by subsectors. Because particles are always
 // in motion, there is little benefit to caching this information
 // from one frame to the next.
+// [MC] VisualThinkers hitches a ride here
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
+	// [MC] Hitch a ride on particle subsectors since VisualThinkers are effectively using the same kind of system.
+	for (uint32_t i = 0; i < Level->subsectors.Size(); i++)
+	{
+		Level->subsectors[i].sprites.Clear();
+	}
+	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
+	// At least it's on its own statnum for maximum efficiency.
+	auto it = Level->GetThinkerIterator<DVisualThinker>(NAME_None, STAT_VISUALTHINKER);
+	DVisualThinker* sp;
+	while (sp = it.Next())
+	{
+		if (sp->sub == nullptr)
+			sp->sub = Level->PointInRenderSubsector(sp->Pos);
+
+		sp->sub->sprites.Push(sp);
+	}
+	// End VisualThinker hitching. Now onto the particles. 
 	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
 	{
 		Level->ParticlesInSubsec.Reserve (Level->subsectors.Size() - Level->ParticlesInSubsec.Size());
@@ -271,7 +294,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 	{
 		particle = &Level->Particles[i];
 		i = particle->tnext;
-		if (Level->isFrozen() && !(particle->flags &PT_NOTIMEFREEZE))
+		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
 			prev = particle;
 			continue;
@@ -305,7 +328,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 
-		if(particle->flags & PT_DOROLL)
+		if(particle->flags & SPF_ROLL)
 		{
 			particle->Roll += particle->RollVel;
 			particle->RollVel += particle->RollAcc;
@@ -334,19 +357,10 @@ void P_ThinkParticles (FLevelLocals *Level)
 	}
 }
 
-enum PSFlag
-{
-	PS_FULLBRIGHT =		    1,
-	PS_NOTIMEFREEZE =	    1 << 5,
-	PS_ROLL =			    1 << 6,
-	PS_REPLACE =		    1 << 7,
-	PS_NO_XY_BILLBOARD =	1 << 8,
-};
-
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
 {
-	particle_t *particle = NewParticle(Level, !!(flags & PS_REPLACE));
+	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
 	if (particle)
 	{
@@ -358,7 +372,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
 		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
-		particle->bright = !!(flags & PS_FULLBRIGHT);
+		particle->bright = !!(flags & SPF_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
 		particle->texture = texture;
@@ -366,18 +380,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Roll = startroll;
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
-		if(flags & PS_NOTIMEFREEZE)
-		{
-			particle->flags |= PT_NOTIMEFREEZE;
-		}
-		if(flags & PS_ROLL)
-		{
-			particle->flags |= PT_DOROLL;
-		}
-		if(flags & PS_NO_XY_BILLBOARD)
-		{
-			particle->flags |= PT_NOXYBILLBOARD;
-		}
+		particle->flags = flags;
 	}
 }
 
@@ -703,7 +706,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			AActor *mo = player->camera;
 			double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
 			r = clamp<double>(r, 0., 1.);
-			seg.soundpos = seg.start + r * seg.dir;
+			seg.soundpos = seg.start.XY() + r * seg.dir.XY();
 			seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
 		}
 		else
@@ -979,3 +982,283 @@ void P_DisconnectEffect (AActor *actor)
 		p->size = 4;
 	}
 }
+
+//===========================================================================
+// 
+// ZScript Sprite (DVisualThinker)
+// Concept by Major Cooke
+// Most code borrowed by Actor and particles above
+// 
+//===========================================================================
+
+void DVisualThinker::Construct()
+{
+	PT = {};
+	PT.sprite = this;
+	Pos = Vel = { 0,0,0 };
+	Offset = { 0,0 };
+	Scale = { 1,1 };
+	Roll = 0.0;
+	Alpha = 1.0;
+	LightLevel = -1;
+	Texture = FTextureID();
+	Style = STYLE_Normal;
+	Flags = 0;
+	Translation = NO_TRANSLATION;
+	sub = nullptr;
+	cursector = nullptr;
+	scolor = 0xffffff;
+}
+
+DVisualThinker::DVisualThinker()
+{
+	Construct();
+}
+
+void DVisualThinker::CallPostBeginPlay()
+{
+	PT.texture = Texture;
+	Super::CallPostBeginPlay();
+}
+
+void DVisualThinker::OnDestroy()
+{
+	PT.alpha = 0.0; // stops all rendering.
+	if (spr) delete spr;
+	Super::OnDestroy();
+}
+
+DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* type)
+{
+	if (type == nullptr)
+		return nullptr;
+	else if (type->bAbstract)
+	{
+		Printf("Attempt to spawn an instance of abstract VisualThinker class %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+	else if (!type->IsDescendantOf(RUNTIME_CLASS(DVisualThinker)))
+	{
+		Printf("Attempt to spawn class not inherent to VisualThinker: %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
+
+	DVisualThinker *zs = static_cast<DVisualThinker*>(Level->CreateThinker(type, STAT_VISUALTHINKER));
+	zs->Construct();
+	return zs;
+}
+
+static DVisualThinker* SpawnVisualThinker(FLevelLocals* Level, PClass* type)
+{
+	return DVisualThinker::NewVisualThinker(Level, type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThinker)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_CLASS_NOT_NULL(type, DVisualThinker);
+	DVisualThinker* zs = SpawnVisualThinker(self, type);
+	ACTION_RETURN_OBJECT(zs);
+}
+
+void DVisualThinker::UpdateSpriteInfo()
+{
+	PT.color = scolor;
+	PT.Pos = Pos;
+	PT.Vel = Vel;
+	PT.Roll = Roll;
+	PT.alpha = Alpha;
+	PT.texture = Texture;
+	PT.style = ERenderStyle(GetRenderStyle());
+	PT.flags = Flags;
+	PT.subsector = sub;
+	PT.sprite = this;
+}
+
+// This runs just like Actor's, make sure to call Super.Tick() in ZScript.
+void DVisualThinker::Tick()
+{
+	if (ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	// There won't be a standard particle for this, it's only for graphics.
+	if (!Texture.isValid()) 
+	{	
+		Printf("No valid texture, destroyed");
+		Destroy();
+		return;
+	}
+
+	if (isFrozen())
+	{	// needed here because it won't retroactively update like actors do.
+		sub = Level->PointInRenderSubsector(Pos);
+		cursector = sub->sector;
+		UpdateSpriteInfo(); 
+		return;
+	}
+	Prev = Pos;
+	PrevRoll = Roll;
+	// Handle crossing a line portal
+	DVector2 newxy = Level->GetPortalOffsetPosition(Pos.X, Pos.Y, Vel.X, Vel.Y);
+	Pos.X = newxy.X;
+	Pos.Y = newxy.Y;
+	Pos.Z += Vel.Z;
+
+	sub = Level->PointInRenderSubsector(Pos);
+	cursector = sub->sector;
+	// Handle crossing a sector portal.
+	if (!cursector->PortalBlocksMovement(sector_t::ceiling))
+	{
+		if (Pos.Z > cursector->GetPortalPlaneZ(sector_t::ceiling))
+		{
+			Pos += cursector->GetPortalDisplacement(sector_t::ceiling);
+			sub = nullptr;
+			cursector = nullptr;
+		}
+	}
+	else if (!cursector->PortalBlocksMovement(sector_t::floor))
+	{
+		if (Pos.Z < cursector->GetPortalPlaneZ(sector_t::floor))
+		{
+			Pos += cursector->GetPortalDisplacement(sector_t::floor);
+			sub = nullptr;
+			cursector = nullptr;
+		}
+	}
+	UpdateSpriteInfo();
+}
+
+int DVisualThinker::GetLightLevel(sector_t* rendersector) const
+{
+	int lightlevel = rendersector->GetSpriteLight();
+
+	if (bAddLightLevel)
+	{
+		lightlevel += LightLevel;
+	}
+	else if (LightLevel > -1)
+	{
+		lightlevel = LightLevel;
+	}
+	return lightlevel;
+}
+
+FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
+{
+	if (bDontInterpolate) return FVector3(Pos);
+
+	DVector3 proc = Prev + (ticFrac * (Pos - Prev));
+	return FVector3(proc);
+
+}
+
+float DVisualThinker::InterpolatedRoll(double ticFrac) const
+{
+	if (bDontInterpolate) return Roll;
+
+	return float(PrevRoll + (Roll - PrevRoll) * ticFrac);
+}
+
+
+
+void DVisualThinker::SetTranslation(FName trname)
+{
+	// There is no constant for the empty name...
+	if (trname.GetChars()[0] == 0)
+	{
+		// '' removes it
+		Translation = NO_TRANSLATION;
+		return;
+	}
+
+	auto tnum = R_FindCustomTranslation(trname);
+	if (tnum != INVALID_TRANSLATION)
+	{
+		Translation = tnum;
+	}
+	// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+}
+
+DEFINE_ACTION_FUNCTION(DVisualThinker, SetTranslation)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	PARAM_NAME(trans);
+	self->SetTranslation(trans);
+	return 0;
+}
+
+bool DVisualThinker::isFrozen()
+{
+	return (Level->isFrozen() && !(Flags & SPF_NOTIMEFREEZE));
+}
+
+DEFINE_ACTION_FUNCTION(DVisualThinker, IsFrozen)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	ACTION_RETURN_BOOL(self->isFrozen());
+}
+
+DEFINE_ACTION_FUNCTION(DVisualThinker, SetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	PARAM_INT(mode);
+
+	self->Style = ERenderStyle(mode);
+	return 0;
+}
+
+int DVisualThinker::GetRenderStyle()
+{
+	for (unsigned i = 0; i < STYLE_Count; i++)
+	{
+		if (Style == LegacyRenderStyles[i]) return i;
+	}
+	return -1;
+}
+
+void DVisualThinker::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+
+	arc
+		("pos", Pos)
+		("vel", Vel)
+		("prev", Prev)
+		("scale", Scale)
+		("roll", Roll)
+		("prevroll", PrevRoll)
+		("offset", Offset)
+		("alpha", Alpha)
+		("texture", Texture)
+		("style", Style)
+		("translation", Translation)
+		("cursector", cursector)
+		("scolor", scolor)
+		("flipx", bXFlip)
+		("flipy", bYFlip)
+		("dontinterpolate", bDontInterpolate)
+		("addlightlevel", bAddLightLevel)
+		("lightlevel", LightLevel)
+		("flags", Flags);
+		
+}
+
+IMPLEMENT_CLASS(DVisualThinker, false, false);
+DEFINE_FIELD(DVisualThinker, Pos);
+DEFINE_FIELD(DVisualThinker, Vel);
+DEFINE_FIELD(DVisualThinker, Prev);
+DEFINE_FIELD(DVisualThinker, Scale);
+DEFINE_FIELD(DVisualThinker, Offset);
+DEFINE_FIELD(DVisualThinker, Roll);
+DEFINE_FIELD(DVisualThinker, PrevRoll);
+DEFINE_FIELD(DVisualThinker, Alpha);
+DEFINE_FIELD(DVisualThinker, Texture);
+DEFINE_FIELD(DVisualThinker, Translation);
+DEFINE_FIELD(DVisualThinker, Flags);
+DEFINE_FIELD(DVisualThinker, LightLevel);
+DEFINE_FIELD(DVisualThinker, scolor);
+DEFINE_FIELD(DVisualThinker, cursector);
+DEFINE_FIELD(DVisualThinker, bXFlip);
+DEFINE_FIELD(DVisualThinker, bYFlip);
+DEFINE_FIELD(DVisualThinker, bDontInterpolate);
+DEFINE_FIELD(DVisualThinker, bAddLightLevel);

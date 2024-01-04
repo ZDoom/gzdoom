@@ -163,7 +163,8 @@ static struct SteamAppInfo
 	{"Strife", 317040},
 	{"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets", 2280},
 	{"Doom 2/rerelease/DOOM II_Data/StreamingAssets", 2300},
-	{"Doom 2/finaldoombase", 2300}
+	{"Doom 2/finaldoombase", 2300},
+    {"Master Levels of Doom/doom2", 9160}
 };
 
 TArray<FString> I_GetSteamPath()
@@ -179,7 +180,7 @@ TArray<FString> I_GetSteamPath()
 	FString regPath = appSupportPath + "/Steam/config/config.vdf";
 	try
 	{
-		SteamInstallFolders = ParseSteamRegistry(regPath);
+		SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 	}
 	catch(class CRecoverableError &error)
 	{
@@ -202,7 +203,7 @@ TArray<FString> I_GetSteamPath()
 
 		try
 		{
-			SteamInstallFolders = ParseSteamRegistry(regPath);
+			SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 		}
 		catch(class CRecoverableError &error)
 		{
@@ -221,7 +222,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
-			if(DirExists(candidate))
+			if(DirExists(candidate.GetChars()))
 				result.Push(candidate);
 		}
 	}

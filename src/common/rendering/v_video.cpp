@@ -93,7 +93,7 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_preferbackend, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
@@ -103,6 +103,8 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 	{
 #ifdef HAVE_GLES2
 	case 3:
+		self = 2;
+		return; // beware of recursions here. Assigning to 'self' will recursively call this handler again.
 	case 2:
 		Printf("Selecting OpenGLES 2.0 backend...\n");
 		break;
@@ -122,7 +124,7 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 int V_GetBackend()
 {
 	int v = vid_preferbackend;
-	if (v == 3) v = 2;
+	if (v == 3) vid_preferbackend = v = 2;
 	else if (v < 0 || v > 3) v = 0;
 	return v;
 }

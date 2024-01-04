@@ -888,7 +888,7 @@ class PlayerPawn : Actor
 			// inventory amount.
 			let defitem = FindInventory (item.GetClass());
 
-			if (sv_cooplosekeys && defitem == NULL && item is 'Key')
+			if ((sv_cooplosekeys && !sv_coopsharekeys) && defitem == NULL && item is 'Key')
 			{
 				item.Destroy();
 			}
@@ -2667,7 +2667,7 @@ class PSprite : Object native play
 	native Bool firstTic;
 	native bool InterpolateTic;
 	native int Tics;
-	native uint Translation;
+	native TranslationID Translation;
 	native bool bAddWeapon;
 	native bool bAddBob;
 	native bool bPowDouble;

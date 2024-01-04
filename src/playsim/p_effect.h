@@ -36,6 +36,8 @@
 #include "vectors.h"
 #include "doomdef.h"
 #include "renderstyle.h"
+#include "dthinker.h"
+#include "palettecontainer.h"
 
 enum
 {
@@ -52,11 +54,17 @@ struct FLevelLocals;
 
 enum EParticleFlags
 {
-    PT_NOTIMEFREEZE = 1,
-	PT_DOROLL = 1 << 1,
-	PT_NOXYBILLBOARD = 1 << 2,
+	SPF_FULLBRIGHT =		1,
+	SPF_RELPOS =			1 << 1,
+	SPF_RELVEL =			1 << 2,
+	SPF_RELACCEL =			1 << 3,
+	SPF_RELANG =			1 << 4,
+	SPF_NOTIMEFREEZE =		1 << 5,
+	SPF_ROLL =				1 << 6,
+	SPF_REPLACE =			1 << 7,
+	SPF_NO_XY_BILLBOARD =	1 << 8,
 };
-
+class DVisualThinker;
 struct particle_t
 {
     DVector3 Pos;
@@ -71,8 +79,9 @@ struct particle_t
     ERenderStyle style;
     double Roll, RollVel, RollAcc;
     uint16_t    tnext, snext, tprev;
-    uint8_t    bright;
-	uint8_t flags;
+    bool    bright;
+	uint16_t flags;
+	DVisualThinker *sprite;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -130,3 +139,59 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);
 
+//===========================================================================
+// 
+// VisualThinkers
+// by Major Cooke
+// Credit to phantombeta, RicardoLuis0 & RaveYard for aid
+// 
+//===========================================================================
+class HWSprite;
+struct FTranslationID;
+class DVisualThinker : public DThinker
+{
+	DECLARE_CLASS(DVisualThinker, DThinker);
+public:
+	DVector3		Pos, Vel, Prev;
+	DVector2		Scale, Offset;
+	double			Roll, PrevRoll, Alpha;
+	int16_t			LightLevel;
+
+	int				scolor;
+
+	FRenderStyle	Style;
+	FTextureID		Texture;
+	FTranslationID	Translation;
+
+	uint16_t		Flags;
+	sector_t		*cursector;
+
+	bool			bXFlip, bYFlip,		// flip the sprite on the x/y axis.
+					bDontInterpolate,	// disable all interpolation
+					bAddLightLevel;		// adds sector light level to 'LightLevel'
+
+	// internal only variables
+	subsector_t		*sub;
+	particle_t		PT;
+	HWSprite		*spr; //in an effort to cache the result. 
+
+	
+
+	DVisualThinker();
+	void Construct();
+	void CallPostBeginPlay() override;
+	void OnDestroy() override;
+
+	static DVisualThinker* NewVisualThinker(FLevelLocals* Level, PClass* type);
+	void SetTranslation(FName trname);
+	int GetRenderStyle();
+	bool isFrozen();
+	int GetLightLevel(sector_t *rendersector) const;
+	FVector3 InterpolatedPosition(double ticFrac) const;
+	float InterpolatedRoll(double ticFrac) const;
+
+	void Tick() override;
+	void UpdateSpriteInfo();
+	void Serialize(FSerializer& arc) override;
+
+};

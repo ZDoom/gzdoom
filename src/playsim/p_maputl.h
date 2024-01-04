@@ -49,6 +49,11 @@ inline int P_PointOnLineSidePrecise(const DVector2 &pt, const linebase_t *line)
 	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
 }
 
+inline int P_PointOnLineSidePrecise(const DVector3& pt, const linebase_t* line)
+{
+	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
+}
+
 inline int P_PointOnLineSide (double x, double y, const line_t *line)
 {
 	extern int P_VanillaPointOnLineSide(double x, double y, const line_t* line);

@@ -45,7 +45,7 @@ void CheckCPUID(CPUInfo *cpu)
 	cpu->DataL1LineSize = 32;	// Assume a 32-byte cache line
 }
 
-FString DumpCPUInfo(const CPUInfo *cpu)
+FString DumpCPUInfo(const CPUInfo *cpu, bool brief)
 {
 	return FString();
 }
@@ -161,7 +161,7 @@ void CheckCPUID(CPUInfo *cpu)
 	}
 }
 
-FString DumpCPUInfo(const CPUInfo *cpu)
+FString DumpCPUInfo(const CPUInfo *cpu, bool brief)
 {
 	char cpustring[4*4*3+1];
 

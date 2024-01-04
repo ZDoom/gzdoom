@@ -148,7 +148,7 @@ class StatusScreen : ScreenJob abstract version("2.5")
 		scalemode = FSMode_ScaleToFit43;
 		scalefactorx = 1;
 		scalefactory = 1;
-		wrapwidth = wrapw == -1 ? width : wrapw;;
+		wrapwidth = wrapw == -1 ? width : wrapw;
 	}
 
 	//====================================================================

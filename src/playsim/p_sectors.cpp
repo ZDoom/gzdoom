@@ -1637,3 +1637,4 @@ void vertex_t::RecalcVertexHeights()
 	if (numheights <= 2) numheights = 0;	// is not in need of any special attention
 	dirty = false;
 }
+

@@ -645,6 +645,8 @@ class Inventory : Actor
 					}
 				}
 			}
+			// [AA] Let the toucher do something with the item they've just received:
+			toucher.HasReceived(self);
 		}
 		return res, toucher;
 	}

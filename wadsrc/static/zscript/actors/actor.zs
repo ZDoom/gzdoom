@@ -518,6 +518,11 @@ class Actor : Thinker native
 		return true;
 	}
 
+	// [AA] Called by inventory items at the end of CallTryPickup to let actors
+	// do something with the items they've received. 'Item' might be null for
+	// items that disappear on pickup.
+	virtual void HasReceived(Inventory item) {}
+
   // Called in TryMove if the mover ran into another Actor. This isn't called on players
 	// if they're currently predicting. Guarantees collisions unlike CanCollideWith.
 	virtual void CollidedWith(Actor other, bool passive) {}

@@ -87,7 +87,7 @@
 #include "i_interface.h"
 #include "i_mainwindow.h"
 
-#include "common/widgets/launcherwindow.h"
+#include "launcherwindow.h"
 
 // MACROS ------------------------------------------------------------------
 

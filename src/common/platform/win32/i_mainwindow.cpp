@@ -36,7 +36,7 @@ void MainWindow::Create(const FString& caption, int x, int y, int width, int hei
 	WndClass.hInstance = hInstance;
 	WndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 	WndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	WndClass.hbrBackground = NULL;
+	WndClass.hbrBackground = CreateSolidBrush(RGB(0,0,0));
 	WndClass.lpszMenuName = NULL;
 	WndClass.lpszClassName = WinClassName;
 

@@ -9,6 +9,7 @@ set(ZWIDGET_SOURCES
 	src/core/timer.cpp
 	src/core/widget.cpp
 	src/core/utf8reader.cpp
+	src/core/pathfill.cpp
 	src/core/schrift/schrift.cpp
 	src/core/schrift/schrift.h
 	src/core/picopng/picopng.cpp
@@ -38,6 +39,7 @@ set(ZWIDGET_INCLUDES
 	include/zwidget/core/font.h
 	include/zwidget/core/image.h
 	include/zwidget/core/rect.h
+	include/zwidget/core/pathfill.h
 	include/zwidget/core/span_layout.h
 	include/zwidget/core/timer.h
 	include/zwidget/core/widget.h

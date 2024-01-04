@@ -794,7 +794,7 @@ public:
 					if (sound == INVALID_SOUND)
 						soundEngine->StopAllChannels();
 					else
-						soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI : CHANF_NONE, sound, 1.f, ATTN_NONE);
+						soundEngine->StartSound(SOURCE_None, nullptr, nullptr, CHAN_AUTO, nostopsound ? CHANF_UI | CHANF_FORCE : CHANF_FORCE, sound, 1.f, ATTN_NONE);
 				}
 			}
 		}

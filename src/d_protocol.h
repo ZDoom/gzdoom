@@ -163,6 +163,7 @@ enum EDemoCommand
 	DEM_MDK,			// 71 String: Damage type
 	DEM_SETINV,			// 72 SetInventory
 	DEM_ENDSCREENJOB,
+	DEM_ZSC_CMD,		// 74 Long: Command id, Word: Byte size of command
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

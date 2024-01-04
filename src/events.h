@@ -18,6 +18,119 @@ enum class EventHandlerType
 	PerMap
 };
 
+enum ENetCmd
+{
+	NET_BYTE = 1,
+	NET_WORD,
+	NET_LONG,
+	NET_FLOAT,
+	NET_STRING,
+};
+
+struct FNetworkCommand
+{
+private:
+	size_t _index = 0;
+	TArray<uint8_t> _stream = {};
+
+	inline bool IsValid() const
+	{
+		return _index < _stream.Size();
+	}
+
+public:
+	int Player = 0;
+	int Command = 0;
+
+	FNetworkCommand(const int player, const int command, TArray<uint8_t>& stream) : Player(player), Command(command)
+	{
+		_stream.Swap(stream);
+	}
+
+	inline void Reset()
+	{
+		_index = 0;
+	}
+
+	int ReadByte()
+	{
+		if (!IsValid())
+			return 0;
+
+		return _stream[_index++];
+	}
+
+	// If a value has to cut off early, just treat the previous value as the full one.
+	int ReadWord()
+	{
+		if (!IsValid())
+			return 0;
+
+		int value = _stream[_index++];
+		if (IsValid())
+			value = (value << 8) | _stream[_index++];
+
+		return value;
+	}
+
+	int ReadLong()
+	{
+		if (!IsValid())
+			return 0;
+
+		int value = _stream[_index++];
+		if (IsValid())
+		{
+			value = (value << 8) | _stream[_index++];
+			if (IsValid())
+			{
+				value = (value << 8) | _stream[_index++];
+				if (IsValid())
+					value = (value << 8) | _stream[_index++];
+			}
+		}
+
+		return value;
+	}
+
+	// Floats without their first 9 bits are pretty meaningless so those are done first.
+	double ReadFloat()
+	{
+		if (!IsValid())
+			return 0.0;
+
+		int value = _stream[_index++] << 24;
+		if (IsValid())
+		{
+			value |= _stream[_index++] << 16;
+			if (IsValid())
+			{
+				value |= _stream[_index++] << 8;
+				if (IsValid())
+					value |= _stream[_index++];
+			}
+		}
+
+		union
+		{
+			int i;
+			float f;
+		} floatCaster;
+		floatCaster.i = value;
+		return floatCaster.f;
+	}
+
+	const char* ReadString()
+	{
+		if (!IsValid())
+			return nullptr;
+
+		const char* str = reinterpret_cast<const char*>(&_stream[_index]);
+		_index += strlen(str) + 1;
+		return str;
+	}
+};
+
 // ==============================================
 //
 //  EventHandler - base class
@@ -113,6 +226,7 @@ public:
 	
 	// 
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui);
+	void NetCommandProcess(FNetworkCommand& cmd);
 
 	//
 	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
@@ -285,6 +399,8 @@ struct EventManager
 	bool Responder(const event_t* ev); // splits events into InputProcess and UiProcess
 	// this executes on console/net events.
 	void Console(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui);
+	// This reads from ZScript network commands.
+	void NetCommand(FNetworkCommand& cmd);
 
 	// called when looking up the replacement for an actor class
 	bool CheckReplacement(PClassActor* replacee, PClassActor** replacement);
@@ -296,6 +412,8 @@ struct EventManager
 
 	// send networked event. unified function.
 	bool SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
+	// Send a custom network command from ZScript.
+	bool SendNetworkCommand(int cmd, VMVa_List args);
 
 	// check if there is anything that should receive GUI events
 	bool CheckUiProcessors();

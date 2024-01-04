@@ -5,6 +5,7 @@
 #include "d_event.h"
 #include "sbar.h"
 #include "info.h"
+#include "vm.h"
 
 class DStaticEventHandler;
 struct EventManager;
@@ -31,7 +32,7 @@ struct FNetworkCommand
 {
 private:
 	size_t _index = 0;
-	TArray<uint8_t> _stream = {};
+	TArray<uint8_t> _stream;
 
 	inline bool IsValid() const
 	{
@@ -39,10 +40,10 @@ private:
 	}
 
 public:
-	int Player = 0;
-	int Command = 0;
+	int Player;
+	FName Command;
 
-	FNetworkCommand(const int player, const int command, TArray<uint8_t>& stream) : Player(player), Command(command)
+	FNetworkCommand(const int player, const FName& command, TArray<uint8_t>& stream) : Player(player), Command(command)
 	{
 		_stream.Swap(stream);
 	}
@@ -128,6 +129,94 @@ public:
 		const char* str = reinterpret_cast<const char*>(&_stream[_index]);
 		_index += strlen(str) + 1;
 		return str;
+	}
+};
+
+struct FNetworkBuffer
+{
+public:
+	struct BufferPair
+	{
+	private:
+		ENetCmd _type;
+		VMValue _message;
+
+	public:
+		BufferPair(const ENetCmd type, const int message) : _type(type), _message(message) {}
+		BufferPair(const ENetCmd type, const double message) : _type(type), _message(message) {}
+		BufferPair(const ENetCmd type, const FString* message) : _type(type), _message(message) {}
+
+		inline ENetCmd GetType() const
+		{
+			return _type;
+		}
+
+		inline int GetInt() const
+		{
+			return _message.i;
+		}
+
+		inline double GetFloat() const
+		{
+			return _message.f;
+		}
+
+		inline const char* GetString() const
+		{
+			return _message.s().GetChars();
+		}
+	};
+
+private:
+	unsigned int _size;
+	TArray<BufferPair> _buffer;
+	TArray<FString> _strings; // Local copies of these need to be stored since VMValues store pointers to strings.
+
+public:
+	inline unsigned int GetBytes() const
+	{
+		return _size;
+	}
+
+	inline unsigned int GetBufferSize() const
+	{
+		return _buffer.Size();
+	}
+
+	inline const BufferPair& GetPair(unsigned int i) const
+	{
+		return _buffer[i];
+	}
+
+	void AddByte(int byte)
+	{
+		++_size;
+		_buffer.Push({ NET_BYTE, byte });
+	}
+
+	void AddWord(int word)
+	{
+		_size += 2u;
+		_buffer.Push({ NET_WORD, word });
+	}
+
+	void AddLong(int msg)
+	{
+		_size += 4u;
+		_buffer.Push({ NET_LONG, msg });
+	}
+
+	void AddFloat(double msg)
+	{
+		_size += 4u;
+		_buffer.Push({ NET_FLOAT, msg });
+	}
+
+	void AddString(const FString& msg)
+	{
+		_size += msg.Len() + 1u;
+		unsigned int index = _strings.Push(msg);
+		_buffer.Push({ NET_STRING, &_strings[index] });
 	}
 };
 
@@ -413,7 +502,9 @@ struct EventManager
 	// send networked event. unified function.
 	bool SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
 	// Send a custom network command from ZScript.
-	bool SendNetworkCommand(int cmd, VMVa_List args);
+	bool SendNetworkCommand(const FName& cmd, VMVa_List& args);
+	// Send a pre-built command buffer over.
+	bool SendNetworkBuffer(const FName& cmd, const FNetworkBuffer* buffer);
 
 	// check if there is anything that should receive GUI events
 	bool CheckUiProcessors();

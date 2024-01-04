@@ -812,6 +812,10 @@ void InitThingdef()
 	netcmdstruct->Size = sizeof(FNetworkCommand);
 	netcmdstruct->Align = alignof(FNetworkCommand);
 
+	auto netbuffstruct = NewStruct("NetworkBuffer", nullptr);
+	netbuffstruct->Size = sizeof(FNetworkBuffer);
+	netbuffstruct->Align = alignof(FNetworkBuffer);
+
 	auto fltd = NewStruct("FLineTraceData", nullptr);
 	fltd->Size = sizeof(FLineTraceData);
 	fltd->Align = alignof(FLineTraceData);

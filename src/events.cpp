@@ -221,7 +221,7 @@ bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, 
 	return true;
 }
 
-bool EventManager::SendNetworkCommand(int cmd, VMVa_List args)
+bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 {
 	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
@@ -247,11 +247,13 @@ bool EventManager::SendNetworkCommand(int cmd, VMVa_List args)
 				break;
 
 			case NET_STRING:
+			{
 				++bytes; // Strings will always consume at least one byte.
 				const FString* str = ListGetString(args);
 				if (str != nullptr)
 					bytes += str->Len();
 				break;
+			}
 		}
 
 		if (tag != NET_STRING)
@@ -261,7 +263,7 @@ bool EventManager::SendNetworkCommand(int cmd, VMVa_List args)
 	}
 
 	Net_WriteByte(DEM_ZSC_CMD);
-	Net_WriteLong(cmd); // Using a full int here to allow better prevention of overlapping command ids.
+	Net_WriteString(cmd.GetChars());
 	Net_WriteWord(bytes);
 
 	constexpr char Default[] = "";
@@ -293,15 +295,59 @@ bool EventManager::SendNetworkCommand(int cmd, VMVa_List args)
 				break;
 
 			case NET_STRING:
+			{
 				const FString* str = ListGetString(args);
 				if (str != nullptr)
 					Net_WriteString(str->GetChars());
 				else
 					Net_WriteString(Default); // Still have to send something here to be read correctly.
 				break;
+			}
 		}
 
 		tag = ListGetInt(args);
+	}
+
+	return true;
+}
+
+bool EventManager::SendNetworkBuffer(const FName& cmd, const FNetworkBuffer* buffer)
+{
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+		return false;
+
+	Net_WriteByte(DEM_ZSC_CMD);
+	Net_WriteString(cmd.GetChars());
+	Net_WriteWord(buffer != nullptr ? buffer->GetBytes() : 0);
+
+	if (buffer != nullptr)
+	{
+		for (unsigned int i = 0u; i < buffer->GetBufferSize(); ++i)
+		{
+			const auto& pair = buffer->GetPair(i);
+			switch (pair.GetType())
+			{
+				case NET_BYTE:
+					Net_WriteByte(pair.GetInt());
+					break;
+
+				case NET_WORD:
+					Net_WriteWord(pair.GetInt());
+					break;
+
+				case NET_LONG:
+					Net_WriteLong(pair.GetInt());
+					break;
+
+				case NET_FLOAT:
+					Net_WriteFloat(pair.GetFloat());
+					break;
+
+				case NET_STRING:
+					Net_WriteString(pair.GetString());
+					break;
+			}
+		}
 	}
 
 	return true;
@@ -855,6 +901,109 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadString)
 	ACTION_RETURN_STRING(res);
 }
 
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	FName res = NAME_None;
+	auto str = self->ReadString();
+	if (str != nullptr)
+		res = str;
+
+	ACTION_RETURN_INT(res.GetIndex());
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector2)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	DVector2 vec = {};
+	vec.X = self->ReadFloat();
+	vec.Y = self->ReadFloat();
+	ACTION_RETURN_VEC2(vec);
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector3)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	DVector3 vec = {};
+	vec.X = self->ReadFloat();
+	vec.Y = self->ReadFloat();
+	vec.Z = self->ReadFloat();
+	ACTION_RETURN_VEC3(vec);
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddByte)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_INT(value);
+	self->AddByte(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddWord)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_INT(value);
+	self->AddWord(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddLong)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_INT(value);
+	self->AddLong(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_FLOAT(value);
+	self->AddFloat(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_STRING(value);
+	self->AddString(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_NAME(value);
+	self->AddString(value.GetChars());
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddVector2)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	self->AddFloat(x);
+	self->AddFloat(y);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FNetworkBuffer, AddVector3)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkBuffer);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	self->AddFloat(x);
+	self->AddFloat(y);
+	self->AddFloat(z);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
 	PARAM_SELF_PROLOGUE(DStaticEventHandler);
@@ -867,11 +1016,20 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkCommand)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(cmd);
+	PARAM_NAME(cmd);
 	PARAM_VA_POINTER(va_reginfo);
 
 	VMVa_List args = { param + 1, 0, numparam - 2, va_reginfo + 1 };
 	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkCommand(cmd, args));
+}
+
+DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkBuffer)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(cmd);
+	PARAM_POINTER(buffer, FNetworkBuffer);
+
+	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkBuffer(cmd, buffer));
 }
 
 DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)

@@ -10,13 +10,32 @@ enum ENetCmd
 struct NetworkCommand native play version("4.12")
 {
     native readonly int Player;
-    native readonly int Command;
+    native readonly Name Command;
 
     native int ReadByte();
     native int ReadWord();
     native int ReadLong();
     native double ReadFloat();
     native string ReadString();
+
+    // Wrappers
+    native Name ReadName();
+    native Vector2 ReadVector2();
+    native Vector3 ReadVector3();
+}
+
+struct NetworkBuffer native version("4.12")
+{
+    native void AddByte(int value);
+    native void AddWord(int value);
+    native void AddLong(int value);
+    native void AddFloat(double value);
+    native void AddString(string value);
+
+    // Wrappers
+    native void AddName(Name value);
+    native void AddVector2(Vector2 value);
+    native void AddVector3(Vector3 value);
 }
 
 struct RenderEvent native ui version("2.4")
@@ -171,6 +190,7 @@ class EventHandler : StaticEventHandler native version("2.4")
 {
     clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
-    version("4.12") clearscope static native vararg bool SendNetworkCommand(int cmd, ...);
+    version("4.12") clearscope static native vararg bool SendNetworkCommand(Name cmd, ...);
+    version("4.12") clearscope static native bool SendNetworkBuffer(Name cmd, NetworkBuffer buffer);
     clearscope static native void SendInterfaceEvent(int playerNum, string name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

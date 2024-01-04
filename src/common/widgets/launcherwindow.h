@@ -2,6 +2,9 @@
 
 #include <zwidget/core/widget.h>
 
+
+#define RENDER_BACKENDS
+
 class ImageBox;
 class TextLabel;
 class CheckboxLabel;
@@ -38,6 +41,12 @@ private:
 	CheckboxLabel* LightsCheckbox = nullptr;
 	CheckboxLabel* BrightmapsCheckbox = nullptr;
 	CheckboxLabel* WidescreenCheckbox = nullptr;
+#ifdef RENDER_BACKENDS
+	TextLabel* BackendLabel = nullptr;
+	CheckboxLabel* VulkanCheckbox = nullptr;
+	CheckboxLabel* OpenGLCheckbox = nullptr;
+	CheckboxLabel* GLESCheckbox = nullptr;
+#endif
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;

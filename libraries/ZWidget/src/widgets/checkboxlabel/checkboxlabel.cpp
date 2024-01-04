@@ -84,6 +84,8 @@ void CheckboxLabel::OnKeyUp(EInputKey key)
 
 void CheckboxLabel::Toggle()
 {
-	checked = !checked;
+	bool oldchecked = checked;
+	checked = radiostyle? true : !checked;
 	Update();
+	if (checked != oldchecked && FuncChanged) FuncChanged(checked);
 }

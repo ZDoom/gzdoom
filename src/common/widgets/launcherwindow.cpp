@@ -12,6 +12,10 @@
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 #include <zwidget/widgets/lineedit/lineedit.h>
 
+#ifdef RENDER_BACKENDS
+EXTERN_CVAR(Int, vid_preferbackend);
+#endif
+
 EXTERN_CVAR(Bool, queryiwad);
 
 int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags)
@@ -73,6 +77,17 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	WidescreenCheckbox->SetText("Widescreen");
 	ParametersLabel->SetText("Additional Parameters:");
 
+#ifdef RENDER_BACKENDS
+	BackendLabel = new TextLabel(this);
+	VulkanCheckbox = new CheckboxLabel(this);
+	OpenGLCheckbox = new CheckboxLabel(this);
+	GLESCheckbox = new CheckboxLabel(this);
+	BackendLabel->SetText("Render Backend");
+	VulkanCheckbox->SetText("Vulkan");
+	OpenGLCheckbox->SetText("OpenGL");
+	GLESCheckbox->SetText("OpenGL ES");
+#endif
+
 	FString welcomeText, versionText;
 	welcomeText.Format("Welcome to %s!", GAMENAME);
 	versionText.Format("Version %s.", GetVersionString());
@@ -87,6 +102,27 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	LightsCheckbox->SetChecked(flags & 2);
 	BrightmapsCheckbox->SetChecked(flags & 4);
 	WidescreenCheckbox->SetChecked(flags & 8);
+
+#ifdef RENDER_BACKENDS
+	OpenGLCheckbox->SetRadioStyle(true);
+	VulkanCheckbox->SetRadioStyle(true);
+	GLESCheckbox->SetRadioStyle(true);
+	OpenGLCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
+	VulkanCheckbox->FuncChanged = [this](bool on) { if (on) { OpenGLCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
+	GLESCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); OpenGLCheckbox->SetChecked(false); }};
+	switch (vid_preferbackend)
+	{
+	case 0:
+		OpenGLCheckbox->SetChecked(true);
+		break;
+	case 1:
+		VulkanCheckbox->SetChecked(true);
+		break;
+	case 2:
+		GLESCheckbox->SetChecked(true);
+		break;
+	}
+#endif
 
 	for (int i = 0; i < numwads; i++)
 	{
@@ -124,6 +160,14 @@ void LauncherWindow::OnPlayButtonClicked()
 	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
 	if (WidescreenCheckbox->GetChecked()) flags |= 8;
 	*AutoloadFlags = flags;
+
+#ifdef RENDER_BACKENDS
+	int v = 1;
+	if (OpenGLCheckbox->GetChecked()) v = 0;
+	else if (VulkanCheckbox->GetChecked()) v = 1;
+	else if (GLESCheckbox->GetChecked()) v = 2;
+	if (v != vid_preferbackend) vid_preferbackend = v;
+#endif
 
 	std::string extraargs = ParametersEdit->GetText();
 	if (!extraargs.empty())
@@ -185,6 +229,24 @@ void LauncherWindow::OnGeometryChanged()
 	y -= 10.0;
 
 	double panelWidth = 150.0;
+
+#ifdef RENDER_BACKENDS
+	auto yy = y;
+	y -= GLESCheckbox->GetPreferredHeight();
+	double x = GetWidth() / 2 - panelWidth / 2;
+	GLESCheckbox->SetFrameGeometry(x, y, 190.0, GLESCheckbox->GetPreferredHeight());
+
+	y -= OpenGLCheckbox->GetPreferredHeight();
+	OpenGLCheckbox->SetFrameGeometry(x, y, 190.0, OpenGLCheckbox->GetPreferredHeight());
+
+	y -= VulkanCheckbox->GetPreferredHeight();
+	VulkanCheckbox->SetFrameGeometry(x, y, 190.0, VulkanCheckbox->GetPreferredHeight());
+
+	y -= BackendLabel->GetPreferredHeight();
+	BackendLabel->SetFrameGeometry(x, y, 190.0, BackendLabel->GetPreferredHeight());
+
+	y = yy;
+#endif
 	y -= DontAskAgainCheckbox->GetPreferredHeight();
 	DontAskAgainCheckbox->SetFrameGeometry(20.0, y, 190.0, DontAskAgainCheckbox->GetPreferredHeight());
 	WidescreenCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());

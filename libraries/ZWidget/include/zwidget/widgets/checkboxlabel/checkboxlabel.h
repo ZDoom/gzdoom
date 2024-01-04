@@ -16,6 +16,8 @@ public:
 	void Toggle();
 
 	double GetPreferredHeight() const;
+	std::function<void(bool)> FuncChanged;
+	void SetRadioStyle(bool on) { radiostyle = on; }
 
 protected:
 	void OnPaint(Canvas* canvas) override;
@@ -27,5 +29,7 @@ protected:
 private:
 	std::string text;
 	bool checked = false;
+	bool radiostyle = false;
 	bool mouseDownActive = false;
+
 };

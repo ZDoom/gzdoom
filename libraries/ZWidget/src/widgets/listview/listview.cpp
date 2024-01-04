@@ -22,6 +22,15 @@ void ListView::Activate()
 		OnActivated();
 }
 
+void ListView::SetSelectedItem(int index)
+{
+	if (selectedItem != index && index >= 0 && index < items.size())
+	{
+		selectedItem = index;
+		Update();
+	}
+}
+
 void ListView::ScrollToItem(int index)
 {
 	double itemHeight = 20.0;
@@ -95,8 +104,7 @@ void ListView::OnMouseDown(const Point& pos, int key)
 		int index = (int)((pos.y - 5.0 + scrollbar->GetPosition()) / 20.0);
 		if (index >= 0 && (size_t)index < items.size())
 		{
-			selectedItem = index;
-			Update();
+			SetSelectedItem(index);
 			ScrollToItem(selectedItem);
 		}
 	}
@@ -128,8 +136,7 @@ void ListView::OnKeyDown(EInputKey key)
 	{
 		if (selectedItem + 1 < (int)items.size())
 		{
-			selectedItem++;
-			Update();
+			SetSelectedItem(selectedItem + 1);
 		}
 		ScrollToItem(selectedItem);
 	}
@@ -137,8 +144,7 @@ void ListView::OnKeyDown(EInputKey key)
 	{
 		if (selectedItem > 0)
 		{
-			selectedItem--;
-			Update();
+			SetSelectedItem(selectedItem - 1);
 		}
 		ScrollToItem(selectedItem);
 	}

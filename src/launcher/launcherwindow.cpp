@@ -139,6 +139,12 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 		GamesList->AddItem(work.GetChars());
 	}
 
+	if (defaultiwad >= 0 && defaultiwad < numwads)
+	{
+		GamesList->SetSelectedItem(defaultiwad);
+		GamesList->ScrollToItem(defaultiwad);
+	}
+
 	Logo->SetImage(Image::LoadResource("widgets/banner.png"));
 
 	GamesList->SetFocus();

@@ -14,6 +14,7 @@ public:
 
 	void AddItem(const std::string& text);
 	int GetSelectedItem() const { return selectedItem; }
+	void SetSelectedItem(int index);
 	void ScrollToItem(int index);
 
 	void Activate();

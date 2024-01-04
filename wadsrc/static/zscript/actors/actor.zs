@@ -510,7 +510,15 @@ class Actor : Thinker native
 		return true;
 	}
 
-	// Called in TryMove if the mover ran into another Actor. This isn't called on players
+	// [AA] Called by inventory items in CallTryPickup to see if this actor needs 
+	// to process them in some way before they're received. Gets called before 
+	// the item's TryPickup, allowing fully customized handling of all items.
+	virtual bool CanReceive(Inventory item)
+	{
+		return true;
+	}
+
+  // Called in TryMove if the mover ran into another Actor. This isn't called on players
 	// if they're currently predicting. Guarantees collisions unlike CanCollideWith.
 	virtual void CollidedWith(Actor other, bool passive) {}
 

@@ -115,7 +115,7 @@ bool VkShaderManager::CompileNextShader()
 
 VkShaderManager::VkShaderManager(VulkanRenderDevice* fb) : fb(fb)
 {
-	CompileNextShader();
+	//CompileNextShader();
 }
 
 VkShaderManager::~VkShaderManager()

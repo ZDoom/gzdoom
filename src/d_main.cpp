@@ -3262,6 +3262,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	if (!batchrun) Printf ("V_Init: allocate screen.\n");
 	if (!restart)
 	{
+		screen->CompileNextShader();
 		if (StartScreen != nullptr) StartScreen->Render();
 	}
 	else

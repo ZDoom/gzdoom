@@ -115,6 +115,12 @@ void DNetworkBuffer::AddFloat(double msg)
 	_buffer.Push({ NET_FLOAT, msg });
 }
 
+void DNetworkBuffer::AddDouble(double msg)
+{
+	_size += 8u;
+	_buffer.Push({ NET_DOUBLE, msg });
+}
+
 void DNetworkBuffer::AddString(const FString& msg)
 {
 	_size += msg.Len() + 1u;
@@ -154,9 +160,10 @@ void DNetworkBuffer::Serialize(FSerializer& arc)
 			{
 				switch (value.GetType())
 				{
+					case NET_DOUBLE:
 					case NET_FLOAT:
 					{
-						double f = value.GetFloat();
+						double f = value.GetDouble();
 						arc(nullptr, f);
 						break;
 					}
@@ -230,6 +237,14 @@ void DNetworkBuffer::Serialize(FSerializer& arc)
 						double f = 0.0;
 						arc(nullptr, f);
 						AddFloat(f);
+						break;
+					}
+
+					case NET_DOUBLE:
+					{
+						double f = 0.0;
+						arc(nullptr, f);
+						AddDouble(f);
 						break;
 					}
 
@@ -404,6 +419,10 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 				bytes += 4u;
 				break;
 
+			case NET_DOUBLE:
+				bytes += 8u;
+				break;
+
 			case NET_STRING:
 			{
 				++bytes; // Strings will always consume at least one byte.
@@ -452,6 +471,10 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 				Net_WriteFloat(ListGetDouble(args));
 				break;
 
+			case NET_DOUBLE:
+				Net_WriteDouble(ListGetDouble(args));
+				break;
+
 			case NET_STRING:
 			{
 				const FString* str = ListGetString(args);
@@ -498,7 +521,11 @@ bool EventManager::SendNetworkBuffer(const FName& cmd, const DNetworkBuffer* buf
 					break;
 
 				case NET_FLOAT:
-					Net_WriteFloat(value.GetFloat());
+					Net_WriteFloat(value.GetDouble());
+					break;
+
+				case NET_DOUBLE:
+					Net_WriteDouble(value.GetDouble());
 					break;
 
 				case NET_STRING:
@@ -1047,6 +1074,13 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloat)
 	ACTION_RETURN_FLOAT(self->ReadFloat());
 }
 
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadDouble)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_FLOAT(self->ReadDouble());
+}
+
 DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadString)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
@@ -1092,8 +1126,8 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector2)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	DVector2 vec = {};
-	vec.X = self->ReadFloat();
-	vec.Y = self->ReadFloat();
+	vec.X = self->ReadDouble();
+	vec.Y = self->ReadDouble();
 	ACTION_RETURN_VEC2(vec);
 }
 
@@ -1102,9 +1136,9 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector3)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	DVector3 vec = {};
-	vec.X = self->ReadFloat();
-	vec.Y = self->ReadFloat();
-	vec.Z = self->ReadFloat();
+	vec.X = self->ReadDouble();
+	vec.Y = self->ReadDouble();
+	vec.Z = self->ReadDouble();
 	ACTION_RETURN_VEC3(vec);
 }
 
@@ -1113,10 +1147,10 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector4)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	DVector4 vec = {};
-	vec.X = self->ReadFloat();
-	vec.Y = self->ReadFloat();
-	vec.Z = self->ReadFloat();
-	vec.W = self->ReadFloat();
+	vec.X = self->ReadDouble();
+	vec.Y = self->ReadDouble();
+	vec.Z = self->ReadDouble();
+	vec.W = self->ReadDouble();
 	ACTION_RETURN_VEC4(vec);
 }
 
@@ -1125,10 +1159,10 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadQuat)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	DQuaternion quat = {};
-	quat.X = self->ReadFloat();
-	quat.Y = self->ReadFloat();
-	quat.Z = self->ReadFloat();
-	quat.W = self->ReadFloat();
+	quat.X = self->ReadDouble();
+	quat.Y = self->ReadDouble();
+	quat.Z = self->ReadDouble();
+	quat.W = self->ReadDouble();
 	ACTION_RETURN_QUAT(quat);
 }
 
@@ -1160,14 +1194,20 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadIntArray)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloatArray)
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadDoubleArray)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 	PARAM_OUTPOINTER(values, TArray<double>);
+	PARAM_BOOL(doublePrecision);
 
 	unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
-		values->Push(self->ReadFloat());
+	{
+		if (doublePrecision)
+			values->Push(self->ReadDouble());
+		else
+			values->Push(self->ReadFloat());
+	}
 
 	return 0;
 }
@@ -1225,6 +1265,14 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddFloat)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDouble)
+{
+	PARAM_SELF_PROLOGUE(DNetworkBuffer);
+	PARAM_FLOAT(value);
+	self->AddDouble(value);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddString)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
@@ -1264,8 +1312,8 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector2)
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	self->AddFloat(x);
-	self->AddFloat(y);
+	self->AddDouble(x);
+	self->AddDouble(y);
 	return 0;
 }
 
@@ -1275,9 +1323,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector3)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	self->AddFloat(x);
-	self->AddFloat(y);
-	self->AddFloat(z);
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
 	return 0;
 }
 
@@ -1288,10 +1336,10 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector4)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
 	PARAM_FLOAT(w);
-	self->AddFloat(x);
-	self->AddFloat(y);
-	self->AddFloat(z);
-	self->AddFloat(w);
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
+	self->AddDouble(w);
 	return 0;
 }
 
@@ -1302,10 +1350,10 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddQuat)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
 	PARAM_FLOAT(w);
-	self->AddFloat(x);
-	self->AddFloat(y);
-	self->AddFloat(z);
-	self->AddFloat(w);
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
+	self->AddDouble(w);
 	return 0;
 }
 
@@ -1338,15 +1386,21 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddIntArray)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddFloatArray)
+DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDoubleArray)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_POINTER(values, TArray<double>);
+	PARAM_BOOL(doublePrecision);
 
 	unsigned int size = values->Size();
 	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
-		self->AddFloat((*values)[i]);
+	{
+		if (doublePrecision)
+			self->AddDouble((*values)[i]);
+		else
+			self->AddFloat((*values)[i]);
+	}
 
 	return 0;
 }

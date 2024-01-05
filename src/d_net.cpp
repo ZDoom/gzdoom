@@ -259,7 +259,7 @@ static struct TicSpecial
 		streamoffs = 0;
 	}
 
-	TicSpecial &operator << (uint8_t it)
+	TicSpecial &operator << (int8_t it)
 	{
 		if (streamptr)
 		{
@@ -269,7 +269,7 @@ static struct TicSpecial
 		return *this;
 	}
 
-	TicSpecial &operator << (short it)
+	TicSpecial &operator << (int16_t it)
 	{
 		if (streamptr)
 		{
@@ -279,12 +279,22 @@ static struct TicSpecial
 		return *this;
 	}
 
-	TicSpecial &operator << (int it)
+	TicSpecial &operator << (int32_t it)
 	{
 		if (streamptr)
 		{
 			CheckSpace (4);
 			WriteInt32 (it, &streamptr);
+		}
+		return *this;
+	}
+
+	TicSpecial& operator << (int64_t it)
+	{
+		if (streamptr)
+		{
+			CheckSpace(8);
+			WriteInt64(it, &streamptr);
 		}
 		return *this;
 	}
@@ -295,6 +305,16 @@ static struct TicSpecial
 		{
 			CheckSpace (4);
 			WriteFloat (it, &streamptr);
+		}
+		return *this;
+	}
+
+	TicSpecial& operator << (double it)
+	{
+		if (streamptr)
+		{
+			CheckSpace(8);
+			WriteDouble(it, &streamptr);
 		}
 		return *this;
 	}
@@ -2047,22 +2067,32 @@ void Net_NewMakeTic (void)
 	specials.NewMakeTic ();
 }
 
-void Net_WriteInt8 (uint8_t it)
+void Net_WriteInt8 (int8_t it)
 {
 	specials << it;
 }
 
-void Net_WriteInt16 (short it)
+void Net_WriteInt16 (int16_t it)
 {
 	specials << it;
 }
 
-void Net_WriteInt32 (int it)
+void Net_WriteInt32 (int32_t it)
+{
+	specials << it;
+}
+
+void Net_WriteInt64(int64_t it)
 {
 	specials << it;
 }
 
 void Net_WriteFloat (float it)
+{
+	specials << it;
+}
+
+void Net_WriteDouble(double it)
 {
 	specials << it;
 }

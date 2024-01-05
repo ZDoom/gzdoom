@@ -55,24 +55,32 @@ const char *ReadStringConst(uint8_t **stream)
 	return string;
 }
 
-int ReadInt8 (uint8_t **stream)
+int8_t ReadInt8 (uint8_t **stream)
 {
-	uint8_t v = **stream;
+	int8_t v = **stream;
 	*stream += 1;
 	return v;
 }
 
-int ReadInt16 (uint8_t **stream)
+int16_t ReadInt16 (uint8_t **stream)
 {
-	short v = (((*stream)[0]) << 8) | (((*stream)[1]));
+	int16_t v = (((*stream)[0]) << 8) | (((*stream)[1]));
 	*stream += 2;
 	return v;
 }
 
-int ReadInt32 (uint8_t **stream)
+int32_t ReadInt32 (uint8_t **stream)
 {
-	int v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
+	int32_t v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
 	*stream += 4;
+	return v;
+}
+
+int64_t ReadInt64(uint8_t** stream)
+{
+	int64_t v = (int64_t((*stream)[0]) << 56) | (int64_t((*stream)[1]) << 48) | (int64_t((*stream)[2]) << 40) | (int64_t((*stream)[3]) << 32)
+				| (int64_t((*stream)[4]) << 24) | (int64_t((*stream)[5]) << 16) | (int64_t((*stream)[6]) << 8) | (int64_t((*stream)[7]));
+	*stream += 8;
 	return v;
 }
 
@@ -80,10 +88,21 @@ float ReadFloat (uint8_t **stream)
 {
 	union
 	{
-		int i;
+		int32_t i;
 		float f;
 	} fakeint;
 	fakeint.i = ReadInt32 (stream);
+	return fakeint.f;
+}
+
+double ReadDouble(uint8_t** stream)
+{
+	union
+	{
+		int64_t i;
+		double f;
+	} fakeint;
+	fakeint.i = ReadInt64(stream);
 	return fakeint.f;
 }
 
@@ -100,20 +119,20 @@ void WriteString (const char *string, uint8_t **stream)
 }
 
 
-void WriteInt8 (uint8_t v, uint8_t **stream)
+void WriteInt8 (int8_t v, uint8_t **stream)
 {
 	**stream = v;
 	*stream += 1;
 }
 
-void WriteInt16 (short v, uint8_t **stream)
+void WriteInt16 (int16_t v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 8;
 	(*stream)[1] = v & 255;
 	*stream += 2;
 }
 
-void WriteInt32 (int v, uint8_t **stream)
+void WriteInt32 (int32_t v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 24;
 	(*stream)[1] = (v >> 16) & 255;
@@ -122,15 +141,39 @@ void WriteInt32 (int v, uint8_t **stream)
 	*stream += 4;
 }
 
+void WriteInt64(int64_t v, uint8_t** stream)
+{
+	(*stream)[0] = v >> 56;
+	(*stream)[1] = (v >> 48) & 255;
+	(*stream)[2] = (v >> 40) & 255;
+	(*stream)[3] = (v >> 32) & 255;
+	(*stream)[4] = (v >> 24) & 255;
+	(*stream)[5] = (v >> 16) & 255;
+	(*stream)[6] = (v >> 8) & 255;
+	(*stream)[7] = v & 255;
+	*stream += 8;
+}
+
 void WriteFloat (float v, uint8_t **stream)
 {
 	union
 	{
-		int i;
+		int32_t i;
 		float f;
 	} fakeint;
 	fakeint.f = v;
 	WriteInt32 (fakeint.i, stream);
+}
+
+void WriteDouble(double v, uint8_t** stream)
+{
+	union
+	{
+		int64_t i;
+		double f;
+	} fakeint;
+	fakeint.f = v;
+	WriteInt64(fakeint.i, stream);
 }
 
 // Returns the number of bytes read

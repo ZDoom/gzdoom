@@ -26,6 +26,7 @@ enum ENetCmd
 	NET_INT16,
 	NET_INT,
 	NET_FLOAT,
+	NET_DOUBLE,
 	NET_STRING,
 };
 
@@ -95,7 +96,7 @@ public:
 		return value;
 	}
 
-	// Floats without their first 9 bits are pretty meaningless so those are done first.
+	// Floats without their first bits are pretty meaningless so those are done first.
 	double ReadFloat()
 	{
 		if (!IsValid())
@@ -115,8 +116,50 @@ public:
 
 		union
 		{
-			int i;
+			int32_t i;
 			float f;
+		} floatCaster;
+		floatCaster.i = value;
+		return floatCaster.f;
+	}
+
+	double ReadDouble()
+	{
+		if (!IsValid())
+			return 0.0;
+
+		int64_t value = int64_t(_stream[_index++]) << 56;
+		if (IsValid())
+		{
+			value |= int64_t(_stream[_index++]) << 48;
+			if (IsValid())
+			{
+				value |= int64_t(_stream[_index++]) << 40;
+				if (IsValid())
+				{
+					value |= int64_t(_stream[_index++]) << 32;
+					if (IsValid())
+					{
+						value |= int64_t(_stream[_index++]) << 24;
+						if (IsValid())
+						{
+							value |= int64_t(_stream[_index++]) << 16;
+							if (IsValid())
+							{
+								value |= int64_t(_stream[_index++]) << 8;
+								if (IsValid())
+									value |= int64_t(_stream[_index++]);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		union
+		{
+			int64_t i;
+			double f;
 		} floatCaster;
 		floatCaster.i = value;
 		return floatCaster.f;
@@ -159,7 +202,7 @@ public:
 			return std::get<int>(_message);
 		}
 
-		inline double GetFloat() const
+		inline double GetDouble() const
 		{
 			return std::get<double>(_message);
 		}
@@ -194,6 +237,7 @@ public:
 	void AddInt16(int word);
 	void AddInt(int msg);
 	void AddFloat(double msg);
+	void AddDouble(double msg);
 	void AddString(const FString& msg);
 	void OnDestroy() override;
 	void Serialize(FSerializer& arc) override;

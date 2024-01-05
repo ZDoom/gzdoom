@@ -10,15 +10,15 @@ public:
 
 	virtual ModelRendererType GetType() const = 0;
 
-	virtual void BeginDrawModel(FRenderStyle style, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
-	virtual void EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf) = 0;
+	virtual void BeginDrawModel(FRenderStyle style, int smf_flags, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
+	virtual void EndDrawModel(FRenderStyle style, int smf_flags) = 0;
 
 	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
 
 	virtual VSMatrix GetViewToWorldMatrix() = 0;
 
-	virtual void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored, FSpriteModelFrame *smf) = 0;
-	virtual void EndDrawHUDModel(FRenderStyle style, FSpriteModelFrame *smf) = 0;
+	virtual void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored, int smf_flags) = 0;
+	virtual void EndDrawHUDModel(FRenderStyle style, int smf_flags) = 0;
 
 	virtual void SetInterpolation(double interpolation) = 0;
 	virtual void SetMaterial(FGameTexture *skin, bool clampNoFilter, FTranslationID translation) = 0;

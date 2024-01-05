@@ -1300,6 +1300,10 @@ class Actor : Thinker native
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
 
+	native version("4.12") void SetModelFlag(int flag);
+	native version("4.12") void ClearModelFlag(int flag);
+	native version("4.12") void ResetModelFlags();
+
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{
 		return ACS_Execute(-int(script), mapnum, arg1, arg2, arg3);

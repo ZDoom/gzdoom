@@ -719,18 +719,21 @@ struct ModelOverride
 enum EModelDataFlags
 {
 	MODELDATA_HADMODEL =		1 << 0,
+	MODELDATA_OVERRIDE_FLAGS =	1 << 1,
 };
 
 class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
-	FName					modelDef;
+	PClass *				modelDef;
 	TArray<ModelOverride>	models;
 	TArray<FTextureID>		skinIDs;
 	TArray<int>				animationIDs;
 	TArray<int>				modelFrameGenerators;
 	int						flags;
+	int						overrideFlagsSet;
+	int						overrideFlagsClear;
 
 	AnimOverride curAnim;
 	AnimOverride prevAnim; // used for interpolation when switching anims

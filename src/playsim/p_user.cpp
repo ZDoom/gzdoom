@@ -478,7 +478,7 @@ void player_t::SetFOV(float fov)
 		{
 			if (consoleplayer == Net_Arbitrator)
 			{
-				Net_WriteByte(DEM_MYFOV);
+				Net_WriteInt8(DEM_MYFOV);
 			}
 			else
 			{
@@ -488,7 +488,7 @@ void player_t::SetFOV(float fov)
 		}
 		else
 		{
-			Net_WriteByte(DEM_MYFOV);
+			Net_WriteInt8(DEM_MYFOV);
 		}
 		Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
@@ -637,9 +637,9 @@ void player_t::SendPitchLimits() const
 			uppitch = downpitch = (int)maxviewpitch;
 		}
 
-		Net_WriteByte(DEM_SETPITCHLIMIT);
-		Net_WriteByte(uppitch);
-		Net_WriteByte(downpitch);
+		Net_WriteInt8(DEM_SETPITCHLIMIT);
+		Net_WriteInt8(uppitch);
+		Net_WriteInt8(downpitch);
 	}
 }
 

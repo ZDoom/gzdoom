@@ -450,15 +450,15 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 		// The slots differ. Send mine.
 		if (playernum == consoleplayer)
 		{
-			Net_WriteByte(DEM_SETSLOT);
+			Net_WriteInt8(DEM_SETSLOT);
 		}
 		else
 		{
-			Net_WriteByte(DEM_SETSLOTPNUM);
-			Net_WriteByte(playernum);
+			Net_WriteInt8(DEM_SETSLOTPNUM);
+			Net_WriteInt8(playernum);
 		}
-		Net_WriteByte(i);
-		Net_WriteByte(Slots[i].Size());
+		Net_WriteInt8(i);
+		Net_WriteInt8(Slots[i].Size());
 		for (j = 0; j < Slots[i].Size(); ++j)
 		{
 			Net_WriteWeapon(Slots[i].GetWeapon(j));
@@ -596,9 +596,9 @@ CCMD (setslot)
 			Printf ("Slot %d cleared\n", slot);
 		}
 
-		Net_WriteByte(DEM_SETSLOT);
-		Net_WriteByte(slot);
-		Net_WriteByte(argv.argc()-2);
+		Net_WriteInt8(DEM_SETSLOT);
+		Net_WriteInt8(slot);
+		Net_WriteInt8(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
 			Net_WriteWeapon(PClass::FindActor(argv[i]));
@@ -647,8 +647,8 @@ CCMD (addslot)
 	}
 	else
 	{
-		Net_WriteByte(DEM_ADDSLOT);
-		Net_WriteByte(slot);
+		Net_WriteInt8(DEM_ADDSLOT);
+		Net_WriteInt8(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -723,8 +723,8 @@ CCMD (addslotdefault)
 	}
 	else
 	{
-		Net_WriteByte(DEM_ADDSLOTDEFAULT);
-		Net_WriteByte(slot);
+		Net_WriteInt8(DEM_ADDSLOTDEFAULT);
+		Net_WriteInt8(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -857,7 +857,7 @@ static int ntoh_cmp(const void *a, const void *b)
 
 void P_WriteDemoWeaponsChunk(uint8_t **demo)
 {
-	WriteWord(Weapons_ntoh.Size(), demo);
+	WriteInt16(Weapons_ntoh.Size(), demo);
 	for (unsigned int i = 1; i < Weapons_ntoh.Size(); ++i)
 	{
 		WriteString(Weapons_ntoh[i]->TypeName.GetChars(), demo);
@@ -879,7 +879,7 @@ void P_ReadDemoWeaponsChunk(uint8_t **demo)
 	PClassActor *type;
 	const char *s;
 
-	count = ReadWord(demo);
+	count = ReadInt16(demo);
 	Weapons_ntoh.Resize(count);
 	Weapons_hton.Clear(count);
 
@@ -923,12 +923,12 @@ void Net_WriteWeapon(PClassActor *type)
 	assert(index >= 0 && index <= 32767);
 	if (index < 128)
 	{
-		Net_WriteByte(index);
+		Net_WriteInt8(index);
 	}
 	else
 	{
-		Net_WriteByte(0x80 | index);
-		Net_WriteByte(index >> 7);
+		Net_WriteInt8(0x80 | index);
+		Net_WriteInt8(index >> 7);
 	}
 }
 
@@ -942,10 +942,10 @@ PClassActor *Net_ReadWeapon(uint8_t **stream)
 {
 	int index;
 
-	index = ReadByte(stream);
+	index = ReadInt8(stream);
 	if (index & 0x80)
 	{
-		index = (index & 0x7F) | (ReadByte(stream) << 7);
+		index = (index & 0x7F) | (ReadInt8(stream) << 7);
 	}
 	if ((unsigned)index >= Weapons_ntoh.Size())
 	{

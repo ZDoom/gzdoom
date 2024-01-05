@@ -571,7 +571,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
-	Net_WriteByte (DEM_UINFCHANGED);
+	Net_WriteInt8 (DEM_UINFCHANGED);
 	Net_WriteString (foo);
 }
 
@@ -592,7 +592,7 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 			{
 				return NULL;
 			}
-			bitdata = ReadByte (stream);
+			bitdata = ReadInt8 (stream);
 			mask = 1 << (bitdata & 31);
 			if (bitdata & 32)
 			{
@@ -608,8 +608,8 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 	{
 		switch (type)
 		{
-		case CVAR_Bool:		value.Bool = ReadByte (stream) ? 1 : 0;	break;
-		case CVAR_Int:		value.Int = ReadLong (stream);			break;
+		case CVAR_Bool:		value.Bool = ReadInt8 (stream) ? 1 : 0;	break;
+		case CVAR_Int:		value.Int = ReadInt32 (stream);			break;
 		case CVAR_Float:	value.Float = ReadFloat (stream);		break;
 		case CVAR_String:	value.String = ReadString (stream);		break;
 		default: break;	// Silence GCC
@@ -665,13 +665,13 @@ bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 
 		namelen = strlen(cvar->GetName());
 
-		Net_WriteByte(DEM_SINFCHANGED);
-		Net_WriteByte((uint8_t)(namelen | (type << 6)));
+		Net_WriteInt8(DEM_SINFCHANGED);
+		Net_WriteInt8((uint8_t)(namelen | (type << 6)));
 		Net_WriteBytes((uint8_t*)cvar->GetName(), (int)namelen);
 		switch (type)
 		{
-		case CVAR_Bool:		Net_WriteByte(value.Bool);		break;
-		case CVAR_Int:		Net_WriteLong(value.Int);		break;
+		case CVAR_Bool:		Net_WriteInt8(value.Bool);		break;
+		case CVAR_Int:		Net_WriteInt32(value.Int);		break;
 		case CVAR_Float:	Net_WriteFloat(value.Float);	break;
 		case CVAR_String:	Net_WriteString(value.String);	break;
 		default: break; // Silence GCC
@@ -696,10 +696,10 @@ bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 
 		int namelen = (int)strlen(cvar->GetName());
 
-		Net_WriteByte(DEM_SINFCHANGEDXOR);
-		Net_WriteByte((uint8_t)namelen);
+		Net_WriteInt8(DEM_SINFCHANGEDXOR);
+		Net_WriteInt8((uint8_t)namelen);
 		Net_WriteBytes((uint8_t*)cvar->GetName(), namelen);
-		Net_WriteByte(uint8_t(bitnum | (set << 5)));
+		Net_WriteInt8(uint8_t(bitnum | (set << 5)));
 		return true;
 	}
 	return false;
@@ -712,7 +712,7 @@ void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
 	int len;
 	int type;
 
-	len = ReadByte (stream);
+	len = ReadInt8 (stream);
 	type = len >> 6;
 	len &= 0x3f;
 	if (len == 0)

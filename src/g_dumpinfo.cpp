@@ -129,7 +129,7 @@ CCMD (spray)
 		return;
 	}
 	
-	Net_WriteByte (DEM_SPRAY);
+	Net_WriteInt8 (DEM_SPRAY);
 	Net_WriteString (argv[1]);
 }
 

@@ -22,9 +22,9 @@ enum class EventHandlerType
 
 enum ENetCmd
 {
-	NET_BYTE = 1,
-	NET_WORD,
-	NET_LONG,
+	NET_INT8 = 1,
+	NET_INT16,
+	NET_INT,
 	NET_FLOAT,
 	NET_STRING,
 };
@@ -54,7 +54,7 @@ public:
 		_index = 0;
 	}
 
-	int ReadByte()
+	int ReadInt8()
 	{
 		if (!IsValid())
 			return 0;
@@ -63,7 +63,7 @@ public:
 	}
 
 	// If a value has to cut off early, just treat the previous value as the full one.
-	int ReadWord()
+	int ReadInt16()
 	{
 		if (!IsValid())
 			return 0;
@@ -75,7 +75,7 @@ public:
 		return value;
 	}
 
-	int ReadLong()
+	int ReadInt()
 	{
 		if (!IsValid())
 			return 0;
@@ -190,9 +190,9 @@ public:
 		return _buffer[i];
 	}
 
-	void AddByte(int byte);
-	void AddWord(int word);
-	void AddLong(int msg);
+	void AddInt8(int byte);
+	void AddInt16(int word);
+	void AddInt(int msg);
 	void AddFloat(double msg);
 	void AddString(const FString& msg);
 	void OnDestroy() override;

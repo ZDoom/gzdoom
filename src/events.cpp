@@ -91,22 +91,22 @@ static const FString* ListGetString(VMVa_List& tags)
 
 IMPLEMENT_CLASS(DNetworkBuffer, false, false);
 
-void DNetworkBuffer::AddByte(int byte)
+void DNetworkBuffer::AddInt8(int byte)
 {
 	++_size;
-	_buffer.Push({ NET_BYTE, byte });
+	_buffer.Push({ NET_INT8, byte });
 }
 
-void DNetworkBuffer::AddWord(int word)
+void DNetworkBuffer::AddInt16(int word)
 {
 	_size += 2u;
-	_buffer.Push({ NET_WORD, word });
+	_buffer.Push({ NET_INT16, word });
 }
 
-void DNetworkBuffer::AddLong(int msg)
+void DNetworkBuffer::AddInt(int msg)
 {
 	_size += 4u;
-	_buffer.Push({ NET_LONG, msg });
+	_buffer.Push({ NET_INT, msg });
 }
 
 void DNetworkBuffer::AddFloat(double msg)
@@ -201,27 +201,27 @@ void DNetworkBuffer::Serialize(FSerializer& arc)
 			{
 				switch (type)
 				{
-					case NET_BYTE:
+					case NET_INT8:
 					{
 						int i = 0;
 						arc(nullptr, i);
-						AddByte(i);
+						AddInt8(i);
 						break;
 					}
 
-					case NET_WORD:
+					case NET_INT16:
 					{
 						int i = 0;
 						arc(nullptr, i);
-						AddWord(i);
+						AddInt16(i);
 						break;
 					}
 
-					case NET_LONG:
+					case NET_INT:
 					{
 						int i = 0;
 						arc(nullptr, i);
-						AddLong(i);
+						AddInt(i);
 						break;
 					}
 
@@ -368,13 +368,13 @@ bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, 
 	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
 
-	Net_WriteByte(DEM_NETEVENT);
+	Net_WriteInt8(DEM_NETEVENT);
 	Net_WriteString(name.GetChars());
-	Net_WriteByte(3);
-	Net_WriteLong(arg1);
-	Net_WriteLong(arg2);
-	Net_WriteLong(arg3);
-	Net_WriteByte(manual);
+	Net_WriteInt8(3);
+	Net_WriteInt32(arg1);
+	Net_WriteInt32(arg2);
+	Net_WriteInt32(arg3);
+	Net_WriteInt8(manual);
 
 	return true;
 }
@@ -391,15 +391,15 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 	{
 		switch (tag)
 		{
-			case NET_BYTE:
+			case NET_INT8:
 				++bytes;
 				break;
 
-			case NET_WORD:
+			case NET_INT16:
 				bytes += 2u;
 				break;
 
-			case NET_LONG:
+			case NET_INT:
 			case NET_FLOAT:
 				bytes += 4u;
 				break;
@@ -420,9 +420,9 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 		tag = ListGetInt(args);
 	}
 
-	Net_WriteByte(DEM_ZSC_CMD);
+	Net_WriteInt8(DEM_ZSC_CMD);
 	Net_WriteString(cmd.GetChars());
-	Net_WriteWord(bytes);
+	Net_WriteInt16(bytes);
 
 	constexpr char Default[] = "";
 
@@ -436,16 +436,16 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 				++args.curindex;
 				break;
 
-			case NET_BYTE:
-				Net_WriteByte(ListGetInt(args));
+			case NET_INT8:
+				Net_WriteInt8(ListGetInt(args));
 				break;
 
-			case NET_WORD:
-				Net_WriteWord(ListGetInt(args));
+			case NET_INT16:
+				Net_WriteInt16(ListGetInt(args));
 				break;
 
-			case NET_LONG:
-				Net_WriteLong(ListGetInt(args));
+			case NET_INT:
+				Net_WriteInt32(ListGetInt(args));
 				break;
 
 			case NET_FLOAT:
@@ -474,9 +474,9 @@ bool EventManager::SendNetworkBuffer(const FName& cmd, const DNetworkBuffer* buf
 	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 		return false;
 
-	Net_WriteByte(DEM_ZSC_CMD);
+	Net_WriteInt8(DEM_ZSC_CMD);
 	Net_WriteString(cmd.GetChars());
-	Net_WriteWord(buffer != nullptr ? buffer->GetBytes() : 0);
+	Net_WriteInt16(buffer != nullptr ? buffer->GetBytes() : 0);
 
 	if (buffer != nullptr)
 	{
@@ -485,16 +485,16 @@ bool EventManager::SendNetworkBuffer(const FName& cmd, const DNetworkBuffer* buf
 			const auto& value = buffer->GetValue(i);
 			switch (value.GetType())
 			{
-				case NET_BYTE:
-					Net_WriteByte(value.GetInt());
+				case NET_INT8:
+					Net_WriteInt8(value.GetInt());
 					break;
 
-				case NET_WORD:
-					Net_WriteWord(value.GetInt());
+				case NET_INT16:
+					Net_WriteInt16(value.GetInt());
 					break;
 
-				case NET_LONG:
-					Net_WriteLong(value.GetInt());
+				case NET_INT:
+					Net_WriteInt32(value.GetInt());
 					break;
 
 				case NET_FLOAT:
@@ -1019,25 +1019,25 @@ DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, IsFinal)
 DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Player)
 DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Command)
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadByte)
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt8)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	ACTION_RETURN_INT(self->ReadByte());
+	ACTION_RETURN_INT(self->ReadInt8());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadWord)
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt16)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	ACTION_RETURN_INT(self->ReadWord());
+	ACTION_RETURN_INT(self->ReadInt16());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadLong)
+DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	ACTION_RETURN_INT(self->ReadLong());
+	ACTION_RETURN_INT(self->ReadInt());
 }
 
 DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloat)
@@ -1076,14 +1076,14 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadMapUnit)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	constexpr double FixedToFloat = 1.0 / (1 << 16);
-	ACTION_RETURN_FLOAT(self->ReadLong() * FixedToFloat);
+	ACTION_RETURN_FLOAT(self->ReadInt() * FixedToFloat);
 }
 
 DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadAngle)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	const DAngle bam = DAngle::fromBam(self->ReadLong());
+	const DAngle bam = DAngle::fromBam(self->ReadInt());
 	ACTION_RETURN_FLOAT(bam.Degrees());
 }
 
@@ -1138,21 +1138,21 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadIntArray)
 	PARAM_OUTPOINTER(values, TArray<int>);
 	PARAM_INT(type)
 
-	unsigned int size = self->ReadLong();
+	unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		switch (type)
 		{
-			case NET_BYTE:
-				values->Push(self->ReadByte());
+			case NET_INT8:
+				values->Push(self->ReadInt8());
 				break;
 
-			case NET_WORD:
-				values->Push(self->ReadWord());
+			case NET_INT16:
+				values->Push(self->ReadInt16());
 				break;
 
 			default:
-				values->Push(self->ReadLong());
+				values->Push(self->ReadInt());
 				break;
 		}
 	}
@@ -1165,7 +1165,7 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloatArray)
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 	PARAM_OUTPOINTER(values, TArray<double>);
 
-	unsigned int size = self->ReadLong();
+	unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 		values->Push(self->ReadFloat());
 
@@ -1178,7 +1178,7 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadStringArray)
 	PARAM_OUTPOINTER(values, TArray<FString>);
 	PARAM_BOOL(skipEmpty);
 
-	unsigned int size = self->ReadLong();
+	unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		FString res = {};
@@ -1193,27 +1193,27 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadStringArray)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddByte)
+DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt8)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
-	self->AddByte(value);
+	self->AddInt8(value);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddWord)
+DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt16)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
-	self->AddWord(value);
+	self->AddInt16(value);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddLong)
+DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
-	self->AddLong(value);
+	self->AddInt(value);
 	return 0;
 }
 
@@ -1247,7 +1247,7 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddMapUnit)
 	PARAM_FLOAT(value);
 
 	constexpr int FloatToFixed = 1 << 16;
-	self->AddLong(static_cast<int>(value * FloatToFixed));
+	self->AddInt(static_cast<int>(value * FloatToFixed));
 	return 0;
 }
 
@@ -1255,7 +1255,7 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddAngle)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_ANGLE(value);
-	self->AddLong(value.BAMs());
+	self->AddInt(value.BAMs());
 	return 0;
 }
 
@@ -1316,21 +1316,21 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddIntArray)
 	PARAM_INT(type);
 
 	unsigned int size = values->Size();
-	self->AddLong(size);
+	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		switch (type)
 		{
-			case NET_BYTE:
-				self->AddByte((*values)[i]);
+			case NET_INT8:
+				self->AddInt8((*values)[i]);
 				break;
 
-			case NET_WORD:
-				self->AddWord((*values)[i]);
+			case NET_INT16:
+				self->AddInt16((*values)[i]);
 				break;
 
 			default:
-				self->AddLong((*values)[i]);
+				self->AddInt((*values)[i]);
 				break;
 		}
 	}
@@ -1344,7 +1344,7 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddFloatArray)
 	PARAM_POINTER(values, TArray<double>);
 
 	unsigned int size = values->Size();
-	self->AddLong(size);
+	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
 		self->AddFloat((*values)[i]);
 
@@ -1357,7 +1357,7 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddStringArray)
 	PARAM_POINTER(values, TArray<FString>);
 
 	unsigned int size = values->Size();
-	self->AddLong(size);
+	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
 		self->AddString((*values)[i]);
 

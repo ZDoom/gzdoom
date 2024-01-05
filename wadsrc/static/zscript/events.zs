@@ -1,8 +1,8 @@
 enum ENetCmd
 {
-	NET_BYTE = 1,
-	NET_WORD,
-	NET_LONG,
+	NET_INT8 = 1,
+	NET_INT16,
+	NET_INT,
 	NET_FLOAT,
 	NET_STRING,
 }
@@ -12,9 +12,9 @@ struct NetworkCommand native play version("4.12")
     native readonly int Player;
     native readonly Name Command;
 
-    native int ReadByte();
-    native int ReadWord();
-    native int ReadLong();
+    native int ReadInt8();
+    native int ReadInt16();
+    native int ReadInt();
     native double ReadFloat();
     native string ReadString();
 
@@ -26,16 +26,16 @@ struct NetworkCommand native play version("4.12")
     native Vector3 ReadVector3();
     native Vector4 ReadVector4();
     native Quat ReadQuat();
-    native void ReadIntArray(out Array<int> values, ENetCmd intSize = NET_LONG);
+    native void ReadIntArray(out Array<int> values, ENetCmd intSize = NET_INT);
     native void ReadFloatArray(out Array<double> values);
     native void ReadStringArray(out Array<string> values, bool skipEmpty = false);
 }
 
 class NetworkBuffer native version("4.12")
 {
-    native void AddByte(int value);
-    native void AddWord(int value);
-    native void AddLong(int value);
+    native void AddInt8(int value);
+    native void AddInt16(int value);
+    native void AddInt(int value);
     native void AddFloat(double value);
     native void AddString(string value);
 
@@ -47,7 +47,7 @@ class NetworkBuffer native version("4.12")
     native void AddVector3(Vector3 value);
     native void AddVector4(Vector4 value);
     native void AddQuat(Quat value);
-    native void AddIntArray(Array<int> values, ENetCmd intSize = NET_LONG);
+    native void AddIntArray(Array<int> values, ENetCmd intSize = NET_INT);
     native void AddFloatArray(Array<double> values);
     native void AddStringArray(Array<string> values);
 }

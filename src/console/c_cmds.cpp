@@ -120,8 +120,8 @@ CCMD (god)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_GOD);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_GOD);
 }
 
 CCMD(god2)
@@ -129,8 +129,8 @@ CCMD(god2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_GOD2);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_GOD2);
 }
 
 CCMD (iddqd)
@@ -138,8 +138,8 @@ CCMD (iddqd)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_IDDQD);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_IDDQD);
 }
 
 CCMD (buddha)
@@ -147,8 +147,8 @@ CCMD (buddha)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_BUDDHA);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_BUDDHA);
 }
 
 CCMD(buddha2)
@@ -156,8 +156,8 @@ CCMD(buddha2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_BUDDHA2);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_BUDDHA2);
 }
 
 CCMD (notarget)
@@ -165,8 +165,8 @@ CCMD (notarget)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOTARGET);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOTARGET);
 }
 
 CCMD (fly)
@@ -174,8 +174,8 @@ CCMD (fly)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_FLY);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_FLY);
 }
 
 /*
@@ -190,8 +190,8 @@ CCMD (noclip)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOCLIP);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOCLIP);
 }
 
 CCMD (noclip2)
@@ -199,8 +199,8 @@ CCMD (noclip2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOCLIP2);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOCLIP2);
 }
 
 CCMD (powerup)
@@ -208,8 +208,8 @@ CCMD (powerup)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_POWER);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_POWER);
 }
 
 CCMD (morphme)
@@ -219,12 +219,12 @@ CCMD (morphme)
 
 	if (argv.argc() == 1)
 	{
-		Net_WriteByte (DEM_GENERICCHEAT);
-		Net_WriteByte (CHT_MORPH);
+		Net_WriteInt8 (DEM_GENERICCHEAT);
+		Net_WriteInt8 (CHT_MORPH);
 	}
 	else
 	{
-		Net_WriteByte (DEM_MORPHEX);
+		Net_WriteInt8 (DEM_MORPHEX);
 		Net_WriteString (argv[1]);
 	}
 }
@@ -234,8 +234,8 @@ CCMD (anubis)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_ANUBIS);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_ANUBIS);
 }
 
 // [GRB]
@@ -244,8 +244,8 @@ CCMD (resurrect)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_RESSURECT);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_RESSURECT);
 }
 
 EXTERN_CVAR (Bool, chasedemo)
@@ -276,8 +276,8 @@ CCMD (chase)
 		if (gamestate != GS_LEVEL || (!(dmflags2 & DF2_CHASECAM) && deathmatch && CheckCheatmode ()))
 			return;
 
-		Net_WriteByte (DEM_GENERICCHEAT);
-		Net_WriteByte (CHT_CHASECAM);
+		Net_WriteInt8 (DEM_GENERICCHEAT);
+		Net_WriteInt8 (CHT_CHASECAM);
 	}
 }
 
@@ -386,12 +386,12 @@ CCMD (changemap)
 			{
 				if (argv.argc() > 2)
 				{
-					Net_WriteByte (DEM_CHANGEMAP2);
-					Net_WriteByte (atoi(argv[2]));
+					Net_WriteInt8 (DEM_CHANGEMAP2);
+					Net_WriteInt8 (atoi(argv[2]));
 				}
 				else
 				{
-					Net_WriteByte (DEM_CHANGEMAP);
+					Net_WriteInt8 (DEM_CHANGEMAP);
 				}
 				Net_WriteString (mapname);
 			}
@@ -446,12 +446,12 @@ CCMD (give)
 	if (CheckCheatmode () || argv.argc() < 2)
 		return;
 
-	Net_WriteByte (DEM_GIVECHEAT);
+	Net_WriteInt8 (DEM_GIVECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi(argv[2]));
+		Net_WriteInt32(atoi(argv[2]));
 	else
-		Net_WriteLong(0);
+		Net_WriteInt32(0);
 }
 
 CCMD (take)
@@ -459,12 +459,12 @@ CCMD (take)
 	if (CheckCheatmode () || argv.argc() < 2)
 		return;
 
-	Net_WriteByte (DEM_TAKECHEAT);
+	Net_WriteInt8 (DEM_TAKECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi (argv[2]));
+		Net_WriteInt32(atoi (argv[2]));
 	else
-		Net_WriteLong (0);
+		Net_WriteInt32 (0);
 }
 
 CCMD(setinv)
@@ -472,17 +472,17 @@ CCMD(setinv)
 	if (CheckCheatmode() || argv.argc() < 2)
 		return;
 
-	Net_WriteByte(DEM_SETINV);
+	Net_WriteInt8(DEM_SETINV);
 	Net_WriteString(argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi(argv[2]));
+		Net_WriteInt32(atoi(argv[2]));
 	else
-		Net_WriteLong(0);
+		Net_WriteInt32(0);
 
 	if (argv.argc() > 3)
-		Net_WriteByte(!!atoi(argv[3]));
+		Net_WriteInt8(!!atoi(argv[3]));
 	else
-		Net_WriteByte(0);
+		Net_WriteInt8(0);
 
 }
 
@@ -513,18 +513,18 @@ CCMD (puke)
 
 		if (script > 0)
 		{
-			Net_WriteByte (DEM_RUNSCRIPT);
-			Net_WriteWord (script);
+			Net_WriteInt8 (DEM_RUNSCRIPT);
+			Net_WriteInt16 (script);
 		}
 		else
 		{
-			Net_WriteByte (DEM_RUNSCRIPT2);
-			Net_WriteWord (-script);
+			Net_WriteInt8 (DEM_RUNSCRIPT2);
+			Net_WriteInt16 (-script);
 		}
-		Net_WriteByte (argn);
+		Net_WriteInt8 (argn);
 		for (i = 0; i < argn; ++i)
 		{
-			Net_WriteLong (arg[i]);
+			Net_WriteInt32 (arg[i]);
 		}
 	}
 }
@@ -557,12 +557,12 @@ CCMD (pukename)
 				arg[i] = atoi(argv[argstart + i]);
 			}
 		}
-		Net_WriteByte(DEM_RUNNAMEDSCRIPT);
+		Net_WriteInt8(DEM_RUNNAMEDSCRIPT);
 		Net_WriteString(argv[1]);
-		Net_WriteByte(argn | (always << 7));
+		Net_WriteInt8(argn | (always << 7));
 		for (i = 0; i < argn; ++i)
 		{
-			Net_WriteLong(arg[i]);
+			Net_WriteInt32(arg[i]);
 		}
 	}
 }
@@ -603,12 +603,12 @@ CCMD (special)
 				return;
 			}
 		}
-		Net_WriteByte(DEM_RUNSPECIAL);
-		Net_WriteWord(specnum);
-		Net_WriteByte(argc - 2);
+		Net_WriteInt8(DEM_RUNSPECIAL);
+		Net_WriteInt16(specnum);
+		Net_WriteInt8(argc - 2);
 		for (int i = 2; i < argc; ++i)
 		{
-			Net_WriteLong(atoi(argv[i]));
+			Net_WriteInt32(atoi(argv[i]));
 		}
 	}
 }
@@ -639,10 +639,10 @@ CCMD (warp)
 	}
 	else
 	{
-		Net_WriteByte (DEM_WARPCHEAT);
-		Net_WriteWord (atoi (argv[1]));
-		Net_WriteWord (atoi (argv[2]));
-		Net_WriteWord (argv.argc() == 3 ? ONFLOORZ/65536 : atoi (argv[3]));
+		Net_WriteInt8 (DEM_WARPCHEAT);
+		Net_WriteInt16 (atoi (argv[1]));
+		Net_WriteInt16 (atoi (argv[2]));
+		Net_WriteInt16 (argv.argc() == 3 ? ONFLOORZ/65536 : atoi (argv[3]));
 	}
 }
 
@@ -951,8 +951,8 @@ CCMD(thaw)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_CLEARFROZENPROPS);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_CLEARFROZENPROPS);
 }
 
 //-----------------------------------------------------------------------------

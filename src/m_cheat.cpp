@@ -676,6 +676,6 @@ CCMD (mdk)
 		return;
 
 	const char *name = argv.argc() > 1 ? argv[1] : "";
-	Net_WriteByte (DEM_MDK);
+	Net_WriteInt8 (DEM_MDK);
 	Net_WriteString(name);
 }

@@ -428,14 +428,14 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		Net_WriteByte (DEM_CENTERVIEW);
+		Net_WriteInt8 (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
 		float fov;
 
-		Net_WriteByte (DEM_FOV);
+		Net_WriteInt8 (DEM_FOV);
 
 		// If the game is started with DF_NO_FOV set, the arbitrator's
 		// DesiredFOV will not be set when this callback is run, so
@@ -2629,7 +2629,7 @@ void Mlook_ReleaseHandler()
 {
 	if (lookspring)
 	{
-		Net_WriteByte(DEM_CENTERVIEW);
+		Net_WriteInt8(DEM_CENTERVIEW);
 	}
 }
 

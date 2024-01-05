@@ -602,7 +602,7 @@ CCMD(finishgame)
 		return;
 	}
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last Level->
-	Net_WriteByte(DEM_FINISHGAME);
+	Net_WriteInt8(DEM_FINISHGAME);
 }
 
 ADD_STAT(statistics)

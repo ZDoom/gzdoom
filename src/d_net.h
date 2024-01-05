@@ -64,9 +64,9 @@ void Net_CheckLastReceived(int);
 
 // [RH] Functions for making and using special "ticcmds"
 void Net_NewMakeTic ();
-void Net_WriteByte (uint8_t);
-void Net_WriteWord (short);
-void Net_WriteLong (int);
+void Net_WriteInt8 (uint8_t);
+void Net_WriteInt16 (short);
+void Net_WriteInt32 (int);
 void Net_WriteFloat (float);
 void Net_WriteString (const char *);
 void Net_WriteBytes (const uint8_t *, int len);

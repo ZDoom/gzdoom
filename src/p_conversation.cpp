@@ -276,17 +276,17 @@ DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
 	switch (node)
 	{
 	case -1:
-		Net_WriteByte(DEM_CONVNULL);
+		Net_WriteInt8(DEM_CONVNULL);
 		break;
 
 	case -2:
-		Net_WriteByte(DEM_CONVCLOSE);
+		Net_WriteInt8(DEM_CONVCLOSE);
 		break;
 
 	default:
-		Net_WriteByte(DEM_CONVREPLY);
-		Net_WriteWord(node);
-		Net_WriteByte(reply);
+		Net_WriteInt8(DEM_CONVREPLY);
+		Net_WriteInt16(node);
+		Net_WriteInt8(reply);
 		break;
 	}
 	StaticLastReply = reply;
@@ -677,8 +677,8 @@ void P_ConversationCommand (int netcode, int pnum, uint8_t **stream)
 	}
 	if (netcode == DEM_CONVREPLY)
 	{
-		int nodenum = ReadWord(stream);
-		int replynum = ReadByte(stream);
+		int nodenum = ReadInt16(stream);
+		int replynum = ReadInt8(stream);
 		HandleReply(player, pnum == consoleplayer, nodenum, replynum);
 	}
 	else

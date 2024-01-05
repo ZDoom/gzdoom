@@ -247,15 +247,15 @@ int SkipTicCmd (uint8_t **stream, int count);
 void ReadTicCmd (uint8_t **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int ReadByte (uint8_t **stream);
-int ReadWord (uint8_t **stream);
-int ReadLong (uint8_t **stream);
+int ReadInt8 (uint8_t **stream);
+int ReadInt16 (uint8_t **stream);
+int ReadInt32 (uint8_t **stream);
 float ReadFloat (uint8_t **stream);
 char *ReadString (uint8_t **stream);
 const char *ReadStringConst(uint8_t **stream);
-void WriteByte (uint8_t val, uint8_t **stream);
-void WriteWord (short val, uint8_t **stream);
-void WriteLong (int val, uint8_t **stream);
+void WriteInt8 (uint8_t val, uint8_t **stream);
+void WriteInt16 (short val, uint8_t **stream);
+void WriteInt32 (int val, uint8_t **stream);
 void WriteFloat (float val, uint8_t **stream);
 void WriteString (const char *string, uint8_t **stream);
 

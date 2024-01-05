@@ -371,8 +371,8 @@ static void ShoveChatStr (const char *str, uint8_t who)
 		who |= 2;
 	}
 
-	Net_WriteByte (DEM_SAY);
-	Net_WriteByte (who);
+	Net_WriteInt8 (DEM_SAY);
+	Net_WriteInt8 (who);
 
 	if (chat_substitution && DoSubstitution (substBuff, str))
 	{

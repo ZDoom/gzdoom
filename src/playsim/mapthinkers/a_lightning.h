@@ -6,17 +6,18 @@
 #endif
 
 #include "dthinker.h"
+#include "s_soundinternal.h"
 
 class DLightningThinker : public DThinker
 {
 	DECLARE_CLASS (DLightningThinker, DThinker);
 public:
 	static const int DEFAULT_STAT = STAT_LIGHTNING;
-	void Construct(const FString& tempSound = "");
+	void Construct(FSoundID tempSound = NO_SOUND);
 	~DLightningThinker ();
 	void Serialize(FSerializer &arc);
 	void Tick ();
-	void ForceLightning (int mode, const FString& tempSound = "");
+	void ForceLightning (int mode, FSoundID tempSound = NO_SOUND);
 	void TerminateLightning();
 
 protected:
@@ -25,7 +26,7 @@ protected:
 	int NextLightningFlash;
 	int LightningFlashCount;
 	bool Stopped;
-	FString TempLightningSound;
+	FSoundID TempLightningSound;
 	TArray<short> LightningLightLevels;
 };
 

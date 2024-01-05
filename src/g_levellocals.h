@@ -194,7 +194,7 @@ public:
 	AActor *SpawnMapThing(int index, FMapThing *mt, int position);
 	AActor *SpawnPlayer(FPlayerStart *mthing, int playernum, int flags = 0);
 	void StartLightning();
-	void ForceLightning(int mode, const FString& tempSound = "");
+	void ForceLightning(int mode, FSoundID tempSound = NO_SOUND);
 	void ClearDynamic3DFloorData();
 	void WorldDone(void);
 	void AirControlChanged();

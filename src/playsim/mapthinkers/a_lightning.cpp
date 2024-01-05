@@ -48,7 +48,7 @@ IMPLEMENT_CLASS(DLightningThinker, false, false)
 //
 //----------------------------------------------------------------------------
 
-void DLightningThinker::Construct(const FString& tempSound)
+void DLightningThinker::Construct(FSoundID tempSound)
 {
 	Stopped = false;
 	LightningFlashCount = 0;
@@ -179,14 +179,14 @@ void DLightningThinker::LightningFlash ()
 	}
 
 	Level->flags |= LEVEL_SWAPSKIES;	// set alternate sky
-	if (TempLightningSound.IsEmpty())
+	if (TempLightningSound == NO_SOUND)
 	{
 		S_Sound(CHAN_AUTO, 0, Level->LightningSound, 1.0, ATTN_NONE);
 	}
 	else
 	{
 		S_Sound(CHAN_AUTO, 0, TempLightningSound, 1.0, ATTN_NONE);
-		TempLightningSound = "";
+		TempLightningSound = NO_SOUND;
 	}
 	// [ZZ] just in case
 	Level->localEventManager->WorldLightning();
@@ -220,7 +220,7 @@ void DLightningThinker::LightningFlash ()
 //
 //----------------------------------------------------------------------------
 
-void DLightningThinker::ForceLightning (int mode, const FString& tempSound)
+void DLightningThinker::ForceLightning (int mode, FSoundID tempSound)
 {
 	switch (mode)
 	{
@@ -298,7 +298,7 @@ void FLevelLocals::StartLightning ()
 //
 //----------------------------------------------------------------------------
 
-void FLevelLocals::ForceLightning (int mode, const FString& tempSound)
+void FLevelLocals::ForceLightning (int mode, FSoundID tempSound)
 {
 	DLightningThinker *lightning = LocateLightning (this);
 	if (lightning == nullptr)
@@ -315,7 +315,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, ForceLightning)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(mode);
-	PARAM_STRING(tempSound);
+	PARAM_SOUND(tempSound);
 	self->ForceLightning(mode,tempSound);
 	return 0;
 }

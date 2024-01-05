@@ -5096,7 +5096,7 @@ static void EnsureModelData(AActor * mobj)
 		auto ptr = Create<DActorModelData>();
 		
 		ptr->flags = (mobj->hasmodel ? MODELDATA_HADMODEL : 0);
-		ptr->modelDef = NAME_None;
+		ptr->modelDef = nullptr;
 		
 		mobj->modelData = ptr;
 		mobj->hasmodel = true;
@@ -5111,7 +5111,8 @@ static void CleanupModelData(AActor * mobj)
 		&& mobj->modelData->modelFrameGenerators.Size() == 0
 		&& mobj->modelData->skinIDs.Size() == 0
 		&& mobj->modelData->animationIDs.Size() == 0
-		&& mobj->modelData->modelDef == NAME_None)
+		&& mobj->modelData->modelDef == nullptr
+		&&(mobj->modelData->flags & ~MODELDATA_HADMODEL) == 0 )
 	{
 		mobj->hasmodel = mobj->modelData->flags & MODELDATA_HADMODEL;
 		mobj->modelData->Destroy();
@@ -5123,6 +5124,8 @@ enum ESetAnimationFlags
 {
 	SAF_INSTANT = 1 << 0,
 	SAF_LOOP = 1 << 1,
+	SAF_USEACTORROLL = 1 << 2,
+	SAF_USEACTORPITCH = 1 << 3,
 };
 
 void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int interpolateTics, int flags, double ticFrac)
@@ -5265,6 +5268,32 @@ void SetAnimationFrameRateUINative(AActor * self, double framerate)
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
 }
 
+void SetModelFlag(AActor * self, int flag)
+{
+	EnsureModelData(self);
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsSet |= flag;
+	self->modelData->overrideFlagsClear &= ~flag;
+}
+
+void ClearModelFlag(AActor * self, int flag)
+{
+	EnsureModelData(self);
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsClear |= flag;
+	self->modelData->overrideFlagsSet &= ~flag;
+}
+
+void ResetModelFlags(AActor * self)
+{
+	if(self->modelData)
+	{
+		self->modelData->overrideFlagsClear = 0;
+		self->modelData->overrideFlagsSet = 0;
+		self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
+	}
+}
+
 enum ChangeModelFlags
 {
 	CMDL_WEAPONTOPLAYER		= 1 << 0,
@@ -5291,14 +5320,16 @@ void ChangeModelNative(
 ) {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
 
-	FName modeldef { ENamedName(i_modeldef) };
+	FName n_modeldef { ENamedName(i_modeldef) };
 	FName model { ENamedName(i_model) };
 	FName skin { ENamedName(i_skin) };
 	FName animation { ENamedName(i_animation) };
 
-	if (modeldef != NAME_None && PClass::FindClass(modeldef.GetChars()) == nullptr)
+	PClass * modeldef = nullptr;
+
+	if (n_modeldef != NAME_None && (modeldef = PClass::FindActor(n_modeldef.GetChars())) == nullptr)
 	{
-		Printf("Attempt to pass invalid modeldef name %s in %s.", modeldef.GetChars(), self->GetCharacterName());
+		Printf("Attempt to pass invalid modeldef name %s in %s.", n_modeldef.GetChars(), self->GetCharacterName());
 		return;
 	}
 
@@ -5529,6 +5560,35 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimationFrameRateUI, SetAnimationFrame
 	PARAM_FLOAT(framerate);
 	
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(flag);
+
+	SetModelFlag(self, flag);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(flag);
+
+	ClearModelFlag(self, flag);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ResetModelFlags, ResetModelFlags)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	
+	ResetModelFlags(self);
 
 	return 0;
 }

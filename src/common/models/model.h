@@ -41,7 +41,9 @@ struct FSpriteModelFrame
 	float xrotate, yrotate, zrotate;
 	float rotationCenterX, rotationCenterY, rotationCenterZ;
 	float rotationSpeed;
+private:
 	unsigned int flags;
+public:
 	const void* type;	// used for hashing, must point to something usable as identifier for the model's owner.
 	short sprite;
 	short frame;
@@ -50,6 +52,9 @@ struct FSpriteModelFrame
 	// added pithoffset, rolloffset.
 	float pitchoffset, rolloffset; // I don't want to bother with type transformations, so I made this variables float.
 	bool isVoxel;
+	unsigned int getFlags(class DActorModelData * defs) const;
+	friend void InitModels();
+	friend void ParseModelDefLump(int Lump);
 };
 
 

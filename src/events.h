@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <variant>
 #include "dobject.h"
 #include "serializer.h"
 #include "d_event.h"
@@ -132,19 +133,21 @@ public:
 	}
 };
 
-struct FNetworkBuffer
+class DNetworkBuffer final : public DObject
 {
+	DECLARE_CLASS(DNetworkBuffer, DObject)
+
 public:
-	struct BufferPair
+	struct BufferValue
 	{
 	private:
 		ENetCmd _type;
-		VMValue _message;
+		std::variant<int, double, FString> _message;
 
 	public:
-		BufferPair(const ENetCmd type, const int message) : _type(type), _message(message) {}
-		BufferPair(const ENetCmd type, const double message) : _type(type), _message(message) {}
-		BufferPair(const ENetCmd type, const FString* message) : _type(type), _message(message) {}
+		BufferValue(const ENetCmd type, const int message) : _type(type), _message(message) {}
+		BufferValue(const ENetCmd type, const double message) : _type(type), _message(message) {}
+		BufferValue(const ENetCmd type, const FString& message) : _type(type), _message(message) {}
 
 		inline ENetCmd GetType() const
 		{
@@ -153,24 +156,23 @@ public:
 
 		inline int GetInt() const
 		{
-			return _message.i;
+			return std::get<int>(_message);
 		}
 
 		inline double GetFloat() const
 		{
-			return _message.f;
+			return std::get<double>(_message);
 		}
 
 		inline const char* GetString() const
 		{
-			return _message.s().GetChars();
+			return std::get<FString>(_message).GetChars();
 		}
 	};
 
 private:
-	unsigned int _size;
-	TArray<BufferPair> _buffer;
-	TArray<FString> _strings; // Local copies of these need to be stored since VMValues store pointers to strings.
+	unsigned int _size = 0u;
+	TArray<BufferValue> _buffer = {};
 
 public:
 	inline unsigned int GetBytes() const
@@ -183,41 +185,18 @@ public:
 		return _buffer.Size();
 	}
 
-	inline const BufferPair& GetPair(unsigned int i) const
+	inline const BufferValue& GetValue(unsigned int i) const
 	{
 		return _buffer[i];
 	}
 
-	void AddByte(int byte)
-	{
-		++_size;
-		_buffer.Push({ NET_BYTE, byte });
-	}
-
-	void AddWord(int word)
-	{
-		_size += 2u;
-		_buffer.Push({ NET_WORD, word });
-	}
-
-	void AddLong(int msg)
-	{
-		_size += 4u;
-		_buffer.Push({ NET_LONG, msg });
-	}
-
-	void AddFloat(double msg)
-	{
-		_size += 4u;
-		_buffer.Push({ NET_FLOAT, msg });
-	}
-
-	void AddString(const FString& msg)
-	{
-		_size += msg.Len() + 1u;
-		unsigned int index = _strings.Push(msg);
-		_buffer.Push({ NET_STRING, &_strings[index] });
-	}
+	void AddByte(int byte);
+	void AddWord(int word);
+	void AddLong(int msg);
+	void AddFloat(double msg);
+	void AddString(const FString& msg);
+	void OnDestroy() override;
+	void Serialize(FSerializer& arc) override;
 };
 
 // ==============================================
@@ -504,7 +483,7 @@ struct EventManager
 	// Send a custom network command from ZScript.
 	bool SendNetworkCommand(const FName& cmd, VMVa_List& args);
 	// Send a pre-built command buffer over.
-	bool SendNetworkBuffer(const FName& cmd, const FNetworkBuffer* buffer);
+	bool SendNetworkBuffer(const FName& cmd, const DNetworkBuffer* buffer);
 
 	// check if there is anything that should receive GUI events
 	bool CheckUiProcessors();

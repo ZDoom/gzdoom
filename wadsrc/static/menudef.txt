@@ -1078,9 +1078,11 @@ OptionMenu "ScalingOptions" protected
 	StaticText "$SCALEMNU_OVERRIDE", 1
 	ScaleSlider "$SCALEMNU_MESSAGES", 			"con_scaletext", 0.0, 8.0, 1.0, "$SCALEMNU_USEUI"
 	ScaleSlider "$SCALEMNU_CONSOLE", 			"con_scale", 0.0, 8.0, 1.0, "$SCALEMNU_USEUI"
-	ScaleSlider "$SCALEMNU_STATBAR",			"st_scale", -1.0, 8.0, 1.0, "$SCALEMNU_USEUI", "$SCALEMNU_USEFS"
-	ScaleSlider "$SCALEMNU_HUD", 				"hud_scale", -1.0, 8.0, 1.0, "$SCALEMNU_USEUI", "$SCALEMNU_USEFS"
-	ScaleSlider "$SCALEMNU_ALTHUD",				"hud_althudscale", 0.0, 8.0, 1.0, "$SCALEMNU_USEUI"
+	Option "$SCALEMNU_HUD_OLDSCALE",			"hud_oldscale", "OnOff"
+	Slider "$SCALEMNU_HUD_SCALEFACTOR",			"hud_scalefactor", 0.0, 1.0, 0.025, 3, "hud_oldscale", 1
+	ScaleSlider "$SCALEMNU_STATBAR",			"st_scale", -1.0, 8.0, 1.0, "$SCALEMNU_USEUI", "$SCALEMNU_USEFS", "hud_oldscale"
+	ScaleSlider "$SCALEMNU_HUD", 				"hud_scale", -1.0, 8.0, 1.0, "$SCALEMNU_USEUI", "$SCALEMNU_USEFS", "hud_oldscale"
+	ScaleSlider "$SCALEMNU_ALTHUD",				"hud_althudscale", 0.0, 8.0, 1.0, "$SCALEMNU_USEUI", "", "hud_oldscale"
 	StaticText " "
 	Option "$SCALEMNU_HUDASPECT", 				"hud_aspectscale", "OnOff"
 	StaticText " "

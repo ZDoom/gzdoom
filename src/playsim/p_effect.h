@@ -81,7 +81,6 @@ struct particle_t
     uint16_t    tnext, snext, tprev;
     bool    bright;
 	uint16_t flags;
-	DVisualThinker *sprite;
 };
 
 const uint16_t NO_PARTICLE = 0xffff;
@@ -152,34 +151,25 @@ class DVisualThinker : public DThinker
 {
 	DECLARE_CLASS(DVisualThinker, DThinker);
 public:
-	DVector3		Pos, Vel, Prev;
-	DVector2		Scale, Offset;
-	double			Roll, PrevRoll, Alpha;
+	DVector3		Prev;
+	DVector2		Scale,
+					Offset;
+	double			PrevRoll;
 	int16_t			LightLevel;
-
-	int				scolor;
-
-	FRenderStyle	Style;
-	FTextureID		Texture;
 	FTranslationID	Translation;
-
-	uint16_t		Flags;
 	sector_t		*cursector;
 
-	bool			bXFlip, bYFlip,		// flip the sprite on the x/y axis.
+	bool			bXFlip,
+					bYFlip,				// flip the sprite on the x/y axis.
 					bDontInterpolate,	// disable all interpolation
 					bAddLightLevel;		// adds sector light level to 'LightLevel'
 
 	// internal only variables
-	subsector_t		*sub;
 	particle_t		PT;
 	HWSprite		*spr; //in an effort to cache the result. 
 
-	
-
 	DVisualThinker();
 	void Construct();
-	void CallPostBeginPlay() override;
 	void OnDestroy() override;
 
 	static DVisualThinker* NewVisualThinker(FLevelLocals* Level, PClass* type);

@@ -284,12 +284,12 @@ int DoMain (HINSTANCE hInstance)
 				HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
 
 				ShowWindow(mainwindow.GetHandle(), SW_HIDE);
-				WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
+				if (StdOut != nullptr) WriteFile(StdOut, "Press any key to exit...", 24, &bytes, nullptr);
 				FlushConsoleInputBuffer(stdinput);
 				SetConsoleMode(stdinput, 0);
 				ReadConsole(stdinput, &bytes, 1, &bytes, NULL);
 			}
-			else if (StdOut == NULL)
+			else if (StdOut == nullptr)
 			{
 				mainwindow.ShowErrorPane(nullptr);
 			}

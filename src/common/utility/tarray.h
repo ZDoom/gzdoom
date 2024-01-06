@@ -234,7 +234,7 @@ public:
 	{
 		DoCopy (other);
 	}
-	TArray (TArray<T,TT> &&other)
+	TArray (TArray<T,TT> &&other) noexcept
 	{
 		Array = other.Array; other.Array = NULL;
 		Most = other.Most; other.Most = 0;
@@ -256,7 +256,7 @@ public:
 		}
 		return *this;
 	}
-	TArray<T,TT> &operator= (TArray<T,TT> &&other)
+	TArray<T,TT> &operator= (TArray<T,TT> &&other) noexcept
 	{
 		if (Array)
 		{
@@ -1777,14 +1777,14 @@ public:
 		return *this;
 	}
 
-	BitArray(BitArray && arr)
+	BitArray(BitArray && arr) noexcept
 		: bytes(std::move(arr.bytes))
 	{
 		size = arr.size;
 		arr.size = 0;
 	}
 
-	BitArray &operator=(BitArray && arr)
+	BitArray &operator=(BitArray && arr) noexcept
 	{
 		bytes = std::move(arr.bytes);
 		size = arr.size;

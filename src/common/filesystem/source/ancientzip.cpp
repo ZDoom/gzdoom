@@ -45,6 +45,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <memory>
 #include "ancientzip.h"
 
 namespace FileSys {
@@ -342,10 +343,19 @@ int FZipExploder::Explode(unsigned char *out, unsigned int outsize,
 
 int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &_In, unsigned int InLeft)
 {
+	// don't allocate this on the stack, it's a bit on the large side.
+	struct work
+	{
+		unsigned char ReadBuf[256];
+		unsigned short Parent[HSIZE];
+		unsigned char Value[HSIZE], Stack[HSIZE];
+	};
+	auto s = std::make_unique<work>();
+	unsigned char* ReadBuf = s->ReadBuf;
+	unsigned short* Parent = s->Parent;
+	unsigned char* Value = s->Value, * Stack = s->Stack;
+
 	FileReader *In = &_In;
-	unsigned char ReadBuf[256];
-	unsigned short Parent[HSIZE];
-	unsigned char Value[HSIZE], Stack[HSIZE];
 	unsigned char *newstr;
 	int len;
 	int KwKwK, codesize = 9;	/* start at 9 bits/code */

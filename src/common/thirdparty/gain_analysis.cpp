@@ -282,7 +282,7 @@ GainAnalyzer::ResetSampleFrequency(int samplefreq) {
 
 int
 GainAnalyzer::InitGainAnalysis(int samplefreq) {
-    *this = {};
+    memset(this, 0, sizeof(*this));
     if (ResetSampleFrequency(samplefreq) != INIT_GAIN_ANALYSIS_OK) {
         return INIT_GAIN_ANALYSIS_ERROR;
     }

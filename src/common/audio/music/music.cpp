@@ -432,14 +432,14 @@ static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playe
 {
 	std::string playparam = _playparam;
 
-	uint8_t buffer[50000];	// for performance reasons only hash the start of the file. If we wanted to do this to large waveform songs it'd cause noticable lag.
+	TArray<uint8_t> buffer(50000, true);	// for performance reasons only hash the start of the file. If we wanted to do this to large waveform songs it'd cause noticable lag.
 	uint8_t digest[16];
 	char digestout[33];
-	auto length = reader->read(reader, buffer, 50000);
+	auto length = reader->read(reader, buffer.data(), 50000);
 	reader->seek(reader, 0, SEEK_SET);
 	MD5Context md5;
 	md5.Init();
-	md5.Update(buffer, (int)length);
+	md5.Update(buffer.data(), (int)length);
 	md5.Final(digest);
 
 	for (size_t j = 0; j < sizeof(digest); ++j)
@@ -448,7 +448,7 @@ static FString ReplayGainHash(ZMusicCustomReader* reader, int flength, int playe
 	}
 	digestout[32] = 0;
 
-	auto type = ZMusic_IdentifyMIDIType((uint32_t*)buffer, 32);
+	auto type = ZMusic_IdentifyMIDIType((uint32_t*)buffer.data(), 32);
 	if (type == MIDI_NOTMIDI) return FStringf("%d:%s", flength, digestout);
 
 	// get the default for MIDI synth

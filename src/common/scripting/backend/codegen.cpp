@@ -11674,7 +11674,7 @@ FxExpression *FxThreeArgForEachLoop::Resolve(FCompileContext &ctx)
 
 	if(HasGameSpecificThreeArgForEachLoopTypeNames())
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach( a, b, c : it ) - 'it' must be % but is a %s", GetGameSpecificThreeArgForEachLoopTypeNames(), BlockIteratorExpr->ValueType->DescriptiveName());
+		ScriptPosition.Message(MSG_ERROR, "foreach( a, b, c : it ) - 'it' must be %s but is a %s", GetGameSpecificThreeArgForEachLoopTypeNames(), BlockIteratorExpr->ValueType->DescriptiveName());
 		delete this;
 		return nullptr;
 	}
@@ -11727,7 +11727,7 @@ FxExpression *FxTypedForEachLoop::Resolve(FCompileContext &ctx)
 
 	if(HasGameSpecificTypedForEachLoopTypeNames())
 	{
-		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be % but is a %s",GetGameSpecificTypedForEachLoopTypeNames(), Expr->ValueType->DescriptiveName());
+		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be %s but is a %s",GetGameSpecificTypedForEachLoopTypeNames(), Expr->ValueType->DescriptiveName());
 		delete this;
 		return nullptr;
 	}

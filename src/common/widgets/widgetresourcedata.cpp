@@ -12,6 +12,11 @@ void InitWidgetResources(const char* filename)
 		I_FatalError("Unable to open %s", filename);
 }
 
+void CloseWidgetResources()
+{
+	if (WidgetResources) delete WidgetResources;
+}
+
 static std::vector<uint8_t> LoadFile(const std::string& name)
 {
 	auto lump = WidgetResources->FindEntry(name.c_str());

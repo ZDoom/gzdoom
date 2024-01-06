@@ -192,6 +192,11 @@ void nsvgDelete(NSVGimage* image);
 #include <stdio.h>
 #include <math.h>
 
+#ifdef _MSC_VER
+#pragma warning(push);
+#pragma warning(disable:4244)
+#endif
+
 #define NSVG_PI (3.14159265358979323846264338327f)
 #define NSVG_KAPPA90 (0.5522847493f)	// Length proportional to radius of a cubic bezier handle for 90deg arcs.
 
@@ -3092,6 +3097,10 @@ void nsvgDelete(NSVGimage* image)
 	}
 	free(image);
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop);
+#endif
 
 #endif // NANOSVG_IMPLEMENTATION
 

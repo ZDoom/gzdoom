@@ -154,20 +154,20 @@ protected:
 	std::vector<LumpRecord> FileInfo;
 
 	std::vector<uint32_t> Hashes;	// one allocation for all hash lists.
-	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
-	uint32_t *NextLumpIndex;
+	uint32_t *FirstLumpIndex = nullptr;	// [RH] Hashing stuff moved out of lumpinfo structure
+	uint32_t *NextLumpIndex = nullptr;
 
-	uint32_t *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
-	uint32_t *NextLumpIndex_FullName;
+	uint32_t *FirstLumpIndex_FullName = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t *NextLumpIndex_FullName = nullptr;
 
-	uint32_t *FirstLumpIndex_NoExt;	// The same information for fully qualified paths from .zips
-	uint32_t *NextLumpIndex_NoExt;
+	uint32_t *FirstLumpIndex_NoExt = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t *NextLumpIndex_NoExt = nullptr;
 
-	uint32_t* FirstLumpIndex_ResId;	// The same information for fully qualified paths from .zips
-	uint32_t* NextLumpIndex_ResId;
+	uint32_t* FirstLumpIndex_ResId = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t* NextLumpIndex_ResId = nullptr;
 
 	uint32_t NumEntries = 0;					// Not necessarily the same as FileInfo.Size()
-	uint32_t NumWads;
+	uint32_t NumWads = 0;
 
 	int IwadIndex = -1;
 	int MaxIwadIndex = -1;

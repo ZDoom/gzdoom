@@ -334,7 +334,8 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (!GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) &&
 			size != 0)
 		{
-			uint8_t *buffer = (uint8_t *)alloca(size);
+			TArray<uint8_t> array(size, true);
+			uint8_t *buffer = array.data();
 			if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) == size)
 			{
 				int code = GET_RAWINPUT_CODE_WPARAM(wParam);
@@ -691,12 +692,15 @@ void I_PutInClipboard (const char *str)
 
 	auto wstr = WideString(str);
 	HGLOBAL cliphandle = GlobalAlloc (GMEM_DDESHARE, wstr.length() * 2 + 2);
-	if (cliphandle != NULL)
+	if (cliphandle != nullptr)
 	{
 		wchar_t *ptr = (wchar_t *)GlobalLock (cliphandle);
-		wcscpy (ptr, wstr.c_str());
-		GlobalUnlock (cliphandle);
-		SetClipboardData (CF_UNICODETEXT, cliphandle);
+		if (ptr)
+		{
+			wcscpy(ptr, wstr.c_str());
+			GlobalUnlock(cliphandle);
+			SetClipboardData(CF_UNICODETEXT, cliphandle);
+		}
 	}
 	CloseClipboard ();
 }

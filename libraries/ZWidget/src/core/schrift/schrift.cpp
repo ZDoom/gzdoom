@@ -1548,7 +1548,7 @@ render_outline(Outline *outl, double transform[6], SFT_Image image)
 	
 	numPixels = (unsigned int) image.width * (unsigned int) image.height;
 
-	STACK_ALLOC(cells, Cell, 128 * 128, numPixels);
+	STACK_ALLOC(cells, Cell, 32 * 32, numPixels);
 	if (!cells) {
 		return -1;
 	}

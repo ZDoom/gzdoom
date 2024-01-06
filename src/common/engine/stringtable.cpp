@@ -321,7 +321,7 @@ void FStringTable::LoadLanguage (int lumpnum, const char* buffer, size_t size)
 					}
 					else
 					{
-						sc.ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %lu characters long.",
+						sc.ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %zu characters long.",
 							sc.String, len);
 					}
 				}

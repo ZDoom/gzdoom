@@ -244,7 +244,7 @@ CCMD (wdir)
 	{
 		if (wadnum == -1 || fileSystem.GetFileContainer(i) == wadnum)
 		{
-			Printf ("%10d %s\n", fileSystem.FileLength(i), fileSystem.GetFileFullName(i));
+			Printf ("%10ld %s\n", fileSystem.FileLength(i), fileSystem.GetFileFullName(i));
 		}
 	}
 }

@@ -1263,13 +1263,12 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 //
 //==========================================================================
 
-void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector)//, int shade, int fakeside)
+void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *sector, DVisualThinker *spr)//, int shade, int fakeside)
 {
 	if (!particle || particle->alpha <= 0)
 		return;
 
-	DVisualThinker *spr = particle->sprite;
-	if (spr && spr->Texture.isNull())
+	if (spr && spr->PT.texture.isNull())
 		return;
 
 	lightlevel = hw_ClampLight(spr ? spr->GetLightLevel(sector) : sector->GetSpriteLight());
@@ -1427,7 +1426,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t* sector)
 {
 	translation = spr->Translation;
-	texture = TexMan.GetGameTexture(spr->Texture, true);
+	texture = TexMan.GetGameTexture(spr->PT.texture, true);
 
 	const auto& vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
@@ -1442,7 +1441,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	offx = (float)spr->Offset.X;
 	offy = (float)spr->Offset.Y;
 
-	if (spr->Flags & SPF_ROLL)
+	if (spr->PT.flags & SPF_ROLL)
 		Angles.Roll = TAngle<double>::fromDeg(spr->InterpolatedRoll(timefrac));
 
 	auto& spi = texture->GetSpritePositioning(0);

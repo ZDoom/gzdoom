@@ -1,18 +1,24 @@
 Class VisualThinker : Thinker native
 {
-	native Vector3		Pos, Vel, Prev;
-	native Vector2		Scale, Offset;
-	native double		Roll, Alpha, PrevRoll;
-	native TextureID	Texture;
+	native Vector3			Pos,
+							Vel,
+							Prev;
+	native Vector2			Scale,
+							Offset;
+	native double			Roll,
+							PrevRoll;
+	native float			Alpha;
+	native TextureID		Texture;
 	native TranslationID	Translation;
-	native uint16		Flags;
-	native int16		LightLevel;
-	native bool			bXFlip, bYFlip,
-						bDontInterpolate,
-						bAddLightLevel;
-	native Color		scolor;
+	native uint16			Flags;
+	native int16			LightLevel;
+	native bool				bXFlip,
+							bYFlip,
+							bDontInterpolate,
+							bAddLightLevel;
+	native Color			scolor;
 
-	native Sector		CurSector; // can be null!
+	native Sector			CurSector; // can be null!
 
 	native void SetTranslation(Name trans);
 	native void SetRenderStyle(int mode); // see ERenderStyle

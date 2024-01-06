@@ -55,9 +55,9 @@ const char *ReadStringConst(uint8_t **stream)
 	return string;
 }
 
-int8_t ReadInt8 (uint8_t **stream)
+uint8_t ReadInt8 (uint8_t **stream)
 {
-	int8_t v = **stream;
+	uint8_t v = **stream;
 	*stream += 1;
 	return v;
 }
@@ -119,7 +119,7 @@ void WriteString (const char *string, uint8_t **stream)
 }
 
 
-void WriteInt8 (int8_t v, uint8_t **stream)
+void WriteInt8 (uint8_t v, uint8_t **stream)
 {
 	**stream = v;
 	*stream += 1;

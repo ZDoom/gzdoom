@@ -259,7 +259,7 @@ static struct TicSpecial
 		streamoffs = 0;
 	}
 
-	TicSpecial &operator << (int8_t it)
+	TicSpecial &operator << (uint8_t it)
 	{
 		if (streamptr)
 		{
@@ -2067,7 +2067,7 @@ void Net_NewMakeTic (void)
 	specials.NewMakeTic ();
 }
 
-void Net_WriteInt8 (int8_t it)
+void Net_WriteInt8 (uint8_t it)
 {
 	specials << it;
 }

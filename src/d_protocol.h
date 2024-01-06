@@ -247,7 +247,7 @@ int SkipTicCmd (uint8_t **stream, int count);
 void ReadTicCmd (uint8_t **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int8_t ReadInt8 (uint8_t **stream);
+uint8_t ReadInt8 (uint8_t **stream);
 int16_t ReadInt16 (uint8_t **stream);
 int32_t ReadInt32 (uint8_t **stream);
 int64_t ReadInt64(uint8_t** stream);
@@ -255,7 +255,7 @@ float ReadFloat (uint8_t **stream);
 double ReadDouble(uint8_t** stream);
 char *ReadString (uint8_t **stream);
 const char *ReadStringConst(uint8_t **stream);
-void WriteInt8 (int8_t val, uint8_t **stream);
+void WriteInt8 (uint8_t val, uint8_t **stream);
 void WriteInt16 (int16_t val, uint8_t **stream);
 void WriteInt32 (int32_t val, uint8_t **stream);
 void WriteInt64(int64_t val, uint8_t** stream);

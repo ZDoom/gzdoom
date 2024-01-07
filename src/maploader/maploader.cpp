@@ -1169,7 +1169,6 @@ bool MapLoader::LoadNodes (MapData * map)
 	int 		k;
 	nodetype	*mn;
 	node_t* 	no;
-	uint16_t*		used;
 	int			lumplen = map->Size(ML_NODES);
 	int			maxss = map->Size(ML_SSECTORS) / sizeof(subsectortype);
 

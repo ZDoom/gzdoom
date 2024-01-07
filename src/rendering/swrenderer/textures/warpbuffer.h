@@ -64,10 +64,10 @@ void WarpBuffer(TYPE *Pixels, const TYPE *source, int width, int height, int xmu
 			if (yf < 0) yf += height;
 			int yt = yf;
 			const TYPE *sourcep = Pixels + (x + ymask * x);
-			TYPE *dest = buffer;
+			TYPE *dest = buffer.data();
 			for (yt = height; yt; yt--, yf = (yf + 1) % height)
 				*dest++ = sourcep[yf];
-			memcpy(Pixels + (x + ymask*x), buffer, height * sizeof(TYPE));
+			memcpy(Pixels + (x + ymask*x), buffer.data(), height * sizeof(TYPE));
 		}
 	}
 	else if (warptype == 2)

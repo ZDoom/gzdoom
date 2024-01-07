@@ -123,11 +123,11 @@ void LineEdit::SetReadOnly(bool enable)
 	}
 }
 
-void LineEdit::SetAlignment(Alignment alignment)
+void LineEdit::SetAlignment(Alignment newalignment)
 {
-	if (alignment != alignment)
+	if (alignment != newalignment)
 	{
-		alignment = alignment;
+		alignment = newalignment;
 		Update();
 	}
 }

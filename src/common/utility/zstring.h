@@ -179,7 +179,7 @@ public:
 	const char &operator[] (unsigned long long index) const { return Chars[index]; }
 
 	FString &operator = (const FString &other);
-	FString &operator = (FString &&other);
+	FString &operator = (FString &&other) noexcept;
 	FString &operator = (const char *copyStr);
 
 	FString operator + (const FString &tail) const;

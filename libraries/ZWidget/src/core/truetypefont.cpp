@@ -63,9 +63,6 @@ TrueTypeTextMetrics TrueTypeFont::GetTextMetrics(double height) const
 
 TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 {
-	if (glyphIndex >= loca.offsets.size())
-		throw std::runtime_error("Glyph index out of bounds");
-
 	double scale = height / head.unitsPerEm;
 	double scaleX = 3.0f;
 	double scaleY = -1.0f;
@@ -97,6 +94,115 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 		return glyph;
 	}
 
+	TTF_SimpleGlyph g;
+	LoadGlyph(g, glyphIndex);
+
+	int numberOfContours = g.endPtsOfContours.size();
+
+	// Create glyph path:
+	PathFillDesc path;
+	path.fill_mode = PathFillMode::winding;
+
+	int startPoint = 0;
+	for (int i = 0; i < numberOfContours; i++)
+	{
+		int endPoint = g.endPtsOfContours[i];
+		if (endPoint < startPoint)
+			throw std::runtime_error("Invalid glyph");
+
+		int pos = startPoint;
+		while (pos <= endPoint)
+		{
+			if (pos == startPoint)
+			{
+				path.MoveTo(Point(g.points[pos].x, g.points[pos].y) * scale);
+				pos++;
+			}
+			else if (g.flags[pos] & TTF_ON_CURVE_POINT)
+			{
+				if (g.flags[pos - 1] & TTF_ON_CURVE_POINT)
+				{
+					path.LineTo(Point(g.points[pos].x, g.points[pos].y) * scale);
+				}
+				else
+				{
+					path.BezierTo(Point(g.points[pos - 1].x, g.points[pos - 1].y) * scale, Point(g.points[pos].x, g.points[pos].y) * scale);
+				}
+				pos++;
+			}
+			else
+			{
+				Point lastcontrolpoint(g.points[pos].x, g.points[pos].y);
+				Point controlpoint(g.points[pos - 1].x, g.points[pos - 1].y);
+				Point midpoint = (lastcontrolpoint + controlpoint) / 2;
+				path.BezierTo(lastcontrolpoint * scale, midpoint * scale);
+				pos++;
+			}
+		}
+		path.Close();
+
+		startPoint = endPoint + 1;
+	}
+
+	// Transform and find the final bounding box
+	Point bboxMin, bboxMax;
+	if (!path.subpaths.front().points.empty())
+	{
+		bboxMin = path.subpaths.front().points.front();
+		bboxMax = path.subpaths.front().points.front();
+		bboxMin.x *= scaleX;
+		bboxMin.y *= scaleY;
+		bboxMax.x *= scaleX;
+		bboxMax.y *= scaleY;
+		for (auto& subpath : path.subpaths)
+		{
+			for (auto& point : subpath.points)
+			{
+				point.x *= scaleX;
+				point.y *= scaleY;
+				bboxMin.x = std::min(bboxMin.x, point.x);
+				bboxMin.y = std::min(bboxMin.y, point.y);
+				bboxMax.x = std::max(bboxMax.x, point.x);
+				bboxMax.y = std::max(bboxMax.y, point.y);
+			}
+		}
+	}
+
+	bboxMin.x = std::floor(bboxMin.x);
+	bboxMin.y = std::floor(bboxMin.y);
+
+	// Reposition glyph to bitmap so it begins at (0,0) for our bitmap
+	for (auto& subpath : path.subpaths)
+	{
+		for (auto& point : subpath.points)
+		{
+			point.x -= bboxMin.x;
+			point.y -= bboxMin.y;
+		}
+	}
+
+	TrueTypeGlyph glyph;
+
+	// Rasterize the glyph
+	glyph.width = (int)std::floor(bboxMax.x - bboxMin.x) + 1;
+	glyph.height = (int)std::floor(bboxMax.y - bboxMin.y) + 1;
+	glyph.grayscale.reset(new uint8_t[glyph.width * glyph.height]);
+	uint8_t* grayscale = glyph.grayscale.get();
+	path.Rasterize(grayscale, glyph.width, glyph.height);
+
+	// TBD: gridfit or not?
+	glyph.advanceWidth = (int)std::round(advanceWidth * scale * scaleX);
+	glyph.leftSideBearing = (int)std::round(lsb * scale * scaleX + bboxMin.x);
+	glyph.yOffset = (int)std::round(bboxMin.y);
+
+	return glyph;
+}
+
+void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compositeDepth) const
+{
+	if (glyphIndex >= loca.offsets.size())
+		throw std::runtime_error("Glyph index out of bounds");
+
 	TrueTypeFileReader reader = glyf.GetReader(data.data(), data.size());
 	reader.Seek(loca.offsets[glyphIndex]);
 
@@ -108,183 +214,223 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 
 	if (numberOfContours > 0) // Simple glyph
 	{
-		std::vector<ttf_uint16> endPtsOfContours;
-		endPtsOfContours.reserve(numberOfContours);
+		int pointsOffset = g.points.size();
 		for (ttf_uint16 i = 0; i < numberOfContours; i++)
-			endPtsOfContours.push_back(reader.ReadUInt16());
+			g.endPtsOfContours.push_back(pointsOffset + reader.ReadUInt16());
 
 		ttf_uint16 instructionLength = reader.ReadUInt16();
 		std::vector<ttf_uint8> instructions;
 		instructions.resize(instructionLength);
 		reader.Read(instructions.data(), instructions.size());
 
-		int numPoints = (int)endPtsOfContours.back() + 1;
-		std::vector<TTF_Point> points(numPoints);
+		int numPoints = (int)g.endPtsOfContours.back() - pointsOffset + 1;
+		g.points.resize(pointsOffset + numPoints);
 
-		std::vector<ttf_uint8> flags;
-
-		while (flags.size() < (size_t)numPoints)
+		while (g.flags.size() < g.points.size())
 		{
 			ttf_uint8 flag = reader.ReadUInt8();
 			if (flag & TTF_REPEAT_FLAG)
 			{
 				ttf_uint8 repeatcount = reader.ReadUInt8();
 				for (ttf_uint8 i = 0; i < repeatcount; i++)
-					flags.push_back(flag);
+					g.flags.push_back(flag);
 			}
-			flags.push_back(flag);
+			g.flags.push_back(flag);
 		}
 
-		for (int i = 0; i < numPoints; i++)
+		for (int i = pointsOffset; i < pointsOffset + numPoints; i++)
 		{
-			if (flags[i] & TTF_X_SHORT_VECTOR)
+			if (g.flags[i] & TTF_X_SHORT_VECTOR)
 			{
 				ttf_int16 x = reader.ReadUInt8();
-				points[i].x = (flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) ? x : -x;
+				g.points[i].x = (g.flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) ? x : -x;
 			}
-			else if (flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR)
+			else if (g.flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR)
 			{
-				points[i].x = 0;
+				g.points[i].x = 0;
 			}
 			else
 			{
-				points[i].x = reader.ReadInt16();
+				g.points[i].x = reader.ReadInt16();
 			}
 		}
 
-		for (int i = 0; i < numPoints; i++)
+		for (int i = pointsOffset; i < pointsOffset + numPoints; i++)
 		{
-			if (flags[i] & TTF_Y_SHORT_VECTOR)
+			if (g.flags[i] & TTF_Y_SHORT_VECTOR)
 			{
 				ttf_int16 y = reader.ReadUInt8();
-				points[i].y = (flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) ? y : -y;
+				g.points[i].y = (g.flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) ? y : -y;
 			}
-			else if (flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR)
+			else if (g.flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR)
 			{
-				points[i].y = 0;
+				g.points[i].y = 0;
 			}
 			else
 			{
-				points[i].y = reader.ReadInt16();
+				g.points[i].y = reader.ReadInt16();
 			}
 		}
 
 		// Convert from relative coordinates to absolute
-		for (int i = 1; i < numPoints; i++)
+		for (int i = pointsOffset + 1; i < pointsOffset + numPoints; i++)
 		{
-			points[i].x += points[i - 1].x;
-			points[i].y += points[i - 1].y;
+			g.points[i].x += g.points[i - 1].x;
+			g.points[i].y += g.points[i - 1].y;
 		}
-
-		// Create glyph path:
-		PathFillDesc path;
-		path.fill_mode = PathFillMode::winding;
-
-		int startPoint = 0;
-		for (ttf_uint16 i = 0; i < numberOfContours; i++)
-		{
-			int endPoint = endPtsOfContours[i];
-			if (endPoint < startPoint)
-				throw std::runtime_error("Invalid glyph");
-
-			int pos = startPoint;
-			while (pos <= endPoint)
-			{
-				if (pos == startPoint)
-				{
-					path.MoveTo(Point(points[pos].x, points[pos].y) * scale);
-					pos++;
-				}
-				else if (flags[pos] & TTF_ON_CURVE_POINT)
-				{
-					if (flags[pos - 1] & TTF_ON_CURVE_POINT)
-					{
-						path.LineTo(Point(points[pos].x, points[pos].y) * scale);
-					}
-					else
-					{
-						path.BezierTo(Point(points[pos - 1].x, points[pos - 1].y) * scale, Point(points[pos].x, points[pos].y) * scale);
-					}
-					pos++;
-				}
-				else
-				{
-					Point lastcontrolpoint(points[pos].x, points[pos].y);
-					Point controlpoint(points[pos - 1].x, points[pos - 1].y);
-					Point midpoint = (lastcontrolpoint + controlpoint) / 2;
-					path.BezierTo(lastcontrolpoint * scale, midpoint * scale);
-					pos++;
-				}
-			}
-			path.Close();
-
-			startPoint = endPoint + 1;
-		}
-
-		// Transform and find the final bounding box
-		Point bboxMin, bboxMax;
-		if (!path.subpaths.front().points.empty())
-		{
-			bboxMin = path.subpaths.front().points.front();
-			bboxMax = path.subpaths.front().points.front();
-			bboxMin.x *= scaleX;
-			bboxMin.y *= scaleY;
-			bboxMax.x *= scaleX;
-			bboxMax.y *= scaleY;
-			for (auto& subpath : path.subpaths)
-			{
-				for (auto& point : subpath.points)
-				{
-					point.x *= scaleX;
-					point.y *= scaleY;
-					bboxMin.x = std::min(bboxMin.x, point.x);
-					bboxMin.y = std::min(bboxMin.y, point.y);
-					bboxMax.x = std::max(bboxMax.x, point.x);
-					bboxMax.y = std::max(bboxMax.y, point.y);
-				}
-			}
-		}
-
-		bboxMin.x = std::floor(bboxMin.x);
-		bboxMin.y = std::floor(bboxMin.y);
-
-		// Reposition glyph to bitmap so it begins at (0,0) for our bitmap
-		for (auto& subpath : path.subpaths)
-		{
-			for (auto& point : subpath.points)
-			{
-				point.x -= bboxMin.x;
-				point.y -= bboxMin.y;
-			}
-		}
-
-		TrueTypeGlyph glyph;
-
-		// Rasterize the glyph
-		glyph.width = (int)std::floor(bboxMax.x - bboxMin.x) + 1;
-		glyph.height = (int)std::floor(bboxMax.y - bboxMin.y) + 1;
-		glyph.grayscale.reset(new uint8_t[glyph.width * glyph.height]);
-		uint8_t* grayscale = glyph.grayscale.get();
-		path.Rasterize(grayscale, glyph.width, glyph.height);
-
-		// TBD: gridfit or not?
-		glyph.advanceWidth = (int)std::round(advanceWidth * scale * scaleX);
-		glyph.leftSideBearing = (int)std::round(lsb * scale * scaleX + bboxMin.x);
-		glyph.yOffset = (int)std::round(bboxMin.y);
-
-		return glyph;
 	}
 	else if (numberOfContours < 0) // Composite glyph
 	{
-		ttf_uint16 flags = reader.ReadUInt16();
-		ttf_uint16 glyphIndex = reader.ReadUInt16();
+		if (compositeDepth == 8)
+			throw std::runtime_error("Composite glyph recursion exceeded");
 
-		// To do: implement this
+		int parentPointsOffset = g.points.size();
 
-		return {};
+		bool weHaveInstructions = false;
+		while (true)
+		{
+			ttf_uint16 flags = reader.ReadUInt16();
+			ttf_uint16 childGlyphIndex = reader.ReadUInt16();
+
+			int argument1, argument2;
+			if (flags & TTF_ARG_1_AND_2_ARE_WORDS)
+			{
+				if (flags & TTF_ARGS_ARE_XY_VALUES)
+				{
+					argument1 = reader.ReadInt16();
+					argument2 = reader.ReadInt16();
+				}
+				else
+				{
+					argument1 = reader.ReadUInt16();
+					argument2 = reader.ReadUInt16();
+				}
+			}
+			else
+			{
+				if (flags & TTF_ARGS_ARE_XY_VALUES)
+				{
+					argument1 = reader.ReadInt8();
+					argument2 = reader.ReadInt8();
+				}
+				else
+				{
+					argument1 = reader.ReadUInt8();
+					argument2 = reader.ReadUInt8();
+				}
+			}
+
+			float mat2x2[4];
+			bool transform = true;
+			if (flags & TTF_WE_HAVE_A_SCALE)
+			{
+				ttf_F2DOT14 scale = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				mat2x2[0] = scale;
+				mat2x2[1] = 0;
+				mat2x2[2] = 0;
+				mat2x2[3] = scale;
+			}
+			else if (flags & TTF_WE_HAVE_AN_X_AND_Y_SCALE)
+			{
+				mat2x2[0] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				mat2x2[1] = 0;
+				mat2x2[2] = 0;
+				mat2x2[3] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+			}
+			else if (flags & TTF_WE_HAVE_A_TWO_BY_TWO)
+			{
+				mat2x2[0] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				mat2x2[1] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				mat2x2[2] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				mat2x2[3] = F2DOT14_ToFloat(reader.ReadF2DOT14());
+			}
+			else
+			{
+				transform = false;
+			}
+
+			int childPointsOffset = g.points.size();
+			LoadGlyph(g, childGlyphIndex, compositeDepth + 1);
+
+			if (transform)
+			{
+				for (int i = childPointsOffset; i < g.points.size(); i++)
+				{
+					float x = g.points[i].x * mat2x2[0] + g.points[i].y * mat2x2[1];
+					float y = g.points[i].x * mat2x2[2] + g.points[i].y * mat2x2[3];
+					g.points[i].x = x;
+					g.points[i].y = y;
+				}
+			}
+
+			float dx, dy;
+
+			if (flags & TTF_ARGS_ARE_XY_VALUES)
+			{
+				dx = argument1;
+				dy = argument2;
+
+				// Spec states we must fall back to TTF_UNSCALED_COMPONENT_OFFSET if both flags are set
+				if ((flags & (TTF_SCALED_COMPONENT_OFFSET | TTF_UNSCALED_COMPONENT_OFFSET)) == TTF_SCALED_COMPONENT_OFFSET)
+				{
+					float x = dx * mat2x2[0] + dy * mat2x2[1];
+					float y = dx * mat2x2[2] + dy * mat2x2[3];
+					dx = x;
+					dy = y;
+				}
+
+				if (flags & TTF_ROUND_XY_TO_GRID)
+				{
+					// To do: round the offset to the pixel grid
+				}
+			}
+			else
+			{
+				int parentPointIndex = parentPointsOffset + argument1;
+				int childPointIndex = childPointsOffset + argument2;
+
+				if ((size_t)parentPointIndex >= g.points.size() || (size_t)childPointIndex >= g.points.size())
+					throw std::runtime_error("Invalid glyph offset");
+
+				dx = g.points[parentPointIndex].x - g.points[childPointIndex].x;
+				dy = g.points[parentPointIndex].y - g.points[childPointIndex].y;
+			}
+
+			for (int i = childPointsOffset; i < g.points.size(); i++)
+			{
+				g.points[i].x += dx;
+				g.points[i].y += dy;
+			}
+
+			if (flags & TTF_USE_MY_METRICS)
+			{
+				// To do: this affects lsb + rsb calculations somehow
+			}
+
+			if (flags & TTF_WE_HAVE_INSTRUCTIONS)
+			{
+				weHaveInstructions = true;
+			}
+
+			if (!(flags & TTF_MORE_COMPONENTS))
+				break;
+		}
+
+		if (weHaveInstructions)
+		{
+			ttf_uint16 instructionLength = reader.ReadUInt16();
+			std::vector<ttf_uint8> instructions;
+			instructions.resize(instructionLength);
+			reader.Read(instructions.data(), instructions.size());
+		}
 	}
+}
 
-	return {};
+float TrueTypeFont::F2DOT14_ToFloat(ttf_F2DOT14 v)
+{
+	int a = ((ttf_int16)v) >> 14;
+	int b = (v & 0x3fff);
+	return a + b / (float)0x4000;
 }
 
 uint32_t TrueTypeFont::GetGlyphIndex(uint32_t c) const

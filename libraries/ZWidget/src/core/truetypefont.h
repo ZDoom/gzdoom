@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <memory>
 #include <cstring>
+#include <string>
 
 typedef uint8_t ttf_uint8;
 typedef uint16_t ttf_uint16;
@@ -19,7 +20,7 @@ typedef int32_t ttf_int32;
 typedef uint32_t ttf_Fixed; // 32-bit signed fixed-point number (16.16)
 typedef uint16_t ttf_UFWORD; // uint16 that describes a quantity in font design units
 typedef int16_t ttf_FWORD; // int16 that describes a quantity in font design units
-typedef uint32_t ttf_F2DOT14; // 16-bit signed fixed number with the low 14 bits of fraction (2.14)
+typedef uint16_t ttf_F2DOT14; // 16-bit signed fixed number with the low 14 bits of fraction (2.14)
 typedef uint64_t ttf_LONGDATETIME; // number of seconds since 12:00 midnight, January 1, 1904, UTC
 
 typedef std::array<uint8_t, 4> ttf_Tag; // 4 byte identifier
@@ -396,8 +397,15 @@ struct TTF_IndexToLocation // 'loca' Index to location
 
 struct TTF_Point
 {
-	ttf_int16 x;
-	ttf_int16 y;
+	float x;
+	float y;
+};
+
+struct TTF_SimpleGlyph
+{
+	std::vector<int> endPtsOfContours;
+	std::vector<ttf_uint8> flags;
+	std::vector<TTF_Point> points;
 };
 
 class TrueTypeGlyph
@@ -431,6 +439,8 @@ public:
 
 private:
 	void LoadCharacterMapEncoding(TrueTypeFileReader& reader);
+	void LoadGlyph(TTF_SimpleGlyph& glyph, uint32_t glyphIndex, int compositeDepth = 0) const;
+	static float F2DOT14_ToFloat(ttf_F2DOT14 v);
 
 	std::vector<uint8_t> data;
 	

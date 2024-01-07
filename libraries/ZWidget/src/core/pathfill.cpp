@@ -122,6 +122,12 @@ private:
 
 void PathFillDesc::Rasterize(uint8_t* dest, int width, int height, bool blend)
 {
+	if (!blend)
+	{
+		memset(dest, 0, width * height);
+	}
+	PathFillRasterizer rasterizer;
+	rasterizer.Rasterize(*this, dest, width, height);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -131,15 +137,15 @@ void PathFillRasterizer::Rasterize(const PathFillDesc& path, uint8_t* dest, int 
 	Clear();
 
 	// For simplicity of the code, ensure the mask is always a multiple of MaskBlockSize
-	int block_width = MaskBlockSize * ((dest_width + MaskBlockSize - 1) / MaskBlockSize);
-	int block_height = MaskBlockSize * ((dest_height + MaskBlockSize - 1) / MaskBlockSize);
+	int block_width = ScanlineBlockSize * ((dest_width + MaskBlockSize - 1) / MaskBlockSize);
+	int block_height = ScanlineBlockSize * ((dest_height + MaskBlockSize - 1) / MaskBlockSize);
 
 	if (width != block_width || height != block_height)
 	{
 		width = block_width;
 		height = block_height;
 
-		scanlines.resize(block_height * AntialiasLevel);
+		scanlines.resize(block_height);
 		first_scanline = scanlines.size();
 		last_scanline = 0;
 	}
@@ -209,7 +215,7 @@ void PathFillRasterizer::Fill(PathFillMode mode, uint8_t* dest, int dest_width, 
 			{
 				for (int i = 0; i < count_y; i++)
 				{
-					uint8_t* dline = dest + (dest_y + i) * dest_width;
+					uint8_t* dline = dest + dest_x + (dest_y + i) * dest_width;
 					memset(dline, 255, count_x);
 				}
 			}
@@ -218,7 +224,7 @@ void PathFillRasterizer::Fill(PathFillMode mode, uint8_t* dest, int dest_width, 
 				for (int i = 0; i < count_y; i++)
 				{
 					const uint8_t* sline = mask_blocks.MaskBufferData + i * MaskBlockSize;
-					uint8_t* dline = dest + (dest_y + i) * dest_width;
+					uint8_t* dline = dest + dest_x + (dest_y + i) * dest_width;
 					for (int j = 0; j < count_x; j++)
 					{
 						dline[j] = std::min((int)dline[j] + (int)sline[j], 255);
@@ -238,16 +244,11 @@ PathFillRasterizer::Extent PathFillRasterizer::FindExtent(const PathScanline* sc
 		if (scanline->edges.empty())
 			continue;
 
-		if (scanline->edges[0].x < extent.left)
-			extent.left = scanline->edges[0].x;
-
-		if (scanline->edges[scanline->edges.size() - 1].x > extent.right)
-			extent.right = scanline->edges[scanline->edges.size() - 1].x;
+		extent.left = std::min(extent.left, (int)scanline->edges.front().x);
+		extent.right = std::max(extent.right, (int)scanline->edges.back().x);
 	}
-	if (extent.left < 0)
-		extent.left = 0;
-	if (extent.right > max_width)
-		extent.right = max_width;
+	extent.left = std::max(extent.left, 0);
+	extent.right = std::min(extent.right, max_width);
 
 	return extent;
 }
@@ -397,7 +398,7 @@ void PathFillRasterizer::Line(double x1, double y1)
 		int end_y = static_cast<int>(std::floor(std::max(y0, y1) - 0.5f)) + 1;
 
 		start_y = std::max(start_y, 0);
-		end_y = std::min(end_y, height * AntialiasLevel);
+		end_y = std::min(end_y, height);
 
 		double rcp_dy = 1.0 / dy;
 

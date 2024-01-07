@@ -5,12 +5,16 @@
 #include "core/utf8reader.h"
 #include "core/resourcedata.h"
 #include "core/image.h"
+#include "core/truetypefont.h"
+#include "core/pathfill.h"
 #include "window/window.h"
 #include "schrift/schrift.h"
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
 #include <cstring>
+
+// #define USE_INTERNAL_TTF
 
 class CanvasTexture
 {
@@ -19,6 +23,109 @@ public:
 	int Height = 0;
 	std::vector<uint32_t> Data;
 };
+
+#if defined(USE_INTERNAL_TTF)
+
+class CanvasGlyph
+{
+public:
+	struct
+	{
+		double leftSideBearing = 0.0;
+		double yOffset = 0.0;
+		double advanceWidth = 0.0;
+	} metrics;
+
+	double u = 0.0;
+	double v = 0.0;
+	double uvwidth = 0.0f;
+	double uvheight = 0.0f;
+	std::shared_ptr<CanvasTexture> texture;
+};
+
+class CanvasFont
+{
+public:
+	CanvasFont(const std::string& fontname, double height) : fontname(fontname), height(height)
+	{
+		ttf = std::make_unique<TrueTypeFont>(LoadWidgetFontData(fontname));
+		textmetrics = ttf->GetTextMetrics(height);
+	}
+
+	~CanvasFont()
+	{
+	}
+
+	CanvasGlyph* getGlyph(uint32_t utfchar)
+	{
+		uint32_t glyphIndex = ttf->GetGlyphIndex(utfchar);
+
+		auto& glyph = glyphs[glyphIndex];
+		if (glyph)
+			return glyph.get();
+
+		glyph = std::make_unique<CanvasGlyph>();
+
+		TrueTypeGlyph ttfglyph = ttf->LoadGlyph(glyphIndex, height);
+
+		// Create final subpixel version
+		int w = ttfglyph.width;
+		int h = ttfglyph.height;
+		int destwidth = (w + 2) / 3;
+		auto texture = std::make_shared<CanvasTexture>();
+		texture->Width = destwidth;
+		texture->Height = h;
+		texture->Data.resize(destwidth * h);
+
+		uint8_t* grayscale = ttfglyph.grayscale.get();
+		uint32_t* dest = (uint32_t*)texture->Data.data();
+		for (int y = 0; y < h; y++)
+		{
+			uint8_t* sline = grayscale + y * w;
+			uint32_t* dline = dest + y * destwidth;
+			for (int x = 0; x < w; x += 3)
+			{
+				uint32_t values[5] =
+				{
+					x > 0 ? sline[x - 1] : 0U,
+					sline[x],
+					x + 1 < w ? sline[x + 1] : 0U,
+					x + 2 < w ? sline[x + 2] : 0U,
+					x + 3 < w ? sline[x + 3] : 0U
+				};
+
+				uint32_t red = (values[0] + values[1] + values[1] + values[2] + 2) >> 2;
+				uint32_t green = (values[1] + values[2] + values[2] + values[3] + 2) >> 2;
+				uint32_t blue = (values[2] + values[3] + values[3] + values[4] + 2) >> 2;
+				uint32_t alpha = (red | green | blue) ? 255 : 0;
+
+				*(dline++) = (alpha << 24) | (red << 16) | (green << 8) | blue;
+			}
+		}
+
+		glyph->u = 0.0;
+		glyph->v = 0.0;
+		glyph->uvwidth = destwidth;
+		glyph->uvheight = h;
+		glyph->texture = std::move(texture);
+
+		glyph->metrics.advanceWidth = (ttfglyph.advanceWidth + 2) / 3;
+		glyph->metrics.leftSideBearing = (ttfglyph.leftSideBearing + 2) / 3;
+		glyph->metrics.yOffset = ttfglyph.yOffset;
+
+		return glyph.get();
+	}
+
+	std::unique_ptr<TrueTypeFont> ttf;
+
+	std::string fontname;
+	double height = 0.0;
+
+	TrueTypeTextMetrics textmetrics;
+	std::unordered_map<uint32_t, std::unique_ptr<CanvasGlyph>> glyphs;
+};
+
+#else
 
 class CanvasGlyph
 {
@@ -151,6 +258,8 @@ private:
 	SFT sft = {};
 	std::vector<uint8_t> data;
 };
+
+#endif
 
 class CanvasFontGroup
 {

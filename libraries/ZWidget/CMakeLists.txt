@@ -10,6 +10,8 @@ set(ZWIDGET_SOURCES
 	src/core/widget.cpp
 	src/core/utf8reader.cpp
 	src/core/pathfill.cpp
+	src/core/truetypefont.cpp
+	src/core/truetypefont.h
 	src/core/schrift/schrift.cpp
 	src/core/schrift/schrift.h
 	src/core/picopng/picopng.cpp

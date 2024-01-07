@@ -1182,8 +1182,8 @@ bool MapLoader::LoadNodes (MapData * map)
 	
 	auto &nodes = Level->nodes;
 	nodes.Alloc(numnodes);		
-	used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
-	memset (used, 0, sizeof(uint16_t)*numnodes);
+	TArray<uint16_t> used(numnodes, true);
+	memset (used.data(), 0, sizeof(uint16_t) * numnodes);
 
 	auto mnp = map->Read(ML_NODES);
 	mn = (nodetype*)(mnp.Data() + nodetype::NF_LUMPOFFSET);

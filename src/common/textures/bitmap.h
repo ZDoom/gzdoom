@@ -108,7 +108,7 @@ public:
 
 	FBitmap(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy.
 
-	FBitmap(FBitmap &&other)
+	FBitmap(FBitmap &&other) noexcept
 	{
 		data = other.data;
 		Pitch = other.Pitch;
@@ -122,7 +122,7 @@ public:
 
 	FBitmap &operator=(const FBitmap &other) = delete;	// disallow because in nearly all cases this creates an unwanted copy. Use Copy instead.
 
-	FBitmap &operator=(FBitmap &&other)
+	FBitmap &operator=(FBitmap &&other) noexcept
 	{
 		if (data != nullptr && FreeBuffer) delete[] data;
 		data = other.data;

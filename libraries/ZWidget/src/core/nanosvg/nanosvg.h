@@ -193,7 +193,7 @@ void nsvgDelete(NSVGimage* image);
 #include <math.h>
 
 #ifdef _MSC_VER
-#pragma warning(push);
+#pragma warning(push)
 #pragma warning(disable:4244)
 #endif
 
@@ -3099,7 +3099,7 @@ void nsvgDelete(NSVGimage* image)
 }
 
 #ifdef _MSC_VER
-#pragma warning(pop);
+#pragma warning(pop)
 #endif
 
 #endif // NANOSVG_IMPLEMENTATION

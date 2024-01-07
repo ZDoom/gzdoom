@@ -217,7 +217,7 @@ FString &FString::operator = (const FString &other)
 	return *this;
 }
 
-FString &FString::operator = (FString &&other)
+FString &FString::operator = (FString &&other) noexcept
 {
 	assert (Chars != NULL);
 

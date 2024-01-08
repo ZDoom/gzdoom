@@ -1283,13 +1283,13 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	index = 0;
 	actor = nullptr;
 	this->particle = particle;
-	fullbright = particle->bright;
+	fullbright = particle->flags & SPF_FULLBRIGHT;
 
 	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
 	}
-	else if (!particle->bright)
+	else if (!(particle->flags & SPF_FULLBRIGHT))
 	{
 		TArray<lightlist_t> & lightlist=sector->e->XFloor.lightlist;
 		double lightbottom;
@@ -1332,12 +1332,19 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	ThingColor.a = 255;
 	const auto& vp = di->Viewpoint;
 
+	double timefrac = vp.TicFrac;
+	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
+		timefrac = 0.;
+
 	if (spr)
+	{
 		AdjustVisualThinker(di, spr, sector);
+	}
 	else
 	{
-		bool has_texture = !particle->texture.isNull();
-
+		bool has_texture = particle->texture.isValid();
+		bool custom_animated_texture = has_texture && (particle->flags & SPF_STANDALONE_ANIMATIONS) && particle->animData.ok;
+		
 		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
 
 		// [BB] Load the texture for round or smooth particles
@@ -1350,27 +1357,36 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 			}
 			else if (particle_style == 2)
 			{
-				lump = has_texture ? particle->texture : TexMan.glPart;
+				if(custom_animated_texture)
+				{
+					lump = TexAnim.UpdateStandaloneAnimation(particle->animData, di->Level->maptime + timefrac);
+				}
+				else if(has_texture)
+				{
+					lump = particle->texture;
+				}
+				else
+				{
+					lump = TexMan.glPart;
+				}
 			}
-			else lump.SetNull();
+			else
+			{
+				lump.SetNull();
+			}
 
-		if (lump.isValid())
-		{
-			translation = NO_TRANSLATION;
-			//auto tex = TexMan.GetGameTexture(lump, false);
+			if (lump.isValid())
+			{
+				translation = NO_TRANSLATION;
 
-				ul = 0;
-				ur = 1;
-				vt = 0;
-				vb = 1;
-				texture = TexMan.GetGameTexture(lump, true);
+				ul = vt = 0;
+				ur = vb = 1;
+
+				texture = TexMan.GetGameTexture(lump, !custom_animated_texture);
 			}
 		}
 
-		
-		double timefrac = vp.TicFrac;
-		if (paused || di->Level->isFrozen())
-			timefrac = 0.;
+
 		float xvf = (particle->Vel.X) * timefrac;
 		float yvf = (particle->Vel.Y) * timefrac;
 		float zvf = (particle->Vel.Z) * timefrac;

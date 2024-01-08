@@ -930,6 +930,109 @@ void FAnimDef::SetSwitchTime (uint64_t mstime)
 	}
 }
 
+static void AdvanceFrame(uint16_t &frame, uint8_t &AnimType, const FAnimDef &anim)
+{
+	switch (AnimType)
+	{
+	default:
+	case FAnimDef::ANIM_Forward:
+		frame = (frame + 1) % anim.NumFrames;
+		break;
+
+	case FAnimDef::ANIM_Backward:
+		if (frame == 0)
+		{
+			frame = anim.NumFrames - 1;
+		}
+		else
+		{
+			frame--;
+		}
+		break;
+	case FAnimDef::ANIM_Random:
+		// select a random frame other than the current one
+		if (anim.NumFrames > 1)
+		{
+			uint16_t rndFrame = (uint16_t)pr_animatepictures(anim.NumFrames - 1);
+			if(rndFrame == frame) rndFrame++;
+			frame = rndFrame % anim.NumFrames;
+		}
+		break;
+
+	case FAnimDef::ANIM_OscillateUp:
+		frame = frame + 1;
+		assert(frame < anim.NumFrames);
+		if (frame == anim.NumFrames - 1)
+		{
+			AnimType = FAnimDef::ANIM_OscillateDown;
+		}
+		break;
+
+	case FAnimDef::ANIM_OscillateDown:
+		frame = frame - 1;
+		if (frame == 0)
+		{
+			AnimType = FAnimDef::ANIM_OscillateUp;
+		}
+		break;
+	}
+}
+
+constexpr double msPerTic = 1'000.0 / TICRATE;
+
+bool FTextureAnimator::InitStandaloneAnimation(FStandaloneAnimation &animInfo, FTextureID tex, uint32_t curTic)
+{
+	FAnimDef * anim;
+	animInfo.ok = false;
+	for(int i = 0; i < mAnimations.Size(); i++)
+	{
+		if(mAnimations[i].BasePic == tex)
+		{
+			animInfo.ok = true;
+			animInfo.AnimIndex = i;
+			anim = &mAnimations[i];
+		}
+	}
+	if(!animInfo.ok) return false;
+	animInfo.CurFrame = 0;
+	animInfo.SwitchTic = curTic;
+	animInfo.AnimType = (anim->AnimType == FAnimDef::ANIM_OscillateDown) ? FAnimDef::ANIM_OscillateUp : anim->AnimType;
+	uint32_t time = anim->Frames[0].SpeedMin;
+	if(anim->Frames[0].SpeedRange != 0)
+	{
+		time += pr_animatepictures(anim->Frames[0].SpeedRange);
+	}
+	animInfo.SwitchTic += time / msPerTic;
+	return true;
+}
+
+FTextureID FTextureAnimator::UpdateStandaloneAnimation(FStandaloneAnimation &animInfo, double curTic)
+{
+	if(!animInfo.ok) return nullptr;
+	auto &anim = mAnimations[animInfo.AnimIndex];
+	if(animInfo.SwitchTic <= curTic)
+	{
+		uint16_t frame = animInfo.CurFrame;
+		uint16_t speedframe = anim.bDiscrete ? frame : 0;
+		while(animInfo.SwitchTic <= curTic)
+		{
+			AdvanceFrame(frame, animInfo.AnimType, anim);
+
+			if(anim.bDiscrete) speedframe = frame;
+
+			uint32_t time = anim.Frames[speedframe].SpeedMin;
+			if(anim.Frames[speedframe].SpeedRange != 0)
+			{
+				time += pr_animatepictures(anim.Frames[speedframe].SpeedRange);
+			}
+
+			animInfo.SwitchTic += time / msPerTic;
+		}
+		animInfo.CurFrame = frame;
+	}
+	return anim.bDiscrete ? anim.Frames[animInfo.CurFrame].FramePic : (anim.BasePic + animInfo.CurFrame);
+}
+
 
 //==========================================================================
 //
@@ -955,50 +1058,7 @@ void FTextureAnimator::UpdateAnimations (uint64_t mstime)
 		{ // Multiple frames may have passed since the last time calling
 		  // R_UpdateAnimations, so be sure to loop through them all.
 
-			switch (anim->AnimType)
-			{
-			default:
-			case FAnimDef::ANIM_Forward:
-				anim->CurFrame = (anim->CurFrame + 1) % anim->NumFrames;
-				break;
-
-			case FAnimDef::ANIM_Backward:
-				if (anim->CurFrame == 0)
-				{
-					anim->CurFrame = anim->NumFrames - 1;
-				}
-				else
-				{
-					anim->CurFrame -= 1;
-				}
-				break;
-
-			case FAnimDef::ANIM_Random:
-				// select a random frame other than the current one
-				if (anim->NumFrames > 1)
-				{
-					uint16_t rndFrame = (uint16_t)pr_animatepictures(anim->NumFrames - 1);
-					if (rndFrame >= anim->CurFrame) rndFrame++;
-					anim->CurFrame = rndFrame;
-				}
-				break;
-
-			case FAnimDef::ANIM_OscillateUp:
-				anim->CurFrame = anim->CurFrame + 1;
-				if (anim->CurFrame >= anim->NumFrames - 1)
-				{
-					anim->AnimType = FAnimDef::ANIM_OscillateDown;
-				}
-				break;
-
-			case FAnimDef::ANIM_OscillateDown:
-				anim->CurFrame = anim->CurFrame - 1;
-				if (anim->CurFrame == 0)
-				{
-					anim->AnimType = FAnimDef::ANIM_OscillateUp;
-				}
-				break;
-			}
+			AdvanceFrame(anim->CurFrame, anim->AnimType, *anim);
 			anim->SetSwitchTime (mstime);
 		}
 

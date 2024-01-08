@@ -1,13 +1,13 @@
 Class VisualThinker : Thinker native
 {
 	native Vector3			Pos,
-							Vel,
 							Prev;
+	native FVector3			Vel;
 	native Vector2			Scale,
 							Offset;
-	native double			Roll,
-							PrevRoll;
-	native float			Alpha;
+	native float			Roll,
+							PrevRoll,
+							Alpha;
 	native TextureID		Texture;
 	native TranslationID	Translation;
 	native uint16			Flags;

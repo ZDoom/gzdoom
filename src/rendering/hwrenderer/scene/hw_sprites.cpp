@@ -1343,7 +1343,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	else
 	{
 		bool has_texture = particle->texture.isValid();
-		bool custom_animated_texture = has_texture && (particle->flags & SPF_STANDALONE_ANIMATIONS) && particle->animData.ok;
+		bool custom_animated_texture = (particle->flags & SPF_STANDALONE_ANIMATIONS) && particle->animData.ok;
 		
 		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
 
@@ -1442,11 +1442,21 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t* sector)
 {
 	translation = spr->Translation;
-	texture = TexMan.GetGameTexture(spr->PT.texture, true);
 
 	const auto& vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
-	if (paused || spr->isFrozen() || spr->bDontInterpolate)
+
+	if (paused || spr->isFrozen())
+		timefrac = 0.;
+	
+	bool custom_anim = ((spr->PT.flags & SPF_STANDALONE_ANIMATIONS) && spr->PT.animData.ok);
+
+	texture = TexMan.GetGameTexture(
+			custom_anim
+			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
+			: spr->PT.texture, !custom_anim);
+
+	if (spr->bDontInterpolate)
 		timefrac = 0.;
 
 	FVector3 interp = spr->InterpolatedPosition(timefrac);

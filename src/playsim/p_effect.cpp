@@ -1024,6 +1024,7 @@ void DVisualThinker::Construct()
 	cursector = nullptr;
 	PT.color = 0xffffff;
 	spr = new HWSprite();
+	AnimatedTexture.SetNull();
 }
 
 DVisualThinker::DVisualThinker()
@@ -1078,6 +1079,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThink
 void DVisualThinker::UpdateSpriteInfo()
 {
 	PT.style = ERenderStyle(GetRenderStyle());
+	if((PT.flags & SPF_STANDALONE_ANIMATIONS) && PT.texture != AnimatedTexture)
+	{
+		AnimatedTexture = PT.texture;
+		TexAnim.InitStandaloneAnimation(PT.animData, PT.texture, Level->maptime);
+	}
 }
 
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.

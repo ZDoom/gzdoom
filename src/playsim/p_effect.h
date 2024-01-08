@@ -163,6 +163,7 @@ public:
 	float			PrevRoll;
 	int16_t			LightLevel;
 	FTranslationID	Translation;
+	FTextureID		AnimatedTexture;
 	sector_t		*cursector;
 
 	bool			bXFlip,

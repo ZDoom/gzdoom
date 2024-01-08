@@ -1,8 +1,14 @@
 
+// #define DUMP_GLYPH
+
 #include "core/truetypefont.h"
 #include "core/pathfill.h"
 #include <algorithm>
 #include <cmath>
+
+#ifdef DUMP_GLYPH
+#include <fstream>
+#endif
 
 TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata) : data(std::move(initdata))
 {
@@ -47,7 +53,9 @@ TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata) : data(std::move(initd
 
 	glyf = directory.GetRecord("glyf");
 
-	LoadGlyph(GetGlyphIndex(32), 13.0);
+#ifdef DUMP_GLYPH
+	LoadGlyph(GetGlyphIndex('6'), 13.0);
+#endif
 }
 
 TrueTypeTextMetrics TrueTypeFont::GetTextMetrics(double height) const
@@ -97,45 +105,72 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 	TTF_SimpleGlyph g;
 	LoadGlyph(g, glyphIndex);
 
-	int numberOfContours = g.endPtsOfContours.size();
-
 	// Create glyph path:
 	PathFillDesc path;
 	path.fill_mode = PathFillMode::winding;
 
 	int startPoint = 0;
+	int numberOfContours = g.endPtsOfContours.size();
 	for (int i = 0; i < numberOfContours; i++)
 	{
 		int endPoint = g.endPtsOfContours[i];
 		if (endPoint < startPoint)
 			throw std::runtime_error("Invalid glyph");
 
-		int pos = startPoint;
-		while (pos <= endPoint)
+		bool prevIsControlPoint;
+		bool isControlPoint = !(g.flags[endPoint] & TTF_ON_CURVE_POINT);
+		bool nextIsControlPoint = !(g.flags[startPoint] & TTF_ON_CURVE_POINT);
+		if (isControlPoint)
 		{
-			if (pos == startPoint)
+			Point nextpoint(g.points[startPoint].x, g.points[startPoint].y);
+			if (nextIsControlPoint)
 			{
-				path.MoveTo(Point(g.points[pos].x, g.points[pos].y) * scale);
-				pos++;
-			}
-			else if (g.flags[pos] & TTF_ON_CURVE_POINT)
-			{
-				if (g.flags[pos - 1] & TTF_ON_CURVE_POINT)
-				{
-					path.LineTo(Point(g.points[pos].x, g.points[pos].y) * scale);
-				}
-				else
-				{
-					path.BezierTo(Point(g.points[pos - 1].x, g.points[pos - 1].y) * scale, Point(g.points[pos].x, g.points[pos].y) * scale);
-				}
-				pos++;
+				Point curpoint(g.points[endPoint].x, g.points[endPoint].y);
+				Point midpoint = (curpoint + nextpoint) / 2;
+				path.MoveTo(midpoint * scale);
+				prevIsControlPoint = isControlPoint;
 			}
 			else
 			{
-				Point lastcontrolpoint(g.points[pos].x, g.points[pos].y);
-				Point controlpoint(g.points[pos - 1].x, g.points[pos - 1].y);
-				Point midpoint = (lastcontrolpoint + controlpoint) / 2;
-				path.BezierTo(lastcontrolpoint * scale, midpoint * scale);
+				path.MoveTo(Point(g.points[startPoint].x, g.points[startPoint].y) * scale);
+				prevIsControlPoint = false;
+			}
+		}
+		else
+		{
+			path.MoveTo(Point(g.points[endPoint].x, g.points[endPoint].y) * scale);
+			prevIsControlPoint = isControlPoint;
+		}
+
+		int pos = startPoint;
+		while (pos <= endPoint)
+		{
+			int nextpos = pos + 1 <= endPoint ? pos + 1 : startPoint;
+			bool isControlPoint = !(g.flags[pos] & TTF_ON_CURVE_POINT);
+			bool nextIsControlPoint = !(g.flags[nextpos] & TTF_ON_CURVE_POINT);
+			Point curpoint(g.points[pos].x, g.points[pos].y);
+			if (isControlPoint)
+			{
+				Point nextpoint(g.points[nextpos].x, g.points[nextpos].y);
+				if (nextIsControlPoint)
+				{
+					Point midpoint = (curpoint + nextpoint) / 2;
+					path.BezierTo(curpoint * scale, midpoint * scale);
+					prevIsControlPoint = isControlPoint;
+					pos++;
+				}
+				else
+				{
+					path.BezierTo(curpoint * scale, nextpoint * scale);
+					prevIsControlPoint = false;
+					pos += 2;
+				}
+			}
+			else
+			{
+				if (!prevIsControlPoint)
+					path.LineTo(curpoint * scale);
+				prevIsControlPoint = isControlPoint;
 				pos++;
 			}
 		}
@@ -180,6 +215,55 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 			point.y -= bboxMin.y;
 		}
 	}
+
+#ifdef DUMP_GLYPH
+	std::string svgxmlstart = R"(<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="1000px" height="1000px" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<path fill-rule="evenodd" d=")";
+	std::string svgxmlend = R"(" fill="red" />
+</svg>)";
+
+	std::ofstream out("c:\\development\\glyph.svg");
+	out << svgxmlstart;
+
+	for (auto& subpath : path.subpaths)
+	{
+		size_t pos = 0;
+		out << "M" << subpath.points[pos].x << " " << subpath.points[pos].y << " ";
+		pos++;
+		for (PathFillCommand cmd : subpath.commands)
+		{
+			int count = 0;
+			if (cmd == PathFillCommand::line)
+			{
+				out << "L";
+				count = 1;
+			}
+			else if (cmd == PathFillCommand::quadradic)
+			{
+				out << "Q";
+				count = 2;
+			}
+			else if (cmd == PathFillCommand::cubic)
+			{
+				out << "C";
+				count = 3;
+			}
+
+			for (int i = 0; i < count; i++)
+			{
+				out << subpath.points[pos].x << " " << subpath.points[pos].y << " ";
+				pos++;
+			}
+		}
+		if (subpath.closed)
+			out << "Z";
+	}
+
+	out << svgxmlend;
+	out.close();
+#endif
 
 	TrueTypeGlyph glyph;
 

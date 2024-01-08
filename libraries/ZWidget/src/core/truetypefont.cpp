@@ -5,17 +5,32 @@
 #include "core/pathfill.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #ifdef DUMP_GLYPH
 #include <fstream>
 #endif
 
-TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata) : data(std::move(initdata))
+TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata, int ttcFontIndex) : data(std::move(initdata))
 {
 	if (data.size() > 0x7fffffff)
 		throw std::runtime_error("TTF file is larger than 2 gigabytes!");
 
 	TrueTypeFileReader reader(data.data(), data.size());
+	ttf_Tag versionTag = reader.ReadTag();
+
+	if (memcmp(versionTag.data(), "ttcf", 4) == 0) // TTC header
+	{
+		ttcHeader.Load(reader);
+		if (ttcFontIndex >= ttcHeader.numFonts)
+			throw std::runtime_error("TTC font index out of bounds");
+		reader.Seek(ttcHeader.tableDirectoryOffsets[ttcFontIndex]);
+	}
+	else
+	{
+		reader.Seek(0);
+	}
+
 	directory.Load(reader);
 
 	if (!directory.ContainsTTFOutlines())

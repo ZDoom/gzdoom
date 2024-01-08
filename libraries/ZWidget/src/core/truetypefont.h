@@ -431,7 +431,7 @@ public:
 class TrueTypeFont
 {
 public:
-	TrueTypeFont(std::vector<uint8_t> data);
+	TrueTypeFont(std::vector<uint8_t> data, int ttcFontIndex = 0);
 
 	TrueTypeTextMetrics GetTextMetrics(double height) const;
 	uint32_t GetGlyphIndex(uint32_t codepoint) const;
@@ -443,7 +443,8 @@ private:
 	static float F2DOT14_ToFloat(ttf_F2DOT14 v);
 
 	std::vector<uint8_t> data;
-	
+
+	TTC_Header ttcHeader;
 	TTF_TableDirectory directory;
 
 	// Required for all OpenType fonts:

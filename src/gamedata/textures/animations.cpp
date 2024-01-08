@@ -984,7 +984,7 @@ bool FTextureAnimator::InitStandaloneAnimation(FStandaloneAnimation &animInfo, F
 {
 	FAnimDef * anim;
 	animInfo.ok = false;
-	for(int i = 0; i < mAnimations.Size(); i++)
+	for(unsigned i = 0; i < mAnimations.Size(); i++)
 	{
 		if(mAnimations[i].BasePic == tex)
 		{

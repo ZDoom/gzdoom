@@ -11,7 +11,7 @@
 #include <fstream>
 #endif
 
-TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData> initdata, int ttcFontIndex) : data(std::move(initdata))
+TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData>& initdata, int ttcFontIndex) : data(initdata)
 {
 	if (data->size() > 0x7fffffff)
 		throw std::runtime_error("TTF file is larger than 2 gigabytes!");

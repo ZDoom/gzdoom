@@ -47,7 +47,7 @@ class CanvasFont
 public:
 	CanvasFont(const std::string& fontname, double height, std::vector<uint8_t>& _data) : fontname(fontname), height(height)
 	{
-		ttf = std::make_unique<TrueTypeFont>(_data);
+		ttf = std::make_unique<TrueTypeFont>(std::make_shared<TrueTypeFontFileData>(_data));
 		textmetrics = ttf->GetTextMetrics(height);
 	}
 

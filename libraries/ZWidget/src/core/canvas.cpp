@@ -8,7 +8,6 @@
 #include "core/truetypefont.h"
 #include "core/pathfill.h"
 #include "window/window.h"
-#include "schrift/schrift.h"
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>

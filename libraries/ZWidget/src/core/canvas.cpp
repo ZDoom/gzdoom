@@ -13,8 +13,6 @@
 #include <stdexcept>
 #include <cstring>
 
-#define USE_INTERNAL_TTF
-
 class CanvasTexture
 {
 public:
@@ -22,8 +20,6 @@ public:
 	int Height = 0;
 	std::vector<uint32_t> Data;
 };
-
-#if defined(USE_INTERNAL_TTF)
 
 class CanvasGlyph
 {
@@ -125,142 +121,6 @@ public:
 	TrueTypeTextMetrics textmetrics;
 	std::unordered_map<uint32_t, std::unique_ptr<CanvasGlyph>> glyphs;
 };
-
-#else
-
-class CanvasGlyph
-{
-public:
-	SFT_Glyph id;
-	SFT_GMetrics metrics;
-
-	double u = 0.0;
-	double v = 0.0;
-	double uvwidth = 0.0f;
-	double uvheight = 0.0f;
-	std::shared_ptr<CanvasTexture> texture;
-};
-
-class CanvasFont
-{
-public:
-	CanvasFont(const std::string& fontname, double height, std::vector<uint8_t>& _data) : fontname(fontname), height(height)
-	{
-		data = std::move(_data);
-		loadFont(data.data(), data.size());
-
-		try
-		{
-			if (sft_lmetrics(&sft, &textmetrics) < 0)
-				throw std::runtime_error("Could not get truetype font metrics");
-		}
-		catch (...)
-		{
-			sft_freefont(sft.font);
-			throw;
-		}
-	}
-
-	~CanvasFont()
-	{
-		sft_freefont(sft.font);
-		sft.font = nullptr;
-	}
-
-	CanvasGlyph* getGlyph(uint32_t utfchar)
-	{
-		auto& glyph = glyphs[utfchar];
-		if (glyph)
-			return glyph.get();
-
-		glyph = std::make_unique<CanvasGlyph>();
-
-		if (sft_lookup(&sft, utfchar, &glyph->id) < 0)
-			return glyph.get();
-
-		if (sft_gmetrics(&sft, glyph->id, &glyph->metrics) < 0)
-			return glyph.get();
-
-		glyph->metrics.advanceWidth /= 3.0;
-		glyph->metrics.leftSideBearing /= 3.0;
-
-		if (glyph->metrics.minWidth <= 0 || glyph->metrics.minHeight <= 0)
-			return glyph.get();
-
-		int w = (glyph->metrics.minWidth + 3) & ~3;
-		int h = glyph->metrics.minHeight;
-
-		int destwidth = (w + 2) / 3;
-
-		auto texture = std::make_shared<CanvasTexture>();
-		texture->Width = destwidth;
-		texture->Height = h;
-		texture->Data.resize(destwidth * h);
-		uint32_t* dest = (uint32_t*)texture->Data.data();
-
-		std::unique_ptr<uint8_t[]> grayscalebuffer(new uint8_t[w * h]);
-		uint8_t* grayscale = grayscalebuffer.get();
-
-		SFT_Image img = {};
-		img.width = w;
-		img.height = h;
-		img.pixels = grayscale;
-		if (sft_render(&sft, glyph->id, img) < 0)
-			return glyph.get();
-
-		for (int y = 0; y < h; y++)
-		{
-			uint8_t* sline = grayscale + y * w;
-			uint32_t* dline = dest + y * destwidth;
-			for (int x = 0; x < w; x += 3)
-			{
-				uint32_t values[5] =
-				{
-					x > 0 ? sline[x - 1] : 0U,
-					sline[x],
-					x + 1 < w ? sline[x + 1] : 0U,
-					x + 2 < w ? sline[x + 2] : 0U,
-					x + 3 < w ? sline[x + 3] : 0U
-				};
-
-				uint32_t red = (values[0] + values[1] + values[1] + values[2] + 2) >> 2;
-				uint32_t green = (values[1] + values[2] + values[2] + values[3] + 2) >> 2;
-				uint32_t blue = (values[2] + values[3] + values[3] + values[4] + 2) >> 2;
-				uint32_t alpha = (red | green | blue) ? 255 : 0;
-
-				*(dline++) = (alpha << 24) | (red << 16) | (green << 8) | blue;
-			}
-		}
-
-		glyph->u = 0.0;
-		glyph->v = 0.0;
-		glyph->uvwidth = destwidth;
-		glyph->uvheight = h;
-		glyph->texture = std::move(texture);
-
-		return glyph.get();
-	}
-
-	std::string fontname;
-	double height = 0.0;
-
-	SFT_LMetrics textmetrics = {};
-	std::unordered_map<uint32_t, std::unique_ptr<CanvasGlyph>> glyphs;
-
-private:
-	void loadFont(const void* data, size_t size)
-	{
-		sft.xScale = height * 3;
-		sft.yScale = height;
-		sft.flags = SFT_DOWNWARD_Y;
-		sft.font = sft_loadmem(data, size);
-	}
-
-	SFT sft = {};
-	std::vector<uint8_t> data;
-};
-
-#endif
 
 class CanvasFontGroup
 {

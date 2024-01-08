@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <cstring>
 
-// #define USE_INTERNAL_TTF
+#define USE_INTERNAL_TTF
 
 class CanvasTexture
 {

@@ -276,7 +276,7 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 
 	// TBD: gridfit or not?
 	glyph.advanceWidth = (int)std::round(advanceWidth * scale * scaleX);
-	glyph.leftSideBearing = (int)std::round(lsb * scale * scaleX + bboxMin.x);
+	glyph.leftSideBearing = (int)std::round(bboxMin.x);
 	glyph.yOffset = (int)std::round(bboxMin.y);
 
 	return glyph;

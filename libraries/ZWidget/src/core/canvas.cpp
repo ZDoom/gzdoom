@@ -46,9 +46,9 @@ public:
 class CanvasFont
 {
 public:
-	CanvasFont(const std::string& fontname, double height) : fontname(fontname), height(height)
+	CanvasFont(const std::string& fontname, double height, std::vector<uint8_t>& _data) : fontname(fontname), height(height)
 	{
-		ttf = std::make_unique<TrueTypeFont>(LoadWidgetFontData(fontname));
+		ttf = std::make_unique<TrueTypeFont>(_data);
 		textmetrics = ttf->GetTextMetrics(height);
 	}
 
@@ -310,7 +310,7 @@ public:
 		return nullptr;
 	}
 
-	SFT_LMetrics& GetTextMetrics()
+	TrueTypeTextMetrics& GetTextMetrics()
 	{
 		return fonts[0].font->textmetrics;
 	}
@@ -398,7 +398,7 @@ BitmapCanvas::BitmapCanvas(DisplayWindow* window) : window(window)
 	uiscale = window->GetDpiScale();
 	uint32_t white = 0xffffffff;
 	whiteTexture = createTexture(1, 1, &white);
-	font = std::make_unique<CanvasFontGroup>("NotoSans", 16.0 * uiscale);
+	font = std::make_unique<CanvasFontGroup>("NotoSans", 15.0 * uiscale);
 }
 
 BitmapCanvas::~BitmapCanvas()

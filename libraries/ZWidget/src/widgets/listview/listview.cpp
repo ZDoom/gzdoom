@@ -126,7 +126,7 @@ void ListView::OnMouseWheel(const Point& pos, EInputKey key)
 	}
 	else if (key == IK_MouseWheelDown)
 	{
-		scrollbar->SetPosition(std::max(scrollbar->GetPosition() + 20.0, scrollbar->GetMax()));
+		scrollbar->SetPosition(std::min(scrollbar->GetPosition() + 20.0, scrollbar->GetMax()));
 	}
 }
 

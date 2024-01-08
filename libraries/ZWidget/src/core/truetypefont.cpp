@@ -11,13 +11,14 @@
 #include <fstream>
 #endif
 
-TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata, int ttcFontIndex) : data(std::move(initdata))
+TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData> initdata, int ttcFontIndex) : data(std::move(initdata))
 {
-	if (data.size() > 0x7fffffff)
+	if (data->size() > 0x7fffffff)
 		throw std::runtime_error("TTF file is larger than 2 gigabytes!");
 
-	TrueTypeFileReader reader(data.data(), data.size());
+	TrueTypeFileReader reader(data->data(), data->size());
 	ttf_Tag versionTag = reader.ReadTag();
+	reader.Seek(0);
 
 	if (memcmp(versionTag.data(), "ttcf", 4) == 0) // TTC header
 	{
@@ -25,10 +26,6 @@ TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata, int ttcFontIndex) : da
 		if (ttcFontIndex >= ttcHeader.numFonts)
 			throw std::runtime_error("TTC font index out of bounds");
 		reader.Seek(ttcHeader.tableDirectoryOffsets[ttcFontIndex]);
-	}
-	else
-	{
-		reader.Seek(0);
 	}
 
 	directory.Load(reader);
@@ -38,32 +35,32 @@ TrueTypeFont::TrueTypeFont(std::vector<uint8_t> initdata, int ttcFontIndex) : da
 
 	// Load required tables:
 
-	reader = directory.GetReader(data.data(), data.size(), "head");
+	reader = directory.GetReader(data->data(), data->size(), "head");
 	head.Load(reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "hhea");
+	reader = directory.GetReader(data->data(), data->size(), "hhea");
 	hhea.Load(reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "maxp");
+	reader = directory.GetReader(data->data(), data->size(), "maxp");
 	maxp.Load(reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "hmtx");
+	reader = directory.GetReader(data->data(), data->size(), "hmtx");
 	hmtx.Load(hhea, maxp, reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "name");
+	reader = directory.GetReader(data->data(), data->size(), "name");
 	name.Load(reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "OS/2");
+	reader = directory.GetReader(data->data(), data->size(), "OS/2");
 	os2.Load(reader);
 
-	reader = directory.GetReader(data.data(), data.size(), "cmap");
+	reader = directory.GetReader(data->data(), data->size(), "cmap");
 	cmap.Load(reader);
 
 	LoadCharacterMapEncoding(reader);
 
 	// Load TTF Outlines:
 
-	reader = directory.GetReader(data.data(), data.size(), "loca");
+	reader = directory.GetReader(data->data(), data->size(), "loca");
 	loca.Load(head, maxp, reader);
 
 	glyf = directory.GetRecord("glyf");
@@ -302,7 +299,7 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 	if (glyphIndex >= loca.offsets.size())
 		throw std::runtime_error("Glyph index out of bounds");
 
-	TrueTypeFileReader reader = glyf.GetReader(data.data(), data.size());
+	TrueTypeFileReader reader = glyf.GetReader(data->data(), data->size());
 	reader.Seek(loca.offsets[glyphIndex]);
 
 	ttf_int16 numberOfContours = reader.ReadInt16();
@@ -631,6 +628,49 @@ void TrueTypeFont::LoadCharacterMapEncoding(TrueTypeFileReader& reader)
 	}
 }
 
+std::vector<TTCFontName> TrueTypeFont::GetFontNames(const std::shared_ptr<TrueTypeFontFileData>& data)
+{
+	if (data->size() > 0x7fffffff)
+		throw std::runtime_error("TTF file is larger than 2 gigabytes!");
+
+	TrueTypeFileReader reader(data->data(), data->size());
+	ttf_Tag versionTag = reader.ReadTag();
+	reader.Seek(0);
+
+	std::vector<TTCFontName> names;
+	if (memcmp(versionTag.data(), "ttcf", 4) == 0) // TTC header
+	{
+		TTC_Header ttcHeader;
+		ttcHeader.Load(reader);
+
+		for (size_t i = 0; i < ttcHeader.tableDirectoryOffsets.size(); i++)
+		{
+			reader.Seek(ttcHeader.tableDirectoryOffsets[i]);
+
+			TTF_TableDirectory directory;
+			directory.Load(reader);
+
+			TTF_NamingTable name;
+			auto name_reader = directory.GetReader(data->data(), data->size(), "name");
+			name.Load(name_reader);
+
+			names.push_back(name.GetFontName());
+		}
+	}
+	else
+	{
+		TTF_TableDirectory directory;
+		directory.Load(reader);
+
+		TTF_NamingTable name;
+		auto name_reader = directory.GetReader(data->data(), data->size(), "name");
+		name.Load(name_reader);
+
+		names.push_back(name.GetFontName());
+	}
+	return names;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 void TTF_CMapSubtable0::Load(TrueTypeFileReader& reader)
@@ -857,6 +897,62 @@ void TTF_MaximumProfile::Load(TrueTypeFileReader& reader)
 
 /////////////////////////////////////////////////////////////////////////////
 
+static std::string unicode_to_utf8(unsigned int value)
+{
+	char text[8];
+
+	if ((value < 0x80) && (value > 0))
+	{
+		text[0] = (char)value;
+		text[1] = 0;
+	}
+	else if (value < 0x800)
+	{
+		text[0] = (char)(0xc0 | (value >> 6));
+		text[1] = (char)(0x80 | (value & 0x3f));
+		text[2] = 0;
+	}
+	else if (value < 0x10000)
+	{
+		text[0] = (char)(0xe0 | (value >> 12));
+		text[1] = (char)(0x80 | ((value >> 6) & 0x3f));
+		text[2] = (char)(0x80 | (value & 0x3f));
+		text[3] = 0;
+	}
+	else if (value < 0x200000)
+	{
+		text[0] = (char)(0xf0 | (value >> 18));
+		text[1] = (char)(0x80 | ((value >> 12) & 0x3f));
+		text[2] = (char)(0x80 | ((value >> 6) & 0x3f));
+		text[3] = (char)(0x80 | (value & 0x3f));
+		text[4] = 0;
+	}
+	else if (value < 0x4000000)
+	{
+		text[0] = (char)(0xf8 | (value >> 24));
+		text[1] = (char)(0x80 | ((value >> 18) & 0x3f));
+		text[2] = (char)(0x80 | ((value >> 12) & 0x3f));
+		text[3] = (char)(0x80 | ((value >> 6) & 0x3f));
+		text[4] = (char)(0x80 | (value & 0x3f));
+		text[5] = 0;
+	}
+	else if (value < 0x80000000)
+	{
+		text[0] = (char)(0xfc | (value >> 30));
+		text[1] = (char)(0x80 | ((value >> 24) & 0x3f));
+		text[2] = (char)(0x80 | ((value >> 18) & 0x3f));
+		text[3] = (char)(0x80 | ((value >> 12) & 0x3f));
+		text[4] = (char)(0x80 | ((value >> 6) & 0x3f));
+		text[5] = (char)(0x80 | (value & 0x3f));
+		text[6] = 0;
+	}
+	else
+	{
+		text[0] = 0;	// Invalid wchar value
+	}
+	return text;
+}
+
 void TTF_NamingTable::Load(TrueTypeFileReader& reader)
 {
 	version = reader.ReadUInt16();
@@ -885,6 +981,34 @@ void TTF_NamingTable::Load(TrueTypeFileReader& reader)
 			langTagRecord.push_back(record);
 		}
 	}
+
+	for (NameRecord& record : nameRecord)
+	{
+		if (record.length > 0 && record.platformID == 3 && record.encodingID == 1)
+		{
+			reader.Seek(storageOffset + record.stringOffset);
+			ttf_uint16 ucs2len = record.length / 2;
+			for (ttf_uint16 i = 0; i < ucs2len; i++)
+			{
+				record.text += unicode_to_utf8(reader.ReadUInt16());
+			}
+		}
+	}
+}
+
+TTCFontName TTF_NamingTable::GetFontName() const
+{
+	TTCFontName fname;
+	for (const auto& record : nameRecord)
+	{
+		if (record.nameID == 1) fname.FamilyName = record.text;
+		if (record.nameID == 2) fname.SubfamilyName = record.text;
+		if (record.nameID == 3) fname.UniqueID = record.text;
+		if (record.nameID == 4) fname.FullName = record.text;
+		if (record.nameID == 5) fname.VersionString = record.text;
+		if (record.nameID == 6) fname.PostscriptName = record.text;
+	}
+	return fname;
 }
 
 /////////////////////////////////////////////////////////////////////////////

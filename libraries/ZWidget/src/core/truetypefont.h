@@ -289,6 +289,17 @@ struct TTF_MaximumProfile // 'maxp' Maximum profile
 	void Load(TrueTypeFileReader& reader);
 };
 
+class TTCFontName
+{
+public:
+	std::string FamilyName;     // Arial
+	std::string SubfamilyName;  // Regular
+	std::string FullName;       // Arial Regular
+	std::string UniqueID;
+	std::string VersionString;
+	std::string PostscriptName;
+};
+
 struct TTF_NamingTable // 'name' Naming table
 {
 	struct NameRecord
@@ -299,6 +310,7 @@ struct TTF_NamingTable // 'name' Naming table
 		ttf_uint16 nameID = {};
 		ttf_uint16 length = {};
 		ttf_Offset16 stringOffset = {};
+		std::string text;
 	};
 
 	struct LangTagRecord
@@ -318,6 +330,8 @@ struct TTF_NamingTable // 'name' Naming table
 	std::vector<LangTagRecord> langTagRecord; // [langTagCount]
 
 	void Load(TrueTypeFileReader& reader);
+
+	TTCFontName GetFontName() const;
 };
 
 struct TTF_OS2Windows // 'OS/2' Windows specific metrics
@@ -428,10 +442,58 @@ public:
 	double lineGap = 0.0;
 };
 
+class TrueTypeFontFileData
+{
+public:
+	TrueTypeFontFileData(std::vector<uint8_t> data) : dataVector(std::move(data))
+	{
+		dataPtr = dataVector.data();
+		dataSize = dataVector.size();
+	}
+
+	TrueTypeFontFileData(const void* data, size_t size, bool copyData = true)
+	{
+		dataSize = size;
+		if (copyData)
+		{
+			dataPtr = new uint8_t[size];
+			deleteDataPtr = true;
+			memcpy(const_cast<void*>(dataPtr), data, size);
+		}
+		else
+		{
+			dataPtr = data;
+		}
+	}
+
+	~TrueTypeFontFileData()
+	{
+		if (deleteDataPtr)
+		{
+			delete[](uint8_t*)dataPtr;
+		}
+		dataPtr = nullptr;
+	}
+
+	const void* data() const { return dataPtr; }
+	size_t size() const { return dataSize; }
+
+private:
+	std::vector<uint8_t> dataVector;
+	const void* dataPtr = nullptr;
+	size_t dataSize = 0;
+	bool deleteDataPtr = false;
+
+	TrueTypeFontFileData(const TrueTypeFontFileData&) = delete;
+	TrueTypeFontFileData& operator=(const TrueTypeFontFileData&) = delete;
+};
+
 class TrueTypeFont
 {
 public:
-	TrueTypeFont(std::vector<uint8_t> data, int ttcFontIndex = 0);
+	TrueTypeFont(std::shared_ptr<TrueTypeFontFileData> data, int ttcFontIndex = 0);
+
+	static std::vector<TTCFontName> GetFontNames(const std::shared_ptr<TrueTypeFontFileData>& data);
 
 	TrueTypeTextMetrics GetTextMetrics(double height) const;
 	uint32_t GetGlyphIndex(uint32_t codepoint) const;
@@ -442,7 +504,7 @@ private:
 	void LoadGlyph(TTF_SimpleGlyph& glyph, uint32_t glyphIndex, int compositeDepth = 0) const;
 	static float F2DOT14_ToFloat(ttf_F2DOT14 v);
 
-	std::vector<uint8_t> data;
+	std::shared_ptr<TrueTypeFontFileData> data;
 
 	TTC_Header ttcHeader;
 	TTF_TableDirectory directory;

@@ -47,7 +47,8 @@ class CanvasFont
 public:
 	CanvasFont(const std::string& fontname, double height, std::vector<uint8_t>& _data) : fontname(fontname), height(height)
 	{
-		ttf = std::make_unique<TrueTypeFont>(std::make_shared<TrueTypeFontFileData>(_data));
+		auto tdata = std::make_shared<TrueTypeFontFileData>(_data);
+		ttf = std::make_unique<TrueTypeFont>(tdata);
 		textmetrics = ttf->GetTextMetrics(height);
 	}
 
@@ -58,6 +59,7 @@ public:
 	CanvasGlyph* getGlyph(uint32_t utfchar)
 	{
 		uint32_t glyphIndex = ttf->GetGlyphIndex(utfchar);
+		if (glyphIndex == 0) return nullptr;
 
 		auto& glyph = glyphs[glyphIndex];
 		if (glyph)
@@ -266,8 +268,7 @@ public:
 	struct SingleFont
 	{
 		std::unique_ptr<CanvasFont> font;
-		std::vector<std::pair<uint32_t, uint32_t>> ranges;
-		int language;	// mainly useful if we start supporting Chinese so that we can use another font there than for Japanese.
+		std::string language;
 	};
 	CanvasFontGroup(const std::string& fontname, double height) : height(height)
 	{
@@ -276,33 +277,21 @@ public:
 		for (size_t i = 0; i < fonts.size(); i++)
 		{
 			fonts[i].font = std::make_unique<CanvasFont>(fontname, height, fontdata[i].fontdata);
-			fonts[i].ranges = std::move(fontdata[i].ranges);
 			fonts[i].language = fontdata[i].language;
 		}
 	}
 
-	CanvasGlyph* getGlyph(uint32_t utfchar)
+	CanvasGlyph* getGlyph(uint32_t utfchar, const char* lang = nullptr)
 	{
-		if (utfchar >= 0x530 && utfchar < 0x590)
+		for (int i = 0; i < 2; i++)
 		{
-			int a = 0;
-		}
-		for (auto& fd : fonts)
-		{
-			bool get = false;
-			if (fd.ranges.size() == 0) get = true;
-			else for (auto r : fd.ranges)
+			for (auto& fd : fonts)
 			{
-				if (utfchar >= r.first && utfchar <= r.second)
+				if (i == 1 || lang == nullptr || *lang == 0 || fd.language.empty() || fd.language == lang)
 				{
-					get = true;
-					break;
+					auto g = fd.font->getGlyph(utfchar);
+					if (g) return g;
 				}
-			}
-			if (get)
-			{
-				auto g = fd.font->getGlyph(utfchar);
-				if (g) return g;
 			}
 		}
 
@@ -371,6 +360,8 @@ public:
 	int getClipMaxX() const;
 	int getClipMaxY() const;
 
+	void setLanguage(const char* lang) { language = lang; }
+
 	std::unique_ptr<CanvasTexture> createTexture(int width, int height, const void* pixels, ImageFormat format = ImageFormat::B8G8R8A8);
 
 	template<typename T>
@@ -390,6 +381,7 @@ public:
 	std::vector<uint32_t> pixels;
 
 	std::unordered_map<std::shared_ptr<Image>, std::unique_ptr<CanvasTexture>> imageTextures;
+	std::string language;
 };
 
 BitmapCanvas::BitmapCanvas(DisplayWindow* window) : window(window)
@@ -557,8 +549,8 @@ void BitmapCanvas::drawText(const Point& pos, const Colorf& color, const std::st
 	UTF8Reader reader(text.data(), text.size());
 	while (!reader.is_end())
 	{
-		CanvasGlyph* glyph = font->getGlyph(reader.character());
-		if (!glyph->texture)
+		CanvasGlyph* glyph = font->getGlyph(reader.character(), language.c_str());
+		if (!glyph || !glyph->texture)
 		{
 			glyph = font->getGlyph(32);
 		}
@@ -583,8 +575,8 @@ Rect BitmapCanvas::measureText(const std::string& text)
 	UTF8Reader reader(text.data(), text.size());
 	while (!reader.is_end())
 	{
-		CanvasGlyph* glyph = font->getGlyph(reader.character());
-		if (!glyph->texture)
+		CanvasGlyph* glyph = font->getGlyph(reader.character(), language.c_str());
+		if (!glyph || !glyph->texture)
 		{
 			glyph = font->getGlyph(32);
 		}

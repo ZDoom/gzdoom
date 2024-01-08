@@ -297,6 +297,11 @@ void P_ThinkParticles (FLevelLocals *Level)
 		i = particle->tnext;
 		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
+			if(particle->flags & SPF_STANDALONE_ANIMATIONS)
+			{
+				particle->animData.SwitchTic++;
+			}
+
 			prev = particle;
 			continue;
 		}
@@ -366,14 +371,13 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 	if (particle)
 	{
 		particle->Pos = pos;
-		particle->Vel = vel;
-		particle->Acc = accel;
+		particle->Vel = FVector3(vel);
+		particle->Acc = FVector3(accel);
 		particle->color = ParticleColor(color);
 		particle->alpha = float(startalpha);
 		if (fadestep < 0) particle->fadestep = FADEFROMTTL(lifetime);
 		else particle->fadestep = float(fadestep);
 		particle->ttl = lifetime;
-		particle->bright = !!(flags & SPF_FULLBRIGHT);
 		particle->size = size;
 		particle->sizestep = sizestep;
 		particle->texture = texture;
@@ -382,6 +386,10 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
 		particle->flags = flags;
+		if(flags & SPF_STANDALONE_ANIMATIONS)
+		{
+			TexAnim.InitStandaloneAnimation(particle->animData, texture, Level->maptime);
+		}
 	}
 }
 
@@ -432,10 +440,10 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
 		if (out < actor->radius/8)
-			particle->Vel.Z += 10./3;
+			particle->Vel.Z += 10.f/3;
 		else
 			particle->Vel.Z += 3;
-		particle->Acc.Z -= 1./11;
+		particle->Acc.Z -= 1.f/11;
 		if (M_Random() < 30) {
 			particle->size = 4;
 			particle->color = color2;
@@ -474,8 +482,8 @@ void P_RunEffect (AActor *actor, int effects)
 			speed = (M_Random () - 128) * (1./200);
 			particle->Vel.X += speed * an.Cos();
 			particle->Vel.Y += speed * an.Sin();
-			particle->Vel.Z -= 1./36;
-			particle->Acc.Z -= 1./20;
+			particle->Vel.Z -= 1.f/36;
+			particle->Acc.Z -= 1.f/20;
 			particle->color = yellow;
 			particle->size = 2;
 		}
@@ -492,8 +500,8 @@ void P_RunEffect (AActor *actor, int effects)
 				speed = (M_Random () - 128) * (1./200);
 				particle->Vel.X += speed * an.Cos();
 				particle->Vel.Y += speed * an.Sin();
-				particle->Vel.Z += 1. / 80;
-				particle->Acc.Z += 1. / 40;
+				particle->Vel.Z += 1.f / 80;
+				particle->Acc.Z += 1.f / 40;
 				if (M_Random () & 7)
 					particle->color = grey2;
 				else
@@ -635,7 +643,7 @@ void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle 
 		p->size = 4;
 		p->color = M_Random() & 0x80 ? color1 : color2;
 		p->Vel.Z = M_Random() * zvel;
-		p->Acc.Z = -1 / 22.;
+		p->Acc.Z = -1 / 22.f;
 		if (kind) 
 		{
 			an = angle + DAngle::fromDeg((M_Random() - 128) * (180 / 256.));
@@ -788,10 +796,13 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			p->ttl = spiralduration;
 			p->fadestep = FADEFROMTTL(spiralduration);
 			p->size = 3;
-			p->bright = fullbright;
+			if(fullbright)
+			{
+				p->flags |= SPF_FULLBRIGHT;
+			}
 
 			tempvec = DMatrix3x3(trail[segment].dir, deg) * trail[segment].extend;
-			p->Vel = tempvec * drift / 16.;
+			p->Vel = FVector3(tempvec * drift / 16.);
 			p->Pos = tempvec + pos;
 			pos += trail[segment].dir * stepsize;
 			deg += DAngle::fromDeg(r_rail_spiralsparsity * 14);
@@ -871,7 +882,10 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				p->Acc.Z -= 1./4096;
 			pos += trail[segment].dir * stepsize;
 			lencount -= stepsize;
-			p->bright = fullbright;
+			if(fullbright)
+			{
+				p->flags |= SPF_FULLBRIGHT;
+			}
 
 			if (color2 == -1)
 			{
@@ -995,7 +1009,8 @@ void P_DisconnectEffect (AActor *actor)
 void DVisualThinker::Construct()
 {
 	PT = {};
-	PT.Pos = PT.Vel = { 0,0,0 };
+	PT.Pos = { 0,0,0 };
+	PT.Vel = { 0,0,0 };
 	Offset = { 0,0 };
 	Scale = { 1,1 };
 	PT.Roll = 0.0;

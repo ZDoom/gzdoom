@@ -83,7 +83,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	VulkanCheckbox = new CheckboxLabel(this);
 	OpenGLCheckbox = new CheckboxLabel(this);
 	GLESCheckbox = new CheckboxLabel(this);
-	BackendLabel->SetText("Render Backend");
+	BackendLabel->SetText(GStrings("VIDMNU_PREFERBACKEND"));
 	VulkanCheckbox->SetText(GStrings("OPTVAL_VULKAN"));
 	OpenGLCheckbox->SetText(GStrings("OPTVAL_OPENGL"));
 	GLESCheckbox->SetText(GStrings("OPTVAL_OPENGLES"));

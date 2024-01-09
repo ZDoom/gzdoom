@@ -84,7 +84,7 @@ public:
 	using LangMap = TMap<uint32_t, StringMap>;
 	using StringMacroMap = TMap<FName, StringMacro>;
 
-	void LoadStrings(const char *language);
+	void LoadStrings(FileSys::FileSystem& fileSystem, const char *language);
 	void UpdateLanguage(const char* language);
 	StringMap GetDefaultStrings() { return allStrings[default_table]; }	// Dehacked needs these for comparison
 	void SetOverrideStrings(StringMap & map)
@@ -108,6 +108,7 @@ public:
 
 private:
 
+	FileSys::FileSystem* fileSystem;
 	FString activeLanguage;
 	StringMacroMap allMacros;
 	LangMap allStrings;

@@ -2,6 +2,7 @@
 #include "v_video.h"
 #include "version.h"
 #include "i_interface.h"
+#include "gstrings.h"
 #include <zwidget/core/image.h>
 #include <zwidget/window/window.h>
 #include <zwidget/widgets/textedit/textedit.h>
@@ -83,9 +84,9 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	OpenGLCheckbox = new CheckboxLabel(this);
 	GLESCheckbox = new CheckboxLabel(this);
 	BackendLabel->SetText("Render Backend");
-	VulkanCheckbox->SetText("Vulkan");
-	OpenGLCheckbox->SetText("OpenGL");
-	GLESCheckbox->SetText("OpenGL ES");
+	VulkanCheckbox->SetText(GStrings("OPTVAL_VULKAN"));
+	OpenGLCheckbox->SetText(GStrings("OPTVAL_OPENGL"));
+	GLESCheckbox->SetText(GStrings("OPTVAL_OPENGLES"));
 #endif
 
 	FString welcomeText, versionText;

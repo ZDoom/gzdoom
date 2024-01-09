@@ -49,6 +49,7 @@
 #include "fs_findfile.h"
 #include "findfile.h"
 #include "i_interface.h"
+#include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
 EXTERN_CVAR(String, defaultiwad);
@@ -56,6 +57,7 @@ EXTERN_CVAR(Bool, disableautoload)
 EXTERN_CVAR(Bool, autoloadlights)
 EXTERN_CVAR(Bool, autoloadbrightmaps)
 EXTERN_CVAR(Bool, autoloadwidescreen)
+EXTERN_CVAR(String, language)
 
 //==========================================================================
 //
@@ -313,12 +315,15 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 
 	if (check.InitMultipleFiles(fns, &lfi, nullptr))
 	{
+		// this is for the IWAD picker. As we have a filesystem open here that contains the base files, it is the easiest place to load the strings early.
+		GStrings.LoadStrings(check, language);
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)
 		{
 			auto data = check.ReadFile(num);
 			ParseIWadInfo("IWADINFO", data.string(), (int)data.size());
 		}
+
 	}
 }
 

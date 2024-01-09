@@ -69,7 +69,6 @@
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
-int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags);
 void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);

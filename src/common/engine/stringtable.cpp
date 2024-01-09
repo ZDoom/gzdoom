@@ -47,27 +47,29 @@
 //
 //==========================================================================
 
-void FStringTable::LoadStrings (const char *language)
+void FStringTable::LoadStrings (FileSys::FileSystem& fileSystem_, const char *language)
 {
 	int lastlump, lump;
 
+	fileSystem = &fileSystem_;
 	allStrings.Clear();
 	lastlump = 0;
-	while ((lump = fileSystem.FindLump("LMACROS", &lastlump)) != -1)
+	while ((lump = fileSystem->FindLump("LMACROS", &lastlump)) != -1)
 	{
 		readMacros(lump);
 	}
 
 	lastlump = 0;
-	while ((lump = fileSystem.FindLump ("LANGUAGE", &lastlump)) != -1)
+	while ((lump = fileSystem->FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		auto lumpdata = fileSystem.ReadFile(lump);
+		auto lumpdata = fileSystem->ReadFile(lump);
 
 		if (!ParseLanguageCSV(lump, lumpdata.string(), lumpdata.size()))
  			LoadLanguage (lump, lumpdata.string(), lumpdata.size());
 	}
 	UpdateLanguage(language);
 	allMacros.Clear();
+	fileSystem = nullptr;
 }
 
 
@@ -159,9 +161,10 @@ TArray<TArray<FString>> FStringTable::parseCSV(const char* buffer, size_t size)
 
 bool FStringTable::readMacros(int lumpnum)
 {
-	auto lumpdata = fileSystem.ReadFile(lumpnum);
+	auto lumpdata = fileSystem->ReadFile(lumpnum);
 	auto data = parseCSV(lumpdata.string(), lumpdata.size());
 
+	allMacros.Clear();
 	for (unsigned i = 1; i < data.Size(); i++)
 	{
 		auto macroname = data[i][0];
@@ -410,7 +413,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 {
 	decltype(allStrings)::Iterator it(allStrings);
 	decltype(allStrings)::Pair *pair;
-	auto filenum = fileSystem.GetFileContainer(lumpnum);
+	auto filenum = fileSystem->GetFileContainer(lumpnum);
 
 	while (it.NextPair(pair))
 	{
@@ -432,7 +435,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { fileSystem.GetFileContainer(lumpnum), { string, string, string, string } };
+	TableElement te = { fileSystem->GetFileContainer(lumpnum), { string, string, string, string } };
 	ptrdiff_t index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{

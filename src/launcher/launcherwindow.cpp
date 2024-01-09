@@ -64,19 +64,19 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
 	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
 
-	SelectLabel->SetText("Select which game file (IWAD) to run.");
-	PlayButton->SetText("Play Game");
-	ExitButton->SetText("Exit");
+	SelectLabel->SetText(GStrings("PICKER_SELECT"));
+	PlayButton->SetText(GStrings("PICKER_PLAY"));
+	ExitButton->SetText(GStrings("PICKER_EXIT"));
 
-	GeneralLabel->SetText("General");
-	ExtrasLabel->SetText("Extra Graphics");
-	FullscreenCheckbox->SetText("Fullscreen");
-	DisableAutoloadCheckbox->SetText("Disable autoload");
-	DontAskAgainCheckbox->SetText("Don't ask me again");
-	LightsCheckbox->SetText("Lights");
-	BrightmapsCheckbox->SetText("Brightmaps");
-	WidescreenCheckbox->SetText("Widescreen");
-	ParametersLabel->SetText("Additional Parameters:");
+	GeneralLabel->SetText(GStrings("PICKER_GENERAL"));
+	ExtrasLabel->SetText(GStrings("PICKER_EXTRA"));
+	FullscreenCheckbox->SetText(GStrings("PICKER_FULLSCREEN"));
+	DisableAutoloadCheckbox->SetText(GStrings("PICKER_NOAUTOLOAD"));
+	DontAskAgainCheckbox->SetText(GStrings("PICKER_DONTASK"));
+	LightsCheckbox->SetText(GStrings("PICKER_LIGHTS"));
+	BrightmapsCheckbox->SetText(GStrings("PICKER_BRIGHTMAPS"));
+	WidescreenCheckbox->SetText(GStrings("PICKER_WIDESCREEN"));
+	ParametersLabel->SetText(GStrings("PICKER_ADDPARM"));
 
 #ifdef RENDER_BACKENDS
 	BackendLabel = new TextLabel(this);
@@ -89,9 +89,10 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	GLESCheckbox->SetText(GStrings("OPTVAL_OPENGLES"));
 #endif
 
-	FString welcomeText, versionText;
-	welcomeText.Format("Welcome to %s!", GAMENAME);
-	versionText.Format("Version %s.", GetVersionString());
+	FString welcomeText = GStrings("PICKER_WELCOME");
+	welcomeText.Substitute("%s", GAMENAME);
+	FString versionText = GStrings("PICKER_VERSION");
+	versionText.Substitute("%s", GetVersionString());
 	WelcomeLabel->SetText(welcomeText.GetChars());
 	VersionLabel->SetText(versionText.GetChars());
 

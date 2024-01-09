@@ -11,4 +11,4 @@ struct SingleFontData
 };
 
 std::vector<SingleFontData> LoadWidgetFontData(const std::string& name);
-std::vector<uint8_t> LoadWidgetImageData(const std::string& name);
+std::vector<uint8_t> LoadWidgetData(const std::string& name);

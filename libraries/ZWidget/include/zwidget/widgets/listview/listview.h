@@ -19,6 +19,7 @@ public:
 
 	void Activate();
 
+	std::function<void(int)> OnChanged;
 	std::function<void()> OnActivated;
 
 protected:

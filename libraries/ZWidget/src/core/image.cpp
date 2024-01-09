@@ -62,7 +62,7 @@ std::shared_ptr<Image> Image::LoadResource(const std::string& resourcename, doub
 
 	if (extension == "png")
 	{
-		auto filedata = LoadWidgetImageData(resourcename);
+		auto filedata = LoadWidgetData(resourcename);
 
 		std::vector<unsigned char> pixels;
 		unsigned long width = 0, height = 0;
@@ -74,7 +74,7 @@ std::shared_ptr<Image> Image::LoadResource(const std::string& resourcename, doub
 	}
 	else if (extension == "svg")
 	{
-		auto filedata = LoadWidgetImageData(resourcename);
+		auto filedata = LoadWidgetData(resourcename);
 		filedata.push_back(0);
 
 		NSVGimage* svgimage = nsvgParse((char*)filedata.data(), "px", (float)(96.0 * dpiscale));

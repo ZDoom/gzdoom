@@ -1,6 +1,8 @@
 #pragma once
 
 #include <zwidget/core/widget.h>
+#include "tarray.h"
+#include "zstring.h"
 
 
 #define RENDER_BACKENDS
@@ -27,10 +29,12 @@ private:
 
 	void OnClose() override;
 	void OnGeometryChanged() override;
+	void UpdateLanguage();
 
 	ImageBox* Logo = nullptr;
 	TextLabel* WelcomeLabel = nullptr;
 	TextLabel* VersionLabel = nullptr;
+	TextLabel* LangLabel = nullptr;
 	TextLabel* SelectLabel = nullptr;
 	TextLabel* GeneralLabel = nullptr;
 	TextLabel* ExtrasLabel = nullptr;
@@ -50,8 +54,11 @@ private:
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
+	ListView* LangList = nullptr;
 	LineEdit* ParametersEdit = nullptr;
 
 	int* AutoloadFlags = nullptr;
 	int ExecResult = -1;
+	bool hideLanguage = false;
+	TArray<std::pair<FString, FString>> languages;
 };

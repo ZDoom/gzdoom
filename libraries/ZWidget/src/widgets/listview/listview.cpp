@@ -27,6 +27,7 @@ void ListView::SetSelectedItem(int index)
 	if (selectedItem != index && index >= 0 && index < items.size())
 	{
 		selectedItem = index;
+		if (OnChanged) OnChanged(selectedItem);
 		Update();
 	}
 }

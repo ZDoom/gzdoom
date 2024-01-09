@@ -3,6 +3,7 @@
 #include "version.h"
 #include "i_interface.h"
 #include "gstrings.h"
+#include <zwidget/core/resourcedata.h>
 #include <zwidget/core/image.h>
 #include <zwidget/window/window.h>
 #include <zwidget/widgets/textedit/textedit.h>
@@ -17,13 +18,14 @@
 EXTERN_CVAR(Int, vid_preferbackend);
 #endif
 
+EXTERN_CVAR(String, language)
 EXTERN_CVAR(Bool, queryiwad);
 
 int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags)
 {
 	Size screenSize = GetScreenSize();
 	double windowWidth = 615.0;
-	double windowHeight = 668.0;
+	double windowHeight = 700.0;
 
 	auto launcher = std::make_unique<LauncherWindow>(wads, numwads, defaultiwad, autoloadflags);
 	launcher->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
@@ -34,36 +36,9 @@ int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int*
 	return launcher->ExecResult;
 }
 
-LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window), AutoloadFlags(autoloadflags)
+void LauncherWindow::UpdateLanguage()
 {
-	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
-	SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
-	SetWindowCaptionColor(Colorf::fromRgba8(33, 33, 33));
-	SetWindowCaptionTextColor(Colorf::fromRgba8(226, 223, 219));
-	SetWindowTitle(GAMENAME);
-
-	Logo = new ImageBox(this);
-	WelcomeLabel = new TextLabel(this);
-	VersionLabel = new TextLabel(this);
-	SelectLabel = new TextLabel(this);
-	GeneralLabel = new TextLabel(this);
-	ExtrasLabel = new TextLabel(this);
-	ParametersLabel = new TextLabel(this);
-	FullscreenCheckbox = new CheckboxLabel(this);
-	DisableAutoloadCheckbox = new CheckboxLabel(this);
-	DontAskAgainCheckbox = new CheckboxLabel(this);
-	LightsCheckbox = new CheckboxLabel(this);
-	BrightmapsCheckbox = new CheckboxLabel(this);
-	WidescreenCheckbox = new CheckboxLabel(this);
-	PlayButton = new PushButton(this);
-	ExitButton = new PushButton(this);
-	GamesList = new ListView(this);
-	ParametersEdit = new LineEdit(this);
-
-	PlayButton->OnClick = [=]() { OnPlayButtonClicked(); };
-	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
-	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
-
+	LangLabel->SetText(GStrings("OPTMNU_LANGUAGE"));
 	SelectLabel->SetText(GStrings("PICKER_SELECT"));
 	PlayButton->SetText(GStrings("PICKER_PLAY"));
 	ExitButton->SetText(GStrings("PICKER_EXIT"));
@@ -79,11 +54,7 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	ParametersLabel->SetText(GStrings("PICKER_ADDPARM"));
 
 #ifdef RENDER_BACKENDS
-	BackendLabel = new TextLabel(this);
-	VulkanCheckbox = new CheckboxLabel(this);
-	OpenGLCheckbox = new CheckboxLabel(this);
-	GLESCheckbox = new CheckboxLabel(this);
-	BackendLabel->SetText(GStrings("VIDMNU_PREFERBACKEND"));
+	BackendLabel->SetText(GStrings("PICKER_PREFERBACKEND"));
 	VulkanCheckbox->SetText(GStrings("OPTVAL_VULKAN"));
 	OpenGLCheckbox->SetText(GStrings("OPTVAL_OPENGL"));
 	GLESCheckbox->SetText(GStrings("OPTVAL_OPENGLES"));
@@ -95,6 +66,48 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	versionText.Substitute("%s", GetVersionString());
 	WelcomeLabel->SetText(welcomeText.GetChars());
 	VersionLabel->SetText(versionText.GetChars());
+}
+
+LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window), AutoloadFlags(autoloadflags)
+{
+	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
+	SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
+	SetWindowCaptionColor(Colorf::fromRgba8(33, 33, 33));
+	SetWindowCaptionTextColor(Colorf::fromRgba8(226, 223, 219));
+	SetWindowTitle(GAMENAME);
+
+	Logo = new ImageBox(this);
+	WelcomeLabel = new TextLabel(this);
+	VersionLabel = new TextLabel(this);
+	LangLabel = new TextLabel(this);
+	SelectLabel = new TextLabel(this);
+	GeneralLabel = new TextLabel(this);
+	ExtrasLabel = new TextLabel(this);
+	ParametersLabel = new TextLabel(this);
+	FullscreenCheckbox = new CheckboxLabel(this);
+	DisableAutoloadCheckbox = new CheckboxLabel(this);
+	DontAskAgainCheckbox = new CheckboxLabel(this);
+	LightsCheckbox = new CheckboxLabel(this);
+	BrightmapsCheckbox = new CheckboxLabel(this);
+	WidescreenCheckbox = new CheckboxLabel(this);
+	PlayButton = new PushButton(this);
+	ExitButton = new PushButton(this);
+	LangList = new ListView(this);
+	GamesList = new ListView(this);
+	ParametersEdit = new LineEdit(this);
+
+#ifdef RENDER_BACKENDS
+	BackendLabel = new TextLabel(this);
+	VulkanCheckbox = new CheckboxLabel(this);
+	OpenGLCheckbox = new CheckboxLabel(this);
+	GLESCheckbox = new CheckboxLabel(this);
+#endif
+
+	PlayButton->OnClick = [=]() { OnPlayButtonClicked(); };
+	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
+	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
+
+	UpdateLanguage();
 
 	FullscreenCheckbox->SetChecked(vid_fullscreen);
 	DontAskAgainCheckbox->SetChecked(!queryiwad);
@@ -126,6 +139,45 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	}
 #endif
 
+
+	try
+	{
+		auto data = LoadWidgetData("menudef.txt");
+		FScanner sc;
+		sc.OpenMem("menudef.txt", data);
+		while (sc.GetString())
+		{
+			if (sc.Compare("OptionString"))
+			{
+				sc.MustGetString();
+				if (sc.Compare("LanguageOptions"))
+				{
+					sc.MustGetStringName("{");
+					while (!sc.CheckString("}"))
+					{
+						sc.MustGetString();
+						FString iso = sc.String;
+						sc.MustGetStringName(",");
+						sc.MustGetString();
+						if(iso.CompareNoCase("auto"))
+							languages.push_back(std::make_pair(iso, FString(sc.String)));
+					}
+				}
+			}
+		}
+	}
+	catch (const std::exception& ex)
+	{
+		hideLanguage = true;
+	}
+	int i = 0;
+	for (auto& l : languages)
+	{
+		LangList->AddItem(l.second.GetChars());
+		if (!l.first.CompareNoCase(::language))
+			LangList->SetSelectedItem(i);
+		i++;
+	}
 	for (int i = 0; i < numwads; i++)
 	{
 		const char* filepart = strrchr(wads[i].Path.GetChars(), '/');
@@ -150,6 +202,14 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	Logo->SetImage(Image::LoadResource("widgets/banner.png"));
 
 	GamesList->SetFocus();
+
+	LangList->OnChanged = [this](int i)
+		{
+			::language = languages[i].first.GetChars();
+			GStrings.UpdateLanguage(::language); // CVAR callbacks are not active yet.
+			UpdateLanguage();
+			Update();
+		};
 }
 
 void LauncherWindow::OnClose()
@@ -215,10 +275,19 @@ void LauncherWindow::OnGeometryChanged()
 
 	y += 10.0;
 
+	if (!hideLanguage)
+	{
+		LangLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, SelectLabel->GetPreferredHeight());
+		y += LangLabel->GetPreferredHeight();
+		LangList->SetFrameGeometry(20.0, y, GetWidth() - 40.0, 61);
+		y += 64.0;
+	}
+
+
 	SelectLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, SelectLabel->GetPreferredHeight());
 	y += SelectLabel->GetPreferredHeight();
 
-	double listViewTop = y + 10.0;
+	double listViewTop = y;
 
 	y = GetHeight() - 15.0 - PlayButton->GetPreferredHeight();
 	PlayButton->SetFrameGeometry(20.0, y, 120.0, PlayButton->GetPreferredHeight());

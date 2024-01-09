@@ -88,18 +88,19 @@ void FTextureAnimator::DeleteAll()
 FAnimDef *FTextureAnimator::AddAnim (FAnimDef& anim)
 {
 	// Search for existing duplicate.
-	for (unsigned int i = 0; i < mAnimations.Size(); ++i)
-	{
-		if (mAnimations[i].BasePic == anim.BasePic)
-		{
-			// Found one!
-			mAnimations[i] = anim;
-			return &mAnimations[i];
-		}
+	uint16_t * index = mAnimationIndices.CheckKey(anim.BasePic);
+
+	if(index)
+	{	// Found one!
+		mAnimations[*index] = anim;
+		return &mAnimations[*index];
 	}
-	// Didn't find one, so add it at the end.
-	mAnimations.Push (anim);
-	return &mAnimations.Last();
+	else
+	{	// Didn't find one, so add it at the end.
+		mAnimationIndices.Insert(anim.BasePic, mAnimations.Size());
+		mAnimations.Push (anim);
+		return &mAnimations.Last();
+	}
 }
 
 //==========================================================================
@@ -982,18 +983,13 @@ constexpr double msPerTic = 1'000.0 / TICRATE;
 
 bool FTextureAnimator::InitStandaloneAnimation(FStandaloneAnimation &animInfo, FTextureID tex, uint32_t curTic)
 {
-	FAnimDef * anim;
 	animInfo.ok = false;
-	for(unsigned i = 0; i < mAnimations.Size(); i++)
-	{
-		if(mAnimations[i].BasePic == tex)
-		{
-			animInfo.ok = true;
-			animInfo.AnimIndex = i;
-			anim = &mAnimations[i];
-		}
-	}
-	if(!animInfo.ok) return false;
+	uint16_t * index = mAnimationIndices.CheckKey(tex);
+	if(!index) return false;
+	FAnimDef * anim = &mAnimations[*index];
+
+	animInfo.ok = true;
+	animInfo.AnimIndex = *index;
 	animInfo.CurFrame = 0;
 	animInfo.SwitchTic = curTic;
 	animInfo.AnimType = (anim->AnimType == FAnimDef::ANIM_OscillateDown) ? FAnimDef::ANIM_OscillateUp : anim->AnimType;

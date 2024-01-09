@@ -73,6 +73,7 @@ struct FDoorAnimation
 
 class FTextureAnimator
 {
+	TMap<FTextureID, uint16_t> mAnimationIndices;
 	TArray<FAnimDef> mAnimations;
 	TArray<FSwitchDef*> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;

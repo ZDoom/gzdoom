@@ -1343,7 +1343,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	else
 	{
 		bool has_texture = particle->texture.isValid();
-		bool custom_animated_texture = (particle->flags & SPF_STANDALONE_ANIMATIONS) && particle->animData.ok;
+		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
 		
 		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
 
@@ -1449,7 +1449,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	if (paused || spr->isFrozen())
 		timefrac = 0.;
 	
-	bool custom_anim = ((spr->PT.flags & SPF_STANDALONE_ANIMATIONS) && spr->PT.animData.ok);
+	bool custom_anim = ((spr->PT.flags & SPF_LOCAL_ANIM) && spr->PT.animData.ok);
 
 	texture = TexMan.GetGameTexture(
 			custom_anim

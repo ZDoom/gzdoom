@@ -297,7 +297,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		i = particle->tnext;
 		if (Level->isFrozen() && !(particle->flags &SPF_NOTIMEFREEZE))
 		{
-			if(particle->flags & SPF_STANDALONE_ANIMATIONS)
+			if(particle->flags & SPF_LOCAL_ANIM)
 			{
 				particle->animData.SwitchTic++;
 			}
@@ -386,7 +386,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->RollVel = rollvel;
 		particle->RollAcc = rollacc;
 		particle->flags = flags;
-		if(flags & SPF_STANDALONE_ANIMATIONS)
+		if(flags & SPF_LOCAL_ANIM)
 		{
 			TexAnim.InitStandaloneAnimation(particle->animData, texture, Level->maptime);
 		}
@@ -1079,7 +1079,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThink
 void DVisualThinker::UpdateSpriteInfo()
 {
 	PT.style = ERenderStyle(GetRenderStyle());
-	if((PT.flags & SPF_STANDALONE_ANIMATIONS) && PT.texture != AnimatedTexture)
+	if((PT.flags & SPF_LOCAL_ANIM) && PT.texture != AnimatedTexture)
 	{
 		AnimatedTexture = PT.texture;
 		TexAnim.InitStandaloneAnimation(PT.animData, PT.texture, Level->maptime);

@@ -2,6 +2,7 @@
 #define TEXTUREID_H
 
 #include <cstddef>
+#include "tarray.h"
 
 enum class ETextureType : uint8_t
 {
@@ -67,7 +68,6 @@ public:
 	constexpr FSetTextureID(int v) : FTextureID(v) {}
 };
 
-#ifdef TARRAY_H
 template<> struct THashTraits<FTextureID>
 {
 
@@ -76,4 +76,3 @@ template<> struct THashTraits<FTextureID>
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const FTextureID left, const FTextureID right) { return left != right; }
 };
-#endif

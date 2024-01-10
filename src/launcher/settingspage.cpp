@@ -183,6 +183,8 @@ void SettingsPage::OnGeometryChanged()
 	y += DontAskAgainCheckbox->GetPreferredHeight();
 
 #ifdef RENDER_BACKENDS
+	double x = w / 2 - panelWidth / 2;
+	y = 0;
 	BackendLabel->SetFrameGeometry(x, y, 190.0, BackendLabel->GetPreferredHeight());
 	y += BackendLabel->GetPreferredHeight();
 
@@ -192,7 +194,6 @@ void SettingsPage::OnGeometryChanged()
 	OpenGLCheckbox->SetFrameGeometry(x, y, 190.0, OpenGLCheckbox->GetPreferredHeight());
 	y += OpenGLCheckbox->GetPreferredHeight();
 
-	double x = w / 2 - panelWidth / 2;
 	GLESCheckbox->SetFrameGeometry(x, y, 190.0, GLESCheckbox->GetPreferredHeight());
 	y += GLESCheckbox->GetPreferredHeight();
 #endif

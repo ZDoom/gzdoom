@@ -72,6 +72,8 @@ void LauncherWindow::Exit()
 
 void LauncherWindow::UpdateLanguage()
 {
+	// Pages->SetTabText(PlayGame, GStrings("PICKER_TAB_PLAY"));
+	// Pages->SetTabText(Settings, GStrings("PICKER_TAB_SETTINGS"));
 	Banner->UpdateLanguage();
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();

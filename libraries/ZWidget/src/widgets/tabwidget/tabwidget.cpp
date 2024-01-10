@@ -30,6 +30,30 @@ int TabWidget::AddTab(Widget* page, const std::shared_ptr<Image>& icon, const st
 	return pageIndex;
 }
 
+void TabWidget::SetTabText(int index, const std::string& text)
+{
+	Bar->SetTabText(index, text);
+}
+
+void TabWidget::SetTabText(Widget* page, const std::string& text)
+{
+	int index = GetPageIndex(page);
+	if (index != -1)
+		SetTabText(index, text);
+}
+
+void TabWidget::SetTabIcon(int index, const std::shared_ptr<Image>& icon)
+{
+	Bar->SetTabIcon(index, icon);
+}
+
+void TabWidget::SetTabIcon(Widget* page, const std::shared_ptr<Image>& icon)
+{
+	int index = GetPageIndex(page);
+	if (index != -1)
+		SetTabIcon(index, icon);
+}
+
 int TabWidget::GetCurrentIndex() const
 {
 	return Bar->GetCurrentIndex();
@@ -111,6 +135,18 @@ int TabBar::AddTab(const std::shared_ptr<Image>& icon, const std::string& label)
 		SetCurrentIndex(pageIndex);
 	OnGeometryChanged();
 	return pageIndex;
+}
+
+void TabBar::SetTabText(int index, const std::string& text)
+{
+	Tabs[index]->SetText(text);
+	OnGeometryChanged();
+}
+
+void TabBar::SetTabIcon(int index, const std::shared_ptr<Image>& icon)
+{
+	Tabs[index]->SetIcon(icon);
+	OnGeometryChanged();
 }
 
 int TabBar::GetCurrentIndex() const

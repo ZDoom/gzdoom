@@ -72,9 +72,9 @@ protected:
 	void OnPaintFrame(Canvas* canvas) override;
 	void OnPaint(Canvas* canvas) override;
 	void OnMouseMove(const Point& pos) override;
-	void OnMouseDown(const Point& pos, int key) override;
-	void OnMouseDoubleclick(const Point& pos, int key) override;
-	void OnMouseUp(const Point& pos, int key) override;
+	bool OnMouseDown(const Point& pos, int key) override;
+	bool OnMouseDoubleclick(const Point& pos, int key) override;
+	bool OnMouseUp(const Point& pos, int key) override;
 	void OnKeyChar(std::string chars) override;
 	void OnKeyDown(EInputKey key) override;
 	void OnKeyUp(EInputKey key) override;

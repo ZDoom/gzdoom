@@ -104,6 +104,7 @@ int TabBar::AddTab(const std::shared_ptr<Image>& icon, const std::string& label)
 	TabBarTab* tab = new TabBarTab(this);
 	tab->SetIcon(icon);
 	tab->SetText(label);
+	tab->OnClick = [=]() { OnTabClicked(tab); };
 	int pageIndex = Tabs.size();
 	Tabs.push_back(tab);
 	if (CurrentIndex == -1)
@@ -270,27 +271,21 @@ void TabBarTab::OnMouseMove(const Point& pos)
 	}
 }
 
-void TabBarTab::OnMouseDown(const Point& pos, int key)
+bool TabBarTab::OnMouseDown(const Point& pos, int key)
 {
-	mouseDown = true;
-	Update();
+	if (OnClick)
+		OnClick();
+	return true;
 }
 
-void TabBarTab::OnMouseUp(const Point& pos, int key)
+bool TabBarTab::OnMouseUp(const Point& pos, int key)
 {
-	if (mouseDown)
-	{
-		mouseDown = false;
-		Repaint();
-		if (OnClick)
-			OnClick();
-	}
+	return true;
 }
 
 void TabBarTab::OnMouseLeave()
 {
 	hot = false;
-	mouseDown = false;
 	Update();
 }
 
@@ -309,7 +304,10 @@ void TabWidgetStack::SetCurrentWidget(Widget* widget)
 			CurrentWidget->SetVisible(false);
 		CurrentWidget = widget;
 		if (CurrentWidget)
+		{
 			CurrentWidget->SetVisible(true);
+			OnGeometryChanged();
+		}
 	}
 }
 

@@ -212,7 +212,7 @@ void LogViewer::OnPaint(Canvas* canvas)
 	}
 }
 
-void LogViewer::OnMouseWheel(const Point& pos, EInputKey key)
+bool LogViewer::OnMouseWheel(const Point& pos, EInputKey key)
 {
 	if (key == IK_MouseWheelUp)
 	{
@@ -222,6 +222,7 @@ void LogViewer::OnMouseWheel(const Point& pos, EInputKey key)
 	{
 		ScrollDown(4);
 	}
+	return true;
 }
 
 void LogViewer::OnKeyDown(EInputKey key)

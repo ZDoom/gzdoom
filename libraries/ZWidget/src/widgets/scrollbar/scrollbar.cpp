@@ -169,7 +169,7 @@ void Scrollbar::OnMouseMove(const Point& pos)
 	Update();
 }
 
-void Scrollbar::OnMouseDown(const Point& pos, int key)
+bool Scrollbar::OnMouseDown(const Point& pos, int key)
 {
 	mouse_drag_start_pos = pos;
 
@@ -254,9 +254,10 @@ void Scrollbar::OnMouseDown(const Point& pos, int key)
 
 	Update();
 	CaptureMouse();
+	return true;
 }
 
-void Scrollbar::OnMouseUp(const Point& pos, int key)
+bool Scrollbar::OnMouseUp(const Point& pos, int key)
 {
 	if (mouse_down_mode == mouse_down_thumb_drag)
 	{
@@ -269,6 +270,7 @@ void Scrollbar::OnMouseUp(const Point& pos, int key)
 
 	Update();
 	ReleaseMouseCapture();
+	return true;
 }
 
 void Scrollbar::OnMouseLeave()

@@ -286,7 +286,7 @@ void TextEdit::OnMouseMove(const Point& pos)
 	}
 }
 
-void TextEdit::OnMouseDown(const Point& pos, int key)
+bool TextEdit::OnMouseDown(const Point& pos, int key)
 {
 	if (key == IK_LeftMouse)
 	{
@@ -298,13 +298,15 @@ void TextEdit::OnMouseDown(const Point& pos, int key)
 
 		Update();
 	}
+	return true;
 }
 
-void TextEdit::OnMouseDoubleclick(const Point& pos, int key)
+bool TextEdit::OnMouseDoubleclick(const Point& pos, int key)
 {
+	return true;
 }
 
-void TextEdit::OnMouseUp(const Point& pos, int key)
+bool TextEdit::OnMouseUp(const Point& pos, int key)
 {
 	if (mouse_selecting && key == IK_LeftMouse)
 	{
@@ -326,6 +328,7 @@ void TextEdit::OnMouseUp(const Point& pos, int key)
 			Update();
 		}
 	}
+	return true;
 }
 
 void TextEdit::OnKeyChar(std::string chars)

@@ -85,9 +85,9 @@ public:
 protected:
 	void OnPaintFrame(Canvas* canvas) override;
 	void OnGeometryChanged() override;
+	bool OnMouseDown(const Point& pos, int key) override;
+	bool OnMouseUp(const Point& pos, int key) override;
 	void OnMouseMove(const Point& pos) override;
-	void OnMouseDown(const Point& pos, int key) override;
-	void OnMouseUp(const Point& pos, int key) override;
 	void OnMouseLeave() override;
 
 private:
@@ -95,7 +95,6 @@ private:
 
 	ImageBox* Icon = nullptr;
 	TextLabel* Label = nullptr;
-	bool mouseDown = false;
 	bool hot = false;
 };
 

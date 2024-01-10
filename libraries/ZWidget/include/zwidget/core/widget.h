@@ -72,6 +72,7 @@ public:
 	bool HasFocus();
 	bool IsEnabled();
 	bool IsVisible();
+	bool IsHidden();
 
 	void SetFocus();
 	void SetEnabled(bool value);
@@ -113,11 +114,11 @@ public:
 protected:
 	virtual void OnPaintFrame(Canvas* canvas) { }
 	virtual void OnPaint(Canvas* canvas) { }
+	virtual bool OnMouseDown(const Point& pos, int key) { return false; }
+	virtual bool OnMouseDoubleclick(const Point& pos, int key) { return false; }
+	virtual bool OnMouseUp(const Point& pos, int key) { return false; }
+	virtual bool OnMouseWheel(const Point& pos, EInputKey key) { return false; }
 	virtual void OnMouseMove(const Point& pos) { }
-	virtual void OnMouseDown(const Point& pos, int key) { }
-	virtual void OnMouseDoubleclick(const Point& pos, int key) { }
-	virtual void OnMouseUp(const Point& pos, int key) { }
-	virtual void OnMouseWheel(const Point& pos, EInputKey key) { }
 	virtual void OnMouseLeave() { }
 	virtual void OnRawMouseMove(int dx, int dy) { }
 	virtual void OnKeyChar(std::string chars) { }
@@ -180,6 +181,7 @@ private:
 	Widget* FocusWidget = nullptr;
 	Widget* CaptureWidget = nullptr;
 	Widget* HoverWidget = nullptr;
+	bool HiddenFlag = false;
 
 	StandardCursor CurrentCursor = StandardCursor::arrow;
 

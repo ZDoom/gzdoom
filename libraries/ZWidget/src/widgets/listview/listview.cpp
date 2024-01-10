@@ -96,7 +96,7 @@ void ListView::OnPaintFrame(Canvas* canvas)
 	canvas->fillRect(Rect::xywh(w - 1.0, 0.0, 1.0, h - 0.0), bordercolor);
 }
 
-void ListView::OnMouseDown(const Point& pos, int key)
+bool ListView::OnMouseDown(const Point& pos, int key)
 {
 	SetFocus();
 
@@ -109,17 +109,19 @@ void ListView::OnMouseDown(const Point& pos, int key)
 			ScrollToItem(selectedItem);
 		}
 	}
+	return true;
 }
 
-void ListView::OnMouseDoubleclick(const Point& pos, int key)
+bool ListView::OnMouseDoubleclick(const Point& pos, int key)
 {
 	if (key == IK_LeftMouse)
 	{
 		Activate();
 	}
+	return true;
 }
 
-void ListView::OnMouseWheel(const Point& pos, EInputKey key)
+bool ListView::OnMouseWheel(const Point& pos, EInputKey key)
 {
 	if (key == IK_MouseWheelUp)
 	{
@@ -129,6 +131,7 @@ void ListView::OnMouseWheel(const Point& pos, EInputKey key)
 	{
 		scrollbar->SetPosition(std::min(scrollbar->GetPosition() + 20.0, scrollbar->GetMax()));
 	}
+	return true;
 }
 
 void ListView::OnKeyDown(EInputKey key)

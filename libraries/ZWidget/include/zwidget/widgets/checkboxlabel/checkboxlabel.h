@@ -21,8 +21,8 @@ public:
 
 protected:
 	void OnPaint(Canvas* canvas) override;
-	void OnMouseDown(const Point& pos, int key) override;
-	void OnMouseUp(const Point& pos, int key) override;
+	bool OnMouseDown(const Point& pos, int key) override;
+	bool OnMouseUp(const Point& pos, int key) override;
 	void OnMouseLeave() override;
 	void OnKeyUp(EInputKey key) override;
 

@@ -427,9 +427,9 @@ Widget* Widget::Window()
 	return nullptr;
 }
 
-Canvas* Widget::GetCanvas()
+Canvas* Widget::GetCanvas() const
 {
-	for (Widget* w = this; w != nullptr; w = w->Parent())
+	for (const Widget* w = this; w != nullptr; w = w->Parent())
 	{
 		if (w->DispCanvas)
 			return w->DispCanvas.get();

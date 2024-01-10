@@ -21,6 +21,7 @@ public:
 	void SetTextAlignment(TextLabelAlignment alignment);
 	TextLabelAlignment GetTextAlignment() const;
 
+	double GetPreferredWidth() const;
 	double GetPreferredHeight() const;
 
 protected:

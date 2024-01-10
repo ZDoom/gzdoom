@@ -33,6 +33,12 @@ TextLabelAlignment TextLabel::GetTextAlignment() const
 	return textAlignment;
 }
 
+double TextLabel::GetPreferredWidth() const
+{
+	Canvas* canvas = GetCanvas();
+	return canvas->measureText(text).width;
+}
+
 double TextLabel::GetPreferredHeight() const
 {
 	return 20.0;

@@ -86,7 +86,7 @@ public:
 	void SetClipboardText(const std::string& text);
 
 	Widget* Window();
-	Canvas* GetCanvas();
+	Canvas* GetCanvas() const;
 	Widget* ChildAt(double x, double y) { return ChildAt(Point(x, y)); }
 	Widget* ChildAt(const Point& pos);
 

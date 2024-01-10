@@ -39,6 +39,10 @@ public:
 
 	// Widget noncontent area
 	void SetNoncontentSizes(double left, double top, double right, double bottom);
+	double GetNoncontentLeft() const { return Noncontent.Left; }
+	double GetNoncontentTop() const { return Noncontent.Top; }
+	double GetNoncontentRight() const { return Noncontent.Right; }
+	double GetNoncontentBottom() const { return Noncontent.Bottom; }
 
 	// Widget frame box
 	Rect GetFrameGeometry() const;

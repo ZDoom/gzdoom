@@ -91,6 +91,7 @@ void TabWidget::OnGeometryChanged()
 
 TabBar::TabBar(Widget* parent) : Widget(parent)
 {
+	SetNoncontentSizes(20.0, 0.0, 20.0, 0.0);
 }
 
 int TabBar::AddTab(const std::string& label)
@@ -151,6 +152,9 @@ int TabBar::GetTabIndex(TabBarTab* tab)
 
 void TabBar::OnPaintFrame(Canvas* canvas)
 {
+	double w = GetFrameGeometry().width;
+	double h = GetFrameGeometry().height;
+	canvas->fillRect(Rect::xywh(0.0, 0.0, w, h), Colorf::fromRgba8(38, 38, 38));
 }
 
 void TabBar::OnGeometryChanged()
@@ -160,7 +164,7 @@ void TabBar::OnGeometryChanged()
 	double x = 0.0;
 	for (TabBarTab* tab : Tabs)
 	{
-		double tabWidth = tab->GetPreferredWidth();
+		double tabWidth = tab->GetNoncontentLeft() + tab->GetPreferredWidth() + tab->GetNoncontentRight();
 		tab->SetFrameGeometry(Rect::xywh(x, 0.0, tabWidth, h));
 		x += tabWidth;
 	}
@@ -170,6 +174,7 @@ void TabBar::OnGeometryChanged()
 
 TabBarTab::TabBarTab(Widget* parent) : Widget(parent)
 {
+	SetNoncontentSizes(15.0, 0.0, 15.0, 0.0);
 }
 
 void TabBarTab::SetText(const std::string& text)
@@ -228,6 +233,16 @@ double TabBarTab::GetPreferredWidth() const
 
 void TabBarTab::OnPaintFrame(Canvas* canvas)
 {
+	double w = GetFrameGeometry().width;
+	double h = GetFrameGeometry().height;
+	if (IsCurrent)
+	{
+		canvas->fillRect(Rect::xywh(0.0, 0.0, w, h), Colorf::fromRgba8(51, 51, 51));
+	}
+	else if (hot)
+	{
+		canvas->fillRect(Rect::xywh(0.0, 0.0, w, h), Colorf::fromRgba8(45, 45, 45));
+	}
 }
 
 void TabBarTab::OnGeometryChanged()
@@ -242,7 +257,7 @@ void TabBarTab::OnGeometryChanged()
 	}
 	if (Label)
 	{
-		Label->SetFrameGeometry(Rect::xywh(x, 0.0, std::max(w - x, 0.0), h));
+		Label->SetFrameGeometry(Rect::xywh(x, (h - Label->GetPreferredHeight()) * 0.5, std::max(w - x, 0.0), Label->GetPreferredHeight()));
 	}
 }
 
@@ -283,6 +298,7 @@ void TabBarTab::OnMouseLeave()
 
 TabWidgetStack::TabWidgetStack(Widget* parent) : Widget(parent)
 {
+	SetNoncontentSizes(20.0, 5.0, 20.0, 5.0);
 }
 
 void TabWidgetStack::SetCurrentWidget(Widget* widget)

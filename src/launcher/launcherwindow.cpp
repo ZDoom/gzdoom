@@ -1,25 +1,15 @@
 #include "launcherwindow.h"
+#include "launcherbanner.h"
+#include "launcherbuttonbar.h"
+#include "playgamepage.h"
+#include "settingspage.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_interface.h"
 #include "gstrings.h"
 #include <zwidget/core/resourcedata.h>
-#include <zwidget/core/image.h>
 #include <zwidget/window/window.h>
-#include <zwidget/widgets/textedit/textedit.h>
-#include <zwidget/widgets/listview/listview.h>
-#include <zwidget/widgets/imagebox/imagebox.h>
-#include <zwidget/widgets/textlabel/textlabel.h>
-#include <zwidget/widgets/pushbutton/pushbutton.h>
-#include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
-#include <zwidget/widgets/lineedit/lineedit.h>
-
-#ifdef RENDER_BACKENDS
-EXTERN_CVAR(Int, vid_preferbackend);
-#endif
-
-EXTERN_CVAR(String, language)
-EXTERN_CVAR(Bool, queryiwad);
+#include <zwidget/widgets/tabwidget/tabwidget.h>
 
 int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags)
 {
@@ -36,39 +26,7 @@ int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int*
 	return launcher->ExecResult;
 }
 
-void LauncherWindow::UpdateLanguage()
-{
-	LangLabel->SetText(GStrings("OPTMNU_LANGUAGE"));
-	SelectLabel->SetText(GStrings("PICKER_SELECT"));
-	PlayButton->SetText(GStrings("PICKER_PLAY"));
-	ExitButton->SetText(GStrings("PICKER_EXIT"));
-
-	GeneralLabel->SetText(GStrings("PICKER_GENERAL"));
-	ExtrasLabel->SetText(GStrings("PICKER_EXTRA"));
-	FullscreenCheckbox->SetText(GStrings("PICKER_FULLSCREEN"));
-	DisableAutoloadCheckbox->SetText(GStrings("PICKER_NOAUTOLOAD"));
-	DontAskAgainCheckbox->SetText(GStrings("PICKER_DONTASK"));
-	LightsCheckbox->SetText(GStrings("PICKER_LIGHTS"));
-	BrightmapsCheckbox->SetText(GStrings("PICKER_BRIGHTMAPS"));
-	WidescreenCheckbox->SetText(GStrings("PICKER_WIDESCREEN"));
-	ParametersLabel->SetText(GStrings("PICKER_ADDPARM"));
-
-#ifdef RENDER_BACKENDS
-	BackendLabel->SetText(GStrings("PICKER_PREFERBACKEND"));
-	VulkanCheckbox->SetText(GStrings("OPTVAL_VULKAN"));
-	OpenGLCheckbox->SetText(GStrings("OPTVAL_OPENGL"));
-	GLESCheckbox->SetText(GStrings("OPTVAL_OPENGLES"));
-#endif
-
-	FString welcomeText = GStrings("PICKER_WELCOME");
-	welcomeText.Substitute("%s", GAMENAME);
-	FString versionText = GStrings("PICKER_VERSION");
-	versionText.Substitute("%s", GetVersionString());
-	WelcomeLabel->SetText(welcomeText.GetChars());
-	VersionLabel->SetText(versionText.GetChars());
-}
-
-LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window), AutoloadFlags(autoloadflags)
+LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window)
 {
 	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
 	SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
@@ -76,270 +34,65 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	SetWindowCaptionTextColor(Colorf::fromRgba8(226, 223, 219));
 	SetWindowTitle(GAMENAME);
 
-	Logo = new ImageBox(this);
-	WelcomeLabel = new TextLabel(this);
-	VersionLabel = new TextLabel(this);
-	LangLabel = new TextLabel(this);
-	SelectLabel = new TextLabel(this);
-	GeneralLabel = new TextLabel(this);
-	ExtrasLabel = new TextLabel(this);
-	ParametersLabel = new TextLabel(this);
-	FullscreenCheckbox = new CheckboxLabel(this);
-	DisableAutoloadCheckbox = new CheckboxLabel(this);
-	DontAskAgainCheckbox = new CheckboxLabel(this);
-	LightsCheckbox = new CheckboxLabel(this);
-	BrightmapsCheckbox = new CheckboxLabel(this);
-	WidescreenCheckbox = new CheckboxLabel(this);
-	PlayButton = new PushButton(this);
-	ExitButton = new PushButton(this);
-	LangList = new ListView(this);
-	GamesList = new ListView(this);
-	ParametersEdit = new LineEdit(this);
+	Banner = new LauncherBanner(this);
+	Pages = new TabWidget(this);
+	Buttonbar = new LauncherButtonbar(this);
 
-#ifdef RENDER_BACKENDS
-	BackendLabel = new TextLabel(this);
-	VulkanCheckbox = new CheckboxLabel(this);
-	OpenGLCheckbox = new CheckboxLabel(this);
-	GLESCheckbox = new CheckboxLabel(this);
-#endif
+	PlayGame = new PlayGamePage(this, wads, numwads, defaultiwad);
+	Settings = new SettingsPage(this, autoloadflags);
 
-	PlayButton->OnClick = [=]() { OnPlayButtonClicked(); };
-	ExitButton->OnClick = [=]() { OnExitButtonClicked(); };
-	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
+	Pages->AddTab(PlayGame, "Play");
+	Pages->AddTab(Settings, "Settings");
 
 	UpdateLanguage();
 
-	FullscreenCheckbox->SetChecked(vid_fullscreen);
-	DontAskAgainCheckbox->SetChecked(!queryiwad);
-
-	int flags = *autoloadflags;
-	DisableAutoloadCheckbox->SetChecked(flags & 1);
-	LightsCheckbox->SetChecked(flags & 2);
-	BrightmapsCheckbox->SetChecked(flags & 4);
-	WidescreenCheckbox->SetChecked(flags & 8);
-
-#ifdef RENDER_BACKENDS
-	OpenGLCheckbox->SetRadioStyle(true);
-	VulkanCheckbox->SetRadioStyle(true);
-	GLESCheckbox->SetRadioStyle(true);
-	OpenGLCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
-	VulkanCheckbox->FuncChanged = [this](bool on) { if (on) { OpenGLCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
-	GLESCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); OpenGLCheckbox->SetChecked(false); }};
-	switch (vid_preferbackend)
-	{
-	case 0:
-		OpenGLCheckbox->SetChecked(true);
-		break;
-	case 1:
-		VulkanCheckbox->SetChecked(true);
-		break;
-	case 2:
-		GLESCheckbox->SetChecked(true);
-		break;
-	}
-#endif
-
-
-	try
-	{
-		auto data = LoadWidgetData("menudef.txt");
-		FScanner sc;
-		sc.OpenMem("menudef.txt", data);
-		while (sc.GetString())
-		{
-			if (sc.Compare("OptionString"))
-			{
-				sc.MustGetString();
-				if (sc.Compare("LanguageOptions"))
-				{
-					sc.MustGetStringName("{");
-					while (!sc.CheckString("}"))
-					{
-						sc.MustGetString();
-						FString iso = sc.String;
-						sc.MustGetStringName(",");
-						sc.MustGetString();
-						if(iso.CompareNoCase("auto"))
-							languages.push_back(std::make_pair(iso, FString(sc.String)));
-					}
-				}
-			}
-		}
-	}
-	catch (const std::exception& ex)
-	{
-		hideLanguage = true;
-	}
-	int i = 0;
-	for (auto& l : languages)
-	{
-		LangList->AddItem(l.second.GetChars());
-		if (!l.first.CompareNoCase(::language))
-			LangList->SetSelectedItem(i);
-		i++;
-	}
-	for (int i = 0; i < numwads; i++)
-	{
-		const char* filepart = strrchr(wads[i].Path.GetChars(), '/');
-		if (filepart == NULL)
-			filepart = wads[i].Path.GetChars();
-		else
-			filepart++;
-
-		FString work;
-		if (*filepart) work.Format("%s (%s)", wads[i].Name.GetChars(), filepart);
-		else work = wads[i].Name.GetChars();
-
-		GamesList->AddItem(work.GetChars());
-	}
-
-	if (defaultiwad >= 0 && defaultiwad < numwads)
-	{
-		GamesList->SetSelectedItem(defaultiwad);
-		GamesList->ScrollToItem(defaultiwad);
-	}
-
-	Logo->SetImage(Image::LoadResource("widgets/banner.png"));
-
-	GamesList->SetFocus();
-
-	LangList->OnChanged = [this](int i)
-		{
-			::language = languages[i].first.GetChars();
-			GStrings.UpdateLanguage(::language); // CVAR callbacks are not active yet.
-			UpdateLanguage();
-			Update();
-		};
+	Pages->SetCurrentWidget(PlayGame);
+	PlayGame->SetFocus();
 }
 
-void LauncherWindow::OnClose()
+void LauncherWindow::Start()
 {
-	OnExitButtonClicked();
-}
+	Settings->Save();
 
-void LauncherWindow::OnPlayButtonClicked()
-{
-	vid_fullscreen = FullscreenCheckbox->GetChecked();
-	queryiwad = !DontAskAgainCheckbox->GetChecked();
-
-	int flags = 0;
-	if (DisableAutoloadCheckbox->GetChecked()) flags |= 1;
-	if (LightsCheckbox->GetChecked()) flags |= 2;
-	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
-	if (WidescreenCheckbox->GetChecked()) flags |= 8;
-	*AutoloadFlags = flags;
-
-#ifdef RENDER_BACKENDS
-	int v = 1;
-	if (OpenGLCheckbox->GetChecked()) v = 0;
-	else if (VulkanCheckbox->GetChecked()) v = 1;
-	else if (GLESCheckbox->GetChecked()) v = 2;
-	if (v != vid_preferbackend) vid_preferbackend = v;
-#endif
-
-	std::string extraargs = ParametersEdit->GetText();
+	std::string extraargs = PlayGame->GetExtraArgs();
 	if (!extraargs.empty())
 	{
 		// To do: restart the process like the cocoa backend is doing?
 	}
 
-	ExecResult = GamesList->GetSelectedItem();
+	ExecResult = PlayGame->GetSelectedGame();
 	DisplayWindow::ExitLoop();
 }
 
-void LauncherWindow::OnExitButtonClicked()
+void LauncherWindow::Exit()
 {
 	ExecResult = -1;
 	DisplayWindow::ExitLoop();
 }
 
-void LauncherWindow::OnGamesListActivated()
+void LauncherWindow::UpdateLanguage()
 {
-	OnPlayButtonClicked();
+	Banner->UpdateLanguage();
+	PlayGame->UpdateLanguage();
+	Settings->UpdateLanguage();
+	Buttonbar->UpdateLanguage();
+}
+
+void LauncherWindow::OnClose()
+{
+	Exit();
 }
 
 void LauncherWindow::OnGeometryChanged()
 {
-	double y = 0.0;
+	double top = 0.0;
+	double bottom = GetHeight();
 
-	Logo->SetFrameGeometry(0.0, y, GetWidth(), Logo->GetPreferredHeight());
-	y += Logo->GetPreferredHeight();
+	Banner->SetFrameGeometry(0.0, top, GetWidth(), Banner->GetPreferredHeight());
+	top += Banner->GetPreferredHeight();
 
-	y += 10.0;
+	bottom -= Buttonbar->GetPreferredHeight();
+	Buttonbar->SetFrameGeometry(0.0, bottom, GetWidth(), Buttonbar->GetPreferredHeight());
 
-	WelcomeLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, WelcomeLabel->GetPreferredHeight());
-	y += WelcomeLabel->GetPreferredHeight();
-
-	VersionLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, VersionLabel->GetPreferredHeight());
-	y += VersionLabel->GetPreferredHeight();
-
-	y += 10.0;
-
-	if (!hideLanguage)
-	{
-		LangLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, SelectLabel->GetPreferredHeight());
-		y += LangLabel->GetPreferredHeight();
-		LangList->SetFrameGeometry(20.0, y, GetWidth() - 40.0, 61);
-		y += 64.0;
-	}
-
-
-	SelectLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, SelectLabel->GetPreferredHeight());
-	y += SelectLabel->GetPreferredHeight();
-
-	double listViewTop = y;
-
-	y = GetHeight() - 15.0 - PlayButton->GetPreferredHeight();
-	PlayButton->SetFrameGeometry(20.0, y, 120.0, PlayButton->GetPreferredHeight());
-	ExitButton->SetFrameGeometry(GetWidth() - 20.0 - 120.0, y, 120.0, PlayButton->GetPreferredHeight());
-
-	y -= 20.0;
-
-	double editHeight = 24.0;
-	y -= editHeight;
-	ParametersEdit->SetFrameGeometry(20.0, y, GetWidth() - 40.0, editHeight);
-	y -= 5.0;
-
-	double labelHeight = ParametersLabel->GetPreferredHeight();
-	y -= labelHeight;
-	ParametersLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, labelHeight);
-	y -= 10.0;
-
-	double panelWidth = 150.0;
-
-#ifdef RENDER_BACKENDS
-	auto yy = y;
-	y -= GLESCheckbox->GetPreferredHeight();
-	double x = GetWidth() / 2 - panelWidth / 2;
-	GLESCheckbox->SetFrameGeometry(x, y, 190.0, GLESCheckbox->GetPreferredHeight());
-
-	y -= OpenGLCheckbox->GetPreferredHeight();
-	OpenGLCheckbox->SetFrameGeometry(x, y, 190.0, OpenGLCheckbox->GetPreferredHeight());
-
-	y -= VulkanCheckbox->GetPreferredHeight();
-	VulkanCheckbox->SetFrameGeometry(x, y, 190.0, VulkanCheckbox->GetPreferredHeight());
-
-	y -= BackendLabel->GetPreferredHeight();
-	BackendLabel->SetFrameGeometry(x, y, 190.0, BackendLabel->GetPreferredHeight());
-
-	y = yy;
-#endif
-	y -= DontAskAgainCheckbox->GetPreferredHeight();
-	DontAskAgainCheckbox->SetFrameGeometry(20.0, y, 190.0, DontAskAgainCheckbox->GetPreferredHeight());
-	WidescreenCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());
-
-	y -= DisableAutoloadCheckbox->GetPreferredHeight();
-	DisableAutoloadCheckbox->SetFrameGeometry(20.0, y, 190.0, DisableAutoloadCheckbox->GetPreferredHeight());
-	BrightmapsCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, BrightmapsCheckbox->GetPreferredHeight());
-
-	y -= FullscreenCheckbox->GetPreferredHeight();
-	FullscreenCheckbox->SetFrameGeometry(20.0, y, 190.0, FullscreenCheckbox->GetPreferredHeight());
-	LightsCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, LightsCheckbox->GetPreferredHeight());
-
-	y -= GeneralLabel->GetPreferredHeight();
-	GeneralLabel->SetFrameGeometry(20.0, y, 190.0, GeneralLabel->GetPreferredHeight());
-	ExtrasLabel->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, ExtrasLabel->GetPreferredHeight());
-
-	double listViewBottom = y - 10.0;
-	GamesList->SetFrameGeometry(20.0, listViewTop, GetWidth() - 40.0, std::max(listViewBottom - listViewTop, 0.0));
+	Pages->SetFrameGeometry(0.0, top, GetWidth(), std::max(bottom - top, 0.0));
 }

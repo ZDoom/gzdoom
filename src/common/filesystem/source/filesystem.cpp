@@ -252,7 +252,7 @@ bool FileSystem::InitMultipleFiles (std::vector<std::string>& filenames, LumpFil
 	stringpool->shared = true;	// will be used by all owned resource files.
 
 	// first, check for duplicates
-	if (allowduplicates)
+	if (!allowduplicates)
 	{
 		for (size_t i=0;i<filenames.size(); i++)
 		{

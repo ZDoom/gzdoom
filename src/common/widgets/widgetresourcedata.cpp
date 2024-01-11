@@ -54,7 +54,7 @@ std::vector<SingleFontData> LoadWidgetFontData(const std::string& name)
 	std::vector<SingleFontData> returnv;
 	if (!stricmp(name.c_str(), "notosans"))
 	{
-		returnv.resize(5);
+		returnv.resize(3);
 		returnv[0].fontdata = LoadFile("widgets/noto/notosans-regular.ttf");
 		returnv[1].fontdata = LoadFile("widgets/noto/notosansarmenian-regular.ttf");
 		returnv[2].fontdata = LoadFile("widgets/noto/notosansgeorgian-regular.ttf");
@@ -62,6 +62,7 @@ std::vector<SingleFontData> LoadWidgetFontData(const std::string& name)
 		wchar_t wbuffer[256];
 		if (GetWindowsDirectoryW(wbuffer, 256))
 		{
+			returnv.resize(5);
 			FString windir(wbuffer);
 			returnv[3].fontdata = LoadDiskFile((windir + "/fonts/yugothm.ttc").GetChars());
 			returnv[3].language = "ja";

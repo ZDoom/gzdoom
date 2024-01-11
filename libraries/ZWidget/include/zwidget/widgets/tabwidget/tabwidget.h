@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../../core/widget.h"
+#include <vector>
 #include <functional>
 #include <string>
 

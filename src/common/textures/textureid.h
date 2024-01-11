@@ -1,5 +1,4 @@
 #pragma once
-#define TEXTUREID_H
 
 #include <cstddef>
 #include "tarray.h"

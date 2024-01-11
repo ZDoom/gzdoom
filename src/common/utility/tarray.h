@@ -1,5 +1,4 @@
 #pragma once
-#define TARRAY_H
 /*
 ** tarray.h
 ** Templated, automatically resizing array

@@ -1826,7 +1826,8 @@ void S_SetSoundPaused(int state)
 
 	if ((state || i_soundinbackground) && !pauseext)
 	{
-		S_ResumeSound(true);
+		if (!paused)
+			S_ResumeSound(true);
 		if (GSnd != nullptr)
 		{
 			GSnd->SetInactive(SoundRenderer::INACTIVE_Active);

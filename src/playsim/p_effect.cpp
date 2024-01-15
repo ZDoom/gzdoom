@@ -1093,14 +1093,6 @@ void DVisualThinker::Tick()
 	if (ObjectFlags & OF_EuthanizeMe)
 		return;
 
-	// There won't be a standard particle for this, it's only for graphics.
-	if (!PT.texture.isValid())
-	{
-		Printf("No valid texture, destroyed");
-		Destroy();
-		return;
-	}
-
 	if (isFrozen())
 	{	// needed here because it won't retroactively update like actors do.
 		PT.subsector = Level->PointInRenderSubsector(PT.Pos);

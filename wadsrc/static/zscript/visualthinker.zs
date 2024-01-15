@@ -11,11 +11,8 @@ Class VisualThinker : Thinker native
 	native TextureID		Texture;
 	native TranslationID	Translation;
 	native uint16			Flags;
+	native uint8			VFlags;
 	native int16			LightLevel;
-	native bool				bXFlip,
-							bYFlip,
-							bDontInterpolate,
-							bAddLightLevel;
 	native Color			scolor;
 
 	native Sector			CurSector; // can be null!
@@ -25,7 +22,8 @@ Class VisualThinker : Thinker native
 	native bool IsFrozen();
 
 	static VisualThinker Spawn(Class<VisualThinker> type, TextureID tex, Vector3 pos, Vector3 vel, double alpha = 1.0, int flags = 0,
-						  double roll = 0.0, Vector2 scale = (1,1), Vector2 offset = (0,0), int style = STYLE_Normal, TranslationID trans = 0)
+						  double roll = 0.0, Vector2 scale = (1,1), Vector2 offset = (0,0), int style = STYLE_Normal, TranslationID trans = 0, 
+						  int vflags = 0)
 	{
 		if (!Level)	return null;
 
@@ -42,6 +40,7 @@ Class VisualThinker : Thinker native
 			p.SetRenderStyle(style);
 			p.Translation = trans;
 			p.Flags = flags;
+			p.VFlags = vflags;
 		}
 		return p;
 	}

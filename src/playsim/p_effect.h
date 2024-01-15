@@ -148,11 +148,20 @@ void P_DisconnectEffect (AActor *actor);
 // 
 // VisualThinkers
 // by Major Cooke
-// Credit to phantombeta, RicardoLuis0 & RaveYard for aid
+// Credit to phantombeta, RicardoLuis0, Rachael & RaveYard for aid
 // 
 //===========================================================================
 class HWSprite;
 struct FTranslationID;
+
+enum EVThinkerFlags
+{
+	VTF_XFLIP =						1 << 0,
+	VTF_YFLIP =						1 << 1,		// flip the sprite on the x/y axis.
+	VTF_DONTINTERPOLATE =			1 << 2,		// disable all interpolation
+	VTF_ADDLIGHTLEVEL =				1 << 3,		// adds sector light level to 'LightLevel'
+};
+
 class DVisualThinker : public DThinker
 {
 	DECLARE_CLASS(DVisualThinker, DThinker);
@@ -165,11 +174,7 @@ public:
 	FTranslationID	Translation;
 	FTextureID		AnimatedTexture;
 	sector_t		*cursector;
-
-	bool			bXFlip,
-					bYFlip,				// flip the sprite on the x/y axis.
-					bDontInterpolate,	// disable all interpolation
-					bAddLightLevel;		// adds sector light level to 'LightLevel'
+	uint8_t			VFlags;
 
 	// internal only variables
 	particle_t		PT;

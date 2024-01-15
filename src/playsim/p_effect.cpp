@@ -1019,6 +1019,7 @@ void DVisualThinker::Construct()
 	PT.texture = FTextureID();
 	PT.style = STYLE_Normal;
 	PT.flags = 0;
+	VFlags = 0;
 	Translation = NO_TRANSLATION;
 	PT.subsector = nullptr;
 	cursector = nullptr;
@@ -1143,7 +1144,7 @@ int DVisualThinker::GetLightLevel(sector_t* rendersector) const
 {
 	int lightlevel = rendersector->GetSpriteLight();
 
-	if (bAddLightLevel)
+	if (VFlags & VTF_ADDLIGHTLEVEL)
 	{
 		lightlevel += LightLevel;
 	}
@@ -1156,7 +1157,8 @@ int DVisualThinker::GetLightLevel(sector_t* rendersector) const
 
 FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
 {
-	if (bDontInterpolate) return FVector3(PT.Pos);
+	if (VFlags & VTF_DONTINTERPOLATE) 
+		return FVector3(PT.Pos);
 
 	DVector3 proc = Prev + (ticFrac * (PT.Pos - Prev));
 	return FVector3(proc);
@@ -1165,7 +1167,8 @@ FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
 
 float DVisualThinker::InterpolatedRoll(double ticFrac) const
 {
-	if (bDontInterpolate) return PT.Roll;
+	if (!(VFlags & VTF_DONTINTERPOLATE)) 
+		return PT.Roll;
 
 	return float(PrevRoll + (PT.Roll - PrevRoll) * ticFrac);
 }
@@ -1206,7 +1209,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, SetTranslation, SetTranslation)
 
 static int IsFrozen(DVisualThinker * self)
 {
-	return (self->Level->isFrozen() && !(self->PT.flags & SPF_NOTIMEFREEZE));
+	return !!(self->Level->isFrozen() && !(self->PT.flags & SPF_NOTIMEFREEZE));
 }
 
 bool DVisualThinker::isFrozen()
@@ -1260,12 +1263,10 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("translation", Translation)
 		("cursector", cursector)
 		("scolor", PT.color)
-		("flipx", bXFlip)
-		("flipy", bYFlip)
-		("dontinterpolate", bDontInterpolate)
-		("addlightlevel", bAddLightLevel)
 		("lightlevel", LightLevel)
-		("flags", PT.flags);
+		("flags", PT.flags)
+		("VFlags", VFlags)
+		;
 		
 }
 
@@ -1285,7 +1286,4 @@ DEFINE_FIELD(DVisualThinker, PrevRoll);
 DEFINE_FIELD(DVisualThinker, Translation);
 DEFINE_FIELD(DVisualThinker, LightLevel);
 DEFINE_FIELD(DVisualThinker, cursector);
-DEFINE_FIELD(DVisualThinker, bXFlip);
-DEFINE_FIELD(DVisualThinker, bYFlip);
-DEFINE_FIELD(DVisualThinker, bDontInterpolate);
-DEFINE_FIELD(DVisualThinker, bAddLightLevel);
+DEFINE_FIELD(DVisualThinker, VFlags);

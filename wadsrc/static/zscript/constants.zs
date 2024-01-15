@@ -1086,6 +1086,14 @@ enum ETeleport
 	TELF_ROTATEBOOMINVERSE	= 64,
 };
 
+enum EVThinkerFlags
+{
+	VTF_XFLIP =						1 << 0,
+	VTF_YFLIP =						1 << 1,		// flip the sprite on the x/y axis.
+	VTF_DONTINTERPOLATE =			1 << 2,		// disable all interpolation
+	VTF_ADDLIGHTLEVEL =				1 << 3,		// adds sector light level to 'LightLevel'
+};
+
 enum EGameType
 {
 	GAME_Any	 = 0,

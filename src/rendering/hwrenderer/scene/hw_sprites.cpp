@@ -1456,7 +1456,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
 			: spr->PT.texture, !custom_anim);
 
-	if (spr->bDontInterpolate)
+	if (spr->VFlags & VTF_DONTINTERPOLATE)
 		timefrac = 0.;
 
 	FVector3 interp = spr->InterpolatedPosition(timefrac);
@@ -1480,12 +1480,13 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	auto r = spi.GetSpriteRect();
 	r.Scale(spr->Scale.X, spr->Scale.Y);
 
-	if (spr->bXFlip)	
+	if (spr->VFlags & VTF_XFLIP)	
 	{
 		std::swap(ul,ur);
 		r.left = -r.width - r.left;	// mirror the sprite's x-offset
 	}
-	if (spr->bYFlip)	std::swap(vt,vb);
+	if (spr->VFlags & VTF_YFLIP)	
+		std::swap(vt,vb);
 
 	float viewvecX = vp.ViewVector.X;
 	float viewvecY = vp.ViewVector.Y;

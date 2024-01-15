@@ -1928,12 +1928,10 @@ class PowerMorph : Powerup
 		
 		// Abort if owner is dead; their Die() method will
 		// take care of any required unmorphing on death.
-		if (MorphedPlayer ? MorphedPlayer.Health <= 0 : Owner.Health <= 0)
+		if (Owner.player ? Owner.player.Health <= 0 : Owner.Health <= 0)
 			return;
 
-		EMorphFlags mStyle = MorphedPlayer ? MorphedPlayer.MorphStyle : MorphStyle;
-		
-		Owner.Unmorph(Owner, force: mStyle & MRF_UNDOALWAYS);
+		Owner.Unmorph(Owner, force: Owner.GetMorphStyle() & MRF_UNDOALWAYS);
 		MorphedPlayer = null;
 	}
 }

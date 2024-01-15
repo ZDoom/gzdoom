@@ -68,7 +68,7 @@ Class ArtiTomeOfPower : PowerupGiver
 	
 	override bool Use(bool pickup)
 	{
-		EMorphFlags mStyle = Owner.player ? Owner.player.MorphStyle : Owner.MorphFlags;
+		EMorphFlags mStyle = Owner.GetMorphStyle();
 		if (Owner.Alternative && (mStyle & MRF_UNDOBYTOMEOFPOWER))
 		{
 			// Attempt to undo chicken.

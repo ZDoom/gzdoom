@@ -38,7 +38,7 @@ class ArtiTeleport : Inventory
 		Owner.Teleport(dest, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 
 		bool canLaugh = Owner.player != null;
-		EMorphFlags mStyle = Owner.player ? Owner.player.MorphStyle : Owner.MorphFlags;
+		EMorphFlags mStyle = Owner.GetMorphStyle();
 		if (Owner.Alternative && (mStyle & MRF_UNDOBYCHAOSDEVICE))
 		{
 			// Teleporting away will undo any morph effects (pig).

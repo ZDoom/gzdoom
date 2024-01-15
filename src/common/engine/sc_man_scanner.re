@@ -167,8 +167,9 @@ std2:
 		'vector2'					{ RET(TK_Vector2); }
 		'vector3'					{ RET(TK_Vector3); }
 		'map'						{ RET(TK_Map); }
-		'mapiterator'				{ RET(TK_MapIterator); }
+		'mapiterator'				{ RET(ParseVersion >= MakeVersion(4, 10, 0)? TK_MapIterator : TK_Identifier); }
 		'array'						{ RET(TK_Array); }
+		'function'					{ RET(ParseVersion >= MakeVersion(4, 12, 0)? TK_FunctionType : TK_Identifier); }
 		'in'						{ RET(TK_In); }
 		'sizeof'					{ RET(TK_SizeOf); }
 		'alignof'					{ RET(TK_AlignOf); }
@@ -204,6 +205,7 @@ std2:
 		'stop'						{ RET(TK_Stop); }
 		'null'						{ RET(TK_Null); }
 		'nullptr'					{ RET(ParseVersion >= MakeVersion(4, 9, 0)? TK_Null : TK_Identifier); }
+		'sealed'					{ RET(ParseVersion >= MakeVersion(4, 12, 0)? TK_Sealed : TK_Identifier); }
 
 		'is'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Is : TK_Identifier); }
 		'replaces'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Replaces : TK_Identifier); }

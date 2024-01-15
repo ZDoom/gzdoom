@@ -92,7 +92,7 @@ struct FDecalLib::FTranslation
 
 	uint32_t StartColor, EndColor;
 	FTranslation *Next;
-	uint32_t Index;
+	FTranslationID Index;
 };
 
 struct FDecalAnimator
@@ -376,7 +376,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			AddDecal (decalName, decalNum, newdecal);
+			AddDecal(decalName.GetChars(), decalNum, newdecal);
 			break;
 		}
 		switch (sc.MustMatchString (DecalKeywords))
@@ -577,7 +577,7 @@ void FDecalLib::ParseFader (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName);
+			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			Animators.Push (fader);
@@ -617,7 +617,7 @@ void FDecalLib::ParseStretcher (FScanner &sc)
 		{
 			if (goalX >= 0 || goalY >= 0)
 			{
-				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName);
+				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName.GetChars());
 				stretcher->StretchStart = startTime;
 				stretcher->StretchTime = takeTime;
 				stretcher->GoalX = goalX;
@@ -668,7 +668,7 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		{
 			if ((/*distX |*/ distY) != 0)
 			{
-				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName);
+				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName.GetChars());
 				slider->SlideStart = startTime;
 				slider->SlideTime = takeTime;
 				/*slider->DistX = distX;*/
@@ -719,7 +719,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName);
+			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			fader->GoalColor = goal;
@@ -772,7 +772,7 @@ void FDecalLib::ParseCombiner (FScanner &sc)
 
 	if (last > first)
 	{
-		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName);
+		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName.GetChars());
 		combiner->FirstAnimator = (int)first;
 		combiner->NumAnimators = (int)(last - first);
 		Animators.Push (combiner);
@@ -1002,7 +1002,7 @@ FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 	if (DecalTranslations.Size() == 256*256)
 	{
 		Printf ("Too many decal translations defined\n");
-		Index = 0;
+		Index = NO_TRANSLATION;
 		return;
 	}
 
@@ -1028,7 +1028,7 @@ FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 		table[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
 	}
 	table[0] = table[1];
-	Index = (uint32_t)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
+	Index = TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
 FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (uint32_t start, uint32_t end)

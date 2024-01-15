@@ -8,7 +8,8 @@ extend struct _
 	native readonly Array<@TerrainDef> Terrains;
 	native int validcount;
 	native play @DehInfo deh;
-	native readonly bool automapactive;
+	native readonly ui bool automapactive;	// is automap enabled?
+	native readonly ui bool viewactive;		// if automap is active, true = main automap, false = overlay automap.
 	native readonly TextureID skyflatnum;
 	native readonly int gametic;
 	native readonly int Net_Arbitrator;
@@ -51,25 +52,21 @@ extend struct Console
 
 extend struct Translation
 {
-	Color colors[256];
-	
-	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
-	native static int GetID(Name transname);
 }
 
 // This is needed because Actor contains a field named 'translation' which shadows the above.
 struct Translate version("4.5")
 {
-	static int MakeID(int group, int num)
+	static TranslationID MakeID(int group, int num)
 	{
-		return (group << 16) + num;
+		return Translation.MakeID(group, num);
 	}
 	static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass)
 	{
 		return Translation.SetPlayerTranslation(group, num, plrnum, pclass);
 	}
-	static int GetID(Name transname)
+	static TranslationID GetID(Name transname)
 	{
 		return Translation.GetID(transname);
 	}
@@ -115,6 +112,7 @@ extend struct GameInfoStruct
 extend class Object
 {
 	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
+	private native static TranslationID BuiltinFindTranslation(Name nm);
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
 	// These really should be global functions...
 	native static String G_SkillName();
@@ -339,6 +337,7 @@ struct LevelInfo native
 	native readonly int flags;
 	native readonly int flags2;
 	native readonly int flags3;
+	native readonly String LightningSound;
 	native readonly String Music;
 	native readonly String LevelName;
 	native readonly String AuthorName;
@@ -430,6 +429,7 @@ struct LevelLocals native
 	native readonly String F1Pic;
 	native readonly int maptype;
 	native readonly String AuthorName;
+	native String LightningSound;
 	native readonly String Music;
 	native readonly int musicorder;
 	native readonly TextureID skytexture1;
@@ -526,6 +526,7 @@ struct LevelLocals native
 	native String GetChecksum() const;
 
 	native void ChangeSky(TextureID sky1, TextureID sky2 );
+	native void ForceLightning(int mode = 0, sound tempSound = "");
 
 	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
 	native LineIdIterator CreateLineIdIterator(int tag);
@@ -548,6 +549,7 @@ struct LevelLocals native
 	native String GetEpisodeName();
 
 	native void SpawnParticle(FSpawnParticleParams p);
+	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
 }
 
 // a few values of this need to be readable by the play code.
@@ -583,7 +585,7 @@ struct State native
 	
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();
-	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
+	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0), int spritenum = -1, int framenum = -1);
 	native bool InStateSequence(State base);
 }
 
@@ -613,6 +615,13 @@ enum EPickStart
 	PPS_NOBLOCKINGCHECK		= 2,
 }
 
+
+enum EMissileHitResult
+{
+	MHIT_DEFAULT = -1,
+	MHIT_DESTROY = 0,
+	MHIT_PASS = 1,
+}
 
 class SectorEffect : Thinker native
 {

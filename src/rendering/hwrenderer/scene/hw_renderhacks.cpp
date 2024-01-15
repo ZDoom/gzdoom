@@ -41,6 +41,7 @@
 #include "hw_lightbuffer.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_fakeflat.h"
+#include "hw_walldispatcher.h"
 
 //==========================================================================
 //
@@ -1117,7 +1118,8 @@ void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
     {
         seg_t * seg=lowersegs[j];
         HWWall wall;
-        wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+		HWWallDispatcher disp(this);
+        wall.ProcessLowerMiniseg(&disp, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
         rendered_lines++;
     }
 }

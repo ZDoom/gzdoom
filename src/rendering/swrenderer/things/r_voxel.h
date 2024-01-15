@@ -85,7 +85,7 @@ namespace swrenderer
 		FVoxel *voxel = nullptr;
 		bool bInMirror = false;
 
-		uint32_t Translation = 0;
+		FTranslationID Translation = NO_TRANSLATION;
 		uint32_t FillColor = 0;
 
 		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4, DVF_FIND_X1X2 = 8 };

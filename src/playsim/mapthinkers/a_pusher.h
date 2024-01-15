@@ -44,3 +44,18 @@ protected:
 	friend bool PIT_PushThing (AActor *thing);
 };
 
+class DThruster : public DThinker
+{
+	DECLARE_CLASS(DThruster, DThinker)
+
+	DVector2 m_PushVec;
+	sector_t* m_Sector;
+	int m_Type;
+	int m_Location;
+
+public:
+	void Construct(sector_t* sec, double dx, double dy, int type, int location);
+	void Serialize(FSerializer& arc);
+	void Tick();
+
+};

@@ -155,7 +155,7 @@ void DFloor::Tick ()
 				case genFloorChgT:
 				case genFloorChg0:
 					m_Sector->SetSpecial(&m_NewSpecial);
-					//fall thru
+					[[fallthrough]];
 				case genFloorChg:
 					m_Sector->SetTexture(sector_t::floor, m_Texture);
 					break;
@@ -171,7 +171,7 @@ void DFloor::Tick ()
 				case genFloorChgT:
 				case genFloorChg0:
 					m_Sector->SetSpecial(&m_NewSpecial);
-					//fall thru
+					[[fallthrough]];
 				case genFloorChg:
 					m_Sector->SetTexture(sector_t::floor, m_Texture);
 					break;

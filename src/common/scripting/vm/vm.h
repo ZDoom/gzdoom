@@ -724,6 +724,11 @@ struct AFuncDesc
 	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
 	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
 
+#define DEFINE_FIELD_NAMED_UNSIZED(cls, name, scriptname) \
+		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), ~0u, 0 }; \
+	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
+	MSVC_FSEG FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr GCC_FSEG = &VMField_##cls##_##scriptname;
+
 #define DEFINE_FIELD_BIT(cls, name, scriptname, bitval) \
 		static const FieldDesc VMField_##cls##_##scriptname = { #cls, #scriptname, (unsigned)myoffsetof(cls, name), (unsigned)sizeof(cls::name), bitval }; \
 	extern FieldDesc const *const VMField_##cls##_##scriptname##_HookPtr; \
@@ -792,6 +797,7 @@ class AActor;
 class PFunction;
 
 VMFunction *FindVMFunction(PClass *cls, const char *name);
+VMFunction* FindVMFunction(const char* name);
 #define DECLARE_VMFUNC(cls, name) static VMFunction *name; if (name == nullptr) name = FindVMFunction(RUNTIME_CLASS(cls), #name);
 
 FString FStringFormat(VM_ARGS, int offset = 0);

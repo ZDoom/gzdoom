@@ -330,6 +330,7 @@ struct level_info_t
 	FString		SkyPic1;
 	FString		SkyPic2;
 	FString		FadeTable;
+	FString		CustomColorMap;
 	FString		F1Pic;
 	FString		BorderTexture;
 	FString		MapBackground;
@@ -343,6 +344,7 @@ struct level_info_t
 	uint32_t	flags2;
 	uint32_t	flags3;
 
+	FString		LightningSound = "world/thunder";
 	FString		Music;
 	FString		LevelName;
 	FString		AuthorName;

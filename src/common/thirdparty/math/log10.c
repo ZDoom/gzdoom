@@ -178,8 +178,7 @@ int isnan(), isfinite();
 #endif
 extern double LOGE2, SQRT2, INFINITY, NAN;
 
-double c_log10(x)
-double x;
+double c_log10(double x)
 {
 VOLATILE double z;
 double y;

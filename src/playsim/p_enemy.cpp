@@ -604,7 +604,7 @@ static int P_Move (AActor *actor)
 				move = move.Rotated(anglediff);
 				oldangle = actor->Angles.Yaw;
 			}
-			start = actor->Pos() - move * i / steps;
+			start = actor->Pos().XY() - move * i / steps;
 		}
 	}
 
@@ -628,9 +628,14 @@ static int P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || CanJump(actor))
-			&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+			&& !(actor->flags2 & MF2_ONMOBJ))
+
 	{
-		if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
+		// account for imprecisions with slopes. A walking actor should never be below its own floorz.
+		if (actor->Z() < actor->floorz)
+			actor->SetZ(actor->floorz);
+
+		else if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
 		{
 			double savedz = actor->Z();
 			actor->SetZ(actor->floorz);
@@ -755,6 +760,10 @@ int P_SmartMove(AActor* actor)
 		)
 		actor->movedir = DI_NODIR;    // avoid the area (most of the time anyway)
 
+	if (actor->flags2 & MF2_FLOORCLIP)
+	{
+		actor->AdjustFloorClip();
+	}
 	return true;
 }
 
@@ -2640,7 +2649,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
 	{
 		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
-		DVector2 old = actor->Pos();
+		DVector2 old = actor->Pos().XY();
 		int oldgroup = actor->PrevPortalGroup;
 		FTextureID oldFloor = actor->floorpic;
 
@@ -2802,7 +2811,7 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->Height = corpsehit->GetDefault()->Height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
+				bool check = P_CheckPosition(corpsehit, corpsehit->Pos().XY());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->Height = oldheight;

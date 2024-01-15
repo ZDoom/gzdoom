@@ -339,7 +339,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (t_fight<(AFTERTICS/2))
 		player->mo->flags |= MF_DROPOFF;
 
-	old = player->mo->Pos();
+	old = player->mo->Pos().XY();
 }
 
 int P_GetRealMaxHealth(AActor *actor, int max);

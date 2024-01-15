@@ -89,7 +89,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 
 		// Stupid way of doing it, but at least it works
-		DVector3 worldP0(viewport->viewpoint.Pos, pl->height.ZatPoint(viewport->viewpoint.Pos));
+		DVector3 worldP0(viewport->viewpoint.Pos.XY(), pl->height.ZatPoint(viewport->viewpoint.Pos));
 		DVector3 worldP1 = worldP0 + pl->height.Normal();
 		DVector3 viewP0 = viewport->PointWorldToView(worldP0);
 		DVector3 viewP1 = viewport->PointWorldToView(worldP1);

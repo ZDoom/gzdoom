@@ -67,7 +67,7 @@ void FTextureAnimator::InitSwitchList ()
 	if (lump != -1)
 	{
 		auto lumpdata = fileSystem.ReadFile (lump);
-		auto alphSwitchList = lumpdata.GetString();
+		auto alphSwitchList = lumpdata.string();
 		const char *list_p;
 		FSwitchDef *def1, *def2;
 

@@ -202,7 +202,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;
-	players[i].userinfo.Reset();
+	players[i].userinfo.Reset(i);
 	playeringame[i] = false;
 }
 
@@ -214,7 +214,7 @@ CCMD (removebots)
 		return;
 	}
 
-	Net_WriteByte (DEM_KILLBOTS);
+	Net_WriteInt8 (DEM_KILLBOTS);
 }
 
 CCMD (freeze)
@@ -228,8 +228,8 @@ CCMD (freeze)
 		return;
 	}
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_FREEZE);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_FREEZE);
 }
 
 CCMD (listbots)

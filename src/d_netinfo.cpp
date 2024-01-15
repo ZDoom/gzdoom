@@ -161,7 +161,7 @@ int D_PlayerClassToInt (const char *classname)
 		{
 			auto type = PlayerClasses[i].Type;
 
-			if (type->GetDisplayName().IsNotEmpty() && stricmp(type->GetDisplayName(), classname) == 0)
+			if (type->GetDisplayName().IsNotEmpty() && type->GetDisplayName().CompareNoCase(classname) == 0)
 			{
 				return i;
 			}
@@ -393,7 +393,7 @@ void D_SetupUserInfo ()
 	// Reset everybody's userinfo to a default state.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].userinfo.Reset();
+		players[i].userinfo.Reset(i);
 	}
 	// Initialize the console player's user info
 	coninfo = &players[consoleplayer].userinfo;
@@ -426,7 +426,7 @@ void D_SetupUserInfo ()
 	R_BuildPlayerTranslation(consoleplayer);
 }
 
-void userinfo_t::Reset()
+void userinfo_t::Reset(int pnum)
 {
 	// Clear this player's userinfo.
 	TMapIterator<FName, FBaseCVar *> it(*this);
@@ -468,6 +468,9 @@ void userinfo_t::Reset()
 			{
 				newcvar->SetExtraDataPointer(cvar); // store backing cvar
 			}
+
+			newcvar->pnum = pnum;
+			newcvar->userinfoName = cvarname;
 
 			Insert(cvarname, newcvar);
 		}
@@ -568,7 +571,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
-	Net_WriteByte (DEM_UINFCHANGED);
+	Net_WriteInt8 (DEM_UINFCHANGED);
 	Net_WriteString (foo);
 }
 
@@ -589,7 +592,7 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 			{
 				return NULL;
 			}
-			bitdata = ReadByte (stream);
+			bitdata = ReadInt8 (stream);
 			mask = 1 << (bitdata & 31);
 			if (bitdata & 32)
 			{
@@ -605,8 +608,8 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 	{
 		switch (type)
 		{
-		case CVAR_Bool:		value.Bool = ReadByte (stream) ? 1 : 0;	break;
-		case CVAR_Int:		value.Int = ReadLong (stream);			break;
+		case CVAR_Bool:		value.Bool = ReadInt8 (stream) ? 1 : 0;	break;
+		case CVAR_Int:		value.Int = ReadInt32 (stream);			break;
 		case CVAR_Float:	value.Float = ReadFloat (stream);		break;
 		case CVAR_String:	value.String = ReadString (stream);		break;
 		default: break;	// Silence GCC
@@ -662,13 +665,13 @@ bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 
 		namelen = strlen(cvar->GetName());
 
-		Net_WriteByte(DEM_SINFCHANGED);
-		Net_WriteByte((uint8_t)(namelen | (type << 6)));
+		Net_WriteInt8(DEM_SINFCHANGED);
+		Net_WriteInt8((uint8_t)(namelen | (type << 6)));
 		Net_WriteBytes((uint8_t*)cvar->GetName(), (int)namelen);
 		switch (type)
 		{
-		case CVAR_Bool:		Net_WriteByte(value.Bool);		break;
-		case CVAR_Int:		Net_WriteLong(value.Int);		break;
+		case CVAR_Bool:		Net_WriteInt8(value.Bool);		break;
+		case CVAR_Int:		Net_WriteInt32(value.Int);		break;
 		case CVAR_Float:	Net_WriteFloat(value.Float);	break;
 		case CVAR_String:	Net_WriteString(value.String);	break;
 		default: break; // Silence GCC
@@ -693,10 +696,10 @@ bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 
 		int namelen = (int)strlen(cvar->GetName());
 
-		Net_WriteByte(DEM_SINFCHANGEDXOR);
-		Net_WriteByte((uint8_t)namelen);
+		Net_WriteInt8(DEM_SINFCHANGEDXOR);
+		Net_WriteInt8((uint8_t)namelen);
 		Net_WriteBytes((uint8_t*)cvar->GetName(), namelen);
-		Net_WriteByte(uint8_t(bitnum | (set << 5)));
+		Net_WriteInt8(uint8_t(bitnum | (set << 5)));
 		return true;
 	}
 	return false;
@@ -709,7 +712,7 @@ void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
 	int len;
 	int type;
 
-	len = ReadByte (stream);
+	len = ReadInt8 (stream);
 	type = len >> 6;
 	len &= 0x3f;
 	if (len == 0)
@@ -786,7 +789,7 @@ FString D_GetUserInfoStrings(int pnum, bool compact)
 				break;
 
 			case NAME_Skin:
-				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name).GetChars());
+				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name.GetChars()).GetChars());
 				break;
 
 			default:
@@ -870,15 +873,15 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
-				info->GenderChanged(value);
+				info->GenderChanged(value.GetChars());
 				break;
 
 			case NAME_PlayerClass:
-				info->PlayerClassChanged(value);
+				info->PlayerClassChanged(value.GetChars());
 				break;
 
 			case NAME_Skin:
-				info->SkinChanged(value, players[pnum].CurrentPlayerClass);
+				info->SkinChanged(value.GetChars(), players[pnum].CurrentPlayerClass);
 				if (players[pnum].mo != NULL)
 				{
 					if (players[pnum].cls != NULL &&
@@ -895,11 +898,11 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 				break;
 
 			case NAME_Team:
-				UpdateTeam(pnum, atoi(value), update);
+				UpdateTeam(pnum, atoi(value.GetChars()), update);
 				break;
 
 			case NAME_Color:
-				info->ColorChanged(value);
+				info->ColorChanged(value.GetChars());
 				break;
 
 			default:
@@ -956,7 +959,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 			switch (pair->Key.GetIndex())
 			{
 			case NAME_Skin:
-				string = Skins[info.GetSkin()].Name;
+				string = Skins[info.GetSkin()].Name.GetChars();
 				break;
 
 			case NAME_PlayerClass:
@@ -969,7 +972,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 				string = val.String;
 				break;
 			}
-			arc.StringPtr(name, string);
+			arc.StringPtr(name.GetChars(), string);
 		}
 		arc.EndObject();
 	}
@@ -981,7 +984,6 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *key;
 	const char *str;
 
-	info.Reset();
 	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{

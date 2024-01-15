@@ -210,8 +210,8 @@ class TObjPtr
 {
 	union
 	{
-		T pp;
-		DObject *o;
+		mutable T pp;
+		mutable DObject *o;
 	};
 public:
 
@@ -273,16 +273,22 @@ public:
 	{
 		return GC::ReadBarrier(pp);
 	}
-	constexpr bool operator!=(T u) noexcept
+	
+	constexpr const T operator->() const noexcept
+	{
+		return GC::ReadBarrier(pp);
+	}
+
+	constexpr bool operator!=(T u) const noexcept
 	{
 		return GC::ReadBarrier(o) != u;
 	}
-	constexpr bool operator==(T u) noexcept
+	constexpr bool operator==(T u) const noexcept
 	{
 		return GC::ReadBarrier(o) == u;
 	}
 
-	constexpr bool operator==(TObjPtr<T> u) noexcept
+	constexpr bool operator==(TObjPtr<T> u) const noexcept
 	{
 		return ForceGet() == u.ForceGet();
 	}

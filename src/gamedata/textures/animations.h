@@ -6,6 +6,17 @@
 #include "tarray.h"
 #include "s_soundinternal.h"
 
+struct FStandaloneAnimation
+{
+	double		SwitchTic;
+	uint32_t	AnimIndex;
+	uint16_t	CurFrame;
+	bool		ok = false;
+	uint8_t		AnimType;
+};
+
+static_assert(sizeof(FStandaloneAnimation) == sizeof(uint64_t)*2);
+
 struct FAnimDef
 {
 	struct FAnimFrame
@@ -62,6 +73,7 @@ struct FDoorAnimation
 
 class FTextureAnimator
 {
+	TMap<FTextureID, uint16_t> mAnimationIndices;
 	TArray<FAnimDef> mAnimations;
 	TArray<FSwitchDef*> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
@@ -112,6 +124,9 @@ public:
 		FixAnimations();
 		InitSwitchList();
 	}
+
+	bool InitStandaloneAnimation(FStandaloneAnimation &animInfo, FTextureID tex, uint32_t curTic);
+	FTextureID UpdateStandaloneAnimation(FStandaloneAnimation &animInfo, double curTic);
 };
 
 extern FTextureAnimator TexAnim;

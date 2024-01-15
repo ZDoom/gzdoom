@@ -289,4 +289,7 @@ xx(SUBA,		sub,	RIRPRP,		NOP,	0, 0)		// dA = pB - pC
 xx(EQA_R,		beq,	CPRR,		NOP,	0, 0)			// if ((pB == pkC) != A) then pc++
 xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER)
 
+// Null check
+xx(NULLCHECK, nullcheck, RP,	NOP, 0, 0) // EmitNullPointerThrow(pA)
+
 #undef xx

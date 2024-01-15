@@ -48,6 +48,7 @@
 #include "types.h"
 #include "vmintern.h"
 #include "c_cvars.h"
+#include "palettecontainer.h"
 
 struct FState; // needed for FxConstant. Maybe move the state constructor to a subclass later?
 
@@ -232,6 +233,7 @@ enum EFxType
 	EFX_StringCast,
 	EFX_ColorCast,
 	EFX_SoundCast,
+	EFX_TranslationCast,
 	EFX_TypeCast,
 	EFX_PlusSign,
 	EFX_MinusSign,
@@ -273,10 +275,14 @@ enum EFxType
 	EFX_DoWhileLoop,
 	EFX_ForLoop,
 	EFX_ForEachLoop,
+	EFX_TwoArgForEachLoop,
+	EFX_ThreeArgForEachLoop,
+	EFX_TypedForEachLoop,
 	EFX_JumpStatement,
 	EFX_ReturnStatement,
 	EFX_ClassTypeCast,
 	EFX_ClassPtrCast,
+	EFX_FunctionPtrCast,
 	EFX_StateByIndex,
 	EFX_RuntimeStateIndex,
 	EFX_MultiNameState,
@@ -506,6 +512,27 @@ public:
 		isresolved = true;
 	}
 
+	FxConstant(FTranslationID state, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.Int = state.index();
+		ValueType = value.Type = TypeTranslationID;
+		isresolved = true;
+	}
+
+	FxConstant(VMFunction* state, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.pointer = state;
+		ValueType = value.Type = TypeVMFunction;
+		isresolved = true;
+	}
+	
+	FxConstant(PFunction* rawptr, const FScriptPosition& pos) : FxExpression(EFX_Constant, pos)
+	{
+		value.pointer = rawptr;
+		ValueType = value.Type = TypeRawFunction;
+		isresolved = true;
+	}
+
 	FxConstant(const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		value.pointer = nullptr;
@@ -550,6 +577,8 @@ public:
 		return value;
 	}
 	ExpEmit Emit(VMFunctionBuilder *build);
+
+	friend class FxTypeCast;
 };
 
 //==========================================================================
@@ -698,6 +727,19 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxTranslationCast : public FxExpression
+{
+	FxExpression* basex;
+
+public:
+
+	FxTranslationCast(FxExpression* x);
+	~FxTranslationCast();
+	FxExpression* Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder* build);
+};
+
 class FxFontCast : public FxExpression
 {
 	FxExpression *basex;
@@ -728,6 +770,8 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);
+
+	static FxConstant * convertRawFunctionToFunctionPointer(FxExpression * in, FScriptPosition &ScriptPosition);
 };
 
 //==========================================================================
@@ -1397,7 +1441,7 @@ public:
 
 //==========================================================================
 //
-//	FxGlobalVariaböe
+//	FxGlobalVariable
 //
 //==========================================================================
 
@@ -1580,7 +1624,7 @@ public:
 	FName MethodName;
 	FArgumentList ArgList;
 
-	FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos);
+	FxFunctionCall(FName methodname, FName rngname, FArgumentList &&args, const FScriptPosition &pos);
 	~FxFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -1597,10 +1641,11 @@ class FxMemberFunctionCall : public FxExpression
 	FxExpression *Self;
 	FName MethodName;
 	FArgumentList ArgList;
+	bool ResolveSelf;
 
 public:
 
-	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &args, const FScriptPosition &pos);
+	FxMemberFunctionCall(FxExpression *self, FName methodname, FArgumentList &&args, const FScriptPosition &pos);
 	~FxMemberFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 };
@@ -1811,6 +1856,7 @@ class FxVMFunctionCall : public FxExpression
 	bool CheckAccessibility(const VersionInfo &ver);
 
 public:
+	const bool FnPtrCall;
 
 	FArgumentList ArgList;
 	PFunction* Function;
@@ -2027,15 +2073,81 @@ public:
 
 class FxForEachLoop : public FxLoopStatement
 {
+public:
 	FName loopVarName;
 	FxExpression* Array;
 	FxExpression* Array2;
+	FxExpression* Array3;
+	FxExpression* Array4;
 	FxExpression* Code;
 
-public:
-	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* code, const FScriptPosition& pos);
+	FxForEachLoop(FName vn, FxExpression* arrayvar, FxExpression* arrayvar2, FxExpression* arrayvar3, FxExpression* arrayvar4, FxExpression* code, const FScriptPosition& pos);
 	~FxForEachLoop();
 	FxExpression* DoResolve(FCompileContext&);
+};
+
+//==========================================================================
+//
+// FxTwoArgForEachLoop
+//
+//==========================================================================
+
+class FxTwoArgForEachLoop : public FxExpression
+{
+public:
+	FName keyVarName;
+	FName valueVarName;
+	FxExpression* MapExpr;
+	FxExpression* MapExpr2;
+	FxExpression* MapExpr3;
+	FxExpression* MapExpr4;
+	FxExpression* Code;
+
+	FxTwoArgForEachLoop(FName kv, FName vv, FxExpression* mapexpr, FxExpression* mapexpr2, FxExpression* mapexpr3, FxExpression* mapexpr4, FxExpression* code, const FScriptPosition& pos);
+	~FxTwoArgForEachLoop();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
+};
+
+//==========================================================================
+//
+// FxThreeArgForEachLoop
+//
+//==========================================================================
+
+class FxThreeArgForEachLoop : public FxExpression
+{
+public:
+	FName varVarName;
+	FName posVarName;
+	FName flagsVarName;
+	FxExpression* BlockIteratorExpr;
+	FxExpression* Code;
+
+	FxThreeArgForEachLoop(FName vv, FName pv, FName fv, FxExpression* blockiteartorexpr, FxExpression* code, const FScriptPosition& pos);
+	~FxThreeArgForEachLoop();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
+};
+
+//==========================================================================
+//
+// FxTypedForEachLoop
+//
+//==========================================================================
+
+class FxTypedForEachLoop : public FxExpression
+{
+public:
+	FName className;
+	FName varName;
+	FxExpression* Expr;
+	FxExpression* Code;
+
+	FxTypedForEachLoop(FName cv, FName vv, FxExpression* castiteartorexpr, FxExpression* code, const FScriptPosition& pos);
+	~FxTypedForEachLoop();
+	FxExpression *Resolve(FCompileContext&);
+	//ExpEmit Emit(VMFunctionBuilder *build); This node is transformed, so it won't ever be emitted itself
 };
 
 //==========================================================================
@@ -2110,6 +2222,24 @@ public:
 
 	FxClassPtrCast(PClass *dtype, FxExpression *x);
 	~FxClassPtrCast();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxFunctionPtrCast : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+
+	FxFunctionPtrCast (PFunctionPointer *ftype, FxExpression *x);
+	~FxFunctionPtrCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

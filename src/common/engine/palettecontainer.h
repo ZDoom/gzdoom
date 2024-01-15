@@ -42,6 +42,49 @@ struct FRemapTable
 private:
 };
 
+
+
+// outside facing translation ID
+struct FTranslationID
+{
+public:
+	FTranslationID() = default;
+
+private:
+	constexpr FTranslationID(int id) : ID(id)
+	{
+	}
+public:
+	static constexpr FTranslationID fromInt(int i)
+	{
+		return FTranslationID(i);
+	}
+	FTranslationID(const FTranslationID& other) = default;
+	FTranslationID& operator=(const FTranslationID& other) = default;
+	bool operator !=(FTranslationID other) const
+	{
+		return ID != other.ID;
+	}
+	bool operator ==(FTranslationID other) const
+	{
+		return ID == other.ID;
+	}
+	constexpr int index() const
+	{
+		return ID;
+	}
+	constexpr bool isvalid() const
+	{
+		return ID >= 0;
+	}
+private:
+
+	int ID;
+};
+
+constexpr FTranslationID NO_TRANSLATION = FTranslationID::fromInt(0);
+constexpr FTranslationID INVALID_TRANSLATION = FTranslationID::fromInt(-1);
+
 // A class that initializes unusued pointers to NULL. This is used so that when
 // the TAutoGrowArray below is expanded, the new elements will be NULLed.
 class FRemapTablePtr
@@ -67,14 +110,19 @@ enum
 	TRANSLATIONTYPE_MASK = (255 << TRANSLATION_SHIFT)
 };
 
-inline constexpr uint32_t TRANSLATION(uint8_t a, uint32_t b)
+inline constexpr FTranslationID TRANSLATION(uint8_t a, uint32_t b)
 {
-	return (a << TRANSLATION_SHIFT) | b;
+	return FTranslationID::fromInt((a << TRANSLATION_SHIFT) | b);
 }
-inline constexpr uint32_t LuminosityTranslation(int range, uint8_t min, uint8_t max)
+inline constexpr FTranslationID MakeLuminosityTranslation(int range, uint8_t min, uint8_t max)
 {
 	// ensure that the value remains positive.
-	return ( (1 << 30) | ((range&0x3fff) << 16) | (min << 8) | max );
+	return FTranslationID::fromInt( (1 << 30) | ((range&0x3fff) << 16) | (min << 8) | max );
+}
+
+inline constexpr bool IsLuminosityTranslation(FTranslationID trans)
+{
+	return trans.index() > 0 && (trans.index() & (1 << 30));
 }
 
 inline constexpr bool IsLuminosityTranslation(int trans)
@@ -82,13 +130,25 @@ inline constexpr bool IsLuminosityTranslation(int trans)
 	return trans > 0 && (trans & (1 << 30));
 }
 
-inline constexpr int GetTranslationType(uint32_t trans)
+inline constexpr int GetTranslationType(FTranslationID trans)
+{
+	assert(!IsLuminosityTranslation(trans));
+	return (trans.index() & TRANSLATIONTYPE_MASK) >> TRANSLATION_SHIFT;
+}
+
+inline constexpr int GetTranslationIndex(FTranslationID trans)
+{
+	assert(!IsLuminosityTranslation(trans));
+	return (trans.index() & TRANSLATION_MASK);
+}
+
+inline constexpr int GetTranslationType(int trans)
 {
 	assert(!IsLuminosityTranslation(trans));
 	return (trans & TRANSLATIONTYPE_MASK) >> TRANSLATION_SHIFT;
 }
 
-inline constexpr int GetTranslationIndex(uint32_t trans)
+inline constexpr int GetTranslationIndex(int trans)
 {
 	assert(!IsLuminosityTranslation(trans));
 	return (trans & TRANSLATION_MASK);
@@ -122,11 +182,16 @@ public:
 	void Clear();
 	int DetermineTranslucency(FileReader& file);
 	FRemapTable* AddRemap(FRemapTable* remap);
-	void UpdateTranslation(int trans, FRemapTable* remap);
-	int AddTranslation(int slot, FRemapTable* remap, int count = 1);
-	void CopyTranslation(int dest, int src);
-	int StoreTranslation(int slot, FRemapTable* remap);
-	FRemapTable* TranslationToTable(int translation);
+	void UpdateTranslation(FTranslationID trans, FRemapTable* remap);
+	FTranslationID AddTranslation(int slot, FRemapTable* remap, int count = 1);
+	void CopyTranslation(FTranslationID dest, FTranslationID src);
+	FTranslationID StoreTranslation(int slot, FRemapTable* remap);
+	FRemapTable* TranslationToTable(int translation) const;
+	FRemapTable* TranslationToTable(FTranslationID translation) const
+	{
+		return TranslationToTable(translation.index());
+	}
+
 	void GenerateGlobalBrightmapFromColormap(const uint8_t* cmapdata, int numlevels);
 
 	void PushIdentityTable(int slot)
@@ -134,7 +199,7 @@ public:
 		AddTranslation(slot, nullptr);
 	}
 
-	FRemapTable* GetTranslation(int slot, int index)
+	FRemapTable* GetTranslation(int slot, int index) const
 	{
 		if (TranslationTables.Size() <= (unsigned)slot) return nullptr;
 		return TranslationTables[slot].GetVal(index);
@@ -152,6 +217,28 @@ public:
 		return TranslationTables[slot].Size();
 	}
 
+
+};
+
+struct LuminosityTranslationDesc
+{
+	int colorrange;
+	int lum_min;
+	int lum_max;
+
+	static LuminosityTranslationDesc fromInt(int translation)
+	{
+		LuminosityTranslationDesc t;
+		t.colorrange = (translation >> 16) & 0x3fff;
+		t.lum_min = (translation >> 8) & 0xff;
+		t.lum_max = translation & 0xff;
+		return t;
+	}
+
+	static LuminosityTranslationDesc fromID(FTranslationID translation)
+	{
+		return fromInt(translation.index());
+	}
 };
 
 extern PaletteContainer GPalette;

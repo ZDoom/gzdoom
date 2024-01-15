@@ -99,6 +99,6 @@ DEFINE_ACTION_FUNCTION(DMenu, StartMessage)
 	PARAM_STRING(msg);
 	PARAM_INT(mode);
 	PARAM_NAME(action);
-	M_StartMessage(msg, mode, action);
+	M_StartMessage(msg.GetChars(), mode, action);
 	return 0;
 }

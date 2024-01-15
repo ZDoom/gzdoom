@@ -146,7 +146,7 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 		auto path = ExtractFilePath(value);
 		auto name = ExtractFileBase(value, true);
 		if (path.IsEmpty()) path = ".";
-		if (FileSys::ScanDirectory(list, path, name, true))
+		if (FileSys::ScanDirectory(list, path.GetChars(), name.GetChars(), true))
 		{ 
 			for(auto& entry : list)
 			{
@@ -178,7 +178,7 @@ void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, c
 			{
 				// D_AddWildFile resets config's position, so remember it
 				config->GetPosition(pos);
-				D_AddWildFile(wadfiles, ExpandEnvVars(value), extension, config);
+				D_AddWildFile(wadfiles, ExpandEnvVars(value).GetChars(), extension, config);
 				// Reset config's position to get next wad
 				config->SetPosition(pos);
 			}
@@ -230,7 +230,7 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 	if (lookfirstinprogdir)
 	{
 		BFSwad.Format("%s%s%s", progdir.GetChars(), progdir.Back() == '/' ? "" : "/", file);
-		if (DirEntryExists(BFSwad))
+		if (DirEntryExists(BFSwad.GetChars()))
 		{
 			return BFSwad.GetChars();
 		}
@@ -257,7 +257,7 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 				if (dir.IsNotEmpty())
 				{
 					BFSwad.Format("%s%s%s", dir.GetChars(), dir.Back() == '/' ? "" : "/", file);
-					if (DirEntryExists(BFSwad))
+					if (DirEntryExists(BFSwad.GetChars()))
 					{
 						return BFSwad.GetChars();
 					}
@@ -271,7 +271,7 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 	{
 		FString tmp = file;
 		DefaultExtension(tmp, ext);
-		return BaseFileSearch(tmp, nullptr, lookfirstinprogdir, config);
+		return BaseFileSearch(tmp.GetChars(), nullptr, lookfirstinprogdir, config);
 	}
 	return nullptr;
 }

@@ -181,7 +181,7 @@ struct FTextureBuffer
 	}
 
 	FTextureBuffer(const FTextureBuffer &other) = delete;
-	FTextureBuffer(FTextureBuffer &&other)
+	FTextureBuffer(FTextureBuffer &&other) noexcept
 	{
 		mBuffer = other.mBuffer;
 		mWidth = other.mWidth;
@@ -190,7 +190,7 @@ struct FTextureBuffer
 		other.mBuffer = nullptr;
 	}
 
-	FTextureBuffer& operator=(FTextureBuffer &&other)
+	FTextureBuffer& operator=(FTextureBuffer &&other) noexcept
 	{
 		mBuffer = other.mBuffer;
 		mWidth = other.mWidth;

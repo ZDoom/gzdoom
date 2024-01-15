@@ -439,8 +439,8 @@ static bool CheatAddKey (cheatseq_t *cheat, uint8_t key, bool *eat)
 
 static bool Cht_Generic (cheatseq_t *cheat)
 {
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (cheat->Args[0]);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (cheat->Args[0]);
 	return true;
 }
 

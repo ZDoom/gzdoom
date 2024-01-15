@@ -116,7 +116,7 @@ void FStat::PrintStat (F2DDrawer *drawer)
 					// Count number of linefeeds but ignore terminating ones.
 					if (stattext[i] == '\n') y -= fontheight;
 				}
-				DrawText(drawer, NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
+				DrawText(drawer, NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext.GetChars(),
 					DTA_VirtualWidth, twod->GetWidth() / textScale,
 					DTA_VirtualHeight, twod->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);

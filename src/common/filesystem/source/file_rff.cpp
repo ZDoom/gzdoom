@@ -33,7 +33,8 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include <assert.h>
+#include "resourcefile.h"
 #include "fs_swap.h"
 
 namespace FileSys {
@@ -69,22 +70,6 @@ struct RFFLump
 
 //==========================================================================
 //
-// Blood RFF lump (uncompressed lump with encryption)
-//
-//==========================================================================
-
-struct FRFFLump : public FUncompressedLump
-{
-	virtual FileReader *GetReader();
-	virtual int FillCache() override;
-
-	uint32_t		IndexNum;
-
-	int GetIndexNum() const { return IndexNum; }
-};
-
-//==========================================================================
-//
 // BloodCrypt
 //
 //==========================================================================
@@ -102,66 +87,45 @@ void BloodCrypt (void *data, int key, int len)
 
 //==========================================================================
 //
-// Blood RFF file
-//
-//==========================================================================
-
-class FRFFFile : public FResourceFile
-{
-	FRFFLump *Lumps;
-
-public:
-	FRFFFile(const char * filename, FileReader &file, StringPool* sp);
-	virtual ~FRFFFile();
-	virtual bool Open(LumpFilterInfo* filter);
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-};
-
-
-//==========================================================================
-//
 // Initializes a Blood RFF file
 //
 //==========================================================================
 
-FRFFFile::FRFFFile(const char *filename, FileReader &file, StringPool* sp)
-: FResourceFile(filename, file, sp)
-{
-	Lumps = NULL;
-}
-
-//==========================================================================
-//
-// Initializes a Blood RFF file
-//
-//==========================================================================
-
-bool FRFFFile::Open(LumpFilterInfo*)
+static bool OpenRFF(FResourceFile* file, LumpFilterInfo*)
 {
 	RFFLump *lumps;
 	RFFInfo header;
 
-	Reader.Read(&header, sizeof(header));
+	auto Reader = file->GetContainerReader();
+	Reader->Read(&header, sizeof(header));
 
-	NumLumps = LittleLong(header.NumLumps);
+	uint32_t NumLumps = LittleLong(header.NumLumps);
+	auto Entries = file->AllocateEntries(NumLumps);
 	header.DirOfs = LittleLong(header.DirOfs);
 	lumps = new RFFLump[header.NumLumps];
-	Reader.Seek (header.DirOfs, FileReader::SeekSet);
-	Reader.Read (lumps, header.NumLumps * sizeof(RFFLump));
-	BloodCrypt (lumps, header.DirOfs, header.NumLumps * sizeof(RFFLump));
-
-	Lumps = new FRFFLump[NumLumps];
+	Reader->Seek (LittleLong(header.DirOfs), FileReader::SeekSet);
+	Reader->Read (lumps, NumLumps * sizeof(RFFLump));
+	BloodCrypt (lumps, LittleLong(header.DirOfs), NumLumps * sizeof(RFFLump));
 
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
-		Lumps[i].Position = LittleLong(lumps[i].FilePos);
-		Lumps[i].LumpSize = LittleLong(lumps[i].Size);
-		Lumps[i].Owner = this;
+		Entries[i].Position = LittleLong(lumps[i].FilePos);
+		Entries[i].CompressedSize = Entries[i].Length = LittleLong(lumps[i].Size);
+		Entries[i].Flags = 0;
+		Entries[i].Method = METHOD_STORED;
 		if (lumps[i].Flags & 0x10)
 		{
-			Lumps[i].Flags |= LUMPF_COMPRESSED;	// flags the lump as not directly usable
+			Entries[i].Flags = RESFF_COMPRESSED;	// for purposes of decoding, compression and encryption are equivalent.
+			Entries[i].Method = METHOD_RFFCRYPT;
 		}
-		Lumps[i].IndexNum = LittleLong(lumps[i].IndexNum);
+		else
+		{
+			Entries[i].Flags = 0;
+			Entries[i].Method = METHOD_STORED;
+		}
+		Entries[i].Namespace = ns_global;
+		Entries[i].ResourceID = LittleLong(lumps[i].IndexNum);
+	
 		// Rearrange the name and extension to construct the fullname.
 		char name[13];
 		strncpy(name, lumps[i].Name, 8);
@@ -173,65 +137,12 @@ bool FRFFFile::Open(LumpFilterInfo*)
 		name[len+2] = lumps[i].Extension[1];
 		name[len+3] = lumps[i].Extension[2];
 		name[len+4] = 0;
-		Lumps[i].LumpNameSetup(name, stringpool);
+		Entries[i].FileName = file->NormalizeFileName(name);
 	}
 	delete[] lumps;
-	GenerateHash();
+	file->GenerateHash();
 	return true;
 }
-
-FRFFFile::~FRFFFile()
-{
-	if (Lumps != NULL)
-	{
-		delete[] Lumps;
-	}
-}
-
-
-//==========================================================================
-//
-// Get reader (only returns non-NULL if not encrypted)
-//
-//==========================================================================
-
-FileReader *FRFFLump::GetReader()
-{
-	// Don't return the reader if this lump is encrypted
-	// In that case always force caching of the lump
-	if (!(Flags & LUMPF_COMPRESSED))
-	{
-		return FUncompressedLump::GetReader();
-	}
-	else
-	{
-		return NULL;
-	}
-}
-
-//==========================================================================
-//
-// Fills the lump cache and performs decryption
-//
-//==========================================================================
-
-int FRFFLump::FillCache()
-{
-	int res = FUncompressedLump::FillCache();
-
-	if (Flags & LUMPF_COMPRESSED)
-	{
-		int cryptlen = std::min<int> (LumpSize, 256);
-		uint8_t *data = (uint8_t *)Cache;
-
-		for (int i = 0; i < cryptlen; ++i)
-		{
-			data[i] ^= i >> 1;
-		}
-	}
-	return res;
-}
-
 
 //==========================================================================
 //
@@ -250,11 +161,9 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* 
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
-			auto rf = new FRFFFile(filename, file, sp);
-			if (rf->Open(filter)) return rf;
-
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			auto rf = new FResourceFile(filename, file, sp);
+			if (OpenRFF(rf, filter)) return rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

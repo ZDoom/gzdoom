@@ -16,7 +16,7 @@ namespace swrenderer
 		FWallCoords wallc;
 		double SpriteScale;
 
-		uint32_t Translation = 0;
+		FTranslationID Translation = NO_TRANSLATION;
 		uint32_t FillColor = 0;
 		
 		uint32_t dynlightcolor = 0;

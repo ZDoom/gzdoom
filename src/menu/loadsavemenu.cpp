@@ -76,15 +76,15 @@ void FSavegameManager::ReadSaveStrings()
 				{
 					bool oldVer = false;
 					bool missing = false;
-					auto info = savegame->FindLump("info.json");
-					if (info == nullptr)
+					auto info = savegame->FindEntry("info.json");
+					if (info < 0)
 					{
 						// savegame info not found. This is not a savegame so leave it alone.
 						continue;
 					}
-					void *data = info->Lock();
+					auto data = savegame->Read(info);
 					FSerializer arc;
-					if (arc.OpenReader((const char *)data, info->LumpSize))
+					if (arc.OpenReader(data.string(), data.size()))
 					{
 						int savever = 0;
 						arc("Save Version", savever);
@@ -171,7 +171,7 @@ FString FSavegameManager::ExtractSaveComment(FSerializer &arc)
 
 FString FSavegameManager::BuildSaveName(const char* prefix, int slot)
 {
-	return G_BuildSaveName(FStringf("%s%02d", prefix, slot));
+	return G_BuildSaveName(FStringf("%s%02d", prefix, slot).GetChars());
 }
 
 //=============================================================================

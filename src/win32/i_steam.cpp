@@ -96,94 +96,46 @@ static void PSR_FindEndBlock(FScanner &sc)
 	}
 	while(depth);
 }
-static void PSR_SkipBlock(FScanner &sc)
-{
-	sc.MustGetToken('{');
-	PSR_FindEndBlock(sc);
-}
-static bool PSR_FindAndEnterBlock(FScanner &sc, const char* keyword)
-{
-	// Finds a block with a given keyword and then enter it (opening brace)
-	// Should be closed with PSR_FindEndBlock
-	while(sc.GetToken())
-	{
-		if(sc.TokenType == '}')
-		{
-			sc.UnGet();
-			return false;
-		}
 
-		sc.TokenMustBe(TK_StringConst);
-		if(!sc.Compare(keyword))
-		{
-			if(!sc.CheckToken(TK_StringConst))
-				PSR_SkipBlock(sc);
-		}
-		else
-		{
-			sc.MustGetToken('{');
-			return true;
-		}
-	}
-	return false;
-}
-static TArray<FString> PSR_ReadBaseInstalls(FScanner &sc)
-{
-	TArray<FString> result;
-
-	// Get a list of possible install directories.
-	while(sc.GetToken())
-	{
-		if(sc.TokenType == '}')
-			break;
-
-		sc.TokenMustBe(TK_StringConst);
-		FString key(sc.String);
-		if(key.Left(18).CompareNoCase("BaseInstallFolder_") == 0)
-		{
-			sc.MustGetToken(TK_StringConst);
-			result.Push(FString(sc.String) + "/steamapps/common");
-		}
-		else
-		{
-			if(sc.CheckToken('{'))
-				PSR_FindEndBlock(sc);
-			else
-				sc.MustGetToken(TK_StringConst);
-		}
-	}
-
-	return result;
-}
 static TArray<FString> ParseSteamRegistry(const char* path)
 {
-	TArray<FString> dirs;
-
-	// Read registry data
+	TArray<FString> result;
 	FScanner sc;
 	if (sc.OpenFile(path))
 	{
 		sc.SetCMode(true);
 
-		// Find the SteamApps listing
-		if (PSR_FindAndEnterBlock(sc, "InstallConfigStore"))
+		sc.MustGetToken(TK_StringConst);
+		sc.MustGetToken('{');
+		// Get a list of possible install directories.
+		while(sc.GetToken() && sc.TokenType != '}')
 		{
-			if (PSR_FindAndEnterBlock(sc, "Software"))
+			sc.TokenMustBe(TK_StringConst);
+			sc.MustGetToken('{');
+
+			while(sc.GetToken() && sc.TokenType != '}')
 			{
-				if (PSR_FindAndEnterBlock(sc, "Valve"))
+				sc.TokenMustBe(TK_StringConst);
+				FString key(sc.String);
+				if(key.CompareNoCase("path") == 0)
 				{
-					if (PSR_FindAndEnterBlock(sc, "Steam"))
-					{
-						dirs = PSR_ReadBaseInstalls(sc);
-					}
+					sc.MustGetToken(TK_StringConst);
+					result.Push(FString(sc.String) + "/steamapps/common");
+					PSR_FindEndBlock(sc);
+					break;
+				}
+				else if(sc.CheckToken('{'))
+				{
 					PSR_FindEndBlock(sc);
 				}
-				PSR_FindEndBlock(sc);
+				else
+				{
+					sc.MustGetToken(TK_StringConst);
+				}
 			}
-			PSR_FindEndBlock(sc);
 		}
 	}
-	return dirs;
+	return result;
 }
 
 //==========================================================================
@@ -343,7 +295,8 @@ TArray<FString> I_GetSteamPath()
 		"Strife",
 		"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets",
 		"Doom 2/rerelease/DOOM II_Data/StreamingAssets",
-		"Doom 2/finaldoombase"
+		"Doom 2/finaldoombase",
+        "Master Levels of Doom/doom2"
 	};
 
 	FString steamPath;
@@ -354,7 +307,7 @@ TArray<FString> I_GetSteamPath()
 			return result;
 	}
 
-	TArray<FString> paths = ParseSteamRegistry(steamPath + "/config/config.vdf");
+	TArray<FString> paths = ParseSteamRegistry((steamPath + "/config/libraryfolders.vdf").GetChars());
 
 	for(FString &path : paths)
 	{

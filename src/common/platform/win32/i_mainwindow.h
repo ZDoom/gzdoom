@@ -20,19 +20,10 @@ public:
 	void RestoreConView();
 
 	void ShowErrorPane(const char* text);
-	void CheckForRestart();
-
-	void HideGameTitleWindow();
-	int GetGameTitleWindowHeight();
+	bool CheckForRestart();
 
 	void PrintStr(const char* cp);
 	void GetLog(std::function<bool(const void* data, uint32_t size, uint32_t& written)> writeFile);
-
-	void UpdateLayout();
-
-	void ShowProgressBar(int maxpos);
-	void HideProgressBar();
-	void SetProgressPos(int pos);
 
 	void ShowNetStartPane(const char* message, int maxpos);
 	void SetNetStartProgress(int pos);
@@ -44,47 +35,11 @@ public:
 	HWND GetHandle() { return Window; }
 
 private:
-	void LayoutMainWindow(HWND hWnd, HWND pane);
-	int LayoutErrorPane(HWND pane, int w);
-	int LayoutNetStartPane(HWND pane, int w);
-
-	void DoPrintStr(const char* cpt);
-	void FlushBufferedConsoleStuff();
-
-	LRESULT OnMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnCreate(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnSize(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnDrawItem(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnCommand(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnClose(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnDestroy(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 	static LRESULT CALLBACK LConProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static INT_PTR CALLBACK ErrorPaneProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	HWND Window = 0;
-
-	HFONT GameTitleFont = 0;
-	LONG GameTitleFontHeight = 0;
-	LONG DefaultGUIFontHeight = 0;
-	LONG ErrorIconChar = 0;
-
 	bool restartrequest = false;
-
-	HWND GameTitleWindow = 0;
-	HWND ErrorPane = 0;
-	HWND ErrorIcon = 0;
-
-	bool ConWindowHidden = false;
-	HWND ConWindow = 0;
 	TArray<FString> bufferedConsoleStuff;
-
-	HWND ProgressBar = 0;
-
-	HWND NetStartPane = 0;
-	int NetStartMaxPos = 0;
-
-	HWND StartupScreen = 0;
 };
 
 extern MainWindow mainwindow;

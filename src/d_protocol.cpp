@@ -55,24 +55,32 @@ const char *ReadStringConst(uint8_t **stream)
 	return string;
 }
 
-int ReadByte (uint8_t **stream)
+uint8_t ReadInt8 (uint8_t **stream)
 {
 	uint8_t v = **stream;
 	*stream += 1;
 	return v;
 }
 
-int ReadWord (uint8_t **stream)
+int16_t ReadInt16 (uint8_t **stream)
 {
-	short v = (((*stream)[0]) << 8) | (((*stream)[1]));
+	int16_t v = (((*stream)[0]) << 8) | (((*stream)[1]));
 	*stream += 2;
 	return v;
 }
 
-int ReadLong (uint8_t **stream)
+int32_t ReadInt32 (uint8_t **stream)
 {
-	int v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
+	int32_t v = (((*stream)[0]) << 24) | (((*stream)[1]) << 16) | (((*stream)[2]) << 8) | (((*stream)[3]));
 	*stream += 4;
+	return v;
+}
+
+int64_t ReadInt64(uint8_t** stream)
+{
+	int64_t v = (int64_t((*stream)[0]) << 56) | (int64_t((*stream)[1]) << 48) | (int64_t((*stream)[2]) << 40) | (int64_t((*stream)[3]) << 32)
+				| (int64_t((*stream)[4]) << 24) | (int64_t((*stream)[5]) << 16) | (int64_t((*stream)[6]) << 8) | (int64_t((*stream)[7]));
+	*stream += 8;
 	return v;
 }
 
@@ -80,10 +88,21 @@ float ReadFloat (uint8_t **stream)
 {
 	union
 	{
-		int i;
+		int32_t i;
 		float f;
 	} fakeint;
-	fakeint.i = ReadLong (stream);
+	fakeint.i = ReadInt32 (stream);
+	return fakeint.f;
+}
+
+double ReadDouble(uint8_t** stream)
+{
+	union
+	{
+		int64_t i;
+		double f;
+	} fakeint;
+	fakeint.i = ReadInt64(stream);
 	return fakeint.f;
 }
 
@@ -100,20 +119,20 @@ void WriteString (const char *string, uint8_t **stream)
 }
 
 
-void WriteByte (uint8_t v, uint8_t **stream)
+void WriteInt8 (uint8_t v, uint8_t **stream)
 {
 	**stream = v;
 	*stream += 1;
 }
 
-void WriteWord (short v, uint8_t **stream)
+void WriteInt16 (int16_t v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 8;
 	(*stream)[1] = v & 255;
 	*stream += 2;
 }
 
-void WriteLong (int v, uint8_t **stream)
+void WriteInt32 (int32_t v, uint8_t **stream)
 {
 	(*stream)[0] = v >> 24;
 	(*stream)[1] = (v >> 16) & 255;
@@ -122,15 +141,39 @@ void WriteLong (int v, uint8_t **stream)
 	*stream += 4;
 }
 
+void WriteInt64(int64_t v, uint8_t** stream)
+{
+	(*stream)[0] = v >> 56;
+	(*stream)[1] = (v >> 48) & 255;
+	(*stream)[2] = (v >> 40) & 255;
+	(*stream)[3] = (v >> 32) & 255;
+	(*stream)[4] = (v >> 24) & 255;
+	(*stream)[5] = (v >> 16) & 255;
+	(*stream)[6] = (v >> 8) & 255;
+	(*stream)[7] = v & 255;
+	*stream += 8;
+}
+
 void WriteFloat (float v, uint8_t **stream)
 {
 	union
 	{
-		int i;
+		int32_t i;
 		float f;
 	} fakeint;
 	fakeint.f = v;
-	WriteLong (fakeint.i, stream);
+	WriteInt32 (fakeint.i, stream);
+}
+
+void WriteDouble(double v, uint8_t** stream)
+{
+	union
+	{
+		int64_t i;
+		double f;
+	} fakeint;
+	fakeint.f = v;
+	WriteInt64(fakeint.i, stream);
 }
 
 // Returns the number of bytes read
@@ -151,7 +194,7 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 		memset (ucmd, 0, sizeof(usercmd_t));
 	}
 
-	flags = ReadByte (stream);
+	flags = ReadInt8 (stream);
 
 	if (flags)
 	{
@@ -159,20 +202,20 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 		if (flags & UCMDF_BUTTONS)
 		{
 			uint32_t buttons = ucmd->buttons;
-			uint8_t in = ReadByte(stream);
+			uint8_t in = ReadInt8(stream);
 
 			buttons = (buttons & ~0x7F) | (in & 0x7F);
 			if (in & 0x80)
 			{
-				in = ReadByte(stream);
+				in = ReadInt8(stream);
 				buttons = (buttons & ~(0x7F << 7)) | ((in & 0x7F) << 7);
 				if (in & 0x80)
 				{
-					in = ReadByte(stream);
+					in = ReadInt8(stream);
 					buttons = (buttons & ~(0x7F << 14)) | ((in & 0x7F) << 14);
 					if (in & 0x80)
 					{
-						in = ReadByte(stream);
+						in = ReadInt8(stream);
 						buttons = (buttons & ~(0xFF << 21)) | (in << 21);
 					}
 				}
@@ -180,17 +223,17 @@ int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream)
 			ucmd->buttons = buttons;
 		}
 		if (flags & UCMDF_PITCH)
-			ucmd->pitch = ReadWord (stream);
+			ucmd->pitch = ReadInt16 (stream);
 		if (flags & UCMDF_YAW)
-			ucmd->yaw = ReadWord (stream);
+			ucmd->yaw = ReadInt16 (stream);
 		if (flags & UCMDF_FORWARDMOVE)
-			ucmd->forwardmove = ReadWord (stream);
+			ucmd->forwardmove = ReadInt16 (stream);
 		if (flags & UCMDF_SIDEMOVE)
-			ucmd->sidemove = ReadWord (stream);
+			ucmd->sidemove = ReadInt16 (stream);
 		if (flags & UCMDF_UPMOVE)
-			ucmd->upmove = ReadWord (stream);
+			ucmd->upmove = ReadInt16 (stream);
 		if (flags & UCMDF_ROLL)
-			ucmd->roll = ReadWord (stream);
+			ucmd->roll = ReadInt16 (stream);
 	}
 
 	return int(*stream - start);
@@ -211,7 +254,7 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream
 		basis = &blank;
 	}
 
-	WriteByte (0, stream);			// Make room for the packing bits
+	WriteInt8 (0, stream);			// Make room for the packing bits
 
 	buttons_changed = ucmd->buttons ^ basis->buttons;
 	if (buttons_changed != 0)
@@ -235,16 +278,16 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream
 				}
 			}
 		}
-		WriteByte (bytes[0], stream);
+		WriteInt8 (bytes[0], stream);
 		if (bytes[0] & 0x80)
 		{
-			WriteByte (bytes[1], stream);
+			WriteInt8 (bytes[1], stream);
 			if (bytes[1] & 0x80)
 			{
-				WriteByte (bytes[2], stream);
+				WriteInt8 (bytes[2], stream);
 				if (bytes[2] & 0x80)
 				{
-					WriteByte (bytes[3], stream);
+					WriteInt8 (bytes[3], stream);
 				}
 			}
 		}
@@ -252,36 +295,36 @@ int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream
 	if (ucmd->pitch != basis->pitch)
 	{
 		flags |= UCMDF_PITCH;
-		WriteWord (ucmd->pitch, stream);
+		WriteInt16 (ucmd->pitch, stream);
 	}
 	if (ucmd->yaw != basis->yaw)
 	{
 		flags |= UCMDF_YAW;
-		WriteWord (ucmd->yaw, stream);
+		WriteInt16 (ucmd->yaw, stream);
 	}
 	if (ucmd->forwardmove != basis->forwardmove)
 	{
 		flags |= UCMDF_FORWARDMOVE;
-		WriteWord (ucmd->forwardmove, stream);
+		WriteInt16 (ucmd->forwardmove, stream);
 	}
 	if (ucmd->sidemove != basis->sidemove)
 	{
 		flags |= UCMDF_SIDEMOVE;
-		WriteWord (ucmd->sidemove, stream);
+		WriteInt16 (ucmd->sidemove, stream);
 	}
 	if (ucmd->upmove != basis->upmove)
 	{
 		flags |= UCMDF_UPMOVE;
-		WriteWord (ucmd->upmove, stream);
+		WriteInt16 (ucmd->upmove, stream);
 	}
 	if (ucmd->roll != basis->roll)
 	{
 		flags |= UCMDF_ROLL;
-		WriteWord (ucmd->roll, stream);
+		WriteInt16 (ucmd->roll, stream);
 	}
 
 	// Write the packing bits
-	WriteByte (flags, &temp);
+	WriteInt8 (flags, &temp);
 
 	return int(*stream - start);
 }
@@ -329,7 +372,7 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stre
 			ucmd->upmove != 0 ||
 			ucmd->roll != 0)
 		{
-			WriteByte (DEM_USERCMD, stream);
+			WriteInt8 (DEM_USERCMD, stream);
 			return PackUserCmd (ucmd, basis, stream) + 1;
 		}
 	}
@@ -342,11 +385,11 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stre
 		ucmd->upmove != basis->upmove ||
 		ucmd->roll != basis->roll)
 	{
-		WriteByte (DEM_USERCMD, stream);
+		WriteInt8 (DEM_USERCMD, stream);
 		return PackUserCmd (ucmd, basis, stream) + 1;
 	}
 
-	WriteByte (DEM_EMPTYUSERCMD, stream);
+	WriteInt8 (DEM_EMPTYUSERCMD, stream);
 	return 1;
 }
 
@@ -417,11 +460,11 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 	int ticmod = tic % BACKUPTICS;
 
 	tcmd = &netcmds[player][ticmod];
-	tcmd->consistancy = ReadWord (stream);
+	tcmd->consistancy = ReadInt16 (stream);
 
 	start = *stream;
 
-	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
+	while ((type = ReadInt8 (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
 		Net_SkipCommand (type, stream);
 
 	NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
@@ -460,7 +503,7 @@ void RunNetSpecs (int player, int buf)
 			uint8_t *end = stream + len;
 			while (stream < end)
 			{
-				int type = ReadByte (&stream);
+				int type = ReadInt8 (&stream);
 				Net_DoCommand (type, &stream, player);
 			}
 			if (!demorecording)
@@ -475,7 +518,7 @@ uint8_t *lenspot;
 // for the length field.
 void StartChunk (int id, uint8_t **stream)
 {
-	WriteLong (id, stream);
+	WriteInt32 (id, stream);
 	lenspot = *stream;
 	*stream += 4;
 }
@@ -490,9 +533,9 @@ void FinishChunk (uint8_t **stream)
 		return;
 
 	len = int(*stream - lenspot - 4);
-	WriteLong (len, &lenspot);
+	WriteInt32 (len, &lenspot);
 	if (len & 1)
-		WriteByte (0, stream);
+		WriteInt8 (0, stream);
 
 	lenspot = NULL;
 }
@@ -503,6 +546,6 @@ void SkipChunk (uint8_t **stream)
 {
 	int len;
 
-	len = ReadLong (stream);
+	len = ReadInt32 (stream);
 	*stream += len + (len & 1);
 }

@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
-** Copyright 2005-2008 Christoph Oelckers
+** Copyright 2005-2023 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 #include <functional>
 #include <vector>
 #include "fs_swap.h"
-
-#include "tarray.h"
 
 namespace FileSys {
 	
@@ -72,22 +71,103 @@ public:
 	}
 };
 
-// Zip compression methods, extended by some internal types to be passed to OpenDecompressor
-enum
+class FileReader;
+
+// an opaque memory buffer to the file's content. Can either own the memory or just point to an external buffer.
+class FileData
 {
-	METHOD_STORED = 0,
-	METHOD_SHRINK = 1,
-	METHOD_IMPLODE = 6,
-	METHOD_DEFLATE = 8,
-	METHOD_BZIP2 = 12,
-	METHOD_LZMA = 14,
-	METHOD_PPMD = 98,
-	METHOD_LZSS = 1337,	// not used in Zips - this is for Console Doom compression
-	METHOD_ZLIB = 1338,	// Zlib stream with header, used by compressed nodes.
-	METHOD_TRANSFEROWNER = 0x8000,
+	void* memory;
+	size_t length;
+	bool owned;
+
+public:
+	using value_type = uint8_t;
+	FileData() { memory = nullptr; length = 0; owned = true; }
+	FileData(const void* memory_, size_t len, bool own = true)
+	{
+		length = len;
+		if (own)
+		{
+			length = len;
+			memory = malloc(len);
+			owned = true;
+			if (memory_) memcpy(memory, memory_, len);
+		}
+		else
+		{
+			memory = (void*)memory_;
+			owned = false;
+		}
+	}
+	uint8_t* writable() const { return owned? (uint8_t*)memory : nullptr; }
+	const void* data() const { return memory; }
+	size_t size() const { return length; }
+	const char* string() const { return (const char*)memory; }
+	const uint8_t* bytes() const { return (const uint8_t*)memory; }
+
+	FileData& operator = (const FileData& copy)
+	{
+		if (owned && memory) free(memory);
+		length = copy.length;
+		owned = copy.owned;
+		if (owned)
+		{
+			memory = malloc(length);
+			memcpy(memory, copy.memory, length);
+		}
+		else memory = copy.memory;
+		return *this;
+	}
+
+	FileData& operator = (FileData&& copy) noexcept
+	{
+		if (owned && memory) free(memory);
+		length = copy.length;
+		owned = copy.owned;
+		memory = copy.memory;
+		copy.memory = nullptr;
+		copy.length = 0;
+		copy.owned = true;
+		return *this;
+	}
+
+	FileData(const FileData& copy)
+	{
+		memory = nullptr;
+		*this = copy;
+	}
+
+	~FileData()
+	{
+		if (owned && memory) free(memory);
+	}
+
+	void* allocate(size_t len)
+	{
+		if (!owned) memory = nullptr;
+		length = len;
+		owned = true;
+		memory = realloc(memory, length);
+		return memory;
+	}
+
+	void set(const void* mem, size_t len)
+	{
+		memory = (void*)mem;
+		length = len;
+		owned = false;
+	}
+
+	void clear()
+	{
+		if (owned && memory) free(memory);
+		memory = nullptr;
+		length = 0;
+		owned = true;
+	}
+
 };
 
-class FileReader;
 
 class FileReaderInterface
 {
@@ -102,12 +182,8 @@ public:
 	ptrdiff_t GetLength () const { return Length; }
 };
 
-struct FResourceLump;
-
 class FileReader
 {
-	friend struct FResourceLump;	// needs access to the private constructor.
-
 	FileReaderInterface *mReader = nullptr;
 
 	FileReader(const FileReader &r) = delete;
@@ -131,13 +207,13 @@ public:
 
 	FileReader() {}
 
-	FileReader(FileReader &&r)
+	FileReader(FileReader &&r) noexcept
 	{
 		mReader = r.mReader;
 		r.mReader = nullptr;
 	}
 
-	FileReader& operator =(FileReader &&r)
+	FileReader& operator =(FileReader &&r) noexcept
 	{
 		Close();
 		mReader = r.mReader;
@@ -170,12 +246,10 @@ public:
 		mReader = nullptr;
 	}
 
-	bool OpenFile(const char *filename, Size start = 0, Size length = -1);
+	bool OpenFile(const char *filename, Size start = 0, Size length = -1, bool buffered = false);
 	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
-	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
-	bool OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, bool exceptions = false);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenMemoryArray(FileData& data);	// take the given array
 
 	Size Tell() const
 	{
@@ -192,35 +266,14 @@ public:
 		return mReader->Read(buffer, len);
 	}
 
-	std::vector<uint8_t> Read(size_t len)
-	{
-		std::vector<uint8_t> buffer(len);
-		if (len > 0)
-		{
-			Size length = mReader->Read(&buffer[0], len);
-			buffer.resize((size_t)length);
-		}
-		return buffer;
-	}
+	FileData Read(size_t len);
+	FileData ReadPadded(size_t padding);
 
-	std::vector<uint8_t> Read()
+	FileData Read()
 	{
 		return Read(GetLength());
 	}
 
-	std::vector<uint8_t> ReadPadded(size_t padding)
-	{
-		auto len = GetLength();
-		std::vector<uint8_t> buffer(len + padding);
-		if (len > 0)
-		{
-			Size length = mReader->Read(&buffer[0], len);
-			if (length < len) buffer.clear();
-			else memset(buffer.data() + len, 0, padding);
-		}
-		else buffer[0] = 0;
-		return buffer;
-	}
 
 	char *Gets(char *strbuf, Size len)
 	{
@@ -352,13 +405,13 @@ protected:
 class BufferWriter : public FileWriter
 {
 protected:
-	TArray<unsigned char> mBuffer;
+	std::vector<unsigned char> mBuffer;
 public:
 
 	BufferWriter() {}
 	virtual size_t Write(const void *buffer, size_t len) override;
-	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
-	TArray<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
+	std::vector<unsigned char> *GetBuffer() { return &mBuffer; }
+	std::vector<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
 };
 
 }

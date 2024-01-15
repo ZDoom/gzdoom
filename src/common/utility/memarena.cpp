@@ -342,7 +342,7 @@ FString *FSharedStringArena::Alloc(const FString &source)
 	unsigned int hash;
 	Node *strnode;
 
-	strnode = FindString(source, source.Len(), hash);
+	strnode = FindString(source.GetChars(), source.Len(), hash);
 	if (strnode == NULL)
 	{
 		strnode = (Node *)iAlloc(sizeof(Node));

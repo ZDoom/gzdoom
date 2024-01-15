@@ -246,7 +246,7 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	TArray<FICastSound> mCastSounds;
 
 	int 			casttics;
-	uint32_t		casttranslation;	// [RH] Draw "our hero" with their chosen suit color
+	FTranslationID		casttranslation;	// [RH] Draw "our hero" with their chosen suit color
 	FState*			caststate;
 	FState*			basestate;
 	FState*			advplayerstate;

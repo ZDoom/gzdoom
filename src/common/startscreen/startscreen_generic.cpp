@@ -72,10 +72,10 @@ FGenericStartScreen::FGenericStartScreen(int max_progress)
 	: FStartScreen(max_progress)
 {
 	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
-	int startup_lump = fileSystem.CheckNumForName("GZDOOM", FileSys::ns_graphics);
+	int startup_lump = fileSystem.CheckNumForName("BOOTLOGO", FileSys::ns_graphics);
 
-	StartupBitmap.Create(640, 480);
-	ClearBlock(StartupBitmap, { 0, 0, 0, 255 }, 0, 0, 640, 480);
+	StartupBitmap.Create(640 * 2, 480 * 2);
+	ClearBlock(StartupBitmap, { 0, 0, 0, 255 }, 0, 0, 640 * 2, 480 * 2);
 	// This also needs to work if the lump turns out to be unusable.
 	if (startup_lump != -1)
 	{
@@ -83,14 +83,13 @@ FGenericStartScreen::FGenericStartScreen(int max_progress)
 		if (iBackground)
 		{
 			Background = iBackground->GetCachedBitmap(nullptr, FImageSource::normal);
-			if (Background.GetWidth() < 640 || Background.GetHeight() < 480)
-				StartupBitmap.Blit(320 - Background.GetWidth()/2, 220 - Background.GetHeight() /2, Background);
+			if (Background.GetWidth() < 640 * 2 || Background.GetHeight() < 480 * 2)
+				StartupBitmap.Blit(320 * 2 - Background.GetWidth()/2, 220 * 2 - Background.GetHeight() / 2, Background);
 			else
-				StartupBitmap.Blit(0, 0, Background, 640, 480);
+				StartupBitmap.Blit(0, 0, Background, 640 * 2, 480 * 2);
 		
 		}
 	}
-	CreateHeader();
 }
 
 //==========================================================================
@@ -107,14 +106,15 @@ bool FGenericStartScreen::DoProgress(int advance)
 
 	if (CurPos < MaxPos)
 	{
-		RgbQuad bcolor = { 128, 0, 0, 255 }; // todo: make configurable
-		int numnotches = 512;
-		notch_pos = ((CurPos + 1) * 512) / MaxPos;
+		RgbQuad bcolor = { 2, 25, 87, 255 }; // todo: make configurable
+		int numnotches = 200 * 2;
+		notch_pos = ((CurPos + 1) * numnotches) / MaxPos;
 		if (notch_pos != NotchPos)
 		{ // Time to draw another notch.
-			ClearBlock(StartupBitmap, bcolor, ST_PROGRESS_X, ST_PROGRESS_Y, notch_pos, 16);
+			ClearBlock(StartupBitmap, bcolor, (320 - 100) * 2, 480 * 2 - 30, notch_pos, 4 * 2);
 			NotchPos = notch_pos;
-			StartupTexture->CleanHardwareData(true);
+			if (StartupTexture)
+				StartupTexture->CleanHardwareData(true);
 		}
 	}
 	return FStartScreen::DoProgress(advance);

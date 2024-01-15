@@ -230,8 +230,7 @@ int isnan(), isfinite();
 #define SQRTH 0.70710678118654752440
 extern double INFINITY, NAN;
 
-double c_log(x)
-double x;
+double c_log(double x)
 {
 int e;
 #ifdef DEC

@@ -65,9 +65,9 @@ FImageSource *WebPImage_TryCreate(FileReader &file, int lumpnum)
 	file.Seek(0, FileReader::SeekSet);
 	auto bytes = file.Read();
 
-	if (WebPGetInfo(bytes.data(), bytes.size(), &width, &height))
+	if (WebPGetInfo(bytes.bytes(), bytes.size(), &width, &height))
 	{
-		WebPData data{ bytes.data(), bytes.size() };
+		WebPData data{ bytes.bytes(), bytes.size() };
 		WebPData chunk_data;
 		auto mux = WebPMuxCreate(&data, 0);
 		if (mux)
@@ -142,7 +142,7 @@ int FWebPTexture::CopyPixels(FBitmap *bmp, int conversion, int frame)
 	config.output.u.RGBA.stride = bmp->GetPitch();
 	config.output.is_external_memory = 1;
 
-	(void)WebPDecode(bytes.GetBytes(), bytes.GetSize(), &config);
+	(void)WebPDecode(bytes.bytes(), bytes.size(), &config);
 
 	return 0;
 }

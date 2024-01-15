@@ -69,7 +69,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	}
 	else
 	{
-		SetColor(state, huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
+		SetColor(state, Level, lightmode, huds->lightlevel, 0, isFullbrightScene(), huds->cm, huds->alpha, true);
 	}
 	state.SetLightIndex(-1);
 	state.SetRenderStyle(huds->RenderStyle);
@@ -98,7 +98,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	{
 		float thresh = (huds->texture->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		state.AlphaFunc(Alpha_GEqual, thresh);
-		uint32_t trans = huds->weapon->GetTranslation() != 0 ? huds->weapon->GetTranslation() : 0;
+		FTranslationID trans = huds->weapon->GetTranslation();
 		if ((huds->weapon->Flags & PSPF_PLAYERTRANSLATED)) trans = huds->owner->Translation;
 		state.SetMaterial(huds->texture, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, trans, huds->OverrideShader);
 		state.Draw(DT_TriangleStrip, huds->mx, 4);
@@ -121,7 +121,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 void HWDrawInfo::DrawPlayerSprites(bool hudModelStep, FRenderState &state)
 {
 	auto oldlightmode = lightmode;
-	if (!hudModelStep && isSoftwareLighting()) SetFallbackLightMode();	// Software lighting cannot handle 2D content.
+	if (!hudModelStep && isSoftwareLighting(oldlightmode)) SetFallbackLightMode();	// Software lighting cannot handle 2D content.
 	for (auto &hudsprite : hudsprites)
 	{
 		if ((!!hudsprite.mframe) == hudModelStep)
@@ -353,9 +353,9 @@ WeaponLighting HWDrawInfo::GetWeaponLighting(sector_t *viewsector, const DVector
 			if (Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
 		}
 
-		l.lightlevel = CalcLightLevel(l.lightlevel, getExtraLight(), true, 0);
+		l.lightlevel = CalcLightLevel(lightmode, l.lightlevel, getExtraLight(), true, 0);
 
-		if (isSoftwareLighting() || l.lightlevel < 92)
+		if (isSoftwareLighting(lightmode) || l.lightlevel < 92)
 		{
 			// Korshun: the way based on max possible light level for sector like in software renderer.
 			double min_L = 36.0 / 31.0 - ((l.lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
@@ -701,13 +701,13 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
 	auto oldlightmode = lightmode;
-	if (isSoftwareLighting()) SetFallbackLightMode();
+	if (isSoftwareLighting(oldlightmode)) SetFallbackLightMode();
 
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
 		
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = FindModelFrame(psp->Caller, psp->GetSprite(), psp->GetFrame(), false);
 
 		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
 		if (smf) continue;
@@ -787,12 +787,12 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
 	auto oldlightmode = lightmode;
-	if (isSoftwareLighting()) SetFallbackLightMode();
+	if (isSoftwareLighting(oldlightmode)) SetFallbackLightMode();
 
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = FindModelFrame(psp->Caller, psp->GetSprite(), psp->GetFrame(), false);
 
 		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
 		if (!smf) continue;

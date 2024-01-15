@@ -77,6 +77,7 @@ void *M_Realloc(void *memblock, size_t size)
 	GC::ReportRealloc(oldsize, _msize(block));
 	return block;
 }
+
 #else
 void *M_Malloc(size_t size)
 {
@@ -113,6 +114,14 @@ void *M_Realloc(void *memblock, size_t size)
 	return block;
 }
 #endif
+
+void* M_Calloc(size_t v1, size_t v2)
+{
+	auto p = M_Malloc(v1 * v2);
+	memset(p, 0, v1 * v2);
+	return p;
+}
+
 #else
 #ifdef _MSC_VER
 #include <crtdbg.h>

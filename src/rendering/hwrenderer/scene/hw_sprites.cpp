@@ -58,6 +58,7 @@
 #include "hw_dynlightdata.h"
 #include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
+#include "quaternion.h"
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
@@ -84,6 +85,7 @@ CVAR(Float, gl_sclipfactor, 1.8f, CVAR_ARCHIVE)
 CVAR(Int, gl_particles_style, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // 0 = square, 1 = round, 2 = smooth
 CVAR(Int, gl_billboard_mode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_billboard_faces_camera, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, hw_force_cambbpref, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, gl_billboard_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Int, gl_fuzztype, 0, CVAR_ARCHIVE)
 {
@@ -101,9 +103,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = fullbright ? 0 : getExtraLight();
-	auto &vp = di->Viewpoint;
-
-	const bool UseActorLight = (actor && actor->LightLevel > -1);
+	auto &vp = di->Viewpoint;	
 
 	if (translucent)
 	{
@@ -142,7 +142,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			if (!Colormap.FadeColor.isBlack())
 			{
 				float dist = Dist2(vp.Pos.X, vp.Pos.Y, x, y);
-				int fogd = di->GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity, Colormap.BlendFactor);
+				int fogd = GetFogDensity(di->Level, di->lightmode, lightlevel, Colormap.FadeColor, Colormap.FogDensity, Colormap.BlendFactor);
 
 				// this value was determined by trial and error and is scale dependent!
 				float factor = 0.05f + exp(-fogd * dist / 62500.f);
@@ -187,7 +187,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			state.SetObjectColor(finalcol);
 			state.SetAddColor(cursec->AdditiveColors[sector_t::sprites] | 0xff000000);
 		}
-		di->SetColor(state, lightlevel, rel, di->isFullbrightScene(), Colormap, trans);
+		SetColor(state, di->Level, di->lightmode, lightlevel, rel, di->isFullbrightScene(), Colormap, trans);
 	}
 
 
@@ -214,7 +214,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
 	}
 
-	if (!foglayer) di->SetFog(state, foglevel, rel, di->isFullbrightScene(), &Colormap, additivefog);
+	if (!foglayer) SetFog(state, di->Level, di->lightmode, foglevel, rel, di->isFullbrightScene(), &Colormap, additivefog);
 	else
 	{
 		state.EnableFog(false);
@@ -255,10 +255,10 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				thiscm.Decolorize();
 			}
 
-			di->SetColor(state, thisll, rel, di->isFullbrightScene(), thiscm, trans);
+			SetColor(state, di->Level, di->lightmode, thisll, rel, di->isFullbrightScene(), thiscm, trans);
 			if (!foglayer)
 			{
-				di->SetFog(state, thislight, rel, di->isFullbrightScene(), &thiscm, additivefog);
+				SetFog(state, di->Level, di->lightmode, thislight, rel, di->isFullbrightScene(), &thiscm, additivefog);
 			}
 			SetSplitPlanes(state, *topplane, *lowplane);
 		}
@@ -286,7 +286,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			if (foglayer)
 			{
 				// If we get here we know that we have colored fog and no fixed colormap.
-				di->SetFog(state, foglevel, rel, false, &Colormap, additivefog);
+				SetFog(state, di->Level, di->lightmode, foglevel, rel, false, &Colormap, additivefog);
 				state.SetTextureMode(TM_FOGLAYER);
 				state.SetRenderStyle(STYLE_Translucent);
 				state.Draw(DT_TriangleStrip, vertexindex, 4);
@@ -383,15 +383,18 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	}
 
 	// [BB] Billboard stuff
-	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & PT_NOXYBILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
+	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & SPF_NO_XY_BILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& di->mViewActor != nullptr
 		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
 
-	const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
+	const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
+		(gl_billboard_faces_camera && (actor && !(actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA)))
+		|| !!(actor && actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
+
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 
-	const bool drawRollParticle = (particle != nullptr && particle->flags & PT_DOROLL);
+	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 
 
 	// [fgsfds] check sprite type mask
@@ -399,7 +402,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 
 	// [Nash] is a flat sprite
-	const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
+	const bool isFlatSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE);
 	const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
 
 	// [Nash] check for special sprite drawing modes
@@ -416,7 +419,19 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		mat.MakeIdentity();
 		mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
 
-												  // Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
+		// [MC] Sprite offsets. These must be calculated separately in their own matrix,
+		// otherwise "face sprites" would cause some issues whenever enabled. We don't 
+		// want those calculations here. Credit to PhantomBeta for this.
+		if (offx || offy)
+		{
+			FQuaternion quat = FQuaternion::FromAngles(FAngle::fromDeg(270) - di->Viewpoint.HWAngles.Yaw, di->Viewpoint.HWAngles.Pitch, FAngle::fromDeg(0));
+			FVector3 sideVec = quat * FVector3(0, 1, 0);
+			FVector3 upVec = quat * FVector3(0, 0, 1);
+			FVector3 res = sideVec * -offx + upVec * offy;
+			mat.Translate(res.X, res.Z, res.Y);
+		}
+
+		// Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
 		if (drawBillboardFacingCamera && !isFlatSprite)
 		{
 			// [CMB] Rotate relative to camera XY position, not just camera direction,
@@ -431,18 +446,15 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		}
 
 		// [fgsfds] calculate yaw vectors
-		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
+		float rollDegrees = 0;
 		float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 		if (actor || drawRollParticle)	rollDegrees = Angles.Roll.Degrees();
-		if (isFlatSprite)
-		{
-			yawvecX = Angles.Yaw.Cos();
-			yawvecY = Angles.Yaw.Sin();
-		}
 
 		// [fgsfds] Rotate the sprite about the sight vector (roll)
 		if (spritetype == RF_WALLSPRITE)
 		{
+			float yawvecX = Angles.Yaw.Cos();
+			float yawvecY = Angles.Yaw.Sin();
 			mat.Rotate(0, 1, 0, 0);
 			if (drawRollSpriteActor)
 			{
@@ -466,12 +478,13 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-      if(r_isocam) mat.Translate(0.0, z2 - zcenter, 0.0);
+		        if(r_isocam) mat.Translate(0.0, z2 - zcenter, 0.0);
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees());
 			if(r_isocam) mat.Translate(0.0, zcenter - z2, 0.0);
 		}
 
 		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
+		
 		v[0] = mat * FVector3(x1, z1, y1);
 		v[1] = mat * FVector3(x2, z1, y2);
 		v[2] = mat * FVector3(x1, z2, y1);
@@ -759,13 +772,23 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		return;
 	}
-
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (viewmaster == camera && !vp.showviewer)
 	{
+		if (vp.noviewer || (viewmaster->player && viewmaster->player->crossingPortal)) return;
 		DVector3 vieworigin = viewmaster->Pos();
 		if (thruportal == 1) vieworigin += di->Level->Displacements.getOffset(viewmaster->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2) return;
+
+		// Necessary in order to prevent sprite pop-ins with viewpos and models. 
+		auto* sec = viewmaster->Sector;
+		if (sec && !sec->PortalBlocksMovement(sector_t::ceiling))
+		{
+			double zh = sec->GetPortalPlaneZ(sector_t::ceiling);
+			double top = (viewmaster->player ? max<double>(viewmaster->player->viewz, viewmaster->Top()) + 1 : viewmaster->Top());
+			if (viewmaster->Z() < zh && top >= zh)
+				return;
+		}
 	}
 	// Thing is invisible if close to the camera.
 	if (viewmaster->renderflags & RF_MAYBEINVISIBLE)
@@ -775,20 +798,14 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (fabs(viewpos.X - vp.Pos.X) < 32 && fabs(viewpos.Y - vp.Pos.Y) < 32) return;
 	}
 
+	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing, spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2)
+	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2
+		&& vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2
+		&& !thing->Vel.isZero() && !modelframe) // exclude vertically moving objects from this check.
 	{
-		if (vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2)
-		{
-			// exclude vertically moving objects from this check.
-			if (!thing->Vel.isZero())
-			{
-				if (!FindModelFrame(thing->GetClass(), spritenum, thing->frame, false))
-				{
-					return;
-				}
-			}
-		}
+		return;
 	}
 
 	// don't draw first frame of a player missile
@@ -808,7 +825,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	if (thruportal != 2 && di->mClipPortal != nullptr)
 	{
-		int clipres = di->mClipPortal->ClipPoint(thingpos);
+		int clipres = di->mClipPortal->ClipPoint(thingpos.XY());
 		if (clipres == PClip_InFront) return;
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
@@ -848,14 +865,11 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		z += fz;
 	}
 
-	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->modelData != nullptr ? thing->modelData->modelDef != NAME_None ? PClass::FindActor(thing->modelData->modelDef) : thing->GetClass() : thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-
 	// don't bother drawing sprite shadows if this is a model (it will never look right)
 	if (modelframe && isSpriteShadow)
 	{
 		return;
 	}
-
 	if (!modelframe)
 	{
 		bool mirror = false;
@@ -922,6 +936,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (!tex || !tex->isValid()) return;
 		auto& spi = tex->GetSpritePositioning(type == RF_FACESPRITE);
 
+		offx = (float)thing->SpriteOffset.X;
+		offy = (float)thing->SpriteOffset.Y;
+
 		vt = spi.GetSpriteVT();
 		vb = spi.GetSpriteVB();
 		if (thing->renderflags & RF_YFLIP) std::swap(vt, vb);
@@ -944,7 +961,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			ur = spi.GetSpriteUL();
 		}
 
-		texture = TexMan.GetGameTexture(patch, false);
+		texture = tex;
 		if (!texture || !texture->isValid())
 			return;
 
@@ -953,10 +970,9 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		r.Scale(sprscale.X, isSpriteShadow ? sprscale.Y * 0.15 : sprscale.Y);
 
-		float SpriteOffY = thing->SpriteOffset.Y;
-		float rightfac = -r.left - thing->SpriteOffset.X;
+		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
-		z1 = z - r.top - SpriteOffY;
+		z1 = z - r.top;
 		z2 = z1 - r.height;
 
 		float spriteheight = sprscale.Y * r.height;
@@ -964,7 +980,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
+			PerformSpriteClipAdjustment(thing, thingpos.XY(), spriteheight);
 		}
 
 		switch (spritetype)
@@ -980,7 +996,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			y2 = y + viewvecX*rightfac;
 			if(thing->radius > 0 && r_isocam) // If sprites are drawn from an isometric perspective
 			{
-        float signX = 1.0;
+			        float signX = 1.0;
 				float signY = 1.0;
 				if(viewvecX < 0) signX = -1.0;
 				if(viewvecY < 0) signY = -1.0;
@@ -996,7 +1012,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 		case RF_FLATSPRITE:
 		{
-			float bottomfac = -r.top - SpriteOffY;
+			float bottomfac = -r.top;
 			float topfac = bottomfac - r.height;
 
 			x1 = x + leftfac;
@@ -1006,8 +1022,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			// [MC] Counteract in case of any potential problems. Tests so far haven't
 			// shown any outstanding issues but that doesn't mean they won't appear later
 			// when more features are added.
-			z1 += SpriteOffY;
-			z2 += SpriteOffY;
+			z1 += offy;
+			z2 += offy;
 			break;
 		}
 		case RF_WALLSPRITE:
@@ -1149,7 +1165,11 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans = 1.f;
 
-		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) || gl_billboard_faces_camera)
+		if (!gl_sprite_blend || modelframe ||
+			(thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) ||
+			(hw_force_cambbpref ? gl_billboard_faces_camera :
+			(gl_billboard_faces_camera && !(thing->renderflags2 & RF2_BILLBOARDNOFACECAMERA)) ||
+			thing->renderflags2 & RF2_BILLBOARDFACECAMERA))
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
@@ -1261,18 +1281,33 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 //
 //==========================================================================
 
-void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector)//, int shade, int fakeside)
+void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *sector, DVisualThinker *spr)//, int shade, int fakeside)
 {
-	if (particle->alpha==0) return;
+	if (!particle || particle->alpha <= 0)
+		return;
 
-	lightlevel = hw_ClampLight(sector->GetSpriteLight());
+	if (spr && spr->PT.texture.isNull())
+		return;
+
+	lightlevel = hw_ClampLight(spr ? spr->GetLightLevel(sector) : sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
-	if (di->isFullbrightScene())
+	trans = particle->alpha;
+	OverrideShader = 0;
+	modelframe = nullptr;
+	texture = nullptr;
+	topclip = LARGE_VALUE;
+	bottomclip = -LARGE_VALUE;
+	index = 0;
+	actor = nullptr;
+	this->particle = particle;
+	fullbright = particle->flags & SPF_FULLBRIGHT;
+
+	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
 	}
-	else if (!particle->bright)
+	else if (!(particle->flags & SPF_FULLBRIGHT))
 	{
 		TArray<lightlist_t> & lightlist=sector->e->XFloor.lightlist;
 		double lightbottom;
@@ -1302,8 +1337,6 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		Colormap.ClearColor();
 	}
 
-	trans=particle->alpha;
-
 	if(particle->style != STYLE_None)
 	{
 		RenderStyle = particle->style;
@@ -1313,91 +1346,104 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		RenderStyle = STYLE_Translucent;
 	}
 
-	OverrideShader = 0;
-
 	ThingColor = particle->color;
 	ThingColor.a = 255;
+	const auto& vp = di->Viewpoint;
 
-	modelframe=nullptr;
-	texture=nullptr;
-	topclip = LARGE_VALUE;
-	bottomclip = -LARGE_VALUE;
-	index = 0;
-
-	bool has_texture = !particle->texture.isNull();
-
-	int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
-
-	// [BB] Load the texture for round or smooth particles
-	if (particle_style)
-	{
-		FTextureID lump;
-		if (particle_style == 1)
-		{
-			lump = TexMan.glPart2;
-		}
-		else if (particle_style == 2)
-		{
-			lump = has_texture ? particle -> texture : TexMan.glPart;
-		}
-		else lump.SetNull();
-
-		if (lump.isValid())
-		{
-			translation = 0;
-			//auto tex = TexMan.GetGameTexture(lump, false);
-
-			ul = 0;
-			ur = 1;
-			vt = 0;
-			vb = 1;
-			texture = TexMan.GetGameTexture(lump, true);
-		}
-	}
-
-    const auto &vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
-	if (paused || di->Level->isFrozen())
+	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
-	float xvf = (particle->Vel.X) * timefrac;
-	float yvf = (particle->Vel.Y) * timefrac;
-	float zvf = (particle->Vel.Z) * timefrac;
 
-	x = float(particle->Pos.X) + xvf;
-	y = float(particle->Pos.Y) + yvf;
-	z = float(particle->Pos.Z) + zvf;
-
-	if(particle->flags & PT_DOROLL)
+	if (spr)
 	{
-		float rvf = (particle->RollVel) * timefrac;
-		Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);
+		AdjustVisualThinker(di, spr, sector);
 	}
+	else
+	{
+		bool has_texture = particle->texture.isValid();
+		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
+		
+		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
 
-	float factor;
-	if (particle_style == 1) factor = 1.3f / 7.f;
-	else if (particle_style == 2) factor = 2.5f / 7.f;
-	else factor = 1 / 7.f;
-	float scalefac=particle->size * factor;
+		// [BB] Load the texture for round or smooth particles
+		if (particle_style)
+		{
+			FTextureID lump;
+			if (particle_style == 1)
+			{
+				lump = TexMan.glPart2;
+			}
+			else if (particle_style == 2)
+			{
+				if(custom_animated_texture)
+				{
+					lump = TexAnim.UpdateStandaloneAnimation(particle->animData, di->Level->maptime + timefrac);
+				}
+				else if(has_texture)
+				{
+					lump = particle->texture;
+				}
+				else
+				{
+					lump = TexMan.glPart;
+				}
+			}
+			else
+			{
+				lump.SetNull();
+			}
 
-	float viewvecX = vp.ViewVector.X;
-	float viewvecY = vp.ViewVector.Y;
+			if (lump.isValid())
+			{
+				translation = NO_TRANSLATION;
 
-	x1=x+viewvecY*scalefac;
-	x2=x-viewvecY*scalefac;
-	y1=y-viewvecX*scalefac;
-	y2=y+viewvecX*scalefac;
-	z1=z-scalefac;
-	z2=z+scalefac;
+				ul = vt = 0;
+				ur = vb = 1;
 
-	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+				texture = TexMan.GetGameTexture(lump, !custom_animated_texture);
+			}
+		}
 
-	actor=nullptr;
-	this->particle=particle;
-	fullbright = !!particle->bright;
 
-	// [BB] Translucent particles have to be rendered without the alpha test.
-	if (particle_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
-	else hw_styleflags = STYLEHW_NoAlphaTest;
+		float xvf = (particle->Vel.X) * timefrac;
+		float yvf = (particle->Vel.Y) * timefrac;
+		float zvf = (particle->Vel.Z) * timefrac;
+
+		offx = 0.f;
+		offy = 0.f;
+
+		x = float(particle->Pos.X) + xvf;
+		y = float(particle->Pos.Y) + yvf;
+		z = float(particle->Pos.Z) + zvf;
+
+		if(particle->flags & SPF_ROLL)
+		{
+			float rvf = (particle->RollVel) * timefrac;
+			Angles.Roll = TAngle<double>::fromDeg(particle->Roll + rvf);
+		}
+	
+		float factor;
+		if (particle_style == 1) factor = 1.3f / 7.f;
+		else if (particle_style == 2) factor = 2.5f / 7.f;
+		else factor = 1 / 7.f;
+		float scalefac=particle->size * factor;
+
+		float viewvecX = vp.ViewVector.X * scalefac;
+		float viewvecY = vp.ViewVector.Y * scalefac;
+
+		x1=x+viewvecY;
+		x2=x-viewvecY;
+		y1=y-viewvecX;
+		y2=y+viewvecX;
+		z1=z-scalefac;
+		z2=z+scalefac;
+
+		depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+	
+		// [BB] Translucent particles have to be rendered without the alpha test.
+		if (particle_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
+		else hw_styleflags = STYLEHW_NoAlphaTest;
+	}
 
 	if (sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright)
 		lightlist = &sector->e->XFloor.lightlist;
@@ -1406,6 +1452,75 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 
 	PutSprite(di, hw_styleflags != STYLEHW_Solid);
 	rendered_sprites++;
+}
+
+// [MC] VisualThinkers are to be rendered akin to actor sprites. The reason this whole system
+// is hitching a ride on particle_t is because of the large number of checks with 
+// HWSprite elsewhere in the draw lists.
+void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t* sector)
+{
+	translation = spr->Translation;
+
+	const auto& vp = di->Viewpoint;
+	double timefrac = vp.TicFrac;
+
+	if (paused || spr->isFrozen())
+		timefrac = 0.;
+	
+	bool custom_anim = ((spr->PT.flags & SPF_LOCAL_ANIM) && spr->PT.animData.ok);
+
+	texture = TexMan.GetGameTexture(
+			custom_anim
+			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
+			: spr->PT.texture, !custom_anim);
+
+	if (spr->bDontInterpolate)
+		timefrac = 0.;
+
+	FVector3 interp = spr->InterpolatedPosition(timefrac);
+	x = interp.X;
+	y = interp.Y;
+	z = interp.Z;
+
+	offx = (float)spr->Offset.X;
+	offy = (float)spr->Offset.Y;
+
+	if (spr->PT.flags & SPF_ROLL)
+		Angles.Roll = TAngle<double>::fromDeg(spr->InterpolatedRoll(timefrac));
+
+	auto& spi = texture->GetSpritePositioning(0);
+
+	vt = spi.GetSpriteVT();
+	vb = spi.GetSpriteVB();
+	ul = spi.GetSpriteUR();
+	ur = spi.GetSpriteUL();
+
+	auto r = spi.GetSpriteRect();
+	r.Scale(spr->Scale.X, spr->Scale.Y);
+
+	if (spr->bXFlip)	
+	{
+		std::swap(ul,ur);
+		r.left = -r.width - r.left;	// mirror the sprite's x-offset
+	}
+	if (spr->bYFlip)	std::swap(vt,vb);
+
+	float viewvecX = vp.ViewVector.X;
+	float viewvecY = vp.ViewVector.Y;
+	float rightfac = -r.left;
+	float leftfac = rightfac - r.width;
+
+	x1 = x - viewvecY * leftfac;
+	x2 = x - viewvecY * rightfac;
+	y1 = y + viewvecX * leftfac;
+	y2 = y + viewvecX * rightfac;
+	z1 = z - r.top;
+	z2 = z1 - r.height;
+
+	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+
+	// [BB] Translucent particles have to be rendered without the alpha test.
+	hw_styleflags = STYLEHW_NoAlphaTest;
 }
 
 //==========================================================================

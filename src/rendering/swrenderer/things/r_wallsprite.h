@@ -18,7 +18,7 @@ namespace swrenderer
 
 	private:
 		FWallCoords wallc;
-		uint32_t Translation = 0;
+		FTranslationID Translation = NO_TRANSLATION;
 		uint32_t FillColor = 0;
 	};
 }

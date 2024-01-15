@@ -53,14 +53,14 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
-		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename.GetChars());
 		mDataLump = lumpnum;
 		mAnivLump = lumpnum2;
 	}
 	else
 	{
 		realfilename.Substitute("_a.3d","_d.3d");
-		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename.GetChars());
 		mAnivLump = lumpnum;
 		mDataLump = lumpnum2;
 	}
@@ -71,9 +71,9 @@ void FUE1Model::LoadGeometry()
 {
 	const char *buffer, *buffer2;
 	auto lump =  fileSystem.ReadFile(mDataLump);
-	buffer = lump.GetString();
+	buffer = lump.string();
 	auto lump2 =  fileSystem.ReadFile(mAnivLump);
-	buffer2 = lump2.GetString();
+	buffer2 = lump2.string();
 	// map structures
 	dhead = (const d3dhead*)(buffer);
 	dpolys = (const d3dpoly*)(buffer+sizeof(d3dhead));
@@ -232,7 +232,7 @@ int FUE1Model::FindFrame(const char* name, bool nodefault)
 	return index;
 }
 
-void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, int translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
+void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	// the moment of magic
 	if ( (frame < 0) || (frame2 < 0) || (frame >= numFrames) || (frame2 >= numFrames) ) return;

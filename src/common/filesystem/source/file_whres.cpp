@@ -34,7 +34,7 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 #include "fs_stringpool.h"
 #include "fs_swap.h"
 
@@ -43,67 +43,52 @@ namespace FileSys {
 
 //==========================================================================
 //
-// WH resource file
-//
-//==========================================================================
-
-class FWHResFile : public FUncompressedFile
-{
-	const char* BaseName;
-public:
-	FWHResFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FWHResFile::FWHResFile(const char *filename, FileReader &file, StringPool* sp)
-	: FUncompressedFile(filename, file, sp)
-{
-	BaseName = stringpool->Strdup(ExtractBaseName(filename, false).c_str());
-}
-
-//==========================================================================
-//
 // Open it
 //
 //==========================================================================
 
-bool FWHResFile::Open(LumpFilterInfo*)
+bool OpenWHRes(FResourceFile* file, LumpFilterInfo*)
 {
 	uint32_t directory[1024];
 
-	Reader.Seek(-4096, FileReader::SeekEnd);
-	Reader.Read(directory, 4096);
+	auto BaseName = ExtractBaseName(file->GetFileName());
+	auto Reader = file->GetContainerReader();
+	Reader->Seek(-4096, FileReader::SeekEnd);
+	Reader->Read(directory, 4096);
 
 	int nl =1024/3;
-	Lumps.Resize(nl);
-
+	
+	int k;
+	for (k = 0; k < nl; k++)
+	{
+		uint32_t offset = LittleLong(directory[k * 3]) * 4096;
+		uint32_t length = LittleLong(directory[k * 3 + 1]);
+		if (length == 0)
+		{
+			break;
+		}
+	}
+	auto Entries = file->AllocateEntries(k);
+	auto NumLumps = k;
 
 	int i = 0;
-	for(int k = 0; k < nl; k++)
+	for(k = 0; k < NumLumps; k++)
 	{
 		uint32_t offset = LittleLong(directory[k*3]) * 4096;
 		uint32_t length = LittleLong(directory[k*3+1]);
-		if (length == 0) break;
-		char num[5];
-		snprintf(num, 5, "/%04d", k);
-		std::string synthname = BaseName;
-		synthname += num;
-		Lumps[i].LumpNameSetup(synthname.c_str(), stringpool);
-		Lumps[i].Owner = this;
-		Lumps[i].Position = offset;
-		Lumps[i].LumpSize = length;
+		char num[6];
+		snprintf(num, 6, "/%04d", k);
+		std::string synthname = BaseName + num;
+		
+		Entries[i].Position = offset;
+		Entries[i].CompressedSize = Entries[i].Length = length;
+		Entries[i].Flags = RESFF_FULLPATH;
+		Entries[i].Namespace = ns_global;
+		Entries[i].ResourceID = -1;
+		Entries[i].Method = METHOD_STORED;
+		Entries[i].FileName = file->NormalizeFileName(synthname.c_str());
 		i++;
 	}
-	NumLumps = i;
-	Lumps.Clamp(NumLumps);
-	Lumps.ShrinkToFit();
 	return true;
 }
 
@@ -134,10 +119,9 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo
 			if (offset != checkpos || length == 0 || offset + length >= (size_t)size - 4096 ) return nullptr;
 			checkpos += (length+4095) / 4096;
 		}
-		auto rf = new FWHResFile(filename, file, sp);
-		if (rf->Open(filter)) return rf;
-		file = std::move(rf->Reader); // to avoid destruction of reader
-		delete rf;
+		auto rf = new FResourceFile(filename, file, sp);
+		if (OpenWHRes(rf, filter)) return rf;
+		file = rf->Destroy();
 	}
 	return NULL;
 }

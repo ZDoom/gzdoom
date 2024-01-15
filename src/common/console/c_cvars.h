@@ -89,6 +89,13 @@ enum ECVarType
 	CVAR_Dummy,			// Unknown
 };
 
+enum ListCCMDType
+{
+	LCT_Default,
+	LCT_Plain,
+	LCT_FullSearch,
+};
+
 
 class FIntCVarRef;
 union UCVarValue
@@ -201,7 +208,7 @@ public:
 	static void MarkZSCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
-	static void ListVars (const char *filter, bool plain);
+	static void ListVars (const char *filter, int listtype);
 
 	const FString &GetDescription() const { return Description; };
 	const FString& GetToggleMessage(int which) { return ToggleMessages[which]; }
@@ -217,6 +224,9 @@ public:
 	void SetExtraDataPointer(void *pointer);
 
 	void* GetExtraDataPointer();
+
+	int pnum = -1;
+	FName userinfoName;
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
@@ -412,8 +422,8 @@ public:
 
 	const char *operator= (const char *stringrep)
 		{ UCVarValue val; val.String = const_cast<char *>(stringrep); SetGenericRep (val, CVAR_String); return stringrep; }
-	inline operator const char * () const { return mValue; }
-	inline const char *operator *() const { return mValue; }
+	inline operator const char * () const { return mValue.GetChars(); }
+	inline const char *operator *() const { return mValue.GetChars(); }
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);

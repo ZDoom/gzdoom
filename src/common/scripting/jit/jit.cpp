@@ -44,6 +44,13 @@ void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
 {
 	using namespace asmjit;
 	StringLogger logger;
+
+	if(sfunc->VarFlags & VARF_Abstract)
+	{
+		// Printf(TEXTCOLOR_ORANGE "Skipping abstract function during JIT dump: %s\n", sfunc->PrintableName.GetChars());
+		return;
+	}
+
 	try
 	{
 		ThrowingErrorHandler errorHandler;

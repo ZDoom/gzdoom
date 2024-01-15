@@ -65,11 +65,10 @@
 #include "palutil.h"
 #include "st_start.h"
 #include "printf.h"
-
+#include "launcherwindow.h"
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
-int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags);
 void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
@@ -118,7 +117,7 @@ void Unix_I_FatalError(const char* errortext)
 		FString cmd;
 		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
 			<< "\" --msgbox \"" << errortext << "\"";
-		popen(cmd, "r");
+		popen(cmd.GetChars(), "r");
 	}
 #ifndef NO_GTK
 	else if (I_GtkAvailable())
@@ -131,7 +130,7 @@ void Unix_I_FatalError(const char* errortext)
 		FString title;
 		title << GAMENAME " " << GetVersionString();
 
-		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
+		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.GetChars(), errortext, NULL) < 0)
 		{
 			printf("\n%s\n", errortext);
 		}
@@ -218,20 +217,21 @@ void RedrawProgressBar(int CurPos, int MaxPos)
 	CleanProgressBar();
 	struct winsize sizeOfWindow;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizeOfWindow);
+	int windowColClamped = std::min((int)sizeOfWindow.ws_col, 512);
 	double progVal = std::clamp((double)CurPos / (double)MaxPos,0.0,1.0);
-	int curProgVal = std::clamp(int(sizeOfWindow.ws_col * progVal),0,(int)sizeOfWindow.ws_col);
+	int curProgVal = std::clamp(int(windowColClamped * progVal),0,windowColClamped);
 
 	char progressBuffer[512];
 	memset(progressBuffer,'.',512);
-	progressBuffer[sizeOfWindow.ws_col - 1] = 0;
+	progressBuffer[windowColClamped - 1] = 0;
 	int lengthOfStr = 0;
 
 	while (curProgVal-- > 0)
 	{
 		progressBuffer[lengthOfStr++] = '=';
-		if (lengthOfStr >= sizeOfWindow.ws_col - 1) break;
+		if (lengthOfStr >= windowColClamped - 1) break;
 	}
-	fprintf(stdout, "\0337\033[%d;%dH\033[2K[%s\033[%d;%dH]\0338", sizeOfWindow.ws_row, 0, progressBuffer, sizeOfWindow.ws_row, sizeOfWindow.ws_col);
+	fprintf(stdout, "\0337\033[%d;%dH\033[2K[%s\033[%d;%dH]\0338", sizeOfWindow.ws_row, 0, progressBuffer, sizeOfWindow.ws_row, windowColClamped);
 	fflush(stdout);
 	ProgressBarCurPos = CurPos;
 	ProgressBarMaxPos = MaxPos;
@@ -299,95 +299,16 @@ void I_PrintStr(const char *cp)
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
 {
-	int i;
-
 	if (!showwin)
 	{
 		return defaultiwad;
 	}
 
-#ifndef __APPLE__
-	if(I_FileAvailable("kdialog"))
-	{
-		FString cmd("kdialog --title \"" GAMENAME " ");
-		cmd << GetVersionString() << ": Select an IWAD to use\""
-					" --menu \"" GAMENAME " found more than one IWAD\n"
-					"Select from the list below to determine which one to use:\"";
-
-		for(i = 0; i < numwads; ++i)
-		{
-			const char *filepart = strrchr(wads[i].Path, '/');
-			if(filepart == NULL)
-				filepart = wads[i].Path;
-			else
-				filepart++;
-			// Menu entries are specified in "tag" "item" pairs, where when a
-			// particular item is selected (and the Okay button clicked), its
-			// corresponding tag is printed to stdout for identification.
-			cmd.AppendFormat(" \"%d\" \"%s (%s)\"", i, wads[i].Name.GetChars(), filepart);
-		}
-
-		if(defaultiwad >= 0 && defaultiwad < numwads)
-		{
-			const char *filepart = strrchr(wads[defaultiwad].Path, '/');
-			if(filepart == NULL)
-				filepart = wads[defaultiwad].Path;
-			else
-				filepart++;
-			cmd.AppendFormat(" --default \"%s (%s)\"", wads[defaultiwad].Name.GetChars(), filepart);
-		}
-
-		FILE *f = popen(cmd, "r");
-		if(f != NULL)
-		{
-			char gotstr[16];
-
-			if(fgets(gotstr, sizeof(gotstr), f) == NULL ||
-			   sscanf(gotstr, "%d", &i) != 1)
-				i = -1;
-
-			// Exit status = 1 means the selection was canceled (either by
-			// Cancel/Esc or the X button), not that there was an error running
-			// the program. In that case, nothing was printed so fgets will
-			// have failed. Other values can indicate an error running the app,
-			// so fall back to whatever else can be used.
-			int status = pclose(f);
-			if(WIFEXITED(status) && (WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1))
-				return i;
-		}
-	}
-#endif
-
-#ifndef NO_GTK
-	if (I_GtkAvailable())
-	{
-		return I_PickIWad_Gtk (wads, numwads, showwin, defaultiwad, autoloadflags);
-	}
-#endif
-
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
+#else
+	return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags);
 #endif
-
-	if (!isatty(fileno(stdin)))
-	{
-		return defaultiwad;
-	}
-
-	printf ("Please select a game wad (or 0 to exit):\n");
-	for (i = 0; i < numwads; ++i)
-	{
-		const char *filepart = strrchr (wads[i].Path, '/');
-		if (filepart == NULL)
-			filepart = wads[i].Path;
-		else
-			filepart++;
-		printf ("%d. %s (%s)\n", i+1, wads[i].Name.GetChars(), filepart);
-	}
-	printf ("Which one? ");
-	if (scanf ("%d", &i) != 1 || i > numwads)
-		return -1;
-	return i-1;
 }
 
 void I_PutInClipboard (const char *str)

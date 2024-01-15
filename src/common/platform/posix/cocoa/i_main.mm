@@ -348,7 +348,7 @@ extern bool AppActive;
 
 	for (size_t i = 0, count = s_argv.Size(); i < count; ++i)
 	{
-		if (0 == strcmp(s_argv[i], charFileName))
+		if (0 == strcmp(s_argv[i].GetChars(), charFileName))
 		{
 			return FALSE;
 		}

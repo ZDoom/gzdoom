@@ -400,7 +400,7 @@ static void GroupLinePortals(FLevelLocals *Level)
 
 	for (unsigned i = 0; i < Level->linePortals.Size(); i++)
 	{
-		auto port = Level->linePortals[i];
+		const auto& port = Level->linePortals[i];
 		bool gotsome;
 
 		if (tempindex[i] == -1)

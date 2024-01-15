@@ -406,7 +406,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 		}
 		else
 		{
-			lineside = P_PointOnLineSide(Start, in->d.line);
+			lineside = P_PointOnLineSide(Start.XY(), in->d.line);
 			CurSector = lineside ? in->d.line->backsector : in->d.line->frontsector;
 		}
 	}

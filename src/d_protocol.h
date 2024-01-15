@@ -163,6 +163,7 @@ enum EDemoCommand
 	DEM_MDK,			// 71 String: Damage type
 	DEM_SETINV,			// 72 SetInventory
 	DEM_ENDSCREENJOB,
+	DEM_ZSC_CMD,		// 74 String: Command, Word: Byte size of command
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -246,16 +247,20 @@ int SkipTicCmd (uint8_t **stream, int count);
 void ReadTicCmd (uint8_t **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int ReadByte (uint8_t **stream);
-int ReadWord (uint8_t **stream);
-int ReadLong (uint8_t **stream);
+uint8_t ReadInt8 (uint8_t **stream);
+int16_t ReadInt16 (uint8_t **stream);
+int32_t ReadInt32 (uint8_t **stream);
+int64_t ReadInt64(uint8_t** stream);
 float ReadFloat (uint8_t **stream);
+double ReadDouble(uint8_t** stream);
 char *ReadString (uint8_t **stream);
 const char *ReadStringConst(uint8_t **stream);
-void WriteByte (uint8_t val, uint8_t **stream);
-void WriteWord (short val, uint8_t **stream);
-void WriteLong (int val, uint8_t **stream);
+void WriteInt8 (uint8_t val, uint8_t **stream);
+void WriteInt16 (int16_t val, uint8_t **stream);
+void WriteInt32 (int32_t val, uint8_t **stream);
+void WriteInt64(int64_t val, uint8_t** stream);
 void WriteFloat (float val, uint8_t **stream);
+void WriteDouble(double val, uint8_t** stream);
 void WriteString (const char *string, uint8_t **stream);
 
 #endif //__D_PROTOCOL_H__

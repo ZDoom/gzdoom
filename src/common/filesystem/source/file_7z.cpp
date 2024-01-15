@@ -38,6 +38,9 @@
 #include "7zCrc.h"
 #include "resourcefile.h"
 #include "fs_findfile.h"
+#include "unicode.h"
+#include "critsec.h"
+#include <mutex>
 
 
 namespace FileSys {
@@ -121,7 +124,7 @@ struct C7zArchive
 		file.Seek(0, FileReader::SeekSet);
 		LookToRead2_CreateVTable(&LookStream, false);
 		LookStream.realStream = &ArchiveStream.s;
-		LookToRead2_Init(&LookStream);
+		LookToRead2_INIT(&LookStream);
 		LookStream.bufSize = sizeof(StreamBuffer);
 		LookStream.buf = StreamBuffer;
 		SzArEx_Init(&DB);
@@ -158,20 +161,6 @@ struct C7zArchive
 		return res;
 	}
 };
-//==========================================================================
-//
-// Zip Lump
-//
-//==========================================================================
-
-struct F7ZLump : public FResourceLump
-{
-	int		Position;
-
-	virtual int FillCache() override;
-
-};
-
 
 //==========================================================================
 //
@@ -183,14 +172,15 @@ class F7ZFile : public FResourceFile
 {
 	friend struct F7ZLump;
 
-	F7ZLump *Lumps;
 	C7zArchive *Archive;
+	FCriticalSection critsec;
 
 public:
 	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
 	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
-	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
+	FileData Read(uint32_t entry) override;
+	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
 
@@ -204,8 +194,7 @@ public:
 F7ZFile::F7ZFile(const char * filename, FileReader &filer, StringPool* sp)
 	: FResourceFile(filename, filer, sp) 
 {
-	Lumps = NULL;
-	Archive = NULL;
+	Archive = nullptr;
 }
 
 
@@ -247,19 +236,18 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 	CSzArEx* const archPtr = &Archive->DB;
 
+	AllocateEntries(archPtr->NumFiles);
 	NumLumps = archPtr->NumFiles;
-	Lumps = new F7ZLump[NumLumps];
 
-	F7ZLump *lump_p = Lumps;
 	std::u16string nameUTF16;
-	std::string nameASCII;
+	std::vector<char> nameASCII;
 
+	uint32_t j = 0;
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
 		// skip Directories
 		if (SzArEx_IsDir(archPtr, i))
 		{
-			skipped++;
 			continue;
 		}
 
@@ -267,39 +255,34 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 		if (0 == nameLength)
 		{
-			++skipped;
 			continue;
 		}
 
 		nameUTF16.resize((unsigned)nameLength);
 		nameASCII.resize((unsigned)nameLength);
-		// note that the file system is not equipped to handle non-ASCII, so don't bother with proper Unicode conversion here.
-		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
-		for (size_t c = 0; c < nameLength; ++c)
-		{
-			nameASCII[c] = tolower(static_cast<char>(nameUTF16[c]));
-		}
-		FixPathSeparator(&nameASCII.front());
 
-		lump_p->LumpNameSetup(nameASCII.c_str(), stringpool);
-		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
-		lump_p->Owner = this;
-		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
-		lump_p->Position = i;
-		lump_p->CheckEmbedded(filter);
-		lump_p++;
+		SzArEx_GetFileNameUtf16(archPtr, i, (UInt16*)nameUTF16.data());
+		utf16_to_utf8((uint16_t*)nameUTF16.data(), nameASCII);
+
+		Entries[j].FileName = NormalizeFileName(nameASCII.data());
+		Entries[j].Length = SzArEx_GetFileSize(archPtr, i);
+		Entries[j].Flags = RESFF_FULLPATH|RESFF_COMPRESSED;
+		Entries[j].ResourceID = -1;
+		Entries[j].Namespace = ns_global;
+		Entries[j].Method = METHOD_INVALID;
+		Entries[j].Position = i;
+		j++;
 	}
 	// Resize the lump record array to its actual size
-	NumLumps -= skipped;
+	NumLumps = j;
 
 	if (NumLumps > 0)
 	{
 		// Quick check for unsupported compression method
 
-		TArray<char> temp;
-		temp.Resize(Lumps[0].LumpSize);
+		FileData temp(nullptr, Entries[0].Length);
 
-		if (SZ_OK != Archive->Extract(Lumps[0].Position, &temp[0]))
+		if (SZ_OK != Archive->Extract((UInt32)Entries[0].Position, (char*)temp.writable()))
 		{
 			Printf(FSMessageLevel::Error, "%s: unsupported 7z/LZMA file!\n", FileName);
 			return false;
@@ -307,7 +290,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 	}
 
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(F7ZLump), filter);
+	PostProcessArchive(filter);
 	return true;
 }
 
@@ -319,11 +302,7 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 
 F7ZFile::~F7ZFile()
 {
-	if (Lumps != NULL)
-	{
-		delete[] Lumps;
-	}
-	if (Archive != NULL)
+	if (Archive != nullptr)
 	{
 		delete Archive;
 	}
@@ -331,21 +310,40 @@ F7ZFile::~F7ZFile()
 
 //==========================================================================
 //
-// Fills the lump cache and performs decompression
+// Reads data for one entry into a buffer
 //
 //==========================================================================
 
-int F7ZLump::FillCache()
+FileData F7ZFile::Read(uint32_t entry)
 {
-	Cache = new char[LumpSize];
-	SRes code = static_cast<F7ZFile*>(Owner)->Archive->Extract(Position, Cache);
-	if (code != SZ_OK)
+	FileData buffer;
+	if (entry < NumLumps && Entries[entry].Length > 0)
 	{
-		throw FileSystemException("Error %d reading from 7z archive", code);
+		auto p = buffer.allocate(Entries[entry].Length);
+		// There is no realistic way to keep multiple references to a 7z file open without massive overhead so to make this thread-safe a mutex is the only option.
+		std::lock_guard<FCriticalSection> lock(critsec);
+		SRes code = Archive->Extract((UInt32)Entries[entry].Position, (char*)p);
+		if (code != SZ_OK) buffer.clear();
 	}
-	RefCount = 1;
-	return 1;
+	return buffer;
 }
+
+//==========================================================================
+//
+// This can only return a FileReader to a memory buffer.
+//
+//==========================================================================
+
+FileReader F7ZFile::GetEntryReader(uint32_t entry, int, int)
+{
+	FileReader fr;
+	if (entry < 0 || entry >= NumLumps) return fr;
+	auto buffer = Read(entry);
+	if (buffer.size() > 0)
+		fr.OpenMemoryArray(buffer);
+	return fr;
+}
+
 
 //==========================================================================
 //
@@ -367,8 +365,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* f
 			auto rf = new F7ZFile(filename, file, sp);
 			if (rf->Open(filter, Printf)) return rf;
 
-			file = std::move(rf->Reader); // to avoid destruction of reader
-			delete rf;
+			file = rf->Destroy();
 		}
 	}
 	return NULL;

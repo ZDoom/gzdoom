@@ -421,7 +421,8 @@ void FDInputJoystick::ProcessInput()
 		return;
 	}
 
-	state = (uint8_t *)alloca(DataFormat.dwDataSize);
+	TArray<uint8_t> statearr(DataFormat.dwDataSize, true);
+	state = statearr.data();
 	hr = Device->GetDeviceState(DataFormat.dwDataSize, state);
 	if (FAILED(hr))
 		return;
@@ -898,7 +899,7 @@ const char *FDInputJoystick::GetAxisName(int axis)
 {
 	if (unsigned(axis) < Axes.Size())
 	{
-		return Axes[axis].Name;
+		return Axes[axis].Name.GetChars();
 	}
 	return "Invalid";
 }

@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "i_system.h"
 #include "s_music.h"
+#include "i_music.h"
 
 using namespace FileSys;
 
@@ -134,6 +135,7 @@ enum SICommands
 	SI_Registered,
 	SI_ArchivePath,
 	SI_MusicVolume,
+	SI_Replaygain,
 	SI_MidiDevice,
 	SI_IfDoom,
 	SI_IfHeretic,
@@ -222,6 +224,7 @@ static const char *SICommandStrings[] =
 	"$registered",
 	"$archivepath",
 	"$musicvolume",
+	"$replaygain",
 	"$mididevice",
 	"$ifdoom",
 	"$ifheretic",
@@ -497,7 +500,7 @@ FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, int l
 	fakename += '"';
 	fakename += sfx->name.GetChars();
 
-	id = soundEngine->AddSoundLump (fakename, lumpnum, CurrentPitchMask);
+	id = soundEngine->AddSoundLump (fakename.GetChars(), lumpnum, CurrentPitchMask);
 	int classnum = S_AddPlayerClass (pclass);
 	int soundlist = S_AddPlayerGender (classnum, gender);
 
@@ -791,8 +794,8 @@ static void S_AddSNDINFO (int lump)
 				int gender;
 				FSoundID refid, sfxnum;
 
-				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
-				sfxnum = S_AddPlayerSound (pclass, gender, refid, sc.String);
+				S_ParsePlayerSoundCommon(sc, pclass, gender, refid);
+				sfxnum = S_AddPlayerSound(pclass.GetChars(), gender, refid, sc.String);
 				if (0 == stricmp(sc.String, "dsempty"))
 				{
 					soundEngine->GetWritableSfx(sfxnum)->UserData[0] |= SND_PlayerSilent;
@@ -813,7 +816,7 @@ static void S_AddSNDINFO (int lump)
 				{
 					sc.ScriptError("%s is not a player sound", sc.String);
 				}
-				S_DupPlayerSound (pclass, gender, refid, targid);
+				S_DupPlayerSound (pclass.GetChars(), gender, refid, targid);
 				}
 				break;
 
@@ -826,7 +829,7 @@ static void S_AddSNDINFO (int lump)
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
-				aliasto = S_LookupPlayerSound (pclass, gender, refid);
+				aliasto = S_LookupPlayerSound (pclass.GetChars(), gender, refid);
 				auto sfx = soundEngine->GetWritableSfx(sfxfrom);
 				sfx->link = aliasto;
 				sfx->UserData[0] |= SND_PlayerCompat;
@@ -841,7 +844,7 @@ static void S_AddSNDINFO (int lump)
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				soundnum = soundEngine->FindSoundTentative (sc.String);
-				S_AddPlayerSoundExisting (pclass, gender, refid, soundnum);
+				S_AddPlayerSoundExisting (pclass.GetChars(), gender, refid, soundnum);
 				}
 				break;
 
@@ -1031,9 +1034,16 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicVolume: {
 				sc.MustGetString();
-				FName musname (sc.String);
-				sc.MustGetFloat();
-				MusicVolumes[musname] = (float)sc.Float;
+				int lumpnum = mus_cb.FindMusic(sc.String);
+				if (!sc.CheckFloat())
+				{
+					sc.MustGetString();
+					char* p;
+					double f = strtod(sc.String, &p);
+					if (!stricmp(p, "db")) sc.Float = dBToAmplitude((float)sc.Float);
+					else sc.ScriptError("Bad value for music volume: %s", sc.String);
+				}
+				if (lumpnum >= 0) MusicVolumes[lumpnum] = (float)sc.Float;
 				}
 				break;
 
@@ -1067,7 +1077,7 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MidiDevice: {
 				sc.MustGetString();
-				FName nm = sc.String;
+				int lumpnum = mus_cb.FindMusic(sc.String);
 				FScanner::SavedPos save = sc.SavePos();
 				
 				sc.SetCMode(true);
@@ -1099,7 +1109,7 @@ static void S_AddSNDINFO (int lump)
 					sc.RestorePos(save);
 					sc.MustGetString();
 				}
-				MidiDevices[nm] = devset;
+				if (lumpnum >= 0) MidiDevices[lumpnum] = devset;
 				}
 				break;
 
@@ -1124,7 +1134,7 @@ static void S_AddSNDINFO (int lump)
 			}
 
 			sc.MustGetString ();
-			S_AddSound (name, sc.String, &sc);
+			S_AddSound (name.GetChars(), sc.String, &sc);
 		}
 	}
 }
@@ -1226,7 +1236,7 @@ static int S_FindPlayerClass (const char *name)
 
 		for (i = 0; i < PlayerClassLookups.Size(); ++i)
 		{
-			if (stricmp (name, PlayerClassLookups[i].Name) == 0)
+			if (stricmp (name, PlayerClassLookups[i].Name.GetChars()) == 0)
 			{
 				return (int)i;
 			}
@@ -1240,7 +1250,7 @@ static int S_FindPlayerClass (const char *name)
 		while (min <= max)
 		{
 			int mid = (min + max) / 2;
-			int lexx = stricmp (PlayerClassLookups[mid].Name, name);
+			int lexx = stricmp (PlayerClassLookups[mid].Name.GetChars(), name);
 			if (lexx == 0)
 			{
 				return mid;
@@ -1295,13 +1305,13 @@ void S_ShrinkPlayerSoundLists ()
 	qsort (&PlayerClassLookups[0], PlayerClassLookups.Size(),
 		sizeof(FPlayerClassLookup), SortPlayerClasses);
 	PlayerClassesIsSorted = true;
-	DefPlayerClass = S_FindPlayerClass (DefPlayerClassName);
+	DefPlayerClass = S_FindPlayerClass (DefPlayerClassName.GetChars());
 }
 
 static int SortPlayerClasses (const void *a, const void *b)
 {
-	return stricmp (((const FPlayerClassLookup *)a)->Name,
-					((const FPlayerClassLookup *)b)->Name);
+	return stricmp (((const FPlayerClassLookup *)a)->Name.GetChars(),
+					((const FPlayerClassLookup *)b)->Name.GetChars());
 }
 
 //==========================================================================

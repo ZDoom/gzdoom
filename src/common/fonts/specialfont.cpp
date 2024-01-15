@@ -182,7 +182,7 @@ void FSpecialFont::LoadTranslations()
 			workpal[i * 4 + 2] = GPalette.BaseColors[i].r;
 			workpal[i * 4 + 3] = GPalette.BaseColors[i].a;
 		}
-		V_ApplyLuminosityTranslation(trans, workpal, 256);
+		V_ApplyLuminosityTranslation(LuminosityTranslationDesc::fromID(trans), workpal, 256);
 		for (int i = 0; i < 256; i++)
 		{
 			if (!notranslate[i])

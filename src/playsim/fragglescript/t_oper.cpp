@@ -167,7 +167,7 @@ void FParser::OPcmp(svalue_t &result, int start, int n, int stop)
 	
 	if(left.type == svt_string && right.type == svt_string)
 	{
-		result.value.i = !strcmp(left.string, right.string);
+		result.value.i = !strcmp(left.string.GetChars(), right.string.GetChars());
 		return;
 	}
 	

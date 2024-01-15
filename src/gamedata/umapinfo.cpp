@@ -230,7 +230,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 
 			if (split.Size() > 1)
 			{
-				epi.mEpisodeName = strbin1(split[1]);
+				epi.mEpisodeName = strbin1(split[1].GetChars());
 			}
 			if (split.Size() > 2 && split[2].IsNotEmpty())
 			{
@@ -389,7 +389,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 {
 	for (auto &map : Maps)
 	{
-		auto levelinfo = FindLevelInfo(map.MapName, false);
+		auto levelinfo = FindLevelInfo(map.MapName.GetChars(), false);
 		if (levelinfo == nullptr)
 		{
 			// Map did not exist yet.

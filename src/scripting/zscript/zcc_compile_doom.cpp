@@ -50,6 +50,7 @@ bool isActor(PContainerType *type);
 void AddActorInfo(PClass *cls);
 int GetIntConst(FxExpression* ex, FCompileContext& ctx);
 double GetFloatConst(FxExpression* ex, FCompileContext& ctx);
+VMFunction* GetFuncConst(FxExpression* ex, FCompileContext& ctx);
 
 //==========================================================================
 //
@@ -69,6 +70,7 @@ int ZCCDoomCompiler::Compile()
 	InitDefaults();
 	InitFunctions();
 	CompileStates();
+	InitDefaultFunctionPointers();
 	return FScriptPosition::ErrorCounter;
 }
 
@@ -282,6 +284,10 @@ void ZCCDoomCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pr
 				conv.d = GetFloatConst(ex, ctx);
 				break;
 
+			case 'G':
+				conv.fu = GetFuncConst(ex, ctx);
+				break;
+
 			case 'Z':	// an optional string. Does not allow any numeric value.
 				if (ex->ValueType != TypeString)
 				{
@@ -389,6 +395,46 @@ void ZCCDoomCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pr
 // Parses an actor property's parameters and calls the handler
 //
 //==========================================================================
+
+PFunction * FindFunctionPointer(PClass * cls, int fn_name);
+PFunction *NativeFunctionPointerCast(PFunction *from, const PFunctionPointer *to);
+
+struct FunctionPointerProperties
+{
+	ZCC_PropertyStmt *prop;
+	PClass * cls;
+	FName name;
+	const PFunctionPointer * type;
+	PFunction ** addr;
+};
+
+TArray<FunctionPointerProperties> DefaultFunctionPointers;
+
+void ZCCDoomCompiler::InitDefaultFunctionPointers()
+{
+	for(auto &d : DefaultFunctionPointers)
+	{
+		PFunction * fn = FindFunctionPointer(d.cls, d.name.GetIndex());
+		if(!fn)
+		{
+			Error(d.prop, "Could not find function '%s' in class '%s'",d.name.GetChars(), d.cls->TypeName.GetChars());
+		}
+		else
+		{
+			PFunction * casted = NativeFunctionPointerCast(fn,d.type);
+			if(!casted)
+			{
+				FString fn_proto_name = PFunctionPointer::GenerateNameForError(fn);
+				Error(d.prop, "Function has incompatible types, cannot convert from '%s' to '%s'",fn_proto_name.GetChars(), d.type->DescriptiveName());
+			}
+			else
+			{
+				(*d.addr) = casted;
+			}
+		}
+	}
+	DefaultFunctionPointers.Clear();
+}
 
 void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *property, AActor *defaults, Baggage &bag)
 {
@@ -603,6 +649,44 @@ void ZCCDoomCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *
 				*(PClass**)addr = cls;
 			}
 		}
+		else if (f->Type->isFunctionPointer())
+		{
+			const char * fn_str = GetStringConst(ex, ctx);
+			if (*fn_str == 0 || !stricmp(fn_str, "none"))
+			{
+				*(PFunction**)addr = nullptr;
+			}
+			else
+			{
+				TArray<FString> fn_info(FString(fn_str).Split("::", FString::TOK_SKIPEMPTY));
+				if(fn_info.Size() != 2)
+				{
+					Error(property, "Malformed function pointer property \"%s\", must be \"Class::Function\"",fn_str);
+				}
+				PClass * cls = PClass::FindClass(fn_info[0]);
+				if(!cls)
+				{
+					Error(property, "Could not find class '%s'",fn_info[0].GetChars());
+					*(PFunction**)addr = nullptr;
+				}
+				else
+				{
+					FName fn_name(fn_info[1], true);
+					if(fn_name.GetIndex() == 0)
+					{
+						Error(property, "Could not find function '%s' in class '%s'",fn_info[1].GetChars(),fn_info[0].GetChars());
+						*(PFunction**)addr = nullptr;
+					}
+					else
+					{
+						DefaultFunctionPointers.Push({property, cls, fn_name, static_cast<const PFunctionPointer *>(f->Type), (PFunction**)addr});
+						*(PFunction**)addr = nullptr;
+					}
+
+				}
+			}
+
+		}
 		else
 		{
 			Error(property, "unhandled property type %s", f->Type->DescriptiveName());
@@ -650,7 +734,7 @@ void ZCCDoomCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt 
 	}
 
 
-	FPropertyInfo *property = FindProperty(propname);
+	FPropertyInfo *property = FindProperty(propname.GetChars());
 
 	if (property != nullptr && property->category != CAT_INFO)
 	{
@@ -987,7 +1071,7 @@ void ZCCDoomCompiler::CompileStates()
 				{
 					auto sl = static_cast<ZCC_StateLabel *>(st);
 					statename = FName(sl->Label).GetChars();
-					statedef.AddStateLabel(statename);
+					statedef.AddStateLabel(statename.GetChars());
 					break;
 				}
 				case AST_StateLine:
@@ -1046,7 +1130,7 @@ void ZCCDoomCompiler::CompileStates()
 						auto l = sl->Lights;
 						do
 						{
-							AddStateLight(&state, StringConstFromNode(l, c->Type()));
+							AddStateLight(&state, StringConstFromNode(l, c->Type()).GetChars());
 							l = static_cast<decltype(l)>(l->SiblingNext);
 						} while (l != sl->Lights);
 					}
@@ -1097,7 +1181,7 @@ void ZCCDoomCompiler::CompileStates()
 							statename.AppendFormat("+%d", offset);
 						}
 					}
-					if (!statedef.SetGotoLabel(statename))
+					if (!statedef.SetGotoLabel(statename.GetChars()))
 					{
 						Error(sg, "GOTO before first state");
 					}

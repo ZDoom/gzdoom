@@ -219,7 +219,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	}
 
 	FString obit = DamageTypeDefinition::GetObituary(mod);
-	if (attacker == nullptr && obit.IsNotEmpty()) messagename = obit;
+	if (attacker == nullptr && obit.IsNotEmpty()) messagename = obit.GetChars();
 	else
 	{
 		switch (mod.GetIndex())
@@ -249,11 +249,11 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		else
 		{
 			lookup.Format("$Obituary_%s_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
-			if (GStrings[lookup.GetChars() + 1]) message = lookup;
+			if (GStrings[lookup.GetChars() + 1]) message = lookup.GetChars();
 			else
 			{
 				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars());
-				if (GStrings[lookup.GetChars() + 1]) message = lookup;
+				if (GStrings[lookup.GetChars() + 1]) message = lookup.GetChars();
 				else
 				{
 					IFVIRTUALPTR(attacker, AActor, GetObituary)
@@ -261,7 +261,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 						VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
 						VMReturn rett(&ret);
 						VMCall(func, params, countof(params), &rett, 1);
-						if (ret.IsNotEmpty()) message = ret;
+						if (ret.IsNotEmpty()) message = ret.GetChars();
 					}
 				}
 			}
@@ -283,12 +283,12 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		if (mod == NAME_Melee)
 		{
 			FStringf ob("DEFHITOB_%s", cls);
-			message = GStrings.GetString(ob, nullptr, self->player->userinfo.GetGender());
+			message = GStrings.GetString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
 		}
 		if (message == nullptr)
 		{
 			FStringf ob("DEFOB_%s", cls);
-			message = GStrings.GetString(ob, nullptr, self->player->userinfo.GetGender());
+			message = GStrings.GetString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
 		}
 		if (message == nullptr)
 		{
@@ -1883,8 +1883,8 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE);
+			Net_WriteInt8 (DEM_GENERICCHEAT);
+			Net_WriteInt8 (CHT_MASSACRE);
 		}
 		else if (!stricmp (argv[1], "baddies"))
 		{
@@ -1892,12 +1892,12 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE2);
+			Net_WriteInt8 (DEM_GENERICCHEAT);
+			Net_WriteInt8 (CHT_MASSACRE2);
 		}
 		else
 		{
-			Net_WriteByte (DEM_KILLCLASSCHEAT);
+			Net_WriteInt8 (DEM_KILLCLASSCHEAT);
 			Net_WriteString (argv[1]);
 		}
 	}
@@ -1908,7 +1908,7 @@ CCMD (kill)
 			return;
 
 		// Kill the player
-		Net_WriteByte (DEM_SUICIDE);
+		Net_WriteInt8 (DEM_SUICIDE);
 	}
 	C_HideConsole ();
 }
@@ -1920,7 +1920,7 @@ CCMD(remove)
 		if (CheckCheatmode())
 			return;
 
-		Net_WriteByte(DEM_REMOVE);
+		Net_WriteInt8(DEM_REMOVE);
 		Net_WriteString(argv[1]);
 		C_HideConsole();
 	}

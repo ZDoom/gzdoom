@@ -212,8 +212,7 @@ extern double PI, PIO2, PIO4, INFINITY, NEGZERO, MAXNUM;
 #endif
 
 
-double c_atan(x)
-double x;
+double c_atan(double x)
 {
 double y, z;
 short sign, flag;
@@ -269,11 +268,10 @@ return(y);
 /*							atan2	*/
 
 #ifdef ANSIC
-double c_atan2( y, x )
+double c_atan2(double y, double x)
 #else
-double c_atan2( x, y )
+double c_atan2(double x, double y)
 #endif
-double x, y;
 {
 double z, w;
 short code;

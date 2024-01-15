@@ -85,7 +85,7 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 //
 //==========================================================================
 
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress, bool)
+FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
 	return new FTTYStartupScreen(max_progress);
 }

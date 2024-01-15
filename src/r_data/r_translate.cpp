@@ -56,6 +56,14 @@
 
 //----------------------------------------------------------------------------
 //
+// helper stuff for serializing TRANSLATION_User
+//
+//----------------------------------------------------------------------------
+
+static TArray<std::pair<FTranslationID, FRemapTable>> usertransmap;
+
+//----------------------------------------------------------------------------
+//
 //
 //
 //----------------------------------------------------------------------------
@@ -69,6 +77,7 @@ static void SerializeRemap(FSerializer &arc, FRemapTable &remap)
 
 void StaticSerializeTranslations(FSerializer &arc)
 {
+	usertransmap.Clear();
 	if (arc.BeginArray("translations"))
 	{
 		// Does this level have custom translations?
@@ -79,7 +88,7 @@ void StaticSerializeTranslations(FSerializer &arc)
 			auto size = GPalette.NumTranslations(TRANSLATION_LevelScripted);
 			for (unsigned int i = 0; i < size; ++i)
 			{
-				trans = GPalette.TranslationToTable(TRANSLATION(TRANSLATION_LevelScripted, i));
+				trans = GPalette.GetTranslation(TRANSLATION_LevelScripted, i);
 				if (trans != NULL && !trans->IsIdentity())
 				{
 					if (arc.BeginObject(nullptr))
@@ -104,6 +113,60 @@ void StaticSerializeTranslations(FSerializer &arc)
 		}
 		arc.EndArray();
 	}
+	if (arc.BeginArray("usertranslations"))
+	{
+		// Does this level have custom translations?
+		FRemapTable* trans;
+		int w;
+		if (arc.isWriting())
+		{
+			auto size = GPalette.NumTranslations(TRANSLATION_User);
+			for (unsigned int i = 0; i < size; ++i)
+			{
+				trans = GPalette.GetTranslation(TRANSLATION_User, i);
+				if (trans != NULL && !trans->IsIdentity())
+				{
+					if (arc.BeginObject(nullptr))
+					{
+						arc("index", i);
+						SerializeRemap(arc, *trans);
+						arc.EndObject();
+					}
+				}
+			}
+		}
+		else
+		{
+			while (arc.BeginObject(nullptr))
+			{
+				arc("index", w);
+				FRemapTable remap;
+				SerializeRemap(arc, remap);
+				// do not add the translation to the global list yet. We want to avoid adding tables that are not needed anymore.
+				usertransmap.Push(std::make_pair(TRANSLATION(TRANSLATION_User, w), remap));
+				arc.EndObject();
+			}
+		}
+		arc.EndArray();
+	}
+}
+
+void StaticClearSerializeTranslationsData()
+{
+	usertransmap.Reset();
+}
+
+FTranslationID RemapUserTranslation(FTranslationID trans)
+{
+	if (GetTranslationType(trans) == TRANSLATION_User)
+	{
+		for (auto& check : usertransmap)
+		{
+			if (trans == check.first)
+				return GPalette.AddTranslation(TRANSLATION_User, &check.second);
+		}
+	}
+	return trans;
 }
 
 //----------------------------------------------------------------------------
@@ -114,7 +177,7 @@ void StaticSerializeTranslations(FSerializer &arc)
 
 static TArray<PalEntry> BloodTranslationColors;
 
-int CreateBloodTranslation(PalEntry color)
+FTranslationID CreateBloodTranslation(PalEntry color)
 {
 	unsigned int i;
 
@@ -132,7 +195,7 @@ int CreateBloodTranslation(PalEntry color)
 			color.b == BloodTranslationColors[i].b)
 		{
 			// A duplicate of this translation already exists
-			return i;
+			return TRANSLATION(TRANSLATION_Blood, i);
 		}
 	}
 	if (BloodTranslationColors.Size() >= MAX_DECORATE_TRANSLATIONS)
@@ -152,7 +215,7 @@ int CreateBloodTranslation(PalEntry color)
 		trans.Remap[i] = entry;
 	}
 	GPalette.AddTranslation(TRANSLATION_Blood, &trans);
-	return BloodTranslationColors.Push(color);
+	return TRANSLATION(TRANSLATION_Blood, BloodTranslationColors.Push(color));
 }
 
 //----------------------------------------------------------------------------
@@ -431,7 +494,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		else
 		{
 			auto translump = fileSystem.ReadFile(colorset->Lump);
-			auto trans = translump.GetBytes();
+			auto trans = translump.bytes();
 			for (i = start; i <= end; ++i)
 			{
 				table->Remap[i] = GPalette.Remap[trans[i]];
@@ -614,7 +677,7 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 
 	if (cls != nullptr)
 	{
-		PlayerSkin = R_FindSkin(Skins[PlayerSkin].Name, int(cls - &PlayerClasses[0]));
+		PlayerSkin = R_FindSkin(Skins[PlayerSkin].Name.GetChars(), int(cls - &PlayerClasses[0]));
 		FRemapTable remap;
 		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
 			&Skins[PlayerSkin], &remap);
@@ -628,9 +691,9 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 //
 //
 //----------------------------------------------------------------------------
-static TMap<FName, int> customTranslationMap;
+static TMap<FName, FTranslationID> customTranslationMap;
 
-int R_FindCustomTranslation(FName name)
+FTranslationID R_FindCustomTranslation(FName name)
 {
 	switch (name.GetIndex())
 	{
@@ -639,7 +702,7 @@ int R_FindCustomTranslation(FName name)
 		return TRANSLATION(TRANSLATION_Standard, 7);
 
 	case NAME_None:
-		return 0;
+		return NO_TRANSLATION;
 
 	case NAME_RainPillar1:
 	case NAME_RainPillar2:
@@ -662,15 +725,8 @@ int R_FindCustomTranslation(FName name)
 		return TRANSLATION(TRANSLATION_Players, name.GetIndex() - NAME_Player1);
 
 	}
-	int *t = customTranslationMap.CheckKey(name);
-	return (t != nullptr)? *t : -1;
-}
-
-DEFINE_ACTION_FUNCTION(_Translation, GetID)
-{
-	PARAM_PROLOGUE;
-	PARAM_NAME(t);
-	ACTION_RETURN_INT(R_FindCustomTranslation(t));
+	auto t = customTranslationMap.CheckKey(name);
+	return (t != nullptr)? *t : INVALID_TRANSLATION;
 }
 
 //----------------------------------------------------------------------------
@@ -705,16 +761,16 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Translation must be in the range [0,%d]", max);
 					}
-					NewTranslation = *GPalette.TranslationToTable(TRANSLATION(TRANSLATION_Standard, sc.Number));
+					NewTranslation = *GPalette.GetTranslation(TRANSLATION_Standard, sc.Number);
 				}
 				else if (sc.TokenType == TK_Identifier)
 				{
-					int tnum = R_FindCustomTranslation(sc.String);
-					if (tnum == -1)
+					auto tnum = R_FindCustomTranslation(sc.String);
+					if (tnum == INVALID_TRANSLATION)
 					{
 						sc.ScriptError("Base translation '%s' not found in '%s'", sc.String, newtrans.GetChars());
 					}
-					NewTranslation = *GPalette.TranslationToTable(tnum);
+					NewTranslation = *GPalette.TranslationToTable(tnum.index());
 				}
 				else
 				{
@@ -753,7 +809,7 @@ void R_ParseTrnslate()
 				}
 			} while (sc.CheckToken(','));
 
-			int trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
+			auto trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
 			customTranslationMap[newtrans] = trans;
 		}
 	}
@@ -780,7 +836,7 @@ DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
 	{
 		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
 	}
-	int trans = GPalette.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
-	ACTION_RETURN_INT(trans);
+	auto trans = GPalette.StoreTranslation(TRANSLATION_User, &NewTranslation);
+	ACTION_RETURN_INT(trans.index());
 }
 

@@ -45,23 +45,25 @@ enum
 {
 	// [BB] Color translations for the model skin are ignored. This is
 	// useful if the skin texture is not using the game palette.
-	MDL_IGNORETRANSLATION			= 1,
-	MDL_PITCHFROMMOMENTUM			= 2,
-	MDL_ROTATING					= 4,
-	MDL_INTERPOLATEDOUBLEDFRAMES	= 8,
-	MDL_NOINTERPOLATION				= 16,
-	MDL_USEACTORPITCH				= 32,
-	MDL_USEACTORROLL				= 64,
-	MDL_BADROTATION					= 128,
-	MDL_DONTCULLBACKFACES			= 256,
-	MDL_USEROTATIONCENTER			= 512,
-	MDL_NOPERPIXELLIGHTING			= 1024, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
-	MDL_SCALEWEAPONFOV				= 2048,	// scale weapon view model with higher user FOVs
-	MDL_MODELSAREATTACHMENTS		= 4096,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
-	MDL_CORRECTPIXELSTRETCH			= 8192,	// ensure model does not distort with pixel stretch when pitch/roll is applied
+	MDL_IGNORETRANSLATION			= 1<<0,
+	MDL_PITCHFROMMOMENTUM			= 1<<1,
+	MDL_ROTATING					= 1<<2,
+	MDL_INTERPOLATEDOUBLEDFRAMES	= 1<<3,
+	MDL_NOINTERPOLATION				= 1<<4,
+	MDL_USEACTORPITCH				= 1<<5,
+	MDL_USEACTORROLL				= 1<<6,
+	MDL_BADROTATION					= 1<<7,
+	MDL_DONTCULLBACKFACES			= 1<<8,
+	MDL_USEROTATIONCENTER			= 1<<9,
+	MDL_NOPERPIXELLIGHTING			= 1<<10, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
+	MDL_SCALEWEAPONFOV				= 1<<11,	// scale weapon view model with higher user FOVs
+	MDL_MODELSAREATTACHMENTS		= 1<<12,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
+	MDL_CORRECTPIXELSTRETCH			= 1<<13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
+	MDL_FORCECULLBACKFACES			= 1<<14,
 };
 
-FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped);
 bool IsHUDModelForPlayerAvailable(player_t * player);
 
 // Check if circle potentially intersects with node AABB

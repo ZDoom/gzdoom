@@ -34,6 +34,10 @@
 */
 
 #include <string>
+#include <memory>
+#include <algorithm>
+#include <assert.h>
+#include <string.h>
 #include "files_internal.h"
 
 namespace FileSys {
@@ -142,10 +146,10 @@ public:
 	char *Gets(char *strbuf, ptrdiff_t len) override
 	{
 		if (len <= 0 || len > 0x7fffffff || FilePos >= StartPos + Length) return nullptr;
-		char *p = fgets(strbuf, len, File);
+		char *p = fgets(strbuf, (int)len, File);
 		if (p != nullptr)
 		{
-			int old = FilePos;
+			ptrdiff_t old = FilePos;
 			FilePos = ftell(File);
 			if (FilePos - StartPos > Length)
 			{
@@ -240,7 +244,7 @@ public:
 		char *p = mReader->Gets(strbuf, len);
 		if (p != nullptr)
 		{
-			int old = FilePos;
+			ptrdiff_t old = FilePos;
 			FilePos = mReader->Tell();
 			if (FilePos - StartPos > Length)
 			{
@@ -285,7 +289,7 @@ ptrdiff_t MemoryReader::Seek(ptrdiff_t offset, int origin)
 
 ptrdiff_t MemoryReader::Read(void *buffer, ptrdiff_t len)
 {
-	if (len>Length - FilePos) len = Length - FilePos;
+	if (len > Length - FilePos) len = Length - FilePos;
 	if (len<0) len = 0;
 	memcpy(buffer, bufptr + FilePos, len);
 	FilePos += len;
@@ -322,40 +326,37 @@ char *MemoryReader::Gets(char *strbuf, ptrdiff_t len)
 	return strbuf;
 }
 
-//==========================================================================
-//
-// MemoryArrayReader
-//
-// reads data from an array of memory
-//
-//==========================================================================
-
-class MemoryArrayReader : public MemoryReader
+int BufferingReader::FillBuffer(ptrdiff_t newpos)
 {
-	std::vector<uint8_t> buf;
-
-public:
-	MemoryArrayReader(const char *buffer, ptrdiff_t length)
+	if (newpos > Length) newpos = Length;
+	if (newpos <= bufferpos) return 0;
+	auto read = baseReader->Read(&buf.writable()[bufferpos], newpos - bufferpos);
+	bufferpos += read;
+	if (bufferpos == Length)
 	{
-		if (length > 0)
-		{
-			buf.resize(length);
-			memcpy(&buf[0], buffer, length);
-		}
-		UpdateBuffer();
+		// we have read the entire file, so delete our data provider.
+		baseReader.reset();
 	}
+	return newpos == bufferpos ? 0 : -1;
+}
 
-	std::vector<uint8_t> &GetArray() { return buf; }
+ptrdiff_t BufferingReader::Seek(ptrdiff_t offset, int origin)
+{
+	if (-1 == MemoryReader::Seek(offset, origin)) return -1;
+	return FillBuffer(FilePos);
+}
 
-	void UpdateBuffer() 
-	{ 
-		bufptr = (const char*)buf.data();
-		FilePos = 0;
-		Length = buf.size();
-	}
-};
+ptrdiff_t BufferingReader::Read(void* buffer, ptrdiff_t len)
+{
+	if (FillBuffer(FilePos + len) < 0) return 0;
+	return MemoryReader::Read(buffer, len);
+}
 
-
+char* BufferingReader::Gets(char* strbuf, ptrdiff_t len)
+{
+	if (FillBuffer(FilePos + len) < 0) return nullptr;
+	return MemoryReader::Gets(strbuf, len);
+}
 
 //==========================================================================
 //
@@ -365,7 +366,7 @@ public:
 //
 //==========================================================================
 
-bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileReader::Size length)
+bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileReader::Size length, bool buffered)
 {
 	auto reader = new StdFileReader;
 	if (!reader->Open(filename, start, length))
@@ -374,7 +375,8 @@ bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileRead
 		return false;
 	}
 	Close();
-	mReader = reader;
+	if (buffered) mReader = new BufferingReader(reader);
+	else mReader = reader;
 	return true;
 }
 
@@ -393,30 +395,39 @@ bool FileReader::OpenMemory(const void *mem, FileReader::Size length)
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
+bool FileReader::OpenMemoryArray(FileData& data)
 {
 	Close();
-	mReader = new MemoryArrayReader((const char *)mem, length);
+	if (data.size() > 0) mReader = new MemoryArrayReader(data);
 	return true;
 }
 
-bool FileReader::OpenMemoryArray(std::function<bool(std::vector<uint8_t>&)> getter)
+FileData FileReader::Read(size_t len)
 {
-	auto reader = new MemoryArrayReader(nullptr, 0);
-	if (getter(reader->GetArray()))
+	FileData buffer;
+	if (len > 0)
 	{
-		Close();
-		reader->UpdateBuffer();
-		mReader = reader;
-		return true;
+		Size length = mReader->Read(buffer.allocate(len), len);
+		if ((size_t)length < len) buffer.allocate(length);
 	}
-	else
-	{
-		// This will keep the old buffer, if one existed
-		delete reader;
-		return false;
-	}
+	return buffer;
 }
+
+FileData FileReader::ReadPadded(size_t padding)
+{
+	auto len = GetLength();
+	FileData buffer;
+
+	if (len > 0)
+	{
+		auto p = (char*)buffer.allocate(len + padding);
+		Size length = mReader->Read(p, len);
+		if (length < len) buffer.clear();
+		else memset(p + len, 0, padding);
+	}
+	return buffer;
+}
+
 
 
 //==========================================================================
@@ -494,7 +505,8 @@ size_t FileWriter::Printf(const char *fmt, ...)
 
 size_t BufferWriter::Write(const void *buffer, size_t len)
 {
-	unsigned int ofs = mBuffer.Reserve((unsigned)len);
+	size_t ofs = mBuffer.size();
+	mBuffer.resize(ofs + len);
 	memcpy(&mBuffer[ofs], buffer, len);
 	return len;
 }

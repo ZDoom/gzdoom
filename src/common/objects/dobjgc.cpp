@@ -287,11 +287,22 @@ static size_t DestroyObjects(size_t count)
 
 	while ((curr = ToDestroy) != nullptr && count-- > 0)
 	{
-		assert(!(curr->ObjectFlags & OF_EuthanizeMe));
-		bytes_destroyed += curr->GetClass()->Size + GCDESTROYCOST;
-		ToDestroy = curr->GCNext;
-		curr->GCNext = nullptr;
-		curr->Destroy();
+		// Note that we cannot assume here that the object has not yet been destroyed.
+		// If destruction happens as the result of another object's destruction we may
+		// get entries here that have been destroyed already if that owning object was
+		// first in the list.
+		if (!(curr->ObjectFlags & OF_EuthanizeMe))
+		{
+			bytes_destroyed += curr->GetClass()->Size + GCDESTROYCOST;
+			ToDestroy = curr->GCNext;
+			curr->GCNext = nullptr;
+			curr->Destroy();
+		}
+		else
+		{
+			ToDestroy = curr->GCNext;
+			curr->GCNext = nullptr;
+		}
 	}
 	return bytes_destroyed;
 }

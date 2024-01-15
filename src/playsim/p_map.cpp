@@ -170,6 +170,25 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	return true;
 }
 
+void P_CollidedWith(AActor* const collider, AActor* const collidee)
+{
+	{
+		IFVIRTUALPTR(collider, AActor, CollidedWith)
+		{
+			VMValue params[] = { collider, collidee, false };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+
+	{
+		IFVIRTUALPTR(collidee, AActor, CollidedWith)
+		{
+			VMValue params[] = { collidee, collider, true };
+			VMCall(func, params, 3, nullptr, 0);
+		}
+	}
+}
+
 //==========================================================================
 // 
 // CanCrossLine
@@ -267,7 +286,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 		return true;
 	}
 
-	DVector2 refpoint = FindRefPoint(ld, cres.Position);
+	DVector2 refpoint = FindRefPoint(ld, cres.Position.XY());
 	FLineOpening open;
 
 	P_LineOpening(open, tmf.thing, ld, refpoint, &cres.Position, flags);
@@ -851,8 +870,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		{
 			spechit_t spec;
 			spec.line = ld;
-			spec.Refpos = cres.Position;
-			spec.Oldrefpos = tm.thing->PosRelative(ld);
+			spec.Refpos = cres.Position.XY();
+			spec.Oldrefpos = tm.thing->PosRelative(ld).XY();
 			portalhit.Push(spec);
 			return true;
 		}
@@ -963,12 +982,12 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 					tm.thing->BlockingLine = ld;
 				}
 				// Calculate line side based on the actor's original position, not the new one.
-				CheckForPushSpecial(ld, P_PointOnLineSide(cres.Position, ld), tm.thing);
+				CheckForPushSpecial(ld, P_PointOnLineSide(cres.Position.XY(), ld), tm.thing);
 				return false;
 			}
 		}
 	}
-	DVector2 ref = FindRefPoint(ld, cres.Position);
+	DVector2 ref = FindRefPoint(ld, cres.Position.XY());
 	FLineOpening open;
 
 	P_LineOpening(open, tm.thing, ld, ref, &cres.Position, cres.portalflags);
@@ -1089,15 +1108,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (ld->special)
 	{
 		spec.line = ld;
-		spec.Refpos = cres.Position;
-		spec.Oldrefpos = tm.thing->PosRelative(ld);
+		spec.Refpos = cres.Position.XY();
+		spec.Oldrefpos = tm.thing->PosRelative(ld).XY();
 		spechit.Push(spec);
 	}
 	if (ld->isLinePortal())
 	{
 		spec.line = ld;
-		spec.Refpos = cres.Position;
-		spec.Oldrefpos = tm.thing->PosRelative(ld);
+		spec.Refpos = cres.Position.XY();
+		spec.Oldrefpos = tm.thing->PosRelative(ld).XY();
 		portalhit.Push(spec);
 	}
 
@@ -1153,7 +1172,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 		if (ld->backsector == NULL) 
 			continue;
 
-		DVector2 ref = FindRefPoint(ld, cres.Position);
+		DVector2 ref = FindRefPoint(ld, cres.Position.XY());
 		FLineOpening open;
 
 		P_LineOpening(open, tm.thing, ld, ref, &cres.Position, 0);
@@ -2017,7 +2036,7 @@ int P_TestMobjLocation(AActor *mobj)
 
 	flags = mobj->flags;
 	mobj->flags &= ~MF_PICKUP;
-	if (P_CheckPosition(mobj, mobj->Pos()))
+	if (P_CheckPosition(mobj, mobj->Pos().XY()))
 	{ // XY is ok, now check Z
 		mobj->flags = flags;
 		if ((mobj->Z() < mobj->floorz) || (mobj->Top() > mobj->ceilingz))
@@ -2046,8 +2065,15 @@ AActor *P_CheckOnmobj(AActor *thing)
 	oldz = thing->Z();
 	P_FakeZMovement(thing);
 	good = P_TestMobjZ(thing, false, &onmobj);
-	thing->SetZ(oldz);
 
+	// Make sure we don't double call a collision with it.
+	if (!good && onmobj != nullptr && onmobj != thing->BlockingMobj
+		&& (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
+	{
+		P_CollidedWith(thing, onmobj);
+	}
+
+	thing->SetZ(oldz);
 	return good ? NULL : onmobj;
 }
 
@@ -2289,6 +2315,11 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (!P_CheckPosition(thing, pos, tm))
 	{
 		AActor *BlockingMobj = thing->BlockingMobj;
+		// This gets called regardless of whether or not the following checks allow the thing to pass. This is because a player
+		// could step on top of an enemy but we still want it to register as a collision.
+		if (BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
+			P_CollidedWith(thing, BlockingMobj);
+
 		// Solid wall or thing
 		if (!BlockingMobj || BlockingMobj->player || !thing->player)
 		{
@@ -2547,7 +2578,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			{
 				FLinkContext ctx;
 				thing->UnlinkFromWorld(&ctx);
-				thing->SetXY(tm.pos + port->mDisplacement);
+				thing->SetXY(tm.pos.XY() + port->mDisplacement);
 				thing->Prev += port->mDisplacement;
 				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
@@ -2557,16 +2588,19 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			}
 			else if (!portalcrossed)
 			{
-				DVector3 pos(tm.pos, thing->Z());
+				DVector3 pos(tm.pos.XY(), thing->Z());
 				DVector3 oldthingpos = thing->Pos();
-				DVector2 thingpos = oldthingpos;
+				DVector2 thingpos = oldthingpos.XY();
 				
 				P_TranslatePortalXY(ld, pos.X, pos.Y);
 				P_TranslatePortalXY(ld, thingpos.X, thingpos.Y);
 				P_TranslatePortalZ(ld, pos.Z);
 				thing->SetXYZ(thingpos.X, thingpos.Y, pos.Z);
-				if (!P_CheckPosition(thing, pos, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
+				if (!P_CheckPosition(thing, pos.XY(), true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
+					if (thing->BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats && CF_PREDICTING)))
+						P_CollidedWith(thing, thing->BlockingMobj);
+
 					thing->SetXYZ(oldthingpos);
 					thing->flags6 &= ~MF6_INTRYMOVE;
 					return false;
@@ -2602,13 +2636,15 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 					auto p = thing->Level->GetConsolePlayer();
 					if (p) p->viewz += hit.pos.Z;	// needs to be done here because otherwise the renderer will not catch the change.
 					P_TranslatePortalAngle(ld, hit.angle);
+					if (thing->player && (port->mType == PORTT_INTERACTIVE || port->mType == PORTT_TELEPORT))
+						thing->player->crossingPortal = true;
 				}
 				R_AddInterpolationPoint(hit);
 			}
 			if (port->mType == PORTT_LINKED)
 			{
 				continue;
-		}
+			}
 		}
 		break;
 	}
@@ -2644,7 +2680,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
 	{
 		spechit_t spec;
-		DVector2 lastpos = thing->Pos();
+		DVector2 lastpos = thing->Pos().XY();
 		while (spechit.Pop(spec))
 		{
 			line_t *ld = spec.line;
@@ -2744,6 +2780,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 
 pushline:
 	thing->flags6 &= ~MF6_INTRYMOVE;
+	thing->SetZ(oldz);
 
 	// [RH] Don't activate anything if just predicting
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -2751,7 +2788,6 @@ pushline:
 		return false;
 	}
 
-	thing->SetZ(oldz);
 	if (!(thing->flags&(MF_TELEPORT | MF_NOCLIP)))
 	{
 		int numSpecHitTemp;
@@ -2988,7 +3024,7 @@ void FSlide::HitSlideLine(line_t* ld)
 	// less than 45 degrees.										// phares
 
 	DVector3 pos = slidemo->PosRelative(ld);
-	side = P_PointOnLineSide(pos, ld);
+	side = P_PointOnLineSide(pos.XY(), ld);
 
 	lineangle = ld->Delta().Angle();
 
@@ -3081,7 +3117,7 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		if (!(li->flags & ML_TWOSIDED) || !li->backsector)
 		{
 			DVector3 pos = slidemo->PosRelative(li);
-			if (P_PointOnLineSide(pos, li))
+			if (P_PointOnLineSide(pos.XY(), li))
 			{
 				// don't hit the back side
 				continue;
@@ -3203,11 +3239,11 @@ retry:
 		// killough 3/15/98: Allow objects to drop off ledges
 		move = { 0, tryp.Y };
 		walkplane = P_CheckSlopeWalk(mo, move);
-		if (!P_TryMove(mo, mo->Pos() + move, true, walkplane))
+		if (!P_TryMove(mo, mo->Pos().XY() + move, true, walkplane))
 		{
 			move = { tryp.X, 0 };
 			walkplane = P_CheckSlopeWalk(mo, move);
-			P_TryMove(mo, mo->Pos() + move, true, walkplane);
+			P_TryMove(mo, mo->Pos().XY() + move, true, walkplane);
 		}
 		return;
 	}
@@ -3222,7 +3258,7 @@ retry:
 		const DVector2 startvel = mo->Vel.XY();
 
 		// killough 3/15/98: Allow objects to drop off ledges
-		if (!P_TryMove(mo, mo->Pos() + newpos, true))
+		if (!P_TryMove(mo, mo->Pos().XY() + newpos, true))
 			goto stairstep;
 
 		if (mo->Vel.XY() != startvel)
@@ -3255,7 +3291,7 @@ retry:
 	walkplane = P_CheckSlopeWalk(mo, tmmove);
 
 	// killough 3/15/98: Allow objects to drop off ledges
-	if (!P_TryMove(mo, mo->Pos() + tmmove, true, walkplane))
+	if (!P_TryMove(mo, mo->Pos().XY() + tmmove, true, walkplane))
 	{
 		goto retry;
 	}
@@ -3335,7 +3371,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		DVector2 dest;
 		double t;
 
-		dest = actor->Pos() + move;
+		dest = actor->Pos().XY() + move;
 		t = (plane->Normal() | DVector3(dest, actor->Z())) + plane->fD();
 		if (t < 0)
 		{ // Desired location is behind (below) the plane
@@ -3370,7 +3406,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 					}
 					if (dopush)
 					{
-						move = plane->Normal() * 2;
+						move = plane->Normal().XY() * 2;
 						actor->Vel.X = move.X;
 						actor->Vel.Y = move.Y;
 					}
@@ -3379,7 +3415,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 			}
 			// Slide the desired location along the plane's normal
 			// so that it lies on the plane's surface
-			dest -= plane->Normal() * t;
+			dest -= plane->Normal().XY() * t;
 			move = dest - actor->Pos().XY();
 			return (actor->floorsector == actor->Sector) ? plane : NULL;
 		}
@@ -3389,7 +3425,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 			{ 
 				// Actor's current spot is on/in the plane, so walk down it
 				// Same principle as walking up, except reversed
-				dest += plane->Normal() * t;
+				dest += plane->Normal().XY() * t;
 				move = dest - actor->Pos().XY();
 				return (actor->floorsector == actor->Sector) ? plane : NULL;
 			}
@@ -3428,7 +3464,7 @@ bool FSlide::BounceTraverse(const DVector2 &start, const DVector2 &end)
 		}
 		if (!(li->flags&ML_TWOSIDED) || !li->backsector)
 		{
-			if (P_PointOnLineSide(slidemo->Pos(), li))
+			if (P_PointOnLineSide(slidemo->Pos().XY(), li))
 				continue;			// don't hit the back side
 			goto bounceblocking;
 		}
@@ -3557,7 +3593,7 @@ bool FSlide::BounceWall(AActor *mo)
 		return true;
 	}
 
-	side = P_PointOnLineSide(mo->Pos(), line);
+	side = P_PointOnLineSide(mo->Pos().XY(), line);
 	lineangle = line->Delta().Angle();
 	if (side == 1)
 	{
@@ -4047,7 +4083,7 @@ struct aim_t
 
 		newtrace.startfrac = frac + 1 / attackrange;	// this is to skip the transition line to the portal which would produce a bogus opening
 
-		DVector2 pos = newtrace.startpos + newtrace.aimtrace * newtrace.startfrac;
+		DVector2 pos = newtrace.startpos.XY() + newtrace.aimtrace * newtrace.startfrac;
 
 		newtrace.lastsector = li->GetLevel()->PointInSector(pos);
 		P_TranslatePortalZ(li, limitz);
@@ -5163,7 +5199,7 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 					bloodcolor.a = 1;
 				}
 
-				uint32_t bloodTrans = (bloodcolor != 0 ? actor->BloodTranslation : 0);
+				auto bloodTrans = (bloodcolor != 0 ? actor->BloodTranslation : NO_TRANSLATION);
 
 				DImpactDecal::StaticCreate(actor->Level, bloodType, bleedtrace.HitPos,
 					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor, bloodTrans);
@@ -5566,24 +5602,47 @@ void P_AimCamera(AActor *t1, DVector3 &campos, DAngle &camangle, sector_t *&Came
 	camangle = trace.SrcAngleFromTarget - DAngle::fromDeg(180.);
 }
 
+struct ViewPosPortal
+{
+	int counter;
+};
+
+static ETraceStatus VPos_CheckPortal(FTraceResults &res, void *userdata)
+{
+	//[MC] Mirror how third person works.
+	ViewPosPortal *pc = (ViewPosPortal *)userdata;
+
+	if (res.HitType == TRACE_CrossingPortal)
+	{
+		res.HitType = TRACE_HitNone; // Needed to force the trace to continue appropriately.
+		pc->counter++;
+		return TRACE_Skip;
+	}
+	if (res.HitType == TRACE_HitActor)
+	{
+		return TRACE_Skip;
+	}
+	return TRACE_Stop;
+}
+
 // [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
-void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP)
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP, FRenderViewpoint *view)
 {
 	FTraceResults trace;
+	ViewPosPortal pc;
+	pc.counter = 0;
 	const DVector3 vvec = campos - orig;
 	const double distance = vvec.Length();
 
 	// Trace handles all of the portal crossing, which is why there is no usage of Vec#Offset(Z).
-	if (Trace(orig, t1->Sector, vvec.Unit(), distance, 0, 0, t1, trace) &&
+	if (Trace(orig, CameraSector, vvec.Unit(), distance, 0, 0, t1, trace, TRACE_ReportPortals, VPos_CheckPortal, &pc) && 
 		trace.Distance > 5)
-	{
-		// Position camera slightly in front of hit thing
 		campos = orig + vvec.Unit() * (trace.Distance - 5);
-	}
 	else
-	{
 		campos = trace.HitPos - trace.HitVector * 1 / 256.;
-	}
+	
+
+	if (pc.counter > 2) view->noviewer = true;
 	CameraSector = trace.Sector;
 	unlinked = trace.unlinked;
 }
@@ -5694,7 +5753,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 					return true;
 				}
 
-				sec = P_PointOnLineSide(xpos, in->d.line) == 0 ?
+				sec = P_PointOnLineSide(xpos.XY(), in->d.line) == 0 ?
 					in->d.line->frontsector : in->d.line->backsector;
 
 				if (sec != NULL && sec->SecActTarget &&
@@ -5713,7 +5772,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 			continue;			// not a special line, but keep checking
 		}
 
-		if (P_PointOnLineSide(xpos, in->d.line) == 1)
+		if (P_PointOnLineSide(xpos.XY(), in->d.line) == 1)
 		{
 			if (!(in->d.line->activation & SPAC_UseBack))
 			{
@@ -5807,7 +5866,7 @@ void P_UseLines(player_t *player)
 	bool foundline = false;
 
 	// If the player is transitioning a portal, use the group that is at its vertical center.
-	DVector2 start = player->mo->GetPortalTransition(player->mo->Height / 2);
+	DVector2 start = player->mo->GetPortalTransition(player->mo->Height / 2).XY();
 	// [NS] Now queries the Player's UseRange.
 	DVector2 end = start + player->mo->Angles.Yaw.ToVector(player->mo->FloatVar(NAME_UseRange));
 
@@ -5847,7 +5906,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 	else
 		usedist = USERANGE;
 
-	start = PuzzleItemUser->GetPortalTransition(PuzzleItemUser->Height / 2);
+	start = PuzzleItemUser->GetPortalTransition(PuzzleItemUser->Height / 2).XY();
 	end = PuzzleItemUser->Angles.Yaw.ToVector(usedist);
 
 	FPathTraverse it(PuzzleItemUser->Level, start.X, start.Y, end.X, end.Y, PT_DELTA | PT_ADDLINES | PT_ADDTHINGS);
@@ -5869,7 +5928,7 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 				}
 				continue;
 			}
-			if (P_PointOnLineSide(PuzzleItemUser->Pos(), in->d.line) == 1)
+			if (P_PointOnLineSide(PuzzleItemUser->Pos().XY(), in->d.line) == 1)
 			{ // Don't use back sides
 				return false;
 			}
@@ -6311,7 +6370,7 @@ bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 		thing->flags2 |= MF2_PASSMOBJ;
 	}
 
-	bool isgood = P_CheckPosition(thing, thing->Pos(), tm);
+	bool isgood = P_CheckPosition(thing, thing->Pos().XY(), tm);
 	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE))
 	{
 		thing->floorz = tm.floorz;
@@ -6481,7 +6540,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;
-					if (thing->BloodTranslation != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+					if (thing->BloodTranslation != NO_TRANSLATION && !(mo->flags2 & MF2_DONTTRANSLATE))
 					{
 						mo->Translation = thing->BloodTranslation;
 					}
@@ -6652,12 +6711,6 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 {
-	if ((thing->Level->i_compatflags2 & COMPATF2_FLOORMOVE) && (thing->Top() > thing->ceilingz))
-	{
-		cpos->nofit = true;
-		return;
-	}
-
 	double oldfloorz = thing->floorz;
 	double oldz = thing->Z();
 
@@ -7033,6 +7086,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 		}
 
 	}
+
 	return cpos.nofit;
 }
 

@@ -90,7 +90,7 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
-		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
+		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos.XY(), renderportal->CurrentPortal->dst))
 			return;
 
 		// transform the origin point
@@ -223,7 +223,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->bright != 0, false, false, false, true);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->flags & SPF_FULLBRIGHT, false, false, false, true);
 
 		thread->SpriteList->Push(vis);
 	}

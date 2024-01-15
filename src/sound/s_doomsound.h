@@ -20,6 +20,10 @@ inline void S_Sound(int channel, EChanFlags flags, const char* sfxid, float volu
 {
 	S_Sound(channel, flags, S_FindSound(sfxid), volume, attenuation);
 }
+inline void S_Sound(int channel, EChanFlags flags, const FString& sfxid, float volume, float attenuation)
+{
+	S_Sound(channel, flags, S_FindSound(sfxid), volume, attenuation);
+}
 void S_SoundPitch(int channel, EChanFlags flags, FSoundID sfxid, float volume, float attenuation, float pitch, float startTime = 0.f);
 
 

@@ -78,6 +78,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	struct ClassFlagsBlock {
 		VM_UWORD Flags;
 		ZCC_Identifier *Replaces;
+		ZCC_Identifier *Sealed;
 		VersionInfo Version;
 	};
 
@@ -242,6 +243,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
+	head->Sealed = C.Sealed;
 	head->Version = C.Version;
 	head->Type = nullptr;
 	head->Symbol = nullptr;
@@ -253,13 +255,15 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
-class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; }
-class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }
-class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
-class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); }
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; X.Sealed = NULL; }
+class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; }
+class_flags(X) ::= class_flags(A) FINAL.					{ X.Flags = A.Flags | ZCC_Final; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed;}
+class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; X.Version = A.Version; X.Sealed = A.Sealed; }
+class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); X.Sealed =  A.Sealed; }
+class_flags(X) ::= class_flags(A) SEALED LPAREN states_opt(B) RPAREN.		{ X.Flags = A.Flags | ZCC_Sealed; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = B; }
 
 /*----- Dottable Identifier -----*/
 // This can be either a single identifier or two identifiers connected by a .
@@ -374,6 +378,15 @@ flag_def(X) ::= FLAGDEF(T) IDENTIFIER(A) COLON IDENTIFIER(B) COMMA INTCONST(C) S
 	X = def;
 }
 
+flag_def(X) ::= FLAGDEF(T) INTERNAL IDENTIFIER(A) COLON IDENTIFIER(B) COMMA INTCONST(C) SEMICOLON.
+{
+	NEW_AST_NODE(FlagDef,def,T);
+	def->NodeName = A.Name();
+	def->RefName = B.Name();
+	def->BitValue = C.Int | 0x10000;
+	X = def;
+}
+
 
 identifier_list(X) ::= IDENTIFIER(A).
 {
@@ -433,6 +446,7 @@ struct_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 struct_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= flag_def(A).						{ X = A; /*X-overwrites-A*/ }
 
 /*----- Constant Definition ------*/
 /* Like UnrealScript, a constant's type is implied by its value's type. */
@@ -974,6 +988,71 @@ aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
 	X = arr;
 }
 
+aggregate_type(X) ::= func_ptr_type(A). { X = A; /*X-overwrites-A*/ }
+
+%type func_ptr_type {ZCC_FuncPtrType *}
+%type func_ptr_params {ZCC_FuncPtrParamDecl *}
+%type func_ptr_param_list {ZCC_FuncPtrParamDecl *}
+%type func_ptr_param {ZCC_FuncPtrParamDecl *}
+
+//fn_ptr_flag(X) ::= .				{ X.Int = 0; }	//implicit scope not allowed
+fn_ptr_flag(X) ::= UI.				{ X.Int = ZCC_UIFlag; }
+fn_ptr_flag(X) ::= PLAY.			{ X.Int = ZCC_Play; }
+fn_ptr_flag(X) ::= CLEARSCOPE.		{ X.Int = ZCC_ClearScope; }
+//fn_ptr_flag(X) ::= VIRTUALSCOPE.	{ X.Int = ZCC_VirtualScope; }	//virtual scope not allowed
+
+
+func_ptr_type(X) ::= FNTYPE(T) LT fn_ptr_flag(F) type_list_or_void(A) LPAREN func_ptr_params(B) RPAREN GT. /* Function<...(...)> */
+{
+	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
+	fn_ptr->RetType = A;
+	fn_ptr->Params = B;
+	fn_ptr->Scope = F.Int;
+	X = fn_ptr;
+}
+
+func_ptr_type(X) ::= FNTYPE(T) LT VOID GT. /* Function<void> */
+{
+	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
+	fn_ptr->RetType = nullptr;
+	fn_ptr->Params = nullptr;
+	fn_ptr->Scope = -1;
+	X = fn_ptr;
+}
+
+func_ptr_params(X) ::= .	/* empty */			{ X = NULL; }
+func_ptr_params(X) ::= VOID.					{ X = NULL; }
+func_ptr_params(X) ::= func_ptr_param_list(X).
+
+//	varargs function pointers not currently supported
+//func_ptr_params(X) ::= func_ptr_param_list(A) COMMA ELLIPSIS.
+//{
+//	NEW_AST_NODE(FuncPtrParamDecl,parm,stat->sc->GetMessageLine());
+//	parm->Type = nullptr;
+//	parm->Flags = 0;
+//	X = A; /*X-overwrites-A*/ 
+//	AppendTreeNodeSibling(X, parm);
+//}
+
+func_ptr_param_list(X) ::= func_ptr_param(X).
+func_ptr_param_list(X) ::= func_ptr_param_list(A) COMMA func_ptr_param(B).	{ X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
+
+func_ptr_param(X) ::= func_param_flags(A) type(B).
+{
+	NEW_AST_NODE(FuncPtrParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Flags = A.Int;
+	X = parm;
+}
+
+func_ptr_param(X) ::= func_param_flags(A) type(B) AND.
+{
+	NEW_AST_NODE(FuncPtrParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Flags = A.Int | ZCC_Out;
+	X = parm;
+}
+
 aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
 {
 	NEW_AST_NODE(ClassType,cls,T);
@@ -1285,6 +1364,26 @@ func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C) EQ expr(D).
 	X = parm;
 }
 
+func_param(X) ::= func_param_flags(A) type(B) AND IDENTIFIER(C).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int | ZCC_Out;
+	parm->Default = nullptr;
+	X = parm;
+}
+
+func_param(X) ::= func_param_flags(A) type(B) AND IDENTIFIER(C) EQ expr(D).
+{
+	NEW_AST_NODE(FuncParamDecl,parm,A.SourceLoc ? A.SourceLoc : B->SourceLoc);
+	parm->Type = B;
+	parm->Name = C.Name();
+	parm->Flags = A.Int | ZCC_Out;
+	parm->Default = D;
+	X = parm;
+}
+
 func_param_flags(X) ::= .									{ X.Int = 0; X.SourceLoc = 0; }
 func_param_flags(X) ::= func_param_flags(A) IN(T).			{ X.Int = A.Int | ZCC_In; X.SourceLoc =  T.SourceLoc; }
 func_param_flags(X) ::= func_param_flags(A) OUT(T).			{ X.Int = A.Int | ZCC_Out; X.SourceLoc =  T.SourceLoc; }
@@ -1374,6 +1473,17 @@ primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) 
 	expr->Parameters = B;
 	X = expr;
 }
+
+primary(X) ::= LPAREN func_ptr_type(A) RPAREN LPAREN expr(B) RPAREN. [DOT]		// function pointer type cast
+{
+	NEW_AST_NODE(FunctionPtrCast, expr, A);
+	expr->Operation = PEX_FunctionPtrCast;
+	A->ArraySize = NULL;
+	expr->PtrType = A;
+	expr->Expr = B;
+	X = expr;
+}
+
 primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 {
 	NEW_AST_NODE(ExprBinary, expr, B);
@@ -1383,6 +1493,7 @@ primary(X) ::= primary(A) LBRACKET expr(B) RBRACKET. [DOT]				// Array access
 	expr->Right = B;
 	X = expr;
 }
+
 primary(X) ::= primary(A) DOT IDENTIFIER(B).							// Member access
 {
 	NEW_AST_NODE(ExprMemberAccess, expr, B);
@@ -1845,6 +1956,9 @@ statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ 
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= array_iteration_statement(X).
+statement(X) ::= two_arg_iteration_statement(X).
+statement(X) ::= three_arg_iteration_statement(X).
+statement(X) ::= typed_iteration_statement(X).
 statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= assign_decl_statement(A) SEMICOLON.{ X = A; /*X-overwrites-A*/ }
@@ -2010,6 +2124,43 @@ array_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(IN) COLON expr(
 	NEW_AST_NODE(ArrayIterationStmt, iter, T);
 	iter->ItName = IN;
 	iter->ItArray = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
+%type two_arg_iteration_statement{ZCC_Statement *}
+
+two_arg_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(KEY) COMMA variable_name(VAL) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(TwoArgIterationStmt, iter, T);
+	iter->ItKey = KEY;
+	iter->ItValue = VAL;
+	iter->ItMap = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
+%type three_arg_iteration_statement{ZCC_Statement *}
+
+three_arg_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(VAR) COMMA variable_name(POS) COMMA variable_name(FLAGS) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(ThreeArgIterationStmt, iter, T);
+	iter->ItVar = VAR;
+	iter->ItPos = POS;
+	iter->ItFlags = FLAGS;
+	iter->ItBlock = EX;
+	iter->LoopStatement = ST;
+	X = iter;
+}
+
+%type typed_iteration_statement{ZCC_Statement *}
+
+typed_iteration_statement(X) ::= FOREACH(T) LPAREN variable_name(TYPE) variable_name(VAR) COLON expr(EX) RPAREN statement(ST).
+{
+	NEW_AST_NODE(TypedIterationStmt, iter, T);
+	iter->ItType = TYPE;
+	iter->ItVar = VAR;
+	iter->ItExpr = EX;
 	iter->LoopStatement = ST;
 	X = iter;
 }

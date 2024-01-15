@@ -43,6 +43,7 @@
 #include "i_time.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "actor.h"
 
 
 #ifdef _MSC_VER
@@ -55,14 +56,14 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
-void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame *smf, const FState* curState, const int curTics, const PClass* ti, int translation, AActor* actor);
+void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame *smf, const FState* curState, const int curTics, FTranslationID translation, AActor* actor);
 
 
 void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
 	// Setup transformation.
 
-	int translation = 0;
+	FTranslationID translation = NO_TRANSLATION;
 	if (!(smf->flags & MDL_IGNORETRANSLATION))
 		translation = actor->Translation;
 
@@ -189,7 +190,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
 	renderer->BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, actor->modelData != nullptr ? actor->modelData->modelDef != NAME_None ? PClass::FindActor(actor->modelData->modelDef) : actor->GetClass() : actor->GetClass(), translation, actor);
+	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, translation, actor);
 	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
@@ -244,20 +245,96 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
-	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
-	uint32_t trans = psp->GetTranslation() != 0 ? psp->GetTranslation() : 0;
+	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0, smf);
+	auto trans = psp->GetTranslation();
 	if ((psp->Flags & PSPF_PLAYERTRANSLATED)) trans = psp->Owner->mo->Translation;
-	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), trans, psp->Caller);
-	renderer->EndDrawHUDModel(playermo->RenderStyle);
+
+	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), trans, psp->Caller);
+	renderer->EndDrawHUDModel(playermo->RenderStyle, smf);
 }
 
-void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation, AActor* actor)
+double getCurrentFrame(const AnimOverride &anim, double tic)
+{
+	if(anim.framerate <= 0) return anim.startFrame;
+
+	double duration = double(anim.lastFrame - anim.firstFrame) / double(anim.framerate); // duration in seconds
+	double startPos = double(anim.startFrame - anim.firstFrame) / double(anim.framerate);
+
+	double pos = startPos + ((tic - anim.startTic) / GameTicRate); // position in seconds
+
+	return (((anim.flags & ANIMOVERRIDE_LOOP) ? fmod(pos, duration) : min(pos, duration)) * anim.framerate) + anim.firstFrame;
+}
+
+static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
+{
+	double frame = getCurrentFrame(anim, tic);
+
+	prev = int(floor(frame));
+
+	inter = frame - prev;
+
+	if(frame > anim.lastFrame)
+	{
+		if(anim.flags & ANIMOVERRIDE_LOOP)
+		{
+			next = anim.loopFrame + (prev - anim.lastFrame);
+		}
+		else
+		{
+			inter = 0;
+			prev = next = anim.lastFrame;
+		}
+	}
+	else
+	{
+		next = int(ceil(frame));
+	}
+}
+
+void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
-	FSpriteModelFrame * smfNext = nullptr;
+	const FSpriteModelFrame * smfNext = nullptr;
 	double inter = 0.;
-	if (gl_interpolate_model_frames && !(smf->flags & MDL_NOINTERPOLATION))
+	double inter_main = -1.f;
+	double inter_next = -1.f;
+
+	bool is_decoupled = (actor->flags9 & MF9_DECOUPLEDANIMATIONS);
+
+	int decoupled_main_prev_frame = -1;
+	int decoupled_next_prev_frame = -1;
+	
+	int decoupled_main_frame = -1;
+	int decoupled_next_frame = -1;
+
+	// if prev_frame == -1: interpolate(main_frame, next_frame, inter), else: interpolate(interpolate(main_prev_frame, main_frame, inter_main), interpolate(next_prev_frame, next_frame, inter_next), inter)
+	// 4-way interpolation is needed to interpolate animation switches between animations that aren't 35hz
+
+	if(is_decoupled)
+	{
+		smfNext = smf = &BaseSpriteModelFrames[actor->GetClass()];
+		if(actor->modelData && !(actor->modelData->curAnim.flags & ANIMOVERRIDE_NONE))
+		{
+			double tic = actor->Level->totaltime;
+			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			{
+				tic += I_GetTimeFrac();
+			}
+			if(actor->modelData->curAnim.startTic > tic)
+			{
+				inter = (tic - actor->modelData->curAnim.switchTic) / (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchTic);
+				
+				calcFrame(actor->modelData->curAnim, actor->modelData->curAnim.startTic, inter_next, decoupled_next_prev_frame, decoupled_next_frame);
+				calcFrame(actor->modelData->prevAnim, actor->modelData->curAnim.switchTic, inter_main, decoupled_main_prev_frame, decoupled_main_frame);
+			}
+			else
+			{
+				calcFrame(actor->modelData->curAnim, tic, inter, decoupled_main_frame, decoupled_next_frame);
+			}
+		}
+	}
+	else if (gl_interpolate_model_frames && !(smf->flags & MDL_NOINTERPOLATION))
 	{
 		FState *nextState = curState->GetNextState();
 		if (curState != nextState && nextState)
@@ -265,7 +342,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if (ConsoleState == c_up && menuactive != MENU_On && !Level->isFrozen())
+			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
 			{
 				ticFraction = I_GetTimeFrac();
 			}
@@ -294,7 +371,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 					}
 				}
 				if (nextState && inter != 0.0)
-					smfNext = FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
+					smfNext = FindModelFrame(actor, nextState->sprite, nextState->Frame, false);
 			}
 		}
 	}
@@ -309,7 +386,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 	TArray<FTextureID> surfaceskinids;
 
-	TArray<VSMatrix> boneData = TArray<VSMatrix>();
+	TArray<VSMatrix> boneData;
 	int boneStartingPosition = 0;
 	bool evaluatedSingle = false;
 
@@ -319,7 +396,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		int animationid = -1;
 		int modelframe = -1;
 		int modelframenext = -1;
-		FTextureID skinid; skinid.SetNull();
+		FTextureID skinid(nullptr);
 
 		surfaceskinids.Clear();
 
@@ -348,30 +425,32 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				animationid = smf->animationIDs[i];
 			}
+			if(!is_decoupled)
+			{
+				//modelFrame
+				if (actor->modelData->modelFrameGenerators.Size() > i
+				 && (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
+				 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
+				   ) {
+					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
 
-			//modelFrame
-			if (actor->modelData->modelFrameGenerators.Size() > i
-			 && (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
-			 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
-			   ) {
-				modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
-
-				if (smfNext) 
-				{
-					if(smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
+					if (smfNext) 
 					{
-						modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
-					}
-					else
-					{
-						modelframenext = smfNext->modelframes[i];
+						if(smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
+						{
+							modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
+						}
+						else
+						{
+							modelframenext = smfNext->modelframes[i];
+						}
 					}
 				}
-			}
-			else if(smf->modelsAmount > i)
-			{
-				modelframe = smf->modelframes[i];
-				if (smfNext) modelframenext = smfNext->modelframes[i];
+				else if(smf->modelsAmount > i)
+				{
+					modelframe = smf->modelframes[i];
+					if (smfNext) modelframenext = smfNext->modelframes[i];
+				}
 			}
 
 			//skinID
@@ -442,29 +521,47 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				GC::WriteBarrier(actor, ptr);
 			}
 
-			if (animationid >= 0)
+			// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
+			if ((!(smf->flags & MDL_MODELSAREATTACHMENTS) && !is_decoupled) || !evaluatedSingle)
 			{
-				FModel* animation = Models[animationid];
-				const TArray<TRS>* animationData = animation->AttachAnimationData();
-
-				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
+				if (animationid >= 0)
 				{
-					boneData = animation->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, animationData, actor->boneComponentData, i);
+					FModel* animation = Models[animationid];
+					const TArray<TRS>* animationData = animation->AttachAnimationData();
+
+					if(is_decoupled)
+					{
+						if(decoupled_main_frame != -1)
+						{
+							boneData = animation->CalculateBones(decoupled_main_frame, decoupled_next_frame, inter, decoupled_main_prev_frame, inter_main, decoupled_next_prev_frame, inter_next, animationData, actor->boneComponentData, i);
+						}
+					}
+					else
+					{
+						boneData = animation->CalculateBones(modelframe, modelframenext, nextFrame ? inter : -1.f, 0, -1.f, 0, -1.f, animationData, actor->boneComponentData, i);
+					}
 					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
-			}
-			else
-			{
-				if (!(smf->flags & MDL_MODELSAREATTACHMENTS) || evaluatedSingle == false)
+				else
 				{
-					boneData = mdl->CalculateBones(modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, nullptr, actor->boneComponentData, i);
+					if(is_decoupled)
+					{
+						if(decoupled_main_frame != -1)
+						{
+							boneData = mdl->CalculateBones(decoupled_main_frame, decoupled_next_frame, inter, decoupled_main_prev_frame, inter_main, decoupled_next_prev_frame, inter_next, nullptr, actor->boneComponentData, i);
+						}
+					}
+					else
+					{
+						boneData = mdl->CalculateBones(modelframe, modelframenext, nextFrame ? inter : -1.f, 0, -1.f, 0, -1.f, nullptr, actor->boneComponentData, i);
+					}
 					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
 				}
 			}
 
-			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : 0.f, translation, ssidp, boneData, boneStartingPosition);
+			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : -1.f, translation, ssidp, boneData, boneStartingPosition);
 		}
 	}
 }
@@ -847,6 +944,16 @@ static void ParseModelDefLump(int Lump)
 						}
 					}
 				}
+				else if (sc.Compare("baseframe"))
+				{
+					FSpriteModelFrame *smfp = &BaseSpriteModelFrames.Insert(type, smf);
+					for(int modelID : smf.modelIDs)
+					{
+						if(modelID >= 0)
+							Models[modelID]->baseFrame = smfp;
+					}
+					GetDefaultByType(type)->hasmodel = true;
+				}
 				else if (sc.Compare("frameindex") || sc.Compare("frame"))
 				{
 					bool isframe=!!sc.Compare("frame");
@@ -931,6 +1038,10 @@ static void ParseModelDefLump(int Lump)
 				{
 					smf.flags |= MDL_CORRECTPIXELSTRETCH;
 				}
+				else if (sc.Compare("forcecullbackfaces"))
+				{
+					smf.flags |= MDL_FORCECULLBACKFACES;
+				}
 				else
 				{
 					sc.ScriptMessage("Unrecognized string \"%s\"", sc.String);
@@ -961,7 +1072,7 @@ static void ParseModelDefLump(int Lump)
 //
 //===========================================================================
 
-FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
+FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped)
 {
 	if (GetDefaultByType(ti)->hasmodel)
 	{
@@ -1000,6 +1111,20 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 	return nullptr;
 }
 
+FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped)
+{
+	if(!thing) return nullptr;
+
+	if(thing->flags9 & MF9_DECOUPLEDANIMATIONS)
+	{
+		return &BaseSpriteModelFrames[thing->GetClass()];
+	}
+	else
+	{
+		return FindModelFrameRaw((thing->modelData != nullptr && thing->modelData->modelDef != NAME_None) ? PClass::FindActor(thing->modelData->modelDef) : thing->GetClass(), sprite, frame, dropped);
+	}
+}
+
 //===========================================================================
 //
 // IsHUDModelForPlayerAvailable
@@ -1014,8 +1139,7 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 	// [MK] check that at least one psprite uses models
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		FSpriteModelFrame *smf = psp->Caller != nullptr ? FindModelFrame(psp->Caller->modelData != nullptr ? psp->Caller->modelData->modelDef != NAME_None ? PClass::FindActor(psp->Caller->modelData->modelDef) : psp->Caller->GetClass() : psp->Caller->GetClass(), psp->GetSprite(), psp->GetFrame(), false) : nullptr;
-		if ( smf != nullptr ) return true;
+		if ( FindModelFrame(psp->Caller, psp->GetSprite(), psp->GetFrame(), false) != nullptr ) return true;
 	}
 	return false;
 }

@@ -719,3 +719,8 @@ asmjit::FuncSignature JitCompiler::CreateFuncSignature()
 	signature.init(CallConv::kIdHost, rettype, cachedArgs->Data(), cachedArgs->Size());
 	return signature;
 }
+
+void JitCompiler::EmitNULLCHECK()
+{
+	EmitNullPointerThrow(A, X_READ_NIL);
+}

@@ -55,7 +55,7 @@ enum ETexMode
 };
 
 // Legacy render styles
-enum ERenderStyle
+enum ERenderStyle : int
 {
 	STYLE_None,				// Do not draw
 	STYLE_Normal,			// Normal; just copy the image to the screen

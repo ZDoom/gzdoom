@@ -313,7 +313,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, sc.String);
-				if (GStrings.exists(key))
+				if (GStrings.exists(key.GetChars()))
 				{
 					mText = "$" + key;
 					done = true;
@@ -954,7 +954,7 @@ CCMD(testfinale)
 		return;
 	}
 
-	auto controller = F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
+	auto controller = F_StartFinale(gameinfo.finaleMusic.GetChars(), gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat.GetChars(), text, false, false, true, true);
 	RunIntermission(nullptr, nullptr, controller, nullptr, [=](bool) { gameaction = ga_nothing; });
 
 }

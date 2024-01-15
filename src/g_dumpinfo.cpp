@@ -129,7 +129,7 @@ CCMD (spray)
 		return;
 	}
 	
-	Net_WriteByte (DEM_SPRAY);
+	Net_WriteInt8 (DEM_SPRAY);
 	Net_WriteString (argv[1]);
 }
 
@@ -366,7 +366,7 @@ CCMD(listmaps)
 	for (unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
 		level_info_t *info = &wadlevelinfos[i];
-		MapData *map = P_OpenMapData(info->MapName, true);
+		MapData *map = P_OpenMapData(info->MapName.GetChars(), true);
 
 		if (map != NULL)
 		{

@@ -50,10 +50,10 @@ public:
 	void EndDrawModel(FRenderStyle style, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 	VSMatrix GetViewToWorldMatrix() override;
-	void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
-	void EndDrawHUDModel(FRenderStyle style) override;
+	void BeginDrawHUDModel(FRenderStyle style, const VSMatrix &objectToWorldMatrix, bool mirrored, FSpriteModelFrame *smf) override;
+	void EndDrawHUDModel(FRenderStyle style, FSpriteModelFrame *smf) override;
 	void SetInterpolation(double interpolation) override;
-	void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) override;
+	void SetMaterial(FGameTexture *skin, bool clampNoFilter, FTranslationID translation) override;
 	void DrawArrays(int start, int count) override;
 	void DrawElements(int numIndices, size_t offset) override;
 	int SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix>& bones, int boneStartIndex) override;

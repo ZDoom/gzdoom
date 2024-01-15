@@ -65,6 +65,11 @@ public:
 	unsigned GetConstantAddress(void *ptr);
 	unsigned GetConstantString(FString str);
 
+	int FindConstantInt(unsigned index);
+	//double FindConstantFloat(unsigned index);
+	//void * FindConstantAddress(unsigned index);
+	//const FString& FindConstantString(unsigned index);
+
 	unsigned AllocConstantsInt(unsigned int count, int *values);
 	unsigned AllocConstantsFloat(unsigned int count, double *values);
 	unsigned AllocConstantsAddress(unsigned int count, void **ptrs);
@@ -155,7 +160,7 @@ class FFunctionBuildList
 
 	TArray<Item> mItems;
 
-	void DumpJit();
+	void DumpJit(bool include_gzdoom_pk3);
 
 public:
 	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
@@ -180,13 +185,12 @@ class FunctionCallEmitter
 	TArray<uint8_t> reginfo;
 	unsigned numparams = 0;	// This counts the number of pushed elements, which can differ from the number of emitters with vectors.
 	VMFunction *target = nullptr;
+	class PFunctionPointer *fnptr = nullptr;
 	int virtualselfreg = -1;
-
+	bool is_vararg;
 public:
-	FunctionCallEmitter(VMFunction *func)
-	{
-		target = func;
-	}
+	FunctionCallEmitter(VMFunction *func);
+	FunctionCallEmitter(class PFunctionPointer *func);
 
 	void SetVirtualReg(int virtreg)
 	{

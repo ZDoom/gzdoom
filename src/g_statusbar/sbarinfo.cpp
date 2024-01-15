@@ -443,7 +443,7 @@ void SBarInfo::Load()
 {
 	if(gameinfo.statusbar.IsNotEmpty())
 	{
-		int lump = fileSystem.CheckNumForFullName(gameinfo.statusbar, true);
+		int lump = fileSystem.CheckNumForFullName(gameinfo.statusbar.GetChars(), true);
 		if(lump != -1)
 		{
 			if (!batchrun) Printf ("ParseSBarInfo: Loading default status bar definition.\n");
@@ -795,7 +795,7 @@ int SBarInfo::newImage(const char *patchname)
 	}
 	for(unsigned int i = 0;i < this->Images.Size();i++) //did we already load it?
 	{
-		if(stricmp(this->Images[i], patchname) == 0)
+		if(stricmp(this->Images[i].GetChars(), patchname) == 0)
 		{
 			return i;
 		}
@@ -996,7 +996,7 @@ public:
 		unsigned int i = 0;
 		for(i = 0;i < script->Images.Size();i++)
 		{
-			patchnames[i] = script->Images[i];
+			patchnames[i] = script->Images[i].GetChars();
 		}
 		for(i = 0;i < 9;i++)
 		{
@@ -1247,7 +1247,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(min<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(min<double>(INT_MAX, dcb)),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1264,7 +1264,7 @@ public:
 						DTA_ClipTop, static_cast<int>(dcy),
 						DTA_ClipRight, static_cast<int>(min<double>(INT_MAX, dcr)),
 						DTA_ClipBottom, static_cast<int>(min<double>(INT_MAX, dcb)),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1319,7 +1319,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1336,7 +1336,7 @@ public:
 						DTA_ClipTop, static_cast<int>(rcy),
 						DTA_ClipRight, static_cast<int>(rcr),
 						DTA_ClipBottom, static_cast<int>(rcb),
-						DTA_TranslationIndex, translate ? GetTranslation() : 0,
+						DTA_TranslationIndex, GetTranslationIndex(translate),
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
 						DTA_Alpha, Alpha,
@@ -1467,11 +1467,16 @@ public:
 		}
 	}
 
-	uint32_t GetTranslation() const
+	FTranslationID GetTranslation() const
 	{
 		if(gameinfo.gametype & GAME_Raven)
 			return TRANSLATION(TRANSLATION_PlayersExtra, int(CPlayer - players));
 		return TRANSLATION(TRANSLATION_Players, int(CPlayer - players));
+	}
+
+	int GetTranslationIndex(bool translate) const
+	{
+		return translate? GetTranslation().index() : 0;
 	}
 
 	PClassActor *AmmoType(int no) const

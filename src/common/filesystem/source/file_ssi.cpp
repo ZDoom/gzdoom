@@ -33,33 +33,9 @@
 **
 */
 
-#include "resourcefile_internal.h"
+#include "resourcefile.h"
 
 namespace FileSys {
-//==========================================================================
-//
-// Build GRP file
-//
-//==========================================================================
-
-class FSSIFile : public FUncompressedFile
-{
-public:
-	FSSIFile(const char * filename, FileReader &file, StringPool* sp);
-	bool Open(int version, int lumpcount, LumpFilterInfo* filter);
-};
-
-
-//==========================================================================
-//
-// Initializes a Build GRP file
-//
-//==========================================================================
-
-FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
-: FUncompressedFile(filename, file, sp)
-{
-}
 
 //==========================================================================
 //
@@ -68,42 +44,50 @@ FSSIFile::FSSIFile(const char *filename, FileReader &file, StringPool* sp)
 //
 //==========================================================================
 
-bool FSSIFile::Open(int version, int lumpcount, LumpFilterInfo*)
+static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilterInfo*)
 {
-	NumLumps = lumpcount*2;
-	Lumps.Resize(lumpcount*2);
+	uint32_t NumLumps = EntryCount * 2;
+	auto Entries = file->AllocateEntries(NumLumps);
+	auto Reader = file->GetContainerReader();
+	
 
-
-	int32_t j = (version == 2 ? 267 : 254) + (lumpcount * 121);
+	int32_t j = (version == 2 ? 267 : 254) + (EntryCount * 121);
 	for (uint32_t i = 0; i < NumLumps; i+=2)
 	{
 		char fn[13];
-		int strlength = Reader.ReadUInt8();
+		int strlength = Reader->ReadUInt8();
 		if (strlength > 12) strlength = 12;
 
-		Reader.Read(fn, 12);
+		Reader->Read(fn, 12);
 		fn[strlength] = 0;
-		int flength = Reader.ReadInt32();
+		int flength = Reader->ReadInt32();
 
-
-		Lumps[i].LumpNameSetup(fn, stringpool);
-		Lumps[i].Position = j;
-		Lumps[i].LumpSize = flength;
-		Lumps[i].Owner = this;
-		if (strstr(fn, ".GRP")) Lumps[i].Flags |= LUMPF_EMBEDDED;
+		Entries[i].Position = j;
+		Entries[i].CompressedSize = Entries[i].Length = flength;
+		Entries[i].Flags = 0;
+		Entries[i].Namespace = ns_global;
+		Entries[i].Method = METHOD_STORED;
+		Entries[i].ResourceID = -1;
+		Entries[i].FileName = file->NormalizeFileName(fn);
+		if (strstr(fn, ".GRP")) Entries[i].Flags |= RESFF_EMBEDDED;
 
 		// SSI files can swap the order of the extension's characters - but there's no reliable detection for this and it can be mixed inside the same container, 
 		// so we have no choice but to create another file record for the altered name.
 		std::swap(fn[strlength - 1], fn[strlength - 3]);
-		Lumps[i+1].LumpNameSetup(fn, stringpool);
-		Lumps[i+1].Position = j;
-		Lumps[i+1].LumpSize = flength;
-		Lumps[i+1].Owner = this;
-		if (strstr(fn, ".GRP")) Lumps[i+1].Flags |= LUMPF_EMBEDDED;
+
+		Entries[i + 1].Position = j;
+		Entries[i + 1].CompressedSize = Entries[i + 1].Length = flength;
+		Entries[i + 1].Flags = 0;
+		Entries[i + 1].Namespace = ns_global;
+		Entries[i + 1].ResourceID = -1;
+		Entries[i + 1].FileName = file->NormalizeFileName(fn);
+		Entries[i + 1].Method = METHOD_STORED;
+		if (strstr(fn, ".GRP")) Entries[i + 1].Flags |= RESFF_EMBEDDED;
 
 		j += flength;
 
-		Reader.Seek(104, FileReader::SeekCur);
+		Reader->Seek(104, FileReader::SeekCur);
+		file->GenerateHash();
 	}
 	return true;
 }
@@ -145,10 +129,9 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* 
 			{
 				if (!skipstring(70)) return nullptr;
 			}
-			auto ssi = new FSSIFile(filename, file, sp);
-			if (ssi->Open(version, numfiles, filter)) return ssi;
-			file = std::move(ssi->Reader); // to avoid destruction of reader
-			delete ssi;
+			auto ssi = new FResourceFile(filename, file, sp);
+			if (OpenSSI(ssi, version, numfiles, filter)) return ssi;
+			file = ssi->Destroy();
 		}
 	}
 	return nullptr;

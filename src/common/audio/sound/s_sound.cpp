@@ -1826,7 +1826,8 @@ void S_SetSoundPaused(int state)
 
 	if ((state || i_soundinbackground) && !pauseext)
 	{
-		S_ResumeSound(true);
+		if (!paused)
+			S_ResumeSound(true);
 		if (GSnd != nullptr)
 		{
 			GSnd->SetInactive(SoundRenderer::INACTIVE_Active);
@@ -1856,12 +1857,18 @@ CCMD(snd_listdrivers)
 	GSnd->PrintDriversList();
 }
 
+//==========================================================================
+//
+// CCMD listsounds
+//
+//==========================================================================
+
 CCMD(listsounds)
 {
 	for (unsigned i = 1; i < soundEngine->GetNumSounds(); i++)
 	{
-		auto S_sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
-		Printf("%04d: %s\n", i, S_sfx->name.GetChars());
+		auto sfx = soundEngine->GetSfx(FSoundID::fromInt(i));
+		Printf("%4d: name = %s, resId = %d, lumpnum = %d\n", i, sfx->name.GetChars(), sfx->ResourceId, sfx->lumpnum);
 	}
 }
 

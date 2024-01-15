@@ -125,7 +125,7 @@ public:
 
 	// Copy constructors
 	FString (const FString &other) { AttachToOther (other); }
-	FString (FString &&other) : Chars(other.Chars) { other.ResetToNull(); }
+	FString (FString &&other) noexcept : Chars(other.Chars) { other.ResetToNull(); }
 	FString (const char *copyStr);
 	FString (const char *copyStr, size_t copyLen);
 	FString (char oneChar);
@@ -163,8 +163,6 @@ public:
 	explicit operator bool() = delete; // this is needed to render the operator const char * ineffective when used in boolean constructs.
 	bool operator !() = delete;
 
-	operator const char *() const { return Chars; }
-
 	const char *GetChars() const { return Chars; }
 
 	const char &operator[] (int index) const { return Chars[index]; }
@@ -181,7 +179,7 @@ public:
 	const char &operator[] (unsigned long long index) const { return Chars[index]; }
 
 	FString &operator = (const FString &other);
-	FString &operator = (FString &&other);
+	FString &operator = (FString &&other) noexcept;
 	FString &operator = (const char *copyStr);
 
 	FString operator + (const FString &tail) const;
@@ -326,13 +324,13 @@ public:
 
 	int Compare (const FString &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }
-	int Compare(const FString &other, int len) const { return strncmp(Chars, other.Chars, len); }
-	int Compare(const char *other, int len) const { return strncmp(Chars, other, len); }
+	int Compare(const FString &other, size_t len) const { return strncmp(Chars, other.Chars, len); }
+	int Compare(const char *other, size_t len) const { return strncmp(Chars, other, len); }
 
 	int CompareNoCase (const FString &other) const { return stricmp (Chars, other.Chars); }
 	int CompareNoCase (const char *other) const { return stricmp (Chars, other); }
-	int CompareNoCase(const FString &other, int len) const { return strnicmp(Chars, other.Chars, len); }
-	int CompareNoCase(const char *other, int len) const { return strnicmp(Chars, other, len); }
+	int CompareNoCase(const FString &other, size_t len) const { return strnicmp(Chars, other.Chars, len); }
+	int CompareNoCase(const char *other, size_t len) const { return strnicmp(Chars, other, len); }
 
 	enum EmptyTokenType
 	{

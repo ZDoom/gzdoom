@@ -273,7 +273,7 @@ public:
 
 	CFsError(const FString &in)
 	{
-		strncpy(msg, in, 2047);
+		strncpy(msg, in.GetChars(), 2047);
 		msg[2047]=0;
 	}
 };

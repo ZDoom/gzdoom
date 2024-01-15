@@ -27,18 +27,18 @@ class FZipExploder
 		unsigned short Code;
 	};
 
-	TArray<HuffNode> LiteralDecoder;
-	TArray<HuffNode> DistanceDecoder;
-	TArray<HuffNode> LengthDecoder;
+	std::vector<HuffNode> LiteralDecoder;
+	std::vector<HuffNode> DistanceDecoder;
+	std::vector<HuffNode> LengthDecoder;
 	unsigned char ReadBuf[256];
 	unsigned int bs, be;
 
 	static int buildercmp(const void *a, const void *b);
-	void InsertCode(TArray<HuffNode> &decoder, unsigned int pos, int bits, unsigned short code, int len, unsigned char value);
-	unsigned int InitTable(TArray<HuffNode> &decoder, int numspots);
-	int BuildDecoder(TArray<HuffNode> &decoder, TableBuilder *values, int numvals);
-	int DecodeSFValue(const TArray<HuffNode> &currentTree);
-	int DecodeSF(TArray<HuffNode> &decoder, int numvals);
+	void InsertCode(std::vector<HuffNode> &decoder, unsigned int pos, int bits, unsigned short code, int len, unsigned char value);
+	unsigned int InitTable(std::vector<HuffNode> &decoder, int numspots);
+	int BuildDecoder(std::vector<HuffNode> &decoder, TableBuilder *values, int numvals);
+	int DecodeSFValue(const std::vector<HuffNode> &currentTree);
+	int DecodeSF(std::vector<HuffNode> &decoder, int numvals);
 public:
 	int Explode(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize, int flags);
 };

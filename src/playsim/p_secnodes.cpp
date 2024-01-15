@@ -414,7 +414,7 @@ void AActor::UpdateRenderSectorList()
 			if (planeh <= lasth) break;	// broken setup.
 			if (Top() + SPRITE_SPACE < planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::ceiling);
+			DVector2 newpos = Pos().XY() + sec->GetPortalDisplacement(sector_t::ceiling);
 			sec = sec->Level->PointInSector(newpos);
 			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}
@@ -426,7 +426,7 @@ void AActor::UpdateRenderSectorList()
 			if (planeh >= lasth) break;	// broken setup.
 			if (Z() - SPRITE_SPACE > planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::floor);
+			DVector2 newpos = Pos().XY() + sec->GetPortalDisplacement(sector_t::floor);
 			sec = sec->Level->PointInSector(newpos);
 			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}

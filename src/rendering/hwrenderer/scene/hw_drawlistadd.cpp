@@ -81,7 +81,7 @@ void HWDrawInfo::AddMirrorSurface(HWWall *w)
 	auto tcs = newwall->tcs;
 	tcs[HWWall::LOLFT].u = tcs[HWWall::LORGT].u = tcs[HWWall::UPLFT].u = tcs[HWWall::UPRGT].u = v.X;
 	tcs[HWWall::LOLFT].v = tcs[HWWall::LORGT].v = tcs[HWWall::UPLFT].v = tcs[HWWall::UPRGT].v = v.Z;
-	newwall->MakeVertices(this, false);
+	newwall->MakeVertices(false);
 
 	bool hasDecals = newwall->seg->sidedef && newwall->seg->sidedef->AttachedDecals;
 	if (hasDecals && Level->HasDynamicLights && !isFullbrightScene())

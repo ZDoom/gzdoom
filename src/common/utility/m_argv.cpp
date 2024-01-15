@@ -158,7 +158,7 @@ int FArgs::CheckParm(const char** check, int start) const
 {
 	for (unsigned i = start; i < Argv.Size(); ++i)
 	{
-		if (0 == stricmp(check, Argv[i]))
+		if (0 == stricmp(check, Argv[i].GetChars()))
 		{
 			return i;
 		}

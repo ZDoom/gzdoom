@@ -34,6 +34,10 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
 bool FileExists (const char *filename);
+inline bool FileExists(const FString& filename)
+{
+	return FileExists(filename.GetChars());
+}
 bool FileReadable (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
@@ -44,12 +48,13 @@ extern	FString progdir;
 void	FixPathSeperator (char *path);
 static void	inline FixPathSeperator (FString &path) { path.ReplaceChars('\\', '/'); }
 
-void 	DefaultExtension (FString &path, const char *extension);
+void 	DefaultExtension (FString &path, const char *extension, bool forcebackslash = false);
 void NormalizeFileName(FString &str);
 
-FString	ExtractFilePath (const char *path);
-FString	ExtractFileBase (const char *path, bool keep_extension=false);
+FString	ExtractFilePath (const char *path, bool forcebackslash = false);
+FString	ExtractFileBase (const char *path, bool keep_extension=false, bool forcebackslash = false);
 FString StripExtension(const char* path);
+void SplitPath(const char* path, FString& directory, FString& base, FString& ext, bool forcebackslash = false);
 
 struct FScriptPosition;
 bool	IsNum (const char *str);		// [RH] added

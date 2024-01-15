@@ -208,13 +208,6 @@ private:
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
 	void DrawPSprite(HUDSprite *huds, FRenderState &state);
-	void SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
-	void SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
-	void SetShaderLight(FRenderState &state, float level, float olight);
-	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
-	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
-	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
-	bool CheckFog(sector_t *frontsector, sector_t *backsector);
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
 
 	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area);
@@ -320,26 +313,6 @@ public:
 
     HWDecal *AddDecal(bool onmirror);
 
-	bool isSoftwareLighting() const
-	{
-		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware || lightmode == ELightMode::Build;
-	}
-
-	bool isBuildSoftwareLighting() const
-	{
-		return lightmode == ELightMode::Build;
-	}
-
-	bool isDoomSoftwareLighting() const
-	{
-		return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware;
-	}
-
-	bool isDarkLightMode() const
-	{
-		return lightmode == ELightMode::Doom || lightmode == ELightMode::DoomDark;
-	}
-
 	void SetFallbackLightMode()
 	{
 		lightmode = ELightMode::Doom;
@@ -353,3 +326,30 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height);
 sector_t* RenderView(player_t* player);
 
 
+inline bool isSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware || lightmode == ELightMode::Build;
+}
+
+inline bool isBuildSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::Build;
+}
+
+inline bool isDoomSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware;
+}
+
+inline bool isDarkLightMode(ELightMode lightmode)
+{
+	return lightmode == ELightMode::Doom || lightmode == ELightMode::DoomDark;
+}
+
+int CalcLightLevel(ELightMode lightmode, int lightlevel, int rellight, bool weapon, int blendfactor);
+PalEntry CalcLightColor(ELightMode lightmode, int light, PalEntry pe, int blendfactor);
+float GetFogDensity(FLevelLocals* Level, ELightMode lightmode, int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
+bool CheckFog(FLevelLocals* Level, sector_t* frontsector, sector_t* backsector, ELightMode lightmode);
+void SetColor(FRenderState& state, FLevelLocals* Level, ELightMode lightmode, int sectorlightlevel, int rellight, bool fullbright, const FColormap& cm, float alpha, bool weapon = false);
+void SetShaderLight(FRenderState& state, FLevelLocals* Level, float level, float olight);
+void SetFog(FRenderState& state, FLevelLocals* Level, ELightMode lightmode, int lightlevel, int rellight, bool fullbright, const FColormap* cmap, bool isadditive);

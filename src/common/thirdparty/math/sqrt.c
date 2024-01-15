@@ -78,8 +78,7 @@ double frexp(), ldexp();
 #endif
 extern double SQRT2;  /*  _sqrt2 = 1.41421356237309504880 */
 
-double c_sqrt(x)
-double x;
+double c_sqrt(double x)
 {
 int e;
 #ifndef UNK

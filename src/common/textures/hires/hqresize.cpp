@@ -39,6 +39,7 @@
 #ifdef HAVE_MMX
 #include "hqnx_asm/hqnx_asm.h"
 #endif
+#include <memory>
 #include "xbr/xbrz.h"
 #include "xbr/xbrz_old.h"
 #include "parallel_for.h"
@@ -304,7 +305,8 @@ static unsigned char *hqNxAsmHelper( void (*hqNxFunction) ( int*, unsigned char*
 		initdone = true;
 	}
 
-	HQnX_asm::CImage cImageIn;
+	auto pImageIn = std::make_unique<HQnX_asm::CImage>();
+	auto& cImageIn = *pImageIn;
 	cImageIn.SetImage(inputBuffer, inWidth, inHeight, 32);
 	cImageIn.Convert32To17();
 

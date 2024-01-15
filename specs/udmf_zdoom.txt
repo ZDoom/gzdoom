@@ -233,6 +233,22 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       lm_sampledist_top = <int>;    // ZDRay customizable sampling distance for this sidedef's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_mid = <int>;    // ZDRay customizable sampling distance for this sidedef's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_bot = <int>;    // ZDRay customizable sampling distance for this sidedef's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0	  
+	  
+	  skew_top = <int>;             // enables skewing of wall textures, the skewing angle will be aligned to one of the 4 planes touching the floor. 
+      skew_middle = <int>;          // Vertical texture alignment defines the position at the leftmost point of the wall.
+      skew_bottom = <int>;          // Possible values: 0 = no skewing, 1 = align to front floor, 2 = align to front ceiling, 3 = align to back floor, 4 = align to back ceiling.
+	                                // Front/Back are relative to the sidedef, not the owning linedef. Default = 0.
+									
+      xscroll  = <float>;           // wall scrolling X speed in map units per tic.
+      yscroll  = <float>;           // wall scrolling Y speed in map units per tic.
+      xscrolltop  = <float>;        // upper wall scrolling X speed in map units per tic.
+      yscrolltop  = <float>;        // upper wall scrolling Y speed in map units per tic.
+      xscrollmid  = <float>;        // mid wall scrolling X speed in map units per tic.
+      yscrollmid  = <float>;        // mid wall scrolling Y speed in map units per tic.
+      xscrollbottom  = <float>;     // lower wall scrolling X speed in map units per tic.
+      yscrollbottom  = <float>;     // lower wall scrolling Y speed in map units per tic.
+									
+
    }
 
    sector
@@ -331,6 +347,36 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       healthfloorgroup = <int>;       // ID of destructible object to synchronize hitpoints (optional, default is 0)
       healthceiling = <int>;          // Amount of hitpoints for this sector (includes ceiling and top-outside linedef sides)
       healthceilinggroup = <int>;     // ID of destructible object to synchronize hitpoints (optional, default is 0)
+	  
+      xscrollfloor = <float>;         // X map units per frame to scroll the floor.
+      yscrollfloor = <float>;         // Y map units per frame to scroll the floor.
+      scrollfloormode = <int>;        // Floor scroll mode bit mask (1 = scroll textures, 2 = carry static objects, 4 = carry players, 8 = carry monsters.
+      xscrollceiling = <float>;       // X map units per frame to scroll the ceiling.
+      yscrollceiling = <float>;       // Y map units per frame to scroll the ceiling.
+      scrollceilingmode = <int>;      // ceiling scroll mode bit mask (1 = scroll textures, 2 = carry static objects, 4 = carry players, 8 = carry monsters.
+	  
+	  scroll_ceil_x = <float>;        // deprecated Eternity based alternatives for the above. 
+	  scroll_ceil_y = <float>;        // Due to using unintuitive units of measurement and a more limited feature set they should not be used anymore.	
+	  scroll_ceil_type = <string>;
+	  scroll_floor_x = <float>;
+	  scroll_floor_y = <float>;
+	  scroll_floor_type = <string>;
+	  
+	  friction = <float>;             // sets the sector's friction factor. Must be between 0 and 1.
+	  movefactor = <float>            // sets the sector's movement acceleration factor. Must be > 0.
+	  
+	  skyfloor = <string>             // defines lower sky for this sector.
+	  skyceiling = <string>           // defines upper sky for this sector.
+	  skyfloor2 = <string>             // defines secondary lower sky for this sector. (for lightning or transparent layers)
+	  skyceiling2 = <string>           // defines secondary upper sky for this sector.
+	  
+	  colormap = <string>;            // only provided for backwards compatibility. Do not use in GZDoom projects.
+	  
+      xthrust = <float>;              // applies thrust to actors - x-magnitude
+      ythrust = <float>;              // applies thrust to actors - y-magnitude
+      thrustgroup = <int>;            // specifies which actors get thrusted. Bitfield with (1 = static objects, 2 = player, 4 = monsters, 8 = projectiles, 16 = actors with +WINDTHRUST)
+      thrustlocation = <int>;         // specifies where in the sector actors get thrusted: (1 = on the ground, 2 = in the air, 4 = on the ceiling)
+	  
 
       * Note about dropactors
 
@@ -541,6 +587,9 @@ Added/updated ZDRay/lightmap-related properties.
 
 1.35 15.09.2023
 fixed omissions: Blocklandmonsters and Blockfloaters line flags.
+
+1.36 20.10.2023
+Sidedef skewing properties
 
 ===============================================================================
 EOF

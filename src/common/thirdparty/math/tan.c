@@ -220,8 +220,7 @@ extern double PIO4;
 extern double INFINITY;
 extern double NAN;
 
-double c_tan(x)
-double x;
+double c_tan(double x)
 {
 #ifdef MINUSZERO
 if( x == 0.0 )
@@ -240,8 +239,7 @@ return( tancot(x,0) );
 }
 
 
-double c_cot(x)
-double x;
+double c_cot(double x)
 {
 
 if( x == 0.0 )
@@ -253,9 +251,7 @@ return( tancot(x,1) );
 }
 
 
-static double tancot( xx, cotflg )
-double xx;
-int cotflg;
+static double tancot(double xx, int cotflg)
 {
 double x, y, z, zz;
 int j, sign;

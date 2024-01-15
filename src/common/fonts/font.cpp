@@ -97,7 +97,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		FStringf path("fonts/%s/", filetemplate);
 		// If a name template is given, collect data from all resource files.
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
-		fileSystem.GetFilesInFolder(path, folderdata, nametemplate == nullptr);
+		fileSystem.GetFilesInFolder(path.GetChars(), folderdata, nametemplate == nullptr);
 
 		//if (nametemplate == nullptr)
 		{
@@ -231,8 +231,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
 						FStringf c120(nametemplate, 120);
 						FStringf c122(nametemplate, 122);
-						if (!TexMan.CheckForTexture(c120, ETextureType::MiscPatch).isValid() ||
-							!TexMan.CheckForTexture(c122, ETextureType::MiscPatch).isValid())
+						if (!TexMan.CheckForTexture(c120.GetChars(), ETextureType::MiscPatch).isValid() ||
+							!TexMan.CheckForTexture(c122.GetChars(), ETextureType::MiscPatch).isValid())
 						{
 							// insert the incorrectly named '|' graphic in its correct position.
 							position = 124;
@@ -711,10 +711,10 @@ int FFont::GetLuminosity (uint32_t *colorsused, TArray<double> &Luminosity, int*
 //
 //==========================================================================
 
-int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
+FTranslationID FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
 	// Single pic fonts do not set up their translation table and must always return 0.
-	if (Translations.Size() == 0) return 0;
+	if (Translations.Size() == 0) return NO_TRANSLATION;
 	assert(Translations.Size() == (unsigned)NumTextColors);
 
 	if (noTranslate)
@@ -728,7 +728,7 @@ int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 		if (color != nullptr) *color = retcolor;
 	}
 	if (range == CR_UNDEFINED)
-		return -1;
+		return INVALID_TRANSLATION;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
 	return Translations[range];
@@ -1059,8 +1059,8 @@ void FFont::LoadTranslations()
 	Translations.Resize(NumTextColors);
 	for (int i = 0; i < NumTextColors; i++)
 	{
-		if (i == CR_UNTRANSLATED) Translations[i] = 0;
- 		else Translations[i] = LuminosityTranslation(i*2 + TranslationType, minlum, maxlum);
+		if (i == CR_UNTRANSLATED) Translations[i] = NO_TRANSLATION;
+ 		else Translations[i] = MakeLuminosityTranslation(i*2 + TranslationType, minlum, maxlum);
 	}
 }
 

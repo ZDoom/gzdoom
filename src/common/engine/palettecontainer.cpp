@@ -220,7 +220,7 @@ FRemapTable* PaletteContainer::AddRemap(FRemapTable* remap)
 //
 //----------------------------------------------------------------------------
 
-void PaletteContainer::UpdateTranslation(int trans, FRemapTable* remap)
+void PaletteContainer::UpdateTranslation(FTranslationID trans, FRemapTable* remap)
 {
 	auto newremap = AddRemap(remap);
 	TranslationTables[GetTranslationType(trans)].SetVal(GetTranslationIndex(trans), newremap);
@@ -232,7 +232,7 @@ void PaletteContainer::UpdateTranslation(int trans, FRemapTable* remap)
 //
 //----------------------------------------------------------------------------
 
-int PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
+FTranslationID PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
 {
 	uint32_t id = 0;
 	for (int i = 0; i < count; i++)
@@ -249,9 +249,9 @@ int PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
 //
 //----------------------------------------------------------------------------
 
-void PaletteContainer::CopyTranslation(int dest, int src)
+void PaletteContainer::CopyTranslation(FTranslationID dest, FTranslationID src)
 {
-	TranslationTables[GetTranslationType(dest)].SetVal(GetTranslationIndex(dest), TranslationToTable(src));
+	TranslationTables[GetTranslationType(dest)].SetVal(GetTranslationIndex(dest), TranslationToTable(src.index()));
 }
 
 //----------------------------------------------------------------------------
@@ -260,8 +260,9 @@ void PaletteContainer::CopyTranslation(int dest, int src)
 //
 //----------------------------------------------------------------------------
 
-FRemapTable *PaletteContainer::TranslationToTable(int translation)
+FRemapTable *PaletteContainer::TranslationToTable(int translation) const
 {
+	if (IsLuminosityTranslation(translation)) return nullptr;
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
 
@@ -278,14 +279,14 @@ FRemapTable *PaletteContainer::TranslationToTable(int translation)
 //
 //----------------------------------------------------------------------------
 
-int PaletteContainer::StoreTranslation(int slot, FRemapTable *remap)
+FTranslationID PaletteContainer::StoreTranslation(int slot, FRemapTable *remap)
 {
 	unsigned int i;
 
 	auto size = NumTranslations(slot);
 	for (i = 0; i < size; i++)
 	{
-		if (*remap == *TranslationToTable(TRANSLATION(slot, i)))
+		if (*remap == *TranslationToTable(TRANSLATION(slot, i).index()))
 		{
 			// A duplicate of this translation already exists
 			return TRANSLATION(slot, i);

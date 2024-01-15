@@ -1,4 +1,5 @@
 #pragma once
+#define TARRAY_H
 /*
 ** tarray.h
 ** Templated, automatically resizing array
@@ -234,7 +235,7 @@ public:
 	{
 		DoCopy (other);
 	}
-	TArray (TArray<T,TT> &&other)
+	TArray (TArray<T,TT> &&other) noexcept
 	{
 		Array = other.Array; other.Array = NULL;
 		Most = other.Most; other.Most = 0;
@@ -256,7 +257,7 @@ public:
 		}
 		return *this;
 	}
-	TArray<T,TT> &operator= (TArray<T,TT> &&other)
+	TArray<T,TT> &operator= (TArray<T,TT> &&other) noexcept
 	{
 		if (Array)
 		{
@@ -399,9 +400,16 @@ public:
 		Grow(item.Size());
 		Count += item.Size();
 
-		for (unsigned i = 0; i < item.Size(); i++)
+		if constexpr (std::is_trivially_copyable<T>::value)
 		{
-			new(&Array[start + i]) T(item[i]);
+			memcpy(Array + start,item.Array,item.Size() * sizeof(T));
+		}
+		else
+		{
+			for (unsigned i = 0; i < item.Size(); i++)
+			{
+				new(&Array[start + i]) T(item[i]);
+			}
 		}
 		return start;
 	}
@@ -413,9 +421,16 @@ public:
 		Grow(item.Size());
 		Count += item.Size();
 
-		for (unsigned i = 0; i < item.Size(); i++)
+		if constexpr (std::is_trivially_copyable<T>::value)
 		{
-			new(&Array[start + i]) T(std::move(item[i]));
+			memcpy(Array + start,item.Array,item.Size() * sizeof(T));
+		}
+		else
+		{
+			for (unsigned i = 0; i < item.Size(); i++)
+			{
+				new(&Array[start + i]) T(std::move(item[i]));
+			}
 		}
 		item.Clear();
 		return start;
@@ -642,6 +657,44 @@ public:
 		std::swap(Count, other.Count);
 		std::swap(Most, other.Most);
 	}
+
+	// aliases with STL compliant names to allow using TArrays with templates designed for STL containers
+
+	size_t size() const
+	{
+		return Count;
+	}
+
+	T* data() const
+	{
+		return Data();
+	}
+
+	T& front() const
+	{
+		return *Data();
+	}
+
+	T& back() const
+	{
+		return Last();
+	}
+
+	void resize(size_t i)
+	{
+		Resize(i);
+	}
+
+	void push_back(const T& elem)
+	{
+		Push(elem);
+	}
+
+	void clear()
+	{
+		Clear();
+	}
+
 
 private:
 	T *Array;
@@ -1725,14 +1778,14 @@ public:
 		return *this;
 	}
 
-	BitArray(BitArray && arr)
+	BitArray(BitArray && arr) noexcept
 		: bytes(std::move(arr.bytes))
 	{
 		size = arr.size;
 		arr.size = 0;
 	}
 
-	BitArray &operator=(BitArray && arr)
+	BitArray &operator=(BitArray && arr) noexcept
 	{
 		bytes = std::move(arr.bytes);
 		size = arr.size;

@@ -44,7 +44,7 @@ struct FRenderViewpoint
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
 	bool			NoPortalPath;	// Disable portal interpolation path for actor viewpos.
-
+	bool			noviewer;		// Force camera sprite off for first person.
 	void SetViewAngle(const FViewWindow &viewwindow);
 
 };

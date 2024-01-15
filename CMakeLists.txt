@@ -256,7 +256,7 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /permissive-" )
+	set( ALL_C_FLAGS "/GF /Gy /permissive- /utf-8" )
 
 	if ( HAVE_VULKAN )
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_VULKAN" )
@@ -301,7 +301,7 @@ else()
 
 	if ( UNIX )
 		include(CheckSymbolExists)
-		check_symbol_exists( "fts_set" "fts.h" HAVE_FTS )
+		check_symbol_exists( "fts_set" "sys/types.h;sys/stat.h;fts.h" HAVE_FTS )
 		if ( NOT HAVE_FTS )
 			include ( FindPkgConfig )
 			pkg_check_modules( MUSL_FTS musl-fts )
@@ -318,7 +318,7 @@ else()
 
 
 	if( APPLE )
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12")
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 			set( ALL_C_FLAGS "-static-libgcc" )
@@ -353,6 +353,8 @@ mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 if (HAVE_VULKAN)
 	add_subdirectory( libraries/ZVulkan )
 endif()
+
+add_subdirectory( libraries/ZWidget )
 
 add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )
 set( DRPC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/discordrpc/include" )

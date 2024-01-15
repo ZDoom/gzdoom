@@ -39,7 +39,7 @@ CCMD (shaderenable)
 	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
 	{
 		PostProcessShader &shader = PostProcessShaders[i];
-		if (strcmp(shader.Name, shaderName) == 0)
+		if (shader.Name.Compare(shaderName) == 0)
 		{
 			if (value != -1)
 				shader.Enabled = value;
@@ -70,7 +70,7 @@ CCMD (shaderuniform)
 	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
 	{
 		PostProcessShader &shader = PostProcessShaders[i];
-		if (strcmp(shader.Name, shaderName) == 0)
+		if (shader.Name.Compare(shaderName) == 0)
 		{
 			if (argv.argc() > 3)
 			{
@@ -116,7 +116,7 @@ CCMD(listuniforms)
 	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
 	{
 		PostProcessShader &shader = PostProcessShaders[i];
-		if (strcmp(shader.Name, shaderName) == 0)
+		if (shader.Name.Compare(shaderName) == 0)
 		{
 			Printf("Shader '%s' uniforms:\n", shaderName);
 

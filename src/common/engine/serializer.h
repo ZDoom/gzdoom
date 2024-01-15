@@ -20,6 +20,7 @@ class FSoundID;
 union FRenderStyle;
 class DObject;
 class FTextureID;
+struct FTranslationID;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -52,6 +53,12 @@ struct NumericValue
 	{
 		return type != other.type || signedval != other.signedval;
 	}
+};
+
+struct FunctionPointerValue
+{
+	FString ClassName;
+	FString FunctionName;
 };
 
 
@@ -101,6 +108,10 @@ public:
 	FSerializer &AddString(const char *key, const char *charptr);
 	const char *GetString(const char *key);
 	FSerializer &ScriptNum(const char *key, int &num);
+
+
+	bool ReadOptionalInt(const char * key, int &into);
+
 	bool isReading() const
 	{
 		return r != nullptr;
@@ -233,7 +244,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &sid, struct ModelOverride *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &mo, struct ModelOverride *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def);
+FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
+
+void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);
 
 template <typename T/*, typename = std::enable_if_t<std::is_base_of_v<DObject, T>>*/>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)

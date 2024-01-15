@@ -193,7 +193,7 @@ namespace swrenderer
 		{ // only things in specially marked sectors
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
-				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
+				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos.XY());
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
@@ -215,7 +215,7 @@ namespace swrenderer
 			}
 			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECMF_FAKEFLOORONLY))
 			{
-				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
+				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos.XY());
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)

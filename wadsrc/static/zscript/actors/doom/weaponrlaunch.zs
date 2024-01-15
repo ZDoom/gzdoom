@@ -152,7 +152,7 @@ extend class StateProvider
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{
-			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
+			if (!weap.DepleteAmmo (weap.bAltFire, true))
 				return;
 		}
 		
@@ -177,7 +177,7 @@ extend class StateProvider
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{
-			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
+			if (!weap.DepleteAmmo (weap.bAltFire, true))
 				return;
 		}
 			

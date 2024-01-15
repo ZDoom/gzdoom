@@ -47,27 +47,29 @@
 //
 //==========================================================================
 
-void FStringTable::LoadStrings (const char *language)
+void FStringTable::LoadStrings (FileSys::FileSystem& fileSystem_, const char *language)
 {
 	int lastlump, lump;
 
+	fileSystem = &fileSystem_;
 	allStrings.Clear();
 	lastlump = 0;
-	while ((lump = fileSystem.FindLump("LMACROS", &lastlump)) != -1)
+	while ((lump = fileSystem->FindLump("LMACROS", &lastlump)) != -1)
 	{
 		readMacros(lump);
 	}
 
 	lastlump = 0;
-	while ((lump = fileSystem.FindLump ("LANGUAGE", &lastlump)) != -1)
+	while ((lump = fileSystem->FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		auto lumpdata = fileSystem.ReadFile(lump);
+		auto lumpdata = fileSystem->ReadFile(lump);
 
-		if (!ParseLanguageCSV(lump, lumpdata.GetString(), lumpdata.GetSize()))
- 			LoadLanguage (lump, lumpdata.GetString(), lumpdata.GetSize());
+		if (!ParseLanguageCSV(lump, lumpdata.string(), lumpdata.size()))
+ 			LoadLanguage (lump, lumpdata.string(), lumpdata.size());
 	}
 	UpdateLanguage(language);
 	allMacros.Clear();
+	fileSystem = nullptr;
 }
 
 
@@ -159,16 +161,14 @@ TArray<TArray<FString>> FStringTable::parseCSV(const char* buffer, size_t size)
 
 bool FStringTable::readMacros(int lumpnum)
 {
-	auto lumpdata = fileSystem.ReadFile(lumpnum);
-	auto data = parseCSV(lumpdata.GetString(), lumpdata.GetSize());
+	auto lumpdata = fileSystem->ReadFile(lumpnum);
+	auto data = parseCSV(lumpdata.string(), lumpdata.size());
 
+	allMacros.Clear();
 	for (unsigned i = 1; i < data.Size(); i++)
 	{
 		auto macroname = data[i][0];
-		auto language = data[i][1];
-		if (macroname.IsEmpty() || language.IsEmpty()) continue;
-		FStringf combined_name("%s/%s", language.GetChars(), macroname.GetChars());
-		FName name = combined_name.GetChars();
+		FName name = macroname.GetChars();
 
 		StringMacro macro;
 
@@ -244,7 +244,7 @@ bool FStringTable::ParseLanguageCSV(int lumpnum, const char* buffer, size_t size
 						auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
 						for (auto& entry : filter)
 						{
-							if (sysCallbacks.CheckGame(entry))
+							if (sysCallbacks.CheckGame(entry.GetChars()))
 							{
 								ok = true;
 								break;
@@ -324,7 +324,7 @@ void FStringTable::LoadLanguage (int lumpnum, const char* buffer, size_t size)
 					}
 					else
 					{
-						sc.ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %lu characters long.",
+						sc.ScriptError ("The language code must be 2 or 3 characters long.\n'%s' is %zu characters long.",
 							sc.String, len);
 					}
 				}
@@ -413,7 +413,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 {
 	decltype(allStrings)::Iterator it(allStrings);
 	decltype(allStrings)::Pair *pair;
-	auto filenum = fileSystem.GetFileContainer(lumpnum);
+	auto filenum = fileSystem->GetFileContainer(lumpnum);
 
 	while (it.NextPair(pair))
 	{
@@ -435,7 +435,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { fileSystem.GetFileContainer(lumpnum), { string, string, string, string } };
+	TableElement te = { fileSystem->GetFileContainer(lumpnum), { string, string, string, string } };
 	ptrdiff_t index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{
@@ -446,9 +446,8 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 			break;
 		}
 		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
-		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
-		FName lookupname(lookupstr.GetChars(), true);
+		FName lookupname(macroname.GetChars(), true);
 		auto replace = allMacros.CheckKey(lookupname);
 		for (int i = 0; i < 4; i++)
 		{
@@ -643,7 +642,7 @@ bool FStringTable::MatchDefaultString(const char *name, const char *content) con
 
 	// Check a secondary key, in case the text comparison cannot be done due to needed orthographic fixes (see Harmony's exit text)
 	FStringf checkkey("%s_CHECK", name);
-	auto cc = GetLanguageString(checkkey, FStringTable::default_table);
+	auto cc = GetLanguageString(checkkey.GetChars(), FStringTable::default_table);
 	if (cc) c = cc;
 
 	return (c && !strnicmp(c, content, strcspn(content, "\n\r\t")));

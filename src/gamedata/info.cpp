@@ -785,17 +785,17 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
-		Net_WriteByte (argv.argc() > 2 ? command2 : command);
+		Net_WriteInt8 (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
 
 		if (argv.argc () > 2)
 		{
-			Net_WriteWord (atoi (argv[2])); // angle
-			Net_WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
-			Net_WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
+			Net_WriteInt16 (atoi (argv[2])); // angle
+			Net_WriteInt16 ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
+			Net_WriteInt8 ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
 			for (int i = 5; i < 10; i++)
 			{ // args[5]
-				Net_WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
+				Net_WriteInt32((i < argv.argc()) ? atoi(argv[i]) : 0);
 			}
 		}
 	}

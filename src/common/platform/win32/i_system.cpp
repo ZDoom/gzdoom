@@ -87,6 +87,8 @@
 #include "i_interface.h"
 #include "i_mainwindow.h"
 
+#include "launcherwindow.h"
+
 // MACROS ------------------------------------------------------------------
 
 #ifdef _MSC_VER
@@ -344,131 +346,6 @@ static void SetQueryIWad(HWND dialog)
 
 //==========================================================================
 //
-// IWADBoxCallback
-//
-// Dialog proc for the IWAD selector.
-//
-//==========================================================================
-static int* pAutoloadflags;
-
-BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	int& flags = *pAutoloadflags;;
-
-	HWND ctrl;
-	int i;
-
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		// Add our program name to the window title
-		{
-			WCHAR label[256];
-			FString newlabel;
-
-			GetWindowTextW(hDlg, label, countof(label));
-			FString alabel(label);
-			newlabel.Format(GAMENAME " %s: %s", GetVersionString(), alabel.GetChars());
-			auto wlabel = newlabel.WideString();
-			SetWindowTextW(hDlg, wlabel.c_str());
-		}
-
-		// [SP] Upstreamed from Zandronum
-		char	szString[256];
-
-		// Check the current video settings.
-		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, vid_fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
-		switch (vid_preferbackend)
-		{
-		case 1:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN2, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-#ifdef HAVE_GLES2
-		case 2:
-		case 3:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN4, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-#endif			
-		default:
-			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN1, BM_SETCHECK, BST_CHECKED, 0 );
-			break;
-		}
-
-
-		// [SP] This is our's
-		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, (flags & 1) ? BST_CHECKED : BST_UNCHECKED, 0);
-		SendDlgItemMessage( hDlg, IDC_WELCOME_LIGHTS, BM_SETCHECK, (flags & 2) ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_BRIGHTMAPS, BM_SETCHECK, (flags & 4) ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_WIDESCREEN, BM_SETCHECK, (flags & 8) ? BST_CHECKED : BST_UNCHECKED, 0 );
-
-		// Set up our version string.
-		snprintf(szString, sizeof(szString), "Version %s.", GetVersionString());
-		SetDlgItemTextA (hDlg, IDC_WELCOME_VERSION, szString);
-
-		// Populate the list with all the IWADs found
-		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
-		for (i = 0; i < NumWads; i++)
-		{
-			const char *filepart = strrchr(WadList[i].Path, '/');
-			if (filepart == NULL)
-				filepart = WadList[i].Path;
-			else
-				filepart++;
-
-			FString work;
-			if (*filepart) work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
-			else work = WadList[i].Name.GetChars();
-			std::wstring wide = work.WideString();
-			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)wide.c_str());
-			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
-		}
-		SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
-		SetFocus(ctrl);
-		// Set the state of the "Don't ask me again" checkbox
-		ctrl = GetDlgItem(hDlg, IDC_DONTASKIWAD);
-		SendMessage(ctrl, BM_SETCHECK, queryiwad ? BST_UNCHECKED : BST_CHECKED, 0);
-		// Make sure the dialog is in front. If SHIFT was pressed to force it visible,
-		// then the other window will normally be on top.
-		SetForegroundWindow(hDlg);
-		break;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog (hDlg, -1);
-		}
-		else if (LOWORD(wParam) == IDOK ||
-			(LOWORD(wParam) == IDC_IWADLIST && HIWORD(wParam) == LBN_DBLCLK))
-		{
-			SetQueryIWad(hDlg);
-			// [SP] Upstreamed from Zandronum
-			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-#ifdef HAVE_GLES2
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN4, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 2;
-			else 
-#endif
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 1;
-			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN1, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				vid_preferbackend = 0;
-
-			// [SP] This is our's.
-			flags = 0;
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 1;
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_LIGHTS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 2;
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_BRIGHTMAPS, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 4;
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_WIDESCREEN, BM_GETCHECK, 0, 0) == BST_CHECKED) flags |= 8;
-			ctrl = GetDlgItem (hDlg, IDC_IWADLIST);
-			EndDialog(hDlg, SendMessage (ctrl, LB_GETCURSEL, 0, 0));
-		}
-		break;
-	}
-	return FALSE;
-}
-
-//==========================================================================
-//
 // I_PickIWad
 //
 // Open a dialog to pick the IWAD, if there is more than one found.
@@ -478,7 +355,6 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
 {
 	int vkey;
-	pAutoloadflags = &autoloadflags;
 	if (stricmp(queryiwad_key, "shift") == 0)
 	{
 		vkey = VK_SHIFT;
@@ -493,12 +369,7 @@ int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& 
 	}
 	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
 	{
-		WadList = wads;
-		NumWads = numwads;
-		DefaultWad = defaultiwad;
-
-		return (int)DialogBox(g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
-			(HWND)mainwindow.GetHandle(), (DLGPROC)IWADBoxCallback);
+		return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags);
 	}
 	return defaultiwad;
 }
@@ -850,37 +721,6 @@ FString I_GetLongPathName(const FString &shortpath)
 	return longpath;
 }
 
-#ifdef _USING_V110_SDK71_
-//==========================================================================
-//
-// _stat64i32
-//
-// Work around an issue where stat() function doesn't work 
-// with Windows XP compatible toolset.
-// It uses GetFileInformationByHandleEx() which requires Windows Vista.
-//
-//==========================================================================
-
-int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
-{
-	WIN32_FILE_ATTRIBUTE_DATA data;
-	if(!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
-		return -1;
-
-	buffer->st_ino = 0;
-	buffer->st_mode = ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR : S_IFREG)|
-	                  ((data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD|S_IWRITE);
-	buffer->st_dev = buffer->st_rdev = 0;
-	buffer->st_nlink = 1;
-	buffer->st_uid = 0;
-	buffer->st_gid = 0;
-	buffer->st_size = data.nFileSizeLow;
-	buffer->st_atime = (*(uint64_t*)&data.ftLastAccessTime) / 10000000 - 11644473600LL;
-	buffer->st_mtime = (*(uint64_t*)&data.ftLastWriteTime) / 10000000 - 11644473600LL;
-	buffer->st_ctime = (*(uint64_t*)&data.ftCreationTime) / 10000000 - 11644473600LL;
-	return 0;
-}
-#endif
 
 struct NumaNode
 {

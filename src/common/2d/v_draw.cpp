@@ -866,7 +866,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 	parms->destheight = INT_MAX;
 	parms->Alpha = type == DrawTexture_Fill ? (float)fillalpha : 1.f;
 	parms->fillcolor = type == DrawTexture_Fill ? fill : PalEntry(~0u);
-	parms->TranslationId = -1;
+	parms->TranslationId = INVALID_TRANSLATION;
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
@@ -1090,7 +1090,7 @@ bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture *img, double x, double
 			break;
 
 		case DTA_TranslationIndex:
-			parms->TranslationId = ListGetInt(tags);
+			parms->TranslationId = FTranslationID::fromInt(ListGetInt(tags));
 			break;
 
 		case DTA_ColorOverlay:

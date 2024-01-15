@@ -559,7 +559,7 @@ void FParser::SF_Include(void)
 	{
 		if(t_argv[0].type == svt_string)
 		{
-			strncpy(tempstr, t_argv[0].string, 8);
+			strncpy(tempstr, t_argv[0].string.GetChars(), 8);
 			tempstr[8]=0;
 		}
 		else
@@ -1869,7 +1869,7 @@ void FParser::SF_FloorTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string.GetChars(), ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			auto itr = Level->GetSectorTagIterator(tagnum);
@@ -1959,7 +1959,7 @@ void FParser::SF_CeilingTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string.GetChars(), ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			auto itr = Level->GetSectorTagIterator(tagnum);
@@ -2229,7 +2229,7 @@ void FParser::SF_SetLineTexture(void)
 		}
 		else // and an improved legacy version
 		{ 
-			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTextureID(t_argv[1].string.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 			side = !!intvalue(t_argv[2]); 
 			int sections = intvalue(t_argv[3]); 
 			
@@ -2714,7 +2714,7 @@ void FParser::SF_MoveCamera(void)
 		double targetheight = floatvalue(t_argv[2]);
 		double movespeed = floatvalue(t_argv[3]);
 		DVector3 campos = cam->Pos();
-		DVector3 targpos = DVector3(target->Pos(), targetheight);
+		DVector3 targpos = DVector3(target->Pos().XY(), targetheight);
 		DVector3 movement = targpos - campos;
 		double movelen = movement.Length();
 

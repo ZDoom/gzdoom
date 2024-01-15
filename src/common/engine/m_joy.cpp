@@ -98,7 +98,7 @@ static bool M_SetJoystickConfigSection(IJoystickConfig *joy, bool create, FConfi
 	FString id = "Joy:";
 	id += joy->GetIdentifier();
 	if (!GameConfig) return false;
-	return GameConfig->SetSection(id, create);
+	return GameConfig->SetSection(id.GetChars(), create);
 }
 
 //==========================================================================

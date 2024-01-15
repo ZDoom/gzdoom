@@ -1242,8 +1242,8 @@ int FRawPS2Manager::DeviceSort(const void *a, const void *b)
 	if (lex == 0)
 	{
 		// Skip device part of the ID and sort the connection part
-		const char *ca = strchr(ha->DeviceID, '#');
-		const char *cb = strchr(hb->DeviceID, '#');
+		const char *ca = strchr(ha->DeviceID.GetChars(), '#');
+		const char *cb = strchr(hb->DeviceID.GetChars(), '#');
 		const char *ea, *eb;
 		// The last bit looks like a controller number. Strip it out to be safe
 		// if this is a multi-controller adapter.

@@ -128,8 +128,7 @@ double fabs(), c_exp(), polevl(), p1evl();
 #endif
 extern double MAXLOG;
 
-double c_tanh(x)
-double x;
+double c_tanh(double x)
 {
 double s, z;
 

@@ -110,7 +110,7 @@ extend class PlayerPawn
 		{
 			// Player is already a beast.
 			if (bCanSuperMorph && spawnType == GetClass()
-				&& player.MorphTics < duration - TICRATE
+				&& GetMorphTics() < duration - TICRATE
 				&& !FindInventory("PowerWeaponLevel2", true))
 			{
 				// Make a super chicken.
@@ -126,7 +126,9 @@ extend class PlayerPawn
 		let morphed = PlayerPawn(Spawn(spawnType, Pos, NO_REPLACE));
 		if (!MorphInto(morphed))
 		{
-			morphed.Destroy();
+			if (morphed)
+				morphed.Destroy();
+				
 			return false;
 		}
 
@@ -155,29 +157,35 @@ extend class PlayerPawn
 		}
 		
 		// special2 is no longer used here since Actors now have a proper field for it.
-		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE) | (bInvisible * MPROP_INVIS);
+		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE)
+										| (bNoBlockmap * MPROP_NO_BLOCKMAP) | (bNoSector * MPROP_NO_SECTOR)
+										| (bNoInteraction * MPROP_NO_INTERACTION) | (bInvisible * MPROP_INVIS);
+		
 		morphed.bShadow |= bShadow;
 		morphed.bNoGravity |= bNoGravity;
 		morphed.bFly |= bFly;
 		morphed.bGhost |= bGhost;
 
 		// Remove all armor.
-		for (Inventory item = morphed.Inv; item;)
+		if (!(style & MRF_KEEPARMOR))
 		{
-			Inventory next = item.Inv;
-			if (item is "Armor")
-				item.DepleteOrDestroy();
+			for (Inventory item = morphed.Inv; item;)
+			{
+				Inventory next = item.Inv;
+				if (item is "Armor")
+					item.DepleteOrDestroy();
 
-			item = next;
+				item = next;
+			}
 		}
 
 		// Players store their morph behavior into their PlayerInfo unlike regular Actors which use the
 		// morph properties. This is needed for backwards compatibility and to give the HUD info.
 		let p = morphed.player;
-		p.MorphTics = duration;
+		morphed.SetMorphTics(duration);
+		morphed.SetMorphStyle(style);
+		morphed.SetMorphExitFlash(exitFlash);
 		p.MorphedPlayerClass = spawnType;
-		p.MorphStyle = style;
-		p.MorphExitFlash = exitFlash;
 		p.PremorphWeapon = p.ReadyWeapon;
 		p.Health = morphed.Health;
 		p.Vel = (0.0, 0.0);
@@ -185,6 +193,10 @@ extend class PlayerPawn
 		if (morphed.ViewHeight > p.ViewHeight && !p.DeltaViewHeight)
 			p.DeltaViewHeight = p.GetDeltaViewHeight();
 
+		bNoInteraction = true;
+		A_ChangeLinkFlags(true, true);
+
+		// Legacy
 		bSolid = bShootable = false;
 		bInvisible = true;
 
@@ -242,7 +254,7 @@ extend class PlayerPawn
 
 			if (!res)
 			{
-				player.MorphTics = 2 * TICRATE;
+				SetMorphTics(2 * TICRATE);
 				return false;
 			}
 		}
@@ -284,9 +296,12 @@ extend class PlayerPawn
 		alt.bFly = bFly;
 		alt.Vel = (0.0, 0.0, Vel.Z);
 
+		alt.bNoInteraction = (PremorphProperties & MPROP_NO_INTERACTION);
+		alt.A_ChangeLinkFlags((PremorphProperties & MPROP_NO_BLOCKMAP), (PremorphProperties & MPROP_NO_SECTOR));
+
 		let p = alt.player;
-		class<Actor> exitFlash = p.MorphExitFlash;
-		EMorphFlags style = p.MorphStyle;
+		class<Actor> exitFlash = alt.GetMorphExitFlash();
+		EMorphFlags style = alt.GetMorphStyle();
 		Weapon premorphWeap = p.PremorphWeapon;
 
 		if (TID && (style & MRF_NEWTIDBEHAVIOUR))
@@ -295,10 +310,10 @@ extend class PlayerPawn
 			ChangeTID(0);
 		}
 
-		p.MorphTics = 0;
+		alt.SetMorphTics(0);
+		alt.SetMorphStyle(0);
+		alt.SetMorphExitFlash(null);
 		p.MorphedPlayerClass = null;
-		p.MorphStyle = 0;
-		p.MorphExitFlash = null;
 		p.PremorphWeapon = null;
 		p.ViewHeight = alt.ViewHeight;
 		p.Vel = (0.0, 0.0);
@@ -346,9 +361,6 @@ extend class PlayerPawn
 
 		alt.ClearFOVInterpolation();
 		alt.InitAllPowerupEffects();
-
-		bInvisible = true;
-		bSolid = bShootable = false;
 
 		PostUnmorph(alt, false);		// This body is no longer current.
 		alt.PostUnmorph(self, true);	// altmo body is current.

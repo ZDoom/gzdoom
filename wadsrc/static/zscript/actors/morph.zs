@@ -23,17 +23,68 @@
 
 extend class Actor
 {
+	// Blockmap, sector, and no interaction are the only relevant flags but the old ones are kept around
+	// for legacy reasons.
 	enum EPremorphProperty
 	{
-		MPROP_SOLID 	= 1 << 1,
-		MPROP_SHOOTABLE = 1 << 2,
-		MPROP_INVIS 	= 1 << 6,
+		MPROP_SOLID				= 1 << 1,
+		MPROP_SHOOTABLE			= 1 << 2,
+		MPROP_NO_BLOCKMAP		= 1 << 3,
+		MPROP_NO_SECTOR			= 1 << 4,
+		MPROP_NO_INTERACTION	= 1 << 5,
+		MPROP_INVIS				= 1 << 6,
 	}
 
 	int UnmorphTime;
 	EMorphFlags MorphFlags;
 	class<Actor> MorphExitFlash;
 	EPremorphProperty PremorphProperties;
+
+	// Players still track these separately for legacy reasons.
+	void SetMorphStyle(EMorphFlags flags)
+	{
+		if (player)
+			player.MorphStyle = flags;
+		else
+			MorphFlags = flags;
+	}
+
+	clearscope EMorphFlags GetMorphStyle() const
+	{
+		return player ? player.MorphStyle : MorphFlags;
+	}
+
+	void SetMorphExitFlash(class<Actor> flash)
+	{
+		if (player)
+			player.MorphExitFlash = flash;
+		else
+			MorphExitFlash = flash;
+	}
+
+	clearscope class<Actor> GetMorphExitFlash() const
+	{
+		return player ? player.MorphExitFlash : MorphExitFlash;
+	}
+
+	void SetMorphTics(int dur)
+	{
+		if (player)
+			player.MorphTics = dur;
+		else
+			UnmorphTime = Level.Time + dur;
+	}
+
+	clearscope int GetMorphTics() const
+	{
+		if (player)
+			return player.MorphTics;
+
+		if (UnmorphTime <= 0)
+			return UnmorphTime;
+
+		return UnmorphTime > Level.Time ? UnmorphTime - Level.Time : 0;
+	}
 
 	// This function doesn't return anything anymore since allowing so would be too volatile
 	// for morphing management. Instead it's now a function that lets special actions occur
@@ -113,8 +164,12 @@ extend class Actor
 		Actor morphed = Spawn(spawnType, Pos, ALLOW_REPLACE);
 		if (!MorphInto(morphed))
 		{
-			morphed.ClearCounters();
-			morphed.Destroy();
+			if (morphed)
+			{
+				morphed.ClearCounters();
+				morphed.Destroy();
+			}
+			
 			return false;
 		}
 
@@ -146,30 +201,39 @@ extend class Actor
 		morphed.CopyFriendliness(self, true);
 
 		// Remove all armor.
-		for (Inventory item = morphed.Inv; item;)
+		if (!(style & MRF_KEEPARMOR))
 		{
-			Inventory next = item.Inv;
-			if (item is "Armor")
-				item.DepleteOrDestroy();
+			for (Inventory item = morphed.Inv; item;)
+			{
+				Inventory next = item.Inv;
+				if (item is "Armor")
+					item.DepleteOrDestroy();
 
-			item = next;
+				item = next;
+			}
 		}
 
-		morphed.UnmorphTime = Level.Time + (duration ? duration : DEFMORPHTICS) + Random[morphmonst]();
-		morphed.MorphFlags = style;
-		morphed.MorphExitFlash = exitFlash;
-		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE) | (bInvisible * MPROP_INVIS);
+		morphed.SetMorphTics((duration ? duration : DEFMORPHTICS) + Random[morphmonst]());
+		morphed.SetMorphStyle(style);
+		morphed.SetMorphExitFlash(exitFlash);
+		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE)
+										| (bNoBlockmap * MPROP_NO_BLOCKMAP) | (bNoSector * MPROP_NO_SECTOR)
+										| (bNoInteraction * MPROP_NO_INTERACTION) | (bInvisible * MPROP_INVIS);
 
 		// This is just here for backwards compatibility as MorphedMonster used to be required.
 		let morphMon = MorphedMonster(morphed);
 		if (morphMon)
 		{
 			morphMon.UnmorphedMe = morphMon.Alternative;
-			morphMon.MorphStyle = morphMon.MorphFlags;
+			morphMon.MorphStyle = morphMon.GetMorphStyle();
 			morphMon.FlagsSave = morphMon.PremorphProperties;
 		}
 
 		Special = 0;
+		bNoInteraction = true;
+		A_ChangeLinkFlags(true, true);
+
+		// Legacy
 		bInvisible = true;
 		bSolid = bShootable = false;
 
@@ -219,7 +283,7 @@ extend class Actor
 			// Didn't fit.
 			if (!res)
 			{
-				UnmorphTime = Level.Time + 5*TICRATE; // Next try in 5 seconds.
+				SetMorphTics(5 * TICRATE);
 				return false;
 			}
 		}
@@ -249,7 +313,11 @@ extend class Actor
 		alt.Vel = Vel;
 		alt.Score = Score;
 
-		if (TID && (MorphFlags & MRF_NEWTIDBEHAVIOUR))
+		alt.bNoInteraction = (PremorphProperties & MPROP_NO_INTERACTION);
+		alt.A_ChangeLinkFlags((PremorphProperties & MPROP_NO_BLOCKMAP), (PremorphProperties & MPROP_NO_SECTOR));
+
+		EMorphFlags style = GetMorphStyle();
+		if (TID && (style & MRF_NEWTIDBEHAVIOUR))
 		{
 			alt.ChangeTID(TID);
 			ChangeTID(0);
@@ -262,14 +330,12 @@ extend class Actor
 		alt.Tracer = Tracer;
 		alt.Master = Master;
 		alt.CopyFriendliness(self, true, false);
-		if (Health > 0 || (MorphFlags & MRF_UNDOBYDEATHSAVES))
+		if (Health > 0 || (style & MRF_UNDOBYDEATHSAVES))
 			alt.Health = alt.SpawnHealth();
 		else
 			alt.Health = Health;
 
 		Special = 0;
-		bInvisible = true;
-		bSolid = bShootable = false;
 
 		PostUnmorph(alt, false);		// From is false here: Leaving the caller's body.
 		alt.PostUnmorph(self, true);	// True here: Entering this body from here.
@@ -347,7 +413,7 @@ class MorphedMonster : Actor
 	override bool UndoMonsterMorph(bool force)
 	{
 		Alternative = UnmorphedMe;
-		MorphFlags = MorphStyle;
+		SetMorphStyle(MorphStyle);
 		PremorphProperties = FlagsSave;
 		return super.UndoMonsterMorph(force);
 	}

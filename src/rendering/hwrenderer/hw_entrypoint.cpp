@@ -162,8 +162,37 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 		di->Viewpoint.FieldOfView = DAngle::fromDeg(fov);	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
-		// Stereo mode specific perspective projection
-		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
+		// Switch viewpoint for isometric camera
+		if(r_isocam && camera->player != NULL)
+		{
+		        float camdist = r_iso_dist;
+			if (r_orthographic) camdist = r_iso_camdist;
+			float camheight = camdist*FAngle::fromDeg(r_iso_pitch).Tan();
+			camheight -= 0.5*camera->player->viewheight;
+			int myisoviewpoint = 1;
+			if (r_isoviewpoint > 0 && r_isoviewpoint < 9) myisoviewpoint = r_isoviewpoint - 1;
+			else myisoviewpoint = camera->player->isoviewpoint % 8;
+			if (myisoviewpoint < 0) myisoviewpoint = 0;
+			if (r_isoviewpoint < 9) camera->player->isoyaw = 45.0 * myisoviewpoint; // The eight cardinal directions
+			vp.Pos.X -= camdist * DAngle::fromDeg(camera->player->isoyaw).Cos();
+			vp.Pos.Y -= camdist * DAngle::fromDeg(camera->player->isoyaw).Sin();
+			vp.Pos.Z += camheight;
+			vp.HWAngles.Pitch = FAngle::fromDeg(r_iso_pitch);
+			vp.Angles.Pitch = DAngle::fromDeg(r_iso_pitch);
+			vp.Angles.Yaw = DAngle::fromDeg(camera->player->isoyaw);
+			vp.Angles.Roll = DAngle::fromDeg(0);
+			vp.showviewer = true; // Draw player sprite
+			r_drawplayersprites = false; // Don't draw first-person hands/weapons
+			// Stereo mode specific perspective projection
+			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio, r_orthographic);
+		}
+		else // Regular first-person viewpoint
+		{
+		        vp.showviewer = false;
+			r_drawplayersprites = true; // Restore first-person hands/weapons
+			// Stereo mode specific perspective projection
+			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio, false);
+		}
 		// Stereo mode specific viewpoint adjustment
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees());
 		di->SetupView(RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);

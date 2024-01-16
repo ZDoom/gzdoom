@@ -101,6 +101,35 @@ CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
+CVARD (Bool, r_isocam, false,  CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render from isometric viewpoint.")
+CVARD (Bool, r_orthographic, true, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render orthographic projection. Only used with r_isocam")
+CUSTOM_CVARD(Float, r_iso_pitch, 30.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "pitch for isometric camera: 0 to 89 degrees.")
+{
+  if (self < 0.f)
+    self = 0.f;
+	else if (self > 89.f)
+    self = 89.f;
+}
+CUSTOM_CVAR(Float, r_iso_camdist, 1000.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT)
+{
+  // Keep this large to avoid texture clipping, not used if r_orthographic is false
+  if (self < 1000.f)
+    self = 1000.f;
+}
+CUSTOM_CVARD(Int, r_isoviewpoint, 0, CVAR_ARCHIVE, "Isometric viewpoint angle. 1 to 8 for cardinal directions. 0 for ignore and use player->isoviewpoint. 9 for continuous use player->isoyaw.")
+{
+	if (self < 0)
+		self = 0;
+	else if (self > 9)
+		self = 9;
+}
+CUSTOM_CVARD(Float, r_iso_dist, 300.0, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "how far the isometric camera (r_isocam) is in the XY plane")
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 1000.f)
+		self = 1000.f;
+}
 CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f) self = 0.f;

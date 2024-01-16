@@ -2744,6 +2744,8 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double deltaviewheight;
 	native double bob;
 	native vector2 vel;
+	native int isoviewpoint;
+	native int isoyaw;
 	native bool centering;
 	native uint8 turnticks;
 	native bool attackdown;

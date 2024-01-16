@@ -160,6 +160,8 @@ enum EVThinkerFlags
 	VTF_YFLIP =						1 << 1,		// flip the sprite on the x/y axis.
 	VTF_DONTINTERPOLATE =			1 << 2,		// disable all interpolation
 	VTF_ADDLIGHTLEVEL =				1 << 3,		// adds sector light level to 'LightLevel'
+	VTF_ABSOLUTEANGLE =				1 << 4,		// SpriteAngle becomes consistent no matter what angle it's viewed from
+	VTF_SPRITEFLIP =				1 << 5,		// Same as Actor's spriteflip flag.
 };
 
 class DVisualThinker : public DThinker
@@ -176,6 +178,13 @@ public:
 	sector_t		*cursector;
 	uint8_t			VFlags;
 
+	FAngle			Angle,
+					PrevAngle,
+					AddRotation;		// Additional rotation to the sprite, i.e. 90 would make a front-facing sprite turn to the side.
+
+	int				sprite;				// used to find patch_t and flip value
+	uint8_t			frame;				// sprite frame to draw
+
 	// internal only variables
 	particle_t		PT;
 	HWSprite		*spr; //in an effort to cache the result. 
@@ -191,6 +200,7 @@ public:
 	int GetLightLevel(sector_t *rendersector) const;
 	FVector3 InterpolatedPosition(double ticFrac) const;
 	float InterpolatedRoll(double ticFrac) const;
+	FAngle GetSpriteAngle(FAngle viewangle, double ticFrac) const;
 
 	void Tick() override;
 	void UpdateSpriteInfo();

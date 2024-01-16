@@ -1102,6 +1102,7 @@ void DVisualThinker::Tick()
 	}
 	Prev = PT.Pos;
 	PrevRoll = PT.Roll;
+	PrevAngle = Angle;
 	// Handle crossing a line portal
 	DVector2 newxy = Level->GetPortalOffsetPosition(PT.Pos.X, PT.Pos.Y, PT.Vel.X, PT.Vel.Y);
 	PT.Pos.X = newxy.X;
@@ -1163,6 +1164,22 @@ float DVisualThinker::InterpolatedRoll(double ticFrac) const
 		return PT.Roll;
 
 	return float(PrevRoll + (PT.Roll - PrevRoll) * ticFrac);
+}
+
+FAngle DVisualThinker::GetSpriteAngle(FAngle viewangle, double ticFrac) const
+{
+	if (VFlags & VTF_ABSOLUTEANGLE)
+	{
+		return Angle;
+	}
+	else
+	{
+		FAngle thisang;
+		if (!(VFlags & VTF_DONTINTERPOLATE))
+			thisang = PrevAngle + deltaangle(PrevAngle, Angle) * ticFrac;
+		else thisang = Angle;
+		return viewangle - (thisang + AddRotation);
+	}
 }
 
 
@@ -1257,6 +1274,11 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("scolor", PT.color)
 		("lightlevel", LightLevel)
 		("flags", PT.flags)
+		("angle", Angle)
+		("prevangle", PrevAngle)
+		("addrotation,", AddRotation)
+		("sprite", sprite)
+		("frame", frame)
 		("VFlags", VFlags)
 		;
 		
@@ -1278,4 +1300,9 @@ DEFINE_FIELD(DVisualThinker, PrevRoll);
 DEFINE_FIELD(DVisualThinker, Translation);
 DEFINE_FIELD(DVisualThinker, LightLevel);
 DEFINE_FIELD(DVisualThinker, cursector);
+DEFINE_FIELD(DVisualThinker, Angle);
+DEFINE_FIELD(DVisualThinker, PrevAngle);
+DEFINE_FIELD(DVisualThinker, AddRotation);
+DEFINE_FIELD(DVisualThinker, sprite);
+DEFINE_FIELD(DVisualThinker, frame);
 DEFINE_FIELD(DVisualThinker, VFlags);

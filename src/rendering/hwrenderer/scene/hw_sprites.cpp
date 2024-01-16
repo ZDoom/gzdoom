@@ -1285,6 +1285,13 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	this->particle = particle;
 	fullbright = particle->flags & SPF_FULLBRIGHT;
 
+	if (spr)
+	{
+		AdjustVisualThinker(di, spr, sector);
+		if (!texture)
+			return;
+	}
+
 	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
@@ -1336,11 +1343,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
 
-	if (spr)
-	{
-		AdjustVisualThinker(di, spr, sector);
-	}
-	else
+	if (!spr)
 	{
 		bool has_texture = particle->texture.isValid();
 		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
@@ -1450,12 +1453,31 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	if (paused || spr->isFrozen())
 		timefrac = 0.;
 	
-	bool custom_anim = ((spr->PT.flags & SPF_LOCAL_ANIM) && spr->PT.animData.ok);
+	if (spr->AnimatedTexture.isValid()) // Overrides the sprite and frame
+	{
+		bool custom_anim = ((spr->PT.flags & SPF_LOCAL_ANIM) && spr->PT.animData.ok);
 
-	texture = TexMan.GetGameTexture(
-			custom_anim
-			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
-			: spr->PT.texture, !custom_anim);
+		texture = TexMan.GetGameTexture(
+				custom_anim
+				? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
+				: spr->PT.texture, !custom_anim);
+	}
+	else
+	{
+		bool mirror = false;
+		int spritenum = spr->sprite;
+		int rot = -1;
+		FAngle ang = FAngle::fromRad((spr->PT.Pos - vp.Pos).Angle().Degrees());
+		DAngle sprangle = DAngle::fromDeg(spr->GetSpriteAngle(ang, vp.TicFrac).Degrees());
+		FTextureID patch = sprites[spritenum].GetSpriteFrame(spr->frame, rot, sprangle, &mirror, !!(spr->VFlags & VTF_SPRITEFLIP));
+		texture = TexMan.GetGameTexture(patch, true);
+	}
+
+	if (!texture->isValid())
+	{
+		texture = nullptr;
+		return;
+	}
 
 	if (spr->VFlags & VTF_DONTINTERPOLATE)
 		timefrac = 0.;

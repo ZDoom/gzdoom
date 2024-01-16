@@ -7,8 +7,11 @@ Class VisualThinker : Thinker native
 							Offset;
 	native float			Roll,
 							PrevRoll,
+							Angle,
+							PrevAngle,
+							AddRotation,
 							Alpha;
-	native TextureID		Texture;
+	native TextureID		Texture;		// Has priority over sprite frames
 	native TranslationID	Translation;
 	native uint16			Flags;
 	native uint8			VFlags;
@@ -16,6 +19,9 @@ Class VisualThinker : Thinker native
 	native Color			scolor;
 
 	native Sector			CurSector; // can be null!
+	
+	native SpriteID			sprite;
+	native uint8			frame;
 
 	native void SetTranslation(Name trans);
 	native void SetRenderStyle(int mode); // see ERenderStyle

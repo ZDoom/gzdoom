@@ -128,9 +128,15 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 						Printf(FSMessageLevel::Warning, "%s is larger than 2GB and will be ignored\n", entry.FilePath.c_str());
 						continue;
 					}
+					// for accessing the file we need to retain the original unaltered path.
+					// On Linux this is important because its file system is case sensitive,
+					// but even on Windows the Unicode normalization is destructive 
+					// for some characters and cannot be used for file names.
+					// Examples for this are the Turkish 'i's or the German ß.
+					SystemFilePath[count] = stringpool->Strdup(entry.FilePathRel.c_str());
 					// for internal access we use the normalized form of the relative path.
+					// this is fine because the paths that get compared against this will also be normalized.
 					Entries[count].FileName = NormalizeFileName(entry.FilePathRel.c_str());
-					SystemFilePath[count] = Entries[count].FileName;
 					Entries[count].CompressedSize = Entries[count].Length = entry.Length;
 					Entries[count].Flags = RESFF_FULLPATH;
 					Entries[count].ResourceID = -1;

@@ -478,9 +478,9 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-		        if(r_isocam) mat.Translate(0.0, z2 - zcenter, 0.0);
+		        if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) mat.Translate(0.0, z2 - zcenter, 0.0);
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees());
-			if(r_isocam) mat.Translate(0.0, zcenter - z2, 0.0);
+			if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) mat.Translate(0.0, zcenter - z2, 0.0);
 		}
 
 		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
@@ -874,7 +874,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		bool mirror = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if(r_isocam) ang = vp.Angles.Yaw;
+		if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) ang = vp.Angles.Yaw;
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -994,7 +994,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			x2 = x - viewvecY*rightfac;
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
-			if(thing->radius > 0 && r_isocam) // If sprites are drawn from an isometric perspective
+			if(di->Level->flags3 & LEVEL3_ISOMETRICSPRITES && (r_isocam  || (di->Level->flags3 & LEVEL3_ISOMETRICMODE))) // If sprites are drawn from an isometric perspective
 			{
 			        float signX = 1.0;
 				float signY = 1.0;
@@ -1048,7 +1048,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
-	if(r_isocam) depth = depth * vp.Angles.Pitch.Cos() - vp.Angles.Pitch.Sin() * z2; // Helps with stacking actors with small xy offsets
+	if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
 	if (isSpriteShadow) depth += 1.f/65536.f; // always sort shadows behind the sprite.
 
 	// light calculation

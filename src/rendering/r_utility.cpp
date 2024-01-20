@@ -103,7 +103,7 @@ CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 CVARD (Bool, r_isocam, false,  CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render from isometric viewpoint.")
 CVARD (Bool, r_orthographic, true, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render orthographic projection. Only used with r_isocam")
-CUSTOM_CVARD(Float, r_iso_pitch, 30.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "pitch for isometric camera: 0 to 89 degrees.")
+CUSTOM_CVARD(Float, r_iso_pitch, 30.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "pitch for isometric camera: 0 to 89 degrees. Used only if r_isoviewpoint > 0.")
 {
   if (self < 0.f)
     self = 0.f;
@@ -116,14 +116,14 @@ CUSTOM_CVAR(Float, r_iso_camdist, 1000.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR
   if (self < 1000.f)
     self = 1000.f;
 }
-CUSTOM_CVARD(Int, r_isoviewpoint, 0, CVAR_ARCHIVE, "Isometric viewpoint angle. 1 to 8 for cardinal directions. 0 for ignore and use player->isoviewpoint. 9 for continuous use player->isoyaw.")
+CUSTOM_CVARD(Int, r_isoviewpoint, 0, CVAR_ARCHIVE, "Isometric viewpoint angle. 1 to 8 for cardinal directions using r_iso_pitch and r_iso_dist. 0 for ignore and use player->isoyaw, level->isocam_pitch and level->iso_dist (from mapinfo).")
 {
 	if (self < 0)
 		self = 0;
-	else if (self > 9)
-		self = 9;
+	else if (self > 8)
+		self = 8;
 }
-CUSTOM_CVARD(Float, r_iso_dist, 300.0, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "how far the isometric camera (r_isocam) is in the XY plane")
+CUSTOM_CVARD(Float, r_iso_dist, 300.0, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "how far the isometric camera (r_isocam) is in the XY plane. Used only if r_isoviewpoint > 0.")
 {
 	if (self < 0.f)
 		self = 0.f;
@@ -182,6 +182,8 @@ FRenderViewpoint::FRenderViewpoint()
 	Sin = 0.0;
 	TanCos = 0.0;
 	TanSin = 0.0;
+	PitchCos = 0.0;
+	PitchSin = 0.0;
 	camera = nullptr;
 	sector = nullptr;
 	FieldOfView =  DAngle::fromDeg(90.); // Angles in the SCREENWIDTH wide window
@@ -658,6 +660,9 @@ void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 
 	TanSin = viewwindow.FocalTangent * Sin;
 	TanCos = viewwindow.FocalTangent * Cos;
+
+	PitchSin = Angles.Pitch.Sin();
+	PitchCos = Angles.Pitch.Cos();
 
 	DVector2 v = Angles.Yaw.ToVector();
 	ViewVector.X = v.X;

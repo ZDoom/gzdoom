@@ -146,16 +146,16 @@ float VREyeInfo::getShift() const
 	return vr_swap_eyes ? -res : res;
 }
 
-VSMatrix VREyeInfo::GetProjection(float fov, float aspectRatio, float fovRatio, bool isocam) const
+VSMatrix VREyeInfo::GetProjection(float fov, float aspectRatio, float fovRatio, bool iso_ortho) const
 {
 	VSMatrix result;
 
-	if (isocam) // Orthographic projection for isometric viewpoint
+	if (iso_ortho) // Orthographic projection for isometric viewpoint
 	{
 		double zNear = -1.0; // screen->GetZNear();
 		double zFar = screen->GetZFar();
 
-		double fH = r_iso_dist * tan(DEG2RAD(fov) / 2) / fovRatio;
+		double fH = tan(DEG2RAD(fov) / 2) / fovRatio;
 		double fW = fH * aspectRatio * mScaleFactor;
 		double left = -fW;
 		double right = fW;

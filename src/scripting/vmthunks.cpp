@@ -1695,6 +1695,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  }
  
  //==========================================================================
+ //
+ //
+ //==========================================================================
+
+ static int IsIsometricMode(FLevelLocals *self)
+ {
+	 return self->IsIsometricMode();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsIsometricMode, IsIsometricMode)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 ACTION_RETURN_BOOL(self->IsIsometricMode());
+ }
+
+ //==========================================================================
 //
 // ZScript counterpart to ACS ChangeSky, uses TextureIDs
 //

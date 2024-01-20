@@ -414,7 +414,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool isWallSprite = (actor != nullptr) && (spritetype == RF_WALLSPRITE);
 	const bool useOffsets = (actor != nullptr) && !(actor->renderflags & RF_ROLLCENTER);
 
-	FVector2 offset = FVector2( -offx, -offy );
+	FVector2 offset = FVector2( offx, offy );
 
 	// Account for +ROLLCENTER flag. Takes the embedded image offsets and adds them in with SpriteOffsets.
 	if (drawRollSpriteActor && useOffsets)
@@ -961,8 +961,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (!tex || !tex->isValid()) return;
 		auto& spi = tex->GetSpritePositioning(type == RF_FACESPRITE);
 
-		offx = (float)thing->SpriteOffset.X;
-		offy = (float)thing->SpriteOffset.Y;
+		offx = (float)thing->GetSpriteOffset(false);
+		offy = (float)thing->GetSpriteOffset(true);
 
 		vt = spi.GetSpriteVT();
 		vb = spi.GetSpriteVB();
@@ -1491,8 +1491,8 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	y = interp.Y;
 	z = interp.Z;
 
-	offx = (float)spr->Offset.X;
-	offy = (float)spr->Offset.Y;
+	offx = (float)spr->GetOffset(false);
+	offy = (float)spr->GetOffset(true);
 
 	if (spr->PT.flags & SPF_ROLL)
 		Angles.Roll = TAngle<double>::fromDeg(spr->InterpolatedRoll(timefrac));

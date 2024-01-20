@@ -174,7 +174,8 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 				camera->player->isoyaw = 45.0 * (r_isoviewpoint - 1); // The eight cardinal directions
 			}
 			float inv_iso_dist = 1.0f/camdist; // camdist can change in next line
-			if (r_orthographic || (camera->Level->flags3 & LEVEL3_ORTHOGRAPHIC)) camdist = r_iso_camdist;
+			bool iso_ortho = ((r_isoviewpoint > 0) && r_orthographic) || ((r_isoviewpoint == 0) && camera->Level->flags3 & LEVEL3_ORTHOGRAPHIC);
+			if (iso_ortho) camdist = r_iso_camdist;
 			vp.Pos.X -= camdist * DAngle::fromDeg(camera->player->isoyaw).Cos();
 			vp.Pos.Y -= camdist * DAngle::fromDeg(camera->player->isoyaw).Sin();
 			vp.Pos.Z += camdist * FAngle::fromDeg(isocam_pitch).Tan() - 0.5 * camera->player->viewheight;
@@ -185,7 +186,8 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 			vp.showviewer = true; // Draw player sprite
 			r_drawplayersprites = false; // Don't draw first-person hands/weapons
 			// Stereo mode specific perspective projection
-			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio * inv_iso_dist, r_orthographic || (camera->Level->flags3 & LEVEL3_ORTHOGRAPHIC));
+			if (!iso_ortho) inv_iso_dist = 1.0f;
+			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio * inv_iso_dist, iso_ortho);
 		}
 		else // Regular first-person viewpoint
 		{

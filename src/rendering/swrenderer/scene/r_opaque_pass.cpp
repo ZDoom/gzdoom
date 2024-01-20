@@ -1046,7 +1046,7 @@ namespace swrenderer
 		// The X offsetting (SpriteOffset.X) is performed in r_sprite.cpp, in RenderSprite::Project().
 		sprite.pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
 		sprite.pos += thing->WorldOffset;
-		sprite.pos.Z += thing->GetBobOffset(Thread->Viewport->viewpoint.TicFrac) - thing->SpriteOffset.Y;
+		sprite.pos.Z += thing->GetBobOffset(Thread->Viewport->viewpoint.TicFrac) + thing->GetSpriteOffset(true);
 		sprite.spritenum = thing->sprite;
 		sprite.tex = nullptr;
 		sprite.voxel = nullptr;

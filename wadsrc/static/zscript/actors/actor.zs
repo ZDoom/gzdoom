@@ -1300,6 +1300,40 @@ class Actor : Thinker native
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
 
+	native version("4.12") void SetModelFlag(int flag);
+	native version("4.12") void ClearModelFlag(int flag);
+	native version("4.12") void ResetModelFlags();
+    
+    
+	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame= -1, int interpolateTics = -1, int flags = 0)
+	{
+		invoker.SetAnimation(animName, framerate, startFrame, loopFrame, interpolateTics, flags);
+	}
+
+	action version("4.12") void A_SetAnimationFrameRate(double framerate)
+	{
+		invoker.SetAnimationFrameRate(framerate);
+	}
+
+	action version("4.12") void A_SetModelFlag(int flag)
+	{
+		invoker.SetModelFlag(flag);
+	}
+	
+	action version("4.12") void A_ClearModelFlag(int flag)
+	{
+		invoker.ClearModelFlag(flag);
+	}
+    
+	action version("4.12") void A_ResetModelFlags()
+	{
+		invoker.ResetModelFlags();
+	}
+    
+    
+    
+    
+
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{
 		return ACS_Execute(-int(script), mapnum, arg1, arg2, arg3);

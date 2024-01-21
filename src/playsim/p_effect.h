@@ -166,7 +166,9 @@ public:
 	FTextureID		AnimatedTexture;
 	sector_t		*cursector;
 
-	bool			bXFlip,
+	bool			bFlipOffsetX,
+					bFlipOffsetY,
+					bXFlip,
 					bYFlip,				// flip the sprite on the x/y axis.
 					bDontInterpolate,	// disable all interpolation
 					bAddLightLevel;		// adds sector light level to 'LightLevel'
@@ -191,4 +193,5 @@ public:
 	void UpdateSpriteInfo();
 	void Serialize(FSerializer& arc) override;
 
+	float GetOffset(bool y) const;
 };

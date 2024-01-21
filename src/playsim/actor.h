@@ -498,6 +498,8 @@ enum ActorRenderFlag2
 	RF2_ONLYVISIBLEINMIRRORS	= 0x0002,	// [Nash] only renders in mirrors
 	RF2_BILLBOARDFACECAMERA		= 0x0004,	// Sprite billboard face camera (override gl_billboard_faces_camera)
 	RF2_BILLBOARDNOFACECAMERA	= 0x0008,	// Sprite billboard face camera angle (override gl_billboard_faces_camera)
+	RF2_FLIPSPRITEOFFSETX		= 0x0010,
+	RF2_FLIPSPRITEOFFSETY		= 0x0020,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -719,18 +721,21 @@ struct ModelOverride
 enum EModelDataFlags
 {
 	MODELDATA_HADMODEL =		1 << 0,
+	MODELDATA_OVERRIDE_FLAGS =	1 << 1,
 };
 
 class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
-	FName					modelDef;
+	PClass *				modelDef;
 	TArray<ModelOverride>	models;
 	TArray<FTextureID>		skinIDs;
 	TArray<int>				animationIDs;
 	TArray<int>				modelFrameGenerators;
 	int						flags;
+	int						overrideFlagsSet;
+	int						overrideFlagsClear;
 
 	AnimOverride curAnim;
 	AnimOverride prevAnim; // used for interpolation when switching anims
@@ -1468,6 +1473,11 @@ public:
 		result.Pitch = PrevAngles.Pitch + deltaangle(PrevAngles.Pitch, Angles.Pitch) * ticFrac;
 		result.Roll = PrevAngles.Roll + deltaangle(PrevAngles.Roll, Angles.Roll) * ticFrac;
 		return result;
+	}
+	float GetSpriteOffset(bool y) const
+	{
+		if (y)	return (float)(renderflags2 & RF2_FLIPSPRITEOFFSETY ? SpriteOffset.Y : -SpriteOffset.Y);
+		else	return (float)(renderflags2 & RF2_FLIPSPRITEOFFSETX ? SpriteOffset.X : -SpriteOffset.X);
 	}
 	DAngle GetSpriteAngle(DAngle viewangle, double ticFrac)
 	{

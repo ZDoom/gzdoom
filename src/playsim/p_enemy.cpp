@@ -1823,7 +1823,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		if (!(player->mo->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
 
-		if (!actor->IsHostile(player->mo))
+		if (actor->IsFriend(player->mo))
 			continue;			// same +MF_FRIENDLY, ignore
 
 		if (player->cheats & CF_NOTARGET)
@@ -1917,7 +1917,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 			targ = NULL;
 		}
 
-		if (targ && targ->player && ((targ->player->cheats & CF_NOTARGET) || !self->IsHostile(targ)))
+		if (targ && targ->player && ((targ->player->cheats & CF_NOTARGET) || !(targ->flags & MF_FRIENDLY)))
 		{
 			return 0;
 		}
@@ -1931,7 +1931,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 
 	if (targ && (targ->flags & MF_SHOOTABLE))
 	{
-		if (!self->IsHostile (targ))	// be a little more precise!
+		if (self->IsFriend (targ))	// be a little more precise!
 		{
 			// If we find a valid target here, the wandering logic should *not*
 			// be activated! It would cause the seestate to be set twice.

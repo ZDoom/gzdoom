@@ -27,7 +27,7 @@ struct VREyeInfo
 	float mShiftFactor;
 	float mScaleFactor;
 
-	VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio, bool iso_ortho) const;
+	VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const;
 	DVector3 GetViewShift(float yaw) const;
 private:
 	float getShift() const;

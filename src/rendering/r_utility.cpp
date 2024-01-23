@@ -631,7 +631,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			else break;
 		}
 	}
-	if (moved) viewpoint.noviewer = true;
+	if (moved && !viewpoint.showviewer) viewpoint.noviewer = true;
 }
 
 //==========================================================================
@@ -893,6 +893,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	{
 		iview->otic = nowtic;
 		iview->Old = iview->New;
+		viewpoint.noviewer = false;
 	}
 	//==============================================================================================
 	// Handles offsetting the camera with ChaseCam and/or viewpos.
@@ -915,7 +916,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			P_AimCamera(viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
 			iview->New.Pos = campos;
 			iview->New.Angles.Yaw = camangle;
-
+			viewpoint.noviewer = false;
 			viewpoint.showviewer = true;
 			// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 			// it's probably best to just reset the interpolation for this move.

@@ -798,6 +798,7 @@ class Actor : Thinker native
 	native bool CheckMissileRange();
 	native bool SetState(state st, bool nofunction = false);
 	clearscope native state FindState(statelabel st, bool exact = false) const;
+	clearscope native state FindStateByString(string st, bool exact = false) const;
 	bool SetStateLabel(statelabel st, bool nofunction = false) { return SetState(FindState(st), nofunction); }
 	native action state ResolveState(statelabel st);	// this one, unlike FindState, is context aware.
 	native void LinkToWorld(LinkContext ctx = null);

@@ -490,7 +490,6 @@ struct LevelLocals native
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
-	native bool IsIsometricMode() const;
 	native void StartIntermission(Name type, int state) const;
 	native play SpotState GetSpotState(bool create = true);
 	native int FindUniqueTid(int start = 0, int limit = 0);

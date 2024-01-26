@@ -162,40 +162,14 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 		di->Viewpoint.FieldOfView = DAngle::fromDeg(fov);	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
-		// Switch viewpoint for isometric camera
-		if((r_isocam || (camera->Level->flags3 & LEVEL3_ISOMETRICMODE)) && camera->player != NULL)
-		{
-		        float camdist = camera->Level->iso_dist;
-			float isocam_pitch = camera->Level->isocam_pitch;
-			if (r_isoviewpoint > 0)
-			{
-			        isocam_pitch = r_iso_pitch;
-				camdist = r_iso_dist;
-				camera->player->isoyaw = 45.0 * (r_isoviewpoint - 1); // The eight cardinal directions
-			}
-			float inv_iso_dist = 1.0f/camdist; // camdist can change in next line
-			bool iso_ortho = ((r_isoviewpoint > 0) && r_orthographic) || ((r_isoviewpoint == 0) && camera->Level->flags3 & LEVEL3_ORTHOGRAPHIC);
-			if (iso_ortho) camdist = r_iso_camdist;
-			vp.Pos.X -= camdist * DAngle::fromDeg(camera->player->isoyaw).Cos();
-			vp.Pos.Y -= camdist * DAngle::fromDeg(camera->player->isoyaw).Sin();
-			vp.Pos.Z += camdist * FAngle::fromDeg(isocam_pitch).Tan() - 0.5 * camera->player->viewheight;
-			vp.HWAngles.Pitch = FAngle::fromDeg(isocam_pitch);
-			vp.Angles.Pitch = DAngle::fromDeg(isocam_pitch);
-			vp.Angles.Yaw = DAngle::fromDeg(camera->player->isoyaw);
-			vp.Angles.Roll = DAngle::fromDeg(0);
-			vp.showviewer = true; // Draw player sprite
-			r_drawplayersprites = false; // Don't draw first-person hands/weapons
-			// Stereo mode specific perspective projection
-			if (!iso_ortho) inv_iso_dist = 1.0f;
-			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio * inv_iso_dist, iso_ortho);
-		}
-		else // Regular first-person viewpoint
-		{
-		        vp.showviewer = false;
-			r_drawplayersprites = true; // Restore first-person hands/weapons
-			// Stereo mode specific perspective projection
-			di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio, false);
-		}
+		if(mainview && (camera->ViewPos != NULL) && (camera->ViewPos->Offset.XY().Length() > 0)) r_drawplayersprites = false;
+		else r_drawplayersprites = true; // Restore first-person hands/weapons
+		// Stereo mode specific perspective projection
+		float inv_iso_dist = 1.0f;
+		bool iso_ortho = (camera->ViewPos != NULL) && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC);
+		if (iso_ortho && (camera->ViewPos->Offset.XY().Length() > 0)) inv_iso_dist = 3.0f/camera->ViewPos->Offset.XY().Length();
+		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio * inv_iso_dist, iso_ortho);
+
 		// Stereo mode specific viewpoint adjustment
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees());
 		di->SetupView(RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);

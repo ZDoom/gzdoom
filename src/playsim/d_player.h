@@ -324,8 +324,6 @@ public:
 	// This only represents the thrust that the player applies himself.
 	// This avoids anomalies with such things as Boom ice and conveyors.
 	DVector2 Vel = { 0,0 };
-        // Used by isometric camera (See RenderViewpoint() in src/rendering/hwrenderer/hw_entrypoint.cpp)
-        int isoyaw = 225; // degrees
 
 	bool		centering = false;
 	uint8_t		turnticks = 0;

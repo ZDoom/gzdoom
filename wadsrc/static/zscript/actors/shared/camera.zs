@@ -128,3 +128,44 @@ class AimingCamera : SecurityCamera
 	}
 
 }
+
+class SpectatorCamera : Actor
+{
+
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+NOSECTOR
+		+NOINTERACTION
+		RenderStyle "None";
+		CameraHeight 0;
+	}
+
+	void Init(double dist, double yaw, double inpitch, int inflags)
+	{
+	        if((inflags & VPSF_ORTHOGRAPHIC) || ((inflags == -1) && (ViewPos.Flags & VPSF_ORTHOGRAPHIC))) dist *= 3.0;
+		SetViewPos((-dist*Cos(yaw), -dist*Sin(yaw), dist*Tan(inpitch)-0.5*players[consoleplayer].mo.height), inflags);
+		// CameraHeight = players[consoleplayer].mo.viewheight; // Not used
+		LookAtSelf(inpitch);
+	}
+
+	void LookAtSelf(double inpitch)
+	{
+	  if(ViewPos.Offset != (0., 0., 0.))
+	  {
+	          Vector3 negviewpos = (-1.0) * ViewPos.Offset;
+		  angle = negviewpos.Angle();
+		  pitch = inpitch;
+	  }
+	}
+
+	override void Tick()
+	{
+		if(player != NULL)
+		{
+		        cameraFOV = player.FOV;
+			SetOrigin(player.mo.pos, true);
+		}
+	}
+}

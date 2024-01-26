@@ -1693,22 +1693,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 ACTION_RETURN_BOOL(self->IsFreelookAllowed());
  }
- 
- //==========================================================================
- //
- //
- //==========================================================================
-
- static int IsIsometricMode(FLevelLocals *self)
- {
-	 return self->IsIsometricMode();
- }
-
- DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, IsIsometricMode, IsIsometricMode)
- {
-	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	 ACTION_RETURN_BOOL(self->IsIsometricMode());
- }
 
  //==========================================================================
 //

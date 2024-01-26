@@ -477,9 +477,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-		        if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) mat.Translate(0.0, z2 - center.Z, 0.0);
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees());
-			if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) mat.Translate(0.0, center.Z - z2, 0.0);
 		}
 
 		mat.Translate(-center.X, -center.Z, -center.Y); // retreat from sprite center
@@ -491,7 +489,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	}
 	else // traditional "Y" billboard mode
 	{
-		if (doRoll || !offset.isZero())
+		if (doRoll || !offset.isZero() || ((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ISOMETRICSPRITES)))
 		{
 			mat.MakeIdentity();
 
@@ -506,6 +504,16 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 
 				mat.Translate(center.X, center.Z, center.Y);
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
+				mat.Translate(-center.X, -center.Z, -center.Y);
+			}
+
+			if ((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ISOMETRICSPRITES))
+			{
+			        float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
+				mat.Translate(center.X, center.Z, center.Y);
+				mat.Translate(0.0, z2 - center.Z, 0.0);
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees());
+				mat.Translate(0.0, center.Z - z2, 0.0);
 				mat.Translate(-center.X, -center.Z, -center.Y);
 			}
 
@@ -902,7 +910,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		bool mirror = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) ang = vp.Angles.Yaw;
+		if((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ISOMETRICSPRITES)) ang = vp.Angles.Yaw;
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -1022,7 +1030,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			x2 = x - viewvecY*rightfac;
 			y1 = y + viewvecX*leftfac;
 			y2 = y + viewvecX*rightfac;
-			if(di->Level->flags3 & LEVEL3_ISOMETRICSPRITES && (r_isocam  || (di->Level->flags3 & LEVEL3_ISOMETRICMODE))) // If sprites are drawn from an isometric perspective
+			if((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ISOMETRICSPRITES)) // If sprites are drawn from an isometric perspective
 			{
 			        float signX = 1.0;
 				float signY = 1.0;
@@ -1076,7 +1084,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
-	if(r_isocam || (di->Level->flags3 & LEVEL3_ISOMETRICMODE)) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
+	if(((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ISOMETRICSPRITES))) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
 	if (isSpriteShadow) depth += 1.f/65536.f; // always sort shadows behind the sprite.
 
 	// light calculation

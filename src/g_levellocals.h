@@ -664,8 +664,6 @@ public:
 	double		airfriction;
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
-	float		isocam_pitch;
-	float		iso_dist;
 
 	DSeqNode *SequenceListHead;
 
@@ -753,17 +751,6 @@ public:
 		if (dmflags & DF_YES_FREELOOK)
 			return true;
 		return !(flags & LEVEL_FREELOOK_NO);
-	}
-
-	//==========================================================================
-	//
-	//
-	//==========================================================================
-
-	bool IsIsometricMode() const
-	{
-		return (flags3 & LEVEL3_ISOMETRICMODE);
-		// What to do about multiplayer flags? Add a dmflags3 bit?
 	}
 
 	node_t		*HeadNode() const

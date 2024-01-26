@@ -66,6 +66,7 @@
 #include "i_system.h"
 #include "v_draw.h"
 #include "i_interface.h"
+#include "d_main.h"
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -101,35 +102,6 @@ CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
-CVARD (Bool, r_isocam, false,  CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render from isometric viewpoint.")
-CVARD (Bool, r_orthographic, true, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "render orthographic projection. Only used with r_isocam")
-CUSTOM_CVARD(Float, r_iso_pitch, 30.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "pitch for isometric camera: 0 to 89 degrees. Used only if r_isoviewpoint > 0.")
-{
-  if (self < 0.f)
-    self = 0.f;
-	else if (self > 89.f)
-    self = 89.f;
-}
-CUSTOM_CVAR(Float, r_iso_camdist, 1000.0f, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT)
-{
-  // Keep this large to avoid texture clipping, not used if r_orthographic is false
-  if (self < 1000.f)
-    self = 1000.f;
-}
-CUSTOM_CVARD(Int, r_isoviewpoint, 0, CVAR_ARCHIVE, "Isometric viewpoint angle. 1 to 8 for cardinal directions using r_iso_pitch and r_iso_dist. 0 for ignore and use player->isoyaw, level->isocam_pitch and level->iso_dist (from mapinfo).")
-{
-	if (self < 0)
-		self = 0;
-	else if (self > 8)
-		self = 8;
-}
-CUSTOM_CVARD(Float, r_iso_dist, 300.0, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "how far the isometric camera (r_isocam) is in the XY plane. Used only if r_isoviewpoint > 0.")
-{
-	if (self < 0.f)
-		self = 0.f;
-	else if (self > 1000.f)
-		self = 1000.f;
-}
 CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f) self = 0.f;
@@ -982,7 +954,11 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 					// Interpolation still happens with everything else though and seems to work fine.
 					DefaultDraw = false;
 					viewpoint.NoPortalPath = true;
-					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP, &viewpoint);
+					// Allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using HW renderer
+					if (!(VP->Flags & VPSF_ALLOWOUTOFBOUNDS) || !V_IsHardwareRenderer())
+					{
+					        P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP, &viewpoint);
+					}
 					
 					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
 					{
@@ -1029,7 +1005,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	viewpoint.SetViewAngle (viewwindow);
 
 	// Keep the view within the sector's floor and ceiling
-	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
+	// But allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using hardware renderer
+	bool disembodied = false;
+	if (viewpoint.camera->ViewPos != NULL) disembodied = viewpoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS;
+	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!disembodied || !V_IsHardwareRenderer()))
 	{
 		double theZ = viewpoint.sector->ceilingplane.ZatPoint(viewpoint.Pos) - 4;
 		if (viewpoint.Pos.Z > theZ)
@@ -1038,7 +1017,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		}
 	}
 
-	if (viewpoint.sector->PortalBlocksMovement(sector_t::floor))
+	if (viewpoint.sector->PortalBlocksMovement(sector_t::floor) && (!disembodied || !V_IsHardwareRenderer()))
 	{
 		double theZ = viewpoint.sector->floorplane.ZatPoint(viewpoint.Pos) + 4;
 		if (viewpoint.Pos.Z < theZ)

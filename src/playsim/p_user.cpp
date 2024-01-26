@@ -270,7 +270,6 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	deltaviewheight = p.deltaviewheight;
 	bob = p.bob;
 	Vel = p.Vel;
-	isoyaw = p.isoyaw;
 	centering = p.centering;
 	turnticks = p.turnticks;
 	attackdown = p.attackdown;
@@ -1636,7 +1635,6 @@ void player_t::Serialize(FSerializer &arc)
 		("deltaviewheight", deltaviewheight)
 		("bob", bob)
 		("vel", Vel)
-	        ("isoyaw", isoyaw)
 		("centering", centering)
 		("health", health)
 		("inventorytics", inventorytics)
@@ -1744,7 +1742,6 @@ DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, bob)
 DEFINE_FIELD_X(PlayerInfo, player_t, Vel)
-DEFINE_FIELD_X(PlayerInfo, player_t, isoyaw)
 DEFINE_FIELD_X(PlayerInfo, player_t, centering)
 DEFINE_FIELD_X(PlayerInfo, player_t, turnticks)
 DEFINE_FIELD_X(PlayerInfo, player_t, attackdown)

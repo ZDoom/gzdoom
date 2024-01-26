@@ -504,13 +504,15 @@ ImageViewBuilder& ImageViewBuilder::Type(VkImageViewType type)
 	return *this;
 }
 
-ImageViewBuilder& ImageViewBuilder::Image(VulkanImage* image, VkFormat format, VkImageAspectFlags aspectMask)
+ImageViewBuilder& ImageViewBuilder::Image(VulkanImage* image, VkFormat format, VkImageAspectFlags aspectMask, int mipLevel, int arrayLayer, int levelCount, int layerCount)
 {
 	viewInfo.image = image->image;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.levelCount = image->mipLevels;
+	viewInfo.subresourceRange.levelCount = levelCount == 0 ? image->mipLevels : levelCount;
 	viewInfo.subresourceRange.aspectMask = aspectMask;
-	viewInfo.subresourceRange.layerCount = image->layerCount;
+	viewInfo.subresourceRange.layerCount = layerCount == 0 ? image->layerCount : layerCount;
+	viewInfo.subresourceRange.baseMipLevel = mipLevel;
+	viewInfo.subresourceRange.baseArrayLayer = arrayLayer;
 	return *this;
 }
 
@@ -918,6 +920,63 @@ std::unique_ptr<VulkanFramebuffer> FramebufferBuilder::Create(VulkanDevice* devi
 
 /////////////////////////////////////////////////////////////////////////////
 
+
+ColorBlendAttachmentBuilder::ColorBlendAttachmentBuilder()
+{
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
+ColorBlendAttachmentBuilder& ColorBlendAttachmentBuilder::ColorWriteMask(VkColorComponentFlags mask)
+{
+	colorBlendAttachment.colorWriteMask = mask;
+	return *this;
+}
+
+ColorBlendAttachmentBuilder& ColorBlendAttachmentBuilder::AdditiveBlendMode()
+{
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	return *this;
+}
+
+ColorBlendAttachmentBuilder& ColorBlendAttachmentBuilder::AlphaBlendMode()
+{
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	return *this;
+}
+
+ColorBlendAttachmentBuilder& ColorBlendAttachmentBuilder::BlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst)
+{
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = src;
+	colorBlendAttachment.dstColorBlendFactor = dst;
+	colorBlendAttachment.colorBlendOp = op;
+	colorBlendAttachment.srcAlphaBlendFactor = src;
+	colorBlendAttachment.dstAlphaBlendFactor = dst;
+	colorBlendAttachment.alphaBlendOp = op;
+	return *this;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 {
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -978,20 +1037,9 @@ GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	multisampling.alphaToCoverageEnable = VK_FALSE;
 	multisampling.alphaToOneEnable = VK_FALSE;
 
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
 	colorBlending.blendConstants[2] = 0.0f;
@@ -1112,53 +1160,9 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::DepthBias(bool enable, float b
 	return *this;
 }
 
-GraphicsPipelineBuilder& GraphicsPipelineBuilder::ColorWriteMask(VkColorComponentFlags mask)
+GraphicsPipelineBuilder& GraphicsPipelineBuilder::AddColorBlendAttachment(VkPipelineColorBlendAttachmentState state)
 {
-	colorBlendAttachment.colorWriteMask = mask;
-	return *this;
-}
-
-GraphicsPipelineBuilder& GraphicsPipelineBuilder::AdditiveBlendMode()
-{
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-	return *this;
-}
-
-GraphicsPipelineBuilder& GraphicsPipelineBuilder::AlphaBlendMode()
-{
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-	return *this;
-}
-
-GraphicsPipelineBuilder& GraphicsPipelineBuilder::BlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst)
-{
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = src;
-	colorBlendAttachment.dstColorBlendFactor = dst;
-	colorBlendAttachment.colorBlendOp = op;
-	colorBlendAttachment.srcAlphaBlendFactor = src;
-	colorBlendAttachment.dstAlphaBlendFactor = dst;
-	colorBlendAttachment.alphaBlendOp = op;
-	return *this;
-}
-
-GraphicsPipelineBuilder& GraphicsPipelineBuilder::SubpassColorAttachmentCount(int count)
-{
-	colorBlendAttachments.resize(count, colorBlendAttachment);
-	colorBlending.pAttachments = colorBlendAttachments.data();
-	colorBlending.attachmentCount = (uint32_t)colorBlendAttachments.size();
+	colorBlendAttachments.push_back(state);
 	return *this;
 }
 
@@ -1227,6 +1231,11 @@ GraphicsPipelineBuilder& GraphicsPipelineBuilder::AddDynamicState(VkDynamicState
 
 std::unique_ptr<VulkanPipeline> GraphicsPipelineBuilder::Create(VulkanDevice* device)
 {
+	if (colorBlendAttachments.empty())
+		colorBlendAttachments.push_back(ColorBlendAttachmentBuilder().Create());
+	colorBlending.pAttachments = colorBlendAttachments.data();
+	colorBlending.attachmentCount = (uint32_t)colorBlendAttachments.size();
+
 	VkPipeline pipeline = 0;
 	VkResult result = vkCreateGraphicsPipelines(device->device, cache ? cache->cache : VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
 	CheckVulkanError(result, "Could not create graphics pipeline");
@@ -1822,7 +1831,9 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 
 		// Check if all required features are there
 		if (info.Features.Features.samplerAnisotropy != VK_TRUE ||
-			info.Features.Features.fragmentStoresAndAtomics != VK_TRUE)
+			info.Features.Features.fragmentStoresAndAtomics != VK_TRUE ||
+			info.Features.Features.multiDrawIndirect != VK_TRUE ||
+			info.Features.Features.independentBlend != VK_TRUE)
 			continue;
 
 		VulkanCompatibleDevice dev;
@@ -1845,6 +1856,8 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 		enabledFeatures.Features.fragmentStoresAndAtomics = deviceFeatures.Features.fragmentStoresAndAtomics;
 		enabledFeatures.Features.depthClamp = deviceFeatures.Features.depthClamp;
 		enabledFeatures.Features.shaderClipDistance = deviceFeatures.Features.shaderClipDistance;
+		enabledFeatures.Features.multiDrawIndirect = deviceFeatures.Features.multiDrawIndirect;
+		enabledFeatures.Features.independentBlend = deviceFeatures.Features.independentBlend;
 		enabledFeatures.BufferDeviceAddress.bufferDeviceAddress = deviceFeatures.BufferDeviceAddress.bufferDeviceAddress;
 		enabledFeatures.AccelerationStructure.accelerationStructure = deviceFeatures.AccelerationStructure.accelerationStructure;
 		enabledFeatures.RayQuery.rayQuery = deviceFeatures.RayQuery.rayQuery;
@@ -1852,6 +1865,7 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 		enabledFeatures.DescriptorIndexing.descriptorBindingPartiallyBound = deviceFeatures.DescriptorIndexing.descriptorBindingPartiallyBound;
 		enabledFeatures.DescriptorIndexing.descriptorBindingSampledImageUpdateAfterBind = deviceFeatures.DescriptorIndexing.descriptorBindingSampledImageUpdateAfterBind;
 		enabledFeatures.DescriptorIndexing.descriptorBindingVariableDescriptorCount = deviceFeatures.DescriptorIndexing.descriptorBindingVariableDescriptorCount;
+		enabledFeatures.DescriptorIndexing.shaderSampledImageArrayNonUniformIndexing = deviceFeatures.DescriptorIndexing.shaderSampledImageArrayNonUniformIndexing;
 
 		// Figure out which queue can present
 		if (surface)
@@ -1901,6 +1915,12 @@ std::vector<VulkanCompatibleDevice> VulkanDeviceBuilder::FindDevices(const std::
 		if (sortA != sortB)
 			return sortA < sortB;
 
+		// Any driver that is emulating vulkan (i.e. via Direct3D 12) should only be chosen as the last option within each GPU type
+		sortA = a.Device->Properties.LayeredDriver.underlyingAPI;
+		sortB = b.Device->Properties.LayeredDriver.underlyingAPI;
+		if (sortA != sortB)
+			return sortA < sortB;
+
 		// Then sort by the device's unique ID so that vk_device uses a consistent order
 		int sortUUID = memcmp(a.Device->Properties.Properties.pipelineCacheUUID, b.Device->Properties.Properties.pipelineCacheUUID, VK_UUID_SIZE);
 		return sortUUID < 0;
@@ -1934,4 +1954,65 @@ VulkanSwapChainBuilder::VulkanSwapChainBuilder()
 std::shared_ptr<VulkanSwapChain> VulkanSwapChainBuilder::Create(VulkanDevice* device)
 {
 	return std::make_shared<VulkanSwapChain>(device);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+BufferTransfer& BufferTransfer::AddBuffer(VulkanBuffer* buffer, size_t offset, const void* data, size_t size)
+{
+	bufferCopies.push_back({ buffer, offset, data, size, nullptr, 0 });
+	return *this;
+}
+
+BufferTransfer& BufferTransfer::AddBuffer(VulkanBuffer* buffer, const void* data, size_t size)
+{
+	bufferCopies.push_back({ buffer, 0, data, size, nullptr, 0 });
+	return *this;
+}
+
+BufferTransfer& BufferTransfer::AddBuffer(VulkanBuffer* buffer, const void* data0, size_t size0, const void* data1, size_t size1)
+{
+	bufferCopies.push_back({ buffer, 0, data0, size0, data1, size1 });
+	return *this;
+}
+
+std::unique_ptr<VulkanBuffer> BufferTransfer::Execute(VulkanDevice* device, VulkanCommandBuffer* cmdbuffer)
+{
+	size_t transferbuffersize = 0;
+	for (const auto& copy : bufferCopies)
+		transferbuffersize += copy.size0 + copy.size1;
+
+	if (transferbuffersize == 0)
+		return nullptr;
+
+	auto transferBuffer = BufferBuilder()
+		.Usage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY)
+		.Size(transferbuffersize)
+		.DebugName("BufferTransfer.transferBuffer")
+		.Create(device);
+
+	uint8_t* data = (uint8_t*)transferBuffer->Map(0, transferbuffersize);
+	size_t pos = 0;
+	for (const auto& copy : bufferCopies)
+	{
+		memcpy(data + pos, copy.data0, copy.size0);
+		pos += copy.size0;
+		memcpy(data + pos, copy.data1, copy.size1);
+		pos += copy.size1;
+	}
+	transferBuffer->Unmap();
+
+	pos = 0;
+	for (const auto& copy : bufferCopies)
+	{
+		if (copy.size0 > 0)
+			cmdbuffer->copyBuffer(transferBuffer.get(), copy.buffer, pos, copy.offset, copy.size0);
+		pos += copy.size0;
+
+		if (copy.size1 > 0)
+			cmdbuffer->copyBuffer(transferBuffer.get(), copy.buffer, pos, copy.offset + copy.size0, copy.size1);
+		pos += copy.size1;
+	}
+
+	return transferBuffer;
 }

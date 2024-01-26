@@ -2962,14 +2962,14 @@ void DAutomap::drawThings ()
 					spriteframe_t *frame;
 					int rotation = 0;
 
-					// try all modes backwards until a valid texture has been found.	
+					// try all modes backwards until a valid texture has been found.
 					for(int show = am_showthingsprites; show > 0 && texture == nullptr; show--)
 					{
 						const spritedef_t& sprite = sprites[t->sprite];
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = DAngle::fromDeg(270. + 22.5) - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+						DAngle angle = DAngle::fromDeg(270. + 22.5) - t->InterpolatedAngles(r_viewpoint.TicFrac).Yaw - t->SpriteRotation; 
 						if (frame->Texture[0] != frame->Texture[1]) angle += DAngle::fromDeg(180. / 16);
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{

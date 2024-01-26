@@ -144,7 +144,7 @@ class SpectatorCamera : Actor
 
 	void Init(double dist, double yaw, double inpitch, int inflags)
 	{
-	        if((inflags & VPSF_ORTHOGRAPHIC) || ((inflags == -1) && (ViewPos.Flags & VPSF_ORTHOGRAPHIC))) dist *= 3.0;
+	        if(((inflags > 0) && (inflags & VPSF_ORTHOGRAPHIC)) || ((inflags < 0) && (ViewPos.Flags & VPSF_ORTHOGRAPHIC))) dist *= 3.0;
 		SetViewPos((-dist*Cos(yaw), -dist*Sin(yaw), dist*Tan(inpitch)-0.5*players[consoleplayer].mo.height), inflags);
 		// CameraHeight = players[consoleplayer].mo.viewheight; // Not used
 		LookAtSelf(inpitch);

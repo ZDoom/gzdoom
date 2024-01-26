@@ -126,9 +126,9 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 		}
 		else
 		{
-			if (supportsMailbox)
+			/*if (supportsMailbox)
 				presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-			else if (supportsImmediate)
+			else*/ if (supportsImmediate)
 				presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 		}
 	}
@@ -140,6 +140,8 @@ bool VulkanSwapChain::CreateSwapchain(int width, int height, int imageCount, boo
 	actualExtent.height = std::max(caps.Capabilites.minImageExtent.height, std::min(caps.Capabilites.maxImageExtent.height, actualExtent.height));
 	if (actualExtent.width == 0 || actualExtent.height == 0)
 	{
+		if (swapchain)
+			vkDestroySwapchainKHR(device->device, swapchain, nullptr);
 		swapchain = VK_NULL_HANDLE;
 		lost = true;
 		return false;

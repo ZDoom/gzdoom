@@ -200,11 +200,17 @@ std::vector<VulkanPhysicalDevice> VulkanInstance::GetPhysicalDevices(VkInstance 
 				*next = &dev.Properties.DescriptorIndexing;
 				next = &dev.Properties.DescriptorIndexing.pNext;
 			}
+			if (checkForExtension(VK_MSFT_LAYERED_DRIVER_EXTENSION_NAME))
+			{
+				*next = &dev.Properties.LayeredDriver;
+				next = &dev.Properties.LayeredDriver.pNext;
+			}
 
 			vkGetPhysicalDeviceProperties2(dev.Device, &deviceProperties2);
 			dev.Properties.Properties = deviceProperties2.properties;
 			dev.Properties.AccelerationStructure.pNext = nullptr;
 			dev.Properties.DescriptorIndexing.pNext = nullptr;
+			dev.Properties.LayeredDriver.pNext = nullptr;
 
 			VkPhysicalDeviceFeatures2 deviceFeatures2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 

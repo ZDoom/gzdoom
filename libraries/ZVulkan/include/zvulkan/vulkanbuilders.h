@@ -144,7 +144,7 @@ public:
 	ImageViewBuilder();
 
 	ImageViewBuilder& Type(VkImageViewType type);
-	ImageViewBuilder& Image(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
+	ImageViewBuilder& Image(VulkanImage *image, VkFormat format, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int mipLevel = 0, int arrayLayer = 0, int levelCount = 0, int layerCount = 0);
 	ImageViewBuilder& DebugName(const char* name) { debugName = name; return *this; }
 
 	std::unique_ptr<VulkanImageView> Create(VulkanDevice *device);
@@ -350,6 +350,22 @@ private:
 	const char* debugName = nullptr;
 };
 
+class ColorBlendAttachmentBuilder
+{
+public:
+	ColorBlendAttachmentBuilder();
+
+	ColorBlendAttachmentBuilder& ColorWriteMask(VkColorComponentFlags mask);
+	ColorBlendAttachmentBuilder& AdditiveBlendMode();
+	ColorBlendAttachmentBuilder& AlphaBlendMode();
+	ColorBlendAttachmentBuilder& BlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
+
+	VkPipelineColorBlendAttachmentState Create() { return colorBlendAttachment; }
+
+private:
+	VkPipelineColorBlendAttachmentState colorBlendAttachment = { };
+};
+
 class GraphicsPipelineBuilder
 {
 public:
@@ -369,13 +385,9 @@ public:
 	GraphicsPipelineBuilder& DepthFunc(VkCompareOp func);
 	GraphicsPipelineBuilder& DepthClampEnable(bool value);
 	GraphicsPipelineBuilder& DepthBias(bool enable, float biasConstantFactor, float biasClamp, float biasSlopeFactor);
-	GraphicsPipelineBuilder& ColorWriteMask(VkColorComponentFlags mask);
 	GraphicsPipelineBuilder& Stencil(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference);
 
-	GraphicsPipelineBuilder& AdditiveBlendMode();
-	GraphicsPipelineBuilder& AlphaBlendMode();
-	GraphicsPipelineBuilder& BlendMode(VkBlendOp op, VkBlendFactor src, VkBlendFactor dst);
-	GraphicsPipelineBuilder& SubpassColorAttachmentCount(int count);
+	GraphicsPipelineBuilder& AddColorBlendAttachment(VkPipelineColorBlendAttachmentState state);
 
 	GraphicsPipelineBuilder& AddVertexShader(VulkanShader *shader);
 	GraphicsPipelineBuilder& AddFragmentShader(VulkanShader *shader);
@@ -398,7 +410,6 @@ private:
 	VkPipelineViewportStateCreateInfo viewportState = { };
 	VkPipelineRasterizationStateCreateInfo rasterizer = { };
 	VkPipelineMultisampleStateCreateInfo multisampling = { };
-	VkPipelineColorBlendAttachmentState colorBlendAttachment = { };
 	VkPipelineColorBlendStateCreateInfo colorBlending = { };
 	VkPipelineDepthStencilStateCreateInfo depthStencil = { };
 	VkPipelineDynamicStateCreateInfo dynamicState = {};
@@ -545,4 +556,25 @@ private:
 
 	std::vector<VkWriteDescriptorSet> writes;
 	std::vector<std::unique_ptr<WriteExtra>> writeExtras;
+};
+
+class BufferTransfer
+{
+public:
+	BufferTransfer& AddBuffer(VulkanBuffer* buffer, size_t offset, const void* data, size_t size);
+	BufferTransfer& AddBuffer(VulkanBuffer* buffer, const void* data, size_t size);
+	BufferTransfer& AddBuffer(VulkanBuffer* buffer, const void* data0, size_t size0, const void* data1, size_t size1);
+	std::unique_ptr<VulkanBuffer> Execute(VulkanDevice* device, VulkanCommandBuffer* cmdbuffer);
+
+private:
+	struct BufferCopy
+	{
+		VulkanBuffer* buffer;
+		size_t offset;
+		const void* data0;
+		size_t size0;
+		const void* data1;
+		size_t size1;
+	};
+	std::vector<BufferCopy> bufferCopies;
 };

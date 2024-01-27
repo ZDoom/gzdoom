@@ -80,13 +80,15 @@ xx(__decorate_internal_float__)
 // Per-actor sound channels (for deprecated PlaySoundEx function) Do not separate this block!!!
 xx(Auto)
 xx(Weapon)
-xx(BobPivot3D)
 xx(Voice)
 xx(Item)
 xx(Body)
 xx(SoundSlot5)
 xx(SoundSlot6)
 xx(SoundSlot7)
+
+// Actor properties
+xx(BobPivot3D)
 
 xx(LevelLocals)
 xx(Level)

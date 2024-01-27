@@ -1103,6 +1103,7 @@ public:
 
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
+	DVector2		AutomapOffsets;		// Offset the actors' sprite view on the automap by these coordinates.
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
 	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras

@@ -10,6 +10,8 @@ class Inventory : Actor
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
 
+	private bool bSharingItem; // Currently being shared (avoid infinite recursions).
+
 	deprecated("3.7") private int ItemFlags;
 	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
 	int Amount;						// Amount of item this instance has
@@ -65,6 +67,7 @@ class Inventory : Actor
 	flagdef IsHealth: ItemFlags, 22;
 	flagdef AlwaysPickup: ItemFlags, 23;
 	flagdef Unclearable: ItemFlags, 24;
+	flagdef IsKeyItem: ItemFlags, 26;
 
 	flagdef ForceRespawnInSurvival: none, 0;
 	flagdef PickupFlash: none, 6;
@@ -253,6 +256,43 @@ class Inventory : Actor
 			A_StartSound ("misc/spawn", CHAN_VOICE);
 			Spawn ("ItemFog", Pos, ALLOW_REPLACE);
 		}
+	}
+
+	protected void ShareItemWithPlayers(Actor giver)
+	{
+		if (bSharingItem)
+			return;
+
+		class<Inventory> type = GetClass();
+		int skip = giver && giver.player ? giver.PlayerNumber() : -1;
+
+		for (int i; i < MAXPLAYERS; ++i)
+		{
+			if (!playerInGame[i] || i == skip)
+				continue;
+
+			let item = Inventory(Spawn(type));
+			if (!item)
+				continue;
+
+			item.bSharingItem = true;
+			if (!item.CallTryPickup(players[i].mo))
+			{
+				item.Destroy();
+				continue;
+			}
+			item.bSharingItem = false;
+
+			if (!bQuiet)
+			{
+				PlayPickupSound(players[i].mo);
+				if (!bNoScreenFlash && players[i].PlayerState != PST_DEAD)
+					players[i].BonusCount = BONUSADD;
+			}
+		}
+
+		if (!bQuiet && consoleplayer != skip)
+			PrintPickupMessage(true, PickupMessage());
 	}
 
 	//===========================================================================
@@ -647,6 +687,10 @@ class Inventory : Actor
 			}
 			// [AA] Let the toucher do something with the item they've just received:
 			toucher.HasReceived(self);
+
+			// If the item can be shared, make sure every player gets a copy.
+			if (multiplayer && !deathmatch && sv_coopsharekeys && bIsKeyItem)
+				ShareItemWithPlayers(toucher);
 		}
 		return res, toucher;
 	}

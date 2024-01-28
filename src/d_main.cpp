@@ -575,6 +575,10 @@ CUSTOM_CVAR(Int, dmflags3, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 
 CVAR(Flag, sv_noplayerclip, dmflags3, DF3_NO_PLAYER_CLIP);
 CVAR(Flag, sv_coopsharekeys, dmflags3, DF3_COOP_SHARE_KEYS);
+CVAR(Flag, sv_localitems, dmflags3, DF3_LOCAL_ITEMS);
+CVAR(Flag, sv_nolocaldrops, dmflags3, DF3_NO_LOCAL_DROPS);
+CVAR(Flag, sv_nocoopitems, dmflags3, DF3_NO_COOP_ONLY_ITEMS);
+CVAR(Flag, sv_nocoopthings, dmflags3, DF3_NO_COOP_ONLY_THINGS);
 
 //==========================================================================
 //

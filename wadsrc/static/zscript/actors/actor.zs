@@ -500,6 +500,8 @@ class Actor : Thinker native
 	virtual native void FallAndSink(double grav, double oldfloorz);
 	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
+	native clearscope void DisableLocalRendering(uint playerNum, bool disable);
+	native ui bool ShouldRenderLocally(); // Only clients get to check this, never the playsim.
 
 	// Called by inventory items to see if this actor is capable of touching them.
 	// If true, the item will attempt to be picked up. Useful for things like

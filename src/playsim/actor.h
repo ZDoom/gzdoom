@@ -899,6 +899,9 @@ public:
 
 	// Returns true if this view is considered "local" for the player.
 	bool CheckLocalView() const;
+	// Allows for enabling/disabling client-side rendering in a way the playsim can't access.
+	void DisableLocalRendering(const unsigned int pNum, const bool disable);
+	bool ShouldRenderLocally() const;
 
 	// Finds the first item of a particular type.
 	AActor *FindInventory (PClassActor *type, bool subclass=false);
@@ -1119,6 +1122,7 @@ public:
 	uint32_t			RenderRequired;		// current renderer must have this feature set
 	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
 
+	bool				NoLocalRender;		// DO NOT EXPORT THIS! This is a way to disable rendering such that the playsim cannot access it.
 	ActorRenderFlags	renderflags;		// Different rendering flags
 	ActorRenderFlags2	renderflags2;		// More rendering flags...
 	ActorFlags		flags;

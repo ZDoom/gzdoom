@@ -10,6 +10,8 @@ class Inventory : Actor
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
 
+	private bool pickedUp[MAXPLAYERS]; // If items are set to local, track who already picked it up.
+
 	deprecated("3.7") private int ItemFlags;
 	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
 	int Amount;						// Amount of item this instance has
@@ -65,6 +67,7 @@ class Inventory : Actor
 	flagdef IsHealth: ItemFlags, 22;
 	flagdef AlwaysPickup: ItemFlags, 23;
 	flagdef Unclearable: ItemFlags, 24;
+	flagdef NeverLocal: ItemFlags, 25;
 
 	flagdef ForceRespawnInSurvival: none, 0;
 	flagdef PickupFlash: none, 6;
@@ -768,12 +771,17 @@ class Inventory : Actor
 
 	override void Touch (Actor toucher)
 	{
+		bool localPickUp;
 		let player = toucher.player;
-
-		// If a voodoo doll touches something, pretend the real player touched it instead.
-		if (player != NULL)
+		if (player)
 		{
+			// If a voodoo doll touches something, pretend the real player touched it instead.
 			toucher = player.mo;
+			// Client already picked this up, so ignore them.
+			if (HasPickedUpLocally(toucher))
+				return;
+
+			localPickUp = CanPickUpLocally(toucher);
 		}
 
 		bool localview = toucher.CheckLocalView();
@@ -781,9 +789,23 @@ class Inventory : Actor
 		if (!toucher.CanTouchItem(self))
 			return;
 
+		Inventory give = self;
+		if (localPickUp)
+		{
+			give = Inventory(Spawn(GetClass()));
+			if (!give)
+				return;
+		}
+
 		bool res;
-		[res, toucher] = CallTryPickup(toucher);
-		if (!res) return;
+		[res, toucher] = give.CallTryPickup(toucher);
+		if (!res)
+		{
+			if (give != self)
+				give.Destroy();
+
+			return;
+		}
 
 		// This is the only situation when a pickup flash should ever play.
 		if (PickupFlash != NULL && !ShouldStay())
@@ -828,6 +850,9 @@ class Inventory : Actor
 			Actor ac = player != NULL? Actor(player.mo) : toucher;
 			ac.GiveSecret(true, true);
 		}
+
+		if (localPickUp)
+			PickUpLocally(toucher);
 
 		//Added by MC: Check if item taken was the roam destination of any bot
 		for (int i = 0; i < MAXPLAYERS; i++)
@@ -1013,6 +1038,37 @@ class Inventory : Actor
 			}
 			SetStateLabel("HoldAndDestroy");
 		}
+	}
+
+	// Check if the Actor can recieve a local copy of the item instead of outright taking it.
+	clearscope bool CanPickUpLocally(Actor other) const
+	{
+		return other && other.player
+				&& multiplayer && !deathmatch && sv_localitems
+				&& !bNeverLocal && (!bDropped || !sv_nolocaldrops);
+	}
+
+	// Check if a client has already picked up this item locally.
+	clearscope bool HasPickedUpLocally(Actor client) const
+	{
+		return pickedUp[client.PlayerNumber()];
+	}
+
+	// When items are dropped, clear their local pick ups.
+	void ClearLocalPickUps()
+	{
+		DisableLocalRendering(consoleplayer, false);
+		for (int i; i < MAXPLAYERS; ++i)
+			pickedUp[i] = false;
+	}
+
+	// Client picked up this item. Mark it as invisible to that specific player and
+	// prevent them from picking it up again.
+	protected void PickUpLocally(Actor client)
+	{
+		int pNum = client.PlayerNumber();
+		pickedUp[pNum] = true;
+		DisableLocalRendering(pNum, true);
 	}
 	
 	//===========================================================================

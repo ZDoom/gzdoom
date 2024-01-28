@@ -970,6 +970,43 @@ DEFINE_ACTION_FUNCTION(AActor, CheckLocalView)
 	ACTION_RETURN_BOOL(self->CheckLocalView());
 }
 
+void AActor::DisableLocalRendering(const unsigned int pNum, const bool disable)
+{
+	if (pNum == consoleplayer)
+		NoLocalRender = disable;
+}
+
+static void DisableLocalRendering(AActor* const self, const unsigned int pNum, const int disable)
+{
+	self->DisableLocalRendering(pNum, disable);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DisableLocalRendering, DisableLocalRendering)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_UINT(pNum);
+	PARAM_INT(disable);
+
+	DisableLocalRendering(self, pNum, disable);
+}
+
+bool AActor::ShouldRenderLocally() const
+{
+	return !NoLocalRender;
+}
+
+static int ShouldRenderLocally(const AActor* const self)
+{
+	return self->ShouldRenderLocally();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ShouldRenderLocally, ShouldRenderLocally)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(ShouldRenderLocally(self));
+}
+
 //============================================================================
 //
 // AActor :: IsInsideVisibleAngles
@@ -1049,6 +1086,9 @@ bool AActor::IsVisibleToPlayer() const
 	// [BB] Safety check. This should never be NULL. Nevertheless, we return true to leave the default ZDoom behavior unaltered.
 	if (p == nullptr || p->camera == nullptr )
 		return true;
+
+	if (!ShouldRenderLocally())
+		return false;
  
 	if (VisibleToTeam != 0 && teamplay &&
 		(signed)(VisibleToTeam-1) != p->userinfo.GetTeam() )
@@ -5701,15 +5741,26 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 
 	const AActor *info = GetDefaultByType (i);
 
-	// don't spawn keycards and players in deathmatch
-	if (deathmatch && info->flags & MF_NOTDMATCH)
-		return NULL;
+	// Don't spawn keycards and players in deathmatch.
+	if (deathmatch && (info->flags & MF_NOTDMATCH))
+		return nullptr;
 
-	// don't spawn extra things in coop if so desired
-	if (multiplayer && !deathmatch && (dmflags2 & DF2_NO_COOP_THING_SPAWN))
+	// Don't spawn extra things in co-op if desired.
+	if (multiplayer && !deathmatch)
 	{
-		if ((mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
-			return NULL;
+		// Don't spawn DM-only things in co-op.
+		if ((dmflags2 & DF2_NO_COOP_THING_SPAWN) && (mthing->flags & (MTF_DEATHMATCH|MTF_SINGLE)) == MTF_DEATHMATCH)
+			return nullptr;
+		// Having co-op only functionality is a bit odd, but you never know.
+		if (!mthing->special && !mthing->thingid && (mthing->flags & (MTF_COOPERATIVE | MTF_SINGLE)) == MTF_COOPERATIVE)
+		{
+			// Don't spawn co-op only things in general.
+			if (dmflags3 & DF3_NO_COOP_ONLY_THINGS)
+				return nullptr;
+			// Don't spawn co-op only items.
+			if ((dmflags3 & DF3_NO_COOP_ONLY_ITEMS) && i->IsDescendantOf(NAME_Inventory))
+				return nullptr;
+		}
 	}
 
 	// [RH] don't spawn extra weapons in coop if so desired

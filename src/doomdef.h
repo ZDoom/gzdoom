@@ -180,7 +180,11 @@ enum : unsigned
 enum : unsigned
 {
 	DF3_NO_PLAYER_CLIP		= 1 << 0,	// Players can walk through and shoot through each other
-	DF3_COOP_SHARE_KEYS		= 1 << 1,	// Keys will be given to all players in coop
+	DF3_COOP_SHARE_KEYS		= 1 << 1,	// Keys and other core items will be given to all players in coop
+	DF3_LOCAL_ITEMS			= 1 << 2,	// Items are picked up client-side rather than fully taken by the client who picked it up
+	DF3_NO_LOCAL_DROPS		= 1 << 3,	// Drops from Actors aren't picked up locally
+	DF3_NO_COOP_ONLY_ITEMS	= 1 << 4,	// Items that only appear in co-op are disabled
+	DF3_NO_COOP_ONLY_THINGS	= 1 << 5,	// Any Actor that only appears in co-op is disabled
 };
 
 // [RH] Compatibility flags.

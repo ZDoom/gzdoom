@@ -988,6 +988,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DisableLocalRendering, DisableLocalRenderi
 	PARAM_INT(disable);
 
 	DisableLocalRendering(self, pNum, disable);
+	return 0;
 }
 
 bool AActor::ShouldRenderLocally() const

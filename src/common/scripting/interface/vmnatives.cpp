@@ -770,6 +770,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplayTopOffset, GetDisplayTopOffset)
 	ACTION_RETURN_FLOAT(GetDisplayTopOffset(self, code));
 }
 
+static int GetChar(FFont* font, int c)
+{
+	int texc = 0;
+	auto getch = font->GetChar(c, CR_UNDEFINED, nullptr);
+	if (getch)
+		texc = getch->GetID().GetIndex();
+	return texc;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetChar, ::GetChar)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_INT(mchar);
+
+	ACTION_RETURN_INT(::GetChar(self, mchar));
+}
+
+
 //==========================================================================
 //
 // file system

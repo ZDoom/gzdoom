@@ -781,7 +781,7 @@ class Inventory : Actor
 			if (HasPickedUpLocally(toucher))
 				return;
 
-			localPickUp = CanPickUpLocally(toucher);
+			localPickUp = CanPickUpLocally(toucher) && !ShouldStay() && !ShouldRespawn();
 		}
 
 		bool localview = toucher.CheckLocalView();

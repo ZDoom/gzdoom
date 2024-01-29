@@ -563,8 +563,10 @@ void Widget::OnWindowMouseMove(const Point& pos)
 		do
 		{
 			widget->OnMouseMove(widget->MapFrom(this, pos));
+			if (widget == this)
+				break;
 			widget = widget->Parent();
-		} while (widget != this);
+		} while (widget);
 	}
 }
 

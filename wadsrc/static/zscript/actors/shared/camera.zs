@@ -132,10 +132,12 @@ class AimingCamera : SecurityCamera
 class SpectatorCamera : Actor
 {
 
-        double lagdistance;
-	bool chasing_tracer;
+	bool chasingtracer;
+        double lagdistance; // camera gives chase (lazy follow) if tracer gets > lagdistance away from camera.pos
+	int chasemode; // 0: chase until tracer centered, 1: same but only when tracer is moving, 2: stop chase if tracer within lagdistance
 	property lagdistance : lagdistance;
-	property chasing_tracer : chasing_tracer;
+	property chasingtracer : chasingtracer;
+	property chasemode : chasemode;
 
 	default
 	{
@@ -145,8 +147,9 @@ class SpectatorCamera : Actor
 		+NOINTERACTION
 		RenderStyle "None";
 		CameraHeight 0;
-		SpectatorCamera.chasing_tracer false;
+		SpectatorCamera.chasingtracer false;
 		SpectatorCamera.lagdistance 0.0;
+		SpectatorCamera.chasemode 0;
 	}
 
 	void Init(double dist, double yaw, double inpitch, int inflags)
@@ -181,25 +184,26 @@ class SpectatorCamera : Actor
 		{
 		        Vector3 distvec = tracer.pos - pos;
 			double dist = distvec.length();
-			if((dist <= 4 && chasing_tracer) || lagdistance <= 0.0) // Keep tracer centered on screen
+			if((dist <= 4 && chasingtracer) || lagdistance <= 0.0) // Keep tracer centered on screen
 			{
 			        SetOrigin(tracer.pos, true);
-				chasing_tracer = false;
+				chasingtracer = false;
 			}
 			else // Lazy follow tracer
 			{
 				if(dist >= 2*lagdistance)
 				{
 				        SetOrigin(tracer.pos, true);
-					chasing_tracer = false;
+					chasingtracer = false;
 				}
-				else if(dist > lagdistance && !chasing_tracer) chasing_tracer = true;
+				else if(dist > lagdistance && !chasingtracer) chasingtracer = true;
 
-				if(chasing_tracer)
+				if(chasingtracer)
 				{
 				  speed = tracer.vel.xy.length()/dist;
-				  if(speed == 0.0) speed = tracer.speed/dist;
+				  if((speed == 0.0) && (chasemode == 0)) speed = tracer.speed/dist;
 				  SetOrigin(pos + 2*distvec*speed, true);
+				  if(chasemode > 1) chasingtracer = false;
 				}
 			}
 		}

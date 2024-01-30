@@ -294,8 +294,12 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 	override void Draw(bool selected, ListMenuDescriptor desc)
 	{
 		let font = menuDelegate.PickFont(mFont);
-		if (desc.mCenterText) x -= font.StringWidth(mText) / 2;
-		DrawText(desc, font, selected ? mColorSelected : mColor, mXpos, mYpos, mText);
+		double x = mXpos;
+		if (desc.mCenterText) 
+		{
+			x -= font.StringWidth(mText) / 2;
+		}
+		DrawText(desc, font, selected ? mColorSelected : mColor, x, mYpos, mText);
 	}
 
 	override int GetWidth()

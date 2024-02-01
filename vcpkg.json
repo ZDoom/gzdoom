@@ -32,10 +32,6 @@
             "platform": "(!windows & static) | (windows & static & staticcrt)"
         },
         {
-            "name": "sdl2",
-            "platform": "!windows & !osx & static"
-        },
-        {
             "name": "libvpx",
             "platform": "!windows & static"
         },

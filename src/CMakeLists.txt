@@ -1386,7 +1386,7 @@ if( NOT WIN32 AND NOT APPLE )
 	IF ("${INSTALL_RPATH}" STREQUAL "")
 		set_target_properties(zdoom PROPERTIES
 			#allow libzmusic.so.1 library in same folder as executable at runtime
-			INSTALL_RPATH "\$ORIGIN"
+			INSTALL_RPATH "\$ORIGIN:\$ORIGIN/zmusic/build/source"
 			BUILD_WITH_INSTALL_RPATH ON
 		)
 	endif()

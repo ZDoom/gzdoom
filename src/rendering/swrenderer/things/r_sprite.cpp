@@ -81,7 +81,7 @@ namespace swrenderer
 		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
 
 		// Calculate billboard line for the sprite
-		double SpriteOffX = (thing) ? thing->SpriteOffset.X : 0.;
+		double SpriteOffX = (thing) ? -thing->GetSpriteOffset(false) : 0.;
 		DVector2 dir = { viewport->viewpoint.Sin, -viewport->viewpoint.Cos };
 		DVector2 trs = pos.XY() - viewport->viewpoint.Pos.XY();
 		trs = { trs.X + SpriteOffX * dir.X, trs.Y + SpriteOffX * dir.Y };

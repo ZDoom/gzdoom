@@ -1688,6 +1688,8 @@ OptionMenu CoopOptions protected
 	Title 	"$GMPLYMNU_COOPERATIVE"
 
 	Option "$GMPLYMNU_MULTIPLAYERTHINGS",	 	"sv_nothingspawn", "NoYes"
+	Option "$GMPLYMNU_COOPTHINGS",	 			"sv_nocoopthings", "NoYes"
+	Option "$GMPLYMNU_COOPITEMS",	 			"sv_nocoopitems", "NoYes"
 	Option "$GMPLYMNU_MULTIPLAYERWEAPONS",	 	"sv_noweaponspawn", "NoYes"
 	Option "$GMPLYMNU_LOSEINVENTORY",			"sv_cooploseinventory", "YesNo"
 	Option "$GMPLYMNU_KEEPKEYS",				"sv_cooplosekeys", "NoYes"
@@ -1699,6 +1701,8 @@ OptionMenu CoopOptions protected
 	Option "$GMPLYMNU_SPAWNWHEREDIED",			"sv_samespawnspot", "YesNo"
 	Option "$GMPLYMNU_NOPLAYERCLIP",			"sv_noplayerclip", "YesNo"
 	Option "$GMPLYMNU_SHAREKEYS",				"sv_coopsharekeys", "YesNo"
+	Option "$GMPLYMNU_LOCALITEMS",				"sv_localitems", "YesNo"
+	Option "$GMPLYMNU_NOLOCALDROP",				"sv_nolocaldrops", "YesNo"
 	Class "GameplayMenu"
 }
 

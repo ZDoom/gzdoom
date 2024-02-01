@@ -88,6 +88,7 @@ public:
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
 	bool mCenter;
+	bool mCenterText;
 	bool mFromEngine;
 	bool mAnimated;
 	bool mAnimatedTransition;

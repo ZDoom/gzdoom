@@ -19,7 +19,7 @@ goto aftercopyright
 ** Not guaranteed to work and your mileage will vary.
 **
 **---------------------------------------------------------------------------
-** Copyright 2023 Rachael Alexanderson and the GZDoom team
+** Copyright 2023-2024 Rachael Alexanderson and the GZDoom team
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

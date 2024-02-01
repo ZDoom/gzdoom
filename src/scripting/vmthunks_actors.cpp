@@ -55,6 +55,7 @@
 #include "actorinlines.h"
 #include "p_enemy.h"
 #include "gi.h"
+#include "shadowinlines.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -1227,6 +1228,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LineTrace, LineTrace)
 	ACTION_RETURN_BOOL(P_LineTrace(self,DAngle::fromDeg(angle),distance,DAngle::fromDeg(pitch),flags,offsetz,offsetforward,offsetside,data));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, PerformShadowChecks)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor); //If this pointer is null, the trace uses the facing direction instead.
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+
+	double penaltyFactor = 0.0;
+	AActor* shadow = PerformShadowChecks(self, other, DVector3(x, y, z), penaltyFactor);
+	if (numret > 2) ret[2].SetFloat(penaltyFactor);
+	if (numret > 1) ret[1].SetObject(shadow);
+	if (numret > 0) ret[0].SetInt(bool(shadow));
+	return numret;
+}
+
+
 static void TraceBleedAngle(AActor *self, int damage, double angle, double pitch)
 {
 	P_TraceBleed(damage, self, DAngle::fromDeg(angle), DAngle::fromDeg(pitch));
@@ -2123,6 +2141,7 @@ DEFINE_FIELD_NAMED(AActor, ViewAngles.Roll, viewroll)
 DEFINE_FIELD(AActor, LightLevel)
 DEFINE_FIELD(AActor, ShadowAimFactor)
 DEFINE_FIELD(AActor, ShadowPenaltyFactor)
+DEFINE_FIELD(AActor, AutomapOffsets)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);

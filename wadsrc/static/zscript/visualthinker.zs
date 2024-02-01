@@ -12,7 +12,9 @@ Class VisualThinker : Thinker native
 	native TranslationID	Translation;
 	native uint16			Flags;
 	native int16			LightLevel;
-	native bool				bXFlip,
+	native bool				bFlipOffsetX,
+							bFlipOffsetY,
+							bXFlip,
 							bYFlip,
 							bDontInterpolate,
 							bAddLightLevel;

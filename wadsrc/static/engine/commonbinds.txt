@@ -61,8 +61,8 @@ dpadleft invprev
 dpadright invnext
 dpaddown invuse
 dpadup togglemap
-pad_start pause
-pad_back menu_main
+pad_start menu_main
+pad_back pause
 lthumb crouch
 
 

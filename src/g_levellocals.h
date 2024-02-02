@@ -670,7 +670,10 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	std::deque<particle_t>	Particles;
+	TArray<particle_t>	Particles;
+	TArray<uint32_t>	ParticleIndices;
+	uint32_t NumParticles = 0;
+	uint32_t ParticleReplaceEnd = 0;
 
 	FThinkerCollection Thinkers;
 

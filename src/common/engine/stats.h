@@ -314,7 +314,7 @@ public:
 
 	virtual FString GetStats () = 0;
 
-	void ToggleStat ();
+	virtual void ToggleStat ();
 	bool isActive() const
 	{
 		return m_Active;
@@ -338,6 +338,14 @@ private:
 	static class Stat_##n : public FStat { \
 		public: \
 			Stat_##n () : FStat (#n) {} \
+		FString GetStats (); } Istaticstat##n; \
+	FString Stat_##n::GetStats ()
+
+#define ADD_STAT2(n) \
+	static class Stat_##n : public FStat { \
+		public: \
+			Stat_##n () : FStat (#n) {} \
+		void ToggleStat () override; \
 		FString GetStats (); } Istaticstat##n; \
 	FString Stat_##n::GetStats ()
 

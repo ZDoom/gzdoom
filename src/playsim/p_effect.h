@@ -33,7 +33,7 @@
 
 #pragma once
 
-#define ABSOLUTE_MAX_PARTICLES 65535
+#define ABSOLUTE_MAX_PARTICLES 131072
 #define ABSOLUTE_MIN_PARTICLES 100
 
 #include "vectors.h"

@@ -118,46 +118,81 @@ static const struct ColorList {
 
 static_assert(std::is_trivially_copyable_v<particle_t>);
 
+constexpr int PARTICLE_TIC_AVG_COUNT = 35;
+
 static int ParticleCount;
 static float ParticleThinkMs;
-static float ParticleThinkMsAvg[5];
+static float ParticleThinkMsAvg[PARTICLE_TIC_AVG_COUNT];
+static uint32_t ParticleReplaceCount;
+static uint32_t ParticleReplaceCountAvg[PARTICLE_TIC_AVG_COUNT];
 static uint64_t ParticleCreateNs;
-static float ParticleCreateMsAvg[5];
 static int ticAvgPos = 0;
+
+static bool checkCreateNs = false;
 
 ADD_STAT(particles)
 {
 	FString str;
-	float ParticleCreateMs = ParticleCreateNs / 1000000.0f;
+
+	double ParticleThinkMsAvgTotal = ParticleThinkMs;
+	double ParticleReplaceCountAvgTotal = ParticleReplaceCount;
+
+	for(int i = 0; i < PARTICLE_TIC_AVG_COUNT; i++)
+	{
+		ParticleThinkMsAvgTotal += ParticleThinkMsAvg[i];
+		ParticleReplaceCountAvgTotal += ParticleReplaceCountAvg[i];
+	}
+
+	ParticleThinkMsAvgTotal /= PARTICLE_TIC_AVG_COUNT + 1.0;
+	ParticleReplaceCountAvgTotal /= PARTICLE_TIC_AVG_COUNT + 1.0;
+
 	str.Format(
-		"Particle Count: %d, Particle Think Time: %.2f ms, Particle Create Time: %.2f ms\n"
-		"Average Particle Think Time (6tic): %.2f ms, Average Particle Create Time (6tic): %.2f ms\n"
-		, ParticleCount, ParticleThinkMs, ParticleCreateMs,
-		((ParticleThinkMsAvg[0] + ParticleThinkMsAvg[1] + ParticleThinkMsAvg[2] + ParticleThinkMsAvg[3] + ParticleThinkMsAvg[4] + ParticleThinkMs) / 6.0f),
-		((ParticleCreateMsAvg[0] + ParticleCreateMsAvg[1] + ParticleCreateMsAvg[2] + ParticleCreateMsAvg[3] + ParticleCreateMsAvg[4] + ParticleCreateMs) / 6.0f)
+		"Particles: %d, Particles Replaced Last Tic: %d, Particle Think Time: %.2f ms\n"
+		"Average Particles Replaced (%dtic): %.2f ms, Average Particle Think Time (%dtic): %.2f ms\n"
+		, ParticleCount, ParticleReplaceCount, ParticleThinkMs, PARTICLE_TIC_AVG_COUNT + 1, ParticleReplaceCountAvgTotal, PARTICLE_TIC_AVG_COUNT + 1, ParticleThinkMsAvgTotal
 		);
 	return str;
 }
 
-static int NumParticles;
+ADD_STAT2(particleCreation)
+{
+	FString str;
+	double ParticleCreateMs = ParticleCreateNs / 1'000'000.0;
+
+	double ParticleCreateMsAvgTotal = ParticleCreateMs;
+
+	str.Format(
+		"Particle Create Time: %.2f ms\n"
+		, ParticleCreateMs
+		);
+	return str;
+}
+
+
+void Stat_particleCreation::ToggleStat()
+{
+	FStat::ToggleStat();
+	checkCreateNs = isActive();
+}
+
+static int MaxParticles;
 
 inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 {
-	if(NumParticles > 0)
+	if(MaxParticles > 0)
 	{
-		uint64_t start = I_nsTime();
-		if(ParticleCount == NumParticles)
+		uint64_t start = checkCreateNs ? I_nsTime() : 0;
+		if(Level->NumParticles == MaxParticles)
 		{
 			if(!replace) return nullptr;
-			Level->Particles.pop_front();
+			ParticleCreateNs += checkCreateNs ? (I_nsTime() - start) : 0;
+			return Level->Particles.Data() + Level->ParticleIndices[(Level->ParticleReplaceEnd++) % MaxParticles];
 		}
 		else
 		{
-			ParticleCount++;
+			ParticleCreateNs += checkCreateNs ? (I_nsTime() - start) : 0;
+			return Level->Particles.Data() + Level->ParticleIndices[Level->NumParticles++];
 		}
-		Level->Particles.push_back({});
-		ParticleCreateNs += (I_nsTime() - start);
-		return &*Level->Particles.rbegin();
 	}
 	return nullptr;
 }
@@ -165,6 +200,17 @@ inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 //
 // [RH] Particle functions
 //
+
+void P_ReInitParticles (FLevelLocals *Level, int num)
+{
+	MaxParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
+	Level->ParticleIndices.Resize(MaxParticles);
+	Level->Particles.Resize(MaxParticles);
+	for(int i = 0; i < MaxParticles; i++)
+	{
+		Level->ParticleIndices[i] = i;
+	}
+}
 
 void P_InitParticles (FLevelLocals *Level)
 {
@@ -179,14 +225,12 @@ void P_InitParticles (FLevelLocals *Level)
 		// [BC] Use r_maxparticles now.
 		num = r_maxparticles;
 	}
-
-	// This should be good, but eh...
-	NumParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
+	P_ReInitParticles(Level, num);
 }
 
 void P_ClearParticles (FLevelLocals *Level)
 {
-	Level->Particles.clear();
+	Level->NumParticles = 0;
 }
 
 // Group particles by subsectors. Because particles are always
@@ -219,11 +263,11 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 		return;
 	}
 
-	auto end = Level->Particles.end();
-	
-	for(auto it = Level->Particles.begin(); it != end; it++)
+	particle_t * pp = Level->Particles.Data();
+
+	for(uint32_t i = 0; i < Level->NumParticles; i++)
 	{
-		particle_t * p = &*it;
+		particle_t * p = pp + Level->ParticleIndices[i];
 		 // Try to reuse the subsector from the last portal check, if still valid.
 		if (p->subsector == nullptr) p->subsector = Level->PointInRenderSubsector(p->Pos);
 		p->subsector->particles.Push(p);
@@ -326,33 +370,56 @@ bool P_ThinkParticle(FLevelLocals * Level, particle_t &particle)
 void P_ThinkParticles (FLevelLocals *Level)
 {
 	uint64_t startNs = I_nsTime();
-	std::deque<particle_t>::iterator newEnd;
+	uint32_t * newEnd;
+	
+	ParticleCount = Level->NumParticles;
+
+	uint32_t replacedCount = Level->ParticleReplaceEnd;
+
+	if(replacedCount)
+	{
+		uint32_t cnt = replacedCount % MaxParticles;
+		if(cnt > 0)
+		{
+			uint32_t num = MaxParticles - cnt;
+			uint32_t * buf = new uint32_t[cnt];
+			uint32_t * arr = Level->ParticleIndices.Data();
+			memcpy(buf, arr, cnt);
+			memmove(arr, arr + cnt, num);
+			memcpy(arr + num, buf, cnt);
+			delete buf;
+		}
+		Level->ParticleReplaceEnd = 0;
+	}
+
+	particle_t * p = Level->Particles.Data();
+
+	auto proc = [Level, p](uint32_t i)
+	{
+		return P_ThinkParticle(Level, *(p + i));
+	};
+
 #if __has_include(<execution>) && (!__APPLE__ || _LIBCPP_HAS_PARALLEL_ALGORITHMS)
 	if(r_particles_multithreaded)
 	{
-		newEnd = std::remove_if(std::execution::par_unseq, Level->Particles.begin(), Level->Particles.end(), [Level](particle_t &p)
-		{
-			return P_ThinkParticle(Level, p);
-		});
+		newEnd = std::remove_if(std::execution::par_unseq, Level->ParticleIndices.Data(), Level->ParticleIndices.Data(Level->NumParticles), proc);
 	}
 	else
 #endif
 	{
-		newEnd = std::remove_if(Level->Particles.begin(), Level->Particles.end(), [Level](particle_t &p)
-		{
-			return P_ThinkParticle(Level, p);
-		});
+		newEnd = std::remove_if(Level->ParticleIndices.Data(), Level->ParticleIndices.Data(Level->NumParticles), proc);
 	}
-	
-	Level->Particles.resize(newEnd - Level->Particles.begin());
-	ParticleCount = (int)Level->Particles.size();
+
+	Level->NumParticles = reinterpret_cast<uintptr_t>(newEnd) - reinterpret_cast<uintptr_t>(Level->ParticleIndices.Data());
+
 
 	ParticleThinkMsAvg[ticAvgPos] = ParticleThinkMs;
-	ParticleCreateMsAvg[ticAvgPos] = ParticleCreateNs / 1000000.0f;
+	ParticleThinkMsAvg[ticAvgPos] = ParticleReplaceCount;
 
-	ticAvgPos = (ticAvgPos + 1) % 5;
+	ticAvgPos = (ticAvgPos + 1) % PARTICLE_TIC_AVG_COUNT;
 
-	ParticleThinkMs = ( I_nsTime() - startNs) / 1000000.0f;
+	ParticleThinkMs = ( I_nsTime() - startNs) / 1'000'000.0f;
+	ParticleReplaceCount = replacedCount;
 	ParticleCreateNs = 0;
 }
 

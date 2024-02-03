@@ -34,7 +34,7 @@
 ** more useful.
 */
 
-#if __has_include(<execution>) && (!__APPLE__ || _LIBCPP_HAS_PARALLEL_ALGORITHMS)
+#if __has_include(<execution>) && !( __linux__ || __APPLE__  )
 
 	#include <execution>
 
@@ -119,6 +119,7 @@ static const struct ColorList {
 static_assert(std::is_trivially_copyable_v<particle_t>);
 
 constexpr int PARTICLE_TIC_AVG_COUNT = 35;
+constexpr int  PARTICLE_FRAME_AVG_COUNT = 60;
 
 static int ParticleCount;
 static float ParticleThinkMs;
@@ -126,7 +127,10 @@ static float ParticleThinkMsAvg[PARTICLE_TIC_AVG_COUNT];
 static uint32_t ParticleReplaceCount;
 static uint32_t ParticleReplaceCountAvg[PARTICLE_TIC_AVG_COUNT];
 static uint64_t ParticleCreateNs;
+//static uint64_t ParticleSubsectorNs;
+//static float ParticleSubsectorMsAvg[PARTICLE_FRAME_AVG_COUNT];
 static int ticAvgPos = 0;
+//static int frameAvgPos = 0;
 
 static bool checkCreateNs = false;
 
@@ -399,7 +403,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		return P_ThinkParticle(Level, *(p + i));
 	};
 
-#if __has_include(<execution>) && (!__APPLE__ || _LIBCPP_HAS_PARALLEL_ALGORITHMS)
+#if __has_include(<execution>) && !( __linux__ || __APPLE__  )
 	if(r_particles_multithreaded)
 	{
 		newEnd = std::remove_if(std::execution::par_unseq, Level->ParticleIndices.Data(), Level->ParticleIndices.Data(Level->NumParticles), proc);

@@ -162,8 +162,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 		di->Viewpoint.FieldOfView = DAngle::fromDeg(fov);	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
-		if(mainview && (camera->ViewPos != NULL) && (camera->ViewPos->Offset.XY().Length() > 0)) r_drawplayersprites = false;
-		else r_drawplayersprites = true; // Restore first-person hands/weapons
 		// Stereo mode specific perspective projection
 		float inv_iso_dist = 1.0f;
 		bool iso_ortho = (camera->ViewPos != NULL) && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC);

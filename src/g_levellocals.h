@@ -424,17 +424,7 @@ public:
 		return true;
 	}
 
-	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
-	{
-		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
-		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
-		thinker->ObjectFlags |= OF_JustSpawned;
-		if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker))) // [MC] This absolutely must happen for this class!
-			statnum = STAT_VISUALTHINKER;
-		Thinkers.Link(thinker, statnum);
-		thinker->Level = this;
-		return thinker;
-	}
+	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT);
 
 	template<typename T, typename... Args>
 	T* CreateThinker(Args&&... args)
@@ -670,6 +660,7 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
+	class HWSprite *	ParticleSprites;
 	TArray<particle_t>	Particles;
 	TArray<uint32_t>	ParticleIndices;
 	uint32_t NumParticles = 0;

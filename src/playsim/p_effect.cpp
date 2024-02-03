@@ -56,8 +56,7 @@
 #include "actorinlines.h"
 #include "g_game.h"
 #include "serializer_doom.h"
-
-#include "hwrenderer/scene/hw_drawstructs.h"
+#include "p_effect_internal.h"
 
 #include "i_time.h"
 
@@ -208,6 +207,10 @@ inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 void P_ReInitParticles (FLevelLocals *Level, int num)
 {
 	MaxParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
+
+	delete[] Level->ParticleSprites;
+	Level->ParticleSprites = new HWSprite[MaxParticles];
+
 	Level->ParticleIndices.Resize(MaxParticles);
 	Level->Particles.Resize(MaxParticles);
 	for(int i = 0; i < MaxParticles; i++)
@@ -1091,7 +1094,6 @@ void DVisualThinker::Construct()
 	PT.subsector = nullptr;
 	cursector = nullptr;
 	PT.color = 0xffffff;
-	spr = new HWSprite();
 	AnimatedTexture.SetNull();
 }
 
@@ -1103,11 +1105,6 @@ DVisualThinker::DVisualThinker()
 void DVisualThinker::OnDestroy()
 {
 	PT.alpha = 0.0; // stops all rendering.
-	if(spr)
-	{
-		delete spr;
-		spr = nullptr;
-	}
 	Super::OnDestroy();
 }
 

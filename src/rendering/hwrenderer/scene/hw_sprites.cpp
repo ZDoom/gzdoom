@@ -60,6 +60,8 @@
 #include "hw_renderstate.h"
 #include "quaternion.h"
 
+#include "p_effect_internal.h"
+
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern uint32_t r_renderercaps;
@@ -548,6 +550,25 @@ inline void HWSprite::PutSprite(HWDrawInfo *di, bool translucent)
 		CreateVertices(di);
 	}
 	di->AddSprite(this, translucent);
+}
+
+inline void HWSprite::PutSpriteDirect(HWDrawInfo *di, bool translucent)
+{
+	// That's a lot of checks...
+	if (modelframe && !modelframe->isVoxel && !(modelframeflags & MDL_NOPERPIXELLIGHTING) && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && di->Level->HasDynamicLights && !di->isFullbrightScene() && !fullbright)
+	{
+		hw_GetDynModelLight(actor, lightdata);
+		dynlightindex = screen->mLights->UploadLights(lightdata);
+	}
+	else
+		dynlightindex = -1;
+
+	vertexindex = -1;
+	if (!screen->BuffersArePersistent())
+	{
+		CreateVertices(di);
+	}
+	di->AddSpriteDirect(this, translucent);
 }
 
 //==========================================================================
@@ -1459,7 +1480,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	else
 		lightlist = nullptr;
 
-	PutSprite(di, hw_styleflags != STYLEHW_Solid);
+	PutSpriteDirect(di, hw_styleflags != STYLEHW_Solid);
 	rendered_sprites++;
 }
 

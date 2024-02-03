@@ -148,7 +148,7 @@ ADD_STAT(particles)
 
 	str.Format(
 		"Particles: %d, Particles Replaced Last Tic: %d, Particle Think Time: %.2f ms\n"
-		"Average Particles Replaced (%dtic): %.2f ms, Average Particle Think Time (%dtic): %.2f ms\n"
+		"Average Particles Replaced (%dtic): %.2f, Average Particle Think Time (%dtic): %.2f ms\n"
 		, ParticleCount, ParticleReplaceCount, ParticleThinkMs, PARTICLE_TIC_AVG_COUNT + 1, ParticleReplaceCountAvgTotal, PARTICLE_TIC_AVG_COUNT + 1, ParticleThinkMsAvgTotal
 		);
 	return str;
@@ -414,7 +414,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 
 	ParticleThinkMsAvg[ticAvgPos] = ParticleThinkMs;
-	ParticleThinkMsAvg[ticAvgPos] = ParticleReplaceCount;
+	ParticleReplaceCountAvg[ticAvgPos] = ParticleReplaceCount;
 
 	ticAvgPos = (ticAvgPos + 1) % PARTICLE_TIC_AVG_COUNT;
 

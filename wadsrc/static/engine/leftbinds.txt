@@ -1,4 +1,4 @@
-/* Default keybindings for all games */
+/* Default keybindings (keypad) for all games */
 
 KP8 +forward
 KP5 +back

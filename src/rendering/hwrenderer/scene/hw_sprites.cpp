@@ -177,7 +177,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				state.SetDynLight(out[0], out[1], out[2]);
 			}
 		}
-		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
+		sector_t *cursec = actor ? actor->Sector : particle && particle->subsector ? particle->subsector->sector : nullptr;
 		if (cursec != nullptr)
 		{
 			const PalEntry finalcol = fullbright

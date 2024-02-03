@@ -95,6 +95,7 @@ static_assert(sizeof(particle_t) == 128);
 const uint32_t NO_PARTICLE = 0xffffffff;
 
 void P_InitParticles(FLevelLocals *);
+void P_ReInitParticles(FLevelLocals *, int num);
 void P_ClearParticles (FLevelLocals *Level);
 void P_FindParticleSubsectors (FLevelLocals *Level);
 

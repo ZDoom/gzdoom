@@ -665,6 +665,7 @@ public:
 	TArray<uint32_t>	ParticleIndices;
 	uint32_t NumParticles = 0;
 	uint32_t ParticleReplaceEnd = 0;
+	uint32_t ParticleReplaceCount = 0;
 
 	FThinkerCollection Thinkers;
 

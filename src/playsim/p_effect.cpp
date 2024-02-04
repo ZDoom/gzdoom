@@ -171,7 +171,6 @@ ADD_STAT2(particleCreation)
 	return str;
 }
 
-
 void Stat_particleCreation::ToggleStat()
 {
 	FStat::ToggleStat();
@@ -219,6 +218,12 @@ void P_ReInitParticles (FLevelLocals *Level, int num)
 	}
 	Level->NumParticles = 0;
 	Level->ParticleReplaceEnd = 0;
+
+	for(uint32_t i = 0; i < Level->subsectors.Size(); i++)
+	{
+		Level->subsectors[i].sprites.Clear();
+		Level->subsectors[i].particles.Clear();
+	}
 }
 
 void P_InitParticles (FLevelLocals *Level)
@@ -277,8 +282,7 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 	for(uint32_t i = 0; i < Level->NumParticles; i++)
 	{
 		particle_t * p = pp + Level->ParticleIndices[i];
-		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (p->subsector == nullptr) p->subsector = Level->PointInRenderSubsector(p->Pos);
+		assert(p->subsector);
 		p->subsector->particles.Push(p);
 	}
 }
@@ -354,40 +358,34 @@ bool P_ThinkParticle(FLevelLocals * Level, particle_t &particle)
 	}
 
 	particle.subsector = Level->PointInRenderSubsector(particle.Pos);
-	sector_t *s = particle.subsector->sector;
-	// Handle crossing a sector portal.
-	if (!s->PortalBlocksMovement(sector_t::ceiling))
+	while(true)
 	{
-		if (particle.Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
+		sector_t *s = particle.subsector->sector;
+		// Handle crossing a sector portal.
+		if (!s->PortalBlocksMovement(sector_t::ceiling) && particle.Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			particle.Pos += s->GetPortalDisplacement(sector_t::ceiling);
-			particle.subsector = NULL;
+			particle.subsector = Level->PointInRenderSubsector(particle.Pos);
 		}
-	}
-
-	else if (!s->PortalBlocksMovement(sector_t::floor))
-	{
-		if (particle.Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
+		else if (!s->PortalBlocksMovement(sector_t::floor) && particle.Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
 		{
 			particle.Pos += s->GetPortalDisplacement(sector_t::floor);
-			particle.subsector = NULL;
+			particle.subsector = Level->PointInRenderSubsector(particle.Pos);
+		}
+		else
+		{
+			break;
 		}
 	}
 	return false;
 }
 
-void P_ThinkParticles (FLevelLocals *Level)
+void P_UpdateReplacedParticles(FLevelLocals *Level)
 {
-	uint64_t startNs = I_nsTime();
-	uint32_t * newEnd;
-	
-	ParticleCount = Level->NumParticles;
-
-	uint32_t replacedCount = Level->ParticleReplaceEnd;
-
-	if(replacedCount)
+	if(Level->ParticleReplaceEnd > 0)
 	{
-		uint32_t cnt = replacedCount % MaxParticles;
+		assert(Level->NumParticles == MaxParticles);
+		uint32_t cnt = Level->ParticleReplaceEnd % MaxParticles;
 		if(cnt > 0)
 		{
 			uint32_t num = MaxParticles - cnt;
@@ -398,8 +396,19 @@ void P_ThinkParticles (FLevelLocals *Level)
 			memcpy(arr + num, buf, cnt * sizeof(uint32_t));
 			delete buf;
 		}
+		Level->ParticleReplaceCount = Level->ParticleReplaceEnd;
 		Level->ParticleReplaceEnd = 0;
 	}
+
+	P_FindParticleSubsectors(Level);
+}
+
+void P_ThinkParticles(FLevelLocals *Level)
+{
+	uint64_t startNs = I_nsTime();
+	uint32_t * newEnd;
+	
+	ParticleCount = Level->NumParticles;
 
 	particle_t * p = Level->Particles.Data();
 
@@ -421,14 +430,14 @@ void P_ThinkParticles (FLevelLocals *Level)
 
 	Level->NumParticles = reinterpret_cast<uintptr_t>(newEnd) - reinterpret_cast<uintptr_t>(Level->ParticleIndices.Data());
 
-
 	ParticleThinkMsAvg[ticAvgPos] = ParticleThinkMs;
 	ParticleReplaceCountAvg[ticAvgPos] = ParticleReplaceCount;
 
 	ticAvgPos = (ticAvgPos + 1) % PARTICLE_TIC_AVG_COUNT;
 
 	ParticleThinkMs = ( I_nsTime() - startNs) / 1'000'000.0f;
-	ParticleReplaceCount = replacedCount;
+	ParticleReplaceCount = Level->ParticleReplaceCount;
+	Level->ParticleReplaceCount = 0;
 	ParticleCreateNs = 0;
 }
 
@@ -448,7 +457,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->ttl = lifetime;
 		particle->size = size;
 		particle->sizestep = sizestep;
-		particle->subsector = nullptr;
+		particle->subsector = Level->PointInRenderSubsector(pos);
 		particle->texture = texture;
 		particle->style = style;
 		particle->Roll = (float)startroll;
@@ -510,6 +519,8 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 		double out = actor->radius * M_Random() / 256.;
 
 		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
+		particle->subsector = actor->Level->PointInRenderSubsector(particle->Pos);
+
 		if (out < actor->radius/8)
 			particle->Vel.Z += 10.f/3;
 		else
@@ -550,6 +561,7 @@ void P_RunEffect (AActor *actor, int effects)
 				backy - actor->Vel.Y * pathdist,
 				backz - actor->Vel.Z * pathdist);
 			particle->Pos = pos;
+			particle->subsector = actor->Level->PointInRenderSubsector(particle->Pos);
 			speed = (M_Random () - 128) * (1./200);
 			particle->Vel.X += speed * an.Cos();
 			particle->Vel.Y += speed * an.Sin();
@@ -567,6 +579,7 @@ void P_RunEffect (AActor *actor, int effects)
 					backy - actor->Vel.Y * pathdist,
 					backz - actor->Vel.Z * pathdist + (M_Random() / 64.));
 				particle->Pos = pos;
+				particle->subsector = actor->Level->PointInRenderSubsector(particle->Pos);
 
 				speed = (M_Random () - 128) * (1./200);
 				particle->Vel.X += speed * an.Cos();
@@ -622,6 +635,7 @@ void P_RunEffect (AActor *actor, int effects)
 				DAngle ang = DAngle::fromDeg(M_Random() * (360 / 256.));
 				DVector3 pos = actor->Vec3Angle(actor->radius, ang, 0);
 				particle->Pos = pos;
+				particle->subsector = actor->Level->PointInRenderSubsector(pos);
 				particle->color = *protectColors[M_Random() & 1];
 				particle->Vel.Z = 1;
 				particle->Acc.Z = M_Random () / 512.;
@@ -668,6 +682,7 @@ void P_DrawSplash (FLevelLocals *Level, int count, const DVector3 &pos, DAngle a
 		angle += DAngle::fromDeg(M_Random() * (45./256));
 		p->Pos.X = pos.X + (M_Random() & 15)*angle.Cos();
 		p->Pos.Y = pos.Y + (M_Random() & 15)*angle.Sin();
+		p->subsector = Level->PointInRenderSubsector(p->Pos);
 	}
 }
 
@@ -728,6 +743,7 @@ void P_DrawSplash2 (FLevelLocals *Level, int count, const DVector3 &pos, DAngle 
 		p->Pos.X = pos.X + ((M_Random() & 31) - 15) * an.Cos();
 		p->Pos.Y = pos.Y + ((M_Random() & 31) - 15) * an.Sin();
 		p->Pos.Z = pos.Z + (M_Random() + zadd - 128) * zspread;
+		p->subsector = Level->PointInRenderSubsector(p->Pos);
 	}
 }
 
@@ -877,6 +893,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			tempvec = DMatrix3x3(trail[segment].dir, deg) * trail[segment].extend;
 			p->Vel = FVector3(tempvec * drift / 16.);
 			p->Pos = tempvec + pos;
+			p->subsector = source->Level->PointInRenderSubsector(p->Pos);
 			pos += trail[segment].dir * stepsize;
 			deg += DAngle::fromDeg(r_rail_spiralsparsity * 14);
 			lencount -= stepsize;
@@ -951,6 +968,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 			p->size = 2;
 			p->Pos = postmp;
+			p->subsector = source->Level->PointInRenderSubsector(postmp);
 			if (color1 != -1)
 				p->Acc.Z -= 1./4096;
 			pos += trail[segment].dir * stepsize;
@@ -1065,6 +1083,7 @@ void P_DisconnectEffect (AActor *actor)
 
 		DVector3 pos = actor->Vec3Offset(xo, yo, zo);
 		p->Pos = pos;
+		p->subsector = actor->Level->PointInRenderSubsector(pos);
 		p->Acc.Z -= 1./4096;
 		p->color = M_Random() < 128 ? maroon1 : maroon2;
 		p->size = 4;

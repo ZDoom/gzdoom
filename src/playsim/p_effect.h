@@ -105,7 +105,8 @@ class AActor;
 particle_t *JitterParticle (FLevelLocals *Level, int ttl);
 particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift);
 
-void P_ThinkParticles (FLevelLocals *Level);
+void P_UpdateReplacedParticles(FLevelLocals *Level);
+void P_ThinkParticles(FLevelLocals *Level);
 
 struct FSpawnParticleParams
 {

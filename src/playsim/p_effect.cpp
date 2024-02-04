@@ -393,9 +393,9 @@ void P_ThinkParticles (FLevelLocals *Level)
 			uint32_t num = MaxParticles - cnt;
 			uint32_t * buf = new uint32_t[cnt];
 			uint32_t * arr = Level->ParticleIndices.Data();
-			memcpy(buf, arr, cnt);
-			memmove(arr, arr + cnt, num);
-			memcpy(arr + num, buf, cnt);
+			memcpy(buf, arr, cnt * sizeof(uint32_t));
+			memmove(arr, arr + cnt, num * sizeof(uint32_t));
+			memcpy(arr + num, buf, cnt * sizeof(uint32_t));
 			delete buf;
 		}
 		Level->ParticleReplaceEnd = 0;

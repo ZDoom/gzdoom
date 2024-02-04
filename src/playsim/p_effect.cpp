@@ -217,6 +217,8 @@ void P_ReInitParticles (FLevelLocals *Level, int num)
 	{
 		Level->ParticleIndices[i] = i;
 	}
+	Level->NumParticles = 0;
+	Level->ParticleReplaceEnd = 0;
 }
 
 void P_InitParticles (FLevelLocals *Level)

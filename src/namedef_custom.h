@@ -12,6 +12,9 @@ xx(BloodSplatter)
 xx(AxeBlood)
 xx(Spray)
 
+// Actor properties
+xx(BobPivot3D)
+
 // Invulnerability types
 xx(Ghost)
 xx(Reflective)

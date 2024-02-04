@@ -90,7 +90,7 @@ bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check,
 				closedir(d);
 				if (!found)
 				{
-					Printf("Can't find file '%s' in '%s'\n", filename.GetChars(), basepath.GetChars());
+					//Printf("Can't find file '%s' in '%s'\n", filename.GetChars(), basepath.GetChars());
 					return false;
 				}
 			}

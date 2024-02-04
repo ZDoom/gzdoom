@@ -87,9 +87,6 @@ xx(SoundSlot5)
 xx(SoundSlot6)
 xx(SoundSlot7)
 
-// Actor properties
-xx(BobPivot3D)
-
 xx(LevelLocals)
 xx(Level)
 

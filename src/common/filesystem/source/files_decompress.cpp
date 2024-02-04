@@ -980,7 +980,7 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 			}
 			dec->Length = length;
 		}
-		if ((flags & DCF_CACHED))
+		if ((flags & (DCF_CACHED| DCF_SEEKABLE))) // the buffering reader does not seem to be stable, so cache it instead until we find out what's wrong.
 		{
 			// read everything into a MemoryArrayReader.
 			FileData data(nullptr, length);

@@ -395,7 +395,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, LumpFilterInf
 				std::string path = filename;
 				path += ':';
 				path += resfile->getName(i);
-				auto embedded = resfile->GetEntryReader(i, READER_NEW, READERFLAG_SEEKABLE);
+				auto embedded = resfile->GetEntryReader(i, READER_CACHED);
 				AddFile(path.c_str(), &embedded, filter, Printf, hashfile);
 			}
 		}

@@ -10,14 +10,11 @@ Class VisualThinker : Thinker native
 							Alpha;
 	native TextureID		Texture;
 	native TranslationID	Translation;
-	native uint16			Flags;
 	native int16			LightLevel;
-	native bool				bFlipOffsetX,
-							bFlipOffsetY,
-							bXFlip,
-							bYFlip,
-							bDontInterpolate,
-							bAddLightLevel;
+	
+	native uint16			ParticleFlags;
+	native int				VisualThinkerFlags;
+
 	native Color			scolor;
 
 	native Sector			CurSector; // can be null!
@@ -43,7 +40,7 @@ Class VisualThinker : Thinker native
 			p.Offset = offset;
 			p.SetRenderStyle(style);
 			p.Translation = trans;
-			p.Flags = flags;
+			p.ParticleFlags = flags;
 		}
 		return p;
 	}

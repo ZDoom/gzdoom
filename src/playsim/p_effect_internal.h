@@ -12,6 +12,16 @@
 // 
 //===========================================================================
 
+enum EVisualThinkerFlags
+{
+	VTF_FlipOffsetX		= 1 << 0,
+	VTF_FlipOffsetY		= 1 << 1,
+	VTF_FlipX			= 1 << 2,
+	VTF_FlipY			= 1 << 3, // flip the sprite on the x/y axis.
+	VTF_DontInterpolate	= 1 << 4, // disable all interpolation
+	VTF_AddLightLevel	= 1 << 5, // adds sector light level to 'LightLevel'
+};
+
 class DVisualThinker : public DThinker
 {
 	DECLARE_CLASS(DVisualThinker, DThinker);
@@ -25,12 +35,7 @@ public:
 	FTextureID		AnimatedTexture;
 	sector_t		*cursector;
 
-	bool			bFlipOffsetX,
-					bFlipOffsetY,
-					bXFlip,
-					bYFlip,				// flip the sprite on the x/y axis.
-					bDontInterpolate,	// disable all interpolation
-					bAddLightLevel;		// adds sector light level to 'LightLevel'
+	int flags;
 
 	// internal only variables
 	particle_t		PT;

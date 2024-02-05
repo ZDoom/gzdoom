@@ -32,6 +32,7 @@
 **
 */
 
+#include <cmath>
 #include "palutil.h"
 #include "sc_man.h"
 #include "m_crc32.h"

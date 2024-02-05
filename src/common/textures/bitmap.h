@@ -36,6 +36,7 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
+#include <cstring>
 #include "palentry.h"
 
 struct FCopyInfo;

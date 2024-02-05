@@ -33,6 +33,8 @@
 */
 
 #include <algorithm>
+#include <cfloat>
+#include <cmath>
 #include "palutil.h"
 #include "palentry.h"
 #include "sc_man.h"

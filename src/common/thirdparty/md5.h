@@ -18,6 +18,8 @@
 #ifndef MD5_H
 #define MD5_H
 
+#include <cstdint>
+
 struct MD5Context
 {
 	MD5Context() { Init(); }

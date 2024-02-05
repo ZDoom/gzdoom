@@ -39,6 +39,7 @@
 #include "files.h"
 #include "m_swap.h"
 #include "w_zip.h"
+#include "fs_decompress.h"
 
 using FileSys::FCompressedBuffer;
 

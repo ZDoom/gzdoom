@@ -91,7 +91,7 @@ extend class Actor
 	// when a morphed Actor dies.
 	virtual Actor, int, int MorphedDeath()
 	{
-		EMorphFlags mStyle = player ? player.MorphStyle : MorphFlags;
+		EMorphFlags mStyle = GetMorphStyle();
 		if (mStyle & MRF_UNDOBYDEATH)
 			Unmorph(self, force: mStyle & MRF_UNDOBYDEATHFORCED);
 

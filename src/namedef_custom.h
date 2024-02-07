@@ -465,7 +465,6 @@ xx(MonsterClass)
 xx(MorphedMonster)
 xx(Wi_NoAutostartMap)
 
-xx(MorphFlags)
 xx(Duration)
 xx(MorphStyle)
 xx(MorphFlash)

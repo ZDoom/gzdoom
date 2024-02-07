@@ -324,14 +324,23 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 		{
 			// Return values are no longer used to ensure things stay properly managed.
 			AActor* const realMo = alternative;
-			const int morphStyle = player != nullptr ? player->MorphStyle : IntVar(NAME_MorphFlags);
+			int morphStyle = 0;
 
 			VMValue params[] = { this };
+
+			{
+				IFVM(Actor, GetMorphStyle)
+				{
+					VMReturn ret[] = { &morphStyle };
+					VMCall(func, params, 1, ret, 1);
+				}
+			}
+
 			VMCall(func, params, 1, nullptr, 0);
 
 			// Kill the dummy Actor if it didn't unmorph, otherwise checking the morph flags. Player pawns need
 			// to stay, otherwise they won't respawn correctly.
-			if (realMo != nullptr
+			if (realMo != nullptr && !(realMo->flags6 & MF6_KILLED)
 				&& ((alternative != nullptr && player == nullptr) || (alternative == nullptr && !(morphStyle & MORPH_UNDOBYDEATHSAVES))))
 			{
 				if (wasgibbed)
@@ -344,6 +353,11 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				{
 					realMo->health = 0;
 				}
+
+				// Pass appropriate damage information along when it's confirmed to die.
+				realMo->DamageTypeReceived = DamageTypeReceived;
+				realMo->DamageType = DamageType;
+				realMo->special1 = special1;
 
 				realMo->CallDie(source, inflictor, dmgflags, MeansOfDeath);
 			}

@@ -98,7 +98,7 @@ extend class PlayerPawn
 	virtual bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
 		if (!player || !spawnType || bDontMorph || player.Health <= 0
-			|| (bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE))))
+			|| (!(style & MRF_IGNOREINVULN) && bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE))))
 		{
 			return false;
 		}
@@ -106,10 +106,10 @@ extend class PlayerPawn
 		if (!duration)
 			duration = DEFMORPHTICS;
 
-		if (Alternative)
+		if (spawnType == GetClass())
 		{
 			// Player is already a beast.
-			if (bCanSuperMorph && spawnType == GetClass()
+			if (Alternative && bCanSuperMorph
 				&& GetMorphTics() < duration - TICRATE
 				&& !FindInventory("PowerWeaponLevel2", true))
 			{
@@ -119,9 +119,6 @@ extend class PlayerPawn
 
 			return false;
 		}
-
-		if (spawnType == GetClass())
-			return false;
 
 		let morphed = PlayerPawn(Spawn(spawnType, Pos, NO_REPLACE));
 		if (!MorphInto(morphed))
@@ -228,7 +225,7 @@ extend class PlayerPawn
 		if (!Alternative || bStayMorphed || Alternative.bStayMorphed)
 			return false;
 
-		if (bInvulnerable
+		if (!(unmorphFlags & MRF_IGNOREINVULN) && bInvulnerable
 			&& (player != activator || (!(player.MorphStyle & MRF_WHENINVULNERABLE) && !(unmorphFlags & MRF_STANDARDUNDOING))))
 		{
 			return false;

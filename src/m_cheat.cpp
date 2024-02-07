@@ -626,10 +626,13 @@ public:
 		double plyrdmgfact = Pawn->DamageFactor;
 		Pawn->DamageFactor = 1.;
 		P_DamageMobj (Pawn, Pawn, Pawn, TELEFRAG_DAMAGE, NAME_Suicide);
-		Pawn->DamageFactor = plyrdmgfact;
-		if (Pawn->health <= 0)
+		if (Pawn != nullptr)
 		{
-			Pawn->flags &= ~MF_SHOOTABLE;
+			Pawn->DamageFactor = plyrdmgfact;
+			if (Pawn->health <= 0)
+			{
+				Pawn->flags &= ~MF_SHOOTABLE;
+			}
 		}
 		Destroy();
 	}

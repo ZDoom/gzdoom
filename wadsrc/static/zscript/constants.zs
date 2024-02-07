@@ -1496,3 +1496,36 @@ enum EModelFlags
 	MDL_CORRECTPIXELSTRETCH			= 1<<13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
 	MDL_FORCECULLBACKFACES			= 1<<14,
 };
+
+enum EF3DFloorFlags
+{
+  FF_EXISTS            = 0x1,    //MAKE SURE IT'S VALID
+  FF_SOLID             = 0x2,    //Does it clip things?
+  FF_RENDERSIDES       = 0x4,    //Render the sides?
+  FF_RENDERPLANES      = 0x8,    //Render the floor/ceiling?
+  FF_RENDERALL         = 0xC,    //Render everything?
+  FF_SWIMMABLE         = 0x10,   //Can we swim?
+  FF_NOSHADE           = 0x20,   //Does it mess with the lighting?
+  FF_BOTHPLANES        = 0x200,  //Render both planes all the time?
+  FF_TRANSLUCENT       = 0x800,  //See through!
+  FF_FOG               = 0x1000, //Fog "brush"?
+  FF_INVERTPLANES      = 0x2000, //Reverse the plane visibility rules?
+  FF_ALLSIDES          = 0x4000, //Render inside and outside sides?
+  FF_INVERTSIDES       = 0x8000, //Only render inside sides?
+  FF_DOUBLESHADOW      = 0x10000,//Make two lightlist entries to reset light?
+  FF_UPPERTEXTURE	   = 0x20000,
+  FF_LOWERTEXTURE      = 0x40000,
+  FF_THINFLOOR		   = 0x80000,	// EDGE
+  FF_NODAMAGE          = 0x100000,  // no damage transfers
+  FF_FIX			   = 0x200000,  // use floor of model sector as floor and floor of real sector as ceiling
+  FF_INVERTSECTOR	   = 0x400000,	// swap meaning of sector planes
+  FF_DYNAMIC		   = 0x800000,	// created by partitioning another 3D-floor due to overlap
+  FF_CLIPPED		   = 0x1000000,	// split into several dynamic ffloors
+  FF_SEETHROUGH        = 0x2000000,
+  FF_SHOOTTHROUGH      = 0x4000000,
+  FF_FADEWALLS         = 0x8000000,	// Applies real fog to walls and doesn't blend the view		
+  FF_ADDITIVETRANS	   = 0x10000000, // Render this floor with additive translucency
+  FF_FLOOD			   = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
+  FF_THISINSIDE		   = 0x40000000, // hack for software 3D with FF_BOTHPLANES
+  FF_RESET			   = 0x80000000, // light effect is completely reset, once interrupted  
+};

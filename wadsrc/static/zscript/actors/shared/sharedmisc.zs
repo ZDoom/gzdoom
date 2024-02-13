@@ -255,7 +255,7 @@ class PathNode : Actor
 	// For non-connected paths. Stamina will be used to set this. Necessary for tele/portals.
 	private int group; 
 
-	Array<Actor> neighbors;
+	Array<PathNode> neighbors;
 	
 	Default
 	{

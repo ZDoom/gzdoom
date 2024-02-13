@@ -554,7 +554,7 @@ struct LevelLocals native
 	native void SpawnParticle(FSpawnParticleParams p);
 	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
 
-	native bool AStar(Actor chaser, Actor target, Actor startnode = null, Actor goalnode = null);
+	native bool FindPath(Actor chaser, Actor target, Actor startnode = null, Actor goalnode = null, double maxSearch = 256.0);
 }
 
 // a few values of this need to be readable by the play code.

@@ -611,8 +611,6 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	while ((ac = it.Next()))
 	{
 		ac->SetDynamicLights();
-		if (ac->IsKindOf(NAME_PathNode))
-			Level->PathNodes.Push(ac);
 	}
 }
 

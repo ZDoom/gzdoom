@@ -98,6 +98,7 @@
 #include "s_music.h"
 #include "fragglescript/t_script.h"
 
+
 #include "texturemanager.h"
 
 void STAT_StartNewGame(const char *lev);
@@ -2466,3 +2467,106 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
 	ACTION_RETURN_STRING(GStrings.localize(STAT_EpisodeName().GetChars()));
 }
 
+
+//----------------------------------------------------------------------------
+//	Pathfinding
+//----------------------------------------------------------------------------
+
+// Code by RicardoLuis0
+TArray<AActor*> * GetNeighbors(AActor * self)
+{
+	PClass * cls = PClass::FindClass("PathNode");
+	if(!cls->IsAncestorOf(self->GetClass()))
+	{
+		ThrowAbortException(X_BAD_SELF, "Invalid class passed to GetNeighbors (must be PathNodeInfo)");
+	}
+
+	PField *var = dyn_cast<PField>(cls->FindSymbol("neighbors", true));
+
+	assert(var);
+	assert(var->Type->isDynArray());
+	assert(static_cast<PDynArray*>(var->Type)->ElementType == cls);
+
+	return reinterpret_cast<TArray<AActor*>*>(reinterpret_cast<uintptr_t>(self) + var->Offset);
+}
+
+int AS_BinarySearch(TMap<AActor*, double>* fScore, bool exact = false)
+{
+	return 0;
+}
+
+void AS_ReconstructPath(TMap<AActor*, AActor*>* cameFrom, AActor* chaser)
+{
+
+}
+
+bool FLevelLocals::AStar(AActor* chaser, AActor* target, AActor* startnode, AActor* goalnode)
+{
+	if (!chaser || !target || PathNodes.Size() < 1)
+		return false;
+
+	// If supplying nodes, skip the search.
+	const bool getstart = (!startnode || !startnode->IsKindOf(NAME_PathNode));
+	const bool getgoal = (!goalnode || !goalnode->IsKindOf(NAME_PathNode));
+
+	if (getstart || getgoal)
+	{
+		double dist[2]; 
+		dist[0] = dist[1] = 100000000.0;
+
+
+		for (int i = 0; i < PathNodes.Size(); i++)
+		{
+			AActor *node = PathNodes[i];
+			if (!node)	continue;
+
+			double dis;
+			if (getstart)
+			{
+				dis = node->Distance2DSquared(chaser);
+				if (dis < dist[0] && P_CheckSight(node, chaser)) // TO DO: Make 3D aware, so 3D floors can work better.
+				{
+					startnode = node;
+					dist[0] = dis;
+				}
+			}
+
+
+			dis = node->Distance2DSquared(target);
+			if (dis < dist[1] && P_CheckSight(node, target))
+			{
+				goalnode = node;
+				dist[1] = dis;
+			}
+		}
+
+		// Incomplete graph.
+		if (!startnode || !goalnode)
+			return false;
+
+		if (startnode == goalnode)
+		{
+			chaser->ClearPath();
+			chaser->Path.Push(MakeObjPtr<AActor*>(startnode));
+			return true;
+		}
+	}
+	
+	// Begin A* here.
+	TArray<AActor*> openSet;
+	TMap<AActor*, AActor*> cameFrom;
+	TMap<AActor*, double> gScore;
+	TMap<AActor*, double> fScore;
+
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, AStar)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_OBJECT(chaser, AActor);
+	PARAM_OBJECT(target, AActor);
+	PARAM_OBJECT(startnode, AActor);
+	PARAM_OBJECT(goalnode, AActor);
+	return self->AStar(chaser, target, startnode, goalnode);
+}

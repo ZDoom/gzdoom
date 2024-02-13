@@ -285,6 +285,7 @@ DoomEdNums
  14163 = MusicChanger, 63
  14164 = MusicChanger, 64
  14165 = MusicChanger
+ 14166 = PathNode
  32000 = DoomBuilderCamera
 }
 

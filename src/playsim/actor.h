@@ -442,7 +442,9 @@ enum ActorFlag9
 	MF9_DOSHADOWBLOCK			= 0x00000002,	// [inkoalawetrust] Should the monster look for SHADOWBLOCK actors ?
 	MF9_SHADOWBLOCK				= 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
 	MF9_SHADOWAIMVERT			= 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
-	MF9_DECOUPLEDANIMATIONS	= 0x00000010,	// [RL0] Decouple model animations from states
+	MF9_DECOUPLEDANIMATIONS		= 0x00000010,	// [RL0] Decouple model animations from states
+	MF9_PATHING					= 0x00000020,	// [MC] Enables monsters to do pathfinding, such as A*.
+	MF9_KEEPPATH				= 0x00000040,	// [MC] Forces monsters to keep to the path when target's in sight.
 };
 
 // --- mobj.renderflags ---
@@ -1101,6 +1103,8 @@ public:
 	void AttachLight(unsigned int count, const FLightDefaults *lightdef);
 	void SetDynamicLights();
 
+	void ClearPath();
+
 // info for drawing
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
@@ -1157,6 +1161,7 @@ public:
 	TObjPtr<DBoneComponents*>		boneComponentData;
 
 // interaction info
+	TArray<TObjPtr<AActor*> > Path;
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;

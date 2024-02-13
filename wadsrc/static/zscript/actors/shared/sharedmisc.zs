@@ -245,3 +245,110 @@ class SpeakerIcon : Unknown
 		Scale 0.125;
 	}
 }
+
+//===============================================================
+// Path Nodes
+//===============================================================
+
+class PathNode : Actor
+{
+	// For non-connected paths. Stamina will be used to set this. Necessary for tele/portals.
+	private int group; 
+
+	Array<Actor> neighbors;
+	
+	Default
+	{
+		//$Arg0 "TID 1"
+		//$Arg1 "TID 2"
+		//$Arg2 "TID 3"
+		//$Arg3 "TID 4"
+		//$Arg4 "TID 5"
+		//$Arg0Type 14
+		//$Arg1Type 14
+		//$Arg2Type 14
+		//$Arg3Type 14
+		//$Arg4Type 14
+		+NOBLOCKMAP
+		+INVISIBLE
+		+DONTSPLASH
+		+NOTONAUTOMAP
+		+NOGRAVITY // TO DO: Look into 3D variant for traversing up and down 3D floors and floating monsters.
+		RenderStyle "None";
+		MeleeRange 2048; // Sight checks limited to this. 0 = infinite.
+	}
+	
+	// Args are TIDs. Can be one way to force single directions.
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		for (int i = 0; i < Args.Size(); i++)
+		{
+			if (!Args[i])	continue;
+			
+			let it = level.CreateActorIterator(Args[i], "PathNode");
+			PathNode node;
+			do
+			{
+				if (node && node != self) 
+					neighbors.Push(node);
+			} while (node = PathNode(it.Next()))
+			
+		}
+	}
+
+	// For ACS access with ScriptCall.
+	// 'con' values are:
+	// 0: No connections
+	// 1: Connect tid1 to tid2 one-way
+	// 2: ^ but two-way.
+	static void SetConnectionGlobal(int tid1, int tid2, int con)
+	{
+		if (tid1 == 0 || tid2 == 0)
+			return;
+
+		PathNode node;
+		Array<PathNode> nodes2; // Cache for actors with tid2
+		{
+			let it = Level.CreateActorIterator(tid2, "PathNode");
+			
+			do
+			{
+				if (node) 
+					nodes2.Push(node);
+			} while (node = PathNode(it.Next()))
+		}
+		// Nothing to set to.
+		if (nodes2.Size() < 1)
+			return;
+
+		let it = Level.CreateActorIterator(tid1, "PathNode");
+		node = null;
+		do
+		{	
+			if (node)
+			{
+				foreach (n2 : nodes2)
+				{
+					if (n2)
+					{
+						node.SetConnection(n2, con);
+						n2.SetConnection(node, (con > 1));
+					}
+				}
+			}
+		} while (node = PathNode(it.Next()))
+	}
+
+	void SetConnection(PathNode other, bool on)
+	{
+		if (!other) return;
+
+		if (on)
+		{
+			if (neighbors.Find(other) >= neighbors.Size())
+				neighbors.Push(other);
+		}
+		else neighbors.Delete(neighbors.Find(other));
+	}
+}

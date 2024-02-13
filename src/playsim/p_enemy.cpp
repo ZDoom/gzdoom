@@ -2532,7 +2532,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		if (!actor->goal)
 		{
-			if (actor->Path.Size() < 1 && actor->Level->AStar(actor, actor->target))
+			if (actor->Path.Size() < 1 && actor->Level->FindPath(actor, actor->target))
 				actor->goal = actor->Path[0];
 				
 		}

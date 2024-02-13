@@ -2473,100 +2473,169 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
 //----------------------------------------------------------------------------
 
 // Code by RicardoLuis0
-TArray<AActor*> * GetNeighbors(AActor * self)
+static TArray<TObjPtr<AActor*>>& GetPathNodeNeighbors(AActor * self)
 {
-	PClass * cls = PClass::FindClass("PathNode");
-	if(!cls->IsAncestorOf(self->GetClass()))
-	{
-		ThrowAbortException(X_BAD_SELF, "Invalid class passed to GetNeighbors (must be PathNodeInfo)");
-	}
+	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
 
-	PField *var = dyn_cast<PField>(cls->FindSymbol("neighbors", true));
+#ifndef NDEBUG
+	if(!nodeCls->IsAncestorOf(self->GetClass()))
+	{
+		ThrowAbortException(X_BAD_SELF, "Invalid class passed to GetNeighbors (must be PathNode)");
+	}
+#endif
+
+	static PField *var = dyn_cast<PField>(nodeCls->FindSymbol("neighbors", true));
 
 	assert(var);
 	assert(var->Type->isDynArray());
-	assert(static_cast<PDynArray*>(var->Type)->ElementType == cls);
+	assert(static_cast<PDynArray*>(var->Type)->ElementType == nodeCls->VMType);
 
-	return reinterpret_cast<TArray<AActor*>*>(reinterpret_cast<uintptr_t>(self) + var->Offset);
+	return *reinterpret_cast<TArray<TObjPtr<AActor*>>*>(reinterpret_cast<uintptr_t>(self) + var->Offset);
 }
 
-int AS_BinarySearch(TMap<AActor*, double>* fScore, bool exact = false)
+static void ReconstructPath(TMap<AActor*, AActor*> &cameFrom, AActor* current, TArray<TObjPtr<AActor*>> &path)
 {
-	return 0;
-}
+	path.Clear();
+	path.Push(current);
+	AActor ** tmp = cameFrom.CheckKey(current);
 
-void AS_ReconstructPath(TMap<AActor*, AActor*>* cameFrom, AActor* chaser)
-{
-
-}
-
-bool FLevelLocals::AStar(AActor* chaser, AActor* target, AActor* startnode, AActor* goalnode)
-{
-	if (!chaser || !target || PathNodes.Size() < 1)
-		return false;
-
-	// If supplying nodes, skip the search.
-	const bool getstart = (!startnode || !startnode->IsKindOf(NAME_PathNode));
-	const bool getgoal = (!goalnode || !goalnode->IsKindOf(NAME_PathNode));
-
-	if (getstart || getgoal)
+	if(tmp) do
 	{
-		double dist[2]; 
-		dist[0] = dist[1] = 100000000.0;
+		path.Insert(0, *tmp);
+	}
+	while(tmp = cameFrom.CheckKey(*tmp));
+}
 
+static AActor* FindClosestNode(AActor* from, double maxSearch)
+{
+	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
 
-		for (int i = 0; i < PathNodes.Size(); i++)
+	FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+	FMultiBlockThingsIterator it(check, from->Level, from->Pos().X, from->Pos().Y, from->Pos().Z - ((from->Height + maxSearch) / 2), from->Height + maxSearch, from->radius + maxSearch, false, from->Sector);
+	FMultiBlockThingsIterator::CheckResult res;
+
+	AActor * closest = nullptr;
+	double closestDist = DBL_MAX;
+
+	while(it.Next(&res))
+	{
+		if(nodeCls->IsAncestorOf(res.thing->GetClass()))
 		{
-			AActor *node = PathNodes[i];
-			if (!node)	continue;
-
-			double dis;
-			if (getstart)
+			double dst = res.thing->Distance3D(from);
+			if(dst < closestDist && P_CheckSight(res.thing, from))
 			{
-				dis = node->Distance2DSquared(chaser);
-				if (dis < dist[0] && P_CheckSight(node, chaser)) // TO DO: Make 3D aware, so 3D floors can work better.
-				{
-					startnode = node;
-					dist[0] = dis;
-				}
+				closestDist = dst;
+				closest = res.thing;
 			}
-
-
-			dis = node->Distance2DSquared(target);
-			if (dis < dist[1] && P_CheckSight(node, target))
-			{
-				goalnode = node;
-				dist[1] = dis;
-			}
-		}
-
-		// Incomplete graph.
-		if (!startnode || !goalnode)
-			return false;
-
-		if (startnode == goalnode)
-		{
-			chaser->ClearPath();
-			chaser->Path.Push(MakeObjPtr<AActor*>(startnode));
-			return true;
 		}
 	}
-	
-	// Begin A* here.
+
+	return closest;
+}
+
+template<typename K, typename V>
+static V GetOr(TMap<K, V> map, const K &key, V alt)
+{
+	V *k = map.CheckKey(key);
+	return k ? *k : alt;
+}
+
+static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> &path)
+{
+
 	TArray<AActor*> openSet;
 	TMap<AActor*, AActor*> cameFrom;
 	TMap<AActor*, double> gScore;
 	TMap<AActor*, double> fScore;
 
+	openSet.Push(start);
+	gScore.Insert(start, 0);
+	fScore.Insert(start, start->Distance3D(goal));
+
+	auto lt_fScore = [&fScore](AActor* lhs, AActor* rhs)
+	{
+		return GetOr(fScore, lhs, DBL_MAX) < GetOr(fScore, rhs, DBL_MAX);
+	};
+
+	while(openSet.Size() > 0)
+	{
+		AActor * current = openSet[0];
+		openSet.Delete(0);
+		if(current == goal)
+		{
+			ReconstructPath(cameFrom, current, path);
+			return true;
+		}
+
+		double current_gScore = GetOr(gScore, current, DBL_MAX);
+
+		for(AActor * neighbor : GetPathNodeNeighbors(current))
+		{
+
+			double tentative_gScore = current_gScore + current->Distance3D(neighbor);
+
+			double neighbor_gScore = GetOr(gScore, neighbor, DBL_MAX);
+
+			if(tentative_gScore < neighbor_gScore)
+			{
+				openSet.SortedDelete(neighbor, lt_fScore);
+				cameFrom.Insert(neighbor, current);
+				gScore.Insert(neighbor, tentative_gScore);
+				fScore.Insert(neighbor, tentative_gScore + neighbor->Distance3D(goal));
+				openSet.SortedInsert(neighbor, lt_fScore);
+			}
+		}
+	}
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(FLevelLocals, AStar)
+bool FLevelLocals::FindPath(AActor* start, AActor* goal, AActor* startNode, AActor* goalNode, double maxSearch)
+{
+	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
+
+	if (!start || !goal)
+	{
+		return false;
+	}
+
+	assert(startNode == nullptr || nodeCls->IsAncestorOf(startNode->GetClass()));
+	assert(goalNode == nullptr || nodeCls->IsAncestorOf(goalNode->GetClass()));
+
+	if(startNode == nullptr) startNode = FindClosestNode(start, maxSearch);
+	if(goalNode == nullptr) goalNode = FindClosestNode(goal, maxSearch);
+
+	// Incomplete graph.
+	if (!startNode || !goalNode)
+	{
+		return false;
+	}
+
+	if (startNode == goalNode)
+	{
+		start->ClearPath();
+		start->Path.Push(MakeObjPtr<AActor*>(startNode));
+		return true;
+	}
+	
+	if(FindPathAStar(startNode, goalNode, start->Path))
+	{
+		if (start->goal && nodeCls->IsAncestorOf(start->goal->GetClass()))
+		{
+			start->goal = nullptr;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, FindPath)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_OBJECT(chaser, AActor);
 	PARAM_OBJECT(target, AActor);
 	PARAM_OBJECT(startnode, AActor);
 	PARAM_OBJECT(goalnode, AActor);
-	return self->AStar(chaser, target, startnode, goalnode);
+	PARAM_FLOAT(maxSearch);
+	return self->FindPath(chaser, target, startnode, goalnode, maxSearch);
 }

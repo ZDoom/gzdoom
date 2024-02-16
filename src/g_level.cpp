@@ -2506,26 +2506,25 @@ static void ReconstructPath(TMap<AActor*, AActor*> &cameFrom, AActor* current, T
 	while(tmp = cameFrom.CheckKey(*tmp));
 }
 
-static AActor* FindClosestNode(AActor* from, double maxSearch)
+static AActor* FindClosestNode(AActor* from)
 {
 	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
 
-	FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(check, from->Level, from->Pos().X, from->Pos().Y, from->Pos().Z - ((from->Height + maxSearch) / 2), from->Height + maxSearch, from->radius + maxSearch, false, from->Sector);
-	FMultiBlockThingsIterator::CheckResult res;
-
 	AActor * closest = nullptr;
 	double closestDist = DBL_MAX;
-
-	while(it.Next(&res))
+	
+	for (int i = 0; i < from->Level->PathNodes.Size(); i++)
 	{
-		if(nodeCls->IsAncestorOf(res.thing->GetClass()))
+		AActor* node = from->Level->PathNodes[i];
+		if(node && !(node->flags & MF_AMBUSH) && nodeCls->IsAncestorOf(node->GetClass()))
 		{
-			double dst = res.thing->Distance3D(from);
-			if(dst < closestDist && P_CheckSight(res.thing, from))
+			double dst = node->Distance3DSquared(from);
+			bool mrange = (dst < closestDist && (node->meleerange <= 0.0 || dst < (node->meleerange * node->meleerange)));
+
+			if(mrange && P_CheckSight(node, from))
 			{
 				closestDist = dst;
-				closest = res.thing;
+				closest = node;
 			}
 		}
 	}
@@ -2540,7 +2539,7 @@ static V GetOr(TMap<K, V> map, const K &key, V alt)
 	return k ? *k : alt;
 }
 
-static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> &path)
+static bool FindPathAStar(AActor* startnode, AActor* goalnode, TArray<TObjPtr<AActor*>> &path)
 {
 
 	TArray<AActor*> openSet;
@@ -2548,9 +2547,9 @@ static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> 
 	TMap<AActor*, double> gScore;
 	TMap<AActor*, double> fScore;
 
-	openSet.Push(start);
-	gScore.Insert(start, 0);
-	fScore.Insert(start, start->Distance3D(goal));
+	openSet.Push(startnode);
+	gScore.Insert(startnode, 0);
+	fScore.Insert(startnode, startnode->Distance3DSquared(goalnode));
 
 	auto lt_fScore = [&fScore](AActor* lhs, AActor* rhs)
 	{
@@ -2561,7 +2560,7 @@ static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> 
 	{
 		AActor * current = openSet[0];
 		openSet.Delete(0);
-		if(current == goal)
+		if(current == goalnode)
 		{
 			ReconstructPath(cameFrom, current, path);
 			return true;
@@ -2572,7 +2571,7 @@ static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> 
 		for(AActor * neighbor : GetPathNodeNeighbors(current))
 		{
 
-			double tentative_gScore = current_gScore + current->Distance3D(neighbor);
+			double tentative_gScore = current_gScore + current->Distance3DSquared(neighbor);
 
 			double neighbor_gScore = GetOr(gScore, neighbor, DBL_MAX);
 
@@ -2581,7 +2580,7 @@ static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> 
 				openSet.SortedDelete(neighbor, lt_fScore);
 				cameFrom.Insert(neighbor, current);
 				gScore.Insert(neighbor, tentative_gScore);
-				fScore.Insert(neighbor, tentative_gScore + neighbor->Distance3D(goal));
+				fScore.Insert(neighbor, tentative_gScore + neighbor->Distance3DSquared(goalnode));
 				openSet.SortedInsert(neighbor, lt_fScore);
 			}
 		}
@@ -2589,20 +2588,19 @@ static bool FindPathAStar(AActor* start, AActor* goal, TArray<TObjPtr<AActor*>> 
 	return false;
 }
 
-bool FLevelLocals::FindPath(AActor* start, AActor* goal, AActor* startNode, AActor* goalNode, double maxSearch)
+bool FLevelLocals::FindPath(AActor* chaser, AActor* target, AActor* startNode, AActor* goalNode)
 {
-	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
-
-	if (!start || !goal)
+	if (!chaser || !target)
 	{
 		return false;
 	}
 
+	static PClass* nodeCls = PClass::FindClass(NAME_PathNode);
 	assert(startNode == nullptr || nodeCls->IsAncestorOf(startNode->GetClass()));
 	assert(goalNode == nullptr || nodeCls->IsAncestorOf(goalNode->GetClass()));
 
-	if(startNode == nullptr) startNode = FindClosestNode(start, maxSearch);
-	if(goalNode == nullptr) goalNode = FindClosestNode(goal, maxSearch);
+	if(startNode == nullptr) startNode = FindClosestNode(chaser);
+	if(goalNode == nullptr) goalNode = FindClosestNode(target);
 
 	// Incomplete graph.
 	if (!startNode || !goalNode)
@@ -2612,16 +2610,16 @@ bool FLevelLocals::FindPath(AActor* start, AActor* goal, AActor* startNode, AAct
 
 	if (startNode == goalNode)
 	{
-		start->ClearPath();
-		start->Path.Push(MakeObjPtr<AActor*>(startNode));
+		chaser->ClearPath();
+		chaser->Path.Push(MakeObjPtr<AActor*>(startNode));
 		return true;
 	}
 	
-	if(FindPathAStar(startNode, goalNode, start->Path))
+	if (FindPathAStar(startNode, goalNode, chaser->Path))
 	{
-		if (start->goal && nodeCls->IsAncestorOf(start->goal->GetClass()))
+		if (chaser->goal && nodeCls->IsAncestorOf(chaser->goal->GetClass()))
 		{
-			start->goal = nullptr;
+			chaser->goal = nullptr;
 		}
 		return true;
 	}
@@ -2636,6 +2634,22 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, FindPath)
 	PARAM_OBJECT(target, AActor);
 	PARAM_OBJECT(startnode, AActor);
 	PARAM_OBJECT(goalnode, AActor);
-	PARAM_FLOAT(maxSearch);
-	return self->FindPath(chaser, target, startnode, goalnode, maxSearch);
+	return self->FindPath(chaser, target, startnode, goalnode);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, HandlePathNode)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_OBJECT(node, AActor);
+	PARAM_BOOL(add);
+	if (node)
+	{
+		if (add)
+		{
+			if (self->PathNodes.Find(node) >= self->PathNodes.Size())
+				self->PathNodes.Push(node);
+		}
+		else self->PathNodes.Delete(self->PathNodes.Find(node));
+	}
+	return 0;
 }

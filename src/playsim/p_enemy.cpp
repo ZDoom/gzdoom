@@ -2208,8 +2208,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearLastHeard)
 void AActor::ClearPath()
 {
 	Path.Clear();
-	if (goal && goal->IsKindOf(NAME_PathNode))
-		goal = nullptr;
+	if (goal)
+	{
+		static PClass* nodeCls = PClass::FindClass(NAME_PathNode);
+		if (nodeCls->IsAncestorOf(goal->GetClass()))
+			goal = nullptr;
+	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, ClearPath)
@@ -2217,6 +2221,42 @@ DEFINE_ACTION_FUNCTION(AActor, ClearPath)
 	PARAM_SELF_PROLOGUE(AActor);
 	self->ClearPath();
 	return 0;
+}
+
+bool AActor::CanPathfind()
+{
+	if ((!(flags9 & MF9_NOPATHING) && !(Sector->MoreFlags & SECMF_NOPATHING)) &&
+		(flags9 & MF9_PATHING || Level->flags3 & LEVEL3_PATHING))
+	{
+		if ((flags6 & MF6_NOFEAR))
+			return true;
+
+		// Can't pathfind while feared.
+		if (!(flags4 & MF4_FRIGHTENED))
+		{
+			if (!target)	
+				return true;
+
+			if (!target->flags8 & MF8_FRIGHTENING)
+				return (!target->player || !(target->player->cheats & CF_FRIGHTENING));
+		}
+	}
+	return false;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CanPathfind)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	return self->CanPathfind();
+}
+
+void AActor::CallReachedNode(AActor *node)
+{
+	IFVIRTUAL(AActor, ReachedNode)
+	{
+		VMValue params[2] = { this, node };
+		VMCall(func, params, 2, nullptr, 0);
+	}
 }
 
 //==========================================================================
@@ -2515,30 +2555,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		return;
 	}
 
-	if (actor->target && actor->flags9 & MF9_PATHING)
-	{
-		if (actor->goal && actor->goal->IsKindOf(NAME_PathNode))
-		{
-			AActor* temp = actor->target;
-			actor->target = actor->goal;
-			bool result = P_CheckMeleeRange(actor);
-			actor->target = temp;
-
-			if (result) // TO DO
-			{
-
-			}
-				
-		}
-		if (!actor->goal)
-		{
-			if (actor->Path.Size() < 1 && actor->Level->FindPath(actor, actor->target))
-				actor->goal = actor->Path[0];
-				
-		}
-	}
 	// [RH] Don't attack if just moving toward goal
-	else if (actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal != nullptr))
+	if (actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal != nullptr))
 	{
 		AActor * savedtarget = actor->target;
 		actor->target = actor->goal;
@@ -2617,7 +2635,45 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				}
 			}
 		}
+	}
 
+	if (actor->target && actor->CanPathfind())
+	{
+		if (actor->goal && !(actor->goal->flags & MF_AMBUSH) && actor->goal->IsKindOf(NAME_PathNode))
+		{
+			AActor* temp = actor->target;
+			actor->target = actor->goal;
+			bool reached = (P_CheckMeleeRange(actor));
+			actor->target = temp;
+
+			if (reached)
+			{
+				actor->CallReachedNode(actor->goal);
+				/*
+				AActor* next = nullptr;
+				if (!(actor->flags9 & MF9_KEEPPATH) && 
+					P_CheckSight(actor, actor->target, SF_IGNOREWATERBOUNDARY | SF_IGNOREVISIBILITY))
+					actor->Path.Clear();
+				else
+				{
+					unsigned int index = actor->Path.Find(actor->goal);
+					while (++index < actor->Path.Size() - 1)
+					{
+						next = actor->Path[index];
+						if (next && next != actor->goal)
+							break;
+					}
+					if (!next)	actor->ClearPath();
+					else		actor->goal = next;
+				}
+				*/
+			}
+		}
+		if (!actor->goal)
+		{
+			if (actor->Path.Size() > 0 || actor->Level->FindPath(actor, actor->target))
+				actor->goal = actor->Path[0];
+		}
 	}
 
 	// [RH] Scared monsters attack less frequently
@@ -2670,7 +2726,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			lookForBetter = true;
 		}
 		AActor * oldtarget = actor->target;
-		gotNew = P_LookForPlayers (actor, !(flags & CHF_DONTLOOKALLAROUND), NULL);
+		gotNew = P_LookForPlayers (actor, !(flags & CHF_DONTLOOKALLAROUND), nullptr);
 		if (lookForBetter)
 		{
 			actor->flags3 |= MF3_NOSIGHTCHECK;
@@ -2678,6 +2734,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (gotNew && actor->target != oldtarget)
 		{
 			actor->flags7 &= ~MF7_INCHASE;
+			actor->ClearPath();
 			return; 	// got a new target
 		}
 	}

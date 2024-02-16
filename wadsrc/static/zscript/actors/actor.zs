@@ -664,7 +664,7 @@ class Actor : Thinker native
 	// called before and after triggering a teleporter
 	// return false in PreTeleport() to cancel the action early
 	virtual bool PreTeleport( Vector3 destpos, double destangle, int flags ) { return true; }
-	virtual void PostTeleport( Vector3 destpos, double destangle, int flags ) {}
+	virtual void PostTeleport( Vector3 destpos, double destangle, int flags ) { }
 	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native clearscope static class<Actor> GetReplacement(class<Actor> cls);
@@ -706,7 +706,6 @@ class Actor : Thinker native
 	native void ClearFOVInterpolation();
 	native clearscope Vector3 PosRelative(sector sec) const;
 	native void RailAttack(FRailParams p);
-	native void ClearPath();
 		
 	native void HandleSpawnFlags();
 	native void ExplodeMissile(line lin = null, Actor target = null, bool onsky = false);
@@ -797,6 +796,46 @@ class Actor : Thinker native
 		}
 		movecount = random[TryWalk](0, 15);
 		return true;
+	}
+
+	native void ClearPath();
+	native clearscope bool CanPathfind() const;
+	virtual void ReachedNode(Actor mo)
+	{
+		if (!mo && !goal) 
+			return;
+		
+		mo = goal;
+		let node = PathNode(mo);
+		if (!node || !target || (!bKEEPPATH && CheckSight(target)))
+		{
+			ClearPath();
+			return;
+		}
+
+		int i = Path.Find(node) + 1;
+		int end = Path.Size();
+		
+		for (i; i < end; i++)
+		{
+			PathNode next = Path[i];
+
+			if (!next || next == node)
+				continue;
+
+			// Monsters will never 'reach' AMBUSH flagged nodes. Instead, the engine
+			// indicates they're reached the moment they tele/portal. 
+
+			if (node.bAMBUSH && next.bAMBUSH)
+				continue;
+
+			goal = next;
+			break;
+		}
+
+		if (i >= end)
+			ClearPath();
+	
 	}
 	
 	native bool TryMove(vector2 newpos, int dropoff, bool missilecheck = false, FCheckPosition tm = null);

@@ -44,6 +44,7 @@ DoomEdNums
   5065 = InvisibleBridge8
   9001 = MapSpot
   9013 = MapSpotGravity
+  9022 = PathNode
   9024 = PatrolPoint
   9025 = SecurityCamera
   9026 = Spark
@@ -285,7 +286,6 @@ DoomEdNums
  14163 = MusicChanger, 63
  14164 = MusicChanger, 64
  14165 = MusicChanger
- 14166 = PathNode
  32000 = DoomBuilderCamera
 }
 

@@ -408,7 +408,7 @@ map E4M1 lookup "HUSTR_E4M1"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 165
-	music = "$MUSIC_E3M4"
+	music = "$MUSIC_E4M1"
 }
 
 map E4M2 lookup "HUSTR_E4M2"
@@ -420,7 +420,7 @@ map E4M2 lookup "HUSTR_E4M2"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 255
-	music = "$MUSIC_E3M2"
+	music = "$MUSIC_E4M2"
 }
 
 map E4M3 lookup "HUSTR_E4M3"
@@ -432,7 +432,7 @@ map E4M3 lookup "HUSTR_E4M3"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 135
-	music = "$MUSIC_E3M3"
+	music = "$MUSIC_E4M3"
 }
 
 map E4M4 lookup "HUSTR_E4M4"
@@ -444,7 +444,7 @@ map E4M4 lookup "HUSTR_E4M4"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 150
-	music = "$MUSIC_E1M5"
+	music = "$MUSIC_E4M4"
 }
 
 map E4M5 lookup "HUSTR_E4M5"
@@ -456,7 +456,7 @@ map E4M5 lookup "HUSTR_E4M5"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 180
-	music = "$MUSIC_E2M7"
+	music = "$MUSIC_E4M5"
 }
 
 map E4M6 lookup "HUSTR_E4M6"
@@ -470,7 +470,7 @@ map E4M6 lookup "HUSTR_E4M6"
 	par = 390
 	e4m6special
 	specialaction_opendoor
-	music = "$MUSIC_E2M4"
+	music = "$MUSIC_E4M6"
 }
 
 map E4M7 lookup "HUSTR_E4M7"
@@ -482,7 +482,7 @@ map E4M7 lookup "HUSTR_E4M7"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 135
-	music = "$MUSIC_E2M6"
+	music = "$MUSIC_E4M7"
 }
 
 map E4M8 lookup "HUSTR_E4M8"
@@ -498,7 +498,7 @@ map E4M8 lookup "HUSTR_E4M8"
 	nosoundclipping
 	e4m8special
 	specialaction_lowerfloor
-	music = "$MUSIC_E2M5"
+	music = "$MUSIC_E4M8"
 	needclustertext
 }
 
@@ -511,7 +511,7 @@ map E4M9 lookup "HUSTR_E4M9"
 	sky1 = "SKY4"
 	cluster = 4
 	par = 180
-	music = "$MUSIC_E1M9"
+	music = "$MUSIC_E4M9"
 }
 
 // Clusters (correspond with same-numbered episode)

@@ -17,15 +17,15 @@ struct SectorPortal native play
 		FLAG_INSKYBOX = 2,				// to avoid recursion
 	};
 
-	native int mType;
-	native int mFlags;
-	native uint mPartner;
-	native int mPlane;
-	native Sector mOrigin;
-	native Sector mDestination;
-	native Vector2 mDisplacement;
-	native double mPlaneZ;
-	native Actor mSkybox;	
+	native readonly int mType;
+	native internal readonly int mFlags;
+	native readonly uint mPartner;
+	native readonly int mPlane;
+	native readonly Sector mOrigin;
+	native internal readonly Sector mDestination;
+	native readonly Vector2 mDisplacement;
+	native readonly double mPlaneZ;
+	native internal readonly Actor mSkybox;	
 };
 
 struct LinePortal native play
@@ -58,16 +58,16 @@ struct LinePortal native play
 		PORG_CEILING,
 	};
 
-	native Line mOrigin;
-	native Line mDestination;
-	native Vector2 mDisplacement;
-	native uint8 mType;
-	native uint8 mFlags;
-	native uint8 mDefFlags;
-	native uint8 mAlign;
-	native double mAngleDiff;
-	native double mSinRot;
-	native double mCosRot;
+	native readonly Line mOrigin;
+	native readonly Line mDestination;
+	native readonly Vector2 mDisplacement;
+	native readonly uint8 mType;
+	native readonly uint8 mFlags;
+	native readonly uint8 mDefFlags;
+	native readonly uint8 mAlign;
+	native readonly double mAngleDiff;
+	native readonly double mSinRot;
+	native readonly double mCosRot;
 }
 
 struct Vertex native play
@@ -262,16 +262,16 @@ struct Line native play
 
 struct SecPlane native play
 {
-	native Vector3 Normal;
-	native double D;
-	native double negiC;
+	native readonly Vector3 Normal;
+	native readonly double D;
+	native readonly double negiC;
 	
 	native clearscope bool isSlope() const;
 	native clearscope int PointOnSide(Vector3 pos) const;
 	native clearscope double ZatPoint (Vector2 v) const;
 	native clearscope double ZatPointDist(Vector2 v, double dist) const;
 	native clearscope bool isEqual(Secplane other) const;
-	native void ChangeHeight(double hdiff);
+	//native void ChangeHeight(double hdiff);
 	native clearscope double GetChangedHeight(double hdiff) const;
 	native clearscope double HeightDiff(double oldd, double newd = 1e37) const;
 	native clearscope double PointToDist(Vector2 xy, double z) const;
@@ -340,11 +340,11 @@ struct SecSpecial play
 
 struct FColormap
 {
-	Color		LightColor;
-	Color		FadeColor;
-	uint8		Desaturation;
-	uint8		BlendFactor;
-	uint16		FogDensity;
+	readonly Color	LightColor;
+	readonly Color	FadeColor;
+	readonly uint8	Desaturation;
+	readonly uint8	BlendFactor;
+	readonly uint16	FogDensity;
 }
 
 struct Sector native play
@@ -472,8 +472,8 @@ struct Sector native play
 
 	native SectorAction		SecActTarget;
 
-	native internal uint		Portals[2];
-	native readonly int			PortalGroup;
+	native internal readonly uint	Portals[2];
+	native readonly int				PortalGroup;
 
 	native readonly int			sectornum;
 

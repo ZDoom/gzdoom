@@ -326,6 +326,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	}
 	ClearPortals();
 
+	PathNodes.Clear();
 	tagManager.Clear();
 	ClearTIDHashes();
 	if (SpotState) SpotState->Destroy();

@@ -246,36 +246,34 @@ class SpeakerIcon : Unknown
 	}
 }
 
-//===============================================================
-// Path Nodes
-//===============================================================
+/*
+=================================================================
+Path Nodes
+=================================================================
+Special flags are as follows:
 
+AMBUSH
+	Node is blind. Things cannot "touch" these nodes with A_Chase.
+	Useful for tele/portals since the engine makes them "touch"
+	upon transitioning. These nodes are fast forwarded over in Actor's
+	ReachedNode() function.
+*/
 class PathNode : Actor
 {
-	// For non-connected paths. Stamina will be used to set this. Necessary for tele/portals.
-	private int group; 
-
 	Array<PathNode> neighbors;
 	
 	Default
 	{
-		//$Arg0 "TID 1"
-		//$Arg1 "TID 2"
-		//$Arg2 "TID 3"
-		//$Arg3 "TID 4"
-		//$Arg4 "TID 5"
-		//$Arg0Type 14
-		//$Arg1Type 14
-		//$Arg2Type 14
-		//$Arg3Type 14
-		//$Arg4Type 14
+		+NOINTERACTION
 		+NOBLOCKMAP
 		+INVISIBLE
 		+DONTSPLASH
 		+NOTONAUTOMAP
-		+NOGRAVITY // TO DO: Look into 3D variant for traversing up and down 3D floors and floating monsters.
+		+NOGRAVITY
+		Radius 16;
+		Height 56;
 		RenderStyle "None";
-		MeleeRange 2048; // Sight checks limited to this. 0 = infinite.
+		MeleeRange 0; // Sight checks limited to this. 0 = infinite. Set within map editor.
 	}
 	
 	// Args are TIDs. Can be one way to force single directions.
@@ -295,6 +293,13 @@ class PathNode : Actor
 			} while (node = PathNode(it.Next()))
 			
 		}
+		level.HandlePathNode(self, true);
+	}
+
+	override void OnDestroy()
+	{
+		level.HandlePathNode(self, false);
+		Super.OnDestroy();
 	}
 
 	// For ACS access with ScriptCall.

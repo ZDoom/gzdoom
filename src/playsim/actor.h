@@ -445,6 +445,7 @@ enum ActorFlag9
 	MF9_DECOUPLEDANIMATIONS		= 0x00000010,	// [RL0] Decouple model animations from states
 	MF9_PATHING					= 0x00000020,	// [MC] Enables monsters to do pathfinding, such as A*.
 	MF9_KEEPPATH				= 0x00000040,	// [MC] Forces monsters to keep to the path when target's in sight.
+	MF9_NOPATHING				= 0x00000080,	// [MC] override the mapinfo "pathfinding"
 };
 
 // --- mobj.renderflags ---
@@ -1104,6 +1105,8 @@ public:
 	void SetDynamicLights();
 
 	void ClearPath();
+	bool CanPathfind();
+	void CallReachedNode(AActor *node);
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.

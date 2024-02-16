@@ -592,7 +592,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			thing->CheckSectorTransition(oldsec);
 		}
 	}
-
+	thing->CallReachedNode(thing->goal);
 	return true;
 }
 
@@ -2613,6 +2613,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
+				thing->CallReachedNode(thing->goal);
 				portalcrossed = true;
 				tm.portalstep = false;
 			}

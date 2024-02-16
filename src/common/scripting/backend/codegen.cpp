@@ -1940,6 +1940,12 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		bool writable;
 		basex->RequestAddress(ctx, &writable);
+
+		if(!writable && !ValueType->toPointer()->IsConst && ctx.Version >= MakeVersion(4, 12))
+		{
+			ScriptPosition.Message(MSG_ERROR, "Trying to assign readonly value to writable type.");
+		}
+
 		basex->ValueType = ValueType;
 		auto x = basex;
 		basex = nullptr;
@@ -8739,6 +8745,12 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (Self->ValueType->isRealPointer())
 	{
 		auto pointedType = Self->ValueType->toPointer()->PointedType;
+		
+		if(pointedType && pointedType->isStruct() && Self->ValueType->toPointer()->IsConst && ctx.Version >= MakeVersion(4, 12))
+		{
+			isreadonly = true;
+		}
+
 		if (pointedType && (pointedType->isDynArray() || pointedType->isMap() || pointedType->isMapIterator()))
 		{
 			Self = new FxOutVarDereference(Self, Self->ScriptPosition);
@@ -9268,7 +9280,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return nullptr;
 		}
 	}
-	else if (Self->ValueType->isStruct())
+	else if (Self->ValueType->isStruct() && !isreadonly)
 	{
 		bool writable;
 

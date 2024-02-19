@@ -95,6 +95,29 @@ extern	int 			nodeforplayer[MAXPLAYERS];
 extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
 extern	int 			ticdup;
 
+class player_t;
+class DObject;
+
+class NetworkEntityManager
+{
+private:
+	inline static TArray<DObject*> s_netEntities = {};
+	inline static TArray<uint32_t> s_openNetIDs = {};
+
+public:
+	NetworkEntityManager() = delete;
+
+	inline static uint32_t WorldNetID = 0u;
+	inline static uint32_t ClientNetIDStart = 1u;
+	inline static uint32_t NetIDStart = MAXPLAYERS + 1u;
+
+	static void InitializeNetworkEntities();
+	static void SetClientNetworkEntity(player_t* const client);
+	static void AddNetworkEntity(DObject* const ent);
+	static void RemoveNetworkEntity(DObject* const ent);
+	static DObject* GetNetworkEntity(const uint32_t id);
+};
+
 // [RH]
 // New generic packet structure:
 //

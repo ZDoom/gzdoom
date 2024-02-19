@@ -101,6 +101,7 @@
 #include "fragglescript/t_fs.h"
 #include "shadowinlines.h"
 #include "model.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -178,6 +179,23 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(modelData)
 	IMPLEMENT_POINTER(boneComponentData)
 IMPLEMENT_POINTERS_END
+
+//==========================================================================
+//
+// Make sure Actors can never have their networking disabled.
+//
+//==========================================================================
+
+void AActor::EnableNetworking(const bool enable)
+{
+	if (!enable)
+	{
+		ThrowAbortException(X_OTHER, "Cannot disable networking on Actors. Consider a Thinker instead.");
+		return;
+	}
+
+	Super::EnableNetworking(true);
+}
 
 //==========================================================================
 //
@@ -4830,6 +4848,7 @@ AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVecto
 	AActor *actor;
 
 	actor = static_cast<AActor *>(Level->CreateThinker(type));
+	actor->EnableNetworking(true);
 
 	ConstructActor(actor, pos, SpawningMapThing);
 	return actor;

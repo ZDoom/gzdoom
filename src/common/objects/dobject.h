@@ -351,6 +351,17 @@ protected:
 		friend T* Create(Args&&... args);
 
 	friend class JitCompiler;
+
+private:
+	// This is intentionally left unserialized.
+	uint32_t _networkID;
+
+public:
+	inline bool IsNetworked() const { return (ObjectFlags & OF_Networked); }
+	inline uint32_t GetNetworkID() const { return _networkID; }
+	void SetNetworkID(const uint32_t id);
+	void ClearNetworkID();
+	virtual void EnableNetworking(const bool enable);
 };
 
 // This is the only method aside from calling CreateNew that should be used for creating DObjects

@@ -2965,6 +2965,89 @@ int Net_GetLatency(int *ld, int *ad)
 	return severity;
 }
 
+void NetworkEntityManager::InitializeNetworkEntities()
+{
+	if (!s_netEntities.Size())
+		s_netEntities.AppendFill(nullptr, NetIDStart); // Allocate the first 0-8 slots for the world and clients.
+}
+
+// Clients need special handling since they always go in slots 1 - MAXPLAYERS.
+void NetworkEntityManager::SetClientNetworkEntity(player_t* const client)
+{
+	AActor* const mo = client->mo;
+	const uint32_t id = ClientNetIDStart + mo->Level->PlayerNum(client);
+
+	// If resurrecting, we need to swap the corpse's position with the new pawn's
+	// position so it's no longer considered the client's body.
+	DObject* const oldBody = s_netEntities[id];
+	if (oldBody != nullptr)
+	{
+		if (oldBody == mo)
+			return;
+
+		const uint32_t curID = mo->GetNetworkID();
+		
+		s_netEntities[curID] = oldBody;
+		oldBody->ClearNetworkID();
+		oldBody->SetNetworkID(curID);
+
+		mo->ClearNetworkID();
+	}
+	else
+	{
+		RemoveNetworkEntity(mo); // Free up its current id.
+	}
+
+	s_netEntities[id] = mo;
+	mo->SetNetworkID(id);
+}
+
+void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
+{
+	if (ent->IsNetworked())
+		return;
+
+	// Slot 0 is reserved for the world.
+	// Clients go in the first 1 - MAXPLAYERS slots
+	// Everything else is first come first serve.
+	uint32_t id = WorldNetID;
+	if (s_openNetIDs.Size())
+	{
+		s_openNetIDs.Pop(id);
+		s_netEntities[id] = ent;
+	}
+	else
+	{
+		id = s_netEntities.Push(ent);
+	}
+
+	ent->SetNetworkID(id);
+}
+
+void NetworkEntityManager::RemoveNetworkEntity(DObject* const ent)
+{
+	if (!ent->IsNetworked())
+		return;
+
+	const uint32_t id = ent->GetNetworkID();
+	if (id == WorldNetID)
+		return;
+
+	assert(s_netEntities[id] == ent);
+	if (id >= NetIDStart)
+		s_openNetIDs.Push(id);
+	s_netEntities[id] = nullptr;
+	ent->ClearNetworkID();
+}
+
+DObject* NetworkEntityManager::GetNetworkEntity(const uint32_t id)
+{
+	if (id == WorldNetID || id >= s_netEntities.Size())
+		return nullptr;
+
+	return s_netEntities[id];
+}
+
 // [RH] List "ping" times
 CCMD (pings)
 {

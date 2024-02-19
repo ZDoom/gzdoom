@@ -2472,7 +2472,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
 //	Pathfinding
 //----------------------------------------------------------------------------
 
-// Code by RicardoLuis0
+// Code by RicardoLuis0, modified by Major Cooke
 static TArray<TObjPtr<AActor*>>& GetPathNodeNeighbors(AActor * self)
 {
 	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
@@ -2508,7 +2508,7 @@ static void ReconstructPath(TMap<AActor*, AActor*> &cameFrom, AActor* current, T
 
 static AActor* FindClosestNode(AActor* from)
 {
-	static PClass * nodeCls = PClass::FindClass(NAME_PathNode);
+	static const PClass * nodeCls = PClass::FindClass(NAME_PathNode);
 
 	AActor * closest = nullptr;
 	double closestDist = DBL_MAX;
@@ -2519,9 +2519,10 @@ static AActor* FindClosestNode(AActor* from)
 		if(node && !(node->flags & MF_AMBUSH) && nodeCls->IsAncestorOf(node->GetClass()))
 		{
 			double dst = node->Distance3DSquared(from);
-			bool mrange = (dst < closestDist && (node->meleerange <= 0.0 || dst < (node->meleerange * node->meleerange)));
+			const bool mrange = (dst < closestDist && 
+				(node->friendlyseeblocks <= 0 || dst < double(node->friendlyseeblocks * node->friendlyseeblocks)));
 
-			if(mrange && P_CheckSight(node, from))
+			if (mrange && !from->CallExcludeNode(node) && P_CheckSight(node, from))
 			{
 				closestDist = dst;
 				closest = node;
@@ -2539,9 +2540,8 @@ static V GetOr(TMap<K, V> map, const K &key, V alt)
 	return k ? *k : alt;
 }
 
-static bool FindPathAStar(AActor* startnode, AActor* goalnode, TArray<TObjPtr<AActor*>> &path)
+static bool FindPathAStar(AActor *chaser, AActor* startnode, AActor* goalnode, TArray<TObjPtr<AActor*>> &path)
 {
-
 	TArray<AActor*> openSet;
 	TMap<AActor*, AActor*> cameFrom;
 	TMap<AActor*, double> gScore;
@@ -2570,12 +2570,11 @@ static bool FindPathAStar(AActor* startnode, AActor* goalnode, TArray<TObjPtr<AA
 
 		for(AActor * neighbor : GetPathNodeNeighbors(current))
 		{
-
 			double tentative_gScore = current_gScore + current->Distance3DSquared(neighbor);
 
 			double neighbor_gScore = GetOr(gScore, neighbor, DBL_MAX);
 
-			if(tentative_gScore < neighbor_gScore)
+			if (tentative_gScore < neighbor_gScore && !chaser->CallExcludeNode(neighbor))
 			{
 				openSet.SortedDelete(neighbor, lt_fScore);
 				cameFrom.Insert(neighbor, current);
@@ -2615,7 +2614,7 @@ bool FLevelLocals::FindPath(AActor* chaser, AActor* target, AActor* startNode, A
 		return true;
 	}
 	
-	if (FindPathAStar(startNode, goalNode, chaser->Path))
+	if (FindPathAStar(chaser, startNode, goalNode, chaser->Path))
 	{
 		if (chaser->goal && nodeCls->IsAncestorOf(chaser->goal->GetClass()))
 		{

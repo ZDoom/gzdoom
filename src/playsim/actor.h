@@ -1106,6 +1106,7 @@ public:
 
 	void ClearPath();
 	bool CanPathfind();
+	bool CallExcludeNode(AActor *node);
 	void CallReachedNode(AActor *node);
 
 // info for drawing

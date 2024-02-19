@@ -2259,6 +2259,20 @@ void AActor::CallReachedNode(AActor *node)
 	}
 }
 
+// Called while scoring the path.
+bool AActor::CallExcludeNode(AActor* node)
+{
+	IFVIRTUAL(AActor, ExcludeNode)
+	{
+		VMValue params[2] = { (DObject*)this, node };
+		int retval = 0;
+		VMReturn ret(&retval);
+		VMCall(func, params, 2, &ret, 1);
+		return !!retval;
+	}
+	return false;
+}
+
 //==========================================================================
 //
 // A_Wander

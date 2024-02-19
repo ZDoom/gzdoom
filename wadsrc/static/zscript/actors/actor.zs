@@ -837,6 +837,26 @@ class Actor : Thinker native
 			ClearPath();
 	
 	}
+
+	// Return true to mark the node as ineligible for constructing a path along.
+	virtual bool ExcludeNode(PathNode node)
+	{
+		if (!node)	return true;
+
+		// Scale is the size requirements.
+		// STANDSTILL flag is used to require the actor to be bigger instead of smaller.
+		double r = node.Scale.X;
+		double h = node.Scale.Y;
+		
+		// Perfect fit.
+		if (radius == r && height == h)
+			return false; 
+
+		if ((0.0 < r && r < radius) || (0.0 < h && h < height))
+			return !node.bSTANDSTILL;
+		
+		return false;
+	}
 	
 	native bool TryMove(vector2 newpos, int dropoff, bool missilecheck = false, FCheckPosition tm = null);
 	native bool CheckMove(vector2 newpos, int flags = 0, FCheckPosition tm = null);

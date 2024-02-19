@@ -137,7 +137,7 @@ public:
 		for (int i = hwTex_Translated.Size()-1; i>= 0; i--)
 		{
 			auto& tt = hwTex_Translated[i];
-			if (!tt.isMarkedForPreache()) 
+			if (!tt.isMarkedForPreache())
 			{
 				hwTex_Translated.Delete(i);
 			}
@@ -148,11 +148,11 @@ public:
 	{
 		for (auto& tt : hwDefTex)
 		{
-			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+			tt.MarkForPrecache(false);
 		}
 		for (auto& tt : hwTex_Translated)
 		{
-			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+			tt.MarkForPrecache(false);
 		}
 	}
 

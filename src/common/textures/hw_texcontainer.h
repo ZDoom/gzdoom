@@ -3,9 +3,9 @@
 #include "tarray.h"
 #include "hw_ihwtexture.h"
 #include "palettecontainer.h"
+#include "hw_ihwtexture.h" // Note: this cannot be a forward declaration due to the inlined delete statement below.
 
 struct FTextureBuffer;
-class IHardwareTexture;
 
 enum ECreateTexBufferFlags
 {
@@ -34,7 +34,7 @@ private:
 
 		void Delete()
 		{
-			if (hwTexture) delete hwTexture;
+			delete hwTexture;
 			hwTexture = nullptr;
 		}
 

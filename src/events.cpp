@@ -131,7 +131,7 @@ void DNetworkBuffer::OnDestroy()
 {
 	Super::OnDestroy();
 
-	_buffer.Clear();
+	_buffer.Reset();
 }
 
 void DNetworkBuffer::Serialize(FSerializer& arc)
@@ -1043,164 +1043,201 @@ DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacee)
 DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacement)
 DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, IsFinal)
 
-DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Player)
-DEFINE_FIELD_X(NetworkCommand, FNetworkCommand, Command)
+DEFINE_FIELD(FNetworkCommand, Player)
+DEFINE_FIELD(FNetworkCommand, Command)
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt8)
+static int NativeReadInt8(FNetworkCommand* const self) { return self->ReadInt8(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadInt8, NativeReadInt8)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	ACTION_RETURN_INT(self->ReadInt8());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt16)
+static int NativeReadInt16(FNetworkCommand* const self) { return self->ReadInt16(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadInt16, NativeReadInt16)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	ACTION_RETURN_INT(self->ReadInt16());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadInt)
+static int NativeReadInt(FNetworkCommand* const self) { return self->ReadInt(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadInt, NativeReadInt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	ACTION_RETURN_INT(self->ReadInt());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadFloat)
+static double NativeReadFloat(FNetworkCommand* const self) { return self->ReadFloat(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadFloat, NativeReadFloat)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	ACTION_RETURN_FLOAT(self->ReadFloat());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadDouble)
+static double NativeReadDouble(FNetworkCommand* const self) { return self->ReadDouble(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadDouble, NativeReadDouble)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	ACTION_RETURN_FLOAT(self->ReadDouble());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadString)
+static void NativeReadString(FNetworkCommand* const self, FString* const result)
+{
+	const auto str = self->ReadString();
+	if (str != nullptr)
+		*result = str;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadString, NativeReadString)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
 	FString res = {};
-	auto str = self->ReadString();
-	if (str != nullptr)
-		res = str;
-
+	NativeReadString(self, &res);
 	ACTION_RETURN_STRING(res);
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadName)
+static int NativeReadName(FNetworkCommand* const self)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
-
 	FName res = NAME_None;
-	auto str = self->ReadString();
+	const auto str = self->ReadString();
 	if (str != nullptr)
 		res = str;
 
-	ACTION_RETURN_INT(res.GetIndex());
+	return res.GetIndex();
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadMapUnit)
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadName, NativeReadName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
+	ACTION_RETURN_INT(NativeReadName(self));
+}
+
+static double NativeReadMapUnit(FNetworkCommand* const self)
+{
 	constexpr double FixedToFloat = 1.0 / (1 << 16);
-	ACTION_RETURN_FLOAT(self->ReadInt() * FixedToFloat);
+	return self->ReadInt() * FixedToFloat;
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadAngle)
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadMapUnit, NativeReadMapUnit)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	const DAngle bam = DAngle::fromBam(self->ReadInt());
-	ACTION_RETURN_FLOAT(bam.Degrees());
+	ACTION_RETURN_FLOAT(NativeReadMapUnit(self));
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector2)
+static double NativeReadAngle(FNetworkCommand* const self) { return DAngle::fromBam(self->ReadInt()).Degrees(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadAngle, NativeReadAngle)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	DVector2 vec = {};
-	vec.X = self->ReadDouble();
-	vec.Y = self->ReadDouble();
-	ACTION_RETURN_VEC2(vec);
+	ACTION_RETURN_FLOAT(DAngle::fromBam(self->ReadInt()).Degrees());
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector3)
+static void NativeReadVector2(FNetworkCommand* const self, DVector2* const result)
+{
+	result->X = self->ReadDouble();
+	result->Y = self->ReadDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadVector2, NativeReadVector2)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	DVector3 vec = {};
-	vec.X = self->ReadDouble();
-	vec.Y = self->ReadDouble();
-	vec.Z = self->ReadDouble();
-	ACTION_RETURN_VEC3(vec);
+	ACTION_RETURN_VEC2(DVector2(self->ReadDouble(), self->ReadDouble()));
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadVector4)
+static void NativeReadVector3(FNetworkCommand* const self, DVector3* const result)
+{
+	result->X = self->ReadDouble();
+	result->Y = self->ReadDouble();
+	result->Z = self->ReadDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadVector3, NativeReadVector3)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	DVector4 vec = {};
-	vec.X = self->ReadDouble();
-	vec.Y = self->ReadDouble();
-	vec.Z = self->ReadDouble();
-	vec.W = self->ReadDouble();
-	ACTION_RETURN_VEC4(vec);
+	ACTION_RETURN_VEC3(DVector3(self->ReadDouble(), self->ReadDouble(), self->ReadDouble()));
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadQuat)
+static void NativeReadVector4(FNetworkCommand* const self, DVector4* const result)
+{
+	result->X = self->ReadDouble();
+	result->Y = self->ReadDouble();
+	result->Z = self->ReadDouble();
+	result->W = self->ReadDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadVector4, NativeReadVector4)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
 
-	DQuaternion quat = {};
-	quat.X = self->ReadDouble();
-	quat.Y = self->ReadDouble();
-	quat.Z = self->ReadDouble();
-	quat.W = self->ReadDouble();
-	ACTION_RETURN_QUAT(quat);
+	ACTION_RETURN_VEC4(DVector4(self->ReadDouble(), self->ReadDouble(), self->ReadDouble(), self->ReadDouble()));
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadIntArray)
+static void NativeReadQuat(FNetworkCommand* const self, DQuaternion* const result)
+{
+	result->X = self->ReadDouble();
+	result->Y = self->ReadDouble();
+	result->Z = self->ReadDouble();
+	result->W = self->ReadDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadQuat, NativeReadQuat)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
-	PARAM_OUTPOINTER(values, TArray<int>);
-	PARAM_INT(type)
 
-	unsigned int size = self->ReadInt();
+	ACTION_RETURN_QUAT(DQuaternion(self->ReadDouble(), self->ReadDouble(), self->ReadDouble(), self->ReadDouble()));
+}
+
+static void NativeReadIntArray(FNetworkCommand* const self, TArray<int>* const values, const int type)
+{
+	const unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		switch (type)
 		{
-			case NET_INT8:
-				values->Push(self->ReadInt8());
-				break;
+		case NET_INT8:
+			values->Push(self->ReadInt8());
+			break;
 
-			case NET_INT16:
-				values->Push(self->ReadInt16());
-				break;
+		case NET_INT16:
+			values->Push(self->ReadInt16());
+			break;
 
-			default:
-				values->Push(self->ReadInt());
-				break;
+		default:
+			values->Push(self->ReadInt());
+			break;
 		}
 	}
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadIntArray, NativeReadIntArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<int>);
+	PARAM_INT(type);
+
+	NativeReadIntArray(self, values, type);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadDoubleArray)
+static void NativeReadDoubleArray(FNetworkCommand* const self, TArray<double>* const values, const bool doublePrecision)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
-	PARAM_OUTPOINTER(values, TArray<double>);
-	PARAM_BOOL(doublePrecision);
-
-	unsigned int size = self->ReadInt();
+	const unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		if (doublePrecision)
@@ -1208,32 +1245,55 @@ DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadDoubleArray)
 		else
 			values->Push(self->ReadFloat());
 	}
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadDoubleArray, NativeReadDoubleArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<double>);
+	PARAM_BOOL(doublePrecision);
+
+	NativeReadDoubleArray(self, values, doublePrecision);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(FNetworkCommand, ReadStringArray)
+static void NativeReadStringArray(FNetworkCommand* const self, TArray<FString>* const values, const bool skipEmpty)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
-	PARAM_OUTPOINTER(values, TArray<FString>);
-	PARAM_BOOL(skipEmpty);
-
-	unsigned int size = self->ReadInt();
+	const unsigned int size = self->ReadInt();
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		FString res = {};
-		auto str = self->ReadString();
+		const auto str = self->ReadString();
 		if (str != nullptr)
 			res = str;
 
 		if (!skipEmpty || !res.IsEmpty())
 			values->Push(res);
 	}
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, ReadStringArray, NativeReadStringArray)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+	PARAM_OUTPOINTER(values, TArray<FString>);
+	PARAM_BOOL(skipEmpty);
+
+	NativeReadStringArray(self, values, skipEmpty);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt8)
+static int EndOfStream(FNetworkCommand* const self) { return self->EndOfStream(); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(FNetworkCommand, EndOfStream, EndOfStream)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FNetworkCommand);
+
+	ACTION_RETURN_BOOL(self->EndOfStream());
+}
+
+static void AddInt8(DNetworkBuffer* const self, const int value) { self->AddInt8(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddInt8, AddInt8)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
@@ -1241,7 +1301,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt8)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt16)
+static void AddInt16(DNetworkBuffer* const self, const int value) { self->AddInt16(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddInt16, AddInt16)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
@@ -1249,7 +1311,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt16)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt)
+static void AddInt(DNetworkBuffer* const self, const int value) { self->AddInt(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddInt, AddInt)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_INT(value);
@@ -1257,7 +1321,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddInt)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddFloat)
+static void AddFloat(DNetworkBuffer* const self, const double value) { self->AddFloat(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddFloat, AddFloat)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(value);
@@ -1265,7 +1331,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddFloat)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDouble)
+static void AddDouble(DNetworkBuffer* const self, const double value) { self->AddDouble(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddDouble, AddDouble)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(value);
@@ -1273,7 +1341,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDouble)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddString)
+static void AddString(DNetworkBuffer* const self, const FString& value) { self->AddString(value); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddString, AddString)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_STRING(value);
@@ -1281,7 +1351,9 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddString)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddName)
+static void AddName(DNetworkBuffer* const self, const int value) { FName x = ENamedName(value);  self->AddString(x.GetChars()); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddName, AddName)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_NAME(value);
@@ -1289,17 +1361,24 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddName)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddMapUnit)
+static void AddMapUnit(DNetworkBuffer* const self, const double value)
+{
+	constexpr int FloatToFixed = 1 << 16;
+	self->AddInt(static_cast<int>(value * FloatToFixed));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddMapUnit, AddMapUnit)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(value);
 
-	constexpr int FloatToFixed = 1 << 16;
-	self->AddInt(static_cast<int>(value * FloatToFixed));
+	AddMapUnit(self, value);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddAngle)
+static void AddAngle(DNetworkBuffer* const self, const double value) { self->AddInt(DAngle::fromDeg(value).BAMs()); }
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddAngle, AddAngle)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_ANGLE(value);
@@ -1307,7 +1386,13 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddAngle)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector2)
+static void AddVector2(DNetworkBuffer* const self, const double x, const double y)
+{
+	self->AddDouble(x);
+	self->AddDouble(y);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddVector2, AddVector2)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(x);
@@ -1317,7 +1402,14 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector2)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector3)
+static void AddVector3(DNetworkBuffer* const self, const double x, const double y, const double z)
+{
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddVector3, AddVector3)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(x);
@@ -1329,7 +1421,15 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector3)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector4)
+static void AddVector4(DNetworkBuffer* const self, const double x, const double y, const double z, const double w)
+{
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
+	self->AddDouble(w);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddVector4, AddVector4)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(x);
@@ -1343,7 +1443,15 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddVector4)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddQuat)
+static void AddQuat(DNetworkBuffer* const self, const double x, const double y, const double z, const double w)
+{
+	self->AddDouble(x);
+	self->AddDouble(y);
+	self->AddDouble(z);
+	self->AddDouble(w);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddQuat, AddQuat)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_FLOAT(x);
@@ -1357,42 +1465,42 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddQuat)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddIntArray)
+static void AddIntArray(DNetworkBuffer* const self, TArray<int>* const values, const int type)
 {
-	PARAM_SELF_PROLOGUE(DNetworkBuffer);
-	PARAM_POINTER(values, TArray<int>);
-	PARAM_INT(type);
-
-	unsigned int size = values->Size();
+	const unsigned int size = values->Size();
 	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
 	{
 		switch (type)
 		{
-			case NET_INT8:
-				self->AddInt8((*values)[i]);
-				break;
+		case NET_INT8:
+			self->AddInt8((*values)[i]);
+			break;
 
-			case NET_INT16:
-				self->AddInt16((*values)[i]);
-				break;
+		case NET_INT16:
+			self->AddInt16((*values)[i]);
+			break;
 
-			default:
-				self->AddInt((*values)[i]);
-				break;
+		default:
+			self->AddInt((*values)[i]);
+			break;
 		}
 	}
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddIntArray, AddIntArray)
+{
+	PARAM_SELF_PROLOGUE(DNetworkBuffer);
+	PARAM_POINTER(values, TArray<int>);
+	PARAM_INT(type);
+
+	AddIntArray(self, values, type);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDoubleArray)
+static void AddDoubleArray(DNetworkBuffer* const self, TArray<double>* const values, const bool doublePrecision)
 {
-	PARAM_SELF_PROLOGUE(DNetworkBuffer);
-	PARAM_POINTER(values, TArray<double>);
-	PARAM_BOOL(doublePrecision);
-
-	unsigned int size = values->Size();
+	const unsigned int size = values->Size();
 	self->AddInt(size);
 	for (unsigned int i = 0u; i < size; ++i)
 	{
@@ -1401,20 +1509,32 @@ DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddDoubleArray)
 		else
 			self->AddFloat((*values)[i]);
 	}
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddDoubleArray, AddDoubleArray)
+{
+	PARAM_SELF_PROLOGUE(DNetworkBuffer);
+	PARAM_POINTER(values, TArray<double>);
+	PARAM_BOOL(doublePrecision);
+
+	AddDoubleArray(self, values, doublePrecision);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DNetworkBuffer, AddStringArray)
+static void AddStringArray(DNetworkBuffer* const self, TArray<FString>* const values)
+{
+	const unsigned int size = values->Size();
+	self->AddInt(size);
+	for (unsigned int i = 0u; i < size; ++i)
+		self->AddString((*values)[i]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DNetworkBuffer, AddStringArray, AddStringArray)
 {
 	PARAM_SELF_PROLOGUE(DNetworkBuffer);
 	PARAM_POINTER(values, TArray<FString>);
 
-	unsigned int size = values->Size();
-	self->AddInt(size);
-	for (unsigned int i = 0u; i < size; ++i)
-		self->AddString((*values)[i]);
-
+	AddStringArray(self, values);
 	return 0;
 }
 

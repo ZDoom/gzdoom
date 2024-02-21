@@ -36,11 +36,6 @@ private:
 	size_t _index = 0;
 	TArray<uint8_t> _stream;
 
-	inline bool IsValid() const
-	{
-		return _index < _stream.Size();
-	}
-
 public:
 	int Player;
 	FName Command;
@@ -50,6 +45,11 @@ public:
 		_stream.Swap(stream);
 	}
 
+	inline bool EndOfStream() const
+	{
+		return _index >= _stream.Size();
+	}
+
 	inline void Reset()
 	{
 		_index = 0;
@@ -57,7 +57,7 @@ public:
 
 	int ReadInt8()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return 0;
 
 		return _stream[_index++];
@@ -66,11 +66,11 @@ public:
 	// If a value has to cut off early, just treat the previous value as the full one.
 	int ReadInt16()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return 0;
 
 		int value = _stream[_index++];
-		if (IsValid())
+		if (!EndOfStream())
 			value = (value << 8) | _stream[_index++];
 
 		return value;
@@ -78,17 +78,17 @@ public:
 
 	int ReadInt()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return 0;
 
 		int value = _stream[_index++];
-		if (IsValid())
+		if (!EndOfStream())
 		{
 			value = (value << 8) | _stream[_index++];
-			if (IsValid())
+			if (!EndOfStream())
 			{
 				value = (value << 8) | _stream[_index++];
-				if (IsValid())
+				if (!EndOfStream())
 					value = (value << 8) | _stream[_index++];
 			}
 		}
@@ -99,17 +99,17 @@ public:
 	// Floats without their first bits are pretty meaningless so those are done first.
 	double ReadFloat()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return 0.0;
 
 		int value = _stream[_index++] << 24;
-		if (IsValid())
+		if (!EndOfStream())
 		{
 			value |= _stream[_index++] << 16;
-			if (IsValid())
+			if (!EndOfStream())
 			{
 				value |= _stream[_index++] << 8;
-				if (IsValid())
+				if (!EndOfStream())
 					value |= _stream[_index++];
 			}
 		}
@@ -125,29 +125,29 @@ public:
 
 	double ReadDouble()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return 0.0;
 
 		int64_t value = int64_t(_stream[_index++]) << 56;
-		if (IsValid())
+		if (!EndOfStream())
 		{
 			value |= int64_t(_stream[_index++]) << 48;
-			if (IsValid())
+			if (!EndOfStream())
 			{
 				value |= int64_t(_stream[_index++]) << 40;
-				if (IsValid())
+				if (!EndOfStream())
 				{
 					value |= int64_t(_stream[_index++]) << 32;
-					if (IsValid())
+					if (!EndOfStream())
 					{
 						value |= int64_t(_stream[_index++]) << 24;
-						if (IsValid())
+						if (!EndOfStream())
 						{
 							value |= int64_t(_stream[_index++]) << 16;
-							if (IsValid())
+							if (!EndOfStream())
 							{
 								value |= int64_t(_stream[_index++]) << 8;
-								if (IsValid())
+								if (!EndOfStream())
 									value |= int64_t(_stream[_index++]);
 							}
 						}
@@ -167,7 +167,7 @@ public:
 
 	const char* ReadString()
 	{
-		if (!IsValid())
+		if (EndOfStream())
 			return nullptr;
 
 		const char* str = reinterpret_cast<const char*>(&_stream[_index]);

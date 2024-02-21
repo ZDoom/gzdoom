@@ -19,11 +19,12 @@ struct NetworkCommand native play version("4.12")
     native double ReadFloat();
     native double ReadDouble();
     native string ReadString();
+    native bool EndOfStream();
 
     // Wrappers
     native Name ReadName();
-    native double ReadMapUnit(); // 16.16 long -> double
-    native double ReadAngle(); // BAM long -> double
+    native double ReadMapUnit(); // 16.16 int -> double
+    native double ReadAngle(); // BAM int -> double
     native Vector2 ReadVector2();
     native Vector3 ReadVector3();
     native Vector4 ReadVector4();
@@ -44,8 +45,8 @@ class NetworkBuffer native version("4.12")
 
     // Wrappers
     native void AddName(Name value);
-    native void AddMapUnit(double value); // double -> 16.16 long
-    native void AddAngle(double value); // double -> BAM long
+    native void AddMapUnit(double value); // double -> 16.16 int
+    native void AddAngle(double value); // double -> BAM int
     native void AddVector2(Vector2 value);
     native void AddVector3(Vector3 value);
     native void AddVector4(Vector4 value);

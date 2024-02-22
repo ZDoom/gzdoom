@@ -418,7 +418,8 @@ void DFsScript::ParseInclude(FLevelLocals *Level, char *lumpname)
     }
 	
 	int lumplen=fileSystem.FileLength(lumpnum);
-	TArray<char> lump(lumplen + 10);
+	TArray<char> lump;
+	lump.Resize(lumplen + 10);
 	fileSystem.ReadFile(lumpnum,lump.Data());
 	
 	lump[lumplen]=0;

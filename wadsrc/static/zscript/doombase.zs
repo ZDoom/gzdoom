@@ -556,7 +556,7 @@ struct LevelLocals native
 	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
 
 	native bool FindPath(Actor chaser, Actor target, PathNode startnode = null, PathNode goalnode = null);
-	native void HandlePathNode(PathNode node, bool add);
+	native void HandlePathNode(PathNode node, bool add); // This is only here because there's no other way to register the node privately.
 }
 
 // a few values of this need to be readable by the play code.

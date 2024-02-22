@@ -38,7 +38,10 @@
 #include <algorithm>
 #include <assert.h>
 #include <string.h>
+#include "printf.h"
 #include "files_internal.h"
+
+#include <cerrno>
 
 namespace FileSys {
 	
@@ -53,7 +56,9 @@ FILE *myfopen(const char *filename, const char *flags)
 #else
 	auto widename = toWide(filename);
 	auto wideflags = toWide(flags);
-	return _wfopen(widename.c_str(), wideflags.c_str());
+	FILE * f = _wfopen(widename.c_str(), wideflags.c_str());
+	if(!f && errno == EMFILE) I_FatalError("Too many file descriptors open");
+	return f;
 #endif
 }
 

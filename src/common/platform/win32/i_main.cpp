@@ -41,6 +41,8 @@
 #include <commctrl.h>
 #include <richedit.h>
 
+#include <cstdio>
+
 #include <processenv.h>
 #include <shellapi.h>
 #include <VersionHelpers.h>
@@ -147,6 +149,8 @@ int DoMain (HINSTANCE hInstance)
 	RECT cRect;
 	TIMECAPS tc;
 	DEVMODE displaysettings;
+
+	_setmaxstdio(8192);
 
 	// Do not use the multibyte __argv here because we want UTF-8 arguments
 	// and those can only be done by converting the Unicode variants.

@@ -318,13 +318,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMeleeRange, P_CheckMeleeRange)
 //
 //=============================================================================
 
-static int P_CheckMissileRange (AActor *actor)
+static int DoCheckMissileRange (AActor *actor, int &sight)
 {
 	double dist;
 		
 	if ((actor->Sector->Flags & SECF_NOATTACK)) return false;
 
-	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
+	sight = P_CheckSight(actor, actor->target, SF_SEEPASTBLOCKEVERYTHING);
+	if (!sight)
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -378,6 +379,12 @@ static int P_CheckMissileRange (AActor *actor)
 
 	int mmc = int(actor->MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= min(int(dist), mmc);
+}
+
+static int P_CheckMissileRange(AActor* actor)
+{
+	int n = -1;
+	return DoCheckMissileRange(actor, n);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMissileRange, P_CheckMissileRange)
@@ -2407,6 +2414,7 @@ nosee:
 
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
+	int sight = -1;
 	if (actor->flags5 & MF5_INCONVERSATION)
 		return;
 
@@ -2651,47 +2659,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 	}
 
-	if (actor->target && actor->CanPathfind())
-	{
-		if (actor->goal && !(actor->goal->flags & MF_AMBUSH) && actor->goal->IsKindOf(NAME_PathNode))
-		{
-			AActor* temp = actor->target;
-			actor->target = actor->goal;
-			bool reached = (P_CheckMeleeRange(actor));
-			actor->target = temp;
-
-			if (reached)
-			{
-				actor->CallReachedNode(actor->goal);
-				/*
-				AActor* next = nullptr;
-				if (!(actor->flags9 & MF9_KEEPPATH) && 
-					P_CheckSight(actor, actor->target, SF_IGNOREWATERBOUNDARY | SF_IGNOREVISIBILITY))
-					actor->Path.Clear();
-				else
-				{
-					unsigned int index = actor->Path.Find(actor->goal);
-					while (++index < actor->Path.Size() - 1)
-					{
-						next = actor->Path[index];
-						if (next && next != actor->goal)
-							break;
-					}
-					if (!next)	actor->ClearPath();
-					else		actor->goal = next;
-				}
-				*/
-			}
-		}
-		if (!actor->goal)
-		{
-			if (actor->Path.Size() > 0 || actor->Level->FindPath(actor, actor->target))
-				actor->goal = actor->Path[0];
-		}
-	}
-
 	// [RH] Scared monsters attack less frequently
-	if (((actor->target->player == NULL ||
+	if (((actor->target->player == nullptr ||
 		!((actor->target->player->cheats & CF_FRIGHTENING) || (actor->target->flags8 & MF8_FRIGHTENING))) &&
 		!(actor->flags4 & MF4_FRIGHTENED)) ||
 		pr_scaredycat() < 43)
@@ -2708,17 +2677,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		
 		// check for missile attack
-		if (missilestate)
+		if (missilestate && (actor->isFast() || actor->movecount < 1) && DoCheckMissileRange(actor, sight))
 		{
-			if (!actor->isFast() && actor->movecount)
-			{
-				goto nomissile;
-			}
-			
-			if (!P_CheckMissileRange (actor))
-				goto nomissile;
-			
-			actor->SetState (missilestate);
+			actor->SetState(missilestate);
 			actor->flags |= MF_JUSTATTACKED;
 			actor->flags4 |= MF4_INCOMBAT;
 			actor->flags7 &= ~MF7_INCHASE;
@@ -2751,6 +2712,39 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			actor->ClearPath();
 			return; 	// got a new target
 		}
+	}
+
+	if (!dontmove && actor->target && actor->CanPathfind())
+	{
+		// Try to get sight checks from missile states if they have any, saving time.
+		if (!(actor->flags9 & MF9_KEEPPATH))
+		{
+			if (sight < 0)
+				sight = P_CheckSight(actor, actor->target, SF_SEEPASTBLOCKEVERYTHING);
+		}
+		else sight = 0;
+			
+		if (sight == 0)
+		{
+			static const PClass* nodeCls = PClass::FindClass(NAME_PathNode);
+			if (actor->goal && !(actor->goal->flags & MF_AMBUSH) && nodeCls->IsAncestorOf(actor->goal->GetClass()))
+			{
+				AActor* temp = actor->target;
+				actor->target = actor->goal;
+				bool reached = (P_CheckMeleeRange(actor));
+				actor->target = temp;
+
+				if (reached)
+					actor->CallReachedNode(actor->goal);
+			
+			}
+			if (!actor->goal)
+			{
+				if (actor->Path.Size() > 0 || actor->Level->FindPath(actor, actor->target))
+					actor->goal = actor->Path[0];
+			}
+		}
+		else actor->ClearPath();
 	}
 
 	//

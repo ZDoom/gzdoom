@@ -669,7 +669,7 @@ PClass *PClass::FindClassTentative(FName name)
 //
 //==========================================================================
 
-int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType)
+int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType, bool ignorePointerReadOnly)
 {
 	auto proto = variant->Proto;
 	for (unsigned i = 0; i < Virtuals.Size(); i++)
@@ -689,8 +689,22 @@ int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction 
 			{
 				if (proto->ArgumentTypes[a] != vproto->ArgumentTypes[a])
 				{
-					fail = true;
-					break;
+					if(ignorePointerReadOnly && proto->ArgumentTypes[a]->isPointer() && vproto->ArgumentTypes[a]->isPointer())
+					{
+						PPointer *ppa = proto->ArgumentTypes[a]->toPointer();
+						PPointer *ppb = vproto->ArgumentTypes[a]->toPointer();
+
+						if(ppa->PointedType != ppb->PointedType)
+						{
+							fail = true;
+							break;
+						}
+					}
+					else
+					{
+						fail = true;
+						break;
+					}
 				}
 			}
 			if (fail) continue;

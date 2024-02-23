@@ -291,29 +291,31 @@ bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 		if (!forcompare && fromtype->IsConst && !totype->IsConst) return false;
 		// A type is always compatible to itself.
 		if (fromtype == totype) return true;
-		// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
 		if (source->isObjectPointer() && dest->isObjectPointer())
-		{
+		{	// Pointers to different types are only compatible if both point to an object and the source type is a child of the destination type.
 			auto fromcls = static_cast<PObjectPointer*>(source)->PointedClass();
 			auto tocls = static_cast<PObjectPointer*>(dest)->PointedClass();
 			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
 			return (fromcls->IsDescendantOf(tocls));
 		}
-		// The same rules apply to class pointers. A child type can be assigned to a variable of a parent type.
-		if (source->isClassPointer() && dest->isClassPointer())
-		{
+		else if (source->isClassPointer() && dest->isClassPointer())
+		{	// The same rules apply to class pointers. A child type can be assigned to a variable of a parent type.
 			auto fromcls = static_cast<PClassPointer*>(source)->ClassRestriction;
 			auto tocls = static_cast<PClassPointer*>(dest)->ClassRestriction;
 			if (forcompare && tocls->IsDescendantOf(fromcls)) return true;
 			return (fromcls->IsDescendantOf(tocls));
 		}
-		if(source->isFunctionPointer() && dest->isFunctionPointer())
+		else if(source->isFunctionPointer() && dest->isFunctionPointer())
 		{
 			auto from = static_cast<PFunctionPointer*>(source);
 			auto to = static_cast<PFunctionPointer*>(dest);
 			if(from->PointedType == TypeVoid) return false;
 
 			return to->PointedType == TypeVoid || (AreCompatibleFnPtrTypes((PPrototype *)to->PointedType, (PPrototype *)from->PointedType) && from->ArgFlags == to->ArgFlags && FScopeBarrier::CheckSidesForFunctionPointer(from->Scope, to->Scope));
+		}
+		else if(source->isRealPointer() && dest->isRealPointer())
+		{
+			return fromtype->PointedType == totype->PointedType;
 		}
 	}
 	return false;

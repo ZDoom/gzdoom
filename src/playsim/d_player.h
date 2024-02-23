@@ -458,8 +458,7 @@ public:
 	bool Resurrect();
 
 	// Scaled angle adjustment info. Not for direct manipulation.
-	DRotator angleTargets;
-	DRotator angleAppliedAmounts;
+	DRotator angleOffsetTargets;
 };
 
 // Bookkeeping on players - state.

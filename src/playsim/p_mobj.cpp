@@ -3495,22 +3495,16 @@ void AActor::SetPitch(DAngle p, int fflags)
 	{
 		if (player != nullptr)
 		{
-			const bool mustLerp = !P_NoInterpolation(player, this);
-
-			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
+			if (fflags & SPF_SCALEDNOLERP)
 			{
-				Angles.Pitch = p;
-				player->cheats |= CF_INTERPVIEW;
-			}
-			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
-			{
-				player->angleTargets.Pitch = deltaangle(Angles.Pitch, p);
-				player->angleAppliedAmounts.Pitch = nullAngle;
+				player->angleOffsetTargets.Pitch = deltaangle(Angles.Pitch, p);
 				player->cheats |= CF_SCALEDNOLERP;
 			}
 			else
 			{
 				Angles.Pitch = p;
+				if (fflags & SPF_INTERPOLATE)
+					player->cheats |= CF_INTERPVIEW;
 			}
 		}
 		else
@@ -3527,22 +3521,16 @@ void AActor::SetAngle(DAngle ang, int fflags)
 	{
 		if (player != nullptr)
 		{
-			const bool mustLerp = !P_NoInterpolation(player, this);
-
-			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
+			if (fflags & SPF_SCALEDNOLERP)
 			{
-				Angles.Yaw = ang;
-				player->cheats |= CF_INTERPVIEW;
-			}
-			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
-			{
-				player->angleTargets.Yaw = deltaangle(Angles.Yaw, ang);
-				player->angleAppliedAmounts.Yaw = nullAngle;
+				player->angleOffsetTargets.Yaw = deltaangle(Angles.Yaw, ang);
 				player->cheats |= CF_SCALEDNOLERP;
 			}
 			else
 			{
 				Angles.Yaw = ang;
+				if (fflags & SPF_INTERPOLATE)
+					player->cheats |= CF_INTERPVIEW;
 			}
 		}
 		else
@@ -3559,22 +3547,16 @@ void AActor::SetRoll(DAngle r, int fflags)
 	{
 		if (player != nullptr)
 		{
-			const bool mustLerp = !P_NoInterpolation(player, this);
-
-			if ((fflags & SPF_INTERPOLATE) || ((fflags & SPF_SCALEDNOLERP) && mustLerp))
+			if (fflags & SPF_SCALEDNOLERP)
 			{
-				Angles.Roll = r;
-				player->cheats |= CF_INTERPVIEW;
-			}
-			else if ((fflags & SPF_SCALEDNOLERP) && !mustLerp)
-			{
-				player->angleTargets.Roll = deltaangle(Angles.Roll, r);
-				player->angleAppliedAmounts.Roll = nullAngle;
+				player->angleOffsetTargets.Roll = deltaangle(Angles.Roll, r);
 				player->cheats |= CF_SCALEDNOLERP;
 			}
 			else
 			{
 				Angles.Roll = r;
+				if (fflags & SPF_INTERPOLATE)
+					player->cheats |= CF_INTERPVIEW;
 			}
 		}
 		else

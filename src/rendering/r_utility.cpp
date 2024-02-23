@@ -783,26 +783,12 @@ static double QuakePower(double factor, double intensity, double offset)
 //
 //==========================================================================
 
-static void R_DoActorTickerAngleChanges(player_t* const player, AActor* const actor, const double scale)
+static void R_DoActorTickerAngleChanges(player_t* const player, DRotator& angles, const double scale)
 {
 	for (unsigned i = 0; i < 3; i++)
 	{
-		if (player->angleTargets[i].Sgn())
-		{
-			// Calculate scaled amount of target and add to the accumlation buffer.
-			DAngle addition = player->angleTargets[i] * scale;
-			player->angleAppliedAmounts[i] += addition;
-
-			// Test whether we're now reached/exceeded our target.
-			if (abs(player->angleAppliedAmounts[i]) >= abs(player->angleTargets[i]))
-			{
-				addition -= player->angleAppliedAmounts[i] - player->angleTargets[i];
-				player->angleTargets[i] = player->angleAppliedAmounts[i] = nullAngle;
-			}
-
-			// Apply the scaled addition to the angle.
-			actor->Angles[i] += addition;
-		}
+		if (fabs(player->angleOffsetTargets[i].Degrees()) >= EQUAL_EPSILON)
+			angles[i] += player->angleOffsetTargets[i] * scale;
 	}
 }
 
@@ -841,15 +827,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (viewpoint.camera == NULL)
 	{
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
-	}
-
-	// [MR] Get the input fraction, even if we don't need it this frame. Must run every frame.
-	const auto scaleAdjust = I_GetInputFrac();
-
-	// [MR] Process player angle changes if permitted to do so.
-	if (player && (player->cheats & CF_SCALEDNOLERP) && P_NoInterpolation(player, viewpoint.camera))
-	{
-		R_DoActorTickerAngleChanges(player, viewpoint.camera, scaleAdjust);
 	}
 
 	iview = FindPastViewer (viewpoint.camera);
@@ -972,6 +949,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// [MR] Apply view angles as the viewpoint angles if asked to do so.
 	iview->New.Angles = !(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES) ? viewpoint.camera->Angles : viewpoint.camera->ViewAngles;
 	iview->New.ViewAngles = viewpoint.camera->ViewAngles;
+	// [MR] Process player angle changes if permitted to do so.
+	if (player && (player->cheats & CF_SCALEDNOLERP) && P_NoInterpolation(player, viewpoint.camera))
+		R_DoActorTickerAngleChanges(player, iview->New.Angles, viewpoint.TicFrac);
 
 	if (viewpoint.camera->player != 0)
 	{

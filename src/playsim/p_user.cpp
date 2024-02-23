@@ -1239,6 +1239,17 @@ void P_PlayerThink (player_t *player)
 		I_Error ("No player %td start\n", player - players + 1);
 	}
 
+	for (unsigned int i = 0u; i < 3u; ++i)
+	{
+		if (fabs(player->angleOffsetTargets[i].Degrees()) >= EQUAL_EPSILON)
+		{
+			player->mo->Angles[i] += player->angleOffsetTargets[i];
+			player->mo->PrevAngles[i] = player->mo->Angles[i];
+		}
+
+		player->angleOffsetTargets[i] = nullAngle;
+	}
+
 	if (player->SubtitleCounter > 0)
 	{
 		player->SubtitleCounter--;

@@ -565,7 +565,7 @@ class Actor : Thinker native
 	}
 
 	// This is called when a missile bounces off something.
-	virtual int SpecialBounceHit(Actor bounceMobj, Line bounceLine, SecPlane bouncePlane)
+	virtual int SpecialBounceHit(Actor bounceMobj, Line bounceLine, readonly<SecPlane> bouncePlane)
 	{
 		return MHIT_DEFAULT;
 	}
@@ -847,7 +847,7 @@ class Actor : Thinker native
 	native void PlayPushSound();
 	native bool BounceActor(Actor blocking, bool onTop);
 	native bool BounceWall(Line l = null);
-	native bool BouncePlane(SecPlane plane);
+	native bool BouncePlane(readonly<SecPlane> plane);
 	native void PlayBounceSound(bool onFloor);
 	native bool ReflectOffActor(Actor blocking);
 

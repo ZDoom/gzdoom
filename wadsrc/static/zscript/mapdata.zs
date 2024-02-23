@@ -270,7 +270,7 @@ struct SecPlane native play
 	native clearscope int PointOnSide(Vector3 pos) const;
 	native clearscope double ZatPoint (Vector2 v) const;
 	native clearscope double ZatPointDist(Vector2 v, double dist) const;
-	native clearscope bool isEqual(Secplane other) const;
+	native clearscope bool isEqual(readonly<Secplane> other) const;
 	//native void ChangeHeight(double hdiff);
 	native clearscope double GetChangedHeight(double hdiff) const;
 	native clearscope double HeightDiff(double oldd, double newd = 1e37) const;

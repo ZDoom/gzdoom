@@ -43,7 +43,7 @@ public:
 	void InitializeSpecials(void* addr, void* defaults, TArray<FTypeAndOffset> PClass::* Inits);
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
-	int FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType);
+	int FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType, bool ignorePointerReadOnly);
 	PSymbol *FindSymbol(FName symname, bool searchparents) const;
 	PField *AddField(FName name, PType *type, uint32_t flags, int fileno = 0);
 	void InitializeDefaults();

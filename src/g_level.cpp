@@ -2589,7 +2589,7 @@ static bool FindPathAStar(AActor *chaser, AActor* startnode, AActor* goalnode, T
 
 bool FLevelLocals::FindPath(AActor* chaser, AActor* target, AActor* startNode, AActor* goalNode)
 {
-	if (!chaser || !target)
+	if (!chaser || !target || PathNodes.Size() < 1)
 	{
 		return false;
 	}

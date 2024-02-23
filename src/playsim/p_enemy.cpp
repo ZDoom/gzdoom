@@ -2232,7 +2232,8 @@ DEFINE_ACTION_FUNCTION(AActor, ClearPath)
 
 bool AActor::CanPathfind()
 {
-	if ((!(flags9 & MF9_NOPATHING) && !(Sector->MoreFlags & SECMF_NOPATHING)) &&
+	if (Level->PathNodes.Size() > 0 &&
+		(!(flags9 & MF9_NOPATHING) && !(Sector->MoreFlags & SECMF_NOPATHING)) &&
 		(flags9 & MF9_PATHING || Level->flags3 & LEVEL3_PATHING))
 	{
 		if ((flags6 & MF6_NOFEAR))

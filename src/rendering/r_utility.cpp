@@ -837,12 +837,44 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->otic = nowtic;
 		iview->Old = iview->New;
 	}
+
+	const auto& mainView = r_viewpoint;
+	AActor* const client = players[consoleplayer].mo;
+	const bool matchPlayer = gamestate != GS_TITLELEVEL && viewpoint.camera->player == nullptr && (viewpoint.camera->renderflags2 & RF2_CAMFOLLOWSPLAYER);
+	const bool usePawn = matchPlayer ? mainView.camera != client : false;
 	//==============================================================================================
 	// Handles offsetting the camera with ChaseCam and/or viewpos.
 	{
 		AActor *mo = viewpoint.camera;
 		DViewPosition *VP = mo->ViewPos;
-		const DVector3 orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
+		DVector3 orig;
+		if (matchPlayer)
+		{
+			if (usePawn)
+			{
+				orig = DVector3(client->Pos().XY(), client->player->viewz);
+				const DViewPosition* const pawnVP = client->ViewPos;
+				if (pawnVP != nullptr)
+				{
+					// Avoid portal checking for now until the need for more accuracy arises.
+					if (pawnVP->Flags & VPSF_ABSOLUTEPOS)
+						orig = pawnVP->Offset;
+					else if (pawnVP->Flags & VPSF_ABSOLUTEOFFSET)
+						orig += pawnVP->Offset;
+					else
+						orig += DQuaternion::FromAngles(client->Angles.Yaw, client->Angles.Pitch, client->Angles.Roll) * pawnVP->Offset;
+				}
+			}
+			else
+			{
+				orig = mainView.Pos;
+			}
+		}
+		else
+		{
+			orig = { mo->Pos().XY(), mo->player ? mo->player->viewz : mo->Z() + mo->GetCameraHeight() };
+		}
+
 		viewpoint.ActorPos = orig;
 
 		bool DefaultDraw = true;
@@ -902,19 +934,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 					// [MC] Do NOT handle portals here! Trace must have the unportaled (absolute) position to
 					// get the correct angle and distance. Trace automatically handles portals by itself.
 					// Note: viewpos does not include view angles, and ViewZ/CameraHeight are applied before this.
-
-					DAngle yaw = mo->Angles.Yaw;
-					DAngle pitch = mo->Angles.Pitch;
-					DAngle roll = mo->Angles.Roll;
-					DVector3 relx, rely, relz, Off = VP->Offset;
-					DMatrix3x3 rot =
-						DMatrix3x3(DVector3(0., 0., 1.), yaw.Cos(), yaw.Sin()) *
-						DMatrix3x3(DVector3(0., 1., 0.), pitch.Cos(), pitch.Sin()) *
-						DMatrix3x3(DVector3(1., 0., 0.), roll.Cos(), roll.Sin());
-					relx = DVector3(1., 0., 0.)*rot;
-					rely = DVector3(0., 1., 0.)*rot;
-					relz = DVector3(0., 0., 1.)*rot;
-					next += relx * Off.X + rely * Off.Y + relz * Off.Z;
+					next += DQuaternion::FromAngles(mo->Angles.Yaw, mo->Angles.Pitch, mo->Angles.Roll) * VP->Offset;
 				}
 
 				if (next != orig)
@@ -947,11 +967,19 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	}
 
 	// [MR] Apply view angles as the viewpoint angles if asked to do so.
-	iview->New.Angles = !(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES) ? viewpoint.camera->Angles : viewpoint.camera->ViewAngles;
+	if (matchPlayer)
+		iview->New.Angles = usePawn ? (client->flags8 & MF8_ABSVIEWANGLES ? client->ViewAngles : client->Angles + client->ViewAngles) : mainView.Angles;
+	else
+		iview->New.Angles = !(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES) ? viewpoint.camera->Angles : viewpoint.camera->ViewAngles;
+
 	iview->New.ViewAngles = viewpoint.camera->ViewAngles;
 	// [MR] Process player angle changes if permitted to do so.
 	if (player && (player->cheats & CF_SCALEDNOLERP) && P_NoInterpolation(player, viewpoint.camera))
 		R_DoActorTickerAngleChanges(player, iview->New.Angles, viewpoint.TicFrac);
+
+	// If currently tracking the player's real view, don't do any sort of interpolating.
+	if (matchPlayer && !usePawn)
+		viewpoint.camera->renderflags |= RF_NOINTERPOLATEVIEW;
 
 	if (viewpoint.camera->player != 0)
 	{

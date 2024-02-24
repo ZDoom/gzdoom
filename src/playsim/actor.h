@@ -500,6 +500,7 @@ enum ActorRenderFlag2
 	RF2_BILLBOARDNOFACECAMERA	= 0x0008,	// Sprite billboard face camera angle (override gl_billboard_faces_camera)
 	RF2_FLIPSPRITEOFFSETX		= 0x0010,
 	RF2_FLIPSPRITEOFFSETY		= 0x0020,
+	RF2_CAMFOLLOWSPLAYER		= 0x0040,	// Matches the cam's base position and angles to the main viewpoint.
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

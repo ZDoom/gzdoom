@@ -5626,7 +5626,7 @@ static ETraceStatus VPos_CheckPortal(FTraceResults &res, void *userdata)
 }
 
 // [MC] Used for ViewPos. Uses code borrowed from P_AimCamera.
-void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, DViewPosition *VP, FRenderViewpoint *view)
+void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&CameraSector, bool &unlinked, FRenderViewpoint *view)
 {
 	FTraceResults trace;
 	ViewPosPortal pc;
@@ -5642,7 +5642,6 @@ void P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &campos, sector_t *&Cam
 		campos = trace.HitPos - trace.HitVector * 1 / 256.;
 	
 
-	if (pc.counter > 2) view->noviewer = true;
 	CameraSector = trace.Sector;
 	unlinked = trace.unlinked;
 }

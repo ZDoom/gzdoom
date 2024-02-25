@@ -551,8 +551,10 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 	}
 	if (P_NoInterpolation(player, viewpoint.camera) &&
-		iview->New.Pos.X == viewpoint.camera->X() &&
-		iview->New.Pos.Y == viewpoint.camera->Y())
+		// TODO: This is only temporarily disabled until R_SetupFrame can be reworked to take up-to-date angles into account.
+		!(player->cheats & CF_CHASECAM) && (!r_deathcamera || viewpoint.camera->health > 0) &&
+		iview->New.Pos.X == viewpoint.ActorPos.X &&
+		iview->New.Pos.Y == viewpoint.ActorPos.Y)
 	{
 		viewpoint.Angles.Yaw = (nviewangle + DAngle::fromBam(LocalViewAngle)).Normalized180();
 		DAngle delta = player->centering ? nullAngle : DAngle::fromBam(LocalViewPitch);
@@ -896,16 +898,12 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			// it's probably best to just reset the interpolation for this move.
 			// Note that this can still cause problems with unusually linked portals
 			if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
-			{
-				iview->otic = nowtic;
-				iview->Old = iview->New;
-				r_NoInterpolate = true;
-			}
+				viewpoint.camera->renderflags |= RF_NOINTERPOLATEVIEW;
+
 			viewpoint.ActorPos = campos;
 		}
 		else if (VP) // No chase/death cam and player is alive, wants viewpos.
 		{
-			viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(iview->New.Pos.XY())->sector;
 			viewpoint.showviewer = false;
 
 			// [MC] Ignores all portal portal transitions since it's meant to be absolute.
@@ -914,9 +912,14 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			if (VP->Flags & VPSF_ABSOLUTEPOS)
 			{
 				iview->New.Pos = VP->Offset;
+				DefaultDraw = false;
+				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(iview->New.Pos.XY())->sector;
+				viewpoint.showviewer = viewpoint.NoPortalPath = false;
+				viewpoint.noviewer = true;
 			}
 			else
 			{
+				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(iview->New.Pos.XY())->sector;
 				DVector3 next = orig;
 
 				if (VP->isZero())
@@ -944,18 +947,17 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 					// Also, disable the portal interpolation pathing entirely when using the viewpos feature.
 					// Interpolation still happens with everything else though and seems to work fine.
 					DefaultDraw = false;
+					viewpoint.noviewer = true;
 					viewpoint.NoPortalPath = true;
-					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, VP, &viewpoint);
+					P_AdjustViewPos(mo, orig, next, viewpoint.sector, unlinked, &viewpoint);
+					iview->New.Pos = next;
 					
 					if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
-					{
-						iview->otic = nowtic;
-						iview->Old = iview->New;
-						r_NoInterpolate = true;
-					}
-					iview->New.Pos = next;
+						viewpoint.camera->renderflags |= RF_NOINTERPOLATEVIEW;
 				}
 			}
+
+			viewpoint.ActorPos = iview->New.Pos;
 		}
 		
 		if (DefaultDraw)

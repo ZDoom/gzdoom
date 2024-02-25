@@ -2536,8 +2536,8 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 
 
 	// Check for crossed portals
-	bool portalcrossed;
-	portalcrossed = false;
+	bool portalcrossed, nodecall;
+	nodecall = portalcrossed = false;
 
 	while (true)
 	{
@@ -2582,6 +2582,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				thing->Prev += port->mDisplacement;
 				thing->LinkToWorld(&ctx);
 				P_FindFloorCeiling(thing);
+				thing->ClearPath();
 				portalcrossed = true;
 				tm.portalstep = false;
 				tm.pos += port->mDisplacement;
@@ -2611,9 +2612,9 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				P_TranslatePortalVXVY(ld, thing->Vel.X, thing->Vel.Y);
 				P_TranslatePortalAngle(ld, thing->Angles.Yaw);
 				thing->LinkToWorld(&ctx);
-				P_FindFloorCeiling(thing);
+				P_FindFloorCeiling(thing); 
+				thing->ClearPath();
 				thing->ClearInterpolation();
-				thing->CallReachedNode(thing->goal);
 				portalcrossed = true;
 				tm.portalstep = false;
 			}
@@ -2770,7 +2771,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		thing->Sector = thing->Level->PointInSector(thing->Pos());
 		thing->PrevPortalGroup = thing->Sector->PortalGroup;
 		thing->LinkToWorld(&ctx);
-
+		thing->ClearPath();
 		P_FindFloorCeiling(thing);
 	}
 

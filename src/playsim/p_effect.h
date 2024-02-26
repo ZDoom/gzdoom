@@ -102,9 +102,6 @@ void P_FindParticleSubsectors (FLevelLocals *Level);
 
 class AActor;
 
-particle_t *JitterParticle (FLevelLocals *Level, int ttl);
-particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift);
-
 void P_UpdateReplacedParticles(FLevelLocals *Level);
 void P_ThinkParticles(FLevelLocals *Level);
 

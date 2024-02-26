@@ -34,12 +34,6 @@
 ** more useful.
 */
 
-#if __has_include(<execution>) && !( __linux__ || __APPLE__  )
-
-	#include <execution>
-
-#endif
-
 #include "doomtype.h"
 #include "doomstat.h"
 
@@ -212,6 +206,7 @@ void P_ReInitParticles (FLevelLocals *Level, int num)
 
 	Level->ParticleIndices.Resize(MaxParticles);
 	Level->Particles.Resize(MaxParticles);
+
 	for(int i = 0; i < MaxParticles; i++)
 	{
 		Level->ParticleIndices[i] = i;
@@ -277,11 +272,9 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 		return;
 	}
 
-	particle_t * pp = Level->Particles.Data();
-
 	for(uint32_t i = 0; i < Level->NumParticles; i++)
 	{
-		particle_t * p = pp + Level->ParticleIndices[i];
+		particle_t * p = Level->Particles.Data(Level->ParticleIndices[i]);
 		assert(p->subsector);
 		p->subsector->particles.Push(p);
 	}
@@ -403,32 +396,39 @@ void P_UpdateReplacedParticles(FLevelLocals *Level)
 	P_FindParticleSubsectors(Level);
 }
 
+
+
 void P_ThinkParticles(FLevelLocals *Level)
 {
 	uint64_t startNs = I_nsTime();
-	uint32_t * newEnd;
 	
 	ParticleCount = Level->NumParticles;
 
-	particle_t * p = Level->Particles.Data();
-
-	auto proc = [Level, p](uint32_t i)
+	if(ParticleCount > 0)
 	{
-		return P_ThinkParticle(Level, *(p + i));
-	};
+		particle_t * particles = Level->Particles.Data();
 
-#if __has_include(<execution>) && !( __linux__ || __APPLE__  )
-	if(r_particles_multithreaded)
-	{
-		newEnd = std::remove_if(std::execution::par_unseq, Level->ParticleIndices.Data(), Level->ParticleIndices.Data(Level->NumParticles), proc);
+		uint32_t * start = Level->ParticleIndices.Data();
+		uint32_t * newEnd = Level->ParticleIndices.Data(Level->NumParticles - 1);
+
+		if(r_particles_multithreaded)
+		{
+			//TODO
+		}
+		//else
+		{
+			for(uint32_t * i = newEnd; i >= start; i--)
+			{
+				if(P_ThinkParticle(Level, *(particles + *i)))
+				{
+					std::swap(*newEnd, *i);
+					newEnd--;
+				}
+			}
+		}
+
+		Level->NumParticles = (newEnd + 1) - Level->ParticleIndices.Data();
 	}
-	else
-#endif
-	{
-		newEnd = std::remove_if(Level->ParticleIndices.Data(), Level->ParticleIndices.Data(Level->NumParticles), proc);
-	}
-
-	Level->NumParticles = reinterpret_cast<uintptr_t>(newEnd) - reinterpret_cast<uintptr_t>(Level->ParticleIndices.Data());
 
 	ParticleThinkMsAvg[ticAvgPos] = ParticleThinkMs;
 	ParticleReplaceCountAvg[ticAvgPos] = ParticleReplaceCount;
@@ -476,10 +476,7 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 //
 // Creates a particle with "jitter"
 //
-particle_t *JitterParticle (FLevelLocals *Level, int ttl)
-{
-	return JitterParticle (Level, ttl, 1.0);
-}
+
 // [XA] Added "drift speed" multiplier setting for enhanced railgun stuffs.
 particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift)
 {
@@ -502,6 +499,11 @@ particle_t *JitterParticle (FLevelLocals *Level, int ttl, double drift)
 		particle->fadestep = FADEFROMTTL(ttl);
 	}
 	return particle;
+}
+
+particle_t *JitterParticle (FLevelLocals *Level, int ttl)
+{
+	return JitterParticle (Level, ttl, 1.0);
 }
 
 static void MakeFountain (AActor *actor, int color1, int color2)

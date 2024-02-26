@@ -309,7 +309,6 @@ public:
     void AddMirrorSurface(HWWall *w);
 	void AddFlat(HWFlat *flat, bool fog);
 	void AddSprite(HWSprite *sprite, bool translucent);
-	void AddSpriteDirect(HWSprite *sprite, bool translucent); // directly add the pointer to the draw list, without allocating and copying it
 
 
     HWDecal *AddDecal(bool onmirror);

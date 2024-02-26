@@ -660,7 +660,6 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	class HWSprite *	ParticleSprites;
 	TArray<particle_t>	Particles;
 	TArray<uint32_t>	ParticleIndices;
 	uint32_t NumParticles = 0;

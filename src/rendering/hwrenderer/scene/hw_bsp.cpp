@@ -620,8 +620,8 @@ void HWDrawInfo::RenderParticles(subsector_t *sub, sector_t *front)
 			int clipres = mClipPortal->ClipPoint(p->Pos.XY());
 			if (clipres == PClip_InFront) continue;
 		}
-
-		Level->ParticleSprites[i].ProcessParticle(this, &Level->Particles[i], front, nullptr);
+		HWSprite sprite;
+		sprite.ProcessParticle(this, &Level->Particles[i], front, nullptr);
 	}
 	SetupSprite.Unclock();
 }

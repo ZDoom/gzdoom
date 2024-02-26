@@ -201,9 +201,6 @@ void P_ReInitParticles (FLevelLocals *Level, int num)
 {
 	MaxParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
 
-	delete[] Level->ParticleSprites;
-	Level->ParticleSprites = new HWSprite[MaxParticles];
-
 	Level->ParticleIndices.Resize(MaxParticles);
 	Level->Particles.Resize(MaxParticles);
 

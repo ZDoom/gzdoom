@@ -157,19 +157,3 @@ void HWDrawInfo::AddSprite(HWSprite *sprite, bool translucent)
 	*newsprt = *sprite;
 }
 
-void HWDrawInfo::AddSpriteDirect(HWSprite *sprite, bool translucent)
-{
-	int list;
-	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.
-	if (translucent || sprite->actor == nullptr || (!sprite->modelframe && (sprite->actor->renderflags & RF_SPRITETYPEMASK) != RF_WALLSPRITE))
-	{
-		list = GLDL_TRANSLUCENT;
-	}
-	else
-	{
-		list = GLDL_MODELS;
-	}
-
-	drawlists[list].AddSprite(sprite);
-}
-

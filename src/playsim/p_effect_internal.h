@@ -25,6 +25,7 @@ enum EVisualThinkerFlags
 class DVisualThinker : public DThinker
 {
 	DECLARE_CLASS(DVisualThinker, DThinker);
+	void UpdateSector(subsector_t * newSubsector);
 public:
 	DVector3		Prev;
 	DVector2		Scale,
@@ -55,6 +56,7 @@ public:
 
 	void Tick() override;
 	void UpdateSpriteInfo();
+	void UpdateSector();
 	void Serialize(FSerializer& arc) override;
 
 	float GetOffset(bool y) const;

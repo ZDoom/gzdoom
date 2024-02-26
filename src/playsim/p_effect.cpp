@@ -197,9 +197,17 @@ inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
 // [RH] Particle functions
 //
 
+static uint32_t * particleBuffer1;
+static uint32_t * particleBuffer2;
+
 void P_ReInitParticles (FLevelLocals *Level, int num)
 {
 	MaxParticles = clamp<int>(num, ABSOLUTE_MIN_PARTICLES, ABSOLUTE_MAX_PARTICLES);
+
+	if(particleBuffer1) delete[] particleBuffer1;
+	if(particleBuffer2) delete[] particleBuffer2;
+	particleBuffer1 = new uint32_t[MaxParticles];
+	particleBuffer2 = new uint32_t[MaxParticles];
 
 	Level->ParticleIndices.Resize(MaxParticles);
 	Level->Particles.Resize(MaxParticles);
@@ -242,28 +250,13 @@ void P_ClearParticles (FLevelLocals *Level)
 // Group particles by subsectors. Because particles are always
 // in motion, there is little benefit to caching this information
 // from one frame to the next.
-// [MC] VisualThinkers hitches a ride here
 
 void P_FindParticleSubsectors (FLevelLocals *Level)
 {
-	// [MC] Hitch a ride on particle subsectors since VisualThinkers are effectively using the same kind of system.
 	for(uint32_t i = 0; i < Level->subsectors.Size(); i++)
 	{
-		Level->subsectors[i].sprites.Clear();
 		Level->subsectors[i].particles.Clear();
 	}
-	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
-	// At least it's on its own statnum for maximum efficiency.
-	auto it = Level->GetThinkerIterator<DVisualThinker>(NAME_None, STAT_VISUALTHINKER);
-	DVisualThinker* sp;
-	while (sp = it.Next())
-	{
-		if (!sp->PT.subsector) sp->PT.subsector = Level->PointInRenderSubsector(sp->PT.Pos);
-
-		sp->PT.subsector->sprites.Push(sp);
-	}
-	// End VisualThinker hitching. Now onto the particles. 
-
 	if (!r_particles)
 	{
 		return;
@@ -392,8 +385,6 @@ void P_UpdateReplacedParticles(FLevelLocals *Level)
 
 	P_FindParticleSubsectors(Level);
 }
-
-
 
 void P_ThinkParticles(FLevelLocals *Level)
 {
@@ -553,7 +544,8 @@ void P_RunEffect (AActor *actor, int effects)
 		double speed;
 
 		particle = JitterParticle (actor->Level, 3 + (M_Random() & 31));
-		if (particle) {
+		if (particle)
+		{
 			double pathdist = M_Random() / 256.;
 			DVector3 pos = actor->Vec3Offset(
 				backx - actor->Vel.X * pathdist,
@@ -571,7 +563,8 @@ void P_RunEffect (AActor *actor, int effects)
 		}
 		for (i = 6; i; i--) {
 			particle_t *particle = JitterParticle (actor->Level, 3 + (M_Random() & 31));
-			if (particle) {
+			if (particle)
+			{
 				double pathdist = M_Random() / 256.;
 				DVector3 pos = actor->Vec3Offset(
 					backx - actor->Vel.X * pathdist,
@@ -1124,8 +1117,41 @@ DVisualThinker::DVisualThinker()
 
 void DVisualThinker::OnDestroy()
 {
+	if(PT.subsector)
+	{
+		PT.subsector->sprites.Delete(PT.subsector->sprites.Find(this));
+	}
 	PT.alpha = 0.0; // stops all rendering.
 	Super::OnDestroy();
+}
+
+void DVisualThinker::UpdateSector(subsector_t * newSubsector)
+{
+	assert(newSubsector);
+	if(PT.subsector != newSubsector)
+	{
+		if(PT.subsector) PT.subsector->sprites.Delete(PT.subsector->sprites.Find(this));
+		PT.subsector = newSubsector;
+		PT.subsector->sprites.Push(this);
+		cursector = newSubsector->sector;
+	}
+}
+
+void DVisualThinker::UpdateSector()
+{
+	UpdateSector(Level->PointInRenderSubsector(PT.Pos));
+}
+
+static void UpdateSector(DVisualThinker * self)
+{
+	self->UpdateSector();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, UpdateSector, UpdateSector)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	self->UpdateSector();
+	return 0;
 }
 
 DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* type)
@@ -1171,6 +1197,18 @@ void DVisualThinker::UpdateSpriteInfo()
 	}
 }
 
+static void UpdateSpriteInfo(DVisualThinker * self)
+{
+	self->UpdateSpriteInfo();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, UpdateSpriteInfo, UpdateSpriteInfo)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	self->UpdateSpriteInfo();
+	return 0;
+}
+
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.
 void DVisualThinker::Tick()
 {
@@ -1187,8 +1225,7 @@ void DVisualThinker::Tick()
 
 	if (isFrozen())
 	{	// needed here because it won't retroactively update like actors do.
-		PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-		cursector = PT.subsector->sector;
+		UpdateSector();
 		UpdateSpriteInfo(); 
 		return;
 	}
@@ -1200,27 +1237,26 @@ void DVisualThinker::Tick()
 	PT.Pos.Y = newxy.Y;
 	PT.Pos.Z += PT.Vel.Z;
 
-	PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-	cursector = PT.subsector->sector;
+	subsector_t * ss = Level->PointInRenderSubsector(PT.Pos);
+
 	// Handle crossing a sector portal.
-	if (!cursector->PortalBlocksMovement(sector_t::ceiling))
+	if (!ss->sector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		if (PT.Pos.Z > cursector->GetPortalPlaneZ(sector_t::ceiling))
+		if (PT.Pos.Z > ss->sector->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			PT.Pos += cursector->GetPortalDisplacement(sector_t::ceiling);
-			PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-			cursector = PT.subsector->sector;
+			PT.Pos += ss->sector->GetPortalDisplacement(sector_t::ceiling);
+			ss = Level->PointInRenderSubsector(PT.Pos);
 		}
 	}
-	else if (!cursector->PortalBlocksMovement(sector_t::floor))
+	else if (!ss->sector->PortalBlocksMovement(sector_t::floor))
 	{
-		if (PT.Pos.Z < cursector->GetPortalPlaneZ(sector_t::floor))
+		if (PT.Pos.Z < ss->sector->GetPortalPlaneZ(sector_t::floor))
 		{
-			PT.Pos += cursector->GetPortalDisplacement(sector_t::floor);
-			PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-			cursector = PT.subsector->sector;
+			PT.Pos += ss->sector->GetPortalDisplacement(sector_t::floor);
+			ss = Level->PointInRenderSubsector(PT.Pos);
 		}
 	}
+	UpdateSector(ss);
 	UpdateSpriteInfo();
 }
 
@@ -1366,7 +1402,7 @@ DEFINE_FIELD_NAMED(DVisualThinker, PT.Vel, Vel);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.Roll, Roll);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.alpha, Alpha);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.texture, Texture);
-DEFINE_FIELD_NAMED(DVisualThinker, PT.flags, ParticleFlags);
+DEFINE_FIELD_NAMED(DVisualThinker, PT.flags, Flags);
 DEFINE_FIELD_NAMED(DVisualThinker, flags, VisualThinkerFlags);
 
 DEFINE_FIELD(DVisualThinker, Prev);

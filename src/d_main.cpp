@@ -3107,7 +3107,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		V_InitScreenSize();
 		// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
 		V_InitScreen();
-		V_Init2();
 	}
 	SavegameFolder = iwad_info->Autoname;
 	gameinfo.gametype = iwad_info->gametype;
@@ -3243,6 +3242,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		delete exec;
 		exec = NULL;
 	}
+
+	if (!restart)
+		V_Init2();
 
 	// [RH] Initialize localizable strings. 
 	GStrings.LoadStrings(fileSystem, language);

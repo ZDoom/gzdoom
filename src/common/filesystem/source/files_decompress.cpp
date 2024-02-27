@@ -985,6 +985,7 @@ bool OpenDecompressor(FileReader& self, FileReader &parent, FileReader::Size len
 			// read everything into a MemoryArrayReader.
 			FileData data(nullptr, length);
 			fr->Read(data.writable(), length);
+			delete fr;
 			fr = new MemoryArrayReader(data);
 		}
 		else if ((flags & DCF_SEEKABLE))

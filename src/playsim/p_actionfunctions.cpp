@@ -1691,7 +1691,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
 	PARAM_FLOAT	(rollacc)
 
 	startalpha = clamp(startalpha, 0., 1.);
-	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
+	fadestep = clamp(fadestep, -1.0, 1.0);
+
 	size = fabs(size);
 	if (lifetime != 0)
 	{

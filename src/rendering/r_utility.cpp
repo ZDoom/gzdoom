@@ -902,7 +902,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 			viewpoint.ActorPos = campos;
 		}
-		else if (VP) // No chase/death cam and player is alive, wants viewpos.
+		else if (VP && !VP->isZero()) // No chase/death cam and player is alive, wants viewpos.
 		{
 			viewpoint.showviewer = false;
 
@@ -919,15 +919,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			}
 			else
 			{
-				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(iview->New.Pos.XY())->sector;
+				viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(orig)->sector;
 				DVector3 next = orig;
 
-				if (VP->isZero())
-				{
-					// Since viewpos isn't being used, it's safe to enable path interpolation
-					viewpoint.NoPortalPath = false;
-				}
-				else if (VP->Flags & VPSF_ABSOLUTEOFFSET)
+				if (VP->Flags & VPSF_ABSOLUTEOFFSET)
 				{
 					// No relativity added from angles.
 					next += VP->Offset;

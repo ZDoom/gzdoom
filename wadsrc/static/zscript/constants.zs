@@ -1493,3 +1493,13 @@ enum EModelFlags
 	MDL_CORRECTPIXELSTRETCH			= 1<<13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
 	MDL_FORCECULLBACKFACES			= 1<<14,
 };
+
+enum EVisualThinkerFlags
+{
+	VTF_FlipOffsetX		= 1 << 0,
+	VTF_FlipOffsetY		= 1 << 1,
+	VTF_FlipX			= 1 << 2,
+	VTF_FlipY			= 1 << 3, // flip the sprite on the x/y axis.
+	VTF_DontInterpolate	= 1 << 4, // disable all interpolation
+	VTF_AddLightLevel	= 1 << 5, // adds sector light level to 'LightLevel'
+};

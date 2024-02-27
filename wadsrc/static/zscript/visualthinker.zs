@@ -10,14 +10,11 @@ Class VisualThinker : Thinker native
 							Alpha;
 	native TextureID		Texture;
 	native TranslationID	Translation;
-	native uint16			Flags;
 	native int16			LightLevel;
-	native bool				bFlipOffsetX,
-							bFlipOffsetY,
-							bXFlip,
-							bYFlip,
-							bDontInterpolate,
-							bAddLightLevel;
+	
+	native uint16			Flags;
+	native int				VisualThinkerFlags;
+
 	native Color			scolor;
 
 	native Sector			CurSector; // can be null!
@@ -25,6 +22,9 @@ Class VisualThinker : Thinker native
 	native void SetTranslation(Name trans);
 	native void SetRenderStyle(int mode); // see ERenderStyle
 	native bool IsFrozen();
+
+	native void UpdateSector(); // needs to be called if the thinker is set to a non-ticking statnum and the position is modified (or if Tick is overriden and doesn't call Super.Tick())
+	native void UpdateSpriteInfo(); // needs to be called every time the texture is updated if the thinker uses SPF_LOCAL_ANIM and is set to a non-ticking statnum (or if Tick is overriden and doesn't call Super.Tick())
 
 	static VisualThinker Spawn(Class<VisualThinker> type, TextureID tex, Vector3 pos, Vector3 vel, double alpha = 1.0, int flags = 0,
 						  double roll = 0.0, Vector2 scale = (1,1), Vector2 offset = (0,0), int style = STYLE_Normal, TranslationID trans = 0)
@@ -43,7 +43,9 @@ Class VisualThinker : Thinker native
 			p.Offset = offset;
 			p.SetRenderStyle(style);
 			p.Translation = trans;
-			p.Flags = flags;
+			p.ParticleFlags = flags;
+			p.UpdateSector();
+			p.UpdateSpriteInfo();
 		}
 		return p;
 	}

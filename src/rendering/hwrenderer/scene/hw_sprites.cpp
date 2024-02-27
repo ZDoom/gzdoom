@@ -60,6 +60,8 @@
 #include "hw_renderstate.h"
 #include "quaternion.h"
 
+#include "p_effect_internal.h"
+
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern uint32_t r_renderercaps;
@@ -177,7 +179,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 				state.SetDynLight(out[0], out[1], out[2]);
 			}
 		}
-		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
+		sector_t *cursec = actor ? actor->Sector : particle && particle->subsector ? particle->subsector->sector : nullptr;
 		if (cursec != nullptr)
 		{
 			const PalEntry finalcol = fullbright
@@ -1483,7 +1485,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 			? TexAnim.UpdateStandaloneAnimation(spr->PT.animData, di->Level->maptime + timefrac)
 			: spr->PT.texture, !custom_anim);
 
-	if (spr->bDontInterpolate)
+	if (spr->flags & VTF_DontInterpolate)
 		timefrac = 0.;
 
 	FVector3 interp = spr->InterpolatedPosition(timefrac);
@@ -1507,12 +1509,12 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	auto r = spi.GetSpriteRect();
 	r.Scale(spr->Scale.X, spr->Scale.Y);
 
-	if (spr->bXFlip)	
+	if (spr->flags & VTF_FlipX)
 	{
 		std::swap(ul,ur);
 		r.left = -r.width - r.left;	// mirror the sprite's x-offset
 	}
-	if (spr->bYFlip)	std::swap(vt,vb);
+	if (spr->flags & VTF_FlipY)	std::swap(vt,vb);
 
 	float viewvecX = vp.ViewVector.X;
 	float viewvecY = vp.ViewVector.Y;

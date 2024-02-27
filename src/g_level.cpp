@@ -100,6 +100,8 @@
 
 #include "texturemanager.h"
 
+#include "p_effect_internal.h"
+
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
 FString STAT_EpisodeName();
@@ -2466,3 +2468,14 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
 	ACTION_RETURN_STRING(GStrings.localize(STAT_EpisodeName().GetChars()));
 }
 
+DThinker *FLevelLocals::CreateThinker(PClass *cls, int statnum)
+{
+	DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
+	assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
+	thinker->ObjectFlags |= OF_JustSpawned;
+	if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker))) // [MC] This absolutely must happen for this class!
+		statnum = STAT_VISUALTHINKER;
+	Thinkers.Link(thinker, statnum);
+	thinker->Level = this;
+	return thinker;
+}

@@ -91,6 +91,7 @@ public:
 	HWWall *NewWall();
 	HWFlat *NewFlat();
 	HWSprite *NewSprite();
+	HWSprite *AddSprite(HWSprite *);
 	void Reset();
 	void SortWalls();
 	void SortFlats();

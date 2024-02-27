@@ -178,6 +178,8 @@ void P_Ticker (void)
 			P_UpdateSpecials(Level);
 		}
 
+		P_UpdateReplacedParticles(Level);
+
 		// for par times
 		Level->time++;
 		Level->maptime++;

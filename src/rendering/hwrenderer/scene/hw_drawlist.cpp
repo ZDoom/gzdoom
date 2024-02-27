@@ -792,6 +792,12 @@ HWSprite *HWDrawList::NewSprite()
 	return sprite;
 }
 
+HWSprite *HWDrawList::AddSprite(HWSprite * sprite)
+{
+	drawitems.Push(HWDrawItem(DrawType_SPRITE, sprites.Push(sprite)));
+	return sprite;
+}
+
 //==========================================================================
 //
 //

@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include <deque>
+
 #include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
@@ -422,17 +424,7 @@ public:
 		return true;
 	}
 
-	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
-	{
-		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
-		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
-		thinker->ObjectFlags |= OF_JustSpawned;
-		if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker))) // [MC] This absolutely must happen for this class!
-			statnum = STAT_VISUALTHINKER;
-		Thinkers.Link(thinker, statnum);
-		thinker->Level = this;
-		return thinker;
-	}
+	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT);
 
 	template<typename T, typename... Args>
 	T* CreateThinker(Args&&... args)
@@ -668,11 +660,12 @@ public:
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals
-	uint32_t			OldestParticle; // [MC] Oldest particle for replacing with SPF_REPLACE
-	uint32_t			ActiveParticles;
-	uint32_t			InactiveParticles;
 	TArray<particle_t>	Particles;
-	TArray<uint16_t>	ParticlesInSubsec;
+	TArray<uint32_t>	ParticleIndices;
+	uint32_t NumParticles = 0;
+	uint32_t ParticleReplaceEnd = 0;
+	uint32_t ParticleReplaceCount = 0;
+
 	FThinkerCollection Thinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level

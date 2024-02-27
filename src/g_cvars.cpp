@@ -122,20 +122,20 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE|CVAR_NOINITCALL)
 
 // [BC] Allow the maximum number of particles to be specified by a cvar (so people
 // with lots of nice hardware can have lots of particles!).
-CUSTOM_CVAR(Int, r_maxparticles, 4000, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, r_maxparticles, 40000, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	if (self == 0)
-		self = 4000;
-	else if (self > 65535)
-		self = 65535;
-	else if (self < 100)
-		self = 100;
+		self = 40000;
+	else if (self > ABSOLUTE_MAX_PARTICLES)
+		self = ABSOLUTE_MAX_PARTICLES;
+	else if (self < ABSOLUTE_MIN_PARTICLES)
+		self = ABSOLUTE_MIN_PARTICLES;
 
 	if (gamestate != GS_STARTUP)
 	{
 		for (auto Level : AllLevels())
 		{
-			P_InitParticles(Level);
+			P_ReInitParticles(Level, self);
 		}
 	}
 }

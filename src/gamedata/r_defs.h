@@ -1665,6 +1665,8 @@ struct subsector_t
 	FPortalCoverage	portalcoverage[2];
 	TArray<DVisualThinker *> sprites;
 	LightmapSurface *lightmap[2];
+
+	TArray<struct particle_t *> particles;
 };
 
 

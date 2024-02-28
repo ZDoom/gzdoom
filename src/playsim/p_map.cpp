@@ -592,7 +592,7 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 			thing->CheckSectorTransition(oldsec);
 		}
 	}
-	thing->CallReachedNode(thing->goal);
+	thing->ClearPath();
 	return true;
 }
 

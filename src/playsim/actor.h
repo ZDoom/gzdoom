@@ -770,7 +770,7 @@ public:
 			Flags = f;
 	}
 
-	bool isZero()
+	bool isZero() const
 	{
 		return Offset.isZero();
 	}

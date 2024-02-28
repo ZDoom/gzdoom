@@ -800,7 +800,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (viewmaster == camera && !vp.showviewer)
 	{
-		if (vp.noviewer || (viewmaster->player && viewmaster->player->crossingPortal)) return;
+		if (vp.bForceNoViewer || (viewmaster->player && viewmaster->player->crossingPortal)) return;
 		DVector3 vieworigin = viewmaster->Pos();
 		if (thruportal == 1) vieworigin += di->Level->Displacements.getOffset(viewmaster->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(vieworigin.X - vp.ActorPos.X) < 2 && fabs(vieworigin.Y - vp.ActorPos.Y) < 2) return;

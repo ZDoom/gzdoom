@@ -393,11 +393,8 @@ bool	P_CheckMissileSpawn(AActor *missile, double maxdist);
 
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
-// [RH] Position the chasecam
-void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
-
-// [MC] Aiming for ViewPos
-void	P_AdjustViewPos(AActor *t1, DVector3 orig, DVector3 &, sector_t *&sec, bool &unlinked, FRenderViewpoint *view);
+// [RH] Position the cam's view offsets.
+void	R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double distance);
 
 
 // [RH] Means of death

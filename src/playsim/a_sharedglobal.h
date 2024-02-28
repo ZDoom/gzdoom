@@ -125,11 +125,11 @@ enum
 
 struct FQuakeJiggers
 {
-	DVector3 Intensity;
-	DVector3 RelIntensity;
-	DVector3 Offset;
-	DVector3 RelOffset;
-	double RollIntensity, RollWave;
+	DVector3 Intensity = {};
+	DVector3 RelIntensity = {};
+	DVector3 Offset = {};
+	DVector3 RelOffset = {};
+	double RollIntensity = 0.0, RollWave = 0.0;
 };
 
 class DEarthquake : public DThinker

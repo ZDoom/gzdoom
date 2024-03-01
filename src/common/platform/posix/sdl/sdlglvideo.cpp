@@ -95,8 +95,6 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
 CUSTOM_CVAR(String, vid_sdl_render_driver, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -120,29 +118,61 @@ namespace Priv
 	bool vulkanEnabled;
 	bool softpolyEnabled;
 	bool fullscreenSwitch;
+	int numberOfDisplays;
+	SDL_Rect* displayBounds = nullptr;
+
+	void updateDisplayInfo()
+	{
+		Priv::numberOfDisplays = SDL_GetNumVideoDisplays();
+		if (Priv::numberOfDisplays <= 0) {
+			Printf("%sWrong number of displays detected.\n", TEXTCOLOR_BOLD);
+			return;
+		}
+		Printf("Number of detected displays %d .\n", Priv::numberOfDisplays);
+
+		if (Priv::displayBounds != nullptr) {
+			free(Priv::displayBounds);
+		}
+		Priv::displayBounds = (SDL_Rect*) calloc(Priv::numberOfDisplays, sizeof(SDL_Rect));
+
+		for (int i=0; i < Priv::numberOfDisplays; i++) {
+			if (0 != SDL_GetDisplayBounds(i, &Priv::displayBounds[i])) {
+				Printf("%sError getting display %d size: %s\n", TEXTCOLOR_BOLD, i, SDL_GetError());
+				if (i == 0) {
+					free(Priv::displayBounds);
+					displayBounds = nullptr;
+				}
+				Priv::numberOfDisplays = i;
+				return;
+			}
+		}
+	}
 
 	void CreateWindow(uint32_t extraFlags)
 	{
 		assert(Priv::window == nullptr);
 
-		// Set default size
-		SDL_Rect bounds;
-		SDL_GetDisplayBounds(vid_adapter, &bounds);
+		// Get displays and default display size
+		updateDisplayInfo();
+
+		// TODO control better when updateDisplayInfo fails
+		SDL_Rect* bounds = &displayBounds[vid_adapter % numberOfDisplays];
 
 		if (win_w <= 0 || win_h <= 0)
 		{
-			win_w = bounds.w * 8 / 10;
-			win_h = bounds.h * 8 / 10;
+			win_w = bounds->w * 8 / 10;
+			win_h = bounds->h * 8 / 10;
 		}
 
+		int xWindowPos = (win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x;
+		int yWindowPos = (win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y;
+		Printf("Creating window [%dx%d] on adapter %d\n", (*win_w), (*win_h), (*vid_adapter));
+		
 		FString caption;
 		caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
 
 		const uint32_t windowFlags = (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_RESIZABLE | extraFlags;
-		Priv::window = SDL_CreateWindow(caption.GetChars(),
-			(win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x,
-			(win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y,
-			win_w, win_h, windowFlags);
+		Priv::window = SDL_CreateWindow(caption.GetChars(), xWindowPos, yWindowPos, win_w, win_h, windowFlags);
 
 		if (Priv::window != nullptr)
 		{
@@ -159,6 +189,11 @@ namespace Priv
 
 		SDL_DestroyWindow(Priv::window);
 		Priv::window = nullptr;
+
+		if (Priv::displayBounds != nullptr) {
+			free(Priv::displayBounds);
+			Priv::displayBounds = nullptr;
+		}
 	}
 
 	void SetupPixelFormat(int multisample, const int *glver)
@@ -194,12 +229,70 @@ namespace Priv
 	}
 }
 
+CUSTOM_CVAR(Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+  if (Priv::window != nullptr) {
+		// Get displays and default display size
+		Priv::updateDisplayInfo();
+
+    int display = (*self) % Priv::numberOfDisplays;
+
+		// TODO control better when updateDisplayInfo fails
+		SDL_Rect* bounds = &Priv::displayBounds[vid_adapter % Priv::numberOfDisplays];
+
+		if (win_w <= 0 || win_h <= 0)
+		{
+			win_w = bounds->w * 8 / 10;
+			win_h = bounds->h * 8 / 10;
+		}
+		// Forces to set to the ini this vars to -1, so +vid_adapter keeps working the next time that the game it's launched
+		win_x = -1;
+		win_y = -1;
+
+		if ((SDL_GetWindowFlags(Priv::window) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0) {
+
+			// TODO This not works. For some reason keeps stuck on the previus screen
+			/*
+			SDL_DisplayMode currentDisplayMode;
+			SDL_GetWindowDisplayMode(Priv::window, &currentDisplayMode);
+			currentDisplayMode.w = win_w;
+			currentDisplayMode.h = win_h;
+			if ( 0 != SDL_SetWindowDisplayMode(Priv::window, &currentDisplayMode)) {
+				Printf("A problem occured trying to change of display %s\n", SDL_GetError());
+			}
+			*/
+
+			// TODO This workaround also isn't working
+			/*
+			SDL_SetWindowFullscreen(Priv::window, 0);
+			SDL_SetWindowSize(Priv::window, win_w, win_h);
+			SDL_SetWindowPosition(Priv::window, bounds->x , bounds->y);
+			SDL_SetWindowFullscreen(Priv::window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			*/
+			Printf("Changing adapter on fullscreen, isn't full supported by SDL. Instead try to switch to windowed mode, change the adapter and then switch again to fullscreen.\n");
+
+		} else {
+			SDL_SetWindowSize(Priv::window, win_w, win_h);
+			SDL_SetWindowPosition(Priv::window, SDL_WINDOWPOS_CENTERED_DISPLAY(display), SDL_WINDOWPOS_CENTERED_DISPLAY(display));
+		}
+
+    display = SDL_GetWindowDisplayIndex(Priv::window);
+    if (display >= 0) {
+			Printf("New display is %d\n", display );
+		} else {
+			Printf("A problem occured trying to change of display %s\n", SDL_GetError());
+		}
+  }
+}
+
 class SDLVideo : public IVideo
 {
 public:
 	SDLVideo ();
 	~SDLVideo ();
 
+	void DumpAdapters();
+	
 	DFrameBuffer *CreateFrameBuffer ();
 
 private:
@@ -269,6 +362,22 @@ SDLVideo::~SDLVideo ()
 	surface.reset();
 #endif
 }
+
+void SDLVideo::DumpAdapters()
+{
+	Priv::updateDisplayInfo();
+  for (int i=0; i < Priv::numberOfDisplays; i++) {
+    Printf("%s%d. [%dx%d @ (%d,%d)]\n",
+        vid_adapter == i ? TEXTCOLOR_BOLD : "",
+        i,
+        Priv::displayBounds[i].w,
+        Priv::displayBounds[i].h,
+        Priv::displayBounds[i].x,
+        Priv::displayBounds[i].y
+      );
+  }
+}
+
 
 DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 {
@@ -415,6 +524,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 		SDL_GetWindowPosition(Priv::window, &x, &y);
 		win_x = x;
 		win_y = y;
+		
 	}
 }
 

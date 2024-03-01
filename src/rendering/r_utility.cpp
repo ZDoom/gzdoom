@@ -78,7 +78,7 @@ struct InterpolationViewer
 {
 	struct instance
 	{
-		DVector3 Pos;
+		DVector3 Pos, ViewPos;
 		DRotator Angles;
 		DRotator ViewAngles;
 	};
@@ -605,6 +605,22 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 
 	// Now that the base position and angles are set, add offsets.
 
+	const DViewPosition* const vPos = iView->ViewActor->ViewPos;
+	if (vPos != nullptr && !(vPos->Flags & VPSF_ABSOLUTEPOS)
+		&& (player == nullptr || gamestate == GS_TITLELEVEL || (!(player->cheats & CF_CHASECAM) && (!r_deathcamera || !(iView->ViewActor->flags6 & MF6_KILLED)))))
+	{
+		DVector3 vOfs = {};
+		if (player == nullptr || !(player->cheats & CF_NOVIEWPOSINTERP))
+			vOfs = iView->Old.ViewPos * inverseTicFrac + iView->New.ViewPos * ticFrac;
+		else
+			vOfs = iView->New.ViewPos;
+
+		if (vPos->Flags & VPSF_ABSOLUTEOFFSET)
+			iView->ViewOffset += vOfs;
+		else
+			iView->RelativeViewOffset += vOfs;
+	}
+
 	DVector3 posOfs = iView->ViewOffset;
 	if (!iView->RelativeViewOffset.isZero())
 		posOfs += DQuaternion::FromAngles(viewPoint.Angles.Yaw, viewPoint.Angles.Pitch, viewPoint.Angles.Roll) * iView->RelativeViewOffset;
@@ -916,8 +932,8 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		viewPoint.showviewer = false;
 		viewPoint.bForceNoViewer = matchPlayer;
 
-		if (gamestate != GS_TITLELEVEL &&
-			((player != nullptr && (player->cheats & CF_CHASECAM)) || (r_deathcamera && (viewPoint.camera->flags6 & MF6_KILLED))))
+		if (player != nullptr && gamestate != GS_TITLELEVEL
+			&& ((player->cheats & CF_CHASECAM) || (r_deathcamera && (viewPoint.camera->flags6 & MF6_KILLED))))
 		{
 			// The cam Actor should probably be visible in third person.
 			viewPoint.showviewer = true;
@@ -925,7 +941,8 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 			iView->ViewOffset.Z = clamp<double>(chase_height, -1000.0, 1000.0);
 			iView->RelativeViewOffset.X = -clamp<double>(chase_dist, 0.0, 30000.0);
 		}
-		else if (viewOffset != nullptr)
+
+		if (viewOffset != nullptr)
 		{
 			// No chase/death cam, so use the view offset.
 			if (!viewPoint.bForceNoViewer)
@@ -933,16 +950,13 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 			
 			if (viewOffset->Flags & VPSF_ABSOLUTEPOS)
 			{
+				iView->New.ViewPos.Zero();
 				if (!matchPlayer)
 					camPos = viewOffset->Offset;
 			}
-			else if (viewOffset->Flags & VPSF_ABSOLUTEOFFSET)
-			{
-				iView->ViewOffset += viewOffset->Offset;
-			}
 			else
 			{
-				iView->RelativeViewOffset = viewOffset->Offset;
+				iView->New.ViewPos = viewOffset->Offset;
 			}
 		}
 

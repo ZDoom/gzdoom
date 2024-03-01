@@ -125,6 +125,7 @@ typedef enum
 	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
 	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
 	CF_SCALEDNOLERP		= 1 << 17,		// [MR] flag for applying angles changes in the ticrate without interpolating the frame
+	CF_NOVIEWPOSINTERP	= 1 << 18,		// Disable view position interpolation.
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
 	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.

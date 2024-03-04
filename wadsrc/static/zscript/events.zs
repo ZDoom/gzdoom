@@ -97,6 +97,14 @@ struct WorldEvent native play version("2.4")
     native readonly bool DamageIsRadius;
     native int NewDamage;
     native readonly State CrushedState;
+	native readonly double AttackAngle;
+	native readonly double AttackPitch;
+	native readonly double AttackDistance;
+	native readonly vector3 AttackPos;
+	native readonly double AttackOffsetForward;
+	native readonly double AttackOffsetSide;
+	native readonly double AttackZ;
+	native readonly class<Actor> AttackPuffType;
 }
 
 struct PlayerEvent native play version("2.4")
@@ -155,6 +163,8 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void WorldThingRevived(WorldEvent e) {}
     virtual void WorldThingDamaged(WorldEvent e) {}
     virtual void WorldThingDestroyed(WorldEvent e) {}
+	virtual bool WorldHitscanPreFired(WorldEvent e) { return false; }
+    virtual void WorldHitscanFired(WorldEvent e) {}
     virtual void WorldLinePreActivated(WorldEvent e) {}
     virtual void WorldLineActivated(WorldEvent e) {}
     virtual void WorldSectorDamaged(WorldEvent e) {}

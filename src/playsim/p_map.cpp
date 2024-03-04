@@ -81,6 +81,7 @@
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
+#include "events.h"
 #include "vm.h"
 
 #include "decallib.h"
@@ -4619,6 +4620,12 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
 	double sz, double offsetforward, double offsetside)
 {
+	if (t1->Level->localEventManager->WorldHitscanPreFired(t1, angle, distance, pitch, damage, damageType, pufftype, flags, sz, offsetforward, offsetside))
+	{
+		return nullptr;
+	}
+
+
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
@@ -4632,6 +4639,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	bool spawnSky = false;
 	if (flags & LAF_NORANDOMPUFFZ)
 		puffFlags |= PF_NORANDOMZ;
+
 
 	if (victim != NULL)
 	{
@@ -4723,6 +4731,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	// LAF_ABSOFFSET: Ignore the angle.
 
 	DVector3 tempos;
+	DVector3 puffpos;
 
 	if (flags & LAF_ABSPOSITION)
 	{
@@ -4758,7 +4767,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 		if (nointeract || (puffDefaults && puffDefaults->flags3 & MF3_ALWAYSPUFF))
 		{ // Spawn the puff anyway
-			puff = P_SpawnPuff(t1, pufftype, trace.HitPos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget, 2, puffFlags);
+			puffpos = trace.HitPos;
+			puff = P_SpawnPuff(t1, pufftype, puffpos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget, 2, puffFlags);
 
 			if (nointeract)
 			{
@@ -4788,7 +4798,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			if (nointeract || trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
 				DVector2 pos = t1->Level->GetPortalOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
-				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
+				puffpos = DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4);
+				puff = P_SpawnPuff(t1, pufftype, puffpos, trace.SrcAngleFromTarget,
 					trace.SrcAngleFromTarget - DAngle::fromDeg(90), 0, puffFlags);
 				puff->radius = 1/65536.;
 
@@ -4835,6 +4846,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		{
 			// Hit a thing, so it could be either a puff or blood
 			DVector3 bleedpos = trace.HitPos;
+			puffpos = bleedpos;
 			// position a bit closer for puffs/blood if using compatibility mode.
 			if (trace.Actor->Level->i_compatflags & COMPATF_HITSCAN)
 			{
@@ -4927,6 +4939,9 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			SpawnDeepSplash(t1, trace, puff);
 		}
 	}
+
+	t1->Level->localEventManager->WorldHitscanFired(t1, tempos, puffpos, puff, flags);
+
 	if (killPuff && puff != NULL)
 	{
 		puff->Destroy();

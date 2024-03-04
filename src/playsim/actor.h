@@ -443,6 +443,7 @@ enum ActorFlag9
 	MF9_SHADOWBLOCK				= 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
 	MF9_SHADOWAIMVERT			= 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
 	MF9_DECOUPLEDANIMATIONS	= 0x00000010,	// [RL0] Decouple model animations from states
+	MF9_ISPUFF					= 0x00000010, //[AA] Set on actors by P_SpawnPuff
 };
 
 // --- mobj.renderflags ---

@@ -1271,7 +1271,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	{
 		maxdist = params->maxDist;
 		mindist = params->minDist;
-		fov = params->Fov;
+		fov = allaround ? 0 : params->Fov; // [RK] Account for LOOKALLAROUND flag.
 	}
 	else
 	{
@@ -2086,7 +2086,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 				{
 					// If we find a valid target here, the wandering logic should *not*
 					// be activated! If would cause the seestate to be set twice.
-					if (P_LookForPlayers(self, true, &params))
+					if (P_LookForPlayers(self, (self->flags4 & MF4_LOOKALLAROUND), &params)) // [RK] Passing true for allround should only occur if the flag is actually set.
 						goto seeyou;
 				}
 

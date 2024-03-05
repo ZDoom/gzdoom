@@ -1271,7 +1271,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	{
 		maxdist = params->maxDist;
 		mindist = params->minDist;
-		fov = allaround ? 0 : params->Fov; // [RK] Account for LOOKALLAROUND flag.
+		fov = allaround ? DAngle::fromDeg(0.) : params->Fov; // [RK] Account for LOOKALLAROUND flag.
 	}
 	else
 	{

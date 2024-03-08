@@ -463,6 +463,7 @@ xx(WBobSpeed)
 xx(WBobFire)
 xx(PlayerClass)
 xx(MonsterClass)
+xx(Morph)
 xx(MorphedMonster)
 xx(Wi_NoAutostartMap)
 

@@ -57,6 +57,19 @@ PFunction* FindBuiltinFunction(FName funcname);
 //
 //==========================================================================
 
+bool ShouldAllowGameSpecificVirtual(FName name, unsigned index, PType* arg, PType* varg)
+{
+	return (name == NAME_Morph && index == 3u && arg->isClassPointer() && varg->isClassPointer()
+			&& PType::toClassPointer(varg)->ClassRestriction->TypeName == NAME_Actor
+			&& PType::toClassPointer(arg)->ClassRestriction->TypeName == NAME_MorphedMonster);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 bool isActor(PContainerType *type)
 {
 	auto cls = PType::toClass(type);

@@ -9,7 +9,9 @@ class Weapon : StateProvider
 
 	const ZOOM_INSTANT = 1;
 	const ZOOM_NOSCALETURNING = 2;
-	
+	const LIFT_SPEED = 6;
+
+	int RaiseSpeed, LowerSpeed;
 	deprecated("3.7") uint WeaponFlags;		// not to be used directly.
 	class<Ammo> AmmoType1, AmmoType2;		// Types of ammo used by self weapon
 	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
@@ -46,6 +48,9 @@ class Weapon : StateProvider
 
 	virtual ui Vector3 ModifyBobPivotLayer3D(int layer, double ticfrac) { return BobPivot3D; }
 	
+	property RaiseSpeed: RaiseSpeed;
+	property LowerSpeed: LowerSpeed;
+	property LiftSpeed: RaiseSpeed, LowerSpeed;
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;
 	property AmmoGive2: AmmoGive2;
@@ -112,6 +117,7 @@ class Weapon : StateProvider
 		Weapon.SlotNumber -1;
 		Weapon.SlotPriority 32767;
 		Weapon.BobPivot3D (0.0, 0.0, 0.0);
+		Weapon.LiftSpeed LIFT_SPEED, LIFT_SPEED;
 		+WEAPONSPAWN
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
 	}
@@ -247,7 +253,7 @@ class Weapon : StateProvider
 		psp.Coord3 = (0,0);
 	}
 
-	action void A_Lower(int lowerspeed = 6)
+	action void A_Lower(int lowerspeed = -1)
 	{
 		let player = player;
 
@@ -268,7 +274,7 @@ class Weapon : StateProvider
 		}
 		else
 		{
-			psp.y += lowerspeed;
+			psp.y += (lowerspeed > -1) ? lowerspeed : invoker.LowerSpeed;
 		}
 		if (psp.y < WEAPONBOTTOM)
 		{ // Not lowered all the way yet
@@ -295,7 +301,7 @@ class Weapon : StateProvider
 	//
 	//---------------------------------------------------------------------------
 
-	action void A_Raise(int raisespeed = 6)
+	action void A_Raise(int raisespeed = -1)
 	{
 		let player = player;
 
@@ -319,7 +325,7 @@ class Weapon : StateProvider
 		{
 			ResetPSprite(psp);
 		}
-		psp.y -= raisespeed;
+		psp.y -= (raisespeed > -1) ? raisespeed : invoker.RaiseSpeed;
 		if (psp.y > WEAPONTOP)
 		{ // Not raised all the way yet
 			return;

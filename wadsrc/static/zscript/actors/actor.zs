@@ -826,6 +826,20 @@ class Actor : Thinker native
 			if (!next || next == node)
 				continue;
 
+			// 2D checks for floaters, 3D for ground
+			Actor tar = target;
+			bool vrange = bNOVERTICALMELEERANGE;
+			bNOVERTICALMELEERANGE = bFLOAT;
+			target = next;
+
+			bool inrange = CheckMeleeRange();
+
+			target = tar;
+			bNOVERTICALMELEERANGE = vrange;
+
+			if (inrange)
+				continue;
+			
 			// Monsters will never 'reach' AMBUSH flagged nodes. Instead, the engine
 			// indicates they're reached the moment they tele/portal. 
 

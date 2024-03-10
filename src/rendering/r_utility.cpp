@@ -598,9 +598,9 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 	}
 	else
 	{
-		viewPoint.Angles.Pitch = iView->Old.Angles.Pitch * inverseTicFrac + iView->New.Angles.Pitch * ticFrac;
-		viewPoint.Angles.Yaw = prevYaw * inverseTicFrac + curYaw * ticFrac;
-		viewPoint.Angles.Roll = iView->Old.Angles.Roll * inverseTicFrac + iView->New.Angles.Roll * ticFrac;
+		viewPoint.Angles.Pitch = iView->Old.Angles.Pitch + deltaangle(iView->Old.Angles.Pitch, iView->New.Angles.Pitch) * ticFrac;
+		viewPoint.Angles.Yaw = prevYaw + deltaangle(prevYaw, curYaw) * ticFrac;
+		viewPoint.Angles.Roll = iView->Old.Angles.Roll + deltaangle(iView->Old.Angles.Roll, iView->New.Angles.Roll) * ticFrac;
 	}
 
 	// Now that the base position and angles are set, add offsets.
@@ -624,9 +624,9 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 	{
 		if (player == nullptr || (player->cheats & CF_INTERPVIEWANGLES))
 		{
-			viewPoint.Angles.Yaw += iView->Old.ViewAngles.Yaw * inverseTicFrac + iView->New.ViewAngles.Yaw * ticFrac;
-			viewPoint.Angles.Pitch += iView->Old.ViewAngles.Pitch * inverseTicFrac + iView->New.ViewAngles.Pitch * ticFrac;
-			viewPoint.Angles.Roll += iView->Old.ViewAngles.Roll * inverseTicFrac + iView->New.ViewAngles.Roll * ticFrac;
+			viewPoint.Angles.Yaw += iView->Old.ViewAngles.Yaw + deltaangle(iView->Old.ViewAngles.Yaw, iView->New.ViewAngles.Yaw) * ticFrac;
+			viewPoint.Angles.Pitch += iView->Old.ViewAngles.Pitch + deltaangle(iView->Old.ViewAngles.Pitch, iView->New.ViewAngles.Pitch) * ticFrac;
+			viewPoint.Angles.Roll += iView->Old.ViewAngles.Roll + deltaangle(iView->Old.ViewAngles.Roll, iView->New.ViewAngles.Roll) * ticFrac;
 		}
 		else
 		{

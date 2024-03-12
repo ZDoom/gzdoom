@@ -446,7 +446,7 @@ enum ActorFlag9
 	MF9_PATHING					= 0x00000020,	// [MC] Enables monsters to do pathfinding, such as A*.
 	MF9_KEEPPATH				= 0x00000040,	// [MC] Forces monsters to keep to the path when target's in sight.
 	MF9_NOPATHING				= 0x00000080,	// [MC] override the mapinfo "pathfinding"
-	MF9_ISPUFF					= 0x00000020, //[AA] Set on actors by P_SpawnPuff
+	MF9_ISPUFF					= 0x00000100, //[AA] Set on actors by P_SpawnPuff
 };
 
 // --- mobj.renderflags ---

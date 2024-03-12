@@ -1369,6 +1369,9 @@ public:
 	int SpawnTime;
 	uint32_t SpawnOrder;
 
+	// landing speed from a jump with normal gravity (squats the player's view)
+	// (note: this is put into AActor instead of the PlayerPawn because non-players also use the value)
+	double LandingSpeed;
 
 	// ThingIDs
 	void SetTID (int newTID);

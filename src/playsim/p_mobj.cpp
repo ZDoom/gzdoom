@@ -391,7 +391,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("lightlevel", LightLevel)
 		A("userlights", UserLights)
 		A("WorldOffset", WorldOffset)
-		("modelData", modelData);
+		("modelData", modelData)
+		A("LandingSpeed", LandingSpeed);
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
@@ -2584,11 +2585,9 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->SetZ(mo->floorz);
 			if (mo->Vel.Z < 0)
 			{
-				const double minvel = -8;	// landing speed from a jump with normal gravity
-
 				// Spawn splashes, etc.
 				P_HitFloor (mo);
-				if (mo->DamageType == NAME_Ice && mo->Vel.Z < minvel)
+				if (mo->DamageType == NAME_Ice && mo->Vel.Z < mo->LandingSpeed)
 				{
 					mo->tics = 1;
 					mo->Vel.Zero();
@@ -2601,11 +2600,11 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 				}
 				if (mo->player)
 				{
-					if (mo->player->jumpTics < 0 || mo->Vel.Z < minvel)
+					if (mo->player->jumpTics < 0 || mo->Vel.Z < mo->LandingSpeed)
 					{ // delay any jumping for a short while
 						mo->player->jumpTics = 7;
 					}
-					if (mo->Vel.Z < minvel && !(mo->flags & MF_NOGRAVITY))
+					if (mo->Vel.Z < mo->LandingSpeed && !(mo->flags & MF_NOGRAVITY))
 					{
 						// Squat down.
 						// Decrease viewheight for a moment after hitting the ground (hard),

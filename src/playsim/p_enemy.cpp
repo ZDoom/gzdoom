@@ -3018,13 +3018,8 @@ void A_Chase(AActor *self)
 	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_Chase)
+void A_ChaseNative(AActor * self, int meleelabel, int missilelabel, int flags)
 {
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATELABEL(meleelabel);
-	PARAM_STATELABEL(missilelabel);
-	PARAM_INT(flags);
-
 	FName meleename = ENamedName(meleelabel - 0x10000000);
 	FName missilename = ENamedName(missilelabel - 0x10000000);
 	if (meleename != NAME__a_chase_default || missilename != NAME__a_chase_default)
@@ -3032,7 +3027,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 		FState *melee = StateLabels.GetState(meleelabel, self->GetClass());
 		FState *missile = StateLabels.GetState(missilelabel, self->GetClass());
 		if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
-			return 0;
+			return;
 
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE),
 			!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags & 0x3fffffff);
@@ -3041,6 +3036,36 @@ DEFINE_ACTION_FUNCTION(AActor, A_Chase)
 	{
 		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Chase, A_ChaseNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STATELABEL(meleelabel);
+	PARAM_STATELABEL(missilelabel);
+	PARAM_INT(flags);
+
+	A_ChaseNative(self, meleelabel, missilelabel, flags);
+
+	return 0;
+}
+
+void A_DoChaseNative(AActor * self, FState *melee, FState *missile, int flags)
+{
+	if ((flags & CHF_RESURRECT) && P_CheckForResurrection(self, false))
+		return;
+	A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), !!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags & 0x3fffffff);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_DoChase, A_DoChaseNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STATE(melee);
+	PARAM_STATE(missile);
+	PARAM_INT(flags);
+
+	A_DoChaseNative(self, melee, missile, flags);
+
 	return 0;
 }
 

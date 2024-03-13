@@ -467,6 +467,35 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	return changed;
 }
 
+size_t DObject::SafePointerSubstitution(DObject* old, DObject* notOld)
+{
+	const PClass* info = GetClass();
+	size_t changed = 0;
+	do
+	{
+		if (!info->bRuntimeClass)
+		{
+			const size_t* offsets = info->Pointers;
+			if (offsets != nullptr)
+			{
+				while (*offsets != ~(size_t)0)
+				{
+					if (*(DObject**)((uint8_t*)this + *offsets) == old)
+					{
+						*(DObject**)((uint8_t*)this + *offsets) = notOld;
+						changed++;
+					}
+					offsets++;
+				}
+			}
+		}
+
+		info = info->ParentClass;
+	} while (info != nullptr);
+
+	return changed;
+}
+
 //==========================================================================
 //
 //

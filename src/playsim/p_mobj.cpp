@@ -5314,56 +5314,41 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 
 	// Only change some gameplay-related pointers that we know we can safely swap to whatever
 	// new Actor class is present.
-	AActor* mo = nullptr;
-	auto it = from->Level->GetThinkerIterator<AActor>();
-	while ((mo = it.Next()) != nullptr)
+	for (auto& level : AllLevels())
 	{
-		if (mo->target == from)
-			mo->target = to;
-		if (mo->tracer == from)
-			mo->tracer = to;
-		if (mo->master == from)
-			mo->master = to;
-		if (mo->goal == from)
-			mo->goal = to;
-		if (mo->lastenemy == from)
-			mo->lastenemy = to;
-		if (mo->LastHeard == from)
-			mo->LastHeard = to;
-		if (mo->LastLookActor == from)
-			mo->LastLookActor = to;
-		if (mo->Poisoner == from)
-			mo->Poisoner = to;
+		// Go through player infos.
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (!level->PlayerInGame(i))
+				continue;
+
+			auto p = level->Players[i];
+
+			if (p->mo == from)
+				p->mo = to;
+			if (p->poisoner == from)
+				p->poisoner = to;
+			if (p->attacker == from)
+				p->attacker = to;
+			if (p->camera == from)
+				p->camera = to;
+			if (p->ConversationNPC == from)
+				p->ConversationNPC = to;
+			if (p->ConversationPC == from)
+				p->ConversationPC = to;
+		}
+
+		// Go through sectors.
+		for (auto& sec : level->sectors)
+		{
+			if (sec.SoundTarget == from)
+				sec.SoundTarget = to;
+		}
 	}
 
-	// Go through player infos.
-	for (int i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (!from->Level->PlayerInGame(i))
-			continue;
-
-		auto p = from->Level->Players[i];
-
-		if (p->mo == from)
-			p->mo = to;
-		if (p->poisoner == from)
-			p->poisoner = to;
-		if (p->attacker == from)
-			p->attacker = to;
-		if (p->camera == from)
-			p->camera = to;
-		if (p->ConversationNPC == from)
-			p->ConversationNPC = to;
-		if (p->ConversationPC == from)
-			p->ConversationPC = to;
-	}
-
-	// Go through sectors.
-	for (auto& sec : from->Level->sectors)
-	{
-		if (sec.SoundTarget == from)
-			sec.SoundTarget = to;
-	}
+	// Only swap around internal pointers. Anything else is too risky.
+	for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
+		probe->SafePointerSubstitution(from, to);
 
 	// Remaining maintenance related to morphing.
 	if (from->player != nullptr)

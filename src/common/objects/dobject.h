@@ -247,6 +247,8 @@ public:
 
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
+	// Unlike the above, this will only swap pointers defined by non-runtime classes.
+	size_t SafePointerSubstitution(DObject* old, DObject* notOld);
 
 	PClass *GetClass() const
 	{

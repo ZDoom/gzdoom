@@ -80,9 +80,7 @@ DEFINE_GLOBAL(WP_NOCHANGE);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // A harmless non-nullptr FlatPointer for classes without pointers.
-static const size_t TheEnd = ~(size_t)0;
-
-static const std::pair<size_t,PType *> TheMapEnd = {~(size_t)0 , nullptr};
+static const std::pair<size_t,PType *> TheEnd = {~(size_t)0 , nullptr};
 
 //==========================================================================
 //
@@ -768,75 +766,81 @@ PSymbol *PClass::FindSymbol(FName symname, bool searchparents) const
 //
 //==========================================================================
 
-void PClass::BuildFlatPointers ()
+void PClass::BuildFlatPointers() const
 {
+	using pairType = std::pair<size_t, PObjectPointer *>;
+
 	if (FlatPointers != nullptr)
 	{ // Already built: Do nothing.
 		return;
 	}
-	else if (ParentClass == nullptr)
-	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
-		if (Pointers == nullptr)
-		{ // No pointers: Make FlatPointers a harmless non-nullptr.
-			FlatPointers = &TheEnd;
-		}
-		else
-		{
-			FlatPointers = Pointers;
-		}
-	}
 	else
 	{
-		ParentClass->BuildFlatPointers ();
-
-		TArray<size_t> ScriptPointers;
-
-		// Collect all pointers in scripted fields. These are not part of the Pointers list.
-		for (auto field : Fields)
+		TArray<pairType> NativePointers;
+		if (Pointers != nullptr)
 		{
-			if (!(field->Flags & VARF_Native))
+			for (size_t i = 0; Pointers[i] != ~(size_t)0; i++)
 			{
-				field->Type->SetPointer(Defaults, unsigned(field->Offset), &ScriptPointers);
+				NativePointers.Push({Pointers[i], nullptr}); // native pointers have a null type
 			}
 		}
 
-		if (Pointers == nullptr && ScriptPointers.Size() == 0)
-		{ // No new pointers: Just use the same FlatPointers as the parent.
-			FlatPointers = ParentClass->FlatPointers;
+		if (ParentClass == nullptr)
+		{ // No parent (i.e. DObject): FlatPointers is the same as Pointers.
+			if (NativePointers.Size() == 0)
+			{ // No pointers: Make FlatPointers a harmless non-nullptr.
+				FlatPointers = (pairType*)(&TheEnd);
+				FlatPointersSize = 0;
+			}
+			else
+			{
+				pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * NativePointers.Size());
+				memcpy(flat, NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
+
+				FlatPointers = flat;
+				FlatPointersSize = NativePointers.Size();
+			}
 		}
 		else
-		{ // New pointers: Create a new FlatPointers array and add them.
-			int numPointers, numSuperPointers;
+		{
+			ParentClass->BuildFlatPointers();
 
-			if (Pointers != nullptr)
+			TArray<pairType> ScriptPointers;
+
+			// Collect all pointers in scripted fields. These are not part of the Pointers list.
+			for (auto field : Fields)
 			{
-				// Count pointers defined by this class.
-				for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
+				if (!(field->Flags & VARF_Native))
 				{
+					field->Type->SetPointer(Defaults, unsigned(field->Offset), &ScriptPointers);
 				}
 			}
-			else numPointers = 0;
 
-			// Count pointers defined by superclasses.
-			for (numSuperPointers = 0; ParentClass->FlatPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
-			{ }
+			if (NativePointers.Size() == 0 && ScriptPointers.Size() == 0)
+			{ // No new pointers: Just use the same FlatPointers as the parent.
+				FlatPointers = ParentClass->FlatPointers;
+				FlatPointersSize = ParentClass->FlatPointersSize;
+			}
+			else
+			{	// New pointers: Create a new FlatPointers array and add them.
+				// Concatenate them into a new array
+				pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * (ParentClass->FlatPointersSize + NativePointers.Size() + ScriptPointers.Size()));
 
-			// Concatenate them into a new array
-			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numPointers + numSuperPointers + ScriptPointers.Size() + 1));
-			if (numSuperPointers > 0)
-			{
-				memcpy (flat, ParentClass->FlatPointers, sizeof(size_t)*numSuperPointers);
+				if (ParentClass->FlatPointersSize > 0)
+				{
+					memcpy (flat, ParentClass->FlatPointers, sizeof(pairType) * ParentClass->FlatPointersSize);
+				}
+				if (NativePointers.Size() > 0)
+				{
+					memcpy(flat + ParentClass->FlatPointersSize, NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
+				}
+				if (ScriptPointers.Size() > 0)
+				{
+					memcpy(flat + ParentClass->FlatPointersSize + NativePointers.Size(), &ScriptPointers[0], sizeof(pairType) * ScriptPointers.Size());
+				}
+				FlatPointers = flat;
+				FlatPointersSize = ParentClass->FlatPointersSize + NativePointers.Size() + ScriptPointers.Size();
 			}
-			if (numPointers > 0)
-			{
-				memcpy(flat + numSuperPointers, Pointers, sizeof(size_t)*numPointers);
-			}
-			if (ScriptPointers.Size() > 0)
-			{
-				memcpy(flat + numSuperPointers + numPointers, &ScriptPointers[0], sizeof(size_t) * ScriptPointers.Size());
-			}
-			flat[numSuperPointers + numPointers + ScriptPointers.Size()] = ~(size_t)0;
-			FlatPointers = flat;
 		}
 	}
 }
@@ -849,21 +853,24 @@ void PClass::BuildFlatPointers ()
 //
 //==========================================================================
 
-void PClass::BuildArrayPointers()
+void PClass::BuildArrayPointers() const
 {
+	using pairType = std::pair<size_t, PDynArray *>;
+
 	if (ArrayPointers != nullptr)
 	{ // Already built: Do nothing.
 		return;
 	}
 	else if (ParentClass == nullptr)
-	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
-		ArrayPointers = &TheEnd;
+	{ // No parent (i.e. DObject): Make ArrayPointers a harmless non-nullptr.
+		ArrayPointers = (pairType*)(&TheEnd);
+		ArrayPointersSize = 0;
 	}
 	else
 	{
 		ParentClass->BuildArrayPointers();
 
-		TArray<size_t> ScriptPointers;
+		TArray<pairType> ScriptPointers;
 
 		// Collect all arrays to pointers in scripted fields.
 		for (auto field : Fields)
@@ -877,28 +884,24 @@ void PClass::BuildArrayPointers()
 		if (ScriptPointers.Size() == 0)
 		{ // No new pointers: Just use the same ArrayPointers as the parent.
 			ArrayPointers = ParentClass->ArrayPointers;
+			ArrayPointersSize = ParentClass->ArrayPointersSize;
 		}
 		else
-		{ // New pointers: Create a new FlatPointers array and add them.
-			int numSuperPointers;
-
-			// Count pointers defined by superclasses.
-			for (numSuperPointers = 0; ParentClass->ArrayPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
-			{
-			}
-
+		{	// New pointers: Create a new ArrayPointers array and add them.
 			// Concatenate them into a new array
-			size_t *flat = (size_t*)ClassDataAllocator.Alloc(sizeof(size_t) * (numSuperPointers + ScriptPointers.Size() + 1));
-			if (numSuperPointers > 0)
+			pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * (ParentClass->ArrayPointersSize + ScriptPointers.Size()));
+			if (ParentClass->ArrayPointersSize > 0)
 			{
-				memcpy(flat, ParentClass->ArrayPointers, sizeof(size_t)*numSuperPointers);
+				memcpy(flat, ParentClass->ArrayPointers, sizeof(pairType) * ParentClass->ArrayPointersSize);
 			}
+
 			if (ScriptPointers.Size() > 0)
 			{
-				memcpy(flat + numSuperPointers, &ScriptPointers[0], sizeof(size_t) * ScriptPointers.Size());
+				memcpy(flat + ParentClass->ArrayPointersSize, ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
 			}
-			flat[numSuperPointers + ScriptPointers.Size()] = ~(size_t)0;
+
 			ArrayPointers = flat;
+			ArrayPointersSize = ParentClass->ArrayPointersSize + ScriptPointers.Size();
 		}
 	}
 }
@@ -911,21 +914,24 @@ void PClass::BuildArrayPointers()
 //
 //==========================================================================
 
-void PClass::BuildMapPointers()
+void PClass::BuildMapPointers() const
 {
+	using pairType = std::pair<size_t, PMap *>;
+
 	if (MapPointers != nullptr)
 	{ // Already built: Do nothing.
 		return;
 	}
 	else if (ParentClass == nullptr)
-	{ // No parent (i.e. DObject: FlatPointers is the same as Pointers.
-		MapPointers = &TheMapEnd;
+	{ // No parent (i.e. DObject): Make MapPointers a harmless non-nullptr.
+		MapPointers = (pairType*)(&TheEnd);
+		MapPointersSize = 0;
 	}
 	else
 	{
 		ParentClass->BuildMapPointers();
 
-		TArray<std::pair<size_t,PType *>> ScriptPointers;
+		TArray<pairType> ScriptPointers;
 
 		// Collect all arrays to pointers in scripted fields.
 		for (auto field : Fields)
@@ -939,28 +945,23 @@ void PClass::BuildMapPointers()
 		if (ScriptPointers.Size() == 0)
 		{ // No new pointers: Just use the same ArrayPointers as the parent.
 			MapPointers = ParentClass->MapPointers;
+			MapPointersSize = ParentClass->MapPointersSize;
 		}
 		else
-		{ // New pointers: Create a new FlatPointers array and add them.
-			int numSuperPointers;
-
-			// Count pointers defined by superclasses.
-			for (numSuperPointers = 0; ParentClass->MapPointers[numSuperPointers].first != ~(size_t)0; numSuperPointers++)
-			{
-			}
-
+		{	// New pointers: Create a new FlatPointers array and add them.
 			// Concatenate them into a new array
-			std::pair<size_t,PType *> *flat = (std::pair<size_t,PType *>*)ClassDataAllocator.Alloc(sizeof(std::pair<size_t,PType *>) * (numSuperPointers + ScriptPointers.Size() + 1));
-			if (numSuperPointers > 0)
+			pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * (ParentClass->MapPointersSize + ScriptPointers.Size()));
+			if (ParentClass->MapPointersSize > 0)
 			{
-				memcpy(flat, ParentClass->MapPointers, sizeof(std::pair<size_t,PType *>)*numSuperPointers);
+				memcpy(flat, ParentClass->MapPointers, sizeof(pairType) * ParentClass->MapPointersSize); 
 			}
+
 			if (ScriptPointers.Size() > 0)
 			{
-				memcpy(flat + numSuperPointers, &ScriptPointers[0], sizeof(std::pair<size_t,PType *>) * ScriptPointers.Size());
+				memcpy(flat + ParentClass->MapPointersSize, ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
 			}
-			flat[numSuperPointers + ScriptPointers.Size()] = TheMapEnd;
 			MapPointers = flat;
+			MapPointersSize = ParentClass->MapPointersSize + ScriptPointers.Size();
 		}
 	}
 }

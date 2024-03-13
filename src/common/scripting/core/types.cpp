@@ -196,15 +196,15 @@ void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> 
 //
 //==========================================================================
 
-void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs)
+void PType::SetPointer(void *base, unsigned offset, TArray<std::pair<size_t, PObjectPointer *>> *stroffs)
 {
 }
 
-void PType::SetPointerArray(void *base, unsigned offset, TArray<size_t> *stroffs)
+void PType::SetPointerArray(void *base, unsigned offset, TArray<std::pair<size_t, PDynArray *>> *stroffs)
 {
 }
 
-void PType::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *ptrofs)
+void PType::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t, PMap *>> *ptrofs)
 {
 }
 
@@ -1575,10 +1575,10 @@ PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
 //
 //==========================================================================
 
-void PObjectPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
+void PObjectPointer::SetPointer(void *base, unsigned offset, TArray<std::pair<size_t, PObjectPointer *>> *special)
 {
 	// Add to the list of pointers for this class.
-	special->Push(offset);
+	special->Push({offset, this});
 }
 
 //==========================================================================
@@ -1706,7 +1706,7 @@ bool PClassPointer::isCompatible(PType *type)
 //
 //==========================================================================
 
-void PClassPointer::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
+void PClassPointer::SetPointer(void *base, unsigned offset, TArray<std::pair<size_t, PObjectPointer *>> *special)
 {
 }
 
@@ -1908,7 +1908,7 @@ void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset>
 //
 //==========================================================================
 
-void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
+void PArray::SetPointer(void *base, unsigned offset, TArray<std::pair<size_t, PObjectPointer *>> *special)
 {
 	for (unsigned i = 0; i < ElementCount; ++i)
 	{
@@ -1922,7 +1922,7 @@ void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 //
 //==========================================================================
 
-void PArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
+void PArray::SetPointerArray(void *base, unsigned offset, TArray<std::pair<size_t, PDynArray *>> *special)
 {
 	if (ElementType->isStruct() || ElementType->isDynArray())
 	{
@@ -1939,7 +1939,7 @@ void PArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *specia
 //
 //==========================================================================
 
-void PArray::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+void PArray::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t, PMap *>> *special)
 {
 	if(ElementType->isStruct() || ElementType->isMap())
 	{
@@ -2254,12 +2254,12 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 //
 //==========================================================================
 
-void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
+void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<std::pair<size_t, PDynArray *>> *special)
 {
 	if (ElementType->isObjectPointer())
 	{
 		// Add to the list of pointer arrays for this class.
-		special->Push(offset);
+		special->Push({offset, this});
 	}
 }
 
@@ -2524,12 +2524,12 @@ void PMap::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *
 //
 //==========================================================================
 
-void PMap::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+void PMap::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t, PMap *>> *special)
 {
 	if (ValueType->isObjectPointer())
 	{
 		// Add to the list of pointer arrays for this class.
-		special->Push(std::make_pair(offset,KeyType));
+		special->Push(std::make_pair(offset, this));
 	}
 }
 
@@ -3264,7 +3264,7 @@ void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset
 //
 //==========================================================================
 
-void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
+void PStruct::SetPointer(void *base, unsigned offset, TArray<std::pair<size_t, PObjectPointer *>> *special)
 {
 	auto it = Symbols.GetIterator();
 	PSymbolTable::MapType::Pair *pair;
@@ -3284,7 +3284,7 @@ void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 //
 //==========================================================================
 
-void PStruct::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
+void PStruct::SetPointerArray(void *base, unsigned offset, TArray<std::pair<size_t, PDynArray *>> *special)
 {
 	auto it = Symbols.GetIterator();
 	PSymbolTable::MapType::Pair *pair;
@@ -3304,7 +3304,7 @@ void PStruct::SetPointerArray(void *base, unsigned offset, TArray<size_t> *speci
 //
 //==========================================================================
 
-void PStruct::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t,PType *>> *special)
+void PStruct::SetPointerMap(void *base, unsigned offset, TArray<std::pair<size_t, PMap *>> *special)
 {
 	auto it = Symbols.GetIterator();
 	PSymbolTable::MapType::Pair *pair;

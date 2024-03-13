@@ -419,7 +419,7 @@ size_t DObject::PropagateMark()
 //==========================================================================
 
 template<typename M>
-static void MapPointerSubstitution(M *map, size_t &changed, DObject *old, DObject *notOld)
+static void MapPointerSubstitution(M *map, size_t &changed, DObject *old, DObject *notOld, const bool shouldSwap)
 {
 	TMapIterator<typename M::KeyType, DObject*> it(*map);
 	typename M::Pair * p;
@@ -427,13 +427,21 @@ static void MapPointerSubstitution(M *map, size_t &changed, DObject *old, DObjec
 	{
 		if (p->Value == old)
 		{
-			p->Value = notOld;
-			changed++;
+			if (shouldSwap)
+			{
+				p->Value = notOld;
+				changed++;
+			}
+			else if (p->Value != nullptr)
+			{
+				p->Value = nullptr;
+				changed++;
+			}
 		}
 	}
 }
 
-size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
+size_t DObject::PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail)
 {
 	const PClass *info = GetClass();
 	size_t changed = 0;
@@ -446,11 +454,22 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	for(size_t i = 0; i < info->FlatPointersSize; i++)
 	{
 		size_t offset = info->FlatPointers[i].first;
+		auto& obj = *(DObject**)((uint8_t*)this + offset);
 
-		if (*(DObject **)((uint8_t *)this + offset) == old)
+		if (obj == old)
 		{
-			*(DObject **)((uint8_t *)this + offset) = notOld;
-			changed++;
+			// If a pointer's type is null, that means it's native and anything native is safe to swap
+			// around due to its inherit type expansiveness.
+			if (info->FlatPointers[i].second == nullptr || notOld->IsKindOf(info->FlatPointers[i].second->PointedClass()))
+			{
+				obj = notOld;
+				changed++;
+			}
+			else if (nullOnFail && obj != nullptr)
+			{
+				obj = nullptr;
+				changed++;
+			}
 		}
 	}
 
@@ -462,13 +481,26 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 
 	for(size_t i = 0; i < info->ArrayPointersSize; i++)
 	{
-		auto aray = (TArray<DObject*>*)((uint8_t *)this + info->ArrayPointers[i].first);
+		const bool isType = notOld->IsKindOf(static_cast<PObjectPointer*>(info->ArrayPointers[i].second->ElementType)->PointedClass());
+
+		if (!isType && !nullOnFail)
+			continue;
+
+		auto aray = (TArray<DObject*>*)((uint8_t*)this + info->ArrayPointers[i].first);
 		for (auto &p : *aray)
 		{
 			if (p == old)
 			{
-				p = notOld;
-				changed++;
+				if (isType)
+				{
+					p = notOld;
+					changed++;
+				}
+				else if (p != nullptr)
+				{
+					p = nullptr;
+					changed++;
+				}
 			}
 		}
 	}
@@ -482,13 +514,18 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 	for(size_t i = 0; i < info->MapPointersSize; i++)
 	{
 		PMap * type = static_cast<PMap*>(info->MapPointers[i].second);
+
+		const bool isType = notOld->IsKindOf(static_cast<PObjectPointer*>(type->ValueType)->PointedClass());
+		if (!isType && !nullOnFail)
+			continue;
+
 		if(type->KeyType->RegType == REGT_STRING)
 		{ // FString,DObject*
-			MapPointerSubstitution((ZSMap<FString,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld);
+			MapPointerSubstitution((ZSMap<FString,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld, isType);
 		}
 		else
 		{ // uint32_t,DObject*
-			MapPointerSubstitution((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld);
+			MapPointerSubstitution((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld, isType);
 		}
 	}
 

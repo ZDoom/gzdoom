@@ -701,7 +701,7 @@ public:
 	void Tick();
 	void InitFunctions();
 	size_t PropagateMark();
-	size_t PointerSubstitution (DObject *old, DObject *notOld);
+	size_t PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail);
 	bool wait_finished(DRunningScript *script);
 	void AddRunningScript(DRunningScript *runscr);
 

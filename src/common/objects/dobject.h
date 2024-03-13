@@ -246,7 +246,7 @@ public:
 	inline int* IntArray(FName field);
 
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
-	virtual size_t PointerSubstitution (DObject *old, DObject *notOld);
+	virtual size_t PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail);
 
 	PClass *GetClass() const
 	{

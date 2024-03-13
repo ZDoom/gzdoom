@@ -32,18 +32,18 @@
 **---------------------------------------------------------------------------
 **
 ** NOTE: TArray takes advantage of the assumption that the contained type is
-** able to be trivially moved. The definition of trivially movable by the C++
-** standard is more strict than the actual set of types that can be moved with
-** memmove. For example, FString uses non-trivial constructors/destructor in
-** order to maintain the reference count, but can be "safely" by passed if the
+** able to be trivially relocated. This definition includes more than just
+** types that the C++ standard says are trivially copyable. For example,
+** FString uses non-trivial constructors/destructor in
+** order to maintain the reference count, but can be "safely" memcpyed if the
 ** opaque destructor call is avoided. Similarly types like TArray itself which
 ** only null the owning pointers when moving which can be skipped if the
 ** destructor is not called.
 **
-** It is possible that with LTO TArray could be made safe for non-trivial types,
-** but we don't wish to rely on LTO to reach expected performance. The set of
-** types which can not be contained by TArray as a result of this choice is
-** actually extremely small.
+** It is possible that with LTO TArray could be made safe for non-trivially
+** relocatable types, but we don't wish to rely on LTO to reach expected
+** performance. The set of types which cannot be contained by TArray as a
+** result of this choice is actually extremely small.
 **
 */
 
@@ -139,6 +139,10 @@ struct FArray
 template <class T, class TT=T>
 class TArray
 {
+#if defined(__clang__) && defined(__cpp_impl_trivially_relocatable)
+    static_assert(__is_trivially_relocatable(T), "T must be trivially relocatable");
+#endif
+
 public:
 
     typedef TIterator<T>                       iterator;

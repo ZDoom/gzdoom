@@ -115,6 +115,6 @@ mapbind joy2 am_clearmarks
 mapbind pov1right +am_panright
 mapbind pov1left +am_panleft
 mapbind pov1up +am_panup
-mapbind pov2down +am_pandown
+mapbind pov1down +am_pandown
 mapbind joy5 +am_zoomout
 mapbind joy6 +am_zoomin

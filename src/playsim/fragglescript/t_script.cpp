@@ -549,9 +549,9 @@ size_t DFraggleThinker::PropagateMark()
 //
 //==========================================================================
 
-size_t DFraggleThinker::PointerSubstitution (DObject *old, DObject *notOld)
+size_t DFraggleThinker::PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail)
 {
-	size_t changed = Super::PointerSubstitution(old, notOld);
+	size_t changed = Super::PointerSubstitution(old, notOld, nullOnFail);
 	for(unsigned i=0;i<SpawnedThings.Size();i++)
 	{
 		if (SpawnedThings[i] == static_cast<AActor*>(old)) 

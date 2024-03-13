@@ -5248,15 +5248,14 @@ extern bool demonew;
 
 //==========================================================================
 //
-// This function is dangerous and only designed for swapping player pawns
+// This function is only designed for swapping player pawns
 // over to their new ones upon changing levels or respawning. It SHOULD NOT be
 // used for anything else! Do not export this functionality as it's
-// meant strictly for internal usage. Only swap pointers if the thing being swapped
-// to is a type of the thing being swapped from.
+// meant strictly for internal usage.
 //
 //==========================================================================
 
-void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer)
+void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer, bool removeOld)
 {
 	if (oldPlayer == nullptr || newPlayer == nullptr || oldPlayer == newPlayer
 		|| !oldPlayer->IsKindOf(NAME_PlayerPawn) || !newPlayer->IsKindOf(NAME_PlayerPawn))
@@ -5293,20 +5292,16 @@ void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer)
 			sec.SoundTarget = newPlayer;
 	}
 
-	// Update all the remaining object pointers. This is dangerous but needed to ensure
-	// everything functions correctly when respawning or changing levels.
+	// Update all the remaining object pointers.
 	for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
-		probe->PointerSubstitution(oldPlayer, newPlayer);
+		probe->PointerSubstitution(oldPlayer, newPlayer, removeOld);
 }
 
 //==========================================================================
 //
-// This function is much safer than PlayerPointerSubstition as it only truly
-// swaps a few safe pointers. This has some extra barriers to it to allow
+// This has some extra barriers compared to PlayerPointerSubstitution to allow
 // Actors to freely morph into other Actors which is its main usage.
-// Previously this used raw pointer substitutions but that's far too
-// volatile to use with modder-provided information. It also allows morphing
-// to be more extendable from ZScript.
+// It also allows morphing to be more extendable from ZScript.
 //
 //==========================================================================
 
@@ -5351,30 +5346,6 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 		VMCall(func, params, 2, nullptr, 0);
 	}
 
-	// Only change some gameplay-related pointers that we know we can safely swap to whatever
-	// new Actor class is present.
-	AActor* mo = nullptr;
-	auto it = from->Level->GetThinkerIterator<AActor>();
-	while ((mo = it.Next()) != nullptr)
-	{
-		if (mo->target == from)
-			mo->target = to;
-		if (mo->tracer == from)
-			mo->tracer = to;
-		if (mo->master == from)
-			mo->master = to;
-		if (mo->goal == from)
-			mo->goal = to;
-		if (mo->lastenemy == from)
-			mo->lastenemy = to;
-		if (mo->LastHeard == from)
-			mo->LastHeard = to;
-		if (mo->LastLookActor == from)
-			mo->LastLookActor = to;
-		if (mo->Poisoner == from)
-			mo->Poisoner = to;
-	}
-
 	// Go through player infos.
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -5403,6 +5374,10 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 		if (sec.SoundTarget == from)
 			sec.SoundTarget = to;
 	}
+
+	// Replace any object pointers that are safe to swap around.
+	for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
+		probe->PointerSubstitution(from, to, false);
 
 	// Remaining maintenance related to morphing.
 	if (from->player != nullptr)
@@ -5696,7 +5671,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 				if (sec.SoundTarget == oldactor) sec.SoundTarget = nullptr;
 			}
 
-			PlayerPointerSubstitution (oldactor, p->mo);
+			PlayerPointerSubstitution (oldactor, p->mo, false);
 
 			localEventManager->PlayerRespawned(PlayerNum(p));
 			Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);

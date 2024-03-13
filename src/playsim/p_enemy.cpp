@@ -2747,7 +2747,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				{
 					bool vrange = !!(actor->flags5 & MF5_NOVERTICALMELEERANGE);
 					actor->flags5 |= MF5_NOVERTICALMELEERANGE;
-					P_CheckMeleeRange(actor);
+					reached = P_CheckMeleeRange(actor);
 					if (!vrange) actor->flags5 &= ~(MF5_NOVERTICALMELEERANGE);
 				}
 				else reached = (P_CheckMeleeRange(actor));

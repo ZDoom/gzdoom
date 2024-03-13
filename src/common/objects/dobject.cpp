@@ -363,54 +363,49 @@ size_t DObject::PropagateMark()
 	const PClass *info = GetClass();
 	if (!PClass::bShutdown)
 	{
-		const size_t *offsets = info->FlatPointers;
-		if (offsets == NULL)
+		if (info->FlatPointers == nullptr)
 		{
-			const_cast<PClass *>(info)->BuildFlatPointers();
-			offsets = info->FlatPointers;
-		}
-		while (*offsets != ~(size_t)0)
-		{
-			GC::Mark((DObject **)((uint8_t *)this + *offsets));
-			offsets++;
+			info->BuildFlatPointers();
+			assert(info->FlatPointers);
 		}
 
-		offsets = info->ArrayPointers;
-		if (offsets == NULL)
+		for(size_t i = 0; i < info->FlatPointersSize; i++)
 		{
-			const_cast<PClass *>(info)->BuildArrayPointers();
-			offsets = info->ArrayPointers;
+			GC::Mark((DObject **)((uint8_t *)this + info->FlatPointers[i].first));
 		}
-		while (*offsets != ~(size_t)0)
+
+		if (info->ArrayPointers == nullptr)
 		{
-			auto aray = (TArray<DObject*>*)((uint8_t *)this + *offsets);
+			info->BuildArrayPointers();
+			assert(info->ArrayPointers);
+		}
+
+		for(size_t i = 0; i < info->ArrayPointersSize; i++)
+		{
+			auto aray = (TArray<DObject*>*)((uint8_t *)this + info->ArrayPointers[i].first);
 			for (auto &p : *aray)
 			{
 				GC::Mark(&p);
 			}
-			offsets++;
 		}
 
+		if (info->MapPointers == nullptr)
 		{
-			const std::pair<size_t,PType *> *maps = info->MapPointers;
-			if (maps == NULL)
-			{
-				const_cast<PClass *>(info)->BuildMapPointers();
-				maps = info->MapPointers;
-			}
-			while (maps->first != ~(size_t)0)
-			{
-				if(maps->second->RegType == REGT_STRING)
-				{ // FString,DObject*
-					PropagateMarkMap((ZSMap<FString,DObject*>*)((uint8_t *)this + maps->first));
-				}
-				else
-				{ // uint32_t,DObject*
-					PropagateMarkMap((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + maps->first));
-				}
-				maps++;
-			}
+			info->BuildMapPointers();
+			assert(info->MapPointers);
+		}
 
+		for(size_t i = 0; i < info->MapPointersSize; i++)
+		{
+			PMap * type = static_cast<PMap*>(info->MapPointers[i].second);
+			if(type->KeyType->RegType == REGT_STRING)
+			{ // FString,DObject*
+				PropagateMarkMap((ZSMap<FString,DObject*>*)((uint8_t *)this + info->MapPointers[i].first));
+			}
+			else
+			{ // uint32_t,DObject*
+				PropagateMarkMap((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + info->MapPointers[i].first));
+			}
 		}
 		return info->Size;
 	}
@@ -423,35 +418,51 @@ size_t DObject::PropagateMark()
 //
 //==========================================================================
 
+template<typename M>
+static void MapPointerSubstitution(M *map, size_t &changed, DObject *old, DObject *notOld)
+{
+	TMapIterator<typename M::KeyType, DObject*> it(*map);
+	typename M::Pair * p;
+	while(it.NextPair(p))
+	{
+		if (p->Value == old)
+		{
+			p->Value = notOld;
+			changed++;
+		}
+	}
+}
+
 size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
 	const PClass *info = GetClass();
-	const size_t *offsets = info->FlatPointers;
 	size_t changed = 0;
-	if (offsets == NULL)
+	if (info->FlatPointers == nullptr)
 	{
-		const_cast<PClass *>(info)->BuildFlatPointers();
-		offsets = info->FlatPointers;
-	}
-	while (*offsets != ~(size_t)0)
-	{
-		if (*(DObject **)((uint8_t *)this + *offsets) == old)
-		{
-			*(DObject **)((uint8_t *)this + *offsets) = notOld;
-			changed++;
-		}
-		offsets++;
+		info->BuildFlatPointers();
+		assert(info->FlatPointers);
 	}
 
-	offsets = info->ArrayPointers;
-	if (offsets == NULL)
+	for(size_t i = 0; i < info->FlatPointersSize; i++)
 	{
-		const_cast<PClass *>(info)->BuildArrayPointers();
-		offsets = info->ArrayPointers;
+		size_t offset = info->FlatPointers[i].first;
+
+		if (*(DObject **)((uint8_t *)this + offset) == old)
+		{
+			*(DObject **)((uint8_t *)this + offset) = notOld;
+			changed++;
+		}
 	}
-	while (*offsets != ~(size_t)0)
+
+	if (info->ArrayPointers == nullptr)
 	{
-		auto aray = (TArray<DObject*>*)((uint8_t *)this + *offsets);
+		info->BuildArrayPointers();
+		assert(info->ArrayPointers);
+	}
+
+	for(size_t i = 0; i < info->ArrayPointersSize; i++)
+	{
+		auto aray = (TArray<DObject*>*)((uint8_t *)this + info->ArrayPointers[i].first);
 		for (auto &p : *aray)
 		{
 			if (p == old)
@@ -460,9 +471,26 @@ size_t DObject::PointerSubstitution (DObject *old, DObject *notOld)
 				changed++;
 			}
 		}
-		offsets++;
 	}
 
+	if (info->MapPointers == nullptr)
+	{
+		info->BuildMapPointers();
+		assert(info->MapPointers);
+	}
+
+	for(size_t i = 0; i < info->MapPointersSize; i++)
+	{
+		PMap * type = static_cast<PMap*>(info->MapPointers[i].second);
+		if(type->KeyType->RegType == REGT_STRING)
+		{ // FString,DObject*
+			MapPointerSubstitution((ZSMap<FString,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld);
+		}
+		else
+		{ // uint32_t,DObject*
+			MapPointerSubstitution((ZSMap<uint32_t,DObject*>*)((uint8_t *)this + info->MapPointers[i].first), changed, old, notOld);
+		}
+	}
 
 	return changed;
 }

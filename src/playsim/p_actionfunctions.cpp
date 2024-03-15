@@ -5165,7 +5165,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	if(animStart == FErr_NotFound)
 	{
 		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
-		Printf("Could not find animation %s", animName.GetChars());
+		Printf("Could not find animation %s\n", animName.GetChars());
 		return;
 	}
 	int animEnd = mdl->FindLastFrame(animName);
@@ -5180,13 +5180,13 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	if(startFrame >= len)
 	{
 		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
-		Printf("frame %d is past the end of animation %s", startFrame, animName.GetChars());
+		Printf("frame %d is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(loopFrame >= len)
 	{
 		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
-		Printf("frame %d is past the end of animation %s", startFrame, animName.GetChars());
+		Printf("frame %d is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	
@@ -5330,7 +5330,7 @@ void ChangeModelNative(
 
 	if (n_modeldef != NAME_None && (modeldef = PClass::FindActor(n_modeldef.GetChars())) == nullptr)
 	{
-		Printf("Attempt to pass invalid modeldef name %s in %s.", n_modeldef.GetChars(), self->GetCharacterName());
+		Printf("Attempt to pass invalid modeldef name %s in %s.\n", n_modeldef.GetChars(), self->GetCharacterName());
 		return;
 	}
 

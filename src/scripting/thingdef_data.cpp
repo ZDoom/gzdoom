@@ -356,6 +356,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF9, PATHING, AActor, flags9),
 	DEFINE_FLAG(MF9, KEEPPATH, AActor, flags9),
 	DEFINE_FLAG(MF9, NOPATHING, AActor, flags9),
+	DEFINE_FLAG(MF9, ISPUFF, AActor, flags9), //[AA] was spawned by SpawnPuff
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

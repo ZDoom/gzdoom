@@ -576,6 +576,35 @@ public:
 		return f;
 	}
 
+	bool SortedDelete(const T& obj)
+	{
+		auto f = SortedFind(obj, true);
+		if (f == Size())
+		{
+			Delete(f);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	template<typename Func>
+	bool SortedDelete(const T& obj, Func lt)
+	{
+		auto f = SortedFind(obj, lt, true);
+		if (f == Size())
+		{
+			Delete(f);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	bool Pop ()
 	{
 		if (Count > 0)

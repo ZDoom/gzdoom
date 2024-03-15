@@ -435,7 +435,6 @@ struct Sector native play
 		SECMF_UNDERWATERMASK	= 32+64,
 		SECMF_DRAWN			= 128,	// sector has been drawn at least once
 		SECMF_HIDDEN			= 256,	// Do not draw on textured automap
-		SECMF_NOPATHING			= 4096, // monsters cannot path find in these areas, saves on time and resources
 	}
 	native uint16		MoreFlags;
 	

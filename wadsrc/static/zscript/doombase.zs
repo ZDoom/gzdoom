@@ -408,7 +408,7 @@ struct LevelLocals native
 	
 	const CLUSTER_HUB = 0x00000001;	// Cluster uses hub behavior
 
-	native readonly Array<PathNode> PathNodes;
+
 	native Array<@Sector> Sectors;
 	native Array<@Line> Lines;
 	native Array<@Side> Sides;
@@ -476,7 +476,6 @@ struct LevelLocals native
 	native readonly int compatflags;
 	native readonly int compatflags2;
 	native readonly LevelInfo info;
-	native readonly bool pathing;
 
 	native String GetUDMFString(int type, int index, Name key);
 	native int GetUDMFInt(int type, int index, Name key);
@@ -554,9 +553,6 @@ struct LevelLocals native
 
 	native void SpawnParticle(FSpawnParticleParams p);
 	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
-
-	native bool FindPath(Actor chaser, Actor target, PathNode startnode = null, PathNode goalnode = null);
-	native void HandlePathNode(PathNode node, bool add); // This is only here because there's no other way to register the node privately.
 }
 
 // a few values of this need to be readable by the play code.

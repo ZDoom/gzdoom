@@ -202,7 +202,6 @@ xx(Cast) // 'damage type' for the cast call
 xx(MapSpot)
 xx(PatrolPoint)
 xx(PatrolSpecial)
-xx(PathNode)
 xx(Communicator)
 xx(PowerScanner)
 

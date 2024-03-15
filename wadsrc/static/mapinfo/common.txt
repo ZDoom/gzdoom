@@ -44,7 +44,6 @@ DoomEdNums
   5065 = InvisibleBridge8
   9001 = MapSpot
   9013 = MapSpotGravity
-  9022 = PathNode
   9024 = PatrolPoint
   9025 = SecurityCamera
   9026 = Spark

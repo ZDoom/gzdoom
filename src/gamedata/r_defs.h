@@ -503,7 +503,6 @@ enum
 	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
 	SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
 	SECMF_LIFT				= 2048,	// For MBF monster AI
-	SECMF_NOPATHING			= 4096, // monsters cannot path find in these areas, saves on time and resources
 };
 
 enum

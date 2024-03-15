@@ -318,14 +318,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMeleeRange, P_CheckMeleeRange)
 //
 //=============================================================================
 
-static int DoCheckMissileRange (AActor *actor, int &sight)
+static int P_CheckMissileRange (AActor *actor)
 {
 	double dist;
 		
 	if ((actor->Sector->Flags & SECF_NOATTACK)) return false;
 
-	sight = P_CheckSight(actor, actor->target, SF_SEEPASTBLOCKEVERYTHING);
-	if (!sight)
+	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -379,12 +378,6 @@ static int DoCheckMissileRange (AActor *actor, int &sight)
 
 	int mmc = int(actor->MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= min(int(dist), mmc);
-}
-
-static int P_CheckMissileRange(AActor* actor)
-{
-	int n = -1;
-	return DoCheckMissileRange(actor, n);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMissileRange, P_CheckMissileRange)
@@ -951,13 +944,13 @@ void P_DoNewChaseDir (AActor *actor, double deltax, double deltay)
 //
 //=============================================================================
 
-void DoNewChaseDir(AActor * actor, bool node)
+void P_NewChaseDir(AActor * actor)
 {
 	DVector2 delta;
 
 	actor->strafecount = 0;
 
-	if ((node || actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal != nullptr)
+	if ((actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal!=NULL)
 	{
 		delta = actor->Vec2To(actor->goal);
 	}
@@ -1094,11 +1087,6 @@ void DoNewChaseDir(AActor * actor, bool node)
 	if (actor->strafecount)
 		actor->movecount = actor->strafecount;
 
-}
-
-void P_NewChaseDir(AActor* actor)
-{
-	DoNewChaseDir(actor, false);
 }
 
 //=============================================================================
@@ -2213,85 +2201,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearLastHeard)
 
 //==========================================================================
 //
-// ClearPath
-//
-//==========================================================================
-
-void AActor::ClearPath()
-{
-	Path.Clear();
-	if (goal)
-	{
-		static PClass* nodeCls = PClass::FindClass(NAME_PathNode);
-		if (nodeCls->IsAncestorOf(goal->GetClass()))
-			goal = nullptr;
-	}
-}
-
-DEFINE_ACTION_FUNCTION(AActor, ClearPath)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	self->ClearPath();
-	return 0;
-}
-
-bool AActor::CanPathfind()
-{
-	if (Level->PathNodes.Size() > 0 &&
-		(!(flags9 & MF9_NOPATHING) && !(Sector->MoreFlags & SECMF_NOPATHING)) &&
-		(flags9 & MF9_PATHING || Level->flags3 & LEVEL3_PATHING))
-	{
-		if ((flags6 & MF6_NOFEAR))
-			return true;
-
-		// Can't pathfind while feared.
-		if (flags4 & MF4_FRIGHTENED)
-			return false;
-
-		if (target)
-		{
-			if (target->flags8 & MF8_FRIGHTENING)
-				return false;
-
-			if (target->player && target->player->cheats & CF_FRIGHTENING)
-				return false;
-		}
-		return true;
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, CanPathfind)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	return self->CanPathfind();
-}
-
-void AActor::CallReachedNode(AActor *node)
-{
-	IFVIRTUAL(AActor, ReachedNode)
-	{
-		VMValue params[2] = { this, node };
-		VMCall(func, params, 2, nullptr, 0);
-	}
-}
-
-// Called while scoring the path.
-bool AActor::CallExcludeNode(AActor* node)
-{
-	IFVIRTUAL(AActor, ExcludeNode)
-	{
-		VMValue params[2] = { (DObject*)this, node };
-		int retval = 0;
-		VMReturn ret(&retval);
-		VMCall(func, params, 2, &ret, 1);
-		return !!retval;
-	}
-	return false;
-}
-
-//==========================================================================
-//
 // A_Wander
 //
 //==========================================================================
@@ -2424,7 +2333,6 @@ nosee:
 
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
-	int sight = -1;
 	if (actor->flags5 & MF5_INCONVERSATION)
 		return;
 
@@ -2503,7 +2411,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 	// [RH] Friendly monsters will consider chasing whoever hurts a player if they
 	// don't already have a target.
-	if (actor->flags & MF_FRIENDLY && actor->target == nullptr)
+	if (actor->flags & MF_FRIENDLY && actor->target == NULL)
 	{
 		player_t *player;
 
@@ -2562,7 +2470,6 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 			else
 			{
-				actor->ClearPath();
 				actor->SetIdle();
 				actor->flags7 &= ~MF7_INCHASE;
 				return;
@@ -2586,13 +2493,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		actor->flags7 &= ~MF7_INCHASE;
 		return;
 	}
-
+	
 	// [RH] Don't attack if just moving toward goal
-	static const PClass* nodeCls = PClass::FindClass(NAME_PathNode);
-	bool pnode = (actor->goal && nodeCls->IsAncestorOf(actor->goal->GetClass()));
-
-	if (!pnode &&
-		(actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal)))
+	if (actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal != NULL))
 	{
 		AActor * savedtarget = actor->target;
 		actor->target = actor->goal;
@@ -2610,7 +2513,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			// as the goal.
 			while ( (spec = specit.Next()) )
 			{
-				P_ExecuteSpecial(actor->Level, spec->special, nullptr, actor, false, spec->args[0],
+				P_ExecuteSpecial(actor->Level, spec->special, NULL, actor, false, spec->args[0],
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
@@ -2633,7 +2536,6 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			if (newgoal != NULL && delay != 0)
 			{
 				actor->flags4 |= MF4_INCOMBAT;
-				actor->ClearPath(); // [MC] Just to be safe.
 				actor->SetIdle();
 			}
 			actor->flags7 &= ~MF7_INCHASE;
@@ -2691,9 +2593,17 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		}
 		
 		// check for missile attack
-		if (missilestate && (actor->isFast() || actor->movecount < 1) && DoCheckMissileRange(actor, sight))
+		if (missilestate)
 		{
-			actor->SetState(missilestate);
+			if (!actor->isFast() && actor->movecount)
+			{
+				goto nomissile;
+			}
+			
+			if (!P_CheckMissileRange (actor))
+				goto nomissile;
+			
+			actor->SetState (missilestate);
 			actor->flags |= MF_JUSTATTACKED;
 			actor->flags4 |= MF4_INCOMBAT;
 			actor->flags7 &= ~MF7_INCHASE;
@@ -2723,51 +2633,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (gotNew && actor->target != oldtarget)
 		{
 			actor->flags7 &= ~MF7_INCHASE;
-			actor->ClearPath();
 			return; 	// got a new target
 		}
-	}
-
-	if (!dontmove && actor->target && actor->CanPathfind())
-	{
-		// Try to get sight checks from missile states if they have any, saving time.
-		if (!(actor->flags9 & MF9_KEEPPATH))
-		{
-			if (sight < 0)
-				sight = P_CheckSight(actor, actor->target, SF_SEEPASTBLOCKEVERYTHING);
-		}
-		else sight = 0;
-		
-		// Out of sight, so keep pathfinding
-		if (sight == 0)
-		{
-			if (pnode && !(actor->goal->flags & MF_AMBUSH))
-			{
-				AActor* temp = actor->target;
-				actor->target = actor->goal;
-				bool reached = false;
-				// 2D checks for floaters, 3D otherwise
-				if (actor->flags & MF_FLOAT)
-				{
-					bool vrange = !!(actor->flags5 & MF5_NOVERTICALMELEERANGE);
-					actor->flags5 |= MF5_NOVERTICALMELEERANGE;
-					reached = P_CheckMeleeRange(actor);
-					if (!vrange) actor->flags5 &= ~(MF5_NOVERTICALMELEERANGE);
-				}
-				else reached = (P_CheckMeleeRange(actor));
-				actor->target = temp;
-
-				if (reached)
-					actor->CallReachedNode(actor->goal);
-			
-			}
-			if (!actor->goal)
-			{
-				if (actor->Path.Size() > 0 || actor->Level->FindPath(actor, actor->target))
-					actor->goal = actor->Path[0];
-			}
-		}
-		else actor->ClearPath();
 	}
 
 	//
@@ -2788,7 +2655,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		// chase towards player
 		if ((--actor->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_SmartMove(actor) && !(flags & CHF_STOPIFBLOCKED)))
 		{
-			DoNewChaseDir(actor, pnode);
+			P_NewChaseDir(actor);
 		}
 		// if the move was illegal, reset it 
 		// (copied from A_SerpentChase - it applies to everything with CANTLEAVEFLOORPIC!)
@@ -2804,7 +2671,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				}
 			}
 			if (!(flags & CHF_STOPIFBLOCKED))
-				DoNewChaseDir(actor, pnode);
+				P_NewChaseDir(actor);
 		}
 	}
 	else if (dontmove && actor->movecount > 0) actor->movecount--;

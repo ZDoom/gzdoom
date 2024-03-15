@@ -1124,7 +1124,7 @@ FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, 
 
 	if(thing->flags9 & MF9_DECOUPLEDANIMATIONS)
 	{
-		return BaseSpriteModelFrames.CheckKey((thing->modelData != nullptr && thing->modelData->modelDef != nullptr) ? thing->modelData->modelDef : thing->GetClass());
+		return &BaseSpriteModelFrames[(thing->modelData != nullptr && thing->modelData->modelDef != nullptr) ? thing->modelData->modelDef : thing->GetClass()];
 	}
 	else
 	{

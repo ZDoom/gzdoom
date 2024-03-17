@@ -5438,57 +5438,6 @@ void ChangeModelNative(
 		}
 	}
 
-	//[SM] - We need to serialize file paths and model names so that they are pushed on loading save files. Likewise, let's not include models that were already parsed when initialized.
-	if (queryModel >= 0)
-	{
-		FString fullName;
-		fullName.Format("%s%s", modelpath.GetChars(), model.GetChars());
-		bool found = false;
-
-		for (auto &m : savedModelFiles) 
-		{
-			if(m.CompareNoCase(fullName) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found) for (auto &m : Models)
-		{
-			if (m->mFileName.CompareNoCase(fullName) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found) savedModelFiles.Push(fullName);
-	}
-	//Same for animations
-	if (queryAnimation >= 0)
-	{
-		FString fullName;
-		fullName.Format("%s%s", animationpath.GetChars(), animation.GetChars());
-		bool found = false;
-
-		for (auto &m : savedModelFiles) 
-		{
-			if(m.CompareNoCase(fullName) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found) for (auto &m : Models)
-		{
-			if (m->mFileName.CompareNoCase(fullName) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found) savedModelFiles.Push(fullName);
-	}
-
 	CleanupModelData(mobj);
 
 	return;

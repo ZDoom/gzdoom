@@ -43,8 +43,6 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 
-
-TArray<FString> savedModelFiles;
 TDeletingArray<FModel*> Models;
 TArray<FSpriteModelFrame> SpriteModelFrames;
 TMap<void*, FSpriteModelFrame> BaseSpriteModelFrames;
@@ -160,7 +158,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 
 	for(unsigned i = 0; i< Models.Size(); i++)
 	{
-		if (!Models[i]->mFileName.CompareNoCase(fullname)) return i;
+		if (Models[i]->mFileName.CompareNoCase(fullname) == 0) return i;
 	}
 
 	auto len = fileSystem.FileLength(lump);
@@ -236,6 +234,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 	}
 	// The vertex buffer cannot be initialized here because this gets called before OpenGL is initialized
 	model->mFileName = fullname;
+	model->mFilePath = {path, modelfile};
 	return Models.Push(model);
 }
 

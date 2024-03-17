@@ -91,6 +91,7 @@ public:
 	void ReadObjects(bool hubtravel);
 	bool BeginObject(const char *name);
 	void EndObject();
+	bool HasKey(const char* name);
 	bool HasObject(const char* name);
 	bool BeginArray(const char *name);
 	void EndArray();
@@ -245,6 +246,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &mo, struct ModelOverride *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimModelOverride &mo, struct AnimModelOverride *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def);
 FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
 
@@ -256,6 +258,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
 	DObject *v = static_cast<DObject*>(value);
 	Serialize(arc, key, v, nullptr);
 	value = static_cast<T*>(v);
+	return arc;
+}
+
+template<class A, class B>
+FSerializer &Serialize(FSerializer &arc, const char *key, std::pair<A, B> &value, std::pair<A, B> *def)
+{
+	arc.BeginObject(key);
+	Serialize(arc, "first", value.first, def ? &def->first : nullptr);
+	Serialize(arc, "second", value.second, def ? &def->second : nullptr);
+	arc.EndObject();
 	return arc;
 }
 

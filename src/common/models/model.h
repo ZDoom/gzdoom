@@ -18,7 +18,7 @@ struct FSpriteModelFrame;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
-extern TArray<FString> savedModelFiles;
+
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
 extern TMap<void*, FSpriteModelFrame> BaseSpriteModelFrames;
@@ -76,6 +76,7 @@ enum EFrameError
 class FModel
 {
 public:
+
 	FModel();
 	virtual ~FModel();
 
@@ -100,7 +101,9 @@ public:
 	void DestroyVertexBuffer();
 
 	bool hasSurfaces = false;
+
 	FString mFileName;
+	std::pair<FString, FString> mFilePath;
 	
 	FSpriteModelFrame *baseFrame;
 private:

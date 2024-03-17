@@ -55,6 +55,7 @@
 #include <utility>
 #include <iterator>
 #include <algorithm>
+#include <functional>
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
@@ -366,11 +367,11 @@ public:
 	}
 
 	template<typename Func>
-	bool IsSorted(Func lt)
+	bool IsSorted(Func &&lt)
 	{
 		for(unsigned i = 1; i < Count; i++)
 		{
-			if(lt(Array[i], Array[i-1])) return false;
+			if(std::invoke(lt, Array[i], Array[i-1])) return false;
 		}
 		return true;
 	}
@@ -418,7 +419,7 @@ public:
 	//
 	// exact = false returns the closest match, to be used for, ex., insertions, exact = true returns Size() when no match, like Find does
 	template<typename Func>
-	unsigned int SortedFind(const T& item, Func lt, bool exact = true) const
+	unsigned int SortedFind(const T& item, Func &&lt, bool exact = true) const
 	{
 		if(Count == 0) return 0;
 		if(Count == 1) return lt(item, Array[0]) ? 0 : 1;
@@ -430,11 +431,11 @@ public:
 		{
 			int mid = lo + ((hi - lo) / 2);
 
-			if(lt(Array[mid], item))
+			if(std::invoke(lt, Array[mid], item))
 			{
 				lo = mid + 1;
 			}
-			else if(lt(item, Array[mid]))
+			else if(std::invoke(lt, item, Array[mid]))
 			{
 				if(mid == 0) break; // prevent negative overflow due to unsigned numbers
 				hi = mid - 1;
@@ -450,7 +451,7 @@ public:
 		}
 		else
 		{
-			return (lo == Count || lt(item, Array[lo])) ? lo : lo + 1;
+			return (lo == Count || std::invoke(lt, item, Array[lo])) ? lo : lo + 1;
 		}
 	}
 
@@ -466,12 +467,24 @@ public:
     }
 
 	template<class Func> 
-	unsigned int FindEx(Func compare) const
+	bool Contains(const T& item, Func &&compare) const
+	{
+		unsigned int i;
+		for(i = 0;i < Count;++i)
+		{
+			if(std::invoke(compare, Array[i], item))
+				return true;
+		}
+		return false;
+	}
+
+	template<class Func> 
+	unsigned int FindEx(Func &&compare) const
 	{
 		unsigned int i;
 		for (i = 0; i < Count; ++i)
 		{
-			if (compare(Array[i]))
+			if (std::invoke(compare, Array[i]))
 				break;
 		}
 		return i;
@@ -569,9 +582,9 @@ public:
 	}
 
 	template<typename Func>
-	unsigned SortedAddUnique(const T& obj, Func lt)
+	unsigned SortedAddUnique(const T& obj, Func &&lt)
 	{
-		auto f = SortedFind(obj, lt, true);
+		auto f = SortedFind(obj, std::forward<Func>(lt), true);
 		if (f == Size()) Push(obj);
 		return f;
 	}
@@ -591,9 +604,9 @@ public:
 	}
 
 	template<typename Func>
-	bool SortedDelete(const T& obj, Func lt)
+	bool SortedDelete(const T& obj, Func &&lt)
 	{
-		auto f = SortedFind(obj, lt, true);
+		auto f = SortedFind(obj, std::forward<Func>(lt), true);
 		if (f == Size())
 		{
 			Delete(f);
@@ -691,9 +704,9 @@ public:
 	}
 
 	template<typename Func>
-	void SortedInsert (const T &item, Func lt)
+	void SortedInsert (const T &item, Func &&lt)
 	{
-		Insert (SortedFind (item, lt, false), item);
+		Insert (SortedFind (item, std::forward<Func>(lt), false), item);
 	}
 
 	void ShrinkToFit ()

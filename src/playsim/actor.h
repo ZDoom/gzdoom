@@ -719,6 +719,16 @@ struct ModelOverride
 	TArray<FTextureID> surfaceSkinIDs;
 };
 
+struct AnimModelOverride
+{
+	int id;
+
+	AnimModelOverride() = default;
+
+	AnimModelOverride(int i) : id(i) {}
+	operator int() { return id; }
+};
+
 enum EModelDataFlags
 {
 	MODELDATA_HADMODEL =		1 << 0,
@@ -729,14 +739,14 @@ class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
-	PClass *				modelDef;
-	TArray<ModelOverride>	models;
-	TArray<FTextureID>		skinIDs;
-	TArray<int>				animationIDs;
-	TArray<int>				modelFrameGenerators;
-	int						flags;
-	int						overrideFlagsSet;
-	int						overrideFlagsClear;
+	PClass *					modelDef;
+	TArray<ModelOverride>		models;
+	TArray<FTextureID>			skinIDs;
+	TArray<AnimModelOverride>	animationIDs;
+	TArray<int>					modelFrameGenerators;
+	int							flags;
+	int							overrideFlagsSet;
+	int							overrideFlagsClear;
 
 	AnimOverride curAnim;
 	AnimOverride prevAnim; // used for interpolation when switching anims

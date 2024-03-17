@@ -2148,14 +2148,6 @@ void G_DoLoadGame ()
 
 	BackupSaveName = savename;
 
-	//Push any added models from A_ChangeModel
-	for (auto& smf : savedModelFiles)
-	{
-		FString modelFilePath = smf.Left(smf.LastIndexOf("/")+1);
-		FString modelFileName = smf.Right(smf.Len() - smf.Left(smf.LastIndexOf("/") + 1).Len());
-		FindModel(modelFilePath.GetChars(), modelFileName.GetChars());
-	}
-
 	// At this point, the GC threshold is likely a lot higher than the
 	// amount of memory in use, so bring it down now by starting a
 	// collection.

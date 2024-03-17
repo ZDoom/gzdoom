@@ -506,7 +506,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			skinid = smf->skinIDs[i];
 		}
 
-		if (modelid >= 0)
+		if (modelid >= 0 && modelid < Models.size())
 		{
 			FModel * mdl = Models[modelid];
 			auto tex = skinid.isValid() ? TexMan.GetGameTexture(skinid, true) : nullptr;

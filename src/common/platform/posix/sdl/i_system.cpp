@@ -77,6 +77,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 double PerfToSec, PerfToMillisec;
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
+EXTERN_CVAR(Bool, longsavemessages)
 
 extern FStartupScreen *StartWindow;
 
@@ -372,13 +373,17 @@ void I_OpenShellFolder(const char* infolder)
 
 	if (!chdir(infolder))
 	{
-		Printf("Opening folder: %s\n", infolder);
+		if (longsavemessages")
+			Printf("Opening folder: %s\n", infolder);
 		std::system("xdg-open .");
 		chdir(curdir);
 	}
 	else
 	{
-		Printf("Unable to open directory '%s\n", infolder);
+		if (longsavemessages")
+			Printf("Unable to open directory '%s\n", infolder);
+		else
+			Printf("Unable to open requested directory\n");
 	}
 	free(curdir);
 }

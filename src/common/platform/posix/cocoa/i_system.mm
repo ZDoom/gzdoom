@@ -40,7 +40,7 @@
 #include "st_console.h"
 #include "v_text.h"
 
-
+EXTERN_CVAR(Bool, longsavemessages)
 double PerfToSec, PerfToMillisec;
 
 void CalculateCPUSpeed()
@@ -188,7 +188,8 @@ void I_OpenShellFolder(const char* folder)
 	NSString *currentpath = [filemgr currentDirectoryPath];
 
 	[filemgr changeCurrentDirectoryPath:[NSString stringWithUTF8String:folder]];
-	Printf("Opening folder: %s\n", folder);
+	if (longsavemessages)
+		Printf("Opening folder: %s\n", folder);
 	std::system("open .");
 	[filemgr changeCurrentDirectoryPath:currentpath];
 }

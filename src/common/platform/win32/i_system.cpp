@@ -114,6 +114,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
 EXTERN_CVAR (Int, vid_preferbackend)
+EXTERN_CVAR(Bool, longsavemessages)
 
 extern HANDLE StdOut;
 extern bool FancyStdOut;
@@ -824,13 +825,17 @@ void I_OpenShellFolder(const char* infolder)
 	}
 	else if (SetCurrentDirectoryW(WideString(infolder).c_str()))
 	{
-		Printf("Opening folder: %s\n", infolder);
+		if (longsavemessages)
+			Printf("Opening folder: %s\n", infolder);
 		ShellExecuteW(NULL, L"open", L"explorer.exe", L".", NULL, SW_SHOWNORMAL);
 		SetCurrentDirectoryW(curdir.Data());
 	}
 	else
 	{
-		Printf("Unable to open directory '%s\n", infolder);
+		if (longsavemessages)
+			Printf("Unable to open directory '%s\n", infolder);
+		else
+			Printf("Unable to open requested directory\n");
 	}
 }
 

@@ -32,6 +32,7 @@
  */
 
 #include "i_common.h"
+#include "c_cvars.h"
 
 #include <fnmatch.h>
 #include <sys/sysctl.h>

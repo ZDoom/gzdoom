@@ -373,14 +373,14 @@ void I_OpenShellFolder(const char* infolder)
 
 	if (!chdir(infolder))
 	{
-		if (longsavemessages")
+		if (longsavemessages)
 			Printf("Opening folder: %s\n", infolder);
 		std::system("xdg-open .");
 		chdir(curdir);
 	}
 	else
 	{
-		if (longsavemessages")
+		if (longsavemessages)
 			Printf("Unable to open directory '%s\n", infolder);
 		else
 			Printf("Unable to open requested directory\n");

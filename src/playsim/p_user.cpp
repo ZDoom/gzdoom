@@ -808,6 +808,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 	ACTION_RETURN_FLOAT(self->userinfo.GetStillBob());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetCameraBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetCameraBob());
+}
+
 
 //===========================================================================
 //

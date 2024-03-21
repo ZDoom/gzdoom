@@ -28,7 +28,7 @@ struct Destructible native play
     static native void DamageLinedef(Line def, Actor source, int damage, Name damagetype, int side, vector3 position, bool isradius);
     
     static native void GeometryLineAttack(TraceResults trace, Actor thing, int damage, Name damagetype);
-    static native void GeometryRadiusAttack(Actor bombspot, Actor bombsource, int bombdamage, int bombdistance, Name damagetype, int fulldamagedistance);
+    static native void GeometryRadiusAttack(Actor bombspot, Actor bombsource, int bombdamage, double bombdistance, Name damagetype, double fulldamagedistance);
     static native bool ProjectileHitLinedef(Actor projectile, Line def);
     static native bool ProjectileHitPlane(Actor projectile, SectorPart part);
     

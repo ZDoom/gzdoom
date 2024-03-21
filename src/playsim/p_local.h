@@ -410,9 +410,9 @@ enum
 	RADF_NOALLIES = 128,
 	RADF_CIRCULAR = 256
 };
-int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, int distance, int fulldmgdistance, bool oldradiusdmg, bool circular);
-int	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, 
-						FName damageType, int flags, int fulldamagedistance=0, FName species = NAME_None);
+int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, double distance, double fulldmgdistance, bool oldradiusdmg, bool circular);
+int	P_RadiusAttack (AActor *spot, AActor *source, int damage, double distance, 
+						FName damageType, int flags, double fulldamagedistance=0.0, FName species = NAME_None);
 
 void	P_DelSeclist(msecnode_t *, msecnode_t *sector_t::*seclisthead);
 void	P_DelSeclist(portnode_t *, portnode_t *FLinePortal::*seclisthead);

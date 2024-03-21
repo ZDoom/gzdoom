@@ -139,8 +139,8 @@ class DEarthquake : public DThinker
 public:
 	static const int DEFAULT_STAT = STAT_EARTHQUAKE;
 	void Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
-		int damrad, int tremrad, FSoundID quakesfx, int flags, 
-		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage);
+		double damrad, double tremrad, FSoundID quakesfx, int flags, 
+		double waveSpeedX, double waveSpeedY, double waveSpeedZ, double falloff, int highpoint, double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage);
 
 	void Serialize(FSerializer &arc);
 	void Tick ();

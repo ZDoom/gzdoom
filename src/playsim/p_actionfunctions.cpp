@@ -3322,8 +3322,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT		(intensity);
 	PARAM_INT		(duration);
-	PARAM_INT		(damrad);
-	PARAM_INT		(tremrad);
+	PARAM_FLOAT		(damrad);
+	PARAM_FLOAT		(tremrad);
 	PARAM_SOUND	(sound);
 
 	P_StartQuake(self->Level, self, 0, intensity, duration, damrad, tremrad, sound);
@@ -3345,14 +3345,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_QuakeEx)
 	PARAM_FLOAT(intensityY);
 	PARAM_FLOAT(intensityZ);
 	PARAM_INT(duration);
-	PARAM_INT(damrad);
-	PARAM_INT(tremrad);
+	PARAM_FLOAT(damrad);
+	PARAM_FLOAT(tremrad);
 	PARAM_SOUND(sound);
 	PARAM_INT(flags);
 	PARAM_FLOAT(mulWaveX);
 	PARAM_FLOAT(mulWaveY);
 	PARAM_FLOAT(mulWaveZ);
-	PARAM_INT(falloff);
+	PARAM_FLOAT(falloff);
 	PARAM_INT(highpoint);
 	PARAM_FLOAT(rollIntensity);
 	PARAM_FLOAT(rollWave);

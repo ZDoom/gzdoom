@@ -51,8 +51,8 @@ IMPLEMENT_POINTERS_END
 //==========================================================================
 
 void DEarthquake::Construct(AActor *center, double intensityX, double intensityY, double intensityZ, int duration,
-	int damrad, int tremrad, FSoundID quakesound, int flags,
-	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
+	double damrad, double tremrad, FSoundID quakesound, int flags,
+	double waveSpeedX, double waveSpeedY, double waveSpeedZ, double falloff, int highpoint, 
 	double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage)
 {
 	m_QuakeSFX = quakesound;
@@ -185,7 +185,7 @@ void DEarthquake::DoQuakeDamage(DEarthquake *quake, AActor *victim, bool falloff
 
 	if (!quake || !victim) return;
 
-	dist = quake->m_Spot->Distance2D(victim, true);
+	dist = quake->m_Spot->Distance2D(victim);
 	thrustfalloff = falloff ? GetFalloff(dist, m_DamageRadius) : 1.0;
 	// Check if in damage radius
 	if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
@@ -355,8 +355,8 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 		{
 			double dist;
 
-			if (quake->m_Flags & QF_3D)	dist = quake->m_Spot->Distance3D(victim, true);
-			else						dist = quake->m_Spot->Distance2D(victim, true);
+			if (quake->m_Flags & QF_3D)	dist = quake->m_Spot->Distance3D(victim);
+			else						dist = quake->m_Spot->Distance2D(victim);
 
 			if (dist < quake->m_TremorRadius)
 			{
@@ -429,8 +429,8 @@ int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuak
 //==========================================================================
 
 bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double intensityX, double intensityY, double intensityZ, int duration,
-	int damrad, int tremrad, FSoundID quakesfx, int flags,
-	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
+	double damrad, double tremrad, FSoundID quakesfx, int flags,
+	double waveSpeedX, double waveSpeedY, double waveSpeedZ, double falloff, int highpoint, 
 	double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage)
 {
 	AActor *center;
@@ -463,7 +463,7 @@ bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double int
 	return res;
 }
 
-bool P_StartQuake(FLevelLocals * Level, AActor * activator, int tid, double intensity, int duration, int damrad, int tremrad, FSoundID quakesfx)
+bool P_StartQuake(FLevelLocals * Level, AActor * activator, int tid, double intensity, int duration, double damrad, double tremrad, FSoundID quakesfx)
 {	//Maintains original behavior by passing 0 to intensityZ, flags, and everything else after QSFX.
 	return P_StartQuakeXYZ(Level, activator, tid, intensity, intensity, 0, duration, damrad, tremrad, quakesfx, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0.5, 0);
 }

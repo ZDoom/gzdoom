@@ -654,9 +654,11 @@ void FStartScreen::NetProgress(int count)
 
 void FStartScreen::Render(bool force)
 {
+	static uint64_t minwaittime = 30;
+
 	auto nowtime = I_msTime();
 	// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
-	if (nowtime - screen->FrameTime > 30 || force)
+	if (nowtime - screen->FrameTime > minwaittime || force)
 	{
 		screen->FrameTime = nowtime;
 		screen->BeginFrame();
@@ -689,6 +691,9 @@ void FStartScreen::Render(bool force)
 		screen->Update();
 		twod->OnFrameDone();
 	}
+	auto newtime = I_msTime();
+	if (newtime - nowtime > minwaittime) // slow down drawing the start screen if we're on a slow GPU!
+		minwaittime = (newtime - nowtime);
 }
 
 FImageSource* CreateStartScreenTexture(FBitmap& srcdata);

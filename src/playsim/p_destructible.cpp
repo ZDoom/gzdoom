@@ -448,11 +448,11 @@ static void PGRA_InsertIfCloser(TMap<int, pgra_data_t>& damageGroupPos, int grou
 
 EXTERN_CVAR(Float, splashfactor);
 
-void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, int bombdistance, FName damagetype, int fulldamagedistance)
+void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, double bombdistance, FName damagetype, double fulldamagedistance)
 {
 	TMap<int, pgra_data_t> damageGroupPos;
 
-	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
+	double bombdistancefloat = 1.0 / (bombdistance - fulldamagedistance);
 
 	// now, this is not entirely correct... but sector actions still _do_ require a valid source actor to trigger anything
 	if (!bombspot)
@@ -588,8 +588,8 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 					int damage = 0;
 					if (dst < bombdistance)
 					{
-						dst = clamp<double>(dst - (double)fulldamagedistance, 0, dst);
-						damage = (int)((double)bombdamage * (1. - dst * bombdistancefloat));
+						dst = clamp<double>(dst - fulldamagedistance, 0.0, dst);
+						damage = (int)((double)bombdamage * (1.0 - dst * bombdistancefloat));
 						if (bombsource == bombspot)
 							damage = (int)(damage * splashfactor);
 					}
@@ -661,8 +661,8 @@ void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage
 		int damage = 0;
 		if (dst < bombdistance)
 		{
-			dst = clamp<double>(dst - (double)fulldamagedistance, 0, dst);
-			damage = (int)((double)bombdamage * (1. - dst * bombdistancefloat));
+			dst = clamp<double>(dst - fulldamagedistance, 0.0, dst);
+			damage = (int)((double)bombdamage * (1.0 - dst * bombdistancefloat));
 			if (bombsource == bombspot)
 				damage = (int)(damage * splashfactor);
 		}
@@ -950,9 +950,9 @@ DEFINE_ACTION_FUNCTION(FDestructible, GeometryRadiusAttack)
 	PARAM_OBJECT(bombspot, AActor);
 	PARAM_OBJECT(bombsource, AActor);
 	PARAM_INT(bombdamage);
-	PARAM_INT(bombdistance);
+	PARAM_FLOAT(bombdistance);
 	PARAM_NAME(damagetype);
-	PARAM_INT(fulldamagedistance);
+	PARAM_FLOAT(fulldamagedistance);
 	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, damagetype, fulldamagedistance);
 	return 0;
 }

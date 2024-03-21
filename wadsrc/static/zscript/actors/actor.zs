@@ -273,7 +273,7 @@ class Actor : Thinker native
 	meta Name BloodType2;		// Bloopsplatter replacement type
 	meta Name BloodType3;		// AxeBlood replacement type
 	meta bool DontHurtShooter;
-	meta int ExplosionRadius;
+	meta double ExplosionRadius;
 	meta int ExplosionDamage;
 	meta int MeleeDamage;
 	meta Sound MeleeSound;
@@ -432,7 +432,7 @@ class Actor : Thinker native
 		DefThreshold 100;
 		BloodType "Blood", "BloodSplatter", "AxeBlood";
 		ExplosionDamage 128;
-		ExplosionRadius -1;	// i.e. use ExplosionDamage value
+		ExplosionRadius -1.0;	// i.e. use ExplosionDamage value
 		MissileHeight 32;
 		SpriteAngle 0;
 		SpriteRotation 0;
@@ -1226,9 +1226,9 @@ class Actor : Thinker native
 	native void A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	native void A_CustomComboAttack(class<Actor> missiletype, double spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	native void A_Burst(class<Actor> chunktype);
-	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
-	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false, bool circular = false);
-	native int RadiusAttack(Actor bombsource, int bombdamage, int bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, int fulldamagedistance = 0, name species = "None");
+	native void A_RadiusDamageSelf(int damage = 128, double distance = 128.0, int flags = 0, class<Actor> flashtype = null);
+	native int GetRadiusDamage(Actor thing, int damage, double distance, double fulldmgdistance = 0.0, bool oldradiusdmg = false, bool circular = false);
+	native int RadiusAttack(Actor bombsource, int bombdamage, double bombdistance, Name bombmod = 'none', int flags = RADF_HURTSOURCE, double fulldamagedistance = 0.0, name species = "None");
 	
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();

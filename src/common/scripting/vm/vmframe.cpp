@@ -279,6 +279,8 @@ static bool CanJit(VMScriptFunction *func)
 	// Asmjit has a 256 register limit. Stay safely away from it as the jit compiler uses a few for temporaries as well.
 	// Any function exceeding the limit will use the VM - a fair punishment to someone for writing a function so bloated ;)
 
+	if(func->blockJit) return false;
+
 	int maxregs = 200;
 	if (func->NumRegA + func->NumRegD + func->NumRegF + func->NumRegS < maxregs)
 		return true;

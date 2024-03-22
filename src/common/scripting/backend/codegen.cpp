@@ -9542,6 +9542,8 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 	auto &argflags = Function->Variants[0].ArgFlags;
 	auto *defaults = FnPtrCall ? nullptr : &Function->Variants[0].Implementation->DefaultArgs;
 
+	if(FnPtrCall) static_cast<VMScriptFunction*>(ctx.Function->Variants[0].Implementation)->blockJit = true;
+
 	int implicit = Function->GetImplicitArgs();
 
 	if (!CheckAccessibility(ctx.Version))

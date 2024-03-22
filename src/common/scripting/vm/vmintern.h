@@ -474,6 +474,8 @@ public:
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
 
+	bool blockJit = false; // function triggers Jit bugs, block compilation until bugs are fixed
+
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);

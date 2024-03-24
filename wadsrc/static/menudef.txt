@@ -1705,6 +1705,7 @@ OptionMenu CoopOptions protected
 	Option "$GMPLYMNU_SHAREKEYS",				"sv_coopsharekeys", "YesNo"
 	Option "$GMPLYMNU_LOCALITEMS",				"sv_localitems", "YesNo"
 	Option "$GMPLYMNU_NOLOCALDROP",				"sv_nolocaldrops", "YesNo"
+	Option "$GMPLYMNU_REMEMBERWEAP",			"sv_rememberlastweapon", "YesNo"
 	Class "GameplayMenu"
 }
 

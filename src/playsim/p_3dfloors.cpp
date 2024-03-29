@@ -198,15 +198,15 @@ void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int 
 
 //==========================================================================
 //
-// P_PlayerOnSpecial3DFloor
-// Checks to see if a player is standing on or is inside a 3D floor (water)
+// P_ActorOnSpecial3DFloor
+// Checks to see if an actor is standing on or is inside a 3D floor (water)
 // and applies any specials..
 //
 //==========================================================================
 
-void P_PlayerOnSpecial3DFloor(player_t* player)
+void P_ActorOnSpecial3DFloor(AActor* victim)
 {
-	for(auto rover : player->mo->Sector->e->XFloor.ffloors)
+	for(auto rover : victim->Sector->e->XFloor.ffloors)
 	{
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->flags & FF_FIX) continue;
@@ -215,22 +215,22 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
+			if(victim->Z() != rover->top.plane->ZatPoint(victim)) continue;
 		}
 		else 
 		{
 			//Water and DEATH FOG!!! heh
 			if ((rover->flags & FF_NODAMAGE) ||
-				player->mo->Z() > rover->top.plane->ZatPoint(player->mo) ||
-				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
+				victim->Z() > rover->top.plane->ZatPoint(victim) ||
+				victim->Top() < rover->bottom.plane->ZatPoint(victim))
 				continue;
 		}
 
 		// Apply sector specials
-		P_PlayerInSpecialSector(player, rover->model);
+		P_ActorInSpecialSector(victim, rover->model);
 
 		// Apply flat specials (using the ceiling!)
-		P_PlayerOnSpecialFlat(player, rover->model->GetTerrain(rover->top.isceiling));
+		P_ActorOnSpecialFlat(victim, rover->model->GetTerrain(rover->top.isceiling));
 
 		break;
 	}

@@ -90,8 +90,8 @@ bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVect
 bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
 bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
-void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
-void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
+void 	P_ActorInSpecialSector (AActor *victim, sector_t * sector=NULL);
+void	P_ActorOnSpecialFlat (AActor *victim, int floorType);
 void	P_SectorDamage(FLevelLocals *Level, int tag, int amount, FName type, PClassActor *protectClass, int flags);
 void	P_SetSectorFriction (FLevelLocals *level, int tag, int amount, bool alterFlag);
 double FrictionToMoveFactor(double friction);

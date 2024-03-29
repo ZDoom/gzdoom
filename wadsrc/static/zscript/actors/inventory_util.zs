@@ -855,8 +855,22 @@ extend class Actor
 		}
 	}
 
+	clearscope static class<BasicArmor> GetBasicArmorClass()
+	{
+		class<BasicArmor> cls = (class<BasicArmor>)(GameInfo.BasicArmorClass);
+		if (cls)
+			return cls;
 
+		return "BasicArmor";
+	}
 
+	clearscope static class<HexenArmor> GetHexenArmorClass()
+	{
+		class<HexenArmor> cls = (class<HexenArmor>)(GameInfo.HexenArmorClass);
+		if (cls)
+			return cls;
 
+		return "HexenArmor";
+	}
 
 }

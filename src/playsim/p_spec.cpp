@@ -430,10 +430,7 @@ void P_ActorInSpecialSector (AActor *victim, sector_t * sector)
 
 	// Falling, not all the way down yet?
 	if (!(sector->MoreFlags & SECMF_HARMINAIR) && !victim->isAtZ(sector->LowestFloorAt(victim)) && !victim->waterlevel)
-	{
-		DPrintf(2,"P_ActorInSpecialSector(): %p is not touching the floor and HARMINAIR isn't on, so they won't be harmed by the sector.\n",victim);
 		return;
-	}
 
 	// Has hit ground.
 

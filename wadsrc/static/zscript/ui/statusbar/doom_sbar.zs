@@ -146,7 +146,7 @@ class DoomStatusBar : BaseStatusBar
 		DrawImage(berserk? "PSTRA0" : "MEDIA0", (20, -2));
 		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (44, -20));
 		
-		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		let armor = CPlayer.mo.FindInventory("BasicArmor", true);
 		if (armor != null && armor.Amount > 0)
 		{
 			DrawInventoryIcon(armor, (20, -22));

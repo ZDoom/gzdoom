@@ -61,7 +61,7 @@ class ScriptUtil play
 		}
 		if (type == 'Armor')
 		{
-			type = "BasicArmor";
+			type = Actor.GetBasicArmorClass().GetClassName();
 		}
 		if (amount <= 0)
 		{

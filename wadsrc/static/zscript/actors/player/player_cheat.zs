@@ -139,7 +139,7 @@ extend class PlayerPawn
 			{
 				for (i = 0; i < 4; ++i)
 				{
-					let armoritem = Inventory(Spawn("HexenArmor"));
+					let armoritem = Inventory(Spawn(GetHexenArmorClass()));
 					armoritem.health = i;
 					armoritem.Amount = 0;
 					if (!armoritem.CallTryPickup (self))

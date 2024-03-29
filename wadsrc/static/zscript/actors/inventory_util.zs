@@ -855,8 +855,15 @@ extend class Actor
 		}
 	}
 
+	clearscope static class<Armor> GetArmorReplacement(class<Armor> type)
+	{
+		class<Armor> replacement = (class<Armor>)(GetReplacement(type));
+		// The replacement must be a type of the base type so it can
+		// suitably replace its functionality.
+		if (replacement is type)
+			return replacement;
 
-
-
+		return type;
+	}
 
 }

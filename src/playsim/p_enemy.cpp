@@ -465,6 +465,12 @@ static int P_IsUnderDamage(AActor* actor)
 				dir |= cl->getDirection();
 		}
 		// Q: consider crushing 3D floors too?
+		// [inkoalawetrust] Check for sectors that can harm the actor.
+		if (!(actor->flags9 & MF9_NOSECTORDAMAGE) && seclist->m_sector->damageamount > 0)
+		{
+			if (seclist->m_sector->MoreFlags & SECMF_HARMINAIR || actor->isAtZ(seclist->m_sector->LowestFloorAt(actor)) || actor->waterlevel)
+				return (actor->player || (actor->player == nullptr && seclist->m_sector->MoreFlags & SECMF_HURTMONSTERS))  ? -1 : 0;
+		}
 	}
 	return dir;
 }

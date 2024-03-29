@@ -509,6 +509,11 @@ class Actor : Thinker native
 	native clearscope void DisableLocalRendering(uint playerNum, bool disable);
 	native ui bool ShouldRenderLocally(); // Only clients get to check this, never the playsim.
 
+	// Called when the Actor is being used within a PSprite. This happens before potentially changing PSprite
+	// state so that any custom actions based on things like player input can be done before moving to the next
+	// state of something like a weapon.
+	virtual void PSpriteTick(PSprite psp) {}
+
 	// Called by inventory items to see if this actor is capable of touching them.
 	// If true, the item will attempt to be picked up. Useful for things like
 	// allowing morphs to pick up limited items such as keys while preventing

@@ -550,21 +550,34 @@ public:
 		bool stop = false;
 		if (clock >= nextframetime)
 		{
+
+
 			nextframetime += nsecsperframe;
 
-			auto img = GetFrameData();
-
-			if (!img || !FormatSupported(img->fmt))
-			{
-				Printf(PRINT_BOLD, "Failed reading next frame\n");
-				stop = true;
-			}
-			else
-			{
-				animtex.SetFrame(nullptr, img);
+			while(clock >= nextframetime)
+			{ // frameskipping
+				auto img = GetFrameData();
+				framenum++;
+				nextframetime += nsecsperframe;
+				if (framenum >= numframes || !img) break;
 			}
 
-			framenum++;
+			if (framenum < numframes)
+			{
+				auto img = GetFrameData();
+
+				if (!img || !FormatSupported(img->fmt))
+				{
+					Printf(PRINT_BOLD, "Failed reading next frame\n");
+					stop = true;
+				}
+				else
+				{
+					animtex.SetFrame(nullptr, img);
+				}
+
+				framenum++;
+			}
 			if (framenum >= numframes) stop = true;
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);

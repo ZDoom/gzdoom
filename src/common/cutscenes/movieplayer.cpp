@@ -322,6 +322,7 @@ class VpxPlayer : public MoviePlayer
 	unsigned width, height;
 	TArray<uint8_t> Pic;
 	TArray<uint8_t> readBuf;
+	vpx_codec_iface_t *iface;
 	vpx_codec_ctx_t codec{};
 	vpx_codec_iter_t iter = nullptr;
 
@@ -365,7 +366,7 @@ public:
 
 		// Todo: Support VP9 as well?
 		vpx_codec_dec_cfg_t cfg = { 1, width, height };
-		if (vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, &cfg, 0))
+		if (vpx_codec_dec_init(&codec, iface, &cfg, 0))
 		{
 			error.Format("Error initializing VPX codec.\n");
 			failed = true;
@@ -388,7 +389,16 @@ public:
 		uint16_t length = fr.ReadUInt16();
 		if (length != 32) return false;
 		fr.Read(&magic, 4);
-		if (magic != MAKE_ID('V', 'P', '8', '0')) return false;
+
+		switch (magic)
+		{
+			case MAKE_ID('V', 'P', '8', '0'):
+				iface = &vpx_codec_vp8_dx_algo; break;
+			case MAKE_ID('V', 'P', '9', '0'):
+				iface = &vpx_codec_vp9_dx_algo; break;
+			default:
+				return false;
+		}
 
 		width = fr.ReadUInt16();
 		height = fr.ReadUInt16();
@@ -895,7 +905,7 @@ MoviePlayer* OpenMovie(const char* filename, TArray<int>& ans, const int* framet
 		}
 		return anm;
 	}
-	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12))
+	else if (!memcmp(id, "DKIF\0\0 \0VP80", 12) || !memcmp(id, "DKIF\0\0 \0VP90", 12))
 	{
 		auto anm = new VpxPlayer(fr, ans, frameticks ? frameticks[1] : 0, flags, error);
 		if (!anm->isvalid())

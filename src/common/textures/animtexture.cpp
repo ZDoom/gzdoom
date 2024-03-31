@@ -48,26 +48,24 @@ void AnimTexture::SetFrameSize(int  format, int width, int height)
 {
 	pixelformat = format;
 	FTexture::SetSize(width, height);
-	Image.Resize(width * height * (format == Paletted ? 1 : 3));
+	Image.Resize(width * height * (format == Paletted ? 1 : format == RGB ? 3 : 4));
 	memset(Image.Data(), 0, Image.Size());
 }
 
 //TODO optimize
-static inline void YUVtoRGB(float y, float u, float v, uint8_t * rgb)
+static inline void YUVtoRGB(uint8_t yi, uint8_t ui, uint8_t vi, uint8_t * rgb)
 {
-	y = y * (1 / 255.f);
-	u = u * (1 / 255.f) - 0.5f;
-	v = v * (1 / 255.f) - 0.5f;
-
-	y = 1.1643f * (y - 0.0625f);
-
-	float r = y + 1.5958f * v;
-	float g = y - 0.39173f * u - 0.81290f * v;
-	float b = y + 2.017f * u;
-
-	rgb[0] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
-	rgb[1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
-	rgb[2] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+	float Y = yi * (1 / 255.f);
+	float U = ui * (1 / 255.f) - 0.5f;
+	float V = vi * (1 / 255.f) - 0.5f;
+	Y = 1.1643f * (Y - 0.0625f);
+	float r = Y + 1.5958f * V;
+	float g = Y - 0.39173f * U - 0.81290f * V;
+	float b = Y + 2.017f * U;
+	(rgb)[2] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
+	(rgb)[1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
+	(rgb)[0] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+	(rgb)[3] = 255;
 }
 
 void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
@@ -80,11 +78,11 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 			auto spix = (const uint8_t*)data_;
 			auto dpix = Image.Data();
 			for (int i = 0; i < Width * Height; i++)
-			 {
+			{
 				YUVtoRGB(spix[0], spix[1], spix[2], dpix);
 
 				spix += 4;
-				dpix += 3;
+				dpix += 4;
 			}
 		}
 		else if(pixelformat == VPX)
@@ -113,7 +111,8 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 								vplane[vstride * (y >> 1) + (x >> 1)],
 								dpix
 						);
-						dpix += 3;
+
+						dpix += 4;
 					}
 				}
 			}
@@ -129,7 +128,7 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 							vplane[vstride * y + x],
 							dpix
 						);
-						dpix += 3;
+						dpix += 4;
 					}
 				}
 			}
@@ -145,7 +144,7 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 							vplane[vstride * y + (x >> 1)],
 							dpix
 						);
-						dpix += 3;
+						dpix += 4;
 					}
 				}
 			}
@@ -161,7 +160,7 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 							vplane[vstride * (y >> 1) + x],
 							dpix
 						);
-						dpix += 3;
+						dpix += 4;
 					}
 				}
 			}
@@ -181,12 +180,17 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 
 FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 {
-	FBitmap bmp;
+	if(pixelformat == YUV || pixelformat == VPX)
+	{
+		return FBitmap(Image.Data(), Width * 4, Width, Height);
+	}
 
+	FBitmap bmp;
 	bmp.Create(Width, Height);
 
 	auto spix = Image.Data();
 	auto dpix = bmp.GetPixels();
+
 	if (pixelformat == Paletted)
 	{
 		for (int i = 0; i < Width * Height; i++)
@@ -199,7 +203,7 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 			dpix[p + 3] = 255;
 		}
 	}
-	else if (pixelformat == RGB || pixelformat == YUV || pixelformat == VPX)
+	else if (pixelformat == RGB)
 	{
 		for (int i = 0; i < Width * Height; i++)
 		{

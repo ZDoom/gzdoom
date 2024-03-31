@@ -35,6 +35,8 @@
 #include "bitmap.h"
 #include "texturemanager.h"
 
+#include "vpx/vpx_image.h"
+
 
 //==========================================================================
 //
@@ -50,6 +52,24 @@ void AnimTexture::SetFrameSize(int  format, int width, int height)
 	memset(Image.Data(), 0, Image.Size());
 }
 
+//TODO optimize
+static inline void YUVtoRGB(float y, float u, float v, uint8_t * rgb)
+{
+	y = y * (1 / 255.f);
+	u = u * (1 / 255.f) - 0.5f;
+	v = v * (1 / 255.f) - 0.5f;
+
+	y = 1.1643f * (y - 0.0625f);
+
+	float r = y + 1.5958f * v;
+	float g = y - 0.39173f * u - 0.81290f * v;
+	float b = y + 2.017f * u;
+
+	rgb[0] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
+	rgb[1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
+	rgb[2] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+}
+
 void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 {
 	if (palette) memcpy(Palette, palette, 768);
@@ -61,24 +81,95 @@ void AnimTexture::SetFrame(const uint8_t* palette, const void* data_)
 			auto dpix = Image.Data();
 			for (int i = 0; i < Width * Height; i++)
 			 {
-				int p = i * 4;
-				int q = i * 3;
-				float y = spix[p] * (1 / 255.f);
-				float u = spix[p + 1] * (1 / 255.f) - 0.5f;
-				float v = spix[p + 2] * (1 / 255.f) - 0.5f;
+				YUVtoRGB(spix[0], spix[1], spix[2], dpix);
 
-				y = 1.1643f * (y - 0.0625f);
-
-				float r = y + 1.5958f * v;
-				float g = y - 0.39173f * u - 0.81290f * v;
-				float b = y + 2.017f * u;
-
-				dpix[q + 0] = (uint8_t)(clamp(r, 0.f, 1.f) * 255);
-				dpix[q + 1] = (uint8_t)(clamp(g, 0.f, 1.f) * 255);
-				dpix[q + 2] = (uint8_t)(clamp(b, 0.f, 1.f) * 255);
+				spix += 4;
+				dpix += 3;
 			}
 		}
-		else memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
+		else if(pixelformat == VPX)
+		{
+			const vpx_image_t *img = reinterpret_cast<const vpx_image_t *>(data_);
+			
+			uint8_t const* const yplane = img->planes[VPX_PLANE_Y];
+			uint8_t const* const uplane = img->planes[VPX_PLANE_U];
+			uint8_t const* const vplane = img->planes[VPX_PLANE_V];
+
+			const int ystride = img->stride[VPX_PLANE_Y];
+			const int ustride = img->stride[VPX_PLANE_U];
+			const int vstride = img->stride[VPX_PLANE_V];
+
+			auto dpix = Image.Data();
+
+			if(img->fmt == VPX_IMG_FMT_I420)
+			{
+				for (unsigned int y = 0; y < Height; y++)
+				{
+					for (unsigned int x = 0; x < Width; x++)
+					{
+						YUVtoRGB(
+								yplane[ystride * y + x],
+								uplane[ustride * (y >> 1) + (x >> 1)],
+								vplane[vstride * (y >> 1) + (x >> 1)],
+								dpix
+						);
+						dpix += 3;
+					}
+				}
+			}
+			else if(img->fmt == VPX_IMG_FMT_I444)
+			{
+				for (unsigned int y = 0; y < Height; y++)
+				{
+					for (unsigned int x = 0; x < Width; x++)
+					{
+						YUVtoRGB(
+							yplane[ystride * y + x],
+							uplane[ustride * y + x],
+							vplane[vstride * y + x],
+							dpix
+						);
+						dpix += 3;
+					}
+				}
+			}
+			else if(img->fmt == VPX_IMG_FMT_I422)
+			{ // 422 and 440 untested
+				for (unsigned int y = 0; y < Height; y++)
+				{
+					for (unsigned int x = 0; x < Width; x++)
+					{
+						YUVtoRGB(
+							yplane[ystride * y + x],
+							uplane[ustride * y + (x >> 1)],
+							vplane[vstride * y + (x >> 1)],
+							dpix
+						);
+						dpix += 3;
+					}
+				}
+			}
+			else if(img->fmt == VPX_IMG_FMT_I440)
+			{
+				for (unsigned int y = 0; y < Height; y++)
+				{
+					for (unsigned int x = 0; x < Width; x++)
+					{
+						YUVtoRGB(
+							yplane[ystride * y + x],
+							uplane[ustride * (y >> 1) + x],
+							vplane[vstride * (y >> 1) + x],
+							dpix
+						);
+						dpix += 3;
+					}
+				}
+			}
+		}
+		else
+		{
+			memcpy(Image.Data(), data_, Width * Height * (pixelformat == Paletted ? 1 : 3));
+		}
 	}
 }
 
@@ -108,7 +199,7 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 			dpix[p + 3] = 255;
 		}
 	}
-	else if (pixelformat == RGB || pixelformat == YUV)
+	else if (pixelformat == RGB || pixelformat == YUV || pixelformat == VPX)
 	{
 		for (int i = 0; i < Width * Height; i++)
 		{

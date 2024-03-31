@@ -363,8 +363,6 @@ public:
 
 		Pic.Resize(width * height * 4);
 
-
-		// Todo: Support VP9 as well?
 		vpx_codec_dec_cfg_t cfg = { 1, width, height };
 		if (vpx_codec_dec_init(&codec, iface, &cfg, 0))
 		{
@@ -485,32 +483,6 @@ public:
 		dest[2] = v;
 	}
 
-	bool CreateNextFrame()
-	{
-		auto img = GetFrameData();
-		if (!img) return false;
-		uint8_t const* const yplane = img->planes[VPX_PLANE_Y];
-		uint8_t const* const uplane = img->planes[VPX_PLANE_U];
-		uint8_t const* const vplane = img->planes[VPX_PLANE_V];
-
-		const int ystride = img->stride[VPX_PLANE_Y];
-		const int ustride = img->stride[VPX_PLANE_U];
-		const int vstride = img->stride[VPX_PLANE_V];
-
-		for (unsigned int y = 0; y < height; y++)
-		{
-			for (unsigned int x = 0; x < width; x++)
-			{
-				uint8_t u = uplane[ustride * (y >> 1) + (x >> 1)];
-				uint8_t v = vplane[vstride * (y >> 1) + (x >> 1)];
-
-				SetPixel(&Pic[(x + y * width) << 2], yplane[ystride * y + x], u, v);
-			}
-		}
-
-		return true;
-	}
-
 	//---------------------------------------------------------------------------
 	//
 	// 
@@ -535,7 +507,7 @@ public:
 				Printf(PRINT_BOLD, "Failed to decode %s\n", fileSystem.GetFileFullName(soundtrack, false));
 			}
 		}
-		animtex.SetSize(AnimTexture::YUV, width, height);
+		animtex.SetSize(AnimTexture::VPX, width, height);
 	}
 
 	//---------------------------------------------------------------------------
@@ -543,6 +515,12 @@ public:
 	// 
 	//
 	//---------------------------------------------------------------------------
+
+	bool FormatSupported(vpx_img_fmt_t fmt)
+	{
+		return fmt == VPX_IMG_FMT_I420 || fmt == VPX_IMG_FMT_I444 || fmt == VPX_IMG_FMT_I422 || fmt == VPX_IMG_FMT_I440;
+	}
+
 
 	bool Frame(uint64_t clock) override
 	{
@@ -574,15 +552,18 @@ public:
 		{
 			nextframetime += nsecsperframe;
 
-			if (!CreateNextFrame())
+			auto img = GetFrameData();
+
+			if (!img || !FormatSupported(img->fmt))
 			{
 				Printf(PRINT_BOLD, "Failed reading next frame\n");
 				stop = true;
 			}
 			else
 			{
-				animtex.SetFrame(nullptr, Pic.Data());
+				animtex.SetFrame(nullptr, img);
 			}
+
 			framenum++;
 			if (framenum >= numframes) stop = true;
 

@@ -13,7 +13,8 @@ public:
 	{
 		Paletted = 0,
 		RGB = 1,
-		YUV = 2
+		YUV = 2,
+		VPX = 3
 	};
 	AnimTexture() = default;
 	void SetFrameSize(int format, int width, int height);

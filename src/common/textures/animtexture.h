@@ -5,7 +5,6 @@
 
 class AnimTexture : public FTexture
 {
-	uint8_t Palette[768];
 	TArray<uint8_t> Image;
 	int pixelformat;
 public:

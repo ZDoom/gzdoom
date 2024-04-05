@@ -6964,7 +6964,7 @@ int DLevelScript::RunScript()
 
 	while (state == SCRIPT_Running)
 	{
-		if (++runaway > 2000000)
+		if ((++runaway > 2000000) && (Level->i_compatflags2 & COMPATF2_CHECKRUNAWAYSCRIPT))
 		{
 			Printf ("Runaway %s terminated\n", ScriptPresentation(script).GetChars());
 			state = SCRIPT_PleaseRemove;

@@ -1786,6 +1786,7 @@ OptionMenu "CompatMapMenu" protected
 	Option "$CMPTMNU_CHECKSWITCHRANGE",				"compat_checkswitchrange", "YesNo"
 	Option "$CMPTMNU_RAILINGHACK",					"compat_railing", "YesNo"
 	Option "$CMPTMNU_NOMBF21",						"compat_nombf21", "YesNo"
+	Option "$CMPTMNU_CHECKRUNAWAYSCRIPT",			"compat_checkrunawayscript", "YesNo"
 	Class "CompatibilityMenu"
 }
 

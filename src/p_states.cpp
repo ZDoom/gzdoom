@@ -506,8 +506,10 @@ int FStateDefinitions::GetStateLabelIndex (FName statename)
 	{
 		return -1;
 	}
-	assert((size_t)std->State <= StateArray.Size() + 1);
-	return (int)((ptrdiff_t)std->State - 1);
+	if ((size_t)std->State <= StateArray.Size() + 1)
+		return (int)((ptrdiff_t)std->State - 1);
+	else
+		return -1;
 }
 
 //==========================================================================

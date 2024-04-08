@@ -2501,6 +2501,7 @@ void HWWall::ProcessLowerMiniseg(HWWallDispatcher *di, seg_t *seg, sector_t * fr
 		this->frontsector = frontsector;
 		this->backsector = backsector;
 		this->sub = NULL;
+		this->lightmap = nullptr;
 
 		vertex_t * v1 = seg->v1;
 		vertex_t * v2 = seg->v2;

@@ -164,6 +164,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	auto lump =  fileSystem.ReadFile(lumpnum);	// FileData adds an extra 0 byte to the end.
 	auto rawvoxel = lump.bytes();
 	int voxelsize = (int)(lump.size());
+	if (voxelsize <= 768 + 4) return nullptr;
 
 	// Oh, KVX, why couldn't you have a proper header? We'll just go through
 	// and collect each MIP level, doing lots of range checking, and if the

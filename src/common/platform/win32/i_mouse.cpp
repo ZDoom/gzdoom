@@ -297,6 +297,12 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 			{
 				BlockMouseMove = 3;
 				Mouse->Ungrab();
+
+				if(!mouse_shown)
+				{
+					ShowCursor(true);
+					mouse_shown = true;
+				}
 			}
 			else
 			{

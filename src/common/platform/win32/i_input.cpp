@@ -110,6 +110,8 @@ EXTERN_CVAR (Bool, use_mouse)
 static int WheelDelta;
 extern bool CursorState;
 
+void SetCursorState(bool visible);
+
 extern BOOL paused;
 static bool noidle = false;
 
@@ -415,7 +417,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SETCURSOR:
 		if (!CursorState)
 		{
-			SetCursor(NULL); // turn off window cursor
+			SetCursorState(false); // turn off window cursor
 			return TRUE;	// Prevent Windows from setting cursor to window class cursor
 		}
 		else

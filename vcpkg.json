@@ -35,10 +35,6 @@
             "name": "libvpx",
             "platform": "!windows & static"
         },
-        {
-            "name": "libwebp",
-            "platform": "(!windows & static) | (windows & static & staticcrt)"
-        },
 	{
             "name": "gtk3",
             "platform": "!windows & !osx & static"

@@ -1,0 +1,12 @@
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv.h
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_cpu.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_cpu.h
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_csp.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_csp.h
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_dsp.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_dsp.h
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_gamma.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_gamma.h
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_neon.c
+C:\Development\VkDoom\libraries\webp\sharpyuv\sharpyuv_sse2.c

@@ -253,6 +253,8 @@ public:
 		CopyPixelDataRGB(originx, originy, src.GetPixels(), src.GetWidth(), src.GetHeight(), 4, src.GetWidth()*4, 0, CF_BGRA, inf);
 	}
 
+
+	friend class FTexture;
 };
 
 bool ClipCopyPixelRect(const FClipRect *cr, int &originx, int &originy,

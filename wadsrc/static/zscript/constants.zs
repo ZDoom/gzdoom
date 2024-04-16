@@ -375,6 +375,7 @@ enum ESetAnimationFlags
 {
 	SAF_INSTANT = 1 << 0,
 	SAF_LOOP = 1 << 1,
+	SAF_NOOVERRIDE = 1 << 2,
 };
 
 // Change model flags

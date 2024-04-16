@@ -709,7 +709,7 @@ struct AnimOverride
 	double startFrame;
 	int flags = ANIMOVERRIDE_NONE;
 	float framerate;
-	double startTic; // when the animation starts if interpolating from previous animation
+	double startTic; // when the current animation started (changing framerates counts as restarting) (or when animation starts if interpolating from previous animation)
 	double switchTic; // when the animation was changed -- where to interpolate the switch from
 };
 

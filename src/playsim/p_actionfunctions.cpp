@@ -5125,17 +5125,21 @@ enum ESetAnimationFlags
 {
 	SAF_INSTANT = 1 << 0,
 	SAF_LOOP = 1 << 1,
-	SAF_USEACTORROLL = 1 << 2,
-	SAF_USEACTORPITCH = 1 << 3,
+	SAF_NOOVERRIDE = 1 << 2,
 };
 
-void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int interpolateTics, int flags, double ticFrac)
+void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
 
 	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
 	{
 		ThrowAbortException(X_OTHER, "Cannot set animation for non-decoupled actors");
+	}
+
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))
+	{
+		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");
 	}
 
 	if(interpolateTics <= 0) interpolateTics = 1;
@@ -5168,6 +5172,13 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		Printf("Could not find animation %s\n", animName.GetChars());
 		return;
 	}
+
+	if((flags & SAF_NOOVERRIDE) && self->modelData->curAnim.flags != ANIMOVERRIDE_NONE && self->modelData->curAnim.firstFrame == animStart)
+	{
+		//same animation as current, skip setting it
+		return;
+	}
+
 	int animEnd = mdl->FindLastFrame(animName);
 
 	if(framerate < 0)
@@ -5180,18 +5191,24 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	if(startFrame >= len)
 	{
 		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
-		Printf("frame %d is past the end of animation %s\n", startFrame, animName.GetChars());
+		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(loopFrame >= len)
 	{
 		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
-		Printf("frame %d is past the end of animation %s\n", startFrame, animName.GetChars());
+		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		return;
+	}
+	else if(endFrame >= len)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
 		return;
 	}
 	
 	self->modelData->curAnim.firstFrame = animStart;
-	self->modelData->curAnim.lastFrame = animEnd - 1;
+	self->modelData->curAnim.lastFrame = endFrame < 0 ? animEnd - 1 : animStart + endFrame;
 	self->modelData->curAnim.startFrame = startFrame < 0 ? animStart : animStart + startFrame;
 	self->modelData->curAnim.loopFrame = loopFrame < 0 ? animStart : animStart + loopFrame;
 	self->modelData->curAnim.flags = (flags&SAF_LOOP) ? ANIMOVERRIDE_LOOP : 0;
@@ -5208,14 +5225,14 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 }
 
-void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int interpolateTics, int flags)
+void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
 {
-	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, interpolateTics, flags, 1);
+	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1);
 }
 
-void SetAnimationUINative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int interpolateTics, int flags)
+void SetAnimationUINative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
 {
-	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, interpolateTics, flags, I_GetTimeFrac());
+	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac());
 }
 
 extern double getCurrentFrame(const AnimOverride &anim, double tic);
@@ -5471,10 +5488,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimation, SetAnimationNative)
 	PARAM_FLOAT(framerate);
 	PARAM_INT(startFrame);
 	PARAM_INT(loopFrame);
+	PARAM_INT(endFrame);
 	PARAM_INT(interpolateTics);
 	PARAM_INT(flags);
 	
-	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, interpolateTics, flags, 1);
+	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1);
 
 	return 0;
 }
@@ -5486,10 +5504,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimationUI, SetAnimationUINative)
 	PARAM_FLOAT(framerate);
 	PARAM_INT(startFrame);
 	PARAM_INT(loopFrame);
+	PARAM_INT(endFrame);
 	PARAM_INT(interpolateTics);
 	PARAM_INT(flags);
 	
-	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, interpolateTics, flags, I_GetTimeFrac());
+	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac());
 
 	return 0;
 }

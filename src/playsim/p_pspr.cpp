@@ -993,9 +993,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivotAlign)
 	if (pspr != nullptr)
 	{
 		if (halign >= PSPA_LEFT && halign <= PSPA_RIGHT)
-			pspr->HAlign |= halign;
+			pspr->HAlign = halign;
 		if (valign >= PSPA_TOP && valign <= PSPA_BOTTOM)
-			pspr->VAlign |= valign;
+			pspr->VAlign = valign;
 	}
 	return 0;
 }

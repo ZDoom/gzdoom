@@ -1817,6 +1817,15 @@ DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_CLASS_PROPERTY(monsterclass, S, PowerMorph)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->PointerVar<PClassActor>(NAME_MonsterClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_CLASS_PROPERTY(morphstyle, M, PowerMorph)
 {
 	PROP_INT_PARM(i, 0);

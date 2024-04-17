@@ -3139,7 +3139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	// [RH] Vary player pain sounds depending on health (ala Quake2)
-	if (self->player && self->player->morphTics == 0)
+	if (self->player && self->alternative == nullptr)
 	{
 		const char *pain_amount;
 		FSoundID sfx_id = NO_SOUND;

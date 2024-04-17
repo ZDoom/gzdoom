@@ -1711,7 +1711,7 @@ int FLevelLocals::FinishTravel ()
 		pawn->flags2 &= ~MF2_BLASTED;
 		if (oldpawn != nullptr)
 		{
-			StaticPointerSubstitution (oldpawn, pawn);
+			PlayerPointerSubstitution (oldpawn, pawn, true);
 			oldpawn->Destroy();
 		}
 		if (pawndup != NULL)

@@ -313,36 +313,54 @@ EXTERN_CVAR (Int, fraglimit)
 
 void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath)
 {
-	// Handle possible unmorph on death
 	bool wasgibbed = (health < GetGibHealth());
 
+	// Check to see if unmorph Actors need to be killed as well. Originally this was always
+	// called but that puts an unnecessary burden on the modder to determine whether it's
+	// a valid call or not.
+	if (alternative != nullptr && !(flags & MF_UNMORPHED))
 	{
 		IFVIRTUAL(AActor, MorphedDeath)
 		{
-			AActor *realthis = NULL;
-			int realstyle = 0;
-			int realhealth = 0;
+			// Return values are no longer used to ensure things stay properly managed.
+			AActor* const realMo = alternative;
+			int morphStyle = 0;
 
 			VMValue params[] = { this };
-			VMReturn returns[3];
-			returns[0].PointerAt((void**)&realthis);
-			returns[1].IntAt(&realstyle);
-			returns[2].IntAt(&realhealth);
-			VMCall(func, params, 1, returns, 3);
 
-			if (realthis && !(realstyle & MORPH_UNDOBYDEATHSAVES))
+			{
+				IFVM(Actor, GetMorphStyle)
+				{
+					VMReturn ret[] = { &morphStyle };
+					VMCall(func, params, 1, ret, 1);
+				}
+			}
+
+			VMCall(func, params, 1, nullptr, 0);
+
+			// Kill the dummy Actor if it didn't unmorph, otherwise checking the morph flags. Player pawns need
+			// to stay, otherwise they won't respawn correctly.
+			if (realMo != nullptr && !(realMo->flags6 & MF6_KILLED)
+				&& ((alternative != nullptr && player == nullptr) || (alternative == nullptr && !(morphStyle & MORPH_UNDOBYDEATHSAVES))))
 			{
 				if (wasgibbed)
 				{
-					int realgibhealth = realthis->GetGibHealth();
-					if (realthis->health >= realgibhealth)
-					{
-						realthis->health = realgibhealth - 1; // if morphed was gibbed, so must original be (where allowed)l
-					}
+					const int realGibHealth = realMo->GetGibHealth();
+					if (realMo->health >= realGibHealth)
+						realMo->health = realGibHealth - 1; // If morphed was gibbed, so must original be (where allowed).
 				}
-				realthis->CallDie(source, inflictor, dmgflags, MeansOfDeath);
-			}
+				else if (realMo->health > 0)
+				{
+					realMo->health = 0;
+				}
 
+				// Pass appropriate damage information along when it's confirmed to die.
+				realMo->DamageTypeReceived = DamageTypeReceived;
+				realMo->DamageType = DamageType;
+				realMo->special1 = special1;
+
+				realMo->CallDie(source, inflictor, dmgflags, MeansOfDeath);
+			}
 		}
 	}
 
@@ -458,7 +476,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					++source->player->spreecount;
 				}
 
-				if (source->player->morphTics)
+				if (source->alternative != nullptr)
 				{ // Make a super chicken
 					source->GiveInventoryType (PClass::FindActor(NAME_PowerWeaponLevel2));
 				}
@@ -1329,7 +1347,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			
 			if (damage >= player->health && !telefragDamage
 				&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
-				&& !player->morphTics)
+				&& target->alternative == nullptr)
 			{ // Try to use some inventory health
 				P_AutoUseHealth (player, damage - player->health + 1);
 			}
@@ -1463,7 +1481,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// check for special fire damage or ice damage deaths
 			if (mod == NAME_Fire)
 			{
-				if (player && !player->morphTics)
+				if (player && target->alternative == nullptr)
 				{ // Check for flame death
 					if (!inflictor ||
 						((target->health > -50) && (damage > 25)) ||
@@ -1797,7 +1815,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	}
 	if (damage >= player->health
 		&& (G_SkillProperty(SKILLP_AutoUseHealth) || deathmatch)
-		&& !player->morphTics)
+		&& target->alternative == nullptr)
 	{ // Try to use some inventory health
 		P_AutoUseHealth(player, damage - player->health+1);
 	}
@@ -1827,7 +1845,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 		else
 		{
 			target->special1 = damage;
-			if (player && !player->morphTics)
+			if (player && target->alternative == nullptr)
 			{ // Check for flame death
 				if ((player->poisontype == NAME_Fire) && (target->health > -50) && (damage > 25))
 				{

@@ -667,8 +667,6 @@ PClass *PClass::FindClassTentative(FName name)
 //
 //==========================================================================
 
-bool ShouldAllowGameSpecificVirtual(FName name, unsigned index, PType* arg, PType* varg);
-
 int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType, bool ignorePointerReadOnly)
 {
 	auto proto = variant->Proto;
@@ -700,7 +698,7 @@ int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction 
 							break;
 						}
 					}
-					else if(!ShouldAllowGameSpecificVirtual(name, a, proto->ArgumentTypes[a], vproto->ArgumentTypes[a]))
+					else
 					{
 						fail = true;
 						break;

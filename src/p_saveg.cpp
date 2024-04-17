@@ -62,7 +62,6 @@
 #include "fragglescript/t_script.h"
 #include "s_music.h"
 #include "model.h"
-#include "d_net.h"
 
 EXTERN_CVAR(Bool, save_formatted)
 
@@ -654,15 +653,6 @@ void FLevelLocals::SerializePlayers(FSerializer &arc, bool skipload)
 				ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
 			}
 			arc.EndArray();
-
-			if (!skipload)
-			{
-				for (unsigned int i = 0u; i < MAXPLAYERS; ++i)
-				{
-					if (PlayerInGame(i) && Players[i]->mo != nullptr)
-						NetworkEntityManager::SetClientNetworkEntity(Players[i]);
-				}
-			}
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{

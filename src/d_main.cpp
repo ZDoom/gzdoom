@@ -3101,8 +3101,6 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 
 static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
-	NetworkEntityManager::InitializeNetworkEntities();
-
 	if (!restart)
 	{
 		V_InitScreenSize();

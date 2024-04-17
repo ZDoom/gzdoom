@@ -1884,6 +1884,8 @@ class PowerMorph : Powerup
 	Default
 	{
 		Powerup.Duration -40;
+		PowerMorph.MorphFlash "TeleportFog";
+		PowerMorph.UnmorphFlash "TeleportFog";
 	}
 	
 	//===========================================================================
@@ -1901,8 +1903,6 @@ class PowerMorph : Powerup
 
 		if (Owner.Morph(Owner, PlayerClass, MonsterClass, int.max, MorphStyle, MorphFlash, UnmorphFlash))
 		{
-			// Get the real owner; safe because we are not attached to anything yet.
-			Owner = Owner.Alternative;
 			bCreateCopyMoved = true;	// Let the caller know the "real" owner has changed (to the morphed actor).
 			MorphedPlayer = Owner.player;
 		}

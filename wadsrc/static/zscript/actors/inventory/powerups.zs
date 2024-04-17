@@ -1870,13 +1870,14 @@ class PowerReflection : Powerup
 //===========================================================================
 //
 // PowerMorph
+// Now works with monsters too!
 //
 //===========================================================================
 
 class PowerMorph : Powerup
 {
-	Class<PlayerPawn> PlayerClass;
-	Class<Actor> MorphFlash, UnMorphFlash;
+	class<PlayerPawn> PlayerClass;
+	class<Actor> MonsterClass, MorphFlash, UnmorphFlash;
 	int MorphStyle;
 	PlayerInfo MorphedPlayer;
 	
@@ -1895,19 +1896,19 @@ class PowerMorph : Powerup
 	{
 		Super.InitEffect();
 
-		if (Owner != null && Owner.player != null && PlayerClass != null)
+		if (!Owner)
+			return;
+
+		if (Owner.Morph(Owner, PlayerClass, MonsterClass, int.max, MorphStyle, MorphFlash, UnmorphFlash))
 		{
-			let realplayer = Owner.player;	// Remember the identity of the player
-			if (realplayer.mo.MorphPlayer(realplayer, PlayerClass, 0x7fffffff/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
-			{
-				Owner = realplayer.mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
-				bCreateCopyMoved = true;			// Let the caller know the "real" owner has changed (to the morphed actor)
-				MorphedPlayer = realplayer;			// Store the player identity (morphing clears the unmorphed actor's "player" field)
-			}
-			else // morph failed - give the caller an opportunity to fail the pickup completely
-			{
-				bInitEffectFailed = true;			// Let the caller know that the activation failed (can fail the pickup if appropriate)
-			}
+			// Get the real owner; safe because we are not attached to anything yet.
+			Owner = Owner.Alternative;
+			bCreateCopyMoved = true;	// Let the caller know the "real" owner has changed (to the morphed actor).
+			MorphedPlayer = Owner.player;
+		}
+		else
+		{
+			bInitEffectFailed = true;	// Let the caller know that the activation failed (can fail the pickup if appropriate).
 		}
 	}
 
@@ -1921,24 +1922,16 @@ class PowerMorph : Powerup
 	{
 		Super.EndEffect();
 
-		// Abort if owner already destroyed or unmorphed
-		if (Owner == null || MorphedPlayer == null || Owner.alternative == null)
-		{
+		// Abort if owner already destroyed or unmorphed.
+		if (!Owner || !Owner.Alternative)
 			return;
-		}
 		
 		// Abort if owner is dead; their Die() method will
 		// take care of any required unmorphing on death.
-		if (MorphedPlayer.health <= 0)
-		{
+		if (Owner.player ? Owner.player.Health <= 0 : Owner.Health <= 0)
 			return;
-		}
 
-		int savedMorphTics = MorphedPlayer.morphTics;
-		MorphedPlayer.mo.UndoPlayerMorph (MorphedPlayer, 0, !!(MorphedPlayer.MorphStyle & MRF_UNDOALWAYS));
+		Owner.Unmorph(Owner, force: Owner.GetMorphStyle() & MRF_UNDOALWAYS);
 		MorphedPlayer = null;
 	}
-
-	
 }
-

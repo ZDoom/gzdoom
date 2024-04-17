@@ -1,26 +1,25 @@
 extend class PlayerPawn
 {
-	private native void Substitute(PlayerPawn replacement);
-
 	//===========================================================================
 	//
-	// EndAllPowerupEffects
+	// InitAllPowerupEffects
 	//
-	// Calls EndEffect() on every Powerup in the inventory list.
+	// Calls InitEffect() on every Powerup in the inventory list. Since these
+	// functions can be overridden it's safest to store what's next in the item
+	// list before calling it.
 	//
 	//===========================================================================
 
 	void InitAllPowerupEffects()
 	{
-		let item = Inv;
-		while (item != null)
+		for (Inventory item = Inv; item;)
 		{
+			Inventory next = item.Inv;
 			let power = Powerup(item);
-			if (power != null)
-			{
+			if (power)
 				power.InitEffect();
-			}
-			item = item.Inv;
+
+			item = next;
 		}
 	}
 	
@@ -34,15 +33,14 @@ extend class PlayerPawn
 
 	void EndAllPowerupEffects()
 	{
-		let item = Inv;
-		while (item != null)
+		for (Inventory item = Inv; item;)
 		{
+			Inventory next = item.Inv;
 			let power = Powerup(item);
-			if (power != null)
-			{
+			if (power)
 				power.EndEffect();
-			}
-			item = item.Inv;
+
+			item = next;
 		}
 	}
 	
@@ -52,46 +50,36 @@ extend class PlayerPawn
 	//
 	//===========================================================================
 
-	virtual void ActivateMorphWeapon ()
+	virtual void ActivateMorphWeapon()
 	{
-		class<Weapon> morphweaponcls = MorphWeapon;
-		player.PendingWeapon = WP_NOCHANGE;
-
-		if (player.ReadyWeapon != null)
+		if (player.ReadyWeapon)
 		{
 			let psp = player.GetPSprite(PSP_WEAPON);
-			if (psp) 
-			{
-				psp.y = WEAPONTOP;
-				player.ReadyWeapon.ResetPSprite(psp);
-			}
+			psp.y = WEAPONTOP;
+			player.ReadyWeapon.ResetPSprite(psp);
 		}
-
-		if (morphweaponcls == null || !(morphweaponcls is 'Weapon'))
-		{ // No weapon at all while morphed!
+		
+		class<Weapon> morphWeapCls = MorphWeapon;
+		if (!morphWeapCls)
+		{
 			player.ReadyWeapon = null;
 		}
 		else
 		{
-			player.ReadyWeapon = Weapon(FindInventory (morphweaponcls));
-			if (player.ReadyWeapon == null)
+			player.ReadyWeapon = Weapon(FindInventory(morphWeapCls));
+			if (!player.ReadyWeapon)
 			{
-				player.ReadyWeapon = Weapon(GiveInventoryType (morphweaponcls));
-				if (player.ReadyWeapon != null)
-				{
-					player.ReadyWeapon.GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in UndoPlayerMorph
-				}
+				player.ReadyWeapon = Weapon(GiveInventoryType(morphWeapCls));
+				if (player.ReadyWeapon)
+					player.ReadyWeapon.GivenAsMorphWeapon = true; // Flag is used only by new morphWeap semantics in UndoPlayerMorph
 			}
-			if (player.ReadyWeapon != null)
-			{
-				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
-			}
+
+			if (player.ReadyWeapon)
+				player.SetPSprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 		}
 
-		if (player.ReadyWeapon != null)
-		{
-			player.SetPsprite(PSP_FLASH, null);
-		}
+		if (player.ReadyWeapon)
+			player.SetPSprite(PSP_FLASH, null);
 
 		player.PendingWeapon = WP_NOCHANGE;
 	}
@@ -107,125 +95,122 @@ extend class PlayerPawn
 	//
 	//---------------------------------------------------------------------------
 
-	virtual bool MorphPlayer(playerinfo activator, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	virtual bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{
-		if (bDontMorph)
+		if (!player || !spawnType || bDontMorph || player.Health <= 0
+			|| (!(style & MRF_IGNOREINVULN) && bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE))))
 		{
 			return false;
 		}
-		if (bInvulnerable && (player != activator || !(style & MRF_WHENINVULNERABLE)))
-		{ // Immune when invulnerable unless this is a power we activated
-			return false;
-		}
-		if (player.morphTics)
-		{ // Player is already a beast
-			if ((GetClass() == spawntype) && bCanSuperMorph
-				&& (player.morphTics < (((duration) ? duration : DEFMORPHTICS) - TICRATE))
-				&& FindInventory('PowerWeaponLevel2', true) == null)
-			{ // Make a super chicken
-				GiveInventoryType ('PowerWeaponLevel2');
+
+		if (!duration)
+			duration = DEFMORPHTICS;
+
+		if (spawnType == GetClass())
+		{
+			// Player is already a beast.
+			if (Alternative && bCanSuperMorph
+				&& GetMorphTics() < duration - TICRATE
+				&& !FindInventory("PowerWeaponLevel2", true))
+			{
+				// Make a super chicken.
+				GiveInventoryType("PowerWeaponLevel2");
 			}
-			return false;
-		}
-		if (health <= 0)
-		{ // Dead players cannot morph
-			return false;
-		}
-		if (spawntype == null)
-		{
-			return false;
-		}
-		if (!(spawntype is 'PlayerPawn'))
-		{
-			return false;
-		}
-		if (spawntype == GetClass())
-		{
+
 			return false;
 		}
 
-		let morphed = PlayerPawn(Spawn (spawntype, Pos, NO_REPLACE));
+		let morphed = PlayerPawn(Spawn(spawnType, Pos, NO_REPLACE));
+		if (!MorphInto(morphed))
+		{
+			if (morphed)
+				morphed.Destroy();
+				
+			return false;
+		}
 
-		// Use GetClass in the event someone actually allows replacements.
 		PreMorph(morphed, false);
 		morphed.PreMorph(self, true);
 
-		EndAllPowerupEffects();
-		Substitute(morphed);
+		morphed.EndAllPowerupEffects();
+
 		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
-		{
 			morphed.Translation = Translation;
-		}
-		if (tid != 0 && (style & MRF_NEWTIDBEHAVIOUR))
-		{
-			morphed.ChangeTid(tid);
-			ChangeTid(0);
-		}
+
 		morphed.Angle = Angle;
-		morphed.target = target;
-		morphed.tracer = tracer;
-		morphed.alternative = self;
+		morphed.Pitch = Pitch; // Allow pitch here since mouse look in GZDoom is far more common than Heretic/Hexen.
+		morphed.Target = Target;
+		morphed.Tracer = Tracer;
+		morphed.Master = Master;
 		morphed.FriendPlayer = FriendPlayer;
 		morphed.DesignatedTeam = DesignatedTeam;
 		morphed.Score = Score;
-		player.PremorphWeapon = player.ReadyWeapon;
-		
-		morphed.special2 = bSolid * 2 + bShootable * 4 + bInvisible * 0x40;	// The factors are for savegame compatibility
-		morphed.player = player;
-
-		if (morphed.ViewHeight > player.viewheight && player.deltaviewheight == 0)
-		{ // If the new view height is higher than the old one, start moving toward it.
-			player.deltaviewheight = player.GetDeltaViewHeight();
+		morphed.ScoreIcon = ScoreIcon;
+		morphed.Health = morphed.SpawnHealth();
+		if (TID && (style & MRF_NEWTIDBEHAVIOUR))
+		{
+			morphed.ChangeTid(TID);
+			ChangeTid(0);
 		}
+		
+		// special2 is no longer used here since Actors now have a proper field for it.
+		morphed.PremorphProperties = (bSolid * MPROP_SOLID) | (bShootable * MPROP_SHOOTABLE)
+										| (bNoBlockmap * MPROP_NO_BLOCKMAP) | (bNoSector * MPROP_NO_SECTOR)
+										| (bNoInteraction * MPROP_NO_INTERACTION) | (bInvisible * MPROP_INVIS);
+		
 		morphed.bShadow |= bShadow;
 		morphed.bNoGravity |= bNoGravity;
 		morphed.bFly |= bFly;
 		morphed.bGhost |= bGhost;
 
-		if (enter_flash == null) enter_flash = 'TeleportFog';
-		let eflash = Spawn(enter_flash, Pos + (0, 0, gameinfo.telefogheight), ALLOW_REPLACE);
-		let p = player;
-		player = null;
-		alternative = morphed;
-		bSolid = false;
-		bShootable = false;
-		bUnmorphed = true;
-		bInvisible = true;
-		
-		p.morphTics = (duration) ? duration : DEFMORPHTICS;
-
-		// [MH] Used by SBARINFO to speed up face drawing
-		p.MorphedPlayerClass = spawntype;
-
-		p.MorphStyle = style;
-		if (exit_flash == null) exit_flash = 'TeleportFog';
-		p.MorphExitFlash = exit_flash;
-		p.health = morphed.health;
-		p.mo = morphed;
-		p.vel = (0, 0);
-		morphed.ObtainInventory (self);
-		// Remove all armor
-		for (Inventory item = morphed.Inv; item != null; )
+		// Remove all armor.
+		if (!(style & MRF_KEEPARMOR))
 		{
-			let next = item.Inv;
-			if (item is 'Armor')
+			for (Inventory item = morphed.Inv; item;)
 			{
-				item.DepleteOrDestroy();
+				Inventory next = item.Inv;
+				if (item is "Armor")
+					item.DepleteOrDestroy();
+
+				item = next;
 			}
-			item = next;
 		}
-		morphed.InitAllPowerupEffects();
-		morphed.ActivateMorphWeapon ();
-		if (p.camera == self)	// can this happen?
-		{
-			p.camera = morphed;
-		}
+
+		// Players store their morph behavior into their PlayerInfo unlike regular Actors which use the
+		// morph properties. This is needed for backwards compatibility and to give the HUD info.
+		let p = morphed.player;
+		morphed.SetMorphTics(duration);
+		morphed.SetMorphStyle(style);
+		morphed.SetMorphExitFlash(exitFlash);
+		p.MorphedPlayerClass = spawnType;
+		p.PremorphWeapon = p.ReadyWeapon;
+		p.Health = morphed.Health;
+		p.Vel = (0.0, 0.0);
+		// If the new view height is higher than the old one, start moving toward it.
+		if (morphed.ViewHeight > p.ViewHeight && !p.DeltaViewHeight)
+			p.DeltaViewHeight = p.GetDeltaViewHeight();
+
+		bNoInteraction = true;
+		A_ChangeLinkFlags(true, true);
+
+		// Legacy
+		bSolid = bShootable = false;
+		bInvisible = true;
+
 		morphed.ClearFOVInterpolation();
-		morphed.ScoreIcon = ScoreIcon;	// [GRB]
-		if (eflash)	
-			eflash.target = morphed;
+		morphed.InitAllPowerupEffects();
+		morphed.ActivateMorphWeapon();
+
 		PostMorph(morphed, false);		// No longer the current body
 		morphed.PostMorph(self, true);	// This is the current body
+
+		if (enterFlash)
+		{
+			Actor fog = Spawn(enterFlash, morphed.Pos.PlusZ(GameInfo.TelefogHeight), ALLOW_REPLACE);
+			if (fog)
+				fog.Target = morphed;
+		}
+
 		return true;
 	}
 	
@@ -235,400 +220,156 @@ extend class PlayerPawn
 	//
 	//----------------------------------------------------------------------------
 
-	virtual bool UndoPlayerMorph(playerinfo activator, int unmorphflag = 0, bool force = false)
+	virtual bool UndoPlayerMorph(PlayerInfo activator, EMorphFlags unmorphFlags = 0, bool force = false)
 	{
-		if (alternative == null)
+		if (!Alternative || bStayMorphed || Alternative.bStayMorphed)
+			return false;
+
+		if (!(unmorphFlags & MRF_IGNOREINVULN) && bInvulnerable
+			&& (player != activator || (!(player.MorphStyle & MRF_WHENINVULNERABLE) && !(unmorphFlags & MRF_STANDARDUNDOING))))
 		{
 			return false;
 		}
 
-		let player = self.player;
-		bool DeliberateUnmorphIsOkay = !!(MRF_STANDARDUNDOING & unmorphflag);
+		let alt = PlayerPawn(Alternative);
+		alt.SetOrigin(Pos, false);
+		// Test if there's room to unmorph.
+		if (!force && (PremorphProperties & MPROP_SOLID))
+		{
+			bool altSolid = alt.bSolid;
+			bool isSolid = bSolid;
+			bool isTouchy = bTouchy;
 
-		if ((bInvulnerable) // If the player is invulnerable
-			&& ((player != activator)       // and either did not decide to unmorph,
-			|| (!((player.MorphStyle & MRF_WHENINVULNERABLE)  // or the morph style does not allow it
-			|| (DeliberateUnmorphIsOkay))))) // (but standard morph styles always allow it),
-		{ // Then the player is immune to the unmorph.
-			return false;
+			alt.bSolid = true;
+			bSolid = bTouchy = false;
+
+			bool res = alt.TestMobjLocation();
+
+			alt.bSolid = altSolid;
+			bSolid = isSolid;
+			bTouchy = isTouchy;
+
+			if (!res)
+			{
+				SetMorphTics(2 * TICRATE);
+				return false;
+			}
 		}
 
-		let altmo = PlayerPawn(alternative);
-		altmo.SetOrigin (Pos, false);
-		altmo.bSolid = true;
-		bSolid = false;
-		if (!force && !altmo.TestMobjLocation())
-		{ // Didn't fit
-			altmo.bSolid = false;
-			bSolid = true;
-			player.morphTics = 2*TICRATE;
+		if (!MorphInto(alt))
 			return false;
-		}
 
-		PreUnmorph(altmo, false);		// This body's about to be left.
-		altmo.PreUnmorph(self, true);	// This one's about to become current.
+		PreUnmorph(alt, false);		// This body's about to be left.
+		alt.PreUnmorph(self, true);	// This one's about to become current.
 
-		// No longer using tracer as morph storage. That is what 'alternative' is for. 
-		// If the tracer has changed on the morph, change the original too.
-		altmo.target = target;
-		altmo.tracer = tracer;
-		self.player = null;
-		altmo.alternative = alternative = null;
+		alt.EndAllPowerupEffects();
 
 		// Remove the morph power if the morph is being undone prematurely.
-		for (Inventory item = Inv; item != null;)
+		for (Inventory item = alt.Inv; item;)
 		{
-			let next = item.Inv;
+			Inventory next = item.Inv;
 			if (item is "PowerMorph")
-			{
 				item.Destroy();
-			}
+
 			item = next;
 		}
-		EndAllPowerupEffects();
-		altmo.ObtainInventory (self);
-		Substitute(altmo);
-		if ((tid != 0) && (player.MorphStyle & MRF_NEWTIDBEHAVIOUR))
-		{
-			altmo.ChangeTid(tid);
-		}
-		altmo.Angle = Angle;
-		altmo.player = player;
-		altmo.reactiontime = 18;
-		altmo.bSolid = !!(special2 & 2);
-		altmo.bShootable = !!(special2 & 4);
-		altmo.bInvisible = !!(special2 & 0x40);
-		altmo.Vel = (0, 0, Vel.Z);
-		player.Vel = (0, 0);
-		altmo.floorz = floorz;
-		altmo.bShadow = bShadow;
-		altmo.bNoGravity = bNoGravity;
-		altmo.bGhost = bGhost;
-		altmo.bUnmorphed = false;
-		altmo.Score = Score;
-		altmo.InitAllPowerupEffects();
 
-		let exit_flash = player.MorphExitFlash;
-		bool correctweapon = !!(player.MorphStyle & MRF_LOSEACTUALWEAPON);
-		bool undobydeathsaves = !!(player.MorphStyle & MRF_UNDOBYDEATHSAVES);
+		alt.Angle = Angle;
+		alt.Pitch = Pitch;
+		alt.Target = Target;
+		alt.Tracer = Tracer;
+		alt.Master = Master;
+		alt.FriendPlayer = FriendPlayer;
+		alt.DesignatedTeam = DesignatedTeam;
+		alt.Score = Score;
+		alt.ScoreIcon = ScoreIcon;
+		alt.ReactionTime = 18;
+		alt.bSolid = (PremorphProperties & MPROP_SOLID);
+		alt.bShootable = (PremorphProperties & MPROP_SHOOTABLE);
+		alt.bInvisible = (PremorphProperties & MPROP_INVIS);
+		alt.bShadow = bShadow;
+		alt.bNoGravity = bNoGravity;
+		alt.bGhost = bGhost;
+		alt.bFly = bFly;
+		alt.Vel = (0.0, 0.0, Vel.Z);
 
-		player.morphTics = 0;
-		player.MorphedPlayerClass = null;
-		player.MorphStyle = 0;
-		player.MorphExitFlash = null;
-		player.viewheight = altmo.ViewHeight;
-		Inventory level2 = altmo.FindInventory("PowerWeaponLevel2", true);
-		if (level2 != null)
+		alt.bNoInteraction = (PremorphProperties & MPROP_NO_INTERACTION);
+		alt.A_ChangeLinkFlags((PremorphProperties & MPROP_NO_BLOCKMAP), (PremorphProperties & MPROP_NO_SECTOR));
+
+		let p = alt.player;
+		class<Actor> exitFlash = alt.GetMorphExitFlash();
+		EMorphFlags style = alt.GetMorphStyle();
+		Weapon premorphWeap = p.PremorphWeapon;
+
+		if (TID && (style & MRF_NEWTIDBEHAVIOUR))
 		{
-			level2.Destroy ();
+			alt.ChangeTid(TID);
+			ChangeTID(0);
 		}
 
-		if ((player.health > 0) || undobydeathsaves)
-		{
-			player.health = altmo.health = altmo.SpawnHealth();
-		}
-		else // killed when morphed so stay dead
-		{
-			altmo.health = player.health;
-		}
+		alt.SetMorphTics(0);
+		alt.SetMorphStyle(0);
+		alt.SetMorphExitFlash(null);
+		p.MorphedPlayerClass = null;
+		p.PremorphWeapon = null;
+		p.ViewHeight = alt.ViewHeight;
+		p.Vel = (0.0, 0.0);
+		if (p.Health > 0 || (style & MRF_UNDOBYDEATHSAVES))
+			p.Health = alt.Health = alt.SpawnHealth();
+		else
+			alt.Health = p.Health;
 
-		player.mo = altmo;
-		if (player.camera == self)
-		{
-			player.camera = altmo;
-		}
-		altmo.ClearFOVInterpolation();
+		Inventory level2 = alt.FindInventory("PowerWeaponLevel2", true);
+		if (level2)
+			level2.Destroy();
 
-		// [MH]
-		// If the player that was morphed is the one
-		// taking events, reset up the face, if any;
-		// this is only needed for old-skool skins
-		// and for the original DOOM status bar.
-		if (player == players[consoleplayer])
+		let morphWeap = p.ReadyWeapon;
+		if (premorphWeap)
 		{
-			if (face != 'None')
-			{
-				// Assume root-level base skin to begin with
-				let skinindex = 0;
-				let skin = player.GetSkin();
-				// If a custom skin was in use, then reload it
-				// or else the base skin for the player class.
-				if (skin >= PlayerClasses.Size () && skin < PlayerSkins.Size())
-				{
-					skinindex = skin;
-				}
-				else if (PlayerClasses.Size () > 1)
-				{
-					let whatami = altmo.GetClass();
-					for (int i = 0; i < PlayerClasses.Size (); ++i)
-					{
-						if (PlayerClasses[i].Type == whatami)
-						{
-							skinindex = i;
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		Actor eflash = null;
-		if (exit_flash != null)
-		{
-			eflash = Spawn(exit_flash, Vec3Angle(20., altmo.Angle, gameinfo.telefogheight), ALLOW_REPLACE);
-			if (eflash)	eflash.target = altmo;
-		}
-		WeaponSlots.SetupWeaponSlots(altmo);		// Use original class's weapon slots.
-		let beastweap = player.ReadyWeapon;
-		if (player.PremorphWeapon != null)
-		{
-			player.PremorphWeapon.PostMorphWeapon ();
+			premorphWeap.PostMorphWeapon();
 		}
 		else
 		{
-			player.ReadyWeapon = player.PendingWeapon = null;
+			p.ReadyWeapon = null;
+			p.PendingWeapon = WP_NOCHANGE;
+			p.Refire = 0;
 		}
-		if (correctweapon)
-		{ // Better "lose morphed weapon" semantics
-			class<Actor> morphweaponcls = MorphWeapon;
-			if (morphweaponcls != null && morphweaponcls is 'Weapon')
-			{
-				let OriginalMorphWeapon = Weapon(altmo.FindInventory (morphweapon));
-				if ((OriginalMorphWeapon != null) && (OriginalMorphWeapon.GivenAsMorphWeapon))
-				{ // You don't get to keep your morphed weapon.
-					if (OriginalMorphWeapon.SisterWeapon != null)
-					{
-						OriginalMorphWeapon.SisterWeapon.Destroy ();
-					}
-					OriginalMorphWeapon.Destroy ();
-				}
-			}
-		}
-		else // old behaviour (not really useful now)
-		{ // Assumptions made here are no longer valid
-			if (beastweap != null)
-			{ // You don't get to keep your morphed weapon.
-				if (beastweap.SisterWeapon != null)
-				{
-					beastweap.SisterWeapon.Destroy ();
-				}
-				beastweap.Destroy ();
-			}
-		}
-		PostUnmorph(altmo, false);		// This body is no longer current.
-		altmo.PostUnmorph(self, true);	// altmo body is current.
-		Destroy ();
-		// Restore playerclass armor to its normal amount.
-		let hxarmor = HexenArmor(altmo.FindInventory('HexenArmor'));
-		if (hxarmor != null)
+
+		if (style & MRF_LOSEACTUALWEAPON)
 		{
-			hxarmor.Slots[4] = altmo.HexenArmor[0];
+			// Improved "lose morph weapon" semantics.
+			class<Weapon> morphWeapCls = MorphWeapon;
+			if (morphWeapCls)
+			{
+				let originalMorphWeapon = Weapon(alt.FindInventory(morphWeapCls));
+				if (originalMorphWeapon && originalMorphWeapon.GivenAsMorphWeapon)
+					originalMorphWeapon.Destroy();
+			}
 		}
+		else if (morphWeap) // Old behaviour (not really useful now).
+		{
+			morphWeap.Destroy();
+		}
+
+		// Reset the base AC of the player's Hexen armor back to its default.
+		let hexArmor = HexenArmor(alt.FindInventory("HexenArmor"));
+		if (hexArmor)
+			hexArmor.Slots[4] = alt.HexenArmor[0];
+
+		alt.ClearFOVInterpolation();
+		alt.InitAllPowerupEffects();
+
+		PostUnmorph(alt, false);		// This body is no longer current.
+		alt.PostUnmorph(self, true);	// altmo body is current.
+
+		if (exitFlash)
+		{
+			Actor fog = Spawn(exitFlash, alt.Vec3Angle(20.0, alt.Angle, GameInfo.TelefogHeight), ALLOW_REPLACE);
+			if (fog)
+				fog.Target = alt;
+		}
+
+		Destroy();
 		return true;
 	}
-
-	//===========================================================================
-	//
-	//
-	//
-	//===========================================================================
-
-	override Actor, int, int MorphedDeath()
-	{
-		// Voodoo dolls should not unmorph the real player here.
-		if (player && (player.mo == self) &&
-			(player.morphTics) &&
-			(player.MorphStyle & MRF_UNDOBYDEATH) &&
-			(alternative))
-		{
-			Actor realme = alternative;
-			int realstyle = player.MorphStyle;
-			int realhealth = health;
-			if (UndoPlayerMorph(player, 0, !!(player.MorphStyle & MRF_UNDOBYDEATHFORCED)))
-			{
-				return realme, realstyle, realhealth;
-			}
-		}
-		return null, 0, 0;
-	}
 }
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-class MorphProjectile : Actor
-{
-
-	Class<PlayerPawn> PlayerClass;
-	Class<Actor> MonsterClass, MorphFlash, UnMorphFlash;
-	int Duration, MorphStyle;
-
-	Default
-	{
-		Damage 1;
-		Projectile;
-		-ACTIVATEIMPACT
-		-ACTIVATEPCROSS
-	}
-	
-	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
-	{
-		if (target.player)
-		{
-			// Voodoo dolls forward this to the real player
-			target.player.mo.MorphPlayer (NULL, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
-		}
-		else
-		{
-			target.MorphMonster (MonsterClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
-		}
-		return -1;
-	}
-
-	
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-class MorphedMonster : Actor
-{
-	Actor UnmorphedMe;
-	int UnmorphTime, MorphStyle;
-	Class<Actor> MorphExitFlash;
-	int FlagsSave;
-
-	Default
-	{
-		Monster;
-		-COUNTKILL
-		+FLOORCLIP
-	}
-
-	private native void Substitute(Actor replacement);
-
-	override void OnDestroy ()
-	{
-		if (UnmorphedMe != NULL)
-		{
-			UnmorphedMe.Destroy ();
-		}
-		Super.OnDestroy();
-	}
-
-	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
-	{
-		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
-		if (UnmorphedMe != NULL && UnmorphedMe.bUnmorphed)
-		{
-			UnmorphedMe.health = health;
-			UnmorphedMe.Die (source, inflictor, dmgflags, MeansOfDeath);
-		}
-	}
-
-	override void Tick ()
-	{
-		if (UnmorphTime > level.time || !UndoMonsterMorph())
-		{
-			Super.Tick();
-		}
-	}
-
-	//----------------------------------------------------------------------------
-	//
-	// FUNC P_UndoMonsterMorph
-	//
-	// Returns true if the monster unmorphs.
-	//
-	//----------------------------------------------------------------------------
-
-	virtual bool UndoMonsterMorph(bool force = false)
-	{
-		if (UnmorphTime == 0 || UnmorphedMe == NULL || bStayMorphed || UnmorphedMe.bStayMorphed)
-		{
-			return false;
-		}
-		let unmorphed = UnmorphedMe;
-		unmorphed.SetOrigin (Pos, false);
-		unmorphed.bSolid = true;
-		bSolid = false;
-		bool save = bTouchy;
-		bTouchy = false;
-		if (!force && !unmorphed.TestMobjLocation ())
-		{ // Didn't fit
-			unmorphed.bSolid = false;
-			bSolid = true;
-			bTouchy = save;
-			UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
-			return false;
-		}
-		PreUnmorph(unmorphed, false);
-		unmorphed.PreUnmorph(self, true);
-		unmorphed.Angle = Angle;
-		unmorphed.target = target;
-		unmorphed.bShadow = bShadow;
-		unmorphed.bGhost = bGhost;
-		unmorphed.bSolid = !!(flagssave & 2);
-		unmorphed.bShootable = !!(flagssave & 4);
-		unmorphed.bInvisible = !!(flagssave & 0x40);
-		unmorphed.health = unmorphed.SpawnHealth();
-		unmorphed.Vel = Vel;
-		unmorphed.ChangeTid(tid);
-		unmorphed.special = special;
-		unmorphed.Score = Score;
-		unmorphed.args[0] = args[0];
-		unmorphed.args[1] = args[1];
-		unmorphed.args[2] = args[2];
-		unmorphed.args[3] = args[3];
-		unmorphed.args[4] = args[4];
-		unmorphed.CopyFriendliness (self, true);
-		unmorphed.bUnmorphed = false;
-		PostUnmorph(unmorphed, false);		// From is false here: Leaving the caller's body.
-		unmorphed.PostUnmorph(self, true);	// True here: Entering this body from here.
-		UnmorphedMe = NULL;
-		Substitute(unmorphed);
-		Destroy ();
-		let eflash = Spawn(MorphExitFlash, Pos + (0, 0, gameinfo.TELEFOGHEIGHT), ALLOW_REPLACE);
-		if (eflash)
-			eflash.target = unmorphed;
-		return true;
-	}
-
-	//===========================================================================
-	//
-	//
-	//
-	//===========================================================================
-
-	override Actor, int, int MorphedDeath()
-	{
-		let realme = UnmorphedMe;
-		if (realme != NULL)
-		{
-			if ((UnmorphTime) &&
-				(MorphStyle & MRF_UNDOBYDEATH))
-			{
-				int realstyle = MorphStyle;
-				int realhealth = health;
-				if (UndoMonsterMorph(!!(MorphStyle & MRF_UNDOBYDEATHFORCED)))
-				{
-					return realme, realstyle, realhealth;
-				}
-			}
-			if (realme.bBossDeath)
-			{
-				realme.health = 0;	// make sure that A_BossDeath considers it dead.
-				realme.A_BossDeath();
-			}
-		}
-		return null, 0, 0;
-	}
-
-}
-

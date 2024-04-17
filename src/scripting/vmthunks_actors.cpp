@@ -1693,28 +1693,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, StaticPointerSubstitution)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MorphInto, MorphPointerSubstitution)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(replace, AActor);
-	StaticPointerSubstitution(self, replace);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_PlayerPawn, Substitute, StaticPointerSubstitution)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(replace, AActor);
-	StaticPointerSubstitution(self, replace);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_MorphedMonster, Substitute, StaticPointerSubstitution)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(replace, AActor);
-	StaticPointerSubstitution(self, replace);
-	return 0;
+	PARAM_OBJECT(to, AActor);
+	ACTION_RETURN_INT(MorphPointerSubstitution(self, to));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpawnableType, P_GetSpawnableType)

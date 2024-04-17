@@ -426,35 +426,40 @@ extend class PlayerPawn
 	}
 	
 
-	virtual String CheatMorph(class<PlayerPawn> morphClass, bool quickundo)
+	virtual String CheatMorph(class<PlayerPawn> morphClass, bool undo)
 	{
-		let oldclass = GetClass();
-
 		// Set the standard morph style for the current game
-		int style = MRF_UNDOBYTOMEOFPOWER;
-		if (gameinfo.gametype == GAME_Hexen) style |= MRF_UNDOBYCHAOSDEVICE;
+		EMorphFlags style = MRF_UNDOBYTOMEOFPOWER;
+		if (GameInfo.GameType == GAME_Hexen)
+			style |= MRF_UNDOBYCHAOSDEVICE;
 
-		if (player.morphTics)
+		if (Alternative)
 		{
-			if (UndoPlayerMorph (player))
+			class<PlayerPawn> cls = GetClass();
+			Actor mo = Alternative;
+			if (!undo || Unmorph(self))
 			{
-				if (!quickundo && oldclass != morphclass && MorphPlayer (player, morphclass, 0, style))
+				if ((!undo && Morph(self, morphClass, null, 0, style))
+					|| (undo && morphClass != cls && mo.Morph(mo, morphClass, null, 0, style)))
 				{
 					return StringTable.Localize("$TXT_STRANGER");
 				}
-				return StringTable.Localize("$TXT_NOTSTRANGE");
+
+				if (undo)
+					return StringTable.Localize("$TXT_NOTSTRANGE");
 			}
 		}
-		else if (MorphPlayer (player, morphclass, 0, style))
+		else if (Morph(self, morphClass, null, 0, style))
 		{
 			return StringTable.Localize("$TXT_STRANGE");
 		}
+
 		return "";
 	}
 	
 	virtual void CheatTakeWeaps()
 	{
-		if (player.morphTics || health <= 0)
+		if (Alternative || health <= 0)
 		{
 			return;
 		}

@@ -40,7 +40,7 @@ class PlayerPawn : Actor
 	double		SideMove1, SideMove2;
 	TextureID	ScoreIcon;
 	int			SpawnMask;
-	Name			MorphWeapon;		// This should really be a class<Weapon> but it's too late to change now.
+	Name			MorphWeapon;
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
@@ -477,7 +477,7 @@ class PlayerPawn : Actor
 		let player = self.player;
 		if (!player) return;	
 		if ((player.WeaponState & WF_DISABLESWITCH) || // Weapon changing has been disabled.
-			Alternative)					// Morphed classes cannot change weapons.
+			player.morphTics != 0)					// Morphed classes cannot change weapons.
 		{ // ...so throw away any pending weapon requests.
 			player.PendingWeapon = WP_NOCHANGE;
 		}
@@ -651,7 +651,7 @@ class PlayerPawn : Actor
 			}
 		}
 
-		if (Alternative)
+		if (player.morphTics)
 		{
 			bob = 0;
 		}
@@ -1084,7 +1084,7 @@ class PlayerPawn : Actor
 
 	virtual bool CanCrouch() const
 	{
-		return !Alternative || bCrouchableMorph;
+		return player.morphTics == 0 || bCrouchableMorph;
 	}
 
 	//----------------------------------------------------------------------------
@@ -1250,7 +1250,7 @@ class PlayerPawn : Actor
 			side *= SideMove2;
 		}
 
-		if (!Alternative)
+		if (!player.morphTics)
 		{
 			double factor = 1.;
 			for(let it = Inv; it != null; it = it.Inv)
@@ -1546,15 +1546,15 @@ class PlayerPawn : Actor
 	{
 		let player = self.player;
 		// Morph counter
-		if (Alternative)
+		if (player.morphTics)
 		{
 			if (player.chickenPeck)
 			{ // Chicken attack counter
 				player.chickenPeck -= 3;
 			}
-			if (player.MorphTics && !--player.MorphTics)
+			if (!--player.morphTics)
 			{ // Attempt to undo the chicken/pig
-				Unmorph(self, MRF_UNDOBYTIMEOUT);
+				player.mo.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
 			}
 		}
 	}
@@ -1679,7 +1679,7 @@ class PlayerPawn : Actor
 				player.jumpTics = 0;
 			}
 		}
-		if (Alternative && !(player.cheats & CF_PREDICTING))
+		if (player.morphTics && !(player.cheats & CF_PREDICTING))
 		{
 			MorphPlayerThink ();
 		}
@@ -2060,9 +2060,9 @@ class PlayerPawn : Actor
 		Inventory item, next;
 		let p = player;
 
-		if (Alternative)
+		if (p.morphTics != 0)
 		{ // Undo morph
-			Unmorph(self, force: true);
+			Unmorph(self, 0, true);
 		}
 		// 'self' will be no longer valid from here on in case of an unmorph
 		let me = p.mo;
@@ -2869,15 +2869,23 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
-	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
+	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
 	{
-		return mo ? mo.MorphPlayer(activator, spawnType, duration, style, enterFlash, exitFlash) : false;
+		if (mo != null)
+		{
+			return mo.MorphPlayer(p, spawntype, duration, style, enter_flash, exit_flash);
+		}
+		return false;
 	}
 	
 	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
-	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(PlayerInfo player, EMorphFlags unmorphFlags = 0, bool force = false)
+	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
 	{
-		return player.mo ? player.mo.UndoPlayerMorph(self, unmorphFlags, force) : false;
+		if (player.mo != null)
+		{
+ 			return player.mo.UndoPlayerMorph(self, unmorphflag, force);
+		}
+		return false;
 	}
 
 	deprecated("3.7", "DropWeapon() should be used on a PlayerPawn object") void DropWeapon()

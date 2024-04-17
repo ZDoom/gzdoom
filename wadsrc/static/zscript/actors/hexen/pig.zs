@@ -145,7 +145,7 @@ class PigPlayer : PlayerPawn
 
 	override void MorphPlayerThink ()
 	{
-		if ((player.MorphTics ? player.MorphTics : Random[PigPlayerThink]()) & 15)
+		if (player.morphTics & 15)
 		{
 			return;
 		}

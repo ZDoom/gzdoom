@@ -819,7 +819,7 @@ int P_GetRealMaxHealth(AActor *actor, int max)
 	{
 		max = actor->GetMaxHealth(true);
 		// [MH] First step in predictable generic morph effects
-		if (actor->alternative != nullptr)
+		if (player->morphTics)
 		{
 			if (player->MorphStyle & MORPH_FULLHEALTH)
 			{
@@ -841,7 +841,7 @@ int P_GetRealMaxHealth(AActor *actor, int max)
 	else
 	{
 		// Bonus health should be added on top of the item's limit.
-		if (actor->alternative == nullptr || (player->MorphStyle & MORPH_ADDSTAMINA))
+		if (player->morphTics == 0 || (player->MorphStyle & MORPH_ADDSTAMINA))
 		{
 			max += actor->IntVar(NAME_BonusHealth);
 		}
@@ -3788,22 +3788,6 @@ void AActor::Tick ()
 	static const uint8_t HereticScrollDirs[4] = { 6, 9, 1, 4 };
 	static const uint8_t HereticSpeedMuls[5] = { 5, 10, 25, 30, 35 };
 
-	// Check for Actor unmorphing, but only on the thing that is the morphed Actor.
-	// Players do their own special checking for this.
-	if (alternative != nullptr && !(flags & MF_UNMORPHED) && player == nullptr)
-	{
-		int res = false;
-		IFVIRTUAL(AActor, CheckUnmorph)
-		{
-			VMValue params[] = { this };
-			VMReturn ret[] = { &res };
-			VMCall(func, params, 1, ret, 1);
-		}
-
-		if (res)
-			return;
-	}
-
 	if (freezetics > 0)
 	{
 		freezetics--;
@@ -5098,16 +5082,6 @@ void AActor::CallDeactivate(AActor *activator)
 
 void AActor::OnDestroy ()
 {
-	// If the Actor is leaving behind a premorph Actor, make sure it gets cleaned up as
-	// well so it's not stuck in the map.
-	if (alternative != nullptr && !(flags & MF_UNMORPHED))
-	{
-		alternative->ClearCounters();
-		alternative->alternative = nullptr;
-		alternative->Destroy();
-		alternative = nullptr;
-	}
-
 	// [ZZ] call destroy event hook.
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.
@@ -5229,157 +5203,59 @@ extern bool demonew;
 
 //==========================================================================
 //
-// This function is only designed for swapping player pawns
-// over to their new ones upon changing levels or respawning. It SHOULD NOT be
-// used for anything else! Do not export this functionality as it's
-// meant strictly for internal usage.
+// This once was the main method for pointer cleanup, but
+// nowadays its only use is swapping out PlayerPawns.
+// This requires pointer fixing throughout all objects and a few
+// global variables, but it only needs to look at pointers that
+// can point to a player.
 //
 //==========================================================================
 
-void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer, bool removeOld)
+void StaticPointerSubstitution(AActor* old, AActor* notOld)
 {
-	if (oldPlayer == nullptr || newPlayer == nullptr || oldPlayer == newPlayer
-		|| !oldPlayer->IsKindOf(NAME_PlayerPawn) || !newPlayer->IsKindOf(NAME_PlayerPawn))
+	DObject* probe;
+	size_t changed = 0;
+	int i;
+
+	if (old == nullptr) return;
+
+	// This is only allowed to replace players or swap out morphed monsters
+	if (!old->IsKindOf(NAME_PlayerPawn) || (notOld != nullptr && !notOld->IsKindOf(NAME_PlayerPawn)))
 	{
-		return;
+		if (notOld == nullptr) return;
+		if (!old->IsKindOf(NAME_MorphedMonster) && !notOld->IsKindOf(NAME_MorphedMonster)) return;
+	}
+	// Go through all objects.
+	i = 0; DObject* last = 0;
+	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)
+	{
+		i++;
+		changed += probe->PointerSubstitution(old, notOld, true);
+		last = probe;
 	}
 
-	// Go through player infos.
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	// Go through players.
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		if (!oldPlayer->Level->PlayerInGame(i))
-			continue;
+		if (playeringame[i])
+		{
+			AActor* replacement = notOld;
+			auto& p = players[i];
 
-		auto p = oldPlayer->Level->Players[i];
-
-		if (p->mo == oldPlayer)
-			p->mo = newPlayer;
-		if (p->poisoner == oldPlayer)
-			p->poisoner = newPlayer;
-		if (p->attacker == oldPlayer)
-			p->attacker = newPlayer;
-		if (p->camera == oldPlayer)
-			p->camera = newPlayer;
-		if (p->ConversationNPC == oldPlayer)
-			p->ConversationNPC = newPlayer;
-		if (p->ConversationPC == oldPlayer)
-			p->ConversationPC = newPlayer;
+			if (p.mo == old)					p.mo = replacement, changed++;
+			if (p.poisoner.ForceGet() == old)			p.poisoner = replacement, changed++;
+			if (p.attacker.ForceGet() == old)			p.attacker = replacement, changed++;
+			if (p.camera.ForceGet() == old)				p.camera = replacement, changed++;
+			if (p.ConversationNPC.ForceGet() == old)	p.ConversationNPC = replacement, changed++;
+			if (p.ConversationPC.ForceGet() == old)		p.ConversationPC = replacement, changed++;
+		}
 	}
 
-	// Go through sectors.
-	for (auto& sec : oldPlayer->Level->sectors)
+	// Go through sectors. Only the level this actor belongs to is relevant.
+	for (auto& sec : old->Level->sectors)
 	{
-		if (sec.SoundTarget == oldPlayer)
-			sec.SoundTarget = newPlayer;
+		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}
-
-	// Update all the remaining object pointers.
-	for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
-		probe->PointerSubstitution(oldPlayer, newPlayer, removeOld);
-}
-
-//==========================================================================
-//
-// This has some extra barriers compared to PlayerPointerSubstitution to allow
-// Actors to freely morph into other Actors which is its main usage.
-// It also allows morphing to be more extendable from ZScript.
-//
-//==========================================================================
-
-int MorphPointerSubstitution(AActor* from, AActor* to)
-{
-	// Special care is taken here to make sure things marked as a dummy Actor for a morphed thing aren't
-	// allowed to be changed into other things. Anything being morphed into that's considered a player
-	// is automatically out of the question to ensure modders aren't swapping clients around.
-	if (from == nullptr || to == nullptr || from == to || to->player != nullptr
-		|| (from->flags & MF_UNMORPHED)									// Another thing's dummy Actor, unmorphing the wrong way, etc.
-		|| (from->alternative == nullptr && to->alternative != nullptr)	// Morphing into something that's already morphed.
-		|| (from->alternative != nullptr && from->alternative != to))	// Only allow something morphed to unmorph.
-	{
-		return false;
-	}
-
-	const bool toIsPlayer = to->IsKindOf(NAME_PlayerPawn);
-	if (from->IsKindOf(NAME_PlayerPawn))
-	{
-		// Players are only allowed to turn into other valid player pawns. For
-		// valid pawns, make sure an actual player is changing into an empty one.
-		// Voodoo dolls aren't allowed to morph since that should be passed to
-		// the main player directly.
-		if (!toIsPlayer || from->player == nullptr || from->player->mo != from)
-			return false;
-	}
-	else if (toIsPlayer || from->player != nullptr
-			|| (from->IsKindOf(NAME_Inventory) && from->PointerVar<AActor>(NAME_Owner) != nullptr)
-			|| (to->IsKindOf(NAME_Inventory) && to->PointerVar<AActor>(NAME_Owner) != nullptr))
-	{
-		// Only allow items to be swapped around if they aren't currently owned. Also prevent non-players from
-		// turning into fake players.
-		return false;
-	}
-
-	// Since the check is good, move the inventory items over. This should always be done when
-	// morphing to emulate Heretic/Hexen's behavior since those stored the inventory in their
-	// player structs.
-	IFVM(Actor, ObtainInventory)
-	{
-		VMValue params[] = { to, from };
-		VMCall(func, params, 2, nullptr, 0);
-	}
-
-	// Go through player infos.
-	for (int i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (!from->Level->PlayerInGame(i))
-			continue;
-
-		auto p = from->Level->Players[i];
-
-		if (p->mo == from)
-			p->mo = to;
-		if (p->poisoner == from)
-			p->poisoner = to;
-		if (p->attacker == from)
-			p->attacker = to;
-		if (p->camera == from)
-			p->camera = to;
-		if (p->ConversationNPC == from)
-			p->ConversationNPC = to;
-		if (p->ConversationPC == from)
-			p->ConversationPC = to;
-	}
-
-	// Go through sectors.
-	for (auto& sec : from->Level->sectors)
-	{
-		if (sec.SoundTarget == from)
-			sec.SoundTarget = to;
-	}
-
-	// Replace any object pointers that are safe to swap around.
-	for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
-		probe->PointerSubstitution(from, to, false);
-
-	// Remaining maintenance related to morphing.
-	if (from->player != nullptr)
-	{
-		to->player = from->player;
-		from->player = nullptr;
-	}
-
-	if (from->alternative != nullptr)
-	{
-		to->flags &= ~MF_UNMORPHED;
-		to->alternative = from->alternative = nullptr;
-	}
-	else
-	{
-		from->flags |= MF_UNMORPHED;
-		from->alternative = to;
-		to->alternative = from;
-	}
-
-	return true;
 }
 
 void FLevelLocals::PlayerSpawnPickClass (int playernum)
@@ -5653,7 +5529,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 				if (sec.SoundTarget == oldactor) sec.SoundTarget = nullptr;
 			}
 
-			PlayerPointerSubstitution (oldactor, p->mo, false);
+			StaticPointerSubstitution (oldactor, p->mo);
 
 			localEventManager->PlayerRespawned(PlayerNum(p));
 			Behaviors.StartTypedScripts (SCRIPT_Respawn, p->mo, true);

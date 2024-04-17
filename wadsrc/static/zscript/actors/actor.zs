@@ -504,7 +504,7 @@ class Actor : Thinker native
 	virtual native bool Slam(Actor victim);
 	virtual void Touch(Actor toucher) {}
 	virtual native void FallAndSink(double grav, double oldfloorz);
-	native bool MorphInto(Actor morph);
+	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 	native clearscope void DisableLocalRendering(uint playerNum, bool disable);
 	native ui bool ShouldRenderLocally(); // Only clients get to check this, never the playsim.
@@ -1410,7 +1410,7 @@ class Actor : Thinker native
 		bool grunted;
 
 		// [RH] only make noise if alive
-		if (self.health > 0 && !Alternative)
+		if (self.health > 0 && self.player.morphTics == 0)
 		{
 			grunted = false;
 			// Why should this number vary by gravity?

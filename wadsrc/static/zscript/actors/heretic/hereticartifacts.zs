@@ -66,26 +66,28 @@ Class ArtiTomeOfPower : PowerupGiver
 		Loop;
 	}
 	
-	override bool Use(bool pickup)
+	override bool Use (bool pickup)
 	{
-		EMorphFlags mStyle = Owner.GetMorphStyle();
-		if (Owner.Alternative && (mStyle & MRF_UNDOBYTOMEOFPOWER))
-		{
-			// Attempt to undo chicken.
-			if (!Owner.Unmorph(Owner, MRF_UNDOBYTOMEOFPOWER))
-			{
-				if (!(mStyle & MRF_FAILNOTELEFRAG))
-					Owner.DamageMobj(null, null, TELEFRAG_DAMAGE, 'Telefrag');
+		Playerinfo p = Owner.player;
+		if (p && p.morphTics && (p.MorphStyle & MRF_UNDOBYTOMEOFPOWER))
+		{ // Attempt to undo chicken
+			if (!p.mo.UndoPlayerMorph (p, MRF_UNDOBYTOMEOFPOWER))
+			{ // Failed
+				if (!(p.MorphStyle & MRF_FAILNOTELEFRAG))
+				{
+					Owner.DamageMobj (null, null, TELEFRAG_DAMAGE, 'Telefrag');
+				}
 			}
-			else if (Owner.player)
-			{
-				Owner.A_StartSound("*evillaugh", CHAN_VOICE);
+			else
+			{ // Succeeded
+				Owner.A_StartSound ("*evillaugh", CHAN_VOICE);
 			}
-
 			return true;
 		}
-
-		return Super.Use(pickup);
+		else
+		{
+			return Super.Use (pickup);
+		}
 	}
 	
 }

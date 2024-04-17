@@ -23,32 +23,35 @@ class ArtiTeleport : Inventory
 		Loop;
 	}
 	
-	override bool Use(bool pickup)
+	override bool Use (bool pickup)
 	{
 		Vector3 dest;
-		double destAngle;
+		int destAngle;
+
 		if (deathmatch)
-			[dest, destAngle] = Level.PickDeathmatchStart();
-		else
-			[dest, destAngle] = Level.PickPlayerStart(Owner.PlayerNumber());
-
-		if (!Level.UsePlayerStartZ)
-			dest.Z = ONFLOORZ;
-
-		Owner.Teleport(dest, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
-
-		bool canLaugh = Owner.player != null;
-		EMorphFlags mStyle = Owner.GetMorphStyle();
-		if (Owner.Alternative && (mStyle & MRF_UNDOBYCHAOSDEVICE))
 		{
-			// Teleporting away will undo any morph effects (pig).
-			if (!Owner.Unmorph(Owner, MRF_UNDOBYCHAOSDEVICE) && (mStyle & MRF_FAILNOLAUGH))
-				canLaugh = false;
+			[dest, destAngle] = level.PickDeathmatchStart();
 		}
-
-		if (canLaugh)
-			Owner.A_StartSound("*evillaugh", CHAN_VOICE, attenuation: ATTN_NONE);
-
+		else
+		{
+			[dest, destAngle] = level.PickPlayerStart(Owner.PlayerNumber());
+		}
+		if (!level.useplayerstartz)
+			dest.Z = ONFLOORZ;
+		Owner.Teleport (dest, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
+		bool canlaugh = true;
+		Playerinfo p = Owner.player;
+		if (p && p.morphTics && (p.MorphStyle & MRF_UNDOBYCHAOSDEVICE))
+		{ // Teleporting away will undo any morph effects (pig)
+			if (!p.mo.UndoPlayerMorph (p, MRF_UNDOBYCHAOSDEVICE) && (p.MorphStyle & MRF_FAILNOLAUGH))
+			{
+				canlaugh = false;
+			}
+		}
+		if (canlaugh)
+		{ // Full volume laugh
+			Owner.A_StartSound ("*evillaugh", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
+		}
 		return true;
 	}
 	

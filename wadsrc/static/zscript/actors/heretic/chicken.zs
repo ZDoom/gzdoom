@@ -221,7 +221,7 @@ class ChickenPlayer : PlayerPawn
 				pspr.y = WEAPONTOP + player.chickenPeck / 2;
 			}
 		}
-		if ((player.MorphTics ? player.MorphTics : Random[ChickenPlayerThink]()) & 15)
+		if (player.morphTics & 15)
 		{
 			return;
 		}

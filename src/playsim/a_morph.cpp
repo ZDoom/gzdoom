@@ -37,7 +37,7 @@ bool P_MorphActor(AActor *activator, AActor *victim, PClassActor *ptype, PClassA
 
 bool P_UnmorphActor(AActor *activator, AActor *morphed, int flags, bool force)
 {
-	IFVIRTUALPTR(morphed, AActor, Unmorph)
+	IFVIRTUALPTR(morphed, AActor, UnMorph)
 	{
 		VMValue params[] = { morphed, activator, flags, force };
 		int retval;

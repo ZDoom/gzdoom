@@ -386,6 +386,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
       lm_sampledist_floor = <int>;      // ZDRay customizable sampling distance for this sector's floor. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_ceiling = <int>;    // ZDRay customizable sampling distance for this sector's ceiling. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_dynamic = <bool>;              // ZDRay marks a sector's lightmaps as dynamic so that they may be updated in realtime (used for flickering lights, changing a lightmap light's position, color etc). Default = false
    }
 
    thing
@@ -416,8 +417,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
-      lm_sampledistance = <int>;    // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 16
-      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default: "FFFFFF"
+      lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8
+      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default = "FFFFFF"
+      sourceradius = <float>;       // ZDRay lightmap light soft shadow amount. Higher values produce softer shadows. Default = 5.0
 
       * Note about arg0str
 

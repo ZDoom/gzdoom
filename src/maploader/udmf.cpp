@@ -792,7 +792,7 @@ public:
 				break;
 
 			case NAME_lm_suncolor:
-			case NAME_lm_sampledistance:
+			case NAME_lm_sampledist:
 				CHECK_N(Zd | Zdt)
 					break;
 

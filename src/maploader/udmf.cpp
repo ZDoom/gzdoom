@@ -2477,6 +2477,7 @@ public:
 			namespc = sc.String;
 			switch(namespc.GetIndex())
 			{
+			case NAME_Dsda:
 			case NAME_ZDoom:
 			case NAME_Eternity:
 				namespace_bits = Zd;

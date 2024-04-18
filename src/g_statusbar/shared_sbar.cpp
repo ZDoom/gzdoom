@@ -233,6 +233,10 @@ void ST_LoadCrosshair(bool alwaysload)
 	{
 		num = crosshair;
 	}
+	if (num < 0)
+	{
+		num = 0;
+	}
 	ST_LoadCrosshair(num, alwaysload);
 }
 

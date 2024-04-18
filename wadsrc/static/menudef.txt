@@ -1630,6 +1630,7 @@ OptionMenu GameplayOptions protected
 	StaticText " "
 	Option "$GMPLYMNU_SMARTAUTOAIM",			"sv_smartaim", "SmartAim"
 	StaticText " "
+	Option "$GMPLYMNU_PISTOLSTART",				"sv_pistolstart", "YesNo"
 	Option "$GMPLYMNU_FALLINGDAMAGE",			"sv_fallingdamage", "FallingDM"
 	Option "$GMPLYMNU_DROPWEAPON",				"sv_weapondrop", "YesNo"
 	Option "$GMPLYMNU_DOUBLEAMMO",				"sv_doubleammo", "YesNo"

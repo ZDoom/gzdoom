@@ -599,14 +599,14 @@ const TArray<VSMatrix> IQMModel::CalculateBones(int frame1, int frame2, float in
 
 			if(frame1 >= 0 && (frame1_prev >= 0 || inter1_prev < 0))
 			{
-				prev = inter1_prev < 0 ? animationFrames[offset1 + i] : InterpolateBone(animationFrames[offset1_1 + i], animationFrames[offset1 + i], inter1_prev, invt1);
+				prev = inter1_prev <= 0 ? animationFrames[offset1 + i] : InterpolateBone(animationFrames[offset1_1 + i], animationFrames[offset1 + i], inter1_prev, invt1);
 			}
 
 			TRS next;
 
 			if(frame2 >= 0 && (frame2_prev >= 0 || inter2_prev < 0))
 			{
-				next = inter2_prev < 0 ? animationFrames[offset2 + i] : InterpolateBone(animationFrames[offset2_1 + i], animationFrames[offset2 + i], inter2_prev, invt2);
+				next = inter2_prev <= 0 ? animationFrames[offset2 + i] : InterpolateBone(animationFrames[offset2_1 + i], animationFrames[offset2 + i], inter2_prev, invt2);
 			}
 
 			TRS bone;

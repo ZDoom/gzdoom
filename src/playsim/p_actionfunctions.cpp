@@ -5128,6 +5128,8 @@ enum ESetAnimationFlags
 	SAF_NOOVERRIDE = 1 << 2,
 };
 
+extern double getCurrentFrame(const AnimOverride &anim, double tic);
+
 void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
@@ -5152,11 +5154,6 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		return;
 	}
 
-	if(!(flags & SAF_INSTANT))
-	{
-		self->modelData->prevAnim = self->modelData->curAnim;
-	}
-
 	double tic = self->Level->totaltime;
 	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
 	{
@@ -5177,6 +5174,11 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	{
 		//same animation as current, skip setting it
 		return;
+	}
+
+	if(!(flags & SAF_INSTANT))
+	{
+		self->modelData->prevAnim = self->modelData->curAnim;
 	}
 
 	int animEnd = mdl->FindLastFrame(animName);
@@ -5217,6 +5219,8 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(!(flags & SAF_INSTANT))
 	{
+		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic);
+		
 		self->modelData->curAnim.startTic = floor(tic) + interpolateTics;
 	}
 	else
@@ -5234,8 +5238,6 @@ void SetAnimationUINative(AActor * self, int i_animName, double framerate, int s
 {
 	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac());
 }
-
-extern double getCurrentFrame(const AnimOverride &anim, double tic);
 
 void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFrac)
 {
@@ -5256,16 +5258,16 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 	}
 
 
-	if(self->modelData->curAnim.startTic < ticFrac)
-	{
-		self->modelData->curAnim.framerate = (float)framerate;
-		return;
-	}
-
 	double tic = self->Level->totaltime;
 	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
 	{
 		tic += ticFrac;
+	}
+
+	if(self->modelData->curAnim.startTic >= tic)
+	{
+		self->modelData->curAnim.framerate = (float)framerate;
+		return;
 	}
 
 	double frame = getCurrentFrame(self->modelData->curAnim, tic);

@@ -414,7 +414,10 @@ class Inventory : Actor
 	{
 		Inventory copy;
 
-		Amount = MIN(Amount, MaxAmount);
+		// Clamping this on local copy creation presents too many possible
+		// pitfalls (e.g. Health items).
+		if (!IsCreatingLocalCopy())
+			Amount = MIN(Amount, MaxAmount);
 		if (GoAway ())
 		{
 			copy = Inventory(Spawn (GetClass()));
@@ -1046,7 +1049,7 @@ class Inventory : Actor
 
 	protected bool GoAway ()
 	{
-		if (bCreatingCopy)
+		if (IsCreatingLocalCopy())
 			return true;
 
 		// Dropped items never stick around
@@ -1129,6 +1132,11 @@ class Inventory : Actor
 		bCreatingCopy = false;
 
 		return item;
+	}
+
+	protected clearscope bool IsCreatingLocalCopy() const
+	{
+		return bCreatingCopy;
 	}
 	
 	//===========================================================================

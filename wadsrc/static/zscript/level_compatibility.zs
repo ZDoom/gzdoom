@@ -1061,6 +1061,20 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '55BF5BFAF086C904E7258258F9700155': // Eternal Doom map02
+			{
+				// unreachable monsters
+				SetThingFlags(274, GetThingFlags(274) | MTF_NOCOUNT);
+				SetThingFlags(275, GetThingFlags(275) | MTF_NOCOUNT);
+				SetThingFlags(276, GetThingFlags(276) | MTF_NOCOUNT);
+				SetThingFlags(277, GetThingFlags(277) | MTF_NOCOUNT);
+				SetThingFlags(278, GetThingFlags(278) | MTF_NOCOUNT);
+				SetThingFlags(279, GetThingFlags(279) | MTF_NOCOUNT);
+				SetThingFlags(280, GetThingFlags(280) | MTF_NOCOUNT);
+				SetThingFlags(281, GetThingFlags(281) | MTF_NOCOUNT);
+				break;
+			}
+
 			case '5C594C67CF7721005DE71429F9811370': // Eternal Doom map03
 			{
 				// fix broken staircase. The compatibility option is not sufficient
@@ -1068,8 +1082,11 @@ class LevelCompatibility : LevelPostProcessor
 				ClearSectorTags(212);
 				ClearSectorTags(213);
 				ClearSectorTags(214);
+				// unreachable secret
+				SetSectorSpecial(551, 0);
 				break;
 			}
+
 			case '9A4615498C3451413F1CD3D15099ACC7': // Eternal Doom map05
 			{
 				// an imp and two cyberdemons are located at the softlock area
@@ -1078,10 +1095,18 @@ class LevelCompatibility : LevelPostProcessor
 				SetThingFlags(274, GetThingFlags (274) | MTF_NOCOUNT);
 				break;
 			}
+
 			case '8B55842D5A509902738040AF10B4E787': // Eternal Doom map10
 			{
 				// soulsphere at the end of the level is there merely to replicate the start of the next map
 				SetThingFlags(548, GetThingFlags (548) | MTF_NOCOUNT);
+				break;
+			}
+
+			case 'E5B4379151C2010B966CA37A9818C901': // Eternal Doom map12
+			{
+				// unreachable baron
+				SetThingFlags(177, GetThingFlags(177) | MTF_NOCOUNT);
 				break;
 			}
 		

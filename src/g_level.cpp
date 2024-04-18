@@ -776,11 +776,12 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	{
 		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
 		{
-			if (nextinfo->flags2 & LEVEL2_RESETINVENTORY)
+			const bool doReset = dmflags3 & DF3_PISTOL_START;
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETINVENTORY))
 			{
 				inflags |= CHANGELEVEL_RESETINVENTORY;
 			}
-			if (nextinfo->flags2 & LEVEL2_RESETHEALTH)
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETHEALTH))
 			{
 				inflags |= CHANGELEVEL_RESETHEALTH;
 			}

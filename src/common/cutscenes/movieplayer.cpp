@@ -325,8 +325,7 @@ class VpxPlayer : public MoviePlayer
 	vpx_codec_ctx_t codec{};
 	vpx_codec_iter_t iter = nullptr;
 
-	uint32_t convnumer;
-	uint32_t convdenom;
+	double convrate;
 
 	uint64_t nsecsperframe;
 	uint64_t nextframetime;
@@ -398,15 +397,20 @@ public:
 		if (numframes == 0) return false;
 		fr.Seek(4, FileReader::SeekCur);
 
-		if (fpsdenominator > 1000 || fpsnumerator == 0 || fpsdenominator == 0)
+		if (fpsnumerator == 0 || fpsdenominator == 0)
 		{
 			// default to 30 fps if the header does not provide useful info.
 			fpsdenominator = 30;
 			fpsnumerator = 1;
 		}
 
-		convnumer = 120 * fpsnumerator;
-		convdenom = fpsdenominator * origframedelay;
+		if (origframedelay < 1)
+			convrate = 0.0;
+		else
+		{
+			convrate = 120.0 * double(fpsnumerator);
+			convrate /= double(fpsdenominator) * double(origframedelay);
+		}
 
 		nsecsperframe = int64_t(fpsnumerator) * 1'000'000'000 / fpsdenominator;
 		nextframetime = 0;
@@ -577,7 +581,7 @@ public:
 			if (framenum >= numframes) stop = true;
 
 			bool nostopsound = (flags & NOSOUNDCUTOFF);
-			int soundframe = convdenom ? Scale(framenum, convnumer, convdenom) : framenum;
+			int soundframe = (convrate > 0.0) ? int(convrate * framenum) : framenum;
 			if (soundframe > lastsoundframe)
 			{
 				if (soundtrack == -1)

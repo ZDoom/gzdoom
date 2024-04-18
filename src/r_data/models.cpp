@@ -323,9 +323,18 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			if(actor->modelData->curAnim.startTic > tic)
 			{
 				inter = (tic - actor->modelData->curAnim.switchTic) / (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchTic);
-				
-				calcFrame(actor->modelData->curAnim, actor->modelData->curAnim.startTic, inter_next, decoupled_next_prev_frame, decoupled_next_frame);
-				calcFrame(actor->modelData->prevAnim, actor->modelData->curAnim.switchTic, inter_main, decoupled_main_prev_frame, decoupled_main_frame);
+
+				double nextFrame = actor->modelData->curAnim.startFrame;
+
+				double prevFrame = actor->modelData->prevAnim.startFrame;
+
+				decoupled_next_prev_frame = floor(nextFrame);
+				decoupled_next_frame = ceil(nextFrame);
+				inter_next = nextFrame - floor(nextFrame);
+
+				decoupled_main_prev_frame = floor(prevFrame);
+				decoupled_main_frame = ceil(prevFrame);
+				inter_main = prevFrame - floor(prevFrame);
 			}
 			else
 			{
@@ -1073,22 +1082,31 @@ void ParseModelDefLump(int Lump)
 
 FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped)
 {
-	if (GetDefaultByType(ti)->hasmodel)
+	auto def = GetDefaultByType(ti);
+	if (def->hasmodel)
 	{
-		FSpriteModelFrame smf;
-
-		memset(&smf, 0, sizeof(smf));
-		smf.type=ti;
-		smf.sprite=sprite;
-		smf.frame=frame;
-
-		int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
-
-		while (hash>=0)
+		if(def->flags9 & MF9_DECOUPLEDANIMATIONS)
 		{
-			FSpriteModelFrame * smff = &SpriteModelFrames[hash];
-			if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
-			hash=smff->hashnext;
+			FSpriteModelFrame * smf = BaseSpriteModelFrames.CheckKey((void*)ti);
+			if(smf) return smf;
+		}
+		else
+		{
+			FSpriteModelFrame smf;
+
+			memset(&smf, 0, sizeof(smf));
+			smf.type=ti;
+			smf.sprite=sprite;
+			smf.frame=frame;
+
+			int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
+
+			while (hash>=0)
+			{
+				FSpriteModelFrame * smff = &SpriteModelFrames[hash];
+				if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
+				hash=smff->hashnext;
+			}
 		}
 	}
 

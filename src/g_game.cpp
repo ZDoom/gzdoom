@@ -122,6 +122,7 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
 
 //==========================================================================
@@ -1751,7 +1752,7 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 	if (!multiplayer && !(flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
 		!G_SkillProperty(SKILLP_PlayerRespawn))
 	{
-		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName))
+		if (!(cl_restartondeath) && (BackupSaveName.Len() > 0 && FileExists (BackupSaveName)))
 		{ // Load game from the last point it was saved
 			savename = BackupSaveName;
 			gameaction = ga_autoloadgame;

@@ -1220,6 +1220,7 @@ OptionMenu "MiscOptions" protected
 	Option "$MISCMNU_NOCHEATS",					"nocheats", "OnOff"
 	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
 	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
+	Option "$MISCMNU_RESTARTONDEATH",			"cl_restartondeath", "OnOff"
 	Option "$MISCMNU_SAVELOADCONFIRMATION",		"saveloadconfirmation", "OnOff"
 	Slider "$MISCMNU_AUTOSAVECOUNT",			"autosavecount", 1, 20, 1, 0
 	Option "$MISCMNU_QUICKSAVEROTATION",		"quicksaverotation", "OnOff"

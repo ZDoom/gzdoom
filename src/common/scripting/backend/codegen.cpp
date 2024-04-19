@@ -12564,7 +12564,14 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 		{
 			if (Init->IsStruct())
 			{
-				ValueType = NewPointer(ValueType);
+				bool writable = true;
+
+				if(ctx.Version >= MakeVersion(4, 12, 0))
+				{
+					Init->RequestAddress(ctx, &writable);
+				}
+
+				ValueType = NewPointer(ValueType, !writable);
 				Init = new FxTypeCast(Init, ValueType, false);
 				SAFE_RESOLVE(Init, ctx);
 			}

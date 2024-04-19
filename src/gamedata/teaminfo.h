@@ -46,12 +46,12 @@ class FTeam
 public:
 	FTeam ();
 	void ParseTeamInfo ();
-	bool IsValidTeam (unsigned int uiTeam);
+	bool IsValidTeam (unsigned int uiTeam) const;
 
 	const char *GetName () const;
 	int GetPlayerColor () const;
 	int GetTextColor () const;
-	FString GetLogo () const;
+	const FString& GetLogo () const;
 	bool GetAllowCustomPlayerColor () const;
 
 	int			m_iPlayerCount;

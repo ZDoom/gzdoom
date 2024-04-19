@@ -38,6 +38,7 @@
 #include "gi.h"
 
 #include "teaminfo.h"
+#include "texturemanager.h"
 #include "v_font.h"
 #include "v_video.h"
 #include "filesystem.h"
@@ -244,7 +245,7 @@ void FTeam::ClearTeams ()
 //
 //==========================================================================
 
-bool FTeam::IsValidTeam (unsigned int uiTeam)
+bool FTeam::IsValidTeam (unsigned int uiTeam) const
 {
 	if (uiTeam >= Teams.Size ())
 		return false;
@@ -303,7 +304,7 @@ int FTeam::GetTextColor () const
 //
 //==========================================================================
 
-FString FTeam::GetLogo () const
+const FString& FTeam::GetLogo () const
 {
 	return m_Logo;
 }
@@ -338,3 +339,75 @@ CCMD (teamlist)
 
 DEFINE_GLOBAL(Teams)
 DEFINE_FIELD_NAMED(FTeam, m_Name, mName)
+
+static int IsValid(unsigned int id)
+{
+	return TeamLibrary.IsValidTeam(id);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, IsValid, IsValid)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(id);
+
+	ACTION_RETURN_BOOL(TeamLibrary.IsValidTeam(id));
+}
+
+static int GetPlayerColor(FTeam* self)
+{
+	return self->GetPlayerColor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, GetPlayerColor, GetPlayerColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTeam);
+	ACTION_RETURN_INT(self->GetPlayerColor());
+}
+
+static int GetTextColor(FTeam* self)
+{
+	return self->GetTextColor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, GetTextColor, GetTextColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTeam);
+	ACTION_RETURN_INT(self->GetTextColor());
+}
+
+static int GetLogo(FTeam* self)
+{
+	const FString& name = self->GetLogo();
+	if (name.IsEmpty())
+		return -1;
+
+	return TexMan.CheckForTexture(name.GetChars(), ETextureType::Any).GetIndex();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, GetLogo, GetLogo)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTeam);
+	ACTION_RETURN_INT(GetLogo(self));
+}
+
+static void GetLogoName(FTeam* self, FString* res)
+{
+	*res = self->GetLogo();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, GetLogoName, GetLogoName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTeam);
+	ACTION_RETURN_STRING(self->GetLogo());
+}
+
+static int AllowsCustomPlayerColor(FTeam* self)
+{
+	return self->GetAllowCustomPlayerColor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, AllowsCustomPlayerColor, AllowsCustomPlayerColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FTeam);
+	ACTION_RETURN_BOOL(self->GetAllowCustomPlayerColor());
+}

@@ -2977,7 +2977,16 @@ struct PlayerSkin native
 
 struct Team native
 {
-	const NoTeam = 255;
-	const Max = 16;
+	const NOTEAM = 255;
+	const MAX = 16;
+
 	native String mName;
+
+	native static bool IsValid(uint teamIndex);
+
+	native Color GetPlayerColor() const;
+	native int GetTextColor() const;
+	native TextureID GetLogo() const;
+	native string GetLogoName() const;
+	native bool AllowsCustomPlayerColor() const;
 }

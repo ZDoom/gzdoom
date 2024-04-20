@@ -421,10 +421,15 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	// [Nash] check for special sprite drawing modes
 	if (drawWithXYBillboard || isWallSprite)
 	{
-		
+		float pixelstretch = 1.2;
+		if (actor && actor->Level)
+			pixelstretch = actor->Level->pixelstretch;
+		else if (particle && particle->subsector && particle->subsector->sector && particle->subsector->sector->Level)
+			pixelstretch = particle->subsector->sector->Level->pixelstretch;
+
 		mat.MakeIdentity();
 		mat.Translate(center.X, center.Z, center.Y); // move to sprite center
-
+		mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 
 		// [MC] Sprite offsets.
 		if (!offset.isZero())
@@ -480,6 +485,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees());
 		}
 
+		mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 		mat.Translate(-center.X, -center.Z, -center.Y); // retreat from sprite center
 
 		v[0] = mat * FVector3(x1, z1, y1);

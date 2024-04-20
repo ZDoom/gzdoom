@@ -749,9 +749,8 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx)
 		{
 			auto sfxp = sfxdata.data();
 			int32_t dmxlen = LittleLong(((int32_t *)sfxp)[1]);
-
 			// If the sound is voc, use the custom loader.
-			if (memcmp (sfxp, "Creative Voice File", 19) == 0)
+			if (size > 19 && memcmp (sfxp, "Creative Voice File", 19) == 0)
 			{
 				sfx->data = GSnd->LoadSoundVoc(sfxp, size);
 			}

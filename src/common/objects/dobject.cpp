@@ -218,8 +218,6 @@ CCMD (dumpclasses)
 //
 //==========================================================================
 
-#include "d_net.h"
-
 void DObject::InPlaceConstructor (void *mem)
 {
 	new ((EInPlace *)mem) DObject;
@@ -319,7 +317,7 @@ void DObject::Release()
 
 void DObject::Destroy ()
 {
-	NetworkEntityManager::RemoveNetworkEntity(this);
+	RemoveFromNetwork();
 
 	// We cannot call the VM during shutdown because all the needed data has been or is in the process of being deleted.
 	if (PClass::bVMOperational)
@@ -594,74 +592,6 @@ void DObject::CheckIfSerialized () const
 			"Super::Serialize\n",
 			StaticType()->TypeName.GetChars());
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DObject::SetNetworkID(const uint32_t id)
-{
-	if (!IsNetworked())
-	{
-		ObjectFlags |= OF_Networked;
-		_networkID = id;
-	}
-}
-
-void DObject::ClearNetworkID()
-{
-	ObjectFlags &= ~OF_Networked;
-	_networkID = NetworkEntityManager::WorldNetID;
-}
-
-void DObject::EnableNetworking(const bool enable)
-{
-	if (enable)
-		NetworkEntityManager::AddNetworkEntity(this);
-	else
-		NetworkEntityManager::RemoveNetworkEntity(this);
-}
-
-static unsigned int GetNetworkID(DObject* const self)
-{
-	return self->GetNetworkID();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetNetworkID, GetNetworkID)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-
-	ACTION_RETURN_INT(self->GetNetworkID());
-}
-
-static void EnableNetworking(DObject* const self, const bool enable)
-{
-	self->EnableNetworking(enable);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, EnableNetworking, EnableNetworking)
-{
-	PARAM_SELF_PROLOGUE(DObject);
-	PARAM_BOOL(enable);
-
-	self->EnableNetworking(enable);
-	return 0;
-}
-
-static DObject* GetNetworkEntity(const unsigned int id)
-{
-	return NetworkEntityManager::GetNetworkEntity(id);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetNetworkEntity, GetNetworkEntity)
-{
-	PARAM_PROLOGUE;
-	PARAM_UINT(id);
-
-	ACTION_RETURN_OBJECT(NetworkEntityManager::GetNetworkEntity(id));
 }
 
 DEFINE_ACTION_FUNCTION(DObject, MSTime)

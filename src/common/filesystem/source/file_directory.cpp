@@ -132,7 +132,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					// On Linux this is important because its file system is case sensitive,
 					// but even on Windows the Unicode normalization is destructive 
 					// for some characters and cannot be used for file names.
-					// Examples for this are the Turkish 'i's or the German ß.
+					// Examples for this are the Turkish 'i's or the German ÃŸ.
 					SystemFilePath[count] = stringpool->Strdup(entry.FilePathRel.c_str());
 					// for internal access we use the normalized form of the relative path.
 					// this is fine because the paths that get compared against this will also be normalized.

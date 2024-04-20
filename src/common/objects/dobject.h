@@ -361,6 +361,7 @@ public:
 	inline uint32_t GetNetworkID() const { return _networkID; }
 	void SetNetworkID(const uint32_t id);
 	void ClearNetworkID();
+	void RemoveFromNetwork();
 	virtual void EnableNetworking(const bool enable);
 };
 

@@ -271,9 +271,20 @@ int Win32Window::GetPixelHeight() const
 	return box.bottom;
 }
 
+typedef UINT(WINAPI* GetDpiForWindow_t)(HWND);
 double Win32Window::GetDpiScale() const
 {
-	return GetDpiForWindow(WindowHandle) / 96.0;
+	static GetDpiForWindow_t pGetDpiForWindow = nullptr;
+	if (!pGetDpiForWindow)
+	{
+		HMODULE hMod = LoadLibrary(TEXT("User32.dll"));
+		pGetDpiForWindow = reinterpret_cast<GetDpiForWindow_t>(GetProcAddress(hMod, "GetDpiForWindow"));
+	}
+
+	if (pGetDpiForWindow)
+		return pGetDpiForWindow(WindowHandle) / 96.0;
+	else
+		return 1.0;
 }
 
 std::string Win32Window::GetClipboardText()

@@ -128,6 +128,8 @@ void Win32Window::SetWindowFrame(const Rect& box)
 
 void Win32Window::SetClientFrame(const Rect& box)
 {
+	// This function is currently unused but needs to be disabled because it contains Windows API calls that were only added in Windows 10.
+#if 0
 	double dpiscale = GetDpiScale();
 
 	RECT rect = {};
@@ -141,6 +143,7 @@ void Win32Window::SetClientFrame(const Rect& box)
 	AdjustWindowRectExForDpi(&rect, style, FALSE, exstyle, GetDpiForWindow(WindowHandle));
 
 	SetWindowPos(WindowHandle, nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
+#endif
 }
 
 void Win32Window::Show()

@@ -128,6 +128,7 @@ public:
 	FString (FString &&other) noexcept : Chars(other.Chars) { other.ResetToNull(); }
 	FString (const char *copyStr);
 	FString (const char *copyStr, size_t copyLen);
+	FString (const std::string &s) : FString(s.c_str(), s.length()) {}
 	FString (char oneChar);
 	FString(const TArray<char> & source) : FString(source.Data(), source.Size()) {}
 	FString(const TArray<uint8_t> & source) : FString((char*)source.Data(), source.Size()) {}

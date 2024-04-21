@@ -298,7 +298,7 @@ void I_PrintStr(const char *cp)
 	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
-int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags)
+int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags, FString &extraArgs)
 {
 	if (!showwin)
 	{
@@ -308,7 +308,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int&
 #ifdef __APPLE__
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #else
-	return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags);
+	return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags, &extraArgs);
 #endif
 }
 

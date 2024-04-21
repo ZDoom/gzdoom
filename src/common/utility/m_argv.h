@@ -85,6 +85,7 @@ public:
 
 	void AppendArg(FString arg);
 	void AppendArgs(int argc, const FString *argv);
+	void AppendArgsString(FString argv);
 	void RemoveArg(int argindex);
 	void RemoveArgs(const char *check);
 	void SetArgs(int argc, char **argv);

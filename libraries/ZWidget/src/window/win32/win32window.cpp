@@ -275,10 +275,12 @@ typedef UINT(WINAPI* GetDpiForWindow_t)(HWND);
 double Win32Window::GetDpiScale() const
 {
 	static GetDpiForWindow_t pGetDpiForWindow = nullptr;
-	if (!pGetDpiForWindow)
+	static bool done = false;
+	if (!done)
 	{
-		HMODULE hMod = LoadLibrary(TEXT("User32.dll"));
-		pGetDpiForWindow = reinterpret_cast<GetDpiForWindow_t>(GetProcAddress(hMod, "GetDpiForWindow"));
+		HMODULE hMod = GetModuleHandleA("User32.dll");
+		if (hMod != nullptr) pGetDpiForWindow = reinterpret_cast<GetDpiForWindow_t>(GetProcAddress(hMod, "GetDpiForWindow"));
+		done = true;
 	}
 
 	if (pGetDpiForWindow)

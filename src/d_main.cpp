@@ -1197,6 +1197,8 @@ void D_DoomLoop ()
 	{
 		try
 		{
+			GStrings.SetDefaultGender(players[consoleplayer].userinfo.GetGender()); // cannot be done when the CVAR changes because we don't know if it's for the consoleplayer.
+
 			// frame syncronous IO operations
 			if (gametic > lasttic)
 			{
@@ -2639,11 +2641,6 @@ void Mlook_ReleaseHandler()
 	}
 }
 
-int StrTable_GetGender()
-{
-	return players[consoleplayer].userinfo.GetGender();
-}
-
 bool StrTable_ValidFilter(const char* str)
 {
 	if (gameinfo.gametype == GAME_Strife && (gameinfo.flags & GI_SHAREWARE) && !stricmp(str, "strifeteaser")) return true;
@@ -3647,7 +3644,6 @@ static int D_DoomMain_Internal (void)
 		System_GetPlayerName,
 		System_DispatchEvent,
 		StrTable_ValidFilter,
-		StrTable_GetGender,
 		nullptr,
 		CheckSkipGameOptionBlock,
 		System_ConsoleToggled,

@@ -101,6 +101,7 @@ public:
 	bool exists(const char *name);
 
 	void InsertString(int filenum, int langid, FName label, const FString& string);
+	void SetDefaultGender(int gender) { defaultgender = gender; }
 
 private:
 
@@ -108,6 +109,7 @@ private:
 	StringMacroMap allMacros;
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
+	int defaultgender = 0;
 
 	void LoadLanguage (int lumpnum, const char* buffer, size_t size);
 	TArray<TArray<FString>> parseCSV(const char* buffer, size_t size);

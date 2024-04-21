@@ -164,7 +164,7 @@ bool FStringTable::readMacros(const char* buffer, size_t size)
 	auto data = parseCSV(buffer, size);
 
 	allMacros.Clear();
-	for (unsigned i = 1; i < size; i++)
+	for (unsigned i = 1; i < data.Size(); i++)
 	{
 		auto macroname = data[i][0];
 		FName name = macroname.GetChars();
@@ -583,7 +583,7 @@ const char *FStringTable::CheckString(const char *name, uint32_t *langtable, int
 	{
 		return nullptr;
 	}
-	if (gender == -1 && sysCallbacks.GetGender) gender = sysCallbacks.GetGender();
+	if (gender == -1) gender = defaultgender;
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)
@@ -623,7 +623,7 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 	{
 		return nullptr;
 	}
-	if (gender == -1 && sysCallbacks.GetGender) gender = sysCallbacks.GetGender();
+	if (gender == -1) gender = defaultgender;
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)

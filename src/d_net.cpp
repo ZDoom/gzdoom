@@ -2260,7 +2260,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		cht_Give (&players[player], s, ReadInt32 (stream));
 		if (player != consoleplayer)
 		{
-			FString message = GStrings("TXT_X_CHEATS");
+			FString message = GStrings.GetString("TXT_X_CHEATS");
 			message.Substitute("%s", players[player].userinfo.GetName());
 			Printf("%s: give %s\n", message.GetChars(), s);
 		}

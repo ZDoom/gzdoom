@@ -336,10 +336,10 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		y += (BigFont->GetHeight() + 8) * CleanYfac;
 	}
 
-	const char *text_color = GStrings("SCORE_COLOR"),
-		*text_frags = GStrings(deathmatch ? "SCORE_FRAGS" : "SCORE_KILLS"),
-		*text_name = GStrings("SCORE_NAME"),
-		*text_delay = GStrings("SCORE_DELAY");
+	const char *text_color = GStrings.GetString("SCORE_COLOR"),
+		*text_frags = GStrings.GetString(deathmatch ? "SCORE_FRAGS" : "SCORE_KILLS"),
+		*text_name = GStrings.GetString("SCORE_NAME"),
+		*text_delay = GStrings.GetString("SCORE_DELAY");
 
 	col2 = (displayFont->StringWidth(text_color) + 16) * FontScale;
 	col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;

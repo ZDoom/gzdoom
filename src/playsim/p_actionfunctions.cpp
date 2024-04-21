@@ -1292,7 +1292,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 	PARAM_FLOAT	(time);
 	PARAM_NAME	(fontname);
 
-	if (text[0] == '$') text = GStrings(&text[1]);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
 	if (self->CheckLocalView() ||
 		(self->target != NULL && self->target->CheckLocalView()))
 	{
@@ -1330,7 +1330,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PrintBold)
 	float saved = con_midtime;
 	FFont *font = NULL;
 	
-	if (text[0] == '$') text = GStrings(&text[1]);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
 	if (fontname != NAME_None)
 	{
 		font = V_GetFont(fontname.GetChars());
@@ -1359,7 +1359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Log)
 
 	if (local && !self->CheckLocalView()) return 0;
 
-	if (text[0] == '$') text = GStrings(&text[1]);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
 	FString formatted = strbin1(text.GetChars());
 	Printf("%s\n", formatted.GetChars());
 	return 0;

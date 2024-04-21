@@ -313,7 +313,7 @@ CCMD (idclev)
 			return;
 
 		// So be it.
-		Printf ("%s\n", GStrings("STSTR_CLEV"));
+		Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
       	G_DeferedInitNew (mapname.GetChars());
 		//players[0].health = 0;		// Force reset
 	}
@@ -337,7 +337,7 @@ CCMD (hxvisit)
 			if (P_CheckMapData(mapname.GetChars()))
 			{
 				// So be it.
-				Printf ("%s\n", GStrings("STSTR_CLEV"));
+				Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
       			G_DeferedInitNew (mapname.GetChars());
 				return;
 			}
@@ -1067,7 +1067,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings(++string) : string);
+		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings.GetString(++string) : string);
 
 		for (auto &line : brok)
 		{
@@ -1200,7 +1200,7 @@ CCMD(idmus)
 				}
 				else
 				{
-					Printf("%s\n", GStrings("STSTR_NOMUS"));
+					Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
 					return;
 				}
 			}
@@ -1214,12 +1214,12 @@ CCMD(idmus)
 				if (info->Music.IsNotEmpty())
 				{
 					S_ChangeMusic(info->Music.GetChars(), info->musicorder);
-					Printf("%s\n", GStrings("STSTR_MUS"));
+					Printf("%s\n", GStrings.GetString("STSTR_MUS"));
 				}
 			}
 			else
 			{
-				Printf("%s\n", GStrings("STSTR_NOMUS"));
+				Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
 			}
 		}
 	}

@@ -2450,7 +2450,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetClusterName)
 	if (cluster)
 	{
 		if (cluster->flags & CLUSTER_LOOKUPNAME)
-			retval = GStrings(cluster->ClusterName);
+			retval = GStrings.GetString(cluster->ClusterName);
 		else
 			retval = cluster->ClusterName;
 	}

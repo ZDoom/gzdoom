@@ -670,7 +670,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
 
 static int StringWidth(FFont *font, const FString &str, int localize)
 {
-	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char *txt = (localize && str[0] == '$') ? GStrings.GetString(&str[1]) : str.GetChars();
 	return font->StringWidth(txt);
 }
 
@@ -684,7 +684,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 
 static int GetMaxAscender(FFont* font, const FString& str, int localize)
 {
-	const char* txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char* txt = (localize && str[0] == '$') ? GStrings.GetString(&str[1]) : str.GetChars();
 	return font->GetMaxAscender(txt);
 }
 
@@ -698,7 +698,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
 
 static int CanPrint(FFont *font, const FString &str, int localize)
 {
-	const char *txt = (localize && str[0] == '$') ? GStrings(&str[1]) : str.GetChars();
+	const char *txt = (localize && str[0] == '$') ? GStrings.GetString(&str[1]) : str.GetChars();
 	return font->CanPrint(txt);
 }
 

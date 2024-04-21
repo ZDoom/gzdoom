@@ -323,7 +323,7 @@ FString level_info_t::LookupLevelName(uint32_t *langtable)
 	if (flags & LEVEL_LOOKUPLEVELNAME)
 	{
 		const char *thename;
-		const char *lookedup = GStrings.GetString(LevelName.GetChars(), langtable);
+		const char *lookedup = GStrings.CheckString(LevelName.GetChars(), langtable);
 		if (lookedup == NULL)
 		{
 			thename = LevelName.GetChars();

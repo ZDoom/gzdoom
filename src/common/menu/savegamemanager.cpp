@@ -470,7 +470,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, GetSavegame)
 
 void FSavegameManagerBase::InsertNewSaveNode()
 {
-	NewSaveNode.SaveTitle = GStrings("NEWSAVE");
+	NewSaveNode.SaveTitle = GStrings.GetString("NEWSAVE");
 	NewSaveNode.bNoDelete = true;
 	SaveGames.Insert(0, &NewSaveNode);
 }

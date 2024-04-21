@@ -321,7 +321,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->GetTeam()))
 	{
-		Printf ("%s\n", GStrings("TXT_NO_TEAM_CHANGE"));
+		Printf ("%s\n", GStrings.GetString("TXT_NO_TEAM_CHANGE"));
 		return;
 	}
 
@@ -339,12 +339,12 @@ static void UpdateTeam (int pnum, int team, bool update)
 		FString message;
 		if (TeamLibrary.IsValidTeam (team))
 		{
-			message = GStrings("TXT_JOINED_TEAM");
+			message = GStrings.GetString("TXT_JOINED_TEAM");
 			message.Substitute("%t", Teams[team].GetName());
 		}
 		else
 		{
-			message = GStrings("TXT_LONER");
+			message = GStrings.GetString("TXT_LONER");
 		}
 		message.Substitute("%s", info->GetName());
 		Printf("%s\n", message.GetChars());

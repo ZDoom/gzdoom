@@ -207,7 +207,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		if ((gameinfo.flags & GI_SHAREWARE) && param > 0)
 		{
 			// Only Doom and Heretic have multi-episode shareware versions.
-			M_StartMessage(GStrings("SWSTRING"), 1);
+			M_StartMessage(GStrings.GetString("SWSTRING"), 1);
 			return false;
 		}
 
@@ -222,7 +222,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		LastSkill = param;
 
 		const char *msg = AllSkills[param].MustConfirmText.GetChars();
-		if (*msg==0) msg = GStrings("NIGHTMARE");
+		if (*msg==0) msg = GStrings.GetString("NIGHTMARE");
 		M_StartMessage (msg, 0, NAME_StartgameConfirmed);
 		return false;
 	}
@@ -248,7 +248,7 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer) || gamestate != GS_LEVEL)
 		{
 			// cannot save outside the game.
-			M_StartMessage (GStrings("SAVEDEAD"), 1);
+			M_StartMessage (GStrings.GetString("SAVEDEAD"), 1);
 			return false;
 		}
 		break;
@@ -394,11 +394,11 @@ CCMD (menu_quit)
 	{
 		if (msg[1] == '*')
 		{
-			EndString = GStrings(msg + 2);
+			EndString = GStrings.GetString(msg + 2);
 		}
 		else
 		{
-			EndString.Format("%s\n\n%s", GStrings(msg + 1), GStrings("DOSY"));
+			EndString.Format("%s\n\n%s", GStrings.GetString(msg + 1), GStrings.GetString("DOSY"));
 		}
 	}
 	else EndString = gameinfo.quitmessages[messageindex];
@@ -430,7 +430,7 @@ CCMD (menu_quit)
 
 void ActivateEndGameMenu()
 {
-	FString tempstring = GStrings(netgame ? "NETEND" : "ENDGAME");
+	FString tempstring = GStrings.GetString(netgame ? "NETEND" : "ENDGAME");
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
 	{
 		M_ClearMenus();
@@ -500,7 +500,7 @@ CCMD (quicksave)
 
 	S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 
-	FString tempstring = GStrings("QSPROMPT");
+	FString tempstring = GStrings.GetString("QSPROMPT");
 	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
@@ -524,7 +524,7 @@ CCMD (quickload)
 	if (netgame)
 	{
 		M_StartControlPanel(true);
-		M_StartMessage (GStrings("QLOADNET"), 1);
+		M_StartMessage (GStrings.GetString("QLOADNET"), 1);
 		return;
 	}
 		
@@ -543,7 +543,7 @@ CCMD (quickload)
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
 		return;
 	}
-	FString tempstring = GStrings("QLPROMPT");
+	FString tempstring = GStrings.GetString("QLPROMPT");
 	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
 	M_StartControlPanel(true);
@@ -567,13 +567,13 @@ CCMD (togglemessages)
 {
 	if (show_messages)
 	{
-		Printf(TEXTCOLOR_RED "%s\n", GStrings("MSGOFF"));
+		Printf(TEXTCOLOR_RED "%s\n", GStrings.GetString("MSGOFF"));
 		show_messages = false;
 	}
 	else
 	{
 		show_messages = true;
-		Printf(TEXTCOLOR_RED "%s\n", GStrings("MSGON"));
+		Printf(TEXTCOLOR_RED "%s\n", GStrings.GetString("MSGON"));
 	}
 }
 
@@ -711,7 +711,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 							continue;	// We do not measure patch based entries. They are assumed to fit
 					}
 					const char *c = AllEpisodes[i].mEpisodeName.GetChars();
-					if (*c == '$') c = GStrings(c + 1);
+					if (*c == '$') c = GStrings.GetString(c + 1);
 					int textwidth = ld->mFont->StringWidth(c);
 					int textright = posx + textwidth;
 					if (posx + textright > 320) posx = max(0, 320 - textright);
@@ -1261,7 +1261,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 						continue;
 				}
 				const char *c = pItemText ? pItemText->GetChars() : skill.MenuName.GetChars();
-				if (*c == '$') c = GStrings(c + 1);
+				if (*c == '$') c = GStrings.GetString(c + 1);
 				int textwidth = ld->mFont->StringWidth(c);
 				int textright = posx + textwidth;
 				if (posx + textright > 320) posx = max(0, 320 - textright);

@@ -260,7 +260,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 		{
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
-				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
+				Printf ("%s\n", GStrings.GetString("TXT_FRAGLIMIT"));
 				primaryLevel->ExitLevel (0, false);
 				break;
 			}
@@ -1097,7 +1097,7 @@ void D_Display ()
 				if (paused && multiplayer)
 				{
 					FFont *font = generic_ui? NewSmallFont : SmallFont;
-					FString pstring = GStrings("TXT_BY");
+					FString pstring = GStrings.GetString("TXT_BY");
 					pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
 					DrawText(twod, font, CR_RED,
 						(twod->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
@@ -1295,7 +1295,7 @@ void D_PageDrawer (void)
 	if (Subtitle != nullptr)
 	{
 		FFont* font = generic_ui ? NewSmallFont : SmallFont;
-		DrawFullscreenSubtitle(font, GStrings[Subtitle]);
+		DrawFullscreenSubtitle(font, GStrings.CheckString(Subtitle));
 	}
 	if (Advisory.isValid())
 	{
@@ -2162,7 +2162,7 @@ static void CheckCmdLine()
 
 	if (devparm)
 	{
-		Printf ("%s", GStrings("D_DEVSTR"));
+		Printf ("%s", GStrings.GetString("D_DEVSTR"));
 	}
 
 	// turbo option  // [RH] (now a cvar)
@@ -3456,7 +3456,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		for (int p = 0; p < 5; ++p)
 		{
 			// At this point we cannot use the player's gender info yet so force 'male' here.
-			const char *str = GStrings.GetString(startupString[p], nullptr, 0);
+			const char *str = GStrings.CheckString(startupString[p], nullptr, 0);
 			if (str != NULL && str[0] != '\0')
 			{
 				Printf("%s\n", str);

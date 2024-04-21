@@ -3248,7 +3248,7 @@ const char *FBehavior::LookupString (uint32_t index, bool forprint) const
 			token.Truncate(5);
 
 			FStringf label("TXT_ACS_%s_%d_%.5s", Level->MapName.GetChars(), index, token.GetChars());
-			auto p = GStrings[label.GetChars()];
+			auto p = GStrings.CheckString(label.GetChars());
 			if (p) return p;
 		}
 
@@ -8503,7 +8503,7 @@ scriptwait:
 			lookup = Level->Behaviors.LookupString (STACK(1), true);
 			if (pcd == PCD_PRINTLOCALIZED)
 			{
-				lookup = GStrings(lookup);
+				lookup = GStrings.GetString(lookup);
 			}
 			if (lookup != NULL)
 			{

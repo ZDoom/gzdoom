@@ -7700,7 +7700,7 @@ const char *AActor::GetTag(const char *def) const
 		const char *tag = Tag->GetChars();
 		if (tag[0] == '$')
 		{
-			return GStrings(tag + 1);
+			return GStrings.GetString(tag + 1);
 		}
 		else
 		{
@@ -7730,7 +7730,7 @@ const char *AActor::GetCharacterName() const
 		const char *cname = Conversation->SpeakerName.GetChars();
 		if (cname[0] == '$')
 		{
-			return GStrings(cname + 1);
+			return GStrings.GetString(cname + 1);
 		}
 		else return cname;
 	}

@@ -619,7 +619,7 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 		{
 			if (printmessage)
 			{
-				C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
+				C_MidPrint(nullptr, GStrings.CheckString("SECRETMESSAGE"));
 				if (showsecretsector && sectornum >= 0) 
 				{
 					Printf(PRINT_HIGH | PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
@@ -696,7 +696,7 @@ void P_UpdateSpecials (FLevelLocals *Level)
 	{
 		if (Level->maptime >= (int)(timelimit * TICRATE * 60))
 		{
-			Printf ("%s\n", GStrings("TXT_TIMELIMIT"));
+			Printf ("%s\n", GStrings.GetString("TXT_TIMELIMIT"));
 			Level->ExitLevel(0, false);
 		}
 	}

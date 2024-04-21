@@ -63,7 +63,7 @@ void PrintPickupMessage(bool localview, const FString &str)
 		StaticLastMessage = str;
 		const char *pstr = str.GetChars();
 		
-		if (pstr[0] == '$')	pstr = GStrings(pstr + 1);
+		if (pstr[0] == '$')	pstr = GStrings.GetString(pstr + 1);
 		if (pstr[0] != 0) Printf(PRINT_LOW, "%s\n", pstr);
 		StatusBar->FlashCrosshair();
 	}

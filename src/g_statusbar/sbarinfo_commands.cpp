@@ -824,10 +824,7 @@ class CommandDrawString : public SBarInfoCommand
 			{
 				strValue = CONSTANT;
 				sc.MustGetToken(TK_StringConst);
-				if(sc.String[0] == '$')
-					str = GStrings[sc.String+1];
-				else
-					str = sc.String;
+				label = sc.String;
 			}
 		}
 		void	Reset()
@@ -923,9 +920,10 @@ class CommandDrawString : public SBarInfoCommand
 					break;
 				}
 				case LOGTEXT:
-					str = GStrings(statusBar->CPlayer->LogText);
+					str = GStrings.GetString(statusBar->CPlayer->LogText);
 					break;
 				default:
+					str = GStrings.localize(label.GetChars());
 					break;
 			}
 		}
@@ -993,6 +991,7 @@ class CommandDrawString : public SBarInfoCommand
 		StringValueType		strValue;
 		int					valueArgument;
 		FString				str;
+		FString				label;
 		StringAlignment		alignment;
 
 	private:

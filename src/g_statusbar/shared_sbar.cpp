@@ -550,7 +550,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	if (!generic_ui)
 	{
 		// If the original font does not have accents this will strip them - but a fallback to the VGA font is not desirable here for such cases.
-		if (!font->CanPrint(GStrings("AM_MONSTERS")) || !font->CanPrint(GStrings("AM_SECRETS")) || !font->CanPrint(GStrings("AM_ITEMS"))) font2 = OriginalSmallFont;
+		if (!font->CanPrint(GStrings.GetString("AM_MONSTERS")) || !font->CanPrint(GStrings.GetString("AM_SECRETS")) || !font->CanPrint(GStrings.GetString("AM_ITEMS"))) font2 = OriginalSmallFont;
 	}
 
 	if (am_showtime)
@@ -575,14 +575,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		y = 0;
 		if (am_showmonsters)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
 		if (am_showsecrets)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
@@ -590,7 +590,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		// Draw item count
 		if (am_showitems)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
@@ -1121,7 +1121,7 @@ void DBaseStatusBar::DrawLog ()
 		FFont *font = (generic_ui || log_vgafont)? NewSmallFont : SmallFont;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings(text.GetChars()+1) : text.GetChars());
+		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings.GetString(text.GetChars()+1) : text.GetChars());
 		int height = 20;
 
 		for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight ();

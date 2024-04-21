@@ -1,4 +1,5 @@
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
@@ -3617,6 +3618,7 @@ static int D_DoomMain_Internal (void)
 	const char *wad;
 	FIWadManager *iwad_man;
 
+	NetworkEntityManager::NetIDStart = MAXPLAYERS + 1;
 	GC::AddMarkerFunc(GC_MarkGameRoots);
 	VM_CastSpriteIDToString = Doom_CastSpriteIDToString;
 

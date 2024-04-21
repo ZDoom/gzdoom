@@ -487,4 +487,25 @@ inline T *&DObject::PointerVar(FName field)
 	return *(T**)ScriptVar(field, nullptr);	// pointer check is more tricky and for the handful of uses in the DECORATE parser not worth the hassle.
 }
 
+
+class NetworkEntityManager
+{
+private:
+	inline static TArray<DObject*> s_netEntities = {};
+	inline static TArray<uint32_t> s_openNetIDs = {};
+
+public:
+	NetworkEntityManager() = delete;
+
+	static constexpr uint32_t WorldNetID = 0u;
+	static constexpr uint32_t ClientNetIDStart = 1u;
+	inline static uint32_t NetIDStart;// = MAXPLAYERS + 1u;
+
+	static void InitializeNetworkEntities();
+	static void SetClientNetworkEntity(DObject* mo, const uint32_t id);
+	static void AddNetworkEntity(DObject* const ent);
+	static void RemoveNetworkEntity(DObject* const ent);
+	static DObject* GetNetworkEntity(const uint32_t id);
+};
+
 #endif //__DOBJECT_H__

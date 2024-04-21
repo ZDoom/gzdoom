@@ -189,7 +189,7 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 	}
 	for (i = ++parmat; i < Argv.Size(); ++i)
 	{
-		if (Argv[i][0] == '-' || Argv[i][1] == '+')
+		if (Argv[i][0] == '-' || Argv[i][0] == '+')
 		{
 			break;
 		}

@@ -85,7 +85,6 @@ void PlayGamePage::OnGeometryChanged()
 
 	y = GetHeight() - 10.0;
 
-#if 0 // NYI: Additional Parameters
 	double editHeight = 24.0;
 	y -= editHeight;
 	ParametersEdit->SetFrameGeometry(0.0, y, GetWidth(), editHeight);
@@ -95,7 +94,6 @@ void PlayGamePage::OnGeometryChanged()
 	y -= labelHeight;
 	ParametersLabel->SetFrameGeometry(0.0, y, GetWidth(), labelHeight);
 	y -= 10.0;
-#endif
 
 	double listViewBottom = y - 10.0;
 	GamesList->SetFrameGeometry(0.0, listViewTop, GetWidth(), std::max(listViewBottom - listViewTop, 0.0));

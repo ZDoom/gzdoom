@@ -139,10 +139,10 @@ void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool al
 	{
 		if (di->di)
 		{
-			HWSkyInfo skyinfo;
-			skyinfo.init(di->di, sector, plane, sector->skytransfer, Colormap.FadeColor);
+			HWSkyInfo* skyinfo = new HWSkyInfo;
+			skyinfo->init(di->di, sector, plane, sector->skytransfer, Colormap.FadeColor);
 			ptype = PORTALTYPE_SKY;
-			sky = &skyinfo;
+			sky = skyinfo;
 		}
 		PutPortal(di, ptype, plane);
 	}

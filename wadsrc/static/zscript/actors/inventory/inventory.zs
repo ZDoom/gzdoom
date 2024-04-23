@@ -261,6 +261,11 @@ class Inventory : Actor
 		}
 	}
 
+	virtual bool ShouldShareItem(Actor giver)
+	{
+		return false;
+	}
+
 	protected void ShareItemWithPlayers(Actor giver)
 	{
 		if (bSharingItem)
@@ -695,7 +700,7 @@ class Inventory : Actor
 			toucher.HasReceived(self);
 
 			// If the item can be shared, make sure every player gets a copy.
-			if (multiplayer && !deathmatch && sv_coopsharekeys && bIsKeyItem)
+			if (multiplayer && !deathmatch && ShouldShareItem(toucher))
 				ShareItemWithPlayers(toucher);
 		}
 		return res, toucher;

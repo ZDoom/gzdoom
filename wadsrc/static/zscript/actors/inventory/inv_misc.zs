@@ -43,6 +43,11 @@ class Key : Inventory
 	static native clearscope Color GetMapColorForKey(Key key);
 	static native clearscope int GetKeyTypeCount();
 	static native clearscope class<Key> GetKeyType(int index);
+
+	override bool ShouldShareItem(Actor giver)
+	{
+		return sv_coopsharekeys;
+	}
 	
 	override bool HandlePickup (Inventory item)
 	{
@@ -112,6 +117,11 @@ class PuzzleItem : Inventory
 		Inventory.PickupSound "misc/i_pkup";
 		PuzzleItem.FailMessage("$TXT_USEPUZZLEFAILED");
 		PuzzleItem.FailSound "*puzzfail";
+	}
+
+	override bool ShouldShareItem(Actor giver)
+	{
+		return sv_coopsharekeys;
 	}
 	
 	override bool HandlePickup (Inventory item)

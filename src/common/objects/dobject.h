@@ -502,7 +502,7 @@ public:
 	inline static uint32_t NetIDStart;// = MAXPLAYERS + 1u;
 
 	static void InitializeNetworkEntities();
-	static void SetClientNetworkEntity(DObject* mo, const uint32_t id);
+	static void SetClientNetworkEntity(DObject* mo, const unsigned int playNum);
 	static void AddNetworkEntity(DObject* const ent);
 	static void RemoveNetworkEntity(DObject* const ent);
 	static DObject* GetNetworkEntity(const uint32_t id);

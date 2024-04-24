@@ -5390,6 +5390,10 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 	{
 		to->player = from->player;
 		from->player = nullptr;
+
+		// Swap the new body into the right network slot if it's a client (this doesn't
+		// really matter for regular Actors since they grab any ID they can get anyway).
+		NetworkEntityManager::SetClientNetworkEntity(to, to->player - players);
 	}
 
 	if (from->alternative != nullptr)

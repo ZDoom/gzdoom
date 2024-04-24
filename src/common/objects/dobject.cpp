@@ -637,10 +637,11 @@ void NetworkEntityManager::InitializeNetworkEntities()
 }
 
 // Clients need special handling since they always go in slots 1 - MAXPLAYERS.
-void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const uint32_t id)
+void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned int playNum)
 {
 	// If resurrecting, we need to swap the corpse's position with the new pawn's
 	// position so it's no longer considered the client's body.
+	const uint32_t id = ClientNetIDStart + playNum;
 	DObject* const oldBody = s_netEntities[id];
 	if (oldBody != nullptr)
 	{

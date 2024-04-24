@@ -289,11 +289,7 @@ void SDL2DisplayWindow::RunLoop()
 		SDL_Event event;
 		int result = SDL_WaitEvent(&event);
 		if (result == 0)
-		{
-			fprintf(stderr, "SDL_WaitEvent failed: ");
-			fprintf(stderr, SDL_GetError());
-			fprintf(stderr, "\n");
-		}
+			fprintf(stderr, "SDL_WaitEvent failed: %s\n", SDL_GetError());
 		DispatchEvent(event);
 	}
 }

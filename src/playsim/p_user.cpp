@@ -1481,6 +1481,8 @@ void P_PredictPlayer (player_t *player)
 			R_RebuildViewInterpolation(player);
 
 		player->cmd = localcmds[i % LOCALCMDTICS];
+		player->mo->ClearInterpolation();
+		player->mo->ClearFOVInterpolation();
 		P_PlayerThink (player);
 		player->mo->Tick ();
 

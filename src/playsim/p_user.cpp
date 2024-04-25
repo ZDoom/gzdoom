@@ -1437,7 +1437,6 @@ void P_PredictPlayer (player_t *player)
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
-	act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 	player->cheats |= CF_PREDICTING;
 
 	BackupNodeList(act, act->touching_sectorlist, &sector_t::touching_thinglist, PredictionTouchingSectors_sprev_Backup, PredictionTouchingSectorsBackup);
@@ -1474,11 +1473,16 @@ void P_PredictPlayer (player_t *player)
 	act->BlockNode = NULL;
 
 	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false;
+	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
+	// called. Call order is preserved.
 	for (int i = gametic; i < maxtic; ++i)
 	{
-		if (!NoInterpolateOld)
-			R_RebuildViewInterpolation(player);
+		// Make sure any portal paths have been cleared from the previous movement.
+		R_ClearInterpolationPath();
+		r_NoInterpolate = false;
+		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
+		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		player->mo->ClearInterpolation();
@@ -1486,7 +1490,7 @@ void P_PredictPlayer (player_t *player)
 		P_PlayerThink (player);
 		player->mo->Tick ();
 
-		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic && !NoInterpolateOld)
+		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic)
 		{
 			// Z is not compared as lifts will alter this with no apparent change
 			// Make lerping less picky by only testing whole units
@@ -1503,12 +1507,11 @@ void P_PredictPlayer (player_t *player)
 		}
 	}
 
+	// TODO: This should be changed to a proper rubberbanding solution in the near future (only rubberband if there was
+	// a mismatch between client's last predicted pos and current predicted pos).
 	if (CanLerp)
 	{
-		if (NoInterpolateOld)
-			P_PredictionLerpReset();
-
-		else if (DoLerp)
+		if (DoLerp)
 		{
 			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
 			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;

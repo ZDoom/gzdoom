@@ -412,7 +412,7 @@ CCMD (changeskill)
 {
 	if (!players[consoleplayer].mo || !usergame)
 	{
-		Printf ("Use the skill command when not in a game.\n");
+		Printf ("Cannot change skills while not in a game.\n");
 		return;
 	}
 
@@ -431,7 +431,8 @@ CCMD (changeskill)
 		}
 		else
 		{
-			NextSkill = skill;
+			Net_WriteInt8(DEM_CHANGESKILL);
+			Net_WriteInt32(skill);
 			Printf ("Skill %d will take effect on the next map.\n", skill);
 		}
 	}

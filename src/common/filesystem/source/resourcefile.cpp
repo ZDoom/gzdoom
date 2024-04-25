@@ -34,6 +34,7 @@
 **
 */
 
+#include <algorithm>
 #include <miniz.h>
 #include "resourcefile.h"
 #include "md5.hpp"
@@ -45,7 +46,7 @@
 #include "wildcards.hpp"
 
 namespace FileSys {
-	
+
 // this is for restricting shared file readers to the main thread.
 thread_local bool mainThread;
 void SetMainThread()

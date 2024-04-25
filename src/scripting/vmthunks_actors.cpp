@@ -2126,6 +2126,10 @@ DEFINE_FIELD(AActor, ShadowAimFactor)
 DEFINE_FIELD(AActor, ShadowPenaltyFactor)
 DEFINE_FIELD(AActor, AutomapOffsets)
 DEFINE_FIELD(AActor, LandingSpeed)
+DEFINE_FIELD(AActor, UnmorphTime)
+DEFINE_FIELD(AActor, MorphFlags)
+DEFINE_FIELD(AActor, PremorphProperties)
+DEFINE_FIELD(AActor, MorphExitFlash)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);

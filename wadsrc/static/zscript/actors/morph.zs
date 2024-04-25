@@ -35,10 +35,10 @@ extend class Actor
 		MPROP_INVIS				= 1 << 6,
 	}
 
-	int UnmorphTime;
-	EMorphFlags MorphFlags;
-	class<Actor> MorphExitFlash;
-	EPremorphProperty PremorphProperties;
+	native int UnmorphTime;
+	native int MorphFlags;
+	native class<Actor> MorphExitFlash;
+	native int PremorphProperties;
 
 	// Players still track these separately for legacy reasons.
 	void SetMorphStyle(EMorphFlags flags)

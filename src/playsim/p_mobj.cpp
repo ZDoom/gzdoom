@@ -393,7 +393,13 @@ void AActor::Serialize(FSerializer &arc)
 		A("userlights", UserLights)
 		A("WorldOffset", WorldOffset)
 		("modelData", modelData)
-		A("LandingSpeed", LandingSpeed);
+		A("LandingSpeed", LandingSpeed)
+
+		("unmorphtime", UnmorphTime)
+		("morphflags", MorphFlags)
+		("premorphproperties", PremorphProperties)
+		("morphexitflash", MorphExitFlash);
+
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);

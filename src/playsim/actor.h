@@ -1362,17 +1362,22 @@ public:
 	DVector3 Prev;
 	DRotator PrevAngles;
 	DAngle   PrevFOV;
-	int PrevPortalGroup;
 	TArray<FDynamicLight *> AttachedLights;
 	TDeletingArray<FLightDefaults *> UserLights;
+	int PrevPortalGroup;
 
 	// When was this actor spawned?
 	int SpawnTime;
 	uint32_t SpawnOrder;
 
+	int UnmorphTime;
+	int MorphFlags;
+	int PremorphProperties;
+	PClassActor* MorphExitFlash;
 	// landing speed from a jump with normal gravity (squats the player's view)
 	// (note: this is put into AActor instead of the PlayerPawn because non-players also use the value)
 	double LandingSpeed;
+
 
 	// ThingIDs
 	void SetTID (int newTID);

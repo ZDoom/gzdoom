@@ -2880,7 +2880,8 @@ void DAutomap::drawPlayers ()
 
 		if (p->mo != nullptr)
 		{
-			DVector3 pos = p->mo->PosRelative(MapPortalGroup);
+			DVector2 pos = p->mo->InterpolatedPosition(r_viewpoint.TicFrac).XY();
+			pos += Level->Displacements.getOffset(Level->PointInSector(pos)->PortalGroup, MapPortalGroup);
 			pt.x = pos.X;
 			pt.y = pos.Y;
 

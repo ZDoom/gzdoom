@@ -3662,10 +3662,6 @@ void AActor::SetViewAngle(DAngle ang, int fflags)
 
 double AActor::GetFOV(double ticFrac)
 {
-	// [B] Disable interpolation when playing online, otherwise it gets vomit inducing
-	if (netgame)
-		return player ? player->FOV : CameraFOV;
-
 	double fov;
 	if (player)
 	{

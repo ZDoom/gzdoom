@@ -103,16 +103,26 @@ CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_CHEAT)
 // Variables for prediction
 CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+// Deprecated
+CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_rubberband_scale, 0.3f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	P_PredictionLerpReset();
+	if (self < 0.0f)
+		self = 0.0f;
+	else if (self > 1.0f)
+		self = 1.0f;
 }
-CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_rubberband_threshold, 20.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.1f)
 		self = 0.1f;
-	P_PredictionLerpReset();
+}
+CUSTOM_CVAR(Float, cl_rubberband_minmove, 20.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.1f)
+		self = 0.1f;
 }
 
 ColorSetList ColorSets;
@@ -125,13 +135,9 @@ CUSTOM_CVAR(Float, fov, 90.f, CVAR_ARCHIVE | CVAR_USERINFO | CVAR_NOINITCALL)
 	p->SetFOV(fov);
 }
 
-struct PredictPos
-{
-	int gametic;
-	DVector3 pos;
-	DRotator angles;
-} static PredictionLerpFrom, PredictionLerpResult, PredictionLast;
-static int PredictionLerptics;
+static DVector3 LastPredictedPosition;
+static int LastPredictedPortalGroup;
+static int LastPredictedTic;
 
 static player_t PredictionPlayerBackup;
 static AActor *PredictionActor;
@@ -1290,23 +1296,25 @@ void P_PlayerThink (player_t *player)
 
 void P_PredictionLerpReset()
 {
-	PredictionLerptics = PredictionLast.gametic = PredictionLerpFrom.gametic = PredictionLerpResult.gametic = 0;
+	LastPredictedPosition = DVector3{};
+	LastPredictedPortalGroup = 0;
+	LastPredictedTic = -1;
 }
 
-bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
+void P_LerpCalculate(AActor* pmo, const DVector3& from, DVector3 &result, float scale, float threshold, float minMove)
 {
-	DVector3 vecFrom = from.pos;
-	DVector3 vecTo = to.pos;
-	DVector3 vecResult;
-	vecResult = vecTo - vecFrom;
-	vecResult *= scale;
-	vecResult = vecResult + vecFrom;
-	DVector3 delta = vecResult - vecTo;
+	DVector3 diff = pmo->Pos() - from;
+	diff.XY() += pmo->Level->Displacements.getOffset(pmo->Sector->PortalGroup, pmo->Level->PointInSector(from.XY())->PortalGroup);
+	double dist = diff.Length();
+	if (dist <= max<float>(threshold, minMove))
+	{
+		result = pmo->Pos();
+		return;
+	}
 
-	result.pos = pmo->Vec3Offset(vecResult - to.pos);
-
-	// As a fail safe, assume extrapolation is the threshold.
-	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
+	diff /= dist;
+	diff *= min<double>(dist * (1.0f - scale), dist - minMove);
+	result = pmo->Vec3Offset(-diff.X, -diff.Y, -diff.Z);
 }
 
 template<class nodetype, class linktype>
@@ -1472,10 +1480,12 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false;
 	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
 	// called. Call order is preserved.
+	bool rubberband = false;
+	DVector3 rubberbandPos = {};
+	const bool canRubberband = LastPredictedTic >= 0 && cl_rubberband_scale > 0.0f && cl_rubberband_scale < 1.0f;
+	const double rubberbandThreshold = max<float>(cl_rubberband_minmove, cl_rubberband_threshold);
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		// Make sure any portal paths have been cleared from the previous movement.
@@ -1484,58 +1494,52 @@ void P_PredictPlayer (player_t *player)
 		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
 		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
+		// Got snagged on something. Start correcting towards the player's final predicted position. We're
+		// being intentionally generous here by not really caring how the player got to that position, only
+		// that they ended up in the same spot on the same tick.
+		if (canRubberband && LastPredictedTic == i)
+		{
+			DVector3 diff = player->mo->Pos() - LastPredictedPosition;
+			diff += player->mo->Level->Displacements.getOffset(player->mo->Sector->PortalGroup, LastPredictedPortalGroup);
+			double dist = diff.LengthSquared();
+			if (dist >= EQUAL_EPSILON * EQUAL_EPSILON && dist > rubberbandThreshold * rubberbandThreshold)
+			{
+				rubberband = true;
+				rubberbandPos = player->mo->Pos();
+			}
+		}
+
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		player->mo->ClearInterpolation();
 		player->mo->ClearFOVInterpolation();
 		P_PlayerThink (player);
 		player->mo->Tick ();
-
-		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic)
-		{
-			// Z is not compared as lifts will alter this with no apparent change
-			// Make lerping less picky by only testing whole units
-			DoLerp = (int)PredictionLast.pos.X != (int)player->mo->X() || (int)PredictionLast.pos.Y != (int)player->mo->Y();
-
-			// Aditional Debug information
-			if (developer >= DMSG_NOTIFY && DoLerp)
-			{
-				DPrintf(DMSG_NOTIFY, "Lerp! Ltic (%d) && Ptic (%d) | Lx (%f) && Px (%f) | Ly (%f) && Py (%f)\n",
-					PredictionLast.gametic, i,
-					(PredictionLast.pos.X), (player->mo->X()),
-					(PredictionLast.pos.Y), (player->mo->Y()));
-			}
-		}
 	}
 
-	// TODO: This should be changed to a proper rubberbanding solution in the near future (only rubberband if there was
-	// a mismatch between client's last predicted pos and current predicted pos).
-	if (CanLerp)
+	if (rubberband)
 	{
-		if (DoLerp)
-		{
-			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
-			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;
-			PredictionLerptics = 1;
-		}
+		R_ClearInterpolationPath();
+		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
-		PredictionLast.gametic = maxtic - 1;
-		PredictionLast.pos = player->mo->Pos();
-		//PredictionLast.portalgroup = player->mo->Sector->PortalGroup;
+		DPrintf(DMSG_NOTIFY, "Prediction mismatch at (%.3f, %.3f, %.3f)\nExpected: (%.3f, %.3f, %.3f)\nCorrecting to (%.3f, %.3f, %.3f)\n",
+			LastPredictedPosition.X, LastPredictedPosition.Y, LastPredictedPosition.Z,
+			rubberbandPos.X, rubberbandPos.Y, rubberbandPos.Z,
+			player->mo->X(), player->mo->Y(), player->mo->Z());
 
-		if (PredictionLerptics > 0)
-		{
-			if (PredictionLerpFrom.gametic > 0 &&
-				P_LerpCalculate(player->mo, PredictionLerpFrom, PredictionLast, PredictionLerpResult, (float)PredictionLerptics * cl_predict_lerpscale))
-			{
-				PredictionLerptics++;
-				player->mo->SetXYZ(PredictionLerpResult.pos);
-			}
-			else
-			{
-				PredictionLerptics = 0;
-			}
-		}
+		DVector3 snapPos = {};
+		P_LerpCalculate(player->mo, LastPredictedPosition, snapPos, cl_rubberband_scale, cl_rubberband_threshold, cl_rubberband_minmove);
+		player->mo->PrevPortalGroup = LastPredictedPortalGroup;
+		player->mo->Prev = LastPredictedPosition;
+		const double zOfs = player->viewz - player->mo->Z();
+		player->mo->SetXYZ(snapPos);
+		player->viewz = snapPos.Z + zOfs;
 	}
+
+	// This is intentionally done after rubberbanding starts since it'll automatically smooth itself towards
+	// the right spot until it reaches it.
+	LastPredictedTic = maxtic;
+	LastPredictedPosition = player->mo->Pos();
+	LastPredictedPortalGroup = player->mo->Level->PointInSector(LastPredictedPosition)->PortalGroup;
 }
 
 void P_UnPredictPlayer ()

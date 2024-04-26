@@ -1478,7 +1478,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 		for (int i = 0; i<MAXPLAYERS; i++)
 		{
 			if (PlayerInGame(i) && Players[i]->mo != nullptr)
-				P_PlayerStartStomp(Players[i]->mo);
+				P_PlayerStartStomp(Players[i]->mo, !deathmatch);
 		}
 	}
 

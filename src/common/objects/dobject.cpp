@@ -662,7 +662,7 @@ void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned in
 	}
 
 	s_netEntities[id] = mo;
-	mo->SetNetworkID(ClientNetIDStart + id);
+	mo->SetNetworkID(id);
 }
 
 void NetworkEntityManager::AddNetworkEntity(DObject* const ent)

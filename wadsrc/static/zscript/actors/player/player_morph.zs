@@ -323,6 +323,7 @@ extend class PlayerPawn
 		if (level2)
 			level2.Destroy();
 
+		WeaponSlots.SetupWeaponSlots(alt);
 		let morphWeap = p.ReadyWeapon;
 		if (premorphWeap)
 		{

@@ -1120,7 +1120,7 @@ FUNC(LS_Teleport_NewMap)
 FUNC(LS_Teleport)
 // Teleport (tid, sectortag, bNoSourceFog)
 {
-	int flags = TELF_DESTFOG;
+	int flags = TELF_DESTFOG | TELF_FDCOMPAT;
 	if (!arg2)
 	{
 		flags |= TELF_SOURCEFOG;

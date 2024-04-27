@@ -173,6 +173,7 @@ static FCompatOption Options[] =
 	{ "scriptwait",				COMPATF2_SCRIPTWAIT, SLOT_COMPAT2 },
 	{ "nombf21",				COMPATF2_NOMBF21, SLOT_COMPAT2 },
 	{ "voodoozombies",			COMPATF2_VOODOO_ZOMBIES, SLOT_COMPAT2 },
+	{ "fdteleport",				COMPATF2_FDTELEPORT, SLOT_COMPAT2 },
 	{ NULL, 0, 0 }
 };
 

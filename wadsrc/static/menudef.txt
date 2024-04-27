@@ -1758,6 +1758,7 @@ OptionMenu "CompatActorMenu" protected
 	Option "$CMPTMNU_INVISIBILITY",					"compat_INVISIBILITY", "YesNo"
 	Option "$CMPTMNU_MINOTAUR",						"compat_MINOTAUR", "YesNo"
 	Option "$CMPTMNU_NOTOSSDROPS",					"compat_NOTOSSDROPS", "YesNo"
+	Option "$CMPTMNU_VOODOOZOMBIES",				"compat_voodoozombies", "YesNo"
 	Class "CompatibilityMenu"
 }
 
@@ -1784,6 +1785,7 @@ OptionMenu "CompatMapMenu" protected
 	Option "$CMPTMNU_POINTONLINE",					"compat_pointonline", "YesNo"
 	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
 	Option "$CMPTMNU_TELEPORT",						"compat_teleport", "YesNo"
+	Option "$CMPTMNU_FDTELEPORT",					"compat_fdteleport", "YesNo"
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
 	Option "$CMPTMNU_CHECKSWITCHRANGE",				"compat_checkswitchrange", "YesNo"
 	Option "$CMPTMNU_RAILINGHACK",					"compat_railing", "YesNo"

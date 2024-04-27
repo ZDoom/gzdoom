@@ -141,6 +141,7 @@ enum
 	TELF_KEEPHEIGHT			= 16,
 	TELF_ROTATEBOOM			= 32,
 	TELF_ROTATEBOOMINVERSE	= 64,
+	TELF_FDCOMPAT			= 128,
 };
 
 //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).

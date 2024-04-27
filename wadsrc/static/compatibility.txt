@@ -332,3 +332,8 @@ F1EB6927F53047F219A54997DAD9DC81 // mm2.wad map20
 	rebuildnodes
 	trace
 }
+
+BA2247ED1465C8107192AC4215B2A5F3 // saturnia.wad map10
+{
+	fdteleport
+}

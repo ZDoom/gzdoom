@@ -712,6 +712,8 @@ CVAR (Flag, compat_railing,				compatflags2, COMPATF2_RAILING);
 CVAR (Flag, compat_avoidhazard,			compatflags2, COMPATF2_AVOID_HAZARDS);
 CVAR (Flag, compat_stayonlift,			compatflags2, COMPATF2_STAYONLIFT);
 CVAR (Flag, compat_nombf21,				compatflags2, COMPATF2_NOMBF21);
+CVAR (Flag, compat_voodoozombies,		compatflags2, COMPATF2_VOODOO_ZOMBIES);
+CVAR (Flag, compat_fdteleport,			compatflags2, COMPATF2_FDTELEPORT);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 

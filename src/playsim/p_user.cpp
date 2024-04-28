@@ -520,6 +520,23 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetFOV)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(skinIndex);
+	if (skinIndex >= 0 && skinIndex < Skins.size())
+	{
+		// commented code - cvar_set calls this automatically, along with saving the skin selection.
+		//self->userinfo.SkinNumChanged(skinIndex);
+		cvar_set("skin", Skins[skinIndex].Name.GetChars());
+		ACTION_RETURN_INT(self->userinfo.GetSkin());
+	}
+	else
+	{
+		ACTION_RETURN_INT(-1);
+	}
+}
+
 //===========================================================================
 //
 // EnumColorsets
@@ -771,6 +788,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_INT(self->userinfo.GetSkin());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkinCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(Skins.size());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)

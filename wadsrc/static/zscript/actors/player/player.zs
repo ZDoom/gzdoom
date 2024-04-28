@@ -2867,6 +2867,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope int GetColorSet() const;
 	native clearscope int GetPlayerClassNum() const;
 	native clearscope int GetSkin() const;
+	native clearscope int GetSkinCount() const;
 	native clearscope bool GetNeverSwitch() const;
 	native clearscope int GetGender() const;
 	native clearscope int GetTeam() const;
@@ -2878,6 +2879,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native bool GetFViewBob() const;
 	native double GetStillBob() const;
 	native void SetFOV(float fov);
+	native int SetSkin(int skinIndex);
 	native clearscope bool GetClassicFlight() const;
 	native void SendPitchLimits();
 	native clearscope bool HasWeaponsInSlot(int slot) const;

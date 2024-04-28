@@ -505,7 +505,12 @@ inline bool AActor::IsNoClip2() const
 }
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
-int IsPredicting(AActor* self);
+
 bool P_NoInterpolation(player_t const *player, AActor const *actor);
+
+inline int IsPredicting(AActor* self)
+{
+	return self->player != nullptr && self->player->mo == self && (self->player->ClientState & CS_PREDICTING);
+}
 
 #endif // __D_PLAYER_H__

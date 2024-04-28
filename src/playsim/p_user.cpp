@@ -1249,11 +1249,6 @@ static bool P_CanPredict(const player_t* player)
 		&& player->playerstate == PST_LIVE);
 }
 
-int IsPredicting(AActor* self)
-{
-	return self->player != nullptr && self->player->mo == self && (self->player->ClientState & CS_PREDICTING);
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsPredicting, IsPredicting)
 {
 	PARAM_SELF_PROLOGUE(AActor);

@@ -156,6 +156,12 @@ static TArray<msecnode_t *> PredictionPortalSectors_sprev_Backup;
 static TArray<FLinePortal *> PredictionPortalLinesBackup;
 static TArray<portnode_t *> PredictionPortalLines_sprev_Backup;
 
+struct
+{
+	DVector3 Pos = {};
+	int Flags = 0;
+} static PredictionViewPosBackup;
+
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
 
@@ -1443,6 +1449,14 @@ void P_PredictPlayer (player_t *player)
 	PredictionActorBackupArray.Resize(act->GetClass()->Size);
 	memcpy(PredictionActorBackupArray.Data(), &act->snext, act->GetClass()->Size - ((uint8_t *)&act->snext - (uint8_t *)act));
 
+	// Since this is a DObject it needs to have its fields backed up manually for restore, otherwise any changes
+	// to it will be permanent while predicting. This is now auto-created on pawns to prevent creation spam.
+	if (act->ViewPos != nullptr)
+	{
+		PredictionViewPosBackup.Pos = act->ViewPos->Offset;
+		PredictionViewPosBackup.Flags = act->ViewPos->Flags;
+	}
+
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
 	player->cheats |= CF_PREDICTING;
@@ -1579,6 +1593,12 @@ void P_UnPredictPlayer ()
 
 		act->UnlinkFromWorld(&ctx);
 		memcpy(&act->snext, PredictionActorBackupArray.Data(), PredictionActorBackupArray.Size() - ((uint8_t *)&act->snext - (uint8_t *)act));
+
+		if (act->ViewPos != nullptr)
+		{
+			act->ViewPos->Offset = PredictionViewPosBackup.Pos;
+			act->ViewPos->Flags = PredictionViewPosBackup.Flags;
+		}
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.

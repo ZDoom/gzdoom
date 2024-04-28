@@ -1512,8 +1512,8 @@ void P_PredictPlayer (player_t *player)
 		player->cmd = localcmds[i % LOCALCMDTICS];
 		player->mo->ClearInterpolation();
 		player->mo->ClearFOVInterpolation();
-		P_PlayerThink (player);
-		player->mo->Tick ();
+		P_PlayerThink(player);
+		player->mo->CallTick();
 	}
 
 	if (rubberband)

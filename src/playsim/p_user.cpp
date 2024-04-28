@@ -270,6 +270,8 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 {
 	mo = p.mo;
 	playerstate = p.playerstate;
+	ClientTic = p.ClientTic;
+	ClientState = p.ClientState;
 	cmd = p.cmd;
 	original_cmd = p.original_cmd;
 	original_oldbuttons = p.original_oldbuttons;
@@ -1236,6 +1238,28 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUse)
 	return 0;
 }
 
+static bool P_CanPredict(const player_t* player)
+{
+	return (netgame
+		&& !cl_noprediction
+		&& !singletics
+		&& !demoplayback
+		&& player->mo != nullptr
+		&& player == player->mo->Level->GetConsolePlayer()
+		&& player->playerstate == PST_LIVE);
+}
+
+int IsPredicting(AActor* self)
+{
+	return self->player != nullptr && self->player->mo == self && (self->player->ClientState & CS_PREDICTING);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsPredicting, IsPredicting)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(IsPredicting(self));
+}
+
 //----------------------------------------------------------------------------
 //
 // PROC P_PlayerThink
@@ -1249,6 +1273,12 @@ void P_PlayerThink (player_t *player)
 	if (player->mo == NULL)
 	{
 		I_Error ("No player %td start\n", player - players + 1);
+	}
+
+	if (!P_CanPredict(player))
+	{
+		player->ClientTic = gametic;
+		player->ClientState |= CS_LATEST_TICK;
 	}
 
 	for (unsigned int i = 0u; i < 3u; ++i)
@@ -1273,7 +1303,7 @@ void P_PlayerThink (player_t *player)
 		return;
 	}
 
-	if (debugfile && !(player->cheats & CF_PREDICTING))
+	if (debugfile && !(player->ClientState & CS_PREDICTING))
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
@@ -1421,18 +1451,8 @@ void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
 
-	if (cl_noprediction ||
-		singletics ||
-		demoplayback ||
-		player->mo == NULL ||
-		player != player->mo->Level->GetConsolePlayer() ||
-		player->playerstate != PST_LIVE ||
-		!netgame ||
-		/*player->morphTics ||*/
-		(player->cheats & CF_PREDICTING))
-	{
+	if ((player->ClientState & CS_PREDICTING) || !P_CanPredict(player))
 		return;
-	}
 
 	maxtic = maketic;
 
@@ -1459,7 +1479,8 @@ void P_PredictPlayer (player_t *player)
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
-	player->cheats |= CF_PREDICTING;
+	player->cheats |= CF_PREDICTING; // Deprecated but needs to be kept around for existing ZScript.
+	player->ClientState |= CS_PREDICTING;
 
 	BackupNodeList(act, act->touching_sectorlist, &sector_t::touching_thinglist, PredictionTouchingSectors_sprev_Backup, PredictionTouchingSectorsBackup);
 	BackupNodeList(act, act->touching_rendersectors, &sector_t::touching_renderthings, PredictionRenderSectors_sprev_Backup, PredictionRenderSectorsBackup);
@@ -1508,6 +1529,10 @@ void P_PredictPlayer (player_t *player)
 		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
 		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
+		player->ClientTic = i;
+		if (i + 1 == maxtic)
+			player->ClientState |= CS_LATEST_TICK;
+
 		// Got snagged on something. Start correcting towards the player's final predicted position. We're
 		// being intentionally generous here by not really caring how the player got to that position, only
 		// that they ended up in the same spot on the same tick.
@@ -1520,6 +1545,7 @@ void P_PredictPlayer (player_t *player)
 			{
 				rubberband = true;
 				rubberbandPos = player->mo->Pos();
+				player->ClientState |= CS_RUBBERBANDING;
 			}
 		}
 
@@ -1560,7 +1586,7 @@ void P_UnPredictPlayer ()
 {
 	player_t *player = &players[consoleplayer];
 
-	if (player->cheats & CF_PREDICTING)
+	if (player->ClientState & CS_PREDICTING)
 	{
 		unsigned int i;
 		AActor *act = player->mo;
@@ -1647,6 +1673,9 @@ void P_UnPredictPlayer ()
 		actInvSel = InvSel;
 		player->inventorytics = inventorytics;
 	}
+
+	player->ClientTic = gametic;
+	player->ClientState &= ~CS_PREDICTION_STATE;
 }
 
 void player_t::Serialize(FSerializer &arc)
@@ -1774,6 +1803,8 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 
 DEFINE_FIELD_X(PlayerInfo, player_t, mo)
 DEFINE_FIELD_X(PlayerInfo, player_t, playerstate)
+DEFINE_FIELD_X(PlayerInfo, player_t, ClientTic)
+DEFINE_FIELD_X(PlayerInfo, player_t, ClientState)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_oldbuttons)
 DEFINE_FIELD_X(PlayerInfo, player_t, cls)
 DEFINE_FIELD_X(PlayerInfo, player_t, DesiredFOV)

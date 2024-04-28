@@ -521,7 +521,7 @@ inline int GetTics(AActor* actor, FState * newstate)
 
 bool AActor::SetState (FState *newstate, bool nofunction)
 {
-	if (debugfile && player && (player->cheats & CF_PREDICTING))
+	if (debugfile && IsPredicting(this))
 		fprintf (debugfile, "for pl %d: SetState while predicting!\n", Level->PlayerNum(player));
 	
 	auto oldstate = state;
@@ -2396,7 +2396,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 		// if in a walking frame, stop moving
 		// killough 10/98:
 		// Don't affect main player when voodoo dolls stop:
-		if (player && player->mo == mo && !(player->cheats & CF_PREDICTING))
+		if (player && player->mo == mo && !(player->ClientState & CS_PREDICTING))
 		{
 			PlayIdle (player->mo);
 		}
@@ -2566,7 +2566,7 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 //
 	if (mo->Z() <= mo->floorz)
 	{	// Hit the floor
-		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
+		if (!IsPredicting(mo) &&
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
@@ -2675,7 +2675,7 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 
 	if (mo->Top() > mo->ceilingz)
 	{ // hit the ceiling
-		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
+		if (!IsPredicting(mo) &&
 			mo->Sector->SecActTarget != NULL &&
 			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
@@ -2727,7 +2727,7 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 
 void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight)
 {
-	if (mo->player && (mo->player->cheats & CF_PREDICTING))
+	if (IsPredicting(mo))
 	{
 		return;
 	}
@@ -2821,7 +2821,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 		mo->player->deltaviewheight = mo->Vel.Z / 8.;
 	}
 
-	if (mo->player->cheats & CF_PREDICTING)
+	if (IsPredicting(mo))
 		return;
 
 	P_FallingDamage (mo);
@@ -3873,7 +3873,7 @@ void AActor::Tick ()
 	{
 		if (player)
 			player->crossingPortal = false;
-		if (!player || !(player->cheats & CF_PREDICTING))
+		if (!IsPredicting(this))
 		{
 			// Handle powerup effects here so that the order is controlled
 			// by the order in the inventory, not the order in the thinker table
@@ -4214,9 +4214,9 @@ void AActor::Tick ()
 			return;
 		}
 		// [ZZ] trigger hit floor/hit ceiling actions from XY movement
-		if (BlockingFloor && BlockingFloor != oldBlockingFloor && (!player || !(player->cheats & CF_PREDICTING)) && BlockingFloor->SecActTarget)
+		if (BlockingFloor && BlockingFloor != oldBlockingFloor && !IsPredicting(this) && BlockingFloor->SecActTarget)
 			BlockingFloor->TriggerSectorActions(this, SECSPAC_HitFloor);
-		if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && (!player || !(player->cheats & CF_PREDICTING)) && BlockingCeiling->SecActTarget)
+		if (BlockingCeiling && BlockingCeiling != oldBlockingCeiling && !IsPredicting(this) && BlockingCeiling->SecActTarget)
 			BlockingCeiling->TriggerSectorActions(this, SECSPAC_HitCeiling);
 		if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
 		{
@@ -4273,7 +4273,7 @@ void AActor::Tick ()
 						|| ((onmo->activationtype & THINGSPEC_MissileTrigger) && (flags & MF_MISSILE))
 						) && (Level->maptime > onmo->lastbump)) // Leave the bumper enough time to go away
 					{
-						if (player == NULL || !(player->cheats & CF_PREDICTING))
+						if (!IsPredicting(this))
 						{
 							if (P_ActivateThingSpecial(onmo, this))
 								onmo->lastbump = Level->maptime + TICRATE;
@@ -4318,7 +4318,7 @@ void AActor::Tick ()
 		UpdateWaterLevel ();
 
 		// [RH] Don't advance if predicting a player
-		if (player && (player->cheats & CF_PREDICTING))
+		if (IsPredicting(this))
 		{
 			return;
 		}
@@ -6498,7 +6498,7 @@ int P_GetThingFloorType (AActor *thing)
 
 bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool checkabove, bool alert, bool force)
 {
-	if (thing->player && (thing->player->cheats & CF_PREDICTING))
+	if (IsPredicting(thing))
 		return false;
 
 	AActor *mo = NULL;

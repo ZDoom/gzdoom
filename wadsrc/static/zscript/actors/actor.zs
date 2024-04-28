@@ -508,6 +508,7 @@ class Actor : Thinker native
 	native ui void DisplayNameTag();
 	native clearscope void DisableLocalRendering(uint playerNum, bool disable);
 	native ui bool ShouldRenderLocally(); // Only clients get to check this, never the playsim.
+	native clearscope bool IsPredicting() const;
 
 	// Called when the Actor is being used within a PSprite. This happens before potentially changing PSprite
 	// state so that any custom actions based on things like player input can be done before moving to the next

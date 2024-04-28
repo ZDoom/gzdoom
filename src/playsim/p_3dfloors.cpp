@@ -244,7 +244,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 //==========================================================================
 bool P_CheckFor3DFloorHit(AActor * mo, double z, bool trigger)
 {
-	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
+	if (IsPredicting(mo)) return false;
 
 	for (auto rover : mo->Sector->e->XFloor.ffloors)
 	{
@@ -272,7 +272,7 @@ bool P_CheckFor3DFloorHit(AActor * mo, double z, bool trigger)
 //==========================================================================
 bool P_CheckFor3DCeilingHit(AActor * mo, double z, bool trigger)
 {
-	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
+	if (IsPredicting(mo)) return false;
 
 	for (auto rover : mo->Sector->e->XFloor.ffloors)
 	{

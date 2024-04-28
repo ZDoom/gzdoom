@@ -87,7 +87,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnTeleportFog)
 
 bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 {
-	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
+	bool predicting = IsPredicting(thing);
 
 	DVector3 old;
 	double aboveFloor;
@@ -385,7 +385,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 	{ // Teleport function called with an invalid actor
 		return false;
 	}
-	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
+	bool predicting = IsPredicting(thing);
 	if (thing->flags2 & MF2_NOTELEPORT)
 	{
 		return false;

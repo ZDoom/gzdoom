@@ -120,7 +120,7 @@ typedef enum
 	CF_FRIGHTENING		= 1 << 10,		// [RH] Scare monsters away
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
-	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
+	CF_PREDICTING		= 1 << 13,		// Deprecated. See CS_PREDICTING.
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
 	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
 	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
@@ -132,6 +132,18 @@ typedef enum
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
 } cheat_t;
+
+typedef enum
+{
+	CS_NONE = 0,
+	CS_PREDICTING = 1,			// Client is currently predicting movement (unconfirmed position).
+	CS_LATEST_TICK = 1 << 1,	// Client is on the latest tick taking prediction into account.
+	CS_RUBBERBANDING = 1 << 2,	// Client's misprediction is being corrected.
+	//CS_CONNECTING		= 1 << 3,	// Client is joining the game.
+	//CS_DISCONNECTING	= 1 << 4,	// Client is leaving the game.
+
+	CS_PREDICTION_STATE = CS_PREDICTING | CS_LATEST_TICK | CS_RUBBERBANDING,
+} clientstate_t;
 
 enum
 {
@@ -305,6 +317,8 @@ public:
 
 	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;
+	int			ClientState = CS_NONE;	// What networking state is the client currently in? This is intentionally unserialized.
+	int			ClientTic = 0;			// Gets the current simulated tick. Unserialized like above.
 	ticcmd_t	cmd = {};
 	usercmd_t	original_cmd;
 	uint32_t		original_oldbuttons;
@@ -491,7 +505,7 @@ inline bool AActor::IsNoClip2() const
 }
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
-
+int IsPredicting(AActor* self);
 bool P_NoInterpolation(player_t const *player, AActor const *actor);
 
 #endif // __D_PLAYER_H__

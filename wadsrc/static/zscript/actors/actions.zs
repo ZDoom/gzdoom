@@ -4,7 +4,7 @@ extend class Actor
 	private void CheckStopped()
 	{
 		let player = self.player;
-		if (player && player.mo == self && !(player.cheats & CF_PREDICTING) && Vel == (0, 0, 0))
+		if (player && player.mo == self && !(player.ClientState & CS_PREDICTING) && Vel == (0, 0, 0))
 		{
 			player.mo.PlayIdle();
 			player.Vel = (0, 0);

@@ -154,7 +154,7 @@ class PlayerPawn : Actor
 			if (health > 0) Height = FullHeight;
 		}
 
-		if (player && bWeaponLevel2Ended && !(player.cheats & CF_PREDICTING))
+		if (player && bWeaponLevel2Ended && !IsPredicting())
 		{
 			bWeaponLevel2Ended = false;
 			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
@@ -1348,7 +1348,7 @@ class PlayerPawn : Actor
 				Thrust(sidemove, a);
 			}
 
-			if (!(player.cheats & CF_PREDICTING) && (forwardmove != 0 || sidemove != 0))
+			if (!IsPredicting() && (forwardmove != 0 || sidemove != 0))
 			{
 				PlayRunning ();
 			}
@@ -1459,7 +1459,7 @@ class PlayerPawn : Actor
 				Vel.Z += jumpvelz;
 				bOnMobj = false;
 				player.jumpTics = -1;
-				if (!(player.cheats & CF_PREDICTING)) A_StartSound("*jump", CHAN_BODY);
+				if (!IsPredicting()) A_StartSound("*jump", CHAN_BODY);
 			}
 		}
 	}
@@ -1493,13 +1493,13 @@ class PlayerPawn : Actor
 				{
 					bFly = true;
 					bNoGravity = true;
-					if ((Vel.Z <= -39) && !(player.cheats & CF_PREDICTING))
+					if ((Vel.Z <= -39) && !IsPredicting())
 					{ // Stop falling scream
 						A_StopSound(CHAN_VOICE);
 					}
 				}
 			}
-			else if (cmd.upmove > 0 && !(player.cheats & CF_PREDICTING))
+			else if (cmd.upmove > 0 && !IsPredicting())
 			{
 				let fly = FindInventory("ArtiFly");
 				if (fly != NULL)
@@ -1682,7 +1682,7 @@ class PlayerPawn : Actor
 				player.jumpTics = 0;
 			}
 		}
-		if (Alternative && !(player.cheats & CF_PREDICTING))
+		if (Alternative && !IsPredicting())
 		{
 			MorphPlayerThink ();
 		}
@@ -1691,7 +1691,7 @@ class PlayerPawn : Actor
 		HandleMovement();
 		CalcHeight ();
 
-		if (!(player.cheats & CF_PREDICTING))
+		if (!IsPredicting())
 		{
 			CheckEnvironment();
 			// Note that after this point the PlayerPawn may have changed due to getting unmorphed or getting its skull popped so 'self' is no longer safe to use.
@@ -2765,6 +2765,8 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	
 	native PlayerPawn mo;
 	native uint8 playerstate;
+	native readonly int ClientTic;
+	native readonly int ClientState;
 	native readonly uint buttons;
 	native uint original_oldbuttons;
 	native Class<PlayerPawn> cls;

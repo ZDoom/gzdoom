@@ -494,6 +494,8 @@ void G_NewInit ()
 		p->settings_controller = settings_controller;
 		p->cheats |= chasecam;
 		p->playerstate = PST_DEAD;
+		p->ClientState = CS_NONE;
+		p->ClientTic = 0;
 		p->userinfo.TransferFrom(saved_ui);
 		playeringame[i] = false;
 	}

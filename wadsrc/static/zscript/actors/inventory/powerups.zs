@@ -1181,7 +1181,7 @@ class PowerSpeed : Powerup
 		if (Owner == NULL || Owner.player == NULL)
 			return;
 
-		if (Owner.player.cheats & CF_PREDICTING)
+		if (Owner.IsPredicting())
 			return;
 
 		if (NoTrail)
@@ -1557,7 +1557,7 @@ class PowerTimeFreezer : Powerup
 		// [RH] Do not change LEVEL_FROZEN on odd tics, or the Revenant's tracer
 		// will get thrown off.
 		// [ED850] Don't change it if the player is predicted either.
-		if (Level.maptime & 1 || (Owner != null && Owner.player != null && Owner.player.cheats & CF_PREDICTING))
+		if (Level.maptime & 1 || (Owner != null && Owner.IsPredicting()))
 		{
 			return;
 		}

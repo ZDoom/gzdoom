@@ -1157,7 +1157,7 @@ enum EPlayerCheats
 	CF_FRIGHTENING		= 1 << 10,		// [RH] Scare monsters away
 	CF_INSTANTWEAPSWITCH= 1 << 11,		// [RH] Switch weapons instantly
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
-	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
+	CF_PREDICTING		= 1 << 13,		// Deprecated. See CS_PREDICTING.
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
 	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
 	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
@@ -1178,6 +1178,18 @@ enum EPlayerCheats
 	CF_PROSPERITY		= 0,
 	CF_DOUBLEFIRINGSPEED= 0,
 	CF_INFINITEAMMO		= 0,
+};
+
+enum EClientState
+{
+	CS_NONE = 0,
+	CS_PREDICTING = 1,			// Client is currently predicting movement (unconfirmed position).
+	CS_LATEST_TICK = 1 << 1,	// Client is on the latest tick taking prediction into account.
+	CS_RUBBERBANDING = 1 << 2,	// Client's misprediction is being corrected.
+	//CS_CONNECTING		= 1 << 3,	// Client is joining the game.
+	//CS_DISCONNECTING	= 1 << 4,	// Client is leaving the game.
+
+	CS_PREDICTION_STATE = CS_PREDICTING | CS_LATEST_TICK | CS_RUBBERBANDING,
 };
 
 enum EWeaponState

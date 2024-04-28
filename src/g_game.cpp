@@ -1402,6 +1402,8 @@ void FLevelLocals::PlayerReborn (int player)
 	chasecam = p->cheats & CF_CHASECAM;
 	Bot = p->Bot;			//Added by MC:
 	const bool settings_controller = p->settings_controller;
+	const int clientState = p->ClientState;
+	const int clientTic = p->ClientTic;
 
 	// Reset player structure to its defaults
 	p->~player_t();
@@ -1421,6 +1423,8 @@ void FLevelLocals::PlayerReborn (int player)
 	p->cheats |= chasecam;
 	p->Bot = Bot;			//Added by MC:
 	p->settings_controller = settings_controller;
+	p->ClientState = clientState;
+	p->ClientTic = clientTic;
 
 	p->oldbuttons = ~0, p->attackdown = true; p->usedown = true;	// don't do anything immediately
 	p->original_oldbuttons = ~0;

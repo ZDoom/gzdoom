@@ -2861,7 +2861,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native void SetSubtitleNumber (int text, Sound sound_id = 0);
 	native bool Resurrect();
 
-	native clearscope String GetUserName() const;
+	native clearscope String GetUserName(uint charLimit = 0u) const;
 	native clearscope Color GetColor() const;
 	native clearscope Color GetDisplayColor() const;
 	native clearscope int GetColorSet() const;

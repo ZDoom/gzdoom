@@ -727,7 +727,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	ACTION_RETURN_STRING(self->userinfo.GetName());
+	PARAM_UINT(charLimit);
+	ACTION_RETURN_STRING(self->userinfo.GetName(charLimit));
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)

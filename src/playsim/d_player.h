@@ -204,9 +204,25 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FFloatCVar *>(*CheckKey(NAME_Autoaim));
 	}
-	const char *GetName() const
+	const char *GetName(unsigned int charLimit = 0u) const
 	{
-		return *static_cast<FStringCVar *>(*CheckKey(NAME_Name));
+		const char* name = *static_cast<FStringCVar*>(*CheckKey(NAME_Name));
+		if (charLimit)
+		{
+			FString temp = name;
+			if (temp.CharacterCount() > charLimit)
+			{
+				int next = 0;
+				for (unsigned int i = 0u; i < charLimit; ++i)
+					temp.GetNextCharacter(next);
+
+				temp.Truncate(next);
+				temp += "...";
+				name = temp.GetChars();
+			}
+		}
+
+		return name;
 	}
 	int GetTeam() const
 	{

@@ -84,7 +84,7 @@ int FSavegameManagerBase::RemoveSaveSlot(int index)
 	int listindex = SaveGames[0]->bNoDelete ? index - 1 : index;
 	if (listindex < 0) return index;
 
-	remove(SaveGames[index]->Filename.GetChars());
+	RemoveFile(SaveGames[index]->Filename.GetChars());
 	UnloadSaveData();
 
 	FSaveGameNode *file = SaveGames[index];
@@ -274,7 +274,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
 
 unsigned FSavegameManagerBase::ExtractSaveData(int index)
 {
-	FResourceFile *resf;
+	std::unique_ptr<FResourceFile> resf;
 	FSaveGameNode *node;
 
 	if (index == -1)
@@ -295,7 +295,7 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
+		( (resf.reset(FResourceFile::OpenResourceFile(node->Filename.GetChars(), true))), resf != nullptr))
 	{
 		auto info = resf->FindEntry("info.json");
 		if (info < 0)
@@ -329,7 +329,6 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 				}
 			}
 		}
-		delete resf;
 	}
 	return index;
 }

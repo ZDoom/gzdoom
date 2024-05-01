@@ -593,6 +593,26 @@ void CreatePath(const char *fn)
 }
 #endif
 
+void RemoveFile(const char* file)
+{
+#ifndef _WIN32
+	remove(file);
+#else
+	auto wpath = WideString(file);
+	_wremove(wpath.c_str());
+#endif
+}
+
+int RemoveDir(const char* file)
+{
+#ifndef _WIN32
+	return rmdir(file);
+#else
+	auto wpath = WideString(file);
+	return _wrmdir(wpath.c_str());
+#endif
+}
+
 //==========================================================================
 //
 // strbin	-- In-place version

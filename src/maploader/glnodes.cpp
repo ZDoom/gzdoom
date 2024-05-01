@@ -34,12 +34,6 @@
 
 #ifndef _WIN32
 #include <unistd.h>
-
-#else
-#include <direct.h>
-
-#define rmdir _rmdir
-
 #endif
 
 #include <miniz.h>
@@ -1215,11 +1209,11 @@ UNSAFE_CCMD(clearnodecache)
 	{
 		if (list[i].isDirectory)
 		{
-			rmdir(list[i].FilePath.c_str());
+			RemoveDir(list[i].FilePath.c_str());
 		}
 		else
 		{
-			remove(list[i].FilePath.c_str());
+			RemoveFile(list[i].FilePath.c_str());
 		}
 	}
 

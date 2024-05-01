@@ -3079,7 +3079,7 @@ bool G_CheckDemoStatus (void)
 			const size_t size = demo_p - demobuffer;
 			saved = fw->Write(demobuffer, size) == size;
 			delete fw;
-			if (!saved) remove(demoname.GetChars());
+			if (!saved) RemoveFile(demoname.GetChars());
 		}
 		M_Free (demobuffer); 
 		demorecording = false;

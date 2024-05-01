@@ -254,6 +254,7 @@ bool FStringTable::ParseLanguageCSV(int filenum, const char* buffer, size_t size
 				}
 			}
 
+			row[labelcol].StripLeftRight();
 			FName strName = row[labelcol].GetChars();
 			if (hasDefaultEntry)
 			{

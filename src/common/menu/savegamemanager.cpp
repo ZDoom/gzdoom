@@ -316,7 +316,8 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		auto pic = resf->FindEntry("savepic.png");
 		if (pic >= 0)
 		{
-			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
+			// This must use READER_CACHED or it will lock the savegame file.
+			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_CACHED, FileSys::READERFLAG_SEEKABLE);
 			PNGHandle *png = M_VerifyPNG(picreader);
 			if (png != nullptr)
 			{

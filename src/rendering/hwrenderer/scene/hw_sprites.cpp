@@ -1447,7 +1447,11 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 		else factor = 1 / 7.f;
 		float scalefac=particle->size * factor;
 
-		float viewvecX = vp.ViewVector.X * scalefac;
+		float ps = di->Level->pixelstretch;
+
+		scalefac *= 2 * ps / (ps * ps + 1); // shrink it slightly to account for the stretch
+
+		float viewvecX = vp.ViewVector.X * scalefac * ps;
 		float viewvecY = vp.ViewVector.Y * scalefac;
 
 		x1=x+viewvecY;

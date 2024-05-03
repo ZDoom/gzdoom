@@ -728,7 +728,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	int pick = 0;
 
 	// We got more than one so present the IWAD selection box.
-	if (picks.Size() > 1)
+	if (picks.Size() > 0)
 	{
 		// Locate the user's prefered IWAD, if it was found.
 		if (defaultiwad[0] != '\0')
@@ -743,7 +743,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				}
 			}
 		}
-		if (picks.Size() > 1)
+		if (picks.Size() > 0)
 		{
 			if (!havepicked)
 			{

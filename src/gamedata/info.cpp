@@ -61,7 +61,7 @@ extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
-FRandom FState::pr_statetics("StateTics");
+FRandom FState::pr_statetics("StateTics", false);
 
 cycle_t ActionCycles;
 

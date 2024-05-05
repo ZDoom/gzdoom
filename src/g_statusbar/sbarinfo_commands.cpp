@@ -3227,7 +3227,7 @@ class CommandDrawGem : public SBarInfoCommand
 		int					chainWiggle;
 		static FRandom		pr_chainwiggle;
 };
-FRandom CommandDrawGem::pr_chainwiggle; //use the same method of chain wiggling as heretic.
+FRandom CommandDrawGem::pr_chainwiggle(true); //use the same method of chain wiggling as heretic.
 
 ////////////////////////////////////////////////////////////////////////////////
 

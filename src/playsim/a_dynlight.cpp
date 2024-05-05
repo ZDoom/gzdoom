@@ -67,7 +67,7 @@
 
 static FMemArena DynLightArena(sizeof(FDynamicLight) * 200);
 static TArray<FDynamicLight*> FreeList;
-static FRandom randLight;
+static FRandom randLight(true);
 
 extern TArray<FLightDefaults *> StateLights;
 

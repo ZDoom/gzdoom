@@ -540,7 +540,7 @@
 
 
 
-FRandom pr_acs ("ACS");
+FRandom pr_acs ("ACS", false);
 
 // I imagine this much stack space is probably overkill, but it could
 // potentially get used with recursive functions.

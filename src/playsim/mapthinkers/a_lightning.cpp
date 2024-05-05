@@ -38,7 +38,7 @@
 #include "gi.h"
 #include <vm.h>
 
-static FRandom pr_lightning ("Lightning");
+static FRandom pr_lightning ("Lightning", false);
 
 IMPLEMENT_CLASS(DLightningThinker, false, false)
 

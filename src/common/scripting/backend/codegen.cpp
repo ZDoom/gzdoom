@@ -8268,8 +8268,12 @@ static bool CheckFunctionCompatiblity(FScriptPosition &ScriptPosition, PFunction
 FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &&args, const FScriptPosition &pos)
 : FxExpression(EFX_FunctionCall, pos)
 {
+	const bool isClient = methodname == NAME_CRandom || methodname == NAME_CFRandom
+							|| methodname == NAME_CRandomPick || methodname == NAME_CFRandomPick
+							|| methodname == NAME_CRandom2 || methodname == NAME_CSetRandomSeed;
+
 	MethodName = methodname;
-	RNG = &pr_exrandom;
+	RNG = isClient ? &M_Random : &pr_exrandom;
 	ArgList = std::move(args);
 	if (rngname != NAME_None)
 	{
@@ -8281,7 +8285,16 @@ FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &&
 		case NAME_FRandomPick:
 		case NAME_Random2:
 		case NAME_SetRandomSeed:
-			RNG = FRandom::StaticFindRNG(rngname.GetChars());
+			RNG = FRandom::StaticFindRNG(rngname.GetChars(), false);
+			break;
+
+		case NAME_CRandom:
+		case NAME_CFRandom:
+		case NAME_CRandomPick:
+		case NAME_CFRandomPick:
+		case NAME_CRandom2:
+		case NAME_CSetRandomSeed:
+			RNG = FRandom::StaticFindRNG(rngname.GetChars(), true);
 			break;
 
 		default:
@@ -8547,13 +8560,22 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		break;
 
+	case NAME_CSetRandomSeed:
+		if (CheckArgSize(NAME_CRandom, ArgList, 1, 1, ScriptPosition))
+		{
+			func = new FxRandomSeed(RNG, ArgList[0], ScriptPosition, ctx.FromDecorate);
+			ArgList[0] = nullptr;
+		}
+		break;
+
 	case NAME_Random:
+	case NAME_CRandom:
 		// allow calling Random without arguments to default to (0, 255)
 		if (ArgList.Size() == 0)
 		{
 			func = new FxRandom(RNG, new FxConstant(0, ScriptPosition), new FxConstant(255, ScriptPosition), ScriptPosition, ctx.FromDecorate);
 		}
-		else if (CheckArgSize(NAME_Random, ArgList, 2, 2, ScriptPosition))
+		else if (CheckArgSize(MethodName, ArgList, 2, 2, ScriptPosition))
 		{
 			func = new FxRandom(RNG, ArgList[0], ArgList[1], ScriptPosition, ctx.FromDecorate);
 			ArgList[0] = ArgList[1] = nullptr;
@@ -8561,7 +8583,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		break;
 
 	case NAME_FRandom:
-		if (CheckArgSize(NAME_FRandom, ArgList, 2, 2, ScriptPosition))
+	case NAME_CFRandom:
+		if (CheckArgSize(MethodName, ArgList, 2, 2, ScriptPosition))
 		{
 			func = new FxFRandom(RNG, ArgList[0], ArgList[1], ScriptPosition);
 			ArgList[0] = ArgList[1] = nullptr;
@@ -8570,14 +8593,17 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	case NAME_RandomPick:
 	case NAME_FRandomPick:
+	case NAME_CRandomPick:
+	case NAME_CFRandomPick:
 		if (CheckArgSize(MethodName, ArgList, 1, -1, ScriptPosition))
 		{
-			func = new FxRandomPick(RNG, ArgList, MethodName == NAME_FRandomPick, ScriptPosition, ctx.FromDecorate);
+			func = new FxRandomPick(RNG, ArgList, MethodName == NAME_FRandomPick || MethodName == NAME_CFRandomPick, ScriptPosition, ctx.FromDecorate);
 		}
 		break;
 
 	case NAME_Random2:
-		if (CheckArgSize(NAME_Random2, ArgList, 0, 1, ScriptPosition))
+	case NAME_CRandom2:
+		if (CheckArgSize(MethodName, ArgList, 0, 1, ScriptPosition))
 		{
 			func = new FxRandom2(RNG, ArgList.Size() == 0? nullptr : ArgList[0], ScriptPosition, ctx.FromDecorate);
 			if (ArgList.Size() > 0) ArgList[0] = nullptr;

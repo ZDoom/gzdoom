@@ -44,8 +44,8 @@ class FSerializer;
 class FRandom : public SFMTObj
 {
 public:
-	FRandom ();
-	FRandom (const char *name);
+	FRandom (bool client);
+	FRandom (const char *name, bool client);
 	~FRandom ();
 
 	int Seed() const
@@ -170,7 +170,9 @@ public:
 	static void StaticClearRandom ();
 	static void StaticReadRNGState (FSerializer &arc);
 	static void StaticWriteRNGState (FSerializer &file);
-	static FRandom *StaticFindRNG(const char *name);
+	static FRandom *StaticFindRNG(const char *name, bool client);
+	static void SaveRNGState(TArray<FRandom>& backups);
+	static void RestoreRNGState(TArray<FRandom>& backups);
 
 #ifndef NDEBUG
 	static void StaticPrintSeeds ();
@@ -182,8 +184,9 @@ private:
 #endif
 	FRandom *Next;
 	uint32_t NameCRC;
+	bool bClient;
 
-	static FRandom *RNGList;
+	static FRandom *RNGList, *CRNGList;
 };
 
 extern uint32_t rngseed;			// The starting seed (not part of state)

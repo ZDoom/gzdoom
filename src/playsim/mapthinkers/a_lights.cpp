@@ -43,10 +43,10 @@
 // State.
 #include "serializer.h"
 
-static FRandom pr_flicker ("Flicker");
-static FRandom pr_lightflash ("LightFlash");
-static FRandom pr_strobeflash ("StrobeFlash");
-static FRandom pr_fireflicker ("FireFlicker");
+static FRandom pr_flicker ("Flicker", true);
+static FRandom pr_lightflash ("LightFlash", true);
+static FRandom pr_strobeflash ("StrobeFlash", true);
+static FRandom pr_fireflicker ("FireFlicker", true);
 
 
 //-----------------------------------------------------------------------------

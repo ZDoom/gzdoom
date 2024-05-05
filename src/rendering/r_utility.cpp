@@ -94,8 +94,8 @@ struct InterpolationViewer
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
 static TArray<InterpolationViewer> PastViewers;
-static FRandom pr_torchflicker ("TorchFlicker");
-static FRandom pr_hom;
+static FRandom pr_torchflicker ("TorchFlicker", true);
+static FRandom pr_hom(true);
 bool NoInterpolateView;	// GL needs access to this.
 static TArray<DVector3a> InterpolationPath;
 

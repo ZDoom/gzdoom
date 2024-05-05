@@ -98,7 +98,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_WIN32 && !__APPLE__
 
-static FRandom pr_botspawn ("BotSpawn");
+static FRandom pr_botspawn ("BotSpawn", false);
 
 cycle_t BotThinkCycles, BotSupportCycles;
 int BotWTG;

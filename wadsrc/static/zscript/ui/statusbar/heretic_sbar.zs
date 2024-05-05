@@ -45,7 +45,7 @@ class HereticStatusBar : BaseStatusBar
 		// wiggle the chain if it moves
 		if (Level.time & 1)
 		{
-			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && Random[ChainWiggle](0, 1);
+			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && CRandom[ChainWiggle](0, 1);
 		}
 	}
 

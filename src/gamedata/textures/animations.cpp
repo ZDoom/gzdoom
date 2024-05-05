@@ -56,7 +56,7 @@ FTextureAnimator TexAnim;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FRandom pr_animatepictures ("AnimatePics");
+static FRandom pr_animatepictures ("AnimatePics", true);
 
 // CODE --------------------------------------------------------------------
 

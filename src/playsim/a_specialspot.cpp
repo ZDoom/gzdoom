@@ -39,7 +39,7 @@
 #include "a_pickups.h"
 #include "vm.h"
 
-static FRandom pr_spot ("SpecialSpot");
+static FRandom pr_spot ("SpecialSpot", false);
 
 IMPLEMENT_CLASS(DSpotState, false, false)
 

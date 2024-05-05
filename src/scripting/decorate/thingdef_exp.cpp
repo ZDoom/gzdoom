@@ -47,9 +47,9 @@
 
 extern FRandom pr_exrandom;
 
-static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls);
-static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls);
-static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls);
+static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls, bool client);
+static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls, bool client);
+static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls, bool client);
 static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls);
 static FxExpression *ParseAtan2(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls);
@@ -491,12 +491,17 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		{
 		case NAME_Random:
 		case NAME_FRandom:
-			return ParseRandom(sc, identifier, cls);
+		case NAME_CRandom:
+		case NAME_CFRandom:
+			return ParseRandom(sc, identifier, cls, identifier == NAME_CRandom || identifier == NAME_CFRandom);
 		case NAME_RandomPick:
 		case NAME_FRandomPick:
-			return ParseRandomPick(sc, identifier, cls);
+		case NAME_CRandomPick:
+		case NAME_CFRandomPick:
+			return ParseRandomPick(sc, identifier, cls, identifier == NAME_CRandomPick || identifier == NAME_CFRandomPick);
 		case NAME_Random2:
-			return ParseRandom2(sc, cls);
+		case NAME_CRandom2:
+			return ParseRandom2(sc, cls, identifier == NAME_CRandom2);
 		default:
 			if (cls != nullptr)
 			{
@@ -559,14 +564,14 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 	return NULL;
 }
 
-static FRandom *ParseRNG(FScanner &sc)
+static FRandom *ParseRNG(FScanner &sc, bool client)
 {
 	FRandom *rng;
 
 	if (sc.CheckToken('['))
 	{
 		sc.MustGetToken(TK_Identifier);
-		rng = FRandom::StaticFindRNG(sc.String);
+		rng = FRandom::StaticFindRNG(sc.String, client);
 		sc.MustGetToken(']');
 	}
 	else
@@ -576,9 +581,9 @@ static FRandom *ParseRNG(FScanner &sc)
 	return rng;
 }
 
-static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls)
+static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls, bool client)
 {
-	FRandom *rng = ParseRNG(sc);
+	FRandom *rng = ParseRNG(sc, client);
 
 	sc.MustGetToken('(');
 	FxExpression *min = ParseExpressionM (sc, cls);
@@ -586,7 +591,7 @@ static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cl
 	FxExpression *max = ParseExpressionM (sc, cls);
 	sc.MustGetToken(')');
 
-	if (identifier == NAME_Random)
+	if (identifier == NAME_Random || identifier == NAME_CRandom)
 	{
 		return new FxRandom(rng, min, max, sc, true);
 	}
@@ -596,7 +601,7 @@ static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cl
 	}
 }
 
-static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls)
+static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls, bool client)
 {
 	bool floaty = identifier == NAME_FRandomPick;
 	FRandom *rng;
@@ -604,7 +609,7 @@ static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor
 	list.Clear();
 	int index = 0;
 
-	rng = ParseRNG(sc);
+	rng = ParseRNG(sc, client);
 	sc.MustGetToken('(');
 
 	for (;;)
@@ -618,9 +623,9 @@ static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor
 	return new FxRandomPick(rng, list, floaty, sc, true);
 }
 
-static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls)
+static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls, bool client)
 {
-	FRandom *rng = ParseRNG(sc);
+	FRandom *rng = ParseRNG(sc, client);
 	FxExpression *mask = NULL;
 
 	sc.MustGetToken('(');

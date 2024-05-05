@@ -216,11 +216,11 @@ class ConversationMenu : Menu
 		let goodbyestr = mCurNode.Goodbye;
 		if (goodbyestr.Length() == 0)
 		{
-			goodbyestr = String.Format("$TXT_RANDOMGOODBYE_%d", Random[RandomSpeech](1, NUM_RANDOM_GOODBYES));
+			goodbyestr = String.Format("$TXT_RANDOMGOODBYE_%d", CRandom[RandomSpeech](1, NUM_RANDOM_GOODBYES));
 		}
 		else if (goodbyestr.Left(7) == "RANDOM_")
 		{
-			goodbyestr = String.Format("$TXT_%s_%02d", goodbyestr, Random[RandomSpeech](1, NUM_RANDOM_LINES));
+			goodbyestr = String.Format("$TXT_%s_%02d", goodbyestr, CRandom[RandomSpeech](1, NUM_RANDOM_LINES));
 		}
 		goodbyestr = Stringtable.Localize(goodbyestr);
 		if (goodbyestr.Length() == 0 || goodbyestr.Left(1) == "$") goodbyestr = "Bye.";
@@ -254,7 +254,7 @@ class ConversationMenu : Menu
 		String toSay = mCurNode.Dialogue;
 		if (toSay.Left(7) == "RANDOM_")
 		{
-			let dlgtext = String.Format("$TXT_%s_%02d", toSay, random[RandomSpeech](1, NUM_RANDOM_LINES));
+			let dlgtext = String.Format("$TXT_%s_%02d", toSay, crandom[RandomSpeech](1, NUM_RANDOM_LINES));
 			toSay = Stringtable.Localize(dlgtext);
 			if (toSay.Left(1) == "$") toSay = Stringtable.Localize("$TXT_GOAWAY");
 		}

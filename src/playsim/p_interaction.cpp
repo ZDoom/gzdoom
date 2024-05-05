@@ -63,12 +63,12 @@
 #include "actorinlines.h"
 #include "d_main.h"
 
-static FRandom pr_botrespawn ("BotRespawn");
-static FRandom pr_killmobj ("ActorDie");
-FRandom pr_damagemobj ("ActorTakeDamage");
-static FRandom pr_lightning ("LightningDamage");
-static FRandom pr_poison ("PoisonDamage");
-static FRandom pr_switcher ("SwitchTarget");
+static FRandom pr_botrespawn ("BotRespawn", false);
+static FRandom pr_killmobj ("ActorDie", false);
+FRandom pr_damagemobj ("ActorTakeDamage", false);
+static FRandom pr_lightning ("LightningDamage", false);
+static FRandom pr_poison ("PoisonDamage", false);
+static FRandom pr_switcher ("SwitchTarget", false);
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)

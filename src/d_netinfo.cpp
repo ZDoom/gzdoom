@@ -52,7 +52,7 @@
 #include "gstrings.h"
 #include "g_game.h"
 
-static FRandom pr_pickteam ("PickRandomTeam");
+static FRandom pr_pickteam ("PickRandomTeam", false);
 
 CVAR (Float,	autoaim,				35.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);

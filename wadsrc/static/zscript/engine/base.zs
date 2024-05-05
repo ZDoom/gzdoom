@@ -788,7 +788,9 @@ class Object native
 	//
 	// Intrinsic random number generation functions. Note that the square
 	// bracket syntax for specifying an RNG ID is only available for these
-	// functions.
+	// functions. If the function is prefixed with a C, this is a client-side RNG
+	// call that isn't backed up while predicting and has a unique name space from
+	// regular RNG calls. This should be used for things like HUD elements.
 	// clearscope void SetRandomSeed[Name rngId = 'None'](int seed); // Set the seed for the given RNG.
 	// clearscope int Random[Name rngId = 'None'](int min, int max); // Use the given RNG to generate a random integer number in the range (min, max) inclusive.
 	// clearscope int Random2[Name rngId = 'None'](int mask); // Use the given RNG to generate a random integer number, and do a "union" (bitwise AND, AKA &) operation with the bits in the mask integer.

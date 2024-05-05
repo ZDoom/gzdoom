@@ -65,7 +65,7 @@ CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
 EXTERN_CVAR(Int, r_maxparticles);
 
-FRandom pr_railtrail("RailTrail");
+FRandom pr_railtrail("RailTrail", true);
 
 #define FADEFROMTTL(a)	(1.f/(a))
 

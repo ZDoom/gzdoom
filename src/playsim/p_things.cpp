@@ -47,7 +47,7 @@
 #include "actorinlines.h"
 #include "vm.h"
 
-static FRandom pr_leadtarget ("LeadTarget");
+static FRandom pr_leadtarget ("LeadTarget", false);
 
 bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {

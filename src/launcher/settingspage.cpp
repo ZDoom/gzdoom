@@ -161,7 +161,7 @@ void SettingsPage::OnLanguageChanged(int i)
 
 void SettingsPage::OnGeometryChanged()
 {
-	double panelWidth = 200.0;
+	double panelWidth = 160.0;
 	double y = 0.0;
 	double w = GetWidth();
 	double h = GetHeight();

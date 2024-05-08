@@ -71,7 +71,10 @@ enum EParticleFlags
 class DVisualThinker;
 struct particle_t
 {
-	subsector_t* subsector; //+8 = 8
+	union {
+		subsector_t* subsector;
+		uint64_t _pad0; //+8 = 8
+	};
     DVector3 Pos; //+24 = 32
     FVector3 Vel; //+12 = 44
     FVector3 Acc; //+12 = 56
@@ -84,7 +87,7 @@ struct particle_t
     float Roll, RollVel, RollAcc; //+12 = 100
     uint16_t    tnext, snext, tprev; //+6 = 106
 	uint16_t flags; //+2 = 108
-	// uint32_t padding; //+4 = 112
+	uint32_t padding; //+4 = 112
 	FStandaloneAnimation animData; //+16 = 128
 };
 

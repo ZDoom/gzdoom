@@ -71,6 +71,7 @@ class Inventory : Actor
 	flagdef Unclearable: ItemFlags, 24;
 	flagdef NeverLocal: ItemFlags, 25;
 	flagdef IsKeyItem: ItemFlags, 26;
+	flagdef NotConsumable: ItemFlags, 27;
 
 	flagdef ForceRespawnInSurvival: none, 0;
 	flagdef PickupFlash: none, 6;

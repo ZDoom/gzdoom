@@ -267,7 +267,7 @@ extend class Actor
 			return false;
 		}
 
-		if (sv_infiniteinventory)
+		if (sv_infiniteinventory || item.bNotConsumable)
 		{
 			return true;
 		}

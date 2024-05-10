@@ -3810,8 +3810,11 @@ void AActor::Tick ()
 
 	// Check for Actor unmorphing, but only on the thing that is the morphed Actor.
 	// Players do their own special checking for this.
-	if (alternative != nullptr && !(flags & MF_UNMORPHED) && player == nullptr)
+	if (alternative != nullptr && player == nullptr)
 	{
+		if (flags & MF_UNMORPHED)
+			return;
+
 		int res = false;
 		IFVIRTUAL(AActor, CheckUnmorph)
 		{

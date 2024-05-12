@@ -476,11 +476,17 @@ CCMD(invquery)
 	}
 }
 
+constexpr char True[] = "true";
+
 CCMD (use)
 {
 	if (argv.argc() > 1 && players[consoleplayer].mo != NULL)
 	{
-		SendItemUse = players[consoleplayer].mo->FindInventory(argv[1]);
+		bool subclass = false;
+		if (argv.argc() > 2)
+			subclass = !stricmp(argv[2], True) || atoi(argv[2]);
+
+		SendItemUse = players[consoleplayer].mo->FindInventory(argv[1], subclass);
 	}
 }
 
@@ -503,7 +509,11 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && players[consoleplayer].mo != NULL)
 	{
-		SendItemDrop = players[consoleplayer].mo->FindInventory(argv[1]);
+		bool subclass = false;
+		if (argv.argc() > 3)
+			subclass = !stricmp(argv[3], True) || atoi(argv[3]);
+
+		SendItemDrop = players[consoleplayer].mo->FindInventory(argv[1], subclass);
 		SendItemDropAmount = argv.argc() > 2 ? atoi(argv[2]) : -1;
 	}
 }
@@ -528,7 +538,11 @@ CCMD (select)
 	auto user = players[consoleplayer].mo;
 	if (argv.argc() > 1)
 	{
-		auto item = user->FindInventory(argv[1]);
+		bool subclass = false;
+		if (argv.argc() > 2)
+			subclass = !stricmp(argv[2], True) || atoi(argv[2]);
+
+		auto item = user->FindInventory(argv[1], subclass);
 		if (item != NULL)
 		{
 			user->PointerVar<AActor>(NAME_InvSel) = item;

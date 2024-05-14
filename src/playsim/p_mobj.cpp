@@ -2811,15 +2811,18 @@ static void PlayerLandedMakeGruntSound(AActor* self, AActor *onmobj)
 	}
 }
 
+static void PlayerSquatView(AActor *self, AActor *onmobj)
+{
+	IFVIRTUALPTR(self, AActor, PlayerSquatView)
+	{
+		VMValue params[2] = { self, onmobj };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
-	if (!mo->player)
-		return;
-
-	if (mo->player->mo == mo)
-	{
-		mo->player->deltaviewheight = mo->Vel.Z / 8.;
-	}
+	PlayerSquatView(mo, onmobj);
 
 	if (mo->player->cheats & CF_PREDICTING)
 		return;

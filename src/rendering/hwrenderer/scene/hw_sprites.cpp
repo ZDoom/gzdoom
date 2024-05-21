@@ -1004,7 +1004,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (thing->renderflags & (RF_ROLLSPRITE|RF_FLATSPRITE))
 		{
 			double ps = di->Level->pixelstretch;
-			double mult = 2 * ps / (ps * ps + 1); // shrink slightly
+			double mult = 1.0 / sqrt(ps); // shrink slightly
 			r.Scale(mult * ps, mult);
 		}
 
@@ -1452,7 +1452,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 
 		float ps = di->Level->pixelstretch;
 
-		scalefac *= 2 * ps / (ps * ps + 1); // shrink it slightly to account for the stretch
+		scalefac /= sqrt(ps); // shrink it slightly to account for the stretch
 
 		float viewvecX = vp.ViewVector.X * scalefac * ps;
 		float viewvecY = vp.ViewVector.Y * scalefac;
@@ -1527,7 +1527,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	if (spr->PT.flags & SPF_ROLL)
 	{
 		double ps = di->Level->pixelstretch;
-		double mult = 2 * ps / (ps * ps + 1); // shrink slightly
+		double mult = 1.0 / sqrt(ps); // shrink slightly
 		r.Scale(mult * ps, mult);
 	}
 

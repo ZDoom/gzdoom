@@ -43,6 +43,7 @@
 #include "v_video.h"
 #include "filesystem.h"
 #include "vm.h"
+#include "d_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -56,9 +57,11 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern bool playeringame[MAXPLAYERS];
+extern player_t players[MAXPLAYERS];
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FTeam			TeamLibrary;
 TArray<FTeam>	Teams;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -245,11 +248,20 @@ void FTeam::ClearTeams ()
 //
 //==========================================================================
 
-bool FTeam::IsValidTeam (unsigned int uiTeam) const
+bool FTeam::IsValid (unsigned int uiTeam)
 {
 	if (uiTeam >= Teams.Size ())
 		return false;
 
+	return true;
+}
+
+bool FTeam::ChangeTeam(unsigned int pNum, unsigned int newTeam)
+{
+	if (!multiplayer || !teamplay || pNum >= MAXPLAYERS || !playeringame[pNum] || !FTeam::IsValid(newTeam) || players[pNum].userinfo.GetTeam() == newTeam)
+		return false;
+
+	players[pNum].userinfo.TeamChanged(newTeam);
 	return true;
 }
 
@@ -342,7 +354,7 @@ DEFINE_FIELD_NAMED(FTeam, m_Name, mName)
 
 static int IsValid(unsigned int id)
 {
-	return TeamLibrary.IsValidTeam(id);
+	return FTeam::IsValid(id);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FTeam, IsValid, IsValid)
@@ -350,7 +362,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(FTeam, IsValid, IsValid)
 	PARAM_PROLOGUE;
 	PARAM_UINT(id);
 
-	ACTION_RETURN_BOOL(TeamLibrary.IsValidTeam(id));
+	ACTION_RETURN_BOOL(FTeam::IsValid(id));
+}
+
+static int ChangeTeam(unsigned int pNum, unsigned int newTeam)
+{
+	return FTeam::ChangeTeam(pNum, newTeam);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FTeam, ChangeTeam, ChangeTeam)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(pNum);
+	PARAM_UINT(newTeam);
+
+	ACTION_RETURN_BOOL(FTeam::ChangeTeam(pNum, newTeam));
 }
 
 static int GetPlayerColor(FTeam* self)

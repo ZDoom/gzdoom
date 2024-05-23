@@ -197,7 +197,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		h, s, v);
 
-	if (teamplay && TeamLibrary.IsValidTeam((team = info->GetTeam())) && !Teams[team].GetAllowCustomPlayerColor())
+	if (teamplay && FTeam::IsValid((team = info->GetTeam())) && !Teams[team].GetAllowCustomPlayerColor())
 	{
 		// In team play, force the player to use the team's hue
 		// and adjust the saturation and value so that the team
@@ -264,7 +264,7 @@ int D_PickRandomTeam ()
 		if (playeringame[i])
 		{
 			team = players[i].userinfo.GetTeam();
-			if (TeamLibrary.IsValidTeam(team))
+			if (FTeam::IsValid(team))
 			{
 				if (Teams[team].m_iPresent++ == 0)
 				{
@@ -319,7 +319,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 
-	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->GetTeam()))
+	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && FTeam::IsValid (info->GetTeam()))
 	{
 		Printf ("%s\n", GStrings.GetString("TXT_NO_TEAM_CHANGE"));
 		return;
@@ -327,7 +327,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	int oldteam;
 
-	if (!TeamLibrary.IsValidTeam (team))
+	if (!FTeam::IsValid (team))
 	{
 		team = TEAM_NONE;
 	}
@@ -337,7 +337,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 	if (update && oldteam != team)
 	{
 		FString message;
-		if (TeamLibrary.IsValidTeam (team))
+		if (FTeam::IsValid (team))
 		{
 			message = GStrings.GetString("TXT_JOINED_TEAM");
 			message.Substitute("%t", Teams[team].GetName());
@@ -356,7 +356,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 		StatusBar->AttachToPlayer (&players[pnum]);
 	}
 	// Double-check
-	if (!TeamLibrary.IsValidTeam (team))
+	if (!FTeam::IsValid (team))
 	{
 		*static_cast<FIntCVar *>((*info)[NAME_Team]) = TEAM_NONE;
 	}
@@ -365,7 +365,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 int D_GetFragCount (player_t *player)
 {
 	const int team = player->userinfo.GetTeam();
-	if (!teamplay || !TeamLibrary.IsValidTeam(team))
+	if (!teamplay || !FTeam::IsValid(team))
 	{
 		return player->fragcount;
 	}
@@ -479,7 +479,7 @@ void userinfo_t::Reset(int pnum)
 
 int userinfo_t::TeamChanged(int team)
 {
-	if (teamplay && !TeamLibrary.IsValidTeam(team))
+	if (teamplay && !FTeam::IsValid(team))
 	{ // Force players onto teams in teamplay mode
 		team = D_PickRandomTeam();
 	}

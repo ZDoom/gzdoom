@@ -293,7 +293,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[sortedplayers[i]-players] && TeamLibrary.IsValidTeam (sortedplayers[i]->userinfo.GetTeam()))
+			if (playeringame[sortedplayers[i]-players] && FTeam::IsValid (sortedplayers[i]->userinfo.GetTeam()))
 			{
 				if (Teams[sortedplayers[i]->userinfo.GetTeam()].m_iPlayerCount++ == 0)
 				{
@@ -485,7 +485,7 @@ int HU_GetRowColor(player_t *player, bool highlight)
 {
 	if (teamplay && deathmatch)
 	{
-		if (TeamLibrary.IsValidTeam (player->userinfo.GetTeam()))
+		if (FTeam::IsValid (player->userinfo.GetTeam()))
 			return Teams[player->userinfo.GetTeam()].GetTextColor();
 		else
 			return CR_GREY;

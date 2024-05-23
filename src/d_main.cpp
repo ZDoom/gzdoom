@@ -3359,7 +3359,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	// [CW] Parse any TEAMINFO lumps.
 	if (!batchrun) Printf ("ParseTeamInfo: Load team definitions.\n");
-	TeamLibrary.ParseTeamInfo ();
+	FTeam::ParseTeamInfo ();
 
 	R_ParseTrnslate();
 	PClassActor::StaticInit ();

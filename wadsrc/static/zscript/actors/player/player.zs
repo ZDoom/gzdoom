@@ -2988,7 +2988,7 @@ struct Team native
 	native String mName;
 
 	native static bool IsValid(uint teamIndex);
-	native static bool ChangeTeam(uint playerNumber, uint newTeamIndex);
+	native play static bool ChangeTeam(uint playerNumber, uint newTeamIndex);
 
 	native Color GetPlayerColor() const;
 	native int GetTextColor() const;

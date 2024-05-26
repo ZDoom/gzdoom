@@ -262,6 +262,7 @@ bool FTeam::ChangeTeam(unsigned int pNum, unsigned int newTeam)
 		return false;
 
 	players[pNum].userinfo.TeamChanged(newTeam);
+	R_BuildPlayerTranslation(pNum);
 	return true;
 }
 

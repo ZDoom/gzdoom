@@ -919,6 +919,7 @@ public:
 	TDeletingArray(TDeletingArray<T,TT> &&other) : TArray<T,TT>(std::move(other)) {}
 	TDeletingArray<T,TT> &operator=(TDeletingArray<T,TT> &&other)
 	{
+		DeleteAndClear();
 		TArray<T,TT>::operator=(std::move(other));
 		return *this;
 	}

@@ -9546,6 +9546,8 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 
 	unsigned implicit = Function->GetImplicitArgs();
 
+	bool relaxed_named_arugments = (ctx.Version >= MakeVersion(4, 13));
+
 	if (!CheckAccessibility(ctx.Version))
 	{
 		delete this;
@@ -9613,25 +9615,43 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 					}
 					else
 					{
-						unsigned j;
 						FName name = static_cast<FxNamedNode *>(ArgList[i])->name;
-						for (j = 0; j < count; j++)
+						if(argnames[index + implicit] != name)
 						{
-							if (argnames[j + implicit] == name)
+							unsigned j;
+
+							for (j = 0; j < count; j++)
 							{
-								// i don't think this needs any further optimization? 
-								//			O(N^2) complexity technically but N isn't likely to be large,
-								//			and the check itself is just an int comparison, so it should be fine
-								index = j;
-								break;
+								if (argnames[j + implicit] == name)
+								{
+									if(!relaxed_named_arugments && !(argflags[j + implicit] & VARF_Optional))
+									{
+										ScriptPosition.Message(MSG_ERROR, "Cannot use a named argument here - not all required arguments have been passed.");
+									}
+									else if(!relaxed_named_arugments && j < index)
+									{
+										ScriptPosition.Message(MSG_ERROR, "Named argument %s comes before current position in argument list.", name.GetChars());
+									}
+
+									// i don't think this needs any further optimization? 
+									//			O(N^2) complexity technically but N isn't likely to be large,
+									//			and the check itself is just an int comparison, so it should be fine
+									index = j;
+
+									break;
+								}
+							}
+
+							if(j == count)
+							{
+								ScriptPosition.Message(MSG_ERROR, "Named argument %s not found.", name.GetChars());
+								delete this;
+								return nullptr;
 							}
 						}
-
-						if(j == count)
+						else if(!relaxed_named_arugments && !(argflags[index + implicit] & VARF_Optional))
 						{
-							ScriptPosition.Message(MSG_ERROR, "Named argument %s not found.", name.GetChars());
-							delete this;
-							return nullptr;
+							ScriptPosition.Message(MSG_ERROR, "Cannot use a named argument here - not all required arguments have been passed.");
 						}
 					}
 				}

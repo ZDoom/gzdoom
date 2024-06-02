@@ -91,7 +91,11 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+#ifdef AURORAOS // we prefer GLES2 in AuroraOS
+CUSTOM_CVAR(Int, vid_preferbackend, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+#else
 CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+#endif
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to

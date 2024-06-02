@@ -114,6 +114,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
+		SetValueForKey ("Path", "$HOME/Documents/" GAMENAME, true);
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		// Arch Linux likes them in /usr/share/doom
@@ -138,6 +139,9 @@ FGameConfigFile::FGameConfigFile ()
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
+		#ifdef AURORAOS
+		SetValueForKey ("Path", "/usr/share/org.zdoom.gzdoom/pk3", true);
+		#endif
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		SetValueForKey ("Path", SHARE_DIR, true);
@@ -166,6 +170,10 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 #else
+		#ifdef AURORAOS
+		SetValueForKey("Path", "/usr/share/org.zdoom.gzdoom/soundfonts", true);
+		SetValueForKey("Path", "/usr/share/org.zdoom.gzdoom/fm_banks", true);
+		#endif
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
 		SetValueForKey("Path", "$HOME/.local/share/games/doom/soundfonts", true);

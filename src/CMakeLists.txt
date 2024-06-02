@@ -213,6 +213,10 @@ if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
 endif()
 
+if( AURORAOS )
+	add_definitions( -DAURORAOS=1 )
+endif()
+
 # Decide on SSE setup
 
 # SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.

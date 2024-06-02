@@ -6289,6 +6289,9 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
 	puff->Angles.Yaw = hitdir + DAngle::fromDeg(180);
 
+	// [AA] Mark the spawned actor as a puff with a flag.
+	puff->flags9 |= MF9_ISPUFF;
+
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
 	// and BlasterPuff.

@@ -444,6 +444,7 @@ enum ActorFlag9
 	MF9_SHADOWAIMVERT			= 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
 	MF9_DECOUPLEDANIMATIONS		= 0x00000010,	// [RL0] Decouple model animations from states
 	MF9_NOSECTORDAMAGE			= 0x00000020,	// [inkoalawetrust] Actor ignores any sector-based damage (i.e damaging floors, NOT crushers)
+	MF9_ISPUFF					= 0x00000020,	// [AA] Set on actors by P_SpawnPuff
 };
 
 // --- mobj.renderflags ---

@@ -1233,6 +1233,7 @@ public:
 	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor*>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor*>	master;			// Thing which spawned this one (prevents mutual attacks)
+	TObjPtr<AActor*>	damagesource;	// [AA] Thing that fired a hitscan using this actor as a puff
 
 	int				tid;			// thing identifier
 	int				special;		// special

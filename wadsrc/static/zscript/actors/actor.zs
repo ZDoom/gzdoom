@@ -148,6 +148,7 @@ class Actor : Thinker native
 	native Actor Target;
 	native Actor Master;
 	native Actor Tracer;
+	native Actor DamageSource;
 	native Actor LastHeard;
 	native Actor LastEnemy;
 	native Actor LastLookActor;
@@ -705,7 +706,7 @@ class Actor : Thinker native
 	native void SoundAlert(Actor target, bool splash = false, double maxdist = 0);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
-	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibilityö. */);
+	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibilityï¿½. */);
 	native bool CheckNoDelay();
 	native bool UpdateWaterLevel (bool splash = true);
 	native bool IsZeroDamage();

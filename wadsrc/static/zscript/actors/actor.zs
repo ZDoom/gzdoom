@@ -148,6 +148,7 @@ class Actor : Thinker native
 	native Actor Target;
 	native Actor Master;
 	native Actor Tracer;
+	native Actor DamageSource;
 	native Actor LastHeard;
 	native Actor LastEnemy;
 	native Actor LastLookActor;

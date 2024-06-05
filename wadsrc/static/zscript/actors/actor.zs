@@ -1310,7 +1310,7 @@ class Actor : Thinker native
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
 	native bool A_RemoveLight(Name lightid);
 
-	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame= -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
+	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 
 	native version("4.12") void SetAnimationFrameRate(double framerate);
@@ -1321,9 +1321,9 @@ class Actor : Thinker native
 	native version("4.12") void ResetModelFlags();
     
     
-	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame= -1, int interpolateTics = -1, int flags = 0)
+	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0)
 	{
-		invoker.SetAnimation(animName, framerate, startFrame, loopFrame, interpolateTics, flags);
+		invoker.SetAnimation(animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags);
 	}
 
 	action version("4.12") void A_SetAnimationFrameRate(double framerate)

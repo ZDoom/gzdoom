@@ -5323,7 +5323,13 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 }
 
 // Macro for CallFunction. Checks passed number of arguments with minimum required. Sets needCount and returns if not enough.
-#define MIN_ARG_COUNT(minCount) do { if (argCount < minCount) { needCount = minCount; return 0; } } while(0)
+#define MIN_ARG_COUNT(minCount) \
+	do { \
+		if (argCount < minCount && !(Level->i_compatflags2 & COMPATF2_NOACSARGCHECK)) { \
+			needCount = minCount; \
+			return 0; \
+		} \
+	} while(0)
 
 int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &needCount)
 {

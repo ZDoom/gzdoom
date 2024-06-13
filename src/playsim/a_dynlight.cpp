@@ -383,10 +383,14 @@ void FDynamicLight::UpdateLocation()
 		Pos = target->Vec3Offset(m_off.X * c + m_off.Y * s, m_off.X * s - m_off.Y * c, m_off.Z + target->GetBobOffset());
 		Sector = target->subsector->sector;	// Get the render sector. target->Sector is the sector according to play logic.
 
-		// Some z-coordinate fudging to prevent the light from getting too close to the floor or ceiling planes. With proper attenuation this would render them invisible.
-		// A distance of 5 is needed so that the light's effect doesn't become too small.
-		if (Z() < target->floorz + 5.) Pos.Z = target->floorz + 5.;
-		else if (Z() > target->ceilingz - 5.) Pos.Z = target->ceilingz - 5.;
+		if (!(target->flags5 & MF5_NOINTERACTION))
+		{
+			// Some z-coordinate fudging to prevent the light from getting too close to the floor or ceiling planes. With proper attenuation this would render them invisible.
+			// A distance of 5 is needed so that the light's effect doesn't become too small.
+			// [SP] don't do this if +NOINTERACTION is set, since the object can fly right through floors and ceilings with that flag
+			if (Z() < target->floorz + 5.) Pos.Z = target->floorz + 5.;
+			else if (Z() > target->ceilingz - 5.) Pos.Z = target->ceilingz - 5.;
+		}
 
 		// The radius being used here is always the maximum possible with the
 		// current settings. This avoids constant relinking of flickering lights

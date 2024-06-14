@@ -56,19 +56,16 @@
 
 class DLevelPostProcessor : public DObject
 {
-	DECLARE_ABSTRACT_CLASS(DLevelPostProcessor, DObject)
+	DECLARE_CLASS(DLevelPostProcessor, DObject)
 public:
 	MapLoader *loader;
 	FLevelLocals *Level;
 };
 
-IMPLEMENT_CLASS(DLevelPostProcessor, true, false);
+IMPLEMENT_CLASS(DLevelPostProcessor, false, false);
 
 void MapLoader::PostProcessLevel(FName checksum)
 {
-	auto lc = Create<DLevelPostProcessor>();
-	lc->loader = this;
-	lc->Level = Level;
 	for(auto cls : PClass::AllClasses)
 	{
 		if (cls->IsDescendantOf(RUNTIME_CLASS(DLevelPostProcessor)))
@@ -87,8 +84,14 @@ void MapLoader::PostProcessLevel(FName checksum)
 				continue;
 			}
 
+			auto lc = static_cast<DLevelPostProcessor*>(cls->CreateNew());
+			lc->loader = this;
+			lc->Level = Level;
+
 			VMValue param[] = { lc, checksum.GetIndex(), &Level->MapName };
 			VMCall(func->Variants[0].Implementation, param, 3, nullptr, 0);
+
+			lc->Destroy();
 		}
 	}
 }

@@ -865,7 +865,7 @@ xx(lm_suncolor)
 xx(lm_sampledist)
 
 // Light keywords
-xx(SourceRadius)
+xx(SoftShadowRadius)
 
 xx(skew_bottom_type)
 xx(skew_middle_type)

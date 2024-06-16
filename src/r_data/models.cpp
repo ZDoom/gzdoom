@@ -616,6 +616,9 @@ void InitModels()
 		smf.animationIDs[0] = -1;
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees();
+		smf.xoffset = VoxelDefs[i]->xoffset;
+		smf.yoffset = VoxelDefs[i]->yoffset;
+		smf.zoffset = VoxelDefs[i]->zoffset;
 		// this helps catching uninitialized data.
 		assert(VoxelDefs[i]->PitchFromMomentum == true || VoxelDefs[i]->PitchFromMomentum == false);
 		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;

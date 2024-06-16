@@ -58,6 +58,9 @@ struct VoxelOptions
 	int			PlacedSpin = 0;
 	double		Scale = 1;
 	DAngle		AngleOffset = DAngle90;
+	double		xoffset = 0.0;
+	double		yoffset = 0.0;
+	double		zoffset = 0.0;
 	bool		OverridePalette = false;
 	bool		PitchFromMomentum = false;
 	bool		UseActorPitch = false;
@@ -177,6 +180,54 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			}
 			opts.AngleOffset = DAngle::fromDeg(mul * sc.Float + 90.);
 		}
+		else if (sc.Compare("xoffset"))
+		{
+			int mul = 1;
+			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
+			sc.MustGetAnyToken();
+			if (sc.TokenType == TK_IntConst)
+			{
+				sc.Float = sc.Number;
+			}
+			else
+			{
+				sc.TokenMustBe(TK_FloatConst);
+			}
+			opts.xoffset = sc.Float * mul;
+		}
+		else if (sc.Compare("yoffset"))
+		{
+			int mul = 1;
+			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
+			sc.MustGetAnyToken();
+			if (sc.TokenType == TK_IntConst)
+			{
+				sc.Float = sc.Number;
+			}
+			else
+			{
+				sc.TokenMustBe(TK_FloatConst);
+			}
+			opts.yoffset = sc.Float * mul;
+		}
+		else if (sc.Compare("zoffset"))
+		{
+			int mul = 1;
+			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
+			sc.MustGetAnyToken();
+			if (sc.TokenType == TK_IntConst)
+			{
+				sc.Float = sc.Number;
+			}
+			else
+			{
+				sc.TokenMustBe(TK_FloatConst);
+			}
+			opts.zoffset = sc.Float * mul;
+		}
 		else if (sc.Compare("overridepalette"))
 		{
 			opts.OverridePalette = true;
@@ -262,6 +313,9 @@ void R_InitVoxels()
 				def->DroppedSpin = opts.DroppedSpin;
 				def->PlacedSpin = opts.PlacedSpin;
 				def->AngleOffset = opts.AngleOffset;
+				def->xoffset = opts.xoffset;
+				def->yoffset = opts.yoffset;
+				def->zoffset = opts.zoffset;
 				def->PitchFromMomentum = opts.PitchFromMomentum;
 				def->UseActorPitch = opts.UseActorPitch;
 				def->UseActorRoll = opts.UseActorRoll;

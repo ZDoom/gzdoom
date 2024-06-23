@@ -68,6 +68,7 @@ enum EParticleFlags
 	SPF_NEGATIVE_FADESTEP		= 1 << 10,
 	SPF_FACECAMERA				= 1 << 11,
 	SPF_NOFACECAMERA			= 1 << 12,
+	SPF_ROLLCENTER				= 1 << 13,
 };
 
 class DVisualThinker;

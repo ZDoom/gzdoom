@@ -99,6 +99,7 @@ extend class Actor
 	}
 
 	// [MC] Called when an actor morphs, on both the previous form (!current) and present form (current).
+	// Due to recent changes, these are now called internally instead of within the virtuals.
 	virtual void PreMorph(Actor mo, bool current) {}
 	virtual void PostMorph(Actor mo, bool current) {}
 	virtual void PreUnmorph(Actor mo, bool current) {}

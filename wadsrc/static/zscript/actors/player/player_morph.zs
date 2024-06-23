@@ -129,9 +129,6 @@ extend class PlayerPawn
 			return false;
 		}
 
-		PreMorph(morphed, false);
-		morphed.PreMorph(self, true);
-
 		morphed.EndAllPowerupEffects();
 
 		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
@@ -258,9 +255,6 @@ extend class PlayerPawn
 
 		if (!MorphInto(alt))
 			return false;
-
-		PreUnmorph(alt, false);		// This body's about to be left.
-		alt.PreUnmorph(self, true);	// This one's about to become current.
 
 		alt.EndAllPowerupEffects();
 

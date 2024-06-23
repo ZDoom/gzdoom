@@ -66,6 +66,8 @@ enum EParticleFlags
 	SPF_NO_XY_BILLBOARD			= 1 << 8,
 	SPF_LOCAL_ANIM				= 1 << 9,
 	SPF_NEGATIVE_FADESTEP		= 1 << 10,
+	SPF_FACECAMERA				= 1 << 11,
+	SPF_NOFACECAMERA			= 1 << 12,
 };
 
 class DVisualThinker;

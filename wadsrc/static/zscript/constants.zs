@@ -422,6 +422,8 @@ enum EViewPosFlags
 {
 	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
 	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+	VPSF_ALLOWOUTOFBOUNDS =		1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
+	VPSF_ORTHOGRAPHIC =		1 << 4,			// Use orthographic projection (hardware renderer only).
 };
 
 // Flags for A_TakeInventory and A_TakeFromTarget

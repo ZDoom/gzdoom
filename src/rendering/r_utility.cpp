@@ -66,6 +66,7 @@
 #include "i_system.h"
 #include "v_draw.h"
 #include "i_interface.h"
+#include "d_main.h"
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -103,6 +104,8 @@ CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
 CVAR (Int, r_clearbuffer, 0, 0)
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
+CVARD (Bool, r_radarclipper, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "Use the horizontal clipper from camera->tracer's perspective")
+CVARD (Bool, r_dithertransparency, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "Use dithered-transparency shading for actor-occluding level geometry")
 CUSTOM_CVAR(Float, r_quakeintensity, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f) self = 0.f;
@@ -155,9 +158,14 @@ FRenderViewpoint::FRenderViewpoint()
 	Sin = 0.0;
 	TanCos = 0.0;
 	TanSin = 0.0;
+	PitchCos = 0.0;
+	PitchSin = 0.0;
+        floordistfact = 0.0;
+	cotfloor = 0.0;
 	camera = nullptr;
 	sector = nullptr;
 	FieldOfView =  DAngle::fromDeg(90.); // Angles in the SCREENWIDTH wide window
+	ScreenProj = 0.0;
 	TicFrac = 0.0;
 	FrameTime = 0;
 	extralight = 0;
@@ -554,37 +562,40 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewPoint.sector = viewLvl->PointInRenderSubsector(viewPoint.Pos)->sector;
-	bool moved = false;
-	while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
+	if (!viewPoint.camera->ViewPos || !(viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) || !V_IsHardwareRenderer())
 	{
-		if (viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+		bool moved = false;
+		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
 		{
-			const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewPoint.Pos += offset;
-			viewPoint.ActorPos += offset;
-			viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
-			moved = true;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	if (!moved)
-	{
-		while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor))
-		{
-			if (viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+		        if (viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
 			{
-				const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+			        const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
 				viewPoint.Pos += offset;
 				viewPoint.ActorPos += offset;
-				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
+				moved = true;
 			}
 			else
 			{
-				break;
+			        break;
+			}
+		}
+
+		if (!moved)
+		{
+		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor))
+			{
+			        if (viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+				{
+				        const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+					viewPoint.Pos += offset;
+					viewPoint.ActorPos += offset;
+					viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+				}
+				else
+				{
+				        break;
+				}
 			}
 		}
 	}
@@ -628,7 +639,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 	// Now that we have the current interpolated position, offset from that directly (for view offset + chase cam).
 	if (!posOfs.isZero())
 	{
-		const double distance = posOfs.Length();
+	        const double distance = posOfs.Length();
 		posOfs /= distance;
 		R_OffsetView(viewPoint, posOfs, distance);
 	}
@@ -682,10 +693,20 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	TanSin = viewWindow.FocalTangent * Sin;
 	TanCos = viewWindow.FocalTangent * Cos;
 
+	PitchSin = Angles.Pitch.Sin();
+	PitchCos = Angles.Pitch.Cos();
+
+        floordistfact = M_SQRT2 + ( fabs(Cos) > fabs(Sin) ? 1.0/fabs(Cos) : 1.0/fabs(Sin) );
+	cotfloor = ( fabs(Cos) > fabs(Sin) ? fabs(Sin/Cos) : fabs(Cos/Sin) );
+
 	const DVector2 v = Angles.Yaw.ToVector();
 	ViewVector.X = v.X;
 	ViewVector.Y = v.Y;
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
+
+	if ((camera->ViewPos != NULL) && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC) && (camera->ViewPos->Offset.XY().Length() > 0.0))
+	  ScreenProj = 1.34396 / camera->ViewPos->Offset.Length(); // [DVR] Estimated. +/-1 should be top/bottom of screen.
+
 }
 
 //==========================================================================
@@ -1019,14 +1040,17 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	viewPoint.SetViewAngle(viewWindow);
 
 	// Keep the view within the sector's floor and ceiling
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
+	// But allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using hardware renderer
+	bool disembodied = false;
+	if (viewPoint.camera->ViewPos != NULL) disembodied = viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS;
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!disembodied || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->ceilingplane.ZatPoint(viewPoint.Pos) - 4.0;
 		if (viewPoint.Pos.Z > z)
 			viewPoint.Pos.Z = z;
 	}
 
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!disembodied || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->floorplane.ZatPoint(viewPoint.Pos) + 4.0;
 		if (viewPoint.Pos.Z < z)

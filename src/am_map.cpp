@@ -2808,7 +2808,7 @@ void DAutomap::drawPlayers ()
 		int numarrowlines;
 
 		double vh = players[consoleplayer].viewheight;
-		DVector2 pos = players[consoleplayer].camera->InterpolatedPosition(r_viewpoint.TicFrac).XY();
+		DVector2 pos = players[consoleplayer].mo->InterpolatedPosition(r_viewpoint.TicFrac).XY();
 		pt.x = pos.X;
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -2818,7 +2818,7 @@ void DAutomap::drawPlayers ()
 		}
 		else
 		{
-			angle = players[consoleplayer].camera->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
+			angle = players[consoleplayer].mo->InterpolatedAngles(r_viewpoint.TicFrac).Yaw;
 		}
 		
 		if (am_cheat != 0 && CheatMapArrow.Size() > 0)

@@ -657,6 +657,7 @@ struct Font native
 	native BrokenLines BreakLines(String text, int maxlen);
 	native int GetGlyphHeight(int code);
 	native int GetDefaultKerning();
+	native TextureID, int GetChar(int c);
 }
 
 struct Console native

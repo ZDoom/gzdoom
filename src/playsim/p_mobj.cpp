@@ -168,6 +168,7 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(target)
 	IMPLEMENT_POINTER(lastenemy)
 	IMPLEMENT_POINTER(tracer)
+	IMPLEMENT_POINTER(damagesource)
 	IMPLEMENT_POINTER(goal)
 	IMPLEMENT_POINTER(LastLookActor)
 	IMPLEMENT_POINTER(Inventory)
@@ -398,7 +399,8 @@ void AActor::Serialize(FSerializer &arc)
 		("unmorphtime", UnmorphTime)
 		("morphflags", MorphFlags)
 		("premorphproperties", PremorphProperties)
-		("morphexitflash", MorphExitFlash);
+		("morphexitflash", MorphExitFlash)
+		("damagesource", damagesource);
 
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
@@ -6202,8 +6204,14 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
 		puff->target = source;
 	
+	// [AA] Track the source of the attack unconditionally in a separate field.
+	puff->damagesource = source;
+	
 	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
 	puff->Angles.Yaw = hitdir + DAngle::fromDeg(180);
+
+	// [AA] Mark the spawned actor as a puff with a flag.
+	puff->flags9 |= MF9_ISPUFF;
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark

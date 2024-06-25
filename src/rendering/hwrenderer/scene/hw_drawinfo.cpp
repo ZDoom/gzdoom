@@ -726,10 +726,10 @@ void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 		{
 			startsec = Level->PointInRenderSubsector(campos)->sector;
 			Trace(campos, startsec, vvec, distance,
-			      MF_SOLID, ML_BLOCKEVERYTHING, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+			      0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
 			campos.Z += actor->Height * 0.5;
 			Trace(campos, startsec, vvec, distance,
-			      MF_SOLID, ML_BLOCKEVERYTHING, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+			      0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
 			campos.Z -= actor->Height * 0.5;
 			campos.X += horix; campos.Y -= horiy;
 		}

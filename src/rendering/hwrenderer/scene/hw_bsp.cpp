@@ -820,7 +820,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		        for (auto p = sector->touching_renderthings; p != nullptr; p = p->m_snext)
 			{
 			        auto thing = p->m_thing;
-				if (((thing->flags3 & MF3_ISMONSTER) && (thing->health > 0)) || (thing->flags & MF_MISSILE))
+				if (((thing->flags3 & MF3_ISMONSTER) && !(thing->flags & MF_CORPSE)) || (thing->flags & MF_MISSILE))
 				{
 				        if ( P_CheckSight(players[consoleplayer].mo, thing, 0) )
 					{

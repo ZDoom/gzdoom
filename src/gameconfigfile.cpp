@@ -143,6 +143,8 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		SetValueForKey ("Path", SHARE_DIR, true);
+		SetValueForKey ("Path", SHARE_DIR "/doom", true);
+		SetValueForKey ("Path", SHARE_DIR "/games/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
 		SetValueForKey ("Path", "/usr/share/doom", true);

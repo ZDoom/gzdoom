@@ -503,6 +503,8 @@ enum
 	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
 	SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
 	SECMF_LIFT				= 2048,	// For MBF monster AI
+	SECMF_HURTMONSTERS		= 4096, // Monsters in this sector are hurt like players.
+	SECMF_HARMINAIR			= 8192, // Actors in this sector are also hurt mid-air.
 };
 
 enum

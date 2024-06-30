@@ -158,7 +158,7 @@ class SpectatorCamera : Actor
 		if(tracer != NULL)
 		{
 		        if(player != NULL) zshift = -0.5*tracer.height;
-			else zshift = 0.5*tracer.height;
+			else zshift = tracer.height;
 		}
 		else if (player != NULL && player.mo != NULL) zshift = -0.5*player.mo.height;
 

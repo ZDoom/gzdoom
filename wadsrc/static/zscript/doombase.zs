@@ -89,6 +89,8 @@ extend struct GameInfoStruct
 	native double Armor2Percent;
 	native String ArmorIcon1;
 	native String ArmorIcon2;
+	native Name BasicArmorClass;
+	native Name HexenArmorClass;
 	native bool norandomplayerclass;
 	native Array<Name> infoPages;
 	native GIFont mStatscreenMapNameFont;

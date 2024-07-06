@@ -916,6 +916,18 @@ class Inventory : Actor
 
 	//===========================================================================
 	//
+	// Inventory :: ExtraDepletionBehavior
+	//
+	// Allows for additional custom depletion behavior with TakeInventory and UseInventory
+	//
+	//===========================================================================
+	
+	virtual void ExtraDepletionBehavior (int takeAmount)
+	{
+	}
+
+	//===========================================================================
+	//
 	// Inventory :: DepleteOrDestroy
 	//
 	// If the item is depleted, just change its amount to 0, otherwise it's destroyed.

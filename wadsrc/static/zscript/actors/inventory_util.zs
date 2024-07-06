@@ -151,7 +151,10 @@ extend class Actor
 			{
 				item.DepleteOrDestroy();
 			}
-			item.ExtraDepletionBehavior(amount);
+			else
+			{
+				item.ExtraDepletionBehavior(amount);
+			}
 			// It won't be used in non-decorate context, so return false here
 			return false;
 		}
@@ -281,7 +284,11 @@ extend class Actor
 		{
 			item.DepleteOrDestroy ();
 		}
-		item.ExtraDepletionBehavior(1); //useinventory can only really use one item at a time
+		//check to prevent address from zero crashes, anyway you should really be using DetachFromOwner for removing the whole item
+		if(item.Amount > 0)
+		{
+			item.ExtraDepletionBehavior(1); //useinventory can only really use one item at a time
+		}
 		return true;
 	}
 

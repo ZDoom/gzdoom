@@ -151,6 +151,7 @@ extend class Actor
 			{
 				item.DepleteOrDestroy();
 			}
+			item.ExtraDepletionBehavior(amount);
 			// It won't be used in non-decorate context, so return false here
 			return false;
 		}
@@ -173,7 +174,11 @@ extend class Actor
 		{
 			item.DepleteOrDestroy();
 		}
-		else item.Amount -= amount;
+		else
+		{ 
+			item.Amount -= amount; 
+			item.ExtraDepletionBehavior(amount); 
+		}
 
 		return result;
 	}
@@ -276,6 +281,7 @@ extend class Actor
 		{
 			item.DepleteOrDestroy ();
 		}
+		item.ExtraDepletionBehavior(1); //useinventory can only really use one item at a time
 		return true;
 	}
 

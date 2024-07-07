@@ -24,7 +24,6 @@
 ** Sprite/Particle rendering
 **
 */
-#include <math.h>
 
 #include "p_local.h"
 #include "p_effect.h"
@@ -66,6 +65,7 @@ extern TArray<spriteframe_t> SpriteFrames;
 extern uint32_t r_renderercaps;
 
 const float LARGE_VALUE = 1e19f;
+const float MY_SQRT2    = 1.41421356237309504880; // sqrt(2)
 
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Float, transsouls)
@@ -1053,10 +1053,10 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			y2 = y + viewvecX*rightfac;
 			if (thing->renderflags2 & RF2_ISOMETRICSPRITES) // If sprites are drawn from an isometric perspective
 			{
-				x1 -= viewvecX * thing->radius * M_SQRT2;
-				x2 -= viewvecX * thing->radius * M_SQRT2;
-				y1 -= viewvecY * thing->radius * M_SQRT2;
-				y2 -= viewvecY * thing->radius * M_SQRT2;
+				x1 -= viewvecX * thing->radius * MY_SQRT2;
+				x2 -= viewvecX * thing->radius * MY_SQRT2;
+				y1 -= viewvecY * thing->radius * MY_SQRT2;
+				y2 -= viewvecY * thing->radius * MY_SQRT2;
 			}
 			break;
 		}

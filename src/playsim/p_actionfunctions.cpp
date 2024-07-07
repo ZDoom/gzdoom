@@ -5214,18 +5214,20 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	self->modelData->curAnim.startFrame = startFrame < 0 ? animStart : animStart + startFrame;
 	self->modelData->curAnim.loopFrame = loopFrame < 0 ? animStart : animStart + loopFrame;
 	self->modelData->curAnim.flags = (flags&SAF_LOOP) ? ANIMOVERRIDE_LOOP : 0;
-	self->modelData->curAnim.switchTic = tic;
 	self->modelData->curAnim.framerate = (float)framerate;
 
 	if(!(flags & SAF_INSTANT))
 	{
 		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic);
 		
-		self->modelData->curAnim.startTic = floor(tic) + interpolateTics;
+		int startTic = floor(tic) + interpolateTics;
+		self->modelData->curAnim.startTic = startTic;
+		self->modelData->curAnim.switchOffset = startTic - tic;
 	}
 	else
 	{
 		self->modelData->curAnim.startTic = tic;
+		self->modelData->curAnim.switchOffset = 0;
 	}
 }
 
@@ -5274,7 +5276,7 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 
 	self->modelData->curAnim.startFrame = frame;
 	self->modelData->curAnim.startTic = tic;
-	self->modelData->curAnim.switchTic = tic;
+	self->modelData->curAnim.switchOffset = 0;
 	self->modelData->curAnim.framerate = (float)framerate;
 }
 

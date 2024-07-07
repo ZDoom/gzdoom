@@ -68,6 +68,7 @@
 #include "i_interface.h"
 #include "d_main.h"
 
+const float MY_SQRT2    = 1.41421356237309504880; // sqrt(2)
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
@@ -696,7 +697,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	PitchSin = Angles.Pitch.Sin();
 	PitchCos = Angles.Pitch.Cos();
 
-        floordistfact = M_SQRT2 + ( fabs(Cos) > fabs(Sin) ? 1.0/fabs(Cos) : 1.0/fabs(Sin) );
+        floordistfact = MY_SQRT2 + ( fabs(Cos) > fabs(Sin) ? 1.0/fabs(Cos) : 1.0/fabs(Sin) );
 	cotfloor = ( fabs(Cos) > fabs(Sin) ? fabs(Sin/Cos) : fabs(Cos/Sin) );
 
 	const DVector2 v = Angles.Yaw.ToVector();

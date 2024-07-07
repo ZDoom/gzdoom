@@ -146,15 +146,7 @@ extend class Actor
 
 		if (!fromdecorate)
 		{
-			item.Amount -= amount;
-			if (item.Amount <= 0)
-			{
-				item.DepleteOrDestroy();
-			}
-			else
-			{
-				item.ExtraDepletionBehavior(amount);
-			}
+			item.DepleteBy(amount, false);
 			// It won't be used in non-decorate context, so return false here
 			return false;
 		}
@@ -173,14 +165,9 @@ extend class Actor
 			// Nothing to do here, except maybe res = false;? Would it make sense?
 			result = false;
 		}
-		else if (!amount || amount >= item.Amount)
-		{
-			item.DepleteOrDestroy();
-		}
 		else
-		{ 
-			item.Amount -= amount; 
-			item.ExtraDepletionBehavior(amount); 
+		{
+			item.DepleteBy(amount, false);
 		}
 
 		return result;
@@ -280,15 +267,7 @@ extend class Actor
 			return true;
 		}
 
-		if (--item.Amount <= 0)
-		{
-			item.DepleteOrDestroy ();
-		}
-		//check to prevent address from zero crashes, anyway you should really be using DetachFromOwner for removing the whole item
-		if(item.Amount > 0)
-		{
-			item.ExtraDepletionBehavior(1); //useinventory can only really use one item at a time
-		}
+		item.DepleteBy(1, true); //useinventory can only really use one item at a time
 		return true;
 	}
 

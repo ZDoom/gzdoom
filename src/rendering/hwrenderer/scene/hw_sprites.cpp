@@ -24,6 +24,7 @@
 ** Sprite/Particle rendering
 **
 */
+#include <math.h>
 
 #include "p_local.h"
 #include "p_effect.h"

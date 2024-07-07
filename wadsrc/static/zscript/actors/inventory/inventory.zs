@@ -916,14 +916,21 @@ class Inventory : Actor
 
 	//===========================================================================
 	//
-	// Inventory :: ExtraDepletionBehavior
+	// Inventory :: DepleteBy
 	//
-	// Allows for additional custom depletion behavior with TakeInventory and UseInventory
+	// Handles item depletion when using or taking items
 	//
 	//===========================================================================
-	
-	virtual void ExtraDepletionBehavior (int takeAmount)
+	virtual void DepleteBy(int by, bool usedItem)
 	{
+		if (!amount || by >= amount || --Amount <= 0 && usedItem)
+		{
+			DepleteOrDestroy();
+		}
+		else
+		{
+			amount -= by;
+		}
 	}
 
 	//===========================================================================

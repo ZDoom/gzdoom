@@ -316,13 +316,13 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		if(actor->modelData && !(actor->modelData->curAnim.flags & ANIMOVERRIDE_NONE))
 		{
 			double tic = actor->Level->totaltime;
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
 			{
 				tic += I_GetTimeFrac();
 			}
 			if(actor->modelData->curAnim.startTic > tic)
 			{
-				inter = (tic - actor->modelData->curAnim.switchTic) / (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchTic);
+				inter = (tic - (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchOffset)) / actor->modelData->curAnim.switchOffset;
 
 				double nextFrame = actor->modelData->curAnim.startFrame;
 

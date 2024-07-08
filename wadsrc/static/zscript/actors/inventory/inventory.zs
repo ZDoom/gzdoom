@@ -921,9 +921,9 @@ class Inventory : Actor
 	// Handles item depletion when using or taking items
 	//
 	//===========================================================================
-	virtual void DepleteBy(int by, bool usedItem)
+	virtual void DepleteBy(int by)
 	{
-		if (!amount || by >= amount || --Amount <= 0 && usedItem)
+		if (!amount || by >= amount)
 		{
 			DepleteOrDestroy();
 		}

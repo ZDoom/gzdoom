@@ -146,7 +146,7 @@ extend class Actor
 
 		if (!fromdecorate)
 		{
-			item.DepleteBy(amount, false);
+			item.DepleteBy(amount);
 			// It won't be used in non-decorate context, so return false here
 			return false;
 		}
@@ -159,15 +159,17 @@ extend class Actor
 
 		// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
 		// and infinite ammo is on
+		// Alternatively do not take customInventory items if sv_infiniteinventory is true
 		if (notakeinfinite &&
-		(sv_infiniteammo || (player && FindInventory('PowerInfiniteAmmo', true))) && (item is 'Ammo'))
+		(sv_infiniteammo || (player && FindInventory('PowerInfiniteAmmo', true))) && (item is 'Ammo')
+		|| sv_infiniteinventory && item is 'CustomInventory')
 		{
 			// Nothing to do here, except maybe res = false;? Would it make sense?
 			result = false;
 		}
 		else
 		{
-			item.DepleteBy(amount, false);
+			item.DepleteBy(amount);
 		}
 
 		return result;
@@ -266,8 +268,10 @@ extend class Actor
 		{
 			return true;
 		}
-
-		item.DepleteBy(1, true); //useinventory can only really use one item at a time
+		else
+		{
+			item.DepleteBy(1); //useinventory can only really use one item at a time
+		}
 		return true;
 	}
 

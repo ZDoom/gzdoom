@@ -44,6 +44,7 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 #include "actor.h"
+#include "actorinlines.h"
 
 
 #ifdef _MSC_VER

@@ -159,10 +159,8 @@ extend class Actor
 
 		// Do not take ammo if the "no take infinite/take as ammo depletion" flag is set
 		// and infinite ammo is on
-		// Alternatively do not take customInventory items if sv_infiniteinventory is true
 		if (notakeinfinite &&
-		(sv_infiniteammo || (player && FindInventory('PowerInfiniteAmmo', true))) && (item is 'Ammo')
-		|| sv_infiniteinventory && item is 'CustomInventory')
+		(sv_infiniteammo || (player && FindInventory('PowerInfiniteAmmo', true))) && (item is 'Ammo'))
 		{
 			// Nothing to do here, except maybe res = false;? Would it make sense?
 			result = false;

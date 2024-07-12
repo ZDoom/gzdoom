@@ -106,7 +106,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 			if (mBasePath == nullptr)
 			{
 				// extract the base path from the first entry to cover changes made in ScanDirectory.
-				auto full = entry.FilePath.find(entry.FilePathRel);
+				auto full = entry.FilePath.rfind(entry.FilePathRel);
 				std::string path(entry.FilePath, 0, full);
 				mBasePath = stringpool->Strdup(path.c_str());
 			}

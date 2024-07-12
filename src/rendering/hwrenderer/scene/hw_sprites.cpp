@@ -913,7 +913,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		bool mirror = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if (thing->renderflags2 & RF2_ISOMETRICSPRITES) ang = vp.Angles.Yaw;
+		if ((vp.camera->ViewPos != NULL) && (vp.camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC)) ang = vp.Angles.Yaw;
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)

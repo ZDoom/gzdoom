@@ -158,7 +158,7 @@ class SpectatorCamera : Actor
 		if(tracer != NULL)
 		{
 		        if(player != NULL) zshift = -0.5*tracer.height;
-			else zshift = tracer.height;
+			else zshift = 0.5*tracer.height;
 		}
 		else if (player != NULL && player.mo != NULL) zshift = -0.5*player.mo.height;
 
@@ -168,7 +168,7 @@ class SpectatorCamera : Actor
 
 	void LookAtSelf(double inpitch)
 	{
-	        if(ViewPos.Offset != (0., 0., 0.))
+	        if(ViewPos.Offset.length() > 0.)
 		{
 	                Vector3 negviewpos = (-1.0) * ViewPos.Offset;
 			angle = negviewpos.Angle();

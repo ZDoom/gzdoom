@@ -130,6 +130,10 @@ void HWSkyInfo::init(HWDrawInfo *di, sector_t* sec, int skypos, int sky1, PalEnt
 void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
+        if(di->di->Viewpoint.camera != NULL && di->di->Viewpoint.camera->ViewPos != NULL)
+	{
+	        if(di->di->Viewpoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) return;
+	}
 
 	FSectorPortal *sportal = sector->ValidatePortal(plane);
 	if (sportal != nullptr && sportal->mFlags & PORTSF_INSKYBOX) sportal = nullptr;	// no recursions, delete it here to simplify the following code

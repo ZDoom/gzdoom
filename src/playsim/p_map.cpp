@@ -82,6 +82,7 @@
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
 #include "vm.h"
+#include "d_main.h"
 
 #include "decallib.h"
 
@@ -5577,33 +5578,42 @@ void R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double
 {
 	const DAngle baseYaw = dir.Angle();
 	FTraceResults trace = {};
-	if (Trace(viewPoint.Pos, viewPoint.sector, dir, distance, 0u, 0u, nullptr, trace))
+	if (viewPoint.camera->ViewPos && (viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) && V_IsHardwareRenderer())
+	{
+	        viewPoint.Pos += dir * distance;
+		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(viewPoint.Pos)->sector;
+	}
+	else if (Trace(viewPoint.Pos, viewPoint.sector, dir, distance, 0u, 0u, nullptr, trace))
 	{
 		viewPoint.Pos = trace.HitPos - trace.HitVector * min<double>(5.0, trace.Distance);
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(viewPoint.Pos)->sector;
+		viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	}
 	else
 	{
 		viewPoint.Pos = trace.HitPos;
 		viewPoint.sector = trace.Sector;
+		viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	}
 
-	viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	// TODO: Why does this even need to be done? Please fix tracers already.
-	if (dir.Z < 0.0)
+	if (!viewPoint.camera->ViewPos || !(viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) || !V_IsHardwareRenderer())
 	{
-		while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+	        if (dir.Z < 0.0)
 		{
-			viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
-			viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+			{
+			        viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+			}
 		}
-	}
-	else if (dir.Z > 0.0)
-	{
-		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+		else if (dir.Z > 0.0)
 		{
-			viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
+		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+			{
+			        viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
+				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
+			}
 		}
 	}
 }

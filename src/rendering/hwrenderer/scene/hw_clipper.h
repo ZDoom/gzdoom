@@ -33,6 +33,7 @@ class Clipper
 	bool blocked = false;
 
 	static angle_t AngleToPseudo(angle_t ang);
+        static angle_t PitchToPseudo(double ang);
 	bool IsRangeVisible(angle_t startangle, angle_t endangle);
 	void RemoveRange(ClipNode * cn);
 	void AddClipRange(angle_t startangle, angle_t endangle);
@@ -41,6 +42,7 @@ class Clipper
 
 public:
 
+        bool amRadar = false;
 	Clipper();
 
 	void Clear();
@@ -116,6 +118,10 @@ public:
 		SafeAddClipRange(AngleToPseudo(startangle), AngleToPseudo(endangle));
 	}
 
+	void SafeAddClipRangeDegPitches(double startpitch, double endpitch)
+	{
+		SafeAddClipRange(PitchToPseudo(startpitch), PitchToPseudo(endpitch));
+	}
 
 	void SafeRemoveClipRange(angle_t startangle, angle_t endangle)
 	{
@@ -148,8 +154,12 @@ public:
 	}
     
     angle_t PointToPseudoAngle(double x, double y);
+    angle_t PointToPseudoPitch(double x, double y, double z);
+    angle_t PointToPseudoOrthoAngle(double x, double y);
+    angle_t PointToPseudoOrthoPitch(double x, double y, double z);
 
 	bool CheckBox(const float *bspcoord);
+        bool CheckBoxOrthoPitch(const float *bspcoord);
 
 	// Used to speed up angle calculations during clipping
 	inline angle_t GetClipAngle(vertex_t *v)

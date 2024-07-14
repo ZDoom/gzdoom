@@ -407,7 +407,7 @@ angle_t Clipper::PointToPseudoAngle(double x, double y)
 	{
 		return 0;
 	}
-	else if (!amRadar && (viewpoint->camera->ViewPos != NULL) && (viewpoint->camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))
+	else if (!amRadar && viewpoint->IsOrtho())
 	{
 	        return PointToPseudoOrthoAngle(x, y);
 	}
@@ -434,7 +434,7 @@ angle_t Clipper::PointToPseudoPitch(double x, double y, double z)
 	{
 		return 0;
 	}
-	else if ((viewpoint->camera->ViewPos != NULL) && (viewpoint->camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))
+	else if (viewpoint->IsOrtho())
 	{
 	        return PointToPseudoOrthoPitch(x, y, z);
 	}
@@ -538,7 +538,7 @@ bool Clipper::CheckBox(const float *bspcoord)
 	angle1 = PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
 	angle2 = PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
 
-	if ((vp->camera->ViewPos != NULL) && (vp->camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))
+	if (vp->IsOrtho())
 	{
 	  if (angle2 != angle1) return true;
 	  switch (boxpos) // Check if the closer corner is poking into the view area
@@ -563,7 +563,7 @@ bool Clipper::CheckBoxOrthoPitch(const float *bspcoord)
 {
 	angle_t pitchmin, pitchmax;
 	auto &vp = viewpoint;
-	if (!((vp->camera->ViewPos != NULL) && (vp->camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))) return true;
+	if (!vp->IsOrtho()) return true;
 
         angle_t pitchtemp;
 	double padding = 1.0/viewpoint->ScreenProj/viewpoint->PitchCos;

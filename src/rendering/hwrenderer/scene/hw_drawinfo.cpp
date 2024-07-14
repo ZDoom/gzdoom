@@ -267,7 +267,7 @@ void HWDrawInfo::ClearBuffers()
 void HWDrawInfo::UpdateCurrentMapSection()
 {
         int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
-	if ((Viewpoint.camera->ViewPos != NULL) && (Viewpoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS))
+	if (Viewpoint.IsAllowedOoB())
 	        mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
 	CurrentMapSections.Set(mapsection);
 }
@@ -284,7 +284,7 @@ void HWDrawInfo::SetViewArea()
     auto &vp = Viewpoint;
 	// The render_sector is better suited to represent the current position in GL
 	vp.sector = Level->PointInRenderSubsector(vp.Pos)->render_sector;
-	if ((vp.camera->ViewPos != NULL) && (vp.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS))
+	if (Viewpoint.IsAllowedOoB())
 	  vp.sector = Level->PointInRenderSubsector(vp.camera->Pos())->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
@@ -710,7 +710,7 @@ void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 		double horiy = Viewpoint.Cos * actor->radius;
 		DVector3 actorpos = actor->Pos();
 		DVector3 vvec = actorpos - Viewpoint.Pos;
-		if (Viewpoint.camera->ViewPos && (Viewpoint.camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))
+		if (Viewpoint.IsOrtho())
 		{
 		        vvec += Viewpoint.camera->Pos() - actorpos;
 			vvec *= 5.0; // Should be 4.0? (since zNear is behind screen by 3*dist in VREyeInfo::GetProjection())
@@ -891,14 +891,14 @@ void HWDrawInfo::DrawScene(int drawmode)
 {
 	static int recursion = 0;
 	static int ssao_portals_available = 0;
-	const auto& vp = Viewpoint;
+	auto& vp = Viewpoint;
 
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
 	{
 		ssao_portals_available = gl_ssao_portals;
 		applySSAO = true;
-		if (r_dithertransparency)
+		if (r_dithertransparency && vp.IsAllowedOoB())
 		{
 		        vp.camera->tracer ? SetDitherTransFlags(vp.camera->tracer) : SetDitherTransFlags(players[consoleplayer].mo);
 		}
@@ -956,7 +956,7 @@ void HWDrawInfo::ProcessScene(bool toscreen)
 	portalState.BeginScene();
 
 	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
-	if ((Viewpoint.camera->ViewPos != NULL) && (Viewpoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS))
+	if (Viewpoint.IsAllowedOoB())
 	        mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
 	CurrentMapSections.Set(mapsection);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);

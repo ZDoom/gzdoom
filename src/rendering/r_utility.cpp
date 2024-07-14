@@ -563,7 +563,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewPoint.sector = viewLvl->PointInRenderSubsector(viewPoint.Pos)->sector;
-	if (!viewPoint.camera->ViewPos || !(viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) || !V_IsHardwareRenderer())
+	if (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer())
 	{
 		bool moved = false;
 		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
@@ -705,9 +705,35 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	ViewVector.Y = v.Y;
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
-	if ((camera->ViewPos != NULL) && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC) && (camera->ViewPos->Offset.XY().Length() > 0.0))
+	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
 	  ScreenProj = 1.34396 / camera->ViewPos->Offset.Length(); // [DVR] Estimated. +/-1 should be top/bottom of screen.
 
+}
+
+//==========================================================================
+//
+// R_IsAllowedOoB()
+// Checks if camera actor exists, has viewpos,
+// and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set.
+//
+//==========================================================================
+
+bool FRenderViewpoint::IsAllowedOoB()
+{
+        return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS));
+}
+
+//==========================================================================
+//
+// R_IsOrtho()
+// Checks if camera actor exists, has viewpos,
+// and viewpos has VPSF_ORTHOGRAPHIC flag set.
+//
+//==========================================================================
+
+bool FRenderViewpoint::IsOrtho()
+{
+        return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC));
 }
 
 //==========================================================================
@@ -1042,16 +1068,14 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 
 	// Keep the view within the sector's floor and ceiling
 	// But allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using hardware renderer
-	bool disembodied = false;
-	if (viewPoint.camera->ViewPos != NULL) disembodied = viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS;
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!disembodied || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->ceilingplane.ZatPoint(viewPoint.Pos) - 4.0;
 		if (viewPoint.Pos.Z > z)
 			viewPoint.Pos.Z = z;
 	}
 
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!disembodied || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->floorplane.ZatPoint(viewPoint.Pos) + 4.0;
 		if (viewPoint.Pos.Z < z)

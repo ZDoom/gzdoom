@@ -510,7 +510,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				mat.Translate(-center.X, -center.Z, -center.Y);
 			}
 
-			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && (di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC))
+			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
 			{
 			        float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				mat.Translate(center.X, center.Z, center.Y);
@@ -913,7 +913,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		bool mirror = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if ((vp.camera->ViewPos != NULL) && (vp.camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC)) ang = vp.Angles.Yaw;
+		if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)

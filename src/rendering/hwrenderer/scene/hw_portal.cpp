@@ -563,7 +563,7 @@ bool HWMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clippe
 	angle_t af = di->FrustumAngle();
 	if (af < ANGLE_180) clipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + af, vp.Angles.Yaw.BAMs() - af);
 
-	if(!((di->Viewpoint.camera->ViewPos != NULL) && (di->Viewpoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS)))
+	if(!di->Viewpoint.IsAllowedOoB())
 	        clipper->SafeAddClipRange(linedef->v1, linedef->v2);
 	return true;
 }

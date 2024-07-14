@@ -51,6 +51,8 @@ struct FRenderViewpoint
 	bool			showviewer;		// show the camera actor?
 	bool			bForceNoViewer; // Never show the camera Actor.
 	void SetViewAngle(const FViewWindow& viewWindow);
+        bool IsAllowedOoB(); // Checks if camera actor exists, has viewpos, and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set
+        bool IsOrtho(); // Checks if camera actor exists, has viewpos, and viewpos has VPSF_ORTHOGRAPHIC flag set
 
 };
 

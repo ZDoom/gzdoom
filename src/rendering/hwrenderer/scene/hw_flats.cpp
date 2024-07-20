@@ -518,7 +518,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	//
 	//
-    if (((which & SSRF_RENDERFLOOR) && frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))&& !(vp.IsOrtho() && (vp.PitchSin < 0.0)))
+	if (((which & SSRF_RENDERFLOOR) && frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))&& !(vp.IsOrtho() && (vp.PitchSin < 0.0)))
 	{
 		// process the original floor first.
 
@@ -576,7 +576,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	// 
 	//
-        if (((which & SSRF_RENDERCEILING) && frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERCEILING))) && !(vp.IsOrtho() && (vp.PitchSin > 0.0)))
+	if (((which & SSRF_RENDERCEILING) && frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERCEILING))) && !(vp.IsOrtho() && (vp.PitchSin > 0.0)))
 	{
 		// process the original ceiling first.
 

@@ -5578,9 +5578,9 @@ void R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double
 {
 	const DAngle baseYaw = dir.Angle();
 	FTraceResults trace = {};
-	if (viewPoint.camera->ViewPos && (viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) && V_IsHardwareRenderer())
+	if (viewPoint.IsAllowedOoB() && V_IsHardwareRenderer())
 	{
-	        viewPoint.Pos += dir * distance;
+		viewPoint.Pos += dir * distance;
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(viewPoint.Pos)->sector;
 	}
 	else if (Trace(viewPoint.Pos, viewPoint.sector, dir, distance, 0u, 0u, nullptr, trace))
@@ -5597,21 +5597,21 @@ void R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double
 	}
 
 	// TODO: Why does this even need to be done? Please fix tracers already.
-	if (!viewPoint.camera->ViewPos || !(viewPoint.camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS) || !V_IsHardwareRenderer())
+	if (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer())
 	{
-	        if (dir.Z < 0.0)
+		if (dir.Z < 0.0)
 		{
-		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+			while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
 			{
-			        viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+				viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
 				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
 			}
 		}
 		else if (dir.Z > 0.0)
 		{
-		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+			while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
 			{
-			        viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
+				viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
 				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
 			}
 		}

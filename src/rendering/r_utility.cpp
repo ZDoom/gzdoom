@@ -161,7 +161,7 @@ FRenderViewpoint::FRenderViewpoint()
 	TanSin = 0.0;
 	PitchCos = 0.0;
 	PitchSin = 0.0;
-        floordistfact = 0.0;
+	floordistfact = 0.0;
 	cotfloor = 0.0;
 	camera = nullptr;
 	sector = nullptr;
@@ -568,9 +568,9 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 		bool moved = false;
 		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
 		{
-		        if (viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+			if (viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
 			{
-			        const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
+				const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
 				viewPoint.Pos += offset;
 				viewPoint.ActorPos += offset;
 				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
@@ -578,24 +578,24 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 			}
 			else
 			{
-			        break;
+				break;
 			}
 		}
 
 		if (!moved)
 		{
-		        while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor))
+			while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor))
 			{
-			        if (viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+				if (viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
 				{
-				        const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+					const DVector2 offset = viewPoint.sector->GetPortalDisplacement(sector_t::floor);
 					viewPoint.Pos += offset;
 					viewPoint.ActorPos += offset;
 					viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
 				}
 				else
 				{
-				        break;
+					break;
 				}
 			}
 		}
@@ -640,7 +640,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 	// Now that we have the current interpolated position, offset from that directly (for view offset + chase cam).
 	if (!posOfs.isZero())
 	{
-	        const double distance = posOfs.Length();
+		const double distance = posOfs.Length();
 		posOfs /= distance;
 		R_OffsetView(viewPoint, posOfs, distance);
 	}
@@ -697,7 +697,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	PitchSin = Angles.Pitch.Sin();
 	PitchCos = Angles.Pitch.Cos();
 
-        floordistfact = MY_SQRT2 + ( fabs(Cos) > fabs(Sin) ? 1.0/fabs(Cos) : 1.0/fabs(Sin) );
+	floordistfact = MY_SQRT2 + ( fabs(Cos) > fabs(Sin) ? 1.0/fabs(Cos) : 1.0/fabs(Sin) );
 	cotfloor = ( fabs(Cos) > fabs(Sin) ? fabs(Sin/Cos) : fabs(Cos/Sin) );
 
 	const DVector2 v = Angles.Yaw.ToVector();
@@ -706,7 +706,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
 	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
-	  ScreenProj = 1.34396 / camera->ViewPos->Offset.Length(); // [DVR] Estimated. +/-1 should be top/bottom of screen.
+		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length(); // [DVR] Estimated. +/-1 should be top/bottom of screen.
 
 }
 
@@ -720,7 +720,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 
 bool FRenderViewpoint::IsAllowedOoB()
 {
-        return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS));
+	return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ALLOWOUTOFBOUNDS));
 }
 
 //==========================================================================
@@ -733,7 +733,7 @@ bool FRenderViewpoint::IsAllowedOoB()
 
 bool FRenderViewpoint::IsOrtho()
 {
-        return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC));
+	return (camera && camera->ViewPos && (camera->ViewPos->Flags & VPSF_ORTHOGRAPHIC));
 }
 
 //==========================================================================

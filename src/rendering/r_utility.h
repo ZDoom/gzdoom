@@ -35,14 +35,14 @@ struct FRenderViewpoint
 	double			TanSin;			// FocalTangent * sin(Angles.Yaw)
 	double			PitchCos;		// cos(Angles.Pitch)
 	double			PitchSin;		// sin(Angles.Pitch)
-        double                  floordistfact;          // used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
-        double                  cotfloor;               // used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
-        angle_t                 FrustAngle;             // FrustumAngle() result
+	double			floordistfact;	// used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
+	double			cotfloor;		// used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
+	angle_t		FrustAngle; 	// FrustumAngle() result
 
 	AActor			*camera;		// camera actor
 	sector_t		*sector;		// [RH] keep track of sector viewing from
 	DAngle			FieldOfView;	// current field of view
-        double                  ScreenProj;             // Screen projection factor for orthographic projection
+	double			ScreenProj;	// Screen projection factor for orthographic projection
 
 	double			TicFrac;		// fraction of tic for interpolation
 	uint32_t		FrameTime;		// current frame's time in tics.
@@ -51,8 +51,8 @@ struct FRenderViewpoint
 	bool			showviewer;		// show the camera actor?
 	bool			bForceNoViewer; // Never show the camera Actor.
 	void SetViewAngle(const FViewWindow& viewWindow);
-        bool IsAllowedOoB(); // Checks if camera actor exists, has viewpos, and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set
-        bool IsOrtho(); // Checks if camera actor exists, has viewpos, and viewpos has VPSF_ORTHOGRAPHIC flag set
+	bool IsAllowedOoB();				// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set
+	bool IsOrtho();					// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ORTHOGRAPHIC flag set
 
 };
 

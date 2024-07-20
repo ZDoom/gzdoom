@@ -692,9 +692,9 @@ struct FDropItem
 
 enum EViewPosFlags // [MC] Flags for SetViewPos.
 {
-	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
-	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
-	VPSF_ALLOWOUTOFBOUNDS =		1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
+	VPSF_ABSOLUTEOFFSET =		1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =			1 << 2,			// Use absolute position.
+	VPSF_ALLOWOUTOFBOUNDS =	1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
 	VPSF_ORTHOGRAPHIC =		1 << 4,			// Use orthographic projection (hardware renderer only).
 };
 
@@ -1122,8 +1122,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DVector2		AutomapOffsets;		// Offset the actors' sprite view on the automap by these coordinates.
-        float                   isoscaleY;              // Y-scale to compensate for Y-billboarding for isometric sprites
-        float                   isotheta;               // Rotation angle to compensate for Y-billboarding for isometric sprites
+	float			isoscaleY;				// Y-scale to compensate for Y-billboarding for isometric sprites
+	float			isotheta;				// Rotation angle to compensate for Y-billboarding for isometric sprites
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
 	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras

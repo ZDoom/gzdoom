@@ -512,7 +512,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 
 			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
 			{
-			        float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
+				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				mat.Translate(center.X, center.Z, center.Y);
 				mat.Translate(0.0, z2 - center.Z, 0.0);
 				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -actor->isotheta);
@@ -1014,13 +1014,13 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		thing->isotheta = vp.HWAngles.Pitch.Degrees();
 		if (thing->renderflags2 & RF2_ISOMETRICSPRITES)
 		{
-		        float floordist = thing->radius * vp.floordistfact;
+			float floordist = thing->radius * vp.floordistfact;
 			floordist -= 0.5 * r.width * vp.cotfloor;
 			float sineisotheta = floordist / r.height;
 			double scl = g_sqrt( 1.0 + sineisotheta * sineisotheta - 2.0 * vp.PitchSin * sineisotheta );
 			if ((thing->radius > 0.0) && (scl > fabs(vp.PitchCos)))
 			{
-			        thing->isoscaleY = scl / ( fabs(vp.PitchCos) > 0.01 ? fabs(vp.PitchCos) : 0.01 );
+				thing->isoscaleY = scl / ( fabs(vp.PitchCos) > 0.01 ? fabs(vp.PitchCos) : 0.01 );
 				thing->isotheta = 180.0 * asin( sineisotheta / thing->isoscaleY ) / M_PI;
 			}
 		}

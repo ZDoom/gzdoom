@@ -1166,7 +1166,7 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:
@@ -1516,7 +1516,7 @@ public:
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:

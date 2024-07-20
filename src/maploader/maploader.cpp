@@ -3266,10 +3266,10 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	// [DVR] Populate subsector->bbox for alternative space culling in orthographic projection with no fog of war
 	subsector_t* sub = &Level->subsectors[0];
 	seg_t* seg;
-	for (uint kk = 0; kk < Level->subsectors.Size(); kk++)
+	for (unsigned int kk = 0; kk < Level->subsectors.Size(); kk++)
 	{
 		sub[kk].bbox.ClearBox();
-		uint count = sub[kk].numlines;
+		unsigned int count = sub[kk].numlines;
 		seg = sub[kk].firstline;
 		while(count--)
 		{

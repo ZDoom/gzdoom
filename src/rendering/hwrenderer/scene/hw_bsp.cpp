@@ -984,7 +984,7 @@ void HWDrawInfo::RenderOrthoNoFog()
 			3.0 * Viewpoint.camera->ViewPos->Offset.Length() : 100.0;
 		FBoundingBox viewbox(vxdbl, vydbl, ext);
 
-		for (uint kk = 0; kk < Level->subsectors.Size(); kk++)
+		for (unsigned int kk = 0; kk < Level->subsectors.Size(); kk++)
 		{
 			if (Level->subsectors[kk].bbox.CheckOverlap(viewbox))
 			{

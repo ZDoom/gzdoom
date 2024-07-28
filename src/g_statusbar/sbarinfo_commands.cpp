@@ -924,6 +924,7 @@ class CommandDrawString : public SBarInfoCommand
 					break;
 				default:
 					str = GStrings.localize(label.GetChars());
+					RealignString();
 					break;
 			}
 		}

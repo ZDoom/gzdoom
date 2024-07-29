@@ -1019,6 +1019,45 @@ struct TVector4
 	}
 };
 
+inline void ZeroSubnormalsF(double& num)
+{
+	if (fabs(num) < FLT_MIN) num = 0;
+}
+
+inline void ZeroSubnormals(double& num)
+{
+	if (fabs(num) < DBL_MIN) num = 0;
+}
+
+inline void ZeroSubnormals(float& num)
+{
+	if (fabsf(num) < FLT_MIN) num = 0;
+}
+
+template<typename T>
+inline void ZeroSubnormals(TVector2<T>& vec)
+{
+	ZeroSubnormals(vec.X);
+	ZeroSubnormals(vec.Y);
+}
+
+template<typename T>
+inline void ZeroSubnormals(TVector3<T>& vec)
+{
+	ZeroSubnormals(vec.X);
+	ZeroSubnormals(vec.Y);
+	ZeroSubnormals(vec.Z);
+}
+
+template<typename T>
+inline void ZeroSubnormals(TVector4<T>& vec)
+{
+	ZeroSubnormals(vec.X);
+	ZeroSubnormals(vec.Y);
+	ZeroSubnormals(vec.Z);
+	ZeroSubnormals(vec.W);
+}
+
 template<class vec_t>
 struct TMatrix3x3
 {

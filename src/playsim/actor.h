@@ -774,6 +774,9 @@ public:
 
 	void Set(DVector3 &off, int f = -1)
 	{
+		ZeroSubnormalsF(off.X);
+		ZeroSubnormalsF(off.Y);
+		ZeroSubnormalsF(off.Z);
 		Offset = off;
 
 		if (f > -1)

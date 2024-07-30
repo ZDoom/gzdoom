@@ -221,8 +221,10 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.SetFog(0, 0);
 	}
 
+	int clampmode = nomipmap ? CLAMP_XY_NOMIP : CLAMP_XY;
+
 	uint32_t spritetype = actor? uint32_t(actor->renderflags & RF_SPRITETYPEMASK) : 0;
-	if (texture) state.SetMaterial(texture, UF_Sprite, (spritetype == RF_FACESPRITE) ? CTF_Expand : 0, CLAMP_XY, translation, OverrideShader);
+	if (texture) state.SetMaterial(texture, UF_Sprite, (spritetype == RF_FACESPRITE) ? CTF_Expand : 0, clampmode, translation, OverrideShader);
 	else if (!modelframe) state.EnableTexture(false);
 
 	//SetColor(lightlevel, rel, Colormap, trans);
@@ -770,6 +772,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (!(thing->flags & MF_STEALTH) || !di->isStealthVision() || thing == camera)
 			return;
 	}
+
+	nomipmap = (thing->renderflags2 & RF2_NOMIPMAP);
 
 	// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
 	// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
@@ -1325,6 +1329,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	actor = nullptr;
 	this->particle = particle;
 	fullbright = particle->flags & SPF_FULLBRIGHT;
+	nomipmap = particle->flags & SPF_NOMIPMAP;
 
 	if (di->isFullbrightScene()) 
 	{

@@ -499,7 +499,7 @@ const char * G_SkillName()
 		if (pmnm != NULL) name = pmnm->GetChars();
 	}
 
-	if (*name == '$') name = GStrings(name+1);
+	if (*name == '$') name = GStrings.GetString(name+1);
 	return name;
 }
 

@@ -4,8 +4,15 @@
 #include "startupinfo.h"
 #include "c_cvars.h"
 #include "gstrings.h"
+#include "version.h"
 
-static_assert(sizeof(void*) == 8, "32 builds are not supported");
+static_assert(sizeof(void*) == 8,
+	"Only LP64/LLP64 builds are officially supported. "
+	"Please do not attempt to build for other platforms; "
+	"even if the program succeeds in a MAP01 smoke test, "
+	"there are e.g. known visual artifacts "
+	"<https://forum.zdoom.org/viewtopic.php?f=7&t=75673> "
+	"that lead to a bad user experience.");
 
 // Some global engine variables taken out of the backend code.
 FStartupScreen* StartWindow;
@@ -23,7 +30,7 @@ bool			pauseext;
 
 FStartupInfo GameStartupInfo;
 
-CVAR(Bool, queryiwad, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, queryiwad, QUERYIWADDEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(String, defaultiwad, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, vid_fps, false, 0)
 

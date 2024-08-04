@@ -65,6 +65,11 @@ enum EParticleFlags
 	SPF_REPLACE					= 1 << 7,
 	SPF_NO_XY_BILLBOARD			= 1 << 8,
 	SPF_LOCAL_ANIM				= 1 << 9,
+	SPF_NEGATIVE_FADESTEP		= 1 << 10,
+	SPF_FACECAMERA				= 1 << 11,
+	SPF_NOFACECAMERA			= 1 << 12,
+	SPF_ROLLCENTER				= 1 << 13,
+	SPF_NOMIPMAP				= 1 << 14,
 };
 
 class DVisualThinker;
@@ -87,7 +92,7 @@ struct particle_t
 	FStandaloneAnimation animData; //+16 = 128
 };
 
-static_assert(sizeof(particle_t) == 128);
+static_assert(sizeof(particle_t) == 128, "Only LP64/LLP64 is supported");
 
 const uint16_t NO_PARTICLE = 0xffff;
 

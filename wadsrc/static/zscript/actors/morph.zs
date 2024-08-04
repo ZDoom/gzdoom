@@ -35,10 +35,10 @@ extend class Actor
 		MPROP_INVIS				= 1 << 6,
 	}
 
-	int UnmorphTime;
-	EMorphFlags MorphFlags;
-	class<Actor> MorphExitFlash;
-	EPremorphProperty PremorphProperties;
+	native int UnmorphTime;
+	native int MorphFlags;
+	native class<Actor> MorphExitFlash;
+	native int PremorphProperties;
 
 	// Players still track these separately for legacy reasons.
 	void SetMorphStyle(EMorphFlags flags)
@@ -99,6 +99,7 @@ extend class Actor
 	}
 
 	// [MC] Called when an actor morphs, on both the previous form (!current) and present form (current).
+	// Due to recent changes, these are now called internally instead of within the virtuals.
 	virtual void PreMorph(Actor mo, bool current) {}
 	virtual void PostMorph(Actor mo, bool current) {}
 	virtual void PreUnmorph(Actor mo, bool current) {}

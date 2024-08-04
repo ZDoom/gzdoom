@@ -2260,7 +2260,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		cht_Give (&players[player], s, ReadInt32 (stream));
 		if (player != consoleplayer)
 		{
-			FString message = GStrings("TXT_X_CHEATS");
+			FString message = GStrings.GetString("TXT_X_CHEATS");
 			message.Substitute("%s", players[player].userinfo.GetName());
 			Printf("%s: give %s\n", message.GetChars(), s);
 		}
@@ -2753,6 +2753,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			primaryLevel->localEventManager->NetCommand(netCmd);
 		}
 	break;
+
+	case DEM_CHANGESKILL:
+		NextSkill = ReadInt32(stream);
+		break;
 		
 	default:
 		I_Error ("Unknown net command: %d", type);
@@ -2848,6 +2852,7 @@ void Net_SkipCommand (int type, uint8_t **stream)
 		case DEM_INVUSE:
 		case DEM_FOV:
 		case DEM_MYFOV:
+		case DEM_CHANGESKILL:
 			skip = 4;
 			break;
 
@@ -2965,88 +2970,11 @@ int Net_GetLatency(int *ld, int *ad)
 	return severity;
 }
 
-void NetworkEntityManager::InitializeNetworkEntities()
-{
-	if (!s_netEntities.Size())
-		s_netEntities.AppendFill(nullptr, NetIDStart); // Allocate the first 0-8 slots for the world and clients.
-}
-
-// Clients need special handling since they always go in slots 1 - MAXPLAYERS.
-void NetworkEntityManager::SetClientNetworkEntity(player_t* const client)
-{
-	AActor* const mo = client->mo;
-	const uint32_t id = ClientNetIDStart + mo->Level->PlayerNum(client);
-
-	// If resurrecting, we need to swap the corpse's position with the new pawn's
-	// position so it's no longer considered the client's body.
-	DObject* const oldBody = s_netEntities[id];
-	if (oldBody != nullptr)
-	{
-		if (oldBody == mo)
-			return;
-
-		const uint32_t curID = mo->GetNetworkID();
-		
-		s_netEntities[curID] = oldBody;
-		oldBody->ClearNetworkID();
-		oldBody->SetNetworkID(curID);
-
-		mo->ClearNetworkID();
-	}
-	else
-	{
-		RemoveNetworkEntity(mo); // Free up its current id.
-	}
-
-	s_netEntities[id] = mo;
-	mo->SetNetworkID(id);
-}
-
-void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
-{
-	if (ent->IsNetworked())
-		return;
-
-	// Slot 0 is reserved for the world.
-	// Clients go in the first 1 - MAXPLAYERS slots
-	// Everything else is first come first serve.
-	uint32_t id = WorldNetID;
-	if (s_openNetIDs.Size())
-	{
-		s_openNetIDs.Pop(id);
-		s_netEntities[id] = ent;
-	}
-	else
-	{
-		id = s_netEntities.Push(ent);
-	}
-
-	ent->SetNetworkID(id);
-}
-
-void NetworkEntityManager::RemoveNetworkEntity(DObject* const ent)
-{
-	if (!ent->IsNetworked())
-		return;
-
-	const uint32_t id = ent->GetNetworkID();
-	if (id == WorldNetID)
-		return;
-
-	assert(s_netEntities[id] == ent);
-	if (id >= NetIDStart)
-		s_openNetIDs.Push(id);
-	s_netEntities[id] = nullptr;
-	ent->ClearNetworkID();
-}
-
-DObject* NetworkEntityManager::GetNetworkEntity(const uint32_t id)
-{
-	if (id == WorldNetID || id >= s_netEntities.Size())
-		return nullptr;
-
-	return s_netEntities[id];
-}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 // [RH] List "ping" times
 CCMD (pings)

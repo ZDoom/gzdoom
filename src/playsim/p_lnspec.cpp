@@ -1120,7 +1120,7 @@ FUNC(LS_Teleport_NewMap)
 FUNC(LS_Teleport)
 // Teleport (tid, sectortag, bNoSourceFog)
 {
-	int flags = TELF_DESTFOG;
+	int flags = TELF_DESTFOG | TELF_FDCOMPAT;
 	if (!arg2)
 	{
 		flags |= TELF_SOURCEFOG;
@@ -3258,7 +3258,7 @@ FUNC(LS_SendToCommunicator)
 			// Get the message from the LANGUAGE lump.
 			FString msg;
 			msg.Format("TXT_COMM%d", arg2);
-			const char *str = GStrings[msg.GetChars()];
+			const char *str = GStrings.CheckString(msg.GetChars());
 			if (str != NULL)
 			{
 				Printf (PRINT_CHAT, "%s\n", str);

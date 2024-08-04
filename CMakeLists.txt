@@ -215,20 +215,6 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( VPX )
-find_package( WebP )
-if (NOT WebP_FOUND)
-	include(FindPkgConfig)
-	pkg_check_modules(libwebp IMPORTED_TARGET libwebp)
-	if (NOT TARGET PkgConfig::libwebp)
-		message(SEND_ERROR "libwebp not found")
-	endif()
-	pkg_check_modules(libwebpmux REQUIRED IMPORTED_TARGET libwebpmux)
-	pkg_check_modules(libwebpdemux REQUIRED IMPORTED_TARGET libwebpdemux)
-
-	add_library(WebP::webp ALIAS PkgConfig::libwebp)
-	add_library(WebP::webpdemux ALIAS PkgConfig::libwebpdemux)
-	add_library(WebP::libwebpmux ALIAS PkgConfig::libwebpmux)
-endif()
 
 include( TargetArch )
 
@@ -355,6 +341,7 @@ if (HAVE_VULKAN)
 endif()
 
 add_subdirectory( libraries/ZWidget )
+add_subdirectory( libraries/webp )
 
 add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )
 set( DRPC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/discordrpc/include" )

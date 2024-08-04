@@ -903,11 +903,11 @@ bool JoinGame (int i)
 static int PrivateNetOf(in_addr in)
 {
 	int addr = ntohl(in.s_addr);
-		 if ((addr & 0xFFFF0000) == 0xC0A80000)		// 192.168.0.0
+	if ((addr & 0xFFFF0000) == 0xC0A80000)		// 192.168.0.0
 	{
 		return 0xC0A80000;
 	}
-	else if ((addr & 0xFFF00000) == 0xAC100000)		// 172.16.0.0
+	else if ((addr & 0xFFFF0000) >= 0xAC100000 && (addr & 0xFFFF0000) <= 0xAC1F0000)	// 172.16.0.0 - 172.31.0.0
 	{
 		return 0xAC100000;
 	}

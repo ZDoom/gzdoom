@@ -313,7 +313,7 @@ CCMD (idclev)
 			return;
 
 		// So be it.
-		Printf ("%s\n", GStrings("STSTR_CLEV"));
+		Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
       	G_DeferedInitNew (mapname.GetChars());
 		//players[0].health = 0;		// Force reset
 	}
@@ -337,7 +337,7 @@ CCMD (hxvisit)
 			if (P_CheckMapData(mapname.GetChars()))
 			{
 				// So be it.
-				Printf ("%s\n", GStrings("STSTR_CLEV"));
+				Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
       			G_DeferedInitNew (mapname.GetChars());
 				return;
 			}
@@ -412,7 +412,7 @@ CCMD (changeskill)
 {
 	if (!players[consoleplayer].mo || !usergame)
 	{
-		Printf ("Use the skill command when not in a game.\n");
+		Printf ("Cannot change skills while not in a game.\n");
 		return;
 	}
 
@@ -431,7 +431,8 @@ CCMD (changeskill)
 		}
 		else
 		{
-			NextSkill = skill;
+			Net_WriteInt8(DEM_CHANGESKILL);
+			Net_WriteInt32(skill);
 			Printf ("Skill %d will take effect on the next map.\n", skill);
 		}
 	}
@@ -1067,7 +1068,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings(++string) : string);
+		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings.GetString(++string) : string);
 
 		for (auto &line : brok)
 		{
@@ -1200,7 +1201,7 @@ CCMD(idmus)
 				}
 				else
 				{
-					Printf("%s\n", GStrings("STSTR_NOMUS"));
+					Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
 					return;
 				}
 			}
@@ -1214,12 +1215,12 @@ CCMD(idmus)
 				if (info->Music.IsNotEmpty())
 				{
 					S_ChangeMusic(info->Music.GetChars(), info->musicorder);
-					Printf("%s\n", GStrings("STSTR_MUS"));
+					Printf("%s\n", GStrings.GetString("STSTR_MUS"));
 				}
 			}
 			else
 			{
-				Printf("%s\n", GStrings("STSTR_NOMUS"));
+				Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
 			}
 		}
 	}

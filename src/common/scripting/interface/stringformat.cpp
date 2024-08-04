@@ -282,9 +282,9 @@ DEFINE_ACTION_FUNCTION(FStringStruct, DeleteLastCharacter)
 
 static void LocalizeString(const FString &label, bool prefixed, FString *result)
 {
-	if (!prefixed) *result = GStrings(label);
+	if (!prefixed) *result = GStrings.GetString(label);
 	else if (label[0] != '$') *result = label;
-	else *result = GStrings(&label[1]);
+	else *result = GStrings.GetString(&label[1]);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)

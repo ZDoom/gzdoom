@@ -450,7 +450,6 @@ void R_Shutdown ()
 //==========================================================================
 
 //CVAR (Int, tf, 0, 0)
-EXTERN_CVAR (Bool, cl_noprediction)
 
 bool P_NoInterpolation(player_t const *player, AActor const *actor)
 {
@@ -464,7 +463,6 @@ bool P_NoInterpolation(player_t const *player, AActor const *actor)
 		&& player->mo->reactiontime == 0
 		&& !NoInterpolateView
 		&& !paused
-		&& (!netgame || !cl_noprediction)
 		&& !LocalKeyboardTurner;
 }
 

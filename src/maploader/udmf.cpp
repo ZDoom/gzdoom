@@ -792,7 +792,7 @@ public:
 				break;
 
 			case NAME_lm_suncolor:
-			case NAME_lm_sampledistance:
+			case NAME_lm_sampledist:
 				CHECK_N(Zd | Zdt)
 					break;
 
@@ -1166,7 +1166,7 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:
@@ -1516,7 +1516,7 @@ public:
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:
@@ -2477,6 +2477,7 @@ public:
 			namespc = sc.String;
 			switch(namespc.GetIndex())
 			{
+			case NAME_Dsda:
 			case NAME_ZDoom:
 			case NAME_Eternity:
 				namespace_bits = Zd;

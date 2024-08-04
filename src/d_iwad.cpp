@@ -727,8 +727,10 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	}
 	int pick = 0;
 
-	// We got more than one so present the IWAD selection box.
-	if (picks.Size() > 1)
+	// Present the IWAD selection box.
+	bool alwaysshow = (queryiwad && !Args->CheckParm("-iwad"));
+
+	if (alwaysshow || picks.Size() > 1)
 	{
 		// Locate the user's prefered IWAD, if it was found.
 		if (defaultiwad[0] != '\0')
@@ -743,7 +745,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				}
 			}
 		}
-		if (picks.Size() > 1)
+		if (alwaysshow || picks.Size() > 1)
 		{
 			if (!havepicked)
 			{
@@ -762,9 +764,18 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				if (autoloadbrightmaps) flags |= 4;
 				if (autoloadwidescreen) flags |= 8;
 
-				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags);
+				FString extraArgs;
+
+				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags, extraArgs);
 				if (pick >= 0)
 				{
+					extraArgs.StripLeftRight();
+
+					if(extraArgs.Len() > 0)
+					{
+						Args->AppendArgsString(extraArgs);
+					}
+
 					disableautoload = !!(flags & 1);
 					autoloadlights = !!(flags & 2);
 					autoloadbrightmaps = !!(flags & 4);

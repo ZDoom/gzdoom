@@ -261,7 +261,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 			playSound |= killer->CheckLocalView();
 		}
 
-		message = GStrings(choice->Message);
+		message = GStrings.GetString(choice->Message);
 		if (message != NULL)
 		{
 			char assembled[1024];
@@ -293,7 +293,7 @@ bool AnnounceTelefrag (AActor *killer, AActor *killee)
 
 	if (cl_bbannounce && multiplayer)
 	{
-		const char *message = GStrings("OB_MPTELEFRAG");
+		const char *message = GStrings.GetString("OB_MPTELEFRAG");
 		if (message != NULL)
 		{
 			char assembled[1024];

@@ -2139,7 +2139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 
 	if (!(flags & LOF_NOSIGHTCHECK))
 	{
-		if (!P_LookForPlayers(self, true, &params))
+		if (!P_LookForPlayers(self, (self->flags4 & MF4_LOOKALLAROUND), &params)) // [RK] Account for the flag being set.
 			return 0;
 	}
 	else

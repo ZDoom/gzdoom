@@ -218,7 +218,7 @@ static void PrintMessage (const char *str)
 	{
 		if (str[0]=='$') 
 		{
-			str = GStrings(str+1);
+			str = GStrings.GetString(str+1);
 		}
 		C_MidPrint (nullptr, str);
 	}

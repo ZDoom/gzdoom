@@ -85,7 +85,12 @@ inline bool AffectedByShadows(AActor* self)
 
 inline AActor* CheckForShadows(AActor* self, AActor* other, DVector3 pos, double& penaltyFactor)
 {
-    return ((other && (other->flags & MF_SHADOW)) || (self->flags9 & MF9_DOSHADOWBLOCK)) ? P_CheckForShadowBlock(self, other, pos, penaltyFactor) : nullptr;
+	if ((other && (other->flags & MF_SHADOW)) || (self->flags9 & MF9_DOSHADOWBLOCK))
+	{
+		AActor* shadowBlock = P_CheckForShadowBlock(self, other, pos, penaltyFactor);
+		return shadowBlock ? shadowBlock : other;
+	}
+	return nullptr;
 }
 
 inline AActor* PerformShadowChecks(AActor* self, AActor* other, DVector3 pos, double& penaltyFactor)

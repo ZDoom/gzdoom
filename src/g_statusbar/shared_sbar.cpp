@@ -233,6 +233,10 @@ void ST_LoadCrosshair(bool alwaysload)
 	{
 		num = crosshair;
 	}
+	if (num < 0)
+	{
+		num = 0;
+	}
 	ST_LoadCrosshair(num, alwaysload);
 }
 
@@ -546,7 +550,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	if (!generic_ui)
 	{
 		// If the original font does not have accents this will strip them - but a fallback to the VGA font is not desirable here for such cases.
-		if (!font->CanPrint(GStrings("AM_MONSTERS")) || !font->CanPrint(GStrings("AM_SECRETS")) || !font->CanPrint(GStrings("AM_ITEMS"))) font2 = OriginalSmallFont;
+		if (!font->CanPrint(GStrings.GetString("AM_MONSTERS")) || !font->CanPrint(GStrings.GetString("AM_SECRETS")) || !font->CanPrint(GStrings.GetString("AM_ITEMS"))) font2 = OriginalSmallFont;
 	}
 
 	if (am_showtime)
@@ -571,14 +575,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		y = 0;
 		if (am_showmonsters)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
 		if (am_showsecrets)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
@@ -586,7 +590,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		// Draw item count
 		if (am_showitems)
 		{
-			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
+			textbuffer.Format("%s\34%c %d/%d", GStrings.GetString("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
 			DrawText(twod, font2, highlight, textdist, y, textbuffer.GetChars(), DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
@@ -1117,7 +1121,7 @@ void DBaseStatusBar::DrawLog ()
 		FFont *font = (generic_ui || log_vgafont)? NewSmallFont : SmallFont;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings(text.GetChars()+1) : text.GetChars());
+		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings.GetString(text.GetChars()+1) : text.GetChars());
 		int height = 20;
 
 		for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight ();
@@ -1229,76 +1233,63 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 
 void DBaseStatusBar::DrawConsistancy () const
 {
-	static bool firsttime = true;
-	int i;
-	char conbuff[64], *buff_p;
-
 	if (!netgame)
 		return;
 
-	buff_p = NULL;
-	for (i = 0; i < MAXPLAYERS; i++)
+	bool desync = false;
+	FString text = "Out of sync with:";
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && players[i].inconsistant)
 		{
-			if (buff_p == NULL)
-			{
-				strcpy (conbuff, "Out of sync with:");
-				buff_p = conbuff + 17;
-			}
-			*buff_p++ = ' ';
-			*buff_p++ = '1' + i;
-			*buff_p = 0;
+			desync = true;
+			text.AppendFormat(" %s (%d)", players[i].userinfo.GetName(10u), i + 1);
 		}
 	}
 
-	if (buff_p != NULL)
+	if (desync)
 	{
-		if (firsttime)
+		auto lines = V_BreakLines(SmallFont, twod->GetWidth() / CleanXfac - 40, text.GetChars());
+		const int height = SmallFont->GetHeight() * CleanYfac;
+		double y = 0.0;
+		for (auto& line : lines)
 		{
-			firsttime = false;
-			if (debugfile)
-			{
-				fprintf (debugfile, "%s as of tic %d (%d)\n", conbuff,
-					players[1-consoleplayer].inconsistant,
-					players[1-consoleplayer].inconsistant/ticdup);
-			}
+			DrawText(twod, SmallFont, CR_GREEN,
+				(twod->GetWidth() - SmallFont->StringWidth(line.Text) * CleanXfac) * 0.5,
+				y, line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+			y += height;
 		}
-		DrawText(twod, SmallFont, CR_GREEN,
-			(twod->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
-			0, conbuff, DTA_CleanNoMove, true, TAG_DONE);
 	}
 }
 
 void DBaseStatusBar::DrawWaiting () const
 {
-	int i;
-	char conbuff[64], *buff_p;
-
 	if (!netgame)
 		return;
 
-	buff_p = NULL;
-	for (i = 0; i < MAXPLAYERS; i++)
+	FString text = "Waiting for:";
+	bool isWaiting = false;
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i] && players[i].waiting)
 		{
-			if (buff_p == NULL)
-			{
-				strcpy (conbuff, "Waiting for:");
-				buff_p = conbuff + 12;
-			}
-			*buff_p++ = ' ';
-			*buff_p++ = '1' + i;
-			*buff_p = 0;
+			isWaiting = true;
+			text.AppendFormat(" %s (%d)", players[i].userinfo.GetName(10u), i + 1);
 		}
 	}
 
-	if (buff_p != NULL)
+	if (isWaiting)
 	{
-		DrawText(twod, SmallFont, CR_ORANGE,
-			(twod->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
-			SmallFont->GetHeight()*CleanYfac, conbuff, DTA_CleanNoMove, true, TAG_DONE);
+		auto lines = V_BreakLines(SmallFont, twod->GetWidth() / CleanXfac - 40, text.GetChars());
+		const int height = SmallFont->GetHeight() * CleanYfac;
+		double y = 0.0;
+		for (auto& line : lines)
+		{
+			DrawText(twod, SmallFont, CR_ORANGE,
+				(twod->GetWidth() - SmallFont->StringWidth(line.Text) * CleanXfac) * 0.5,
+				y, line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+			y += height;
+		}
 	}
 }
 

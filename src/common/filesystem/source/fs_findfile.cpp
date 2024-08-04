@@ -40,6 +40,9 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#ifdef __FreeBSD__
+#include <sys/time.h>
+#endif
 #include <unistd.h>
 #include <fnmatch.h>
 #include <sys/stat.h>

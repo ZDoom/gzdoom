@@ -17,7 +17,7 @@ LauncherBanner::LauncherBanner(Widget* parent) : Widget(parent)
 
 void LauncherBanner::UpdateLanguage()
 {
-	FString versionText = GStrings("PICKER_VERSION");
+	FString versionText = GStrings.GetString("PICKER_VERSION");
 	versionText.Substitute("%s", GetVersionString());
 	VersionLabel->SetText(versionText.GetChars());
 }

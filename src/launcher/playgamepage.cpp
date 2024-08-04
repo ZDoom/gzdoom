@@ -52,9 +52,9 @@ int PlayGamePage::GetSelectedGame()
 
 void PlayGamePage::UpdateLanguage()
 {
-	SelectLabel->SetText(GStrings("PICKER_SELECT"));
-	ParametersLabel->SetText(GStrings("PICKER_ADDPARM"));
-	FString welcomeText = GStrings("PICKER_WELCOME");
+	SelectLabel->SetText(GStrings.GetString("PICKER_SELECT"));
+	ParametersLabel->SetText(GStrings.GetString("PICKER_ADDPARM"));
+	FString welcomeText = GStrings.GetString("PICKER_WELCOME");
 	welcomeText.Substitute("%s", GAMENAME);
 	WelcomeLabel->SetText(welcomeText.GetChars());
 }

@@ -38,7 +38,7 @@ void I_PrintStr (const char *str);
 void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
-int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad, int&);
+int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad, int&, FString &);
 
 // [RH] Checks the registry for Steam's install path, so we can scan its
 // directories for IWADs if the user purchased any through Steam.

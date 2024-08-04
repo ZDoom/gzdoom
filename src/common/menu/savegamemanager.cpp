@@ -84,7 +84,7 @@ int FSavegameManagerBase::RemoveSaveSlot(int index)
 	int listindex = SaveGames[0]->bNoDelete ? index - 1 : index;
 	if (listindex < 0) return index;
 
-	remove(SaveGames[index]->Filename.GetChars());
+	RemoveFile(SaveGames[index]->Filename.GetChars());
 	UnloadSaveData();
 
 	FSaveGameNode *file = SaveGames[index];
@@ -274,7 +274,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
 
 unsigned FSavegameManagerBase::ExtractSaveData(int index)
 {
-	FResourceFile *resf;
+	std::unique_ptr<FResourceFile> resf;
 	FSaveGameNode *node;
 
 	if (index == -1)
@@ -295,7 +295,7 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
+		( (resf.reset(FResourceFile::OpenResourceFile(node->Filename.GetChars(), true))), resf != nullptr))
 	{
 		auto info = resf->FindEntry("info.json");
 		if (info < 0)
@@ -316,7 +316,8 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		auto pic = resf->FindEntry("savepic.png");
 		if (pic >= 0)
 		{
-			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
+			// This must use READER_CACHED or it will lock the savegame file.
+			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_CACHED, FileSys::READERFLAG_SEEKABLE);
 			PNGHandle *png = M_VerifyPNG(picreader);
 			if (png != nullptr)
 			{
@@ -329,7 +330,6 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 				}
 			}
 		}
-		delete resf;
 	}
 	return index;
 }
@@ -470,7 +470,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, GetSavegame)
 
 void FSavegameManagerBase::InsertNewSaveNode()
 {
-	NewSaveNode.SaveTitle = GStrings("NEWSAVE");
+	NewSaveNode.SaveTitle = GStrings.GetString("NEWSAVE");
 	NewSaveNode.bNoDelete = true;
 	SaveGames.Insert(0, &NewSaveNode);
 }

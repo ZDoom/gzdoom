@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(_Screen, GetTextScreenSize)
 void DrawFullscreenSubtitle(FFont* font, const char *text)
 {
 	if (!text || !*text || !inter_subtitles) return;
-	if (*text == '$') text = GStrings[text + 1];
+	text = GStrings.localize(text);
 
 	// This uses the same scaling as regular HUD messages
 	auto scale = active_con_scaletext(twod, generic_ui);
@@ -170,7 +170,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	}
 	else if (*texname == '$')
 	{
-		texname = GStrings(texname+1);
+		texname = GStrings.GetString(texname+1);
 	}
 	if (texname[0] != 0)
 	{
@@ -330,7 +330,7 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mText = static_cast<FIntermissionActionTextscreen*>(desc)->mText;
-	if (mText[0] == '$') mText = GStrings(&mText[1]);
+	if (mText[0] == '$') mText = GStrings.GetString(&mText[1]);
 
 	auto lines = mText.Split("\n");
 	mText = "";
@@ -659,7 +659,7 @@ void DIntermissionScreenCast::Drawer ()
 	if (name != NULL)
 	{
 		auto font = generic_ui ? NewSmallFont : SmallFont;
-		if (*name == '$') name = GStrings(name+1);
+		if (*name == '$') name = GStrings.GetString(name+1);
 		DrawText(twod, font, CR_UNTRANSLATED,
 			(twod->GetWidth() - font->StringWidth (name) * CleanXfac)/2,
 			(twod->GetHeight() * 180) / 200,

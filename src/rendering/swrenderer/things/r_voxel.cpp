@@ -148,6 +148,9 @@ namespace swrenderer
 
 		vis->depth = (float)tz;
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
+		vis->gpos.X += (float)voxel->xoffset;
+		vis->gpos.Y += (float)voxel->yoffset;
+		vis->gpos.Z += (float)voxel->zoffset;
 		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
 		vis->gzt = (float)gzt;		// killough 3/27/98
 		vis->deltax = float(pos.X - thread->Viewport->viewpoint.Pos.X);

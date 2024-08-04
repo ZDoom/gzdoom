@@ -589,7 +589,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		const char *log = reply->LogString.GetChars();
 		if (log[0] == '$')
 		{
-			log = GStrings(log + 1);
+			log = GStrings.GetString(log + 1);
 		}
 
 		player->SetLogText(log);
@@ -713,7 +713,7 @@ static void TerminalResponse (const char *str)
 		// handle string table replacement
 		if (str[0] == '$')
 		{
-			str = GStrings(str + 1);
+			str = GStrings.GetString(str + 1);
 		}
 
 		if (StatusBar != NULL)

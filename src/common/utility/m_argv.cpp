@@ -189,7 +189,7 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 	}
 	for (i = ++parmat; i < Argv.Size(); ++i)
 	{
-		if (Argv[i][0] == '-' || Argv[i][1] == '+')
+		if (Argv[i][0] == '-' || Argv[i][0] == '+')
 		{
 			break;
 		}
@@ -345,6 +345,114 @@ void FArgs::AppendArgs(int argc, const FString *argv)
 	}
 }
 
+//===========================================================================
+//
+// FArgs :: AppendArgsString
+//
+// Adds extra args as a space-separated string, supporting simple quoting, and inserting -file args into the right place
+//
+//===========================================================================
+
+
+void FArgs::AppendArgsString(FString argv)
+{
+	auto file_index = Argv.Find("-file");
+	auto files_end = file_index + 1;
+
+	for (; files_end < Argv.Size() && Argv[files_end][0] != '-' && Argv[files_end][0] != '+'; ++files_end);
+
+	if(file_index == Argv.Size())
+	{
+		Argv.Push("-file");
+	}
+
+	bool inserting_file = true;
+
+	argv.StripLeftRight();
+
+	size_t i = 0;
+	size_t lastSection = 0;
+	size_t lastStart = 0;
+	char lastQuoteType = 0;
+
+	FString tmp;
+	bool has_tmp = false;
+
+	for(i = 0; i < argv.Len(); i++)
+	{
+		if(argv[i] == ' ')
+		{
+			FString arg = tmp + argv.Mid(lastSection, i - lastSection);
+
+			if(arg[0] == '-' || arg[0] == '+') inserting_file = false;
+
+			if(inserting_file)
+			{
+				Argv.Insert(files_end++, arg);
+			}
+			else if(arg.Compare("-file") == 0)
+			{
+				inserting_file = true;
+			}
+			else
+			{
+				files_end++;
+				Argv.Insert(file_index++, arg);
+			}
+
+			lastSection = i + 1;
+			tmp = "";
+			has_tmp = false;
+			for(;(i + 1) < argv.Len() && argv[i + 1] == ' '; i++, lastSection++);
+			lastStart = i + 1;
+		}
+		else if(argv[i] == '\'' || argv[i] == '"')
+		{
+			lastQuoteType = argv[i];
+			tmp += argv.Mid(lastSection, i - lastSection);
+			has_tmp = true;
+			bool wasSlash = false;
+
+			for(i++; (argv[i] != lastQuoteType || wasSlash) && i < argv.Len(); i++)
+			{
+				if(i == '\\' && !wasSlash)
+				{
+					wasSlash = true;
+				}
+				else
+				{
+					tmp += argv[i];
+					wasSlash = false;
+				}
+			}
+			lastSection = i + 1;
+		}
+	}
+
+	if(lastSection != i)
+	{ // ended on an unquoted section
+		FString arg = tmp + argv.Mid(lastSection);
+		if(inserting_file)
+		{
+			Argv.Insert(files_end, arg);
+		}
+		else if(arg.Compare("-file") != 0)
+		{
+			Argv.Insert(file_index, arg);
+		}
+	}
+	else if(has_tmp)
+	{ // ended on a quote
+		if(inserting_file)
+		{
+			Argv.Insert(files_end, tmp);
+		}
+		else if(tmp.Compare("-file") != 0)
+		{
+			Argv.Insert(file_index, tmp);
+		}
+	}
+}
 //===========================================================================
 //
 // FArgs :: RemoveArg

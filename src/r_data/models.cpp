@@ -44,6 +44,7 @@
 #include "texturemanager.h"
 #include "modelrenderer.h"
 #include "actor.h"
+#include "actorinlines.h"
 
 
 #ifdef _MSC_VER
@@ -261,12 +262,19 @@ double getCurrentFrame(const AnimOverride &anim, double tic)
 {
 	if(anim.framerate <= 0) return anim.startFrame;
 
-	double duration = double(anim.lastFrame - anim.firstFrame) / double(anim.framerate); // duration in seconds
-	double startPos = double(anim.startFrame - anim.firstFrame) / double(anim.framerate);
+	double frame = ((tic - anim.startTic) / GameTicRate) * anim.framerate; // position in frames
 
-	double pos = startPos + ((tic - anim.startTic) / GameTicRate); // position in seconds
+	double duration = double(anim.lastFrame) - anim.startFrame;
 
-	return (((anim.flags & ANIMOVERRIDE_LOOP) ? fmod(pos, duration) : min(pos, duration)) * anim.framerate) + anim.firstFrame;
+	if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
+	{
+		frame = frame - duration;
+		return fmod(frame, anim.lastFrame - anim.loopFrame) + anim.loopFrame;
+	}
+	else
+	{
+		return min(frame, duration) + anim.startFrame;
+	}
 }
 
 static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
@@ -277,22 +285,7 @@ static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &
 
 	inter = frame - prev;
 
-	if(frame > anim.lastFrame)
-	{
-		if(anim.flags & ANIMOVERRIDE_LOOP)
-		{
-			next = anim.loopFrame + (prev - anim.lastFrame);
-		}
-		else
-		{
-			inter = 0;
-			prev = next = anim.lastFrame;
-		}
-	}
-	else
-	{
-		next = int(ceil(frame));
-	}
+	next = int(ceil(frame));
 }
 
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
@@ -324,16 +317,25 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		if(actor->modelData && !(actor->modelData->curAnim.flags & ANIMOVERRIDE_NONE))
 		{
 			double tic = actor->Level->totaltime;
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
 			{
 				tic += I_GetTimeFrac();
 			}
 			if(actor->modelData->curAnim.startTic > tic)
 			{
-				inter = (tic - actor->modelData->curAnim.switchTic) / (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchTic);
-				
-				calcFrame(actor->modelData->curAnim, actor->modelData->curAnim.startTic, inter_next, decoupled_next_prev_frame, decoupled_next_frame);
-				calcFrame(actor->modelData->prevAnim, actor->modelData->curAnim.switchTic, inter_main, decoupled_main_prev_frame, decoupled_main_frame);
+				inter = (tic - (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchOffset)) / actor->modelData->curAnim.switchOffset;
+
+				double nextFrame = actor->modelData->curAnim.startFrame;
+
+				double prevFrame = actor->modelData->prevAnim.startFrame;
+
+				decoupled_next_prev_frame = floor(nextFrame);
+				decoupled_next_frame = ceil(nextFrame);
+				inter_next = nextFrame - floor(nextFrame);
+
+				decoupled_main_prev_frame = floor(prevFrame);
+				decoupled_main_frame = ceil(prevFrame);
+				inter_main = prevFrame - floor(prevFrame);
 			}
 			else
 			{
@@ -615,6 +617,9 @@ void InitModels()
 		smf.animationIDs[0] = -1;
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees();
+		smf.xoffset = VoxelDefs[i]->xoffset;
+		smf.yoffset = VoxelDefs[i]->yoffset;
+		smf.zoffset = VoxelDefs[i]->zoffset;
 		// this helps catching uninitialized data.
 		assert(VoxelDefs[i]->PitchFromMomentum == true || VoxelDefs[i]->PitchFromMomentum == false);
 		if (VoxelDefs[i]->PitchFromMomentum) smf.flags |= MDL_PITCHFROMMOMENTUM;
@@ -1081,22 +1086,31 @@ void ParseModelDefLump(int Lump)
 
 FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped)
 {
-	if (GetDefaultByType(ti)->hasmodel)
+	auto def = GetDefaultByType(ti);
+	if (def->hasmodel)
 	{
-		FSpriteModelFrame smf;
-
-		memset(&smf, 0, sizeof(smf));
-		smf.type=ti;
-		smf.sprite=sprite;
-		smf.frame=frame;
-
-		int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
-
-		while (hash>=0)
+		if(def->flags9 & MF9_DECOUPLEDANIMATIONS)
 		{
-			FSpriteModelFrame * smff = &SpriteModelFrames[hash];
-			if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
-			hash=smff->hashnext;
+			FSpriteModelFrame * smf = BaseSpriteModelFrames.CheckKey((void*)ti);
+			if(smf) return smf;
+		}
+		else
+		{
+			FSpriteModelFrame smf;
+
+			memset(&smf, 0, sizeof(smf));
+			smf.type=ti;
+			smf.sprite=sprite;
+			smf.frame=frame;
+
+			int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
+
+			while (hash>=0)
+			{
+				FSpriteModelFrame * smff = &SpriteModelFrames[hash];
+				if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
+				hash=smff->hashnext;
+			}
 		}
 	}
 

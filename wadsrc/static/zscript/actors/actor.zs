@@ -509,6 +509,11 @@ class Actor : Thinker native
 	native clearscope void DisableLocalRendering(uint playerNum, bool disable);
 	native ui bool ShouldRenderLocally(); // Only clients get to check this, never the playsim.
 
+	// Called when the Actor is being used within a PSprite. This happens before potentially changing PSprite
+	// state so that any custom actions based on things like player input can be done before moving to the next
+	// state of something like a weapon.
+	virtual void PSpriteTick(PSprite psp) {}
+
 	// Called by inventory items to see if this actor is capable of touching them.
 	// If true, the item will attempt to be picked up. Useful for things like
 	// allowing morphs to pick up limited items such as keys while preventing
@@ -1305,8 +1310,8 @@ class Actor : Thinker native
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
 	native bool A_RemoveLight(Name lightid);
 
-	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame= -1, int interpolateTics = -1, int flags = 0);
-	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int interpolateTics = -1, int flags = 0);
+	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
+	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
@@ -1316,9 +1321,9 @@ class Actor : Thinker native
 	native version("4.12") void ResetModelFlags();
     
     
-	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame= -1, int interpolateTics = -1, int flags = 0)
+	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0)
 	{
-		invoker.SetAnimation(animName, framerate, startFrame, loopFrame, interpolateTics, flags);
+		invoker.SetAnimation(animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags);
 	}
 
 	action version("4.12") void A_SetAnimationFrameRate(double framerate)
@@ -1431,6 +1436,17 @@ class Actor : Thinker native
 					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO);
 				}
 			}
+		}
+	}
+
+	virtual void PlayerSquatView(Actor onmobj)
+	{
+		if (!self.player)
+			return;
+
+		if (self.player.mo == self)
+		{
+			self.player.deltaviewheight = self.Vel.Z / 8.;
 		}
 	}
 

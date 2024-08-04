@@ -34,12 +34,6 @@
 
 #ifndef _WIN32
 #include <unistd.h>
-
-#else
-#include <direct.h>
-
-#define rmdir _rmdir
-
 #endif
 
 #include <miniz.h>
@@ -906,7 +900,8 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					break;
 				}
 				else
-					gwalumps[i] = f_gwa->GetEntryReader(li + i + 1, FileSys::READER_NEW, FileSys::READERFLAG_SEEKABLE);
+					// This is a special case. The container for the map WAD is not set up to create new file handles for itself so this needs to cache the content here.
+					gwalumps[i] = f_gwa->GetEntryReader(li + i + 1, FileSys::READER_CACHED, FileSys::READERFLAG_SEEKABLE);
 			}
 			if (result) result = DoLoadGLNodes(gwalumps);
 		}
@@ -1215,11 +1210,11 @@ UNSAFE_CCMD(clearnodecache)
 	{
 		if (list[i].isDirectory)
 		{
-			rmdir(list[i].FilePath.c_str());
+			RemoveDir(list[i].FilePath.c_str());
 		}
 		else
 		{
-			remove(list[i].FilePath.c_str());
+			RemoveFile(list[i].FilePath.c_str());
 		}
 	}
 

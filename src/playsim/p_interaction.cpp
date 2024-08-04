@@ -249,11 +249,11 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		else
 		{
 			lookup.Format("$Obituary_%s_%s", attacker->GetClass()->TypeName.GetChars(), mod.GetChars());
-			if (GStrings[lookup.GetChars() + 1]) message = lookup.GetChars();
+			if (GStrings.CheckString(lookup.GetChars() + 1)) message = lookup.GetChars();
 			else
 			{
 				lookup.Format("$Obituary_%s", attacker->GetClass()->TypeName.GetChars());
-				if (GStrings[lookup.GetChars() + 1]) message = lookup.GetChars();
+				if (GStrings.CheckString(lookup.GetChars() + 1)) message = lookup.GetChars();
 				else
 				{
 					IFVIRTUALPTR(attacker, AActor, GetObituary)
@@ -273,7 +273,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message != NULL && message[0] == '$') 
 	{
-		message = GStrings.GetString(message+1, nullptr, self->player->userinfo.GetGender());
+		message = GStrings.CheckString(message+1, nullptr, self->player->userinfo.GetGender());
 	}
 
 	if (message == NULL)
@@ -283,16 +283,16 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 		if (mod == NAME_Melee)
 		{
 			FStringf ob("DEFHITOB_%s", cls);
-			message = GStrings.GetString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
+			message = GStrings.CheckString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
 		}
 		if (message == nullptr)
 		{
 			FStringf ob("DEFOB_%s", cls);
-			message = GStrings.GetString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
+			message = GStrings.CheckString(ob.GetChars(), nullptr, self->player->userinfo.GetGender());
 		}
 		if (message == nullptr)
 		{
-			message = GStrings.GetString("OB_DEFAULT", nullptr, self->player->userinfo.GetGender());
+			message = GStrings.CheckString("OB_DEFAULT", nullptr, self->player->userinfo.GetGender());
 		}
 	}
 
@@ -454,7 +454,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				player->fragcount--;
 				if (deathmatch && player->spreecount >= 5 && cl_showsprees)
 				{
-					PronounMessage (GStrings("SPREEKILLSELF"), buff,
+					PronounMessage (GStrings.GetString("SPREEKILLSELF"), buff,
 						player->userinfo.GetGender(), player->userinfo.GetName(),
 						player->userinfo.GetName());
 					StatusBar->AttachMessage (Create<DHUDMessageFadeOut>(nullptr, buff,
@@ -489,19 +489,19 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					switch (source->player->spreecount)
 					{
 					case 5:
-						spreemsg = GStrings("SPREE5");
+						spreemsg = GStrings.GetString("SPREE5");
 						break;
 					case 10:
-						spreemsg = GStrings("SPREE10");
+						spreemsg = GStrings.GetString("SPREE10");
 						break;
 					case 15:
-						spreemsg = GStrings("SPREE15");
+						spreemsg = GStrings.GetString("SPREE15");
 						break;
 					case 20:
-						spreemsg = GStrings("SPREE20");
+						spreemsg = GStrings.GetString("SPREE20");
 						break;
 					case 25:
-						spreemsg = GStrings("SPREE25");
+						spreemsg = GStrings.GetString("SPREE25");
 						break;
 					default:
 						spreemsg = NULL;
@@ -512,7 +512,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 					{
 						if (!AnnounceSpreeLoss (this))
 						{
-							PronounMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
+							PronounMessage (GStrings.GetString("SPREEOVER"), buff, player->userinfo.GetGender(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
 							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (nullptr, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -554,16 +554,16 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 							multimsg = NULL;
 							break;
 						case 2:
-							multimsg = GStrings("MULTI2");
+							multimsg = GStrings.GetString("MULTI2");
 							break;
 						case 3:
-							multimsg = GStrings("MULTI3");
+							multimsg = GStrings.GetString("MULTI3");
 							break;
 						case 4:
-							multimsg = GStrings("MULTI4");
+							multimsg = GStrings.GetString("MULTI4");
 							break;
 						default:
-							multimsg = GStrings("MULTI5");
+							multimsg = GStrings.GetString("MULTI5");
 							break;
 						}
 						if (multimsg != NULL)
@@ -587,7 +587,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 			if (deathmatch && fraglimit &&
 				fraglimit <= D_GetFragCount (source->player))
 			{
-				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
+				Printf ("%s\n", GStrings.GetString("TXT_FRAGLIMIT"));
 				Level->ExitLevel (0, false);
 			}
 		}

@@ -38,7 +38,7 @@ void I_PrintStr (const char *cp);
 void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
-int I_PickIWad(WadStuff* wads, int numwads, bool queryiwad, int defaultiwad, int& autoloadflags);
+int I_PickIWad(WadStuff* wads, int numwads, bool queryiwad, int defaultiwad, int& autoloadflags, FString &extraArgs);
 
 // The ini could not be saved at exit
 bool I_WriteIniFailed (const char* filename);

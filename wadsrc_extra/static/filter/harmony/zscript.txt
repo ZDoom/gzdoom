@@ -1,2 +1,3 @@
 version "4.5"
 #include "zscript/harm_sbar.zs"
+#include "zscript/decorate_replacement.zs"

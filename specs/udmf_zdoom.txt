@@ -122,6 +122,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       blocklandmonsters = <bool>; // Line blocks walking monsters' movement.
       locknumber = <int>;         // Line special is locked
       arg0str = <string>;         // Alternate string-based version of arg0
+      arg1str = <string>;         // Alternate string-based version of arg1
       moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
 
       transparent   = <bool>;     // true = line is a Strife transparent line (alpha 0.25)
@@ -347,6 +348,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       healthfloorgroup = <int>;       // ID of destructible object to synchronize hitpoints (optional, default is 0)
       healthceiling = <int>;          // Amount of hitpoints for this sector (includes ceiling and top-outside linedef sides)
       healthceilinggroup = <int>;     // ID of destructible object to synchronize hitpoints (optional, default is 0)
+      health3d = <int>;               // Amount of hitpoints for this sector (includes 3D floors)
+      health3dgroup = <int>;          // ID of destructible object to synchronize hitpoints (optional, default is 0)
 	  
       xscrollfloor = <float>;         // X map units per frame to scroll the floor.
       yscrollfloor = <float>;         // Y map units per frame to scroll the floor.
@@ -386,6 +389,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
       lm_sampledist_floor = <int>;      // ZDRay customizable sampling distance for this sector's floor. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
       lm_sampledist_ceiling = <int>;    // ZDRay customizable sampling distance for this sector's ceiling. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_dynamic = <bool>;              // ZDRay marks a sector's lightmaps as dynamic so that they may be updated in realtime (used for flickering lights, changing a lightmap light's position, color etc). Default = false
    }
 
    thing
@@ -395,7 +399,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       conversation = <int>      // Assigns a conversation dialogue to this thing.
                                 // Parameter is the conversation ID, 0 meaning none.
       countsecret = <bool>;     // Picking up this actor counts as a secret.
+      nocount = <bool>;         // When true, object does not count toward kills or items.
       arg0str = <string>;       // Alternate string-based version of arg0
+      arg1str = <string>;       // Alternate string-based version of arg1
       gravity = <float>;        // Set per-actor gravity. Positive values are multiplied with the class's property, 
                                 // negative values are used as their absolute. Default = 1.0.
 
@@ -416,8 +422,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
-      lm_sampledistance = <int>;    // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 16
-      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default: "FFFFFF"
+      lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8
+      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default = "FFFFFF"
+      SoftShadowRadius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
+
+      friendlyseeblocks = <int>;    // How far (in block units) a friendly monster can see other monsters. Default 10
 
       * Note about arg0str
 

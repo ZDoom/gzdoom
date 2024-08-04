@@ -169,6 +169,7 @@ union FContentIdBuilder
 struct FTextureBuffer
 {
 	uint8_t *mBuffer = nullptr;
+	bool mFreeBuffer = true;
 	int mWidth = 0;
 	int mHeight = 0;
 	uint64_t mContentId = 0;	// unique content identifier. (Two images created from the same image source with the same settings will return the same value.)
@@ -177,7 +178,7 @@ struct FTextureBuffer
 
 	~FTextureBuffer()
 	{
-		if (mBuffer) delete[] mBuffer;
+		if (mBuffer && mFreeBuffer) delete[] mBuffer;
 	}
 
 	FTextureBuffer(const FTextureBuffer &other) = delete;
@@ -187,6 +188,7 @@ struct FTextureBuffer
 		mWidth = other.mWidth;
 		mHeight = other.mHeight;
 		mContentId = other.mContentId;
+		mFreeBuffer = other.mFreeBuffer;
 		other.mBuffer = nullptr;
 	}
 
@@ -196,6 +198,7 @@ struct FTextureBuffer
 		mWidth = other.mWidth;
 		mHeight = other.mHeight;
 		mContentId = other.mContentId;
+		mFreeBuffer = other.mFreeBuffer;
 		other.mBuffer = nullptr;
 		return *this;
 	}

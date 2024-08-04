@@ -128,7 +128,15 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 			}
 			else
 			{
-				pos.Z = floorheight;
+				if (!(thing->Level->i_compatflags2 & COMPATF2_FDTELEPORT) || !(flags & TELF_FDCOMPAT) || floorheight > thing->Z())
+				{
+					pos.Z = floorheight;
+				}
+				else
+				{
+					pos.Z = thing->Z();
+				}
+
 				if (!(flags & TELF_KEEPORIENTATION))
 				{
 					resetpitch = false;
@@ -145,7 +153,16 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		}
 		else
 		{
-			pos.Z = floorheight;
+			// emulation of Final Doom's teleport glitch.
+			// For walking monsters we still have to force them to the ground because the handling of off-ground monsters is different from vanilla.
+			if (!(thing->Level->i_compatflags2 & COMPATF2_FDTELEPORT) || !(flags & TELF_FDCOMPAT) || !(thing->flags & MF_NOGRAVITY) || floorheight > pos.Z)
+			{
+				pos.Z = floorheight;
+			}
+			else
+			{
+				pos.Z = thing->Z();
+			}
 		}
 	}
 	// [MK] notify thing of incoming teleport, check for an early cancel
@@ -245,7 +262,7 @@ DEFINE_ACTION_FUNCTION(AActor, Teleport)
 	PARAM_FLOAT(z);
 	PARAM_ANGLE(an);
 	PARAM_INT(flags);
-	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
+	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags & ~TELF_FDCOMPAT));
 }
 
 //-----------------------------------------------------------------------------

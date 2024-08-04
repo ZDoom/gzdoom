@@ -519,7 +519,7 @@ void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *pale
 		!M_AppendPNGText (file, "Software", software) ||
 		!M_FinishPNG (file))
 	{
-		Printf ("%s\n", GStrings("TXT_SCREENSHOTERR"));
+		Printf ("%s\n", GStrings.GetString("TXT_SCREENSHOTERR"));
 	}
 }
 

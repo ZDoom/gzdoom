@@ -218,8 +218,6 @@ CCMD (dumpclasses)
 //
 //==========================================================================
 
-#include "d_net.h"
-
 void DObject::InPlaceConstructor (void *mem)
 {
 	new ((EInPlace *)mem) DObject;
@@ -319,7 +317,7 @@ void DObject::Release()
 
 void DObject::Destroy ()
 {
-	NetworkEntityManager::RemoveNetworkEntity(this);
+	RemoveFromNetwork();
 
 	// We cannot call the VM during shutdown because all the needed data has been or is in the process of being deleted.
 	if (PClass::bVMOperational)
@@ -332,6 +330,7 @@ void DObject::Destroy ()
 	}
 	OnDestroy();
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
+	GC::WriteBarrier(this);
 }
 
 DEFINE_ACTION_FUNCTION(DObject, Destroy)
@@ -596,6 +595,123 @@ void DObject::CheckIfSerialized () const
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DObject, MSTime)
+{
+	ACTION_RETURN_INT((uint32_t)I_msTime());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, MSTimef, I_msTimeF)
+{
+	ACTION_RETURN_FLOAT(I_msTimeF());
+}
+
+void *DObject::ScriptVar(FName field, PType *type)
+{
+	auto cls = GetClass();
+	auto sym = dyn_cast<PField>(cls->FindSymbol(field, true));
+	if (sym && (sym->Type == type || type == nullptr))
+	{
+		if (!(sym->Flags & VARF_Meta))
+		{
+			return (((char*)this) + sym->Offset);
+		}
+		else
+		{
+			return (cls->Meta + sym->Offset);
+		}
+	}
+	// This is only for internal use so I_Error is fine.
+	I_Error("Variable %s not found in %s\n", field.GetChars(), cls->TypeName.GetChars());
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void NetworkEntityManager::InitializeNetworkEntities()
+{
+	if (!s_netEntities.Size())
+		s_netEntities.AppendFill(nullptr, NetIDStart); // Allocate the first 0-8 slots for the world and clients.
+}
+
+// Clients need special handling since they always go in slots 1 - MAXPLAYERS.
+void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned int playNum)
+{
+	// If resurrecting, we need to swap the corpse's position with the new pawn's
+	// position so it's no longer considered the client's body.
+	const uint32_t id = ClientNetIDStart + playNum;
+	DObject* const oldBody = s_netEntities[id];
+	if (oldBody != nullptr)
+	{
+		if (oldBody == mo)
+			return;
+
+		const uint32_t curID = mo->GetNetworkID();
+
+		s_netEntities[curID] = oldBody;
+		oldBody->ClearNetworkID();
+		oldBody->SetNetworkID(curID);
+
+		mo->ClearNetworkID();
+	}
+	else
+	{
+		RemoveNetworkEntity(mo); // Free up its current id.
+	}
+
+	s_netEntities[id] = mo;
+	mo->SetNetworkID(id);
+}
+
+void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
+{
+	if (ent->IsNetworked())
+		return;
+
+	// Slot 0 is reserved for the world.
+	// Clients go in the first 1 - MAXPLAYERS slots
+	// Everything else is first come first serve.
+	uint32_t id = WorldNetID;
+	if (s_openNetIDs.Size())
+	{
+		s_openNetIDs.Pop(id);
+		s_netEntities[id] = ent;
+	}
+	else
+	{
+		id = s_netEntities.Push(ent);
+	}
+
+	ent->SetNetworkID(id);
+}
+
+void NetworkEntityManager::RemoveNetworkEntity(DObject* const ent)
+{
+	if (!ent->IsNetworked())
+		return;
+
+	const uint32_t id = ent->GetNetworkID();
+	if (id == WorldNetID)
+		return;
+
+	assert(s_netEntities[id] == ent);
+	if (id >= NetIDStart)
+		s_openNetIDs.Push(id);
+	s_netEntities[id] = nullptr;
+	ent->ClearNetworkID();
+}
+
+DObject* NetworkEntityManager::GetNetworkEntity(const uint32_t id)
+{
+	if (id == WorldNetID || id >= s_netEntities.Size())
+		return nullptr;
+
+	return s_netEntities[id];
+}
+
 //==========================================================================
 //
 //
@@ -623,6 +739,11 @@ void DObject::EnableNetworking(const bool enable)
 		NetworkEntityManager::AddNetworkEntity(this);
 	else
 		NetworkEntityManager::RemoveNetworkEntity(this);
+}
+
+void DObject::RemoveFromNetwork()
+{
+	NetworkEntityManager::RemoveNetworkEntity(this);
 }
 
 static unsigned int GetNetworkID(DObject* const self)
@@ -664,31 +785,3 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetNetworkEntity, GetNetworkEntity)
 	ACTION_RETURN_OBJECT(NetworkEntityManager::GetNetworkEntity(id));
 }
 
-DEFINE_ACTION_FUNCTION(DObject, MSTime)
-{
-	ACTION_RETURN_INT((uint32_t)I_msTime());
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, MSTimef, I_msTimeF)
-{
-	ACTION_RETURN_FLOAT(I_msTimeF());
-}
-
-void *DObject::ScriptVar(FName field, PType *type)
-{
-	auto cls = GetClass();
-	auto sym = dyn_cast<PField>(cls->FindSymbol(field, true));
-	if (sym && (sym->Type == type || type == nullptr))
-	{
-		if (!(sym->Flags & VARF_Meta))
-		{
-			return (((char*)this) + sym->Offset);
-		}
-		else
-		{
-			return (cls->Meta + sym->Offset);
-		}
-	}
-	// This is only for internal use so I_Error is fine.
-	I_Error("Variable %s not found in %s\n", field.GetChars(), cls->TypeName.GetChars());
-}

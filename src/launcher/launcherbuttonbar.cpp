@@ -15,8 +15,8 @@ LauncherButtonbar::LauncherButtonbar(LauncherWindow* parent) : Widget(parent)
 
 void LauncherButtonbar::UpdateLanguage()
 {
-	PlayButton->SetText(GStrings("PICKER_PLAY"));
-	ExitButton->SetText(GStrings("PICKER_EXIT"));
+	PlayButton->SetText(GStrings.GetString("PICKER_PLAY"));
+	ExitButton->SetText(GStrings.GetString("PICKER_EXIT"));
 }
 
 double LauncherButtonbar::GetPreferredHeight() const

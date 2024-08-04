@@ -154,7 +154,7 @@ static FString LookupMusic(const char* musicname, int& order)
 		// handle dehacked replacement.
 		// Any music name defined this way needs to be prefixed with 'D_' because
 		// Doom.exe does not contain the prefix so these strings don't either.
-		const char* mus_string = GStrings[musicname + 1];
+		const char* mus_string = GStrings.CheckString(musicname + 1);
 		if (mus_string != nullptr)
 		{
 			DEH_Music << "D_" << mus_string;

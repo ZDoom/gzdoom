@@ -132,7 +132,7 @@ void G_LeavingHub(FLevelLocals *Level, int mode, cluster_info_t * cluster, wbsta
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
-					wbs->thisname = GStrings(cluster->ClusterName);
+					wbs->thisname = GStrings.GetString(cluster->ClusterName);
 				}
 				else
 				{

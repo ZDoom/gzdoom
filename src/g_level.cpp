@@ -776,11 +776,12 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	{
 		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
 		{
-			if (nextinfo->flags2 & LEVEL2_RESETINVENTORY)
+			const bool doReset = dmflags3 & DF3_PISTOL_START;
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETINVENTORY))
 			{
 				inflags |= CHANGELEVEL_RESETINVENTORY;
 			}
-			if (nextinfo->flags2 & LEVEL2_RESETHEALTH)
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETHEALTH))
 			{
 				inflags |= CHANGELEVEL_RESETHEALTH;
 			}
@@ -1477,7 +1478,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 		for (int i = 0; i<MAXPLAYERS; i++)
 		{
 			if (PlayerInGame(i) && Players[i]->mo != nullptr)
-				P_PlayerStartStomp(Players[i]->mo);
+				P_PlayerStartStomp(Players[i]->mo, !deathmatch);
 		}
 	}
 
@@ -2449,7 +2450,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetClusterName)
 	if (cluster)
 	{
 		if (cluster->flags & CLUSTER_LOOKUPNAME)
-			retval = GStrings(cluster->ClusterName);
+			retval = GStrings.GetString(cluster->ClusterName);
 		else
 			retval = cluster->ClusterName;
 	}

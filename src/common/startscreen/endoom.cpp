@@ -111,7 +111,7 @@ FEndoomScreen::FEndoomScreen(int loading_lump)
 	StartupBitmap.Create(80 * 8, 26 * 16); // line 26 is for our own 'press any key to quit' message.
 	DrawTextScreen(StartupBitmap, endoom_screen);
 	ClearBlock(StartupBitmap, {0, 0, 0, 255}, 0, 25*16, 640, 16);
-	DrawString(StartupBitmap, 0, 25, GStrings("TXT_QUITENDOOM"), { 128, 128, 128 ,255}, { 0, 0, 0, 255});
+	DrawString(StartupBitmap, 0, 25, GStrings.GetString("TXT_QUITENDOOM"), { 128, 128, 128 ,255}, { 0, 0, 0, 255});
 	lastUpdateTime = I_msTime();
 	
 	// Does this screen need blinking?

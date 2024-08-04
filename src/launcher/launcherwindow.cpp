@@ -11,7 +11,7 @@
 #include <zwidget/window/window.h>
 #include <zwidget/widgets/tabwidget/tabwidget.h>
 
-int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags)
+int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags, FString * extraArgs)
 {
 	Size screenSize = GetScreenSize();
 	double windowWidth = 615.0;
@@ -22,6 +22,8 @@ int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int*
 	launcher->Show();
 
 	DisplayWindow::RunLoop();
+
+	if(extraArgs) *extraArgs = launcher->PlayGame->GetExtraArgs();
 
 	return launcher->ExecResult;
 }
@@ -54,12 +56,6 @@ void LauncherWindow::Start()
 {
 	Settings->Save();
 
-	std::string extraargs = PlayGame->GetExtraArgs();
-	if (!extraargs.empty())
-	{
-		// To do: restart the process like the cocoa backend is doing?
-	}
-
 	ExecResult = PlayGame->GetSelectedGame();
 	DisplayWindow::ExitLoop();
 }
@@ -72,8 +68,8 @@ void LauncherWindow::Exit()
 
 void LauncherWindow::UpdateLanguage()
 {
-	Pages->SetTabText(PlayGame, GStrings("PICKER_TAB_PLAY"));
-	Pages->SetTabText(Settings, GStrings("OPTMNU_TITLE"));
+	Pages->SetTabText(PlayGame, GStrings.GetString("PICKER_TAB_PLAY"));
+	Pages->SetTabText(Settings, GStrings.GetString("OPTMNU_TITLE"));
 	Banner->UpdateLanguage();
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();

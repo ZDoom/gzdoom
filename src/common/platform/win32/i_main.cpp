@@ -158,7 +158,7 @@ int DoMain (HINSTANCE hInstance)
 		Args->AppendArg(FString(wargv[i]));
 	}
 
-	if (Args->CheckParm("-stdout"))
+	if (Args->CheckParm("-stdout") || Args->CheckParm("-norun"))
 	{
 		// As a GUI application, we don't normally get a console when we start.
 		// If we were run from the shell and are on XP+, we can attach to its

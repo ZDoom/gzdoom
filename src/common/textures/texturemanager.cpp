@@ -378,7 +378,7 @@ FGameTexture *FTextureManager::FindGameTexture(const char *texname, ETextureType
 bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitute, int locmode)
 {
 	uint32_t langtable = 0;
-	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
+	if (*substitute == '$') substitute = GStrings.CheckString(substitute+1, &langtable);
 	else return true;	// String literals from the source data should never override graphics from the same definition.
 	if (substitute == nullptr) return true;	// The text does not exist.
 

@@ -267,6 +267,7 @@ enum EExplodeFlags
 	XF_THRUSTLESS = 64,
 	XF_NOALLIES = 128,
 	XF_CIRCULAR = 256,
+	XF_CIRCULARTHRUST = 512,
 };
 
 // Flags for A_RadiusThrust
@@ -276,6 +277,7 @@ enum ERadiusThrustFlags
 	RTF_NOIMPACTDAMAGE = 2,
 	RTF_NOTMISSILE = 4,
 	RTF_THRUSTZ = 16,
+	RTF_CIRCULARTHRUST = 512,
 };
 
 // Flags for A_RadiusDamageSelf
@@ -1254,7 +1256,8 @@ enum RadiusDamageFlags
 	RADF_OLDRADIUSDAMAGE = 32,
 	RADF_THRUSTLESS = 64,
 	RADF_NOALLIES = 128,
-	RADF_CIRCULAR = 256
+	RADF_CIRCULAR = 256,
+	RADF_CIRCULARTHRUST = 512,
 };
 
 enum IntermissionSequenceType

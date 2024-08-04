@@ -1524,9 +1524,13 @@ public:
 	{
 		return Z() + Height;
 	}
+	double CenterOffset() const
+	{
+		return Height / 2;
+	}
 	double Center() const
 	{
-		return Z() + Height/2;
+		return Z() + CenterOffset();
 	}
 	void SetZ(double newz, bool moving = true)
 	{
@@ -1601,6 +1605,11 @@ public:
 	{
 		Vel.X += speed * angle.Cos();
 		Vel.Y += speed * angle.Sin();
+	}
+
+	void Thrust(const DVector3& vel)
+	{
+		Vel += vel;
 	}
 
 	void Vel3DFromAngle(DAngle angle, DAngle pitch, double speed)

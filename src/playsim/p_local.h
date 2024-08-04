@@ -408,7 +408,8 @@ enum
 	RADF_OLDRADIUSDAMAGE = 32,
 	RADF_THRUSTLESS = 64,
 	RADF_NOALLIES = 128,
-	RADF_CIRCULAR = 256
+	RADF_CIRCULAR = 256,
+	RADF_CIRCULARTHRUST = 512,
 };
 int P_GetRadiusDamage(AActor *self, AActor *thing, int damage, double distance, double fulldmgdistance, bool oldradiusdmg, bool circular);
 int	P_RadiusAttack (AActor *spot, AActor *source, int damage, double distance, 

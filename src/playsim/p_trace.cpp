@@ -633,6 +633,9 @@ cont:
 		case TRACE_Stop:
 			return false;
 
+		case TRACE_ContinueOutOfBounds:
+			return true;
+
 		case TRACE_Abort:
 			Results->HitType = TRACE_HitNone;
 			return false;
@@ -732,6 +735,7 @@ bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 			switch (TraceCallback(*Results, TraceCallbackData))
 			{
 			case TRACE_Continue: return true;
+			case TRACE_ContinueOutOfBounds: return true;
 			case TRACE_Stop:	 return false;
 			case TRACE_Abort:	 Results->HitType = TRACE_HitNone; return false;
 			case TRACE_Skip:	 Results->HitType = TRACE_HitNone; return true;

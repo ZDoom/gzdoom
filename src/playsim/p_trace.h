@@ -109,6 +109,7 @@ enum ETraceStatus
 	TRACE_Continue,		// continue the trace, returning this hit if there are none further along
 	TRACE_Skip,			// continue the trace; do not return this hit
 	TRACE_Abort,		// stop the trace, returning no hits
+	TRACE_ContinueOutOfBounds,	// continue the trace through walls; don't use this for railguns
 };
 
 bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,

@@ -320,7 +320,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	state.SetObjectColor(FlatColor | 0xff000000);
 	state.SetAddColor(AddColor | 0xff000000);
 	state.ApplyTextureManipulation(TextureFx);
-
+	if (plane.plane.dithertransflag) state.SetEffect(EFF_DITHERTRANS);
 
 	if (hacktype & SSRF_PLANEHACK)
 	{
@@ -372,6 +372,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	state.SetObjectColor(0xffffffff);
 	state.SetAddColor(0);
 	state.ApplyTextureManipulation(nullptr);
+	if (plane.plane.dithertransflag) state.SetEffect(EFF_NONE);
 }
 
 //==========================================================================
@@ -408,6 +409,8 @@ inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 {
 	plane.GetFromSector(model, whichplane);
+	model->ceilingplane.dithertransflag = false; // Resetting this every frame
+	model->floorplane.dithertransflag = false; // Resetting this every frame
 	if (whichplane != int(ceiling))
 	{
 		// Flip the normal if the source plane has a different orientation than what we are about to render.
@@ -506,7 +509,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 
 	uint8_t sink;
 	uint8_t &srf = hacktype? sink : di->section_renderflags[di->Level->sections.SectionIndex(section)];
-    const auto &vp = di->Viewpoint;
+	auto &vp = di->Viewpoint;
 
 	//
 	//
@@ -515,7 +518,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	//
 	//
-	if ((which & SSRF_RENDERFLOOR) && frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))
+	if (((which & SSRF_RENDERFLOOR) && frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))&& !(vp.IsOrtho() && (vp.PitchSin < 0.0)))
 	{
 		// process the original floor first.
 
@@ -573,7 +576,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	// 
 	//
-	if ((which & SSRF_RENDERCEILING) && frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERCEILING)))
+	if (((which & SSRF_RENDERCEILING) && frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z && (!section || !(section->flags & FSection::DONTRENDERCEILING))) && !(vp.IsOrtho() && (vp.PitchSin > 0.0)))
 	{
 		// process the original ceiling first.
 

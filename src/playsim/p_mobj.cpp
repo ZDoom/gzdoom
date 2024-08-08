@@ -2937,7 +2937,7 @@ void AActor::CallFallAndSink(double grav, double oldfloorz)
 	}
 	else
 	{
-	FallAndSink(grav, oldfloorz);
+		FallAndSink(grav, oldfloorz);
 	}
 }
 
@@ -4616,6 +4616,23 @@ void AActor::SplashCheck()
 
 //==========================================================================
 //
+// AActor::PlayDiveOrSurfaceSounds
+//
+// Plays diving or surfacing sounds for the player
+//
+//==========================================================================
+
+void AActor::PlayDiveOrSurfaceSounds(int oldlevel)
+{
+	IFVIRTUAL(AActor, PlayDiveOrSurfaceSounds)
+	{
+		VMValue params[2] = { (DObject *)this, oldlevel };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+//==========================================================================
+//
 // AActor::UpdateWaterLevel
 //
 // Returns true if actor should splash
@@ -4637,21 +4654,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 
 	if (player != nullptr)
 	{
-		if (oldlevel < 3 && waterlevel == 3)
-		{
-			// Our head just went under.
-			S_Sound(this, CHAN_VOICE, 0, "*dive", 1, ATTN_NORM);
-		}
-		else if (oldlevel == 3 && waterlevel < 3)
-		{
-			// Our head just came up.
-			if (player->air_finished > Level->maptime)
-			{
-				// We hadn't run out of air yet.
-				S_Sound(this, CHAN_VOICE, 0, "*surface", 1, ATTN_NORM);
-			}
-			// If we were running out of air, then ResetAirSupply() will play *gasp.
-		}
+		PlayDiveOrSurfaceSounds(oldlevel);
 	}
 
 	return false;	// we did the splash ourselves

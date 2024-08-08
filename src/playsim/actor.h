@@ -1406,6 +1406,7 @@ public:
 	bool IsMapActor();
 	bool SetState (FState *newstate, bool nofunction=false);
 	void SplashCheck();
+	void PlayDiveOrSurfaceSounds(int oldlevel = 0);
 	bool UpdateWaterLevel (bool splash=true);
 	bool isFast();
 	bool isSlow();

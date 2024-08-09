@@ -133,6 +133,26 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabled)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, AllowsEnabledInBackground)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->AllowsEnabledInBackground());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetEnabledInBackground)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->GetEnabledInBackground());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_BOOL(enabled);
+	self->SetEnabledInBackground(enabled);
+	return 0;
+}
+
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {

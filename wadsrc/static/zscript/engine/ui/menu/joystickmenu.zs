@@ -243,6 +243,29 @@ class OptionMenuJoyEnable : OptionMenuItemOptionBase
 	}
 }
 
+
+class OptionMenuJoyEnableInBackground : OptionMenuItemOptionBase
+{
+	JoystickConfig mJoy;
+
+	OptionMenuJoyEnableInBackground Init(String label, JoystickConfig joy)
+	{
+		Super.Init(label,"none","YesNo",null,0);
+		mJoy = joy;
+		return self;
+	}
+
+	override int GetSelection()
+	{
+		return mJoy.GetEnabledInBackground() ? 1 : 0;
+	}
+
+	override void SetSelection(int Selection)
+	{
+		mJoy.SetEnabledInBackground(Selection);
+	}
+}
+
 class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 {
 	JoystickConfig mJoy;
@@ -279,11 +302,22 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 		}
 		else
 		{
+			/*
 			it = new("OptionMenuItemStaticText").Init(joy.GetName(), false);
+			opt.mItems.Push(it);
+
 			it = new("OptionMenuItemStaticText").Init("", false);
+			opt.mItems.Push(it);
+			*/
 
 			it = new("OptionMenuJoyEnable").Init("$JOYMNU_JOYENABLE", joy);
 			opt.mItems.Push(it);
+
+			if(joy.AllowsEnabledInBackground())
+			{
+				it = new("OptionMenuJoyEnableInBackground").Init("$JOYMNU_JOYENABLEINBACKGROUND", joy);
+				opt.mItems.Push(it);
+			}
 
 			it = new("OptionMenuSliderJoySensitivity").Init("$JOYMNU_OVRSENS", 0, 2, 0.1, 3, joy);
 			opt.mItems.Push(it);

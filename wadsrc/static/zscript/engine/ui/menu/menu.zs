@@ -87,6 +87,10 @@ struct JoystickConfig native version("2.4")
 	native bool GetEnabled();
 	native void SetEnabled(bool enabled);
 
+	native bool AllowsEnabledInBackground();
+	native bool GetEnabledInBackground();
+	native void SetEnabledInBackground(bool enabled);
+
 }
 
 class Menu : Object native ui version("2.4")

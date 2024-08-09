@@ -39,6 +39,10 @@ struct IJoystickConfig
 	virtual bool GetEnabled() = 0;
 	virtual void SetEnabled(bool enabled) = 0;
 
+	virtual bool AllowsEnabledInBackground() = 0;
+	virtual bool GetEnabledInBackground() = 0;
+	virtual void SetEnabledInBackground(bool enabled) = 0;
+
 	// Used by the saver to not save properties that are at their defaults.
 	virtual bool IsSensitivityDefault() = 0;
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;

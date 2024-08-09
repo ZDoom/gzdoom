@@ -442,7 +442,8 @@ enum ActorFlag9
 	MF9_DOSHADOWBLOCK			= 0x00000002,	// [inkoalawetrust] Should the monster look for SHADOWBLOCK actors ?
 	MF9_SHADOWBLOCK				= 0x00000004,	// [inkoalawetrust] Actors in the line of fire with this flag trigger the MF_SHADOW aiming penalty.
 	MF9_SHADOWAIMVERT			= 0x00000008,	// [inkoalawetrust] Monster aim is also offset vertically when aiming at shadow actors.
-	MF9_DECOUPLEDANIMATIONS	= 0x00000010,	// [RL0] Decouple model animations from states
+	MF9_DECOUPLEDANIMATIONS		= 0x00000010,	// [RL0] Decouple model animations from states
+	MF9_NOSECTORDAMAGE			= 0x00000020,	// [inkoalawetrust] Actor ignores any sector-based damage (i.e damaging floors, NOT crushers)
 };
 
 // --- mobj.renderflags ---

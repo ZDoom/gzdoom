@@ -1181,15 +1181,6 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckMusicChange)
 
 void P_CheckEnvironment(player_t *player)
 {
-	P_PlayerOnSpecial3DFloor(player);
-	P_PlayerInSpecialSector(player);
-
-	if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPoint(player->mo)) ||
-		player->mo->waterlevel)
-	{
-		// Player must be touching the floor
-		P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
-	}
 	if (player->mo->Vel.Z <= -player->mo->FloatVar(NAME_FallingScreamMinSpeed) &&
 		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && player->mo->alternative == nullptr &&
 		player->mo->waterlevel == 0)

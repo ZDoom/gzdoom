@@ -5506,7 +5506,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 			else
 			{
 				FName p(Level->Behaviors.LookupString(args[0]));
-				auto armor = Level->Players[args[1]]->mo->FindInventory(NAME_BasicArmor);
+				auto armor = Level->Players[args[1]]->mo->FindInventory(NAME_BasicArmor, true);
 				if (armor && armor->NameVar(NAME_ArmorType) == p) return armor->IntVar(NAME_Amount);
 			}
 			return 0;
@@ -5517,7 +5517,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 		{
 			if (activator == NULL || activator->player == NULL) return 0;
 
-			auto equippedarmor = activator->FindInventory(NAME_BasicArmor);
+			auto equippedarmor = activator->FindInventory(NAME_BasicArmor, true);
 
 			if (equippedarmor && equippedarmor->IntVar(NAME_Amount) != 0)
 			{
@@ -8898,7 +8898,7 @@ scriptwait:
 		case PCD_PLAYERARMORPOINTS:
 			if (activator)
 			{
-				auto armor = activator->FindInventory(NAME_BasicArmor);
+				auto armor = activator->FindInventory(NAME_BasicArmor, true);
 				PushToStack (armor ? armor->IntVar(NAME_Amount) : 0);
 			}
 			else

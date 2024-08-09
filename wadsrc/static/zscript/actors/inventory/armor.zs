@@ -106,7 +106,7 @@ class BasicArmor : Armor
 	{
 		// BasicArmor that is in use is stored in the inventory as BasicArmor.
 		// BasicArmor that is in reserve is not.
-		let copy = BasicArmor(Spawn("BasicArmor"));
+		let copy = BasicArmor(Spawn(GetBasicArmorClass()));
 		copy.SavePercent = SavePercent != 0 ? SavePercent : 0.33335;	// slightly more than 1/3 to avoid roundoff errors.
 		copy.Amount = Amount;
 		copy.MaxAmount = MaxAmount;
@@ -127,7 +127,7 @@ class BasicArmor : Armor
 
 	override bool HandlePickup (Inventory item)
 	{
-		if (item.GetClass() == "BasicArmor")
+		if (item is "BasicArmor")
 		{
 			// You shouldn't be picking up BasicArmor anyway.
 			return true;
@@ -271,13 +271,13 @@ class BasicArmorBonus : Armor
 
 	override bool Use (bool pickup)
 	{
-		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor", true));
 		bool result = false;
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
 		{
-			armor = BasicArmor(Spawn("BasicArmor"));
+			armor = BasicArmor(Spawn(GetBasicArmorClass()));
 			armor.BecomeItem ();
 			armor.Amount = 0;
 			armor.MaxAmount = MaxSaveAmount;
@@ -391,12 +391,12 @@ class BasicArmorPickup : Armor
 	override bool Use (bool pickup)
 	{
 		int SaveAmount = GetSaveAmount();
-		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor", true));
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
 		{
-			armor = BasicArmor(Spawn("BasicArmor"));
+			armor = BasicArmor(Spawn(GetBasicArmorClass()));
 			armor.BecomeItem ();
 			Owner.AddInventory (armor);
 		}
@@ -471,7 +471,7 @@ class HexenArmor : Armor
 		// Like BasicArmor, HexenArmor is used in the inventory but not the map.
 		// health is the slot this armor occupies.
 		// Amount is the quantity to give (0 = normal max).
-		let copy = HexenArmor(Spawn("HexenArmor"));
+		let copy = HexenArmor(Spawn(GetHexenArmorClass()));
 		copy.AddArmorToSlot (health, Amount);
 		GoAwayAndDie ();
 		return copy;

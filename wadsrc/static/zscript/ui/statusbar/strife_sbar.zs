@@ -287,7 +287,7 @@ class StrifeStatusBar : BaseStatusBar
 		DrawHealthBar (points, 49, 175);
 
 		// Armor
-		item = CPlayer.mo.FindInventory('BasicArmor');
+		item = CPlayer.mo.FindInventory('BasicArmor', true);
 		if (item != NULL && item.Amount > 0)
 		{
 			DrawInventoryIcon(item, (2, 177), DI_ITEM_OFFSETS);
@@ -333,7 +333,7 @@ class StrifeStatusBar : BaseStatusBar
 		DrawImage("I_MDKT", (14, -17));
 
 		// Draw armor
-		let armor = CPlayer.mo.FindInventory('BasicArmor');
+		let armor = CPlayer.mo.FindInventory('BasicArmor', true);
 		if (armor != NULL && armor.Amount != 0)
 		{
 			DrawString(mYelFont, FormatNumber(armor.Amount, 3), (35, -10));

@@ -1036,7 +1036,7 @@ public:
 		ammocount2 = ammo2 != nullptr ? ammo2->IntVar(NAME_Amount) : 0;
 
 		//prepare ammo counts
-		armor = CPlayer->mo->FindInventory(NAME_BasicArmor);
+		armor = CPlayer->mo->FindInventory(NAME_BasicArmor, true);
 	}
 
 	void _Draw (EHudState state)

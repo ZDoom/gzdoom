@@ -626,7 +626,7 @@ extend class Actor
 	}
 
 	deprecated("2.3", "For Dehacked use only")
-	void A_RadiusDamage(int dam, double dist)
+	void A_RadiusDamage(int dam, int dist)
 	{
 		A_Explode(dam, dist);
 	}

@@ -35,6 +35,7 @@
 #include "fs_findfile.h"
 #include <string.h>
 #include <vector>
+#include <sys/stat.h>
 
 #ifndef _WIN32
 
@@ -45,8 +46,6 @@
 #endif
 #include <unistd.h>
 #include <fnmatch.h>
-#include <sys/stat.h>
-
 #include <dirent.h>
 
 #endif

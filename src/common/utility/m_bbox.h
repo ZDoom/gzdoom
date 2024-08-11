@@ -72,6 +72,13 @@ public:
 			m_Box[BOXTOP] = pos.Y;
 	}
 
+	bool CheckOverlap(const FBoundingBox &box2)
+	{
+		bool hori = (Left() > box2.Right()) || (Right() < box2.Left());
+		bool vert = (Bottom() > box2.Top()) || (Top() < box2.Bottom());
+		return !(hori || vert); // [DVR] For alternative space partition
+	}
+
 	inline double Top () const { return m_Box[BOXTOP]; }
 	inline double Bottom () const { return m_Box[BOXBOTTOM]; }
 	inline double Left () const { return m_Box[BOXLEFT]; }

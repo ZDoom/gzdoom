@@ -41,6 +41,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 #include <list>
 #include <map>
 #include <set>

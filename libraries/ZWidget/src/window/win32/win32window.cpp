@@ -34,7 +34,7 @@
 
 BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult )
 {
-	typedef LRESULT(* dwmdwp)(HWND, UINT, WPARAM, LPARAM, LRESULT* );
+	typedef BOOL(* dwmdwp)(HWND, UINT, WPARAM, LPARAM, LRESULT* );
 	BOOL result(FALSE);
 	HMODULE module = LoadLibrary( _T( "dwmapi.dll" ) );
 	if( module ) {

@@ -29,6 +29,26 @@
 #define RIDEV_INPUTSINK	(0x100)
 #endif
 
+#ifdef MINGW
+// MinGW's library doesn't contain a thunk for DwmDefWindowProc, so we need to create our own
+
+BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult )
+{
+	typedef LRESULT(* dwmdwp)(HWND, UINT, WPARAM, LPARAM );
+	BOOL result(false);
+	HMODULE module = LoadLibrary( _T( "dwmapi.dll" ) );
+	if( module ) {
+		dwmdwp proc = reinterpret_cast<dwmdwp>( GetProcAddress( module, "DwmDefWindowProc" ) );
+		if( proc ) {
+			*plResult = proc( hWnd, msg, wParam, lParam );
+		}
+		FreeLibrary(module);
+	}
+	return result;
+}
+
+#endif
+
 static std::string from_utf16(const std::wstring& str)
 {
 	if (str.empty()) return {};
@@ -389,9 +409,8 @@ LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	LPARAM result = 0;
 
-	// DwmDefWindowProc is not a publicly defined symbol on Windows 11
-	/*if (DwmDefWindowProc(WindowHandle, msg, wparam, lparam, &result))
-		return result;*/
+	if (DwmDefWindowProc(WindowHandle, msg, wparam, lparam, &result))
+		return result;
 
 	if (msg == WM_INPUT)
 	{

@@ -73,11 +73,16 @@ if( WIN32 )
 		dwmapi
 	)
 
+	if( NOT MINGW )
+		list( APPEND PROJECT_LIBRARIES legacy_stdio_definitions )
+	endif()
+
 	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
 			list( APPEND PROJECT_LIBRARIES "${DX_dxguid_LIBRARY}" )
 		endif()
 	endif()
+	
 else()
 	if( APPLE )
 		set( NO_GTK ON )

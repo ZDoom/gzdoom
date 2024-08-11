@@ -31,14 +31,14 @@
 **
 */
 
-namespace FileSys {
-
 #ifdef _WIN32
 
 #ifndef _WINNT_
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+
+namespace FileSys {
 
 class FInternalCriticalSection
 {
@@ -81,6 +81,8 @@ void LeaveCriticalSection(FInternalCriticalSection *c)
 #include "critsec.h"
 
 #include <pthread.h>
+
+namespace FileSys {
 
 class FInternalCriticalSection
 {

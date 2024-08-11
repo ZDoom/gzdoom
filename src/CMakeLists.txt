@@ -69,7 +69,9 @@ if( WIN32 )
 		setupapi
 		oleaut32
 		dbghelp
-		legacy_stdio_definitions )
+		dxguid
+		dwmapi
+	)
 
 	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )

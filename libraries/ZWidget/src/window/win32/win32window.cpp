@@ -1,6 +1,7 @@
 
 #include "win32window.h"
 #include <windowsx.h>
+#include <tchar.h>
 #include <stdexcept>
 #include <cmath>
 #include <vector>
@@ -65,7 +66,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	classdesc.cbSize = sizeof(WNDCLASSEX);
 	classdesc.hInstance = GetModuleHandle(0);
 	classdesc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS;
-	classdesc.lpszClassName = L"ZWidgetWindow";
+	classdesc.lpszClassName = _T( "ZWidgetWindow" );
 	classdesc.lpfnWndProc = &Win32Window::WndProc;
 	RegisterClassEx(&classdesc);
 
@@ -74,7 +75,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	// WS_CAPTION shows the caption (yay! actually a flag that does what it says it does!)
 	// WS_SYSMENU shows the min/max/close buttons
 	// WS_THICKFRAME makes the window resizable
-	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, L"ZWidgetWindow", L"", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
+	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, _T( "ZWidgetWindow" ), _T( "" ), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
 
 	/*
 	RAWINPUTDEVICE rid;
@@ -278,7 +279,7 @@ double Win32Window::GetDpiScale() const
 	static bool done = false;
 	if (!done)
 	{
-		HMODULE hMod = GetModuleHandleA("User32.dll");
+		HMODULE hMod = GetModuleHandle( _T( "User32.dll" ));
 		if (hMod != nullptr) pGetDpiForWindow = reinterpret_cast<GetDpiForWindow_t>(GetProcAddress(hMod, "GetDpiForWindow"));
 		done = true;
 	}
@@ -387,8 +388,10 @@ void Win32Window::PresentBitmap(int width, int height, const uint32_t* pixels)
 LRESULT Win32Window::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	LPARAM result = 0;
-	if (DwmDefWindowProc(WindowHandle, msg, wparam, lparam, &result))
-		return result;
+
+	// DwmDefWindowProc is not a publicly defined symbol on Windows 11
+	/*if (DwmDefWindowProc(WindowHandle, msg, wparam, lparam, &result))
+		return result;*/
 
 	if (msg == WM_INPUT)
 	{

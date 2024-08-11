@@ -34,14 +34,13 @@
 
 BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult )
 {
-	typedef LRESULT(* dwmdwp)(HWND, UINT, WPARAM, LPARAM );
+	typedef LRESULT(* dwmdwp)(HWND, UINT, WPARAM, LPARAM, LRESULT* );
 	BOOL result(FALSE);
 	HMODULE module = LoadLibrary( _T( "dwmapi.dll" ) );
 	if( module ) {
 		dwmdwp proc = reinterpret_cast<dwmdwp>( GetProcAddress( module, "DwmDefWindowProc" ) );
 		if( proc ) {
-			*plResult = proc( hWnd, msg, wParam, lParam );
-			result = TRUE;
+			result = proc( hWnd, msg, wParam, lParam, plResult );
 		}
 		FreeLibrary(module);
 	}

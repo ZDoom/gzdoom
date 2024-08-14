@@ -76,6 +76,7 @@ struct FIWADInfo
 	FString Name;			// Title banner text for this IWAD
 	FString Autoname;		// Name of autoload ini section for this IWAD
 	FString IWadname;		// Default name this game would use - this is for IWAD detection in GAMEINFO.
+	FString SupportWAD;		// Optional support WAD, load if present (initially implemented for id24)
 	int prio = 0;			// selection priority for given IWAD name.
 	FString Configname;		// Name of config section for this IWAD
 	FString Required;		// Requires another IWAD
@@ -133,7 +134,9 @@ class FIWadManager
 	void CollectSearchPaths();
 	void AddIWADCandidates(const char *dir);
 	void ValidateIWADs();
+	FString IWADPathFileSearch(const FString &file);
 public:
+
 	FIWadManager(const char *fn, const char *fnopt);
 	const FIWADInfo *FindIWAD(std::vector<std::string>& wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
 	const FString *GetAutoname(unsigned int num) const

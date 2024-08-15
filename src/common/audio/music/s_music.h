@@ -45,6 +45,9 @@ bool S_StartMusic (const char *music_name);
 // Start music using <music_name>, and set whether looping
 bool S_ChangeMusic (const char *music_name, int order=0, bool looping=true, bool force=false);
 
+// Check if <music_name> exists
+bool MusicExists(const char* music_name);
+
 void S_RestartMusic ();
 void S_MIDIDeviceChanged(int newdev);
 

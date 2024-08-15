@@ -183,7 +183,6 @@ static bool QueryPathKey(HKEY key, const wchar_t *keypath, const wchar_t *valnam
 
 TArray<FString> I_GetGogPaths()
 {
-	// TODO Does the 2024 Update affect GOG version?
 	TArray<FString> result;
 	FString path;
 	std::wstring gamepath;
@@ -224,6 +223,13 @@ TArray<FString> I_GetGogPaths()
 	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/DOOM II_Data/StreamingAssets");	// in a subdirectory
+	}
+
+	// Look for Doom + Doom II
+	gamepath = gogregistrypath + L"\\1413291984";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
+	{
+		result.Push(path);	// directly in install folder
 	}
 
 	// Look for Final Doom
@@ -355,7 +361,6 @@ TArray<FString> I_GetBethesdaPath()
 	TArray<FString> result;
 	static const char* const bethesda_dirs[] =
 	{
-		// TODO Does the 2024 Update affect Bethesda Launcher?
 		"DOOM_Classic_2019/base",
 		"DOOM_Classic_2019/rerelease/DOOM_Data/StreamingAssets",
 		"DOOM_II_Classic_2019/base",

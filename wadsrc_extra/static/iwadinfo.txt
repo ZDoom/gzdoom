@@ -392,7 +392,7 @@ IWad
 	Autoname = "doom.id.doom1.ultimate.xbox"
 	Game = "Doom"
 	Config = "Doom"
-	IWADName = "doom.wad"
+	IWADName = "doomxbox.wad"
 	Mapinfo = "mapinfo/doomxbox.txt"
 	Compatibility = "Shorttex", "nosectionmerge"
 	MustContain = "E1M1","E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
@@ -627,11 +627,13 @@ Names
 {
 	"doom_complete.pk3"
 	"doom2.wad"
+	"doom2xbox.wad"
 	"doom2unity.wad"
 	"doom2kex.wad"
 	"doom2f.wad"
 	"doomu.wad"
 	"doom.wad"
+	"doomxbox.wad"
 	"doomunity.wad"
 	"doomkex.wad"
 	"doom1.wad"

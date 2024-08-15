@@ -93,6 +93,7 @@ public:
 	void EndObject();
 	bool HasKey(const char* name);
 	bool HasObject(const char* name);
+	bool IsKeyNull(const char* name);
 	bool BeginArray(const char *name);
 	void EndArray();
 	unsigned GetSize(const char *group);
@@ -224,6 +225,7 @@ public:
 
 	int mErrors = 0;
 	int mObjectErrors = 0;
+	FString mLumpName;
 };
 
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval);

@@ -52,6 +52,8 @@ struct UMapEntry
 	char endpic[9] = "";
 	char exitpic[9] = "";
 	char enterpic[9] = "";
+	char exitanim[9] = "";
+	char enteranim[9] = "";
 	char interbackdrop[9] = "FLOOR4_8";
 	char intermusic[9] = "";
 	int partime = 0;
@@ -185,6 +187,14 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	else if (!pname.CompareNoCase("enterpic"))
 	{
 		ParseLumpName(scanner, mape->enterpic);
+	}
+	else if (!pname.CompareNoCase("exitanim"))
+	{
+		ParseLumpName(scanner, mape->exitanim);
+	}
+	else if (!pname.CompareNoCase("enteranim"))
+	{
+		ParseLumpName(scanner, mape->enteranim);
 	}
 	else if (!pname.CompareNoCase("nointermission"))
 	{
@@ -443,6 +453,8 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.partime > 0) levelinfo->partime = map.partime;
 		if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
 		if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
+		if (map.enteranim[0]) levelinfo->EnterAnim = map.enteranim;
+		if (map.exitanim[0]) levelinfo->ExitAnim = map.exitanim;
 		/* UMAPINFO's intermusic is for the text screen, not the summary.
 		if (map.intermusic[0])
 		{

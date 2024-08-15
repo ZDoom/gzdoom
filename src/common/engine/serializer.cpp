@@ -197,7 +197,10 @@ void FSerializer::Close()
 	}
 	if (mErrors > 0)
 	{
-		I_Error("%d errors parsing JSON", mErrors);
+		if (mLumpName.IsNotEmpty())
+			I_Error("%d errors parsing JSON lump %s", mErrors, mLumpName.GetChars());
+		else
+			I_Error("%d errors parsing JSON", mErrors);
 	}
 }
 
@@ -317,6 +320,28 @@ bool FSerializer::HasObject(const char* name)
 		if (val != nullptr)
 		{
 			if (val->IsObject())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool FSerializer::IsKeyNull(const char* name)
+{
+	if (isReading())
+	{
+		auto val = r->FindKey(name);
+		if (val != nullptr)
+		{
+			if (val->IsNull())
 			{
 				return true;
 			}

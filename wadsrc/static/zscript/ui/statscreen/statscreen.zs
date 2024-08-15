@@ -6,6 +6,7 @@ class InterBackground native ui version("2.5")
 	native virtual bool LoadBackground(bool isenterpic);
 	native virtual void updateAnimatedBack();
 	native virtual void drawBackground(int CurState, bool drawsplat, bool snl_pointeron);
+	native virtual bool IsUsingMusic();
 }
 
 // This is obsolete. Hopefully this was never used...
@@ -825,7 +826,8 @@ class StatusScreen : ScreenJob abstract version("2.5")
 	
 	virtual void StartMusic()
 	{
-		Level.SetInterMusic(wbs.next);
+		if (!bg.IsUsingMusic())
+			Level.SetInterMusic(wbs.next);
 	}
 
 	//====================================================================

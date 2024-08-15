@@ -130,6 +130,24 @@ static FileReader OpenMusic(const char* musicname)
 	return reader;
 }
 
+bool MusicExists(const char* music_name)
+{
+	if (music_name == nullptr)
+		return false;
+
+	if (FileExists(music_name))
+		return true;
+	else
+	{
+		int lumpnum;
+		lumpnum = mus_cb.FindMusic(music_name);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(music_name, FileSys::ns_music);
+		if (lumpnum != -1 && fileSystem.FileLength(lumpnum) != 0)
+			return true;
+	}
+	return false;
+}
+
 void S_SetMusicCallbacks(MusicCallbacks* cb)
 {
 	mus_cb = *cb;

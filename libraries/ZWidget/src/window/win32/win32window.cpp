@@ -36,7 +36,11 @@ BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 {
 	typedef BOOL(* dwmdwp)(HWND, UINT, WPARAM, LPARAM, LRESULT* );
 	BOOL result(FALSE);
+<<<<<<< Updated upstream
 	HMODULE module = LoadLibrary( _T( "dwmapi.dll" ) );
+=======
+	HMODULE module = LoadLibrary( L"dwmapi.dll" );
+>>>>>>> Stashed changes
 	if( module ) {
 		dwmdwp proc = reinterpret_cast<dwmdwp>( GetProcAddress( module, "DwmDefWindowProc" ) );
 		if( proc ) {

@@ -69,20 +69,13 @@ if( WIN32 )
 		setupapi
 		oleaut32
 		dbghelp
-		dxguid
-		dwmapi
-	)
-
-	if( NOT MINGW )
-		list( APPEND PROJECT_LIBRARIES legacy_stdio_definitions )
-	endif()
+		legacy_stdio_definitions )
 
 	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
 			list( APPEND PROJECT_LIBRARIES "${DX_dxguid_LIBRARY}" )
 		endif()
 	endif()
-	
 else()
 	if( APPLE )
 		set( NO_GTK ON )

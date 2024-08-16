@@ -46,7 +46,6 @@ static void* PosixGetProcAddress (const GLubyte* name)
 #undef APIENTRY
 #endif
 #include <windows.h>
-#include <tchar.h>
 
 
 #ifdef _MSC_VER
@@ -77,7 +76,7 @@ static void CheckOpenGL(void)
 {
     if (opengl32dll == 0)
     {
-        opengl32dll = LoadLibrary(_T("OpenGL32.DLL"));
+        opengl32dll = LoadLibraryA("OpenGL32.DLL");
 		if (opengl32dll != 0)
 		{
 			createcontext = (HGLRC(WINAPI*)(HDC)) GetProcAddress(opengl32dll, "wglCreateContext");

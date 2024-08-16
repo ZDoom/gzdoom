@@ -1,7 +1,6 @@
 
 #include "win32window.h"
 #include <windowsx.h>
-#include <tchar.h>
 #include <stdexcept>
 #include <cmath>
 #include <vector>

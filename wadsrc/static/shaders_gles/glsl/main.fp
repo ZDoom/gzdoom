@@ -493,6 +493,11 @@ void main()
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
 
+#ifdef DITHERTRANS
+	int index = (int(pixelpos.x) % 2) * 2 + int(pixelpos.y) % 2;
+	if (index != 2) discard;
+#endif
+
 	#if (DEF_FOG_2D == 0)	// check for special 2D 'fog' mode.
 	{
 		float fogdist = 0.0;

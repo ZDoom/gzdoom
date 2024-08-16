@@ -303,6 +303,7 @@ struct secplane_t
 	DVector3 normal;
 	double  D, negiC;	// negative iC because that also saves a negation in all methods using this.
 public:
+	bool dithertransflag;	// Render plane with dithering transparency shader (gets reset every frame)
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, secplane_t &p, secplane_t *def);
 
 	void set(double aa, double bb, double cc, double dd)
@@ -1179,6 +1180,8 @@ enum
 	WALLF_ABSLIGHTING_TOP		= WALLF_ABSLIGHTING_TIER << 0, 	// Top tier light is absolute instead of relative
 	WALLF_ABSLIGHTING_MID		= WALLF_ABSLIGHTING_TIER << 1, 	// Mid tier light is absolute instead of relative
 	WALLF_ABSLIGHTING_BOTTOM 	= WALLF_ABSLIGHTING_TIER << 2,	// Bottom tier light is absolute instead of relative
+
+	WALLF_DITHERTRANS			= 8192,	// Render with dithering transparency shader (gets reset every frame)
 };
 
 struct side_t
@@ -1654,6 +1657,7 @@ struct subsector_t
 	uint32_t	numlines;
 	uint16_t	flags;
 	short		mapsection;
+	FBoundingBox	bbox; // [DVR] For alternative space culling in orthographic projection with no fog of war
 
 	// subsector related GL data
 	int				validcount;

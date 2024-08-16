@@ -1450,6 +1450,25 @@ class Actor : Thinker native
 		}
 	}
 
+	virtual void PlayDiveOrSurfaceSounds(int oldlevel)
+	{
+		if (oldlevel < 3 && WaterLevel == 3)
+		{
+			// Our head just went under.
+			A_StartSound("*dive", CHAN_VOICE, attenuation: ATTN_NORM);
+		}
+		else if (oldlevel == 3 && WaterLevel < 3)
+		{
+			// Our head just came up.
+			if (player.air_finished > Level.maptime)
+			{
+				// We hadn't run out of air yet.
+				A_StartSound("*surface", CHAN_VOICE, attenuation: ATTN_NORM);
+			}
+			// If we were running out of air, then ResetAirSupply() will play *gasp.
+		}
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// PROC A_CheckSkullDone

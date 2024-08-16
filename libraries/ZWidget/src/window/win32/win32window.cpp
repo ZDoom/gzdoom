@@ -80,7 +80,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	Windows.push_front(this);
 	WindowsIterator = Windows.begin();
 
-	WNDCLASSEX classdesc = {};
+	WNDCLASSEXW classdesc = {};
 	classdesc.cbSize = sizeof(WNDCLASSEX);
 	classdesc.hInstance = GetModuleHandle(0);
 	classdesc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS;
@@ -93,7 +93,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	// WS_CAPTION shows the caption (yay! actually a flag that does what it says it does!)
 	// WS_SYSMENU shows the min/max/close buttons
 	// WS_THICKFRAME makes the window resizable
-	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, L"ZWidgetWindow", L"", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
+	CreateWindowExW(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, L"ZWidgetWindow", L"", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
 
 	/*
 	RAWINPUTDEVICE rid;

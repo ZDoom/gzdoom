@@ -128,3 +128,87 @@ class AimingCamera : SecurityCamera
 	}
 
 }
+
+class SpectatorCamera : Actor
+{
+
+	bool chasingtracer;
+	double lagdistance; // camera gives chase (lazy follow) if tracer gets > lagdistance away from camera.pos
+	int chasemode; // 0: chase until tracer centered, 1: same but only when tracer is moving, 2: stop chase if tracer within lagdistance
+	property lagdistance : lagdistance;
+	property chasingtracer : chasingtracer;
+	property chasemode : chasemode;
+
+	default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+NOINTERACTION
+		RenderStyle "None";
+		CameraHeight 0;
+		SpectatorCamera.chasingtracer false;
+		SpectatorCamera.lagdistance 0.0;
+		SpectatorCamera.chasemode 0;
+	}
+
+	void Init(double dist, double yaw, double inpitch, int inflags)
+	{
+
+		double zshift = 0.0;
+		if(tracer != NULL)
+		{
+			if(player != NULL) zshift = -0.25*tracer.height;
+			else zshift = 0.5*tracer.height;
+		}
+		else if (player != NULL && player.mo != NULL) zshift = -0.5*player.mo.height;
+
+		SetViewPos((-dist*Cos(yaw)*Cos(inpitch), -dist*Sin(yaw)*Cos(inpitch), dist*Sin(inpitch)+zshift), inflags);
+		LookAtSelf(inpitch);
+	}
+
+	void LookAtSelf(double inpitch)
+	{
+		if(ViewPos.Offset.length() > 0.)
+		{
+			Vector3 negviewpos = (-1.0) * ViewPos.Offset;
+			angle = negviewpos.Angle();
+			pitch = inpitch;
+		}
+	}
+
+	override void Tick()
+	{
+		if(tracer != NULL)
+		{
+			Vector3 distvec = tracer.pos - pos;
+			double dist = distvec.length();
+			if((dist <= 4 && chasingtracer) || lagdistance <= 0.0) // Keep tracer centered on screen
+			{
+				SetOrigin(tracer.pos, true);
+				chasingtracer = false;
+			}
+			else // Lazy follow tracer
+			{
+				if(dist >= 2*lagdistance)
+				{
+					SetOrigin(tracer.pos, true);
+					chasingtracer = false;
+				}
+				else if(dist > lagdistance && !chasingtracer) chasingtracer = true;
+
+				if(chasingtracer)
+				{
+					speed = tracer.vel.xy.length()/dist;
+					if((speed == 0.0) && (chasemode == 0)) speed = tracer.speed/dist;
+					SetOrigin(pos + 2*distvec*speed, true);
+					if(chasemode > 1) chasingtracer = false;
+				}
+			}
+		}
+		else if(player != NULL && player.mo != NULL)
+		{
+			cameraFOV = player.FOV;
+			SetOrigin(player.mo.pos, true);
+		}
+	}
+}

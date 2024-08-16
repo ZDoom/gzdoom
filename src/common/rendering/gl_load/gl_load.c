@@ -76,7 +76,7 @@ static void CheckOpenGL(void)
 {
     if (opengl32dll == 0)
     {
-        opengl32dll = LoadLibrary(L"OpenGL32.DLL");
+        opengl32dll = LoadLibraryA("OpenGL32.DLL");
 		if (opengl32dll != 0)
 		{
 			createcontext = (HGLRC(WINAPI*)(HDC)) GetProcAddress(opengl32dll, "wglCreateContext");

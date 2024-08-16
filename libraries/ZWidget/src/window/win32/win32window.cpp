@@ -35,11 +35,7 @@ BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 {
 	typedef BOOL(* dwmdwp)(HWND, UINT, WPARAM, LPARAM, LRESULT* );
 	BOOL result(FALSE);
-<<<<<<< Updated upstream
-	HMODULE module = LoadLibrary( _T( "dwmapi.dll" ) );
-=======
 	HMODULE module = LoadLibrary( L"dwmapi.dll" );
->>>>>>> Stashed changes
 	if( module ) {
 		dwmdwp proc = reinterpret_cast<dwmdwp>( GetProcAddress( module, "DwmDefWindowProc" ) );
 		if( proc ) {
@@ -49,7 +45,6 @@ BOOL DwmDefWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT
 	}
 	return result;
 }
-
 #endif
 
 static std::string from_utf16(const std::wstring& str)
@@ -89,7 +84,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	classdesc.cbSize = sizeof(WNDCLASSEX);
 	classdesc.hInstance = GetModuleHandle(0);
 	classdesc.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS;
-	classdesc.lpszClassName = _T( "ZWidgetWindow" );
+	classdesc.lpszClassName = L"ZWidgetWindow";
 	classdesc.lpfnWndProc = &Win32Window::WndProc;
 	RegisterClassEx(&classdesc);
 
@@ -98,7 +93,7 @@ Win32Window::Win32Window(DisplayWindowHost* windowHost) : WindowHost(windowHost)
 	// WS_CAPTION shows the caption (yay! actually a flag that does what it says it does!)
 	// WS_SYSMENU shows the min/max/close buttons
 	// WS_THICKFRAME makes the window resizable
-	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, _T( "ZWidgetWindow" ), _T( "" ), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
+	CreateWindowEx(WS_EX_APPWINDOW | WS_EX_DLGMODALFRAME, L"ZWidgetWindow", L"", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX, 0, 0, 100, 100, 0, 0, GetModuleHandle(0), this);
 
 	/*
 	RAWINPUTDEVICE rid;
@@ -302,7 +297,7 @@ double Win32Window::GetDpiScale() const
 	static bool done = false;
 	if (!done)
 	{
-		HMODULE hMod = GetModuleHandle( _T( "User32.dll" ));
+		HMODULE hMod = GetModuleHandle( L"User32.dll");
 		if (hMod != nullptr) pGetDpiForWindow = reinterpret_cast<GetDpiForWindow_t>(GetProcAddress(hMod, "GetDpiForWindow"));
 		done = true;
 	}

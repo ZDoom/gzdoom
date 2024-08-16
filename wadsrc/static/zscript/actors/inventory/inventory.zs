@@ -281,6 +281,7 @@ class Inventory : Actor
 			if (!item || item == self)
 				continue;
 
+			item.ClearCounters();
 			item.bSharingItem = true;
 			item.bDropped = item.bNeverLocal = true;
 			if (!item.CallTryPickup(players[i].mo))
@@ -847,6 +848,8 @@ class Inventory : Actor
 				return;
 
 			localPickUp = give != self;
+			if (localPickUp)
+				give.ClearCounters();
 		}
 
 		bool res;
@@ -1124,6 +1127,7 @@ class Inventory : Actor
 		int pNum = client.PlayerNumber();
 		pickedUp[pNum] = true;
 		DisableLocalRendering(pNum, true);
+		bCountItem = bCountSecret = false;
 	}
 
 	// Force spawn a new version of the item. This needs to use CreateCopy so that

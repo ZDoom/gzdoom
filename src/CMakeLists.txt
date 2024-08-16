@@ -271,6 +271,12 @@ if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode" )
 	endif()
 
+	# MINGW needs to be told to build in Unicode.
+	if( MINGW )
+		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -municode" )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -municode" )
+	endif()
+
 	# Detect FreeBSD and add flags
 	if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )

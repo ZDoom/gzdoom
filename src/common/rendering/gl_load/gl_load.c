@@ -46,7 +46,6 @@ static void* PosixGetProcAddress (const GLubyte* name)
 #undef APIENTRY
 #endif
 #include <windows.h>
-#include <tchar.h>
 
 
 #ifdef _MSC_VER

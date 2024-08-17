@@ -536,7 +536,7 @@ class Actor : Thinker native
 	// items that disappear on pickup.
 	// 'itemcls' is passed unconditionally, so it can still be read even if
 	// 'item' is null due to being destroyed with GoAwayAndDie() on pickup.
-	virtual void HasReceived(Inventory item, class<Inventory> itemcls) {}
+	virtual void HasReceived(Inventory item, class<Inventory> itemcls = null) {}
 
   // Called in TryMove if the mover ran into another Actor. This isn't called on players
 	// if they're currently predicting. Guarantees collisions unlike CanCollideWith.
@@ -707,7 +707,7 @@ class Actor : Thinker native
 	native void SoundAlert(Actor target, bool splash = false, double maxdist = 0);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
-	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibility�. */);
+	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibility. */);
 	native bool CheckNoDelay();
 	native bool UpdateWaterLevel (bool splash = true);
 	native bool IsZeroDamage();

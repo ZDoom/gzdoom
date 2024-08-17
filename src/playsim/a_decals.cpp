@@ -934,3 +934,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(ADecal, SpawnDecal, SpawnDecal)
 	SpawnDecal(self);
 	return 0;
 }
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+static int GetDecalName(AActor* self)
+{
+	return self->DecalGenerator != nullptr ? self->DecalGenerator->GetDecalName().GetIndex() : NAME_None;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetDecalName, GetDecalName)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_INT(GetDecalName(self));
+}

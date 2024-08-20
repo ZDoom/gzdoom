@@ -1782,7 +1782,7 @@ bool ConsiderPatches (const char *arg)
 		if ( (f = BaseFileSearch(args[i].GetChars(), ".deh", false, GameConfig)) ||
 			 (f = BaseFileSearch(args[i].GetChars(), ".bex", false, GameConfig)) )
 		{
-			D_LoadDehFile(f);
+			D_LoadDehFile(f, 0);
 		}
 	}
 	return argc > 0;
@@ -3396,7 +3396,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	auto numbasesounds = soundEngine->GetNumSounds();
 
 	// Load embedded Dehacked patches
-	D_LoadDehLumps(FromIWAD);
+	D_LoadDehLumps(FromIWAD, iwad_info->SkipBexStringsIfLanguage ? DEH_SKIP_BEX_STRINGS_IF_LANGUAGE : 0);
 
 	// [RH] Add any .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
@@ -3413,13 +3413,13 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			if (stricmp (key, "Path") == 0 && FileExists (value))
 			{
 				if (!batchrun) Printf ("Applying patch %s\n", value);
-				D_LoadDehFile(value);
+				D_LoadDehFile(value, 0);
 			}
 		}
 	}
 
 	// Load embedded Dehacked patches
-	D_LoadDehLumps(FromPWADs);
+	D_LoadDehLumps(FromPWADs, 0);
 
 	// Create replacements for dehacked pickups
 	FinishDehPatch();

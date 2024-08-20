@@ -138,6 +138,10 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 				{
 					iwad->nokeyboardcheats = true;
 				}
+				else if (sc.Compare("SkipBexStringsIfLanguage"))
+				{
+					iwad->SkipBexStringsIfLanguage = true;
+				}
 				else if (sc.Compare("Compatibility"))
 				{
 					sc.MustGetStringName("=");

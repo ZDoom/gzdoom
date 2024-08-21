@@ -446,28 +446,28 @@ struct Key {
 	ptrdiff_t offset;
 };
 
-static int PatchThing (int);
-static int PatchSound (int);
-static int PatchFrame (int);
-static int PatchSprite (int);
-static int PatchAmmo (int);
-static int PatchWeapon (int);
-static int PatchPointer (int);
-static int PatchCheats (int);
-static int PatchMisc (int);
-static int PatchText (int);
-static int PatchStrings (int);
-static int PatchPars (int);
-static int PatchCodePtrs (int);
-static int PatchMusic (int);
-static int DoInclude (int);
-static int PatchSpriteNames(int);
-static int PatchSoundNames(int);
-static bool DoDehPatch();
+static int PatchThing (int, int);
+static int PatchSound (int, int);
+static int PatchFrame (int, int);
+static int PatchSprite (int, int);
+static int PatchAmmo (int, int);
+static int PatchWeapon (int, int);
+static int PatchPointer (int, int);
+static int PatchCheats (int, int);
+static int PatchMisc (int, int);
+static int PatchText (int, int);
+static int PatchStrings (int, int);
+static int PatchPars (int, int);
+static int PatchCodePtrs (int, int);
+static int PatchMusic (int, int);
+static int DoInclude (int, int);
+static int PatchSpriteNames(int, int);
+static int PatchSoundNames(int, int);
+static bool DoDehPatch(int);
 
 static const struct {
 	const char *name;
-	int (*func)(int);
+	int (*func)(int, int);
 } Modes[] = {
 	// These appear in .deh and .bex files
 	{ "Thing",		PatchThing },
@@ -491,7 +491,7 @@ static const struct {
 	{ NULL, NULL },
 };
 
-static int HandleMode (const char *mode, int num);
+static int HandleMode (const char *mode, int num, int flags);
 static bool HandleKey (const struct Key *keys, void *structure, const char *key, int value);
 static bool ReadChars (char **stuff, int size);
 static char *igets (void);
@@ -509,14 +509,14 @@ static void PushTouchedActor(PClassActor *cls)
 }
 
 
-static int HandleMode (const char *mode, int num)
+static int HandleMode (const char *mode, int num, int flags)
 {
 	int i = 0;
 	while (Modes[i].name && stricmp (Modes[i].name, mode))
 		i++;
 
 	if (Modes[i].name)
-		return Modes[i].func (num);
+		return Modes[i].func (num, flags);
 
 	// Handle unknown or unimplemented data
 	Printf ("Unknown chunk %s encountered. Skipping.\n", mode);
@@ -1181,7 +1181,7 @@ static void ClearBits2Stuff(AActor* defaults)
 }
 
 
-static int PatchThing (int thingy)
+static int PatchThing (int thingy, int flags)
 {
 	enum
 	{
@@ -1776,7 +1776,7 @@ static int PatchThing (int thingy)
 // real benefit to doing this, and it would be very difficult for
 // me to emulate it, I have disabled them entirely.
 
-static int PatchSound (int soundNum)
+static int PatchSound (int soundNum, int flags)
 {
 	int result;
 
@@ -1833,7 +1833,7 @@ DehBits sbits[] = {
 };
 
 
-static int PatchFrame (int frameNum)
+static int PatchFrame (int frameNum, int flags)
 {
 	MBFArgs args{};
 	int result;
@@ -1983,7 +1983,7 @@ static int PatchFrame (int frameNum)
 	return result;
 }
 
-static int PatchSprite (int sprNum)
+static int PatchSprite (int sprNum, int flags)
 {
 	int result;
 	int offset = 0;
@@ -2025,7 +2025,7 @@ static int PatchSprite (int sprNum)
 	return result;
 }
 
-static int PatchAmmo (int ammoNum)
+static int PatchAmmo (int ammoNum, int flags)
 {
 	PClassActor *ammoType = NULL;
 	AActor *defaultAmmo = NULL;
@@ -2116,7 +2116,7 @@ DehBits wbits[] = {
 	{ "NOAUTOSWITCHTO", WIF_NOAUTOSWITCHTO }
 };
 
-static int PatchWeapon (int weapNum)
+static int PatchWeapon (int weapNum, int flags)
 {
 	int result;
 	PClassActor *type = nullptr;
@@ -2324,7 +2324,7 @@ static int SetPointer(FState *state, PFunction *sym, int frame = 0)
 	return -1;
 }
 
-static int PatchPointer (int ptrNum)
+static int PatchPointer (int ptrNum, int flags)
 {
 	int result;
 
@@ -2386,7 +2386,7 @@ static int PatchPointer (int ptrNum)
 	return result;
 }
 
-static int PatchCheats (int dummy)
+static int PatchCheats (int dummy, int flags)
 {
 	int result;
 
@@ -2398,7 +2398,7 @@ static int PatchCheats (int dummy)
 	return result;
 }
 
-static int PatchMisc (int dummy)
+static int PatchMisc (int dummy, int flags)
 {
 	static const struct Key keys[] = {
 		{ "Initial Health",			static_cast<ptrdiff_t>(myoffsetof(struct DehInfo,StartHealth)) },
@@ -2592,7 +2592,7 @@ static int PatchMisc (int dummy)
 	return result;
 }
 
-static int PatchPars (int dummy)
+static int PatchPars (int dummy, int flags)
 {
 	char *space, mapname[8], *moredata;
 	level_info_t *info;
@@ -2658,7 +2658,7 @@ static int PatchPars (int dummy)
 }
 
 								
-static int PatchCodePtrs (int dummy)
+static int PatchCodePtrs (int dummy, int flags)
 {
 	int result;
 
@@ -2733,7 +2733,7 @@ static int PatchCodePtrs (int dummy)
 	return result;
 }
 
-static int PatchMusic (int dummy)
+static int PatchMusic (int dummy, int flags)
 {
 	int result;
 
@@ -2788,7 +2788,7 @@ static void ReplaceSpriteInData(const char* oldStr, const char* newStr)
 		}
 	}
 
-static int PatchText (int oldSize)
+static int PatchText (int oldSize, int flags)
 {
 	int newSize;
 	char *oldStr;
@@ -2895,7 +2895,7 @@ donewithtext:
 	return result;
 }
 
-static int PatchStrings (int dummy)
+static int PatchStrings (int dummy, int flags)
 {
 	int result;
 
@@ -2919,20 +2919,23 @@ static int PatchStrings (int dummy)
 			}
 		} while (Line2 && *Line2);
 
-		ReplaceSpecialChars (holdstring.LockBuffer());
-		holdstring.UnlockBuffer();
-		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
-		const char *ll = Line1;
-		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
-		TableElement te = { LumpFileNum, { holdstring, holdstring, holdstring, holdstring } };
-		DehStrings.Insert(ll, te);
-		DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
+		if(!(flags & DEH_SKIP_BEX_STRINGS_IF_LANGUAGE))
+		{
+			ReplaceSpecialChars (holdstring.LockBuffer());
+			holdstring.UnlockBuffer();
+			// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
+			const char *ll = Line1;
+			if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
+			TableElement te = { LumpFileNum, { holdstring, holdstring, holdstring, holdstring } };
+			DehStrings.Insert(ll, te);
+			DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
+		}
 	}
 
 	return result;
 }
 
-static int PatchSoundNames (int dummy)
+static int PatchSoundNames (int dummy, int flags)
 {
 	int result;
 
@@ -2949,7 +2952,7 @@ static int PatchSoundNames (int dummy)
 	return result;
 }
 
-static int PatchSpriteNames (int dummy)
+static int PatchSpriteNames (int dummy, int flags)
 {
 		int result;
 		
@@ -2985,7 +2988,7 @@ static int PatchSpriteNames (int dummy)
 	}
 								  
 
-static int DoInclude (int dummy)
+static int DoInclude (int dummy, int flags)
 {
 	char *data;
 	int savedversion, savepversion, savepatchsize;
@@ -3047,7 +3050,7 @@ static int DoInclude (int dummy)
 			}
 		}
 
-		D_LoadDehFile(path);
+		D_LoadDehFile(path, flags);
 
 		if (data != path)
 		{
@@ -3080,7 +3083,7 @@ static bool isDehFile(int lumpnum)
 		&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
 }
 
-int D_LoadDehLumps(DehLumpSource source)
+int D_LoadDehLumps(DehLumpSource source, int flags)
 {
 	int lastlump = 0, lumpnum, count = 0;
 
@@ -3099,7 +3102,20 @@ int D_LoadDehLumps(DehLumpSource source)
 			continue;
 		}
 
-		count += D_LoadDehLump(lumpnum);
+		int filtered_flags = flags & ~DEH_SKIP_BEX_STRINGS_IF_LANGUAGE;
+
+		if((flags & DEH_SKIP_BEX_STRINGS_IF_LANGUAGE) && FromIWAD == source)
+		{
+			int iwadnum = fileSystem.GetIwadNum();
+			int lastlump2 = fileSystem.GetFirstEntry(iwadnum);
+			int lumpnum2 = fileSystem.FindLump("LANGUAGE", &lastlump2);
+
+			if(lumpnum2 >= 0 && fileSystem.GetFileContainer(lumpnum2) == iwadnum)
+			{
+				filtered_flags |= DEH_SKIP_BEX_STRINGS_IF_LANGUAGE;
+			}
+		}
+		count += D_LoadDehLump(lumpnum, filtered_flags);
 	}
 
 	if (FromPWADs == source && 0 == PatchSize && dehload > 0)
@@ -3112,7 +3128,7 @@ int D_LoadDehLumps(DehLumpSource source)
 			{
 				if (isDehFile(lumpnum))
 				{
-					count += D_LoadDehLump(lumpnum);
+					count += D_LoadDehLump(lumpnum, 0);
 				}
 			}
 		}
@@ -3122,7 +3138,7 @@ int D_LoadDehLumps(DehLumpSource source)
 			{
 				if (isDehFile(lumpnum))
 				{
-					count += D_LoadDehLump(lumpnum);
+					count += D_LoadDehLump(lumpnum, 0);
 					break;
 				}
 			}
@@ -3132,7 +3148,7 @@ int D_LoadDehLumps(DehLumpSource source)
 	return count;
 }
 
-bool D_LoadDehLump(int lumpnum)
+bool D_LoadDehLump(int lumpnum, int flags)
 {
 	auto ls = LumpFileNum;
 	LumpFileNum = fileSystem.GetFileContainer(lumpnum);
@@ -3143,13 +3159,13 @@ bool D_LoadDehLump(int lumpnum)
 	PatchFile = new char[PatchSize + 1];
 	fileSystem.ReadFile(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
-	auto res = DoDehPatch();
+	auto res = DoDehPatch(flags);
 	LumpFileNum = ls;
 
 	return res;
 }
 
-bool D_LoadDehFile(const char *patchfile)
+bool D_LoadDehFile(const char *patchfile, int flags)
 {
 	FileReader fr;
 
@@ -3162,7 +3178,7 @@ bool D_LoadDehFile(const char *patchfile)
 		fr.Read(PatchFile, PatchSize);
 		fr.Close();
 		PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
-		return DoDehPatch();
+		return DoDehPatch(flags);
 	}
 	else
 	{
@@ -3178,14 +3194,14 @@ bool D_LoadDehFile(const char *patchfile)
 		}
 		if (lumpnum >= 0)
 		{
-			return D_LoadDehLump(lumpnum);
+			return D_LoadDehLump(lumpnum, flags);
 		}
 	}
 	Printf ("Could not open DeHackEd patch \"%s\"\n", patchfile);
 	return false;
 }
 
-static bool DoDehPatch()
+static bool DoDehPatch(int flags)
 {
 	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName.GetChars());
 
@@ -3276,7 +3292,7 @@ static bool DoDehPatch()
 		}
 		else if (cont == 2)
 		{
-			cont = HandleMode (Line1, atoi (Line2));
+			cont = HandleMode (Line1, atoi (Line2), flags);
 		}
 	} while (cont);
 

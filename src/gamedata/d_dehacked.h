@@ -40,9 +40,14 @@ enum DehLumpSource
 	FromPWADs
 };
 
-int D_LoadDehLumps(DehLumpSource source);
-bool D_LoadDehLump(int lumpnum);
-bool D_LoadDehFile(const char *filename);
+enum DehFlags
+{
+	DEH_SKIP_BEX_STRINGS_IF_LANGUAGE = 1,
+};
+
+int D_LoadDehLumps(DehLumpSource source, int flags);
+bool D_LoadDehLump(int lumpnum, int flags);
+bool D_LoadDehFile(const char *filename, int flags);
 void FinishDehPatch ();
 
 #endif //__D_DEHACK_H__

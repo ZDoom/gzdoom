@@ -282,6 +282,7 @@ IWad
 	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "FREEDM"
 	BannerColors = "32 54 43", "c6 dc d1"
+	SkipBexStringsIfLanguage
 }
 
 IWad
@@ -294,6 +295,7 @@ IWad
 	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "FREEDOOM"
 	BannerColors = "32 54 43", "c6 dc d1"
+	SkipBexStringsIfLanguage
 }
 
 IWad
@@ -306,6 +308,7 @@ IWad
 	Mapinfo = "mapinfo/doom1.txt"
 	MustContain = "E1M1", "E2M1", "E3M1", "FREEDOOM"
 	BannerColors = "32 54 43", "c6 dc d1"
+	SkipBexStringsIfLanguage
 }
 
 IWad
@@ -317,6 +320,7 @@ IWad
 	Mapinfo = "mapinfo/doom1.txt"
 	MustContain = "E1M1", "FREEDOOM"
 	BannerColors = "32 54 43", "c6 dc d1"
+	SkipBexStringsIfLanguage
 }
 
 IWad

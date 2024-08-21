@@ -2,7 +2,7 @@
 // Random spawner ----------------------------------------------------------
 
 extend class Actor {
-	Class<RandomSpawner> originSpawner;
+	Class<Actor> originSpawner;
 
 	/// Get class of thing that originally spawned this thing.
 	Class<Actor> GetOriginSpawner() {
@@ -14,7 +14,7 @@ class RandomSpawner : Actor
 {
 	
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
-	Class<RandomSpawner> origin; // Keep track of original RandomSpawner.
+	Class<Actor> origin; // Keep track of original RandomSpawner.
 
 	private Class<RandomSpawner> MyOriginSpawner() {
 		if (origin == null) {
@@ -250,7 +250,7 @@ class RandomSpawner : Actor
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj is 'RandomSpawner') {
 				newmobj.bouncecount = ++bouncecount;
-				newmobj.origin = origin != null ? origin : GetClass();
+				RandomSpawner(newmobj).origin = origin != null ? origin : GetClass();
 			} else {
 				newmobj.originSpawner = MyOriginSpawner();
 			}

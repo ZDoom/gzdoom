@@ -16,7 +16,7 @@ class RandomSpawner : Actor
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
 	Class<Actor> origin; // Keep track of original RandomSpawner.
 
-	private Class<RandomSpawner> MyOriginSpawner() {
+	private Class<Actor> MyOriginSpawner() {
 		if (origin == null) {
 			return GetClass();
 		}

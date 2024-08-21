@@ -3,6 +3,11 @@
 
 extend class Actor {
 	Class<RandomSpawner> originSpawner;
+
+	/// Get class of thing that originally spawned this thing.
+	Class<Actor> GetOriginSpawner() {
+		return originSpawner != null ? originSpawner : GetClass();
+	}
 }
 
 class RandomSpawner : Actor
@@ -11,7 +16,7 @@ class RandomSpawner : Actor
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
 	Class<RandomSpawner> origin; // Keep track of original RandomSpawner.
 
-	Class<RandomSpawner> GetOriginSpawner() {
+	private Class<RandomSpawner> MyOriginSpawner() {
 		if (origin == null) {
 			return GetClass();
 		}
@@ -247,7 +252,7 @@ class RandomSpawner : Actor
 				newmobj.bouncecount = ++bouncecount;
 				newmobj.origin = origin != null ? origin : GetClass();
 			} else {
-				newmobj.originSpawner = GetOriginSpawner();
+				newmobj.originSpawner = MyOriginSpawner();
 			}
 			// If the spawned actor has either of those flags, it's a boss.
 			if (newmobj.bBossDeath || newmobj.bBoss)

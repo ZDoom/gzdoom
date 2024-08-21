@@ -3112,7 +3112,7 @@ int D_LoadDehLumps(DehLumpSource source, int flags)
 
 			if(lumpnum2 >= 0 && fileSystem.GetFileContainer(lumpnum2) == iwadnum)
 			{
-				flags |= DEH_SKIP_BEX_STRINGS_IF_LANGUAGE;
+				filtered_flags |= DEH_SKIP_BEX_STRINGS_IF_LANGUAGE;
 			}
 		}
 		count += D_LoadDehLump(lumpnum, filtered_flags);

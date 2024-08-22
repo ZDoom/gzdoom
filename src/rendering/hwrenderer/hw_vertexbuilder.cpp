@@ -329,9 +329,9 @@ static int CreateIndexedVertices(FFlatVertexBuffer* fvb, int h, sector_t* sec, c
 
 	// and finally all attached 3D floors
 	TArray<sector_t*>& xf = sec->e->XFloor.attached;
-	for (unsigned g = 0; g < xf.Size(); g++)
+	for (unsigned i = 0; i < xf.Size(); i++)
 	{
-		sector_t* fsec = xf[g];
+		sector_t* fsec = xf[i];
 		int ffloorIndex;
 		F3DFloor* ffloor = Find3DFloor(fsec, sec, ffloorIndex);
 

@@ -954,7 +954,7 @@ void NetUpdate (void)
 	int		lowtic;
 	int 	nowtime;
 	int 	newtics;
-	int 	i,j;
+	int 	i,ii;
 	int 	realstart;
 	uint8_t	*cmddata;
 	bool	resendOnly;
@@ -1014,17 +1014,17 @@ void NetUpdate (void)
 			if (maketic % ticdup != 0)
 			{
 				int mod = maketic - maketic % ticdup;
-				int j;
+				int ii;
 
 				// Update the buttons for all tics in this ticdup set as soon as
 				// possible so that the prediction shows jumping as correctly as
 				// possible. (If you press +jump in the middle of a ticdup set,
 				// the jump will actually begin at the beginning of the set, not
 				// in the middle.)
-				for (j = maketic-2; j >= mod; --j)
+				for (ii = maketic-2; ii >= mod; --ii)
 				{
-					localcmds[j % LOCALCMDTICS].ucmd.buttons |=
-						localcmds[(j + 1) % LOCALCMDTICS].ucmd.buttons;
+					localcmds[ii % LOCALCMDTICS].ucmd.buttons |=
+						localcmds[(ii + 1) % LOCALCMDTICS].ucmd.buttons;
 				}
 			}
 			else
@@ -1034,7 +1034,7 @@ void NetUpdate (void)
 				// need to update them in all the localcmds slots that
 				// are dupped so that prediction works properly.
 				int mod = maketic - ticdup;
-				int modp, j;
+				int modp, ii;
 
 				int pitch = 0;
 				int yaw = 0;
@@ -1043,9 +1043,9 @@ void NetUpdate (void)
 				int sidemove = 0;
 				int upmove = 0;
 
-				for (j = 0; j < ticdup; ++j)
+				for (ii = 0; ii < ticdup; ++ii)
 				{
-					modp = (mod + j) % LOCALCMDTICS;
+					modp = (mod + ii) % LOCALCMDTICS;
 					pitch += localcmds[modp].ucmd.pitch;
 					yaw += localcmds[modp].ucmd.yaw;
 					roll += localcmds[modp].ucmd.roll;
@@ -1061,9 +1061,9 @@ void NetUpdate (void)
 				sidemove /= ticdup;
 				upmove /= ticdup;
 
-				for (j = 0; j < ticdup; ++j)
+				for (i = 0; i < ticdup; ++i)
 				{
-					modp = (mod + j) % LOCALCMDTICS;
+					modp = (mod + i) % LOCALCMDTICS;
 					localcmds[modp].ucmd.pitch = pitch;
 					localcmds[modp].ucmd.yaw = yaw;
 					localcmds[modp].ucmd.roll = roll;
@@ -1098,9 +1098,9 @@ void NetUpdate (void)
 	{
 		if (NetMode == NET_PacketServer)
 		{
-			for (j = 0; j < MAXPLAYERS; j++)
+			for (ii = 0; ii < MAXPLAYERS; ii++)
 			{
-				if (playeringame[j] && players[j].Bot == NULL)
+				if (playeringame[ii] && players[ii].Bot == NULL)
 				{
 					count++;
 				}
@@ -1110,13 +1110,13 @@ void NetUpdate (void)
 			// and it also added the player being sent the packet to the count.
 			count -= 2;
 
-			for (j = 0; j < doomcom.numnodes; ++j)
+			for (ii = 0; ii < doomcom.numnodes; ++ii)
 			{
-				if (nodejustleft[j])
+				if (nodejustleft[ii])
 				{
 					if (count == 0)
 					{
-						PlayerIsGone (j, playerfornode[j]);
+						PlayerIsGone (ii, playerfornode[ii]);
 					}
 					else
 					{
@@ -1165,11 +1165,11 @@ void NetUpdate (void)
 			consoleplayer == Net_Arbitrator &&
 			i != 0)
 		{
-			for (j = 1; j < doomcom.numnodes; ++j)
+			for (ii = 1; ii < doomcom.numnodes; ++ii)
 			{
-				if (nodeingame[j] && nettics[j] < lowtic && j != i)
+				if (nodeingame[ii] && nettics[ii] < lowtic && ii != i)
 				{
-					lowtic = nettics[j];
+					lowtic = nettics[ii];
 				}
 			}
 			netbuffer[k++] = lowtic;
@@ -1237,12 +1237,12 @@ void NetUpdate (void)
 
 				if (NetMode == NET_PacketServer)
 				{
-					for (l = 1, j = 0; j < MAXPLAYERS; j++)
+					for (ii = 1, ii = 0; ii < MAXPLAYERS; ii++)
 					{
-						if (playeringame[j] && players[j].Bot == NULL && j != playerfornode[i] && j != consoleplayer)
+						if (playeringame[ii] && players[ii].Bot == NULL && ii != playerfornode[i] && ii != consoleplayer)
 						{
-							playerbytes[l++] = j;
-							netbuffer[k++] = j;
+							playerbytes[l++] = ii;
+							netbuffer[k++] = ii;
 						}
 					}
 				}
@@ -1252,9 +1252,9 @@ void NetUpdate (void)
 
 			for (l = 0; l < count; ++l)
 			{
-				for (j = 0; j < numtics; j++)
+				for (ii = 0; ii < numtics; ii++)
 				{
-					int start = realstart + j, prev = start - 1;
+					int start = realstart + ii, prev = start - 1;
 					int localstart, localprev;
 
 					localstart = (start * ticdup) % LOCALCMDTICS;
@@ -1336,10 +1336,10 @@ void NetUpdate (void)
 					// Try to guess ahead the time it takes to send responses to the slowest node
 					int nodeavg = 0, arbavg = 0;
 
-					for (j = 0; j < BACKUPTICS; j++)
+					for (ii = 0; ii < BACKUPTICS; ii++)
 					{
-						arbavg += netdelay[nodeforplayer[Net_Arbitrator]][j];
-						nodeavg += netdelay[0][j];
+						arbavg += netdelay[nodeforplayer[Net_Arbitrator]][ii];
+						nodeavg += netdelay[0][ii];
 					}
 					arbavg /= BACKUPTICS;
 					nodeavg /= BACKUPTICS;
@@ -1429,7 +1429,7 @@ bool DoArbitrate (void *userdata)
 	uint8_t *stream;
 	int version;
 	int node;
-	int i, j;
+	int i, ii;
 
 	while (HGetPacket ())
 	{
@@ -1532,14 +1532,14 @@ bool DoArbitrate (void *userdata)
 		netbuffer[0] = NCMD_SETUP+1;
 		for (i = 1; i < doomcom.numnodes; ++i)
 		{
-			for (j = 0; j < doomcom.numnodes; ++j)
+			for (ii = 0; ii < doomcom.numnodes; ++ii)
 			{
 				// Send info about player j to player i?
-				if ((data->playersdetected[0] & (1<<j)) && !(data->playersdetected[i] & (1<<j)))
+				if ((data->playersdetected[0] & (1<<ii)) && !(data->playersdetected[i] & (1<<ii)))
 				{
-					netbuffer[1] = j;
+					netbuffer[1] = ii;
 					stream = &netbuffer[9];
-					auto str = D_GetUserInfoStrings(j, true);
+					auto str = D_GetUserInfoStrings(ii, true);
 					memcpy(stream, str.GetChars(), str.Len() + 1);
 					stream += str.Len();
 					HSendPacket (i, int(stream - netbuffer));
@@ -1780,7 +1780,7 @@ bool D_CheckNetGame (void)
 //
 void D_QuitNetGame (void)
 {
-	int i, j, k;
+	int i, ii, k;
 
 	if (!netgame || !usergame || consoleplayer == -1 || demoplayback)
 		return;
@@ -1812,9 +1812,9 @@ void D_QuitNetGame (void)
 		}
 		else
 		{
-			for (j = 1; j < doomcom.numnodes; j++)
-				if (nodeingame[j])
-					HSendPacket (j, k);
+			for (ii = 1; ii < doomcom.numnodes; ii++)
+				if (nodeingame[ii])
+					HSendPacket (ii, k);
 		}
 		I_WaitVBL (1);
 	}

@@ -321,9 +321,9 @@ static int CreateIndexedVertices(FFlatVertexBuffer* fvb, int h, sector_t* sec, c
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t*>& fakes = sec->e->FakeFloor.Sectors;
-	for (unsigned g = 0; g < fakes.Size(); g++)
+	for (unsigned i = 0; i < fakes.Size(); i++)
 	{
-		sector_t* fsec = fakes[g];
+		sector_t* fsec = fakes[i];
 		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fvb, fsec, plane, false, verts[fsec->Index()], h, -1);
 	}
 

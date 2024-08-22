@@ -133,7 +133,7 @@ static int WallInFront(FGLSectionLine *wal1, FGLSectionLine *wal2)
 // around so we can only compare angle differences.
 //
 // Rules:
-// 1. Any bunch can span at most 180°.
+// 1. Any bunch can span at most 180ï¿½.
 // 2. 2 bunches can never overlap at both ends
 // 3. if there is an overlap one of the 2 starting points must be in the
 //    overlapping area.
@@ -512,9 +512,9 @@ private:
 			FGLSectionLoop *loop = sect->GetLoop(i);
 			inbunch = false;
 
-			for(int j=0; j<loop->numlines; j++)
+			for(int i=0; i<loop->numlines; i++)
 			{
-				FGLSectionLine *ln = loop->GetLine(j);
+				FGLSectionLine *ln = loop->GetLine(i);
 
 				angle_t ang1 = ln->start->GetClipAngle();
 				angle_t ang2 = ln->end->GetClipAngle();
@@ -533,16 +533,16 @@ private:
 				}
 				else if (!inbunch || startangle - ang2 >= ANGLE_180)
 				{
-					// don't let a bunch span more than 180° to avoid problems.
+					// don't let a bunch span more than 180ï¿½ to avoid problems.
 					// This limitation ensures that the combined range of 2
-					// bunches will always be less than 360° which simplifies
+					// bunches will always be less than 360ï¿½ which simplifies
 					// the distance comparison code because it prevents a 
 					// situation where 2 bunches may overlap at both ends.
 					D(Printf(PRINT_LOG, "Starting bunch %d at line %d\n",Bunches.Size(), ln->linedef - lines));
 
 					startangle = ang2;
 					// Clipping angles are backward which makes this code very hard to read so let's use the inverse
-					StartBunch(loop->startline + j, 0 - ang1, 0 - ang2);
+					StartBunch(loop->startline + i, 0 - ang1, 0 - ang2);
 					inbunch = true;
 				}
 				else

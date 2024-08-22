@@ -350,11 +350,11 @@ int FIWadManager::ScanIWAD (const char *iwad)
 	{
 		for (unsigned i = 0; i< mIWadInfos.Size(); i++)
 		{
-			for (unsigned j = 0; j < mIWadInfos[i].Lumps.Size(); j++)
+			for (unsigned ii = 0; ii < mIWadInfos[i].Lumps.Size(); ii++)
 			{
-				if (!mIWadInfos[i].Lumps[j].CompareNoCase(name))
+				if (!mIWadInfos[i].Lumps[ii].CompareNoCase(name))
 				{
-					mLumpsFound[i] |= (1 << j);
+					mLumpsFound[i] |= (1 << ii);
 				}
 			}
 		}
@@ -636,14 +636,14 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			{
 				bool found = false;
 				// needs to be loaded with another IWAD (HexenDK)
-				for (unsigned j = 0; j < mFoundWads.Size(); j++)
+				for (unsigned ii = 0; ii < mFoundWads.Size(); ii++)
 				{
-					auto inf2ndx = mFoundWads[j].mInfoIndex;
+					auto inf2ndx = mFoundWads[ii].mInfoIndex;
 					if (inf2ndx >= 0)
 					{
 						if (!mIWadInfos[infndx].Required.Compare(mIWadInfos[inf2ndx].Name))
 						{
-							mFoundWads[i].mRequiredPath = mFoundWads[j].mFullPath;
+							mFoundWads[i].mRequiredPath = mFoundWads[i].mFullPath;
 							break;
 						}
 					}
@@ -686,18 +686,18 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		for (unsigned i = 0; i < mOrderNames.Size(); i++)
 		{
 			bool picked = false;
-			for (int j = 0; j < (int)mFoundWads.Size(); j++)
+			for (int ii = 0; ii < (int)mFoundWads.Size(); ii++)
 			{
-				if (mFoundWads[j].mInfoIndex >= 0)
+				if (mFoundWads[ii].mInfoIndex >= 0)
 				{
-					if (mIWadInfos[mFoundWads[j].mInfoIndex].Name.Compare(mOrderNames[i]) == 0)
+					if (mIWadInfos[mFoundWads[ii].mInfoIndex].Name.Compare(mOrderNames[i]) == 0)
 					{
 						if (!picked)
 						{
 							picked = true;
-							picks.Push(mFoundWads[j]);
+							picks.Push(mFoundWads[ii]);
 						}
-						mFoundWads.Delete(j--);
+						mFoundWads.Delete(ii--);
 					}
 				}
 			}

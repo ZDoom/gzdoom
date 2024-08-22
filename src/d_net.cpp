@@ -333,7 +333,7 @@ static struct TicSpecial
 
 void Net_ClearBuffers ()
 {
-	int i, j;
+	int i, ii;
 
 	memset (localcmds, 0, sizeof(localcmds));
 	memset (netcmds, 0, sizeof(netcmds));
@@ -351,9 +351,9 @@ void Net_ClearBuffers ()
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		for (j = 0; j < BACKUPTICS; j++)
+		for (ii = 0; ii < BACKUPTICS; ii++)
 		{
-			NetSpecs[i][j].SetData (NULL, 0);
+			NetSpecs[i][ii].SetData (NULL, 0);
 		}
 	}
 

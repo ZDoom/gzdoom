@@ -240,18 +240,18 @@ static int CreateIndexedSectorVerticesLM(FFlatVertexBuffer* fvb, sector_t* sec, 
 		{
 			float* luvs = lightmap->TexCoords;
 			int lindex = lightmap->LightmapNum;
-			for (unsigned int j = 0; j < sub->numlines; j++)
+			for (unsigned int ii = 0; ii < sub->numlines; ii++)
 			{
-				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane, luvs[j * 2], luvs[j * 2 + 1], lindex);
+				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[ii].v1, plane, luvs[ii * 2], luvs[ii * 2 + 1], lindex);
 				vbo_shadowdata[vi + pos].z += diff;
 				pos++;
 			}
 		}
 		else
 		{
-			for (unsigned int j = 0; j < sub->numlines; j++)
+			for (unsigned int i = 0; i < sub->numlines; i++)
 			{
-				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[j].v1, plane);
+				SetFlatVertex(vbo_shadowdata[vi + pos], sub->firstline[i].v1, plane);
 				vbo_shadowdata[vi + pos].z += diff;
 				pos++;
 			}

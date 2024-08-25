@@ -843,7 +843,7 @@ static void CreateScratchFunc(FunctionCallEmitter &emitters, int value1, int val
 // misc1 = sound, misc2 = attenuation none (true) or normal (false)
 static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int value2, MBFParamState* state)
 { // A_PlaySound
-	emitters.AddParameterIntConst(DehFindSound(value1 - 1, true).index());		// soundid
+	emitters.AddParameterIntConst(DehFindSound(value1 - 1, false).index());		// soundid
 	emitters.AddParameterIntConst(CHAN_BODY);							// channel
 	emitters.AddParameterFloatConst(1);									// volume
 	emitters.AddParameterIntConst(false);								// looping

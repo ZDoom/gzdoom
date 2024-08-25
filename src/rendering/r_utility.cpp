@@ -147,11 +147,11 @@ CCMD (maxdrawdist)
 
 	if (argv.argc() < 2)
 	{
-		Printf ("maxdrawdist %.1f (default: 3000.0)\n", level.maxdrawdist);
+		Printf ("maxdrawdist %.1f (default: 3000.0)\n", level.info->maxdrawdist);
 	}
 	else
 	{
-		level.maxdrawdist = strtod(argv[1], nullptr);
+		level.info->maxdrawdist = strtod(argv[1], nullptr);
 	}
 }
 

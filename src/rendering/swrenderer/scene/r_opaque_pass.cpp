@@ -456,7 +456,7 @@ namespace swrenderer
 		};
 		int boxpos;
 		bool distcheck;
-		double maxdist = level.maxdrawdist;
+		double maxdist = level.info->maxdrawdist; // Consider dividing by Sin(fov) for sniper scopes
 		
 		const int* check;
 

@@ -296,6 +296,8 @@ void level_info_t::Reset()
 	skyfog = 0;
 	pixelstretch = 1.2f;
 
+	maxdrawdist = 3000.f;
+
 	specialactions.Clear();
 	DefaultEnvironment = 0;
 	PrecacheSounds.Clear();
@@ -1216,6 +1218,13 @@ DEFINE_MAP_OPTION(gravity, true)
 	info->gravity = parse.sc.Float;
 }
 
+DEFINE_MAP_OPTION(maxdrawdist, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->maxdrawdist = parse.sc.Float;
+}
+
 DEFINE_MAP_OPTION(nogravity, true)
 {
 	info->gravity = DBL_MAX;
@@ -1693,7 +1702,6 @@ DEFINE_MAP_OPTION(outro, true)
 {
 	parse.ParseCutscene(info->outro);
 }
-
 
 //==========================================================================
 //

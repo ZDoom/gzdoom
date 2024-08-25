@@ -959,14 +959,26 @@ void HWDrawInfo::RenderBSPNode (void *node)
 			if (!(no_renderflags[bsp->Index()] & SSRF_SEEN))
 				return;
 		}
+
 		if (Viewpoint.IsOrtho())
 		{
+			// Check max draw distance
+			if (r_radarclipper && !rClipper->CheckBoxClosestDist(bsp->bbox[side]))
+			{
+				return;
+			}
 			if (!vClipper->CheckBoxOrthoPitch(bsp->bbox[side]))
 			{
 				if (!(no_renderflags[bsp->Index()] & SSRF_SEEN))
 					return;
 			}
 		}
+		else if (!mClipper->CheckBoxClosestDist(bsp->bbox[side]))
+		{
+			// Check max draw distance
+			return;
+		}
+
 
 		node = bsp->children[side];
 	}

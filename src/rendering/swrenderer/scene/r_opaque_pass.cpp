@@ -438,6 +438,126 @@ namespace swrenderer
 		return Thread->ClipSegments->IsVisible(sx1, sx2);
 	}
 
+	bool RenderOpaquePass::CheckBoxClosestDist(const float *bspcoord)
+	{
+		static const int checkcoord[12][4] =
+		{
+			{ 3,0,2,1 },
+			{ 3,0,2,0 },
+			{ 3,1,2,0 },
+			{ 0 },
+			{ 2,0,2,1 },
+			{ 0,0,0,0 },
+			{ 3,1,3,0 },
+			{ 0 },
+			{ 2,0,3,1 },
+			{ 2,1,3,1 },
+			{ 2,1,3,0 }
+		};
+		int boxpos;
+		bool distcheck;
+		double maxdist = level.maxdrawdist;
+		
+		const int* check;
+
+		double	 			x1, y1, x2, y2;
+		double				rx1, ry1, rx2, ry2;
+		int					sx1, sx2;
+	
+		// Find the corners of the box
+		// that define the edges from current viewpoint.
+		auto &vp = Thread->Viewport->viewpoint;
+		boxpos = (vp.Pos.X <= bspcoord[BOXLEFT] ? 0 : vp.Pos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(vp.Pos.Y >= bspcoord[BOXTOP ] ? 0 : vp.Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+
+		check = checkcoord[boxpos];
+
+		switch (boxpos) // Distcheck if the closer corner is poking into the view area
+		{
+		case 0:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXTOP])).Length() < maxdist;
+			break;
+		case 1:
+			distcheck = (vp.Pos.Y - bspcoord[BOXTOP]) < maxdist;
+			break;
+		case 2:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXTOP])).Length() < maxdist;
+			break;
+		case 4:
+			distcheck = (bspcoord[BOXLEFT] - vp.Pos.X) < maxdist;
+			break;
+		case 6:
+			distcheck = (vp.Pos.X - bspcoord[BOXRIGHT]) < maxdist;
+			break;
+		case 8:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+			break;
+		case 9:
+			distcheck = (bspcoord[BOXBOTTOM] - vp.Pos.Y) < maxdist;
+			break;
+		case 10:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+			break;
+		default:
+			distcheck = true;
+			break;
+		}
+		if (!distcheck && boxpos != 5)
+		{
+			x1 = bspcoord[checkcoord[boxpos][0]] - Thread->Viewport->viewpoint.Pos.X;
+			y1 = bspcoord[checkcoord[boxpos][1]] - Thread->Viewport->viewpoint.Pos.Y;
+			x2 = bspcoord[checkcoord[boxpos][2]] - Thread->Viewport->viewpoint.Pos.X;
+			y2 = bspcoord[checkcoord[boxpos][3]] - Thread->Viewport->viewpoint.Pos.Y;
+			// Sitting on a line?
+			if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
+				return true;
+			rx1 = x1 * Thread->Viewport->viewpoint.Sin - y1 * Thread->Viewport->viewpoint.Cos;
+			rx2 = x2 * Thread->Viewport->viewpoint.Sin - y2 * Thread->Viewport->viewpoint.Cos;
+			ry1 = x1 * Thread->Viewport->viewpoint.TanCos + y1 * Thread->Viewport->viewpoint.TanSin;
+			ry2 = x2 * Thread->Viewport->viewpoint.TanCos + y2 * Thread->Viewport->viewpoint.TanSin;
+
+			if (Thread->Portal->MirrorFlags & RF_XFLIP)
+			{
+				double t = -rx1;
+				rx1 = -rx2;
+				rx2 = t;
+				std::swap(ry1, ry2);
+			}
+		
+			auto viewport = Thread->Viewport.get();
+
+			if (rx1 >= -ry1)
+			{
+				if (rx1 > ry1) return false;	// left edge is off the right side
+				if (ry1 == 0) return false;
+				sx1 = xs_RoundToInt(viewport->CenterX + rx1 * viewport->CenterX / ry1);
+			}
+			else
+			{
+				if (rx2 < -ry2) return false;	// wall is off the left side
+				if (rx1 - rx2 - ry2 + ry1 == 0) return false;	// wall does not intersect view volume
+				sx1 = 0;
+			}
+
+			if (rx2 <= ry2)
+			{
+				if (rx2 < -ry2) return false;	// right edge is off the left side
+				if (ry2 == 0) return false;
+				sx2 = xs_RoundToInt(viewport->CenterX + rx2 * viewport->CenterX / ry2);
+			}
+			else
+			{
+				if (rx1 > ry1) return false;	// wall is off the right side
+				if (ry2 - ry1 - rx2 + rx1 == 0) return false;	// wall does not intersect view volume
+				sx2 = viewwidth;
+			}
+			VisibleSegmentRenderer visitor;
+			Thread->ClipSegments->Clip(sx1, sx2, true, &visitor);
+		}
+		return distcheck;
+	}
+
+
 	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)
 	{
 		Thread->PreparePolyObject(sub);
@@ -861,6 +981,10 @@ namespace swrenderer
 			// Possibly divide back space (away from the viewer).
 			side ^= 1;
 			if (!CheckBBox(bsp->bbox[side]))
+				return;
+
+			// Check max draw distance
+			if (!CheckBoxClosestDist(bsp->bbox[side]))
 				return;
 
 			node = bsp->children[side];

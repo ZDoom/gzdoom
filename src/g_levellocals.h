@@ -551,6 +551,7 @@ public:
 	FInterpolator interpolator;
 
 	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
+	double maxdrawdist = 3000.0;
 
 	static const int BODYQUESIZE = 32;
 	TObjPtr<AActor*> bodyque[BODYQUESIZE];

@@ -160,7 +160,8 @@ public:
 
 	bool CheckBox(const float *bspcoord);
 	bool CheckBoxOrthoPitch(const float *bspcoord);
-
+	bool CheckBoxClosestDist(const float *bspcoord);
+	
 	// Used to speed up angle calculations during clipping
 	inline angle_t GetClipAngle(vertex_t *v)
 	{

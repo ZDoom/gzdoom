@@ -142,6 +142,19 @@ CUSTOM_CVARD(Float, r_actorspriteshadowfadeheight, 0.0, CVAR_ARCHIVE | CVAR_GLOB
 		self = 8192.f;
 }
 
+CCMD (maxdrawdist)
+{
+
+	if (argv.argc() < 2)
+	{
+		Printf ("maxdrawdist %.1f (default: 3000.0)\n", level.maxdrawdist);
+	}
+	else
+	{
+		level.maxdrawdist = strtod(argv[1], nullptr);
+	}
+}
+
 int 			viewwindowx;
 int 			viewwindowy;
 int				viewwidth;

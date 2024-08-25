@@ -1694,6 +1694,7 @@ DEFINE_MAP_OPTION(outro, true)
 	parse.ParseCutscene(info->outro);
 }
 
+
 //==========================================================================
 //
 // All flag based map options 

@@ -377,8 +377,6 @@ struct level_info_t
 	int			skyfog;
 	float		pixelstretch;
 
-	double      maxdrawdist;
-
 	// Redirection: If any player is carrying the specified item, then
 	// you go to the RedirectMap instead of this one.
 	FName		RedirectType;

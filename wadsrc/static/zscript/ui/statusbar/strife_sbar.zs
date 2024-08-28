@@ -303,7 +303,7 @@ class StrifeStatusBar : BaseStatusBar
 		}
 
 		// Sigil
-		item = CPlayer.mo.FindInventory('Sigil');
+		item = CPlayer.mo.FindInventory('Sigil', true);
 		if (item != NULL)
 		{
 			DrawInventoryIcon (item, (253, 175), DI_ITEM_OFFSETS);

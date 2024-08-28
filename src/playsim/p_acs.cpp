@@ -9368,7 +9368,7 @@ scriptwait:
 			{
 				AActor *sigil;
 
-				if (activator == NULL || (sigil = activator->FindInventory(NAME_Sigil)) == NULL)
+				if (activator == NULL || (sigil = activator->FindInventory(NAME_Sigil, true)) == NULL)
 				{
 					PushToStack (0);
 				}

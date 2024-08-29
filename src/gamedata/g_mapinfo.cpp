@@ -296,7 +296,7 @@ void level_info_t::Reset()
 	skyfog = 0;
 	pixelstretch = 1.2f;
 
-	maxdrawdist = 3000.f;
+	maxdrawdist = -1.f; // <= 0 means not applied
 
 	specialactions.Clear();
 	DefaultEnvironment = 0;

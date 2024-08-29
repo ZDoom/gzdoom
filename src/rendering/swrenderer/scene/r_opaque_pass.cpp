@@ -456,7 +456,7 @@ namespace swrenderer
 		};
 		int boxpos;
 		bool distcheck;
-		double maxdist = level.info->maxdrawdist; // Consider dividing by Sin(fov) for sniper scopes
+		double maxdist = level.maxdrawdist / r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
 		
 		const int* check;
 
@@ -984,7 +984,7 @@ namespace swrenderer
 				return;
 
 			// Check max draw distance
-			if (!CheckBoxClosestDist(bsp->bbox[side]))
+			if (level.maxdrawdist > 0 && !CheckBoxClosestDist(bsp->bbox[side]))
 				return;
 
 			node = bsp->children[side];

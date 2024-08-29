@@ -2784,6 +2784,7 @@ DEFINE_FIELD_X(LevelInfo, level_info_t, pixelstretch)
 DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectType)
 DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectMapName)
 DEFINE_FIELD_X(LevelInfo, level_info_t, teamdamage)
+DEFINE_FIELD_X(LevelInfo, level_info_t, maxdrawdist)
 
 DEFINE_GLOBAL_NAMED(currentVMLevel, level)
 DEFINE_FIELD(FLevelLocals, sectors)
@@ -2835,6 +2836,7 @@ DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags, compatflags)
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags2, compatflags2)
+DEFINE_FIELD(FLevelLocals, maxdrawdist)
 DEFINE_FIELD(FLevelLocals, info);
 
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)

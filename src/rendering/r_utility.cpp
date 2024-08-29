@@ -73,6 +73,7 @@ const float MY_SQRT2    = 1.41421356237309504880; // sqrt(2)
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Int, gl_fogmode)
 
 // TYPES -------------------------------------------------------------------
 
@@ -102,7 +103,7 @@ static TArray<DVector3a> InterpolationPath;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
-CVAR (Int, r_clearbuffer, 0, 0)
+CVARD (Int, r_clearbuffer, 0, 0, "Color of the void. 0: Normal, 1: Black (even software renderer), 2: White, 3: Oscillating, 4: Chirp colors, 5: Fog color (hardware renderer only), >5: Random color.")
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 CVARD (Bool, r_radarclipper, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "Use the horizontal clipper from camera->tracer's perspective")
@@ -147,11 +148,11 @@ CCMD (maxdrawdist)
 
 	if (argv.argc() < 2)
 	{
-		Printf ("maxdrawdist %.1f (default: 3000.0)\n", level.info->maxdrawdist);
+		Printf ("maxdrawdist %.1f (default: -1.0, not applied of <= 0.0)\n", level.maxdrawdist);
 	}
 	else
 	{
-		level.info->maxdrawdist = strtod(argv[1], nullptr);
+		level.maxdrawdist = strtod(argv[1], nullptr);
 	}
 }
 
@@ -1164,7 +1165,17 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		else
 			color = pr_hom();
 
-		screen->SetClearColor(color);
+		if (hom == 5 && gl_fogmode != 0)
+		{
+			screen->SetClearColorFog(viewPoint.sector->Colormap.FadeColor,
+									 viewPoint.sector->Colormap.FogDensity > 0 ?
+									 (actor->Level->skyfog > 0 ? actor->Level->skyfog :
+									  viewPoint.sector->Colormap.FogDensity) : actor->Level->fogdensity,
+									 actor->Level->maxdrawdist);
+		}
+		else
+			screen->SetClearColor(color);
+
 		SWRenderer->SetClearColor(color);
 	}
     else

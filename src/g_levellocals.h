@@ -665,6 +665,8 @@ public:
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 
+	double      maxdrawdist;
+
 	DSeqNode *SequenceListHead;
 
 	// [RH] particle globals

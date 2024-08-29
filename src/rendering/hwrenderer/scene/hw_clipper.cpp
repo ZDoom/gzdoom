@@ -586,7 +586,7 @@ bool Clipper::CheckBoxClosestDist(const float *bspcoord)
 {
 	int        boxpos;
 	bool distcheck;
-	double maxdist = level.info->maxdrawdist; // Consider dividing by Sin(fov) for sniper scopes
+	double maxdist = level.maxdrawdist / r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
 	angle_t angle1, angle2;
 
 	const uint8_t* check;

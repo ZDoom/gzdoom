@@ -502,58 +502,6 @@ namespace swrenderer
 			distcheck = true;
 			break;
 		}
-		if (!distcheck && boxpos != 5)
-		{
-			x1 = bspcoord[checkcoord[boxpos][0]] - Thread->Viewport->viewpoint.Pos.X;
-			y1 = bspcoord[checkcoord[boxpos][1]] - Thread->Viewport->viewpoint.Pos.Y;
-			x2 = bspcoord[checkcoord[boxpos][2]] - Thread->Viewport->viewpoint.Pos.X;
-			y2 = bspcoord[checkcoord[boxpos][3]] - Thread->Viewport->viewpoint.Pos.Y;
-			// Sitting on a line?
-			if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
-				return true;
-			rx1 = x1 * Thread->Viewport->viewpoint.Sin - y1 * Thread->Viewport->viewpoint.Cos;
-			rx2 = x2 * Thread->Viewport->viewpoint.Sin - y2 * Thread->Viewport->viewpoint.Cos;
-			ry1 = x1 * Thread->Viewport->viewpoint.TanCos + y1 * Thread->Viewport->viewpoint.TanSin;
-			ry2 = x2 * Thread->Viewport->viewpoint.TanCos + y2 * Thread->Viewport->viewpoint.TanSin;
-
-			if (Thread->Portal->MirrorFlags & RF_XFLIP)
-			{
-				double t = -rx1;
-				rx1 = -rx2;
-				rx2 = t;
-				std::swap(ry1, ry2);
-			}
-		
-			auto viewport = Thread->Viewport.get();
-
-			if (rx1 >= -ry1)
-			{
-				if (rx1 > ry1) return false;	// left edge is off the right side
-				if (ry1 == 0) return false;
-				sx1 = xs_RoundToInt(viewport->CenterX + rx1 * viewport->CenterX / ry1);
-			}
-			else
-			{
-				if (rx2 < -ry2) return false;	// wall is off the left side
-				if (rx1 - rx2 - ry2 + ry1 == 0) return false;	// wall does not intersect view volume
-				sx1 = 0;
-			}
-
-			if (rx2 <= ry2)
-			{
-				if (rx2 < -ry2) return false;	// right edge is off the left side
-				if (ry2 == 0) return false;
-				sx2 = xs_RoundToInt(viewport->CenterX + rx2 * viewport->CenterX / ry2);
-			}
-			else
-			{
-				if (rx1 > ry1) return false;	// wall is off the right side
-				if (ry2 - ry1 - rx2 + rx1 == 0) return false;	// wall does not intersect view volume
-				sx2 = viewwidth;
-			}
-			VisibleSegmentRenderer visitor;
-			Thread->ClipSegments->Clip(sx1, sx2, true, &visitor);
-		}
 		return distcheck;
 	}
 

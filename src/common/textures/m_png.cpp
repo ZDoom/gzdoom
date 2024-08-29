@@ -42,6 +42,10 @@
 #include <malloc.h>		// for alloca()
 #endif
 
+#include <png.h>
+
+#include <csetjmp>
+
 #include "m_crc32.h"
 #include "m_swap.h"
 #if __has_include("c_cvars.h")
@@ -50,18 +54,15 @@
 #include "m_png.h"
 #include "basics.h"
 
+#include "bitmap.h"
+
+#include "vectors.h"
 
 // MACROS ------------------------------------------------------------------
 
 // The maximum size of an IDAT chunk ZDoom will write. This is also the
 // size of the compression buffer it allocates on the stack.
 #define PNG_WRITE_SIZE	32768
-
-// Set this to 1 to use a simple heuristic to select the filter to apply
-// for each row of RGB image saves. As it turns out, it seems no filtering
-// is the best for Doom screenshots, no matter what the heuristic might
-// determine, so that's why this is 0 here.
-#define USE_FILTER_HEURISTIC 0
 
 // TYPES -------------------------------------------------------------------
 
@@ -76,18 +77,6 @@ struct IHDR
 	uint8_t		Interlace;
 };
 
-PNGHandle::PNGHandle (FileReader &file) : bDeleteFilePtr(true), ChunkPt(0)
-{
-	File = std::move(file);
-}
-
-PNGHandle::~PNGHandle ()
-{
-	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
-	{
-		delete[] TextChunks[i];
-	}
-}
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -98,8 +87,6 @@ PNGHandle::~PNGHandle ()
 static inline void MakeChunk (void *where, uint32_t type, size_t len);
 static inline void StuffPalette (const PalEntry *from, uint8_t *to);
 static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len);
-static void UnfilterRow (int width, uint8_t *dest, uint8_t *stream, uint8_t *prev, int bpp);
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_t *rowin, uint8_t *rowout, bool grayscale);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -217,33 +204,6 @@ bool M_FinishPNG (FileWriter *file)
 
 //==========================================================================
 //
-// M_AppendPNGChunk
-//
-// Writes a PNG-compliant chunk to the file.
-//
-//==========================================================================
-
-bool M_AppendPNGChunk (FileWriter *file, uint32_t chunkID, const uint8_t *chunkData, uint32_t len)
-{
-	uint32_t head[2] = { BigLong((unsigned int)len), chunkID };
-	uint32_t crc;
-
-	if (file->Write (head, 8) == 8 &&
-		(len == 0 || file->Write (chunkData, len) == len))
-	{
-		crc = CalcCRC32 ((uint8_t *)&head[1], 4);
-		if (len != 0)
-		{
-			crc = AddCRC32 (crc, chunkData, len);
-		}
-		crc = BigLong((unsigned int)crc);
-		return file->Write (&crc, 4) == 4;
-	}
-	return false;
-}
-
-//==========================================================================
-//
 // M_AppendPNGText
 //
 // Appends a PNG tEXt chunk to the file
@@ -279,426 +239,206 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 
 //==========================================================================
 //
-// M_FindPNGChunk
-//
-// Finds a chunk in a PNG file. The file pointer will be positioned at the
-// beginning of the chunk data, and its length will be returned. A return
-// value of 0 indicates the chunk was either not present or had 0 length.
-// This means there is no way to conclusively determine if a chunk is not
-// present in a PNG file with this function, but since we're only
-// interested in chunks with content, that's okay. The file pointer will
-// be left sitting at the start of the chunk's data if it was found.
+// PNG READING
 //
 //==========================================================================
 
-unsigned int M_FindPNGChunk (PNGHandle *png, uint32_t id)
+void PNGRead(png_structp readp, png_bytep dest, png_size_t count)
 {
-	png->ChunkPt = 0;
-	return M_NextPNGChunk (png, id);
+	FileReader * fr = static_cast<FileReader*>(png_get_io_ptr(readp));
+
+	if(fr->Read(dest, count) != count)
+	{
+		png_error(readp, "PNG file too short");
+	}
 }
 
-//==========================================================================
-//
-// M_NextPNGChunk
-//
-// Like M_FindPNGChunk, but it starts it search at the current chunk.
-//
-//==========================================================================
-
-unsigned int M_NextPNGChunk (PNGHandle *png, uint32_t id)
+bool Internal_ReadPNG (FileReader * fr, FBitmap * out, int(*callback)(png_structp, png_unknown_chunkp), void * data, int start)
 {
-	for ( ; png->ChunkPt < png->Chunks.Size(); ++png->ChunkPt)
+	TArray<uint8_t *> rows;
+
+	if(!out) return false;
+
+	png_structp readp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+
+	if(!readp)
 	{
-		if (png->Chunks[png->ChunkPt].ID == id)
-		{ // Found the chunk
-			png->File.Seek (png->Chunks[png->ChunkPt++].Offset, FileReader::SeekSet);
-			return png->Chunks[png->ChunkPt - 1].Size;
-		}
+		return false;
+	}
+
+	png_infop infop = png_create_info_struct(readp);
+
+	if(!infop)
+	{
+		png_destroy_read_struct(&readp, NULL, NULL);
+		return false;
+	}
+
+	png_infop end_infop = png_create_info_struct(readp);
+
+	if(!end_infop)
+	{
+		png_destroy_read_struct(&readp, &infop, NULL);
+		return false;
+	}
+
+	if(setjmp(png_jmpbuf(readp)))
+	{
+		png_destroy_read_struct(&readp, &infop, &end_infop);
+		return false;
+	}
+
+	png_set_read_fn(readp, fr, &PNGRead);
+	png_set_sig_bytes(readp, 8);
+
+	if(callback) png_set_read_user_chunk_fn(readp, data, callback);
+
+	png_read_info(readp, infop);
+
+	uint32_t width = 0;
+	uint32_t height = 0;
+	int bitDepth = 0;
+	int colorType = 0;
+
+	if(png_get_IHDR(readp, infop, &width, &height, &bitDepth, &colorType, nullptr, nullptr, nullptr) != 1)
+	{
+		png_destroy_read_struct(&readp, &infop, &end_infop);
+	}
+
+	png_set_expand(readp);
+	png_set_strip_16(readp);
+	png_set_gray_to_rgb(readp);
+	png_set_bgr(readp);
+	png_set_filler(readp, 0xff, PNG_FILLER_AFTER);
+	
+	out->Destroy();
+	out->Create(width, height);
+
+	rows.Resize(height);
+
+	for(int i = 0; i < height; i++)
+	{
+		rows[i] = out->GetPixels() + (4 * width * i);
+	}
+	
+	png_read_image(readp, rows.Data());
+	png_read_end(readp, end_infop);
+	png_destroy_read_struct(&readp, &infop, &end_infop);
+	
+	return true;
+}
+
+bool M_IsPNG(FileReader &fr)
+{
+	png_byte header[8];
+	return (png_sig_cmp(header, 0, fr.Read(header, 8)) == 0);
+}
+
+#define IS_CHUNK(chunk, a, b, c, d) \
+	((chunk)->name[0] == (a) && (chunk)->name[1] == (b) && (chunk)->name[2] == (c) && (chunk)->name[3] == (d) && (chunk)->name[4] == 0)
+
+int ofs_ReadChunkCallback(png_structp png_ptr, png_unknown_chunkp chunk)
+{
+	if(IS_CHUNK(chunk, 'g','r','A','b') && chunk->size == 8)
+	{
+		TVector2<int32_t*> *ofs = static_cast<TVector2<int32_t*>*>(png_get_user_chunk_ptr(png_ptr));
+
+		if(ofs->X) (*ofs->X)=(chunk->data[0]<<24)|(chunk->data[1]<<16)|(chunk->data[2]<<8)|(chunk->data[3]);
+		if(ofs->Y) (*ofs->Y)=(chunk->data[4]<<24)|(chunk->data[5]<<16)|(chunk->data[6]<<8)|(chunk->data[7]);
+
+		return 8;
 	}
 	return 0;
 }
 
-//==========================================================================
-//
-// M_GetPNGText
-//
-// Finds a PNG text chunk with the given signature and returns a pointer
-// to a NULL-terminated string if present. Returns NULL on failure.
-//
-//==========================================================================
-
-char *M_GetPNGText (PNGHandle *png, const char *keyword)
+bool M_GetPNGSize(FileReader &fr, uint32_t &width, uint32_t &height, int32_t *ofs_x, int32_t *ofs_y, bool *isMasked)
 {
-	unsigned int i;
-	size_t keylen, textlen;
-
-	for (i = 0; i < png->TextChunks.Size(); ++i)
-	{
-		if (strncmp (keyword, png->TextChunks[i], 80) == 0)
-		{
-			// Woo! A match was found!
-			keylen = min<size_t> (80, strlen (keyword) + 1);
-			textlen = strlen (png->TextChunks[i] + keylen) + 1;
-			char *str = new char[textlen];
-			strcpy (str, png->TextChunks[i] + keylen);
-			return str;
-		}
-	}
-	return NULL;
-}
-
-// This version copies it to a supplied buffer instead of allocating a new one.
-
-bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize)
-{
-	unsigned int i;
-	size_t keylen;
-
-	for (i = 0; i < png->TextChunks.Size(); ++i)
-	{
-		if (strncmp (keyword, png->TextChunks[i], 80) == 0)
-		{
-			// Woo! A match was found!
-			keylen = min<size_t> (80, strlen (keyword) + 1);
-			strncpy (buffer, png->TextChunks[i] + keylen, buffsize);
-			return true;
-		}
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// M_VerifyPNG
-//
-// Returns a PNGHandle if the file is a PNG or NULL if not. CRC checking of
-// chunks is not done in order to save time.
-//
-//==========================================================================
-
-PNGHandle *M_VerifyPNG (FileReader &filer)
-{
-	PNGHandle::Chunk chunk;
-	PNGHandle *png;
-	uint32_t data[2];
-	bool sawIDAT = false;
-
-	if (filer.Read(&data, 8) != 8)
-	{
-		return NULL;
-	}
-	if (data[0] != MAKE_ID(137,'P','N','G') || data[1] != MAKE_ID(13,10,26,10))
+	if(!M_IsPNG(fr))
 	{ // Does not have PNG signature
-		return NULL;
-	}
-	if (filer.Read (&data, 8) != 8)
-	{
-		return NULL;
-	}
-	if (data[1] != MAKE_ID('I','H','D','R'))
-	{ // IHDR must be the first chunk
-		return NULL;
+		return false;
 	}
 
-	// It looks like a PNG so far, so start creating a PNGHandle for it
-	png = new PNGHandle (filer);
-	// filer is no longer valid after the above line!
-	chunk.ID = data[1];
-	chunk.Offset = 16;
-	chunk.Size = BigLong((unsigned int)data[0]);
-	png->Chunks.Push (chunk);
-	png->File.Seek (16, FileReader::SeekSet);
+	png_structp readp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 
-	while (png->File.Seek (chunk.Size + 4, FileReader::SeekCur) == 0)
-	{
-		// If the file ended before an IEND was encountered, it's not a PNG.
-		if (png->File.Read (&data, 8) != 8)
-		{
-			break;
-		}
-		// An IEND chunk terminates the PNG and must be empty
-		if (data[1] == MAKE_ID('I','E','N','D'))
-		{
-			if (data[0] == 0 && sawIDAT)
-			{
-				return png;
-			}
-			break;
-		}
-		// A PNG must include an IDAT chunk
-		if (data[1] == MAKE_ID('I','D','A','T'))
-		{
-			sawIDAT = true;
-		}
-		chunk.ID = data[1];
-		chunk.Offset = (uint32_t)png->File.Tell();
-		chunk.Size = BigLong((unsigned int)data[0]);
-		png->Chunks.Push (chunk);
-
-		// If this is a text chunk, also record its contents.
-		if (data[1] == MAKE_ID('t','E','X','t'))
-		{
-			char *str = new char[chunk.Size + 1];
-
-			if (png->File.Read (str, chunk.Size) != chunk.Size)
-			{
-				delete[] str;
-				break;
-			}
-			str[chunk.Size] = 0;
-			png->TextChunks.Push (str);
-			chunk.Size = 0;		// Don't try to seek past its contents again.
-		}
-	}
-
-	filer = std::move(png->File);	// need to get the reader back if this function failed.
-	delete png;
-	return NULL;
-}
-
-//==========================================================================
-//
-// M_FreePNG
-//
-// Just deletes the PNGHandle. The file is not closed.
-//
-//==========================================================================
-
-void M_FreePNG (PNGHandle *png)
-{
-	delete png;
-}
-
-//==========================================================================
-//
-// ReadIDAT
-//
-// Reads image data out of a PNG
-//
-//==========================================================================
-
-bool M_ReadIDAT (FileReader &file, uint8_t *buffer, int width, int height, int pitch,
-				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int chunklen)
-{
-	// Uninterlaced images are treated as a conceptual eighth pass by these tables.
-	static const uint8_t passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
-	static const uint8_t passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
-	static const uint8_t passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
-	static const uint8_t passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
-
-	Byte *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
-	Byte chunkbuffer[4096];
-	z_stream stream;
-	int err;
-	int i, pass, passbuff, passpitch, passwidth;
-	bool lastIDAT;
-	int bytesPerRowIn, bytesPerRowOut;
-	int bytesPerPixel;
-	bool initpass;
-
-	switch (colortype)
-	{
-	case 2:		bytesPerPixel = 3;		break;		// RGB
-	case 4:		bytesPerPixel = 2;		break;		// LA
-	case 6:		bytesPerPixel = 4;		break;		// RGBA
-	default:	bytesPerPixel = 1;		break;
-	}
-
-	bytesPerRowOut = width * bytesPerPixel;
-	i = 4 + bytesPerRowOut * 2;
-	if (interlace)
-	{
-		i += bytesPerRowOut * 2;
-	}
-	TArray<Byte> inputArray(i, true);
-	inputLine = inputArray.data();
-	adam7buff[0] = inputLine + 4 + bytesPerRowOut;
-	adam7buff[1] = adam7buff[0] + bytesPerRowOut;
-	adam7buff[2] = adam7buff[1] + bytesPerRowOut;
-	bufferend = buffer + pitch * height;
-
-	stream.next_in = Z_NULL;
-	stream.avail_in = 0;
-	stream.zalloc = Z_NULL;
-	stream.zfree = Z_NULL;
-	err = inflateInit (&stream);
-	if (err != Z_OK)
+	if(!readp)
 	{
 		return false;
 	}
-	lastIDAT = false;
-	initpass = true;
-	pass = interlace ? 0 : 7;
 
-	// Silence GCC warnings. Due to initpass being true, these will be set
-	// before they're used, but it doesn't know that.
-	curr = prev = 0;
-	passwidth = passpitch = bytesPerRowIn = 0;
-	passbuff = 0;
+	png_infop infop = png_create_info_struct(readp);
 
-	while (err != Z_STREAM_END && pass < 8 - interlace)
+	if(!infop)
 	{
-		if (initpass)
-		{
-			int rowoffset, coloffset;
-
-			initpass = false;
-			pass--;
-			do
-			{
-				pass++;
-				rowoffset = passrowoffset[pass];
-				coloffset = passcoloffset[pass];
-			}
-			while ((rowoffset >= height || coloffset >= width) && pass < 7);
-			if (pass == 7 && interlace)
-			{
-				break;
-			}
-			passwidth = (width + (1 << passwidthshift[pass]) - 1 - coloffset) >> passwidthshift[pass];
-			prev = adam7buff[0];
-			passbuff = 1;
-			memset (prev, 0, passwidth * bytesPerPixel);
-			switch (bitdepth)
-			{
-			case 8:		bytesPerRowIn = passwidth * bytesPerPixel;	break;
-			case 4:		bytesPerRowIn = (passwidth+1)/2;			break;
-			case 2:		bytesPerRowIn = (passwidth+3)/4;			break;
-			case 1:		bytesPerRowIn = (passwidth+7)/8;			break;
-			default:	return false;
-			}
-			curr = buffer + rowoffset*pitch + coloffset*bytesPerPixel;
-			passpitch = pitch << passheightshift[pass];
-			stream.next_out = inputLine;
-			stream.avail_out = bytesPerRowIn + 1;
-		}
-		if (stream.avail_in == 0 && chunklen > 0)
-		{
-			stream.next_in = chunkbuffer;
-			stream.avail_in = (uInt)file.Read (chunkbuffer, min<uint32_t>(chunklen,sizeof(chunkbuffer)));
-			chunklen -= stream.avail_in;
-		}
-
-		err = inflate (&stream, Z_SYNC_FLUSH);
-		if (err != Z_OK && err != Z_STREAM_END)
-		{ // something unexpected happened
-			inflateEnd (&stream);
-			return false;
-		}
-
-		if (stream.avail_out == 0)
-		{
-			if (pass >= 6)
-			{
-				// Store pixels directly into the output buffer
-				UnfilterRow (bytesPerRowIn, curr, inputLine, prev, bytesPerPixel);
-				prev = curr;
-			}
-			else
-			{
-				const uint8_t *in;
-				uint8_t *out;
-				int colstep, x;
-
-				// Store pixels into a temporary buffer
-				UnfilterRow (bytesPerRowIn, adam7buff[passbuff], inputLine, prev, bytesPerPixel);
-				prev = adam7buff[passbuff];
-				passbuff ^= 1;
-				in = prev;
-				if (bitdepth < 8)
-				{
-					UnpackPixels (passwidth, bytesPerRowIn, bitdepth, in, adam7buff[2], colortype == 0);
-					in = adam7buff[2];
-				}
-				// Distribute pixels into the output buffer
-				out = curr;
-				colstep = bytesPerPixel << passwidthshift[pass];
-				switch (bytesPerPixel)
-				{
-				case 1:
-					for (x = passwidth; x > 0; --x)
-					{
-						*out = *in;
-						out += colstep;
-						in += 1;
-					}
-					break;
-
-				case 2:
-					for (x = passwidth; x > 0; --x)
-					{
-						*(uint16_t *)out = *(uint16_t *)in;
-						out += colstep;
-						in += 2;
-					}
-					break;
-
-				case 3:
-					for (x = passwidth; x > 0; --x)
-					{
-						out[0] = in[0];
-						out[1] = in[1];
-						out[2] = in[2];
-						out += colstep;
-						in += 3;
-					}
-					break;
-
-				case 4:
-					for (x = passwidth; x > 0; --x)
-					{
-						*(uint32_t *)out = *(uint32_t *)in;
-						out += colstep;
-						in += 4;
-					}
-					break;
-				}
-			}
-			if ((curr += passpitch) >= bufferend)
-			{
-				++pass;
-				initpass = true;
-			}
-			stream.next_out = inputLine;
-			stream.avail_out = bytesPerRowIn + 1;
-		}
-
-		if (chunklen == 0 && !lastIDAT)
-		{
-			uint32_t x[3];
-
-			if (file.Read (x, 12) != 12)
-			{
-				lastIDAT = true;
-			}
-			else if (x[2] != MAKE_ID('I','D','A','T'))
-			{
-				lastIDAT = true;
-			}
-			else
-			{
-				chunklen = BigLong((unsigned int)x[1]);
-			}
-		}
+		png_destroy_read_struct(&readp, NULL, NULL);
+		return false;
 	}
 
-	inflateEnd (&stream);
-
-	if (bitdepth < 8)
+	if(setjmp(png_jmpbuf(readp)))
 	{
-		// Noninterlaced images must be unpacked completely.
-		// Interlaced images only need their final pass unpacked.
-		passpitch = pitch << interlace;
-		for (curr = buffer + pitch * interlace; curr <= prev; curr += passpitch)
-		{
-			UnpackPixels (width, bytesPerRowIn, bitdepth, curr, curr, colortype == 0);
-		}
+		png_destroy_read_struct(&readp, &infop, nullptr);
+		return false;
 	}
+
+	png_set_read_fn(readp, &fr, &PNGRead);
+	png_set_sig_bytes(readp, 8);
+
+	TVector2<int32_t*> ofs(ofs_x, ofs_y);
+
+	if(ofs_x != nullptr || ofs_y != nullptr) png_set_read_user_chunk_fn(readp, &ofs, ofs_ReadChunkCallback);
+
+	png_read_info(readp, infop);
+
+	int colorType = 0;
+
+	if(png_get_IHDR(readp, infop, &width, &height, nullptr, &colorType, nullptr, nullptr, nullptr) != 1)
+	{
+		png_destroy_read_struct(&readp, &infop, nullptr);
+		return false;
+	}
+
+	if(isMasked != nullptr)
+	{
+		(*isMasked) = (colorType & PNG_COLOR_MASK_ALPHA) || png_get_valid(readp, infop, PNG_INFO_tRNS);
+	}
+
+	png_destroy_read_struct(&readp, &infop, nullptr);
+
 	return true;
 }
 
-// PRIVATE CODE ------------------------------------------------------------
+bool M_ReadPNG(FileReader &fr, FBitmap * out)
+{
+	if(!M_IsPNG(fr))
+	{ // Does not have PNG signature
+		return false;
+	}
 
+	// It looks like a PNG so far, so start creating a PNGHandle for it
+	FileReader png(std::move(fr));
+	if(Internal_ReadPNG(&png, out, nullptr, nullptr, 8))
+	{
+		return true;
+	}
+	else
+	{
+		fr = std::move(png);	// need to get the reader back if this function failed.
+		return false;
+	}
+}
+
+bool M_ReadPNG(FileReader &&fr, FBitmap * out)
+{
+	if(!M_IsPNG(fr))
+	{ // Does not have PNG signature
+		return false;
+	}
+
+	FileReader png(std::move(fr));
+
+	return Internal_ReadPNG(&png, out, nullptr, nullptr, 8);
+}
+
+// PRIVATE CODE ------------------------------------------------------------
 
 //==========================================================================
 //
@@ -738,161 +478,7 @@ static void StuffPalette (const PalEntry *from, uint8_t *to)
 	}
 }
 
-//==========================================================================
-//
-// CalcSum
-//
-//
-//==========================================================================
-
-uint32_t CalcSum(Byte *row, int len)
-{
-	uint32_t sum = 0;
-
-	while (len-- != 0)
-	{
-		sum += (char)*row++;
-	}
-	return sum;
-}
-
-//==========================================================================
-//
-// SelectFilter
-//
-// Performs the heuristic recommended by the PNG spec to decide the
-// (hopefully) best filter to use for this row. To quate:
-//
-//    Select the filter that gives the smallest sum of absolute values of
-//    outputs. (Consider the output bytes as signed differences for this
-//    test.)
-//
-//==========================================================================
-
-#if USE_FILTER_HEURISTIC
-static int SelectFilter(Byte **row, Byte *prior, int width)
-{
-	// As it turns out, it seems no filtering is the best for Doom screenshots,
-	// no matter what the heuristic might determine.
-	return 0;
-	uint32_t sum;
-	uint32_t bestsum;
-	int bestfilter;
-	int x;
-
-	width *= 3;
-
-	// The first byte of each row holds the filter type, filled in by the caller.
-	// However, the prior row does not contain a filter type, since it's always 0.
-
-	bestsum = 0;
-	bestfilter = 0;
-
-	// None
-	for (x = 1; x <= width; ++x)
-	{
-		bestsum += abs((char)row[0][x]);
-	}
-
-	// Sub
-	row[1][1] = row[0][1];
-	row[1][2] = row[0][2];
-	row[1][3] = row[0][3];
-	sum = abs((char)row[0][1]) + abs((char)row[0][2]) + abs((char)row[0][3]);
-	for (x = 4; x <= width; ++x)
-	{
-		row[1][x] = row[0][x] - row[0][x - 3];
-		sum += abs((char)row[1][x]);
-		if (sum >= bestsum)
-		{ // This isn't going to be any better.
-			break;
-		}
-	}
-	if (sum < bestsum)
-	{
-		bestsum = sum;
-		bestfilter = 1;
-	}
-
-	// Up
-	sum = 0;
-	for (x = 1; x <= width; ++x)
-	{
-		row[2][x] = row[0][x] - prior[x - 1];
-		sum += abs((char)row[2][x]);
-		if (sum >= bestsum)
-		{ // This isn't going to be any better.
-			break;
-		}
-	}
-	if (sum < bestsum)
-	{
-		bestsum = sum;
-		bestfilter = 2;
-	}
-
-	// Average
-	row[3][1] = row[0][1] - prior[0] / 2;
-	row[3][2] = row[0][2] - prior[1] / 2;
-	row[3][3] = row[0][3] - prior[2] / 2;
-	sum = abs((char)row[3][1]) + abs((char)row[3][2]) + abs((char)row[3][3]);
-	for (x = 4; x <= width; ++x)
-	{
-		row[3][x] = row[0][x] - (row[0][x - 3] + prior[x - 1]) / 2;
-		sum += (char)row[3][x];
-		if (sum >= bestsum)
-		{ // This isn't going to be any better.
-			break;
-		}
-	}
-	if (sum < bestsum)
-	{
-		bestsum = sum;
-		bestfilter = 3;
-	}
-
-	// Paeth
-	row[4][1] = row[0][1] - prior[0];
-	row[4][2] = row[0][2] - prior[1];
-	row[4][3] = row[0][3] - prior[2];
-	sum = abs((char)row[4][1]) + abs((char)row[4][2]) + abs((char)row[4][3]);
-	for (x = 4; x <= width; ++x)
-	{
-		Byte a = row[0][x - 3];
-		Byte b = prior[x - 1];
-		Byte c = prior[x - 4];
-		int p = a + b - c;
-		int pa = abs(p - a);
-		int pb = abs(p - b);
-		int pc = abs(p - c);
-		if (pa <= pb && pa <= pc)
-		{
-			row[4][x] = row[0][x] - a;
-		}
-		else if (pb <= pc)
-		{
-			row[4][x] = row[0][x] - b;
-		}
-		else
-		{
-			row[4][x] = row[0][x] - c;
-		}
-		sum += (char)row[4][x];
-		if (sum >= bestsum)
-		{ // This isn't going to be any better.
-			break;
-		}
-	}
-	if (sum < bestsum)
-	{
-		bestfilter = 4;
-	}
-
-	return bestfilter;
-}
-#else
 #define SelectFilter(x,y,z)		0
-#endif
 
 //==========================================================================
 //
@@ -907,14 +493,7 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 {
 	TArray<Byte> temprow_storage;
 
-#if USE_FILTER_HEURISTIC
-	static const unsigned temprow_count = 5;
-
-	TArray<Byte> prior_storage(width * 3, true);
-	Byte *prior = &prior_storage[0];
-#else
 	static const unsigned temprow_count = 1;
-#endif
 
 	const unsigned temprow_size = 1 + width * 3;
 	temprow_storage.Resize(temprow_size * temprow_count);
@@ -948,19 +527,6 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 	stream.avail_out = sizeof(buffer);
 
 	temprow[0][0] = 0;
-#if USE_FILTER_HEURISTIC
-	temprow[1][0] = 1;
-	temprow[2][0] = 2;
-	temprow[3][0] = 3;
-	temprow[4][0] = 4;
-
-	// Fill the prior row with 0 for RGB images. Paletted is always filter 0,
-	// so it doesn't need this.
-	if (color_type != SS_PAL)
-	{
-		memset(prior, 0, width * 3);
-	}
-#endif
 
 	while (y-- > 0 && err == Z_OK)
 	{
@@ -990,13 +556,6 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 			stream.avail_in = width * 3 + 1;
 			break;
 		}
-#if USE_FILTER_HEURISTIC
-		if (color_type != SS_PAL)
-		{
-			// Save this row for filter calculations on the next row.
-			memcpy (prior, &temprow[0][1], stream.avail_in - 1);
-		}
-#endif
 
 		from += pitch;
 
@@ -1075,230 +634,4 @@ static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len)
 		return false;
 	}
 	return true;
-}
-
-//==========================================================================
-//
-// UnfilterRow
-//
-// Unfilters the given row. Unknown filter types are silently ignored.
-// bpp is bytes per pixel, not bits per pixel.
-// width is in bytes, not pixels.
-//
-//==========================================================================
-
-void UnfilterRow (int width, uint8_t *dest, uint8_t *row, uint8_t *prev, int bpp)
-{
-	int x;
-
-	switch (*row++)
-	{
-	case 1:		// Sub
-		x = bpp;
-		do
-		{
-			*dest++ = *row++;
-		}
-		while (--x);
-		for (x = width - bpp; x > 0; --x)
-		{
-			*dest = *row++ + *(dest - bpp);
-			dest++;
-		}
-		break;
-
-	case 2:		// Up
-		x = width;
-		do
-		{
-			*dest++ = *row++ + *prev++;
-		}
-		while (--x);
-		break;
-
-	case 3:		// Average
-		x = bpp;
-		do
-		{
-			*dest++ = *row++ + (*prev++)/2;
-		}
-		while (--x);
-		for (x = width - bpp; x > 0; --x)
-		{
-			*dest = *row++ + (uint8_t)((unsigned(*(dest - bpp)) + unsigned(*prev++)) >> 1);
-			dest++;
-		}
-		break;
-
-	case 4:		// Paeth
-		x = bpp;
-		do
-		{
-			*dest++ = *row++ + *prev++;
-		}
-		while (--x);
-		for (x = width - bpp; x > 0; --x)
-		{
-			int a, b, c, pa, pb, pc;
-
-			a = *(dest - bpp);
-			b = *(prev);
-			c = *(prev - bpp);
-			pa = b - c;
-			pb = a - c;
-			pc = abs (pa + pb);
-			pa = abs (pa);
-			pb = abs (pb);
-			*dest = *row + (uint8_t)((pa <= pb && pa <= pc) ? a : (pb <= pc) ? b : c);
-			dest++;
-			row++;
-			prev++;
-		}
-		break;
-
-	default:	// Treat everything else as filter type 0 (none)
-		memcpy (dest, row, width);
-		break;
-	}
-}
-
-//==========================================================================
-//
-// UnpackPixels
-//
-// Unpacks a row of pixels whose depth is less than 8 so that each pixel
-// occupies a single byte. The outrow must be "width" bytes long.
-// "bytesPerRow" is the number of bytes for the packed row. The in and out
-// rows may overlap, but only if rowin == rowout.
-//
-//==========================================================================
-
-static void UnpackPixels (int width, int bytesPerRow, int bitdepth, const uint8_t *rowin, uint8_t *rowout, bool grayscale)
-{
-	const uint8_t *in;
-	uint8_t *out;
-	uint8_t pack;
-	int lastbyte;
-
-	assert(bitdepth == 1 || bitdepth == 2 || bitdepth == 4);
-
-	out = rowout + width;
-	in = rowin + bytesPerRow;
-
-	switch (bitdepth)
-	{
-	case 1:
-
-		lastbyte = width & 7;
-		if (lastbyte != 0)
-		{
-			in--;
-			pack = *in;
-			out -= lastbyte;
-			out[0] = (pack >> 7) & 1;
-			if (lastbyte >= 2) out[1] = (pack >> 6) & 1;
-			if (lastbyte >= 3) out[2] = (pack >> 5) & 1;
-			if (lastbyte >= 4) out[3] = (pack >> 4) & 1;
-			if (lastbyte >= 5) out[4] = (pack >> 3) & 1;
-			if (lastbyte >= 6) out[5] = (pack >> 2) & 1;
-			if (lastbyte == 7) out[6] = (pack >> 1) & 1;
-		}
-
-		while (in-- > rowin)
-		{
-			pack = *in;
-			out -= 8;
-			out[0] = (pack >> 7) & 1;
-			out[1] = (pack >> 6) & 1;
-			out[2] = (pack >> 5) & 1;
-			out[3] = (pack >> 4) & 1;
-			out[4] = (pack >> 3) & 1;
-			out[5] = (pack >> 2) & 1;
-			out[6] = (pack >> 1) & 1;
-			out[7] = pack & 1;
-		}
-		break;
-
-	case 2:
-
-		lastbyte = width & 3;
-		if (lastbyte != 0)
-		{
-			in--;
-			pack = *in;
-			out -= lastbyte;
-			out[0] = pack >> 6;
-			if (lastbyte >= 2) out[1] = (pack >> 4) & 3;
-			if (lastbyte == 3) out[2] = (pack >> 2) & 3;
-		}
-
-		while (in-- > rowin)
-		{
-			pack = *in;
-			out -= 4;
-			out[0] = pack >> 6;
-			out[1] = (pack >> 4) & 3;
-			out[2] = (pack >> 2) & 3;
-			out[3] = pack & 3;
-		}
-		break;
-
-	case 4:
-		lastbyte = width & 1;
-		if (lastbyte != 0)
-		{
-			in--;
-			pack = *in;
-			out -= lastbyte;
-			out[0] = pack >> 4;
-		}
-
-		while (in-- > rowin)
-		{
-			pack = *in;
-			out -= 2;
-			out[0] = pack >> 4;
-			out[1] = pack & 15;
-		}
-		break;
-	}
-
-	// Expand grayscale to 8bpp
-	if (grayscale)
-	{
-		// Put the 2-bit lookup table on the stack, since it's probably already
-		// in a cache line.
-		union
-		{
-			uint32_t bits2l;
-			uint8_t bits2[4];
-		};
-
-		out = rowout + width;
-		switch (bitdepth)
-		{
-		case 1:
-			while (--out >= rowout)
-			{
-				// 1 becomes -1 (0xFF), and 0 remains untouched.
-				*out = 0 - *out;
-			}
-			break;
-
-		case 2:
-			bits2l = MAKE_ID(0x00,0x55,0xAA,0xFF);
-			while (--out >= rowout)
-			{
-				*out = bits2[*out];
-			}
-			break;
-
-		case 4:
-			while (--out >= rowout)
-			{
-				*out |= (*out << 4);
-			}
-			break;
-		}
-	}
 }

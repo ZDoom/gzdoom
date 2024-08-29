@@ -58,9 +58,6 @@ bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *pal,
 // Creates a grayscale 1x1 PNG file. Used for savegames without savepics.
 bool M_CreateDummyPNG (FileWriter *file);
 
-// Appends any chunk to a PNG file started with M_CreatePNG.
-bool M_AppendPNGChunk (FileWriter *file, uint32_t chunkID, const uint8_t *chunkData, uint32_t len);
-
 // Adds a tEXt chunk to a PNG file started with M_CreatePNG.
 bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text);
 
@@ -71,54 +68,19 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 
 // PNG Reading --------------------------------------------------------------
 
-struct PNGHandle
-{
-	struct Chunk
-	{
-		uint32_t		ID;
-		uint32_t		Offset;
-		uint32_t		Size;
-	};
+class FBitmap;
 
-	FileSys::FileReader			File;
-	bool			bDeleteFilePtr;
-	TArray<Chunk>	Chunks;
-	TArray<char *>	TextChunks;
-	unsigned int	ChunkPt;
+bool M_IsPNG(FileSys::FileReader &fr);
 
-	PNGHandle(FileSys::FileReader &file);
-	~PNGHandle();
-};
 
-// Verify that a file really is a PNG file. This includes not only checking
-// the signature, but also checking for the IEND chunk. CRC checking of
-// each chunk is not done. If it is valid, you get a PNGHandle to pass to
-// the following functions.
-PNGHandle *M_VerifyPNG (FileSys::FileReader &file);
+bool M_GetPNGSize(FileSys::FileReader &fr, uint32_t &width, uint32_t &height, int32_t *ofs_x = nullptr, int32_t *ofs_y = nullptr, bool *isMasked = nullptr);
 
-// Finds a chunk in a PNG file. The file pointer will be positioned at the
-// beginning of the chunk data, and its length will be returned. A return
-// value of 0 indicates the chunk was either not present or had 0 length.
-unsigned int M_FindPNGChunk (PNGHandle *png, uint32_t chunkID);
+//bool M_ReadPNG(FileSys::FileReader &fr, FBitmap * out);
 
-// Finds a chunk in the PNG file, starting its search at whatever chunk
-// the file pointer is currently positioned at.
-unsigned int M_NextPNGChunk (PNGHandle *png, uint32_t chunkID);
-
-// Finds a PNG text chunk with the given signature and returns a pointer
-// to a NULL-terminated string if present. Returns NULL on failure.
-// (Note: tEXt, not zTXt.)
-char *M_GetPNGText (PNGHandle *png, const char *keyword);
-bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize);
-
-// The file must be positioned at the start of the first IDAT. It reads
-// image data into the provided buffer. Returns true on success.
-bool M_ReadIDAT (FileSys::FileReader &file, uint8_t *buffer, int width, int height, int pitch,
-				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int idatlen);
-
+bool M_ReadPNG(FileSys::FileReader &&fr, FBitmap * out);
 
 class FGameTexture;
 
-FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename);
+FGameTexture *PNGTexture_CreateFromFile(FileSys::FileReader &&fr, const FString &filename);
 
 #endif

@@ -317,17 +317,15 @@ unsigned FSavegameManagerBase::ExtractSaveData(int index)
 		if (pic >= 0)
 		{
 			// This must use READER_CACHED or it will lock the savegame file.
-			FileReader picreader = resf->GetEntryReader(pic, FileSys::READER_CACHED, FileSys::READERFLAG_SEEKABLE);
-			PNGHandle *png = M_VerifyPNG(picreader);
-			if (png != nullptr)
+			SavePic = PNGTexture_CreateFromFile(
+					resf->GetEntryReader(pic, FileSys::READER_CACHED, FileSys::READERFLAG_SEEKABLE),
+					node->Filename
+			);
+
+			if(SavePic && SavePic->GetDisplayWidth() == 1 && SavePic->GetDisplayHeight() == 1)
 			{
-				SavePic = PNGTexture_CreateFromFile(png, node->Filename);
-				delete png;
-				if (SavePic && SavePic->GetDisplayWidth() == 1 && SavePic->GetDisplayHeight() == 1)
-				{
-					delete SavePic;
-					SavePic = nullptr;
-				}
+				delete SavePic;
+				SavePic = nullptr;
 			}
 		}
 	}

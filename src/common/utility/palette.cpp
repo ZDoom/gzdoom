@@ -937,8 +937,8 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 
 	FileReader fr;
 	fr.OpenMemory(lumpmem, lump.size());
-	auto png = M_VerifyPNG(fr);
-	if (png)
+
+	if (M_IsPNG(fr))
 	{
 		uint32_t id, len;
 		fr.Seek(33, FileReader::SeekSet);

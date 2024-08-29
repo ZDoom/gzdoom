@@ -352,6 +352,29 @@ if( MSVC AND NOT ZMUSIC_FOUND )
 	set( ZMUSIC_FOUND TRUE )
 endif()
 
+# PNG
+
+if( MSVC )
+	find_package( PNG )
+else()
+    set(CMAKE_FIND_FRAMEWORK LAST)
+	find_package( PNG 1.6 REQUIRED )
+endif()
+
+if( MSVC AND NOT PNG_FOUND )
+	# Use prebuilt library
+    set( PNG_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/Windows/lpng16" )
+    set( PNG_INCLUDE_DIRS "${PNG_ROOT_PATH}/include" )
+    set( PNG_LIBRARIES libpng16 )
+    link_directories( "${PNG_ROOT_PATH}/bin/" )
+    set( PNG_FOUND TRUE )
+endif()
+
+if( PNG_FOUND )
+	include_directories( SYSTEM "${PNG_INCLUDE_DIRS}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${PNG_LIBRARIES} )
+endif()
+
 
 # VPX
 

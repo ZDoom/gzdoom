@@ -178,6 +178,7 @@ class Actor : Thinker native
 	native name DamageTypeReceived;
 	native uint8 FloatBobPhase;
 	native double FloatBobStrength;
+	native double FloatBobFactor;
 	native int RipperLevel;
 	native int RipLevelMin;
 	native int RipLevelMax;
@@ -413,6 +414,7 @@ class Actor : Thinker native
 		FloatSpeed 4;
 		FloatBobPhase -1;	// randomly initialize by default
 		FloatBobStrength 1.0;
+		FloatBobFactor 1.0;
 		Gravity 1;
 		Friction 1;
 		DamageFactor 1.0;		// damage multiplier as target of damage.

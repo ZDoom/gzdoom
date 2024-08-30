@@ -645,6 +645,16 @@ DEFINE_PROPERTY(floatbobstrength, F, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(floatbobfactor, F, Actor)
+{
+	PROP_DOUBLE_PARM(id, 0);
+	if (id <= 0) I_Error ("FloatBobFactor must be above 0.0");
+	defaults->FloatBobFactor = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(args, Iiiii, Actor)
 {
 	for (int i = 0; i < PROP_PARM_COUNT; i++)

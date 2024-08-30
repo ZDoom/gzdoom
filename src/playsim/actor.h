@@ -1304,6 +1304,7 @@ public:
 	uint8_t FloatBobPhase;
 	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	double FloatBobStrength;
+	double FloatBobFactor;
 	PalEntry BloodColor;
 	FTranslationID BloodTranslation;
 

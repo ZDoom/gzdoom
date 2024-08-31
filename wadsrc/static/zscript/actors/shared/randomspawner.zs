@@ -4,8 +4,8 @@ class RandomSpawnerTracker {
 	static RandomSpawnerTracker instance;
 
 	protected int size;
-	protected Array<Class<Actor>> origin;
-	protected Array<Class<Actor>> destClass;
+	protected Array<Class<Actor> > origin;
+	protected Array<Class<Actor> > destClass;
 	protected Array<Actor> dest;
 
 	static RandomSpawnerTracker Get() {

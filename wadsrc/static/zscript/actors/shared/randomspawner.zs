@@ -1,18 +1,19 @@
 // Random spawner tracker singleton ----------------------------------------
 
-class RandomSpawnerTracker {
-	static RandomSpawnerTracker instance;
-
+class RandomSpawnerTracker : Thinker {
 	protected int size;
 	protected Array<Class<Actor> > origin;
 	protected Array<Class<Actor> > destClass;
 	protected Array<Actor> dest;
 
 	static RandomSpawnerTracker Get() {
+		RandomSpawnerTracker instance = RandomSpawnerTracker(ThinkerIterator.Create("RandomSpawnerTracker").Next());
+		
 		if (instance == null) {
 			instance = new("RandomSpawnerTracker");
 			instance.Init();
 		}
+		
 		return instance;
 	}
 

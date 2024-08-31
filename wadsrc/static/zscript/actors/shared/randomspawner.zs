@@ -55,13 +55,13 @@ class RandomSpawnerTracker {
 		size++;
 	}
 
-	Class<Actor> GetSpawnOrigin(Actor Other) {
+	Class<Actor>, bool GetSpawnOrigin(Actor Other) {
 		for (int i = 0; i < size; i++) {
 			if (dest[i] == Other) {
-				return origin[i];
+				return origin[i], true;
 			}
 		}
-		return null;
+		return Other.class, false;
 	}
 }
 

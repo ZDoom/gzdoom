@@ -20,14 +20,6 @@ class RandomSpawnerTracker {
 		size = 0;
 	}
 
-	virtual protected Class<Actor> FindRootClass(Actor from) {
-		for (int i = 0; i < size; i++) {
-			if (dest[i] = from) {
-				return origin[i];
-			}
-		}
-		return from.class;
-	}
 
 	virtual protected void Delete(int index) {
 		self.origin.Delete(index);
@@ -37,7 +29,7 @@ class RandomSpawnerTracker {
 	}
 
 	void RegisterSpawn(Actor from, Actor dest) {
-		let root = from.class;
+		let root = from.GetClass();
 
 		// find intermediary link to remove
 		// (this prevents intermediary spawns from lingering without GC)
@@ -61,7 +53,7 @@ class RandomSpawnerTracker {
 				return origin[i], true;
 			}
 		}
-		return Other.class, false;
+		return Other.GetClass(), false;
 	}
 }
 

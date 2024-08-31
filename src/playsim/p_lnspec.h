@@ -180,10 +180,18 @@ typedef enum {
 
 // [RH] Equivalents for BOOM's generalized sector types
 
-#define DAMAGE_MASK		0x0300
-#define SECRET_MASK		0x0400
-#define FRICTION_MASK	0x0800
-#define PUSH_MASK		0x1000
+enum
+{
+	DAMAGE_MASK		= 0x0300,
+	SECRET_MASK		= 0x0400,
+	FRICTION_MASK	= 0x0800,
+	PUSH_MASK		= 0x1000,
+	SILENCE_MASK	= 0x2000,	// Unimplemented Boom flag - handled differently.
+	SILENTMOVE_MASK = 0x4000,	// Unimplemented Boom flag - handled differently.
+	// mbf21
+	DEATH_MASK		= 0x8000,
+	KILL_MONSTERS_MASK = 0x10000
+};
 
 struct line_t;
 class AActor;

@@ -46,7 +46,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
-#include "zlib.h"
+#include <miniz.h>
 #include "bzlib.h"
 #include "LzmaEnc.h"
 #include "7zVersion.h"
@@ -781,6 +781,8 @@ void write_zip(const char *zipname, dir_tree_t *trees, int update)
 			if (central_dir == NULL)
 			{
 				fprintf(stderr, "Could not read central directory from %s. (Is it a zipfile?)\n", zipname);
+				fclose(ozip);
+				ozip = NULL;
 				update = 0;
 			}
 		}

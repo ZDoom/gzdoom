@@ -64,7 +64,7 @@ class PowerupGiver : Inventory
 
 class Powerup : Inventory
 {
-	int EffectTics;	
+	int EffectTics, MaxEffectTics;	
 	color BlendColor;
 	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
@@ -121,6 +121,7 @@ class Powerup : Inventory
 			if (power.bAdditiveTime) 
 			{
 				EffectTics += power.EffectTics;
+				MaxEffectTics = Max(EffectTics, MaxEffectTics);
 				BlendColor = power.BlendColor;
 			}
 			// If it's not blinking yet, you can't replenish the power unless the
@@ -132,7 +133,7 @@ class Powerup : Inventory
 			// Reset the effect duration.
 			else if (power.EffectTics > EffectTics)
 			{
-				EffectTics = power.EffectTics;
+				EffectTics = MaxEffectTics = power.EffectTics;
 				BlendColor = power.BlendColor;
 			}
 			power.bPickupGood = true;
@@ -150,7 +151,7 @@ class Powerup : Inventory
 	override Inventory CreateCopy (Actor other)
 	{
 		// Get the effective effect time.
-		EffectTics = abs (EffectTics);
+		EffectTics = MaxEffectTics = abs (EffectTics);
 		// Abuse the Owner field to tell the
 		// InitEffect method who started it;
 		// this should be cleared afterwards,
@@ -356,7 +357,11 @@ class PowerInvulnerable : Powerup
 		{
 			return;
 		}
-
+		Owner.bInvulnerable = true;
+		if (Mode == 'Reflective')
+		{
+			Owner.bReflective = true;
+		}
 		if (Mode == 'Ghost')
 		{
 			if (!Owner.bShadow)
@@ -565,7 +570,7 @@ class PowerInvisibility : Powerup
 		Super.DoEffect();
 		// Due to potential interference with other PowerInvisibility items
 		// the effect has to be refreshed each tic.
-		double ts = (Strength / 100) * (special1 + 1);
+		double ts = (Strength / 100.) * (special1 + 1);
 		
 		if (ts > 1.) ts = 1.;
 		let newAlpha = clamp((1. - ts), 0., 1.);
@@ -759,6 +764,7 @@ class PowerIronFeet : Powerup
 	{
 		Powerup.Duration -60;
 		Powerup.Color "00 ff 00", 0.125;
+		Powerup.Mode "Normal";
 	}
 	
 	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
@@ -950,7 +956,7 @@ class PowerFlight : Powerup
 		Owner.bNoGravity = true;
 		if (Owner.pos.Z <= Owner.floorz)
 		{
-			Owner.Vel.Z = 4;;	// thrust the player in the air a bit
+			Owner.Vel.Z = 4;	// thrust the player in the air a bit
 		}
 		if (Owner.Vel.Z <= -35)
 		{ // stop falling scream
@@ -1128,22 +1134,12 @@ class PowerWeaponLevel2 : Powerup
 		Super.EndEffect();
 		if (Owner == null) return;
 		let player = Owner.player;
-		if (player != NULL)
+		if (player != NULL && player.mo != null)
 		{
-			if (player.ReadyWeapon != NULL && player.ReadyWeapon.bPowered_Up)
-			{
-				player.ReadyWeapon.EndPowerup ();
-			}
-			if (player.PendingWeapon != NULL && player.PendingWeapon != WP_NOCHANGE &&
-				player.PendingWeapon.bPowered_Up &&
-				player.PendingWeapon.SisterWeapon != NULL)
-			{
-				player.PendingWeapon = player.PendingWeapon.SisterWeapon;
-			}
+			player.mo.bWeaponLevel2Ended = true;
 		}
 	}
 
-	
 }
 
 //===========================================================================
@@ -1874,19 +1870,22 @@ class PowerReflection : Powerup
 //===========================================================================
 //
 // PowerMorph
+// Now works with monsters too!
 //
 //===========================================================================
 
 class PowerMorph : Powerup
 {
-	Class<PlayerPawn> PlayerClass;
-	Class<Actor> MorphFlash, UnMorphFlash;
+	class<PlayerPawn> PlayerClass;
+	class<Actor> MonsterClass, MorphFlash, UnmorphFlash;
 	int MorphStyle;
 	PlayerInfo MorphedPlayer;
 	
 	Default
 	{
 		Powerup.Duration -40;
+		PowerMorph.MorphFlash "TeleportFog";
+		PowerMorph.UnmorphFlash "TeleportFog";
 	}
 	
 	//===========================================================================
@@ -1899,19 +1898,17 @@ class PowerMorph : Powerup
 	{
 		Super.InitEffect();
 
-		if (Owner != null && Owner.player != null && PlayerClass != null)
+		if (!Owner)
+			return;
+
+		if (Owner.Morph(Owner, PlayerClass, MonsterClass, int.max, MorphStyle, MorphFlash, UnmorphFlash))
 		{
-			let realplayer = Owner.player;	// Remember the identity of the player
-			if (realplayer.mo.MorphPlayer(realplayer, PlayerClass, 0x7fffffff/*INDEFINITELY*/, MorphStyle, MorphFlash, UnMorphFlash))
-			{
-				Owner = realplayer.mo;				// Replace the new owner in our owner; safe because we are not attached to anything yet
-				bCreateCopyMoved = true;			// Let the caller know the "real" owner has changed (to the morphed actor)
-				MorphedPlayer = realplayer;			// Store the player identity (morphing clears the unmorphed actor's "player" field)
-			}
-			else // morph failed - give the caller an opportunity to fail the pickup completely
-			{
-				bInitEffectFailed = true;			// Let the caller know that the activation failed (can fail the pickup if appropriate)
-			}
+			bCreateCopyMoved = true;	// Let the caller know the "real" owner has changed (to the morphed actor).
+			MorphedPlayer = Owner.player;
+		}
+		else
+		{
+			bInitEffectFailed = true;	// Let the caller know that the activation failed (can fail the pickup if appropriate).
 		}
 	}
 
@@ -1925,24 +1922,16 @@ class PowerMorph : Powerup
 	{
 		Super.EndEffect();
 
-		// Abort if owner already destroyed or unmorphed
-		if (Owner == null || MorphedPlayer == null || Owner.alternative == null)
-		{
+		// Abort if owner already destroyed or unmorphed.
+		if (!Owner || !Owner.Alternative)
 			return;
-		}
 		
 		// Abort if owner is dead; their Die() method will
 		// take care of any required unmorphing on death.
-		if (MorphedPlayer.health <= 0)
-		{
+		if (Owner.player ? Owner.player.Health <= 0 : Owner.Health <= 0)
 			return;
-		}
 
-		int savedMorphTics = MorphedPlayer.morphTics;
-		MorphedPlayer.mo.UndoPlayerMorph (MorphedPlayer, 0, !!(MorphedPlayer.MorphStyle & MRF_UNDOALWAYS));
+		Owner.Unmorph(Owner, force: Owner.GetMorphStyle() & MRF_UNDOALWAYS);
 		MorphedPlayer = null;
 	}
-
-	
 }
-

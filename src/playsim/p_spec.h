@@ -141,6 +141,7 @@ enum
 	TELF_KEEPHEIGHT			= 16,
 	TELF_ROTATEBOOM			= 32,
 	TELF_ROTATEBOOMINVERSE	= 64,
+	TELF_FDCOMPAT			= 128,
 };
 
 //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
@@ -164,7 +165,7 @@ void P_TerminateScript (FLevelLocals *Level, int script, const char *map);
 //
 // [RH] p_quake.c
 //
-bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, FSoundID quakesfx, int flags, double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
-bool P_StartQuake(FLevelLocals *Level, AActor *activator, int tid, int intensity, int duration, int damrad, int tremrad, FSoundID quakesfx);
+bool P_StartQuakeXYZ(FLevelLocals *Level, AActor *activator, int tid, double intensityX, double intensityY, double intensityZ, int duration, double damrad, double tremrad, FSoundID quakesfx, int flags, double waveSpeedX, double waveSpeedY, double waveSpeedZ, double falloff, int highpoint, double rollIntensity, double rollWave, double damageMultiplier, double thrustMultiplier, int damage);
+bool P_StartQuake(FLevelLocals *Level, AActor *activator, int tid, double intensity, int duration, double damrad, double tremrad, FSoundID quakesfx);
 
 #endif

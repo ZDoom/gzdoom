@@ -109,7 +109,7 @@ class Minotaur : Actor
 	{
 		double ang = AngleTo(target);
 		double thrust = 16 + random[MinotaurSlam]() / 64.;
-		target.VelFromAngle(ang, thrust);
+		target.VelFromAngle(thrust, ang);
 		int damage = random[MinotaurSlam](1, 8) * (bSummonedMonster? 4 : 6);
 		int newdam = target.DamageMobj (null, null, damage, 'Melee');
 		target.TraceBleedAngle (newdam > 0 ? newdam : damage, ang, 0.);
@@ -347,7 +347,7 @@ class Minotaur : Actor
 		}
 		else
 		{
-			if (Floorclip > 0 && (Level.compatflags & COMPAT_MINOTAUR))
+			if (Floorclip > 0 && (Level.compatflags & COMPATF_MINOTAUR))
 			{
 				// only play the sound. 
 				A_StartSound ("minotaur/fx2hit", CHAN_WEAPON);

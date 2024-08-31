@@ -1,8 +1,8 @@
 include "xlat/base.txt"
 
 
-sector bitmask 0xf000 clear;
-sector bitmask 0xfe0 <<= 3;
+sector bitmask 0xc000 clear;
+sector bitmask 0x3fe0 <<= 3;
 
 sector 1 = dLight_Flicker;
 sector 2 = dLight_StrobeFast;
@@ -40,3 +40,5 @@ lineflag 8 = ML_MAPPED;
 lineflag 9 = ML_PASSTHROUGH;
 lineflag 10 = ML_3DMIDTEX;
 lineflag 11 & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_TWOSIDED|ML_DONTPEGTOP|ML_DONTPEGBOTTOM|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED);
+lineflag 12 = ML_BLOCKLANDMONSTERS;
+lineflag 13 = ML_BLOCK_PLAYERS;

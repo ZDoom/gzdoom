@@ -6,6 +6,7 @@
 #include "doomstat.h"
 #include "doomdata.h"
 #include "m_bbox.h"
+#include "cmdlib.h"
 
 extern int validcount;
 struct FBlockNode;
@@ -38,12 +39,17 @@ struct intercept_t
 //
 //==========================================================================
 
-inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
+inline int P_PointOnLineSidePrecise(double x, double y, const linebase_t *line)
 {
 	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > EQUAL_EPSILON;
 }
 
-inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
+inline int P_PointOnLineSidePrecise(const DVector2 &pt, const linebase_t *line)
+{
+	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
+}
+
+inline int P_PointOnLineSidePrecise(const DVector3& pt, const linebase_t* line)
 {
 	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
 }
@@ -318,7 +324,7 @@ public:
 		Level = l;
 		init(box);
 	}
-	void init(const FBoundingBox &box);
+	void init(const FBoundingBox &box, bool clearhash = true);
 	AActor *Next(bool centeronly = false);
 	void Reset() { StartBlock(minx, miny); }
 };
@@ -415,5 +421,7 @@ double P_InterceptVector(const divline_t *v2, const divline_t *v1);
 #define PT_ADDTHINGS	2
 #define PT_COMPATIBLE	4
 #define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
+
+int BoxOnLineSide(const FBoundingBox& box, const line_t* ld);
 
 #endif

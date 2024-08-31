@@ -35,18 +35,32 @@
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "po_man.h"
-#include "r_data/models/models.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/utility/hw_cvars.h"
-#include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "hwrenderer/utility/hw_vrmodes.h"
+#include "models.h"
+#include "hw_clock.h"
+#include "hw_cvars.h"
+#include "hw_viewpointbuffer.h"
+#include "flatvertices.h"
+#include "hw_lightbuffer.h"
+#include "hw_bonebuffer.h"
+#include "hw_vrmodes.h"
 #include "hw_clipper.h"
+#include "v_draw.h"
+#include "a_corona.h"
+#include "texturemanager.h"
+#include "actorinlines.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, gl_enhanced_nv_stealth, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CVAR(Bool, gl_texture, true, 0)
+CVAR(Float, gl_mask_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, gl_mask_sprite_threshold, 0.5f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CVAR(Bool, gl_coronas, true, CVAR_ARCHIVE);
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
@@ -90,7 +104,6 @@ HWDrawInfo *FDrawInfoList::GetNew()
 
 void FDrawInfoList::Release(HWDrawInfo * di)
 {
-	di->DrawScene = nullptr;
 	di->ClearBuffers();
 	di->Level = nullptr;
 	mList.Push(di);
@@ -105,7 +118,6 @@ void FDrawInfoList::Release(HWDrawInfo * di)
 HWDrawInfo *HWDrawInfo::StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	HWDrawInfo *di = di_list.GetNew();
-	if (parent) di->DrawScene = parent->DrawScene;
 	di->Level = lev;
 	di->StartScene(parentvp, uniforms);
 	return di;
@@ -119,15 +131,23 @@ HWDrawInfo *HWDrawInfo::StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRe
 //==========================================================================
 
 static Clipper staticClipper;		// Since all scenes are processed sequentially we only need one clipper.
+static Clipper staticVClipper;		// Another clipper to clip vertically (used if (VPSF_ALLOWOUTOFBOUNDS & camera->viewpos->Flags)).
+static Clipper staticRClipper;		// Another clipper for radar (doesn't actually clip. Changes SSECMF_DRAWN setting).
 static HWDrawInfo * gl_drawinfo;	// This is a linked list of all active DrawInfos and needed to free the memory arena after the last one goes out of scope.
 
 void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	staticClipper.Clear();
+	staticVClipper.Clear();
+	staticRClipper.Clear();
 	mClipper = &staticClipper;
+	vClipper = &staticVClipper;
+	rClipper = &staticRClipper;
+	rClipper->amRadar = true;
 
 	Viewpoint = parentvp;
-	lightmode = Level->lightMode;
+	lightmode = getRealLightmode(Level, true);
+
 	if (uniforms)
 	{
 		VPUniforms = *uniforms;
@@ -135,13 +155,35 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		VPUniforms.mClipLine.X = -1000001.f;
 		VPUniforms.mClipHeight = 0;
 	}
-	else VPUniforms.SetDefaults(this);
+	else
+	{
+		VPUniforms.mProjectionMatrix.loadIdentity();
+		VPUniforms.mViewMatrix.loadIdentity();
+		VPUniforms.mNormalViewMatrix.loadIdentity();
+		VPUniforms.mViewHeight = viewheight;
+		if (lightmode == ELightMode::Build)
+		{
+			VPUniforms.mGlobVis = 1 / 64.f;
+			VPUniforms.mPalLightLevels = 32 | (static_cast<int>(gl_fogmode) << 8) | ((int)lightmode << 16);
+		}
+		else
+		{
+			VPUniforms.mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
+			VPUniforms.mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | ((int)lightmode << 16);
+		}
+		VPUniforms.mClipLine.X = -10000000.0f;
+		VPUniforms.mShadowmapFilter = gl_shadowmap_filter;
+		VPUniforms.mLightBlendMode = (level.info ? (int)level.info->lightblendmode : 0);
+	}
 	mClipper->SetViewpoint(Viewpoint);
+	vClipper->SetViewpoint(Viewpoint);
+	rClipper->SetViewpoint(Viewpoint);
 
 	ClearBuffers();
 
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	hudsprites.Clear();
+//	Coronas.Clear();
 	vpIndex = 0;
 
 	// Fullbright information needs to be propagated from the main view.
@@ -224,7 +266,9 @@ void HWDrawInfo::ClearBuffers()
 
 void HWDrawInfo::UpdateCurrentMapSection()
 {
-	const int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
+	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
+	if (Viewpoint.IsAllowedOoB())
+		mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
 	CurrentMapSections.Set(mapsection);
 }
 
@@ -237,9 +281,11 @@ void HWDrawInfo::UpdateCurrentMapSection()
 
 void HWDrawInfo::SetViewArea()
 {
-    auto &vp = Viewpoint;
+	auto &vp = Viewpoint;
 	// The render_sector is better suited to represent the current position in GL
 	vp.sector = Level->PointInRenderSubsector(vp.Pos)->render_sector;
+	if (Viewpoint.IsAllowedOoB())
+		vp.sector = Level->PointInRenderSubsector(vp.camera->Pos())->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
 	if (vp.sector->GetHeightSec())
@@ -271,7 +317,7 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		int cm = CM_DEFAULT;
 		if (cplayer->extralight == INT_MIN)
 		{
-			cm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			cm = CM_FIRSTSPECIALCOLORMAP + REALINVERSECOLORMAP;
 			Viewpoint.extralight = 0;
 			FullbrightFlags = Fullbright;
 			// This does never set stealth vision.
@@ -318,16 +364,21 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 
 angle_t HWDrawInfo::FrustumAngle()
 {
-	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees);
+	// If pitch is larger than this you can look all around at an FOV of 90 degrees
+	if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 89.0)  return 0xffffffff;
+	int aspMult = AspectMultiplier(r_viewwindow.WidescreenRatio); // 48 == square window
+	double absPitch = fabs(Viewpoint.HWAngles.Pitch.Degrees());
+	 // Smaller aspect ratios still clip too much. Need a better solution
+	if (aspMult > 36 && absPitch > 30.0)  return 0xffffffff;
+	else if (aspMult > 40 && absPitch > 25.0)  return 0xffffffff;
+	else if (aspMult > 45 && absPitch > 20.0)  return 0xffffffff;
+	else if (aspMult > 47 && absPitch > 10.0) return 0xffffffff;
 
-	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt > 46.0f) return 0xffffffff;
+	double xratio = r_viewwindow.FocalTangent / Viewpoint.PitchCos;
+	double floatangle = 0.05 + atan ( xratio ) * 48.0 / aspMult; // this is radians
+	angle_t a1 = DAngle::fromRad(floatangle).BAMs();
 
-	// ok, this is a gross hack that barely works...
-	// but at least it doesn't overestimate too much...
-	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
-	angle_t a1 = DAngle(floatangle).BAMs();
-	if (a1 >= ANGLE_180) return 0xffffffff;
+	if (a1 >= ANGLE_90) return 0xffffffff;
 	return a1;
 }
 
@@ -343,9 +394,9 @@ void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float
 	float planemult = planemirror ? -Level->info->pixelstretch : Level->info->pixelstretch;
 
 	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees, 0.0f, 0.0f, 1.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees, 0.0f, mult, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees(), 0.0f, 0.0f, 1.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees(), 1.0f, 0.0f, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees(), 0.0f, mult, 0.0f);
 	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult, -vy);
 	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
 }
@@ -387,26 +438,6 @@ HWPortal * HWDrawInfo::FindPortal(const void * src)
 //
 //-----------------------------------------------------------------------------
 
-void HWViewpointUniforms::SetDefaults(HWDrawInfo *drawInfo)
-{
-	mProjectionMatrix.loadIdentity();
-	mViewMatrix.loadIdentity();
-	mNormalViewMatrix.loadIdentity();
-	mViewHeight = viewheight;
-	mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
-	const int lightMode = drawInfo == nullptr ? static_cast<int>(*gl_lightmode) : static_cast<int>(drawInfo->lightmode);
-	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | (lightMode << 16);
-	mClipLine.X = -10000000.0f;
-	mShadowmapFilter = gl_shadowmap_filter;
-
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
 HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 {
 	auto decal = (HWDecal*)RenderDataAllocator.Alloc(sizeof(HWDecal));
@@ -425,17 +456,25 @@ HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 void HWDrawInfo::CreateScene(bool drawpsprites)
 {
 	const auto &vp = Viewpoint;
-	angle_t a1 = FrustumAngle();
+	angle_t a1 = FrustumAngle(); // horizontally clip the back of the viewport
 	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
+	Viewpoint.FrustAngle = a1;
+	if (Viewpoint.IsAllowedOoB()) // No need for vertical clipper if viewpoint not allowed out of bounds
+	{
+		double a2 = 20.0 + 0.5*Viewpoint.FieldOfView.Degrees(); // FrustumPitch for vertical clipping
+		if (a2 > 179.0) a2 = 179.0;
+		vClipper->SafeAddClipRangeDegPitches(vp.HWAngles.Pitch.Degrees() - a2, vp.HWAngles.Pitch.Degrees() + a2); // clip the suplex range
+	}
 
 	// reset the portal manager
-	screen->mPortalState->StartFrame();
+	portalState.StartFrame();
 
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
 	screen->mVertexData->Map();
 	screen->mLights->Map();
+	screen->mBones->Map();
 
 	RenderBSP(Level->HeadNode(), drawpsprites);
 
@@ -448,6 +487,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	PrepareUnhandledMissingTextures();
 	DispatchRenderHacks();
 	screen->mLights->Unmap();
+	screen->mBones->Unmap();
 	screen->mVertexData->Unmap();
 
 	ProcessAll.Unclock();
@@ -566,6 +606,207 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 
 }
 
+void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
+{
+#if 0
+	spriteframe_t* sprframe = &SpriteFrames[sprites[corona->sprite].spriteframes + (size_t)corona->SpawnState->GetFrame()];
+	FTextureID patch = sprframe->Texture[0];
+	if (!patch.isValid()) return;
+	auto tex = TexMan.GetGameTexture(patch, false);
+	if (!tex || !tex->isValid()) return;
+
+	// Project the corona sprite center
+	FVector4 worldPos((float)corona->X(), (float)corona->Z(), (float)corona->Y(), 1.0f);
+	FVector4 viewPos, clipPos;
+	VPUniforms.mViewMatrix.multMatrixPoint(&worldPos[0], &viewPos[0]);
+	VPUniforms.mProjectionMatrix.multMatrixPoint(&viewPos[0], &clipPos[0]);
+	if (clipPos.W < -1.0f) return; // clip z nearest
+	float halfViewportWidth = screen->GetWidth() * 0.5f;
+	float halfViewportHeight = screen->GetHeight() * 0.5f;
+	float invW = 1.0f / clipPos.W;
+	float screenX = halfViewportWidth + clipPos.X * invW * halfViewportWidth;
+	float screenY = halfViewportHeight - clipPos.Y * invW * halfViewportHeight;
+
+	float alpha = corona->CoronaFade * float(corona->Alpha);
+
+	// distance-based fade - looks better IMO
+	float distNearFadeStart = float(corona->RenderRadius()) * 0.1f;
+	float distFarFadeStart = float(corona->RenderRadius()) * 0.5f;
+	float distFade = 1.0f;
+
+	if (float(dist) < distNearFadeStart)
+		distFade -= abs(((float(dist) - distNearFadeStart) / distNearFadeStart));
+	else if (float(dist) >= distFarFadeStart)
+		distFade -= (float(dist) - distFarFadeStart) / distFarFadeStart;
+
+	alpha *= distFade;
+
+	state.SetColorAlpha(0xffffff, alpha, 0);
+	if (isSoftwareLighting()) state.SetSoftLightLevel(255);
+	else state.SetNoSoftLightLevel();
+
+	state.SetLightIndex(-1);
+	state.SetRenderStyle(corona->RenderStyle);
+	state.SetTextureMode(corona->RenderStyle);
+
+	state.SetMaterial(tex, UF_Sprite, CTF_Expand, CLAMP_XY_NOMIP, 0, 0);
+
+	float scale = screen->GetHeight() / 1000.0f;
+	float tileWidth = corona->Scale.X * tex->GetDisplayWidth() * scale;
+	float tileHeight = corona->Scale.Y * tex->GetDisplayHeight() * scale;
+	float x0 = screenX - tileWidth, y0 = screenY - tileHeight;
+	float x1 = screenX + tileWidth, y1 = screenY + tileHeight;
+
+	float u0 = 0.0f, v0 = 0.0f;
+	float u1 = 1.0f, v1 = 1.0f;
+
+	auto vert = screen->mVertexData->AllocVertices(4);
+	auto vp = vert.first;
+	unsigned int vertexindex = vert.second;
+
+	vp[0].Set(x0, y0, 1.0f, u0, v0);
+	vp[1].Set(x1, y0, 1.0f, u1, v0);
+	vp[2].Set(x0, y1, 1.0f, u0, v1);
+	vp[3].Set(x1, y1, 1.0f, u1, v1);
+
+	state.Draw(DT_TriangleStrip, vertexindex, 4);
+#endif
+}
+
+//==========================================================================
+//
+// TraceCallbackForDitherTransparency
+// Toggles dither flag on anything that occludes the actor's
+// position from viewpoint.
+//
+//==========================================================================
+
+static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void* userdata)
+{
+	int* count = (int*)userdata;
+	double bf, bc;
+	(*count)++;
+	switch(res.HitType)
+	{
+	case TRACE_HitWall:
+		if (!(res.Line->sidedef[res.Side]->Flags & WALLF_DITHERTRANS))
+		{
+			bf = res.Line->sidedef[res.Side]->sector->floorplane.ZatPoint(res.HitPos.XY());
+			bc = res.Line->sidedef[res.Side]->sector->ceilingplane.ZatPoint(res.HitPos.XY());
+			if ((res.HitPos.Z <= bc) && (res.HitPos.Z >= bf)) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS;
+		}
+		break;
+	case TRACE_HitFloor:
+		res.Sector->floorplane.dithertransflag = true;
+		break;
+	case TRACE_HitCeiling:
+		res.Sector->ceilingplane.dithertransflag = true;
+		break;
+	case TRACE_HitActor:
+	default:
+		break;
+	}
+
+	return TRACE_ContinueOutOfBounds;
+}
+
+
+void HWDrawInfo::SetDitherTransFlags(AActor* actor)
+{
+	if (actor && actor->Sector)
+	{
+		FTraceResults results;
+		double horix = Viewpoint.Sin * actor->radius;
+		double horiy = Viewpoint.Cos * actor->radius;
+		DVector3 actorpos = actor->Pos();
+		DVector3 vvec = actorpos - Viewpoint.Pos;
+		if (Viewpoint.IsOrtho())
+		{
+			vvec += Viewpoint.camera->Pos() - actorpos;
+			vvec *= 5.0; // Should be 4.0? (since zNear is behind screen by 3*dist in VREyeInfo::GetProjection())
+		}
+		double distance = vvec.Length() - actor->radius;
+		DVector3 campos = actorpos - vvec;
+		sector_t* startsec;
+		int count = 0;
+
+		vvec = vvec.Unit();
+		campos.X -= horix; campos.Y += horiy; campos.Z += actor->Height * 0.25;
+		for (int iter = 0; iter < 3; iter++)
+		{
+			startsec = Level->PointInRenderSubsector(campos)->sector;
+			Trace(campos, startsec, vvec, distance,
+				  0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+			campos.Z += actor->Height * 0.5;
+			Trace(campos, startsec, vvec, distance,
+				  0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+			campos.Z -= actor->Height * 0.5;
+			campos.X += horix; campos.Y -= horiy;
+		}
+	}
+}
+
+static ETraceStatus CheckForViewpointActor(FTraceResults& res, void* userdata)
+{
+	FRenderViewpoint* data = (FRenderViewpoint*)userdata;
+	if (res.HitType == TRACE_HitActor && res.Actor && res.Actor == data->ViewActor)
+	{
+		return TRACE_Skip;
+	}
+
+	return TRACE_Stop;
+}
+
+
+void HWDrawInfo::DrawCoronas(FRenderState& state)
+{
+	state.EnableDepthTest(false);
+	state.SetDepthMask(false);
+
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = VRMode::GetVRMode(true)->GetHUDSpriteProjection();
+	screen->mViewpoints->SetViewpoint(state, &vp);
+
+	float timeElapsed = (screen->FrameTime - LastFrameTime) / 1000.0f;
+	LastFrameTime = screen->FrameTime;
+
+#if 0
+	for (ACorona* corona : Coronas)
+	{
+		auto cPos = corona->Vec3Offset(0., 0., corona->Height * 0.5);
+		DVector3 direction = Viewpoint.Pos - cPos;
+		double dist = direction.Length();
+
+		// skip coronas that are too far
+		if (dist > corona->RenderRadius())
+			continue;
+
+		static const float fadeSpeed = 9.0f;
+
+		direction.MakeUnit();
+		FTraceResults results;
+		if (!Trace(cPos, corona->Sector, direction, dist, MF_SOLID, ML_BLOCKEVERYTHING, corona, results, 0, CheckForViewpointActor, &Viewpoint))
+		{
+			corona->CoronaFade = std::min(corona->CoronaFade + timeElapsed * fadeSpeed, 1.0f);
+		}
+		else
+		{
+			corona->CoronaFade = std::max(corona->CoronaFade - timeElapsed * fadeSpeed, 0.0f);
+		}
+
+		if (corona->CoronaFade > 0.0f)
+			DrawCorona(state, corona, dist);
+	}
+#endif
+
+	state.SetTextureMode(TM_NORMAL);
+	screen->mViewpoints->Bind(state, vpIndex);
+	state.EnableDepthTest(true);
+	state.SetDepthMask(true);
+}
+
+
 //-----------------------------------------------------------------------------
 //
 // Draws player sprites and color blend
@@ -576,6 +817,11 @@ void HWDrawInfo::RenderPortal(HWPortal *p, FRenderState &state, bool usestencil)
 void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
 {
 	state.EnableFog(false);
+
+	/*if (gl_coronas && Coronas.Size() > 0)
+	{
+		DrawCoronas(state);
+	}*/
 
 	// [BB] HUD models need to be rendered here. 
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
@@ -644,18 +890,86 @@ void HWDrawInfo::Set3DViewport(FRenderState &state)
 
 //-----------------------------------------------------------------------------
 //
+// gl_drawscene - this function renders the scene from the current
+// viewpoint, including mirrors and skyboxes and other portals
+// It is assumed that the HWPortal::EndFrame returns with the 
+// stencil, z-buffer and the projection matrix intact!
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::DrawScene(int drawmode)
+{
+	static int recursion = 0;
+	static int ssao_portals_available = 0;
+	auto& vp = Viewpoint;
+
+	bool applySSAO = false;
+	if (drawmode == DM_MAINVIEW)
+	{
+		ssao_portals_available = gl_ssao_portals;
+		applySSAO = true;
+		if (r_dithertransparency && vp.IsAllowedOoB())
+		{
+			vp.camera->tracer ? SetDitherTransFlags(vp.camera->tracer) : SetDitherTransFlags(players[consoleplayer].mo);
+		}
+	}
+	else if (drawmode == DM_OFFSCREEN)
+	{
+		ssao_portals_available = 0;
+	}
+	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
+	{
+		applySSAO = (mCurrentPortal->AllowSSAO() || Level->flags3&LEVEL3_SKYBOXAO);
+		ssao_portals_available--;
+	}
+
+	if (vp.camera != nullptr)
+	{
+		ActorRenderFlags savedflags = vp.camera->renderflags;
+		CreateScene(drawmode == DM_MAINVIEW);
+		vp.camera->renderflags = savedflags;
+	}
+	else
+	{
+		CreateScene(false);
+	}
+	auto& RenderState = *screen->RenderState();
+
+	RenderState.SetDepthMask(true);
+	if (!gl_no_skyclear) portalState.RenderFirstSkyPortal(recursion, this, RenderState);
+
+	RenderScene(RenderState);
+
+	if (applySSAO && RenderState.GetPassType() == GBUFFER_PASS)
+	{
+		screen->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
+		screen->mViewpoints->Bind(RenderState, vpIndex);
+	}
+
+	// Handle all portals after rendering the opaque objects but before
+	// doing all translucent stuff
+	recursion++;
+	portalState.EndFrame(this, RenderState);
+	recursion--;
+	RenderTranslucent(RenderState);
+}
+
+
+//-----------------------------------------------------------------------------
+//
 // R_RenderView - renders one view - either the screen or a camera texture
 //
 //-----------------------------------------------------------------------------
 
-void HWDrawInfo::ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *,int)> &drawScene)
+void HWDrawInfo::ProcessScene(bool toscreen)
 {
-	screen->mPortalState->BeginScene();
+	portalState.BeginScene();
 
 	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
+	if (Viewpoint.IsAllowedOoB())
+		mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
 	CurrentMapSections.Set(mapsection);
-	DrawScene = drawScene;
-	DrawScene(this, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
 
@@ -670,7 +984,7 @@ void HWDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 	auto portal = FindPortal(ptg);
 	if (!portal)
 	{
-        portal = new HWSectorStackPortal(screen->mPortalState, ptg);
+        portal = new HWSectorStackPortal(&portalState, ptg);
 		Portals.Push(portal);
 	}
     auto ptl = static_cast<HWSectorStackPortal*>(portal);

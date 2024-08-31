@@ -12,11 +12,13 @@ void D_ConfirmSendStats()
 #else // !NO_SEND_STATS
 
 #if defined(_WIN32)
+#include "i_mainwindow.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
-extern int sys_ostype;
+extern const char* sys_ostype;
 #else
+extern FString sys_ostype;
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 #else // !__APPLE__
@@ -34,18 +36,19 @@ extern int sys_ostype;
 #include "x86.h"
 #include "version.h"
 #include "v_video.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
+#include "printf.h"
 
-CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
-CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
-CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
+CVAR(Int, anonstats_enabled411, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
+CVAR(String, anonstats_host, "gzstats.drdteam.org", CVAR_NOSET)
+CVAR(Int, anonstats_port, 80, CVAR_NOSET)
 
-// Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
-#define CHECKVERSION 350
-#define CHECKVERSIONSTR "350"
+#define CHECKVERSION 490
+#define CHECKVERSIONSTR "490"
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
+extern int vkversion;
 
 
 
@@ -68,13 +71,16 @@ FString URLencode(const char *s)
 	return out;
 }
 
+// accept FString inputs too
+FString URLencode(FString s)
+{
+	return URLencode(s.GetChars());
+}
+
 #ifdef _WIN32
 
 bool I_HTTPRequest(const char* request)
 {
-	if (sys_statshost.GetHumanString() == NULL)
-		return false; // no host, disable
-
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
@@ -83,20 +89,20 @@ bool I_HTTPRequest(const char* request)
 	}
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct hostent *host;
-	host = gethostbyname(sys_statshost.GetHumanString());
+	host = gethostbyname(anonstats_host);
 	if (host == nullptr)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
 		return false;
 	}
 	SOCKADDR_IN SockAddr;
-	SockAddr.sin_port = htons(sys_statsport);
+	SockAddr.sin_port = htons(anonstats_port);
 	SockAddr.sin_family = AF_INET;
 	SockAddr.sin_addr.s_addr = *((uint32_t*)host->h_addr);
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *anonstats_host);
 	if (connect(Socket, (SOCKADDR*)(&SockAddr), sizeof(SockAddr)) != 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *anonstats_host);
 		return false;
 	}
 	send(Socket, request, (int)strlen(request), 0);
@@ -118,14 +124,14 @@ bool I_HTTPRequest(const char* request)
 #else
 bool I_HTTPRequest(const char* request)
 {
-	if (sys_statshost.GetHumanString() == NULL || sys_statshost.GetHumanString()[0] == 0)
+	if ((*anonstats_host)[0] == 0)
 		return false; // no host, disable
 
 	int sockfd, portno, n;
 		struct sockaddr_in serv_addr;
 		struct hostent *server;
 
-		portno = sys_statsport;
+		portno = anonstats_port;
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (sockfd < 0)
@@ -134,7 +140,7 @@ bool I_HTTPRequest(const char* request)
 		return false;
 	}
 
-	server = gethostbyname(sys_statshost.GetHumanString());
+	server = gethostbyname(anonstats_host);
 	if (server == NULL)
 	{
 		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
@@ -147,10 +153,10 @@ bool I_HTTPRequest(const char* request)
 		  server->h_length);
 	serv_addr.sin_port = htons(portno);
 
-	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
+	DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", *anonstats_host);
 	if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", *anonstats_host);
 		return false;
 	}
 
@@ -170,44 +176,28 @@ bool I_HTTPRequest(const char* request)
 }
 #endif
 
-static int GetOSVersion()
+static FString GetOSVersion()
 {
 #ifdef _WIN32
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		BOOL res;
-		if (IsWow64Process(GetCurrentProcess(), &res) && res)
-		{
-			return 2;
-		}
-		return 1;
-	}
-	else
-	{
-		if (sys_ostype == 2) return 3;
-		else return 4;
-	}
+#ifndef _M_ARM64
+	return FStringf("Windows %s", sys_ostype);
+#else
+	return FStringf("Windows %s ARM", sys_ostype);
+#endif
 
 #elif defined __APPLE__
 
-	return 5;
-
+#if defined(__aarch64__)
+	return sys_ostype + " ARM";
 #else
+	return sys_ostype + " x64";
+#endif
 
-// fall-through linux stuff here
+#else // fall-through linux stuff here
 #ifdef __arm__
-	return 8;
-#elif __ppc__
-	return 9;
+	return sys_ostype + " ARM";
 #else
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		return 6;
-	}
-	else
-	{
-		return 7;
-	}
+	return sys_ostype;
 #endif
 
 
@@ -260,19 +250,19 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
+	if (screen->Backend() == 2) return 1;
 	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
 	{
-		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 2;
-		return 1;
+		return 2;
 	}
 	return 3;
 }
 
 static int GetGLVersion()
 {
-	if (screen->Backend() == 1) return 50;
+	if (screen->Backend() == 1) return vkversion;
 	auto info = gl_getInfo();
 	return int(info.first * 10);
 }
@@ -285,11 +275,57 @@ static void D_DoHTTPRequest(const char *request)
 	}
 }
 
+
+static FString GetDeviceName()
+{
+	FString device = screen->DeviceName();
+	if (device.Compare("AMD Radeon(TM) Graphics") == 0 ||
+		device.Compare("Intel(R) UHD Graphics") == 0 ||
+		//device.Compare("Intel(R) HD Graphics") == 0 || these are not that interesting so leave them alone
+		device.Compare("Intel(R) Iris(R) Plus Graphics") == 0 ||
+		device.Compare("Intel(R) Iris(R) Xe Graphics") == 0 ||
+		device.Compare("Radeon RX Vega") == 0 ||
+		device.Compare("AMD Radeon Series") == 0)
+	{
+		// for these anonymous series names add the CPU name to get an idea what GPU we really have
+		auto ci = DumpCPUInfo(&CPU, true);
+		device.AppendFormat(" * %s", ci.GetChars());
+	}
+	// cleanse the GPU info string to allow better searches on the database.
+	device.Substitute("/SSE2", "");
+	device.Substitute("/PCIe", "");
+	device.Substitute("/PCI", "");
+	device.Substitute("(TM) ", "");
+	device.Substitute("Mesa ", "");
+	device.Substitute("DRI ", "");
+	auto pos = device.IndexOf("Intel(R)");
+	if (pos >= 0)
+	{
+		device.Substitute("(R) ", "");
+		auto pos = device.IndexOf("(");
+		if (pos >= 0) device.Truncate(pos);
+	}
+
+	pos = device.IndexOf("(LLVM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(DRM");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf("(RADV");
+	if (pos >= 0) device.Truncate(pos);
+	pos = device.IndexOf(", LLVM");
+	if (pos >= 0)
+	{
+		device.Truncate(pos);
+		device << ')';
+	}
+	device.StripLeftRight();
+	return device;
+}
 void D_DoAnonStats()
 {
 #ifndef _DEBUG
 	// Do not repeat if already sent.
-	if (sys_statsenabled != 1 || sentstats_hwr_done >= CHECKVERSION)
+	if (anonstats_enabled411 != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
@@ -301,10 +337,10 @@ void D_DoAnonStats()
 
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_202309.py?render=%i&cores=%i&os=%s&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+		GetRenderInfo(), GetCoreInfo(), URLencode(GetOSVersion()).GetChars(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(GetDeviceName()).GetChars(), *anonstats_host, GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
-#ifndef _DEBUG
+#if 1//ndef _DEBUG
 	// Don't send info in debug builds
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
@@ -315,7 +351,7 @@ void D_DoAnonStats()
 
 void D_ConfirmSendStats()
 {
-	if (sys_statsenabled >= 0)
+	if (anonstats_enabled411 >= 0)
 	{
 		return;
 	}
@@ -327,7 +363,7 @@ void D_ConfirmSendStats()
 		"- Operating system\n" \
 		"- Number of processor cores\n" \
 		"- OpenGL version and your graphics card's name\n\n" \
-		"All information sent will be anonymously. We will NOT be sending this information to any third party.\n" \
+		"All information sent will be collected anonymously. We will NOT be sending this information to any third party.\n" \
 		"It will merely be used for decision-making about GZDoom's future development.\n" \
 		"Data will only be sent once per system.\n" \
 		"If you are getting this notice more than once, please let us know on the forums. Thanks!\n\n" \
@@ -338,8 +374,7 @@ void D_ConfirmSendStats()
 	UCVarValue enabled = { 0 };
 
 #ifdef _WIN32
-	extern HWND Window;
-	enabled.Int = MessageBoxA(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+	enabled.Int = MessageBoxA(mainwindow.GetHandle(), MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
 #elif defined __APPLE__
 	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
 	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
@@ -372,7 +407,7 @@ void D_ConfirmSendStats()
 	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
 #endif // _WIN32
 
-	sys_statsenabled.ForceSet(enabled, CVAR_Int);
+	anonstats_enabled411->ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

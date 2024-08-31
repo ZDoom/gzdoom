@@ -36,10 +36,11 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "p_pspr.h"
-#include "templates.h"
+
 #include "g_level.h"
 #include "d_player.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
@@ -89,7 +90,7 @@ enum EWRF_Options
 
 // [SO] 1=Weapons states are all 1 tick
 //		2=states with a function 1 tick, others 0 ticks.
-CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
+CVAR(Int, sv_fastweapons, 0, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -131,9 +132,21 @@ DEFINE_FIELD(DPSprite, x)
 DEFINE_FIELD(DPSprite, y)
 DEFINE_FIELD(DPSprite, oldx)
 DEFINE_FIELD(DPSprite, oldy)
+DEFINE_FIELD(DPSprite, baseScale)
+DEFINE_FIELD(DPSprite, pivot)
+DEFINE_FIELD(DPSprite, scale)
+DEFINE_FIELD(DPSprite, rotation)
+DEFINE_FIELD_NAMED(DPSprite, Coord[0], Coord0)
+DEFINE_FIELD_NAMED(DPSprite, Coord[1], Coord1)
+DEFINE_FIELD_NAMED(DPSprite, Coord[2], Coord2)
+DEFINE_FIELD_NAMED(DPSprite, Coord[3], Coord3)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
+DEFINE_FIELD(DPSprite, Translation)
+DEFINE_FIELD(DPSprite, HAlign)
+DEFINE_FIELD(DPSprite, VAlign)
 DEFINE_FIELD(DPSprite, alpha)
+DEFINE_FIELD(DPSprite, InterpolateTic)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
@@ -141,6 +154,8 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
 DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPivotPercent, PSPF_PIVOTPERCENT)
+DEFINE_FIELD_BIT(DPSprite, Flags, bInterpolate, PSPF_INTERPOLATE)
 
 //------------------------------------------------------------------------
 //
@@ -149,12 +164,15 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 //------------------------------------------------------------------------
 
 DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
-: x(.0), y(.0),
+: HAlign(0),
+  VAlign(0),
+  x(.0), y(.0),
   oldx(.0), oldy(.0),
+  InterpolateTic(false),
   firstTic(true),
   Tics(0),
+  Translation(NO_TRANSLATION),
   Flags(0),
-  Caller(caller),
   Owner(owner),
   State(nullptr),
   Sprite(0),
@@ -162,6 +180,17 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   ID(id),
   processPending(true)
 {
+	Caller = caller;
+	baseScale = {1.0, 1.2};
+	rotation = nullAngle;
+	scale = {1.0, 1.0};
+	pivot = {0.0, 0.0};
+	for (int i = 0; i < 4; i++)
+	{
+		Coord[i] = DVector2(0, 0);
+		Prev.v[i] = Vert.v[i] = FVector2(0,0);
+	}
+	
 	alpha = 1;
 	Renderstyle = STYLE_Normal;
 
@@ -189,7 +218,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 		Next->Destroy(); // Replace it.
 
 	if (Caller->IsKindOf(NAME_Weapon) || Caller->IsKindOf(NAME_PlayerPawn))
-		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
+		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST|PSPF_PIVOTPERCENT);
 }
 
 //------------------------------------------------------------------------
@@ -222,6 +251,26 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to 
 	ACTION_RETURN_OBJECT(self->FindPSprite((PSPLayers)id));
 }
 
+
+//------------------------------------------------------------------------
+//
+//
+//
+//------------------------------------------------------------------------
+
+static DPSprite *P_CreatePsprite(player_t *player, AActor *caller, int layer)
+{
+	DPSprite *pspr = Create<DPSprite>(player, caller, layer);
+
+	// [XA] apply WeaponScaleX/WeaponScaleY properties for weapon psprites
+	if (caller != nullptr && caller->IsKindOf(NAME_Weapon))
+	{
+		pspr->baseScale.X = caller->FloatVar(NAME_WeaponScaleX);
+		pspr->baseScale.Y = caller->FloatVar(NAME_WeaponScaleY);
+	}
+
+	return pspr;
+}
 
 //------------------------------------------------------------------------
 //
@@ -267,16 +316,23 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		newcaller = ReadyWeapon;
 	}
 
-	if (newcaller == nullptr) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
+	if (newcaller == nullptr || layer == PSP_CALLERID) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
 	
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{
-		pspr = Create<DPSprite>(this, newcaller, layer);
+		pspr = P_CreatePsprite(this, newcaller, layer);
 	}
 	else
 	{
 		oldcaller = pspr->Caller;
+
+		// update scaling properties here
+		if (newcaller != nullptr && newcaller->IsKindOf(NAME_Weapon))
+		{
+			pspr->baseScale.X = newcaller->FloatVar(NAME_WeaponScaleX);
+			pspr->baseScale.Y = newcaller->FloatVar(NAME_WeaponScaleY);
+		}
 	}
 
 	// Always update the caller here in case we switched weapon
@@ -291,7 +347,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		}
 		else
 		{
-			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
+			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE|PSPF_PIVOTPERCENT);
 		}
 		if (layer == PSP_STRIFEHANDS)
 		{
@@ -507,7 +563,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %sd to %s which accesses user variables. The action function has been removed from this state\n", 
-					FState::StaticGetStateName(newstate).GetChars(), newstate->ActionFunc->PrintableName.GetChars());
+					FState::StaticGetStateName(newstate).GetChars(), newstate->ActionFunc->PrintableName);
 				newstate->ActionFunc = nullptr;
 			}
 			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
@@ -585,11 +641,58 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 		DVector2 result;
 		VMReturn ret(&result);
 		VMCall(func, param, 2, &ret, 1);
+		
+		auto inv = player->mo->Inventory;
+		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe)) // same loop as ModifyDamage, except it actually checks if it's overriden before calling
+		{
+			auto nextinv = inv->Inventory;
+			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob)
+			{
+				VMValue param[] = { (DObject*)inv, result.X, result.Y, ticfrac };
+				VMCall(func, param, 4, &ret, 1);
+			}
+			inv = nextinv;
+		}
+
 		*x = (float)result.X;
 		*y = (float)result.Y;
 		return;
 	}
 	*x = *y = 0;
+}
+
+void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation, double ticfrac)
+{
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon3D)
+	{
+		VMValue param[] = { player->mo, ticfrac };
+		DVector3 t, r;
+		VMReturn returns[2];
+		returns[0].Vec3At(&t);
+		returns[1].Vec3At(&r);
+		VMCall(func, param, 2, returns, 2);
+
+		auto inv = player->mo->Inventory;
+		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe))
+		{
+			auto nextinv = inv->Inventory;
+			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob3D)
+			{
+				VMValue param[] = { (DObject*)inv, t.X, t.Y, t.Z, r.X, r.Y, r.Z, ticfrac };
+				VMCall(func, param, 8, returns, 2);
+			}
+			inv = nextinv;
+		}
+
+		translation->X = (float)t.X;
+		translation->Y = (float)t.Y;
+		translation->Z = (float)t.Z;
+		rotation->X = (float)r.X;
+		rotation->Y = (float)r.Y;
+		rotation->Z = (float)r.Z;
+		return;
+	}
+	*translation = *rotation = {};
 }
 
 //---------------------------------------------------------------------------
@@ -634,18 +737,160 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponButtons)
 	return 0;
 }
 
+
+
+enum WOFFlags
+{
+	WOF_KEEPX = 1,
+	WOF_KEEPY = 1 << 1,
+	WOF_ADD = 1 << 2,
+	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE = 1 << 4,
+	WOF_ZEROY = 1 << 5,
+};
+
+void HandleOverlayRelative(DPSprite *psp, double *x, double *y)
+{
+	double wx = *x;
+	double wy = *y;
+
+	double c = psp->rotation.Cos(), s = psp->rotation.Sin();
+	double nx = wx * c + wy * s;
+	double ny = wx * s - wy * c;
+	*x = nx; *y = ny;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayVertexOffset
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayVertexOffset)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_INT(index)
+	PARAM_FLOAT(x)
+	PARAM_FLOAT(y)
+	PARAM_INT(flags)
+
+	if (index < 0 || index > 3 || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)) || !ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (!(flags & WOF_KEEPX))	pspr->Coord[index].X = (flags & WOF_ADD) ? pspr->Coord[index].X + x : x;
+	if (!(flags & WOF_KEEPY))	pspr->Coord[index].Y = (flags & WOF_ADD) ? pspr->Coord[index].Y + y : y;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayScale
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayScale)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)
+	PARAM_FLOAT(wy)
+	PARAM_INT(flags)
+	
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (!(flags & WOF_ZEROY) && wy == 0.0)
+		wy = wx;
+
+	if (!(flags & WOF_KEEPX))	pspr->scale.X = (flags & WOF_ADD) ? pspr->scale.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->scale.Y = (flags & WOF_ADD) ? pspr->scale.Y + wy : wy;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayRotate
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayRotate)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_ANGLE(degrees)
+	PARAM_INT(flags)
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr != nullptr)
+	{
+		pspr->rotation = (flags & WOF_ADD) ? pspr->rotation + degrees : degrees;
+		if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+	}
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayPivot
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivot)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer)
+	PARAM_FLOAT(wx)
+	PARAM_FLOAT(wy)
+	PARAM_INT(flags)
+
+	if (!ACTION_CALL_FROM_PSPRITE() || ((flags & WOF_KEEPX) && (flags & WOF_KEEPY)))
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (flags & WOF_RELATIVE)
+	{
+		HandleOverlayRelative(pspr, &wx, &wy);
+	}
+
+	if (!(flags & WOF_KEEPX))	pspr->pivot.X = (flags & WOF_ADD) ? pspr->pivot.X + wx : wx;
+	if (!(flags & WOF_KEEPY))	pspr->pivot.Y = (flags & WOF_ADD) ? pspr->pivot.Y + wy : wy;
+
+	if (flags & (WOF_ADD | WOF_INTERPOLATE))	pspr->InterpolateTic = true;
+
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_OverlayOffset
 //
 //---------------------------------------------------------------------------
-enum WOFFlags
-{
-	WOF_KEEPX =		1,
-	WOF_KEEPY =		1 << 1,
-	WOF_ADD =		1 << 2,
-	WOF_INTERPOLATE = 1 << 3,
-};
 
 void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 {
@@ -664,30 +909,16 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 		if (psp == nullptr)
 			return;
 
-		if (!(flags & WOF_KEEPX))
+		if (flags & WOF_RELATIVE)
 		{
-			if (flags & WOF_ADD)
-			{
-				psp->x += wx;
-			}
-			else
-			{
-				psp->x = wx;
-				if (!(flags & WOF_INTERPOLATE)) psp->oldx = psp->x;
-			}
+			HandleOverlayRelative(psp, &wx, &wy);
 		}
-		if (!(flags & WOF_KEEPY))
-		{
-			if (flags & WOF_ADD)
-			{
-				psp->y += wy;
-			}
-			else
-			{
-				psp->y = wy;
-				if (!(flags & WOF_INTERPOLATE)) psp->oldy = psp->y;
-			}
-		}
+
+		if (!(flags & WOF_KEEPX))		psp->x = (flags & WOF_ADD) ? psp->x + wx : wx;
+		if (!(flags & WOF_KEEPY))		psp->y = (flags & WOF_ADD) ? psp->y + wy : wy;
+		
+		if (!(flags & (WOF_ADD | WOF_INTERPOLATE)))
+			psp->ResetInterpolation();
 	}
 }
 
@@ -736,7 +967,73 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 	if (set)
 		pspr->Flags |= flags;
 	else
+	{
 		pspr->Flags &= ~flags;
+
+		// This is the only way to shut off the temporary interpolation tic
+		// in the event another mod is causing potential interference
+		if (flags & PSPF_INTERPOLATE)
+			pspr->ResetInterpolation();
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayPivotAlign)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_INT(halign);
+	PARAM_INT(valign);
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+
+	if (pspr != nullptr)
+	{
+		if (halign >= PSPA_LEFT && halign <= PSPA_RIGHT)
+			pspr->HAlign = halign;
+		if (valign >= PSPA_TOP && valign <= PSPA_BOTTOM)
+			pspr->VAlign = valign;
+	}
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_OverlayTranslation
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayTranslation)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(layer);
+	PARAM_NAME(trname);
+
+	if (!ACTION_CALL_FROM_PSPRITE())
+		return 0;
+
+	DPSprite* pspr = self->player->FindPSprite(((layer != 0) ? layer : stateinfo->mPSPIndex));
+	if (pspr != nullptr)
+	{
+		// There is no constant for the empty name...
+		if (trname.GetChars()[0] == 0)
+		{
+			// an empty string resets to the default
+			// (unlike AActor::SetTranslation, there is no Default block for PSprites, so just set the translation to 0)
+			pspr->Translation = NO_TRANSLATION;
+			return 0;
+		}
+
+		auto tnum = R_FindCustomTranslation(trname);
+		if (tnum != INVALID_TRANSLATION)
+		{
+			pspr->Translation = tnum;
+		}
+		// silently ignore if the name does not exist, this would create some insane message spam otherwise.
+	}
 
 	return 0;
 }
@@ -889,7 +1186,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 	}
 
 	DPSprite *pspr;
-	pspr = Create<DPSprite>(player, stateowner, layer);
+	pspr = P_CreatePsprite(player, stateowner, layer);
 	pspr->SetState(state);
 	ACTION_RETURN_BOOL(true);
 }
@@ -955,13 +1252,14 @@ DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfla
 	DAngle pitch;
 	FTranslatedLineTarget scratch;
 
+	aimflags &= ~ALF_IGNORENOAUTOAIM; // just to be safe.
 	if (pLineTarget == NULL) pLineTarget = &scratch;
 	// see which target is to be aimed at
 	i = 2;
 	do
 	{
-		an = mo->Angles.Yaw + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
+		an = mo->Angles.Yaw + DAngle::fromDeg(angdiff[i]);
+		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, nullAngle, aimflags);
 
 		if (mo->player != nullptr &&
 			mo->Level->IsFreelookAllowed() &&
@@ -979,7 +1277,7 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(t, FTranslatedLineTarget);
 	PARAM_INT(aimflags);
-	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
+	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees());
 }
 
 //------------------------------------------------------------------------
@@ -996,7 +1294,7 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 	player->DestroyPSprites();
 
 	// Spawn the ready weapon
-	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : WP_NOCHANGE;
+	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : (AActor*)WP_NOCHANGE;
 	P_BringUpWeapon (player);
 }
 
@@ -1016,6 +1314,7 @@ void DPSprite::Serialize(FSerializer &arc)
 		("flags", Flags)
 		("state", State)
 		("tics", Tics)
+		("translation", Translation)
 		.Sprite("sprite", Sprite, nullptr)
 		("frame", Frame)
 		("id", ID)
@@ -1024,7 +1323,13 @@ void DPSprite::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy)
 		("alpha", alpha)
-		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("pivot", pivot)
+		("scale", scale)
+		("rotation", rotation)
+		("halign", HAlign)
+		("valign", VAlign)
+		("renderstyle_", Renderstyle)	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
+		("baseScale", baseScale);
 }
 
 //------------------------------------------------------------------------
@@ -1073,25 +1378,35 @@ void P_SetSafeFlash(AActor *weapon, player_t *player, FState *flashstate, int in
 					P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 					return;
 				}
-				else
+				else if (flashstate->DehIndex < 0)
 				{
-					// oh, no! The state is beyond the end of the state table so use the original flash state.
+					// oh, no! The state is beyond the end of the state table so use the original flash state if it does not have a Dehacked index.
 					P_SetPsprite(player, PSP_FLASH, flashstate, true);
 					return;
 				}
+				else break; // no need to continue.
 			}
 			// try again with parent class
 			cls = static_cast<PClassActor *>(cls->ParentClass);
 		}
-		// if we get here the state doesn't seem to belong to any class in the inheritance chain
-		// This can happen with Dehacked if the flash states are remapped. 
-		// The only way to check this would be to go through all Dehacked modifiable actors, convert
-		// their states into a single flat array and find the correct one.
-		// Rather than that, just check to make sure it belongs to something.
-		if (FState::StaticFindStateOwner(flashstate + index) == NULL)
-		{ // Invalid state. With no index offset, it should at least be valid.
-			index = 0;
+		
+		// if we get here the target state doesn't belong to any class in the inheritance chain.
+		// This can happen with Dehacked if the flash states are remapped.
+		// In this case we should check the Dehacked state map to get the proper state.
+		if (flashstate->DehIndex >= 0)
+		{
+			auto pTargetstate = dehExtStates.CheckKey(flashstate->DehIndex + index);
+			if (pTargetstate)
+			{
+				P_SetPsprite(player, PSP_FLASH, *pTargetstate, true);
+				return;
+			}
 		}
+
+		// If we still haven't found anything here, just use the base flash state.
+		// Normally this code should not be reachable.
+		index = 0;
+
 	}
 	P_SetPsprite(player, PSP_FLASH, flashstate + index, true);
 }

@@ -50,8 +50,11 @@
 #include "d_player.h"
 #include "events.h"
 #include "types.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
+#include "texturemanager.h"
+#include "d_main.h"
+#include "maps.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
@@ -62,6 +65,7 @@ FRandom FState::pr_statetics("StateTics");
 
 cycle_t ActionCycles;
 
+void InitServices();
 
 //==========================================================================
 //
@@ -128,16 +132,16 @@ void FState::CheckCallerType(AActor *self, AActor *stateowner)
 		// This should really never happen. Any valid action function must have actor pointers here.
 		if (!requiredType->isObjectPointer())
 		{
-			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName.GetChars());
+			ThrowAbortException(X_OTHER, "Bad function prototype in function call to %s", ActionFunc->PrintableName);
 		}
 		auto cls = static_cast<PObjectPointer*>(requiredType)->PointedClass();
 		if (check == nullptr)
 		{
-			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+			ThrowAbortException(X_OTHER, "%s called without valid caller. %s expected", ActionFunc->PrintableName, cls->TypeName.GetChars());
 		}
 		if (!(StateFlags & STF_DEHACKED) && !check->IsKindOf(cls))
 		{
-			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName.GetChars(), cls->TypeName.GetChars());
+			ThrowAbortException(X_OTHER, "Invalid class %s in function call to %s. %s expected", check->GetClass()->TypeName.GetChars(), ActionFunc->PrintableName, cls->TypeName.GetChars());
 		}
 	};
 	
@@ -316,7 +320,7 @@ static void LoadAltHudStuff()
 		break;
 	}
 
-	while ((lump = Wads.FindLump("ALTHUDCF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("ALTHUDCF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString())
@@ -365,6 +369,7 @@ static void LoadAltHudStuff()
 // PClassActor :: StaticInit										STATIC
 //
 //==========================================================================
+void InitServices();
 
 void PClassActor::StaticInit()
 {
@@ -391,6 +396,17 @@ void PClassActor::StaticInit()
 	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
+	InitServices();
+
+
+	for (auto cls : AllClasses)
+	{
+		if (cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			AllActorClasses.Push(static_cast<PClassActor*>(cls));
+		}
+	}
+
 	LoadAltHudStuff();
 	InitBotStuff();
 
@@ -441,6 +457,68 @@ bool PClassActor::SetReplacement(FName replaceName)
 		}
 	}
 	return true;
+}
+
+//==========================================================================
+//
+// PClassActor :: InitializeNativeDefaults
+//
+//==========================================================================
+
+void PClassActor::InitializeDefaults()
+{
+	if (IsDescendantOf(RUNTIME_CLASS(AActor)))
+	{
+		assert(Defaults == nullptr);
+		Defaults = (uint8_t*)M_Malloc(Size);
+
+		ConstructNative(Defaults);
+		// We must unlink the defaults from the class list because it's just a static block of data to the engine.
+		DObject* optr = (DObject*)Defaults;
+		GC::Root = optr->ObjNext;
+		optr->ObjNext = nullptr;
+		optr->SetClass(this);
+
+		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
+		if (ParentClass->Defaults != nullptr)
+		{
+			memcpy(Defaults + sizeof(DObject), ParentClass->Defaults + sizeof(DObject), ParentClass->Size - sizeof(DObject));
+			if (Size > ParentClass->Size)
+			{
+				memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+			}
+
+			optr->ObjectFlags = ((DObject*)ParentClass->Defaults)->ObjectFlags & OF_Transient;
+		}
+		else
+		{
+			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
+		}
+
+		assert(MetaSize >= ParentClass->MetaSize);
+		if (MetaSize != 0)
+		{
+			Meta = (uint8_t*)M_Malloc(MetaSize);
+
+			// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
+			if (ParentClass->Meta != nullptr)
+			{
+				memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+				if (MetaSize > ParentClass->MetaSize)
+				{
+					memset(Meta + ParentClass->MetaSize, 0, MetaSize - ParentClass->MetaSize);
+				}
+			}
+			else
+			{
+				memset(Meta, 0, MetaSize);
+			}
+
+			if (MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
+			else memset(Meta, 0, MetaSize);
+		}
+	}
+	PClass::InitializeDefaults();
 }
 
 //==========================================================================
@@ -660,7 +738,7 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 	if (chance >= 0) 
 	{
-		ActorInfo()->PainChances.Push({ type, MIN(chance, 256) });
+		ActorInfo()->PainChances.Push({ type, min(chance, 256) });
 	}
 }
 
@@ -707,22 +785,17 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
-		if (type->bAbstract)
-		{
-			Printf("Cannot instantiate abstract class %s\n", argv[1]);
-			return;
-		}
-		Net_WriteByte (argv.argc() > 2 ? command2 : command);
+		Net_WriteInt8 (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
 
 		if (argv.argc () > 2)
 		{
-			Net_WriteWord (atoi (argv[2])); // angle
-			Net_WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
-			Net_WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
+			Net_WriteInt16 (atoi (argv[2])); // angle
+			Net_WriteInt16 ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
+			Net_WriteInt8 ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
 			for (int i = 5; i < 10; i++)
 			{ // args[5]
-				Net_WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
+				Net_WriteInt32((i < argv.argc()) ? atoi(argv[i]) : 0);
 			}
 		}
 	}

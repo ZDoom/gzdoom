@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -31,7 +31,7 @@
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "d_net.h"
@@ -40,7 +40,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_walldraw.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/line/r_line.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
@@ -54,6 +54,8 @@ namespace swrenderer
 		auto viewport = thread->Viewport.get();
 		RenderPortal* renderportal = thread->Portal.get();
 
+		// Rotate to view direction:
+
 		tleft.X = float(pt1.X * viewport->viewpoint.Sin - pt1.Y * viewport->viewpoint.Cos);
 		tright.X = float(pt2.X * viewport->viewpoint.Sin - pt2.Y * viewport->viewpoint.Cos);
 
@@ -65,8 +67,10 @@ namespace swrenderer
 			float t = -tleft.X;
 			tleft.X = -tright.X;
 			tright.X = t;
-			swapvalues(tleft.Y, tright.Y);
+			std::swap(tleft.Y, tright.Y);
 		}
+
+		// Edge clip:
 
 		float fsx1, fsz1, fsx2, fsz2;
 
@@ -112,23 +116,20 @@ namespace swrenderer
 		if (fsz2 < TOO_CLOSE_Z)
 			return true;
 
+		// Find screen range covered by the line:
+
 		sx1 = xs_RoundToInt(fsx1);
 		sx2 = xs_RoundToInt(fsx2);
-
-		float delta = fsx2 - fsx1;
-		float t1 = (sx1 + 0.5f - fsx1) / delta;
-		float t2 = (sx2 + 0.5f - fsx1) / delta;
-		float invZ1 = 1.0f / fsz1;
-		float invZ2 = 1.0f / fsz2;
-		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
-		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
 
 		if (sx2 <= sx1)
 			return true;
 
+		// Remap texture coordinates to the part covered by the line segment:
+
 		if (lineseg && lineseg->linedef)
 		{
 			line_t* line = lineseg->linedef;
+			float t1, t2;
 			if (fabs(line->delta.X) > fabs(line->delta.Y))
 			{
 				t1 = (lineseg->v1->fX() - line->v1->fX()) / line->delta.X;
@@ -149,6 +150,23 @@ namespace swrenderer
 			tx1 = t1 + tx1 * (t2 - t1);
 			tx2 = t1 + tx2 * (t2 - t1);
 		}
+
+		// Calculate screen depths for the start and end points (resulting values are at the pixel center):
+
+		float delta = fsx2 - fsx1;
+		float t1 = (sx1 + 0.5f - fsx1) / delta;
+		float t2 = (sx2 + 0.5f - fsx1) / delta;
+		float invZ1 = 1.0f / fsz1;
+		float invZ2 = 1.0f / fsz2;
+		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
+		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
+
+		// Adjust texture coordinates to also be at the pixel centers:
+
+		float ftx1 = tx1 * invZ1;
+		float ftx2 = tx2 * invZ2;
+		tx1 = (ftx1 * (1.0f - t1) + ftx2 * t1) * sz1;
+		tx2 = (ftx1 * (1.0f - t2) + ftx2 * t2) * sz2;
 
 		return false;
 	}
@@ -287,7 +305,7 @@ namespace swrenderer
 	{
 		for (int i = x1; i < x2; i++)
 		{
-			ScreenY[i] = std::min(ScreenY[i], clip.sprbottomclip[i]);
+			ScreenY[i] = min(ScreenY[i], clip.sprbottomclip[i]);
 		}
 	}
 
@@ -423,8 +441,8 @@ namespace swrenderer
 		float yscale = GetYScale(sidedef, pic, side_t::mid);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
-		double texZFloor = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
-		double texZCeiling = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+		double texZFloor = max(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
+		double texZCeiling = min(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 
 		double texturemid;
 		if (yscale >= 0)
@@ -483,7 +501,7 @@ namespace swrenderer
 		double rowoffset = lineseg->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
 
-		fixed_t xoffset = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
+		fixed_t xoffset = xs_Fix<16>::ToFix(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 		if (rowoffset < 0)
 		{
 			rowoffset += pic->GetHeight();
@@ -615,7 +633,7 @@ namespace swrenderer
 
 	fixed_t ProjectedWallTexcoords::GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart)
 	{
-		fixed_t TextureOffsetU = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(texpart));
+		fixed_t TextureOffsetU = xs_Fix<16>::ToFix(lineseg->sidedef->GetTextureXOffset(texpart));
 		double xscale = GetXScale(lineseg->sidedef, tex, texpart);
 
 		fixed_t xoffset;
@@ -669,7 +687,7 @@ namespace swrenderer
 		}
 	}
 
-	void ProjectedWallLight::SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit)
+	void ProjectedWallLight::SetColormap(const sector_t *frontsector, seg_t *lineseg, int tier, lightlist_t *lit)
 	{
 		if (!lit)
 		{
@@ -677,7 +695,7 @@ namespace swrenderer
 			foggy = frontsector->Level->fadeto || frontsector->Colormap.FadeColor || (frontsector->Level->flags & LEVEL_HASFADETABLE);
 
 			if (!(lineseg->sidedef->Flags & WALLF_POLYOBJ))
-				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel);
+				lightlevel = lineseg->sidedef->GetLightLevel(foggy, frontsector->lightlevel, tier);
 			else
 				lightlevel = frontsector->GetLightLevel();
 		}
@@ -685,7 +703,7 @@ namespace swrenderer
 		{
 			basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
 			foggy = frontsector->Level->fadeto || basecolormap->Fade || (frontsector->Level->flags & LEVEL_HASFADETABLE);
-			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != nullptr);
+			lightlevel = lineseg->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, tier, lit->lightsource != nullptr);
 		}
 	}
 }

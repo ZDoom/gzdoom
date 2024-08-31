@@ -60,6 +60,7 @@ class Beak : Weapon
 		if (psp)
 		{
 			psp.y = WEAPONTOP;
+			ResetPSprite(psp);
 		}
 		player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 	}
@@ -220,7 +221,7 @@ class ChickenPlayer : PlayerPawn
 				pspr.y = WEAPONTOP + player.chickenPeck / 2;
 			}
 		}
-		if (player.morphTics & 15)
+		if ((player.MorphTics ? player.MorphTics : Random[ChickenPlayerThink]()) & 15)
 		{
 			return;
 		}

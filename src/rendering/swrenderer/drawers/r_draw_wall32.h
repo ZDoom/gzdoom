@@ -47,12 +47,10 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawWall32T : public DrawWallCommand
+	class DrawWall32T
 	{
 	public:
-		DrawWall32T(const WallDrawerArgs &drawerargs) : DrawWallCommand(drawerargs) { }
-
-		void DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args) override
+		static void DrawColumn(const WallColumnDrawerArgs& args)
 		{
 			using namespace DrawWall32TModes;
 
@@ -62,23 +60,26 @@ namespace swrenderer
 			if (shade_constants.simple_shade)
 			{
 				if (is_nearest_filter)
-					Loop<SimpleShade, NearestFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<SimpleShade, LinearFilter>(thread, args, shade_constants);
+					Loop<SimpleShade, LinearFilter>(args, shade_constants);
 			}
 			else
 			{
 				if (is_nearest_filter)
-					Loop<AdvancedShade, NearestFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 				else
-					Loop<AdvancedShade, LinearFilter>(thread, args, shade_constants);
+					Loop<AdvancedShade, LinearFilter>(args, shade_constants);
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void Loop(DrawerThread *thread, const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawWall32TModes;
+
+			int count = args.Count();
+			if (count <= 0) return;
 
 			const uint32_t *source = (const uint32_t*)args.TexturePixels();
 			const uint32_t *source2 = (const uint32_t*)args.TexturePixels2();
@@ -115,7 +116,6 @@ namespace swrenderer
 				desaturate = 0;
 			}
 
-			int count = args.Count();
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
@@ -125,15 +125,8 @@ namespace swrenderer
 
 			auto lights = args.dc_lights;
 			auto num_lights = args.dc_num_lights;
-			float viewpos_z = args.dc_viewpos.Z + args.dc_viewpos_step.Z * thread->skipped_by_thread(dest_y);
-			float step_viewpos_z = args.dc_viewpos_step.Z * thread->num_cores;
-
-			count = thread->count_for_thread(dest_y, count);
-			if (count <= 0) return;
-			frac += thread->skipped_by_thread(dest_y) * fracstep;
-			dest = thread->dest_for_thread(dest_y, pitch, dest);
-			fracstep *= thread->num_cores;
-			pitch *= thread->num_cores;
+			float viewpos_z = args.dc_viewpos.Z;
+			float step_viewpos_z = args.dc_viewpos_step.Z;
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
@@ -167,7 +160,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		FORCEINLINE BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
+		FORCEINLINE static BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, int textureheight, uint32_t one, uint32_t texturefracx)
 		{
 			using namespace DrawWall32TModes;
 
@@ -203,7 +196,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_z)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -225,7 +218,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_z);
 		}
 
-		FORCEINLINE BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_z)
+		FORCEINLINE static BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_z)
 		{
 			using namespace DrawWall32TModes;
 
@@ -243,13 +236,13 @@ namespace swrenderer
 
 				// L = light-pos
 				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				// distance_attenuation = 1 - min(dist * (1/radius), 1)
 				float Lxy2 = light_x; // L.x*L.x + L.y*L.y
 				float Lz = light_z - viewpos_z;
 				float dist2 = Lxy2 + Lz * Lz;
 				float rcp_dist = 1.f/sqrt(dist2);
 				float dist = dist2 * rcp_dist;
-				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+				float distance_attenuation = 256.0f - min(dist * light_radius, 256.0f);
 
 				// The simple light type
 				float simple_attenuation = distance_attenuation;
@@ -267,17 +260,17 @@ namespace swrenderer
 				lit.b += (light_color.b * attenuation) >> 8;
 			}
 
-			lit.r = MIN<uint32_t>(lit.r, 256);
-			lit.g = MIN<uint32_t>(lit.g, 256);
-			lit.b = MIN<uint32_t>(lit.b, 256);
+			lit.r = min<uint32_t>(lit.r, 256);
+			lit.g = min<uint32_t>(lit.g, 256);
+			lit.b = min<uint32_t>(lit.b, 256);
 
-			fgcolor.r = MIN<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
-			fgcolor.g = MIN<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
-			fgcolor.b = MIN<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
+			fgcolor.r = min<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
+			fgcolor.g = min<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
+			fgcolor.b = min<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
 			return fgcolor;
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, unsigned int ifgcolor, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, unsigned int ifgcolor, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawWall32TModes;
 
@@ -309,21 +302,21 @@ namespace swrenderer
 				BgraColor outcolor;
 				if (BlendT::Mode == (int)WallBlendModes::AddClamp)
 				{
-					outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-					outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-					outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+					outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+					outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+					outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				}
 				else if (BlendT::Mode == (int)WallBlendModes::SubClamp)
 				{
-					outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 				}
 				else if (BlendT::Mode == (int)WallBlendModes::RevSubClamp)
 				{
-					outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 				}
 				outcolor.a = 255;
 				return outcolor;

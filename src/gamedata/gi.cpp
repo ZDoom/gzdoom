@@ -36,7 +36,7 @@
 #include "info.h"
 #include "gi.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "g_level.h"
 #include "vm.h"
@@ -52,6 +52,8 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, backpacktype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, Armor2Percent)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon1)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, BasicArmorClass)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, HexenArmorClass)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
@@ -67,6 +69,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderBackColor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultbloodcolor)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, telefogheight)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defKickback)
@@ -75,6 +78,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, berserkpic)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mHideParTimes)
 
 const char *GameNames[17] =
 {
@@ -154,7 +158,7 @@ const char* GameInfoBorders[] =
 			{ \
 				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
 			} \
-			gameinfo.key[gameinfo.key.Reserve(1)] = FSoundID(sc.String); \
+			gameinfo.key[gameinfo.key.Reserve(1)] = S_FindSound(sc.String); \
 		} \
 		while (sc.CheckToken(',')); \
 	}
@@ -171,7 +175,7 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		gameinfo.key = sc.String; \
-		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
+		gameinfo.stampvar = fileSystem.GetFileContainer(sc.LumpNum); \
 	}
 
 #define GAMEINFOKEY_INT(key, variable) \
@@ -210,10 +214,10 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		FString color = sc.String; \
-		FString colorName = V_GetColorStringByName(color); \
+		FString colorName = V_GetColorStringByName(color.GetChars()); \
 		if(!colorName.IsEmpty()) \
 			color = colorName; \
-		gameinfo.key = V_GetColorFromString(NULL, color); \
+		gameinfo.key = V_GetColorFromString(color.GetChars()); \
 	}
 
 #define GAMEINFOKEY_BOOL(key, variable) \
@@ -272,6 +276,12 @@ void FMapInfoParser::ParseGameInfo()
 		if (sc.TokenType == '}') break;
 
 		sc.TokenMustBe(TK_Identifier);
+		if (sc.Compare("intro"))
+		{
+			ParseCutscene(gameinfo.IntroScene);
+			continue;
+		}
+
 		FString nextKey = sc.String;
 		sc.MustGetToken('=');
 
@@ -354,6 +364,13 @@ void FMapInfoParser::ParseGameInfo()
 			}
 			else gameinfo.mCheatMapArrow = "";
 		}
+		else if (nextKey.CompareNoCase("dialogue") == 0)
+		{
+			sc.MustGetToken(TK_StringConst);
+			gameinfo.Dialogue = sc.String;
+			gameinfo.AddDialogues.Clear();
+		}
+
 		// Insert valid keys here.
 		GAMEINFOKEY_STRING(mCheatKey, "cheatKey")
 			GAMEINFOKEY_STRING(mEasyKey, "easyKey")
@@ -376,7 +393,9 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_STRINGARRAY(PrecachedTextures, "precachetextures", 0, false)
 			GAMEINFOKEY_SOUNDARRAY(PrecachedSounds, "precachesounds", 0, false)
 			GAMEINFOKEY_STRINGARRAY(EventHandlers, "addeventhandlers", 0, false)
-			GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, true)
+			GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, false)
+			GAMEINFOKEY_STRING(BasicArmorClass, "BasicArmorClass")
+			GAMEINFOKEY_STRING(HexenArmorClass, "HexenArmorClass")
 			GAMEINFOKEY_STRING(PauseSign, "pausesign")
 			GAMEINFOKEY_STRING(quitSound, "quitSound")
 			GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
@@ -396,6 +415,8 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 			GAMEINFOKEY_STRING(CursorPic, "CursorPic")
 			GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
+			GAMEINFOKEY_STRING(HelpMenuClass, "HelpMenuClass")
+			GAMEINFOKEY_STRING(MenuDelegateClass, "MenuDelegateClass")
 			GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 			GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
 			GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
@@ -409,6 +430,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 			GAMEINFOKEY_FLOAT(bluramount, "bluramount")
 			GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
+			GAMEINFOKEY_STRING(mSliderBackColor, "menusliderbackcolor")
 			GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
 			GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 			GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
@@ -434,12 +456,14 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_FONT(mStatscreenAuthorFont, "statscreen_authorfont")
 			GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 			GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
-			GAMEINFOKEY_STRING(Dialogue, "dialogue")
+			GAMEINFOKEY_STRINGARRAY(AddDialogues, "adddialogues", 0, false)
 			GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
 			GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
 			GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 			GAMEINFOKEY_TWODOUBLES(normforwardmove, "normforwardmove")
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
+			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
+			GAMEINFOKEY_BOOL(mHideParTimes, "hidepartimes")
 
 		else
 		{
@@ -450,12 +474,19 @@ void FMapInfoParser::ParseGameInfo()
 			SkipToNext();
 		}
 	}
-	turbo.Callback();
+	turbo->Callback();
 }
 
 const char *gameinfo_t::GetFinalePage(unsigned int num) const
 {
 	if (finalePages.Size() == 0) return "-NOFLAT-";
-	else if (num < 1 || num > finalePages.Size()) return finalePages[0];
-	else return finalePages[num-1];
+	else if (num < 1 || num > finalePages.Size()) return finalePages[0].GetChars();
+	else return finalePages[num-1].GetChars();
+}
+
+bool CheckGame(const char* string, bool chexisdoom)
+{
+	int test = gameinfo.gametype;
+	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
+	return !stricmp(string, GameNames[test]);
 }

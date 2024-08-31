@@ -185,7 +185,7 @@ class CircleFlame : Actor
 		Stop;
 	Death:
 		CFCF QR 3 Bright;
-		CFCF S 3 Bright A_Explode(20, 20, 0);
+		CFCF S 3 Bright A_Explode(20, 128, 0);
 		CFCF TUVWXYZ 3 Bright;
 		Stop;
 	}

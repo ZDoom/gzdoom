@@ -38,6 +38,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "i_interface.h"
 
 extern gamestate_t wipegamestate;
 extern uint8_t globalfreeze, globalchangefreeze;
@@ -157,6 +158,7 @@ void P_Ticker (void)
 		while ((ac = it.Next()))
 		{
 			ac->ClearInterpolation();
+			ac->ClearFOVInterpolation();
 		}
 
 		P_ThinkParticles(Level);	// [RH] make the particles think
@@ -174,22 +176,6 @@ void P_Ticker (void)
 		if (!Level->isFrozen())
 		{
 			P_UpdateSpecials(Level);
-		}
-		it = Level->GetThinkerIterator<AActor>();
-
-		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
-		while ((ac = it.Next()))
-		{
-			if (ac->flags8 & MF8_RECREATELIGHTS)
-			{
-				ac->flags8 &= ~MF8_RECREATELIGHTS;
-				ac->SetDynamicLights();
-			}
-			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
-			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
-			{
-				P_RunEffect(ac, ac->effects);
-			}
 		}
 
 		// for par times

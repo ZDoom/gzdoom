@@ -52,7 +52,8 @@
 #include "sbar.h"
 #include "r_utility.h"
 #include "r_sky.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"
@@ -60,6 +61,8 @@
 #include "version.h"
 #include "fragglescript/t_script.h"
 #include "s_music.h"
+#include "model.h"
+#include "d_net.h"
 
 EXTERN_CVAR(Bool, save_formatted)
 
@@ -74,16 +77,18 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 	if (arc.BeginObject(key))
 	{
 		arc("flags", line.flags, def->flags)
+			("flags2", line.flags2, def->flags2)
 			("activation", line.activation, def->activation)
 			("special", line.special, def->special)
 			("alpha", line.alpha, def->alpha)
-			.Args("args", line.args, def->args, line.special)
 			("portalindex", line.portalindex, def->portalindex)
 			("locknumber", line.locknumber, def->locknumber)
-			("health", line.health, def->health)
+			("health", line.health, def->health);
 			// Unless the map loader is changed the sidedef references will not change between map loads so there's no need to save them.
 			//.Array("sides", line.sidedef, 2)
-			.EndObject();
+
+		SerializeArgs(arc, "args", line.args, def->args, line.special);
+		arc.EndObject();
 	}
 	return arc;
 
@@ -136,6 +141,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, si
 			("texture", part.texture, def->texture)
 			("interpolation", part.interpolation)
 			("flags", part.flags, def->flags)
+			("skew", part.skew, def->skew)
 			("color1", part.SpecialColors[0], def->SpecialColors[0])
 			("color2", part.SpecialColors[1], def->SpecialColors[1])
 			("addcolor", part.AdditiveColor, def->AdditiveColor)
@@ -298,11 +304,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			//("bottommap", p.bottommap)
 			//("midmap", p.midmap)
 			//("topmap", p.topmap)
+			//("selfmap", p.selfmap) // todo: if this becomes changeable we need a colormap serializer.
 			("damageamount", p.damageamount, def->damageamount)
 			("damageinterval", p.damageinterval, def->damageinterval)
 			("leakydamage", p.leakydamage, def->leakydamage)
 			("damagetype", p.damagetype, def->damagetype)
-			("sky", p.sky, def->sky)
+			("sky", p.skytransfer, def->skytransfer)
 			("moreflags", p.MoreFlags, def->MoreFlags)
 			("flags", p.Flags, def->Flags)
 			.Array("portals", p.Portals, def->Portals, 2, true)
@@ -324,14 +331,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 5, true)
 			.Array("additivecolors", p.AdditiveColors, def->AdditiveColors, 5, true)
 			("gravity", p.gravity, def->gravity)
-			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
-			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
 			("healthfloor", p.healthfloor, def->healthfloor)
 			("healthceiling", p.healthceiling, def->healthceiling)
 			("health3d", p.health3d, def->health3d)
 			// GZDoom exclusive:
-			.Array("reflect", p.reflect, def->reflect, 2, true)
-			.EndObject();
+			.Array("reflect", p.reflect, def->reflect, 2, true);
+
+		SerializeTerrain(arc, "floorterrain", p.terrainnum[0], &def->terrainnum[0]);
+		SerializeTerrain(arc, "ceilingterrain", p.terrainnum[1], &def->terrainnum[1]);
+		arc.EndObject();
 	}
 	return arc;
 }
@@ -374,7 +382,7 @@ FSerializer &FLevelLocals::SerializeSubsectors(FSerializer &arc, const char *key
 	auto numsubsectors = subsectors.Size();
 	if (arc.isWriting())
 	{
-		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
+		TArray<char> encoded(1 + (numsubsectors + 5) / 6, true);
 		int p = 0;
 		for (unsigned i = 0; i < numsubsectors; i += 6)
 		{
@@ -521,9 +529,12 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj &poly, FPolyO
 
 		if (arc.isReading())
 		{
-			poly.RotatePolyobj(angle, true);
-			delta -= poly.StartSpot.pos;
-			poly.MovePolyobj(delta, true);
+			if (poly.OriginalPts.Size() > 0)
+			{
+				poly.RotatePolyobj(angle, true);
+				delta -= poly.StartSpot.pos;
+				poly.MovePolyobj(delta, true);
+			}
 		}
 	}
 	return arc;
@@ -643,6 +654,15 @@ void FLevelLocals::SerializePlayers(FSerializer &arc, bool skipload)
 				ReadMultiplePlayers(arc, numPlayers, numPlayersNow, skipload);
 			}
 			arc.EndArray();
+
+			if (!skipload)
+			{
+				for (unsigned int i = 0u; i < MAXPLAYERS; ++i)
+				{
+					if (PlayerInGame(i) && Players[i]->mo != nullptr)
+						NetworkEntityManager::SetClientNetworkEntity(Players[i]->mo, i);
+				}
+			}
 		}
 		if (!skipload && numPlayersNow > numPlayers)
 		{
@@ -809,7 +829,7 @@ void FLevelLocals::ReadMultiplePlayers(FSerializer &arc, int numPlayers, int num
 	}
 	else
 	{
-		for (i = 0; i < MAXPLAYERS; ++i)
+		for (i = 0; i < numPlayers; ++i)
 		{
 			players[i].mo = playertemp[i].mo;
 		}
@@ -847,7 +867,7 @@ void FLevelLocals::CopyPlayer(player_t *dst, player_t *src, const char *name)
 	if (dst->Bot != nullptr)
 	{
 		botinfo_t *thebot = BotInfo.botinfo;
-		while (thebot && stricmp(name, thebot->name))
+		while (thebot && thebot->Name.CompareNoCase(name))
 		{
 			thebot = thebot->next;
 		}
@@ -862,11 +882,11 @@ void FLevelLocals::CopyPlayer(player_t *dst, player_t *src, const char *name)
 	{
 		dst->userinfo.TransferFrom(uibackup);
 		// The player class must come from the save, so that the menu reflects the currently playing one.
-		dst->userinfo.PlayerClassChanged(src->mo->GetInfo()->DisplayName);
+		dst->userinfo.PlayerClassChanged(src->mo->GetInfo()->DisplayName.GetChars());
 	}
 
 	// Validate the skin
-	dst->userinfo.SkinNumChanged(R_FindSkin(Skins[dst->userinfo.GetSkin()].Name, dst->CurrentPlayerClass));
+	dst->userinfo.SkinNumChanged(R_FindSkin(Skins[dst->userinfo.GetSkin()].Name.GetChars(), dst->CurrentPlayerClass));
 
 	// Make sure the player pawn points to the proper player struct.
 	if (dst->mo != nullptr)
@@ -948,17 +968,23 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	}
 	arc("saveversion", SaveVersion);
 
+	// this sets up some static data needed further down which means it must be done first.
+	StaticSerializeTranslations(arc);
+
 	if (arc.isReading())
 	{
 		Thinkers.DestroyAllThinkers();
 		interpolator.ClearInterpolations();
 		arc.ReadObjects(hubload);
+		// If there have been object deserialization errors we must absolutely not continue here because scripted objects can do unpredictable things.
+		if (arc.mObjectErrors) I_Error("Failed to load savegame");
 	}
 
 	arc("multiplayer", multiplayer);
 
 	arc("flags", flags)
 		("flags2", flags2)
+		("flags3", flags3)
 		("fadeto", fadeto)
 		("found_secrets", found_secrets)
 		("found_items", found_items)
@@ -1025,7 +1051,6 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	FRemapTable::StaticSerializeTranslations(arc);
 	canvasTextureInfo.Serialize(arc);
 	SerializePlayers(arc, hubload);
 	SerializeSounds(arc);
@@ -1057,6 +1082,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		automap->UpdateShowAllLines();
 
 	}
+	// clean up the static data we allocated
+	StaticClearSerializeTranslationsData();
 
 }
 
@@ -1072,7 +1099,7 @@ void FLevelLocals::SnapshotLevel()
 
 	if (info->isValid())
 	{
-		FSerializer arc(this);
+		FDoomSerializer arc(this);
 
 		if (arc.OpenWriter(save_formatted))
 		{
@@ -1097,7 +1124,7 @@ void FLevelLocals::UnSnapshotLevel(bool hubLoad)
 
 	if (info->isValid())
 	{
-		FSerializer arc(this);
+		FDoomSerializer arc(this);
 		if (!arc.OpenReader(&info->Snapshot))
 		{
 			I_Error("Failed to load savegame");
@@ -1121,7 +1148,7 @@ void FLevelLocals::UnSnapshotLevel(bool hubLoad)
 				// If this isn't the unmorphed original copy of a player, destroy it, because it's extra.
 				for (i = 0; i < MAXPLAYERS; ++i)
 				{
-					if (PlayerInGame(i) && Players[i]->morphTics && Players[i]->mo->alternative == pawn)
+					if (PlayerInGame(i) && Players[i]->mo->alternative == pawn)
 					{
 						break;
 					}

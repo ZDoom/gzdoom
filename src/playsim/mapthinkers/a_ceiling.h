@@ -54,6 +54,9 @@ public:
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
+	int getCrush() const { return m_Crush; }
+	int getDirection() const { return m_Direction; }
+
 protected:
 	ECeiling	m_Type;
 	double	 	m_BottomHeight;

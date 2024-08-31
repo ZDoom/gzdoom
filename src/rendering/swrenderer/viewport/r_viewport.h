@@ -7,11 +7,9 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #include "actorinlines.h"
-#include "utility/matrix.h"
+#include "matrix.h"
 
 #define MINZ double((2048*4) / double(1 << 20))
-
-class PolyDepthStencil;
 
 namespace swrenderer
 {
@@ -82,6 +80,12 @@ namespace swrenderer
 		double ScreenToViewY(int screenY, double viewZ) const
 		{
 			return (CenterY - screenY - 0.5) / FocalLengthY * viewZ;
+		}
+
+		DVector3 ScreenToViewPos(int screenX, int screenY, const DVector3& plane, double planeD)
+		{
+			double viewZ = -planeD / ((screenX + 0.5 - CenterX) / FocalLengthX * plane.X + (CenterY - screenY - 0.5) / FocalLengthY * plane.Y + plane.Z);
+			return DVector3(ScreenToViewX(screenX, viewZ), ScreenToViewY(screenY, viewZ), viewZ);
 		}
 
 		FLevelLocals *Level()

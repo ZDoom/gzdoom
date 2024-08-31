@@ -1,0 +1,128 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }} | ${{ matrix.config.build_type }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - name: Visual Studio 2022
+          os: windows-2022
+          extra_options: -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake
+          build_type: Release
+
+        - name: Visual Studio 2022
+          os: windows-2022
+          extra_options: -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake
+          build_type: Debug
+
+        - name: Visual Studio 2019
+          os: windows-2019
+          extra_options: -DCMAKE_TOOLCHAIN_FILE=build/vcpkg/scripts/buildsystems/vcpkg.cmake
+          build_type: Release
+
+        - name: macOS
+          os: macos-12
+          deps_cmdline: brew install libvpx webp
+          build_type: Release
+
+        - name: macOS
+          os: macos-12
+          extra_options: -G Xcode -DDYN_OPENAL=OFF
+          deps_cmdline: brew install libvpx webp
+          build_type: Debug
+
+        - name: Linux GCC 9
+          os: ubuntu-22.04
+          extra_options: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
+          deps_cmdline: sudo apt update && sudo apt install libsdl2-dev libvpx-dev libgtk2.0-dev libwebp-dev
+          build_type: RelWithDebInfo
+
+        - name: Linux GCC 12
+          os: ubuntu-22.04
+          extra_options: -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12
+          deps_cmdline: sudo apt update && sudo apt install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
+          build_type: MinSizeRel
+
+        - name: Linux Clang 11
+          os: ubuntu-22.04
+          extra_options: -DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11 -DDYN_OPENAL=OFF
+          deps_cmdline: sudo apt update && sudo apt install clang-11 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
+          build_type: Debug
+
+        - name: Linux Clang 15
+          os: ubuntu-22.04
+          extra_options: -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15
+          deps_cmdline: sudo apt update && sudo apt install clang-15 libsdl2-dev libvpx-dev libwebp-dev
+          build_type: Release
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        if [[ -n "${{ matrix.config.deps_cmdline }}" ]]; then
+          eval ${{ matrix.config.deps_cmdline }}
+        fi
+        mkdir build
+        if [[ "${{ runner.os }}" == 'macOS' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-macos.tar.xz
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
+        fi
+        if [[ -n "${ZMUSIC_PACKAGE}" ]]; then
+          cd build
+          wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
+          tar -xf "${ZMUSIC_PACKAGE}"
+        fi
+    
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      if: runner.os == 'Windows'
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/build/vcpkg'
+        vcpkgGitCommitId: '2c401863dd54a640aeb26ed736c55489c079323b'
+
+    - name: Configure
+      shell: bash
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic -DPK3_QUIET_ZIPDIR=ON ${{ matrix.config.extra_options }} .
+
+    - name: Build
+      shell: bash
+      run: |
+        export MAKEFLAGS=--keep-going
+        cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
+
+    - name: Create Package
+      if: runner.os == 'Windows'  # Remove to make packages of all targets
+      shell: bash
+      run: |
+        cd build
+        mkdir package
+        if [[ "${{ runner.os }}" == 'Windows' ]]; then
+          cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 package
+        elif [[ "${{ runner.os }}" == 'macOS' ]]; then
+          cp -r gzdoom.app package
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          cp gzdoom *.pk3 package
+        fi
+
+    - name: Upload Package
+      if: runner.os == 'Windows'  # Remove to store packages of all targets
+      uses: actions/upload-artifact@v3
+      with:
+        path: build/package
+        name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}
+
+    - name: List Build Directory
+      if: always()
+      shell: bash
+      run: |
+        git status
+        ls -lR build

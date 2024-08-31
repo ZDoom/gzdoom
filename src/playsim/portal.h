@@ -1,8 +1,12 @@
 #ifndef _PORTALS_H_
 #define _PORTALS_H_
 
-#include "basictypes.h"
+#include "basics.h"
 #include "m_bbox.h"
+
+struct linebase_t;
+struct line_t;
+struct sector_t;
 
 struct FPortalGroupArray;
 struct portnode_t;
@@ -190,6 +194,16 @@ struct FLinePortal
 	double mCosRot;
 	portnode_t *lineportal_thinglist;
 	FLinePortalSpan *mGroup;
+
+	FLinePortal()
+	{
+		Clear();
+	}
+
+	void Clear()
+	{
+		memset((void*)this, 0, sizeof * this);
+	}
 };
 
 struct FLinePortalSpan
@@ -235,6 +249,16 @@ struct FSectorPortal
 	double mPlaneZ;
 	TObjPtr<AActor*> mSkybox;
 
+	FSectorPortal()
+	{
+		Clear();
+	}
+
+	void Clear()
+	{
+		memset((void*)this, 0, sizeof * this);
+	}
+
 	bool MergeAllowed() const
 	{
 		// For thing based stack sectors and regular skies the portal has no relevance for merging visplanes.
@@ -265,7 +289,7 @@ struct FSectorPortalGroup
 
 
 /* code ported from prototype */
-bool P_ClipLineToPortal(line_t* line, line_t* portal, DVector2 view, bool partial = true, bool samebehind = true);
+bool P_ClipLineToPortal(linebase_t* line, linebase_t* portal, DVector2 view, bool partial = true, bool samebehind = true);
 void P_TranslatePortalXY(line_t* src, double& vx, double& vy);
 void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely);
 void P_TranslatePortalAngle(line_t* src, DAngle& angle);

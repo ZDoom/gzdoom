@@ -26,21 +26,79 @@
 */
 
 #include "c_dispatch.h"
+#include "a_dynlight.h" 
 #include "p_local.h"
 #include "p_effect.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/dynlights/hw_shadowmap.h"
+#include "hw_dynlightdata.h"
+#include "hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "r_data/models/models.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "models.h"
+#include <cmath>	// needed for std::floor on mac
 
 template<class T>
 T smoothstep(const T edge0, const T edge1, const T x)
 {
 	auto t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
 	return t * t * (3.0 - 2.0 * t);
+}
+
+LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z)
+{
+	LightProbe* foundprobe = nullptr;
+	if (level->LightProbes.Size() > 0)
+	{
+#if 1
+		double rcpCellSize = 1.0 / level->LPCellSize;
+		int gridCenterX = (int)std::floor(x * rcpCellSize) - level->LPMinX;
+		int gridCenterY = (int)std::floor(y * rcpCellSize) - level->LPMinY;
+		int gridWidth = level->LPWidth;
+		int gridHeight = level->LPHeight;
+		float lastdist = 0.0f;
+		for (int gridY = gridCenterY - 1; gridY <= gridCenterY + 1; gridY++)
+		{
+			for (int gridX = gridCenterX - 1; gridX <= gridCenterX + 1; gridX++)
+			{
+				if (gridX >= 0 && gridY >= 0 && gridX < gridWidth && gridY < gridHeight)
+				{
+					const LightProbeCell& cell = level->LPCells[gridX + (size_t)gridY * gridWidth];
+					for (int i = 0; i < cell.NumProbes; i++)
+					{
+						LightProbe* probe = cell.FirstProbe + i;
+						float dx = probe->X - x;
+						float dy = probe->Y - y;
+						float dz = probe->Z - z;
+						float dist = dx * dx + dy * dy + dz * dz;
+						if (!foundprobe || dist < lastdist)
+						{
+							foundprobe = probe;
+							lastdist = dist;
+						}
+					}
+				}
+			}
+		}
+#else
+		float lastdist = 0.0f;
+		for (unsigned int i = 0; i < level->LightProbes.Size(); i++)
+		{
+			LightProbe *probe = &level->LightProbes[i];
+			float dx = probe->X - x;
+			float dy = probe->Y - y;
+			float dz = probe->Z - z;
+			float dist = dx * dx + dy * dy + dz * dz;
+			if (i == 0 || dist < lastdist)
+			{
+				foundprobe = probe;
+				lastdist = dist;
+			}
+		}
+#endif
+	}
+	return foundprobe;
 }
 
 //==========================================================================
@@ -56,6 +114,15 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	float radius;
 	
 	out[0] = out[1] = out[2] = 0.f;
+
+	LightProbe* probe = FindLightProbe(Level, x, y, z);
+	if (probe)
+	{
+		out[0] = probe->Red;
+		out[1] = probe->Green;
+		out[2] = probe->Blue;
+	}
+
 	// Go through both light lists
 	while (node)
 	{
@@ -104,7 +171,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 					frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
 				}
 
-				if (frac > 0 && (!light->shadowmapped || screen->mShadowMap.ShadowTest(light, { x, y, z })))
+				if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
 				{
 					lr = light->GetRed() / 255.0f;
 					lg = light->GetGreen() / 255.0f;
@@ -182,7 +249,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							modellightdata.AddLightToList(group, light, true);
+							AddLightToList(modellightdata, group, light, true);
 							addedLights.Push(light);
 						}
 					}

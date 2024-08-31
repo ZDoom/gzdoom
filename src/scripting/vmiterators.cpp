@@ -123,7 +123,7 @@ IMPLEMENT_CLASS(DBlockLinesIterator, true, false);
 
 static DBlockLinesIterator *CreateBLI(AActor *origin, double radius)
 {
-	return Create<DBlockLinesIterator>(origin, radius);
+	return Create<DBlockLinesIterator>(PARAM_NULLCHECK(origin, origin), radius);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, Create, CreateBLI)
@@ -198,7 +198,7 @@ IMPLEMENT_CLASS(DBlockThingsIterator, true, false);
 
 static DBlockThingsIterator *CreateBTI(AActor *origin, double radius, bool ignore)
 {
-	return Create<DBlockThingsIterator>(origin, radius, ignore);
+	return Create<DBlockThingsIterator>(PARAM_NULLCHECK(origin, origin), radius, ignore);
 }
 
 

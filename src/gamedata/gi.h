@@ -34,8 +34,10 @@
 #ifndef __GI_H__
 #define __GI_H__
 
-#include "basictypes.h"
+#include "basics.h"
 #include "zstring.h"
+#include "name.h"
+#include "screenjob.h"
 
 // Flags are not user configurable and only depend on the standard IWADs
 enum
@@ -49,6 +51,7 @@ enum
 	GI_COMPATPOLY1			= 0x00000040,	// Hexen's MAP36 needs old polyobject drawing
 	GI_COMPATPOLY2			= 0x00000080,	// so does HEXDD's MAP47
 	GI_IGNORETITLEPATCHES	= 0x00000200,	// Ignore the map name graphics when not runnning in English language
+	GI_NOSECTIONMERGE		= 0x00000400,	// For the original id IWADs: avoid merging sections due to how idbsp created its sectors.
 };
 
 #include "gametype.h"
@@ -129,7 +132,7 @@ struct gameinfo_t
 
 	TArray<FName> PrecachedClasses;
 	TArray<FString> PrecachedTextures;
-	TArray<int> PrecachedSounds;
+	TArray<FSoundID> PrecachedSounds;
 	TArray<FString> EventHandlers;
 
 	FString titleMusic;
@@ -145,6 +148,8 @@ struct gameinfo_t
 	FString SkyFlatName;
 	FString ArmorIcon1;
 	FString ArmorIcon2;
+	FName BasicArmorClass;
+	FName HexenArmorClass;
 	FString PauseSign;
 	FString Endoom;
 	double Armor2Percent;
@@ -161,6 +166,8 @@ struct gameinfo_t
 	FName althudclass;
 	int statusbarclassfile = -1;
 	FName MessageBoxClass;
+	FName HelpMenuClass;
+	FName MenuDelegateClass;
 	FName backpacktype;
 	FString intermissionMusic;
 	int intermissionOrder;
@@ -181,6 +188,7 @@ struct gameinfo_t
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
 	FName mSliderColor;
+	FName mSliderBackColor;
 	FString mBackButton;
 	double gibfactor;
 	int TextScreenX;
@@ -190,6 +198,7 @@ struct gameinfo_t
 	FString mMapArrow, mCheatMapArrow;
 	FString mEasyKey, mCheatKey;
 	FString Dialogue;
+	TArray<FString> AddDialogues;
 	FGIFont mStatscreenMapNameFont;
 	FGIFont mStatscreenFinishedFont;
 	FGIFont mStatscreenEnteringFont;
@@ -204,7 +213,10 @@ struct gameinfo_t
 	int berserkpic;
 	double normforwardmove[2];
 	double normsidemove[2];
-	int fullscreenautoaspect = 0;
+	int fullscreenautoaspect = 3;
+	bool nomergepickupmsg;
+	bool mHideParTimes;
+	CutsceneDef IntroScene;
 
 	const char *GetFinalePage(unsigned int num) const;
 };
@@ -217,11 +229,6 @@ inline const char *GameTypeName()
 	return GameNames[gameinfo.gametype];
 }
 
-inline bool CheckGame(const char *string, bool chexisdoom)
-{
-	int test = gameinfo.gametype;
-	if (test == GAME_Chex && chexisdoom) test = GAME_Doom;
-	return !stricmp(string, GameNames[test]);
-}
+bool CheckGame(const char *string, bool chexisdoom);
 
 #endif //__GI_H__

@@ -34,12 +34,15 @@
 */
 
 
-#include "menu/menu.h"
+#include "menu.h"
 #include "gi.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "gameconfigfile.h"
-#include "w_wad.h"
+#include "filesystem.h"
+#include "gi.h"
+#include "d_player.h"
+#include "c_dispatch.h"
 
 TArray<FKeySection> KeySections;
 extern TArray<FString> KeyConfWeapons;
@@ -69,7 +72,7 @@ static void DoSaveKeys (FConfigFile *config, const char *section, FKeySection *k
 	FKeyBindings *bindings = dbl? &DoubleBindings : &Bindings;
 	for (unsigned i = 0; i < keysection->mActions.Size(); ++i)
 	{
-		bindings->ArchiveBindings (config, keysection->mActions[i].mAction);
+		bindings->ArchiveBindings (config, keysection->mActions[i].mAction.GetChars());
 	}
 }
 
@@ -160,15 +163,15 @@ void D_LoadWadSettings ()
 	KeySections.Clear();
 	KeyConfWeapons.Clear();
 
-	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("KEYCONF", &lastlump)) != -1)
 	{
-		FMemLump data = Wads.ReadLump (lump);
-		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
-		const char *conf = (char *)data.GetMem();
+		auto data = fileSystem.ReadFile (lump);
+		const char* conf = data.string();
+		const char *eof = conf + data.size();
 
 		while (conf < eof)
 		{
-			size_t i;
+			size_t i = 0;
 
 			// Fetch a line to execute
 			command.Clear();
@@ -176,14 +179,14 @@ void D_LoadWadSettings ()
 			{
 				command.Push(conf[i]);
 			}
-			if (i == 0)
+			if (i == 0) // Blank line
 			{
 				conf++;
 				continue;
 			}
 			command.Push(0);
 			conf += i;
-			if (*conf == '\n')
+			if (conf >= eof || *conf == '\n')
 			{
 				conf++;
 			}
@@ -223,11 +226,45 @@ void D_LoadWadSettings ()
 	ParsingKeyConf = false;
 }
 
+// Strict handling of SetSlot and ClearPlayerClasses in KEYCONF (see a_weapons.cpp)
+EXTERN_CVAR (Bool, setslotstrict)
+
+// Specifically hunt for and remove IWAD playerclasses
+void ClearIWADPlayerClasses (PClassActor *ti)
+{
+	for(unsigned i=0; i < PlayerClasses.Size(); i++)
+	{
+		if(PlayerClasses[i].Type==ti)
+		{
+			for(unsigned j = i; j < PlayerClasses.Size()-1; j++)
+			{
+				PlayerClasses[j] = PlayerClasses[j+1];
+			}
+			PlayerClasses.Pop();
+		}
+	}
+}
+
 CCMD(clearplayerclasses)
 {
 	if (ParsingKeyConf)
-	{
-		PlayerClasses.Clear();
+	{	
+		// Only clear the playerclasses first if setslotstrict is true
+		// If not, we'll only remove the IWAD playerclasses
+		if(setslotstrict)
+			PlayerClasses.Clear();
+		else
+		{
+			// I wish I had a better way to pick out IWAD playerclasses
+			// without having to explicitly name them here...
+			ClearIWADPlayerClasses(PClass::FindActor("DoomPlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("HereticPlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("StrifePlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("FighterPlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("ClericPlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("MagePlayer"));
+			ClearIWADPlayerClasses(PClass::FindActor("ChexPlayer"));
+		}
 	}
 }
 
@@ -245,6 +282,16 @@ CCMD(addplayerclass)
 
 			newclass.Type = ti;
 			newclass.Flags = 0;
+			
+			// If this class was already added, don't add it again			
+			for(unsigned i = 0; i < PlayerClasses.Size(); i++)
+			{
+				if(PlayerClasses[i].Type == ti)
+				{
+					return;
+				}
+			}
+			
 
 			int arg = 2;
 			while (arg < argv.argc())

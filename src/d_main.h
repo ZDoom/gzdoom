@@ -30,6 +30,12 @@
 
 #include "doomtype.h"
 #include "gametype.h"
+#include "startupinfo.h"
+#include "c_cvars.h"
+
+extern bool		advancedemo;
+extern bool hud_toggled;
+void D_ToggleHud();
 
 struct event_t;
 
@@ -45,8 +51,6 @@ struct CRestartException
 	char dummy;
 };
 
-int D_DoomMain (void);
-
 
 void D_Display ();
 
@@ -58,7 +62,6 @@ void D_PageTicker (void);
 void D_PageDrawer (void);
 void D_AdvanceDemo (void);
 void D_StartTitle (void);
-bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check = true, int position = -1);
 
 
 // [RH] Set this to something to draw an icon during the next screen refresh.
@@ -67,31 +70,6 @@ extern const char *D_DrawIcon;
 // [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
 extern uint32_t r_renderercaps;
 
-
-struct WadStuff
-{
-	FString Path;
-	FString Name;
-};
-
-struct FStartupInfo
-{
-	FString Name;
-	uint32_t FgColor;			// Foreground color for title banner
-	uint32_t BkColor;			// Background color for title banner
-	FString Song;
-	int Type;
-	int LoadLights = -1;
-	int LoadBrightmaps = -1;
-	enum
-	{
-		DefaultStartup,
-		DoomStartup,
-		HereticStartup,
-		HexenStartup,
-		StrifeStartup,
-	};
-};
 
 struct FIWADInfo
 {
@@ -108,10 +86,16 @@ struct FIWADInfo
 	int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
 	FString MapInfo;		// Base mapinfo to load
 	bool nokeyboardcheats = false;		// disable keyboard cheats
+	bool SkipBexStringsIfLanguage = false;
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
 	TArray<FString> DeleteLumps;	// Lumps which must be deleted from the directory.
 	int flags = 0;
+	int LoadWidescreen = -1;
+	int LoadBrightmaps = -1;
+	int LoadLights = -1;
+	FString DiscordAppId = nullptr;
+	FString SteamAppId = nullptr;
 };
 
 struct FFoundWadInfo
@@ -126,8 +110,6 @@ struct FFoundWadInfo
 	{
 	}
 };
-
-extern FStartupInfo DoomStartupInfo;
 
 //==========================================================================
 //
@@ -147,13 +129,13 @@ class FIWadManager
 	void ParseIWadInfo(const char *fn, const char *data, int datasize, FIWADInfo *result = nullptr);
 	int ScanIWAD (const char *iwad);
 	int CheckIWADInfo(const char *iwad);
-	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
+	int IdentifyVersion (std::vector<std::string>& wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
 	void CollectSearchPaths();
 	void AddIWADCandidates(const char *dir);
 	void ValidateIWADs();
 public:
 	FIWadManager(const char *fn, const char *fnopt);
-	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
+	const FIWADInfo *FindIWAD(std::vector<std::string>& wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
 	const FString *GetAutoname(unsigned int num) const
 	{
 		if (num < mIWadInfos.Size()) return &mIWadInfos[num].Autoname;
@@ -165,6 +147,25 @@ public:
 		else return 0;
 	}
 
+
 };
+
+#ifndef NO_SWRENDERER
+EXTERN_CVAR(Int, vid_rendermode)
+#else
+constexpr int vid_rendermode = 4;
+#endif
+
+inline bool V_IsHardwareRenderer()
+{
+	return vid_rendermode == 4;
+}
+
+inline bool V_IsTrueColor()
+{
+	return vid_rendermode == 1 || vid_rendermode == 4;
+}
+
+bool CheckCheatmode(bool printmsg = true, bool sponly = false);
 
 #endif

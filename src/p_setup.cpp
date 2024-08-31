@@ -30,11 +30,11 @@
 #include <malloc.h>		// for alloca()
 #endif
 
-#include "templates.h"
+
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
@@ -44,7 +44,7 @@
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"
@@ -67,7 +67,7 @@
 #include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
 #include "p_acs.h"
@@ -76,6 +76,10 @@
 #include "v_video.h"
 #include "fragglescript/t_script.h"
 #include "s_music.h"
+#include "animations.h"
+#include "texturemanager.h"
+#include "p_lnspec.h"
+#include "d_main.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -98,11 +102,11 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	const auto addAnimations = [hitlist, bitmask](const FTextureID texid)
 	{
-		for (auto anim : TexMan.mAnimations)
+		for (auto& anim : TexAnim.GetAnimations())
 		{
-			if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
+			if (texid == anim.BasePic || (!anim.bDiscrete && anim.BasePic < texid && texid < anim.BasePic + anim.NumFrames))
 			{
-				for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+				for (int i = anim.BasePic.GetIndex(); i < anim.BasePic.GetIndex() + anim.NumFrames; i++)
 				{
 					hitlist[i] |= (uint8_t)bitmask;
 				}
@@ -112,7 +116,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	addAnimations(texid);
 
-	auto switchdef = TexMan.FindSwitch(texid);
+	auto switchdef = TexAnim.FindSwitch(texid);
 	if (switchdef)
 	{
 		const FSwitchDef *const pair = switchdef->PairDef;
@@ -136,7 +140,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 		}
 	}
 
-	auto adoor = TexMan.FindAnimatedDoor(texid);
+	auto adoor = TexAnim.FindAnimatedDoor(texid);
 	if (adoor)
 	{
 		for (int i = 0; i < adoor->NumTextureFrames; i++)
@@ -182,13 +186,21 @@ static void PrecacheLevel(FLevelLocals *Level)
 	{
 		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::floor), FTextureManager::HIT_Flat);
 		AddToList(hitlist.Data(), Level->sectors[i].GetTexture(sector_t::ceiling), FTextureManager::HIT_Flat);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[0].skytexture[0], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[0].skytexture[1], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[1].skytexture[0], FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), Level->sectors[i].planes[1].skytexture[1], FTextureManager::HIT_Wall);
 	}
 
 	for (i = Level->sides.Size() - 1; i >= 0; i--)
 	{
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
+		auto &sd = Level->sides[i];
+		int hitflag = FTextureManager::HIT_Wall;
+		// Only precache skyboxes when this is actually used as a sky transfer.
+		if (sd.linedef->sidedef[0] == &sd && sd.linedef->special == Static_Init && sd.linedef->args[1] == Init_TransferSky) hitflag |= FTextureManager::HIT_Sky;
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::top), hitflag);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::mid), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::bottom), hitflag);
 	}
 
 
@@ -201,14 +213,16 @@ static void PrecacheLevel(FLevelLocals *Level)
 		AddToList(hitlist.Data(), Level->skytexture2, FTextureManager::HIT_Sky);
 	}
 
+	static const BITFIELD checkForTextureFlags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst | FTextureManager::TEXMAN_DontCreate;
+
 	for (auto n : gameinfo.PrecachedTextures)
 	{
-		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(n.GetChars(), ETextureType::Wall, checkForTextureFlags);
 		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 	for (unsigned i = 0; i < Level->info->PrecacheTextures.Size(); i++)
 	{
-		FTextureID tex = TexMan.CheckForTexture(Level->info->PrecacheTextures[i], ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(Level->info->PrecacheTextures[i].GetChars(), ETextureType::Wall, checkForTextureFlags);
 		if (tex.Exists()) AddToList(hitlist.Data(), tex, FTextureManager::HIT_Wall);
 	}
 
@@ -235,11 +249,11 @@ void FLevelLocals::ClearPortals()
 	PortalBlockmap.Clear();
 
 	// The first entry must always be the default skybox. This is what every sector gets by default.
-	memset(&sectorPortals[0], 0, sizeof(sectorPortals[0]));
+	sectorPortals[0].Clear();
 	sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[0].mFlags = PORTSF_SKYFLATONLY;
 	// The second entry will be the default sky. This is for forcing a regular sky through the skybox picker
-	memset(&sectorPortals[1], 0, sizeof(sectorPortals[0]));
+	sectorPortals[1].Clear();
 	sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
 
@@ -269,10 +283,19 @@ void FLevelLocals::ClearPortals()
 //
 //==========================================================================
 
-void FLevelLocals::ClearLevelData()
+void FLevelLocals::ClearLevelData(bool fullgc)
 {
+	{
+		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
+		for (AActor *actor = it.Next(); actor != nullptr; actor = it.Next())
+		{
+			actor->BlockingLine = actor->MovementBlockingLine = nullptr;
+			actor->BlockingFloor = actor->BlockingCeiling = actor->Blocking3DFloor = nullptr;
+		}
+	}
+	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
-	Thinkers.DestroyAllThinkers();
+	Thinkers.DestroyAllThinkers(fullgc);
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
@@ -297,11 +320,6 @@ void FLevelLocals::ClearLevelData()
 	DialogueRoots.Clear();
 	ClassRoots.Clear();
 
-	// delete allocated data in the level arrays.
-	if (sectors.Size() > 0)
-	{
-		delete[] sectors[0].e;
-	}
 	for (auto &sub : subsectors)
 	{
 		if (sub.BSP != nullptr) delete sub.BSP;
@@ -318,6 +336,7 @@ void FLevelLocals::ClearLevelData()
 	canvasTextureInfo.EmptyList();
 	sections.Clear();
 	segs.Clear();
+	extsectors.Clear();
 	sectors.Clear();
 	linebuffer.Clear();
 	subsectorbuffer.Clear();
@@ -356,6 +375,12 @@ void FLevelLocals::ClearLevelData()
 	if (automap) automap->Destroy();
 	Behaviors.UnloadModules();
 	localEventManager->Shutdown();
+	if (aabbTree) delete aabbTree;
+	if (levelMesh) delete levelMesh;
+	aabbTree = nullptr;
+	levelMesh = nullptr;
+	if (screen)
+		screen->SetAABBTree(nullptr);
 }
 
 //==========================================================================
@@ -364,13 +389,13 @@ void FLevelLocals::ClearLevelData()
 //
 //==========================================================================
 
-void P_FreeLevelData ()
+void P_FreeLevelData (bool fullgc)
 {
 	R_FreePastViewers();
 
 	for (auto Level : AllLevels())
 	{
-		Level->ClearLevelData();
+		Level->ClearLevelData(fullgc);
 	}
 	// primaryLevel->FreeSecondaryLevels();
 }
@@ -406,17 +431,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
-	{
-		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
-		if (table != nullptr)
-		{
-			delete table;
-			translationtables[TRANSLATION_LevelScripted][i] = nullptr;
-		}
-	}
-	translationtables[TRANSLATION_LevelScripted].Clear();
+	GPalette.ClearTranslationSlot(TRANSLATION_LevelScripted);
+
 
 	// Initial height of PointOfView will be set by player think.
 	auto p = Level->GetConsolePlayer();
@@ -424,7 +440,14 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
-	S_StartMusic();
+	S_ResetMusic();
+
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!primaryLevel->IsReentering())
+	{
+		primaryLevel->SetMusic();
+	}
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);
@@ -432,7 +455,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	// Free all level data from the previous map
 	P_FreeLevelData();
 
-	MapData *map = P_OpenMapData(Level->MapName, true);
+	MapData *map = P_OpenMapData(Level->MapName.GetChars(), true);
 	if (map == nullptr)
 	{
 		I_Error("Unable to open map '%s'\n", Level->MapName.GetChars());
@@ -477,6 +500,18 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 			{
 				Level->Players[i]->mo = nullptr;
 				FPlayerStart *mthing = Level->PickPlayerStart(i);
+				Level->SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			}
+		}
+	}
+	else if (newGame)
+	{
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			// Didn't have a player spawn available so spawn it now.
+			if (Level->PlayerInGame(i) && Level->Players[i]->playerstate == PST_ENTER && Level->Players[i]->mo == nullptr)
+			{
+				FPlayerStart* mthing = Level->PickPlayerStart(i);
 				Level->SpawnPlayer(mthing, i, (Level->flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			}
 		}
@@ -581,6 +616,9 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	auto it = Level->GetThinkerIterator<AActor>();
 	AActor* ac;
+
+	Level->flags3 |= LEVEL3_LIGHTCREATED;
+
 	// Initial setup of the dynamic lights.
 	while ((ac = it.Next()))
 	{

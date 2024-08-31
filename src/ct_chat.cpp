@@ -36,20 +36,21 @@
 #include "d_gui.h"
 #include "g_input.h"
 #include "d_net.h"
-#include "d_event.h"
+#include "d_eventbase.h"
 #include "sbar.h"
 #include "v_video.h"
 #include "utf8.h"
 #include "gstrings.h"
 #include "vm.h"
+#include "c_buttons.h"
+#include "d_buttons.h"
+#include "v_draw.h"
 
 enum
 {
 	QUEUESIZE = 128
 };
 
-
-EXTERN_CVAR (Int, con_scaletext)
 
 EXTERN_CVAR (Bool, sb_cooperative_enable)
 EXTERN_CVAR (Bool, sb_deathmatch_enable)
@@ -63,8 +64,6 @@ void CT_Init ();
 void CT_Drawer ();
 bool CT_Responder (event_t *ev);
 void CT_PasteChat(const char *clip);
-
-int chatmodeon;
 
 // Private data
 
@@ -87,7 +86,7 @@ CVAR (String, chatmacro8, "I'll take care of it.", CVAR_ARCHIVE)
 CVAR (String, chatmacro9, "Yes", CVAR_ARCHIVE)
 CVAR (String, chatmacro0, "No", CVAR_ARCHIVE)
 
-FStringCVar *chat_macros[10] =
+FStringCVarRef *chat_macros[10] =
 {
 	&chatmacro0,
 	&chatmacro1,
@@ -174,7 +173,7 @@ bool CT_Responder (event_t *ev)
 			else if (ev->data1 == 'V' && (ev->data3 & GKM_CTRL))
 #endif // __APPLE__
 			{
-				CT_PasteChat(I_GetFromClipboard(false));
+				CT_PasteChat(I_GetFromClipboard(false).GetChars());
 			}
 		}
 		else if (ev->subtype == EV_GUI_Char)
@@ -194,7 +193,7 @@ bool CT_Responder (event_t *ev)
 #ifdef __unix__
 		else if (ev->subtype == EV_GUI_MButtonDown)
 		{
-			CT_PasteChat(I_GetFromClipboard(true));
+			CT_PasteChat(I_GetFromClipboard(true).GetChars());
 		}
 #endif
 	}
@@ -233,16 +232,20 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
 
 	if (players[consoleplayer].camera != NULL &&
-		(Button_ShowScores.bDown ||
+		(buttonMap.ButtonDown(Button_ShowScores) ||
 		 players[consoleplayer].camera->health <= 0 ||
-		 SB_ForceActive) &&
-		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
-		 gamestate != GS_INTERMISSION)
+		 SB_ForceActive))
 	{
-		HU_DrawScores (&players[consoleplayer]);
+		bool skipit = false;
+		if (gamestate == GS_CUTSCENE)
+		{
+			// todo: check for summary screen
+		}
+		if (!skipit) HU_DrawScores (&players[consoleplayer]);
 	}
 	if (chatmodeon)
 	{
@@ -258,18 +261,18 @@ void CT_Drawer (void)
 			if (!!rv) return;
 		}
 
-		FStringf prompt("%s ", GStrings("TXT_SAY"));
+		FStringf prompt("%s ", GStrings.GetString("TXT_SAY"));
 		int x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext(true);
-		int screen_width = SCREENWIDTH / scale;
-		int screen_height= SCREENHEIGHT / scale;
+		int scale = active_con_scale(drawer);
+		int screen_width = twod->GetWidth() / scale;
+		int screen_height= twod->GetHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
-		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
+		y += ((twod->GetHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = displayfont->StringWidth (prompt) * scalex;
 		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;
@@ -286,9 +289,9 @@ void CT_Drawer (void)
 		}
 		printstr += displayfont->GetCursor();
 
-		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
+		DrawText(drawer, displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
+		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr.GetChars(),
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 	}
 }
@@ -368,17 +371,16 @@ static void ShoveChatStr (const char *str, uint8_t who)
 		who |= 2;
 	}
 
-	Net_WriteByte (DEM_SAY);
-	Net_WriteByte (who);
+	Net_WriteInt8 (DEM_SAY);
+	Net_WriteInt8 (who);
 
-	if (!chat_substitution || !DoSubstitution (substBuff, str))
+	if (chat_substitution && DoSubstitution (substBuff, str))
 	{
-		Net_WriteString(MakeUTF8(str));
+		str = substBuff.GetChars();
 	}
-	else
-	{
-		Net_WriteString(MakeUTF8(substBuff));
-	}
+
+	Net_WriteString(CleanseString(const_cast<char*>(MakeUTF8(str))));
+
 }
 
 //===========================================================================
@@ -426,7 +428,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 				else
 				{
-					out += weapon->GetClass()->TypeName;
+					out += weapon->GetClass()->TypeName.GetChars();
 				}
 			}
 		}
@@ -434,7 +436,7 @@ static bool DoSubstitution (FString &out, const char *in)
 		{
 			if (strnicmp(a, "armor", 5) == 0)
 			{
-				auto armor = player->mo->FindInventory(NAME_BasicArmor);
+				auto armor = player->mo->FindInventory(NAME_BasicArmor, true);
 				out.AppendFormat("%d", armor != NULL ? armor->IntVar(NAME_Amount) : 0);
 			}
 		}
@@ -504,6 +506,7 @@ CCMD (messagemode)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 1;
 		C_HideConsole ();
 		CT_ClearChatMessage ();
@@ -526,6 +529,7 @@ CCMD (messagemode2)
 {
 	if (menuactive == MENU_Off)
 	{
+		buttonMap.ResetButtonStates();
 		chatmodeon = 2;
 		C_HideConsole ();
 		CT_ClearChatMessage ();

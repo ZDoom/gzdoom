@@ -1,0 +1,3 @@
+/* Default keybindings for Heretic */
+
+backspace "use ArtiTomeOfPower"

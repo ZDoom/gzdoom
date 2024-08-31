@@ -91,14 +91,14 @@ script << 0 >> (int type, int tag)
 	case 228:
 		if (CheckInventory ("QuestItem24"))
 		{
+			int logNum = 128;
 			if (CheckInventory ("QuestItem28"))
 			{
-				LocalAmbientSound ("svox/voc130", 127);
+				logNum = 130;
 			}
-			else
-			{
-				LocalAmbientSound ("svox/voc128", 127);
-			}
+			str soundToPlay = StrParam(s: "svox/voc", d: logNum);
+			LocalAmbientSound(soundToPlay, 127);
+			SetSubtitleNumber(logNum, soundToPlay);
 			clearlinespecial ();
 		}
 		break;

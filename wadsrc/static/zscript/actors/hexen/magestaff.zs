@@ -260,9 +260,9 @@ class MageStaffFX2 : Actor
 		if (victim != target && !victim.player && !victim.bBoss)
 		{
 			victim.DamageMobj (self, target, 10, 'Fire');
-			return 1;	// Keep going
+			return MHIT_PASS;	// Keep going
 		}
-		return -1;
+		return MHIT_DEFAULT;
 	}
 
 	override bool SpecialBlastHandling (Actor source, double strength)

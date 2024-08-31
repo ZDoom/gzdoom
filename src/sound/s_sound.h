@@ -37,27 +37,45 @@ struct FLevelLocals;
 
 #include "s_soundinternal.h"
 #include "s_doomsound.h"
+#include "name.h"
+#include "tarray.h"
+
+enum SndUserFlags
+{
+	SND_PlayerReserve = 1,
+	SND_PlayerCompat = 2,
+	SND_PlayerSilent = 4
+};
+
+enum // This cannot be remain as this, but for now it has to suffice.
+{
+	SOURCE_Actor = SOURCE_None+1,		// Sound is coming from an actor.
+	SOURCE_Sector,		// Sound is coming from a sector.
+	SOURCE_Polyobj,		// Sound is coming from a polyobject.
+};
 
 // Per level startup code.
 // Kills playing sounds at start of level and starts new music.
 //
+typedef TMap<FName, FName> MusicAliasMap;
+extern MusicAliasMap MusicAliases;
 
 // Called after a level is loaded. Ensures that most sounds are loaded.
 
 // [RH] S_sfx "maintenance" routines
 void S_ClearSoundData();
 void S_ParseSndInfo (bool redefine);
+void S_LockLocalSndinfo();
 
-bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2);
-bool S_AreSoundsEquivalent (AActor *actor, const char *name1, const char *name2);
-int S_LookupPlayerSound (const char *playerclass, int gender, const char *logicalname);
-int S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);
-int S_FindSkinnedSound (AActor *actor, FSoundID refid);
-int S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
-int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc=NULL);	// Add sound by lumpname
-int S_AddPlayerSound (const char *playerclass, const int gender, int refid, const char *lumpname);
-int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum, bool fromskin=false);
-int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto, bool fromskin=false);
+bool S_AreSoundsEquivalent (AActor *actor, FSoundID id1, FSoundID id2);
+FSoundID S_LookupPlayerSound (const char *playerclass, int gender, FSoundID refid);
+const char *S_GetSoundClass(AActor *pp);
+FSoundID S_FindSkinnedSound (AActor *actor, FSoundID refid);
+FSoundID S_FindSkinnedSoundEx (AActor *actor, const char *logicalname, const char *extendedname);
+FSoundID S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc=NULL);	// Add sound by lumpname
+FSoundID S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, const char *lumpname);
+FSoundID S_AddPlayerSound (const char *playerclass, const int gender, FSoundID refid, int lumpnum, bool fromskin=false);
+FSoundID S_AddPlayerSoundExisting (const char *playerclass, const int gender, FSoundID refid, FSoundID aliasto, bool fromskin=false);
 void S_MarkPlayerSounds (AActor *player);
 void S_ShrinkPlayerSoundLists ();
 unsigned int S_GetMSLength(FSoundID sound);

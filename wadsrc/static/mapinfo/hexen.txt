@@ -39,6 +39,7 @@ gameinfo
 	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
+	menusliderbackcolor = "White"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -70,6 +71,8 @@ gameinfo
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
 	messageboxclass = "MessageBoxMenu"
+	helpmenuclass = "ReadThisMenu"
+	menudelegateclass = "DoomMenuDelegate"
 	normforwardmove = 0x19, 0x32
 	normsidemove = 0x18, 0x28
 }
@@ -455,6 +458,7 @@ skill nightmare
 	AmmoFactor = 1.5
 	DoubleAmmoFactor = 1.5
 	FastMonsters
+	InstantReaction
 	DisableCheats
 	SpawnFilter = Nightmare
 	Name = "$MNU_BLACKPLAGUE"
@@ -511,6 +515,7 @@ gamedefaults
 	noautosequences
 	missilesactivateimpactlines
 	monsterfallingdamage
+	enableskyboxao
 }
 
 // There is also support for showing a clus5msg after cluster 5, but

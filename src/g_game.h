@@ -30,29 +30,12 @@
 
 struct event_t;
 
+#include <functional>
+
 #include "dobjgc.h"
+#include "name.h"
+#include "gamestate.h"
 
-// The current state of the game: whether we are
-// playing, gazing at the intermission screen,
-// the game final animation, or a demo. 
-enum gamestate_t : int
-{
-	GS_LEVEL,
-	GS_INTERMISSION,
-	GS_FINALE,
-	GS_DEMOSCREEN,
-	GS_FULLCONSOLE,		// [RH]	Fullscreen console
-	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
-	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
-	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
-
-	GS_FORCEWIPE = -1,
-	GS_FORCEWIPEFADE = -2,
-	GS_FORCEWIPEBURN = -3,
-	GS_FORCEWIPEMELT = -4
-};
-
-extern	gamestate_t 	gamestate;
 
 // wipegamestate can be set to -1
 //	to force a wipe on the next draw
@@ -100,8 +83,6 @@ bool G_Responder (event_t*	ev);
 void G_ScreenShot (const char* filename);
 void G_StartSlideshow(FLevelLocals *Level, FName whichone);
 
-FString G_BuildSaveName (const char *prefix, int slot);
-
 class FSerializer;
 bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn);
 
@@ -122,10 +103,15 @@ void G_AddViewPitch (int look, bool mouse = false);
 // Adds to consoleplayer's viewangle if allowed
 void G_AddViewAngle (int yaw, bool mouse = false);
 
+class FBaseCVar;
+FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname);
+
+class DIntermissionController;
+struct level_info_t;
+void RunIntermission(level_info_t* oldlevel, level_info_t* newlevel, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf);
+
 extern const AActor *SendItemUse, *SendItemDrop;
 extern int SendItemDropAmount;
 
-const int SAVEPICWIDTH = 216;
-const int SAVEPICHEIGHT = 162;
 
 #endif

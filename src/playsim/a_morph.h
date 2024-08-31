@@ -26,6 +26,8 @@ enum
 	MORPH_UNDOBYTIMEOUT		= 0x00001000,	// Player unmorphs once countdown expires
 	MORPH_UNDOALWAYS		= 0x00002000,	// Powerups must always unmorph, no matter what.
 	MORPH_TRANSFERTRANSLATION = 0x00004000,	// Transfer translation from the original actor to the morphed one
+	MORPH_KEEPARMOR			= 0x00008000,	// Don't lose current armor value when morphing.
+	MORPH_IGNOREINVULN		= 0x00010000,	// Completely ignore invulnerability status on players.
 
 	MORPH_STANDARDUNDOING	= MORPH_UNDOBYTOMEOFPOWER | MORPH_UNDOBYCHAOSDEVICE | MORPH_UNDOBYTIMEOUT,
 };

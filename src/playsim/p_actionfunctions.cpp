@@ -50,7 +50,7 @@
 #include "decallib.h"
 #include "p_local.h"
 #include "c_console.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "a_sharedglobal.h"
 #include "v_font.h"
 #include "doomstat.h"
@@ -69,20 +69,23 @@
 #include "sbar.h"
 #include "actorinlines.h"
 #include "types.h"
+#include "model.h"
+#include "shadowinlines.h"
+#include "i_time.h"
 
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_cabullet ("CustomBullet");
 static FRandom pr_cwjump ("CustomWpJump");
 static FRandom pr_cwpunch ("CustomWpPunch");
 static FRandom pr_grenade ("ThrowGrenade");
-static FRandom pr_crailgun ("CustomRailgun");
+	   FRandom pr_crailgun ("CustomRailgun");
 static FRandom pr_spawndebris ("SpawnDebris");
 static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
 static FRandom pr_teleport("A_Teleport");
 static FRandom pr_bfgselfdamage("BFGSelfDamage");
-FRandom pr_cajump("CustomJump");
+	   FRandom pr_cajump("CustomJump");
 
 //==========================================================================
 //
@@ -126,9 +129,8 @@ static int CallStateChain (AActor *self, AActor *actor, FState *state)
 			if (state->ActionFunc->Unsafe)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
-				auto owner = FState::StaticFindStateOwner(state);
 				Printf(TEXTCOLOR_RED "Unsafe state call in state %s to %s which accesses user variables. The action function has been removed from this state\n",
-					FState::StaticGetStateName(state).GetChars(), state->ActionFunc->PrintableName.GetChars());
+					FState::StaticGetStateName(state).GetChars(), state->ActionFunc->PrintableName);
 				state->ActionFunc = nullptr;
 			}
 
@@ -383,7 +385,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVar)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self->player ? int(self->player - players) : -1, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player ? int(self->player - players) : -1, cvarname.GetChars());
 		if (cvar == nullptr)
 		{
 			ret->SetFloat(0);
@@ -413,7 +415,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVarString)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self->player? int(self->player - players) : -1, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player? int(self->player - players) : -1, cvarname.GetChars());
 		if (cvar == nullptr)
 		{
 			ret->SetString("");
@@ -715,13 +717,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlaySoundEx)
 
 	if (!looping)
 	{
-		S_Sound (self, int(channel) - NAME_Auto, 0, soundid, 1, attenuation);
+		S_Sound (self, channel.GetIndex() - NAME_Auto, 0, soundid, 1, attenuation);
 	}
 	else
 	{
-		if (!S_IsActorPlayingSomething (self, int(channel) - NAME_Auto, soundid))
+		if (!S_IsActorPlayingSomething (self, channel.GetIndex() - NAME_Auto, soundid))
 		{
-			S_Sound (self, (int(channel) - NAME_Auto), CHANF_LOOP, soundid, 1, attenuation);
+			S_Sound (self, (channel.GetIndex() - NAME_Auto), CHANF_LOOP, soundid, 1, attenuation);
 		}
 	}
 	return 0;
@@ -734,7 +736,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopSoundEx)
 
 	if (channel > NAME_Auto && channel <= NAME_SoundSlot7)
 	{
-		S_StopSound (self, int(channel) - NAME_Auto);
+		S_StopSound (self, channel.GetIndex() - NAME_Auto);
 	}
 	return 0;
 }
@@ -764,7 +766,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SeekerMissile)
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90), clamp<int>(ang2, 0, 90), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	if (!P_SeekerMissile(self, DAngle::fromDeg(clamp<int>(ang1, 0, 90)), DAngle::fromDeg(clamp<int>(ang2, 0, 90)), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.
@@ -794,7 +796,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 	S_Sound (self, CHAN_WEAPON, 0, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
-		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
+		DAngle angle = self->Angles.Yaw + DAngle::fromDeg(pr_cabullet.Random2() * (5.625 / 256.));
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
 			NAME_Hitscan, NAME_BulletPuff);
@@ -845,6 +847,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RadiusDamageSelf)
 	int 				actualDamage;
 	double 				actualDistance;
 
+	if (self->target == nullptr) return 0;
 	actualDistance = self->Distance3D(self->target);
 	if (actualDistance < distance)
 	{
@@ -929,7 +932,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProjectile)
 	{
 		if (ti) 
 		{
-			DAngle angle = self->Angles.Yaw - 90;
+			DAngle angle = self->Angles.Yaw - DAngle::fromDeg(90.);
 			double x = Spawnofs_xy * angle.Cos();
 			double y = Spawnofs_xy * angle.Sin();
 			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
@@ -1072,9 +1075,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 		return 0;
 				
 	A_FaceTarget (self);
-	if (self->CheckMeleeRange ())
+	if (P_CheckMeleeRange(self))
 	{
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1082,7 +1085,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	}
 	else
 	{
-		if (misssound)
+		if (misssound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, misssound, 1, ATTN_NORM);
 	}
 	return 0;
@@ -1107,11 +1110,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 		return 0;
 				
 	A_FaceTarget (self);
-	if (self->CheckMeleeRange())
+	if (P_CheckMeleeRange(self))
 	{
 		if (damagetype == NAME_None)
 			damagetype = NAME_Melee;	// Melee is the default type
-		if (meleesound)
+		if (meleesound.isvalid())
 			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
@@ -1200,7 +1203,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 	{
 		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target : NULL);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg(60.), 0, aim ? self->target.Get() : nullptr);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -1224,11 +1227,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomRailgun)
 			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * veleffect, -self->target->Vel.Y * veleffect);
 		}
 
-		if (self->target->flags & MF_SHADOW)
-		{
-			DAngle rnd = pr_crailgun.Random2() * (45. / 256.);
-			self->Angles.Yaw += rnd;
-		}
+		A_CustomRailgun_ShadowHandling(self, spawnofs_xy, spawnofs_z, spread_xy, flags);
 	}
 
 	if (!(flags & CRF_EXPLICITANGLE))
@@ -1274,7 +1273,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Recoil)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(xyvel);
 
-	self->Thrust(self->Angles.Yaw + 180., xyvel);
+	self->Thrust(self->Angles.Yaw + DAngle::fromDeg(180.), xyvel);
 	return 0;
 }
 
@@ -1293,7 +1292,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 	PARAM_FLOAT	(time);
 	PARAM_NAME	(fontname);
 
-	if (text[0] == '$') text = GStrings(&text[1]);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
 	if (self->CheckLocalView() ||
 		(self->target != NULL && self->target->CheckLocalView()))
 	{
@@ -1302,13 +1301,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Print)
 		
 		if (fontname != NAME_None)
 		{
-			font = V_GetFont(fontname);
+			font = V_GetFont(fontname.GetChars());
 		}
 		if (time > 0)
 		{
 			con_midtime = float(time);
 		}
-		FString formatted = strbin1(text);
+		FString formatted = strbin1(text.GetChars());
 		C_MidPrint(font, formatted.GetChars());
 		con_midtime = saved;
 	}
@@ -1331,16 +1330,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_PrintBold)
 	float saved = con_midtime;
 	FFont *font = NULL;
 	
-	if (text[0] == '$') text = GStrings(&text[1]);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
 	if (fontname != NAME_None)
 	{
-		font = V_GetFont(fontname);
+		font = V_GetFont(fontname.GetChars());
 	}
 	if (time > 0)
 	{
 		con_midtime = float(time);
 	}
-	FString formatted = strbin1(text);
+	FString formatted = strbin1(text.GetChars());
 	C_MidPrint(font, formatted.GetChars(), true);
 	con_midtime = saved;
 	return 0;
@@ -1360,8 +1359,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Log)
 
 	if (local && !self->CheckLocalView()) return 0;
 
-	if (text[0] == '$') text = GStrings(&text[1]);
-	FString formatted = strbin1(text);
+	if (text[0] == '$') text = GStrings.GetString(&text[1]);
+	FString formatted = strbin1(text.GetChars());
 	Printf("%s\n", formatted.GetChars());
 	return 0;
 }
@@ -1397,7 +1396,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LogFloat)
 
 	if (local && !self->CheckLocalView()) return 0;
 	IGNORE_FORMAT_PRE
-	Printf("%H\n", num);
+	Printf("%g\n", num);
 	IGNORE_FORMAT_POST
 	return 0;
 }
@@ -1609,15 +1608,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 // A_SpawnParticle
 //
 //===========================================================================
-enum SPFflag
-{
-	SPF_FULLBRIGHT =		1,
-	SPF_RELPOS =			1 << 1,
-	SPF_RELVEL =			1 << 2,
-	SPF_RELACCEL =			1 << 3,
-	SPF_RELANG =			1 << 4,
-	SPF_NOTIMEFREEZE =		1 << 5,
-};
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 {
@@ -1648,7 +1638,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 		if (flags & SPF_RELANG) angle += self->Angles.Yaw;
 		double s = angle.Sin();
 		double c = angle.Cos();
-		DVector3 pos(xoff, yoff, zoff);
+		DVector3 pos(xoff, yoff, zoff + self->GetBobOffset());
 		DVector3 vel(xvel, yvel, zvel);
 		DVector3 acc(accelx, accely, accelz);
 		//[MC] Code ripped right out of A_SpawnItemEx.
@@ -1670,6 +1660,76 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticle)
 			acc.Y = accelx * s - accely * c;
 		}
 		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_COLOR		(color);
+	PARAM_INT   (i_texid)
+	PARAM_INT   (style)
+	PARAM_INT	(flags)		
+	PARAM_INT	(lifetime)	
+	PARAM_FLOAT	(size)		
+	PARAM_ANGLE	(angle)		
+	PARAM_FLOAT	(xoff)		
+	PARAM_FLOAT	(yoff)		
+	PARAM_FLOAT	(zoff)		
+	PARAM_FLOAT	(xvel)		
+	PARAM_FLOAT	(yvel)		
+	PARAM_FLOAT	(zvel)		
+	PARAM_FLOAT	(accelx)	
+	PARAM_FLOAT	(accely)	
+	PARAM_FLOAT	(accelz)	
+	PARAM_FLOAT	(startalpha)
+	PARAM_FLOAT	(fadestep)	
+	PARAM_FLOAT (sizestep)	
+	PARAM_FLOAT	(startroll)	
+	PARAM_FLOAT	(rollvel)	
+	PARAM_FLOAT	(rollacc)
+
+	startalpha = clamp(startalpha, 0., 1.);
+	fadestep = clamp(fadestep, -1.0, 1.0);
+
+	size = fabs(size);
+	if (lifetime != 0)
+	{
+		if (flags & SPF_RELANG) angle += self->Angles.Yaw;
+		double s = angle.Sin();
+		double c = angle.Cos();
+		DVector3 pos(xoff, yoff, zoff + self->GetBobOffset());
+		DVector3 vel(xvel, yvel, zvel);
+		DVector3 acc(accelx, accely, accelz);
+		//[MC] Code ripped right out of A_SpawnItemEx.
+		if (flags & SPF_RELPOS)
+		{
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+			pos.X = xoff * c + yoff * s;
+			pos.Y = xoff * s - yoff * c;
+		}
+		if (flags & SPF_RELVEL)
+		{
+			vel.X = xvel * c + yvel * s;
+			vel.Y = xvel * s - yvel * c;
+		}
+		if (flags & SPF_RELACCEL)
+		{
+			acc.X = accelx * c + accely * s;
+			acc.Y = accelx * s - accely * c;
+		}
+		
+		FTextureID texid;
+		texid.SetIndex(i_texid);
+		
+		if(style < 0 || style >= STYLE_Count)
+		{
+			style = STYLE_None;
+		}
+
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style), startroll, rollvel, rollacc);
 	}
 	return 0;
 }
@@ -1920,9 +1980,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burst)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An self with radius 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, int(self->radius * self->Height)/32);
+	numChunks = max<int> (4, int(self->radius * self->Height)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
-	for (i = MAX (24, numChunks + i); i >= 0; i--)
+	for (i = max (24, numChunks + i); i >= 0; i--)
 	{
 		double xo = (pr_burst() - 128) * self->radius / 128;
 		double yo = (pr_burst() - 128) * self->radius / 128;
@@ -1985,7 +2045,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->Pos(), true);
+		oktorespawn = P_CheckPosition(self, self->Pos().XY(), true);
 	}
 
 	if (oktorespawn)
@@ -2018,6 +2078,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 		self->flags6 = defs->flags6;
 		self->flags7 = defs->flags7;
 		self->flags8 = defs->flags8;
+		self->flags9 = defs->flags9;
 		self->SetState (self->SpawnState);
 		self->renderflags &= ~RF_INVISIBLE;
 
@@ -2421,7 +2482,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? 0.5 : 0., ALF_PORTALRESTRICT);
+		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, DAngle::fromDeg((flags & JLOSF_NOAUTOAIM) ? 0.5 : 0.), ALF_PORTALRESTRICT);
 		
 		if (!t.linetarget)
 		{
@@ -2433,14 +2494,14 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		{
 		case JLOSF_TARGETLOS|JLOSF_FLIPFOV:
 			// target makes sight check, player makes fov check; player has verified fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_TARGETLOS:
 			doCheckSight = !(flags & JLOSF_NOSIGHT); // The target is responsible for sight check and fov
 			break;
 		default:
 			// player has verified sight and fov
-			fov = 0.;
+			fov = nullAngle;
 			// fall-through
 		case JLOSF_FLIPFOV: // Player has verified sight, but target must verify fov
 			doCheckSight = false;
@@ -2471,7 +2532,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
@@ -2491,9 +2552,9 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	fov = MIN<DAngle>(fov, 360.);
+	fov = min<DAngle>(fov, DAngle::fromDeg(360.));
 
-	if (fov > 0)
+	if (fov > nullAngle)
 	{
 		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 
@@ -2565,13 +2626,13 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 			ACTION_RETURN_BOOL(false);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0.;
+			fov = nullAngle;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
 	}
 
-	if (fov > 0 && (fov < 360.))
+	if (fov > nullAngle && (fov < DAngle::fromDeg(360.)))
 	{
 		DAngle an = absangle(target->AngleTo(self), target->Angles.Yaw);
 
@@ -2615,7 +2676,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFlag)
 	PARAM_INT	(checkpointer);
 
 	AActor *owner = COPY_AAPTR(self, checkpointer);
-	ACTION_RETURN_BOOL(owner != nullptr && CheckActorFlag(owner, flagname));
+	ACTION_RETURN_BOOL(owner != nullptr && CheckActorFlag(owner, flagname.GetChars()));
 }
 
 
@@ -2792,24 +2853,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRefire)
 // Set actor's angle (in degrees).
 //
 //===========================================================================
-enum
-{
-	SPF_FORCECLAMP = 1,	// players always clamp
-	SPF_INTERPOLATE = 2,
-};
-
 
 DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(angle);
+	PARAM_ANGLE(angle);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != NULL)
 	{
-		ref->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
+		ref->SetAngle(angle, flags);
 	}
 	return 0;
 }
@@ -2825,7 +2880,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT(pitch);
+	PARAM_ANGLE(pitch);
 	PARAM_INT(flags);
 	PARAM_INT(ptr);
 
@@ -2833,7 +2888,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 
 	if (ref != NULL)
 	{
-		ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE), !!(flags & SPF_FORCECLAMP));
+		ref->SetPitch(pitch, flags);
 	}
 	return 0;
 }
@@ -2849,15 +2904,102 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_FLOAT		(roll);
+	PARAM_ANGLE		(roll);
 	PARAM_INT	(flags);
 	PARAM_INT	(ptr)	;
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	if (ref != NULL)
 	{
-		ref->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+		ref->SetRoll(roll, flags);
 	}
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetViewAngle
+//
+// Set actor's viewangle (in degrees).
+//
+//===========================================================================
+
+static void SetViewAngleNative(AActor* self, double angle, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewAngle(DAngle::fromDeg(angle), flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewAngle, SetViewAngleNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(angle);
+	PARAM_INT(flags);
+	PARAM_INT(ptr);
+
+	SetViewAngleNative(self, angle, flags, ptr);
+
+	return 0;
+}
+
+//===========================================================================
+//
+// A_SetViewPitch
+//
+// Set actor's viewpitch (in degrees).
+//
+//===========================================================================
+
+static void SetViewPitchNative(AActor* self, double pitch, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewPitch(DAngle::fromDeg(pitch), flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewPitch, SetViewPitchNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(pitch);
+	PARAM_INT(flags);
+	PARAM_INT(ptr);
+
+	SetViewPitchNative(self, pitch, flags, ptr);
+
+	return 0;
+}
+
+//===========================================================================
+//
+// [MC] A_SetViewRoll
+//
+// Set actor's viewroll (in degrees).
+//
+//===========================================================================
+
+static void SetViewRollNative(AActor* self, double roll, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != nullptr)
+	{
+		ref->SetViewRoll(DAngle::fromDeg(roll), flags);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SetViewRoll, SetViewRollNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(roll);
+	PARAM_INT(flags);
+	PARAM_INT(ptr);
+
+	SetViewRollNative(self, roll, flags, ptr);
+
 	return 0;
 }
 
@@ -3178,10 +3320,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Teleport)
 DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT		(intensity);
+	PARAM_FLOAT		(intensity);
 	PARAM_INT		(duration);
-	PARAM_INT		(damrad);
-	PARAM_INT		(tremrad);
+	PARAM_FLOAT		(damrad);
+	PARAM_FLOAT		(tremrad);
 	PARAM_SOUND	(sound);
 
 	P_StartQuake(self->Level, self, 0, intensity, duration, damrad, tremrad, sound);
@@ -3199,23 +3341,26 @@ DEFINE_ACTION_FUNCTION(AActor, A_Quake)
 DEFINE_ACTION_FUNCTION(AActor, A_QuakeEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(intensityX);
-	PARAM_INT(intensityY);
-	PARAM_INT(intensityZ);
+	PARAM_FLOAT(intensityX);
+	PARAM_FLOAT(intensityY);
+	PARAM_FLOAT(intensityZ);
 	PARAM_INT(duration);
-	PARAM_INT(damrad);
-	PARAM_INT(tremrad);
+	PARAM_FLOAT(damrad);
+	PARAM_FLOAT(tremrad);
 	PARAM_SOUND(sound);
 	PARAM_INT(flags);
 	PARAM_FLOAT(mulWaveX);
 	PARAM_FLOAT(mulWaveY);
 	PARAM_FLOAT(mulWaveZ);
-	PARAM_INT(falloff);
+	PARAM_FLOAT(falloff);
 	PARAM_INT(highpoint);
 	PARAM_FLOAT(rollIntensity);
 	PARAM_FLOAT(rollWave);
+	PARAM_FLOAT(damageMultiplier);
+	PARAM_FLOAT(thrustMultiplier);
+	PARAM_INT(damage);
 	P_StartQuakeXYZ(self->Level, self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
-		rollIntensity, rollWave);
+		rollIntensity, rollWave, damageMultiplier, thrustMultiplier, damage);
 	return 0;
 }
 
@@ -3234,7 +3379,7 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist)
 
 	weaveXY = self->WeaveIndexXY & 63;
 	weaveZ = self->WeaveIndexZ & 63;
-	angle = self->Angles.Yaw + 90;
+	angle = self->Angles.Yaw + DAngle::fromDeg(90);
 
 	if (xydist != 0 && xyspeed != 0)
 	{
@@ -3349,7 +3494,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 
 	// Target can dodge if it can see enemy
 	DAngle angle = absangle(self->target->Angles.Yaw, self->target->AngleTo(self));
-	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21°
+	bool dodge = (P_CheckSight(self->target, self) && angle < DAngle::fromDeg(30. * 256. / 360.));	// 30 byteangles ~ 21Â°
 
 	// Distance check is simplistic
 	DVector2 vec = self->Vec2To(self->target);
@@ -3371,7 +3516,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 	hitchance -= idist * (dodge ? 16 : 8);
 
 	// While we're here, we may as well do something for this:
-	if (self->target->flags & MF_SHADOW)
+	if (A_WolfAttack_ShadowHandling(self))
 	{
 		hitchance >>= 2;
 	}
@@ -4597,7 +4742,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckBlock)
 		if (flags & CBF_NOACTORS)	fpass |= PCM_NOACTORS;
 		if (flags & CBF_NOLINES)	fpass |= PCM_NOLINES;
 		mobj->SetZ(pos.Z);
-		checker = P_CheckMove(mobj, pos, fpass);
+		checker = P_CheckMove(mobj, pos.XY(), fpass);
 		mobj->SetZ(oldpos.Z);
 	}
 	else
@@ -4668,16 +4813,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		//Done because using anglelimit directly causes a signed/unsigned mismatch.
 
 		//Code borrowed from A_Face*.
-		if (anglelimit > 0)
+		if (anglelimit > nullAngle)
 		{
 			DAngle delta = -deltaangle(current, angle);
 			if (fabs(delta) > anglelimit)
 			{
-				if (delta < 0)
+				if (delta < nullAngle)
 				{
 					current += anglelimit + offset;
 				}
-				else if (delta > 0)
+				else if (delta > nullAngle)
 				{
 					current -= anglelimit + offset;
 				}
@@ -4695,19 +4840,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FaceMovementDirection)
 		DAngle current = mobj->Angles.Pitch;
 		const DVector2 velocity = mobj->Vel.XY();
 		DAngle pitch = -VecToAngle(velocity.Length(), mobj->Vel.Z);
-		if (pitchlimit > 0)
+		if (pitchlimit > nullAngle)
 		{
 			DAngle pdelta = deltaangle(current, pitch);
 
 			if (fabs(pdelta) > pitchlimit)
 			{
-				if (pdelta > 0)
+				if (pdelta > nullAngle)
 				{
-					current -= MIN(pitchlimit, pdelta);
+					current -= min(pitchlimit, pdelta);
 				}
 				else //if (pdelta < 0)
 				{
-					current += MIN(pitchlimit, -pdelta);
+					current += min(pitchlimit, -pdelta);
 				}
 				mobj->SetPitch(current, !!(flags & FMDF_INTERPOLATE));
 			}
@@ -4775,10 +4920,10 @@ enum VRFFlags
 DEFINE_ACTION_FUNCTION(AActor, A_SetVisibleRotation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_ANGLE(anglestart)
-	PARAM_ANGLE(angleend)	
-	PARAM_ANGLE(pitchstart)
-	PARAM_ANGLE(pitchend)	
+	PARAM_FANGLE(anglestart)
+	PARAM_FANGLE(angleend)
+	PARAM_FANGLE(pitchstart)
+	PARAM_FANGLE(pitchend)
 	PARAM_INT(flags)		
 	PARAM_INT(ptr)			
 
@@ -4838,7 +4983,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 
 	if (self->Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
 	{
-		if (sec->special == Damage_InstantDeath)
+		if (sec->damageamount >= TELEFRAG_DAMAGE)
 		{
 			P_DamageMobj(self, NULL, NULL, 999, NAME_InstantDeath);
 		}
@@ -4846,7 +4991,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		{
 			int anglespeed = self->Level->GetFirstSectorTag(sec) - 100;
 			double speed = (anglespeed % 10) / 16.;
-			DAngle an = (anglespeed / 10) * (360 / 8.);
+			DAngle an = DAngle::fromDeg((anglespeed / 10) * (360 / 8.));
 			self->Thrust(an, speed);
 		}
 	}
@@ -4917,7 +5062,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
 	PARAM_FLOAT(dist);
-	SprayDecal(self, name, dist);
+	PARAM_FLOAT(offset_x);
+	PARAM_FLOAT(offset_y);
+	PARAM_FLOAT(offset_z);
+	PARAM_FLOAT(direction_x);
+	PARAM_FLOAT(direction_y);
+	PARAM_FLOAT(direction_z);
+	PARAM_BOOL(useBloodColor);
+	PARAM_COLOR(decalColor);
+	SprayDecal(self, name.GetChars(), dist, DVector3(offset_x, offset_y, offset_z), DVector3(direction_x, direction_y, direction_z), useBloodColor, decalColor);
 	return 0;
 }
 
@@ -4926,7 +5079,490 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetMugshotState)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
 	if (self->CheckLocalView())
-		StatusBar->SetMugShotState(name);
+		StatusBar->SetMugShotState(name.GetChars());
+	return 0;
+}
+
+//==========================================================================
+//
+// A_ChangeModel(modeldef, modelpath, model, modelindex, skinpath, skin, skinid, flags)
+//
+// This function allows the changing of an actor's modeldef, or models and/or skins at a given index
+//==========================================================================
+
+static void EnsureModelData(AActor * mobj)
+{
+	if (mobj->modelData == nullptr)
+	{
+		auto ptr = Create<DActorModelData>();
+		
+		ptr->flags = (mobj->hasmodel ? MODELDATA_HADMODEL : 0);
+		ptr->modelDef = nullptr;
+		
+		mobj->modelData = ptr;
+		mobj->hasmodel = true;
+		GC::WriteBarrier(mobj, ptr);
+	}
+}
+
+static void CleanupModelData(AActor * mobj)
+{
+	if ( !(mobj->flags9 & MF9_DECOUPLEDANIMATIONS)
+		&& mobj->modelData->models.Size() == 0
+		&& mobj->modelData->modelFrameGenerators.Size() == 0
+		&& mobj->modelData->skinIDs.Size() == 0
+		&& mobj->modelData->animationIDs.Size() == 0
+		&& mobj->modelData->modelDef == nullptr
+		&&(mobj->modelData->flags & ~MODELDATA_HADMODEL) == 0 )
+	{
+		mobj->hasmodel = mobj->modelData->flags & MODELDATA_HADMODEL;
+		mobj->modelData->Destroy();
+		mobj->modelData = nullptr;
+	}
+}
+
+enum ESetAnimationFlags
+{
+	SAF_INSTANT = 1 << 0,
+	SAF_LOOP = 1 << 1,
+	SAF_NOOVERRIDE = 1 << 2,
+};
+
+extern double getCurrentFrame(const AnimOverride &anim, double tic);
+
+void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac)
+{
+	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
+
+	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
+	{
+		ThrowAbortException(X_OTHER, "Cannot set animation for non-decoupled actors");
+	}
+
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))
+	{
+		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");
+	}
+
+	if(interpolateTics <= 0) interpolateTics = 1;
+
+	EnsureModelData(self);
+
+	if(animName == NAME_None)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		return;
+	}
+
+	double tic = self->Level->totaltime;
+	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
+	{
+		tic += ticFrac;
+	}
+
+	FModel * mdl = Models[(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0) ? self->modelData->models[0].modelID : BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];
+
+	int animStart = mdl->FindFirstFrame(animName);
+	if(animStart == FErr_NotFound)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		Printf("Could not find animation %s\n", animName.GetChars());
+		return;
+	}
+
+	if((flags & SAF_NOOVERRIDE) && self->modelData->curAnim.flags != ANIMOVERRIDE_NONE && self->modelData->curAnim.firstFrame == animStart)
+	{
+		//same animation as current, skip setting it
+		return;
+	}
+
+	if(!(flags & SAF_INSTANT))
+	{
+		self->modelData->prevAnim = self->modelData->curAnim;
+	}
+
+	int animEnd = mdl->FindLastFrame(animName);
+
+	if(framerate < 0)
+	{
+		framerate = mdl->FindFramerate(animName);
+	}
+	
+	int len = animEnd - animStart;
+
+	if(startFrame >= len)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		return;
+	}
+	else if(loopFrame >= len)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		return;
+	}
+	else if(endFrame >= len)
+	{
+		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
+		return;
+	}
+	
+	self->modelData->curAnim.firstFrame = animStart;
+	self->modelData->curAnim.lastFrame = endFrame < 0 ? animEnd - 1 : animStart + endFrame;
+	self->modelData->curAnim.startFrame = startFrame < 0 ? animStart : animStart + startFrame;
+	self->modelData->curAnim.loopFrame = loopFrame < 0 ? animStart : animStart + loopFrame;
+	self->modelData->curAnim.flags = (flags&SAF_LOOP) ? ANIMOVERRIDE_LOOP : 0;
+	self->modelData->curAnim.framerate = (float)framerate;
+
+	if(!(flags & SAF_INSTANT))
+	{
+		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic);
+		
+		int startTic = floor(tic) + interpolateTics;
+		self->modelData->curAnim.startTic = startTic;
+		self->modelData->curAnim.switchOffset = startTic - tic;
+	}
+	else
+	{
+		self->modelData->curAnim.startTic = tic;
+		self->modelData->curAnim.switchOffset = 0;
+	}
+}
+
+void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
+{
+	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1);
+}
+
+void SetAnimationUINative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
+{
+	SetAnimationInternal(self, FName(ENamedName(i_animName)), framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac());
+}
+
+void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFrac)
+{
+	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
+
+	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
+	{
+		ThrowAbortException(X_OTHER, "Cannot set animation for non-decoupled actors");
+	}
+
+	EnsureModelData(self);
+
+	if(self->modelData->curAnim.flags & ANIMOVERRIDE_NONE) return;
+
+	if(framerate < 0)
+	{
+		ThrowAbortException(X_OTHER, "Cannot set negative framerate");
+	}
+
+
+	double tic = self->Level->totaltime;
+	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
+	{
+		tic += ticFrac;
+	}
+
+	if(self->modelData->curAnim.startTic >= tic)
+	{
+		self->modelData->curAnim.framerate = (float)framerate;
+		return;
+	}
+
+	double frame = getCurrentFrame(self->modelData->curAnim, tic);
+
+	self->modelData->curAnim.startFrame = frame;
+	self->modelData->curAnim.startTic = tic;
+	self->modelData->curAnim.switchOffset = 0;
+	self->modelData->curAnim.framerate = (float)framerate;
+}
+
+void SetAnimationFrameRateNative(AActor * self, double framerate)
+{
+	SetAnimationFrameRateInternal(self, framerate, 1);
+}
+
+void SetAnimationFrameRateUINative(AActor * self, double framerate)
+{
+	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
+}
+
+void SetModelFlag(AActor * self, int flag)
+{
+	EnsureModelData(self);
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsSet |= flag;
+	self->modelData->overrideFlagsClear &= ~flag;
+}
+
+void ClearModelFlag(AActor * self, int flag)
+{
+	EnsureModelData(self);
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsClear |= flag;
+	self->modelData->overrideFlagsSet &= ~flag;
+}
+
+void ResetModelFlags(AActor * self)
+{
+	if(self->modelData)
+	{
+		self->modelData->overrideFlagsClear = 0;
+		self->modelData->overrideFlagsSet = 0;
+		self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
+	}
+}
+
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER		= 1 << 0,
+	CMDL_HIDEMODEL			= 1 << 1,
+	CMDL_USESURFACESKIN		= 1 << 2,
+};
+
+void ChangeModelNative(
+	AActor * self,
+	AActor * invoker,
+	FStateParamInfo * stateinfo,
+	int i_modeldef,
+	int i_modelindex,
+	const FString &p_modelpath,
+	int i_model,
+	int i_skinindex,
+	const FString &p_skinpath,
+	int i_skin,
+	int flags,
+	int generatorindex,
+	int i_animationindex,
+	const FString &p_animationpath,
+	int i_animation
+) {
+	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
+
+	FName n_modeldef { ENamedName(i_modeldef) };
+	FName model { ENamedName(i_model) };
+	FName skin { ENamedName(i_skin) };
+	FName animation { ENamedName(i_animation) };
+
+	PClass * modeldef = nullptr;
+
+	if (n_modeldef != NAME_None && (modeldef = PClass::FindActor(n_modeldef.GetChars())) == nullptr)
+	{
+		Printf("Attempt to pass invalid modeldef name %s in %s.\n", n_modeldef.GetChars(), self->GetCharacterName());
+		return;
+	}
+
+	unsigned modelindex = i_modelindex < 0 ? 0 : i_modelindex;
+	unsigned skinindex = i_skinindex < 0 ? 0 : i_skinindex;
+	unsigned animationindex = i_animationindex < 0 ? 0 : i_animationindex;
+
+	AActor* mobj = (ACTION_CALL_FROM_PSPRITE() && (flags & CMDL_WEAPONTOPLAYER)) || ACTION_CALL_FROM_INVENTORY() ? self : invoker;
+
+	FString modelpath = p_modelpath;
+	FString skinpath = p_skinpath;
+	FString animationpath = p_animationpath;
+
+	if (modelpath.Len() != 0 && modelpath[(int)modelpath.Len() - 1] != '/') modelpath += '/';
+	if (skinpath.Len() != 0 && skinpath[(int)skinpath.Len() - 1] != '/') skinpath += '/';
+	if (animationpath.Len() != 0 && animationpath[(int)animationpath.Len() - 1] != '/') animationpath += '/';
+
+	EnsureModelData(mobj);
+
+	int queryModel = !(flags & CMDL_HIDEMODEL) ? model != NAME_None ? FindModel(modelpath.GetChars(), model.GetChars()) : -1 : -2;
+	int queryAnimation = animation != NAME_None ? FindModel(animationpath.GetChars(), animation.GetChars()) : -1;
+
+	mobj->modelData->modelDef = modeldef;
+
+	assert(mobj->modelData->models.Size() == mobj->modelData->modelFrameGenerators.Size());
+
+	if(mobj->modelData->models.Size() < modelindex)
+	{
+		mobj->modelData->models.AppendFill({-1, {}}, modelindex - mobj->modelData->models.Size());
+		mobj->modelData->modelFrameGenerators.AppendFill(-1, modelindex - mobj->modelData->modelFrameGenerators.Size());
+	}
+
+	if(mobj->modelData->animationIDs.Size() < animationindex)
+	{
+		mobj->modelData->animationIDs.AppendFill(-1, animationindex - mobj->modelData->animationIDs.Size());
+	}
+
+	auto skindata = skin != NAME_None ? LoadSkin(skinpath.GetChars(), skin.GetChars()) : FNullTextureID();
+
+	if(mobj->modelData->models.Size() == modelindex)
+	{
+
+		if(flags & CMDL_USESURFACESKIN && skinindex >= 0)
+		{
+			TArray<FTextureID> surfaceSkins;
+			if(skinindex > 0)
+			{
+				surfaceSkins.AppendFill(FNullTextureID(), skinindex);
+			}
+			surfaceSkins.Push(skindata);
+			mobj->modelData->models.Push({queryModel, std::move(surfaceSkins)});
+			mobj->modelData->modelFrameGenerators.Push(generatorindex);
+		}
+		else
+		{
+			mobj->modelData->models.Push({queryModel, {}});
+			mobj->modelData->modelFrameGenerators.Push(generatorindex);
+		}
+	}
+	else
+	{
+		if(flags & CMDL_USESURFACESKIN && skinindex >= 0)
+		{
+			if(skinindex > mobj->modelData->models[modelindex].surfaceSkinIDs.Size())
+			{
+				mobj->modelData->models[modelindex].surfaceSkinIDs.AppendFill(FNullTextureID(), skinindex - mobj->modelData->models[modelindex].surfaceSkinIDs.Size());
+			}
+
+			if(skinindex == mobj->modelData->models[modelindex].surfaceSkinIDs.Size())
+			{
+				mobj->modelData->models[modelindex].surfaceSkinIDs.Push(skindata);
+			}
+			else
+			{
+				mobj->modelData->models[modelindex].surfaceSkinIDs[skinindex] = skindata;
+			}
+		}
+		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
+		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
+	}
+
+	if(mobj->modelData->animationIDs.Size() == animationindex)
+	{
+		mobj->modelData->animationIDs.Push(queryAnimation);
+	}
+	else
+	{
+		mobj->modelData->animationIDs[animationindex] = queryAnimation;
+	}
+
+	if (!(flags & CMDL_USESURFACESKIN))
+	{
+		if(mobj->modelData->skinIDs.Size() < skinindex)
+		{
+			mobj->modelData->skinIDs.AppendFill(FNullTextureID(), skinindex - mobj->modelData->skinIDs.Size());
+		}
+
+		if(mobj->modelData->skinIDs.Size() == skinindex)
+		{
+			mobj->modelData->skinIDs.Push(skindata);
+		}
+		else
+		{
+			mobj->modelData->skinIDs[skinindex] = skindata;
+		}
+	}
+
+	CleanupModelData(mobj);
+
+	return;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_ChangeModel, ChangeModelNative)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_NAME(modeldef);
+	PARAM_INT(modelindex);
+	PARAM_STRING_VAL(modelpath);
+	PARAM_NAME(model);
+	PARAM_INT(skinindex);
+	PARAM_STRING_VAL(skinpath);
+	PARAM_NAME(skin);
+	PARAM_INT(flags);
+	PARAM_INT(generatorindex);
+	PARAM_INT(animationindex);
+	PARAM_STRING_VAL(animationpath);
+	PARAM_NAME(animation);
+	
+	ChangeModelNative(self,stateowner,stateinfo,modeldef.GetIndex(),modelindex,modelpath,model.GetIndex(),skinindex,skinpath,skin.GetIndex(),flags,generatorindex,animationindex,animationpath,animation.GetIndex());
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimation, SetAnimationNative)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+	PARAM_FLOAT(framerate);
+	PARAM_INT(startFrame);
+	PARAM_INT(loopFrame);
+	PARAM_INT(endFrame);
+	PARAM_INT(interpolateTics);
+	PARAM_INT(flags);
+	
+	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimationUI, SetAnimationUINative)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+	PARAM_FLOAT(framerate);
+	PARAM_INT(startFrame);
+	PARAM_INT(loopFrame);
+	PARAM_INT(endFrame);
+	PARAM_INT(interpolateTics);
+	PARAM_INT(flags);
+	
+	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac());
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimationFrameRate, SetAnimationFrameRateNative)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_FLOAT(framerate);
+	
+	SetAnimationFrameRateInternal(self, framerate, 1);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetAnimationFrameRateUI, SetAnimationFrameRateUINative)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_FLOAT(framerate);
+	
+	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(flag);
+
+	SetModelFlag(self, flag);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	PARAM_INT(flag);
+
+	ClearModelFlag(self, flag);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ResetModelFlags, ResetModelFlags)
+{
+	PARAM_ACTION_PROLOGUE(AActor);
+	
+	ResetModelFlags(self);
+
 	return 0;
 }
 

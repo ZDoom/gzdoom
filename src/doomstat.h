@@ -64,8 +64,6 @@ extern	FString			startmap;			// [RH] Actual map name now
 
 extern	bool 			autostart;
 
-extern	FString			StoredWarp;			// [RH] +warp at the command line
-
 // Selected by user. 
 EXTERN_CVAR (Int, gameskill);
 extern	int				NextSkill;			// [RH] Skill to use at next level load
@@ -107,18 +105,9 @@ EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 // Status flags for refresh.
 //
 
-enum EMenuState : int
-{
-	MENU_Off,			// Menu is closed
-	MENU_On,			// Menu is opened
-	MENU_WaitKey,		// Menu is opened and waiting for a key in the controls menu
-	MENU_OnNoPause,		// Menu is opened but does not pause the game
-};
+#include "menustate.h"
 
 extern	bool			automapactive;	// In AutoMap mode?
-extern	EMenuState		menuactive; 	// Menu overlayed?
-extern	int				paused; 		// Game Pause?
-extern	bool			pauseext;
 
 
 extern	bool			viewactive;
@@ -180,7 +169,6 @@ extern	bool	 		playeringame[/*MAXPLAYERS*/];
 
 // File handling stuff.
 extern	FILE*			debugfile;
-extern	FILE*			hashfile;
 
 // if true, load all graphics at level load
 extern	bool	 		precache;
@@ -193,7 +181,6 @@ extern	bool	 		precache;
 extern bool setsizeneeded;
 
 
-EXTERN_CVAR (Float, mouse_sensitivity)
 //?
 // debug flag to cancel adaptiveness
 extern	bool	 		singletics; 	
@@ -246,6 +233,7 @@ EXTERN_CVAR (Int, infighting)
 
 EXTERN_CVAR (Int, dmflags);
 EXTERN_CVAR (Int, dmflags2);	// [BC]
+EXTERN_CVAR (Int, dmflags3);	// [Nash]
 
 EXTERN_CVAR (Int, compatflags);
 EXTERN_CVAR (Int, compatflags2);

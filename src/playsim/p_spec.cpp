@@ -67,7 +67,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -249,7 +249,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 	auto Level = line->GetLevel();
  	int lineActivation = line->activation;
 
-	if (line->flags & ML_FIRSTSIDEONLY && side == 1)
+	if ((line->flags & ML_FIRSTSIDEONLY && side == 1) || line->special == 0)
 	{
 		return false;
 	}
@@ -345,6 +345,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 					{
 						break;
 					}
+					[[fallthrough]];
 				case Teleport:
 				case Teleport_NoFog:
 				case Teleport_Line:
@@ -383,7 +384,9 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 
 	// Only predict a very specifc section of specials
 	if (line->special != Teleport_Line &&
-		line->special != Teleport)
+		line->special != Teleport &&
+		line->special != Teleport_NoFog &&
+		line->special != Teleport_NoStop)
 	{
 		return false;
 	}
@@ -427,24 +430,47 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	}
 
 	// Has hit ground.
-	AActor *ironfeet;
 
 	auto Level = sector->Level;
 
 	// [RH] Apply any customizable damage
+
+	if (sector->damageinterval <= 0)
+		sector->damageinterval = 32; // repair invalid damageinterval values
+
+	if (sector->Flags & (SECF_EXIT1 | SECF_EXIT2))
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+			if (playeringame[i])
+				P_DamageMobj(players[i].mo, nullptr, nullptr, TELEFRAG_DAMAGE, NAME_InstantDeath);
+		if (sector->Flags & SECF_EXIT2)
+			Level->SecretExitLevel(0);
+		else 
+			Level->ExitLevel(0, false);
+		return;
+	}
+
 	if (sector->damageamount > 0)
 	{
 		// Allow subclasses. Better would be to implement it as armor and let that reduce
 		// the damage as part of the normal damage procedure. Unfortunately, I don't have
 		// different damage types yet, so that's not happening for now.
-		for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
+		// [MK] account for subclasses that may have "Full" protection (i.e.: prevent leaky damage)
+		int ironfeet = 0;
+		for (auto i = player->mo->Inventory; i != NULL; i = i->Inventory)
 		{
-			if (ironfeet->IsKindOf(NAME_PowerIronFeet))
-				break;
+			if (i->IsKindOf(NAME_PowerIronFeet))
+			{
+				FName mode = i->NameVar(NAME_Mode);
+				if ( ironfeet < 2 && mode == NAME_Full )
+					ironfeet = 2;
+				else if ( ironfeet < 1 && mode == NAME_Normal )
+					ironfeet = 1;
+			}
 		}
 
 		if (sector->Flags & SECF_ENDGODMODE) player->cheats &= ~CF_GODMODE;
-		if ((ironfeet == NULL || pr_playerinspecialsector() < sector->leakydamage))
+		if ((ironfeet == 0 || (ironfeet < 2 && pr_playerinspecialsector() < sector->leakydamage)))
 		{
 			if (sector->Flags & SECF_HAZARD)
 			{
@@ -454,7 +480,10 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 			}
 			else if (Level->time % sector->damageinterval == 0)
 			{
-				if (!(player->cheats & (CF_GODMODE|CF_GODMODE2))) P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				if (!(player->cheats & (CF_GODMODE | CF_GODMODE2)))
+				{
+					P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				}
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
 					Level->ExitLevel(0, false);
@@ -592,10 +621,10 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 		{
 			if (printmessage)
 			{
-				C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
+				C_MidPrint(nullptr, GStrings.CheckString("SECRETMESSAGE"));
 				if (showsecretsector && sectornum >= 0) 
 				{
-					Printf(PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
+					Printf(PRINT_HIGH | PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
 			if (playsound) S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
@@ -625,7 +654,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 	auto Level = player->mo->Level;
 
 	if (Terrains[floorType].DamageAmount &&
-		!(Level->time & Terrains[floorType].DamageTimeMask))
+		!(Level->time % (Terrains[floorType].DamageTimeMask+1)))
 	{
 		AActor *ironfeet = NULL;
 
@@ -669,7 +698,7 @@ void P_UpdateSpecials (FLevelLocals *Level)
 	{
 		if (Level->maptime >= (int)(timelimit * TICRATE * 60))
 		{
-			Printf ("%s\n", GStrings("TXT_TIMELIMIT"));
+			Printf ("%s\n", GStrings.GetString("TXT_TIMELIMIT"));
 			Level->ExitLevel(0, false);
 		}
 	}

@@ -20,7 +20,6 @@ class LostSoul : Actor
 		PainSound "skull/pain";
 		DeathSound "skull/death";
 		ActiveSound "skull/active";
-		RenderStyle "SoulTrans";
 		Obituary "$OB_SKULL";
 		Tag "$FN_LOST";
 	}

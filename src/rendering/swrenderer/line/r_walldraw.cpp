@@ -50,7 +50,7 @@
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/r_renderthread.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
@@ -61,7 +61,7 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void RenderWallPart::Render(const sector_t* lightsector, seg_t* curline, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, const ProjectedWallTexcoords& texcoords, bool mask, bool additive, fixed_t alpha)
+	void RenderWallPart::Render(const sector_t* lightsector, seg_t* curline, int tier, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, const ProjectedWallTexcoords& texcoords, bool mask, bool additive, fixed_t alpha)
 	{
 		if (pic == nullptr)
 			return;
@@ -70,6 +70,7 @@ namespace swrenderer
 		this->x2 = x2;
 		this->lightsector = lightsector;
 		this->curline = curline;
+		this->tier = tier;
 		this->WallC = WallC;
 		this->pic = pic;
 		this->mask = mask;
@@ -78,10 +79,8 @@ namespace swrenderer
 
 		light_list = GetLightList();
 
-		mLight.SetColormap(lightsector, curline);
+		mLight.SetColormap(lightsector, curline, tier);
 		mLight.SetLightLeft(Thread, WallC);
-
-		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
 		CameraLight* cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedColormap() || cameraLight->FixedLightLevel() >= 0 || !(lightsector->e && lightsector->e->XFloor.lightlist.Size()))
@@ -109,14 +108,14 @@ namespace swrenderer
 			{
 				for (int j = x1; j < x2; ++j)
 				{
-					down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
+					down[j] = max(min(most3.ScreenY[j], up[j]), dwal[j]); // this cannot use clamp due to failing range checks.
 				}
 				ProcessNormalWall(up, down, texcoords);
 				up = down;
 				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
 
-			mLight.SetColormap(lightsector, curline, &lightsector->e->XFloor.lightlist[i]);
+			mLight.SetColormap(lightsector, curline, tier, &lightsector->e->XFloor.lightlist[i]);
 		}
 
 		ProcessNormalWall(up, dwal, texcoords);
@@ -130,7 +129,7 @@ namespace swrenderer
 		WallDrawerArgs drawerargs;
 
 		// Textures that aren't masked can use the faster opaque drawer
-		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
+		if (!pic->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
 			drawerargs.SetStyle(true, false, OPAQUE, light_list);
 		}

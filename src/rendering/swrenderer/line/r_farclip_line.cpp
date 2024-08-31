@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -30,7 +30,7 @@
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "d_net.h"
@@ -40,7 +40,7 @@
 #include "v_palette.h"
 #include "r_utility.h"
 #include "r_data/colormaps.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
@@ -93,7 +93,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos.XY()))
 			return;
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
@@ -155,7 +155,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
-				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
+				short bottom = min(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
 					mCeilingPlane->top[x] = top;
@@ -177,7 +177,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
+				short top = max(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{

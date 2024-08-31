@@ -55,6 +55,7 @@ extend class Actor
 		double bangle;
 		double bslope = 0.;
 		int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
+		FTranslatedLineTarget t;
 
 		if (ref != NULL || (flags & CBAF_AIMFACING))
 		{
@@ -89,7 +90,7 @@ extend class Actor
 				if (!(flags & CBAF_NORANDOM))
 					damage *= random[cwbullet](1, 3);
 
-				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags);
+				let puff = LineAttack(pangle, range, slope, damage, 'Hitscan', pufftype, laflags, t);
 				if (missile != null && pufftype != null)
 				{
 					double ang = pangle - 90;
@@ -104,11 +105,19 @@ extend class Actor
 						bool temp = (puff == null);
 						if (!puff)
 						{
-							puff = LineAttack(pangle, range, slope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT);
+							puff = LineAttack(pangle, range, slope, 0, 'Hitscan', pufftype, laflags | LAF_NOINTERACT, t);
 						}
 						if (puff)
 						{			
 							AimBulletMissile(proj, puff, flags, temp, true);
+							if (t.unlinked)
+							{
+								// Arbitary portals will make angle and pitch calculations unreliable.
+								// So use the angle and pitch we passed instead.
+								proj.Angle = pangle;
+								proj.Pitch = bslope;
+								proj.Vel3DFromAngle(proj.Speed, proj.Angle, proj.Pitch);
+							}
 						}
 					}
 				}
@@ -137,7 +146,7 @@ extend class Actor
 		bInCombat = true;
 
 		self.target = target;
-		let painstate = FindState('Pain', 'Dagger');
+		let painstate = FindState('Pain.Dagger');
 		if (painstate != NULL)
 		{
 			SetState(painstate);
@@ -560,7 +569,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none")
+	int A_Explode(int damage = -1, double distance = -1.0, int flags = XF_HURTSOURCE, bool alert = false, double fulldamagedistance = 0.0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none")
 	{
 
 		if (damage < 0)	// get parameters from metadata
@@ -597,6 +606,9 @@ extend class Actor
 		if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
 		if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
 		if (flags & XF_THRUSTZ)	pflags |= RADF_THRUSTZ;
+		if (flags & XF_THRUSTLESS) pflags |= RADF_THRUSTLESS;
+		if (flags & XF_NOALLIES) pflags |= RADF_NOALLIES;
+		if (flags & XF_CIRCULAR) pflags |= RADF_CIRCULAR;
 
 		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
 		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);
@@ -607,16 +619,28 @@ extend class Actor
 		return count;
 	}
 
+	deprecated("2.3", "For Dehacked use only")
+	void A_NailBomb()
+	{
+		A_Explode(nails:30);
+	}
+
+	deprecated("2.3", "For Dehacked use only")
+	void A_RadiusDamage(int dam, int dist)
+	{
+		A_Explode(dam, dist);
+	}
+
 	//==========================================================================
 	//
 	// A_RadiusThrust
 	//
 	//==========================================================================
 
-	void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0)
+	void A_RadiusThrust(int force = 128, double distance = -1.0, int flags = RTF_AFFECTSOURCE, double fullthrustdistance = 0.0, name species = "None")
 	{
 		if (force == 0) force = 128;
-		if (distance <= 0) distance = abs(force);
+		if (distance <= 0.0) distance = abs(force);
 		bool nothrust = false;
 
 		if (target)
@@ -628,7 +652,7 @@ extend class Actor
 				target.bNoDamageThrust = false;
 			}
 		}
-		RadiusAttack (target, force, distance, DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
+		RadiusAttack (target, force, distance, DamageType, flags | RADF_NODAMAGE, fullthrustdistance, species);
 		CheckSplash(distance);
 		if (target) target.bNoDamageThrust = nothrust;
 	}

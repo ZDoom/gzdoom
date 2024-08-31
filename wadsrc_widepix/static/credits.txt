@@ -1,0 +1,76 @@
+WidePix v1.3
+-------------
+
+Made by Nash Muhandes
+
+(C) 2020 - 2021 Nash Muhandes
+
+Widescreen (16:9 and 21:9) graphical extensions.
+
+Supported games:
+- Doom
+- Heretic
+- Hexen
+- Strife
+- Chex Quest
+- Hacx
+- Harmony
+
+Please see license.md for licensing info.
+
+--------------------------------------------------------------------------------
+
+NOTE:
+-----
+
+WidePix was conceived on March 15, 2020, before there was any public knowledge
+about the widescreen images that shipped with the September 2020 update of the
+Unity port of Doom.
+
+Differences between WidePix and Doom Unity:
+
+- Completely built from the ground up (not based off Doom Unity's graphics)
+- The original 4:3 portion is left completely unaltered where possible*
+- Ultrawide (21:9) aspect ratio support
+- Custom animation for Doom 1 Episode 3
+- Weapon sprite extensions (both horizontally/vertically, where applicable)
+
+* I generally avoid changing the center image as I feel it's important to
+preserve the original artwork. However, that said, there are some cases where
+alterations were unavoidable because not doing so would've made it impossible
+to extend the images. I have documented such cases below:
+
+TNT INTERPIC: There was a solid-black, 1-pixel border around the image.
+
+Hexen TITLEPIC and INTERPIC: There were what appeared to be anti-aliasing
+artifacts on the left and right borders.
+
+Strife SS4F3, SS5F1, SS5F3, SS6F2, SS6F3, VELLOGO: Weird artifacts at the
+borders made the images impossible to extend.
+
+Chex Quest WIMAP0: There's a bright 1-pixel-wide sliver to the left.
+
+CREDITS:
+--------
+
+id Software: For making Doom.
+
+Nash Muhandes: For making WidePix.
+
+Gez: For telling me the exact dimensions needed for the 21:9 graphics, and tips
+on how to handle Wadsmoosh.
+
+Kinsie: For providing the unaltered Doom 1 Registered TITLEPIC.
+
+Rachael Alexanderson: Github maintenance help.
+
+-------------------------------------------------------------------------------
+
+Some high resolution images were used as a source to create the widescreen
+extensions. They are listed below.
+
+Don Ivan Punchatz - Doom 1 cover artwork.
+
+Gerald Brom - Doom 2 cover artwork.
+
+Simon "fragglet" Howard: High res versions of the original cover artwork.

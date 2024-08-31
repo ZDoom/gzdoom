@@ -402,6 +402,10 @@ void MapLoader::InitVertexData()
 
 	for(auto &line : Level->lines)
 	{
+		if (line.Index() == 13380)
+		{
+			int a = 0;
+		}
 		for(int j = 0; j < 2; ++j)
 		{
 			vertex_t * v = j==0? line.v1 : line.v2;
@@ -412,10 +416,13 @@ void MapLoader::InitVertexData()
 
 				if (sec)
 				{
-					extsector_t::xfloor &x = sec->e->XFloor;
-
 					AddToVertex(Index(sec), vt_sectorlists[Index(v)]);
 					if (sec->heightsec) AddToVertex(Index(sec->heightsec), vt_sectorlists[Index(v)]);
+					extsector_t::xfloor& x = sec->e->XFloor;
+					for (auto& ff : x.ffloors)
+					{
+						AddToVertex(Index(ff->model), vt_sectorlists[Index(v)]);
+					}
 				}
 			}
 		}
@@ -709,7 +716,7 @@ void MapLoader::InitRenderInfo()
 	PrepareSectorData();
 	InitVertexData();
 	FloodSectorStacks();
-	TArray<int> checkmap(Level->vertexes.Size());
+	TArray<int> checkmap(Level->vertexes.Size(), true);
 	memset(checkmap.Data(), -1, sizeof(int)*Level->vertexes.Size());
 	for(auto &sec : Level->sectors) 
 	{
@@ -821,7 +828,7 @@ void MapLoader::FixHoles()
 		segloops.Reserve(1);
 		auto *segloop = &segloops.Last();
 
-		seg_t *startseg;
+		seg_t *startseg = nullptr;
 		seg_t *checkseg;
 		while (bogussegs.Size() > 0)
 		{

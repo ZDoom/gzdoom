@@ -40,7 +40,7 @@
 
 #include "gi.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "decallib.h"
@@ -50,12 +50,13 @@
 #include "thingdef.h"
 #include "a_morph.h"
 #include "teaminfo.h"
-#include "backend/vmbuilder.h"
+#include "vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"
 #include "a_dynlight.h"
 #include "v_video.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -151,18 +152,18 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 	if (actor != NULL)
 	{
 		auto Level = actor->Level;
-		const char *dot = strchr(flagname, '.');
+		const char *dot = strchr(flagname.GetChars(), '.');
 		FFlagDef *fd;
 		PClassActor *cls = actor->GetClass();
 
 		if (dot != NULL)
 		{
-			FString part1(flagname.GetChars(), dot - flagname);
-			fd = FindFlag(cls, part1, dot + 1);
+			FString part1(flagname.GetChars(), dot - flagname.GetChars());
+			fd = FindFlag(cls, part1.GetChars(), dot + 1);
 		}
 		else
 		{
-			fd = FindFlag(cls, flagname, NULL);
+			fd = FindFlag(cls, flagname.GetChars(), NULL);
 		}
 
 		if (fd != NULL)
@@ -244,7 +245,7 @@ INTBOOL CheckActorFlag(AActor *owner, const char *flagname, bool printerror)
 	if (dot != NULL)
 	{
 		FString part1(flagname, dot-flagname);
-		fd = FindFlag (cls, part1, dot+1);
+		fd = FindFlag (cls, part1.GetChars(), dot+1);
 	}
 	else
 	{
@@ -324,6 +325,10 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
 
+	case DEPF_HIGHERMPROB:
+		defaults->MinMissileChance = set ? 160 : 200;
+		break;
+
 	default:
 		break;	// silence GCC
 	}
@@ -383,6 +388,9 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 
 	case DEPF_INTERHUBSTRIP:
 		return !(actor->IntVar(NAME_InterHubAmount));
+
+	case DEPF_HIGHERMPROB:
+		return actor->MinMissileChance <= 160;
 	}
 
 	return false; // Any entirely unknown flag is not set
@@ -520,7 +528,9 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 		return;
 	}
 
-	*defaults = *GetDefault<AActor>();
+	// major hack job alert. This is only supposed to copy the parts that actually are defined by AActor itself.
+	memcpy(&defaults->snext, &GetDefault<AActor>()->snext, (uint8_t*)&defaults[1] - (uint8_t*)&defaults->snext);
+
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 	static_cast<PClassActor*>(bag.Info)->ActorInfo()->SkipSuperSet = true;	// ZScript processes the states later so this property must be flagged for later handling.
 }
@@ -610,7 +620,7 @@ DEFINE_PROPERTY(damage, X, Actor)
 DEFINE_PROPERTY(scale, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
-	defaults->Scale.X = defaults->Scale.Y = id;
+	defaults->Scale.X = defaults->Scale.Y = float(id);
 }
 
 //==========================================================================
@@ -737,8 +747,8 @@ DEFINE_PROPERTY(translation, L, Actor)
 		for(int i = 1; i < PROP_PARM_COUNT; i++)
 		{
 			PROP_STRING_PARM(str, i);
-			int tnum;
-			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != -1)
+			FTranslationID tnum;
+			if (i== 1 && PROP_PARM_COUNT == 2 && (tnum = R_FindCustomTranslation(str)) != INVALID_TRANSLATION)
 			{
 				defaults->Translation = tnum;
 				return;
@@ -756,7 +766,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 				}
 			}
 		}
-		defaults->Translation = CurrentTranslation.StoreTranslation (TRANSLATION_Decorate);
+		defaults->Translation = GPalette.StoreTranslation (TRANSLATION_Decorate, &CurrentTranslation);
 	}
 }
 
@@ -765,7 +775,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 //==========================================================================
 DEFINE_PROPERTY(stencilcolor, C, Actor)
 {
-	PROP_COLOR_PARM(color, 0);
+	PROP_COLOR_PARM(color, 0, &bag.ScriptPosition);
 
 	defaults->fillcolor = color | (ColorMatcher.Pick (RPART(color), GPART(color), BPART(color)) << 24);
 }
@@ -775,11 +785,11 @@ DEFINE_PROPERTY(stencilcolor, C, Actor)
 //==========================================================================
 DEFINE_PROPERTY(bloodcolor, C, Actor)
 {
-	PROP_COLOR_PARM(color, 0);
+	PROP_COLOR_PARM(color, 0, &bag.ScriptPosition);
 
 	defaults->BloodColor = color;
 	defaults->BloodColor.a = 255;	// a should not be 0.
-	defaults->BloodTranslation = TRANSLATION(TRANSLATION_Blood,  CreateBloodTranslation(color));
+	defaults->BloodTranslation = CreateBloodTranslation(color);
 }
 
 //==========================================================================
@@ -906,7 +916,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 DEFINE_PROPERTY(decal, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(str)));
+	defaults->DecalGenerator = (FDecalBase *)(intptr_t)FName(str).GetIndex();
 }
 
 //==========================================================================
@@ -941,7 +951,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
 
-	if (i < 0) I_Error ("Gravity must not be negative.");
+	//if (i < 0) I_Error ("Gravity must not be negative.");
 	defaults->Gravity = i;
 }
 
@@ -951,7 +961,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 DEFINE_PROPERTY(spriteangle, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
-	defaults->SpriteAngle = i;
+	defaults->SpriteAngle = DAngle::fromDeg(i);
 }
 
 //==========================================================================
@@ -978,6 +988,7 @@ DEFINE_PROPERTY(clearflags, 0, Actor)
 	defaults->flags6 = 0;
 	defaults->flags7 = 0;
 	defaults->flags8 = 0;
+	defaults->flags9 = 0;
 }
 
 //==========================================================================
@@ -1022,6 +1033,45 @@ DEFINE_PROPERTY(designatedteam, I, Actor)
 	if(val < 0 || (val >= (signed) Teams.Size() && val != TEAM_NONE))
 		I_Error("Invalid team designation.\n");
 	defaults->DesignatedTeam = val;
+}
+
+//==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(infightinggroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < 0)
+	{
+		I_Error("Infighting groups must be >= 0.");
+	}
+	info->ActorInfo()->infighting_group = i;
+}
+
+//==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(projectilegroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < -1)
+	{
+		I_Error("Projectile groups must be >= -1.");
+	}
+	info->ActorInfo()->projectile_group = i;
+}
+
+//==========================================================================
+// MBF21
+//==========================================================================
+DEFINE_PROPERTY(splashgroup, I, Actor)
+{
+	PROP_INT_PARM(i, 0);
+	if (i < 0)
+	{
+		I_Error("Splash groups must be >= 0.");
+	}
+	info->ActorInfo()->splash_group = i;
 }
 
 //==========================================================================
@@ -1125,7 +1175,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
 			if ((bag.Info->ActorInfo()->GameFilter == GAME_Any || bag.Info->ActorInfo()->GameFilter & gameinfo.gametype) &&
-				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
+				!(gameinfo.flags&GI_SHAREWARE) && fileSystem.GetFileContainer(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,
 					"Icon '%s' for '%s' not found\n", i, bag.Info->TypeName.GetChars());
@@ -1244,7 +1294,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
 		}
-		color = V_GetColor(NULL, name, &bag.ScriptPosition);
+		color = V_GetColor(name, &bag.ScriptPosition);
 	}
 	if (PROP_PARM_COUNT > 2)
 	{
@@ -1276,7 +1326,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r, 0);
 		PROP_FLOAT_PARM(g, 1);
 		PROP_FLOAT_PARM(b, 2);
-		BlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(GPalette.BaseColors, 0, 0, 0, r, g, b));
 	}
 	else if (PROP_PARM_COUNT == 6)
 	{
@@ -1286,7 +1336,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r2, 3);
 		PROP_FLOAT_PARM(g2, 4);
 		PROP_FLOAT_PARM(b2, 5);
-		BlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(GPalette.BaseColors, r1, g1, b1, r2, g2, b2));
 	}
 	else
 	{
@@ -1327,7 +1377,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 		{
 			FString st;
 			st.Format("%s%s", strnicmp(str, "power", 5) ? "Power" : "", str);
-			cls = FindClassTentative(st, pow);
+			cls = FindClassTentative(st.GetChars(), pow);
 		}
 		else
 		{
@@ -1400,7 +1450,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	PROP_INT_PARM(end, 1);
 
 	if (start > end)
-		swapvalues (start, end);
+		std::swap (start, end);
 
 	defaults->IntVar(NAME_ColorRangeStart) = start;
 	defaults->IntVar(NAME_ColorRangeEnd) = end;
@@ -1474,7 +1524,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 
 	FPlayerColorSet color;
 	color.Name = setname;
-	color.Lump = Wads.CheckNumForName(rangefile);
+	color.Lump = fileSystem.CheckNumForName(rangefile);
 	color.RepresentativeColor = representative_color;
 	color.NumExtraRanges = 0;
 
@@ -1607,7 +1657,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, crouchsprite, S, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 {
-	PROP_COLOR_PARM(c, 0);
+	PROP_COLOR_PARM(c, 0, &bag.ScriptPosition);
 
 	PalEntry color = c;
 
@@ -1762,6 +1812,15 @@ DEFINE_CLASS_PROPERTY(playerclass, S, PowerMorph)
 {
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_PlayerClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_CLASS_PROPERTY(monsterclass, S, PowerMorph)
+{
+	PROP_STRING_PARM(str, 0);
+	defaults->PointerVar<PClassActor>(NAME_MonsterClass) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
 
 //==========================================================================

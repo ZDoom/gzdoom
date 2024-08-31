@@ -81,6 +81,7 @@ class ArtiInvulnerability : PowerupGiver
 	{
 		+COUNTITEM
 		+FLOATBOB
+		+Inventory.BIGPOWERUP
 		Inventory.PickupFlash "PickupFlash";
 		Inventory.RespawnTics 4230;
 		Inventory.Icon "ARTIINVU";
@@ -105,6 +106,7 @@ class ArtiInvulnerability2 : PowerupGiver
 	{
 		+COUNTITEM
 		+FLOATBOB
+		+Inventory.BIGPOWERUP
 		Inventory.PickupFlash "PickupFlash";
 		Inventory.RespawnTics 4230;
 		Inventory.Icon "ARTIDEFN";

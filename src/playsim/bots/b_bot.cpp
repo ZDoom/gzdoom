@@ -45,11 +45,13 @@
 #include "cmdlib.h"
 #include "teaminfo.h"
 #include "d_net.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vm.h"
 #include "g_levellocals.h"
+#include "d_main.h"
 
 IMPLEMENT_CLASS(DBot, false, true)
 
@@ -72,7 +74,7 @@ void DBot::Construct()
 void DBot::Clear ()
 {
 	player = nullptr;
-	Angle = 0.;
+	Angle = nullAngle;
 	dest = nullptr;
 	prev = nullptr;
 	enemy = nullptr;
@@ -154,7 +156,7 @@ CVAR (Int, bot_next_color, 11, 0)
 
 CCMD (addbot)
 {
-	if (gamestate != GS_LEVEL && gamestate != GS_INTERMISSION)
+	if (gamestate != GS_LEVEL)
 	{
 		Printf ("Bots cannot be added when not in a game!\n");
 		return;
@@ -186,7 +188,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		players[i].mo = nullptr;
 	}
 	botinfo_t *bot = botinfo;
-	while (bot && stricmp (players[i].userinfo.GetName(), bot->name))
+	while (bot && stricmp (players[i].userinfo.GetName(), bot->Name.GetChars()))
 		bot = bot->next;
 	if (bot)
 	{
@@ -200,7 +202,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 	}
 	players[i].~player_t();
 	::new(&players[i]) player_t;
-	players[i].userinfo.Reset();
+	players[i].userinfo.Reset(i);
 	playeringame[i] = false;
 }
 
@@ -212,7 +214,7 @@ CCMD (removebots)
 		return;
 	}
 
-	Net_WriteByte (DEM_KILLBOTS);
+	Net_WriteInt8 (DEM_KILLBOTS);
 }
 
 CCMD (freeze)
@@ -226,8 +228,8 @@ CCMD (freeze)
 		return;
 	}
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_FREEZE);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_FREEZE);
 }
 
 CCMD (listbots)
@@ -237,7 +239,7 @@ CCMD (listbots)
 
 	while (thebot)
 	{
-		Printf ("%s%s\n", thebot->name, thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
+		Printf ("%s%s\n", thebot->Name.GetChars(), thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
 		thebot = thebot->next;
 		count++;
 	}
@@ -253,7 +255,7 @@ void InitBotStuff()
 {
 	int lump;
 	int lastlump = 0;
-	while (-1 != (lump = Wads.FindLump("BOTSUPP", &lastlump)))
+	while (-1 != (lump = fileSystem.FindLump("BOTSUPP", &lastlump)))
 	{
 		FScanner sc(lump);
 		sc.SetCMode(true);

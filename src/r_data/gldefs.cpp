@@ -35,8 +35,8 @@
 #include <ctype.h>
 
 #include "sc_man.h"
-#include "templates.h"
-#include "w_wad.h"
+
+#include "filesystem.h"
 #include "gi.h"
 #include "r_state.h"
 #include "stats.h"
@@ -44,19 +44,65 @@
 #include "g_levellocals.h"
 #include "a_dynlight.h"
 #include "v_video.h"
-#include "textures/skyboxtexture.h"
+#include "skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
+#include "texturemanager.h"
+#include "gameconfigfile.h"
+#include "m_argv.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 void ParseColorization(FScanner& sc);
 
-TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 
+bool addedcvars = false;
+
+struct ExtraUniformCVARData
+{
+	FString Shader;
+	FString Uniform;
+	double* vec4 = nullptr;
+	ExtraUniformCVARData* Next = nullptr;
+};
+
+static void do_uniform_set(float value, ExtraUniformCVARData* data)
+{
+	if (!(data->vec4))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader& shader = PostProcessShaders[i];
+			if (strcmp(shader.Name.GetChars(), data->Shader.GetChars()) == 0)
+			{
+				data->vec4 = shader.Uniforms[data->Uniform].Values;
+			}
+		}
+	}
+	double* vec4 = data->vec4;
+	if (vec4)
+	{
+		vec4[0] = value;
+		vec4[1] = 0.0;
+		vec4[2] = 0.0;
+		vec4[3] = 1.0;
+	}
+	if (data->Next)
+		do_uniform_set(value, data->Next);
+}
+
+void uniform_callback_int(FIntCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
+
+void uniform_callback_float(FFloatCVar &self)
+{
+	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -66,7 +112,7 @@ extern int AttenuationIsSet;
 
 static void ParseVavoomSkybox()
 {
-	int lump = Wads.CheckNumForName("SKYBOXES");
+	int lump = fileSystem.CheckNumForName("SKYBOXES");
 
 	if (lump < 0) return;
 
@@ -76,6 +122,7 @@ static void ParseVavoomSkybox()
 		int facecount=0;
 		int maplump = -1;
 		bool error = false;
+		FString s = sc.String;
 		FSkyBox * sb = new FSkyBox(sc.String);
 		sb->fliptop = true;
 		sc.MustGetStringName("{");
@@ -87,12 +134,12 @@ static void ParseVavoomSkybox()
 				sc.MustGetStringName("map");
 				sc.MustGetString();
 
-				maplump = Wads.CheckNumForFullName(sc.String, true);
+				maplump = fileSystem.CheckNumForFullName(sc.String, true);
 
-				FTexture *tex = TexMan.FindTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
+				auto tex = TexMan.FindGameTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
 				{
-					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->GetName().GetChars());
+					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, s.GetChars());
 					error = true;
 				}
 				sb->faces[facecount] = tex;
@@ -102,12 +149,12 @@ static void ParseVavoomSkybox()
 		}
 		if (facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->GetName().GetChars());
+			sc.ScriptError("%s: Skybox definition requires 6 faces", s.GetChars());
 		}
 		sb->SetSize();
 		if (!error)
 		{
-			TexMan.AddTexture(sb);
+			TexMan.AddGameTexture(MakeGameTexture(sb, s.GetChars(), ETextureType::Override));
 		}
 	}
 }
@@ -142,6 +189,8 @@ static const char *LightTags[]=
    "dontlightactors",
    "spot",
    "noshadowmap",
+   "dontlightothers",
+   "dontlightmap",
    nullptr
 };
 
@@ -166,6 +215,8 @@ enum {
    LIGHTTAG_DONTLIGHTACTORS,
    LIGHTTAG_SPOT,
    LIGHTTAG_NOSHADOWMAP,
+   LIGHTTAG_DONTLIGHTOTHERS,
+   LIGHTTAG_DONTLIGHTMAP,
 };
 
 //==========================================================================
@@ -466,6 +517,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -561,6 +618,12 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_SPOT:
 					{
@@ -661,6 +724,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -759,6 +828,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -854,6 +929,12 @@ class GLDefsParser
 				case LIGHTTAG_DONTLIGHTACTORS:
 					defaults->SetDontLightActors(ParseInt(sc) != 0);
 					break;
+				case LIGHTTAG_DONTLIGHTOTHERS:
+					defaults->SetDontLightOthers(ParseInt(sc) != 0);
+					break;
+				case LIGHTTAG_DONTLIGHTMAP:
+					defaults->SetDontLightMap(ParseInt(sc) != 0);
+					break;
 				case LIGHTTAG_SPOT:
 					{
 						float innerAngle = ParseFloat(sc);
@@ -916,7 +997,7 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_LIGHT:
 					ParseString(sc);
-					AddLightAssociation(name, frameName, sc.String);
+					AddLightAssociation(name.GetChars(), frameName.GetChars(), sc.String);
 					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -990,8 +1071,8 @@ class GLDefsParser
 
 		sc.MustGetString();
 
-		FSkyBox * sb = new FSkyBox(sc.String);
-		sb->Name.ToUpper();
+		FString s = sc.String;
+		FSkyBox * sb = new FSkyBox(s.GetChars());
 		if (sc.CheckString("fliptop"))
 		{
 			sb->fliptop = true;
@@ -1002,16 +1083,16 @@ class GLDefsParser
 			sc.MustGetString();
 			if (facecount<6) 
 			{
-				sb->faces[facecount] = TexMan.GetTexture(TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable));
+				sb->faces[facecount] = TexMan.GetGameTexture(TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable));
 			}
 			facecount++;
 		}
 		if (facecount != 3 && facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->Name.GetChars());
+			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", s.GetChars());
 		}
 		sb->SetSize();
-		TexMan.AddTexture(sb);
+		TexMan.AddGameTexture(MakeGameTexture(sb, s.GetChars(), ETextureType::Override));
 	}
 
 	//===========================================================================
@@ -1033,8 +1114,8 @@ class GLDefsParser
 				{
 					sc.MustGetString();
 					FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Flat,FTextureManager::TEXMAN_TryAny);
-					FTexture *tex = TexMan.GetTexture(flump);
-					if (tex) tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true;
+					auto tex = TexMan.GetGameTexture(flump);
+					if (tex) tex->SetAutoGlowing();
 				}
 			}
 			else if (sc.Compare("WALLS"))
@@ -1044,8 +1125,8 @@ class GLDefsParser
 				{
 					sc.MustGetString();
 					FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Wall,FTextureManager::TEXMAN_TryAny);
-					FTexture *tex = TexMan.GetTexture(flump);
-					if (tex) tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true;
+					auto tex = TexMan.GetGameTexture(flump);
+					if (tex) tex->SetAutoGlowing();
 				}
 			}
 			else if (sc.Compare("TEXTURE"))
@@ -1053,31 +1134,29 @@ class GLDefsParser
 				sc.SetCMode(true);
 				sc.MustGetString();
 				FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Flat,FTextureManager::TEXMAN_TryAny);
-				FTexture *tex = TexMan.GetTexture(flump);
+				auto tex = TexMan.GetGameTexture(flump);
 				sc.MustGetStringName(",");
 				sc.MustGetString();
-				PalEntry color = V_GetColor(NULL, sc.String);
+				PalEntry color = V_GetColor(sc.String);
 				//sc.MustGetStringName(",");
 				//sc.MustGetNumber();
 				if (sc.CheckString(","))
 				{
 					if (sc.CheckNumber())
 					{
-						if (tex) tex->GlowHeight = sc.Number;
+						if (tex) tex->SetGlowHeight(sc.Number);
 						if (!sc.CheckString(",")) goto skip_fb;
 					}
 
 					sc.MustGetStringName("fullbright");
-					if (tex) tex->bFullbright = true;
+					if (tex) tex->SetFullbright();
 				}
 			skip_fb:
 				sc.SetCMode(false);
 
 				if (tex && color != 0)
 				{
-					tex->bAutoGlowing = false;
-					tex->bGlowing = true;
-					tex->GlowColor = color;
+					tex->SetGlowing(color);
 				}
 			}
 		}
@@ -1096,7 +1175,7 @@ class GLDefsParser
 		bool disable_fullbright=false;
 		bool thiswad = false;
 		bool iwad = false;
-		FTexture *bmtex = NULL;
+		FGameTexture *bmtex = NULL;
 
 		sc.MustGetString();
 		if (sc.Compare("texture")) type = ETextureType::Wall;
@@ -1106,7 +1185,7 @@ class GLDefsParser
 
 		sc.MustGetString();
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
-		FTexture *tex = TexMan.GetTexture(no);
+		auto tex = TexMan.GetGameTexture(no);
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1135,13 +1214,13 @@ class GLDefsParser
 
 				if (bmtex != NULL)
 				{
-					Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name.GetChars() : "(null)");
+					Printf("Multiple brightmap definitions in texture %s\n", tex? tex->GetName().GetChars() : "(null)");
 				}
 
-				bmtex = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				bmtex = TexMan.FindGameTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 
 				if (bmtex == NULL) 
-					Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
+					Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->GetName().GetChars() : "(null)");
 			}
 		}
 		if (!tex)
@@ -1155,28 +1234,27 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
 
 		if (bmtex != NULL)
 		{
-			bmtex->bMasked = false;
-			tex->Brightmap = bmtex;
+			tex->SetBrightmap(bmtex);
 		}	
-		tex->bDisableFullbright = disable_fullbright;
+		tex->SetDisableFullbright(disable_fullbright);
 	}
 
-	void SetShaderIndex(FTexture *tex, unsigned index)
+	void SetShaderIndex(FGameTexture *tex, unsigned index)
 	{
 		auto desc = usershaders[index - FIRST_USER_SHADER];
 		if (desc.disablealphatest)
 		{
-			tex->bTranslucent = true;
+			tex->SetTranslucent(true);
 		}
-		tex->shaderindex = index;
+		tex->SetShaderIndex(index);
 	}
 
 	//==========================================================================
@@ -1198,10 +1276,10 @@ class GLDefsParser
 		TArray<int> texNameIndex;
 		float speed = 1.f;
 
-		FTexture *textures[6];
+		MaterialLayers mlay = { -1000, -1000 };
+		FGameTexture* textures[6] = {};
 		const char *keywords[7] = { "brightmap", "normal", "specular", "metallic", "roughness", "ao", nullptr };
 		const char *notFound[6] = { "Brightmap", "Normalmap", "Specular texture", "Metallic texture", "Roughness texture", "Ambient occlusion texture" };
-		memset(textures, 0, sizeof(textures));
 
 		sc.MustGetString();
 		if (sc.Compare("texture")) type = ETextureType::Wall;
@@ -1211,12 +1289,13 @@ class GLDefsParser
 
 		sc.MustGetString();
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
-		FTexture *tex = TexMan.GetTexture(no);
+		auto tex = TexMan.GetGameTexture(no);
 
 		if (tex == nullptr)
 		{
 			sc.ScriptMessage("Material definition refers nonexistent texture '%s'\n", sc.String);
 		}
+		else tex->AddAutoMaterials();	// We need these before setting up the texture.
 
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
@@ -1243,14 +1322,12 @@ class GLDefsParser
 			else if (sc.Compare("glossiness"))
 			{
 				sc.MustGetFloat();
-				if (tex)
-					tex->Glossiness = (float)sc.Float;
+				mlay.Glossiness = (float)sc.Float;
 			}
 			else if (sc.Compare("specularlevel"))
 			{
 				sc.MustGetFloat();
-				if (tex)
-					tex->SpecularLevel = (float)sc.Float;
+				mlay.SpecularLevel = (float)sc.Float;
 			}
 			else if (sc.Compare("speed"))
 			{
@@ -1270,32 +1347,32 @@ class GLDefsParser
 				{
 					if (!texName.Compare(textureName))
 					{
-						sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex ? tex->Name.GetChars() : "(null)");
+						sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex ? tex->GetName().GetChars() : "(null)");
 					}
 				}
 				sc.MustGetString();
 				if (tex)
 				{
 					bool okay = false;
-					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
-						if (!tex->CustomShaderTextures[i])
+						if (!mlay.CustomShaderTextures[i])
 						{
-							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
-							if (!tex->CustomShaderTextures[i])
+							mlay.CustomShaderTextures[i] = TexMan.FindGameTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							if (!mlay.CustomShaderTextures[i])
 							{
-								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex->Name.GetChars());
+								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex->GetName().GetChars());
 							}
 
 							texNameList.Push(textureName);
-							texNameIndex.Push(i);
+							texNameIndex.Push((int)i);
 							okay = true;
 							break;
 						}
 					}
 					if (!okay)
 					{
-						sc.ScriptError("Error: out of texture units in texture '%s'", tex->Name.GetChars());
+						sc.ScriptError("Error: out of texture units in texture '%s'", tex->GetName().GetChars());
 					}
 				}
 			}
@@ -1319,10 +1396,10 @@ class GLDefsParser
 					{
 						sc.MustGetString();
 						if (textures[i])
-							Printf("Multiple %s definitions in texture %s\n", keywords[i], tex? tex->Name.GetChars() : "(null)");
-						textures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							Printf("Multiple %s definitions in texture %s\n", keywords[i], tex? tex->GetName().GetChars() : "(null)");
+						textures[i] = TexMan.FindGameTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 						if (!textures[i])
-							Printf("%s '%s' not found in texture '%s'\n", notFound[i], sc.String, tex? tex->Name.GetChars() : "(null)");
+							Printf("%s '%s' not found in texture '%s'\n", notFound[i], sc.String, tex? tex->GetName().GetChars() : "(null)");
 						break;
 					}
 				}
@@ -1339,50 +1416,49 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
 		}
 
-		FTexture **bindings[6] =
+		FGameTexture **bindings[6] =
 		{
-			&tex->Brightmap,
-			&tex->Normal,
-			&tex->Specular,
-			&tex->Metallic,
-			&tex->Roughness,
-			&tex->AmbientOcclusion
+			&mlay.Brightmap,
+			&mlay.Normal,
+			&mlay.Specular,
+			&mlay.Metallic,
+			&mlay.Roughness,
+			&mlay.AmbientOcclusion
 		};
 		for (int i = 0; keywords[i] != nullptr; i++)
 		{
 			if (textures[i])
 			{
-				textures[i]->bMasked = false;
 				*bindings[i] = textures[i];
 			}
 		}
 
 		if (disable_fullbright_specified)
-			tex->bDisableFullbright = disable_fullbright;
+			tex->SetDisableFullbright(disable_fullbright);
 
 		if (usershader.shader.IsNotEmpty())
 		{
 			int firstUserTexture;
-			if (tex->Normal && tex->Specular)
+			if ((mlay.Normal || tex->GetNormalmap()) && (mlay.Specular || tex->GetSpecularmap()))
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_SpecularBrightmap : SHADER_Specular;
-				firstUserTexture = tex->Brightmap ? 5 : 4;
+				usershader.shaderType = SHADER_Specular;
+				firstUserTexture = 7;
 			}
-			else if (tex->Normal && tex->Metallic && tex->Roughness && tex->AmbientOcclusion)
+			else if ((mlay.Normal || tex->GetNormalmap()) && (mlay.Metallic || tex->GetMetallic()) && (mlay.Roughness || tex->GetRoughness()) && (mlay.AmbientOcclusion || tex->GetAmbientOcclusion()))
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_PBRBrightmap : SHADER_PBR;
-				firstUserTexture = tex->Brightmap ? 7 : 6;
+				usershader.shaderType = SHADER_PBR;
+				firstUserTexture = 9;
 			}
 			else
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_Brightmap : SHADER_Default;
-				firstUserTexture = tex->Brightmap ? 3 : 2;
+				usershader.shaderType = SHADER_Default;
+				firstUserTexture = 5;
 			}
 
 			for (unsigned int i = 0; i < texNameList.Size(); i++)
@@ -1392,10 +1468,10 @@ class GLDefsParser
 
 			if (tex->isWarped() != 0)
 			{
-				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->GetName().GetChars());
 				return;
 			}
-			tex->shaderspeed = speed;
+			tex->SetShaderSpeed(speed);
 			for (unsigned i = 0; i < usershaders.Size(); i++)
 			{
 				if (!usershaders[i].shader.CompareNoCase(usershader.shader) &&
@@ -1403,11 +1479,13 @@ class GLDefsParser
 					!usershaders[i].defines.Compare(usershader.defines))
 				{
 					SetShaderIndex(tex, i + FIRST_USER_SHADER);
+					tex->SetShaderLayers(mlay);
 					return;
 				}
 			}
 			SetShaderIndex(tex, usershaders.Push(usershader) + FIRST_USER_SHADER);
 		}
+		tex->SetShaderLayers(mlay);
 	}
 
 
@@ -1454,8 +1532,10 @@ class GLDefsParser
 					sc.MustGetString();
 					shaderdesc.Name = sc.String;
 				}
-				else if (sc.Compare("uniform"))
+				else if (sc.Compare("uniform") || sc.Compare("cvar_uniform"))
 				{
+					bool is_cvar = sc.Compare("cvar_uniform");
+
 					sc.MustGetString();
 					FString uniformType = sc.String;
 					uniformType.ToLower();
@@ -1476,8 +1556,96 @@ class GLDefsParser
 					else
 						sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
 
+					auto strUniformType = sc.String;
+
 					if (parsedType != PostProcessUniformType::Undefined)
 						shaderdesc.Uniforms[uniformName].Type = parsedType;
+
+					if (is_cvar)
+					{
+						addedcvars = true;
+						if (shaderdesc.Name.IsEmpty())
+							sc.ScriptError("Shader must have a name to use cvar uniforms");
+
+						ECVarType cvartype = CVAR_Dummy;
+						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
+						FBaseCVar *cvar;
+						void (*callback)(FBaseCVar&) = NULL;
+						FString cvarname;
+						switch (parsedType)
+						{
+						case PostProcessUniformType::Int:
+							cvartype = CVAR_Int;
+							callback = (void (*)(FBaseCVar&))uniform_callback_int;
+							break;
+						case PostProcessUniformType::Float:
+							cvartype = CVAR_Float;
+							callback = (void (*)(FBaseCVar&))uniform_callback_float;
+							break;
+						default:
+							sc.ScriptError("'%s' not supported for CVAR uniforms!", strUniformType);
+							break;
+						}
+						sc.MustGetString();
+						cvarname = sc.String;
+						cvar = FindCVar(cvarname.GetChars(), NULL);
+
+						UCVarValue oldval;
+						UCVarValue val;
+						ExtraUniformCVARData* oldextra = nullptr;
+						sc.MustGetFloat();
+						
+						val.Float = oldval.Float = (float)sc.Float;
+
+						if (!Args->CheckParm ("-shaderuniformtest"))
+						{
+							// these aren't really release-ready, so lock them behind a command-line argument for now.
+							sc.ScriptMessage("Warning - Use -shaderuniformtest to enable shader uniforms!");
+						}
+						else
+						{
+							if (!cvar)
+							{
+								cvar = C_CreateCVar(cvarname.GetChars(), cvartype, cvarflags);
+							}
+							else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+							{
+								// this value may have been previously loaded
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
+
+							if (!(cvar->GetFlags() & CVAR_MOD))
+							{
+								if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+									sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
+							}
+
+							// must've picked this up from an autoexec.cfg, handle accordingly
+							if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
+							{
+								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
+								delete cvar;
+								cvar = C_CreateCVar(cvarname.GetChars(), cvartype, cvarflags);
+								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							}
+
+							shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
+
+							cvar->SetGenericRepDefault(val, CVAR_Float);
+
+							if (val.Float != oldval.Float) // it's not default anymore
+								cvar->SetGenericRep(oldval.Float, CVAR_Float);
+						
+							if (callback)
+								cvar->SetCallback(callback);
+							ExtraUniformCVARData* extra = new ExtraUniformCVARData;
+							extra->Shader = shaderdesc.Name.GetChars();
+							extra->Uniform = uniformName.GetChars();
+							extra->Next = oldextra;
+							cvar->SetExtraDataPointer(extra);
+						}
+					}
 				}
 				else if (sc.Compare("texture"))
 				{
@@ -1522,7 +1690,9 @@ class GLDefsParser
 
 			sc.MustGetString();
 			FTextureID no = TexMan.CheckForTexture(sc.String, type);
-			FTexture *tex = TexMan.GetTexture(no);
+			auto tex = TexMan.GetGameTexture(no);
+			if (tex) tex->AddAutoMaterials();
+			MaterialLayers mlay = { -1000, -1000 };
 
 			sc.MustGetToken('{');
 			while (!sc.CheckToken('}'))
@@ -1536,14 +1706,16 @@ class GLDefsParser
 				else if (sc.Compare("material"))
 				{
 					sc.MustGetString();
-					MaterialShaderIndex typeIndex[6] = { SHADER_Default, SHADER_Brightmap, SHADER_Specular, SHADER_SpecularBrightmap, SHADER_PBR, SHADER_PBRBrightmap };
-					const char *typeName[6] = { "normal", "brightmap", "specular", "specularbrightmap", "pbr", "pbrbrightmap" };
+					static MaterialShaderIndex typeIndex[6] = { SHADER_Default, SHADER_Default, SHADER_Specular, SHADER_Specular, SHADER_PBR, SHADER_PBR };
+					static bool usesBrightmap[6] = { false, true, false, true, false, true };
+					static const char *typeName[6] = { "normal", "brightmap", "specular", "specularbrightmap", "pbr", "pbrbrightmap" };
 					bool found = false;
 					for (int i = 0; i < 6; i++)
 					{
 						if (sc.Compare(typeName[i]))
 						{
 							desc.shaderType = typeIndex[i];
+							if (usesBrightmap[i]) desc.shaderFlags |= SFlag_Brightmap;
 							found = true;
 							break;
 						}
@@ -1564,30 +1736,30 @@ class GLDefsParser
 					{
 						if(!texName.Compare(textureName))
 						{
-							sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex? tex->Name.GetChars() : "(null)");
+							sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex? tex->GetName().GetChars() : "(null)");
 						}
 					}
 					sc.MustGetString();
 					bool okay = false;
-					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
-						if (!tex->CustomShaderTextures[i])
+						if (!mlay.CustomShaderTextures[i])
 						{
-							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
-							if (!tex->CustomShaderTextures[i])
+							mlay.CustomShaderTextures[i] = TexMan.FindGameTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							if (!mlay.CustomShaderTextures[i])
 							{
-								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
+								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex? tex->GetName().GetChars() : "(null)");
 							}
 
 							texNameList.Push(textureName);
-							texNameIndex.Push(i);
+							texNameIndex.Push((int)i);
 							okay = true;
 							break;
 						}
 					}
 					if(!okay)
 					{
-						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->Name.GetChars() : "(null)");
+						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->GetName().GetChars() : "(null)");
 					}
 				}
 				else if(sc.Compare("define"))
@@ -1616,12 +1788,9 @@ class GLDefsParser
 			switch (desc.shaderType)
 			{
 			default:
-			case SHADER_Default: firstUserTexture = 2; break;
-			case SHADER_Brightmap: firstUserTexture = 3; break;
-			case SHADER_Specular: firstUserTexture = 4; break;
-			case SHADER_SpecularBrightmap: firstUserTexture = 5; break;
-			case SHADER_PBR: firstUserTexture = 6; break;
-			case SHADER_PBRBrightmap: firstUserTexture = 7; break;
+			case SHADER_Default: firstUserTexture = 5; break;
+			case SHADER_Specular: firstUserTexture = 7; break;
+			case SHADER_PBR: firstUserTexture = 9; break;
 			}
 
 			for (unsigned int i = 0; i < texNameList.Size(); i++)
@@ -1633,10 +1802,10 @@ class GLDefsParser
 			{
 				if (tex->isWarped() != 0)
 				{
-					Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+					Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->GetName().GetChars());
 					return;
 				}
-				tex->shaderspeed = speed;
+				tex->SetShaderSpeed(speed);
 				for (unsigned i = 0; i < usershaders.Size(); i++)
 				{
 					if (!usershaders[i].shader.CompareNoCase(desc.shader) &&
@@ -1644,11 +1813,13 @@ class GLDefsParser
 						!usershaders[i].defines.Compare(desc.defines))
 					{
 						SetShaderIndex(tex, i + FIRST_USER_SHADER);
+						tex->SetShaderLayers(mlay);		
 						return;
 					}
 				}
 				SetShaderIndex(tex, usershaders.Push(desc) + FIRST_USER_SHADER);
 			}
+			tex->SetShaderLayers(mlay);
 		}
 	}
 
@@ -1670,12 +1841,12 @@ class GLDefsParser
 			else if (sc.Compare("AddColor"))
 			{
 				sc.MustGetString();
-				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(sc) & 0xffffff);
 			}
 			else if (sc.Compare("ModulateColor"))
 			{
 				sc.MustGetString();
-				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.ModulateColor = V_GetColor(sc) & 0xffffff;
 				if (sc.CheckToken(','))
 				{
 					sc.MustGetNumber();
@@ -1686,7 +1857,7 @@ class GLDefsParser
 			else if (sc.Compare("BlendColor"))
 			{
 				sc.MustGetString();
-				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				tm.BlendColor = V_GetColor(sc) & 0xffffff;
 				sc.MustGetToken(',');
 				sc.MustGetString();
 				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
@@ -1732,6 +1903,8 @@ public:
 			sc.SavePos();
 			if (!sc.GetToken ())
 			{
+				if (addedcvars)
+					GameConfig->DoModSetup (gameinfo.ConfigName.GetChars());
 				return;
 			}
 			type = sc.MatchString(CoreKeywords);
@@ -1741,7 +1914,7 @@ public:
 				{
 					sc.MustGetString();
 					// This is not using sc.Open because it can print a more useful error message when done here
-					lump = Wads.CheckNumForFullName(sc.String, true);
+					lump = fileSystem.CheckNumForFullName(sc.String, true);
 					if (lump==-1)
 						sc.ScriptError("Lump '%s' not found", sc.String);
 
@@ -1835,7 +2008,7 @@ void LoadGLDefs(const char *defsLump)
 	static const char *gldefsnames[] = { "GLDEFS", defsLump, nullptr };
 
 	lastLump = 0;
-	while ((workingLump = Wads.FindLumpMulti(gldefsnames, &lastLump)) != -1)
+	while ((workingLump = fileSystem.FindLumpMulti(gldefsnames, &lastLump)) != -1)
 	{
 		GLDefsParser sc(workingLump, LightAssociations);
 		sc.DoParseDefs();

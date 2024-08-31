@@ -54,14 +54,10 @@ namespace swrenderer
 	}
 
 	template<typename BlendT, typename SamplerT>
-	class DrawSprite32T : public DrawerCommand
+	class DrawSprite32T
 	{
 	public:
-		SpriteDrawerArgs args;
-
-		DrawSprite32T(const SpriteDrawerArgs &drawerargs) : args(drawerargs) { }
-
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SpriteDrawerArgs& args)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -74,33 +70,33 @@ namespace swrenderer
 				if (shade_constants.simple_shade)
 				{
 					if (is_nearest_filter)
-						Loop<SimpleShade, NearestFilter>(thread, shade_constants);
+						Loop<SimpleShade, NearestFilter>(args, shade_constants);
 					else
-						Loop<SimpleShade, LinearFilter>(thread, shade_constants);
+						Loop<SimpleShade, LinearFilter>(args, shade_constants);
 				}
 				else
 				{
 					if (is_nearest_filter)
-						Loop<AdvancedShade, NearestFilter>(thread, shade_constants);
+						Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 					else
-						Loop<AdvancedShade, LinearFilter>(thread, shade_constants);
+						Loop<AdvancedShade, LinearFilter>(args, shade_constants);
 				}
 			}
 			else // no linear filtering for translated, shaded or fill
 			{
 				if (shade_constants.simple_shade)
 				{
-					Loop<SimpleShade, NearestFilter>(thread, shade_constants);
+					Loop<SimpleShade, NearestFilter>(args, shade_constants);
 				}
 				else
 				{
-					Loop<AdvancedShade, NearestFilter>(thread, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(args, shade_constants);
 				}
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void Loop(DrawerThread *thread, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const SpriteDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -147,9 +143,9 @@ namespace swrenderer
 				shade_light.g = shade_constants.light_green;
 				shade_light.b = shade_constants.light_blue;
 				desaturate = shade_constants.desaturate;
-				lightcontrib.r = MIN<uint32_t>(light + dynlight.r, 256) - light;
-				lightcontrib.g = MIN<uint32_t>(light + dynlight.g, 256) - light;
-				lightcontrib.b = MIN<uint32_t>(light + dynlight.b, 256) - light;
+				lightcontrib.r = min<uint32_t>(light + dynlight.r, 256) - light;
+				lightcontrib.g = min<uint32_t>(light + dynlight.g, 256) - light;
+				lightcontrib.b = min<uint32_t>(light + dynlight.b, 256) - light;
 				mlight.r = light;
 				mlight.g = light;
 				mlight.b = light;
@@ -165,25 +161,20 @@ namespace swrenderer
 				shade_light.b = 0;
 				desaturate = 0;
 				lightcontrib = 0;
-				mlight.r = MIN<uint32_t>(light + dynlight.r, 256);
-				mlight.g = MIN<uint32_t>(light + dynlight.g, 256);
-				mlight.b = MIN<uint32_t>(light + dynlight.b, 256);
+				mlight.r = min<uint32_t>(light + dynlight.r, 256);
+				mlight.g = min<uint32_t>(light + dynlight.g, 256);
+				mlight.b = min<uint32_t>(light + dynlight.b, 256);
 			}
 
 			int count = args.Count();
+			if (count <= 0) return;
+
 			int pitch = args.Viewport()->RenderTarget->GetPitch();
 			uint32_t fracstep = args.TextureVStep();
 			uint32_t frac = args.TextureVPos();
 			uint32_t texturefracx = args.TextureUPos();
 			uint32_t *dest = (uint32_t*)args.Dest();
 			int dest_y = args.DestY();
-
-			count = thread->count_for_thread(dest_y, count);
-			if (count <= 0) return;
-			frac += thread->skipped_by_thread(dest_y) * fracstep;
-			dest = thread->dest_for_thread(dest_y, pitch, dest);
-			fracstep *= thread->num_cores;
-			pitch *= thread->num_cores;
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
@@ -220,7 +211,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT>
-		FORCEINLINE BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
+		FORCEINLINE static BgraColor Sample(uint32_t frac, const uint32_t *source, const uint32_t *source2, const uint32_t *translation, int textureheight, uint32_t one, uint32_t texturefracx, uint32_t color, uint32_t srccolor)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -269,7 +260,7 @@ namespace swrenderer
 			}
 		}
 
-		FORCEINLINE uint32_t SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
+		FORCEINLINE static uint32_t SampleShade(uint32_t frac, const uint32_t *source, const uint8_t *colormap)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -286,7 +277,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, BgraColor lightcontrib)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, BgraColor lightcontrib)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -309,14 +300,14 @@ namespace swrenderer
 				fgcolor.g = (((shade_fade.g + ((fgcolor.g * inv_desaturate + intensity) >> 8) * mlight.g) >> 8) * shade_light.g) >> 8;
 				fgcolor.b = (((shade_fade.b + ((fgcolor.b * inv_desaturate + intensity) >> 8) * mlight.b) >> 8) * shade_light.b) >> 8;
 
-				fgcolor.r = MIN<uint32_t>(fgcolor.r + lit_dynlight.r, 255);
-				fgcolor.g = MIN<uint32_t>(fgcolor.g + lit_dynlight.g, 255);
-				fgcolor.b = MIN<uint32_t>(fgcolor.b + lit_dynlight.b, 255);
+				fgcolor.r = min<uint32_t>(fgcolor.r + lit_dynlight.r, 255);
+				fgcolor.g = min<uint32_t>(fgcolor.g + lit_dynlight.g, 255);
+				fgcolor.b = min<uint32_t>(fgcolor.b + lit_dynlight.b, 255);
 				return fgcolor;
 			}
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t ifgcolor, uint32_t ifgshade, uint32_t srcalpha, uint32_t destalpha)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t ifgcolor, uint32_t ifgshade, uint32_t srcalpha, uint32_t destalpha)
 		{
 			using namespace DrawSprite32TModes;
 
@@ -341,9 +332,9 @@ namespace swrenderer
 			{
 				uint32_t alpha = ifgshade;
 				BgraColor outcolor;
-				outcolor.r = MIN<uint32_t>(((fgcolor.r * alpha) >> 8) + bgcolor.r, 255);
-				outcolor.g = MIN<uint32_t>(((fgcolor.g * alpha) >> 8) + bgcolor.g, 255);
-				outcolor.b = MIN<uint32_t>(((fgcolor.b * alpha) >> 8) + bgcolor.b, 255);
+				outcolor.r = min<uint32_t>(((fgcolor.r * alpha) >> 8) + bgcolor.r, 255);
+				outcolor.g = min<uint32_t>(((fgcolor.g * alpha) >> 8) + bgcolor.g, 255);
+				outcolor.b = min<uint32_t>(((fgcolor.b * alpha) >> 8) + bgcolor.b, 255);
 				outcolor.a = 255;
 				return outcolor;
 			}
@@ -366,21 +357,21 @@ namespace swrenderer
 				BgraColor outcolor;
 				if (BlendT::Mode == (int)SpriteBlendModes::AddClamp)
 				{
-					outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-					outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-					outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+					outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+					outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+					outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				}
 				else if (BlendT::Mode == (int)SpriteBlendModes::SubClamp)
 				{
-					outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 				}
 				else if (BlendT::Mode == (int)SpriteBlendModes::RevSubClamp)
 				{
-					outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 				}
 				outcolor.a = 255;
 				return outcolor;

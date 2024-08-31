@@ -136,6 +136,9 @@ DoomEdNums
   9872 = SpotLightFlickerAttenuated
   9873 = SectorSpotLightAttenuated
   9874 = SpotLightFlickerRandomAttenuated
+  9876 = None	// ZDRay static point light
+  9881 = None	// ZDRay static spotlight
+  9890 = None	// ZDRayInfo
   9982 = SecActEyesAboveC
   9983 = SecActEyesBelowC
   9988 = CustomSprite
@@ -359,7 +362,6 @@ Intermission Inter_Bunny
 
 Intermission TheEnd
 {
-	// no backgrounds are set here so this will reuse the previous one.
 	Image
 	{
 		Draw = "END0", 108, 68
@@ -408,9 +410,6 @@ Intermission Inter_Underwater
 	Image
 	{
 		Background = "E2END", 0
-	}
-	GotoTitle
-	{
 	}
 }
 

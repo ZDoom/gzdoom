@@ -134,7 +134,7 @@ vec3 ProcessMaterialLight(Material material, vec3 ambientLight)
 				vec4 lightcolor = lights[i+1];
 				vec4 lightspot1 = lights[i+2];
 				vec4 lightspot2 = lights[i+3];
-				
+
 				vec3 L = normalize(lightpos.xyz - worldpos);
 				vec3 H = normalize(V + L);
 

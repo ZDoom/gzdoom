@@ -29,6 +29,7 @@ class IShadowMap;
 struct particle_t;
 struct FDynLightData;
 struct HUDSprite;
+class ACorona;
 class Clipper;
 class HWPortal;
 class FFlatVertexBuffer;
@@ -145,11 +146,15 @@ struct HWDrawInfo
 	HWPortal *mCurrentPortal;
 	//FRotator mAngles;
 	Clipper *mClipper;
+	Clipper *vClipper; // Vertical clipper
+	Clipper *rClipper; // Radar clipper
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
 	TArray<HWPortal *> Portals;
 	TArray<HWDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
+	//TArray<ACorona*> Coronas;
+	uint64_t LastFrameTime = 0;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -179,8 +184,6 @@ struct HWDrawInfo
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
 	bool multithread;
 
-	std::function<void(HWDrawInfo *, int)> DrawScene = nullptr;
-
 private:
     // For ProcessLowerMiniseg
     bool inview;
@@ -199,7 +202,7 @@ private:
 	void RenderPolyBSPNode(void *node);
 	void AddPolyobjs(subsector_t *sub);
 	void AddLines(subsector_t * sub, sector_t * sector);
-	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
+	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, linebase_t *line);
 	public:
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void RenderParticles(subsector_t *sub, sector_t *front);
@@ -207,14 +210,10 @@ private:
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
 	void DrawPSprite(HUDSprite *huds, FRenderState &state);
-	void SetColor(FRenderState &state, int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon = false);
-	void SetFog(FRenderState &state, int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive);
-	void SetShaderLight(FRenderState &state, float level, float olight);
-	int CalcLightLevel(int lightlevel, int rellight, bool weapon, int blendfactor);
-	PalEntry CalcLightColor(int light, PalEntry pe, int blendfactor);
-	float GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
-	bool CheckFog(sector_t *frontsector, sector_t *backsector);
 	WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos);
+
+	void PreparePlayerSprites2D(sector_t * viewsector, area_t in_area);
+	void PreparePlayerSprites3D(sector_t * viewsector, area_t in_area);
 public:
 
 	void SetCameraPos(const DVector3 &pos)
@@ -237,6 +236,7 @@ public:
 
 	HWPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
+	void RenderOrthoNoFog();
 	void RenderBSP(void *node, bool drawpsprites);
 
 	static HWDrawInfo *StartDrawInfo(FLevelLocals *lev, HWDrawInfo *parent, FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
@@ -246,6 +246,7 @@ public:
 	void SetViewArea();
 	int SetFullbrightFlags(player_t *player);
 
+	void DrawScene(int drawmode);
 	void CreateScene(bool drawpsprites);
 	void RenderScene(FRenderState &state);
 	void RenderTranslucent(FRenderState &state);
@@ -253,7 +254,7 @@ public:
 	void EndDrawScene(sector_t * viewsector, FRenderState &state);
 	void DrawEndScene2D(sector_t * viewsector, FRenderState &state);
 	void Set3DViewport(FRenderState &state);
-	void ProcessScene(bool toscreen, const std::function<void(HWDrawInfo *, int)> &drawScene);
+	void ProcessScene(bool toscreen);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -292,7 +293,7 @@ public:
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
 	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
-	void PrepareTargeterSprites();
+	void PrepareTargeterSprites(double ticfrac);
 
 	void UpdateCurrentMapSection();
 	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -301,6 +302,10 @@ public:
 
 	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
+	void DrawCoronas(FRenderState& state);
+	void DrawCorona(FRenderState& state, ACorona* corona, double dist);
+
+	void SetDitherTransFlags(AActor* actor);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
@@ -313,16 +318,6 @@ public:
 
     HWDecal *AddDecal(bool onmirror);
 
-	bool isSoftwareLighting() const
-	{
-		return lightmode >= ELightMode::ZDoomSoftware;
-	}
-
-	bool isDarkLightMode() const
-	{
-		return !!((int)lightmode & (int)ELightMode::Doom);
-	}
-
 	void SetFallbackLightMode()
 	{
 		lightmode = ELightMode::Doom;
@@ -330,3 +325,36 @@ public:
 
 };
 
+void CleanSWDrawer();
+sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+void WriteSavePic(player_t* player, FileWriter* file, int width, int height);
+sector_t* RenderView(player_t* player);
+
+
+inline bool isSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware || lightmode == ELightMode::Build;
+}
+
+inline bool isBuildSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::Build;
+}
+
+inline bool isDoomSoftwareLighting(ELightMode lightmode)
+{
+	return lightmode == ELightMode::ZDoomSoftware || lightmode == ELightMode::DoomSoftware;
+}
+
+inline bool isDarkLightMode(ELightMode lightmode)
+{
+	return lightmode == ELightMode::Doom || lightmode == ELightMode::DoomDark;
+}
+
+int CalcLightLevel(ELightMode lightmode, int lightlevel, int rellight, bool weapon, int blendfactor);
+PalEntry CalcLightColor(ELightMode lightmode, int light, PalEntry pe, int blendfactor);
+float GetFogDensity(FLevelLocals* Level, ELightMode lightmode, int lightlevel, PalEntry fogcolor, int sectorfogdensity, int blendfactor);
+bool CheckFog(FLevelLocals* Level, sector_t* frontsector, sector_t* backsector, ELightMode lightmode);
+void SetColor(FRenderState& state, FLevelLocals* Level, ELightMode lightmode, int sectorlightlevel, int rellight, bool fullbright, const FColormap& cm, float alpha, bool weapon = false);
+void SetShaderLight(FRenderState& state, FLevelLocals* Level, float level, float olight);
+void SetFog(FRenderState& state, FLevelLocals* Level, ELightMode lightmode, int lightlevel, int rellight, bool fullbright, const FColormap* cmap, bool isadditive);

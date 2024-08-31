@@ -35,7 +35,7 @@
 #define __P_TERRAIN_H__
 
 #include "s_sound.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 class PClass;
 

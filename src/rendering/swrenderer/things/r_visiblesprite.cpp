@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"
@@ -42,7 +42,7 @@
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
@@ -61,8 +61,8 @@ namespace swrenderer
 				DrawSegment *ds = segmentlist->TranslucentSegment(index);
 				if (ds->drawsegclip.SubsectorDepth >= SubsectorDepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 				{
-					int r1 = MAX<int>(ds->x1, 0);
-					int r2 = MIN<int>(ds->x2, viewwidth - 1);
+					int r1 = max<int>(ds->x1, 0);
+					int r2 = min<int>(ds->x2, viewwidth - 1);
 
 					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, r1, r2, clip3DFloor);
@@ -193,57 +193,56 @@ namespace swrenderer
 		{ // only things in specially marked sectors
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
-				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos);
+				double hz = spr->heightsec->floorplane.ZatPoint(spr->gpos.XY());
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::BelowFloor)
 				{ // seen below floor: clip top
 					if (!spr->IsVoxel() && h > topclip)
 					{
-						topclip = short(MIN(h, viewheight));
+						topclip = short(min(h, viewheight));
 					}
-					hzt = MIN(hzt, hz);
+					hzt = min(hzt, hz);
 				}
 				else
 				{ // seen in the middle: clip bottom
 					if (!spr->IsVoxel() && h < botclip)
 					{
-						botclip = MAX<short>(0, h);
+						botclip = max<short>(0, h);
 					}
-					hzb = MAX(hzb, hz);
+					hzb = max(hzb, hz);
 				}
 			}
 			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECMF_FAKEFLOORONLY))
 			{
-				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
+				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos.XY());
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 
 				if (spr->FakeFlatStat == WaterFakeSide::AboveCeiling)
 				{ // seen above ceiling: clip bottom
 					if (!spr->IsVoxel() && h < botclip)
 					{
-						botclip = MAX<short>(0, h);
+						botclip = max<short>(0, h);
 					}
-					hzb = MAX(hzb, hz);
+					hzb = max(hzb, hz);
 				}
 				else
 				{ // seen in the middle: clip top
 					if (!spr->IsVoxel() && h > topclip)
 					{
-						topclip = MIN(h, viewheight);
+						topclip = min(h, viewheight);
 					}
-					hzt = MIN(hzt, hz);
+					hzt = min(hzt, hz);
 				}
 			}
 		}
 		// killough 3/27/98: end special clipping for deep water / fake ceilings
 		else if (!spr->IsVoxel() && spr->floorclip)
 		{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
-		  //int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid - (spr->pic->GetHeight() << FRACBITS) + spr->floorclip, spr->yscale)) >> FRACBITS);
 			int clip = xs_RoundToInt(viewport->CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
 			if (clip < botclip)
 			{
-				botclip = MAX<short>(0, clip);
+				botclip = max<short>(0, clip);
 			}
 		}
 
@@ -263,10 +262,10 @@ namespace swrenderer
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 				if (h < botclip)
 				{
-					botclip = MAX<short>(0, h);
+					botclip = max<short>(0, h);
 				}
 			}
-			hzb = MAX(hzb, clip3DFloor.sclipBottom);
+			hzb = max(hzb, clip3DFloor.sclipBottom);
 		}
 		if (clip3DFloor.clipTop)
 		{
@@ -284,11 +283,14 @@ namespace swrenderer
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
 				if (h > topclip)
 				{
-					topclip = short(MIN(h, viewheight));
+					topclip = short(min(h, viewheight));
 				}
 			}
-			hzt = MIN(hzt, clip3DFloor.sclipTop);
+			hzt = min(hzt, clip3DFloor.sclipTop);
 		}
+
+		// Make sure bottom clipping stays within the view size
+		botclip = min<short>(botclip, viewheight);
 
 		if (topclip >= botclip)
 		{
@@ -314,24 +316,6 @@ namespace swrenderer
 		DrawSegmentList *segmentlist = thread->DrawSegments.get();
 		RenderPortal *renderportal = thread->Portal.get();
 
-		// Render draw segments behind sprite
-		if (r_modelscene)
-		{
-			int subsectordepth = spr->SubsectorDepth;
-			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
-			{
-				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-				if (ds->drawsegclip.SubsectorDepth >= subsectordepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
-				{
-					int r1 = MAX<int>(ds->x1, 0);
-					int r2 = MIN<int>(ds->x2, viewwidth - 1);
-
-					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, r1, r2, clip3DFloor);
-				}
-			}
-		}
-		else
 		{
 			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 			{
@@ -342,8 +326,8 @@ namespace swrenderer
 					continue;
 				}
 
-				float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
-				float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
+				float neardepth = min(ds->WallC.sz1, ds->WallC.sz2);
+				float fardepth = max(ds->WallC.sz1, ds->WallC.sz2);
 
 				// Check if sprite is in front of draw seg:
 				if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
@@ -352,8 +336,8 @@ namespace swrenderer
 				{
 					if (ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 					{
-						int r1 = MAX<int>(ds->x1, x1);
-						int r2 = MIN<int>(ds->x2, x2);
+						int r1 = max<int>(ds->x1, x1);
+						int r2 = min<int>(ds->x2, x2);
 
 						RenderDrawSegment renderer(thread);
 						renderer.Render(ds, r1, r2, clip3DFloor);
@@ -371,8 +355,8 @@ namespace swrenderer
 
 			if (group.fardepth < spr->depth) 
 			{
-				int r1 = MAX<int>(group.x1, x1);
-				int r2 = MIN<int>(group.x2, x2);
+				int r1 = max<int>(group.x1, x1);
+				int r2 = min<int>(group.x2, x2);
 
 				// Clip bottom
 				short *clip1 = clipbot + r1;
@@ -411,11 +395,11 @@ namespace swrenderer
 						continue;
 					}
 
-					int r1 = MAX<int>(ds->x1, x1);
-					int r2 = MIN<int>(ds->x2, x2);
+					int r1 = max<int>(ds->x1, x1);
+					int r2 = min<int>(ds->x2, x2);
 
-					float neardepth = MIN(ds->WallC.sz1, ds->WallC.sz2);
-					float fardepth = MAX(ds->WallC.sz1, ds->WallC.sz2);
+					float neardepth = min(ds->WallC.sz1, ds->WallC.sz2);
+					float fardepth = max(ds->WallC.sz1, ds->WallC.sz2);
 
 					// Check if sprite is in front of draw seg:
 					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&

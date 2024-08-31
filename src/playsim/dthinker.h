@@ -79,7 +79,7 @@ struct FThinkerCollection
 	}
 
 	void RunThinkers(FLevelLocals *Level);	// The level is needed to tick the lights
-	void DestroyAllThinkers();
+	void DestroyAllThinkers(bool fullgc = true);
 	void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	void MarkRoots();
 	DThinker *FirstThinker(int statnum);
@@ -116,7 +116,7 @@ private:
 	friend struct FThinkerCollection;
 	friend class FThinkerIterator;
 	friend class DObject;
-	friend class FSerializer;
+	friend class FDoomSerializer;
 
 	DThinker *NextThinker = nullptr, *PrevThinker = nullptr;
 

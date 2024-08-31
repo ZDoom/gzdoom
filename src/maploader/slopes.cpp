@@ -160,22 +160,22 @@ void MapLoader::SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi
 
 	if (zangi >= 180)
 	{
-		zang = 179.;
+		zang =  DAngle::fromDeg(179.);
 	}
 	else if (zangi <= 0)
 	{
-		zang = 1.;
+		zang =  DAngle::fromDeg(1.);
 	}
 	else
 	{
-		zang = (double)zangi;
+		zang =  DAngle::fromDeg(zangi);
 	}
 	if (setCeil)
 	{
-		zang += 180.;
+		zang +=  DAngle::fromDeg(180.);
 	}
 
-	xyang = (double)xyangi;
+	xyang =  DAngle::fromDeg(xyangi);
 
 	DVector3 norm;
 
@@ -417,18 +417,18 @@ void MapLoader::SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const i
 			mt->EdNum = 0;
 		}
 	}
+	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 
 	for (mt = firstmt; mt < lastmt; ++mt)
 	{
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
+			CopyPlane (mt->args[0], mt->pos.XY(), mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}
 
-	SetSlopesFromVertexHeights(firstmt, lastmt, oldvertextable);
 }
 
 

@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -53,7 +53,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "r_voxel.h"
 #include "swrenderer/segments/r_drawsegment.h"
@@ -62,7 +62,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "a_dynlight.h"
 #include "r_data/r_vanillatrans.h"
@@ -74,17 +74,18 @@ EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
-	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ttex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *tex, const DVector2 &spriteScale, int renderflags, WaterFakeSide fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling, sector_t *current_sector, int lightlevel, bool foggy, FDynamicColormap *basecolormap, bool isSpriteShadow)
 	{
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
-
 		auto viewport = thread->Viewport.get();
 
 		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
 
 		// Calculate billboard line for the sprite
+		double SpriteOffX = (thing) ? -thing->GetSpriteOffset(false) : 0.;
 		DVector2 dir = { viewport->viewpoint.Sin, -viewport->viewpoint.Cos };
-		DVector2 pt1 = pos.XY() - viewport->viewpoint.Pos.XY() - dir * (((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul);
+		DVector2 trs = pos.XY() - viewport->viewpoint.Pos.XY();
+		trs = { trs.X + SpriteOffX * dir.X, trs.Y + SpriteOffX * dir.Y };
+		DVector2 pt1 = trs - dir * (((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul);
 		DVector2 pt2 = pt1 + dir * (tex->GetWidth() * thingxscalemul);
 
 		FWallCoords wallc;
@@ -92,8 +93,8 @@ namespace swrenderer
 			return;
 
 		// [RH] Added scaling
-		int scaled_to = tex->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - tex->GetScaledHeight();
+		double scaled_to = tex->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - tex->GetScaledHeight();
 		double gzt = pos.Z + spriteScale.Y * scaled_to;
 		double gzb = pos.Z + spriteScale.Y * scaled_bo;
 
@@ -194,7 +195,14 @@ namespace swrenderer
 
 		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
 		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
-		
+
+		if (isSpriteShadow)
+		{
+			vis->RenderStyle = LegacyRenderStyles[STYLE_TranslucentStencil];
+			vis->FillColor = 0;
+			vis->Alpha *= 0.5;
+		}
+
 		if (r_dynlights && gl_light_sprites)
 		{
 			float lit_red = 0;
@@ -261,8 +269,7 @@ namespace swrenderer
 		{
 			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 			short portalfloorclip[MAXWIDTH];
-			int x2 = wallc.sx2;
-			for (int x = wallc.sx1; x < x2; x++)
+			for (int x = x1; x < x2; x++)
 			{
 				if (translucentPass->ClipSpriteColumnWithPortals(x, this))
 					portalfloorclip[x] = mceilingclip[x];
@@ -270,12 +277,9 @@ namespace swrenderer
 					portalfloorclip[x] = mfloorclip[x];
 			}
 
-			thread->PrepareTexture(pic, RenderStyle);
-
 			ProjectedWallLight mlight;
 			mlight.SetSpriteLight();
 
-			drawerargs.SetBaseColormap(Light.BaseColormap);
 			drawerargs.DrawMasked(thread, gzt - floorclip, SpriteScale, renderflags & RF_XFLIP, renderflags & RF_YFLIP, wallc, x1, x2, mlight, pic, portalfloorclip, mceilingclip, RenderStyle);
 		}
 	}

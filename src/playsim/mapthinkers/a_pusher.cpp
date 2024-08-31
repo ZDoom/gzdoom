@@ -30,6 +30,7 @@
 #include "actor.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "p_local.h"
@@ -231,7 +232,7 @@ void DPusher::Tick ()
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
 					DAngle pushangle = pos.Angle();
-					if (m_Source->GetClass()->TypeName == NAME_PointPuller) pushangle += 180;  
+					if (m_Source->IsKindOf(NAME_PointPuller)) pushangle += DAngle::fromDeg(180);
 					thing->Thrust(pushangle, speed);
 				}
 			}
@@ -271,13 +272,13 @@ void DPusher::Tick ()
 				{
 					pushvel = m_PushVec; // full force
 				}
-				else if (thing->player->viewz < ht) // underwater
+				else if (thing->player && thing->player->viewz < ht) // underwater
 				{
 					pushvel.Zero(); // no force
 				}
 				else // wading in water
 				{
-					pushvel = m_PushVec / 2; // full force
+					pushvel = m_PushVec / 2; // half force
 				}
 			}
 		}

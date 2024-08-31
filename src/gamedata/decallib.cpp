@@ -34,19 +34,20 @@
 
 #include "decallib.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "cmdlib.h"
 #include "m_random.h"
 #include "weightedlist.h"
 #include "statnums.h"
-#include "templates.h"
+
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "b_bot.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "a_decalfx.h"
+#include "texturemanager.h"
 
 FDecalLib DecalLibrary;
 
@@ -91,7 +92,7 @@ struct FDecalLib::FTranslation
 
 	uint32_t StartColor, EndColor;
 	FTranslation *Next;
-	uint32_t Index;
+	FTranslationID Index;
 };
 
 struct FDecalAnimator
@@ -264,7 +265,7 @@ void FDecalLib::ReadAllDecals ()
 
 	DecalLibrary.Clear();
 
-	while ((lump = Wads.FindLump ("DECALDEF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("DECALDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		ReadDecals (sc);
@@ -283,7 +284,7 @@ void FDecalLib::ReadAllDecals ()
 		FName v = ENamedName(intptr_t(def->DecalGenerator));
 		if (v.IsValidName())
 		{
-			def->DecalGenerator = ScanTreeForName (v, Root);
+			def->DecalGenerator = ScanTreeForName (v.GetChars(), Root);
 		}
 	}
 }
@@ -341,7 +342,7 @@ uint16_t FDecalLib::GetDecalID (FScanner &sc)
 	}
 	else
 	{
-		unsigned long num = strtoul (sc.String, NULL, 10);
+		uint64_t num = strtoull (sc.String, NULL, 10);
 		if (num < 1 || num > 65535)
 		{
 			sc.ScriptError ("Decal ID must be between 1 and 65535");
@@ -375,7 +376,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			AddDecal (decalName, decalNum, newdecal);
+			AddDecal(decalName.GetChars(), decalNum, newdecal);
 			break;
 		}
 		switch (sc.MustMatchString (DecalKeywords))
@@ -391,7 +392,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_PIC:
 			sc.MustGetString ();
 			picnum = TexMan.CheckForTexture (sc.String, ETextureType::Any);
-			if (!picnum.Exists() && (lumpnum = Wads.CheckNumForName (sc.String, ns_graphics)) >= 0)
+			if (!picnum.Exists() && (lumpnum = fileSystem.CheckNumForName (sc.String, FileSys::ns_graphics)) >= 0)
 			{
 				picnum = TexMan.CreateTexture (lumpnum, ETextureType::Decal);
 			}
@@ -442,7 +443,7 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			sc.MustGetString ();
 			if (!sc.Compare("BloodDefault"))
 			{
-				newdecal.ShadeColor = V_GetColor (NULL, sc);
+				newdecal.ShadeColor = V_GetColor (sc);
 			}
 			else
 			{
@@ -457,8 +458,8 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_COLORS:
 			uint32_t startcolor, endcolor;
 
-			sc.MustGetString (); startcolor = V_GetColor (NULL, sc);
-			sc.MustGetString (); endcolor   = V_GetColor (NULL, sc);
+			sc.MustGetString (); startcolor = V_GetColor (sc);
+			sc.MustGetString (); endcolor   = V_GetColor (sc);
 			newdecal.Translation = GenerateTranslation (startcolor, endcolor)->Index;
 			break;
 
@@ -576,7 +577,7 @@ void FDecalLib::ParseFader (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName);
+			FDecalFaderAnim *fader = new FDecalFaderAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			Animators.Push (fader);
@@ -616,7 +617,7 @@ void FDecalLib::ParseStretcher (FScanner &sc)
 		{
 			if (goalX >= 0 || goalY >= 0)
 			{
-				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName);
+				FDecalStretcherAnim *stretcher = new FDecalStretcherAnim (stretcherName.GetChars());
 				stretcher->StretchStart = startTime;
 				stretcher->StretchTime = takeTime;
 				stretcher->GoalX = goalX;
@@ -667,7 +668,7 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		{
 			if ((/*distX |*/ distY) != 0)
 			{
-				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName);
+				FDecalSliderAnim *slider = new FDecalSliderAnim (sliderName.GetChars());
 				slider->SlideStart = startTime;
 				slider->SlideTime = takeTime;
 				/*slider->DistX = distX;*/
@@ -718,7 +719,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		sc.MustGetString ();
 		if (sc.Compare ("}"))
 		{
-			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName);
+			FDecalColorerAnim *fader = new FDecalColorerAnim (faderName.GetChars());
 			fader->DecayStart = startTime;
 			fader->DecayTime = decayTime;
 			fader->GoalColor = goal;
@@ -738,7 +739,7 @@ void FDecalLib::ParseColorchanger (FScanner &sc)
 		else if (sc.Compare ("Color"))
 		{
 			sc.MustGetString ();
-			goal = V_GetColor (NULL, sc);
+			goal = V_GetColor (sc);
 		}
 		else
 		{
@@ -771,7 +772,7 @@ void FDecalLib::ParseCombiner (FScanner &sc)
 
 	if (last > first)
 	{
-		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName);
+		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName.GetChars());
 		combiner->FirstAnimator = (int)first;
 		combiner->NumAnimators = (int)(last - first);
 		Animators.Push (combiner);
@@ -809,7 +810,7 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 	// Check if this decal already exists.
 	while (node != NULL)
 	{
-		int lexx = stricmp (decal->Name, node->Name);
+		int lexx = stricmp (decal->Name.GetChars(), node->Name.GetChars());
 		if (lexx == 0)
 		{
 			break;
@@ -885,7 +886,7 @@ const FDecalTemplate *FDecalLib::GetDecalByName (const char *name) const
 	FDecalBase *base = ScanTreeForName (name, Root);
 	if (base != NULL)
 	{
-		return static_cast<FDecalTemplate *>(base);
+		return base->GetDecal();
 	}
 	return NULL;
 }
@@ -910,7 +911,7 @@ FDecalBase *FDecalLib::ScanTreeForName (const char *name, FDecalBase *root)
 {
 	while (root != NULL)
 	{
-		int lexx = stricmp (name, root->Name);
+		int lexx = stricmp (name, root->Name.GetChars());
 		if (lexx == 0)
 		{
 			break;
@@ -1001,7 +1002,7 @@ FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 	if (DecalTranslations.Size() == 256*256)
 	{
 		Printf ("Too many decal translations defined\n");
-		Index = 0;
+		Index = NO_TRANSLATION;
 		return;
 	}
 
@@ -1027,7 +1028,7 @@ FDecalLib::FTranslation::FTranslation (uint32_t start, uint32_t end)
 		table[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
 	}
 	table[0] = table[1];
-	Index = (uint32_t)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
+	Index = TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
 FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (uint32_t start, uint32_t end)
@@ -1145,7 +1146,7 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 
 	for (i = (int)Animators.Size ()-1; i >= 0; --i)
 	{
-		if (stricmp (name, Animators[i]->Name) == 0)
+		if (stricmp (name, Animators[i]->Name.GetChars()) == 0)
 		{
 			return Animators[i];
 		}

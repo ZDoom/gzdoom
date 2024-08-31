@@ -41,11 +41,12 @@
 #include "p_terrain.h"
 #include "gi.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "sc_man.h"
 #include "p_local.h"
 #include "actor.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -249,7 +250,7 @@ void P_InitTerrainTypes ()
 	MakeDefaultTerrain ();
 
 	lastlump = 0;
-	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
+	while (-1 != (lump = fileSystem.FindLump ("TERRAIN", &lastlump)) )
 	{
 		FScanner sc(lump);
 		ParseOuter (sc);
@@ -354,7 +355,7 @@ static void ParseOuter (FScanner &sc)
 static void SetSplashDefaults (FSplashDef *splashdef)
 {
 	splashdef->SmallSplashSound =
-		splashdef->NormalSplashSound = 0;
+		splashdef->NormalSplashSound = NO_SOUND;
 	splashdef->SmallSplash =
 		splashdef->SplashBase =
 		splashdef->SplashChunk = NULL;
@@ -536,7 +537,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Sound:
 			sc.MustGetString ();
-			SET_FIELD (FSoundID, FSoundID(sc.String));
+			SET_FIELD (FSoundID, S_FindSound(sc.String));
 			/* unknown sounds never produce errors anywhere else so they shouldn't here either.
 			if (val == 0)
 			{
@@ -644,11 +645,15 @@ static void ParseFloor (FScanner &sc)
 		return;
 	}
 	sc.MustGetString ();
+	if (sc.Compare("Null") || sc.Compare("None"))
+	{
+		TerrainTypes.Set(picnum.GetIndex(), 0xffff);
+		return;
+	}
 	terrain = P_FindTerrain (sc.String);
 	if (terrain == -1)
 	{
 		Printf ("Unknown terrain %s\n", sc.String);
-		terrain = 0;
 	}
 	TerrainTypes.Set(picnum.GetIndex(), terrain);
 }
@@ -703,7 +708,7 @@ int P_FindTerrain (FName name)
 {
 	unsigned int i;
 
-	if (name == NAME_Null) return -1;
+	if (name == NAME_Null || name == NAME_None) return -1;
 	for (i = 0; i < Terrains.Size (); i++)
 	{
 		if (Terrains[i].Name == name)

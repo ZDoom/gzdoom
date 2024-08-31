@@ -375,6 +375,11 @@ include "xlat/defines.i"
 438 = SHOOT,		Floor_RaiseByValue (tag, F_SLOW, 2)
 439 = SHOOT|REP,	Floor_RaiseByValue (tag, F_SLOW, 2)
 
+// MBF21 extensions
+1024 = 0,	Scroll_Texture_Offsets(0, tag, 0, 8)
+1025 = 0,	Scroll_Texture_Offsets(0, tag, 1, 8)
+1026 = 0,	Scroll_Texture_Offsets(0, tag, 2, 8)
+
 /****** BOOM generalized linetypes ******
  *
  * The general structure for a BOOM generalized translator is
@@ -416,7 +421,7 @@ include "xlat/defines.i"
 
 
 // Generalized crusher (tag, dnspeed, upspeed, silent, damage)
-[Generic_Crusher] (0x2f80, 0x2fff)
+[Generic_CrusherDist] (0x2f80, 0x2fff)
 {
 	flags |= 0x0020 [0x0020 : MONST]
 	arg2 = 0x0018  [0x0000 : C_SLOW,

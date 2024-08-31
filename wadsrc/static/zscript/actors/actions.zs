@@ -95,4 +95,9 @@ extend class Actor
 		}
 	}
 
+	void A_SpriteOffset(double ox = 0.0, double oy = 0.0)
+	{
+		SpriteOffset.X = ox;
+		SpriteOffset.Y = oy;
+	}
 }

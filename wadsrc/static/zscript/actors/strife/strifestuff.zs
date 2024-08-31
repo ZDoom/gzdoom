@@ -1786,6 +1786,7 @@ class KneelingGuy : Actor
 		+NOBLOOD
 		+ISMONSTER
 		+INCOMBAT
+		Tag "$TAG_KNEELINGGUY";
 		PainSound "misc/static";
 		DeathSound "misc/static";
 		ActiveSound "misc/chant";

@@ -21,6 +21,7 @@ class Crusader : Actor
 		MinMissileChance 120;
 		MaxDropoffHeight 32;
 		DropItem "EnergyPod", 256, 20;
+		Tag "$TAG_CRUSADER";
 		SeeSound "crusader/sight";
 		PainSound "crusader/pain";
 		DeathSound "crusader/death";

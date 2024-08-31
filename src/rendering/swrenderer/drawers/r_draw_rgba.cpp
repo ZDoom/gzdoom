@@ -34,10 +34,10 @@
 */
 #include <stddef.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"
@@ -63,9 +63,9 @@
 
 #include "gi.h"
 #include "stats.h"
-#include "x86.h"
 #include <vector>
 
+;
 // Use linear filtering when scaling up
 CVAR(Bool, r_magfilter, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -82,193 +82,185 @@ namespace swrenderer
 {
 	void SWTruecolorDrawers::DrawWall(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWall32Command>(args);
+		DrawWallColumns<DrawWall32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallMasked(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWallMasked32Command>(args);
+		DrawWallColumns<DrawWallMasked32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallAdd(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWallAddClamp32Command>(args);
+		DrawWallColumns<DrawWallAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallAddClamp(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWallAddClamp32Command>(args);
+		DrawWallColumns<DrawWallAddClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallSubClamp(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWallSubClamp32Command>(args);
+		DrawWallColumns<DrawWallSubClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawWallRevSubClamp(const WallDrawerArgs &args)
 	{
-		Queue->Push<DrawWallRevSubClamp32Command>(args);
+		DrawWallColumns<DrawWallRevSubClamp32Command>(args);
 	}
 	
 	void SWTruecolorDrawers::DrawColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSprite32Command>(args);
+		DrawSprite32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::FillColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<FillSprite32Command>(args);
+		FillSprite32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::FillAddColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<FillSpriteAddClamp32Command>(args);
+		FillSpriteAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::FillAddClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<FillSpriteAddClamp32Command>(args);
+		FillSpriteAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::FillSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<FillSpriteSubClamp32Command>(args);
+		FillSpriteSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::FillRevSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<FillSpriteRevSubClamp32Command>(args);
+		FillSpriteRevSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawFuzzColumn(const SpriteDrawerArgs &args)
 	{
 		if (r_fuzzscale)
-			Queue->Push<DrawScaledFuzzColumnRGBACommand>(args);
+			DrawScaledFuzzColumn(args);
 		else
-			Queue->Push<DrawFuzzColumnRGBACommand>(args);
+			DrawUnscaledFuzzColumn(args);
 		R_UpdateFuzzPos(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteAddClamp32Command>(args);
+		DrawSpriteAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteTranslated32Command>(args);
+		DrawSpriteTranslated32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawTranslatedAddColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
+		DrawSpriteTranslatedAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawShadedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteShaded32Command>(args);
+		DrawSpriteShaded32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddClampShadedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteAddClampShaded32Command>(args);
+		DrawSpriteAddClampShaded32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteAddClamp32Command>(args);
+		DrawSpriteAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawAddClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteTranslatedAddClamp32Command>(args);
+		DrawSpriteTranslatedAddClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteSubClamp32Command>(args);
+		DrawSpriteSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteTranslatedSubClamp32Command>(args);
+		DrawSpriteTranslatedSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawRevSubClampColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteRevSubClamp32Command>(args);
+		DrawSpriteRevSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
-	}
-
-	void SWTruecolorDrawers::DrawVoxelBlocks(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount)
-	{
-		Queue->Push<DrawVoxelBlocksRGBACommand>(args, blocks, blockcount);
+		DrawSpriteTranslatedRevSubClamp32Command::DrawColumn(args);
 	}
 
 	void SWTruecolorDrawers::DrawSpan(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpan32Command>(args);
+		DrawSpan32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMasked(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpanMasked32Command>(args);
+		DrawSpanMasked32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanTranslucent(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpanTranslucent32Command>(args);
+		DrawSpanTranslucent32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMaskedTranslucent(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpanAddClamp32Command>(args);
+		DrawSpanAddClamp32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanAddClamp(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpanTranslucent32Command>(args);
+		DrawSpanTranslucent32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSpanMaskedAddClamp(const SpanDrawerArgs &args)
 	{
-		Queue->Push<DrawSpanAddClamp32Command>(args);
+		DrawSpanAddClamp32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawSingleSkyColumn(const SkyDrawerArgs &args)
 	{
-		Queue->Push<DrawSkySingle32Command>(args);
+		DrawSkySingle32Command::DrawColumn(args);
 	}
 	
 	void SWTruecolorDrawers::DrawDoubleSkyColumn(const SkyDrawerArgs &args)
 	{
-		Queue->Push<DrawSkyDouble32Command>(args);
+		DrawSkyDouble32Command::DrawColumn(args);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawScaledFuzzColumnRGBACommand::DrawScaledFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
+	void SWTruecolorDrawers::DrawScaledFuzzColumn(const SpriteDrawerArgs& drawerargs)
 	{
-		_x = drawerargs.FuzzX();
-		_yl = drawerargs.FuzzY1();
-		_yh = drawerargs.FuzzY2();
-		_destorg = drawerargs.Viewport()->GetDest(0, 0);
-		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
-		_fuzzpos = fuzzpos;
-		_fuzzviewheight = fuzzviewheight;
-	}
+		int _x = drawerargs.FuzzX();
+		int _yl = drawerargs.FuzzY1();
+		int _yh = drawerargs.FuzzY2();
+		uint8_t* RESTRICT _destorg = drawerargs.Viewport()->GetDest(0, 0);
+		int _pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
+		int _fuzzpos = fuzzpos;
+		int _fuzzviewheight = fuzzviewheight;
 
-	void DrawScaledFuzzColumnRGBACommand::Execute(DrawerThread *thread)
-	{
 		int x = _x;
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
-		int count = thread->count_for_thread(yl, yh - yl + 1);
+		int count = yh - yl + 1;
 		if (count <= 0) return;
 
 		int pitch = _pitch;
@@ -279,14 +271,7 @@ namespace swrenderer
 
 		fixed_t fuzzstep = (200 << FRACBITS) / _fuzzviewheight;
 		fixed_t fuzzcount = FUZZTABLE << FRACBITS;
-		fixed_t fuzz = (fuzz_x << FRACBITS) + yl * fuzzstep;
-
-		dest = thread->dest_for_thread(yl, pitch, dest);
-		pitch *= thread->num_cores;
-
-		fuzz += fuzzstep * thread->skipped_by_thread(yl);
-		fuzz %= fuzzcount;
-		fuzzstep *= thread->num_cores;
+		fixed_t fuzz = ((fuzz_x << FRACBITS) + yl * fuzzstep) % fuzzcount;
 
 		while (count > 0)
 		{
@@ -309,33 +294,30 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
+	void SWTruecolorDrawers::DrawUnscaledFuzzColumn(const SpriteDrawerArgs& drawerargs)
 	{
-		_x = drawerargs.FuzzX();
-		_yl = drawerargs.FuzzY1();
-		_yh = drawerargs.FuzzY2();
-		_destorg = drawerargs.Viewport()->GetDest(0, 0);
-		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
-		_fuzzpos = fuzzpos;
-		_fuzzviewheight = fuzzviewheight;
-	}
+		int _x = drawerargs.FuzzX();
+		int _yl = drawerargs.FuzzY1();
+		int _yh = drawerargs.FuzzY2();
+		uint8_t* RESTRICT _destorg = drawerargs.Viewport()->GetDest(0, 0);
+		int _pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
+		int _fuzzpos = fuzzpos;
+		int _fuzzviewheight = fuzzviewheight;
 
-	void DrawFuzzColumnRGBACommand::Execute(DrawerThread *thread)
-	{
-		int yl = MAX(_yl, 1);
-		int yh = MIN(_yh, _fuzzviewheight);
+		int yl = max(_yl, 1);
+		int yh = min(_yh, _fuzzviewheight);
 
-		int count = thread->count_for_thread(yl, yh - yl + 1);
+		int count = yh - yl + 1;
 
 		// Zero length.
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(yl, _pitch, _pitch * yl + _x + (uint32_t*)_destorg);
-		int pitch = _pitch * thread->num_cores;
+		uint32_t *dest = _pitch * yl + _x + (uint32_t*)_destorg;
+		int pitch = _pitch;
 
-		int fuzzstep = thread->num_cores;
-		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
+		int fuzzstep = 1;
+		int fuzz = _fuzzpos % FUZZTABLE;
 
 #ifndef ORIGINAL_FUZZ
 
@@ -346,7 +328,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -366,8 +348,6 @@ namespace swrenderer
 		}
 
 #else
-
-		yl += thread->skipped_by_thread(yl);
 
 		// Handle the case where we would go out of bounds at the top:
 		if (yl < fuzzstep)
@@ -403,7 +383,7 @@ namespace swrenderer
 			if (available % fuzzstep != 0)
 				next_wrap++;
 
-			int cnt = MIN(count, next_wrap);
+			int cnt = min(count, next_wrap);
 			count -= cnt;
 			do
 			{
@@ -443,20 +423,14 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	FillSpanRGBACommand::FillSpanRGBACommand(const SpanDrawerArgs &drawerargs)
+	void SWTruecolorDrawers::FillSpan(const SpanDrawerArgs& drawerargs)
 	{
-		_x1 = drawerargs.DestX1();
-		_x2 = drawerargs.DestX2();
-		_y = drawerargs.DestY();
-		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
-		_light = drawerargs.Light();
-		_color = drawerargs.SolidColor();
-	}
-
-	void FillSpanRGBACommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		int _x1 = drawerargs.DestX1();
+		int _x2 = drawerargs.DestX2();
+		int _y = drawerargs.DestY();
+		uint8_t* RESTRICT _dest = drawerargs.Viewport()->GetDest(_x1, _y);
+		fixed_t _light = drawerargs.Light();
+		int _color = drawerargs.SolidColor();
 
 		uint32_t *dest = (uint32_t*)_dest;
 		int count = (_x2 - _x1 + 1);
@@ -468,20 +442,14 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawFogBoundaryLineRGBACommand::DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs)
+	void SWTruecolorDrawers::DrawFogBoundaryLine(const SpanDrawerArgs& drawerargs)
 	{
-		_y = drawerargs.DestY();
-		_x = drawerargs.DestX1();
-		_x2 = drawerargs.DestX2();
-		_line = drawerargs.Viewport()->GetDest(0, _y);
-		_light = drawerargs.Light();
-		_shade_constants = drawerargs.ColormapConstants();
-	}
-
-	void DrawFogBoundaryLineRGBACommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		int _y = drawerargs.DestY();
+		int _x = drawerargs.DestX1();
+		int _x2 = drawerargs.DestX2();
+		uint8_t* RESTRICT _line = drawerargs.Viewport()->GetDest(0, _y);
+		fixed_t _light = drawerargs.Light();
+		ShadeConstants constants = drawerargs.ColormapConstants();
 
 		int y = _y;
 		int x = _x;
@@ -490,7 +458,6 @@ namespace swrenderer
 		uint32_t *dest = (uint32_t*)_line;
 
 		uint32_t light = LightBgra::calc_light_multiplier(_light);
-		ShadeConstants constants = _shade_constants;
 
 		do
 		{
@@ -530,32 +497,87 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawTiltedSpanRGBACommand::DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy)
+	FORCEINLINE static BgraColor AddTiltedLights(BgraColor material, BgraColor fgcolor, const DrawerLight* lights, int num_lights, float viewpos_x, float viewpos_y, float viewpos_z, float nx, float ny, float nz)
 	{
-		_x1 = drawerargs.DestX1();
-		_x2 = drawerargs.DestX2();
-		_y = drawerargs.DestY();
-		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
-		_light = drawerargs.Light();
-		_shade_constants = drawerargs.ColormapConstants();
-		_plane_sz = plane_sz;
-		_plane_su = plane_su;
-		_plane_sv = plane_sv;
-		_plane_shade = plane_shade;
-		_planeshade = planeshade;
-		_planelightfloat = planelightfloat;
-		_pviewx = pviewx;
-		_pviewy = pviewy;
-		_source = (const uint32_t*)drawerargs.TexturePixels();
-		_xbits = drawerargs.TextureWidthBits();
-		_ybits = drawerargs.TextureHeightBits();
-		viewport = drawerargs.Viewport();
+		using namespace DrawSpan32TModes;
+
+		BgraColor lit;
+		lit.r = 0;
+		lit.g = 0;
+		lit.b = 0;
+
+		// Screen space to view space
+		viewpos_z = 1.0f / viewpos_z;
+		viewpos_x *= viewpos_z;
+		viewpos_y *= viewpos_z;
+
+		for (int i = 0; i != num_lights; i++)
+		{
+			float light_x = lights[i].x;
+			float light_y = lights[i].y;
+			float light_z = lights[i].z;
+			float light_radius = lights[i].radius;
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// attenuation = 1 - min(dist * (1/radius), 1)
+			float Lx = lights[i].x - viewpos_x;
+			float Ly = lights[i].y - viewpos_y;
+			float Lz = lights[i].z - viewpos_z;
+			float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_load_ss(&dist2)));
+#endif
+			Lx *= rcp_dist;
+			Ly *= rcp_dist;
+			Lz *= rcp_dist;
+			float dist = dist2 * rcp_dist;
+			float radius = lights[i].radius;
+			bool simpleType = radius < 0.0f;
+			if (simpleType)
+				radius = -radius;
+			float distance_attenuation = (256.0f - min(dist * radius, 256.0f));
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = dot(N,L) * attenuation
+			float dotNL = max(nx * Lx + ny * Ly + nz * Lz, 0.0f);
+			float point_attenuation = dotNL * distance_attenuation;
+			uint32_t attenuation = (uint32_t)(simpleType ? simple_attenuation : point_attenuation);
+
+			BgraColor light_color = lights[i].color;
+
+			lit.r += (light_color.r * attenuation) >> 8;
+			lit.g += (light_color.g * attenuation) >> 8;
+			lit.b += (light_color.b * attenuation) >> 8;
+		}
+
+		lit.r = min<uint32_t>(lit.r, 256);
+		lit.g = min<uint32_t>(lit.g, 256);
+		lit.b = min<uint32_t>(lit.b, 256);
+
+		fgcolor.r = min<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
+		fgcolor.g = min<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
+		fgcolor.b = min<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
+		return fgcolor;
 	}
 
-	void DrawTiltedSpanRGBACommand::Execute(DrawerThread *thread)
+	void SWTruecolorDrawers::DrawTiltedSpan(const SpanDrawerArgs& drawerargs, const FVector3& _plane_sz, const FVector3& _plane_su, const FVector3& _plane_sv, bool _plane_shade, int _planeshade, float _planelightfloat, fixed_t _pviewx, fixed_t _pviewy, FDynamicColormap* _basecolormap)
 	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		int _x1 = drawerargs.DestX1();
+		int _x2 = drawerargs.DestX2();
+		int _y = drawerargs.DestY();
+		uint8_t* _dest = drawerargs.Viewport()->GetDest(_x1, _y);
+		fixed_t _light = drawerargs.Light();
+		ShadeConstants _shade_constants = drawerargs.ColormapConstants();
+		const uint32_t* _source = (const uint32_t*)drawerargs.TexturePixels();
+		int _xbits = drawerargs.TextureWidthBits();
+		int _ybits = drawerargs.TextureHeightBits();
+		RenderViewport* viewport = drawerargs.Viewport();
 
 		//#define SPANSIZE 32
 		//#define INVSPAN 0.03125f
@@ -597,23 +619,52 @@ namespace swrenderer
 		double uzstep = _plane_su[0] * SPANSIZE;
 		double vzstep = _plane_sv[0] * SPANSIZE;
 
-		// Linear interpolate in sizes of SPANSIZE to increase speed
-		while (count >= SPANSIZE)
+		if (drawerargs.dc_num_lights == 0)
 		{
-			iz += izstep;
-			uz += uzstep;
-			vz += vzstep;
-
-			double endz = 1.f / iz;
-			double endu = uz*endz;
-			double endv = vz*endz;
-			uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
-			uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
-			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
-			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
-
-			for (int i = 0; i < SPANSIZE; i++)
+			// Linear interpolate in sizes of SPANSIZE to increase speed
+			while (count >= SPANSIZE)
 			{
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
+
+				double endz = 1.f / iz;
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
+				uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
+				for (int i = 0; i < SPANSIZE; i++)
+				{
+					uint32_t sx = ((u >> 16) * source_width) >> 16;
+					uint32_t sy = ((v >> 16) * source_height) >> 16;
+					uint32_t fg = _source[sy + sx * source_height];
+
+					if (_shade_constants.simple_shade)
+						*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
+					else
+						*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+					u += stepu;
+					v += stepv;
+					light += steplight;
+				}
+				startu = endu;
+				startv = endv;
+				count -= SPANSIZE;
+			}
+
+			// The last few pixels at the end
+			while (count > 0)
+			{
+				double endz = 1.f / iz;
+				startu = uz * endz;
+				startv = vz * endz;
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
 				uint32_t sx = ((u >> 16) * source_width) >> 16;
 				uint32_t sy = ((v >> 16) * source_height) >> 16;
 				uint32_t fg = _source[sy + sx * source_height];
@@ -623,57 +674,101 @@ namespace swrenderer
 				else
 					*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
 
-				u += stepu;
-				v += stepv;
+				iz += _plane_sz[0];
+				uz += _plane_su[0];
+				vz += _plane_sv[0];
 				light += steplight;
+				count--;
 			}
-			startu = endu;
-			startv = endv;
-			count -= SPANSIZE;
 		}
-
-		// The last few pixels at the end
-		while (count > 0)
+		else
 		{
-			double endz = 1.f / iz;
-			startu = uz*endz;
-			startv = vz*endz;
-			uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
-			uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+			auto lights = drawerargs.dc_lights;
+			auto num_lights = drawerargs.dc_num_lights;
+			auto normal = drawerargs.dc_normal;
+			auto viewpos = drawerargs.dc_viewpos;
+			auto viewpos_step = drawerargs.dc_viewpos_step;
 
-			uint32_t sx = ((u >> 16) * source_width) >> 16;
-			uint32_t sy = ((v >> 16) * source_height) >> 16;
-			uint32_t fg = _source[sy + sx * source_height];
+			// Linear interpolate in sizes of SPANSIZE to increase speed
+			while (count >= SPANSIZE)
+			{
+				iz += izstep;
+				uz += uzstep;
+				vz += vzstep;
 
-			if (_shade_constants.simple_shade)
-				*(dest++) = LightBgra::shade_bgra_simple(fg, LightBgra::calc_light_multiplier(light));
-			else
-				*(dest++) = LightBgra::shade_bgra(fg, LightBgra::calc_light_multiplier(light), _shade_constants);
+				double endz = 1.f / iz;
+				double endu = uz * endz;
+				double endv = vz * endz;
+				uint32_t stepu = (uint32_t)(int64_t((endu - startu) * INVSPAN));
+				uint32_t stepv = (uint32_t)(int64_t((endv - startv) * INVSPAN));
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
 
-			iz += _plane_sz[0];
-			uz += _plane_su[0];
-			vz += _plane_sv[0];
-			light += steplight;
-			count--;
+				for (int i = 0; i < SPANSIZE; i++)
+				{
+					uint32_t sx = ((u >> 16) * source_width) >> 16;
+					uint32_t sy = ((v >> 16) * source_height) >> 16;
+					uint32_t material = _source[sy + sx * source_height];
+
+					uint32_t fg;
+					if (_shade_constants.simple_shade)
+						fg = LightBgra::shade_bgra_simple(material, LightBgra::calc_light_multiplier(light));
+					else
+						fg = LightBgra::shade_bgra(material, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+					*(dest++) = AddTiltedLights(material, fg, lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z);
+
+					u += stepu;
+					v += stepv;
+					light += steplight;
+					viewpos += viewpos_step;
+				}
+				startu = endu;
+				startv = endv;
+				count -= SPANSIZE;
+			}
+
+			// The last few pixels at the end
+			while (count > 0)
+			{
+				double endz = 1.f / iz;
+				startu = uz * endz;
+				startv = vz * endz;
+				uint32_t u = (uint32_t)(int64_t(startu) + _pviewx);
+				uint32_t v = (uint32_t)(int64_t(startv) + _pviewy);
+
+				uint32_t sx = ((u >> 16) * source_width) >> 16;
+				uint32_t sy = ((v >> 16) * source_height) >> 16;
+				uint32_t material = _source[sy + sx * source_height];
+
+				uint32_t fg;
+				if (_shade_constants.simple_shade)
+					fg = LightBgra::shade_bgra_simple(material, LightBgra::calc_light_multiplier(light));
+				else
+					fg = LightBgra::shade_bgra(material, LightBgra::calc_light_multiplier(light), _shade_constants);
+
+				*(dest++) = AddTiltedLights(material, fg, lights, num_lights, viewpos.X, viewpos.Y, viewpos.Z, normal.X, normal.Y, normal.Z);
+
+				iz += _plane_sz[0];
+				uz += _plane_su[0];
+				vz += _plane_sv[0];
+				light += steplight;
+				viewpos += viewpos_step;
+				count--;
+			}
 		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs)
+	void SWTruecolorDrawers::DrawColoredSpan(const SpanDrawerArgs& drawerargs)
 	{
-		_y = drawerargs.DestY();
-		_x1 = drawerargs.DestX1();
-		_x2 = drawerargs.DestX2();
-		_dest = drawerargs.Viewport()->GetDest(_x1, _y);
-		_light = drawerargs.Light();
-		_color = drawerargs.SolidColor();
-	}
-
-	void DrawColoredSpanRGBACommand::Execute(DrawerThread *thread)
-	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
+		int _y = drawerargs.DestY();
+		int _x1 = drawerargs.DestX1();
+		int _x2 = drawerargs.DestX2();
+		uint8_t* RESTRICT _dest = drawerargs.Viewport()->GetDest(_x1, _y);
+		fixed_t _light = drawerargs.Light();
+		int _color = drawerargs.SolidColor();
 
 		int y = _y;
 		int x1 = _x1;
@@ -690,12 +785,13 @@ namespace swrenderer
 	/////////////////////////////////////////////////////////////////////////////
 
 #if 0
-	ApplySpecialColormapRGBACommand::ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen)
+#ifdef NO_SSE
+	void SWTruecolorDrawers::ApplySpecialColormap(FSpecialColormap* colormap, DFrameBuffer* screen)
 	{
-		buffer = screen->GetBuffer();
-		pitch = screen->GetPitch();
-		width = screen->GetWidth();
-		height = screen->GetHeight();
+		uint8_t* buffer = screen->GetBuffer();
+		int pitch = screen->GetPitch();
+		int width = screen->GetWidth();
+		int height = screen->GetHeight();
 
 		start_red = (int)(colormap->ColorizeStart[0] * 255);
 		start_green = (int)(colormap->ColorizeStart[1] * 255);
@@ -703,13 +799,9 @@ namespace swrenderer
 		end_red = (int)(colormap->ColorizeEnd[0] * 255);
 		end_green = (int)(colormap->ColorizeEnd[1] * 255);
 		end_blue = (int)(colormap->ColorizeEnd[2] * 255);
-	}
 
-#ifdef NO_SSE
-	void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
-	{
-		int y = thread->skipped_by_thread(0);
-		int count = thread->count_for_thread(0, height);
+		int y = 0;
+		int count = height;
 		while (count > 0)
 		{
 			uint8_t *pixels = buffer + y * pitch * 4;
@@ -734,15 +826,27 @@ namespace swrenderer
 
 				pixels += 4;
 			}
-			y += thread->num_cores;
+			y++;
 			count--;
 		}
 	}
 #else
-	void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
+	void SWTruecolorDrawers::ApplySpecialColormap(FSpecialColormap* colormap, DFrameBuffer* screen)
 	{
-		int y = thread->skipped_by_thread(0);
-		int count = thread->count_for_thread(0, height);
+		uint8_t* buffer = screen->GetBuffer();
+		int pitch = screen->GetPitch();
+		int width = screen->GetWidth();
+		int height = screen->GetHeight();
+
+		start_red = (int)(colormap->ColorizeStart[0] * 255);
+		start_green = (int)(colormap->ColorizeStart[1] * 255);
+		start_blue = (int)(colormap->ColorizeStart[2] * 255);
+		end_red = (int)(colormap->ColorizeEnd[0] * 255);
+		end_green = (int)(colormap->ColorizeEnd[1] * 255);
+		end_blue = (int)(colormap->ColorizeEnd[2] * 255);
+
+		int y = 0;
+		int count = height;
 		__m128i gray_weight = _mm_set_epi16(256, 77, 143, 37, 256, 77, 143, 37);
 		__m128i start_end = _mm_set_epi16(255, start_red, start_green, start_blue, 255, end_red, end_green, end_blue);
 		while (count > 0)
@@ -836,7 +940,7 @@ namespace swrenderer
 				pixels += 4;
 			}
 
-			y += thread->num_cores;
+			y++;
 			count--;
 		}
 	}
@@ -845,33 +949,21 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawParticleColumnRGBACommand::DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx)
+	void SWTruecolorDrawers::DrawParticleColumn(int x, int _dest_y, int _count, uint32_t _fg, uint32_t _alpha, uint32_t _fracposx)
 	{
-		_dest = dest;
-		_pitch = pitch;
-		_count = count;
-		_fg = fg;
-		_alpha = alpha;
-		_fracposx = fracposx;
-		_dest_y = dest_y;
-	}
+		uint32_t* dest = (uint32_t*)thread->Viewport->GetDest(x, _dest_y);
+		int pitch = thread->Viewport->RenderTarget->GetPitch();
 
-	void DrawParticleColumnRGBACommand::Execute(DrawerThread *thread)
-	{
-		int count = thread->count_for_thread(_dest_y, _count);
+		int count = _count;
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, _dest);
-		int pitch = _pitch * thread->num_cores;
-
-		int particle_texture_index = MIN<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
+		int particle_texture_index = min<int>(gl_particles_style, NUM_PARTICLE_TEXTURES - 1);
 		const uint32_t *source = &particle_texture[particle_texture_index][(_fracposx >> FRACBITS) * PARTICLE_TEXTURE_SIZE];
 		uint32_t particle_alpha = _alpha;
 
 		uint32_t fracstep = PARTICLE_TEXTURE_SIZE * FRACUNIT / _count;
-		uint32_t fracpos = fracstep * thread->skipped_by_thread(_dest_y) + fracstep / 2;
-		fracstep *= thread->num_cores;
+		uint32_t fracpos = fracstep / 2;
 
 		uint32_t fg_red = (_fg >> 16) & 0xff;
 		uint32_t fg_green = (_fg >> 8) & 0xff;
@@ -898,37 +990,184 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	DrawVoxelBlocksRGBACommand::DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
-	{
-	}
-
-	void DrawVoxelBlocksRGBACommand::Execute(DrawerThread *thread)
+	void SWTruecolorDrawers::DrawVoxelBlocks(const SpriteDrawerArgs& args, const VoxelBlock* blocks, int blockcount)
 	{
 		int pitch = args.Viewport()->RenderTarget->GetPitch();
 		uint8_t *destorig = args.Viewport()->RenderTarget->GetPixels();
 
-		DrawSprite32Command drawer(args);
-		drawer.args.dc_texturefracx = 0;
-		drawer.args.dc_source2 = 0;
+		SpriteDrawerArgs drawerargs = args;
+		drawerargs.dc_texturefracx = 0;
+		drawerargs.dc_source2 = 0;
 		for (int i = 0; i < blockcount; i++)
 		{
 			const VoxelBlock &block = blocks[i];
 
 			double v = block.vPos / (double)block.voxelsCount / FRACUNIT;
 			double vstep = block.vStep / (double)block.voxelsCount / FRACUNIT;
-			drawer.args.dc_texturefrac = (int)(v * (1 << 30));
-			drawer.args.dc_iscale = (int)(vstep * (1 << 30));
-			drawer.args.dc_source = block.voxels;
-			drawer.args.dc_textureheight = block.voxelsCount;
-			drawer.args.dc_count = block.height;
-			drawer.args.dc_dest_y = block.y;
-			drawer.args.dc_dest = destorig + (block.x + block.y * pitch) * 4;
+			drawerargs.dc_texturefrac = (int)(v * (1 << 30));
+			drawerargs.dc_iscale = (int)(vstep * (1 << 30));
+			drawerargs.dc_source = block.voxels;
+			drawerargs.dc_textureheight = block.voxelsCount;
+			drawerargs.dc_count = block.height;
+			drawerargs.dc_dest_y = block.y;
+			drawerargs.dc_dest = destorig + (block.x + block.y * pitch) * 4;
 
 			for (int j = 0; j < block.width; j++)
 			{
-				drawer.Execute(thread);
-				drawer.args.dc_dest += 4;
+				DrawSprite32Command::DrawColumn(drawerargs);
+				drawerargs.dc_dest += 4;
 			}
 		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////////
+
+	template<typename DrawerT>
+	void SWTruecolorDrawers::DrawWallColumns(const WallDrawerArgs& wallargs)
+	{
+		wallcolargs.wallargs = &wallargs;
+
+		bool haslights = r_dynlights && wallargs.lightlist;
+		if (haslights)
+		{
+			float dx = wallargs.WallC.tright.X - wallargs.WallC.tleft.X;
+			float dy = wallargs.WallC.tright.Y - wallargs.WallC.tleft.Y;
+			float length = sqrt(dx * dx + dy * dy);
+			wallcolargs.dc_normal.X = dy / length;
+			wallcolargs.dc_normal.Y = -dx / length;
+			wallcolargs.dc_normal.Z = 0.0f;
+		}
+
+		wallcolargs.SetTextureFracBits(wallargs.fracbits);
+
+		float curlight = wallargs.lightpos;
+		float lightstep = wallargs.lightstep;
+		int shade = wallargs.Shade();
+
+		if (wallargs.fixedlight)
+		{
+			curlight = wallargs.FixedLight();
+			lightstep = 0;
+		}
+
+		float upos = wallargs.texcoords.upos, ustepX = wallargs.texcoords.ustepX, ustepY = wallargs.texcoords.ustepY;
+		float vpos = wallargs.texcoords.vpos, vstepX = wallargs.texcoords.vstepX, vstepY = wallargs.texcoords.vstepY;
+		float wpos = wallargs.texcoords.wpos, wstepX = wallargs.texcoords.wstepX, wstepY = wallargs.texcoords.wstepY;
+		float startX = wallargs.texcoords.startX;
+
+		int x1 = wallargs.x1;
+		int x2 = wallargs.x2;
+
+		upos += ustepX * (x1 + 0.5f - startX);
+		vpos += vstepX * (x1 + 0.5f - startX);
+		wpos += wstepX * (x1 + 0.5f - startX);
+
+		float centerY = wallargs.CenterY;
+		centerY -= 0.5f;
+
+		auto uwal = wallargs.uwal;
+		auto dwal = wallargs.dwal;
+		for (int x = x1; x < x2; x++)
+		{
+			int y1 = uwal[x];
+			int y2 = dwal[x];
+			if (y2 > y1)
+			{
+				wallcolargs.SetLight(curlight, shade);
+				if (haslights)
+					SetLights(wallcolargs, x, y1, wallargs);
+				else
+					wallcolargs.dc_num_lights = 0;
+
+				float dy = (y1 - centerY);
+				float u = upos + ustepY * dy;
+				float v = vpos + vstepY * dy;
+				float w = wpos + wstepY * dy;
+				float scaleU = ustepX;
+				float scaleV = vstepY;
+				w = 1.0f / w;
+				u *= w;
+				v *= w;
+				scaleU *= w;
+				scaleV *= w;
+
+				uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+				uint32_t texelY = (uint32_t)(int64_t)((v - std::floor(v)) * 0x1'0000'0000LL);
+				uint32_t texelStepX = (uint32_t)(int64_t)(scaleU * 0x1'0000'0000LL);
+				uint32_t texelStepY = (uint32_t)(int64_t)(scaleV * 0x1'0000'0000LL);
+
+				DrawWallColumn32<DrawerT>(wallcolargs, x, y1, y2, texelX, texelY, texelStepX, texelStepY);
+			}
+
+			upos += ustepX;
+			vpos += vstepX;
+			wpos += wstepX;
+			curlight += lightstep;
+		}
+	}
+
+	template<typename DrawerT>
+	void SWTruecolorDrawers::DrawWallColumn32(WallColumnDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepX, uint32_t texelStepY)
+	{
+		auto& wallargs = *drawerargs.wallargs;
+		int texwidth = wallargs.texwidth;
+		int texheight = wallargs.texheight;
+
+		double xmagnitude = fabs(static_cast<int32_t>(texelStepX) * (1.0 / 0x1'0000'0000LL));
+		double ymagnitude = fabs(static_cast<int32_t>(texelStepY) * (1.0 / 0x1'0000'0000LL));
+		double magnitude = max(ymagnitude, xmagnitude);
+		double min_lod = -1000.0;
+		double lod = max(log2(magnitude) + r_lod_bias, min_lod);
+		bool magnifying = lod < 0.0f;
+
+		int mipmap_offset = 0;
+		int mip_width = texwidth;
+		int mip_height = texheight;
+		if (wallargs.mipmapped && mip_width > 1 && mip_height > 1)
+		{
+			int level = (int)lod;
+			while (level > 0 && mip_width > 1 && mip_height > 1)
+			{
+				mipmap_offset += mip_width * mip_height;
+				level--;
+				mip_width = max(mip_width >> 1, 1);
+				mip_height = max(mip_height >> 1, 1);
+			}
+		}
+
+		const uint32_t* pixels = static_cast<const uint32_t*>(wallargs.texpixels) + mipmap_offset;
+		fixed_t xxoffset = (texelX >> 16) * mip_width;
+
+		const uint8_t* source;
+		const uint8_t* source2;
+		uint32_t texturefracx;
+		bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+		if (filter_nearest)
+		{
+			int tx = (xxoffset >> FRACBITS) % mip_width;
+			source = (uint8_t*)(pixels + tx * mip_height);
+			source2 = nullptr;
+			texturefracx = 0;
+		}
+		else
+		{
+			xxoffset -= FRACUNIT / 2;
+			int tx0 = (xxoffset >> FRACBITS) % mip_width;
+			if (tx0 < 0)
+				tx0 += mip_width;
+			int tx1 = (tx0 + 1) % mip_width;
+			source = (uint8_t*)(pixels + tx0 * mip_height);
+			source2 = (uint8_t*)(pixels + tx1 * mip_height);
+			texturefracx = (xxoffset >> (FRACBITS - 4)) & 15;
+		}
+
+		int count = y2 - y1;
+		drawerargs.SetDest(x, y1);
+		drawerargs.SetCount(count);
+		drawerargs.SetTexture(source, source2, mip_height);
+		drawerargs.SetTextureUPos(texturefracx);
+		drawerargs.SetTextureVPos(texelY);
+		drawerargs.SetTextureVStep(texelStepY);
+		DrawerT::DrawColumn(drawerargs);
 	}
 }

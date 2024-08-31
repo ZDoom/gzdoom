@@ -51,7 +51,7 @@ class ArtiHealingRadius : Inventory
 				case 'Armor':
 					for (int j = 0; j < 4; ++j)
 					{
-						HexenArmor armor = HexenArmor(Spawn("HexenArmor"));
+						HexenArmor armor = HexenArmor(Spawn(GetHexenArmorClass()));
 						armor.health = j;
 						armor.Amount = 1;
 						if (!armor.CallTryPickup (mo))

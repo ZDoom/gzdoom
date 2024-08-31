@@ -28,7 +28,9 @@
 #ifndef __R_SKY_H__
 #define __R_SKY_H__
 
-#include "textures/textures.h"
+#include <utility>
+#include <stdint.h>
+#include "textureid.h"
 
 struct FLevelLocals;
 
@@ -41,12 +43,6 @@ extern int		freelookviewheight;
 void InitSkyMap(FLevelLocals *Level);
 void R_InitSkyMap();
 void R_UpdateSky (uint64_t mstime);
-
-// 57 world units roughly represent one sky texel for the glTranslate call.
-enum
-{
-	skyoffsetfactor = 57
-};
 
 
 #endif //__R_SKY_H__

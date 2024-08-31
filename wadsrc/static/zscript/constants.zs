@@ -36,6 +36,7 @@ enum ESawFlags
 	SF_NOPULLIN = 32,
 	SF_NOTURN = 64,
 	SF_STEALARMOR = 128,
+	SF_NORANDOMPUFFZ = 256,
 };
 
 // Flags for A_BFGSpray
@@ -139,6 +140,8 @@ enum EChaseFlags
 	CHF_NODIRECTIONTURN =				64,
 	CHF_NOPOSTATTACKTURN =				128,
 	CHF_STOPIFBLOCKED =					256,
+	CHF_DONTIDLE =						512,
+	CHF_DONTLOOKALLAROUND =				1024,
 
 	CHF_DONTTURN = CHF_NORANDOMTURN | CHF_NOPOSTATTACKTURN | CHF_STOPIFBLOCKED
 };
@@ -229,6 +232,8 @@ enum EMorphFlags
 	MRF_UNDOBYTIMEOUT		= 0x00001000,
 	MRF_UNDOALWAYS			= 0x00002000,
 	MRF_TRANSFERTRANSLATION = 0x00004000,
+	MRF_KEEPARMOR			= 0x00008000,
+	MRF_IGNOREINVULN		= 0x00010000,
 	MRF_STANDARDUNDOING	= MRF_UNDOBYTOMEOFPOWER | MRF_UNDOBYCHAOSDEVICE | MRF_UNDOBYTIMEOUT,
 };
 
@@ -259,7 +264,9 @@ enum EExplodeFlags
 	XF_EXPLICITDAMAGETYPE = 8,
 	XF_NOSPLASH = 16,
 	XF_THRUSTZ = 32,
-
+	XF_THRUSTLESS = 64,
+	XF_NOALLIES = 128,
+	XF_CIRCULAR = 256,
 };
 
 // Flags for A_RadiusThrust
@@ -284,6 +291,7 @@ enum EBlastFlags
 	BF_DONTWARN = 2,
 	BF_AFFECTBOSSES = 4,
 	BF_NOIMPACTDAMAGE = 8,
+	BF_ONLYVISIBLETHINGS = 16,
 };
 
 // Flags for A_SeekerMissile
@@ -362,6 +370,22 @@ enum ERadiusGiveFlags
 	RGF_EITHER		=	1 << 17,
 };
 
+// SetAnimation flags
+enum ESetAnimationFlags
+{
+	SAF_INSTANT = 1 << 0,
+	SAF_LOOP = 1 << 1,
+	SAF_NOOVERRIDE = 1 << 2,
+};
+
+// Change model flags
+enum ChangeModelFlags
+{
+	CMDL_WEAPONTOPLAYER = 1,
+	CMDL_HIDEMODEL = 1 << 1,
+	CMDL_USESURFACESKIN = 1 << 2,
+};
+
 // Activation flags
 enum EActivationFlags
 {
@@ -394,56 +418,20 @@ enum EActivationFlags
 	
 };
 
+// [MC] Flags for SetViewPos.
+enum EViewPosFlags
+{
+	VPSF_ABSOLUTEOFFSET =		1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =			1 << 2,			// Use absolute position.
+	VPSF_ALLOWOUTOFBOUNDS =	1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
+	VPSF_ORTHOGRAPHIC =		1 << 4,			// Use orthographic projection (hardware renderer only).
+};
+
 // Flags for A_TakeInventory and A_TakeFromTarget
 enum ETakeFlags
 {
 	TIF_NOTAKEINFINITE = 1
 };
-
-// constants for A_PlaySound
-enum ESoundFlags
-{
-	CHAN_AUTO = 0,
-	CHAN_WEAPON = 1,
-	CHAN_VOICE = 2,
-	CHAN_ITEM = 3,
-	CHAN_BODY = 4,
-	CHAN_5 = 5,
-	CHAN_6 = 6,
-	CHAN_7 = 7,
-	
-	// modifier flags
-	CHAN_LISTENERZ = 8,
-	CHAN_MAYBE_LOCAL = 16,
-	CHAN_UI = 32,
-	CHAN_NOPAUSE = 64,
-	CHAN_LOOP = 256,
-	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
-	CHAN_NOSTOP = 4096,
-	CHAN_OVERLAP = 8192,
-
-	// Same as above, with an F appended to allow better distinction of channel and channel flags.
-	CHANF_DEFAULT = 0,	// just to make the code look better and avoid literal 0's.
-	CHANF_LISTENERZ = 8,
-	CHANF_MAYBE_LOCAL = 16,
-	CHANF_UI = 32,
-	CHANF_NOPAUSE = 64,
-	CHANF_LOOP = 256,
-	CHANF_NOSTOP = 4096,
-	CHANF_OVERLAP = 8192,
-	CHANF_LOCAL = 16384,
-
-
-	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
-
-};
-
-// sound attenuation values
-const ATTN_NONE = 0;
-const ATTN_NORM = 1;
-const ATTN_IDLE = 1.001;
-const ATTN_STATIC = 3;
-
 // For SetPlayerProperty action special
 enum EPlayerProperties
 {
@@ -462,6 +450,12 @@ enum EPlayerProperties
 	PROP_FLIGHT = 12, // (Deprecated)
 	PROP_SPEED = 15, // (Deprecated)
 	PROP_BUDDHA = 16,
+	PROP_BUDDHA2 = 17,
+	PROP_FRIGHTENING = 18,
+	PROP_NOCLIP = 19,
+	PROP_NOCLIP2 = 20,
+	PROP_GODMODE = 21,
+	PROP_GODMODE2 = 22,
 }
 
 // Line_SetBlocking
@@ -475,6 +469,10 @@ enum EBlockFlags
 	BLOCKF_EVERYTHING = 32,
 	BLOCKF_RAILING = 64,
 	BLOCKF_USE = 128,
+	BLOCKF_SIGHT = 256,
+	BLOCKF_HITSCAN = 512,
+	BLOCKF_SOUND = 1024,
+	BLOCKF_LANDMONSTERS = 2048,
 };
 
 // Pointer constants, bitfield-enabled
@@ -547,6 +545,7 @@ enum EAngleFlags
 {
 	SPF_FORCECLAMP = 1,
 	SPF_INTERPOLATE = 2,
+	SPF_SCALEDNOLERP = 4,
 };
 
 // flags for A_CheckLOF
@@ -665,6 +664,11 @@ enum EQuakeFlags
 	QF_MAX =			1 << 3,
 	QF_FULLINTENSITY =	1 << 4,
 	QF_WAVE =			1 << 5,
+	QF_3D =				1 << 6,
+	QF_GROUNDONLY =		1 << 7,
+	QF_AFFECTACTORS =	1 << 8,
+	QF_SHAKEONLY =		1 << 9,
+	QF_DAMAGEFALLOFF =	1 << 10,
 };
 
 // A_CheckProximity flags
@@ -702,14 +706,23 @@ enum ECheckBlockFlags
 
 enum EParticleFlags
 {
-	SPF_FULLBRIGHT =	1,
-	SPF_RELPOS =		1 << 1,
-	SPF_RELVEL =		1 << 2,
-	SPF_RELACCEL =		1 << 3,
-	SPF_RELANG =		1 << 4,
-	SPF_NOTIMEFREEZE =	1 << 5,
+	SPF_FULLBRIGHT				= 1 << 0,
+	SPF_RELPOS					= 1 << 1,
+	SPF_RELVEL					= 1 << 2,
+	SPF_RELACCEL				= 1 << 3,
+	SPF_RELANG					= 1 << 4,
+	SPF_NOTIMEFREEZE			= 1 << 5,
+	SPF_ROLL					= 1 << 6,
+	SPF_REPLACE					= 1 << 7,
+	SPF_NO_XY_BILLBOARD			= 1 << 8,
+	SPF_LOCAL_ANIM				= 1 << 9,
+	SPF_NEGATIVE_FADESTEP		= 1 << 10,
+	SPF_FACECAMERA				= 1 << 11,
+	SPF_NOFACECAMERA			= 1 << 12,
+	SPF_ROLLCENTER				= 1 << 13,
+	SPF_NOMIPMAP				= 1 << 14,
 
-	SPF_RELATIVE =	SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
+	SPF_RELATIVE				= SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
 };
 
 //Flags for A_FaceMovementDirection
@@ -738,22 +751,36 @@ enum EWeaponOffsetFlags
 	WOF_KEEPY =		1 << 1,
 	WOF_ADD =		1 << 2,
 	WOF_INTERPOLATE = 1 << 3,
+	WOF_RELATIVE	= 1 << 4,
+	WOF_ZEROY		= 1 << 5,
 };
 
 // Flags for psprite layers
 enum EPSpriteFlags
 {
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_ALPHA		= 1 << 4,
-	PSPF_RENDERSTYLE= 1 << 5,
-	PSPF_FLIP		= 1 << 6,
-	PSPF_FORCEALPHA	= 1 << 7,
-	PSPF_FORCESTYLE	= 1 << 8,
-	PSPF_MIRROR		= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_ADDWEAPON		= 1 << 0,
+	PSPF_ADDBOB			= 1 << 1,
+	PSPF_POWDOUBLE		= 1 << 2,
+	PSPF_CVARFAST		= 1 << 3,
+	PSPF_ALPHA			= 1 << 4,
+	PSPF_RENDERSTYLE	= 1 << 5,
+	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
+	PSPF_MIRROR			= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
+};
+
+// Alignment constants for A_OverlayPivotAlign
+enum EPSpriteAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
 };
 
 // Default psprite layers
@@ -762,6 +789,9 @@ enum EPSPLayers
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
+	PSP_TARGETCENTER = int.max - 2,
+	PSP_TARGETLEFT,
+	PSP_TARGETRIGHT
 };
 
 enum EInputFlags
@@ -821,6 +851,8 @@ enum EButtons
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+
+	BT_RUN			= 1<<25,
 };
 
 // Flags for GetAngle
@@ -848,31 +880,6 @@ enum EMaskRotationFlags
 	VRF_NOANGLE = VRF_NOANGLESTART|VRF_NOANGLEEND,
 	VRF_NOPITCH = VRF_NOPITCHSTART|VRF_NOPITCHEND,
 };
-
-enum ERenderStyle
-{
-	STYLE_None,				// Do not draw
-	STYLE_Normal,			// Normal; just copy the image to the screen
-	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
-	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
-	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
-	STYLE_Stencil,			// Fill image interior with alphacolor
-	STYLE_Translucent,		// Draw translucent
-	STYLE_Add,				// Draw additive
-	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
-	STYLE_TranslucentStencil,
-	STYLE_Shadow,
-	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
-	STYLE_AddStencil,		// Fill image interior with alphacolor
-	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
-	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
-	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
-	STYLE_ColorBlend,		// Use color intensity as transparency factor
-	STYLE_Source,			// No blending (only used internally)
-	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
-
-};
-
 // Type definition for the implicit 'callingstate' parameter that gets passed to action functions.
 enum EStateType
 {
@@ -997,6 +1004,7 @@ enum EMapThingFlags
 
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
+	MTF_NOCOUNT			= 0x200000,	// Removes COUNTKILL/COUNTITEM
 };
 
 enum ESkillProperty
@@ -1014,6 +1022,8 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -1047,7 +1057,6 @@ enum ETranslationTable
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
 	TRANSLATION_Custom,
-	TRANSLATION_Font,
 };
 
 enum EFindFloorCeiling
@@ -1109,18 +1118,6 @@ enum PaletteFlashFlags
 	PF_HAZARD			= 8,
 };
 
-enum EGameState
-{
-	GS_LEVEL,
-	GS_INTERMISSION,
-	GS_FINALE,
-	GS_DEMOSCREEN,
-	GS_FULLCONSOLE,
-	GS_HIDECONSOLE,
-	GS_STARTUP,
-	GS_TITLELEVEL,
-}
-
 enum EGameAction
 {
 	ga_nothing,
@@ -1169,6 +1166,10 @@ enum EPlayerCheats
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
+	CF_INTERPVIEWANGLES	= 1 << 15,		// [MR] flag for interpolating view angles without interpolating the entire frame
+	CF_NOFOVINTERP		= 1 << 16,		// [B] Disable FOV interpolation when instantly zooming
+	CF_SCALEDNOLERP		= 1 << 17,		// [MR] flag for applying angles changes in the ticrate without interpolating the frame
+	CF_NOVIEWPOSINTERP	= 1 << 18,		// Disable view position interpolation.
 
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
 
@@ -1185,40 +1186,6 @@ enum EPlayerCheats
 	CF_DOUBLEFIRINGSPEED= 0,
 	CF_INFINITEAMMO		= 0,
 };
-
-const TEXTCOLOR_BRICK			= "\034A";
-const TEXTCOLOR_TAN				= "\034B";
-const TEXTCOLOR_GRAY			= "\034C";
-const TEXTCOLOR_GREY			= "\034C";
-const TEXTCOLOR_GREEN			= "\034D";
-const TEXTCOLOR_BROWN			= "\034E";
-const TEXTCOLOR_GOLD			= "\034F";
-const TEXTCOLOR_RED				= "\034G";
-const TEXTCOLOR_BLUE			= "\034H";
-const TEXTCOLOR_ORANGE			= "\034I";
-const TEXTCOLOR_WHITE			= "\034J";
-const TEXTCOLOR_YELLOW			= "\034K";
-const TEXTCOLOR_UNTRANSLATED	= "\034L";
-const TEXTCOLOR_BLACK			= "\034M";
-const TEXTCOLOR_LIGHTBLUE		= "\034N";
-const TEXTCOLOR_CREAM			= "\034O";
-const TEXTCOLOR_OLIVE			= "\034P";
-const TEXTCOLOR_DARKGREEN		= "\034Q";
-const TEXTCOLOR_DARKRED			= "\034R";
-const TEXTCOLOR_DARKBROWN		= "\034S";
-const TEXTCOLOR_PURPLE			= "\034T";
-const TEXTCOLOR_DARKGRAY		= "\034U";
-const TEXTCOLOR_CYAN			= "\034V";
-const TEXTCOLOR_ICE				= "\034W";
-const TEXTCOLOR_FIRE			= "\034X";
-const TEXTCOLOR_SAPPHIRE		= "\034Y";
-const TEXTCOLOR_TEAL			= "\034Z";
-
-const TEXTCOLOR_NORMAL			= "\034-";
-const TEXTCOLOR_BOLD			= "\034+";
-
-const TEXTCOLOR_CHAT			= "\034*";
-const TEXTCOLOR_TEAMCHAT		= "\034!";
 
 enum EWeaponState
 {
@@ -1270,6 +1237,8 @@ enum SPAC
 	SPAC_MUse = 1<<8,		// monsters can use
 	SPAC_MPush = 1<<9,		// monsters can push
 	SPAC_UseBack = 1<<10,	// Can be used from the backside
+	SPAC_Damage = 1<<11,	// [ZZ] when linedef receives damage
+	SPAC_Death = 1<<12,		// [ZZ] when linedef receives damage and has 0 health
 
 	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
 };
@@ -1281,7 +1250,10 @@ enum RadiusDamageFlags
 	RADF_SOURCEISSPOT = 4,
 	RADF_NODAMAGE = 8,
 	RADF_THRUSTZ = 16,
-	RADF_OLDRADIUSDAMAGE = 32
+	RADF_OLDRADIUSDAMAGE = 32,
+	RADF_THRUSTLESS = 64,
+	RADF_NOALLIES = 128,
+	RADF_CIRCULAR = 256
 };
 
 enum IntermissionSequenceType
@@ -1319,6 +1291,122 @@ enum EChangeLevelFlags
 	CHANGELEVEL_PRERAISEWEAPON = 64,
 };
 
+enum ELevelFlags
+{
+	LEVEL_NOINTERMISSION		= 0x00000001,
+	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.
+	LEVEL_DOUBLESKY				= 0x00000004,
+	LEVEL_HASFADETABLE			= 0x00000008,	// Level uses Hexen's fadetable mapinfo to get fog
+
+	LEVEL_MAP07SPECIAL			= 0x00000010,
+	LEVEL_BRUISERSPECIAL		= 0x00000020,
+	LEVEL_CYBORGSPECIAL			= 0x00000040,
+	LEVEL_SPIDERSPECIAL			= 0x00000080,
+
+	LEVEL_SPECLOWERFLOOR		= 0x00000100,
+	LEVEL_SPECOPENDOOR			= 0x00000200,
+	LEVEL_SPECLOWERFLOORTOHIGHEST=0x00000300,
+	LEVEL_SPECACTIONSMASK		= 0x00000300,
+
+	LEVEL_MONSTERSTELEFRAG		= 0x00000400,
+	LEVEL_ACTOWNSPECIAL			= 0x00000800,
+	LEVEL_SNDSEQTOTALCTRL		= 0x00001000,
+	LEVEL_FORCETILEDSKY		= 0x00002000,
+
+	LEVEL_CROUCH_NO				= 0x00004000,
+	LEVEL_JUMP_NO				= 0x00008000,
+	LEVEL_FREELOOK_NO			= 0x00010000,
+	LEVEL_FREELOOK_YES			= 0x00020000,
+
+	// The absence of both of the following bits means that this level does not
+	// use falling damage (though damage can be forced with dmflags,.
+	LEVEL_FALLDMG_ZD			= 0x00040000,	// Level uses ZDoom's falling damage
+	LEVEL_FALLDMG_HX			= 0x00080000,	// Level uses Hexen's falling damage
+
+	LEVEL_HEADSPECIAL			= 0x00100000,	// Heretic episode 1/4
+	LEVEL_MINOTAURSPECIAL		= 0x00200000,	// Heretic episode 2/5
+	LEVEL_SORCERER2SPECIAL		= 0x00400000,	// Heretic episode 3
+	LEVEL_SPECKILLMONSTERS		= 0x00800000,
+
+	LEVEL_STARTLIGHTNING		= 0x01000000,	// Automatically start lightning
+	LEVEL_FILTERSTARTS			= 0x02000000,	// Apply mapthing filtering to player starts
+	LEVEL_LOOKUPLEVELNAME		= 0x04000000,	// Level name is the name of a language string
+	LEVEL_USEPLAYERSTARTZ		= 0x08000000,	// Use the Z position of player starts
+
+	LEVEL_SWAPSKIES				= 0x10000000,	// Used by lightning
+	LEVEL_NOALLIES				= 0x20000000,	// i.e. Inside Strife's front base
+	LEVEL_CHANGEMAPCHEAT		= 0x40000000,	// Don't display cluster messages
+	LEVEL_VISITED				= 0x80000000,	// Used for intermission map
+
+	// The flags uint64_t is now split into 2 DWORDs 
+	LEVEL2_RANDOMPLAYERSTARTS	= 0x00000001,	// Select single player starts randomnly (no voodoo dolls)
+	LEVEL2_ALLMAP				= 0x00000002,	// The player picked up a map on this level
+
+	LEVEL2_LAXMONSTERACTIVATION	= 0x00000004,	// Monsters can open doors depending on the door speed
+	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
+
+	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
+	LEVEL2_NEEDCLUSTERTEXT		= 0x00000020,	// A map with this flag needs to retain its cluster intermission texts when being redefined in UMAPINFO
+
+	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
+
+	LEVEL2_PRERAISEWEAPON		= 0x00000080,	// players should spawn with their weapons fully raised (but not when respawning it multiplayer)
+	LEVEL2_MONSTERFALLINGDAMAGE	= 0x00000100,
+	LEVEL2_CLIPMIDTEX			= 0x00000200,
+	LEVEL2_WRAPMIDTEX			= 0x00000400,
+
+	LEVEL2_CHECKSWITCHRANGE		= 0x00000800,	
+
+	LEVEL2_PAUSE_MUSIC_IN_MENUS	= 0x00001000,
+	LEVEL2_TOTALINFIGHTING		= 0x00002000,
+	LEVEL2_NOINFIGHTING			= 0x00004000,
+
+	LEVEL2_NOMONSTERS			= 0x00008000,
+	LEVEL2_INFINITE_FLIGHT		= 0x00010000,
+
+	LEVEL2_ALLOWRESPAWN			= 0x00020000,
+
+	LEVEL2_FORCETEAMPLAYON		= 0x00040000,
+	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
+
+	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
+	LEVEL2_NOCLUSTERTEXT		= 0x00200000,	// ignore intermission texts fro clusters. This gets set when UMAPINFO is used to redefine its properties.
+	LEVEL2_DUMMYSWITCHES		= 0x00400000,
+	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
+
+	LEVEL2_SMOOTHLIGHTING		= 0x01000000,	// Level uses the smooth lighting feature.
+	LEVEL2_POLYGRIND			= 0x02000000,	// Polyobjects grind corpses to gibs.
+	LEVEL2_RESETINVENTORY		= 0x04000000,	// Resets player inventory when starting this level (unless in a hub)
+	LEVEL2_RESETHEALTH			= 0x08000000,	// Resets player health when starting this level (unless in a hub)
+
+	LEVEL2_NOSTATISTICS			= 0x10000000,	// This level should not have statistics collected
+	LEVEL2_ENDGAME				= 0x20000000,	// This is an epilogue level that cannot be quit.
+	LEVEL2_NOAUTOSAVEHINT		= 0x40000000,	// tell the game that an autosave for this level does not need to be kept
+	LEVEL2_FORGETSTATE			= 0x80000000,	// forget this map's state in a hub
+	
+	// More flags!
+	LEVEL3_FORCEFAKECONTRAST	= 0x00000001,	// forces fake contrast even with fog enabled
+	LEVEL3_REMOVEITEMS			= 0x00000002,	// kills all INVBAR items on map change.
+	LEVEL3_ATTENUATE			= 0x00000004,	// attenuate lights?
+	LEVEL3_NOLIGHTFADE			= 0x00000008,	// no light fading to black.
+	LEVEL3_NOCOLOREDSPRITELIGHTING = 0x00000010,	// draw sprites only with color-less light
+	LEVEL3_EXITNORMALUSED		= 0x00000020,
+	LEVEL3_EXITSECRETUSED		= 0x00000040,
+	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
+	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
+	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
+	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_E1M8SPECIAL			= 0x00000800,
+	LEVEL3_E2M8SPECIAL			= 0x00001000,
+	LEVEL3_E3M8SPECIAL			= 0x00002000,
+	LEVEL3_E4M8SPECIAL			= 0x00004000,
+	LEVEL3_E4M6SPECIAL			= 0x00008000,
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
+};
+
 // [RH] Compatibility flags.
 enum ECompatFlags
 {
@@ -1347,7 +1435,8 @@ enum ECompatFlags
 	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
 	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
 	COMPATF_MBFMONSTERMOVE	= 1 << 24,	// Monsters are affected by friction and pushers/pullers.
-	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_CORPSEGIBS		= 1 << 25,	// only needed for some hypothetical mod checking this flag.
+	COMPATF_VILEGHOSTS		= 1 << 25,	// Crushed monsters are resurrected as ghosts.
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
 	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
@@ -1366,26 +1455,52 @@ enum ECompatFlags
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
+	COMPATF2_AVOID_HAZARDS	= 1 << 12,	// another MBF thing.
+	COMPATF2_STAYONLIFT		= 1 << 13,	// yet another MBF thing.
+	COMPATF2_NOMBF21		= 1 << 14,	// disable MBF21 features that may clash with certain maps
+	COMPATF2_VOODOO_ZOMBIES = 1 << 15,  // allow playerinfo, playerpawn, and voodoo health to all be different, and allow monster targetting of 'dead' players that have positive health
 };
 
-enum EMonospacing
-{
-	Mono_Off = 0,
-	Mono_CellLeft = 1,
-	Mono_CellCenter = 2,
-	Mono_CellRight = 3
-};
+const M_E        = 2.7182818284590452354;  // e
+const M_LOG2E    = 1.4426950408889634074;  // log_2 e
+const M_LOG10E   = 0.43429448190325182765; // log_10 e
+const M_LN2      = 0.69314718055994530942; // log_e 2
+const M_LN10     = 2.30258509299404568402; // log_e 10
+const M_PI       = 3.14159265358979323846; // pi
+const M_PI_2     = 1.57079632679489661923; // pi/2
+const M_PI_4     = 0.78539816339744830962; // pi/4
+const M_1_PI     = 0.31830988618379067154; // 1/pi
+const M_2_PI     = 0.63661977236758134308; // 2/pi
+const M_2_SQRTPI = 1.12837916709551257390; // 2/sqrt(pi)
+const M_SQRT2    = 1.41421356237309504880; // sqrt(2)
+const M_SQRT1_2  = 0.70710678118654752440; // 1/sqrt(2)
 
-enum EPrintLevel
+// Used by Actor.FallAndSink
+const WATER_SINK_FACTOR         = 0.125;
+const WATER_SINK_SMALL_FACTOR   = 0.25;
+const WATER_SINK_SPEED          = 0.5;
+const WATER_JUMP_SPEED          = 3.5;
+
+
+// for SetModelFlag/ClearModelFlag
+enum EModelFlags
 {
-	PRINT_LOW,		// pickup messages
-	PRINT_MEDIUM,	// death messages
-	PRINT_HIGH,		// critical messages
-	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT,	// chat messages from a teammate
-	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200,				// What Printf_Bold used
-	PRINT_TYPES = 1023,		// Bitmask.
-	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
-	PRINT_NOLOG = 2048,		// Flag - do not print to log file
+	// [BB] Color translations for the model skin are ignored. This is
+	// useful if the skin texture is not using the game palette.
+	MDL_IGNORETRANSLATION			= 1<<0,
+	MDL_PITCHFROMMOMENTUM			= 1<<1,
+	MDL_ROTATING					= 1<<2,
+	MDL_INTERPOLATEDOUBLEDFRAMES	= 1<<3,
+	MDL_NOINTERPOLATION				= 1<<4,
+	MDL_USEACTORPITCH				= 1<<5,
+	MDL_USEACTORROLL				= 1<<6,
+	MDL_BADROTATION					= 1<<7,
+	MDL_DONTCULLBACKFACES			= 1<<8,
+	MDL_USEROTATIONCENTER			= 1<<9,
+	MDL_NOPERPIXELLIGHTING			= 1<<10, // forces a model to not use per-pixel lighting. useful for voxel-converted-to-model objects.
+	MDL_SCALEWEAPONFOV				= 1<<11,	// scale weapon view model with higher user FOVs
+	MDL_MODELSAREATTACHMENTS		= 1<<12,	// any model index after 0 is treated as an attachment, and therefore will use the bone results of index 0
+	MDL_CORRECTPIXELSTRETCH			= 1<<13,	// ensure model does not distort with pixel stretch when pitch/roll is applied
+	MDL_FORCECULLBACKFACES			= 1<<14,
 };

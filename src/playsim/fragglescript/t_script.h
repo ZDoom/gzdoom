@@ -28,7 +28,7 @@
 #include "p_lnspec.h"
 #include "m_fixed.h"
 #include "actor.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #ifdef _MSC_VER
 // This pragma saves 8kb of wasted code.
@@ -38,11 +38,11 @@
 class DFraggleThinker;
 
 
-class CFraggleScriptError : public CDoomError
+class CFraggleScriptError : public CEngineError
 {
 public:
-	CFraggleScriptError() : CDoomError() {}
-	CFraggleScriptError(const char *message) : CDoomError(message) {}
+	CFraggleScriptError() : CEngineError() {}
+	CFraggleScriptError(const char *message) : CEngineError(message) {}
 };
 
 
@@ -101,13 +101,8 @@ struct svalue_t
 		value.i = 0;
 	}
 
-	svalue_t(const svalue_t & other)
-	{
-		type = other.type;
-		string = other.string;
-		value = other.value;
-	}
-
+	svalue_t(const svalue_t & other) = default;
+	svalue_t& operator=(const svalue_t& other) = default;
 	void setInt(int ip)
 	{
 		value.i = ip;
@@ -278,7 +273,7 @@ public:
 
 	CFsError(const FString &in)
 	{
-		strncpy(msg, in, 2047);
+		strncpy(msg, in.GetChars(), 2047);
 		msg[2047]=0;
 	}
 };
@@ -303,7 +298,7 @@ class DFsScript : public DObject
 public:
 	// script data
 
-	char *data;
+	TArray<char> Data;
 	int scriptnum;  // this script's number
 	int len;
 
@@ -335,7 +330,6 @@ public:
 	// true or false
 
 	DFsScript();
-	~DFsScript();
 	void OnDestroy() override;
 	void Serialize(FSerializer &ar);
 
@@ -354,7 +348,7 @@ public:
 	void ClearSections();
 	void ClearChildren();
 
-	int MakeIndex(const char *p) { return int(p-data); }
+	int MakeIndex(const char *p) { return int(p-Data.Data()); }
 
 	// preprocessor
 	int section_hash(const char *b) { return MakeIndex(b) % SECTIONSLOTS; }
@@ -707,7 +701,7 @@ public:
 	void Tick();
 	void InitFunctions();
 	size_t PropagateMark();
-	size_t PointerSubstitution (DObject *old, DObject *notOld);
+	size_t PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail);
 	bool wait_finished(DRunningScript *script);
 	void AddRunningScript(DRunningScript *runscr);
 

@@ -33,23 +33,12 @@ struct event_t;
 class player_t;
 
 //
-// Globally visible constants.
-//
-#define HU_FONTSTART	uint8_t('!')		// the first font characters
-#define HU_FONTEND		uint8_t('\377')	// the last font characters
-
-// Calculate # of glyphs in font.
-#define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
-
-//
 // Chat routines
 //
 
 void CT_Init (void);
 bool CT_Responder (event_t* ev);
 void CT_Drawer (void);
-
-extern int chatmodeon;
 
 // [RH] Draw deathmatch scores
 

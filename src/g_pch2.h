@@ -1,4 +1,5 @@
 // This is separate because the files being compiled with it use different compiler settings which may affect how the header is compiled
+#pragma once
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,7 +11,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdint.h>
-#include <zlib.h>
+#include <miniz.h>
 #include <new>
 #include <algorithm>
 #include <sys/stat.h>

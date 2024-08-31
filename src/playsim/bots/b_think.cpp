@@ -78,13 +78,13 @@ void DBot::Think ()
 		ThinkForMove (cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
+		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees() * (65536 / 360.f)) / ticdup;
+		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees() * (65536 / 360.f));
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;
-		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * ticdup * (360 / 65536.f));
-		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * ticdup * (360 / 65536.f));
+		actor->Angles.Yaw = oldyaw + DAngle::fromDeg(cmd->ucmd.yaw * ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle::fromDeg(cmd->ucmd.pitch * ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;
@@ -118,7 +118,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	dist = dest ? player->mo->Distance2D(dest) : 0;
 
 	if (missile &&
-		(!missile->Vel.X || !missile->Vel.Y || !Check_LOS(missile, SHOOTFOV*3/2)))
+		(!missile->Vel.X || !missile->Vel.Y || !Check_LOS(missile, DAngle::fromDeg(SHOOTFOV*3/2))))
 	{
 		sleft = !sleft;
 		missile = nullptr; //Probably ended its travel.
@@ -147,7 +147,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		}
 
 		//If able to see enemy while avoiding missile, still fire at enemy.
-		if (enemy && Check_LOS (enemy, SHOOTFOV)) 
+		if (enemy && Check_LOS (enemy, DAngle::fromDeg(SHOOTFOV)))
 			Dofire (cmd); //Order bot to fire current weapon
 	}
 	else if (enemy && P_CheckSight (player->mo, enemy, 0)) //Fight!
@@ -259,7 +259,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	/////
 	roam:
 	/////
-		if (enemy && Check_LOS (enemy, SHOOTFOV*3/2)) //If able to see enemy while avoiding missile , still fire at it.
+		if (enemy && Check_LOS (enemy, DAngle::fromDeg(SHOOTFOV*3/2))) //If able to see enemy while avoiding missile , still fire at it.
 			Dofire (cmd); //Order bot to fire current weapon
 
 		if (dest && !(dest->flags&MF_SPECIAL) && dest->health < 0)
@@ -339,7 +339,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (t_fight<(AFTERTICS/2))
 		player->mo->flags |= MF_DROPOFF;
 
-	old = player->mo->Pos();
+	old = player->mo->Pos().XY();
 }
 
 int P_GetRealMaxHealth(AActor *actor, int max);
@@ -387,8 +387,8 @@ void DBot::WhatToGet (AActor *item)
 	else if (item->GetClass()->TypeName == NAME_Megasphere || item->IsKindOf(NAME_Health))
 	{
 		// do the test with the health item that's actually given.
-		AActor* const testItem = NAME_Megasphere == item->GetClass()->TypeName
-			? GetDefaultByName("MegasphereHealth")
+		AActor* const testItem = item->GetClass()->TypeName == NAME_Megasphere
+			? GetDefaultByName(NAME_MegasphereHealth)
 			: item;
 		if (nullptr != testItem)
 		{

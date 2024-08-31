@@ -206,7 +206,7 @@ decal BloodSmear1
 
 decal BloodSmear2
 {
-	pic BSMEAR1
+	pic BSMEAR2
 	x-scale 0.625
 	y-scale 0.625
 	shade "BloodDefault"
@@ -1091,6 +1091,8 @@ generator CrossbowFX1			CrossbowScorch
 generator CrossbowFX2			CrossbowScorch
 generator CrossbowFX3			CrossbowScorch2
 generator MaceFX1			BaronScorch
+generator MaceFX2			BaronScorch
+generator MaceFX3			BaronScorch
 generator MaceFX4			BFGScorch
 generator Blaster			RailScorchLower
 generator BlasterFX1			HImpScorch

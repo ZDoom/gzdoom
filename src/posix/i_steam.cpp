@@ -38,7 +38,7 @@
 #include "m_misc.h"
 #endif // __APPLE__
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "d_main.h"
 #include "sc_man.h"
 #include "cmdlib.h"
@@ -160,7 +160,11 @@ static struct SteamAppInfo
 	{"Hexen Deathkings of the Dark Citadel/base", 2370},
 	{"Ultimate Doom/base", 2280},
 	{"DOOM 3 BFG Edition/base/wads", 208200},
-	{"Strife", 317040}
+	{"Strife", 317040},
+	{"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets", 2280},
+	{"Doom 2/rerelease/DOOM II_Data/StreamingAssets", 2300},
+	{"Doom 2/finaldoombase", 2300},
+    {"Master Levels of Doom/doom2", 9160}
 };
 
 TArray<FString> I_GetSteamPath()
@@ -176,7 +180,7 @@ TArray<FString> I_GetSteamPath()
 	FString regPath = appSupportPath + "/Steam/config/config.vdf";
 	try
 	{
-		SteamInstallFolders = ParseSteamRegistry(regPath);
+		SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 	}
 	catch(class CRecoverableError &error)
 	{
@@ -184,7 +188,7 @@ TArray<FString> I_GetSteamPath()
 		return result;
 	}
 
-	SteamInstallFolders.Push(appSupportPath + "/Steam/SteamApps/common");
+	SteamInstallFolders.Push(appSupportPath + "/Steam/steamapps/common");
 #else
 	char* home = getenv("HOME");
 	if(home != NULL && *home != '\0')
@@ -195,11 +199,11 @@ TArray<FString> I_GetSteamPath()
 		// .steam at some point. Not sure if it's just my setup so I guess we
 		// can fall back on it?
 		if(!FileExists(regPath))
-			regPath.Format("%s/.local/share/Steam/config/config.vdf", home);
+			regPath.Format("%s/.steam/steam/config/config.vdf", home);
 
 		try
 		{
-			SteamInstallFolders = ParseSteamRegistry(regPath);
+			SteamInstallFolders = ParseSteamRegistry(regPath.GetChars());
 		}
 		catch(class CRecoverableError &error)
 		{
@@ -207,7 +211,7 @@ TArray<FString> I_GetSteamPath()
 			return result;
 		}
 
-		regPath.Format("%s/.local/share/Steam/SteamApps/common", home);
+		regPath.Format("%s/.steam/steam/steamapps/common", home);
 		SteamInstallFolders.Push(regPath);
 	}
 #endif
@@ -218,10 +222,16 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
-			if(DirExists(candidate))
+			if(DirExists(candidate.GetChars()))
 				result.Push(candidate);
 		}
 	}
 
 	return result;
+}
+
+TArray<FString> I_GetGogPaths()
+{
+	// GOG's Doom games are Windows only at the moment
+	return TArray<FString>();
 }

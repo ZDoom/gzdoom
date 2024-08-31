@@ -34,7 +34,8 @@
 
 #include "decallib.h"
 #include "a_decalfx.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "a_sharedglobal.h"
 #include "g_levellocals.h"
 #include "m_fixed.h"

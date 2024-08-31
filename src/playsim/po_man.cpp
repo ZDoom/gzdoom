@@ -32,7 +32,8 @@
 #include "r_data/r_interpolate.h"
 #include "po_man.h"
 #include "p_setup.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "p_blockmap.h"
 #include "p_maputl.h"
 #include "r_utility.h"
@@ -225,7 +226,7 @@ void DMovePoly::Serialize(FSerializer &arc)
 void DMovePoly::Construct(FPolyObj *polyNum)
 {
 	Super::Construct(polyNum);
-	m_Angle = 0.;
+	m_Angle = nullAngle;
 	m_Speedv = { 0,0 };
 }
 
@@ -274,7 +275,7 @@ void DPolyDoor::Construct (FPolyObj * polyNum, podoortype_t type)
 {
 	Super::Construct(polyNum);
 	m_Type = type;
-	m_Direction = 0.;
+	m_Direction = nullAngle;
 	m_TotalDist = 0;
 	m_Tics = 0;
 	m_WaitTics = 0;
@@ -299,7 +300,7 @@ void DRotatePoly::Tick ()
 		m_Speed = m_Speed < 0 ? -m_Dist : m_Dist;
 	}
 
-	if (m_PolyObj->RotatePolyobj (m_Speed))
+	if (m_PolyObj->RotatePolyobj (DAngle::fromDeg(m_Speed)))
 	{
 		if (m_Dist == -1)
 		{ // perpetual polyobj
@@ -441,7 +442,7 @@ bool EV_MovePoly (FLevelLocals *Level, line_t *line, int polyNum, double speed, 
 			pe->StopInterpolation ();
 		}
 
-		angle += 180.;	// Reverse the angle.
+		angle += DAngle::fromDeg(180.);	// Reverse the angle.
 	}
 	return pe != nullptr;	// Return true if something started moving.
 }
@@ -510,6 +511,7 @@ bool EV_MovePolyTo(FLevelLocals *Level, line_t *line, int polyNum, double speed,
 		pe->m_Speed = speed;
 		pe->m_Speedv = dist * speed;
 		pe->m_Target = poly->StartSpot.pos + dist * distlen;
+		SN_StartSequence(poly, poly->seqType, SEQ_DOOR, 0);
 		if ((pe->m_Dist / pe->m_Speed) <= 2)
 		{
 			pe->StopInterpolation();
@@ -583,7 +585,7 @@ void DPolyDoor::Tick ()
 		break;
 
 	case PODOOR_SWING:
-		if (m_Dist <= 0 || m_PolyObj->RotatePolyobj (m_Speed))
+		if (m_Dist <= 0 || m_PolyObj->RotatePolyobj(DAngle::fromDeg(m_Speed)))
 		{
 			double absSpeed = fabs (m_Speed);
 			m_Dist -= absSpeed;
@@ -666,14 +668,14 @@ bool EV_OpenPolyDoor(FLevelLocals *Level, line_t *line, int polyNum, double spee
 			pd->m_Direction = angle;
 			pd->m_Speedv = angle.ToVector(speed);
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
-			angle += 180.;	// reverse the angle
+			angle += DAngle::fromDeg(180.);	// reverse the angle
 		}
 		else if (type == PODOOR_SWING)
 		{
 			pd->m_WaitTics = delay;
-			pd->m_Direction.Degrees = swingdir; 
+			pd->m_Direction = DAngle::fromDeg(swingdir);
 			pd->m_Speed = (speed*swingdir*(90. / 64)) / 8;
-			pd->m_Dist = pd->m_TotalDist = angle.Degrees;
+			pd->m_Dist = pd->m_TotalDist = angle.Degrees();
 			SN_StartSequence (poly, poly->seqType, SEQ_DOOR, 0);
 			swingdir = -swingdir;	// reverse the direction
 		}
@@ -716,7 +718,7 @@ bool EV_StopPoly(FLevelLocals *Level, int polynum)
 FPolyObj::FPolyObj()
 {
 	StartSpot.pos = { 0,0 };
-	Angle = 0.;
+	Angle = nullAngle;
 	tag = 0;
 	memset(bbox, 0, sizeof(bbox));
 	validcount = 0;
@@ -760,7 +762,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - 90.;
+	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - DAngle::fromDeg(90.);
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)
@@ -1078,11 +1080,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						open.top = LINEOPEN_MAX;
 						open.bottom = LINEOPEN_MIN;
 						// [TN] Check wether this actor gets blocked by the line.
-						if (ld->backsector != nullptr &&
-							!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
-							&& !(ld->flags & ML_BLOCK_PLAYERS && (mobj->player || (mobj->flags8 & MF8_BLOCKASPLAYER))) 
-							&& !(ld->flags & ML_BLOCKMONSTERS && mobj->flags3 & MF3_ISMONSTER)
-							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
+						if (ld->backsector != nullptr && !P_IsBlockedByLine(mobj, ld) 
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
 									(mobj->Top() < open.top)
@@ -1099,10 +1097,10 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						DVector2 pos = mobj->PosRelative(ld);
+						DVector2 pos = mobj->PosRelative(ld).XY();
 						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
-						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+						if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 						{
 							continue;
 						}
@@ -1110,7 +1108,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (ld->isLinePortal())
 						{
 							// Fixme: this still needs to figure out if the polyobject move made the player cross the portal line.
-							if (P_TryMove(mobj, mobj->Pos(), false))
+							if (P_TryMove(mobj, mobj->Pos().XY(), false))
 							{
 								continue;
 							}

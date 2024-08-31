@@ -127,7 +127,7 @@ public:
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
 		sightstart = t1->PosRelative(task->portalgroup);
-		sightend = t2->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup).XY();
 		sightstart.Z += t1->Height * 0.75;
 
 		portalgroup = task->portalgroup;
@@ -192,8 +192,8 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, doubl
 	if (ff == 0) ff = front->floorplane.ZatPoint(x, y);
 	if (bf == 0) bf = back->floorplane.ZatPoint(x, y);
 
-	open.bottom = MAX(ff, bf);
-	open.top = MIN(fc, bc);
+	open.bottom = max(ff, bf);
+	open.top = min(fc, bc);
 
 	// we only want to know if there is an opening, not how large it is.
 	open.range = open.bottom < open.top;
@@ -849,6 +849,11 @@ int P_CheckSight (AActor *t1, AActor *t2, int flags)
 		return false;
 	}
 
+	if ((t2->flags8 & MF8_MVISBLOCKED) && !(flags & SF_IGNOREVISIBILITY))
+	{
+		return false;
+	}
+
 	auto s1 = t1->Sector;
 	auto s2 = t2->Sector;
 	//
@@ -866,7 +871,10 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if ((flags & SF_IGNOREVISIBILITY) == 0 && ((t2->renderflags & RF_INVISIBLE) || !t2->RenderStyle.IsVisible(t2->Alpha)))
+	if ((flags & SF_IGNOREVISIBILITY) == 0 &&
+		((t2->renderflags & RF_INVISIBLE) ||
+		(t2->flags8 & MF8_MINVISIBLE) ||
+		!t2->RenderStyle.IsVisible(t2->Alpha)))
 	{ // small chance of an attack being made anyway
 		if ((t1->Level->BotInfo.m_Thinking ? pr_botchecksight() : pr_checksight()) > 50)
 		{

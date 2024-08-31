@@ -33,19 +33,20 @@
 */
 
 #include <assert.h>
-#include "templates.h"
+
 #include "d_main.h"
 #include "g_level.h"
 #include "g_game.h"
 #include "s_sound.h"
 #include "d_event.h"
 #include "m_random.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "am_map.h"
 #include "c_dispatch.h"
+#include "i_interface.h"
 
 #include "p_setup.h"
 #include "p_local.h"
@@ -69,11 +70,11 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
-#include "menu/menu.h"
+#include "doommenu.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "p_spec.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "vm.h"
 #include "events.h"
 #include "i_music.h"
@@ -81,8 +82,13 @@
 #include "p_conversation.h"
 #include "p_effect.h"
 #include "stringtable.h"
+#include "c_buttons.h"
+#include "screenjob.h"
+#include "types.h"
+#include "gstrings.h"
 
 #include "gi.h"
+
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -90,9 +96,13 @@
 #include "i_time.h"
 #include "p_maputl.h"
 #include "s_music.h"
+#include "fragglescript/t_script.h"
+
+#include "texturemanager.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);
+FString STAT_EpisodeName();
 
 EXTERN_CVAR(Bool, save_formatted)
 EXTERN_CVAR (Float, sv_gravity)
@@ -136,20 +146,32 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 	}
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL | CVAR_CHEAT) // this is just for testing. -1 means 'inactive'
 {
-	int newself = self;
-	if (newself > 8) newself = 16;	// use 8 and 16 for software lighting to avoid conflicts with the bit mask
-	else if (newself > 4) newself = 8;
-	else if (newself < 0) newself = 0;
-	if (self != newself) self = newself;
-	else for (auto Level : AllLevels())
-	{
-		if ((Level->info == nullptr || Level->info->lightmode == ELightMode::NotSet)) Level->lightMode = (ELightMode)*self;
-	}
+	if (self > 5 || self < -1) self = -1;
 }
 
+CUSTOM_CVARD(Int, gl_lightmode, 1, CVAR_ARCHIVE, "Select lighting mode. 2 is vanilla accurate, 1 is accurate to the ZDoom software renderer and 0 is a less demanding non-shader implementation")
+{
+	if (self < 0 || self > 2) self = 1;
+}
 
+ELightMode getRealLightmode(FLevelLocals* Level, bool for3d)
+{
+	// The rules are:
+	// 1) if the map sets a proper light mode, it is taken unconditionally.
+	if (Level->info->lightmode != ELightMode::NotSet) return Level->info->lightmode;
+	// 2) if the user sets gl_maplightmode, this is being used.
+	if (gl_maplightmode != -1) return (ELightMode)*gl_maplightmode;
+	// 3) if not for 3D use lightmode Doom. This is for the automap where the software light modes do not work
+	if (!for3d) return ELightMode::Doom;
+	// otherwise use lightmode Doom or software lighting based on user preferences.
+	if (gl_lightmode == 1) return ELightMode::ZDoomSoftware;
+	else if (gl_lightmode == 2) return ELightMode::DoomSoftware;
+	return ELightMode::Doom;
+}
+
+CVAR(Int, sv_alwaystally, 0, CVAR_SERVERINFO)
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -165,7 +187,7 @@ extern FString BackupSaveName;
 bool savegamerestore;
 int finishstate = FINISH_NoHub;
 
-extern int mousex, mousey;
+extern float mousex, mousey;
 extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
@@ -173,7 +195,59 @@ void *statcopy;					// for statistics driver
 FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
+static PType* maprecordtype;
 
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void Local_Job_Init()
+{
+	maprecordtype = NewPointer(NewStruct("MapRecord", nullptr, true));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void CallCreateMapFunction(const char* qname, DObject* runner, level_info_t* map)
+{
+	auto func = LookupFunction(qname);
+	if (func->Proto->ArgumentTypes.Size() == 1) return CallCreateFunction(qname, runner);	// accept functions without map parameter as well here.
+	if (func->Proto->ArgumentTypes.Size() != 2) I_Error("Bad map-cutscene function %s. Must receive precisely two arguments.", qname);
+	if (func->Proto->ArgumentTypes[0] != cutscene.runnerclasstype && func->Proto->ArgumentTypes[1] != maprecordtype)
+		I_Error("Bad cutscene function %s. Must receive ScreenJobRunner and LevelInfo reference.", qname);
+	VMValue val[2] = { runner, map };
+	VMCall(func, val, 2, nullptr, 0);
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+bool CreateCutscene(CutsceneDef* cs, DObject* runner, level_info_t* map)
+{
+	if (cs->function.CompareNoCase("none") == 0)
+		return true;	// play nothing but return as being validated
+	if (cs->function.IsNotEmpty())
+	{
+		CallCreateMapFunction(cs->function.GetChars(), runner, map);
+		return true;
+	}
+	else if (cs->video.IsNotEmpty())
+	{
+		AddGenericVideo(runner, cs->video, cs->GetSound(), cs->framespersec);
+		return true;
+	}
+	return false;
+}
 
 //==========================================================================
 //
@@ -194,14 +268,34 @@ void G_DeferedInitNew (const char *mapname, int newskill)
 	gameaction = ga_newgame2;
 }
 
-void G_DeferedInitNew (FGameStartup *gs)
+void G_DeferedInitNew (FNewGameStartup *gs)
 {
-	if (gs->PlayerClass != NULL) playerclass = gs->PlayerClass;
+	if (gs->hasPlayerClass) playerclass = gs->PlayerClass.GetChars();
 	d_mapname = AllEpisodes[gs->Episode].mEpisodeMap;
 	d_skill = gs->Skill;
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+
+	if (AllEpisodes[gs->Episode].mIntro.isdefined())
+	{
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
+
+		if (!CreateCutscene(&AllEpisodes[gs->Episode].mIntro, cutscene.runner, nullptr))
+		{
+			return;
+		}
+
+		cutscene.completion = [](bool) { gameaction = ga_newgame2; };
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			cutscene.completion = nullptr;
+			return;
+		}
+		gameaction = ga_intermission;
+	}
 }
 
 //==========================================================================
@@ -324,7 +418,7 @@ UNSAFE_CCMD (open)
 	{
 		d_mapname = "file:";
 		d_mapname += argv[1];
-		if (!P_CheckMapData(d_mapname))
+		if (!P_CheckMapData(d_mapname.GetChars()))
 		{
 			Printf ("No map %s\n", d_mapname.GetChars());
 		}
@@ -371,6 +465,12 @@ void G_NewInit ()
 		pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;
 		pawn->Destroy();
 	}
+	if (primaryLevel->FraggleScriptThinker) primaryLevel->FraggleScriptThinker->Destroy();
+	primaryLevel->FraggleScriptThinker = nullptr;
+
+	// Destroy thinkers that may remain after change level failure
+	// Usually, the list contains just a sentinel when such error occurred
+	primaryLevel->Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
 
 	G_ClearSnapshots ();
 	netgame = false;
@@ -415,7 +515,7 @@ void G_DoNewGame (void)
 	{
 		gameskill = d_skill;
 	}
-	G_InitNew (d_mapname, false);
+	G_InitNew (d_mapname.GetChars(), false);
 	gameaction = ga_nothing;
 }
 
@@ -458,8 +558,9 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 
 	// did we have any level before?
 	if (primaryLevel->info != nullptr)
-		staticEventManager.WorldUnloaded();
+		staticEventManager.WorldUnloaded(FString());	// [MK] don't pass the new map, as it's not a level transition
 
+	UnlatchCVars ();
 	if (!savegamerestore)
 	{
 		G_ClearHubInfo();
@@ -469,9 +570,14 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		// [RH] Mark all levels as not visited
 		for (unsigned int i = 0; i < wadlevelinfos.Size(); i++)
 			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
+
+		auto redirectmap = FindLevelInfo(mapname);
+		if (redirectmap->RedirectCVAR != NAME_None)
+			redirectmap = redirectmap->CheckLevelRedirect();
+		if (redirectmap && redirectmap->MapName.IsNotEmpty())
+				mapname = redirectmap->MapName.GetChars();
 	}
 
-	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
 	globalfreeze = globalchangefreeze = 0;
@@ -578,6 +684,26 @@ static bool		unloading;
 
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 
+bool FLevelLocals::ShouldDoIntermission(cluster_info_t* nextcluster, cluster_info_t* thiscluster)
+{
+	// this is here to remove some code duplication
+
+	if ((sv_alwaystally == 2) || (deathmatch))
+		return true;
+
+	if ((sv_alwaystally == 0) && (flags & LEVEL_NOINTERMISSION))
+		return false;
+
+	bool withinSameCluster = (nextcluster == thiscluster);
+	bool clusterIsHub = (thiscluster->flags & CLUSTER_HUB);
+	bool hubNoIntermission = !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION);
+
+	if (withinSameCluster && clusterIsHub && hubNoIntermission)
+		return false;
+
+	return true;
+}
+
 void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags, int nextSkill)
 {
 	if (!isPrimaryLevel()) return;	// only the primary level may exit.
@@ -605,14 +731,14 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		}
 		else 
 		{
-			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
+			nextlevel.Format("enDSeQ%04x", gameinfo.DefaultEndSequence.GetIndex());
 		}
 	}
 	else if (strncmp(levelname, "enDSeQ", 6) != 0)
 	{
 		FString reallevelname = levelname;
 		CheckWarpTransMap(reallevelname, true);
-		nextinfo = FindLevelInfo (reallevelname, false);
+		nextinfo = FindLevelInfo (reallevelname.GetChars(), false);
 		if (nextinfo != NULL)
 		{
 			level_info_t *nextredir = nextinfo->CheckLevelRedirect();
@@ -633,7 +759,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	}
 
 	if (nextSkill != -1)
-		NextSkill = nextSkill;
+		NextSkill = (unsigned)nextSkill < AllSkills.Size() ? nextSkill : -1;
 
 	if (inflags & CHANGELEVEL_NOINTERMISSION)
 	{
@@ -650,11 +776,12 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	{
 		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
 		{
-			if (nextinfo->flags2 & LEVEL2_RESETINVENTORY)
+			const bool doReset = dmflags3 & DF3_PISTOL_START;
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETINVENTORY))
 			{
 				inflags |= CHANGELEVEL_RESETINVENTORY;
 			}
-			if (nextinfo->flags2 & LEVEL2_RESETHEALTH)
+			if (doReset || (nextinfo->flags2 & LEVEL2_RESETHEALTH))
 			{
 				inflags |= CHANGELEVEL_RESETHEALTH;
 			}
@@ -671,17 +798,17 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	for (auto Level : AllLevels())
 	{
 		// Todo: This must be exolicitly sandboxed!
-		Level->localEventManager->WorldUnloaded();
+		Level->localEventManager->WorldUnloaded(nextlevel);
 	}
 	// [ZZ] unsafe world unload (changemap != map)
-	staticEventManager.WorldUnloaded();
+	staticEventManager.WorldUnloaded(nextlevel);
 	unloading = false;
 
-	STAT_ChangeLevel(nextlevel, this);
+	STAT_ChangeLevel(nextlevel.GetChars(), this);
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
-		if ((flags & LEVEL_NOINTERMISSION) || ((nextcluster == thiscluster) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION)))
+		if (!ShouldDoIntermission(nextcluster, thiscluster))
 			NoWipe = 35;
 		D_DrawIcon = "TELEICON";
 	}
@@ -717,6 +844,17 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 	::nextlevel = nextlevel;
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeLevel)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_STRING(levelname);
+	PARAM_INT(position);
+	PARAM_INT(inflags);
+	PARAM_INT(nextSkill);
+	self->ChangeLevel(levelname.GetChars(), position, inflags, nextSkill);
+	return 0;
+}
+
 //==========================================================================
 //
 //
@@ -724,13 +862,13 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 
 const char *FLevelLocals::GetSecretExitMap()
 {
-	const char *nextmap = NextMap;
+	const char *nextmap = NextMap.GetChars();
 
 	if (NextSecretMap.Len() > 0)
 	{
-		if (P_CheckMapData(NextSecretMap))
+		if (NextSecretMap.Compare("enDSeQ", 6) == 0 || P_CheckMapData(NextSecretMap.GetChars()))
 		{
-			nextmap = NextSecretMap;
+			nextmap = NextSecretMap.GetChars();
 		}
 	}
 	return nextmap;
@@ -745,7 +883,7 @@ const char *FLevelLocals::GetSecretExitMap()
 void FLevelLocals::ExitLevel (int position, bool keepFacing)
 {
 	flags3 |= LEVEL3_EXITNORMALUSED;
-	ChangeLevel(NextMap, position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
+	ChangeLevel(NextMap.GetChars(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
 static void LevelLocals_ExitLevel(FLevelLocals *self, int position, bool keepFacing)
@@ -787,6 +925,167 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SecretExitLevel, LevelLocals_SecretE
 //==========================================================================
 static wbstartstruct_t staticWmInfo;
 
+DIntermissionController* FLevelLocals::CreateIntermission()
+{
+	DIntermissionController* controller = nullptr;
+	cluster_info_t *nextcluster;
+	cluster_info_t *thiscluster;
+
+	if (flags & LEVEL_CHANGEMAPCHEAT)
+		return nullptr;
+
+	thiscluster = FindClusterInfo (cluster);
+
+	bool endgame = strncmp (nextlevel.GetChars(), "enDSeQ", 6) == 0;
+	if (endgame)
+	{
+		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
+		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
+		if (endsequence == NAME_Inter_Strife)
+		{
+			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
+				Players[0]->mo->FindInventory (NAME_QuestItem28))
+			{
+				endsequence = NAME_Inter_Strife_Good;
+			}
+			else
+			{
+				endsequence = NAME_Inter_Strife_Sad;
+			}
+		}
+
+		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
+		{
+			controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic.GetChars() : gameinfo.finaleMusic.GetChars(),
+				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+				-1, 0,
+				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop.GetChars() : gameinfo.FinaleFlat.GetChars(),
+				ext->mText.GetChars(),
+				false,
+				ext->mDefined & FExitText::DEF_PIC,
+				ext->mDefined & FExitText::DEF_LOOKUP,
+				true, endsequence);
+		}
+		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			controller = F_StartFinale(thiscluster->MessageMusic.GetChars(), thiscluster->musicorder,
+				thiscluster->cdtrack, thiscluster->cdid,
+				thiscluster->FinaleFlat.GetChars(), thiscluster->ExitText.GetChars(),
+				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+				thiscluster->flags & CLUSTER_FINALEPIC,
+				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+				true, endsequence);
+		}
+	}
+	else if (!deathmatch)
+	{
+		FExitText *ext = nullptr;
+		
+		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
+
+		if (ext != nullptr)
+		{
+			if ((ext->mDefined & FExitText::DEF_TEXT))
+			{
+				controller = F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic.GetChars() : gameinfo.finaleMusic.GetChars(),
+					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+					-1, 0,
+					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop.GetChars() : gameinfo.FinaleFlat.GetChars(),
+					ext->mText.GetChars(),
+					false,
+					ext->mDefined & FExitText::DEF_PIC,
+					ext->mDefined & FExitText::DEF_LOOKUP,
+					false);
+			}
+			return controller;
+		}
+
+		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel.GetChars())->cluster);
+
+		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
+		{
+			// Only start the finale if the next level's cluster is different
+			// than the current one and we're not in deathmatch.
+			if (nextcluster->EnterText.IsNotEmpty())
+			{
+				controller = F_StartFinale (nextcluster->MessageMusic.GetChars(), nextcluster->musicorder,
+					nextcluster->cdtrack, nextcluster->cdid,
+					nextcluster->FinaleFlat.GetChars(), nextcluster->EnterText.GetChars(),
+					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
+					nextcluster->flags & CLUSTER_FINALEPIC,
+					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
+					false);
+			}
+			else if (thiscluster->ExitText.IsNotEmpty())
+			{
+				controller = F_StartFinale (thiscluster->MessageMusic.GetChars(), thiscluster->musicorder,
+					thiscluster->cdtrack, nextcluster->cdid,
+					thiscluster->FinaleFlat.GetChars(), thiscluster->ExitText.GetChars(),
+					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+					thiscluster->flags & CLUSTER_FINALEPIC,
+					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+					false);
+			}
+		}
+	}
+	return controller;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+{
+	cutscene.runner = CreateRunner(false);
+	GC::WriteBarrier(cutscene.runner);
+	cutscene.completion = std::move(completionf);
+	
+	// retrieve cluster relations for cluster-based cutscenes.
+	cluster_info_t* fromcluster = nullptr, *tocluster = nullptr;
+	if (fromMap) fromcluster = FindClusterInfo(fromMap->cluster);
+	if (toMap) tocluster = FindClusterInfo(toMap->cluster);
+	if (fromcluster == tocluster) fromcluster = tocluster = nullptr;
+
+	if (fromMap)
+	{
+		if (!CreateCutscene(&fromMap->outro, cutscene.runner, fromMap))
+		{
+			if (fromcluster != nullptr) CreateCutscene(&fromcluster->outro, cutscene.runner, fromMap);
+		}
+	}
+
+	auto func = LookupFunction("DoomCutscenes.BuildMapTransition");
+	if (func == nullptr)
+	{
+		I_Error("Script function 'DoomCutscenes.BuildMapTransition' not found");
+	}
+	VMValue val[3] = { cutscene.runner, intermissionScreen, statusScreen };
+	VMCall(func, val, 3, nullptr, 0);
+
+	if (toMap)
+	{
+		if (!CreateCutscene(&toMap->intro, cutscene.runner, toMap))
+		{
+			if  (tocluster != nullptr) CreateCutscene(&tocluster->intro, cutscene.runner, toMap);
+		}
+	}
+
+	if (!ScreenJobValidate())
+	{
+		DeleteScreenJob();
+		if (cutscene.completion) cutscene.completion(false);
+		cutscene.completion = nullptr;
+		return;
+	}
+	gameaction = ga_intermission;
+}
+
 void G_DoCompleted (void)
 {
 	gameaction = ga_nothing;
@@ -812,24 +1111,32 @@ void G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
+	bool playinter = primaryLevel->DoCompleted(nextlevel, staticWmInfo);
 	S_StopAllChannels();
 	for (auto Level : AllLevels())
 	{
 		SN_StopAllSequences(Level);
 	}
 
-	if (primaryLevel->DoCompleted(nextlevel, staticWmInfo))
+	// todo: create end of level screenjob
+	DObject* statusScreen = nullptr;
+	DIntermissionController* intermissionScreen = nullptr;
+	if (playinter)
 	{
-		gamestate = GS_INTERMISSION;
-		viewactive = false;
-		automapactive = false;
-		
 		// [RH] If you ever get a statistics driver operational, adapt this.
 		//	if (statcopy)
 		//		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
-		WI_Start (&staticWmInfo);
+		statusScreen = WI_Start (&staticWmInfo);
 	}
+	bool endgame = strncmp(nextlevel.GetChars(), "enDSeQ", 6) == 0;
+	intermissionScreen = primaryLevel->CreateIntermission();
+	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel.GetChars(), false);
+	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, [=](bool)
+	{
+		if (!endgame) primaryLevel->WorldDone();
+		else D_StartTitle();
+	});
 }
 
 //==========================================================================
@@ -849,7 +1156,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	
 	uint32_t langtable[2] = {};
 	wminfo.finished_ep = cluster - 1;
-	wminfo.LName0 = TexMan.CheckForTexture(info->PName, ETextureType::MiscPatch);
+	wminfo.LName0 = TexMan.CheckForTexture(info->PName.GetChars(), ETextureType::MiscPatch);
 	wminfo.thisname = info->LookupLevelName(&langtable[0]);	// re-get the name so we have more info about its origin.
 	if (!wminfo.LName0.isValid() || !(info->flags3 & LEVEL3_HIDEAUTHORNAME)) wminfo.thisauthor = info->AuthorName;
 	wminfo.current = MapName;
@@ -865,8 +1172,8 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	}
 	else
 	{
-		level_info_t *nextinfo = FindLevelInfo (nextlevel, false);
-		if (nextinfo == NULL || strncmp (nextlevel, "enDSeQ", 6) == 0)
+		level_info_t *nextinfo = FindLevelInfo (nextlevel.GetChars(), false);
+		if (nextinfo == NULL || strncmp (nextlevel.GetChars(), "enDSeQ", 6) == 0)
 		{
 			wminfo.next = "";
 			wminfo.LName1.SetInvalid();
@@ -876,7 +1183,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		else
 		{
 			wminfo.next = nextinfo->MapName;
-			wminfo.LName1 = TexMan.CheckForTexture(nextinfo->PName, ETextureType::MiscPatch);
+			wminfo.LName1 = TexMan.CheckForTexture(nextinfo->PName.GetChars(), ETextureType::MiscPatch);
 			wminfo.nextname = nextinfo->LookupLevelName(&langtable[1]);
 			if (!wminfo.LName1.isValid() || !(nextinfo->flags3 & LEVEL3_HIDEAUTHORNAME)) wminfo.nextauthor = nextinfo->AuthorName;
 		}
@@ -892,14 +1199,10 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		{
 			if (texids[i]->isValid() && langtable[i] != FStringTable::default_table)
 			{
-				FTexture *tex = TexMan.GetTexture(*texids[i]);
-				if (tex != nullptr)
+				FGameTexture *tex = TexMan.GetGameTexture(*texids[i]);
+				if (tex != nullptr && !tex->isUserContent())
 				{
-					int filenum = Wads.GetLumpFile(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= Wads.GetMaxIwadNum())
-					{
-						texids[i]->SetInvalid();
-					}
+					texids[i]->SetInvalid();
 				}
 			}
 		}
@@ -908,7 +1211,8 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	CheckWarpTransMap (wminfo.next, true);
 	nextlevel = wminfo.next;
 
-	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
+	wminfo.next_ep = FindLevelInfo (wminfo.next.GetChars())->cluster - 1;
+	wminfo.totalkills = killed_monsters;
 	wminfo.maxkills = total_monsters;
 	wminfo.maxitems = total_items;
 	wminfo.maxsecret = total_secrets;
@@ -957,6 +1261,8 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	// Intermission stats for entire hubs
 	G_LeavingHub(this, mode, thiscluster, &wminfo);
 
+	// Do not allow playing sounds in here - they'd never be able to play properly.
+	soundEngine->BlockNewSounds(true);
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
@@ -964,6 +1270,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 			G_PlayerFinishLevel (i, mode, changeflags);
 		}
 	}
+	soundEngine->BlockNewSounds(false);
 
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
@@ -994,14 +1301,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 
 	finishstate = mode;
 
-	if (!deathmatch &&
-		((flags & LEVEL_NOINTERMISSION) ||
-		((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB) && !(thiscluster->flags & CLUSTER_ALLOWINTERMISSION))))
-	{
-		WorldDone ();
-		return false;
-	}
-	return true;
+	return ShouldDoIntermission(nextcluster, thiscluster);
 }
 
 //==========================================================================
@@ -1021,7 +1321,7 @@ IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
-	Net_WriteByte (DEM_CHECKAUTOSAVE);
+	Net_WriteInt8 (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 
@@ -1052,7 +1352,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 	gameaction = ga_nothing;
 
 	// clear cmd building stuff
-	ResetButtonStates();
+	buttonMap.ResetButtonStates();
 
 	SendItemUse = nullptr;
 	SendItemDrop = nullptr;
@@ -1080,7 +1380,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		UCVarValue val;
 		val.Int = NextSkill;
-		gameskill.ForceSet (val, CVAR_Int);
+		gameskill->ForceSet (val, CVAR_Int);
 		NextSkill = -1;
 	}
 
@@ -1104,7 +1404,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		FString mapname = nextmapname;
 		mapname.ToUpper();
-		Printf("\n%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, "\n" TEXTCOLOR_NORMAL "%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
 	}
 
 	// Set the sky map.
@@ -1112,7 +1412,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	//	a flat. The data is in the WAD only because
 	//	we look for an actual index, instead of simply
 	//	setting one.
-	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
+	skyflatnum = TexMan.GetTextureID (gameinfo.SkyFlatName.GetChars(), ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 	// [RH] Set up details about sky rendering
 	InitSkyMap (this);
@@ -1178,7 +1478,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 		for (int i = 0; i<MAXPLAYERS; i++)
 		{
 			if (PlayerInGame(i) && Players[i]->mo != nullptr)
-				P_PlayerStartStomp(Players[i]->mo);
+				P_PlayerStartStomp(Players[i]->mo, !deathmatch);
 		}
 	}
 
@@ -1241,10 +1541,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 //==========================================================================
 
 void FLevelLocals::WorldDone (void) 
-{ 
-	cluster_info_t *nextcluster;
-	cluster_info_t *thiscluster;
-
+{
 	gameaction = ga_worlddone; 
 
 
@@ -1254,110 +1551,11 @@ void FLevelLocals::WorldDone (void)
 		BotInfo.RemoveAllBots(this, consoleplayer != Net_Arbitrator);
 	}
 
-	if (flags & LEVEL_CHANGEMAPCHEAT)
-		return;
-
-	thiscluster = FindClusterInfo (cluster);
-
-	if (strncmp (nextlevel, "enDSeQ", 6) == 0)
-	{
-		FName endsequence = ENamedName(strtoll(nextlevel.GetChars()+6, NULL, 16));
-		// Strife needs a special case here to choose between good and sad ending. Bad is handled elsewhere.
-		if (endsequence == NAME_Inter_Strife)
-		{
-			if (Players[0]->mo->FindInventory (NAME_QuestItem25) ||
-				Players[0]->mo->FindInventory (NAME_QuestItem28))
-			{
-				endsequence = NAME_Inter_Strife_Good;
-			}
-			else
-			{
-				endsequence = NAME_Inter_Strife_Sad;
-			}
-		}
-
-		auto ext = info->ExitMapTexts.CheckKey(flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
-		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
-		{
-			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-				-1, 0,
-				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-				ext->mText,
-				false,
-				ext->mDefined & FExitText::DEF_PIC,
-				ext->mDefined & FExitText::DEF_LOOKUP,
-				true, endsequence);
-		}
-		else if (!(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
-				thiscluster->cdtrack, thiscluster->cdid,
-				thiscluster->FinaleFlat, thiscluster->ExitText,
-				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-				thiscluster->flags & CLUSTER_FINALEPIC,
-				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-				true, endsequence);
-		}
-	}
-	else if (!deathmatch)
-	{
-		FExitText *ext = nullptr;
-		
-		if (flags3 & LEVEL3_EXITSECRETUSED) ext = info->ExitMapTexts.CheckKey(NAME_Secret);
-		else if (flags3 & LEVEL3_EXITNORMALUSED) ext = info->ExitMapTexts.CheckKey(NAME_Normal);
-		if (ext == nullptr) ext = info->ExitMapTexts.CheckKey(nextlevel);
-
-		if (ext != nullptr)
-		{
-			if ((ext->mDefined & FExitText::DEF_TEXT))
-			{
-				F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
-					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
-					-1, 0,
-					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
-					ext->mText,
-					false,
-					ext->mDefined & FExitText::DEF_PIC,
-					ext->mDefined & FExitText::DEF_LOOKUP,
-					false);
-			}
-			return;
-		}
-
-		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
-
-		if (nextcluster->cluster != cluster && !(info->flags2 & LEVEL2_NOCLUSTERTEXT))
-		{
-			// Only start the finale if the next level's cluster is different
-			// than the current one and we're not in deathmatch.
-			if (nextcluster->EnterText.IsNotEmpty())
-			{
-				F_StartFinale (nextcluster->MessageMusic, nextcluster->musicorder,
-					nextcluster->cdtrack, nextcluster->cdid,
-					nextcluster->FinaleFlat, nextcluster->EnterText,
-					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
-					nextcluster->flags & CLUSTER_FINALEPIC,
-					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT,
-					false);
-			}
-			else if (thiscluster->ExitText.IsNotEmpty())
-			{
-				F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
-					thiscluster->cdtrack, nextcluster->cdid,
-					thiscluster->FinaleFlat, thiscluster->ExitText,
-					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-					thiscluster->flags & CLUSTER_FINALEPIC,
-					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-					false);
-			}
-		}
-	}
-} 
+}
  
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
-	primaryLevel->WorldDone();
+	// This is just a dummy to make old status screens happy.
 	return 0;
 }
 
@@ -1500,6 +1698,7 @@ int FLevelLocals::FinishTravel ()
 			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
+			pawn->waterdepth = pawndup->waterdepth;
 		}
 		else if (failnum == 0)	// In the failure case this may run into some undefined data.
 		{
@@ -1513,7 +1712,7 @@ int FLevelLocals::FinishTravel ()
 		pawn->flags2 &= ~MF2_BLASTED;
 		if (oldpawn != nullptr)
 		{
-			DObject::StaticPointerSubstitution (oldpawn, pawn);
+			PlayerPointerSubstitution (oldpawn, pawn, true);
 			oldpawn->Destroy();
 		}
 		if (pawndup != NULL)
@@ -1522,6 +1721,7 @@ int FLevelLocals::FinishTravel ()
 		}
 		pawn->LinkToWorld (nullptr);
 		pawn->ClearInterpolation();
+		pawn->ClearFOVInterpolation();
 		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
 		pawn->tid = 0;				// Reset TID
 		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
@@ -1532,6 +1732,7 @@ int FLevelLocals::FinishTravel ()
 		{
 			inv->ChangeStatNum (STAT_INVENTORY);
 			inv->LinkToWorld (nullptr);
+			P_FindFloorCeiling(inv, FFCF_ONLYSPAWNPOS);
 
 			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
 			{
@@ -1542,6 +1743,12 @@ int FLevelLocals::FinishTravel ()
 		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
 		{
 			pawn->Speed = pawn->GetDefault()->Speed;
+		}
+
+		IFVIRTUALPTRNAME(pawn, NAME_PlayerPawn, Travelled)
+		{
+			VMValue params[1] = { pawn };
+			VMCall(func, params, 1, nullptr, 0);
 		}
 		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
 		pawns[pawnsnum++] = pawn;
@@ -1575,6 +1782,7 @@ FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
 FLevelLocals::~FLevelLocals()
 {
 	if (localEventManager) delete localEventManager;
+	if (aabbTree) delete aabbTree;
 }
 
 //==========================================================================
@@ -1586,8 +1794,7 @@ void FLevelLocals::Init()
 {
 	P_InitParticles(this);
 	P_ClearParticles(this);
-	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
-
+	
 	gravity = sv_gravity * 35/TICRATE;
 	aircontrol = sv_aircontrol;
 	AirControlChanged();
@@ -1598,30 +1805,34 @@ void FLevelLocals::Init()
 	ImpactDecalCount = 0;
 	frozenstate = 0;
 
-	info = FindLevelInfo (MapName);
+	info = FindLevelInfo (MapName.GetChars());
 
 	skyspeed1 = info->skyspeed1;
 	skyspeed2 = info->skyspeed2;
-	skytexture1 = TexMan.GetTextureID(info->SkyPic1, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	skytexture2 = TexMan.GetTextureID(info->SkyPic2, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	skytexture1 = TexMan.GetTextureID(info->SkyPic1.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
+	skytexture2 = TexMan.GetTextureID(info->SkyPic2.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	fadeto = info->fadeto;
 	cdtrack = info->cdtrack;
 	cdid = info->cdid;
 	FromSnapshot = false;
 	if (fadeto == 0)
 	{
-		if (strnicmp (info->FadeTable, "COLORMAP", 8) != 0)
+		if (strnicmp (info->FadeTable.GetChars(), "COLORMAP", 8) != 0)
 		{
 			flags |= LEVEL_HASFADETABLE;
 		}
 	}
+
+
+	globalcolormap = R_ColormapNumForName(info->CustomColorMap.GetChars());
 	airsupply = info->airsupply*TICRATE;
 	outsidefog = info->outsidefog;
 	WallVertLight = info->WallVertLight*2;
 	WallHorizLight = info->WallHorizLight*2;
 	if (info->gravity != 0.f)
 	{
-		gravity = info->gravity * 35/TICRATE;
+		if (info->gravity == DBL_MAX) gravity = 0;
+		else gravity = info->gravity * 35/TICRATE;
 	}
 	if (info->aircontrol != 0.f)
 	{
@@ -1644,6 +1855,7 @@ void FLevelLocals::Init()
 	flags2 |= info->flags2;
 	flags3 |= info->flags3;
 	levelnum = info->levelnum;
+	LightningSound = info->LightningSound;
 	Music = info->Music;
 	musicorder = info->musicorder;
 	MusicVolume = 1.f;
@@ -1665,12 +1877,11 @@ void FLevelLocals::Init()
 
 	pixelstretch = info->pixelstretch;
 
-	compatflags.Callback();
-	compatflags2.Callback();
+	compatflags->Callback();
+	compatflags2->Callback();
 
 	DefaultEnvironment = info->DefaultEnvironment;
 
-	lightMode = info->lightmode == ELightMode::NotSet? (ELightMode)*gl_lightmode : info->lightmode;
 	brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
 	lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
 	notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
@@ -1691,8 +1902,7 @@ FString CalcMapName (int episode, int level)
 	}
 	else
 	{
-		lumpname = "";
-		lumpname << 'E' << ('0' + episode) << 'M' << ('0' + level);
+		lumpname.Format("E%01dM%01d", episode, level);
 	}
 	return lumpname;
 }
@@ -1758,7 +1968,7 @@ void G_WriteVisited(FSerializer &arc)
 		{
 			if (wi.flags & LEVEL_VISITED)
 			{
-				arc.AddString(nullptr, wi.MapName);
+				arc.AddString(nullptr, wi.MapName.GetChars());
 			}
 		}
 		arc.EndArray();
@@ -1776,9 +1986,8 @@ void G_WriteVisited(FSerializer &arc)
 		{
 			if (playeringame[i])
 			{
-				FString key;
-				key.Format("%d", i);
-				arc(key, players[i].cls);
+				FStringf key("%d", i);
+				arc(key.GetChars(), players[i].cls);
 			}
 		}
 		arc.EndObject();
@@ -1797,31 +2006,28 @@ void G_ReadSnapshots(FResourceFile *resf)
 
 	G_ClearSnapshots();
 
-	for (unsigned j = 0; j < resf->LumpCount(); j++)
+	for (unsigned j = 0; j < resf->EntryCount(); j++)
 	{
-		FResourceLump * resl = resf->GetLump(j);
-		if (resl != nullptr)
+		auto name = resf->getName(j);
+		auto ptr = strstr(name, ".map.json");
+		if (ptr != nullptr)
 		{
-			auto ptr = strstr(resl->FullName, ".map.json");
+			ptrdiff_t maplen = ptr - name;
+			FString mapname(name, (size_t)maplen);
+			i = FindLevelInfo(mapname.GetChars());
+			if (i != nullptr)
+			{
+				i->Snapshot = resf->GetRawData(j);
+			}
+		}
+		else
+		{
+			auto ptr = strstr(name, ".mapd.json");
 			if (ptr != nullptr)
 			{
-				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-				FString mapname(resl->FullName.GetChars(), (size_t)maplen);
-				i = FindLevelInfo(mapname);
-				if (i != nullptr)
-				{
-					i->Snapshot = resl->GetRawData();
-				}
-			}
-			else
-			{
-				auto ptr = strstr(resl->FullName, ".mapd.json");
-				if (ptr != nullptr)
-				{
-					ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-					FString mapname(resl->FullName.GetChars(), (size_t)maplen);
-					TheDefaultLevelInfo.Snapshot = resl->GetRawData();
-				}
+				ptrdiff_t maplen = ptr - name;
+				FString mapname(name, (size_t)maplen);
+				TheDefaultLevelInfo.Snapshot = resf->GetRawData(j);
 			}
 		}
 	}
@@ -1840,7 +2046,7 @@ void G_ReadVisited(FSerializer &arc)
 		{
 			FString str;
 			arc(nullptr, str);
-			auto i = FindLevelInfo(str);
+			auto i = FindLevelInfo(str.GetChars());
 			if (i != nullptr) i->flags |= LEVEL_VISITED;
 		}
 		arc.EndArray();
@@ -1852,9 +2058,8 @@ void G_ReadVisited(FSerializer &arc)
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			FString key;
-			key.Format("%d", i);
-			arc(key, players[i].cls);
+			FStringf key("%d", i);
+			arc(key.GetChars(), players[i].cls);
 		}
 		arc.EndObject();
 	}
@@ -1886,7 +2091,7 @@ void P_WriteACSDefereds (FSerializer &arc)
 			{
 				if (wi.deferred.Size() > 0)
 				{
-					arc(wi.MapName, wi.deferred);
+					arc(wi.MapName.GetChars(), wi.deferred);
 				}
 			}
 		}
@@ -2114,9 +2319,9 @@ void FLevelLocals::SetInterMusic(const char *nextmap)
 {
 	auto mus = info->MapInterMusic.CheckKey(nextmap);
 	if (mus != nullptr)
-		S_ChangeMusic(mus->first, mus->second);
+		S_ChangeMusic(mus->first.GetChars(), mus->second);
 	else if (info->InterMusic.IsNotEmpty())
-		S_ChangeMusic(info->InterMusic, info->intermusicorder);
+		S_ChangeMusic(info->InterMusic.GetChars(), info->intermusicorder);
 	else
 		S_ChangeMusic(gameinfo.intermissionMusic.GetChars(), gameinfo.intermissionOrder);
 }
@@ -2125,7 +2330,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_STRING(map);
-	self->SetInterMusic(map);
+	self->SetInterMusic(map.GetChars());
 	return 0;
 }
 
@@ -2232,6 +2437,33 @@ int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 
 void FLevelLocals::SetMusic()
 {
-	S_ChangeMusic(Music, musicorder);
+	S_ChangeMusic(Music.GetChars(), musicorder);
+}
+
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetClusterName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals)
+	cluster_info_t* cluster = FindClusterInfo(self->cluster);
+	FString retval;
+
+	if (cluster)
+	{
+		if (cluster->flags & CLUSTER_LOOKUPNAME)
+			retval = GStrings.GetString(cluster->ClusterName);
+		else
+			retval = cluster->ClusterName;
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetEpisodeName)
+{
+	// this is a bit of a crapshoot because ZDoom never assigned a level to an episode
+	// and retroactively fixing this is not possible.
+	// This will need some heuristics to assign a proper episode to each existing level.
+	// Stuff for later. for now this just checks the STAT module for the currently running episode,
+	// which should be fine unless cheating.
+	ACTION_RETURN_STRING(GStrings.localize(STAT_EpisodeName().GetChars()));
 }
 

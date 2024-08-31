@@ -31,6 +31,7 @@ class PatrolPoint : Actor
 		+NOGRAVITY
 		+NOBLOCKMAP
 		+DONTSPLASH
+		+NOTONAUTOMAP
 		RenderStyle "None";
 	}
 }	
@@ -47,6 +48,7 @@ class PatrolSpecial : Actor
 		+NOGRAVITY
 		+NOBLOCKMAP
 		+DONTSPLASH
+		+NOTONAUTOMAP
 		RenderStyle "None";
 	}
 }	
@@ -61,6 +63,7 @@ class MapSpot : Actor
 		+NOSECTOR
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 		RenderStyle "None";
 		CameraHeight 0;
 	}
@@ -81,6 +84,7 @@ class MapSpotGravity : MapSpot
 		-NOBLOCKMAP
 		-NOSECTOR
 		-NOGRAVITY
+		+NOTONAUTOMAP
 	}
 }
 
@@ -93,6 +97,7 @@ class PointPusher : Actor
 		+NOBLOCKMAP
 		+INVISIBLE
 		+NOCLIP
+		+NOTONAUTOMAP
 	}
 }
 
@@ -103,6 +108,7 @@ class PointPuller : Actor
 		+NOBLOCKMAP
 		+INVISIBLE
 		+NOCLIP
+		+NOTONAUTOMAP
 	}
 }
 
@@ -220,6 +226,7 @@ class SectorFlagSetter : Actor
 	{
 		Super.BeginPlay ();
 		CurSector.Flags |= args[0];
+		Destroy();
 	}
 }
 

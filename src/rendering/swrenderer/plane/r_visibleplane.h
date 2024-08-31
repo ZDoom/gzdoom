@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include "r_defs.h"
 #include "r_state.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 struct FDynamicLight;
 struct FLightNode;
@@ -70,7 +70,7 @@ namespace swrenderer
 		int			extralight = 0;
 		double		visibility = 0.0;
 		DVector3	viewpos = { 0.0, 0.0, 0.0 };
-		DAngle		viewangle = { 0.0 };
+		DAngle		viewangle = nullAngle;
 		fixed_t		Alpha = 0;
 		bool		Additive = false;
 

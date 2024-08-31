@@ -28,8 +28,8 @@ namespace swrenderer
 	public:
 		SpriteDrawerArgs();
 
-		bool SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, int translation, uint32_t color, const ColormapLight &light);
-		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, const ColormapLight &light);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, fixed_t alpha, FTranslationID translation, uint32_t color, const ColormapLight &light);
+		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, FTranslationID translation, uint32_t color, const ColormapLight &light);
 		void SetSolidColor(int color) { dc_color = color; dc_color_bgra = GPalette.BaseColors[color]; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 
@@ -69,7 +69,7 @@ namespace swrenderer
 		RenderViewport *Viewport() const { return dc_viewport; }
 
 	private:
-		void DrawMaskedColumn(RenderThread* thread, int x, int y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style);
+		void DrawMaskedColumn(RenderThread* thread, int x, float y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style);
 
 		void SetDest(RenderViewport* viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
@@ -111,7 +111,7 @@ namespace swrenderer
 
 		RenderViewport *dc_viewport = nullptr;
 
-		friend class DrawVoxelBlocksRGBACommand;
-		friend class DrawVoxelBlocksPalCommand;
+		friend class SWTruecolorDrawers;
+		friend class SWPalDrawers;
 	};
 }

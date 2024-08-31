@@ -93,7 +93,7 @@ class PhoenixRodPowered : PhoenixRod
 
 	override void EndPowerup ()
 	{
-		DepleteAmmo (bAltFire);
+		if (FlameCount > 0) DepleteAmmo (bAltFire);
 		Owner.player.refire = 0;
 		Owner.A_StopSound (CHAN_WEAPON);
 		Owner.player.ReadyWeapon = SisterWeapon;
@@ -178,9 +178,10 @@ class PhoenixRodPowered : PhoenixRod
 			return;
 		}
 		A_StopSound (CHAN_WEAPON);
-		Weapon weapon = player.ReadyWeapon;
+		PhoenixRodPowered weapon = PhoenixRodPowered(player.ReadyWeapon);
 		if (weapon != null)
 		{
+			weapon.FlameCount = 0;
 			weapon.DepleteAmmo (weapon.bAltFire);
 		}
 	}

@@ -45,8 +45,8 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "doomerrors.h"
-#include "w_wad.h"
+#include "engineerrors.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_setup.h"
 #include "s_sound.h"
@@ -202,15 +202,7 @@ int compare_episode_names(const void *a, const void *b)
 	FStatistics *A = (FStatistics*)a;
 	FStatistics *B = (FStatistics*)b;
 
-	return strnatcasecmp(A->epi_header, B->epi_header);
-}
-
-int compare_level_names(const void *a, const void *b)
-{
-	FLevelStatistics *A = (FLevelStatistics*)a;
-	FLevelStatistics *B = (FLevelStatistics*)b;
-
-	return strnatcasecmp(A->name, B->name);
+	return strnatcasecmp(A->epi_header.GetChars(), B->epi_header.GetChars());
 }
 
 int compare_dates(const void *a, const void *b)
@@ -248,7 +240,11 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 	unsigned int j;
 
 	FileWriter *fw = FileWriter::Open(fn);
-	if (fw == nullptr) return;
+	if (fw == nullptr)
+	{
+		Printf(PRINT_HIGH, "Unable to save statistics to %s\n", fn);
+		return;
+	}
 
 	qsort(&statlist[0], statlist.Size(), sizeof(statlist[0]), compare_episode_names);
 	for(unsigned i=0;i<statlist.Size ();i++)
@@ -270,8 +266,6 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 				if (ls.Size() > 0)
 				{
 					fw->Printf("\t{\n");
-
-					qsort(&ls[0], ls.Size(), sizeof(ls[0]), compare_level_names);
 
 					for(unsigned k=0;k<ls.Size ();k++)
 					{
@@ -297,7 +291,7 @@ static FStatistics *GetStatisticsList(TArray<FStatistics> &statlist, const char 
 {
 	for(unsigned int i=0;i<statlist.Size();i++)
 	{
-		if (!stricmp(section, statlist[i].epi_header)) 
+		if (!stricmp(section, statlist[i].epi_header.GetChars()))
 		{
 			return &statlist[i];
 		}
@@ -386,6 +380,15 @@ void STAT_StartNewGame(const char *mapname)
 //
 //==========================================================================
 
+int compare_level_names(const void* a, const void* b)
+{
+	OneLevel* A = (OneLevel*)a;
+	OneLevel* B = (OneLevel*)b;
+
+	return strnatcasecmp(A->Levelname.GetChars(), B->Levelname.GetChars());
+}
+
+
 static void StoreLevelStats(FLevelLocals *Level)
 {
 	unsigned int i;
@@ -423,6 +426,8 @@ static void StoreLevelStats(FLevelLocals *Level)
 		}
 		if (mc == 0) LevelData[i].killcount = LevelData[i].totalkills;
 	}
+	// sort level names alphabetically to bring the newly added level to its proper place when playing a hub.
+	qsort(&LevelData[0], LevelData.Size(), sizeof(LevelData[0]), compare_level_names);
 }
 
 //==========================================================================
@@ -453,19 +458,19 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 		{
 			// we reached the end of this episode
 			int wad = 0;
-			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap, false);
+			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap.GetChars(), false);
 			if (map != NULL)
 			{
-				wad = Wads.GetLumpFile(map->lumpnum);
+				wad = fileSystem.GetFileContainer(map->lumpnum);
 				delete map;
 			}
-			const char * name = Wads.GetWadName(wad);
+			const char * name = fileSystem.GetResourceFileName(wad);
 			FString section = ExtractFileBase(name) + "." + StartEpisode->mEpisodeMap;
 			section.ToUpper();
 
-			const char *ep_name = StartEpisode->mEpisodeName;
-			if (*ep_name == '$') ep_name = GStrings(ep_name+1);
-			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section, ep_name);
+			const char *ep_name = StartEpisode->mEpisodeName.GetChars();
+			if (*ep_name == '$') ep_name = GStrings.GetString(ep_name+1);
+			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section.GetChars(), ep_name);
 
 			int statvals[6] = {0,0,0,0,0,0};
 			FString infostring;
@@ -481,7 +486,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			}
 
 			infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], statvals[4], statvals[5], validlevels);
-			FSessionStatistics *es = StatisticsEntry(sl, infostring, Level->totaltime);
+			FSessionStatistics *es = StatisticsEntry(sl, infostring.GetChars(), Level->totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
@@ -490,7 +495,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 				infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d",
 					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].itemcount, LevelData[i].totalitems, LevelData[i].secretcount, LevelData[i].totalsecrets);
 
-				LevelStatEntry(es, lsection, infostring, LevelData[i].leveltime);
+				LevelStatEntry(es, lsection.GetChars(), infostring.GetChars(), LevelData[i].leveltime);
 			}
 			SaveStatistics(statfile, EpisodeStatistics);
 		}
@@ -556,6 +561,12 @@ void STAT_Serialize(FSerializer &arc)
 }
 
 
+FString STAT_EpisodeName()
+{
+	if (StartEpisode == nullptr) return "";
+	return StartEpisode->mEpisodeName;
+}
+
 //==========================================================================
 //
 // show statistics
@@ -584,14 +595,14 @@ CCMD(printstats)
 
 CCMD(finishgame)
 {
-	bool gamestatecheck = gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+	bool gamestatecheck = gamestate == GS_LEVEL || gamestate == GS_CUTSCENE;
 	if (!gamestatecheck)
 	{
 		Printf("Cannot use 'finishgame' while not in a game!\n");
 		return;
 	}
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last Level->
-	Net_WriteByte(DEM_FINISHGAME);
+	Net_WriteInt8(DEM_FINISHGAME);
 }
 
 ADD_STAT(statistics)

@@ -70,6 +70,7 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -77,7 +78,7 @@
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, r_fakecontrast, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0) self = 1;
 	else if (self > 2) self = 2;
@@ -88,27 +89,44 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 // Returns the next special sector attached to this sector
 // with a certain special.
-sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
+
+sector_t* P_NextSpecialSectorVC(sector_t* sec, int type)
+{
+	sector_t* tsec;
+	for (auto ln : sec->Lines)
+	{
+		if (nullptr != (tsec = getNextSector(ln, sec)) &&
+			tsec->validcount != validcount &&
+			tsec->special == type)
+		{
+			return tsec;
+		}
+	}
+	return nullptr;
+}
+
+
+sector_t *P_NextSpecialSector (sector_t* sec, int type, sector_t *nogood)
 {
 	sector_t *tsec;
-	for (auto ln : Lines)
+	for (auto ln : sec->Lines)
 	{
-		if (NULL != (tsec = getNextSector (ln, this)) &&
+		if (nullptr != (tsec = getNextSector (ln, sec)) &&
 			tsec != nogood &&
 			tsec->special == type)
 		{
 			return tsec;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
-DEFINE_ACTION_FUNCTION(_Sector, NextSpecialSector)
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextSpecialSector, P_NextSpecialSector)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(type);
 	PARAM_POINTER(nogood, sector_t);
-	ACTION_RETURN_POINTER(self->NextSpecialSector(type, nogood));
+	ACTION_RETURN_POINTER(P_NextSpecialSector(self, type, nogood));
 }
 
 //
@@ -488,7 +506,7 @@ static inline void CheckShortestTex (FLevelLocals *Level, FTextureID texnum, dou
 {
 	if (texnum.isValid() || (texnum.isNull() && (Level->i_compatflags & COMPATF_SHORTTEX)))
 	{
-		FTexture *tex = TexMan.GetTexture(texnum);
+		auto tex = TexMan.GetGameTexture(texnum);
 		if (tex != NULL)
 		{
 			double h = tex->GetDisplayHeight();
@@ -512,7 +530,7 @@ double FindShortestTextureAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -537,7 +555,7 @@ double FindShortestUpperAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -920,7 +938,12 @@ int GetTerrain(const sector_t *sector, int pos)
 	return sector->terrainnum[pos] >= 0 ? sector->terrainnum[pos] : TerrainTypes[sector->GetTexture(pos)];
 }
 
-	//=====================================================================================
+FTerrainDef *GetFloorTerrain_S(const sector_t* sec, int pos)
+{
+	return &Terrains[GetTerrain(sec, pos)];
+}
+
+//=====================================================================================
 //
 //
 //=====================================================================================
@@ -1155,10 +1178,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 tex->GetGlowColor(bottomglowcolor);
@@ -1200,10 +1223,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 auto c = planes[sector_t::ceiling].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::ceiling));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::ceiling));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::ceiling), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::ceiling), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
@@ -1224,10 +1247,10 @@ double GetFriction(const sector_t *self, int plane, double *pMoveFac)
 	 c = planes[sector_t::floor].GlowColor;
 	 if (c == 0)
 	 {
-		 FTexture *tex = TexMan.GetTexture(GetTexture(sector_t::floor));
+		 auto tex = TexMan.GetGameTexture(GetTexture(sector_t::floor));
 		 if (tex != NULL && tex->isGlowing())
 		 {
-			 if (!tex->isAutoGlowing()) tex = TexMan.GetTexture(GetTexture(sector_t::floor), true);
+			 if (!tex->isAutoGlowing()) tex = TexMan.GetGameTexture(GetTexture(sector_t::floor), true);
 			 if (tex->isGlowing())	// recheck the current animation frame.
 			 {
 				 ret = true;
@@ -1378,12 +1401,12 @@ bool FLevelLocals::AlignFlat (int linenum, int side, int fc)
 		return false;
 
 	DAngle angle = line->Delta().Angle();
-	DAngle norm = angle - 90;
+	DAngle norm = angle - DAngle::fromDeg(90.);
 	double dist = -(norm.Cos() * line->v1->fX() + norm.Sin() * line->v1->fY());
 
 	if (side)
 	{
-		angle += 180.;
+		angle += DAngle::fromDeg(180.);
 		dist = -dist;
 	}
 
@@ -1474,6 +1497,12 @@ void subsector_t::BuildPolyBSP()
 		BSP->Subsectors[i].sector = sector;
 		BSP->Subsectors[i].section = section;
 	}
+	for (unsigned i = 0; i < BSP->Segs.Size(); i++)
+	{
+		BSP->Segs[i].Subsector = this;
+		BSP->Segs[i].PartnerSeg = nullptr;
+	}
+
 }
 
 //===========================================================================
@@ -1515,11 +1544,18 @@ void line_t::AdjustLine()
 //
 //==========================================================================
 
-int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfakecontrast) const
+int side_t::GetLightLevel (bool foggy, int baselight, int which, bool is3dlight, int *pfakecontrast) const
 {
-	if (!is3dlight && (Flags & WALLF_ABSLIGHTING))
+	if (!is3dlight)
 	{
-		baselight = Light;
+		if (Flags & (WALLF_ABSLIGHTING_TIER << which))
+		{
+			baselight = TierLights[which];
+		}
+		else if (Flags & WALLF_ABSLIGHTING)
+		{
+			baselight = Light + TierLights[which];
+		}
 	}
 
 	if (pfakecontrast != NULL)
@@ -1558,9 +1594,9 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 			}
 		}
 	}
-	if (!is3dlight && !(Flags & WALLF_ABSLIGHTING) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
+	if (!is3dlight && !(Flags & WALLF_ABSLIGHTING) && !(Flags & (WALLF_ABSLIGHTING_TIER << which)) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
 	{
-		baselight += this->Light;
+		baselight += this->Light + this->TierLights[which];
 	}
 	return baselight;
 }

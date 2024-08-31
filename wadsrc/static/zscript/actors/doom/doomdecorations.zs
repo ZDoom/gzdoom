@@ -82,7 +82,7 @@ class ShortGreenColumn : Actor
 	Default
 	{
 		Radius 16;
-		Height 40;;
+		Height 40;
 		ProjectilePassHeight -16;
 		+SOLID
 	}
@@ -234,7 +234,7 @@ class BlueTorch : Actor
 	Default
 	{
 		Radius 16;
-		Height 68;;
+		Height 68;
 		ProjectilePassHeight -16;
 		+SOLID
 	}
@@ -594,7 +594,7 @@ class HeadsOnAStick : Actor
 	Default
 	{
 		Radius 16;
-		Height 64;;
+		Height 64;
 		ProjectilePassHeight -16;
 		+SOLID
 	}

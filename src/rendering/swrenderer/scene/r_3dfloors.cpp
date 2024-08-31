@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "p_local.h"
 #include "c_dispatch.h"
@@ -41,9 +41,9 @@
 #include "r_3dfloors.h"
 #include "r_utility.h"
 #include "swrenderer/r_renderthread.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
-CVAR(Int, r_3dfloors, true, 0);
+CVAR(Int, r_3dfloors, 1, 0);
 
 namespace swrenderer
 {

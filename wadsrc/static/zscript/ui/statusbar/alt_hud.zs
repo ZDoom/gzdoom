@@ -184,22 +184,38 @@ class AltHud ui
 		
 		if (!deathmatch)
 		{
-			// FIXME: ZDoom doesn't preserve the player's stat counters across hubs so this doesn't
-			// work in cooperative hub games
 			if (hud_showsecrets)
 			{
-				DrawStatLine(x, y, "S:", String.Format("%i/%i ", multiplayer? CPlayer.secretcount : Level.found_secrets, Level.total_secrets));
+				DrawStatLine(x, y, "S:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.secretcount, Level.found_secrets, Level.total_secrets)
+					: String.Format("%i/%i ", Level.found_secrets, Level.total_secrets));
 			}
 			
 			if (hud_showitems)
 			{
-				DrawStatLine(x, y, "I:", String.Format("%i/%i ", multiplayer? CPlayer.itemcount : Level.found_items, Level.total_items));
+				DrawStatLine(x, y, "I:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.itemcount, Level.found_items, Level.total_items)
+					: String.Format("%i/%i ", Level.found_items, Level.total_items));
 			}
 			
 			if (hud_showmonsters)
 			{
-				DrawStatLine(x, y, "K:", String.Format("%i/%i ", multiplayer? CPlayer.killcount : Level.killed_monsters, Level.total_monsters));
+				DrawStatLine(x, y, "K:", multiplayer
+					? String.Format("%i/%i/%i ", CPlayer.killcount, Level.killed_monsters, Level.total_monsters)
+					: String.Format("%i/%i ", Level.killed_monsters, Level.total_monsters));
 			}
+
+			if (hud_showtimestat)
+			{
+				String s;
+				let seconds = Thinker.Tics2Seconds(level.time);
+				if (seconds >= 3600)
+					s = String.Format("%02i:%02i:%02i", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+				else
+					s = String.Format("%02i:%02i", seconds / 60, seconds % 60);
+				DrawStatLine(x, y, "T:", s);
+			}
+
 		}
 	}
 
@@ -702,9 +718,10 @@ class AltHud ui
 	//
 	//---------------------------------------------------------------------------
 	
-	void DrawCoordinateEntry(int xpos, int ypos, String coordstr)
+	void DrawCoordinateEntry(int xpos, int ypos, String coordstr, Font fnt = nullptr)
 	{
-		screen.DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
+		if (fnt == nullptr) fnt = SmallFont;
+		screen.DrawText(fnt, hudcolor_xyco, xpos, ypos, coordstr,
 						 DTA_KeepRatio, true,
 						 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
 	}
@@ -713,7 +730,8 @@ class AltHud ui
 	{
 		Vector3 pos;
 		String coordstr;
-		int h = SmallFont.GetHeight();
+		let fnt = generic_ui ? NewSmallFont : SmallFont;
+		int h = fnt.GetHeight();
 		let mo = CPlayer.mo;
 		
 		if (!map_point_coordinates || !automapactive) 
@@ -726,7 +744,7 @@ class AltHud ui
 			pos.z = Level.PointInSector(pos.xy).floorplane.ZatPoint(pos.xy);
 		}
 
-		int xpos = hudwidth - SmallFont.StringWidth("X: -00000")-6;
+		int xpos = hudwidth - fnt.StringWidth("X: -00000")-6;
 		int ypos = 18;
 
 		if (withmapname)
@@ -745,20 +763,20 @@ class AltHud ui
 			ypos += 2 * hh + h;
 		}
 		
-		DrawCoordinateEntry(xpos, ypos, String.Format("X: %.0f", pos.X));
+		DrawCoordinateEntry(xpos, ypos, String.Format("X: %.0f", pos.X), fnt);
 		ypos += h;
-		DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", pos.Y));
+		DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", pos.Y), fnt);
 		ypos += h;
-		DrawCoordinateEntry(xpos, ypos, String.Format("Z: %.0f", pos.Z));
+		DrawCoordinateEntry(xpos, ypos, String.Format("Z: %.0f", pos.Z), fnt);
 		ypos += h;
 
 		if (hud_showangles)
 		{
-			DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", Actor.Normalize180(mo.Angle)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("Y: %.0f", Actor.Normalize180(mo.Angle)), fnt);
 			ypos += h;
-			DrawCoordinateEntry(xpos, ypos, String.Format("P: %.0f", Actor.Normalize180(mo.Pitch)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("P: %.0f", Actor.Normalize180(mo.Pitch)), fnt);
 			ypos += h;
-			DrawCoordinateEntry(xpos, ypos, String.Format("R: %.0f", Actor.Normalize180(mo.Roll)));
+			DrawCoordinateEntry(xpos, ypos, String.Format("R: %.0f", Actor.Normalize180(mo.Roll)), fnt);
 		}
 	}
 	
@@ -770,13 +788,12 @@ class AltHud ui
 	// for meaning of all display modes
 	//
 	//---------------------------------------------------------------------------
-	private native static int GetRealTime();
-
 	virtual bool DrawTime(int y)
 	{
 		if (hud_showtime > 0 && hud_showtime <= 9)
 		{
 			int timeSeconds;
+			String timeString;
 
 			if (hud_showtime < 8)
 			{
@@ -787,33 +804,35 @@ class AltHud ui
 							? Level.time
 							: Level.totaltime);
 				timeSeconds = Thinker.Tics2Seconds(timeTicks);
-			}
-			else
-			{
-				timeSeconds = GetRealTime();
-			}
 
-			int hours   =  timeSeconds / 3600;
-			int minutes = (timeSeconds % 3600) / 60;
-			int seconds =  timeSeconds % 60;
+				int hours   =  timeSeconds / 3600;
+				int minutes = (timeSeconds % 3600) / 60;
+				int seconds =  timeSeconds % 60;
 
-			bool showMillis  = 1 == hud_showtime;
-			bool showSeconds = showMillis || (0 == hud_showtime % 2);
+				bool showMillis  = 1 == hud_showtime;
+				bool showSeconds = showMillis || (0 == hud_showtime % 2);
 
-			String timeString;
-
-			if (showMillis)
-			{
-				int millis  = (Level.time % Thinker.TICRATE) * (1000 / Thinker.TICRATE);
-				timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				if (showMillis)
+				{
+					int millis  = (Level.time % GameTicRate) * 1000 / GameTicRate;
+					timeString = String.Format("%02i:%02i:%02i.%03i", hours, minutes, seconds, millis);
+				}
+				else if (showSeconds)
+				{
+					timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				}
+				else
+				{
+					timeString = String.Format("%02i:%02i", hours, minutes);
+				}
 			}
-			else if (showSeconds)
+			else if (hud_showtime == 8)
 			{
-				timeString = String.Format("%02i:%02i:%02i", hours, minutes, seconds);
+				timeString = SystemTime.Format("%H:%M:%S",SystemTime.Now());
 			}
-			else
+			else //if (hud_showtime == 9)
 			{
-				timeString = String.Format("%02i:%02i", hours, minutes);
+				timeString = SystemTime.Format("%H:%M",SystemTime.Now());
 			}
 
 			int characterCount = timeString.length();
@@ -907,8 +926,12 @@ class AltHud ui
 			DrawStatus(CPlayer, 5, hudheight-75);
 			DrawFrags(CPlayer, 5, hudheight-70);
 		}
-		DrawHealth(CPlayer, 5, hudheight-45);
-		DrawArmor(BasicArmor(CPlayer.mo.FindInventory('BasicArmor')), HexenArmor(CPlayer.mo.FindInventory('HexenArmor')), 5, hudheight-20);
+
+		int armory = hud_swaphealtharmor ? hudheight-45 : hudheight-20;
+		int healthy = hud_swaphealtharmor ? hudheight-20 : hudheight-45;
+		DrawHealth(CPlayer, 5, healthy);
+		DrawArmor(BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true)), HexenArmor(CPlayer.mo.FindInventory('HexenArmor', true)), 5, armory);
+
 		int y = DrawKeys(CPlayer, hudwidth-4, hudheight-10);
 		y = DrawAmmo(CPlayer, hudwidth-5, y);
 		if (hud_showweapons) DrawWeapons(CPlayer, hudwidth - 5, y);
@@ -956,9 +979,31 @@ class AltHud ui
 		let amstr = Level.FormatMapName(hudcolor_titl);
 		font = generic_ui? NewSmallFont : SmallFont.CanPrint(amstr)? SmallFont : OriginalSmallFont;
 
-		screen.DrawText(font, Font.CR_BRICK, 2, hudheight - fonth - 1, amstr,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+		bottom = hudheight - fonth - 1;
+
+		screen.DrawText(font, Font.CR_BRICK, 2, bottom, amstr,
+			DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+
+		if (am_showcluster && (Level.clusterflags & Level.CLUSTER_HUB))
+		{
+			let text = Level.GetClusterName();
+			if (text != "")
+			{
+				bottom -= fonth;
+				screen.DrawText(font, Font.CR_ORANGE, 2, bottom, text,
+					DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+			}
+		}
+		if (am_showepisode)
+		{
+			let text = Level.GetEpisodeName();
+			if (text != "")
+			{
+				bottom -= fonth;
+				screen.DrawText(font, Font.CR_RED, 2, bottom, text,
+					DTA_KeepRatio, true, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight);
+			}
+		}
 
 		DrawCoordinates(CPlayer, false);
 	}

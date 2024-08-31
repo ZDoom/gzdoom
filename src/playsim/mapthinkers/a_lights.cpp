@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 
 
-#include "templates.h"
+
 #include "m_random.h"
 
 #include "doomdef.h"
@@ -521,7 +521,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 		else
 			l = Level->CreateThinker<DPhased> (sector, baselevel);
 
-		int numsteps = PhaseHelper (sector->NextSpecialSector (
+		int numsteps = PhaseHelper (P_NextSpecialSector (sector,
 				sector->special == LightSequenceSpecial1 ?
 					LightSequenceSpecial2 : LightSequenceSpecial1, prev),
 				index + 1, l->m_BaseLevel, sector);

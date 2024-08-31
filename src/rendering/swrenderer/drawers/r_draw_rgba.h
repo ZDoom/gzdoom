@@ -25,6 +25,7 @@
 #include "r_draw.h"
 #include "v_palette.h"
 #include "r_thread.h"
+#include "r_draw_pal.h"
 #include "swrenderer/viewport/r_skydrawer.h"
 #include "swrenderer/viewport/r_spandrawer.h"
 #include "swrenderer/viewport/r_walldrawer.h"
@@ -70,125 +71,6 @@ namespace swrenderer
 	#define VECTORCALL
 	#endif
 
-	class DrawFuzzColumnRGBACommand : public DrawerCommand
-	{
-		int _x;
-		int _yl;
-		int _yh;
-		uint8_t * RESTRICT _destorg;
-		int _pitch;
-		int _fuzzpos;
-		int _fuzzviewheight;
-
-	public:
-		DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
-		void Execute(DrawerThread *thread) override;
-	};
-
-	class DrawScaledFuzzColumnRGBACommand : public DrawerCommand
-	{
-		int _x;
-		int _yl;
-		int _yh;
-		uint8_t * RESTRICT _destorg;
-		int _pitch;
-		int _fuzzpos;
-		int _fuzzviewheight;
-
-	public:
-		DrawScaledFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
-		void Execute(DrawerThread *thread) override;
-	};
-
-	class FillSpanRGBACommand : public DrawerCommand
-	{
-		int _x1;
-		int _x2;
-		int _y;
-		uint8_t * RESTRICT _dest;
-		fixed_t _light;
-		int _color;
-
-	public:
-		FillSpanRGBACommand(const SpanDrawerArgs &drawerargs);
-		void Execute(DrawerThread *thread) override;
-	};
-
-	class DrawFogBoundaryLineRGBACommand : public DrawerCommand
-	{
-		int _y;
-		int _x;
-		int _x2;
-		uint8_t * RESTRICT _line;
-		fixed_t _light;
-		ShadeConstants _shade_constants;
-
-	public:
-		DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs);
-		void Execute(DrawerThread *thread) override;
-	};
-
-	class DrawTiltedSpanRGBACommand : public DrawerCommand
-	{
-		int _x1;
-		int _x2;
-		int _y;
-		uint8_t * RESTRICT _dest;
-		fixed_t _light;
-		ShadeConstants _shade_constants;
-		FVector3 _plane_sz;
-		FVector3 _plane_su;
-		FVector3 _plane_sv;
-		bool _plane_shade;
-		int _planeshade;
-		float _planelightfloat;
-		fixed_t _pviewx;
-		fixed_t _pviewy;
-		int _xbits;
-		int _ybits;
-		const uint32_t * RESTRICT _source;
-		RenderViewport *viewport;
-
-	public:
-		DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
-		void Execute(DrawerThread *thread) override;
-	};
-
-	class DrawColoredSpanRGBACommand : public DrawerCommand
-	{
-		int _y;
-		int _x1;
-		int _x2;
-		uint8_t * RESTRICT _dest;
-		fixed_t _light;
-		int _color;
-
-	public:
-		DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs);
-
-		void Execute(DrawerThread *thread) override;
-	};
-
-#if 0
-	class ApplySpecialColormapRGBACommand : public DrawerCommand
-	{
-		uint8_t *buffer;
-		int pitch;
-		int width;
-		int height;
-		int start_red;
-		int start_green;
-		int start_blue;
-		int end_red;
-		int end_green;
-		int end_blue;
-
-	public:
-		ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen);
-		void Execute(DrawerThread *thread) override;
-	};
-#endif
-
 	template<typename CommandType, typename BlendMode>
 	class DrawerBlendCommand : public CommandType
 	{
@@ -203,38 +85,6 @@ namespace swrenderer
 				blend.Blend(*this, loop);
 			} while (loop.next());
 		}
-	};
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	class DrawParticleColumnRGBACommand : public DrawerCommand
-	{
-	public:
-		DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
-		void Execute(DrawerThread *thread) override;
-
-	private:
-		uint32_t *_dest;
-		int _dest_y;
-		int _pitch;
-		int _count;
-		uint32_t _fg;
-		uint32_t _alpha;
-		uint32_t _fracposx;
-	};
-
-	/////////////////////////////////////////////////////////////////////////////
-
-	class DrawVoxelBlocksRGBACommand : public DrawerCommand
-	{
-	public:
-		DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount);
-		void Execute(DrawerThread *thread) override;
-
-	private:
-		SpriteDrawerArgs args;
-		const VoxelBlock *blocks;
-		int blockcount;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -277,15 +127,19 @@ namespace swrenderer
 		void DrawSpanMaskedTranslucent(const SpanDrawerArgs &args) override;
 		void DrawSpanAddClamp(const SpanDrawerArgs &args) override;
 		void DrawSpanMaskedAddClamp(const SpanDrawerArgs &args) override;
-		void FillSpan(const SpanDrawerArgs &args) override { Queue->Push<FillSpanRGBACommand>(args); }
+		void FillSpan(const SpanDrawerArgs& args) override;
+		void DrawTiltedSpan(const SpanDrawerArgs& args, const FVector3& plane_sz, const FVector3& plane_su, const FVector3& plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap* basecolormap) override;
+		void DrawColoredSpan(const SpanDrawerArgs& args) override;
+		void DrawFogBoundaryLine(const SpanDrawerArgs& args) override;
+		void DrawParticleColumn(int x, int yl, int ycount, uint32_t fg, uint32_t alpha, uint32_t fracposx) override;
 
-		void DrawTiltedSpan(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap) override
-		{
-			Queue->Push<DrawTiltedSpanRGBACommand>(args, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy);
-		}
+		void DrawScaledFuzzColumn(const SpriteDrawerArgs& args);
+		void DrawUnscaledFuzzColumn(const SpriteDrawerArgs& args);
 
-		void DrawColoredSpan(const SpanDrawerArgs &args) override { Queue->Push<DrawColoredSpanRGBACommand>(args); }
-		void DrawFogBoundaryLine(const SpanDrawerArgs &args) override { Queue->Push<DrawFogBoundaryLineRGBACommand>(args); }
+		template<typename DrawerT> void DrawWallColumns(const WallDrawerArgs& args);
+		template<typename DrawerT> void DrawWallColumn32(WallColumnDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepX, uint32_t texelStepY);
+
+		WallColumnDrawerArgs wallcolargs;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////

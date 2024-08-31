@@ -32,11 +32,12 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "flatvertices.h"
+#include "hw_clock.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hw_fakeflat.h"
+#include "hw_walldispatcher.h"
 
 FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
 
@@ -268,7 +269,7 @@ void HWDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //
 //
 //==========================================================================
-void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
+void HWDrawList::SortWallIntoPlane(HWDrawInfo* di, SortNode * head, SortNode * sort)
 {
 	HWFlat * fh = flats[drawitems[head->itemindex].index];
 	HWWall * ws = walls[drawitems[sort->itemindex].index];
@@ -287,6 +288,7 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 		{
 			ws->vertcount = 0;	// invalidate current vertices.
 			float newtexv = ws->tcs[HWWall::UPLFT].v + ((ws->tcs[HWWall::LOLFT].v - ws->tcs[HWWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
+			float newlmv = ws->lightuv[HWWall::UPLFT].v + ((ws->lightuv[HWWall::LOLFT].v - ws->lightuv[HWWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
 
 			// I make the very big assumption here that translucent walls in sloped sectors
 			// and 3D-floors never coexist in the same level - If that were the case this
@@ -295,12 +297,16 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 			{
 				ws->ztop[1] = w->zbottom[1] = ws->ztop[0] = w->zbottom[0] = fh->z;
 				ws->tcs[HWWall::UPRGT].v = w->tcs[HWWall::LORGT].v = ws->tcs[HWWall::UPLFT].v = w->tcs[HWWall::LOLFT].v = newtexv;
+				ws->lightuv[HWWall::UPRGT].v = w->lightuv[HWWall::LORGT].v = ws->lightuv[HWWall::UPLFT].v = w->lightuv[HWWall::LOLFT].v = newlmv;
 			}
 			else
 			{
 				w->ztop[1] = ws->zbottom[1] = w->ztop[0] = ws->zbottom[0] = fh->z;
 				w->tcs[HWWall::UPLFT].v = ws->tcs[HWWall::LOLFT].v = w->tcs[HWWall::UPRGT].v = ws->tcs[HWWall::LORGT].v = newtexv;
+				w->lightuv[HWWall::UPLFT].v = ws->lightuv[HWWall::LOLFT].v = w->lightuv[HWWall::UPRGT].v = ws->lightuv[HWWall::LORGT].v = newlmv;
 			}
+			w->MakeVertices(false);
+			ws->MakeVertices(false);
 		}
 
 		SortNode * sort2 = SortNodes.GetNew();
@@ -431,6 +437,7 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 		float ix=(float)(ws->glseg.x1+r*(ws->glseg.x2-ws->glseg.x1));
 		float iy=(float)(ws->glseg.y1+r*(ws->glseg.y2-ws->glseg.y1));
 		float iu=(float)(ws->tcs[HWWall::UPLFT].u + r * (ws->tcs[HWWall::UPRGT].u - ws->tcs[HWWall::UPLFT].u));
+		float ilmu=(float)(ws->lightuv[HWWall::UPLFT].u + r * (ws->lightuv[HWWall::UPRGT].u - ws->lightuv[HWWall::UPLFT].u));
 		float izt=(float)(ws->ztop[0]+r*(ws->ztop[1]-ws->ztop[0]));
 		float izb=(float)(ws->zbottom[0]+r*(ws->zbottom[1]-ws->zbottom[0]));
 
@@ -444,8 +451,9 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 		w->ztop[0]=ws->ztop[1]=izt;
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[HWWall::LOLFT].u = w->tcs[HWWall::UPLFT].u = ws->tcs[HWWall::LORGT].u = ws->tcs[HWWall::UPRGT].u = iu;
-		ws->MakeVertices(di, false);
-		w->MakeVertices(di, false);
+		w->lightuv[HWWall::LOLFT].u = w->lightuv[HWWall::UPLFT].u = ws->lightuv[HWWall::LORGT].u = ws->lightuv[HWWall::UPRGT].u = iu;
+		ws->MakeVertices(false);
+		w->MakeVertices(false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -472,6 +480,7 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 //==========================================================================
 EXTERN_CVAR(Int, gl_billboard_mode)
 EXTERN_CVAR(Bool, gl_billboard_faces_camera)
+EXTERN_CVAR(Bool, hw_force_cambbpref)
 EXTERN_CVAR(Bool, gl_billboard_particles)
 
 inline double CalcIntersectionVertex(HWSprite *s, HWWall * w2)
@@ -515,7 +524,10 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * s
 		const bool drawWithXYBillboard = ((ss->particle && gl_billboard_particles) || (!(ss->actor && ss->actor->renderflags & RF_FORCEYBILLBOARD)
 			&& (gl_billboard_mode == 1 || (ss->actor && ss->actor->renderflags & RF_FORCEXYBILLBOARD))));
 
-		const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
+		const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
+			(gl_billboard_faces_camera && (ss->actor && !(ss->actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA)))
+			|| (ss->actor && ss->actor->renderflags2 & RF2_BILLBOARDFACECAMERA);
+
 		// [Nash] has +ROLLSPRITE
 		const bool rotated = (ss->actor != nullptr && ss->actor->renderflags & (RF_ROLLSPRITE | RF_WALLSPRITE | RF_FLATSPRITE));
 
@@ -647,7 +659,7 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 				break;
 
 			case DrawType_WALL:
-				SortWallIntoPlane(head,node);
+				SortWallIntoPlane(di,head,node);
 				break;
 
 			case DrawType_SPRITE:
@@ -722,7 +734,7 @@ void HWDrawList::SortWalls()
 			HWWall * w1 = walls[a.index];
 			HWWall * w2 = walls[b.index];
 
-			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
+			if (w1->texture != w2->texture) return w1->texture < w2->texture;
 			return (w1->flags & 3) < (w2->flags & 3);
 
 		});
@@ -737,7 +749,7 @@ void HWDrawList::SortFlats()
 		{
 			HWFlat * w1 = flats[a.index];
 			HWFlat* w2 = flats[b.index];
-			return w1->gltexture < w2->gltexture;
+			return w1->texture < w2->texture;
 		});
 	}
 }
@@ -801,8 +813,9 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 	case DrawType_WALL:
 		{
 			HWWall * w= walls[drawitems[i].index];
+			HWWallDispatcher dis(di);
 			RenderWall.Clock();
-			w->DrawWall(di, state, translucent);
+			w->DrawWall(&dis, state, translucent);
 			RenderWall.Unclock();
 		}
 		break;
@@ -838,10 +851,11 @@ void HWDrawList::Draw(HWDrawInfo *di, FRenderState &state, bool translucent)
 //==========================================================================
 void HWDrawList::DrawWalls(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
+	HWWallDispatcher dis(di);
 	RenderWall.Clock();
 	for (auto &item : drawitems)
 	{
-		walls[item.index]->DrawWall(di, state, translucent);
+		walls[item.index]->DrawWall(&dis, state, translucent);
 	}
 	RenderWall.Unclock();
 }

@@ -32,19 +32,19 @@
 // the GNU General Public License v3.0.
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "r_data/sprites.h"
 #include "d_net.h"
 #include "po_man.h"
 #include "r_utility.h"
 #include "i_time.h"
 #include "swrenderer/drawers/r_draw.h"
-#include "swrenderer/drawers/r_thread.h"
+#include "r_thread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/scene/r_portal.h"
@@ -53,7 +53,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
@@ -135,12 +135,12 @@ namespace swrenderer
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
 		{
-			DAngle ang = double(screen->FrameTime) * voxelspin / 1000;
+			DAngle ang = DAngle::fromDeg((screen->FrameTime) * voxelspin / 1000.);
 			vis->Angle -= ang;
 		}
 
 		vis->pa.vpos = { (float)thread->Viewport->viewpoint.Pos.X, (float)thread->Viewport->viewpoint.Pos.Y, (float)thread->Viewport->viewpoint.Pos.Z };
-		vis->pa.vang = FAngle((float)thread->Viewport->viewpoint.Angles.Yaw.Degrees);
+		vis->pa.vang = FAngle::fromDeg(((float)thread->Viewport->viewpoint.Angles.Yaw.Degrees()));
 
 		// killough 3/27/98: save sector for special clipping later
 		vis->heightsec = heightsec;
@@ -148,6 +148,9 @@ namespace swrenderer
 
 		vis->depth = (float)tz;
 		vis->gpos = { (float)pos.X, (float)pos.Y, (float)pos.Z };
+		vis->gpos.X += (float)voxel->xoffset;
+		vis->gpos.Y += (float)voxel->yoffset;
+		vis->gpos.Z += (float)voxel->zoffset;
 		vis->gzb = (float)gzb;		// [RH] use gzb, not thing->z
 		vis->gzt = (float)gzt;		// killough 3/27/98
 		vis->deltax = float(pos.X - thread->Viewport->viewpoint.Pos.X);
@@ -323,8 +326,8 @@ namespace swrenderer
 		sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
 		// Select mip level
-		i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
-		i = DivScale6(i, MIN(daxscale, dayscale));
+		i = abs(DMulScale(dasprx - globalposx, cosang, daspry - globalposy, sinang, 6));
+		i = DivScale(i, min(daxscale, dayscale), 6);
 		j = xs_Fix<13>::ToFix(viewport->FocalLengthX);
 		for (k = 0; i >= j && k < voxobj->NumMips; ++k)
 		{
@@ -338,10 +341,10 @@ namespace swrenderer
 		maxslabz >>= k;
 
 		daxscale <<= (k + 8); dayscale <<= (k + 8);
-		dazscale = FixedDiv(dayscale, FLOAT2FIXED(viewport->BaseYaspectMul));
+		dazscale = DivScale(dayscale, FLOAT2FIXED(viewport->BaseYaspectMul), 16);
 		daxscale = fixed_t(daxscale / viewport->YaspectMul);
 		daxscale = Scale(daxscale, xdimenscale, viewport->viewwindow.centerxwide << 9);
-		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewport->viewingrangerecip), viewport->viewwindow.centerxwide << 9);
+		dayscale = Scale(dayscale, MulScale(xdimenscale, viewport->viewingrangerecip, 16), viewport->viewwindow.centerxwide << 9);
 
 		daxscalerecip = (1 << 30) / daxscale;
 		dayscalerecip = (1 << 30) / dayscale;
@@ -350,38 +353,38 @@ namespace swrenderer
 		fixed_t piv_y = fixed_t(mip->Pivot.Y*256.);
 		fixed_t piv_z = fixed_t(mip->Pivot.Z*256.);
 
-		x = FixedMul(globalposx - dasprx, daxscalerecip);
-		y = FixedMul(globalposy - daspry, daxscalerecip);
-		backx = (DMulScale10(x, sprcosang, y, sprsinang) + piv_x) >> 8;
-		backy = (DMulScale10(y, sprcosang, x, -sprsinang) + piv_y) >> 8;
+		x = MulScale(globalposx - dasprx, daxscalerecip, 16);
+		y = MulScale(globalposy - daspry, daxscalerecip, 16);
+		backx = (DMulScale(x, sprcosang, y, sprsinang, 10) + piv_x) >> 8;
+		backy = (DMulScale(y, sprcosang, x, -sprsinang, 10) + piv_y) >> 8;
 		cbackx = clamp(backx, 0, mip->SizeX - 1);
 		cbacky = clamp(backy, 0, mip->SizeY - 1);
 
-		sprcosang = MulScale14(daxscale, sprcosang);
-		sprsinang = MulScale14(daxscale, sprsinang);
+		sprcosang = MulScale(daxscale, sprcosang, 14);
+		sprsinang = MulScale(daxscale, sprsinang, 14);
 
-		x = (dasprx - globalposx) - DMulScale18(piv_x, sprcosang, piv_y, -sprsinang);
-		y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x, sprsinang);
+		x = (dasprx - globalposx) - DMulScale(piv_x, sprcosang, piv_y, -sprsinang, 18);
+		y = (daspry - globalposy) - DMulScale(piv_y, sprcosang, piv_x, sprsinang, 18);
 
-		cosang = FixedMul(cosang, dayscalerecip);
-		sinang = FixedMul(sinang, dayscalerecip);
+		cosang = MulScale(cosang, dayscalerecip, 16);
+		sinang = MulScale(sinang, dayscalerecip, 16);
 
 		gxstart = y*cosang - x*sinang;
 		gystart = x*cosang + y*sinang;
-		gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
-		gyinc = DMulScale10(sprcosang, cosang, sprsinang, sinang);
+		gxinc = DMulScale(sprsinang, cosang, sprcosang, -sinang, 10);
+		gyinc = DMulScale(sprcosang, cosang, sprsinang, sinang, 10);
 		if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
 
-		x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
-		fixed_t *ggxinc = (fixed_t *)alloca((j + 1) * sizeof(fixed_t) * 2);
-		fixed_t *ggyinc = ggxinc + (j + 1);
+		x = 0; y = 0; j = max(mip->SizeX, mip->SizeY);
+		TArray<fixed_t> ggxinc((j + 1) * 2);
+		fixed_t *ggyinc = ggxinc.data() + (j + 1);
 		for (i = 0; i <= j; i++)
 		{
 			ggxinc[i] = x; x += gxinc;
 			ggyinc[i] = y; y += gyinc;
 		}
 
-		syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (piv_z << 7);
+		syoff = DivScale(globalposz - dasprz, MulScale(dazscale, 0xE800, 16), 21) + (piv_z << 7);
 		yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 		bool useSlabDataBgra = !drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra();
@@ -446,12 +449,12 @@ namespace swrenderer
 			uint8_t oand16 = oand + 16;
 			uint8_t oand32 = oand + 32;
 
-			if (yi > 0) { dagxinc = gxinc; dagyinc = FixedMul(gyinc, viewport->viewingrangerecip); }
-			else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewport->viewingrangerecip); }
+			if (yi > 0) { dagxinc = gxinc; dagyinc = MulScale(gyinc, viewport->viewingrangerecip, 16); }
+			else { dagxinc = -gxinc; dagyinc = -MulScale(gyinc, viewport->viewingrangerecip, 16); }
 
 			/* Fix for non 90 degree viewing ranges */
-			nxoff = FixedMul(x2 - x1, viewport->viewingrangerecip);
-			x1 = FixedMul(x1, viewport->viewingrangerecip);
+			nxoff = MulScale(x2 - x1, viewport->viewingrangerecip, 16);
+			x1 = MulScale(x1, viewport->viewingrangerecip, 16);
 
 			ggxstart = gxstart + ggyinc[ys];
 			ggystart = gystart - ggxinc[ys];
@@ -462,7 +465,7 @@ namespace swrenderer
 				uint8_t *slabxoffs = &SlabData[mip->OffsetX[x]];
 				short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
 
-				nx = FixedMul(ggxstart + ggxinc[x], viewport->viewingrangerecip) + x1;
+				nx = MulScale(ggxstart + ggxinc[x], viewport->viewingrangerecip, 16) + x1;
 				ny = ggystart + ggyinc[x];
 				for (y = ys; y != ye; y += yi, nx += dagyinc, ny -= dagxinc)
 				{
@@ -487,8 +490,8 @@ namespace swrenderer
 
 					if (flags & DVF_FIND_X1X2)
 					{
-						coverageX1 = MIN(coverageX1, lx);
-						coverageX2 = MAX(coverageX2, rx);
+						coverageX1 = min(coverageX1, lx);
+						coverageX2 = max(coverageX2, rx);
 						continue;
 					}
 
@@ -522,20 +525,20 @@ namespace swrenderer
 							if (k < 0)
 							{
 								if ((voxptr->backfacecull & oand32) == 0) continue;
-								z2 = MulScale32(l2, k) + viewport->viewwindow.centery;					/* Below slab */
+								z2 = MulScale(l2, k, 32) + viewport->viewwindow.centery;					/* Below slab */
 							}
 							else
 							{
 								if ((voxptr->backfacecull & oand) == 0) continue;	/* Middle of slab */
-								z2 = MulScale32(l1, k) + viewport->viewwindow.centery;
+								z2 = MulScale(l1, k, 32) + viewport->viewwindow.centery;
 							}
-							z1 = MulScale32(l1, j) + viewport->viewwindow.centery;
+							z1 = MulScale(l1, j, 32) + viewport->viewwindow.centery;
 						}
 						else
 						{
 							if ((voxptr->backfacecull & oand16) == 0) continue;
-							z1 = MulScale32(l2, j) + viewport->viewwindow.centery;						/* Above slab */
-							z2 = MulScale32(l1, j + (zleng << 15)) + viewport->viewwindow.centery;
+							z1 = MulScale(l2, j, 32) + viewport->viewwindow.centery;						/* Above slab */
+							z2 = MulScale(l1, j + (zleng << 15), 32) + viewport->viewwindow.centery;
 						}
 
 						if (z2 <= z1) continue;
@@ -546,13 +549,13 @@ namespace swrenderer
 						}
 						else
 						{
-							if (z2 - z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
+							if (z2 - z1 >= 1024) yinc = DivScale(zleng, z2 - z1, 16);
 							else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 						}
 						// [RH] Clip each column separately, not just by the first one.
-						for (int stripwidth = MIN<int>(countof(z1a), rx - lx), lxt = lx;
+						for (int stripwidth = min<int>(countof(z1a), rx - lx), lxt = lx;
 							lxt < rx;
-							(lxt += countof(z1a)), stripwidth = MIN<int>(countof(z1a), rx - lxt))
+							(lxt += countof(z1a)), stripwidth = min<int>(countof(z1a), rx - lxt))
 						{
 							// Calculate top and bottom pixels locations
 							for (int xxx = 0; xxx < stripwidth; ++xxx)
@@ -560,7 +563,7 @@ namespace swrenderer
 								if (zleng == 1)
 								{
 									yplc[xxx] = 0;
-									z1a[xxx] = MAX<int>(z1, daumost[lxt + xxx]);
+									z1a[xxx] = max<int>(z1, daumost[lxt + xxx]);
 								}
 								else
 								{
@@ -575,7 +578,7 @@ namespace swrenderer
 										z1a[xxx] = z1;
 									}
 								}
-								z2a[xxx] = MIN<int>(z2, dadmost[lxt + xxx]);
+								z2a[xxx] = min<int>(z2, dadmost[lxt + xxx]);
 							}
 
 							const uint8_t *columnColors = col;
@@ -991,8 +994,8 @@ namespace swrenderer
 						int ztop = slab->ztop;
 						int zbottom = ztop + slab->zleng;
 						
-						//ztop = MAX(ztop, minZ);
-						//zbottom = MIN(zbottom, maxZ);
+						//ztop = max(ztop, minZ);
+						//zbottom = min(zbottom, maxZ);
 						
 						for (int z = ztop; z < zbottom; z++)
 						{
@@ -1023,10 +1026,10 @@ namespace swrenderer
 		DVector3 screenPos = viewport->PointViewToScreen(viewPos);
 		DVector2 screenExtent = viewport->ScaleViewToScreen({ extentX, extentY }, viewPos.Z, pixelstretch);
 
-		int x1 = MAX((int)(screenPos.X - screenExtent.X), 0);
-		int x2 = MIN((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
-		int y1 = MAX((int)(screenPos.Y - screenExtent.Y), 0);
-		int y2 = MIN((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
+		int x1 = max((int)(screenPos.X - screenExtent.X), 0);
+		int x2 = min((int)(screenPos.X + screenExtent.X + 0.5f), viewwidth - 1);
+		int y1 = max((int)(screenPos.Y - screenExtent.Y), 0);
+		int y2 = min((int)(screenPos.Y + screenExtent.Y + 0.5f), viewheight - 1);
 
 		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
 
@@ -1034,8 +1037,8 @@ namespace swrenderer
 		{
 			for (int x = x1; x < x2; x++)
 			{
-				int columnY1 = MAX(y1, (int)cliptop[x]);
-				int columnY2 = MIN(y2, (int)clipbottom[x]);
+				int columnY1 = max(y1, (int)cliptop[x]);
+				int columnY2 = min(y2, (int)clipbottom[x]);
 				if (columnY1 < columnY2)
 				{
 					drawerargs.SetDest(x, columnY1);

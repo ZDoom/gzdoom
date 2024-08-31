@@ -24,60 +24,12 @@
 #define __D_EVENT_H__
 
 
-#include "basictypes.h"
+#include "basics.h"
 #include <functional>
-
-
-//
-// Event handling.
-//
-
-// Input event types.
-enum EGenericEvent
-{
-	EV_None,
-	EV_KeyDown,		// data1: scan code, data2: Qwerty ASCII code
-	EV_KeyUp,		// same
-	EV_Mouse,		// x, y: mouse movement deltas
-	EV_GUI_Event,	// subtype specifies actual event
-	EV_DeviceChange,// a device has been connected or removed
-};
-
-// Event structure.
-struct event_t
-{
-	uint8_t		type;
-	uint8_t		subtype;
-	int16_t 		data1;		// keys / mouse/joystick buttons
-	int16_t		data2;
-	int16_t		data3;
-	int 		x;			// mouse/joystick x move
-	int 		y;			// mouse/joystick y move
-};
+#include "d_eventbase.h"
+#include "gamestate.h"
 
  
-enum gameaction_t : int
-{
-	ga_nothing,
-	ga_loadlevel, // not used.
-	ga_newgame,
-	ga_newgame2,
-	ga_recordgame,
-	ga_loadgame,
-	ga_loadgamehidecon,
-	ga_loadgameplaydemo,
-	ga_autoloadgame,
-	ga_savegame,
-	ga_autosave,
-	ga_playdemo,
-	ga_completed,
-	ga_slideshow,
-	ga_worlddone,
-	ga_screenshot,
-	ga_togglemap,
-	ga_fullconsole,
-	ga_resumeconversation,
-};
 
 
 
@@ -116,20 +68,38 @@ typedef enum
 	BT_USER2		= 1<<22,
 	BT_USER3		= 1<<23,
 	BT_USER4		= 1<<24,
+
+	BT_RUN			= 1<<25,
 } buttoncode_t;
 
 // Called by IO functions when input is detected.
-void D_PostEvent (const event_t* ev);
-void D_RemoveNextCharEvent();
 void D_Render(std::function<void()> action, bool interpolate);
 
-
-//
-// GLOBAL VARIABLES
-//
-#define MAXEVENTS		128
-
-extern	event_t 		events[MAXEVENTS];
+enum gameaction_t : int
+{
+	ga_nothing,
+	ga_loadlevel, // not used.
+	ga_newgame,
+	ga_newgame2,
+	ga_recordgame,
+	ga_loadgame,
+	ga_loadgamehidecon,
+	ga_loadgameplaydemo,
+	ga_autoloadgame,
+	ga_savegame,
+	ga_autosave,
+	ga_playdemo,
+	ga_completed,
+	ga_slideshow,
+	ga_worlddone,
+	ga_screenshot,
+	ga_togglemap,
+	ga_fullconsole,
+	ga_resumeconversation,
+	ga_intro,
+	ga_intermission,
+	ga_titleloop,
+};
 
 extern	gameaction_t	gameaction;
 

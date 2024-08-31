@@ -1,0 +1,47 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "builtin-baseline": "2c401863dd54a640aeb26ed736c55489c079323b",
+    "features":
+    {
+        "vcpkg-libvpx":
+        {
+            "description": "Use libvpx provided by vcpkg on Windows",
+            "dependencies": [
+                {
+                    "name": "libvpx",
+                    "default-features": false,
+                    "platform": "(!windows & static) | (windows & static & staticcrt)"
+                }
+            ]
+        },
+        "vcpkg-openal-soft":
+        {
+            "description": "Use openal-soft provided by vcpkg.",
+            "dependencies": [
+                {
+                    "name": "openal-soft",
+                    "default-features": false,
+                    "platform": "(!windows & static) | (windows & static & staticcrt)"
+                }
+            ]
+        }
+    },
+    "dependencies": [
+        {
+            "name": "bzip2",
+            "platform": "(!windows & static) | (windows & static & staticcrt)"
+        },
+        {
+            "name": "libvpx",
+            "platform": "!windows & static"
+        },
+	{
+            "name": "gtk3",
+            "platform": "!windows & !osx & static"
+	},
+	{
+            "name": "glib",
+            "platform": "!windows & !osx & static"
+	}
+    ]
+}

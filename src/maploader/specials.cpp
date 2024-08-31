@@ -67,7 +67,7 @@
 
 #include <stdlib.h>
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -120,17 +120,18 @@ void MapLoader::SpawnLinePortal(line_t* line)
 	// portal destination is special argument #0
 	line_t* dst = nullptr;
 
-	if (line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED)
+	if ((line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED) || line->special == Line_QuickPortal)
 	{
-		dst = Level->FindPortalDestination(line, line->args[0]);
+		int type = (line->special != Line_QuickPortal) ? line->args[2] : line->args[0] == 0 ? PORTT_LINKED : PORTT_VISUAL;
+		int tag = (line->special == Line_QuickPortal) ? Level->tagManager.GetFirstLineID(line) : line->args[0];
+		dst = Level->FindPortalDestination(line, tag, line->special == Line_QuickPortal? Line_QuickPortal : -1);
 
 		line->portalindex = Level->linePortals.Reserve(1);
 		FLinePortal *port = &Level->linePortals.Last();
 
-		memset(port, 0, sizeof(FLinePortal));
 		port->mOrigin = line;
 		port->mDestination = dst;
-		port->mType = uint8_t(line->args[2]);	// range check is done above.
+		port->mType = uint8_t(type);	// range check is done above.
 
 		if (port->mType == PORTT_LINKED)
 		{
@@ -139,7 +140,8 @@ void MapLoader::SpawnLinePortal(line_t* line)
 		}
 		else
 		{
-			port->mAlign = uint8_t(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+			int flags = (line->special == Line_QuickPortal) ? PORG_ABSOLUTE : line->args[3];
+			port->mAlign = uint8_t(flags >= PORG_ABSOLUTE && flags <= PORG_CEILING ? flags : PORG_ABSOLUTE);
 			if (port->mType == PORTT_INTERACTIVE && port->mAlign != PORG_ABSOLUTE)
 			{
 				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
@@ -164,7 +166,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				line->portalindex = Level->linePortals.Reserve(1);
 				FLinePortal *port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = line;
 				port->mDestination = &ln;
 				port->mType = PORTT_LINKED;
@@ -175,7 +177,7 @@ void MapLoader::SpawnLinePortal(line_t* line)
 				ln.portalindex = Level->linePortals.Reserve(1);
 				port = &Level->linePortals.Last();
 
-				memset(port, 0, sizeof(FLinePortal));
+				port->Clear();
 				port->mOrigin = &ln;
 				port->mDestination = line;
 				port->mType = PORTT_LINKED;
@@ -279,7 +281,7 @@ void MapLoader::SetupPortals()
 	{
 		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
 		{
-			s.mDisplacement = s.mSkybox->Pos() - s.mSkybox->target->Pos();
+			s.mDisplacement = s.mSkybox->Pos().XY() - s.mSkybox->target->Pos().XY();
 			s.mSkybox = nullptr;
 		}
 	}
@@ -447,10 +449,10 @@ void MapLoader::SpawnSkybox(AActor *origin)
 static void SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
 {
 	// Only set if damage is not yet initialized. This ensures that UDMF takes precedence over sector specials.
-	if (sector->damageamount == 0)
+	if (sector->damageamount == 0 && !(sector->Flags & (SECF_EXIT1|SECF_EXIT2)))
 	{
 		sector->damageamount = damage;
-		sector->damageinterval = MAX(1, interval);
+		sector->damageinterval = max(1, interval);
 		sector->leakydamage = leakchance;
 		sector->damagetype = type;
 		sector->Flags = (sector->Flags & ~SECF_DAMAGEFLAGS) | (flags & SECF_DAMAGEFLAGS);
@@ -482,17 +484,44 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 	{
 		sector->Flags |= SECF_PUSH;
 	}
-	if ((sector->special & DAMAGE_MASK) == 0x100)
+	// Nom MBF21 compatibility needs to be checked here, because after this point there is no longer any context in which it can be done.
+	if ((sector->special & KILL_MONSTERS_MASK) && Level->MBF21Enabled())
 	{
-		SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		sector->Flags |= SECF_KILLMONSTERS;
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x200)
+	if (!(sector->special & DEATH_MASK) || !Level->MBF21Enabled())
 	{
-		SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		}
 	}
-	else if ((sector->special & DAMAGE_MASK) == 0x300)
+	else
 	{
-		SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		if ((sector->special & DAMAGE_MASK) == 0x100)
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x200)
+		{
+			sector->Flags |= SECF_EXIT1;
+		}
+		else if ((sector->special & DAMAGE_MASK) == 0x300)
+		{
+			sector->Flags |= SECF_EXIT2;
+		}
+		else // 0
+		{
+			SetupSectorDamage(sector, TELEFRAG_DAMAGE-1, 0, 0, NAME_InstantDeath, 0);
+		}
 	}
 	sector->special &= 0xff;
 
@@ -545,7 +574,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		CreateScroller(EScroll::sc_floor, -4., 0, sector, 0);
+		CreateScroller(EScroll::sc_floor, -4., 0, sector, nullptr, 0);
 		keepspecial = true;
 		break;
 
@@ -580,7 +609,7 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case Sky2:
-		sector->sky = PL_SKYFLAT;
+		sector->skytransfer = PL_SKYFLAT;
 		break;
 
 	default:
@@ -602,13 +631,13 @@ void MapLoader::InitSectorSpecial(sector_t *sector, int special)
 			int i = sector->special - Scroll_North_Slow;
 			double dx = hexenScrollies[i][0] / 2.;
 			double dy = hexenScrollies[i][1] / 2.;
-			CreateScroller(EScroll::sc_floor, dx, dy, sector, 0);
+			CreateScroller(EScroll::sc_floor, dx, dy, sector, nullptr, 0);
 		}
 		else if (sector->special >= Carry_East5 && sector->special <= Carry_East35)
 		{ 
 			// Heretic scroll special
 			// Only east scrollers also scroll the texture
-			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, 0);
+			CreateScroller(EScroll::sc_floor,	-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, sector, nullptr, 0);
 		}
 		keepspecial = true;
 		break;
@@ -755,7 +784,30 @@ void MapLoader::SpawnSpecials ()
 			break;
 
 		case Line_SetPortal:
+		case Line_QuickPortal:
 			SpawnLinePortal(&line);
+			break;
+
+			// partial support for MBF's stay-on-lift feature.
+			// Unlike MBF we cannot scan all lines for a proper special each time because it'd take too long.
+			// So instead, set the info here, but only for repeatable lifts to keep things simple. 
+			// This also cannot consider lifts triggered by scripts etc.
+		case Generic_Lift:
+			if (line.args[3] != 1) continue;
+			[[fallthrough]];
+		case Plat_DownWaitUpStay:
+		case Plat_DownWaitUpStayLip:
+		case Plat_UpWaitDownStay:
+		case Plat_UpNearestWaitDownStay:
+			if (line.flags & ML_REPEAT_SPECIAL)
+			{
+				auto it = Level->GetSectorTagIterator(line.args[0], &line);
+				int secno;
+				while ((secno = it.Next()) != -1)
+				{
+					Level->sectors[secno].MoreFlags |= SECMF_LIFT;
+				}
+			}
 			break;
 
 		// [RH] ZDoom Static_Init settings
@@ -820,7 +872,7 @@ void MapLoader::SpawnSpecials ()
 				{
 					auto itr = Level->GetSectorTagIterator(line.args[0]);
 					while ((s = itr.Next()) >= 0)
-						Level->sectors[s].sky = (line.Index() + 1) | PL_SKYFLAT;
+						Level->sectors[s].skytransfer = (line.Index() + 1) | PL_SKYFLAT;
 					break;
 				}
 			}
@@ -943,7 +995,8 @@ int MapLoader::Set3DFloor(line_t * line, int param, int param2, int alpha)
 			// if flooding is used the floor must be non-solid and is automatically made shootthrough and seethrough
 			if ((param2 & 128) && !(flags & FF_SOLID)) flags |= FF_FLOOD | FF_SEETHROUGH | FF_SHOOTTHROUGH;
 			if (param2 & 512) flags |= FF_FADEWALLS;
-			if (param2&1024) flags |= FF_RESET;
+			if (param2 & 1024) flags |= FF_RESET;
+			if (param2 & 2048) flags |= FF_NODAMAGE;
 			FTextureID tex = line->sidedef[0]->GetTexture(side_t::top);
 			if (!tex.Exists() && alpha < 255)
 			{
@@ -970,7 +1023,7 @@ int MapLoader::Set3DFloor(line_t * line, int param, int param2, int alpha)
 
 void MapLoader::Spawn3DFloors ()
 {
-	static int flagvals[] = {512, 2+512, 512+1024};
+	static int flagvals[] = {512+2048, 2+512+2048, 512+1024+2048};
 
 	for (auto &line : Level->lines)
 	{
@@ -1096,8 +1149,8 @@ AActor *MapLoader::GetPushThing(int s)
 	thing = sec->thinglist;
 
 	while (thing &&
-		thing->GetClass()->TypeName != NAME_PointPusher &&
-		thing->GetClass()->TypeName != NAME_PointPuller)
+		!thing->IsKindOf(NAME_PointPusher) &&
+		!thing->IsKindOf(NAME_PointPuller))
 	{
 		thing = thing->snext;
 	}
@@ -1156,8 +1209,8 @@ void MapLoader::SpawnPushers()
 
 				while ((thing = iterator.Next()))
 				{
-					if (thing->GetClass()->TypeName == NAME_PointPusher ||
-						thing->GetClass()->TypeName == NAME_PointPuller)
+					if (thing->IsKindOf(NAME_PointPusher) ||
+						thing->IsKindOf(NAME_PointPuller))
 					{
 						Level->CreateThinker<DPusher>(DPusher::p_push, l->args[3] ? l : NULL, l->args[2], 0, thing, thing->Sector->Index());
 					}
@@ -1342,11 +1395,34 @@ void MapLoader::SpawnScrollers()
 		}
 
 		case Scroll_Texture_Offsets:
+		{
+			double divider = max(1, l->args[3]);
 			// killough 3/2/98: scroll according to sidedef offsets
-			side = Level->lines[i].sidedef[0];
-			Level->CreateThinker<DScroller>(EScroll::sc_side, -side->GetTextureXOffset(side_t::mid),
-				side->GetTextureYOffset(side_t::mid), nullptr, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			side = l->sidedef[0];
+			if (l->args[2] & 3)
+			{
+				// if 1, then displacement
+				// if 2, then accelerative (also if 3)
+				control = l->sidedef[0]->sector;
+				if (l->args[2] & 2)
+					accel = 1;
+			}
+			double dx = -side->GetTextureXOffset(side_t::mid) / divider;
+			double dy = side->GetTextureYOffset(side_t::mid) / divider;
+			if (l->args[1] == 0)
+			{
+				Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, side, accel, SCROLLTYPE(l->args[0]));
+			}
+			else
+			{
+				auto it = Level->GetLineIdIterator(l->args[1]);
+				while ((s = it.Next()) >= 0)
+				{
+					Level->CreateThinker<DScroller>(EScroll::sc_side, dx, dy, control, nullptr, Level->lines[s].sidedef[0], accel, SCROLLTYPE(l->args[0]));
+				}
+			}
 			break;
+		}
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
@@ -1390,7 +1466,8 @@ void MapLoader::SpawnScrollers()
 }
 
 
-void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *affectee, int accel, EScrollPos scrollpos)
+void MapLoader::CreateScroller(EScroll type, double dx, double dy, sector_t *sect, side_t* side, int accel, EScrollPos scrollpos, int scrollmode)
 {
-	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, affectee, nullptr, accel, scrollpos);
+	Level->CreateThinker<DScroller>(type, dx, dy, nullptr, sect, side, accel, scrollpos, scrollmode);
 }
+

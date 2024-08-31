@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -53,7 +53,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
@@ -64,19 +64,18 @@
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ppic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FSoftwareTexture *pic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
 	{
-		FSoftwareTexture *pic = ppic->GetSoftwareTexture();
 		FWallCoords wallc;
 		double x1, x2;
 		DVector2 left, right;
 		double gzb, gzt, tz;
-		DAngle ang = thing->Angles.Yaw + 90;
+		DAngle ang = thing->Angles.Yaw + DAngle::fromDeg(90);
 		double angcos = ang.Cos();
 		double angsin = ang.Sin();
 
@@ -106,8 +105,8 @@ namespace swrenderer
 		// but right now, I just want to get them drawing.
 		tz = (pos.X - thread->Viewport->viewpoint.Pos.X) * thread->Viewport->viewpoint.TanCos + (pos.Y - thread->Viewport->viewpoint.Pos.Y) * thread->Viewport->viewpoint.TanSin;
 
-		int scaled_to = pic->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - pic->GetScaledHeight();
+		double scaled_to = pic->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - pic->GetScaledHeight();
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 
@@ -160,33 +159,22 @@ namespace swrenderer
 	{
 		auto spr = this;
 
-		int x1 = MAX<int>(spr->x1, spr->wallc.sx1);
-		int x2 = MIN<int>(spr->x2, spr->wallc.sx2);
+		int x1 = max<int>(spr->x1, spr->wallc.sx1);
+		int x2 = min<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
 
-		// Prepare lighting
-
-		// Decals that are added to the scene must fade to black.
-		ColormapLight cmlight;
-		if (spr->RenderStyle == LegacyRenderStyles[STYLE_Add] && cmlight.BaseColormap->Fade != 0)
-		{
-			cmlight.BaseColormap = GetSpecialLights(cmlight.BaseColormap->Color, 0, cmlight.BaseColormap->Desaturate);
-		}
-
 		SpriteDrawerArgs drawerargs;
 
-		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, cmlight);
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), spr->RenderStyle, spr->Alpha, spr->Translation, spr->FillColor, Light);
 		if (!visible)
 			return;
 
 		ProjectedWallLight mlight;
-		mlight.SetLightLeft(thread, wallc);
+		mlight.SetSpriteLight();
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
-
-		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
 
 		RenderTranslucentPass* translucentPass = thread->TranslucentPass.get();
 		short floorclip[MAXWIDTH];

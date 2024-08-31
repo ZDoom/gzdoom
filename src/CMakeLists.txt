@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
+cmake_minimum_required( VERSION 3.16.0 )
 
 include(precompiled_headers)
 
@@ -14,26 +14,7 @@ include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
-if( MSVC )
-	find_package( ZMusic )
-else()
-	find_package( ZMusic REQUIRED )
-endif()
-
-if( MSVC AND NOT ZMUSIC_FOUND )
-	# Use prebuilt library
-	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
-	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
-	set( ZMUSIC_LIBRARIES zmusic )
-	if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
-		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
-	else()
-		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
-	endif()
-	set( ZMUSIC_FOUND TRUE )
-endif()
-
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
 	# instead of the separate strip utility.
@@ -46,61 +27,39 @@ if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
 endif()
 
-if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
-	set( X64 64 )
+option( ZDOOM_ENABLE_SWR "Enable software renderer" ON )
+if( NOT ZDOOM_ENABLE_SWR )
+	add_definitions( -DNO_SWRENDERER )
 endif()
 
-if( X64 OR ${ZDOOM_TARGET_ARCH} MATCHES "i386" )
+target_architecture(TARGET_ARCHITECTURE)
+message(STATUS "Architecture is ${TARGET_ARCHITECTURE}")
+
+if ( ${TARGET_ARCHITECTURE} MATCHES "arm64" )
+	set (ARM64 aarch64)
+endif()
+
+# Right now only 64 bit is supported.
+if( ${TARGET_ARCHITECTURE} MATCHES "x86_64" )
+	set( X64 64 )
 	add_definitions( -DARCH_IA32 )
 endif()
 
-if( NOT ZDOOM_LIBS )
-	set( ZDOOM_LIBS "" )
+if( NOT PROJECT_LIBRARIES )
+	set( PROJECT_LIBRARIES "" )
 endif()
 
+add_definitions( -DTHIS_IS_GZDOOM )
+
 if( WIN32 )
-	if( X64 )
-		set( WIN_TYPE Win64 )
-		set( XBITS x64 )
-	else()
-		set( WIN_TYPE Win32 )
-		set( XBITS x86 )
-	endif()
 
 	add_definitions( -D_WIN32 )
 
-
-	if( MSVC )	# For VS 2017 and later.
-		# for modern Windows SDKs the DirectX headers should be available by default.
-		set( DX_dinput8_LIBRARY dinput8 )
-	else()
-
-		find_library( DX_dinput8_LIBRARY dinput8
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-		find_library( DX_dxguid_LIBRARY dxguid
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
-
-		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
-		# CMake cannot find these libraries via find_library.
-		if( NOT DX_dinput8_LIBRARY )
-			# If we got this far, assume dinput8.lib is in the system library path.
-			set( DX_dinput8_LIBRARY dinput8 )
-		endif()
-
-		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-		# were moved to dinput8.lib.
-		if( NOT DX_dxguid_LIBRARY )
-			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
-		endif()
-	endif()
-
-	set( ZDOOM_LIBS
-		opengl32
+	set( PROJECT_LIBRARIES
+		psapi
 		wsock32
 		winmm
-		"${DX_dinput8_LIBRARY}"
+		dinput8
 		ole32
 		user32
 		gdi32
@@ -109,17 +68,13 @@ if( WIN32 )
 		ws2_32
 		setupapi
 		oleaut32
-		dbghelp )
+		dbghelp
+		legacy_stdio_definitions )
 
-	if( NOT ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
-	endif()
-
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
-			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
+			list( APPEND PROJECT_LIBRARIES "${DX_dxguid_LIBRARY}" )
 		endif()
-		list( APPEND ZDOOM_LIBS d3d9 )
 	endif()
 else()
 	if( APPLE )
@@ -140,22 +95,29 @@ else()
 			pkg_check_modules( GTK3 gtk+-3.0 )
 			if( GTK3_FOUND )
 				if( NOT DYN_GTK )
-					set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK3_LIBRARIES} )
+					set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK3_LIBRARIES} )
 				endif()
-				include_directories( ${GTK3_INCLUDE_DIRS} )
+				include_directories( SYSTEM ${GTK3_INCLUDE_DIRS} )
 				link_directories( ${GTK3_LIBRARY_DIRS} )
 			else()
 				pkg_check_modules( GTK2 gtk+-2.0 )
 				if( GTK2_FOUND )
 					if( NOT DYN_GTK )
-						set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
+						set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${GTK2_LIBRARIES} )
 					endif()
-					include_directories( ${GTK2_INCLUDE_DIRS} )
+					include_directories( SYSTEM ${GTK2_INCLUDE_DIRS} )
 					link_directories( ${GTK2_LIBRARY_DIRS} )
 				else()
 					set( NO_GTK ON )
 				endif()
 			endif()
+		endif()
+	endif()
+
+	if ( NOT WIN32 )
+		option( NO_SDL_JOYSTICK "Disable SDL joystick support (Not applicable to Windows)" OFF )
+		if ( NO_SDL_JOYSTICK )
+			add_definitions( -DNO_SDL_JOYSTICK=1 )
 		endif()
 	endif()
 
@@ -170,26 +132,28 @@ else()
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
-		include_directories( "${SDL2_INCLUDE_DIR}" )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
+		include_directories( SYSTEM "${SDL2_INCLUDE_DIR}" )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
 
-	find_path( FPU_CONTROL_DIR fpu_control.h )
-	if( FPU_CONTROL_DIR )
-		include_directories( ${FPU_CONTROL_DIR} )
-		add_definitions( -DHAVE_FPU_CONTROL )
-	endif()
 endif()
 
 if( NOT NO_OPENAL )
-	if ( NOT DYN_OPENAL )	# DYN_OPENAL uses local copies of the headers.
+	if ( "vcpkg-openal-soft" IN_LIST VCPKG_MANIFEST_FEATURES )
+		# Statically link to OpenAL from vcpkg
+		find_package( OpenAL CONFIG REQUIRED )
+		list( APPEND PROJECT_LIBRARIES OpenAL::OpenAL )
+	elseif ( NOT DYN_OPENAL )	# DYN_OPENAL uses local copies of the headers.
 		find_package( OpenAL )
 		mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
 		if( OPENAL_INCLUDE_DIR )
-			include_directories( ${OPENAL_INCLUDE_DIR} )
+			include_directories( SYSTEM ${OPENAL_INCLUDE_DIR} )
 			mark_as_advanced(CLEAR OPENAL_LIBRARY)
 			if( OPENAL_LIBRARY )
-				set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
+				set( PROJECT_LIBRARIES ${OPENAL_LIBRARY} ${PROJECT_LIBRARIES} )
+				if( APPLE )
+					set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "-framework AudioUnit -framework CoreAudio -framework ApplicationServices -framework AudioToolbox -framework CoreFoundation" )
+				endif()
 			else()
 				set( NO_OPENAL ON )
 			endif()
@@ -207,40 +171,8 @@ endif()
 
 # Decide on SSE setup
 
-set( SSE_MATTERS NO )
-
-# with global use of SSE 2 we do not need special handling for selected files
-if (NOT ZDOOM_USE_SSE2)
-	# SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
-	if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
-		CHECK_CXX_COMPILER_FLAG( "-msse2 -mfpmath=sse" CAN_DO_MFPMATH )
-		CHECK_CXX_COMPILER_FLAG( -arch:SSE2 CAN_DO_ARCHSSE2 )
-		if( CAN_DO_MFPMATH )
-			set( SSE1_ENABLE "-msse -mfpmath=sse" )
-			set( SSE2_ENABLE "-msse2 -mfpmath=sse" )
-			set( SSE_MATTERS YES )
-		elseif( CAN_DO_ARCHSSE2 )
-			set( SSE1_ENABLE -arch:SSE )
-			set( SSE2_ENABLE -arch:SSE2 )
-			set( SSE_MATTERS YES )
-		endif()
-	endif()
-endif()
-
 if( X64 )
 	set( HAVE_MMX 1 )
-else( X64 )
-	set( SAFE_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
-
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmmx")
-	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-
-	CHECK_CXX_SOURCE_COMPILES("#include <mmintrin.h>
-		int main(void) { __m64 v = _m_from_int(0); }"
-		HAVE_MMX)
-
-	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
 endif( X64 )
 
 CHECK_CXX_SOURCE_COMPILES("#include <ppl.h>
@@ -260,7 +192,7 @@ endif (MSVC)
 
 # Set up flags for GCC
 
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	if( PROFILE )
 		set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -pg" )
 		set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -pg" )
@@ -268,7 +200,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -pg" )
 	endif()
 
-	set( REL_CXX_FLAGS "-fno-rtti" )
 	if( NOT PROFILE AND NOT APPLE )
 		# On OS X frame pointers are required for exception handling, at least with Clang
 		set( REL_CXX_FLAGS "${REL_CXX_FLAGS} -fomit-frame-pointer" )
@@ -309,7 +240,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-Wno-unused-result ${CMAKE_CXX_FLAGS}" )
 	endif()
-	if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+	if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
 		if( APPLE OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.6" )
 			set( CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override ${CMAKE_CXX_FLAGS}" )
 		endif()
@@ -317,44 +248,10 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
 
-	# ARM processors (Raspberry Pi, et al) - enable ARM NEON support.
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-		set (USE_ARMV8 0 CACHE BOOL "Use ARMv8 instructions - Raspberry Pi 3")
-		if (USE_ARMV8)
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mtune=cortex-a53 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		else ()
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mtune=cortex-a7 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
-		endif ()
-	endif ()
-
 	if( NOT X64 AND NOT CAN_DO_MFPMATH )
 		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
 	endif()
-
-	# Use the highest C++ standard available since VS2015 compiles with C++14
-	# but we only require C++11.  The recommended way to do this in CMake is to
-	# probably to use target_compile_features, but I don't feel like maintaining
-	# a list of features we use.
-	CHECK_CXX_COMPILER_FLAG( "-std=gnu++14" CAN_DO_CPP14 )
-	if ( CAN_DO_CPP14 )
-		set ( CMAKE_CXX_FLAGS "-std=gnu++14 ${CMAKE_CXX_FLAGS}" )
-	else ()
-		CHECK_CXX_COMPILER_FLAG( "-std=gnu++1y" CAN_DO_CPP1Y )
-		if ( CAN_DO_CPP1Y )
-			set ( CMAKE_CXX_FLAGS "-std=gnu++1y ${CMAKE_CXX_FLAGS}" )
-		else ()
-			CHECK_CXX_COMPILER_FLAG( "-std=gnu++11" CAN_DO_CPP11 )
-			if ( CAN_DO_CPP11 )
-				set ( CMAKE_CXX_FLAGS "-std=gnu++11 ${CMAKE_CXX_FLAGS}" )
-			else ()
-				CHECK_CXX_COMPILER_FLAG( "-std=gnu++0x" CAN_DO_CPP0X )
-				if ( CAN_DO_CPP0X )
-					set ( CMAKE_CXX_FLAGS "-std=gnu++0x ${CMAKE_CXX_FLAGS}" )
-				endif ()
-			endif ()
-		endif ()
-	endif ()
 
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
@@ -372,6 +269,10 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC" )
 	endif()
+	
+	if(${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
+		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ljemalloc")
+	endif()
 
 	if( NOT NO_STRIP )
 		set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s" )
@@ -381,24 +282,11 @@ endif()
 
 # Check for thread_local keyword, it's optional at the moment
 
-CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() { i = 0; }"
-	HAVE_THREAD_LOCAL)
-
-if( NOT HAVE_THREAD_LOCAL )
+if ( NOT (cxx_thread_local IN_LIST CMAKE_CXX_COMPILE_FEATURES) )
 	message( SEND_ERROR "C++ compiler doesn't support thread_local storage duration specifier" )
 endif()
 
 # Check for functions that may or may not exist.
-
-CHECK_FUNCTION_EXISTS( filelength FILELENGTH_EXISTS )
-if( FILELENGTH_EXISTS )
-	add_definitions( -DHAVE_FILELENGTH=1 )
-endif()
-
-CHECK_FUNCTION_EXISTS( strupr STRUPR_EXISTS )
-if( NOT STRUPR_EXISTS )
-	add_definitions( -DNEED_STRUPR=1 )
-endif()
 
 require_stricmp()
 require_strnicmp()
@@ -416,7 +304,7 @@ if( UNIX )
 			add_definitions( -DNO_CLOCK_GETTIME )
 		endif()
 	else()
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} rt )
+		list( APPEND PROJECT_LIBRARIES rt )
 	endif()
 endif()
 
@@ -429,119 +317,195 @@ add_custom_target( revision_check ALL
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-# Libraries ZDoom needs
+# required libraries
 
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" )
+set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} miniz "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" "${DRPC_LIBRARIES}")
 if (HAVE_VULKAN)
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
+	list( APPEND PROJECT_LIBRARIES "zvulkan" )
 endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" )
+
+list( APPEND PROJECT_LIBRARIES "zwidget" )
+list( APPEND PROJECT_LIBRARIES "webp" )
+
+# ZMUSIC
+
+if( MSVC )
+	find_package( ZMusic )
+else()
+	find_package( ZMusic REQUIRED )
+endif()
+
+message("Building for target architecture: ${TARGET_ARCHITECTURE}")
+
+if( MSVC AND NOT ZMUSIC_FOUND )
+	# Use prebuilt library
+	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
+	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
+	set( ZMUSIC_LIBRARIES zmusic )
+	if( X64 )
+		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
+	elseif( ARM64 )
+		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
+	else()
+		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
+	endif()
+	set( ZMUSIC_FOUND TRUE )
+endif()
+
+
+# VPX
+
+if( MSVC AND NOT VPX_FOUND )
+	# Use prebuilt library
+	set( VPX_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/Windows/vpx" )
+	set( VPX_INCLUDE_DIR ${VPX_ROOT_PATH}/include )
+	set( VPX_LIBRARIES libvpx )
+	if ( NOT ARM64 )
+		set (VPX_LIBRARIES ${VPX_LIBRARIES} libcompat-to-msvc )
+	endif()
+	if( ARM64 )
+		link_directories( ${VPX_ROOT_PATH}/lib/arm64 )
+	elseif( X64 )
+		link_directories( ${VPX_ROOT_PATH}/lib/64 )
+	else()
+		link_directories( ${VPX_ROOT_PATH}/lib/32 )
+		# Workaround for "error LNK2026: module unsafe for SAFESEH image."
+		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO" )
+	endif()
+	set( VPX_FOUND TRUE )
+endif()
+
+if( VPX_FOUND )
+	add_definitions( "-DUSE_LIBVPX=1" )
+	include_directories( SYSTEM "${VPX_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${VPX_LIBRARIES} )
+else()
+	message( SEND_ERROR "Could not find libvpx" )
+endif()
+
+include_directories( SYSTEM "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" "${DRPC_INCLUDE_DIR}")
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
-	include_directories( "${ASMJIT_INCLUDE_DIR}" )
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ASMJIT_LIBRARIES}")
+	include_directories( SYSTEM "${ASMJIT_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
 endif()
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
-	win32/hardware.cpp
-	win32/i_crash.cpp
-	win32/i_input.cpp
-	win32/i_keyboard.cpp
-	win32/i_mouse.cpp
-	win32/i_dijoy.cpp
-	win32/i_rawps2.cpp
-	win32/i_xinput.cpp
-	win32/i_main.cpp
-	win32/i_system.cpp
-	win32/i_specialpaths.cpp
-	win32/st_start.cpp
-	win32/st_start_util.cpp
-	win32/gl_sysfb.cpp
-	win32/base_sysfb.cpp
-	win32/win32basevideo.cpp
-	win32/win32glvideo.cpp
-	win32/win32polyvideo.cpp)
-	
+	win32/i_steam.cpp
+	common/platform/win32/hardware.cpp
+	common/platform/win32/i_input.cpp
+	common/platform/win32/i_keyboard.cpp
+	common/platform/win32/i_mouse.cpp
+	common/platform/win32/i_dijoy.cpp
+	common/platform/win32/i_rawps2.cpp
+	common/platform/win32/i_xinput.cpp
+	common/platform/win32/i_main.cpp
+	common/platform/win32/i_mainwindow.cpp
+	common/platform/win32/i_system.cpp
+	common/platform/win32/i_specialpaths.cpp
+	common/platform/win32/st_start.cpp
+	common/platform/win32/gl_sysfb.cpp
+	common/platform/win32/base_sysfb.cpp
+	common/platform/win32/win32basevideo.cpp
+	common/platform/win32/win32glvideo.cpp
+	)
+
 if (HAVE_VULKAN)
-	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
+	list (APPEND PLAT_WIN32_SOURCES common/platform/win32/win32vulkanvideo.cpp )
+endif()
+
+# todo: implement an actual crash catcher for ARM
+# for now this is purely experimental
+if (NOT ${TARGET_ARCHITECTURE} MATCHES "arm" )
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash.cpp )
+endif()
+if (MSVC AND ${TARGET_ARCHITECTURE} MATCHES "arm")
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash_arm.cpp )
+	add_definitions( -DNO_SSE -D__ARM__ -DRAPIDJSON_ENDIAN=RAPIDJSON_LITTLEENDIAN)
 endif()
 	
 set( PLAT_POSIX_SOURCES
 	posix/i_steam.cpp
-	posix/i_system_posix.cpp )
+	common/platform/posix/i_system_posix.cpp )
 set( PLAT_SDL_SOURCES
-	posix/sdl/crashcatcher.c
-	posix/sdl/hardware.cpp
-	posix/sdl/i_gui.cpp
-	posix/sdl/i_input.cpp
-	posix/sdl/i_joystick.cpp
-	posix/sdl/i_main.cpp
-	posix/sdl/i_system.cpp
-	posix/sdl/sdlglvideo.cpp
-	posix/sdl/st_start.cpp )
+	common/platform/posix/sdl/crashcatcher.c
+	common/platform/posix/sdl/hardware.cpp
+	common/platform/posix/sdl/i_gui.cpp
+	common/platform/posix/sdl/i_input.cpp
+	common/platform/posix/sdl/i_joystick.cpp
+	common/platform/posix/sdl/i_main.cpp
+	common/platform/posix/sdl/i_system.cpp
+	common/platform/posix/sdl/sdlglvideo.cpp
+	common/platform/posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
-	posix/unix/i_specialpaths.cpp
-	posix/unix/gtk_dialogs.cpp )
+	common/platform/posix/unix/i_specialpaths.cpp
+	common/platform/posix/unix/gtk_dialogs.cpp )
 set( PLAT_OSX_SOURCES
-	posix/osx/iwadpicker_cocoa.mm
-	posix/osx/i_specialpaths.mm
+	common/platform/posix/osx/iwadpicker_cocoa.mm
+	common/platform/posix/osx/i_specialpaths.mm
 	posix/osx/zdoom.icns )
 set( PLAT_COCOA_SOURCES
-	posix/cocoa/i_input.mm
-	posix/cocoa/i_joystick.cpp
-	posix/cocoa/i_main.mm
-	posix/cocoa/i_system.mm
-	posix/cocoa/i_video.mm
-	posix/cocoa/st_console.mm
-	posix/cocoa/st_start.mm )
+	common/platform/posix/cocoa/i_input.mm
+	common/platform/posix/cocoa/i_joystick.cpp
+	common/platform/posix/cocoa/i_main.mm
+	common/platform/posix/cocoa/i_system.mm
+	common/platform/posix/cocoa/i_video.mm
+	common/platform/posix/cocoa/st_console.mm
+	common/platform/posix/cocoa/st_start.mm )
 
 if( WIN32 )
-	set( SYSTEM_SOURCES_DIR win32 )
+	set( SYSTEM_SOURCES_DIR common/platform/win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
-		set( SYSTEM_SOURCES_DIR posix posix/cocoa )
+		set( SYSTEM_SOURCES_DIR common/platform/posix common/platform/posix/cocoa )
 		set( SYSTEM_SOURCES ${PLAT_COCOA_SOURCES} )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_UNIX_SOURCES} )
 	else()
-		set( SYSTEM_SOURCES_DIR posix posix/sdl )
+		set( SYSTEM_SOURCES_DIR common/platform/posix common/platform/posix/sdl )
 		set( SYSTEM_SOURCES ${PLAT_SDL_SOURCES} )
-		set( PLAT_OSX_SOURCES ${PLAT_OSX_SOURCES} posix/sdl/i_system.mm )
+		set( PLAT_OSX_SOURCES ${PLAT_OSX_SOURCES} common/platform/posix/sdl/i_system.mm )
 		set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 	endif()
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} ${PLAT_POSIX_SOURCES} ${PLAT_OSX_SOURCES} )
 
 	set_source_files_properties( posix/osx/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
-	set_source_files_properties( posix/osx/iwadpicker_cocoa.mm PROPERTIES COMPILE_FLAGS -fobjc-exceptions )
+	set_source_files_properties( common/platform/posix/osx/iwadpicker_cocoa.mm PROPERTIES COMPILE_FLAGS -fobjc-exceptions )
 else()
-	set( SYSTEM_SOURCES_DIR posix posix/sdl )
+	option (SYSTEMINSTALL "Set global progdir based on CMake Install Dir" OFF)
+
+	set( SYSTEM_SOURCES_DIR common/platform/posix common/platform/posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_UNIX_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} )
+
+	if ( SYSTEMINSTALL )
+		add_definitions( -DPROGDIR="${CMAKE_INSTALL_PREFIX}/${INSTALL_PK3_PATH}" )
+	endif()
 endif()
 
 if( HAVE_MMX )
 	add_definitions( -DHAVE_MMX=1 )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES}
-		gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
+		common/textures/hires/hqnx_asm/hq2x_asm.cpp
+		common/textures/hires/hqnx_asm/hq3x_asm.cpp
+		common/textures/hires/hqnx_asm/hq4x_asm.cpp
+		common/textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
 
-	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set_source_files_properties(
-			gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
-			gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
-			gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-			gamedata/textures/hires/hqresize.cpp
+			common/textures/hires/hqnx_asm/hq2x_asm.cpp
+			common/textures/hires/hqnx_asm/hq3x_asm.cpp
+			common/textures/hires/hqnx_asm/hq4x_asm.cpp
+			common/textures/hires/hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
-	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	endif( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
 
 if( HAVE_PARALLEL_FOR )
@@ -566,12 +530,12 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CUR
 	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/gamedata/xlat/xlat_parser.y )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h
-	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon
-	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/zcc-parse.lemon )
+	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/frontend/zcc-parse.lemon
+	DEPENDS lemon ${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/frontend/zcc-parse.lemon )
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
-	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/utility/sc_man_scanner.re
-	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/utility/sc_man_scanner.re )
+	COMMAND re2c --no-generation-date -s -o ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h ${CMAKE_CURRENT_SOURCE_DIR}/common/engine/sc_man_scanner.re
+	DEPENDS re2c ${CMAKE_CURRENT_SOURCE_DIR}/common/engine/sc_man_scanner.re )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
@@ -593,34 +557,66 @@ file( GLOB HEADER_FILES
 	gamedata/*.h
 	gamedata/resourcefiles/*.h
 	gamedata/fonts/*.h
-	gamedata/textures/*.h
-	gamedata/textures/hires/hqnx/*.h
-	gamedata/textures/hires/hqnx_asm/*.h
-	gamedata/textures/hires/xbr/*.h
 	gamedata/xlat/*.h
 	intermission/*.h
 	maploader/*.h
 	menu/*.h
 	sound/*.h
 	sound/backend/*.h*
-	sound/music/*.h*
 	posix/*.h
-	posix/cocoa/*.h
-	posix/sdl/*.h
-	win32/*.h
 	r_data/*.h
-	r_data/models/*.h
-	utility/rapidjson/*.h
-	utility/sfmt/*.h
-	utility/math./*h
+	common/audio/sound/thirdparty/*.h
+	common/audio/sound/*.h
+	common/audio/music/*.h*
+	common/2d/*.h
+	common/console/*.h
+	common/cutscenes/*.h
+	common/utility/*.h
+	common/engine/*.h
+	common/menu/*.h
+	common/statusbar/*.h
+	common/fonts/*.h
+	common/objects/*.h
+	common/filesystem/include/*.h
+	common/filesystem/source/*.h
+	common/platform/posix/cocoa/*.h
+	common/platform/posix/sdl/*.h
+	common/platform/win32/*.h
+	common/models/*.h
+	common/textures/*.h
+	common/startscreen/*.h
+	common/widgets/*.h
+	common/textures/hires/hqnx/*.h
+	common/textures/hires/hqnx_asm/*.h
+	common/textures/hires/xbr/*.h
+	common/thirdparty/*.h
+	common/thirdparty/rapidjson/*.h
+	common/thirdparty/math/*h
+	common/thirdparty/libsmackerdec/include/*.h
+	common/thirdparty/utf8proc/*.h
+	common/rendering/*.h
+	common/rendering/gl_load/*.h
+	common/rendering/gles/*.h
+	common/rendering/hwrenderer/data/*.h
+	common/rendering/vulkan/*.h
+	common/rendering/vulkan/system/*.h
+	common/rendering/vulkan/renderer/*.h
+	common/rendering/vulkan/shaders/*.h
+	common/rendering/vulkan/textures/*.h
+	common/scripting/core/*h
+	common/scripting/vm/*h
+	common/scripting/jit/*h
+	common/scripting/interface/*.h
+	common/scripting/backend/*.h
+	common/scripting/frontend/*.h
+
 	utility/*.h
+	launcher/*.h
 	scripting/*.h
 	scripting/backend/*.h
 	scripting/decorate/*.h
 	scripting/zscript/*.h
-	scripting/vm/*.h
 	sound/midisources/*.h
-	sound/thirdparty/*.h
 	rendering/*.h
 	rendering/2d/*.h
 	rendering/swrenderer/*.h
@@ -632,42 +628,18 @@ file( GLOB HEADER_FILES
 	rendering/swrenderer/plane/*.h
 	rendering/swrenderer/things/*.h
 	rendering/swrenderer/viewport/*.h
-	rendering/polyrenderer/*.h
-	rendering/polyrenderer/math/*.h
-	rendering/polyrenderer/drawers/*.h
-	rendering/polyrenderer/backend/*.h
-	rendering/hwrenderer/data/*.h
-	rendering/hwrenderer/dynlights/*.h
-	rendering/hwrenderer/models/*.h
-	rendering/hwrenderer/postprocessing/*.h
+	rendering/hwrenderer/*.h
 	rendering/hwrenderer/scene/*.h
-	rendering/hwrenderer/textures/*.h
-	rendering/hwrenderer/utility/*.h
-	rendering/vulkan/*.h
-	rendering/vulkan/system/*.h
-	rendering/vulkan/renderer/*.h
-	rendering/vulkan/shaders/*.h
-	rendering/vulkan/textures/*.h
-	rendering/gl/*.h
-	rendering/gl/models/*.h
-	rendering/gl/renderer/*.h
-	rendering/gl/scene/*.h
-	rendering/gl/shaders/*.h
-	rendering/gl/system/*.h
-	rendering/gl/textures/*.h
-	rendering/gl_load/*.h
 	*.h
 )
 
 set ( SWRENDER_SOURCES
 	rendering/swrenderer/r_swcolormaps.cpp
 	rendering/swrenderer/r_swrenderer.cpp
-	rendering/swrenderer/r_memory.cpp
 	rendering/swrenderer/r_renderthread.cpp
 	rendering/swrenderer/drawers/r_draw.cpp
 	rendering/swrenderer/drawers/r_draw_pal.cpp
 	rendering/swrenderer/drawers/r_draw_rgba.cpp
-	rendering/swrenderer/drawers/r_thread.cpp
 	rendering/swrenderer/scene/r_3dfloors.cpp
 	rendering/swrenderer/scene/r_light.cpp
 	rendering/swrenderer/scene/r_opaque_pass.cpp
@@ -697,7 +669,6 @@ set ( SWRENDER_SOURCES
 	rendering/swrenderer/things/r_sprite.cpp
 	rendering/swrenderer/things/r_wallsprite.cpp
 	rendering/swrenderer/things/r_decal.cpp
-	rendering/swrenderer/things/r_model.cpp
 	rendering/swrenderer/plane/r_visibleplane.cpp
 	rendering/swrenderer/plane/r_visibleplanelist.cpp
 	rendering/swrenderer/plane/r_skyplane.cpp
@@ -706,65 +677,46 @@ set ( SWRENDER_SOURCES
 	rendering/swrenderer/plane/r_slopeplane.cpp
 )
 
-set( POLYRENDER_SOURCES
-	rendering/polyrenderer/drawers/poly_triangle.cpp
-	rendering/polyrenderer/drawers/poly_thread.cpp
-	rendering/polyrenderer/drawers/screen_triangle.cpp
-	rendering/polyrenderer/drawers/screen_scanline_setup.cpp
-	rendering/polyrenderer/drawers/screen_shader.cpp
-	rendering/polyrenderer/drawers/screen_blend.cpp
-)
-
 # These files will be flagged as "headers" so that they appear in project files
 # without being compiled.
 set( NOT_COMPILED_SOURCE_FILES
 	${OTHER_SYSTEM_SOURCES}
 	${SWRENDER_SOURCES}
-	${POLYRENDER_SOURCES}
 	sc_man_scanner.h
-	utility/sc_man_scanner.re
+	common/engine/sc_man_scanner.re
 	g_statusbar/sbarinfo_commands.cpp
 	gamedata/xlat/xlat_parser.y
 	xlat_parser.c
 	xlat_parser.h
-	scripting/zscript/zcc-parse.lemon
+	common/scripting/frontend/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
-	win32/zdoom.natvis
+	common/platform/win32/zutil.natvis
 )
 
 set( VM_JIT_SOURCES
-	scripting/vm/jit.cpp
-	scripting/vm/jit_runtime.cpp
-	scripting/vm/jit_call.cpp
-	scripting/vm/jit_flow.cpp
-	scripting/vm/jit_load.cpp
-	scripting/vm/jit_math.cpp
-	scripting/vm/jit_move.cpp
-	scripting/vm/jit_store.cpp
+	common/scripting/jit/jit.cpp
+	common/scripting/jit/jit_runtime.cpp
+	common/scripting/jit/jit_call.cpp
+	common/scripting/jit/jit_flow.cpp
+	common/scripting/jit/jit_load.cpp
+	common/scripting/jit/jit_math.cpp
+	common/scripting/jit/jit_move.cpp
+	common/scripting/jit/jit_store.cpp
 )
-
-# This is disabled for now because I cannot find a way to give the .pch file a different name.
-# Visual C++ 2015 seems hell-bent on only allowing one .pch file with the same name as the executable.
-#enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
 
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
 	rendering/swrenderer/r_swscene.cpp
-	rendering/polyrenderer/poly_all.cpp
-	sound/music/music_midi_base.cpp
-	sound/backend/oalsound.cpp
-	gamedata/textures/hires/hqnx/init.cpp
-	gamedata/textures/hires/hqnx/hq2x.cpp
-	gamedata/textures/hires/hqnx/hq3x.cpp
-	gamedata/textures/hires/hqnx/hq4x.cpp
-	gamedata/textures/hires/xbr/xbrz.cpp
-	gamedata/textures/hires/xbr/xbrz_old.cpp
-	rendering/gl_load/gl_load.c
-	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
-	rendering/hwrenderer/dynlights/hw_dynlightdata.cpp
+	common/textures/hires/hqnx/init.cpp
+	common/textures/hires/hqnx/hq2x.cpp
+	common/textures/hires/hqnx/hq3x.cpp
+	common/textures/hires/hqnx/hq4x.cpp
+	common/textures/hires/xbr/xbrz.cpp
+	common/textures/hires/xbr/xbrz_old.cpp
+	common/rendering/gl_load/gl_load.c
+	rendering/hwrenderer/hw_dynlightdata.cpp
 	rendering/hwrenderer/scene/hw_bsp.cpp
 	rendering/hwrenderer/scene/hw_fakeflat.cpp
 	rendering/hwrenderer/scene/hw_decal.cpp
@@ -781,43 +733,61 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_walls.cpp
 	rendering/hwrenderer/scene/hw_walls_vertex.cpp
 	rendering/hwrenderer/scene/hw_weapon.cpp
-	r_data/models/models.cpp
-	utility/matrix.cpp
+	common/utility/matrix.cpp
 )
 	
-#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+#Vulkan stuff must go into a separate list because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
-	rendering/vulkan/system/vk_device.cpp
-	rendering/vulkan/system/vk_swapchain.cpp
-	rendering/vulkan/system/vk_builders.cpp
-	rendering/vulkan/system/vk_framebuffer.cpp
-	rendering/vulkan/system/vk_buffers.cpp
-	rendering/vulkan/renderer/vk_renderstate.cpp
-	rendering/vulkan/renderer/vk_renderpass.cpp
-	rendering/vulkan/renderer/vk_streambuffer.cpp
-	rendering/vulkan/renderer/vk_postprocess.cpp
-	rendering/vulkan/renderer/vk_renderbuffers.cpp
-	rendering/vulkan/shaders/vk_shader.cpp
-	rendering/vulkan/textures/vk_samplers.cpp
-	rendering/vulkan/textures/vk_hwtexture.cpp
-	rendering/vulkan/textures/vk_imagetransition.cpp
-	rendering/vulkan/thirdparty/volk/volk.c
-	rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
+	common/rendering/vulkan/system/vk_renderdevice.cpp
+	common/rendering/vulkan/system/vk_commandbuffer.cpp
+	common/rendering/vulkan/system/vk_hwbuffer.cpp
+	common/rendering/vulkan/system/vk_buffer.cpp
+	common/rendering/vulkan/renderer/vk_renderstate.cpp
+	common/rendering/vulkan/renderer/vk_renderpass.cpp
+	common/rendering/vulkan/renderer/vk_streambuffer.cpp
+	common/rendering/vulkan/renderer/vk_postprocess.cpp
+	common/rendering/vulkan/renderer/vk_pprenderstate.cpp
+	common/rendering/vulkan/renderer/vk_descriptorset.cpp
+	common/rendering/vulkan/renderer/vk_raytrace.cpp
+	common/rendering/vulkan/shaders/vk_shader.cpp
+	common/rendering/vulkan/shaders/vk_ppshader.cpp
+	common/rendering/vulkan/textures/vk_samplers.cpp
+	common/rendering/vulkan/textures/vk_hwtexture.cpp
+	common/rendering/vulkan/textures/vk_pptexture.cpp
+	common/rendering/vulkan/textures/vk_imagetransition.cpp
+	common/rendering/vulkan/textures/vk_renderbuffers.cpp
+	common/rendering/vulkan/textures/vk_texture.cpp
+	common/rendering/vulkan/textures/vk_framebuffer.cpp
 )
 
-if (HAVE_VULKAN)
-	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${VULKAN_SOURCES})
+if (HAVE_GLES2)
+	set (GLES_SOURCES
+		common/rendering/gles/gles_system.cpp
+		common/rendering/gles/gles_renderer.cpp
+		common/rendering/gles/gles_framebuffer.cpp
+		common/rendering/gles/gles_renderstate.cpp
+		common/rendering/gles/gles_renderbuffers.cpp
+		common/rendering/gles/gles_postprocess.cpp
+		common/rendering/gles/gles_postprocessstate.cpp
+		common/rendering/gles/gles_buffers.cpp
+		common/rendering/gles/gles_hwtexture.cpp
+		common/rendering/gles/gles_shader.cpp
+		common/rendering/gles/gles_shaderprogram.cpp
+		common/rendering/gles/gles_samplers.cpp
+		common/rendering/gles/glad/src/glad.c
+	)
+
+	list (APPEND FASTMATH_SOURCES ${GLES_SOURCES})
 endif()
 
-set (POLYBACKEND_SOURCES
-	rendering/polyrenderer/backend/poly_framebuffer.cpp
-	rendering/polyrenderer/backend/poly_buffers.cpp
-	rendering/polyrenderer/backend/poly_hwtexture.cpp
-	rendering/polyrenderer/backend/poly_renderstate.cpp
-)
-set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${POLYBACKEND_SOURCES})
+if (HAVE_VULKAN)
+	list (APPEND FASTMATH_SOURCES ${VULKAN_SOURCES})
+endif()
+
+set (FASTMATH_SOURCES ${FASTMATH_SOURCES})
 
 set (PCH_SOURCES
+	common/thirdparty/richpresence.cpp
 	am_map.cpp
 	playsim/bots/b_bot.cpp
 	playsim/bots/b_func.cpp
@@ -825,24 +795,17 @@ set (PCH_SOURCES
 	playsim/bots/b_move.cpp
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
-	console/c_bind.cpp
 	console/c_cmds.cpp
-	console/c_console.cpp
-	console/c_consolebuffer.cpp
-	console/c_cvars.cpp
-	console/c_dispatch.cpp
-	console/c_expr.cpp
+	console/c_notifybuffer.cpp
 	console/c_functions.cpp
 	ct_chat.cpp
 	d_iwad.cpp
 	d_main.cpp
+	d_defcvars.cpp
 	d_anonstats.cpp
 	d_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
-	dobject.cpp
-	dobjgc.cpp
-	dobjtype.cpp
 	doomstat.cpp
 	g_cvars.cpp
 	g_dumpinfo.cpp
@@ -850,11 +813,8 @@ set (PCH_SOURCES
 	g_hub.cpp
 	g_level.cpp
 	gameconfigfile.cpp
-	gitinfo.cpp
 	hu_scores.cpp
-	i_net.cpp
 	m_cheat.cpp
-	m_joy.cpp
 	m_misc.cpp
 	playsim/p_acs.cpp
 	playsim/p_actionfunctions.cpp
@@ -878,20 +838,13 @@ set (PCH_SOURCES
 	playsim/p_user.cpp
 	rendering/r_utility.cpp
 	rendering/r_sky.cpp
-	rendering/r_videoscale.cpp
 	sound/s_advsound.cpp
-	sound/s_environment.cpp
-	sound/s_reverbedit.cpp
 	sound/s_sndseq.cpp
 	sound/s_doomsound.cpp
-	sound/s_sound.cpp
-	sound/s_music.cpp
-	serializer.cpp
+	serializer_doom.cpp
 	scriptutil.cpp
 	st_stuff.cpp
-	rendering/v_framebuffer.cpp
 	r_data/v_palette.cpp
-	rendering/v_video.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
 	gamedata/a_weapons.cpp
@@ -899,9 +852,7 @@ set (PCH_SOURCES
 	gamedata/g_mapinfo.cpp
 	gamedata/g_skill.cpp
 	gamedata/gi.cpp
-	gamedata/stringtable.cpp
 	gamedata/umapinfo.cpp
-	gamedata/w_wad.cpp
 	gamedata/d_dehacked.cpp
 	gamedata/g_doomedmap.cpp
 	gamedata/info.cpp
@@ -920,10 +871,12 @@ set (PCH_SOURCES
 	playsim/mapthinkers/a_pillar.cpp
 	playsim/mapthinkers/a_plats.cpp
 	playsim/mapthinkers/a_pusher.cpp
+	playsim/mapthinkers/a_thruster.cpp
 	playsim/mapthinkers/a_scroll.cpp
 	playsim/mapthinkers/dsectoreffect.cpp
 	playsim/a_pickups.cpp
 	playsim/a_action.cpp
+	playsim/a_corona.cpp
 	playsim/a_decals.cpp
 	playsim/a_dynlight.cpp
 	playsim/a_flashfader.cpp
@@ -948,47 +901,16 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	rendering/2d/f_wipe.cpp
-	rendering/2d/v_2ddrawer.cpp
-	rendering/2d/v_drawtext.cpp
 	rendering/2d/v_blend.cpp
-	rendering/2d/v_draw.cpp
-	rendering/gl/renderer/gl_renderer.cpp
-	rendering/gl/renderer/gl_renderstate.cpp
-	rendering/gl/renderer/gl_renderbuffers.cpp
-	rendering/gl/renderer/gl_postprocess.cpp
-	rendering/gl/renderer/gl_postprocessstate.cpp
-	rendering/gl/renderer/gl_stereo3d.cpp
-	rendering/gl/renderer/gl_scene.cpp
-	rendering/gl/shaders/gl_shader.cpp
-	rendering/gl/shaders/gl_shaderprogram.cpp
-	rendering/gl_load/gl_interface.cpp
-	rendering/gl/system/gl_framebuffer.cpp
-	rendering/gl/system/gl_debug.cpp
-	rendering/gl/system/gl_buffers.cpp
-	rendering/gl/textures/gl_hwtexture.cpp
-	rendering/gl/textures/gl_samplers.cpp
-	rendering/hwrenderer/data/hw_vertexbuilder.cpp
-	rendering/hwrenderer/data/flatvertices.cpp
-	rendering/hwrenderer/data/hw_viewpointbuffer.cpp
-	rendering/hwrenderer/dynlights/hw_aabbtree.cpp
-	rendering/hwrenderer/dynlights/hw_shadowmap.cpp
-	rendering/hwrenderer/dynlights/hw_lightbuffer.cpp
-	rendering/hwrenderer/models/hw_models.cpp
-	rendering/hwrenderer/scene/hw_skydome.cpp
+	rendering/hwrenderer/hw_entrypoint.cpp
+	rendering/hwrenderer/hw_vertexbuilder.cpp
+	rendering/hwrenderer/doom_aabbtree.cpp
+	rendering/hwrenderer/doom_levelmesh.cpp
+	rendering/hwrenderer/hw_models.cpp
+	rendering/hwrenderer/hw_precache.cpp
+	rendering/hwrenderer/scene/hw_lighting.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
-	rendering/hwrenderer/scene/hw_renderstate.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocess.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
-	rendering/hwrenderer/textures/hw_material.cpp
-	rendering/hwrenderer/textures/hw_precache.cpp
-	rendering/hwrenderer/utility/hw_clock.cpp
-	rendering/hwrenderer/utility/hw_cvars.cpp
-	rendering/hwrenderer/utility/hw_draw2d.cpp
-	rendering/hwrenderer/utility/hw_lighting.cpp
-	rendering/hwrenderer/utility/hw_shaderpatcher.cpp
-	rendering/hwrenderer/utility/hw_vrmodes.cpp
+	rendering/hwrenderer/scene/hw_setcolor.cpp
 	maploader/edata.cpp
 	maploader/specials.cpp
 	maploader/maploader.cpp
@@ -1001,60 +923,12 @@ set (PCH_SOURCES
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
 	maploader/postprocessor.cpp
-	menu/joystickmenu.cpp
+	menu/doommenu.cpp
 	menu/loadsavemenu.cpp
-	menu/menu.cpp
-	menu/menudef.cpp
-	menu/messagebox.cpp
-	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/resolutionmenu.cpp
-	gamedata/resourcefiles/ancientzip.cpp
-	gamedata/resourcefiles/file_7z.cpp
-	gamedata/resourcefiles/file_grp.cpp
-	gamedata/resourcefiles/file_lump.cpp
-	gamedata/resourcefiles/file_rff.cpp
-	gamedata/resourcefiles/file_wad.cpp
-	gamedata/resourcefiles/file_zip.cpp
-	gamedata/resourcefiles/file_pak.cpp
-	gamedata/resourcefiles/file_directory.cpp
-	gamedata/resourcefiles/resourcefile.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
-	gamedata/textures/bitmap.cpp
-	gamedata/textures/texture.cpp
-	gamedata/textures/image.cpp
-	gamedata/textures/imagetexture.cpp
-	gamedata/textures/texturemanager.cpp
-	gamedata/textures/multipatchtexturebuilder.cpp
-	gamedata/textures/skyboxtexture.cpp
-	gamedata/textures/formats/automaptexture.cpp
-	gamedata/textures/formats/brightmaptexture.cpp
-	gamedata/textures/formats/buildtexture.cpp
-	gamedata/textures/formats/canvastexture.cpp
-	gamedata/textures/formats/ddstexture.cpp
-	gamedata/textures/formats/flattexture.cpp
-	gamedata/textures/formats/fontchars.cpp
-	gamedata/textures/formats/imgztexture.cpp
-	gamedata/textures/formats/jpegtexture.cpp
-	gamedata/textures/formats/md5check.cpp
-	gamedata/textures/formats/multipatchtexture.cpp
-	gamedata/textures/formats/patchtexture.cpp
-	gamedata/textures/formats/pcxtexture.cpp
-	gamedata/textures/formats/pngtexture.cpp
-	gamedata/textures/formats/rawpagetexture.cpp
-	gamedata/textures/formats/emptytexture.cpp
-	gamedata/textures/formats/shadertexture.cpp
-	gamedata/textures/formats/tgatexture.cpp
-	gamedata/textures/formats/stbtexture.cpp
-	gamedata/textures/hires/hqresize.cpp
-	gamedata/fonts/singlelumpfont.cpp
-	gamedata/fonts/singlepicfont.cpp
-	gamedata/fonts/specialfont.cpp
-	gamedata/fonts/font.cpp
-	gamedata/fonts/hexfont.cpp
-	gamedata/fonts/v_font.cpp
-	gamedata/fonts/v_text.cpp	
+	gamedata/textures/buildloader.cpp
 	gamedata/p_xlat.cpp
 	gamedata/xlat/parse_xlat.cpp
 	gamedata/xlat/parsecontext.cpp
@@ -1070,81 +944,240 @@ set (PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
-	r_data/cycler.cpp
 	r_data/gldefs.cpp
 	r_data/a_dynlightdata.cpp
 	r_data/r_translate.cpp
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp
-	r_data/voxels.cpp
-	r_data/renderstyle.cpp
+	r_data/voxeldef.cpp
 	r_data/r_canvastexture.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
 	r_data/r_sections.cpp
-	r_data/models/models_md3.cpp
-	r_data/models/models_md2.cpp
-	r_data/models/models_voxel.cpp
-	r_data/models/models_ue1.cpp
-	r_data/models/models_obj.cpp
-	scripting/symbols.cpp
+	r_data/models.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
 	scripting/vmthunks_actors.cpp
-	scripting/types.cpp
 	scripting/thingdef.cpp
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
-	scripting/backend/codegen.cpp
-	scripting/backend/scopebarrier.cpp
-	scripting/backend/dynarrays.cpp
-	scripting/backend/vmbuilder.cpp
-	scripting/backend/vmdisasm.cpp
+	scripting/backend/codegen_doom.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp
 	scripting/decorate/thingdef_parse.cpp
 	scripting/decorate/thingdef_states.cpp
-	scripting/vm/vmexec.cpp
-	scripting/vm/vmframe.cpp
-	scripting/zscript/ast.cpp
-	scripting/zscript/zcc_compile.cpp
-	scripting/zscript/zcc_parser.cpp
-	utility/sfmt/SFMT.cpp
-	sound/music/i_music.cpp
-	sound/music/i_soundfont.cpp
-	sound/backend/i_sound.cpp
-	sound/music/music_config.cpp
+	scripting/zscript/zcc_compile_doom.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
-	utility/i_module.cpp
-	utility/palette.cpp
-	utility/files.cpp
-	utility/files_decompress.cpp
-	utility/m_png.cpp
-	utility/m_random.cpp
-	utility/memarena.cpp
-	utility/md5.cpp
+	launcher/launcherwindow.cpp
+	launcher/launcherbanner.cpp
+	launcher/launcherbuttonbar.cpp
+	launcher/playgamepage.cpp
+	launcher/settingspage.cpp
+
+	common/audio/sound/i_sound.cpp
+	common/audio/sound/oalsound.cpp
+	common/audio/sound/s_environment.cpp
+	common/audio/sound/s_sound.cpp
+	common/audio/sound/s_reverbedit.cpp
+	common/audio/music/music_midi_base.cpp
+	common/audio/music/music.cpp
+	common/audio/music/i_music.cpp
+	common/audio/music/i_soundfont.cpp
+	common/audio/music/music_config.cpp
+	common/2d/v_2ddrawer.cpp
+	common/2d/v_drawtext.cpp
+	common/2d/v_draw.cpp
+	common/2d/wipe.cpp
+	common/thirdparty/animlib.cpp
+	common/thirdparty/gain_analysis.cpp
+	common/thirdparty/sfmt/SFMT.cpp
+	common/startscreen/startscreen.cpp
+	common/startscreen/startscreen_heretic.cpp
+	common/startscreen/startscreen_hexen.cpp
+	common/startscreen/startscreen_strife.cpp
+	common/startscreen/startscreen_generic.cpp
+	common/startscreen/endoom.cpp
+	common/widgets/errorwindow.cpp
+	common/widgets/netstartwindow.cpp
+	common/widgets/widgetresourcedata.cpp
+	common/fonts/singlelumpfont.cpp
+	common/fonts/singlepicfont.cpp
+	common/fonts/specialfont.cpp
+	common/fonts/font.cpp
+	common/fonts/hexfont.cpp
+	common/fonts/v_font.cpp
+	common/fonts/v_text.cpp	
+	common/textures/hw_ihwtexture.cpp
+	common/textures/hw_material.cpp
+	common/textures/bitmap.cpp
+	common/textures/m_png.cpp
+	common/textures/texture.cpp
+	common/textures/gametexture.cpp
+	common/textures/image.cpp
+	common/textures/imagetexture.cpp
+	common/textures/texturemanager.cpp
+	common/textures/multipatchtexturebuilder.cpp
+	common/textures/skyboxtexture.cpp
+	common/textures/animtexture.cpp
+	common/textures/v_collection.cpp
+	common/textures/formats/automaptexture.cpp
+	common/textures/formats/brightmaptexture.cpp
+	common/textures/formats/buildtexture.cpp
+	common/textures/formats/ddstexture.cpp
+	common/textures/formats/flattexture.cpp
+	common/textures/formats/fontchars.cpp
+	common/textures/formats/imgztexture.cpp
+	common/textures/formats/md5check.cpp
+	common/textures/formats/multipatchtexture.cpp
+	common/textures/formats/patchtexture.cpp
+	common/textures/formats/pcxtexture.cpp
+	common/textures/formats/pngtexture.cpp
+	common/textures/formats/rawpagetexture.cpp
+	common/textures/formats/startuptexture.cpp
+	common/textures/formats/emptytexture.cpp
+	common/textures/formats/shadertexture.cpp
+	common/textures/formats/tgatexture.cpp
+	common/textures/formats/stbtexture.cpp
+	common/textures/formats/anmtexture.cpp
+	common/textures/formats/startscreentexture.cpp
+	common/textures/formats/qoitexture.cpp
+	common/textures/formats/webptexture.cpp
+	common/textures/hires/hqresize.cpp
+	common/models/models_md3.cpp
+	common/models/models_md2.cpp
+	common/models/models_voxel.cpp
+	common/models/models_ue1.cpp
+	common/models/models_obj.cpp
+	common/models/models_iqm.cpp
+	common/models/model.cpp
+	common/models/voxels.cpp
+	common/console/c_commandline.cpp
+	common/console/c_buttons.cpp
+	common/console/c_bind.cpp
+	common/console/c_enginecmds.cpp
+	common/console/c_consolebuffer.cpp
+	common/console/c_cvars.cpp
+	common/console/c_dispatch.cpp
+	common/console/c_commandbuffer.cpp
+	common/console/c_console.cpp
+	common/console/c_notifybufferbase.cpp
+	common/console/c_tabcomplete.cpp
+	common/console/c_expr.cpp
+	common/cutscenes/playmve.cpp
+	common/cutscenes/movieplayer.cpp
+	common/cutscenes/screenjob.cpp
+	common/utility/engineerrors.cpp
+	common/utility/i_module.cpp
+	common/utility/gitinfo.cpp
+	common/utility/m_alloc.cpp
+	common/utility/utf8.cpp
+	common/utility/palette.cpp
+	common/utility/memarena.cpp
+	common/utility/cmdlib.cpp
+	common/utility/configfile.cpp
+	common/utility/i_time.cpp
+	common/utility/m_argv.cpp
+	common/utility/s_playlist.cpp
+	common/utility/name.cpp
+	common/utility/r_memory.cpp
+	common/utility/writezip.cpp
+	common/thirdparty/base64.cpp
+	common/thirdparty/md5.cpp
+ 	common/thirdparty/superfasthash.cpp
+	common/thirdparty/libsmackerdec/src/BitReader.cpp
+	common/thirdparty/libsmackerdec/src/FileStream.cpp
+	common/thirdparty/libsmackerdec/src/HuffmanVLC.cpp
+	common/thirdparty/libsmackerdec/src/LogError.cpp
+	common/thirdparty/libsmackerdec/src/SmackerDecoder.cpp
+	common/engine/cycler.cpp
+	common/engine/d_event.cpp
+	common/engine/date.cpp
+	common/engine/stats.cpp
+	common/engine/sc_man.cpp
+	common/engine/palettecontainer.cpp
+	common/engine/stringtable.cpp
+	common/engine/i_net.cpp
+	common/engine/i_interface.cpp
+	common/engine/renderstyle.cpp
+	common/engine/v_colortables.cpp
+	common/engine/serializer.cpp
+	common/engine/m_joy.cpp
+	common/engine/m_random.cpp
+	common/objects/autosegs.cpp
+	common/objects/dobject.cpp
+	common/objects/dobjgc.cpp
+	common/objects/dobjtype.cpp
+	common/menu/joystickmenu.cpp
+	common/menu/menu.cpp
+	common/menu/messagebox.cpp
+	common/menu/optionmenu.cpp
+	common/menu/resolutionmenu.cpp
+	common/menu/menudef.cpp
+	common/menu/savegamemanager.cpp
+	common/statusbar/base_sbar.cpp
+	
+	common/rendering/v_framebuffer.cpp
+	common/rendering/v_video.cpp
+	common/rendering/r_thread.cpp
+	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/hw_draw2d.cpp
+	common/rendering/hwrenderer/data/hw_clock.cpp
+	common/rendering/hwrenderer/data/hw_skydome.cpp
+	common/rendering/hwrenderer/data/flatvertices.cpp
+	common/rendering/hwrenderer/data/hw_viewpointbuffer.cpp
+	common/rendering/hwrenderer/data/hw_modelvertexbuffer.cpp
+	common/rendering/hwrenderer/data/hw_cvars.cpp
+	common/rendering/hwrenderer/data/hw_vrmodes.cpp
+	common/rendering/hwrenderer/data/hw_lightbuffer.cpp
+	common/rendering/hwrenderer/data/hw_bonebuffer.cpp
+	common/rendering/hwrenderer/data/hw_aabbtree.cpp
+	common/rendering/hwrenderer/data/hw_shadowmap.cpp
+	common/rendering/hwrenderer/data/hw_shaderpatcher.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocessshader_ccmds.cpp
+	common/rendering/gl_load/gl_interface.cpp
+	common/rendering/gl/gl_renderer.cpp
+	common/rendering/gl/gl_stereo3d.cpp
+	common/rendering/gl/gl_framebuffer.cpp
+	common/rendering/gl/gl_renderstate.cpp
+	common/rendering/gl/gl_renderbuffers.cpp
+	common/rendering/gl/gl_postprocess.cpp
+	common/rendering/gl/gl_postprocessstate.cpp
+	common/rendering/gl/gl_debug.cpp
+	common/rendering/gl/gl_buffers.cpp
+	common/rendering/gl/gl_hwtexture.cpp
+	common/rendering/gl/gl_samplers.cpp
+	common/rendering/gl/gl_shader.cpp
+	common/rendering/gl/gl_shaderprogram.cpp
+	common/scripting/core/maps.cpp
+	common/scripting/core/dictionary.cpp
+	common/scripting/core/dynarrays.cpp
+	common/scripting/core/symbols.cpp
+	common/scripting/core/types.cpp
+	common/scripting/core/scopebarrier.cpp
+	common/scripting/core/vmdisasm.cpp
+	common/scripting/core/imports.cpp
+	common/scripting/vm/vmexec.cpp
+	common/scripting/vm/vmframe.cpp
+	common/scripting/interface/stringformat.cpp
+	common/scripting/interface/vmnatives.cpp
+	common/scripting/frontend/ast.cpp
+	common/scripting/frontend/zcc_compile.cpp
+	common/scripting/frontend/zcc_parser.cpp
+	common/scripting/backend/vmbuilder.cpp
+	common/scripting/backend/codegen.cpp
+	
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
 	utility/nodebuilder/nodebuild_extract.cpp
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
-	utility/sc_man.cpp
-	utility/stats.cpp
-	utility/cmdlib.cpp
-	utility/configfile.cpp
-	utility/i_time.cpp
-	utility/m_alloc.cpp
-	utility/m_argv.cpp
-	utility/m_bbox.cpp
-	utility/name.cpp
-	utility/s_playlist.cpp
-	utility/v_collection.cpp
-	utility/utf8.cpp
-	utility/zstrformat.cpp
 )
 
 if( ${HAVE_VM_JIT} )
@@ -1153,66 +1186,128 @@ else()
 	set( NOT_COMPILED_SOURCE_FILES ${NOT_COMPILED_SOURCE_FILES} ${VM_JIT_SOURCES} )
 endif()
 
-if( MSVC )
-	enable_precompiled_headers( g_pch.h PCH_SOURCES )
-else()
-	# Temporary solution for compilers other than MSVC
-	set_source_files_properties( ${PCH_SOURCES} PROPERTIES COMPILE_FLAGS "-include g_pch.h" )
-endif()
-
-add_executable( zdoom WIN32 MACOSX_BUNDLE
+set( GAME_SOURCES
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
-	utility/x86.cpp
-	utility/strnatcmp.c
-	utility/zstring.cpp
-	utility/dictionary.cpp
-	utility/math/asin.c
-	utility/math/atan.c
-	utility/math/const.c
-	utility/math/cosh.c
-	utility/math/exp.c
-	utility/math/isnan.c
-	utility/math/log.c
-	utility/math/log10.c
-	utility/math/mtherr.c
-	utility/math/polevl.c
-	utility/math/pow.c
-	utility/math/powi.c
-	utility/math/sin.c
-	utility/math/sinh.c
-	utility/math/sqrt.c
-	utility/math/tan.c
-	utility/math/tanh.c
-	utility/math/fastsin.cpp
-	zzautozend.cpp
+	common/utility/x86.cpp
+	common/thirdparty/strnatcmp.c
+	common/thirdparty/utf8proc/utf8proc.c
+	common/thirdparty/stb/stb_sprintf.c
+	common/utility/zstring.cpp
+	common/utility/findfile.cpp
+	common/thirdparty/math/asin.c
+	common/thirdparty/math/atan.c
+	common/thirdparty/math/const.c
+	common/thirdparty/math/cosh.c
+	common/thirdparty/math/exp.c
+	common/thirdparty/math/isnan.c
+	common/thirdparty/math/log.c
+	common/thirdparty/math/log10.c
+	common/thirdparty/math/mtherr.c
+	common/thirdparty/math/polevl.c
+	common/thirdparty/math/pow.c
+	common/thirdparty/math/powi.c
+	common/thirdparty/math/sin.c
+	common/thirdparty/math/sinh.c
+	common/thirdparty/math/sqrt.c
+	common/thirdparty/math/tan.c
+	common/thirdparty/math/tanh.c
+	common/thirdparty/math/fastsin.cpp
+
+	common/filesystem/source/filesystem.cpp
+	common/filesystem/source/ancientzip.cpp
+	common/filesystem/source/file_7z.cpp
+	common/filesystem/source/file_grp.cpp
+	common/filesystem/source/file_lump.cpp
+	common/filesystem/source/file_rff.cpp
+	common/filesystem/source/file_wad.cpp
+	common/filesystem/source/file_zip.cpp
+	common/filesystem/source/file_pak.cpp
+	common/filesystem/source/file_whres.cpp
+	common/filesystem/source/file_ssi.cpp
+	common/filesystem/source/file_hog.cpp
+	common/filesystem/source/file_mvl.cpp
+	common/filesystem/source/file_directory.cpp
+	common/filesystem/source/resourcefile.cpp
+	common/filesystem/source/files.cpp
+	common/filesystem/source/files_decompress.cpp
+	common/filesystem/source/fs_findfile.cpp
+	common/filesystem/source/fs_stringpool.cpp
+	common/filesystem/source/unicode.cpp
+	common/filesystem/source/critsec.cpp
+
 )
+
+set( GAME_NONPCH_SOURCES ${GAME_SOURCES} )
+list( REMOVE_ITEM GAME_NONPCH_SOURCES ${PCH_SOURCES} )
+
+add_executable( zdoom WIN32 MACOSX_BUNDLE ${GAME_SOURCES} )
+
+target_precompile_headers( zdoom PRIVATE g_pch.h )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
-set_source_files_properties( utility/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
+set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
+set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} nsl socket)
 endif()
 
 if( UNIX )
 	find_package( Backtrace )
 	if(Backtrace_FOUND)
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} ${Backtrace_LIBRARIES} )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${Backtrace_LIBRARIES} )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
 
-include_directories( .
+include_directories(
+	BEFORE
+	.
+	common/audio/sound
+	common/audio/music
+	common/2d
+	common/cutscenes
+	common/thirdparty/libsmackerdec/include
+	common/thirdparty
+	common/thirdparty/stb
+	common/thirdparty/utf8proc
+	common/textures
+	common/textures/formats
+	common/textures/hires
+	common/textures
+	common/models
+	common/filesystem/include
+	common/utility
+	common/console
+	common/engine
+	common/menu
+	common/statusbar
+	common/fonts
+	common/objects
+	common/startscreen
+	common/widgets
+	common/rendering
+	common/rendering/hwrenderer/data
+	common/rendering/gl_load
+	common/rendering/gl
+	common/rendering/gles
+	common/rendering/gles/glad/include
+	common/rendering/gles/Mali_OpenGL_ES_Emulator/include
+	common/scripting/vm
+	common/scripting/jit
+	common/scripting/core
+	common/scripting/interface
+	common/scripting/frontend
+	common/scripting/backend
 	g_statusbar
 	console
 	playsim
@@ -1222,23 +1317,24 @@ include_directories( .
 	gamedata/textures
 	gamedata/fonts
 	rendering
+	rendering/hwrenderer
 	rendering/2d
 	r_data
 	sound
-	sound/music
+	menu
 	sound/backend
 	xlat
 	utility
 	utility/nodebuilder
 	scripting
-	scripting/vm
+	scripting/zscript
 	rendering
-	rendering/vulkan/thirdparty
-	../libraries/gdtoa
-	../libraries/glslang/glslang/Public
-	../libraries/glslang/spirv
-	${CMAKE_BINARY_DIR}/libraries/gdtoa
-	${SYSTEM_SOURCES_DIR} )
+	launcher
+	../libraries/ZVulkan/include
+	../libraries/ZWidget/include
+	../libraries/webp/include
+	${SYSTEM_SOURCES_DIR}
+)
 
 add_dependencies( zdoom revision_check )
 
@@ -1271,7 +1367,7 @@ if( MSVC )
 	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 
 	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
+		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\common\\platform\\win32\\manifest.xml\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
 		COMMENT "Adding manifest..."
 	)
 
@@ -1281,7 +1377,14 @@ if( NOT WIN32 AND NOT APPLE )
 	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
 	add_custom_command( TARGET zdoom POST_BUILD
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
-		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
+		COMMAND ${CMAKE_CURRENT_BINARY_DIR}/link-make )
+	IF ("${INSTALL_RPATH}" STREQUAL "")
+		set_target_properties(zdoom PROPERTIES
+			#allow libzmusic.so.1 library in same folder as executable at runtime
+			INSTALL_RPATH "\$ORIGIN:\$ORIGIN/zmusic/build/source"
+			BUILD_WITH_INSTALL_RPATH ON
+		)
+	endif()
 endif()
 
 add_custom_command(TARGET zdoom POST_BUILD
@@ -1293,20 +1396,26 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
-if( CMAKE_COMPILER_IS_GNUCXX )
-	# GCC misoptimizes this file
-	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
+if (VCPKG_TOOLCHAIN)
+	x_vcpkg_install_local_dependencies(TARGETS zdoom DESTINATION ".")
 endif()
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+
+if( WIN32 )
+	set( INSTALL_SOUNDFONT_PATH . CACHE STRING "Directory where soundfonts and WOPL/WOPN banks will be placed during install." )
+else()
+	set( INSTALL_SOUNDFONT_PATH share/games/doom CACHE STRING "Directory where soundfonts and WOPL/WOPN banks will be placed during install." )
+endif()
+install(DIRECTORY "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_banks"
+		DESTINATION ${INSTALL_SOUNDFONT_PATH}
+		COMPONENT "Soundfont resources")
+
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
-	if( SSE_MATTERS )
-		set_property( SOURCE
-			rendering/polyrenderer/poly_all.cpp
-			rendering/swrenderer/r_all.cpp
-			utility/palette.cpp
-			utility/x86.cpp
-			APPEND_STRING PROPERTY COMPILE_FLAGS " -msse2 -mmmx" )
-	endif()
+	set_property( SOURCE
+		common/utility/palette.cpp
+		common/utility/x86.cpp
+		rendering/swrenderer/r_all.cpp
+		APPEND_STRING PROPERTY COMPILE_FLAGS " ${SSE2_ENABLE}" )
 endif()
 
 if( APPLE )
@@ -1319,6 +1428,7 @@ if( APPLE )
 	set_target_properties(zdoom PROPERTIES
 		LINK_FLAGS "${LINK_FRAMEWORKS}"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist"
+		XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.drdteam.gzdoom"
 		XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "" )
 
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()
@@ -1327,30 +1437,21 @@ if( APPLE )
 endif()
 
 if( WIN32 )
-	set( INSTALL_PATH . CACHE STRING "Directory where the zdoom executable will be placed during install." )
+	set( INSTALL_PATH . CACHE STRING "Directory where the executable will be placed during install." )
 else()
-	set( INSTALL_PATH bin CACHE STRING "Directory where the zdoom executable will be placed during install." )
+	set( INSTALL_PATH bin CACHE STRING "Directory where the executable will be placed during install." )
 endif()
 install(TARGETS zdoom
 		DESTINATION ${INSTALL_PATH}
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/backend/.+")
-source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
-source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/thirdparty/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
-source_group("Game Data\\Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/resourcefiles/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
-source_group("Game Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/.+")
-source_group("Game Data\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/.+")
-source_group("Game Data\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/hqnx/.+")
-source_group("Game Data\\Textures\\Hires\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/hqnx_asm/.+")
-source_group("Game Data\\Textures\\Hires\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/xbr/.+")
-source_group("Game Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/formats/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/console/.+")
 source_group("Playsim" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/.+")
 source_group("Playsim\\Bots" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/bots/.+")
 source_group("Playsim\\FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/fragglescript/.+")
@@ -1358,33 +1459,7 @@ source_group("Playsim\\Map Thinkers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE
 source_group("Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/.+")
 source_group("Rendering\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/2d/.+")
 source_group("Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
-source_group("Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/data/.+")
-source_group("Rendering\\Hardware Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/dynlights/.+")
-source_group("Rendering\\Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/models/.+")
-source_group("Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/postprocessing/.+")
-source_group("Rendering\\Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/renderer/.+")
 source_group("Rendering\\Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/scene/.+")
-source_group("Rendering\\Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/shaders/.+")
-source_group("Rendering\\Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/system/.+")
-source_group("Rendering\\Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/textures/.+")
-source_group("Rendering\\Hardware Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/utility/.+")
-source_group("Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/system/.+")
-source_group("Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/renderer/.+")
-source_group("Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/shaders/.+")
-source_group("Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/textures/.+")
-source_group("Rendering\\Vulkan Renderer\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/.+")
-source_group("Rendering\\Vulkan Renderer\\Third Party\\Volk" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/volk/.+")
-source_group("Rendering\\Vulkan Renderer\\Third Party\\Vk_Mem_Alloc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/vk_mem_alloc.+")
-source_group("Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl_load/.+")
-source_group("Rendering\\OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/.+")
-source_group("Rendering\\OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/data/.+")
-source_group("Rendering\\OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/dynlights/.+")
-source_group("Rendering\\OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/renderer/.+")
-source_group("Rendering\\OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/scene/.+")
-source_group("Rendering\\OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/shaders/.+")
-source_group("Rendering\\OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/system/.+")
-source_group("Rendering\\OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/textures/.+")
-source_group("Rendering\\OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/utility/.+")
 source_group("Rendering\\Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/.+")
 source_group("Rendering\\Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/drawers/.+")
 source_group("Rendering\\Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/scene/.+")
@@ -1393,30 +1468,75 @@ source_group("Rendering\\Software Renderer\\Line" REGULAR_EXPRESSION "^${CMAKE_C
 source_group("Rendering\\Software Renderer\\Plane" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/plane/.+")
 source_group("Rendering\\Software Renderer\\Things" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/things/.+")
 source_group("Rendering\\Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/viewport/.+")
-source_group("Rendering\\Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/.+")
-source_group("Rendering\\Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/math/.+")
-source_group("Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/drawers/.+")
-source_group("Rendering\\Poly Renderer\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/backend/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
-source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
 source_group("Platforms\\POSIX Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/.+")
-source_group("Platforms\\Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/cocoa/.+")
-source_group("Platforms\\OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/.+")
-source_group("Platforms\\Unix Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/unix/.+")
-source_group("Platforms\\SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/sdl/.+")
 source_group("Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/win32/.+")
 source_group("Scripting\\Decorate frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/decorate/.+")
-source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h)
+source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/.+")
 source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/backend/.+")
-source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
+source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
+source_group("Common\\Audio" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/.+")
+source_group("Common\\Audio\\Sound" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/sound/.+")
+source_group("Common\\Audio\\Sound\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/sound/thirdparty/.+")
+source_group("Common\\Audio\\Music" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/music.+")
+source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
+source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
+source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
+source_group("Common\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/2d/.+")
+source_group("Common\\Cutscenes" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/cutscenes/.+")
+source_group("Common\\Objects" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/objects/.+")
+source_group("Common\\Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/menu/.+")
+source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
+source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
+source_group("Common\\File System\\Include" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/include/.+")
+source_group("Common\\File System\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/source/.+")
+source_group("Common\\Startscreen" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/startscreen/.+")
+source_group("Common\\Widgets" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/widgets/.+")
+source_group("Common\\Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/.+")
+source_group("Common\\Scripting\\Interface" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/interface/.+")
+source_group("Common\\Scripting\\Frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/frontend/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h)
+source_group("Common\\Scripting\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/backend/.+")
+source_group("Common\\Scripting\\Core" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/core/.+")
+source_group("Common\\Scripting\\JIT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/jit/.+")
+source_group("Common\\Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/vm/.+")
+source_group("Common\\Platforms\\Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/cocoa/.+")
+source_group("Common\\Platforms\\OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/osx/.+")
+source_group("Common\\Platforms\\Unix Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/unix/.+")
+source_group("Common\\Platforms\\SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/sdl/.+")
+source_group("Common\\Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/win32/.+")
+source_group("Common\\Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/.+")
+source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/.+")
+source_group("Common\\Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/data/.+")
+source_group("Common\\Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/postprocessing/.+")
+source_group("Common\\Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl_load/.+")
+source_group("Common\\Rendering\\OpenGL Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl/.+")
+source_group("Common\\Rendering\\GLES Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gles/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/system/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/renderer/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/shaders/.+")
+source_group("Common\\Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/vulkan/textures/.+")
+source_group("Common\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/models/.+")
+source_group("Common\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/.+")
+source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")
+source_group("Common\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx/.+")
+source_group("Common\\Textures\\Hires\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx_asm/.+")
+source_group("Common\\Textures\\Hires\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/xbr/.+")
+source_group("Common\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/formats/.+")
+source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
+source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
+source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")
+source_group("Common\\Third Party\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/sfmt/.+")
+source_group("Common\\Third Party\\stb" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/stb/.+")
+source_group("Common\\Third Party\\utf8proc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/utf8proc/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
-source_group("Utility\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/math/.+")
-source_group("Utility\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/rapidjson/.+")
-source_group("Utility\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/sfmt/.+")
+source_group("Utility\\Smackerdec" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/smackerdec/.+")
+source_group("Utility\\Smackerdec\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/libsmackerdec/include/.+")
+source_group("Utility\\Smackerdec\\Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/libsmackerdec/src/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
+source_group("Launcher" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/launcher/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)
-source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h utility/sc_man_scanner.re)
+source_group("Source Files" FILES ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h common/engine/sc_man_scanner.re)

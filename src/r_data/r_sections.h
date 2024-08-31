@@ -72,8 +72,8 @@ struct BoundingRect
 	double distanceTo(const BoundingRect &other) const
 	{
 		if (intersects(other)) return 0;
-		return std::max(std::min(fabs(left - other.right), fabs(right - other.left)),
-			std::min(fabs(top - other.bottom), fabs(bottom - other.top)));
+		return max(min(fabs(left - other.right), fabs(right - other.left)),
+			min(fabs(top - other.bottom), fabs(bottom - other.top)));
 	}
 
 	void addVertex(double x, double y)
@@ -141,6 +141,7 @@ public:
 	}
 	TArrayView<FSection> SectionsForSector(int sindex)
 	{
+		if (numberOfSectionForSectorPtr[sindex] == 0) return TArrayView<FSection>(nullptr);
 		return sindex < 0 ? TArrayView<FSection>(0) : TArrayView<FSection>(&allSections[firstSectionForSectorPtr[sindex]], numberOfSectionForSectorPtr[sindex]);
 	}
 	int SectionIndex(const FSection *sect)

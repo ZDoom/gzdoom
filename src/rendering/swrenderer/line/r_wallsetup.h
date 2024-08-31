@@ -119,7 +119,7 @@ namespace swrenderer
 		float GetLightStep() const { return lightstep; }
 		bool IsSpriteLight() const { return spritelight; }
 
-		void SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit = nullptr);
+		void SetColormap(const sector_t *frontsector, seg_t *lineseg, int tier, lightlist_t *lit = nullptr);
 		void SetLightLeft(RenderThread *thread, const FWallCoords &wallc);
 		void SetSpriteLight() { lightleft = 0.0f; lightstep = 0.0f; spritelight = true; }
 

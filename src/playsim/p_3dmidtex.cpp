@@ -35,7 +35,7 @@
 */
 
 
-#include "templates.h"
+
 #include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"
@@ -43,6 +43,8 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "actor.h"
+#include "texturemanager.h"
+#include "vm.h"
 
 
 //============================================================================
@@ -230,7 +232,7 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	side_t *side = line->sidedef[sideno];
 	FTextureID texnum = side->GetTexture(side_t::mid);
 	if (!texnum.isValid()) return false;
-	FTexture * tex= TexMan.GetTexture(texnum, true);
+	FGameTexture * tex= TexMan.GetGameTexture(texnum, true);
 	if (!tex) return false;
 
 	FTexCoordInfo tci;
@@ -243,18 +245,32 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
 		*ptexbot = y_offset +
-			MAX(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
+			max(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
 		*ptextop = y_offset +
-		   MIN(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
+		   min(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
 		
 		*ptexbot = *ptextop - textureheight;
 	}
 	return true;
+}
+
+DEFINE_ACTION_FUNCTION(_Line, GetMidTexturePosition)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	PARAM_INT(side);
+	double top = 0.0;
+	double bottom = 0.0;
+
+	bool res = P_GetMidTexturePosition(self,side,&top,&bottom);
+	if (numret > 2) ret[2].SetFloat(bottom);
+	if (numret > 1) ret[1].SetFloat(top);
+	if (numret > 0) ret[0].SetInt(int(res));
+	return numret;
 }
 
 //============================================================================

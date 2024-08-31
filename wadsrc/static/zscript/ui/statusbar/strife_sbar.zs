@@ -251,7 +251,7 @@ class StrifeStatusBar : BaseStatusBar
 			{
 				int stopp = 200 - health;
 				FillBar (x, y, 0, stopp, green1, green2);
-				FillBar (x, y, stopp, 100, blue1, blue2);
+				FillBar (x + stopp * 2, y, stopp, 100, blue1, blue2);
 			}
 		}
 	}
@@ -287,7 +287,7 @@ class StrifeStatusBar : BaseStatusBar
 		DrawHealthBar (points, 49, 175);
 
 		// Armor
-		item = CPlayer.mo.FindInventory('BasicArmor');
+		item = CPlayer.mo.FindInventory('BasicArmor', true);
 		if (item != NULL && item.Amount > 0)
 		{
 			DrawInventoryIcon(item, (2, 177), DI_ITEM_OFFSETS);
@@ -318,10 +318,10 @@ class StrifeStatusBar : BaseStatusBar
 			int flags = item.Amount <= 0? DI_ITEM_OFFSETS|DI_DIM : DI_ITEM_OFFSETS;
 			if (item == CPlayer.mo.InvSel)
 			{
-				DrawTexture (Images[CursorImage], (42 + 35*i, 180), flags, 1. - itemflashFade);
+				DrawTexture (Images[CursorImage], (42 + TICRATE*i, 180), flags, 1. - itemflashFade);
 			}
-			DrawInventoryIcon (item, (48 + 35*i, 182), flags);
-			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + 35*i, 191), DI_TEXT_ALIGN_RIGHT);
+			DrawInventoryIcon (item, (48 + TICRATE*i, 182), flags);
+			DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (75 + TICRATE*i, 191), DI_TEXT_ALIGN_RIGHT);
 			i++;
 		}
 	}
@@ -333,7 +333,7 @@ class StrifeStatusBar : BaseStatusBar
 		DrawImage("I_MDKT", (14, -17));
 
 		// Draw armor
-		let armor = CPlayer.mo.FindInventory('BasicArmor');
+		let armor = CPlayer.mo.FindInventory('BasicArmor', true);
 		if (armor != NULL && armor.Amount != 0)
 		{
 			DrawString(mYelFont, FormatNumber(armor.Amount, 3), (35, -10));
@@ -353,8 +353,8 @@ class StrifeStatusBar : BaseStatusBar
 			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
-				DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3), (-23, -48));
-				DrawInventoryIcon(ammo1, (-14, -55));
+				DrawString(mGrnFont, FormatNumber(ammo2.Amount, 3), (-23, -48));
+				DrawInventoryIcon(ammo2, (-14, -55));
 			}
 		}
 
@@ -388,13 +388,13 @@ class StrifeStatusBar : BaseStatusBar
 				{
 					if (item == CPlayer.mo.InvSel)
 					{
-						DrawTexture(Images[CursorImage], (-90+i*35, -3), DI_SCREEN_CENTER_BOTTOM, 0.75);
+						DrawTexture(Images[CursorImage], (-90+i*TICRATE, -3), DI_SCREEN_CENTER_BOTTOM, 0.75);
 					}
 					if (item.Icon.isValid())
 					{
-						DrawInventoryIcon(item, (-90+i*35, -5), DI_SCREEN_CENTER_BOTTOM|DI_DIMDEPLETED, 0.75);
+						DrawInventoryIcon(item, (-90+i*TICRATE, -5), DI_SCREEN_CENTER_BOTTOM|DI_DIMDEPLETED, 0.75);
 					}
-					DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (-72 + i*35, -8), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM);
+					DrawString(mYelFont, FormatNumber(item.Amount, 3, 5), (-72 + i*TICRATE, -8), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM);
 					++i;
 				}
 			}

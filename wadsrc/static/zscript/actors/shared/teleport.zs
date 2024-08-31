@@ -55,6 +55,7 @@ class TeleportDest : Actor
 		+NOBLOCKMAP
 		+NOSECTOR
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 }
 

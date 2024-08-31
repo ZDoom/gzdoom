@@ -106,7 +106,7 @@ class PhasingZorcher : PlasmaRifle
 	States
 	{
 	Fire:
-		PLSG A 0 A_GunFlash;
+		PLSG A 0 A_GunFlash('Flash', GFF_NOEXTCHANGE);
 		PLSG A 3 A_FireProjectile("PhaseZorchMissile");
 		PLSG B 20 A_ReFire;
 		Goto Ready;

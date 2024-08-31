@@ -34,10 +34,12 @@
 #include "r_state.h"
 #include "gi.h"
 #include "a_keys.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "animations.h"
+#include "texturemanager.h"
 
 //============================================================================
 //
@@ -289,7 +291,7 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 				if (line->backsector == NULL)
 					continue;
 
-				FTexture *tex = TexMan.GetTexture(line->sidedef[0]->GetTexture(side_t::top));
+				auto tex = TexMan.GetGameTexture(line->sidedef[0]->GetTexture(side_t::top));
 				texname = tex ? tex->GetName().GetChars() : NULL;
 				if (texname != NULL && texname[0] == 'D' && texname[1] == 'O' && texname[2] == 'R')
 				{
@@ -714,7 +716,7 @@ void DAnimatedDoor::Construct(sector_t *sec, line_t *line, int speed, int delay,
 
 	picnum = tex1[side_t::top].texture;
 
-	FTexture *tex = TexMan.GetTexture(picnum);
+	auto tex = TexMan.GetGameTexture(picnum);
 	topdist = tex ? tex->GetDisplayHeight() : 64;
 
 	topdist = m_Sector->ceilingplane.fD() - topdist * m_Sector->ceilingplane.fC();
@@ -764,7 +766,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		// Make sure door isn't already being animated
 		if (sec->ceilingdata != NULL )
 		{
-			if (actor->player == NULL)
+			if (actor == NULL || actor->player == NULL)
 				return false;
 
 			if (sec->ceilingdata->IsA (RUNTIME_CLASS(DAnimatedDoor)))
@@ -780,7 +782,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		// Do not attempt to close the door if it already is
 		else if (type == DAnimatedDoor::adClose)
 			return false;
-		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+		FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
 			CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
@@ -816,7 +818,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 			{
 				continue;
 			}
-			FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+			FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 			if (anim != NULL)
 			{
 				rtn = true;

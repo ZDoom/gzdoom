@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <float.h>
 
-#include "templates.h"
 
-#include "w_wad.h"
+
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -37,7 +37,7 @@
 #include "d_net.h"
 #include "g_level.h"
 #include "a_dynlight.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
@@ -121,7 +121,7 @@ namespace swrenderer
 			xform = &nulltransform;
 			nulltransform.xOffs = nulltransform.yOffs = nulltransform.baseyOffs = 0;
 			nulltransform.xScale = nulltransform.yScale = 1;
-			nulltransform.Angle = nulltransform.baseAngle = 0.0;
+			nulltransform.Angle = nulltransform.baseAngle = nullAngle;
 			additive = false;
 			// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 			// always necessary, but it is needed if a floor and ceiling sky are in the

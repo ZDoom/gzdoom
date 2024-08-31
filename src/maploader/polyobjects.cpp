@@ -36,6 +36,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "v_text.h"
+#include "s_sndseq.h"
 
 #include "maploader/maploader.h"
 
@@ -147,7 +148,22 @@ static int posicmp(const void *a, const void *b)
 	return (*(const side_t **)a)->linedef->args[1] - (*(const side_t **)b)->linedef->args[1];
 }
 
-void MapLoader::SpawnPolyobj (int index, int tag, int type)
+int SetPolyobjDamage(int type, int damage)
+{
+	int dam;
+	if (type != SMT_PolySpawn)
+	{
+		if (damage == 1)
+			dam = 3;
+		else if (damage > 1)
+			dam = TELEFRAG_DAMAGE;
+		else if (damage < 0)
+			dam = abs(damage);
+	}
+	return (type != SMT_PolySpawn) ? dam : 0;
+}
+
+void MapLoader::SpawnPolyobj (int index, int tag, int type, int damage)
 {
 	unsigned int ii;
 	int i;
@@ -180,11 +196,12 @@ void MapLoader::SpawnPolyobj (int index, int tag, int type)
 				sd->linedef->args[0] = 0;
 				IterFindPolySides(&Level->Polyobjects[index], sd);
 				po->MirrorNum = sd->linedef->args[1];
-				po->crush = (type != SMT_PolySpawn) ? 3 : 0;
+				po->crush = SetPolyobjDamage(type,damage);
 				po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
+
 				po->tag = tag;
 				po->seqType = sd->linedef->args[2];
-				if (po->seqType < 0 || po->seqType > 63)
+				if (po->seqType < 0 || po->seqType > (MAX_SNDSEQS - 1))
 				{
 					po->seqType = 0;
 				}
@@ -221,7 +238,7 @@ void MapLoader::SpawnPolyobj (int index, int tag, int type)
 		qsort(&po->Sidedefs[0], po->Sidedefs.Size(), sizeof(po->Sidedefs[0]), posicmp);
 		if (po->Sidedefs.Size() > 0)
 		{
-			po->crush = (type != SMT_PolySpawn) ? 3 : 0;
+			po->crush = SetPolyobjDamage(type,damage);
 			po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
 			po->tag = tag;
 			po->seqType = po->Sidedefs[0]->linedef->args[3];
@@ -294,8 +311,8 @@ void MapLoader::TranslateToStartSpot (int tag, const DVector2 &origin)
 		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Anchor point located without a StartSpot point: %d\n", tag);
 		return;
 	}
-	po->OriginalPts.Resize(po->Sidedefs.Size());
-	po->PrevPts.Resize(po->Sidedefs.Size());
+	po->OriginalPts.Resize(po->Vertices.Size());
+	po->PrevPts.Resize(po->Vertices.Size());
 	delta = origin - po->StartSpot.pos;
 
 	for (unsigned i = 0; i < po->Sidedefs.Size(); i++)
@@ -331,7 +348,7 @@ void MapLoader::PO_Init (void)
 	TArray<FMapThing *> polythings;
 	for (auto &mthing : MapThingsConverted)
 	{
-		if (mthing.EdNum == 0 || mthing.EdNum == -1 || mthing.info == nullptr) continue;
+		if (mthing.EdNum == 0 || mthing.EdNum == -1 || mthing.info == nullptr || mthing.info->Type != nullptr) continue;
 
 		FDoomEdEntry *mentry = mthing.info;
 		switch (mentry->Special)
@@ -358,13 +375,13 @@ void MapLoader::PO_Init (void)
 	// Find the startSpot points, and spawn each polyobj
 	for (int i=polythings.Size()-1; i >= 0; i--)
 	{
-		// 9301 (3001) = no crush, 9302 (3002) = crushing, 9303 = hurting touch
+		// 9301 (3001) = no crush, 9302 (3002) = crushing, 9303 = hurting touch, Health = crusher/hurter damage
 		int type = polythings[i]->info->Special;
 		if (type >= SMT_PolySpawn && type <= SMT_PolySpawnHurt)
 		{ 
 			// Polyobj StartSpot Pt.
-			Level->Polyobjects[polyIndex].StartSpot.pos = polythings[i]->pos;
-			SpawnPolyobj(polyIndex, polythings[i]->angle, type);
+			Level->Polyobjects[polyIndex].StartSpot.pos = polythings[i]->pos.XY();
+			SpawnPolyobj(polyIndex, polythings[i]->angle, type, polythings[i]->Health);
 			polyIndex++;
 		} 
 	}
@@ -374,7 +391,7 @@ void MapLoader::PO_Init (void)
 		if (type == SMT_PolyAnchor)
 		{ 
 			// Polyobj Anchor Pt.
-			TranslateToStartSpot (polythings[i]->angle, polythings[i]->pos);
+			TranslateToStartSpot (polythings[i]->angle, polythings[i]->pos.XY());
 		}
 	}
 
@@ -414,4 +431,3 @@ void MapLoader::PO_Init (void)
 		}
 	}
 }
-

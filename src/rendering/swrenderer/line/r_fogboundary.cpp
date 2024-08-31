@@ -22,9 +22,9 @@
 
 #include <stdlib.h>
 #include <float.h>
-#include "templates.h"
 
-#include "w_wad.h"
+
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -45,7 +45,7 @@
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/line/r_fogboundary.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_light.h"
 
 #ifdef _MSC_VER
@@ -110,13 +110,13 @@ namespace swrenderer
 			{
 				if (fake_dc_colormap != basecolormapdata)
 				{
-					stop = MIN(t1, b2);
+					stop = min(t1, b2);
 					while (t2 < stop)
 					{
 						int y = t2++;
 						drawerargs.DrawFogBoundaryLine(thread, y, xr, spanend[y]);
 					}
-					stop = MAX(b1, t2);
+					stop = max(b1, t2);
 					while (b2 > stop)
 					{
 						int y = --b2;
@@ -125,16 +125,16 @@ namespace swrenderer
 				}
 				else
 				{
-					t2 = MAX(t2, MIN(t1, b2));
-					b2 = MIN(b2, MAX(b1, t2));
+					t2 = max(t2, min(t1, b2));
+					b2 = min(b2, max(b1, t2));
 				}
 
-				stop = MIN(t2, b1);
+				stop = min(t2, b1);
 				while (t1 < stop)
 				{
 					spanend[t1++] = x;
 				}
-				stop = MAX(b2, t2);
+				stop = max(b2, t2);
 				while (b1 > stop)
 				{
 					spanend[--b1] = x;

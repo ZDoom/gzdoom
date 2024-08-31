@@ -32,14 +32,16 @@
 **
 */
 
-#include "templates.h"
-#include "textures/textures.h"
+
+#include "textures.h"
 #include "s_sound.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "gi.h"
+#include "animations.h"
+#include "texturemanager.h"
 
 
 static int SortSwitchDefs (const void *a, const void *b)
@@ -57,15 +59,15 @@ static int SortSwitchDefs (const void *a, const void *b)
 //
 //==========================================================================
 
-void FTextureManager::InitSwitchList ()
+void FTextureAnimator::InitSwitchList ()
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
-	int lump = Wads.CheckNumForName ("SWITCHES");
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+	int lump = fileSystem.CheckNumForName ("SWITCHES");
 
 	if (lump != -1)
 	{
-		FMemLump lumpdata = Wads.ReadLump (lump);
-		const char *alphSwitchList = (const char *)lumpdata.GetMem();
+		auto lumpdata = fileSystem.ReadFile (lump);
+		auto alphSwitchList = lumpdata.string();
 		const char *list_p;
 		FSwitchDef *def1, *def2;
 
@@ -78,17 +80,18 @@ void FTextureManager::InitSwitchList ()
 				continue;
 			}
 			// [RH] Skip this switch if its textures can't be found.
-			if (CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags).Exists() &&
-				CheckForTexture (list_p + 9 /* .name2 */, ETextureType::Wall, texflags).Exists())
+			if (TexMan.CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags).Exists() &&
+				TexMan.CheckForTexture (list_p + 9 /* .name2 */, ETextureType::Wall, texflags).Exists())
 			{
 				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->frames[0].Texture = CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags);
-				def2->PreTexture = def1->frames[0].Texture = CheckForTexture (list_p + 9, ETextureType::Wall, texflags);
-				def1->Sound = def2->Sound = 0;
+				def1->PreTexture = def2->frames[0].Texture = TexMan.CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags);
+				def2->PreTexture = def1->frames[0].Texture = TexMan.CheckForTexture (list_p + 9, ETextureType::Wall, texflags);
+				def1->Sound = def2->Sound = NO_SOUND;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->frames[0].TimeMin = def2->frames[0].TimeMin = 0;
 				def1->frames[0].TimeRnd = def2->frames[0].TimeRnd = 0;
+				def1->QuestPanel = def2->QuestPanel = false;
 				AddSwitchPair(def1, def2);
 			}
 		}
@@ -104,16 +107,16 @@ void FTextureManager::InitSwitchList ()
 //
 //==========================================================================
 
-void FTextureManager::ProcessSwitchDef (FScanner &sc)
+void FTextureAnimator::ProcessSwitchDef (FScanner &sc)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FString picname;
 	FSwitchDef *def1, *def2;
 	FTextureID picnum;
 	int gametype;
 	bool quest = false;
 
-	def1 = def2 = NULL;
+	def1 = def2 = nullptr;
 	sc.MustGetString ();
 	if (sc.Compare ("doom"))
 	{
@@ -145,7 +148,7 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 	}
 
 	sc.MustGetString ();
-	picnum = CheckForTexture (sc.String, ETextureType::Wall, texflags);
+	picnum = TexMan.CheckForTexture (sc.String, ETextureType::Wall, texflags);
 	picname = sc.String;
 	while (sc.GetString ())
 	{
@@ -155,7 +158,7 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 		}
 		else if (sc.Compare ("on"))
 		{
-			if (def1 != NULL)
+			if (def1 != nullptr)
 			{
 				sc.ScriptError ("Switch already has an on state");
 			}
@@ -163,7 +166,7 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 		}
 		else if (sc.Compare ("off"))
 		{
-			if (def2 != NULL)
+			if (def2 != nullptr)
 			{
 				sc.ScriptError ("Switch already has an off state");
 			}
@@ -176,14 +179,14 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 		}
 	}
 
-	if (def1 == NULL || !picnum.Exists() ||
+	if (def1 == nullptr || !picnum.Exists() ||
 		(gametype != GAME_Any && !(gametype & gameinfo.gametype)))
 	{
-		if (def2 != NULL)
+		if (def2 != nullptr)
 		{
 			M_Free (def2);
 		}
-		if (def1 != NULL)
+		if (def1 != nullptr)
 		{
 			M_Free (def1);
 		}
@@ -192,7 +195,7 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 
 	// If the switch did not have an off state, create one that just returns
 	// it to the original texture without doing anything interesting
-	if (def2 == NULL)
+	if (def2 == nullptr)
 	{
 		def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 		def2->Sound = def1->Sound;
@@ -218,15 +221,15 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 //
 //==========================================================================
 
-FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
+FSwitchDef *FTextureAnimator::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 {
-	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FSwitchDef *def;
 	TArray<FSwitchDef::frame> frames;
 	FSwitchDef::frame thisframe;
 	FTextureID picnum;
 	bool bad;
-	FSoundID sound = 0;
+	FSoundID sound = NO_SOUND;
 
 	bad = false;
 
@@ -234,17 +237,17 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	{
 		if (sc.Compare ("sound"))
 		{
-			if (sound != 0)
+			if (sound != NO_SOUND)
 			{
 				sc.ScriptError ("Switch state already has a sound");
 			}
 			sc.MustGetString ();
-			sound = sc.String;
+			sound = S_FindSound(sc.String);
 		}
 		else if (sc.Compare ("pic"))
 		{
 			sc.MustGetString ();
-			picnum = CheckForTexture (sc.String, ETextureType::Wall, texflags);
+			picnum = TexMan.CheckForTexture (sc.String, ETextureType::Wall, texflags);
 			if (!picnum.Exists() && !ignoreBad)
 			{
 				//Printf ("Unknown switch texture %s\n", sc.String);
@@ -268,7 +271,7 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				max = sc.Number & 65535;
 				if (min > max)
 				{
-					swapvalues (min, max);
+					std::swap (min, max);
 				}
 				thisframe.TimeMin = min;
 				thisframe.TimeRnd = (max - min + 1);
@@ -293,14 +296,14 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 	}
 	if (bad)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	def = (FSwitchDef *)M_Malloc (myoffsetof (FSwitchDef, frames[0]) + frames.Size()*sizeof(frames[0]));
 	def->Sound = sound;
 	def->NumFrames = frames.Size();
 	memcpy (&def->frames[0], &frames[0], frames.Size() * sizeof(frames[0]));
-	def->PairDef = NULL;
+	def->PairDef = nullptr;
 	return def;
 }
 
@@ -310,11 +313,11 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 //
 //==========================================================================
 
-void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
+void FTextureAnimator::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 {
 	unsigned int i;
-	FSwitchDef *sw1 = NULL;
-	FSwitchDef *sw2 = NULL;
+	FSwitchDef *sw1 = nullptr;
+	FSwitchDef *sw2 = nullptr;
 	unsigned int index1 = 0xffffffff, index2 = 0xffffffff;
 
 	for (i = mSwitchDefs.Size (); i-- > 0; )
@@ -336,7 +339,7 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 	def1->PairDef = def2;
 	def2->PairDef = def1;
 
-	if (sw1 != NULL && sw2 != NULL && sw1->PairDef == sw2 && sw2->PairDef == sw1)
+	if (sw1 != nullptr && sw2 != nullptr && sw1->PairDef == sw2 && sw2->PairDef == sw1)
 	{
 		//We are replacing an existing pair so we can safely delete the old definitions
 		M_Free(sw1);
@@ -350,10 +353,10 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 		// We should not break up an old pair if the new one only redefined one
 		// of the two textures. These paired definitions will only be used
 		// as the return animation so their names don't matter. Better clear them to be safe.
-		if (sw1 != NULL) sw1->PreTexture.SetInvalid();
-		if (sw2 != NULL) sw2->PreTexture.SetInvalid();
-		sw1 = NULL;
-		sw2 = NULL;
+		if (sw1 != nullptr) sw1->PreTexture.SetInvalid();
+		if (sw2 != nullptr) sw2->PreTexture.SetInvalid();
+		sw1 = nullptr;
+		sw2 = nullptr;
 		unsigned int pos = mSwitchDefs.Reserve(2);
 		mSwitchDefs[pos] = def1;
 		mSwitchDefs[pos+1] = def2;
@@ -366,7 +369,7 @@ void FTextureManager::AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2)
 //
 //==========================================================================
 
-FSwitchDef *FTextureManager::FindSwitch (FTextureID texture)
+FSwitchDef *FTextureAnimator::FindSwitch (FTextureID texture)
 {
 	int mid, low, high;
 
@@ -391,6 +394,6 @@ FSwitchDef *FTextureManager::FindSwitch (FTextureID texture)
 			}
 		} while (low <= high);
 	}
-	return NULL;
+	return nullptr;
 }
 

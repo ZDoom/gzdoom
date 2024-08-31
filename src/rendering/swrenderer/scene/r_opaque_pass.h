@@ -51,7 +51,7 @@ namespace swrenderer
 	{
 		DVector3 pos;
 		int spritenum;
-		FTexture *tex;
+		FSoftwareTexture *tex;
 		FVoxelDef *voxel;
 		FTextureID picnum;
 		DVector2 spriteScale;

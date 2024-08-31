@@ -35,7 +35,6 @@
 int SaveVersion;
 
 // Localizable strings
-FStringTable	GStrings;
 
 // Game speed
 EGameSpeed		GameSpeed = SPEED_Normal;
@@ -46,7 +45,5 @@ int Net_Arbitrator = 0;
 int NextSkill = -1;
 
 int SinglePlayerClass[MAXPLAYERS];
-
-bool ToggleFullscreen;
 
 FString LumpFilterIWAD;

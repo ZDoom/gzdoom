@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"
@@ -44,7 +44,7 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/line/r_renderdrawsegment.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)

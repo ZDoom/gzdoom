@@ -416,14 +416,14 @@ void FParser::spec_script()
 	datasize = (Section->end_index - Section->start_index - 2);
 	
 	// alloc extra 10 for safety
-	newscript->data = (char *)malloc(datasize+10);
+	newscript->Data.Resize(datasize+1);
 	
 	// copy from parent newscript (levelscript) 
 	// ignore first char which is {
-	memcpy(newscript->data, Script->SectionStart(Section) + 1, datasize);
+	memcpy(newscript->Data.Data(), Script->SectionStart(Section) + 1, datasize);
 	
 	// tack on a 0 to end the string
-	newscript->data[datasize] = '\0';
+	newscript->Data.Data()[datasize] = '\0';
 	
 	newscript->scriptnum = scriptnum;
 	newscript->parent = Script; // remember parent

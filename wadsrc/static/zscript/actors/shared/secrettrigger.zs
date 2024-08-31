@@ -7,6 +7,7 @@ class SecretTrigger : Actor
 		+NOSECTOR
 		+NOGRAVITY
 		+DONTSPLASH
+		+NOTONAUTOMAP
 	}
 
 	override void PostBeginPlay ()

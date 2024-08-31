@@ -23,6 +23,7 @@
 
 #include "r_visiblesprite.h"
 #include "r_data/colormaps.h"
+#include "palettecontainer.h"
 
 class DPSprite;
 
@@ -46,7 +47,7 @@ namespace swrenderer
 
 		float Alpha = 0.0f;
 		FRenderStyle RenderStyle;
-		uint32_t Translation = 0;
+		FTranslationID Translation = NO_TRANSLATION;
 		uint32_t FillColor = 0;
 
 		ColormapLight Light;
@@ -66,7 +67,7 @@ namespace swrenderer
 
 		float Alpha = 0.0f;
 		FRenderStyle RenderStyle;
-		uint32_t Translation = 0;
+		FTranslationID Translation = NO_TRANSLATION; // this gets passed to the 2D code which works with high level IDs.
 		uint32_t FillColor = 0;
 
 		FDynamicColormap *basecolormap = nullptr;
@@ -92,11 +93,10 @@ namespace swrenderer
 	private:
 		void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int lightlevel, FDynamicColormap *basecolormap, bool foggy);
 
-		enum { BASEXCENTER = 160 };
-		enum { BASEYCENTER = 100 };
+		static constexpr int BASEXCENTER = 160;
+		static constexpr int BASEYCENTER = 100;
 
 		TArray<HWAccelPlayerSprite> AcceleratedSprites;
 		sector_t tempsec;
-		bool renderHUDModel = false;
 	};
 }

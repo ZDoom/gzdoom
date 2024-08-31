@@ -62,7 +62,7 @@ class Mauler : StrifeWeapon
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null)
 		{
-			if (!weap.DepleteAmmo (weap.bAltFire, true, 2))
+			if (!weap.DepleteAmmo (weap.bAltFire, true))
 				return;
 			
 		}
@@ -240,6 +240,7 @@ class MaulerTorpedo : Actor
 
 	action void A_MaulerTorpedoWave()
 	{
+		if (target == null) return;
 		readonly<Actor> wavedef = GetDefaultByType("MaulerTorpedoWave");
 		double savedz = pos.z;
 		angle += 180.;

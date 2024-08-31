@@ -34,7 +34,7 @@ void P_DamageSector(sector_t* sector, AActor* source, int damage, FName damagety
 void P_DamageLinedef(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius, bool dogroups);
 
 void P_GeometryLineAttack(FTraceResults& trace, AActor* thing, int damage, FName damageType);
-void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, int bombdistance, FName damagetype, int fulldamagedistance);
+void P_GeometryRadiusAttack(AActor* bombspot, AActor* bombsource, int bombdamage, double bombdistance, FName damagetype, double fulldamagedistance);
 bool P_ProjectileHitLinedef(AActor* projectile, line_t* line);
 bool P_ProjectileHitPlane(AActor* projectile, int part);
 

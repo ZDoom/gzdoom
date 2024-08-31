@@ -1,6 +1,6 @@
 /*
 ** playermenu.cpp
-** The player setup menu
+** The player setup menu's setters. These are native for security purposes.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2001-2010 Randy Heit
@@ -33,12 +33,13 @@
 **
 */
 
-#include "menu/menu.h"
+#include "menu.h"
 #include "gi.h"
 #include "c_dispatch.h"
 #include "teaminfo.h"
 #include "r_state.h"
 #include "vm.h"
+#include "d_player.h"
 
 EXTERN_CVAR(Int, team)
 EXTERN_CVAR(Float, autoaim)
@@ -80,7 +81,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(s);
-	const char *pp = s;
+	const char *pp = s.GetChars();
 	FString command("name \"");
 
 	if (DMenu::InMenu)
@@ -95,7 +96,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 			command << *p;
 		}
 		command << '"';
-		C_DoCommand(command);
+		C_DoCommand(command.GetChars());
 	}
 	return 0;
 }
@@ -154,7 +155,7 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 	if (DMenu::InMenu)
 	{
 		players[consoleplayer].userinfo.SkinNumChanged(sel);
-		cvar_set("skin", Skins[sel].Name);
+		cvar_set("skin", Skins[sel].Name.GetChars());
 	}
 	return 0;
 }

@@ -709,10 +709,10 @@ void FParser::ErrorMessage(FString msg)
 	int linenum = 0;
 
 	// find the line number
-	if(Rover >= Script->data && Rover <= Script->data+Script->len)
+	if(Rover >= Script->Data.Data() && Rover <= Script->Data.Data() +Script->len)
     {
 		char *temp;
-		for(temp = Script->data; temp<LineStart; temp++)
+		for(temp = Script->Data.Data(); temp<LineStart; temp++)
 			if(*temp == '\n') linenum++;    // count EOLs
     }
 

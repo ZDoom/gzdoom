@@ -35,25 +35,20 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include <unistd.h>
-#endif
+#include <errno.h>
 
 #include "version.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 
 #include "i_system.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "doomstat.h"
 #include "gstrings.h"
 #include "s_sound.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"
@@ -68,21 +63,33 @@
 #include "c_functions.h"
 #include "g_levellocals.h"
 #include "v_video.h"
+#include "md5.h"
+#include "findfile.h"
+#include "i_music.h"
+#include "s_music.h"
+#include "texturemanager.h"
+#include "v_draw.h"
+#include "d_main.h"
+#include "savegamemanager.h"
 
 extern FILE *Logfile;
 extern bool insave;
 
-CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
+CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO)
 CVAR (Bool, sv_unlimited_pickup, false, CVAR_SERVERINFO)
 CVAR (Int, cl_blockcheats, 0, 0)
 
-CCMD (toggleconsole)
-{
-	C_ToggleConsole();
-}
+CVARD(Bool, show_messages, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enable/disable showing messages")
+CVAR(Bool, show_obituaries, true, CVAR_ARCHIVE)
 
-bool CheckCheatmode (bool printmsg)
+
+bool CheckCheatmode (bool printmsg, bool sponly)
 {
+	if (sponly && netgame)
+	{
+		if (printmsg) Printf("Not in a singleplayer game.\n");
+		return true;
+	}
 	if ((G_SkillProperty(SKILLP_DisableCheats) || netgame || deathmatch) && (!sv_cheats))
 	{
 		if (printmsg) Printf ("sv_cheats must be true to enable this command.\n");
@@ -99,16 +106,6 @@ bool CheckCheatmode (bool printmsg)
 	}
 }
 
-CCMD (quit)
-{
-	if (!insave) throw CExitEvent(0);
-}
-
-CCMD (exit)
-{
-	if (!insave) throw CExitEvent(0);
-}
-
 /*
 ==================
 Cmd_God
@@ -123,8 +120,8 @@ CCMD (god)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_GOD);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_GOD);
 }
 
 CCMD(god2)
@@ -132,8 +129,8 @@ CCMD(god2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_GOD2);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_GOD2);
 }
 
 CCMD (iddqd)
@@ -141,8 +138,8 @@ CCMD (iddqd)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_IDDQD);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_IDDQD);
 }
 
 CCMD (buddha)
@@ -150,8 +147,8 @@ CCMD (buddha)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_BUDDHA);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_BUDDHA);
 }
 
 CCMD(buddha2)
@@ -159,8 +156,8 @@ CCMD(buddha2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte(DEM_GENERICCHEAT);
-	Net_WriteByte(CHT_BUDDHA2);
+	Net_WriteInt8(DEM_GENERICCHEAT);
+	Net_WriteInt8(CHT_BUDDHA2);
 }
 
 CCMD (notarget)
@@ -168,8 +165,8 @@ CCMD (notarget)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOTARGET);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOTARGET);
 }
 
 CCMD (fly)
@@ -177,8 +174,8 @@ CCMD (fly)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_FLY);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_FLY);
 }
 
 /*
@@ -193,8 +190,8 @@ CCMD (noclip)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOCLIP);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOCLIP);
 }
 
 CCMD (noclip2)
@@ -202,8 +199,8 @@ CCMD (noclip2)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_NOCLIP2);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_NOCLIP2);
 }
 
 CCMD (powerup)
@@ -211,8 +208,8 @@ CCMD (powerup)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_POWER);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_POWER);
 }
 
 CCMD (morphme)
@@ -222,12 +219,12 @@ CCMD (morphme)
 
 	if (argv.argc() == 1)
 	{
-		Net_WriteByte (DEM_GENERICCHEAT);
-		Net_WriteByte (CHT_MORPH);
+		Net_WriteInt8 (DEM_GENERICCHEAT);
+		Net_WriteInt8 (CHT_MORPH);
 	}
 	else
 	{
-		Net_WriteByte (DEM_MORPHEX);
+		Net_WriteInt8 (DEM_MORPHEX);
 		Net_WriteString (argv[1]);
 	}
 }
@@ -237,8 +234,8 @@ CCMD (anubis)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_ANUBIS);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_ANUBIS);
 }
 
 // [GRB]
@@ -247,8 +244,8 @@ CCMD (resurrect)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_RESSURECT);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_RESSURECT);
 }
 
 EXTERN_CVAR (Bool, chasedemo)
@@ -279,8 +276,8 @@ CCMD (chase)
 		if (gamestate != GS_LEVEL || (!(dmflags2 & DF2_CHASECAM) && deathmatch && CheckCheatmode ()))
 			return;
 
-		Net_WriteByte (DEM_GENERICCHEAT);
-		Net_WriteByte (CHT_CHASECAM);
+		Net_WriteInt8 (DEM_GENERICCHEAT);
+		Net_WriteInt8 (CHT_CHASECAM);
 	}
 }
 
@@ -312,12 +309,12 @@ CCMD (idclev)
 		// Catch invalid maps.
 		mapname = CalcMapName (epsd, map);
 
-		if (!P_CheckMapData(mapname))
+		if (!P_CheckMapData(mapname.GetChars()))
 			return;
 
 		// So be it.
-		Printf ("%s\n", GStrings("STSTR_CLEV"));
-      	G_DeferedInitNew (mapname);
+		Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
+      	G_DeferedInitNew (mapname.GetChars());
 		//players[0].health = 0;		// Force reset
 	}
 }
@@ -337,11 +334,11 @@ CCMD (hxvisit)
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
 
-			if (P_CheckMapData(mapname))
+			if (P_CheckMapData(mapname.GetChars()))
 			{
 				// So be it.
-				Printf ("%s\n", GStrings("STSTR_CLEV"));
-      			G_DeferedInitNew (mapname);
+				Printf ("%s\n", GStrings.GetString("STSTR_CLEV"));
+      			G_DeferedInitNew (mapname.GetChars());
 				return;
 			}
 		}
@@ -351,13 +348,13 @@ CCMD (hxvisit)
 
 CCMD (changemap)
 {
-	if (who == NULL || !usergame)
+	if (!players[consoleplayer].mo || !usergame)
 	{
 		Printf ("Use the map command when not in a game.\n");
 		return;
 	}
 
-	if (!players[who->player - players].settings_controller && netgame)
+	if (!players[consoleplayer].settings_controller && netgame)
 	{
 		Printf ("Only setting controllers can change the map.\n");
 		return;
@@ -366,7 +363,18 @@ CCMD (changemap)
 	if (argv.argc() > 1)
 	{
 		const char *mapname = argv[1];
-		if (!strcmp(mapname, "*")) mapname = primaryLevel->MapName.GetChars();
+		if (!strcmp(mapname, "*"))
+		{
+			mapname = primaryLevel->MapName.GetChars();
+		}
+		else if (!strcmp(mapname, "+") && primaryLevel->NextMap.Len() > 0 && primaryLevel->NextMap.Compare("enDSeQ", 6))
+		{
+			mapname = primaryLevel->NextMap.GetChars();
+		}
+		else if (!strcmp(mapname, "+$") && primaryLevel->NextSecretMap.Len() > 0 && primaryLevel->NextSecretMap.Compare("enDSeQ", 6))
+		{
+			mapname = primaryLevel->NextSecretMap.GetChars();
+		}
 
 		try
 		{
@@ -378,12 +386,12 @@ CCMD (changemap)
 			{
 				if (argv.argc() > 2)
 				{
-					Net_WriteByte (DEM_CHANGEMAP2);
-					Net_WriteByte (atoi(argv[2]));
+					Net_WriteInt8 (DEM_CHANGEMAP2);
+					Net_WriteInt8 (atoi(argv[2]));
 				}
 				else
 				{
-					Net_WriteByte (DEM_CHANGEMAP);
+					Net_WriteInt8 (DEM_CHANGEMAP);
 				}
 				Net_WriteString (mapname);
 			}
@@ -400,17 +408,51 @@ CCMD (changemap)
 	}
 }
 
+CCMD (changeskill)
+{
+	if (!players[consoleplayer].mo || !usergame)
+	{
+		Printf ("Cannot change skills while not in a game.\n");
+		return;
+	}
+
+	if (!players[consoleplayer].settings_controller && netgame)
+	{
+		Printf ("Only setting controllers can change the skill.\n");
+		return;
+	}
+
+	if (argv.argc() == 2)
+	{
+		int skill = atoi(argv[1]);
+		if ((unsigned)skill >= AllSkills.Size())
+		{
+			Printf ("Skill %d is out of range.\n", skill);
+		}
+		else
+		{
+			Net_WriteInt8(DEM_CHANGESKILL);
+			Net_WriteInt32(skill);
+			Printf ("Skill %d will take effect on the next map.\n", skill);
+		}
+	}
+	else
+	{
+		Printf ("Usage: changeskill <skill>\n");
+	}
+}
+
 CCMD (give)
 {
 	if (CheckCheatmode () || argv.argc() < 2)
 		return;
 
-	Net_WriteByte (DEM_GIVECHEAT);
+	Net_WriteInt8 (DEM_GIVECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi(argv[2]));
+		Net_WriteInt32(atoi(argv[2]));
 	else
-		Net_WriteLong(0);
+		Net_WriteInt32(0);
 }
 
 CCMD (take)
@@ -418,12 +460,12 @@ CCMD (take)
 	if (CheckCheatmode () || argv.argc() < 2)
 		return;
 
-	Net_WriteByte (DEM_TAKECHEAT);
+	Net_WriteInt8 (DEM_TAKECHEAT);
 	Net_WriteString (argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi (argv[2]));
+		Net_WriteInt32(atoi (argv[2]));
 	else
-		Net_WriteLong (0);
+		Net_WriteInt32 (0);
 }
 
 CCMD(setinv)
@@ -431,87 +473,20 @@ CCMD(setinv)
 	if (CheckCheatmode() || argv.argc() < 2)
 		return;
 
-	Net_WriteByte(DEM_SETINV);
+	Net_WriteInt8(DEM_SETINV);
 	Net_WriteString(argv[1]);
 	if (argv.argc() > 2)
-		Net_WriteLong(atoi(argv[2]));
+		Net_WriteInt32(atoi(argv[2]));
 	else
-		Net_WriteLong(0);
+		Net_WriteInt32(0);
 
 	if (argv.argc() > 3)
-		Net_WriteByte(!!atoi(argv[3]));
+		Net_WriteInt8(!!atoi(argv[3]));
 	else
-		Net_WriteByte(0);
+		Net_WriteInt8(0);
 
 }
 
-CCMD (gameversion)
-{
-	Printf ("%s @ %s\nCommit %s\n", GetVersionString(), GetGitTime(), GetGitHash());
-}
-
-CCMD (print)
-{
-	if (argv.argc() != 2)
-	{
-		Printf ("print <name>: Print a string from the string table\n");
-		return;
-	}
-	const char *str = GStrings[argv[1]];
-	if (str == NULL)
-	{
-		Printf ("%s unknown\n", argv[1]);
-	}
-	else
-	{
-		Printf ("%s\n", str);
-	}
-}
-
-UNSAFE_CCMD (exec)
-{
-	if (argv.argc() < 2)
-		return;
-
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		if (!C_ExecFile(argv[i]))
-		{
-			Printf ("Could not exec \"%s\"\n", argv[i]);
-			break;
-		}
-	}
-}
-
-void execLogfile(const char *fn, bool append)
-{
-	if ((Logfile = fopen(fn, append? "a" : "w")))
-	{
-		const char *timestr = myasctime();
-		Printf("Log started: %s\n", timestr);
-	}
-	else
-	{
-		Printf("Could not start log\n");
-	}
-}
-
-UNSAFE_CCMD (logfile)
-{
-
-	if (Logfile)
-	{
-		const char *timestr = myasctime();
-		Printf("Log stopped: %s\n", timestr);
-		fclose (Logfile);
-		Logfile = NULL;
-	}
-
-	if (argv.argc() >= 2)
-	{
-		execLogfile(argv[1], argv.argc() >=3? !!argv[2]:false);
-	}
-}
 
 CCMD (puke)
 {
@@ -530,7 +505,7 @@ CCMD (puke)
 			return;
 		}
 		int arg[4] = { 0, 0, 0, 0 };
-		int argn = MIN<int>(argc - 2, countof(arg)), i;
+		int argn = min<int>(argc - 2, countof(arg)), i;
 
 		for (i = 0; i < argn; ++i)
 		{
@@ -539,18 +514,18 @@ CCMD (puke)
 
 		if (script > 0)
 		{
-			Net_WriteByte (DEM_RUNSCRIPT);
-			Net_WriteWord (script);
+			Net_WriteInt8 (DEM_RUNSCRIPT);
+			Net_WriteInt16 (script);
 		}
 		else
 		{
-			Net_WriteByte (DEM_RUNSCRIPT2);
-			Net_WriteWord (-script);
+			Net_WriteInt8 (DEM_RUNSCRIPT2);
+			Net_WriteInt16 (-script);
 		}
-		Net_WriteByte (argn);
+		Net_WriteInt8 (argn);
 		for (i = 0; i < argn; ++i)
 		{
-			Net_WriteLong (arg[i]);
+			Net_WriteInt32 (arg[i]);
 		}
 	}
 }
@@ -577,18 +552,18 @@ CCMD (pukename)
 				always = true;
 				argstart = 3;
 			}
-			argn = MIN<int>(argc - argstart, countof(arg));
+			argn = min<int>(argc - argstart, countof(arg));
 			for (i = 0; i < argn; ++i)
 			{
 				arg[i] = atoi(argv[argstart + i]);
 			}
 		}
-		Net_WriteByte(DEM_RUNNAMEDSCRIPT);
+		Net_WriteInt8(DEM_RUNNAMEDSCRIPT);
 		Net_WriteString(argv[1]);
-		Net_WriteByte(argn | (always << 7));
+		Net_WriteInt8(argn | (always << 7));
 		for (i = 0; i < argn; ++i)
 		{
-			Net_WriteLong(arg[i]);
+			Net_WriteInt32(arg[i]);
 		}
 	}
 }
@@ -629,131 +604,16 @@ CCMD (special)
 				return;
 			}
 		}
-		Net_WriteByte(DEM_RUNSPECIAL);
-		Net_WriteWord(specnum);
-		Net_WriteByte(argc - 2);
+		Net_WriteInt8(DEM_RUNSPECIAL);
+		Net_WriteInt16(specnum);
+		Net_WriteInt8(argc - 2);
 		for (int i = 2; i < argc; ++i)
 		{
-			Net_WriteLong(atoi(argv[i]));
+			Net_WriteInt32(atoi(argv[i]));
 		}
 	}
 }
 
-CCMD (error)
-{
-	if (argv.argc() > 1)
-	{
-		char *textcopy = copystring (argv[1]);
-		I_Error ("%s", textcopy);
-	}
-	else
-	{
-		Printf ("Usage: error <error text>\n");
-	}
-}
-
-UNSAFE_CCMD (error_fatal)
-{
-	if (argv.argc() > 1)
-	{
-		char *textcopy = copystring (argv[1]);
-		I_FatalError ("%s", textcopy);
-	}
-	else
-	{
-		Printf ("Usage: error_fatal <error text>\n");
-	}
-}
-
-//==========================================================================
-//
-// CCMD crashout
-//
-// Debugging routine for testing the crash logger.
-// Useless in a win32 debug build, because that doesn't enable the crash logger.
-//
-//==========================================================================
-
-#if !defined(_WIN32) || !defined(_DEBUG)
-UNSAFE_CCMD (crashout)
-{
-	*(volatile int *)0 = 0;
-}
-#endif
-
-
-UNSAFE_CCMD (dir)
-{
-	FString dir, path;
-	char curdir[256];
-	const char *match;
-	findstate_t c_file;
-	void *file;
-
-	if (!getcwd (curdir, countof(curdir)))
-	{
-		Printf ("Current path too long\n");
-		return;
-	}
-
-	if (argv.argc() > 1)
-	{
-		path = NicePath(argv[1]);
-		if (chdir(path))
-		{
-			match = path;
-			dir = ExtractFilePath(path);
-			if (dir[0] != '\0')
-			{
-				match += dir.Len();
-			}
-			else
-			{
-				dir = "./";
-			}
-			if (match[0] == '\0')
-			{
-				match = "*";
-			}
-			if (chdir (dir))
-			{
-				Printf ("%s not found\n", dir.GetChars());
-				return;
-			}
-		}
-		else
-		{
-			match = "*";
-			dir = path;
-		}
-	}
-	else
-	{
-		match = "*";
-		dir = curdir;
-	}
-	if (dir[dir.Len()-1] != '/')
-	{
-		dir += '/';
-	}
-
-	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))
-		Printf ("Nothing matching %s%s\n", dir.GetChars(), match);
-	else
-	{
-		Printf ("Listing of %s%s:\n", dir.GetChars(), match);
-		do
-		{
-			if (I_FindAttr (&c_file) & FA_DIREC)
-				Printf (PRINT_BOLD, "%s <dir>\n", I_FindName (&c_file));
-			else
-				Printf ("%s\n", I_FindName (&c_file));
-		} while (I_FindNext (file, &c_file) == 0);
-		I_FindClose (file);
-	}
-
-	chdir (curdir);
-}
 
 //==========================================================================
 //
@@ -780,10 +640,10 @@ CCMD (warp)
 	}
 	else
 	{
-		Net_WriteByte (DEM_WARPCHEAT);
-		Net_WriteWord (atoi (argv[1]));
-		Net_WriteWord (atoi (argv[2]));
-		Net_WriteWord (argv.argc() == 3 ? ONFLOORZ/65536 : atoi (argv[3]));
+		Net_WriteInt8 (DEM_WARPCHEAT);
+		Net_WriteInt16 (atoi (argv[1]));
+		Net_WriteInt16 (atoi (argv[2]));
+		Net_WriteInt16 (argv.argc() == 3 ? ONFLOORZ/65536 : atoi (argv[3]));
 	}
 }
 
@@ -808,8 +668,27 @@ UNSAFE_CCMD (load)
 		return;
 	}
 	FString fname = argv[1];
-	DefaultExtension (fname, "." SAVEGAME_EXT);
-    G_LoadGame (fname);
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
+	{
+		Printf("saving to an absolute path is not allowed\n");
+		return;
+	}
+	if (fname.IndexOf("..") > 0)
+	{
+		Printf("'..' not allowed in file names\n");
+		return;
+	}
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
+	{
+		Printf("file name contains invalid characters\n");
+		return;
+	}
+#endif
+	fname = G_BuildSaveName(fname.GetChars());
+	G_LoadGame (fname.GetChars());
 }
 
 //==========================================================================
@@ -820,47 +699,37 @@ UNSAFE_CCMD (load)
 //
 //==========================================================================
 
-UNSAFE_CCMD (save)
+UNSAFE_CCMD(save)
 {
-    if (argv.argc() < 2 || argv.argc() > 3)
+	if (argv.argc() < 2 || argv.argc() > 3 || argv[1][0] == 0)
 	{
         Printf ("usage: save <filename> [description]\n");
         return;
     }
-    FString fname = argv[1];
-	DefaultExtension (fname, "." SAVEGAME_EXT);
-	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
-}
-
-//==========================================================================
-//
-// CCMD wdir
-//
-// Lists the contents of a loaded wad file.
-//
-//==========================================================================
-
-CCMD (wdir)
-{
-	if (argv.argc() != 2)
+	FString fname = argv[1];
+	FixPathSeperator(fname);
+	if (fname[0] == '/')
 	{
-		Printf ("usage: wdir <wadfile>\n");
+		Printf("saving to an absolute path is not allowed\n");
 		return;
 	}
-	int wadnum = Wads.CheckIfWadLoaded (argv[1]);
-	if (wadnum < 0)
+	if (fname.IndexOf("..") > 0)
 	{
-		Printf ("%s must be loaded to view its directory.\n", argv[1]);
+		Printf("'..' not allowed in file names\n");
 		return;
 	}
-	for (int i = 0; i < Wads.GetNumLumps(); ++i)
+#ifdef _WIN32
+	// block all invalid characters for Windows file names
+	if (fname.IndexOfAny(":?*<>|") >= 0)
 	{
-		if (Wads.GetLumpFile(i) == wadnum)
-		{
-			Printf ("%s\n", Wads.GetLumpFullName(i));
-		}
+		Printf("file name contains invalid characters\n");
+		return;
 	}
+#endif
+    fname = G_BuildSaveName(fname.GetChars());
+	G_SaveGame (fname.GetChars(), argv.argc() > 2 ? argv[2] : argv[1]);
 }
+
 
 //-----------------------------------------------------------------------------
 //
@@ -1083,8 +952,8 @@ CCMD(thaw)
 	if (CheckCheatmode())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_CLEARFROZENPROPS);
+	Net_WriteInt8 (DEM_GENERICCHEAT);
+	Net_WriteInt8 (CHT_CLEARFROZENPROPS);
 }
 
 //-----------------------------------------------------------------------------
@@ -1103,7 +972,7 @@ CCMD(nextmap)
 	
 	if (primaryLevel->NextMap.Len() > 0 && primaryLevel->NextMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(primaryLevel->NextMap);
+		G_DeferedInitNew(primaryLevel->NextMap.GetChars());
 	}
 	else
 	{
@@ -1127,7 +996,7 @@ CCMD(nextsecret)
 
 	if (primaryLevel->NextSecretMap.Len() > 0 && primaryLevel->NextSecretMap.Compare("enDSeQ", 6))
 	{
-		G_DeferedInitNew(primaryLevel->NextSecretMap);
+		G_DeferedInitNew(primaryLevel->NextSecretMap.GetChars());
 	}
 	else
 	{
@@ -1146,8 +1015,8 @@ CCMD(currentpos)
 	AActor *mo = players[consoleplayer].mo;
 	if(mo)
 	{
-		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			mo->X(), mo->Y(), mo->Z(), mo->Angles.Yaw.Normalized360().Degrees, mo->floorz, mo->Sector->sectornum, mo->Sector->lightlevel);
+		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, sector lightlevel: %d, actor lightlevel: %d\n",
+			mo->X(), mo->Y(), mo->Z(), mo->Angles.Yaw.Normalized360().Degrees(), mo->floorz, mo->Sector->sectornum, mo->Sector->lightlevel, mo->LightLevel);
 	}
 	else
 	{
@@ -1181,7 +1050,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 			}
 			else if (string[1] == 'T' || string[1] == 't')
 			{
-				long tid = (long)strtoll(string+2, (char**)&string, 10);
+				int tid = (int)strtoll(string+2, (char**)&string, 10);
 				if (*string == ';') string++;
 				auto it = primaryLevel->GetActorIterator(tid);
 				AActor *actor;
@@ -1199,7 +1068,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, screen->GetWidth()*95/100, string);
+		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, *string == '$' ? GStrings.GetString(++string) : string);
 
 		for (auto &line : brok)
 		{
@@ -1217,33 +1086,33 @@ static void PrintSecretString(const char *string, bool thislevel)
 CCMD(secret)
 {
 	const char *mapname = argv.argc() < 2? primaryLevel->MapName.GetChars() : argv[1];
-	bool thislevel = !stricmp(mapname, primaryLevel->MapName);
+	bool thislevel = !stricmp(mapname, primaryLevel->MapName.GetChars());
 	bool foundsome = false;
 
-	int lumpno=Wads.CheckNumForName("SECRETS");
+	int lumpno=fileSystem.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
 
-	auto lump = Wads.OpenLumpReader(lumpno);
+	auto lump = fileSystem.OpenFileReader(lumpno);
 	FString maphdr;
 	maphdr.Format("[%s]", mapname);
 
 	FString linebuild;
-	char readbuffer[1024];
+	char readbuffer[10240];
 	bool inlevel = false;
 
-	while (lump.Gets(readbuffer, 1024))
+	while (lump.Gets(readbuffer, 10240))
 	{
 		if (!inlevel)
 		{
 			if (readbuffer[0] == '[')
 			{
-				inlevel = !strnicmp(readbuffer, maphdr, maphdr.Len());
+				inlevel = !strnicmp(readbuffer, maphdr.GetChars(), maphdr.Len());
 				if (!foundsome)
 				{
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
-					const char *ln = !(info->flags & LEVEL_LOOKUPLEVELNAME)? info->LevelName.GetChars() : GStrings[info->LevelName.GetChars()];
-					levelname.Format("%s - %s", mapname, ln);
+					FString ln = info->LookupLevelName();
+					levelname.Format("%s - %s", mapname, ln.GetChars());
 					Printf(TEXTCOLOR_YELLOW "%s\n", levelname.GetChars());
 					size_t llen = levelname.Len();
 					levelname = "";
@@ -1264,7 +1133,7 @@ CCMD(secret)
 					// line complete so print it.
 					linebuild.Substitute("\r", "");
 					linebuild.StripRight(" \t\n");
-					PrintSecretString(linebuild, thislevel);
+					PrintSecretString(linebuild.GetChars(), thislevel);
 					linebuild = "";
 				}
 			}
@@ -1278,7 +1147,7 @@ CCMD(angleconvtest)
 	Printf("Testing degrees to angle conversion:\n");
 	for (double ang = -5 * 180.; ang < 5 * 180.; ang += 45.)
 	{
-		unsigned ang1 = DAngle(ang).BAMs();
+		unsigned ang1 = DAngle::fromDeg(ang).BAMs();
 		unsigned ang2 = (unsigned)(ang * (0x40000000 / 90.));
 		unsigned ang3 = (unsigned)(int)(ang * (0x40000000 / 90.));
 		Printf("Angle = %.5f: xs_RoundToInt = %08x, unsigned cast = %08x, signed cast = %08x\n",
@@ -1305,3 +1174,182 @@ CCMD(r_showcaps)
 	PRINT_CAP("Truecolor Enabled", RFF_TRUECOLOR)
 	PRINT_CAP("Voxels", RFF_VOXELS)
 }
+
+
+//==========================================================================
+//
+// CCMD idmus
+//
+//==========================================================================
+
+CCMD(idmus)
+{
+	level_info_t* info;
+	FString map;
+	int l;
+
+	if (MusicEnabled())
+	{
+		if (argv.argc() > 1)
+		{
+			if (gameinfo.flags & GI_MAPxx)
+			{
+				l = atoi(argv[1]);
+				if (l <= 99)
+				{
+					map = CalcMapName(0, l);
+				}
+				else
+				{
+					Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
+					return;
+				}
+			}
+			else
+			{
+				map = CalcMapName(argv[1][0] - '0', argv[1][1] - '0');
+			}
+
+			if ((info = FindLevelInfo(map.GetChars())))
+			{
+				if (info->Music.IsNotEmpty())
+				{
+					S_ChangeMusic(info->Music.GetChars(), info->musicorder);
+					Printf("%s\n", GStrings.GetString("STSTR_MUS"));
+				}
+			}
+			else
+			{
+				Printf("%s\n", GStrings.GetString("STSTR_NOMUS"));
+			}
+		}
+	}
+	else
+	{
+		Printf("Music is disabled\n");
+	}
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CCMD(dumpactors)
+{
+	const char* const filters[32] =
+	{
+		"0:All", "1:Doom", "2:Heretic", "3:DoomHeretic", "4:Hexen", "5:DoomHexen", "6:Raven", "7:IdRaven",
+		"8:Strife", "9:DoomStrife", "10:HereticStrife", "11:DoomHereticStrife", "12:HexenStrife",
+		"13:DoomHexenStrife", "14:RavenStrife", "15:NotChex", "16:Chex", "17:DoomChex", "18:HereticChex",
+		"19:DoomHereticChex", "20:HexenChex", "21:DoomHexenChex", "22:RavenChex", "23:NotStrife", "24:StrifeChex",
+		"25:DoomStrifeChex", "26:HereticStrifeChex", "27:NotHexen",	"28:HexenStrifeChex", "29:NotHeretic",
+		"30:NotDoom", "31:All",
+	};
+	Printf("%u object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
+	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
+	{
+		PClass* cls = PClass::AllClasses[i];
+		PClassActor* acls = ValidateActor(cls);
+		if (acls != NULL)
+		{
+			auto ainfo = acls->ActorInfo();
+			Printf("%s\t%i\t%i\t%s\t%s\n",
+				acls->TypeName.GetChars(), ainfo->DoomEdNum,
+				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
+				acls->SourceLumpName.GetChars());
+		}
+		else if (cls != NULL)
+		{
+			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\tSource: %s\n", cls->TypeName.GetChars(), cls->SourceLumpName.GetChars());
+		}
+		else
+		{
+			Printf("Type %i is not an object class\n", i);
+		}
+	}
+}
+
+const char* testlocalised(const char* in)
+{
+	const char *out = GStrings.GetLanguageString(in, FStringTable::default_table);
+	if (in[0] == '$')
+		out = GStrings.GetLanguageString(in + 1, FStringTable::default_table);
+	if (out)
+		return out;
+	return in;
+}
+
+CCMD (mapinfo)
+{
+	level_info_t *myLevel = nullptr;
+	if (players[consoleplayer].mo && players[consoleplayer].mo->Level)
+		myLevel = players[consoleplayer].mo->Level->info;
+
+	if (argv.argc() > 1)
+	{
+		if (P_CheckMapData(argv[1]))
+			myLevel = FindLevelInfo(argv[1]);
+		else
+		{
+			Printf("Mapname '%s' not found\n", argv[1]);
+			return;
+		}
+	}
+
+	if (!myLevel)
+	{
+		Printf("Not in a level\n");
+		return;
+	}
+
+	Printf("[ Map Info For: '%s' ]\n\n", myLevel->MapName.GetChars());
+
+	if (myLevel->LevelName.IsNotEmpty())
+		Printf("           LevelName: %s\n", myLevel->LookupLevelName().GetChars());
+
+	if (myLevel->AuthorName.IsNotEmpty())
+		Printf("          AuthorName: %s\n", testlocalised(myLevel->AuthorName.GetChars()));
+
+	if (myLevel->levelnum)
+		Printf("            LevelNum: %i\n", myLevel->levelnum);
+
+	if (myLevel->NextMap.IsNotEmpty())
+		Printf("                Next: %s\n", myLevel->NextMap.GetChars());
+
+	if (myLevel->NextSecretMap.IsNotEmpty())
+		Printf("          SecretNext: %s\n", myLevel->NextSecretMap.GetChars());
+
+	if (myLevel->Music.IsNotEmpty())
+		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music.GetChars()));
+
+		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
+
+	if (myLevel->RedirectType != NAME_None)
+		Printf("     Redirect (Item): %s\n", myLevel->RedirectType.GetChars());
+
+	if (myLevel->RedirectMapName.IsNotEmpty())
+		Printf("      Redirect (Map): %s\n", myLevel->RedirectMapName.GetChars());
+
+	if (myLevel->RedirectCVAR != NAME_None)
+		Printf("CVAR_Redirect (CVAR): %s\n", myLevel->RedirectCVAR.GetChars());
+
+	if (myLevel->RedirectCVARMapName.IsNotEmpty())
+		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName.GetChars());
+
+		Printf("           LightMode: %i\n", (int8_t)myLevel->lightmode);
+
+	if (players[consoleplayer].mo && players[consoleplayer].mo->Level)
+	{
+		level_info_t *check = myLevel->CheckLevelRedirect();
+		if (check)
+			Printf("Level IS currently being redirected to '%s'!\n", check->MapName.GetChars());
+		else
+			Printf("Level is currently NOT being redirected!\n");
+	}
+	else
+		Printf("Level redirection is currently not being tested - not in game!\n");
+}
+

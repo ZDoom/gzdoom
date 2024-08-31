@@ -33,8 +33,9 @@
 #include "r_sky.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "r_utility.h"
+#include "texturemanager.h"
 
 static sector_t **fakesectorbuffer;
 
@@ -117,7 +118,7 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	// now check for closed sectors!
 	if (bs_ceilingheight1 <= fs_floorheight1 && bs_ceilingheight2 <= fs_floorheight2)
 	{
-		FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::top), true);
 		if (!tex || !tex->isValid()) return false;
 		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
@@ -126,7 +127,7 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 	if (fs_ceilingheight1 <= bs_floorheight1 && fs_ceilingheight2 <= bs_floorheight2)
 	{
-		FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::bottom), true);
+		auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::bottom), true);
 		if (!tex || !tex->isValid()) return false;
 
 		// properly render skies (consider door "open" if both floors are sky):
@@ -140,12 +141,12 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 		// preserve a kind of transparent door/lift special effect:
 		if (bs_ceilingheight1 < fs_ceilingheight1 || bs_ceilingheight2 < fs_ceilingheight2)
 		{
-			FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::top), true);
+			auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::top), true);
 			if (!tex || !tex->isValid()) return false;
 		}
 		if (bs_floorheight1 > fs_floorheight1 || bs_floorheight2 > fs_floorheight2)
 		{
-			FTexture * tex = TexMan.GetTexture(sidedef->GetTexture(side_t::bottom), true);
+			auto tex = TexMan.GetGameTexture(sidedef->GetTexture(side_t::bottom), true);
 			if (!tex || !tex->isValid()) return false;
 		}
 		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
@@ -223,9 +224,9 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 			if (fakesectorbuffer && fakesectorbuffer[sec->sectornum]) return fakesectorbuffer[sec->sectornum];
 			auto dest = localcopy? localcopy : allocateSector(sec);
 			*dest = *sec;
-			dest->ceilingplane = sec->floorplane;
-			dest->ceilingplane.FlipVert();
-			dest->planes[sector_t::ceiling].TexZ = dest->planes[sector_t::floor].TexZ;
+			dest->floorplane = sec->ceilingplane;
+			dest->floorplane.FlipVert();
+			dest->planes[sector_t::floor].TexZ = dest->planes[sector_t::ceiling].TexZ;
 			dest->ClearPortal(sector_t::ceiling);
 			dest->ClearPortal(sector_t::floor);
 			return dest;
@@ -265,7 +266,8 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 			dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 			dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
-			dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
+			for (int n = 0; n < screen->mPipelineNbr; n++)
+				dest->vboheight[n][sector_t::floor] = s->vboheight[n][sector_t::floor];
 		}
 		else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
 		{
@@ -291,7 +293,8 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 		dest->floorplane   = s->floorplane;
 
 		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
-		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
+		for (int n = 0; n < screen->mPipelineNbr; n++)
+			dest->vboheight[n][sector_t::floor] = s->vboheight[n][sector_t::floor];
 	}
 
 	if (!(s->MoreFlags&SECMF_FAKEFLOORONLY))
@@ -303,7 +306,8 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 				dest->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
 				dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
 				dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
-				dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
+				for (int n = 0; n < screen->mPipelineNbr; n++)
+					dest->vboheight[n][sector_t::ceiling] = s->vboheight[n][sector_t::ceiling];
 			}
 		}
 		else
@@ -311,7 +315,8 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 			dest->ceilingplane  = s->ceilingplane;
 			dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
 			dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
-			dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
+			for (int n = 0; n < screen->mPipelineNbr; n++)
+				dest->vboheight[n][sector_t::ceiling] = s->vboheight[n][sector_t::ceiling];
 		}
 	}
 
@@ -325,10 +330,12 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 		dest->ceilingplane.FlipVert();
 
 		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::floor];
-		dest->vboheight[sector_t::floor] = sec->vboheight[sector_t::floor];
+		for (int n = 0; n < screen->mPipelineNbr; n++)
+			dest->vboheight[n][sector_t::floor] = sec->vboheight[n][sector_t::floor];
 
 		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakefloor];
-		dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::floor];
+		for (int n = 0; n < screen->mPipelineNbr; n++)
+			dest->vboheight[n][sector_t::ceiling] = s->vboheight[n][sector_t::floor];
 
 		dest->ClearPortal(sector_t::ceiling);
 
@@ -378,10 +385,12 @@ sector_t * hw_FakeFlat(sector_t * sec, area_t in_area, bool back, sector_t *loca
 		dest->floorplane.FlipVert();
 
 		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakeceiling];
-		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::ceiling];
+		for (int n = 0; n < screen->mPipelineNbr; n++)
+			dest->vboheight[n][sector_t::floor] = sec->vboheight[n][sector_t::ceiling];
 
 		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::ceiling];
-		dest->vboheight[sector_t::ceiling] = sec->vboheight[sector_t::ceiling];
+		for (int n = 0; n < screen->mPipelineNbr; n++)
+			dest->vboheight[n][sector_t::ceiling] = s->vboheight[n][sector_t::ceiling];
 
 		dest->ClearPortal(sector_t::floor);
 

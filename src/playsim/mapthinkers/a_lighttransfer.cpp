@@ -34,7 +34,7 @@
 
 #include "p_spec.h"
 #include "a_lighttransfer.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "g_levellocals.h"
 
 //

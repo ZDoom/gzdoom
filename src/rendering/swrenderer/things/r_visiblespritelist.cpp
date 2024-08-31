@@ -23,16 +23,16 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"
 #include "swrenderer/things/r_visiblespritelist.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 
 namespace swrenderer
 {
@@ -83,23 +83,6 @@ namespace swrenderer
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
-		if (r_modelscene)
-		{
-			for (unsigned int i = 0; i < count; i++)
-			{
-				FVector2 worldPos = SortedSprites[i]->WorldPos().XY();
-				SortedSprites[i]->SubsectorDepth = FindSubsectorDepth(thread, { worldPos.X, worldPos.Y });
-			}
-
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
-			{
-				if (a->SubsectorDepth != b->SubsectorDepth)
-					return a->SubsectorDepth < b->SubsectorDepth;
-				else
-					return a->SortDist() > b->SortDist();
-			});
-		}
-		else
 		{
 			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 			{

@@ -16,6 +16,7 @@ class Chainsaw : Weapon
 		Obituary "$OB_MPCHAINSAW";
 		Tag "$TAG_CHAINSAW";
 		+WEAPON.MELEEWEAPON		
+		+WEAPON.NOAUTOSWITCHTO
 	}
 	States
 	{
@@ -64,7 +65,7 @@ extend class StateProvider
 		}
 		if (range == 0)
 		{ 
-			range = SAWRANGE;
+			range = MeleeRange + MELEEDELTA + (1. / 65536.); // MBF21 SAWRANGE;
 		}
 
 		double ang = angle + spread_xy * (Random2[Saw]() / 255.);
@@ -78,9 +79,11 @@ extend class StateProvider
 				return;
 		}
 
+		int puffFlags = (flags & SF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0;
+
 		Actor puff;
 		int actualdamage;
-		[puff, actualdamage] = LineAttack (ang, range, slope, damage, 'Melee', pufftype, false, t);
+		[puff, actualdamage] = LineAttack (ang, range, slope, damage, 'Melee', pufftype, puffFlags, t);
 
 		if (!t.linetarget)
 		{

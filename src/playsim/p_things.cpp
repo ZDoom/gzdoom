@@ -87,7 +87,7 @@ bool FLevelLocals::EV_Thing_Spawn (int tid, AActor *source, int type, DAngle ang
 			if (P_TestMobjLocation (mobj))
 			{
 				rtn++;
-				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
+				mobj->Angles.Yaw = (angle != DAngle::fromDeg(1000000.) ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
 					P_SpawnTeleportFog(mobj, spot->Pos(), false, true);
@@ -171,10 +171,11 @@ void InterceptDefaultAim(AActor *mobj, AActor *targ, DVector3 aim, double speed)
 
 // [MC] Was part of P_Thing_Projectile, now its own function for use in ZScript.
 // Aims mobj at targ based on speed and targ's velocity.
-static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false, bool leadtarget = true)
+static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch = false, bool oldvel = false, bool resetvel = false, bool leadtarget = true)
 {
 	if (targ == nullptr || mobj == nullptr)	return;
 
+	DVector3 prevel = mobj->Vel;
 	DVector3 aim = mobj->Vec3To(targ);
 	aim.Z += targ->Height / 2;
 
@@ -198,6 +199,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 			if (targ->Vel.X == 0 && targ->Vel.Y == 0)
 			{
 				InterceptDefaultAim(mobj, targ, aim, speed);
+				if (resetvel)
+				{
+					mobj->Vel = prevel;
+				}
 				return;
 			}
 		}
@@ -207,7 +212,6 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 		double a = g_acos(clamp(ydotx / targspeed / dist, -1.0, 1.0));
 		double multiplier = double(pr_leadtarget.Random2())*0.1 / 255 + 1.1;
 		double sinb = -clamp(targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
-		DVector3 prevel = mobj->Vel;
 		// Use the cross product of two of the triangle's sides to get a
 		// rotation vector.
 		DVector3 rv(tvel ^ aim);
@@ -235,6 +239,10 @@ static void VelIntercept(AActor *targ, AActor *mobj, double speed, bool aimpitch
 	{
 		InterceptDefaultAim(mobj, targ, aim, speed);
 	}
+	if (resetvel)
+	{
+		mobj->Vel = prevel;
+	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
@@ -244,8 +252,9 @@ DEFINE_ACTION_FUNCTION(AActor, VelIntercept)
 	PARAM_FLOAT(speed);
 	PARAM_BOOL(aimpitch);
 	PARAM_BOOL(oldvel);
+	PARAM_BOOL(resetvel);
 	if (speed < 0)	speed = self->Speed;
-	VelIntercept(targ, self, speed, aimpitch, oldvel);
+	VelIntercept(targ, self, speed, aimpitch, oldvel, resetvel);
 	return 0;
 }
 
@@ -331,7 +340,7 @@ bool FLevelLocals::EV_Thing_Projectile (int tid, AActor *source, int type, const
 
 					if (targ != nullptr)
 					{
-						VelIntercept(targ, mobj, speed, false, false, leadTarget);
+						VelIntercept(targ, mobj, speed, false, false, false, leadTarget);
 
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{
@@ -459,7 +468,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags)
 	thing->flags |= MF_SOLID;
 	thing->Height = info->Height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!(flags & RF_NOCHECKPOSITION) && !P_CheckPosition (thing, thing->Pos()))
+	if (!(flags & RF_NOCHECKPOSITION) && !P_CheckPosition (thing, thing->Pos().XY()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -503,7 +512,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->Height = info->Height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->Pos());
+	bool check = P_CheckPosition (thing, thing->Pos().XY());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -767,7 +776,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			if (flags & WARPF_COPYPITCH)
 				caller->SetPitch(reference->Angles.Pitch, false);
 			
-			if (pitch != 0)
+			if (pitch != nullAngle)
 				caller->SetPitch(caller->Angles.Pitch + pitch, false);
 			
 			if (flags & WARPF_COPYVELOCITY)
@@ -804,7 +813,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			{
 				caller->AddZ(reference->GetBobOffset());
 			}
-			P_TryMove(caller, caller->Pos(), false);
+			P_TryMove(caller, caller->Pos().XY(), false);
 		}
 		return true;
 	}

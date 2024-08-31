@@ -16,6 +16,7 @@ class Fatso : Actor
 		Monster;
 		+FLOORCLIP
 		+BOSSDEATH
+		+MAP07BOSS1
 		SeeSound "fatso/sight";
 		PainSound "fatso/pain";
 		DeathSound "fatso/death";

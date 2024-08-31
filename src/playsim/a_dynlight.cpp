@@ -115,7 +115,7 @@ void AttachLight(AActor *self)
 	light->pPitch = &self->Angles.Pitch;
 	light->pLightFlags = (LightFlags*)&self->IntVar(NAME_lightflags);
 	light->pArgs = self->args;
-	light->specialf1 = DAngle(double(self->SpawnAngle)).Normalized360().Degrees;
+	light->specialf1 = DAngle::fromDeg(double(self->SpawnAngle)).Normalized360().Degrees();
 	light->Sector = self->Sector;
 	light->target = self;
 	light->mShadowmapIndex = 1024;
@@ -255,7 +255,7 @@ void FDynamicLight::Tick()
 
 	if (owned)
 	{
-		if (!target->state)
+		if (!target->state || !target->ShouldRenderLocally())
 		{
 			Deactivate();
 			return;
@@ -395,7 +395,7 @@ void FDynamicLight::UpdateLocation()
 
 		if (lighttype == FlickerLight || lighttype == RandomFlickerLight || lighttype == PulseLight)
 		{
-			intensity = float(MAX(GetIntensity(), GetSecondaryIntensity()));
+			intensity = float(max(GetIntensity(), GetSecondaryIntensity()));
 		}
 		else
 		{
@@ -748,6 +748,7 @@ void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 		AttachedLights.Push(light);
 	}
 	lightdef->ApplyProperties(light);
+	light->UpdateLocation();
 }
 
 //==========================================================================
@@ -849,6 +850,7 @@ int AttachLightDef(AActor *self, int _lightid, int _lightname)
 		auto userlight = self->UserLights[FindUserLight(self, lightid, true)];
 		userlight->CopyFrom(*LightDefaults[lightdef]);
 		self->flags8 |= MF8_RECREATELIGHTS;
+		self->Level->flags3 |= LEVEL3_LIGHTCREATED;
 		return 1;
 	}
 	return 0;
@@ -893,6 +895,7 @@ int AttachLightDirect(AActor *self, int _lightid, int type, int color, int radiu
 		userlight->UnsetSpotPitch();
 	}
 	self->flags8 |= MF8_RECREATELIGHTS;
+	self->Level->flags3 |= LEVEL3_LIGHTCREATED;
 	return 1;
 }
 
@@ -912,7 +915,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_AttachLight, AttachLightDirect)
 	PARAM_FLOAT(spoti);
 	PARAM_FLOAT(spoto);
 	PARAM_FLOAT(spotp);
-	ACTION_RETURN_BOOL(AttachLightDirect(self, lightid, type, color, radius1, radius2, flags, ofs_x, ofs_y, ofs_z, parami, spoti, spoto, spotp));
+	ACTION_RETURN_BOOL(AttachLightDirect(self, lightid.GetIndex(), type, color, radius1, radius2, flags, ofs_x, ofs_y, ofs_z, parami, spoti, spoto, spotp));
 }
 
 //==========================================================================
@@ -930,6 +933,7 @@ int RemoveLight(AActor *self, int _lightid)
 		delete self->UserLights[userlight];
 		self->UserLights.Delete(userlight);
 		self->flags8 |= MF8_RECREATELIGHTS;
+		self->Level->flags3 |= LEVEL3_LIGHTCREATED;
 		return 1;
 	}
 	return 0;
@@ -939,7 +943,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_RemoveLight, RemoveLight)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(lightid);
-	ACTION_RETURN_BOOL(RemoveLight(self, lightid));
+	ACTION_RETURN_BOOL(RemoveLight(self, lightid.GetIndex()));
 }
 
 

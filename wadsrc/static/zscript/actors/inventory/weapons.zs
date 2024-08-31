@@ -25,6 +25,7 @@ class Weapon : StateProvider
 	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
 	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
 	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
+	double WeaponScaleX, WeaponScaleY;		// [XA] Weapon scale. Defines the scale for the held weapon sprites (PSprite). Defaults to (1.0, 1.2) since that's what Doom does.
 	Ammo Ammo1, Ammo2;						// In-inventory instance variables
 	Weapon SisterWeapon;
 	double FOVScale;
@@ -36,6 +37,14 @@ class Weapon : StateProvider
 											// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
 	meta int SlotNumber;
 	meta double SlotPriority;
+
+	Vector3 BobPivot3D;	// Pivot used for BobWeapon3D
+
+	virtual ui Vector2 ModifyBobLayer(Vector2 Bob, int layer, double ticfrac) { return Bob; }
+
+	virtual ui Vector3, Vector3 ModifyBobLayer3D(Vector3 Translation, Vector3 Rotation, int layer, double ticfrac) { return Translation, Rotation; }
+
+	virtual ui Vector3 ModifyBobPivotLayer3D(int layer, double ticfrac) { return BobPivot3D; }
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;
@@ -57,9 +66,12 @@ class Weapon : StateProvider
 	property BobSpeed: BobSpeed;
 	property BobRangeX: BobRangeX;
 	property BobRangeY: BobRangeY;
+	property WeaponScaleX: WeaponScaleX;
+	property WeaponScaleY: WeaponScaleY;
 	property SlotNumber: SlotNumber;
 	property SlotPriority: SlotPriority;
 	property LookScale: LookScale;
+	property BobPivot3D : BobPivot3D;
 
 	flagdef NoAutoFire: WeaponFlags, 0;			// weapon does not autofire
 	flagdef ReadySndHalf: WeaponFlags, 1;		// ready sound is played ~1/2 the time
@@ -80,6 +92,7 @@ class Weapon : StateProvider
 	flagdef NoDeathDeselect: WeaponFlags, 16;	// Don't jump to the Deselect state when the player dies
 	flagdef NoDeathInput: WeaponFlags, 17;		// The weapon cannot be fired/reloaded/whatever when the player is dead
 	flagdef CheatNotWeapon: WeaponFlags, 18;	// Give cheat considers this not a weapon (used by Sigil)
+	flagdef NoAutoSwitchTo : WeaponFlags, 19;	// do not auto switch to this weapon ever!
 
 	// no-op flags
 	flagdef NoLMS: none, 0;
@@ -94,8 +107,11 @@ class Weapon : StateProvider
 		Weapon.BobSpeed 1.0;
 		Weapon.BobRangeX 1.0;
 		Weapon.BobRangeY 1.0;
+		Weapon.WeaponScaleX 1.0;
+		Weapon.WeaponScaleY 1.2;
 		Weapon.SlotNumber -1;
 		Weapon.SlotPriority 32767;
+		Weapon.BobPivot3D (0.0, 0.0, 0.0);
 		+WEAPONSPAWN
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY|SUF_WEAPON;
 	}
@@ -213,6 +229,24 @@ class Weapon : StateProvider
 	//
 	//---------------------------------------------------------------------------
 
+	action void ResetPSprite(PSprite psp)
+	{
+		if (!psp)	return;
+		psp.rotation = 0;
+		psp.baseScale.x = invoker.WeaponScaleX;
+		psp.baseScale.y = invoker.WeaponScaleY;
+		psp.scale.x = 1;
+		psp.scale.y = 1;
+		psp.pivot.x = 0;
+		psp.pivot.y = 0;
+		psp.valign = 0;
+		psp.halign = 0;
+		psp.Coord0 = (0,0);
+		psp.Coord1 = (0,0);
+		psp.Coord2 = (0,0);
+		psp.Coord3 = (0,0);
+	}
+
 	action void A_Lower(int lowerspeed = 6)
 	{
 		let player = player;
@@ -228,7 +262,7 @@ class Weapon : StateProvider
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
 		if (!psp) return;
-		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
+		if (Alternative || player.cheats & CF_INSTANTWEAPSWITCH)
 		{
 			psp.y = WEAPONBOTTOM;
 		}
@@ -240,6 +274,8 @@ class Weapon : StateProvider
 		{ // Not lowered all the way yet
 			return;
 		}
+		ResetPSprite(psp);
+		
 		if (player.playerstate == PST_DEAD)
 		{ // Player is dead, so don't bring up a pending weapon
 			// Player is dead, so keep the weapon off screen
@@ -278,12 +314,18 @@ class Weapon : StateProvider
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
 		if (!psp) return;
+
+		if (psp.y <= WEAPONBOTTOM)
+		{
+			ResetPSprite(psp);
+		}
 		psp.y -= raisespeed;
 		if (psp.y > WEAPONTOP)
 		{ // Not raised all the way yet
 			return;
 		}
 		psp.y = WEAPONTOP;
+		
 		psp.SetState(player.ReadyWeapon.GetReadyState());
 		return;
 	}
@@ -428,6 +470,7 @@ class Weapon : StateProvider
 			if (flags & 1)
 			{ // Make the zoom instant.
 				player.FOV = player.DesiredFOV * zoom;
+				player.cheats |= CF_NOFOVINTERP;
 			}
 			if (flags & 2)
 			{ // Disable pitch/yaw scaling.
@@ -710,13 +753,13 @@ class Weapon : StateProvider
 
 		// [BC] This behavior is from the original Doom. Give 5/2 times as much ammoitem when
 		// we pick up a weapon in deathmatch.
-		if (( deathmatch ) && ( gameinfo.gametype & GAME_DoomChex ))
+		if (( deathmatch && !sv_noextraammo ) && ( gameinfo.gametype & GAME_DoomChex ))
 			amount = amount * 5 / 2;
 
 		// extra ammoitem in baby mode and nightmare mode
 		if (!bIgnoreSkill)
 		{
-			amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+			amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 		}
 		ammoitem = Ammo(other.FindInventory (ammotype));
 		if (ammoitem == NULL)
@@ -751,7 +794,7 @@ class Weapon : StateProvider
 			// extra ammo in baby mode and nightmare mode
 			if (!bIgnoreSkill)
 			{
-				amount = int(amount * G_SkillPropertyFloat(SKILLP_AmmoFactor));
+				amount = int(amount * (G_SkillPropertyFloat(SKILLP_AmmoFactor) * sv_ammofactor));
 			}
 			ammo.Amount += amount;
 			if (ammo.Amount > ammo.MaxAmount && !sv_unlimited_pickup)
@@ -824,9 +867,10 @@ class Weapon : StateProvider
 			{
 				if (player.PendingWeapon == NULL ||	player.PendingWeapon == WP_NOCHANGE)
 				{
-					player.PendingWeapon = SisterWeapon;
+					player.refire = 0;
+					player.ReadyWeapon = SisterWeapon;
+					player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());
 				}
-				player.WeaponState |= WF_REFIRESWITCHOK;
 			}
 			else
 			{
@@ -842,9 +886,10 @@ class Weapon : StateProvider
 					if (player.PendingWeapon == NULL || player.PendingWeapon == WP_NOCHANGE)
 					{
 						// Something went wrong. Initiate a regular weapon change.
-						player.PendingWeapon = SisterWeapon;
+						player.refire = 0;
+						player.ReadyWeapon = SisterWeapon;
+						player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());
 					}
-					player.WeaponState |= WF_REFIRESWITCHOK;
 				}
 			}
 		}
@@ -893,6 +938,7 @@ class Weapon : StateProvider
 		int count1, count2;
 		int enough, enoughmask;
 		int lAmmoUse1;
+        int lAmmoUse2 = AmmoUse2;
 
 		if (sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null))
 		{
@@ -922,16 +968,17 @@ class Weapon : StateProvider
 		{
 			lAmmoUse1 = 0;
 		}
-		else if (ammocount >= 0 && bDehAmmo)
+		else if (ammocount >= 0)
 		{
 			lAmmoUse1 = ammocount;
+			lAmmoUse2 = ammocount;
 		}
 		else
 		{
 			lAmmoUse1 = AmmoUse1;
 		}
 
-		enough = (count1 >= lAmmoUse1) | ((count2 >= AmmoUse2) << 1);
+		enough = (count1 >= lAmmoUse1) | ((count2 >= lAmmoUse2) << 1);
 		if (useboth)
 		{
 			enoughmask = 3;
@@ -967,7 +1014,7 @@ class Weapon : StateProvider
 	//
 	//===========================================================================
 
-	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1)
+	virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1, bool forceammouse = false)
 	{
 		if (!(sv_infiniteammo || (Owner.FindInventory ('PowerInfiniteAmmo', true) != null)))
 		{
@@ -979,7 +1026,7 @@ class Weapon : StateProvider
 			{
 				if (Ammo1 != null)
 				{
-					if (ammouse >= 0 && bDehAmmo)
+					if (ammouse >= 0 && (bDehAmmo || forceammouse))
 					{
 						Ammo1.Amount -= ammouse;
 					}

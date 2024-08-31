@@ -22,8 +22,8 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include "templates.h"
-#include "doomerrors.h"
+
+#include "engineerrors.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomdata.h"
@@ -32,7 +32,7 @@
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "d_net.h"
@@ -42,7 +42,8 @@
 #include "v_palette.h"
 #include "r_utility.h"
 #include "r_data/colormaps.h"
-#include "swrenderer/r_memory.h"
+#include "texturemanager.h"
+#include "r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"
 #include "swrenderer/scene/r_portal.h"
@@ -105,7 +106,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos.XY()))
 			return;
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
@@ -313,8 +314,6 @@ namespace swrenderer
 
 		if (markportal)
 		{
-			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
-			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
 			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
 		else if (!mBackSector)
@@ -388,8 +387,7 @@ namespace swrenderer
 
 					if (mLineSegment->linedef->alpha > 0.0f && sidedef->GetTexture(side_t::mid).isValid())
 					{
-						FTexture* tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-						FSoftwareTexture* pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						auto pic =  GetPalettedSWTexture(sidedef->GetTexture(side_t::mid), true);
 						if (pic)
 						{
 							draw_segment->SetHasTranslucentMidTexture();
@@ -686,10 +684,9 @@ namespace swrenderer
 		// No top texture for skyhack lines
 		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum) return;
 		
-		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::top), true);
-		if (!tex || !tex->isValid()) return;
-
-		mTopTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::top), true);
+		if (!tex) return;
+		mTopTexture = tex;
 	}
 	
 	void SWRenderLine::SetMiddleTexture()
@@ -701,10 +698,9 @@ namespace swrenderer
 		if (linedef->isVisualPortal()) return;
 		if (linedef->special == Line_Horizon) return;
 			
-		auto tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-		if (!tex || !tex->isValid()) return;
-
-		mMiddleTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::mid), true);
+		if (!tex) return;
+		mMiddleTexture = tex;
 	}
 	
 	void SWRenderLine::SetBottomTexture()
@@ -712,10 +708,9 @@ namespace swrenderer
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
 		
-		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::bottom), true);
-		if (!tex || !tex->isValid()) return;
-
-		mBottomTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::bottom), true);
+		if (!tex) return;
+		mBottomTexture = tex;
 	}
 
 	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const
@@ -757,7 +752,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
-				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
+				short bottom = min(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
 					mCeilingPlane->top[x] = top;
@@ -779,7 +774,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
+				short top = max(wallbottom.ScreenY[x], ceilingclip[x]);
 				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
@@ -809,7 +804,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
+					walllower.ScreenY[x] = min(max(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
 				memcpy(clip3d->fakeFloor->floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -821,7 +816,7 @@ namespace swrenderer
 			{
 				for (int x = x1; x < x2; ++x)
 				{
-					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
+					wallupper.ScreenY[x] = max(min(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				memcpy(clip3d->fakeFloor->ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -844,7 +839,7 @@ namespace swrenderer
 			{ // top wall
 				for (int x = x1; x < x2; ++x)
 				{
-					wallupper.ScreenY[x] = MAX(MIN(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
+					wallupper.ScreenY[x] = max(min(wallupper.ScreenY[x], floorclip[x]), walltop.ScreenY[x]);
 				}
 				memcpy(ceilingclip + x1, wallupper.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -857,7 +852,7 @@ namespace swrenderer
 			{ // bottom wall
 				for (int x = x1; x < x2; ++x)
 				{
-					walllower.ScreenY[x] = MIN(MAX(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
+					walllower.ScreenY[x] = min(max(walllower.ScreenY[x], ceilingclip[x]), wallbottom.ScreenY[x]);
 				}
 				memcpy(floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -878,7 +873,7 @@ namespace swrenderer
 		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::top, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -890,7 +885,7 @@ namespace swrenderer
 		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::mid, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -903,6 +898,6 @@ namespace swrenderer
 		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
+		renderWallpart.Render(mFrontSector, mLineSegment, side_t::bottom, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 }

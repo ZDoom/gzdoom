@@ -3,10 +3,10 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
-#include "resourcefiles/file_zip.h"
 #include "g_mapinfo.h"
 
 
+using FileSys::FCompressedBuffer;
 extern bool savegamerestore;
 
 void G_InitNew (const char *mapname, bool bTitleLevel);
@@ -15,8 +15,8 @@ void G_InitNew (const char *mapname, bool bTitleLevel);
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void G_DeferedInitNew (const char *mapname, int skill = -1);
-struct FGameStartup;
-void G_DeferedInitNew (FGameStartup *gs);
+struct FNewGameStartup;
+void G_DeferedInitNew (FNewGameStartup *gs);
 
 enum 
 {

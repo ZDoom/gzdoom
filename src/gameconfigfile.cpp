@@ -47,6 +47,7 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "d_main.h"
+#include "v_video.h"
 #if !defined _MSC_VER && !defined __APPLE__
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_MSC_VER && !__APPLE__
@@ -67,6 +68,17 @@ EXTERN_CVAR (Int, gl_texture_hqresizemult)
 EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Float, vid_scale_custompixelaspect)
 EXTERN_CVAR (Bool, vid_scale_linear)
+EXTERN_CVAR(Float, m_sensitivity_x)
+EXTERN_CVAR(Float, m_sensitivity_y)
+EXTERN_CVAR(Int, adl_volume_model)
+EXTERN_CVAR (Int, gl_texture_hqresize_targets)
+EXTERN_CVAR(Int, wipetype)
+EXTERN_CVAR(Bool, i_pauseinbackground)
+EXTERN_CVAR(Bool, i_soundinbackground)
+
+#ifdef _WIN32
+EXTERN_CVAR(Int, in_mouse)
+#endif
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -80,14 +92,14 @@ FGameConfigFile::FGameConfigFile ()
 	OkayToWrite = false;	// Do not allow saving of the config before DoKeySetup()
 	bModSetup = false;
 	pathname = GetConfigPath (true);
-	ChangePathName (pathname);
+	ChangePathName (pathname.GetChars());
 	LoadConfigFile ();
 
 	// If zdoom.ini was read from the program directory, switch
 	// to the user directory now. If it was read from the user
 	// directory, this effectively does nothing.
 	pathname = GetConfigPath (false);
-	ChangePathName (pathname);
+	ChangePathName (pathname.GetChars());
 
 	// Set default IWAD search paths if none present
 	if (!SetSection ("IWADSearch.Directories"))
@@ -96,15 +108,16 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", ".", true);
 		SetValueForKey ("Path", "$DOOMWADDIR", true);
 #ifdef __APPLE__
-		SetValueForKey ("Path", user_docs, true);
-		SetValueForKey ("Path", user_app_support, true);
+		SetValueForKey ("Path", user_docs.GetChars(), true);
+		SetValueForKey ("Path", user_app_support.GetChars(), true);
 		SetValueForKey ("Path", "$PROGDIR", true);
-		SetValueForKey ("Path", local_app_support, true);
+		SetValueForKey ("Path", local_app_support.GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
+		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		// Arch Linux likes them in /usr/share/doom
 		// Debian likes them in /usr/share/games/doom
 		// I assume other distributions don't do anything radically different
@@ -120,14 +133,15 @@ FGameConfigFile::FGameConfigFile ()
 	{
 		SetSection ("FileSearch.Directories", true);
 #ifdef __APPLE__
-		SetValueForKey ("Path", user_docs, true);
-		SetValueForKey ("Path", user_app_support, true);
+		SetValueForKey ("Path", user_docs.GetChars(), true);
+		SetValueForKey ("Path", user_app_support.GetChars(), true);
 		SetValueForKey ("Path", "$PROGDIR", true);
-		SetValueForKey ("Path", local_app_support, true);
+		SetValueForKey ("Path", local_app_support.GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
+		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		SetValueForKey ("Path", SHARE_DIR, true);
 		SetValueForKey ("Path", "/usr/local/share/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
@@ -142,20 +156,22 @@ FGameConfigFile::FGameConfigFile ()
 	{
 		SetSection("SoundfontSearch.Directories", true);
 #ifdef __APPLE__
-		SetValueForKey("Path", user_docs + "/soundfonts", true);
-		SetValueForKey("Path", user_docs + "/fm_banks", true);
-		SetValueForKey("Path", user_app_support + "/soundfonts", true);
-		SetValueForKey("Path", user_app_support + "/fm_banks", true);
+		SetValueForKey("Path", (user_docs + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (user_docs + "/fm_banks").GetChars(), true);
+		SetValueForKey("Path", (user_app_support + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (user_app_support + "/fm_banks").GetChars(), true);
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
-		SetValueForKey("Path", local_app_support + "/soundfonts", true);
-		SetValueForKey("Path", local_app_support + "/fm_banks", true);
+		SetValueForKey("Path", (local_app_support + "/soundfonts").GetChars(), true);
+		SetValueForKey("Path", (local_app_support + "/fm_banks").GetChars(), true);
 #elif !defined(__unix__)
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 #else
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
+		SetValueForKey("Path", "$HOME/.local/share/games/doom/soundfonts", true);
+		SetValueForKey("Path", "$HOME/.local/share/games/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/local/share/doom/soundfonts", true);
 		SetValueForKey("Path", "/usr/local/share/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/local/share/games/doom/soundfonts", true);
@@ -241,7 +257,7 @@ void FGameConfigFile::DoAutoloadSetup (FIWadManager *iwad_man)
 			{
 				FString section = workname + ".Autoload";
 				CreateSectionAtStart(section.GetChars());
-				long dotpos = workname.LastIndexOf('.');
+				auto dotpos = workname.LastIndexOf('.');
 				if (dotpos < 0) break;
 				workname.Truncate(dotpos);
 			}
@@ -294,47 +310,6 @@ void FGameConfigFile::DoGlobalSetup ()
 		if (lastver != NULL)
 		{
 			double last = atof (lastver);
-			if (last < 123.1)
-			{
-				FBaseCVar *noblitter = FindCVar ("vid_noblitter", NULL);
-				if (noblitter != NULL)
-				{
-					noblitter->ResetToDefault ();
-				}
-			}
-			if (last < 202)
-			{
-				// Make sure the Hexen hotkeys are accessible by default.
-				if (SetSection ("Hexen.Bindings"))
-				{
-					SetValueForKey ("\\", "use ArtiHealth");
-					SetValueForKey ("scroll", "+showscores");
-					SetValueForKey ("0", "useflechette");
-					SetValueForKey ("9", "use ArtiBlastRadius");
-					SetValueForKey ("8", "use ArtiTeleport");
-					SetValueForKey ("7", "use ArtiTeleportOther");
-					SetValueForKey ("6", "use ArtiPork");
-					SetValueForKey ("5", "use ArtiInvulnerability2");
-				}
-			}
-			if (last < 204)
-			{ // The old default for vsync was true, but with an unlimited framerate
-			  // now, false is a better default.
-				FBaseCVar *vsync = FindCVar ("vid_vsync", NULL);
-				if (vsync != NULL)
-				{
-					vsync->ResetToDefault ();
-				}
-			}
-			/* spc_amp no longer exists
-			if (last < 206)
-			{ // spc_amp is now a float, not an int.
-				if (spc_amp > 16)
-				{
-					spc_amp = spc_amp / 16.f;
-				}
-			}
-			*/
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
 				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);
@@ -550,6 +525,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					case 1:
 						newvalue.Int = 0;
 						var->SetGenericRep(newvalue, CVAR_Int);
+						[[fallthrough]];
 					case 3:
 					case 4:
 						vid_scale_linear = true;
@@ -558,6 +534,86 @@ void FGameConfigFile::DoGlobalSetup ()
 						vid_scale_linear = false;
 						break;
 					}
+				}
+			}
+			if (last < 220)
+			{
+				auto var = FindCVar("Gamma", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					vid_gamma = v.Float;
+				}
+				var = FindCVar("fullscreen", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Bool);
+					vid_fullscreen = v.Float;
+				}
+			}
+			if (last < 221)
+			{
+				// Transfer the messed up mouse scaling config to something sane and consistent.
+#ifndef _WIN32
+				double xfact = 3, yfact = 2;
+#else
+				double xfact = in_mouse == 1? 1.5 : 4, yfact = 1;
+#endif
+				auto var = FindCVar("m_noprescale", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Bool);
+					if (v.Bool) xfact = yfact = 1;
+				}
+
+				var = FindCVar("mouse_sensitivity", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					xfact *= v.Float;
+					yfact *= v.Float;
+				}
+				m_sensitivity_x = (float)xfact;
+				m_sensitivity_y = (float)yfact;
+
+				adl_volume_model = 0;
+
+				// if user originally wanted the in-game textures resized, set model skins to resize too
+				int old_targets = gl_texture_hqresize_targets;
+				old_targets |= (old_targets & 1) ? 8 : 0;
+				gl_texture_hqresize_targets = old_targets;
+			}
+			if (last < 222)
+			{
+				auto var = FindCVar("mod_dumb_mastervolume", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					v.Float /= 4.f;
+					if (v.Float < 1.f) v.Float = 1.f;
+				}
+			}
+			if (last < 223)
+			{
+				// ooooh boy did i open a can of worms with this one.
+				i_pauseinbackground = !(i_soundinbackground);
+			}
+			if (last < 224)
+			{
+				if (const auto var = FindCVar("m_sensitivity_x", NULL))
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					v.Float *= 0.5f;
+					var->SetGenericRep(v, CVAR_Float);
+				}
+			}
+			if (last < 225)
+			{
+				if (const auto var = FindCVar("gl_lightmode", NULL))
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					v.Int = v.Int == 16 ? 2 : v.Int == 8 ? 1 : 0;
+					var->SetGenericRep(v, CVAR_Int);
 				}
 			}
 		}
@@ -594,6 +650,11 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	if (gameinfo.gametype & GAME_Raven)
 	{
 		SetRavenDefaults (gameinfo.gametype == GAME_Hexen);
+	}
+
+	if (gameinfo.gametype & GAME_Strife)
+	{
+		SetStrifeDefaults ();
 	}
 
 	// The NetServerInfo section will be read and override anything loaded
@@ -879,38 +940,48 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	UCVarValue val;
 
 	val.Bool = false;
-	wi_percents.SetGenericRepDefault (val, CVAR_Bool);
+	wi_percents->SetGenericRepDefault (val, CVAR_Bool);
 	val.Bool = true;
-	con_centernotify.SetGenericRepDefault (val, CVAR_Bool);
-	snd_pitched.SetGenericRepDefault (val, CVAR_Bool);
+	con_centernotify->SetGenericRepDefault (val, CVAR_Bool);
+	snd_pitched->SetGenericRepDefault (val, CVAR_Bool);
 	val.Int = 9;
-	msg0color.SetGenericRepDefault (val, CVAR_Int);
+	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_WHITE;
-	msgmidcolor.SetGenericRepDefault (val, CVAR_Int);
+	msgmidcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_YELLOW;
-	msgmidcolor2.SetGenericRepDefault (val, CVAR_Int);
+	msgmidcolor2->SetGenericRepDefault (val, CVAR_Int);
 
 	val.Int = 0x543b17;
-	am_wallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_wallcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = 0xd0b085;
-	am_fdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_fdwallcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = 0x734323;
-	am_cdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+	am_cdwallcolor->SetGenericRepDefault (val, CVAR_Int);
+
+	val.Int = 0;
+	wipetype->SetGenericRepDefault(val, CVAR_Int);
 
 	// Fix the Heretic/Hexen automap colors so they are correct.
 	// (They were wrong on older versions.)
 	if (*am_wallcolor == 0x2c1808 && *am_fdwallcolor == 0x887058 && *am_cdwallcolor == 0x4c3820)
 	{
-		am_wallcolor.ResetToDefault ();
-		am_fdwallcolor.ResetToDefault ();
-		am_cdwallcolor.ResetToDefault ();
+		am_wallcolor->ResetToDefault ();
+		am_fdwallcolor->ResetToDefault ();
+		am_cdwallcolor->ResetToDefault ();
 	}
 
 	if (!isHexen)
 	{
 		val.Int = 0x3f6040;
-		color.SetGenericRepDefault (val, CVAR_Int);
+		color->SetGenericRepDefault (val, CVAR_Int);
 	}
+}
+
+void FGameConfigFile::SetStrifeDefaults ()
+{
+	UCVarValue val;
+	val.Int = 3;
+	wipetype->SetGenericRepDefault(val, CVAR_Int);
 }
 
 CCMD (whereisini)

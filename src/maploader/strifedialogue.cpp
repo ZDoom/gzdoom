@@ -37,7 +37,7 @@
 
 #include "actor.h"
 #include "p_conversation.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "v_text.h"
 #include "gi.h"
@@ -105,6 +105,20 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 	}
 	else
 	{
+		// additive dialogues via MAPINFO
+		bool addedDialogues = false;
+		for (const FString &addd : gameinfo.AddDialogues)
+		{
+			if (!LoadScriptFile(addd.GetChars(), true, 0))
+			{
+				continue;
+			}
+			else
+			{
+				addedDialogues = true;
+			}
+		}
+
 		if (strnicmp (mapname, "MAP", 3) == 0)
 		{
 			char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
@@ -119,8 +133,12 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 
 		if (gameinfo.Dialogue.IsNotEmpty())
 		{
-			if (LoadScriptFile(gameinfo.Dialogue, false, 0))
+			if (LoadScriptFile(gameinfo.Dialogue.GetChars(), false, 0))
 			{
+				if (addedDialogues)
+				{
+					Printf(TEXTCOLOR_RED "Warning! Dialogue was mixed with AddDialogues! Previous AddDialogues have been overwritten\n");
+				}
 				return;
 			}
 		}
@@ -139,9 +157,9 @@ void MapLoader::LoadStrifeConversations (MapData *map, const char *mapname)
 
 bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 {
-	int lumpnum = Wads.CheckNumForName (name);
+	int lumpnum = fileSystem.CheckNumForName (name);
 	const bool found = lumpnum >= 0
-		|| (lumpnum = Wads.CheckNumForFullName (name)) >= 0;
+		|| (lumpnum = fileSystem.CheckNumForFullName (name)) >= 0;
 
 	if (!found)
 	{
@@ -152,13 +170,13 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 
 		return false;
 	}
-	FileReader lump = Wads.ReopenLumpReader (lumpnum);
+	FileReader lump = fileSystem.ReopenFileReader (lumpnum);
 
-	auto fn = Wads.GetLumpFile(lumpnum);
-	auto wadname = Wads.GetWadName(fn);
+	auto fn = fileSystem.GetFileContainer(lumpnum);
+	auto wadname = fileSystem.GetResourceFileName(fn);
 	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
 
-	bool res = LoadScriptFile(name, lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
+	bool res = LoadScriptFile(name, lumpnum, lump, fileSystem.FileLength(lumpnum), include, type);
 	return res;
 }
 
@@ -177,7 +195,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 
 	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
+		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 		return false;
 	}
 
@@ -197,7 +215,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1516;
@@ -207,7 +225,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", Wads.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1488;
@@ -301,7 +319,7 @@ FStrifeDialogueNode *MapLoader::ReadRetailNode (const char *name, FileReader &lu
 	// The speaker's voice for this node, if any.
 	speech.Backdrop[0] = 0; 	//speech.Sound[8] = 0;
 	mysnprintf (fullsound, countof(fullsound), "svox/%s", speech.Sound);
-	node->SpeakerVoice = fullsound;
+	node->SpeakerVoice = S_FindSound(fullsound);
 
 	// The speaker's name, if any.
 	speech.Sound[0] = 0; 		//speech.Name[16] = 0;
@@ -327,7 +345,7 @@ FStrifeDialogueNode *MapLoader::ReadRetailNode (const char *name, FileReader &lu
 	for (j = 0; j < 3; ++j)
 	{
 		auto inv = GetStrifeType(speech.ItemCheck[j]);
-		if (!inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
+		if (inv == NULL || !inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
 		node->ItemCheck[j].Item = inv;
 		node->ItemCheck[j].Amount = -1;
 	}
@@ -397,11 +415,11 @@ FStrifeDialogueNode *MapLoader::ReadTeaserNode (const char *name, FileReader &lu
 	if (speech.VoiceNumber != 0)
 	{
 		mysnprintf (fullsound, countof(fullsound), "svox/voc%u", speech.VoiceNumber);
-		node->SpeakerVoice = fullsound;
+		node->SpeakerVoice = S_FindSound(fullsound);
 	}
 	else
 	{
-		node->SpeakerVoice = 0;
+		node->SpeakerVoice = NO_SOUND;
 	}
 
 	// The speaker's name, if any.
@@ -498,7 +516,7 @@ void MapLoader::ParseReplies (const char *name, int pos, FStrifeDialogueReply **
 		for (k = 0; k < 3; ++k)
 		{
 			auto inv = GetStrifeType(rsp->Item[k]);
-			if (!inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
+			if (inv == NULL || !inv->IsDescendantOf(NAME_Inventory)) inv = nullptr;
 			reply->ItemCheck[k].Item = inv;
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}

@@ -36,6 +36,7 @@
 
 #include "doomtype.h"
 #include "configfile.h"
+#include "files.h"
 
 class FArgs;
 class FIWadManager;
@@ -63,7 +64,8 @@ protected:
 
 private:
 	void SetRavenDefaults (bool isHexen);
-	void ReadCVars (uint32_t flags);
+	void SetStrifeDefaults ();
+	void ReadCVars (unsigned flags);
 
 	bool bModSetup;
 

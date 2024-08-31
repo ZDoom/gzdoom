@@ -21,6 +21,7 @@ class StrifeBishop : Actor
 		DamageFactor "Fire", 0.5;
 		MinMissileChance 150;
 		MaxDropoffHeight 32;
+		Tag "$TAG_BISHOP";
 		SeeSound "bishop/sight";
 		PainSound "bishop/pain";
 		DeathSound "bishop/death";

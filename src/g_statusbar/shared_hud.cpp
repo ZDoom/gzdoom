@@ -35,7 +35,7 @@
 #include "doomdef.h"
 #include "v_video.h"
 #include "gi.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "a_keys.h"
 #include "sbar.h"
 #include "sc_man.h"
@@ -48,6 +48,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "v_draw.h"
 
 #include <time.h>
 
@@ -62,14 +63,18 @@ CVAR (Bool,  hud_showitems,		false,CVAR_ARCHIVE);	// Show item stats on HUD
 CVAR (Bool,  hud_showstats,		false,	CVAR_ARCHIVE);	// for stamina and accuracy. 
 CVAR (Bool,  hud_showscore,		false,	CVAR_ARCHIVE);	// for user maintained score
 CVAR (Bool,  hud_showweapons,	true, CVAR_ARCHIVE);	// Show weapons collected
+CVAR (Bool,  am_showepisode,	false, CVAR_ARCHIVE);	// Show current episode name
+CVAR (Bool,  am_showcluster,	false, CVAR_ARCHIVE);	// Show current cluster name
 CVAR (Int ,  hud_showammo,		2, CVAR_ARCHIVE);		// Show ammo collected
 CVAR (Int ,  hud_showtime,		0,	    CVAR_ARCHIVE);	// Show time on HUD
+CVAR (Int ,  hud_showtimestat,	0,	    CVAR_ARCHIVE);	// Show time on HUD as statistics widget
 CVAR (Int ,  hud_timecolor,		CR_GOLD,CVAR_ARCHIVE);	// Color of in-game time on HUD
 CVAR (Int ,  hud_showlag,		0, CVAR_ARCHIVE);		// Show input latency (maketic - gametic difference)
 
 CVAR (Int, hud_ammo_order, 0, CVAR_ARCHIVE);				// ammo image and text order
 CVAR (Int, hud_ammo_red, 25, CVAR_ARCHIVE)					// ammo percent less than which status is red    
 CVAR (Int, hud_ammo_yellow, 50, CVAR_ARCHIVE)				// ammo percent less is yellow more green        
+CVAR (Bool, hud_swaphealtharmor, false, CVAR_ARCHIVE);		// swap health and armor position on HUD
 CVAR (Int, hud_health_red, 25, CVAR_ARCHIVE)				// health amount less than which status is red   
 CVAR (Int, hud_health_yellow, 50, CVAR_ARCHIVE)				// health amount less than which status is yellow
 CVAR (Int, hud_health_green, 100, CVAR_ARCHIVE)				// health amount above is blue, below is green   
@@ -158,20 +163,34 @@ void DBaseStatusBar::CreateAltHUD()
 //
 //---------------------------------------------------------------------------
 EXTERN_CVAR(Bool, hud_aspectscale)
+EXTERN_CVAR(Bool, hud_oldscale)
+EXTERN_CVAR(Float, hud_scalefactor)
 
 void DBaseStatusBar::DrawAltHUD()
 {
 	player_t * CPlayer = StatusBar->CPlayer;
 
 	players[consoleplayer].inventorytics = 0;
-	int scale = GetUIScale(hud_althudscale);
-	int hudwidth = SCREENWIDTH / scale;
-	int hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
+	int hudwidth;
+	int hudheight;
 
-	IFVM(AltHud, Draw)
+	if (hud_oldscale)
+	{
+		int scale = GetUIScale(twod, hud_althudscale);
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
+	}
+	else
+	{
+		hudwidth = int(640 / hud_scalefactor);
+		hudheight = hudwidth * twod->GetHeight() / twod->GetWidth();
+	}
+	if (hud_aspectscale) hudheight = hudheight * 5 / 6;
+
+
+	IFVIRTUALPTRNAME(AltHud, "AltHud", Draw)
 	{
 		VMValue params[] = { AltHud, CPlayer, hudwidth, hudheight };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
-

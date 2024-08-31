@@ -1,5 +1,6 @@
 NoAutostartMap
 Background mape1
+Screensize 320 200
 Splat in_x
 Pointer in_yah
 

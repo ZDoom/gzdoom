@@ -42,7 +42,7 @@
 #include "g_level.h"
 #include "udmf.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "p_spec.h"
@@ -51,6 +51,9 @@
 #include "vm.h"
 #include "xlat/xlat.h"
 #include "maploader.h"
+#include "texturemanager.h"
+#include "a_scroll.h"
+#include "p_spec_thinkers.h"
 
 //===========================================================================
 //
@@ -103,26 +106,47 @@ static char HexenSectorSpecialOk[256]={
 	1,1,1,1,1,
 };
 
+#if 0
+static const char* udmfsolidskewtypes[] =
+{
+   "none",
+   "front",
+   "back",
+   nullptr
+};
+
+static const char* udmfmaskedskewtypes[] =
+{
+   "none",
+   "front_floor",
+   "front_ceiling",
+   "back_floor",
+   "back_ceiling",
+   nullptr
+};
+#endif
+
 static inline bool P_IsThingSpecial(int specnum)
 {
 	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
 			specnum == Thing_SpawnFacing || specnum == Thing_ProjectileIntercept || specnum == Thing_ProjectileAimed;
 }
-
-enum
+namespace
 {
-	Dm=1,
-	Ht=2,
-	Hx=4,
-	St=8,
-	Zd=16,
-	Zdt=32,
-	Va=64,
+	enum
+	{
+		Dm=1,		// Doom
+		Ht=2,		// Heretic
+		Hx=4,		// Hexen
+		St=8,		// Strife
+		Zd=16,		// ZDoom
+		Zdt=32,		// ZDoom Translated
+		Va=64,		// Vavoom
 
-	// will be extended later. Unknown namespaces will always be treated like the base
-	// namespace for each game
-};
-
+		// will be extended later. Unknown namespaces will always be treated like the base
+		// namespace for each game
+	};
+}
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
 //===========================================================================
@@ -226,58 +250,72 @@ FName UDMFParserBase::ParseKey(bool checkblock, bool *isblock)
 //
 //===========================================================================
 
-int UDMFParserBase::CheckInt(const char *key)
+int UDMFParserBase::CheckInt(FName key)
 {
 	if (sc.TokenType != TK_IntConst)
 	{
-		sc.ScriptMessage("Integer value expected for key '%s'", key);
+		sc.ScriptMessage("Integer value expected for key '%s'", key.GetChars());
 	}
 	return sc.Number;
 }
 
-double UDMFParserBase::CheckFloat(const char *key)
+double UDMFParserBase::CheckFloat(FName key)
 {
 	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
 	{
-		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+		sc.ScriptMessage("Floating point value expected for key '%s'", key.GetChars());
 	}
 	return sc.Float;
 }
 
-double UDMFParserBase::CheckCoordinate(const char *key)
+double UDMFParserBase::CheckCoordinate(FName key)
 {
 	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
 	{
-		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+		sc.ScriptMessage("Floating point value expected for key '%s'", key.GetChars());
 	}
 	if (sc.Float < -32768 || sc.Float > 32768)
 	{
-		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is [-32768 .. 32768]", sc.Float, key);
+		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is [-32768 .. 32768]", sc.Float, key.GetChars());
 		BadCoordinates = true;	// If this happens the map must not allowed to be started.
 	}
 	return sc.Float;
 }
 
-DAngle UDMFParserBase::CheckAngle(const char *key)
+DAngle UDMFParserBase::CheckAngle(FName key)
 {
-	return DAngle(CheckFloat(key)).Normalized360();
+	return DAngle::fromDeg(CheckFloat(key)).Normalized360();
 }
 
-bool UDMFParserBase::CheckBool(const char *key)
+bool UDMFParserBase::CheckBool(FName key)
 {
 	if (sc.TokenType == TK_True) return true;
 	if (sc.TokenType == TK_False) return false;
-	sc.ScriptMessage("Boolean value expected for key '%s'", key);
+	sc.ScriptMessage("Boolean value expected for key '%s'", key.GetChars());
 	return false;
 }
 
-const char *UDMFParserBase::CheckString(const char *key)
+const char *UDMFParserBase::CheckString(FName key)
 {
 	if (sc.TokenType != TK_StringConst)
 	{
-		sc.ScriptMessage("String value expected for key '%s'", key);
+		sc.ScriptMessage("String value expected for key '%s'", key.GetChars());
 	}
-	return parsedString;
+	return parsedString.GetChars();
+}
+
+int UDMFParserBase::MatchString(FName key, const char* const* strings, int defval)
+{
+	const char* string = CheckString(key);
+	for (int i = 0; *strings != nullptr; i++, strings++)
+	{
+		if (!stricmp(string, *strings))
+		{
+			return i;
+		}
+	}
+	sc.ScriptMessage("Unknown value %s for key '%s'", string, key.GetChars());
+	return defval;
 }
 
 //===========================================================================
@@ -291,7 +329,7 @@ static int udmfcmp(const void *a, const void *b)
 	FUDMFKey *A = (FUDMFKey*)a;
 	FUDMFKey *B = (FUDMFKey*)b;
 
-	return int(A->Key) - int(B->Key);
+	return int(A->Key.GetIndex()) - int(B->Key.GetIndex());
 }
 
 void FUDMFKeys::Sort()
@@ -392,10 +430,10 @@ FString GetUDMFString(FLevelLocals *Level, int type, int index, FName key)
 
 struct UDMFScroll
 {
-	bool ceiling;
+	int where;
 	int index;
 	double x, y;
-	FName type;
+	int scrolltype;
 };
 
 class UDMFParser : public UDMFParserBase
@@ -411,7 +449,9 @@ class UDMFParser : public UDMFParserBase
 	TArray<intmapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
-	TArray<UDMFScroll> UDMFScrollers;
+	TArray<UDMFScroll> UDMFSectorScrollers;
+	TArray<UDMFScroll> UDMFWallScrollers;
+	TArray<UDMFScroll> UDMFThrusters;
 
 	FDynamicColormap	*fogMap = nullptr, *normMap = nullptr;
 	FMissingTextureTracker &missingTex;
@@ -482,7 +522,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_Id:
 				th->thingid = CheckInt(key);
@@ -530,7 +570,7 @@ public:
 			case NAME_Arg3:
 			case NAME_Arg4:
 				CHECK_N(Hx | Zd | Zdt | Va)
-				th->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				th->args[key.GetIndex() - int(NAME_Arg0)] = CheckInt(key);
 				break;
 
 			case NAME_Arg0Str:
@@ -560,8 +600,8 @@ public:
 			case NAME_Skill14:
 			case NAME_Skill15:
 			case NAME_Skill16:
-				if (CheckBool(key)) th->SkillFilter |= (1<<(int(key)-NAME_Skill1));
-				else th->SkillFilter &= ~(1<<(int(key)-NAME_Skill1));
+				if (CheckBool(key)) th->SkillFilter |= (1<<(key.GetIndex()-NAME_Skill1));
+				else th->SkillFilter &= ~(1<<(key.GetIndex()-NAME_Skill1));
 				break;
 
 			case NAME_Class1:
@@ -581,8 +621,8 @@ public:
 			case NAME_Class15:
 			case NAME_Class16:
 				CHECK_N(Hx | Zd | Zdt | Va)
-				if (CheckBool(key)) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
-				else th->ClassFilter &= ~(1<<(int(key)-NAME_Class1));
+				if (CheckBool(key)) th->ClassFilter |= (1<<(key.GetIndex()-NAME_Class1));
+				else th->ClassFilter &= ~(1<<(key.GetIndex()-NAME_Class1));
 				break;
 
 			case NAME_Ambush:
@@ -636,6 +676,11 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
+			case NAME_NoCount:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_NOCOUNT, key);
+				break;
+
 			case NAME_Floatbobphase:
 				CHECK_N(Zd | Zdt)
 				th->FloatbobPhase = CheckInt(key);
@@ -644,7 +689,7 @@ public:
 			case NAME_Renderstyle:
 				{
 				FName style = CheckString(key);
-				switch (style)
+				switch (style.GetIndex())
 				{
 				case NAME_None:
 					th->RenderStyle = STYLE_None;
@@ -730,21 +775,26 @@ public:
 				break;
 
 			case NAME_ScaleX:
-				th->Scale.X = CheckFloat(key);
+				th->Scale.X = (float)CheckFloat(key);
 				break;
 
 			case NAME_ScaleY:
-				th->Scale.Y = CheckFloat(key);
+				th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_Scale:
-				th->Scale.X = th->Scale.Y = CheckFloat(key);
+				th->Scale.X = th->Scale.Y = (float)CheckFloat(key);
 				break;
 
 			case NAME_FriendlySeeBlocks:
 				CHECK_N(Zd | Zdt)
 				th->friendlyseeblocks = CheckInt(key);
 				break;
+
+			case NAME_lm_suncolor:
+			case NAME_lm_sampledist:
+				CHECK_N(Zd | Zdt)
+					break;
 
 			default:
 				CHECK_N(Zd | Zdt)
@@ -755,16 +805,20 @@ public:
 					ReadUserKey(ukey);
 					loader->MapThingsUserData.Push(ukey);
 				}
+				else if (stricmp("comment", key.GetChars()))
+				{
+					DPrintf(DMSG_WARNING, "Unknown UDMF thing key %s\n", key.GetChars());
+				}
 				break;
 			}
 		}
 		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(th->special) || th->special == 0))
 		{
-			th->args[0] = -FName(arg0str);
+			th->args[0] = -FName(arg0str).GetIndex();
 		}
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(th->special) || th->special == 0))
 		{
-			th->args[1] = -FName(arg1str);
+			th->args[1] = -FName(arg1str).GetIndex();
 		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
@@ -821,7 +875,7 @@ public:
 			FName key = ParseKey();
 
 			// This switch contains all keys of the UDMF base spec
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_V1:
 				ld->v1 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
@@ -859,7 +913,7 @@ public:
 			case NAME_Arg2:
 			case NAME_Arg3:
 			case NAME_Arg4:
-				ld->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				ld->args[key.GetIndex()-int(NAME_Arg0)] = CheckInt(key);
 				continue;
 
 			case NAME_Arg0Str:
@@ -918,6 +972,12 @@ public:
 				Flag(ld->flags, ML_BLOCK_FLOATERS, key); 
 				continue;
 
+			case NAME_Blocklandmonsters:
+				// This is from MBF21 so it may later be needed for a lower level namespace.
+				CHECK_N(St | Zd | Zdt | Va)
+				Flag(ld->flags2, ML2_BLOCKLANDMONSTERS, key);
+				continue;
+
 			case NAME_Translucent:
 				CHECK_N(St | Zd | Zdt | Va)
 				strifetrans = CheckBool(key); 
@@ -934,11 +994,13 @@ public:
 				continue;
 
 			default:
+				if (!stricmp("comment", key.GetChars()))
+					continue;
 				break;
 			}
 
 			// This switch contains all keys of the UDMF base spec which only apply to Hexen format specials
-			if (!isTranslated) switch (key)
+			if (!isTranslated) switch (key.GetIndex())
 			{
 			case NAME_Playercross:
 				Flag(ld->activation, SPAC_Cross, key); 
@@ -985,7 +1047,7 @@ public:
 			}
 
 			// This switch contains all keys which are ZDoom specific
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 			case NAME_Alpha:
 				ld->setAlpha(CheckFloat(key));
@@ -1104,7 +1166,16 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
+			case NAME_lm_sampledist:
+			case NAME_lm_sampledist_top:
+			case NAME_lm_sampledist_mid:
+			case NAME_lm_sampledist_bot:
+				CHECK_N(Zd | Zdt)
+				break;
+
 			default:
+				if (strnicmp("user_", key.GetChars(), 5))
+					DPrintf(DMSG_WARNING, "Unknown UDMF linedef key %s\n", key.GetChars());
 				break;
 			}
 
@@ -1156,11 +1227,11 @@ public:
 		}
 		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(ld->special) || ld->special == 0))
 		{
-			ld->args[0] = -FName(arg0str);
+			ld->args[0] = -FName(arg0str).GetIndex();
 		}
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(ld->special) || ld->special == 0))
 		{
-			ld->args[1] = -FName(arg1str);
+			ld->args[1] = -FName(arg1str).GetIndex();
 		}
 		if ((ld->flags & ML_3DMIDTEX_IMPASS) && !(ld->flags & ML_3DMIDTEX)) // [TP]
 		{
@@ -1177,6 +1248,7 @@ public:
 	void ParseSidedef(side_t *sd, intmapsidedef_t *sdt, int index)
 	{
 		double texOfs[2]={0,0};
+		DVector2 scrolls[4] = {};
 
 		memset(sd, 0, sizeof(*sd));
 		sdt->bottomtexture = "-";
@@ -1190,7 +1262,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 
 			{
 			case NAME_Offsetx:
@@ -1218,10 +1290,12 @@ public:
 				continue;
 
 			default:
+				if (!stricmp("comment", key.GetChars()))
+					continue;
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 			case NAME_offsetx_top:
 				sd->SetTextureXOffset(side_t::top, CheckFloat(key));
@@ -1277,6 +1351,30 @@ public:
 
 			case NAME_lightabsolute:
 				Flag(sd->Flags, WALLF_ABSLIGHTING, key);
+				continue;
+
+			case NAME_light_top:
+				sd->SetLight(CheckInt(key), side_t::top);
+				continue;
+				
+			case NAME_lightabsolute_top:
+				Flag(sd->Flags, WALLF_ABSLIGHTING_TOP, key);
+				continue;
+
+			case NAME_light_mid:
+				sd->SetLight(CheckInt(key), side_t::mid);
+				continue;
+
+			case NAME_lightabsolute_mid:
+				Flag(sd->Flags, WALLF_ABSLIGHTING_MID, key);
+				continue;
+
+			case NAME_light_bottom:
+				sd->SetLight(CheckInt(key), side_t::bottom);
+				continue;
+
+			case NAME_lightabsolute_bottom:
+				Flag(sd->Flags, WALLF_ABSLIGHTING_BOTTOM, key);
 				continue;
 
 			case NAME_lightfog:
@@ -1404,19 +1502,86 @@ public:
 				break;
 
 			case NAME_useowncoloradd_top:
-				Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnAdditiveColor, key);
-				sd->Flags |= WALLF_EXTCOLOR;
+				if (Flag(sd->textures[side_t::top].flags, side_t::part::UseOwnAdditiveColor, key))
+					sd->Flags |= WALLF_EXTCOLOR;
+				break;
 
 			case NAME_useowncoloradd_mid:
 				if (Flag(sd->textures[side_t::mid].flags, side_t::part::UseOwnAdditiveColor, key))
 					sd->Flags |= WALLF_EXTCOLOR;
+				break;
 
 			case NAME_useowncoloradd_bottom:
 				if (Flag(sd->textures[side_t::bottom].flags, side_t::part::UseOwnAdditiveColor, key))
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
+			case NAME_lm_sampledist:
+			case NAME_lm_sampledist_top:
+			case NAME_lm_sampledist_mid:
+			case NAME_lm_sampledist_bot:
+				CHECK_N(Zd | Zdt)
+					break;
+
+#if 0		// specs are to rough and too vague - needs to be cleared first how this works.
+			case NAME_skew_top_type:
+				CHECK_N(Zd | Zdt)
+				sd->textures[side_t::top].skew = MatchString(key, udmfsolidskewtypes, 0);
+				break;
+
+			case NAME_skew_middle_type:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::mid].skew = MatchString(key, udmfmaskedskewtypes, 0);
+				break;
+
+			case NAME_skew_bottom_type:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::bottom].skew = MatchString(key, udmfsolidskewtypes, 0);
+				break;
+#endif
+
+			case NAME_skew_top:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::top].skew = CheckInt(key);
+				break;
+
+			case NAME_skew_middle:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::mid].skew = CheckInt(key);
+				break;
+
+			case NAME_skew_bottom:
+				CHECK_N(Zd | Zdt)
+					sd->textures[side_t::bottom].skew = CheckInt(key);
+				break;
+
+			case NAME_xscroll:
+				scrolls[0].X = CheckFloat(key);
+				break;
+			case NAME_yscroll:
+				scrolls[0].Y = CheckFloat(key);
+				break;
+			case NAME_xscrolltop:
+				scrolls[1].X = CheckFloat(key);
+				break;
+			case NAME_yscrolltop:
+				scrolls[1].Y = CheckFloat(key);
+				break;
+			case NAME_xscrollmid:
+				scrolls[2].X = CheckFloat(key);
+				break;
+			case NAME_yscrollmid:
+				scrolls[2].Y = CheckFloat(key);
+				break;
+			case NAME_xscrollbottom:
+				scrolls[3].X = CheckFloat(key);
+				break;
+			case NAME_yscrollbottom:
+				scrolls[3].Y = CheckFloat(key);
+				break;
 			default:
+				if (strnicmp("user_", key.GetChars(), 5))
+					DPrintf(DMSG_WARNING, "Unknown UDMF sidedef key %s\n", key.GetChars());
 				break;
 
 			}
@@ -1432,6 +1597,21 @@ public:
 		sd->AddTextureYOffset(side_t::top, texOfs[1]);
 		sd->AddTextureYOffset(side_t::mid, texOfs[1]);
 		sd->AddTextureYOffset(side_t::bottom, texOfs[1]);
+		int scroll = scw_all;
+		for (int i = 1; i < 4; i++)
+		{
+			auto& scrl = scrolls[i];
+			if (!scrl.isZero())
+			{
+				int where = 1 << (i - 1);
+				scroll &= ~where;
+				UDMFWallScrollers.Push({ where, index, scrl.X, scrl.Y, 0 });
+			}
+		}
+		if (!scrolls[0].isZero() && scroll)
+		{
+			UDMFWallScrollers.Push({ scroll, index, scrolls[0].X, scrolls[0].Y, 0});
+		}
 	}
 
 	//===========================================================================
@@ -1453,11 +1633,19 @@ public:
 		// Brand new UDMF scroller properties
 		double scroll_ceil_x = 0;
 		double scroll_ceil_y = 0;
-		FName scroll_ceil_type = NAME_None;
+		int scroll_ceil_type = 0;
 
 		double scroll_floor_x = 0;
 		double scroll_floor_y = 0;
-		FName scroll_floor_type = NAME_None;
+		int scroll_floor_type = 0;
+
+		double friction = -FLT_MAX, movefactor = -FLT_MAX;
+
+		DVector2 thrust = { 0,0 };
+		int thrustgroup = 0;
+		int thrustlocation = 0;
+
+		const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
 
 		memset(sec, 0, sizeof(*sec));
 		sec->Level = Level;
@@ -1496,7 +1684,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_Heightfloor:
 				sec->SetPlaneTexZ(sector_t::floor, CheckCoordinate(key));
@@ -1533,10 +1721,12 @@ public:
 				continue;
 
 			default:
+				if (!stricmp("comment", key.GetChars()))
+					continue;
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 				case NAME_Xpanningfloor:
 					sec->SetXOffset(sector_t::floor, CheckFloat(key));
@@ -1869,30 +2059,110 @@ public:
 					break;
 
 				case NAME_scroll_ceil_x:
+					scroll_ceil_x = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_xscrollceiling:
 					scroll_ceil_x = CheckFloat(key);
 					break;
 
 				case NAME_scroll_ceil_y:
+					scroll_ceil_y = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_yscrollceiling:
 					scroll_ceil_y = CheckFloat(key);
 					break;
 
-				case NAME_scroll_ceil_type:
-					scroll_ceil_type = CheckString(key);
+				case NAME_scrollceilingmode:
+					scroll_ceil_type = CheckInt(key);
 					break;
 
+				case NAME_scroll_ceil_type:
+				{
+					const char* val = CheckString(key);
+					if (!stricmp(val, "both")) scroll_ceil_type = SCROLL_All;
+					else if (!stricmp(val, "visual")) scroll_ceil_type = SCROLL_Textures;
+					if (!stricmp(val, "physical")) scroll_ceil_type = SCROLL_All & ~SCROLL_Textures;
+					else scroll_ceil_type = 0;
+					break;
+				}
+
 				case NAME_scroll_floor_x:
+					scroll_floor_x = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_xscrollfloor:
 					scroll_floor_x = CheckFloat(key);
 					break;
 
 				case NAME_scroll_floor_y:
+					scroll_floor_y = CheckFloat(key) * scrollfactor;
+					break;
+
+				case NAME_yscrollfloor:
 					scroll_floor_y = CheckFloat(key);
 					break;
 
-				case NAME_scroll_floor_type:
-					scroll_floor_type = CheckString(key);
+				case NAME_scrollfloormode:
+					scroll_floor_type = CheckInt(key);
 					break;
 
-				// These two are used by Eternity for something I do not understand.
+				case NAME_scroll_floor_type:
+				{
+					const char* val = CheckString(key);
+					if (!stricmp(val, "both")) scroll_floor_type = SCROLL_All;
+					else if (!stricmp(val, "visual")) scroll_floor_type = SCROLL_Textures;
+					if (!stricmp(val, "physical")) scroll_floor_type = SCROLL_All & ~SCROLL_Textures;
+					else scroll_floor_type = 0;
+					break;
+				}
+
+				case NAME_colormap:
+					sec->selfmap = R_ColormapNumForName(CheckString(key));
+					break;
+
+				case NAME_frictionfactor:
+					friction = CheckFloat(key);
+					break;
+
+				case NAME_movefactor:
+					movefactor = CheckFloat(key);
+					break;
+
+				case NAME_skyfloor:
+					sec->planes[sector_t::floor].skytexture[0] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyfloor2:
+					sec->planes[sector_t::floor].skytexture[1] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyceiling:
+					sec->planes[sector_t::ceiling].skytexture[0] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_skyceiling2:
+					sec->planes[sector_t::ceiling].skytexture[1] = TexMan.CheckForTexture(CheckString(key), ETextureType::Wall, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+					break;
+
+				case NAME_xthrust:
+					thrust.X = CheckFloat(key);
+					break;
+
+				case NAME_ythrust:
+					thrust.Y = CheckFloat(key);
+					break;
+
+				case NAME_thrustgroup:
+					thrustgroup = CheckInt(key);
+					break;
+
+				case NAME_thrustlocation:
+					thrustlocation = CheckInt(key);
+					break;
+
+					// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:
 
@@ -1919,8 +2189,15 @@ public:
 				case NAME_Health3DGroup:
 					sec->health3dgroup = CheckInt(key);
 					break;
-					
+
+				case NAME_lm_sampledist_floor:
+				case NAME_lm_sampledist_ceiling:
+					CHECK_N(Zd | Zdt)
+					break;
+
 				default:
+					if (strnicmp("user_", key.GetChars(), 5))
+						DPrintf(DMSG_WARNING, "Unknown UDMF sector key %s\n", key.GetChars());
 					break;
 			}
 			if ((namespace_bits & (Zd | Zdt)) && !strnicmp("user_", key.GetChars(), 5))
@@ -1950,14 +2227,18 @@ public:
 			sec->Flags &= ~SECF_DAMAGEFLAGS;
 		}
 
-		// Cannot be initialized yet because they need the final sector array.
+		// These cannot be initialized yet because they need the final sector array.
 		if (scroll_ceil_type != NAME_None)
 		{
-			UDMFScrollers.Push({ true, index, scroll_ceil_x, scroll_ceil_y, scroll_ceil_type });
+			UDMFSectorScrollers.Push({ true, index, scroll_ceil_x, scroll_ceil_y, scroll_ceil_type });
 		}
 		if (scroll_floor_type != NAME_None)
 		{
-			UDMFScrollers.Push({ false, index, scroll_floor_x, scroll_floor_y, scroll_floor_type });
+			UDMFSectorScrollers.Push({ false, index, scroll_floor_x, scroll_floor_y, scroll_floor_type });
+		}
+		if (!thrust.isZero())
+		{
+			UDMFThrusters.Push({ thrustlocation, index, thrust.X, thrust.Y, thrustgroup });
 		}
 
 		
@@ -1981,6 +2262,7 @@ public:
 			DVector3 n = DVector3(cp[0], cp[1], cp[2]).Unit();
 			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
+		sec->CheckOverlap();
 
 		if (lightcolor == ~0u && fadecolor == ~0u && desaturation == -1 && fogdensity == -1)
 		{
@@ -2010,6 +2292,16 @@ public:
 			sec->Colormap.Desaturation = clamp(desaturation, 0, 255);
 			sec->Colormap.FogDensity = clamp(fogdensity, 0, 512) / 2;
 		}
+		if (friction > -FLT_MAX)
+		{
+			sec->friction = clamp(friction, 0., 1.);
+			sec->movefactor = FrictionToMoveFactor(sec->friction);
+			sec->Flags |= SECF_FRICTION;
+		}
+		if (movefactor > -FLT_MAX)
+		{
+			sec->movefactor = max(movefactor, 1 / 2048.);
+		}
 	}
 
 	//===========================================================================
@@ -2028,7 +2320,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch (key)
+			switch (key.GetIndex())
 			{
 			case NAME_X:
 				x = CheckCoordinate(key);
@@ -2061,7 +2353,7 @@ public:
 	//
 	//===========================================================================
 
-	void ProcessLineDefs()
+	void ProcessLineDefs(TArray<TArray<int>>& siderefs)
 	{
 		int sidecount = 0;
 		for(unsigned i = 0, skipped = 0; i < ParsedLines.Size();)
@@ -2096,6 +2388,7 @@ public:
 			}
 		}
 		unsigned numlines = ParsedLines.Size();
+		siderefs.Resize(ParsedSides.Size());
 		Level->sides.Alloc(sidecount);
 		Level->lines.Alloc(numlines);
 		int line, side;
@@ -2115,10 +2408,24 @@ public:
 					int mapside = int(intptr_t(lines[line].sidedef[sd]))-1;
 					if (mapside < sidecount)
 					{
+						siderefs[mapside].Push(side);
 						sides[side] = ParsedSides[mapside];
 						sides[side].linedef = &lines[line];
 						sides[side].sector = &Level->sectors[intptr_t(sides[side].sector)];
 						lines[line].sidedef[sd] = &sides[side];
+
+#if 0
+						if (sd == 1)
+						{
+							// fix flags for backside. The definition is linedef relative, not sidedef relative.
+							static const uint8_t swaps[] = { 0, side_t::skew_back, side_t::skew_front };
+							static const uint8_t swapsm[] = {0, side_t::skew_back_floor, side_t::skew_back_ceiling, side_t::skew_front_floor, side_t::skew_front_ceiling};
+
+							sides[side].textures[side_t::top].skew = swaps[sides[side].textures[side_t::top].skew];
+							sides[side].textures[side_t::bottom].skew = swaps[sides[side].textures[side_t::bottom].skew];
+							sides[side].textures[side_t::mid].skew = swapsm[sides[side].textures[side_t::mid].skew];
+						}
+#endif
 
 						loader->ProcessSideTextures(!isExtended, &sides[side], sides[side].sector, &ParsedSideTextures[mapside],
 							lines[line].special, lines[line].args[0], &tempalpha[sd], missingTex);
@@ -2161,16 +2468,18 @@ public:
 		isExtended = false;
 		floordrop = false;
 
-		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), map->Read(ML_TEXTMAP));
+		sc.OpenMem(fileSystem.GetFileFullName(map->lumpnum), map->Read(ML_TEXTMAP));
 		sc.SetCMode(true);
 		if (sc.CheckString("namespace"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
 			namespc = sc.String;
-			switch(namespc)
+			switch(namespc.GetIndex())
 			{
+			case NAME_Dsda:
 			case NAME_ZDoom:
+			case NAME_Eternity:
 				namespace_bits = Zd;
 				isTranslated = false;
 				break;
@@ -2302,28 +2611,39 @@ public:
 		// Create the real sectors
 		Level->sectors.Alloc(ParsedSectors.Size());
 		memcpy(&Level->sectors[0], &ParsedSectors[0], Level->sectors.Size() * sizeof(sector_t));
-		Level->sectors[0].e = new extsector_t[Level->sectors.Size()];
+		Level->extsectors.Alloc(Level->sectors.Size());
 		for(unsigned i = 0; i < Level->sectors.Size(); i++)
 		{
-			Level->sectors[i].e = &Level->sectors[0].e[i];
-		}
-		// Now create the scrollers.
-		for (auto &scroll : UDMFScrollers)
-		{
-			const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
-			if (scroll.type == NAME_Both || scroll.type == NAME_Visual)
-			{
-				loader->CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
-			}
-			if (scroll.type == NAME_Both || scroll.type == NAME_Physical)
-			{
-				// sc_carry_ceiling doesn't do anything yet.
-				loader->CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, &Level->sectors[scroll.index], 0);
-			}
+			Level->sectors[i].e = &Level->extsectors[i];
 		}
 
-		// Create the real linedefs and decompress the sidedefs
-		ProcessLineDefs();
+		// Create the real linedefs and decompress the sidedefs. Must be done before
+		TArray<TArray<int>> siderefs;
+		ProcessLineDefs(siderefs);
+
+		// Now create the scrollers.
+		for (auto &scroll : UDMFSectorScrollers)
+		{
+			if (scroll.scrolltype & SCROLL_Textures)
+			{
+				loader->CreateScroller(scroll.where == 1 ? EScroll::sc_ceiling : EScroll::sc_floor, -scroll.x, scroll.y, &Level->sectors[scroll.index], nullptr, 0);
+			}
+			if (scroll.scrolltype & (SCROLL_StaticObjects | SCROLL_Players | SCROLL_Monsters))
+			{
+				loader->CreateScroller(scroll.where == 1 ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x, scroll.y, &Level->sectors[scroll.index], nullptr, 0, scw_all, scroll.scrolltype);
+			}
+		}
+		for (auto& scroll : UDMFWallScrollers)
+		{
+			for(auto sd : siderefs[scroll.index])
+			{
+				loader->CreateScroller(EScroll::sc_side, scroll.x, scroll.y, nullptr, &Level->sides[sd], 0);
+			}
+		}
+		for (auto& scroll : UDMFThrusters)
+		{
+			Level->CreateThinker<DThruster>(&Level->sectors[scroll.index], scroll.x, scroll.y, scroll.scrolltype, scroll.where);
+		}
 	}
 };
 

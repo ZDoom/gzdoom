@@ -41,20 +41,20 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#define VERSIONSTR "4.4pre"
+#define VERSIONSTR "4.13pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 4,3,9999,0
-#define RC_PRODUCTVERSION 4,3,9999,0
+#define RC_FILEVERSION 4,12,9999,0
+#define RC_PRODUCTVERSION 4,12,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
 // These are for content versioning.
 #define VER_MAJOR 4
-#define VER_MINOR 4
+#define VER_MINOR 13
 #define VER_REVISION 0
 
 // This should always refer to the GZDoom version a derived port is based on and not reflect the derived port's version number!
 #define ENG_MAJOR 4
-#define ENG_MINOR 4
+#define ENG_MINOR 13
 #define ENG_REVISION 0
 
 // Version identifier for network games.
@@ -65,7 +65,7 @@ const char *GetVersionString();
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "219"
+#define LASTRUNVERSION "225"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
@@ -74,7 +74,7 @@ const char *GetVersionString();
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.
-#define MINDEMOVERSION 0x21F
+#define MINDEMOVERSION 0x221
 
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
@@ -88,25 +88,37 @@ const char *GetVersionString();
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
-#define SAVEVER 4558
+#define SAVEVER 4560
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "GZDOOM"
 #define BASEWAD "gzdoom.pk3"
 #define OPTIONALWAD "game_support.pk3"
+#define GZDOOM 1
+#define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
 #define GAMENAME "GZDoom"
 #define WGAMENAME L"GZDoom"
 #define GAMENAMELOWERCASE "gzdoom"
+#define QUERYIWADDEFAULT true
 #define FORUM_URL "http://forum.zdoom.org/"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"
+// For QUERYIWADDEFAULT: Set to 'true' to always show dialog box on startup by default, 'false' to disable.
+// Should set to 'false' for standalone games, and set to 'true' for regular source port forks that are meant to run any game.
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
 #define GAME_DIR ".config/" GAMENAMELOWERCASE
 #endif
+
+#define DEFAULT_DISCORD_APP_ID "951303644597325885"
+
+const int SAVEPICWIDTH = 216;
+const int SAVEPICHEIGHT = 162;
+const int VID_MIN_WIDTH = 320;
+const int VID_MIN_HEIGHT = 200;
 
 
 #endif //__VERSION_H__

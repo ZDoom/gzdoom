@@ -1,0 +1,34 @@
+N/A                                   weapon_recoil                                                 Firing a weapon pushes the player back
+---N/A (todo, lastenemy?)             monsters_remember                       1                         Friendly monsters return to old target when losing current one
+!LEVEL2_NOINFIGHTING                  monster_infighting                      1                          Monsters infight
+LEVEL3_AVOIDMELEE                     monster_backing                                                 Ranged monsters will back away from close melee targets
+COMPATF2_AVOID_HAZARDS                monster_avoid_hazards                   1                             Monsters avoid hazards such as crushing ceilings
+N/A                                   monkeys                                                 Monsters can climb steep stairs
+COMPATF_MBFMONSTERMOVE                monster_friction                        1                        Monsters are affected by friction modifiers
+                                      help_friends                                                 Friendly monsters prefer targets of friends
+                                      player_helpers                                                 Number of dogs to spawn
+                                      friend_distance                         128                     Friendly monsters try to keep at least this distance apart
+!LEVEL3_NOJUMPDOWN                    dog_jumping                             1                   Dogs can jump down from high ledges
+N/A                                   comp_telefrag                                                 Spawners only telefrag on Map 30
+COMPATF_DROPOFF                       comp_dropoff                            01                     Discourage / prevent enemies from walking off ledges (?)
+COMPATF_CORPSEGIBS,BCOMPATF_VILEGHOSTS comp_vile                                                 Archviles can create ghosts
+COMPATF_LIMITPAIN                     comp_pain                                                 Pain elementals don't spawn lost souls if there are over 20
+--- N/A (todo)                        comp_skull                                                 Lost souls can spawn past impassable lines
+N/A                                   comp_blazing                                                 Blazing doors have double sounds
+COMPATF_NODOORLIGHT                   comp_doorlight                                                 Door lighting changes are abrupt
+COMPATF_LIGHT,COMPATF_SHORTTEX (partial)               comp_model                                                 Assorted physics quirks and bugs
+N/A                                   comp_god                                                 God mode is removed in sector 11 & ignored at 1000+ damage
+N/A                                   comp_falloff                                                 Don't pull monsters off ledges they are hanging off of
+COMPATF2_FLOORMOVE                    comp_floors                                                 Assorted floor bugs
+N/A                                   comp_skymap                                                 Don't apply invulnerability palette to skies
+---todo                               comp_pursuit                            1                    Monsters can infight immediately when alerted
+N/A                                   comp_doorstuck                                                 Monsters get stuck in door tracks
+COMPATF2_STAYONLIFT                   comp_staylift                                                 Monsters don't prefer staying on lifts their target is on
+N/A                                   comp_zombie                                                 Dead players can activate things
+COMPATF_STAIRINDEX                    comp_stairs                                                 Assorted stair bugs
+N/A                                   comp_infcheat                                                 ?
+N/A                                   comp_zerotags                                                 Allow tag zero actions
+N/A                                   comp_respawn                                                 Monsters not spawned at level start respawn at the origin
+N/A                                   comp_soul                                                 Buggy lost soul bouncing
+COMPATF_CROSSDROPOFF                  comp_ledgeblock                         10                       Monsters are blocked by ledges (except when scrolling)
+---todo                               comp_friendlyspawn                      1                          Spawned things inherit the friend attribute from the source

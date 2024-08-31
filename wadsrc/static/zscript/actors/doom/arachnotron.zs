@@ -16,6 +16,7 @@ class Arachnotron : Actor
 		Monster;
 		+FLOORCLIP
 		+BOSSDEATH
+		+MAP07BOSS2
 		SeeSound "baby/sight";
 		PainSound "baby/pain";
 		DeathSound "baby/death";

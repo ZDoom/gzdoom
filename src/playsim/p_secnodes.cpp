@@ -242,7 +242,7 @@ msecnode_t *P_CreateSecNodeList(AActor *thing, double radius, msecnode_t *sector
 
 	while ((ld = it.Next()))
 	{
-		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+		if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 			continue;
 
 		// This line crosses through the object.
@@ -390,7 +390,7 @@ void AActor::UpdateRenderSectorList()
 		{
 			int bx = Level->blockmap.GetBlockX(X());
 			int by = Level->blockmap.GetBlockY(Y());
-			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
+			FBoundingBox bb(X(), Y(), min(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
 			// Are there any portals near the actor's position?
 			if (Level->blockmap.isValidBlock(bx, by) && Level->PortalBlockmap(bx, by).neighborContainsLines)
 			{
@@ -398,7 +398,7 @@ void AActor::UpdateRenderSectorList()
 				for (auto &p : Level->linePortals)
 				{
 					if (p.mType == PORTT_VISUAL) continue;
-					if (bb.inRange(p.mOrigin) && bb.BoxOnLineSide(p.mOrigin))
+					if (inRange(bb, p.mOrigin) && BoxOnLineSide(bb, p.mOrigin))
 					{
 						touching_lineportallist = P_AddPortalnode(&p, this, touching_lineportallist);
 					}
@@ -414,7 +414,7 @@ void AActor::UpdateRenderSectorList()
 			if (planeh <= lasth) break;	// broken setup.
 			if (Top() + SPRITE_SPACE < planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::ceiling);
+			DVector2 newpos = Pos().XY() + sec->GetPortalDisplacement(sector_t::ceiling);
 			sec = sec->Level->PointInSector(newpos);
 			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}
@@ -426,7 +426,7 @@ void AActor::UpdateRenderSectorList()
 			if (planeh >= lasth) break;	// broken setup.
 			if (Z() - SPRITE_SPACE > planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::floor);
+			DVector2 newpos = Pos().XY() + sec->GetPortalDisplacement(sector_t::floor);
 			sec = sec->Level->PointInSector(newpos);
 			touching_sectorportallist = P_AddSecnode(sec, this, touching_sectorportallist, sec->sectorportal_thinglist);
 		}

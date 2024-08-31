@@ -24,7 +24,7 @@
 #ifndef __M_MISC__
 #define __M_MISC__
 
-#include "basictypes.h"
+#include "basics.h"
 #include "zstring.h"
 
 class FConfigFile;
@@ -44,23 +44,6 @@ void M_LoadDefaults ();
 bool M_SaveDefaults (const char *filename);
 void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection, size_t sublen);
 
-// Get special directory paths (defined in m_specialpaths.cpp)
 
-#ifdef __unix__
-FString GetUserFile (const char *path);		// Prepends ~/.zdoom to path
-#endif
-FString M_GetAppDataPath(bool create);
-FString M_GetCachePath(bool create);
-FString M_GetAutoexecPath();
-FString M_GetCajunPath(const char *filename);
-FString M_GetConfigPath(bool for_reading);
-FString M_GetScreenshotsPath();
-FString M_GetSavegamesPath();
-FString M_GetDocumentsPath();
-
-#ifdef __APPLE__
-FString M_GetMacAppSupportPath(const bool create = true);
-void M_GetMacSearchDirectories(FString& user_docs, FString& user_app_support, FString& local_app_support);
-#endif // __APPLE__
-
+#include "i_specialpaths.h"
 #endif

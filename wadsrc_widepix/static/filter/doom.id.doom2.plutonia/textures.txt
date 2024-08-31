@@ -1,0 +1,10 @@
+graphic BOSSBACK, 560, 200
+{
+	patch PLUBOSS, 0, 0 { }
+}
+
+graphic INTERPIC, 560, 200
+{
+	patch PLUINTER, 0, 0 { }
+}
+

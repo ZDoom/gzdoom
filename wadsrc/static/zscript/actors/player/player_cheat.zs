@@ -42,6 +42,11 @@ extend class PlayerPawn
 	}
 	
 	native void CheatSuicide();
+	
+	private bool CheckArtifact(class<Actor> type)
+	{
+		return !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor") && !(type is "Key") && !(type is "Weapon");
+	}
 
 	virtual void CheatGive (String name, int amount)
 	{
@@ -134,7 +139,7 @@ extend class PlayerPawn
 			{
 				for (i = 0; i < 4; ++i)
 				{
-					let armoritem = Inventory(Spawn("HexenArmor"));
+					let armoritem = Inventory(Spawn(GetHexenArmorClass()));
 					armoritem.health = i;
 					armoritem.Amount = 0;
 					if (!armoritem.CallTryPickup (self))
@@ -175,7 +180,7 @@ extend class PlayerPawn
 			for (i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				let type = (class<Weapon>)(AllActorClasses[i]);
-				if (type != null && type != "Weapon")
+				if (type != null && type != "Weapon" && !type.isAbstract())
 				{
 					// Don't give replaced weapons unless the replacement was done by Dehacked.
 					let rep = GetReplacement(type);
@@ -207,8 +212,7 @@ extend class PlayerPawn
 				if (type!= null)
 				{
 					let def = GetDefaultByType (type);
-					if (def.Icon.isValid() && def.MaxAmount > 1 &&
-						!(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor"))
+					if (def.Icon.isValid() && (def.MaxAmount > 1 || def.bAutoActivate == false) && CheckArtifact(type))
 					{
 						// Do not give replaced items unless using "give everything"
 						if (giveall == ALL_YESYES || GetReplacement(type) == type)
@@ -364,7 +368,7 @@ extend class PlayerPawn
 			for (int i = 0; i < AllActorClasses.Size(); ++i)
 			{
 				type = (class<Inventory>)(AllActorClasses[i]);
-				if (type!= null && !(type is "PuzzleItem") && !(type is "Powerup") && !(type is "Ammo") &&	!(type is "Armor"))
+				if (type!= null && CheckArtifact(type))
 				{
 					let pack = FindInventory(type);
 					if (pack) pack.Destroy();
@@ -422,35 +426,40 @@ extend class PlayerPawn
 	}
 	
 
-	virtual String CheatMorph(class<PlayerPawn> morphClass, bool quickundo)
+	virtual String CheatMorph(class<PlayerPawn> morphClass, bool undo)
 	{
-		let oldclass = GetClass();
-
 		// Set the standard morph style for the current game
-		int style = MRF_UNDOBYTOMEOFPOWER;
-		if (gameinfo.gametype == GAME_Hexen) style |= MRF_UNDOBYCHAOSDEVICE;
+		EMorphFlags style = MRF_UNDOBYTOMEOFPOWER;
+		if (GameInfo.GameType == GAME_Hexen)
+			style |= MRF_UNDOBYCHAOSDEVICE;
 
-		if (player.morphTics)
+		if (Alternative)
 		{
-			if (UndoPlayerMorph (player))
+			class<PlayerPawn> cls = GetClass();
+			Actor mo = Alternative;
+			if (!undo || Unmorph(self))
 			{
-				if (!quickundo && oldclass != morphclass && MorphPlayer (player, morphclass, 0, style))
+				if ((!undo && Morph(self, morphClass, null, 0, style))
+					|| (undo && morphClass != cls && mo.Morph(mo, morphClass, null, 0, style)))
 				{
 					return StringTable.Localize("$TXT_STRANGER");
 				}
-				return StringTable.Localize("$TXT_NOTSTRANGE");
+
+				if (undo)
+					return StringTable.Localize("$TXT_NOTSTRANGE");
 			}
 		}
-		else if (MorphPlayer (player, morphclass, 0, style))
+		else if (Morph(self, morphClass, null, 0, style))
 		{
 			return StringTable.Localize("$TXT_STRANGE");
 		}
+
 		return "";
 	}
 	
 	virtual void CheatTakeWeaps()
 	{
-		if (player.morphTics || health <= 0)
+		if (Alternative || health <= 0)
 		{
 			return;
 		}

@@ -10,6 +10,10 @@ class Inventory : Actor
 	const BLINKTHRESHOLD = (4*32);
 	const BONUSADD = 6;
 
+	private bool bSharingItem; // Currently being shared (avoid infinite recursions).
+	private bool pickedUp[MAXPLAYERS]; // If items are set to local, track who already picked it up.
+	private bool bCreatingCopy; // Tells GoAway that it needs to return true so a new copy of the item is spawned.
+
 	deprecated("3.7") private int ItemFlags;
 	Actor Owner;						// Who owns this item? NULL if it's still a pickup.
 	int Amount;						// Amount of item this instance has
@@ -65,6 +69,8 @@ class Inventory : Actor
 	flagdef IsHealth: ItemFlags, 22;
 	flagdef AlwaysPickup: ItemFlags, 23;
 	flagdef Unclearable: ItemFlags, 24;
+	flagdef NeverLocal: ItemFlags, 25;
+	flagdef IsKeyItem: ItemFlags, 26;
 
 	flagdef ForceRespawnInSurvival: none, 0;
 	flagdef PickupFlash: none, 6;
@@ -255,6 +261,47 @@ class Inventory : Actor
 		}
 	}
 
+	virtual bool ShouldShareItem(Actor giver)
+	{
+		return false;
+	}
+
+	protected void ShareItemWithPlayers(Actor giver)
+	{
+		if (bSharingItem)
+			return;
+
+		int skip = giver && giver.player ? giver.PlayerNumber() : -1;
+		for (int i; i < MAXPLAYERS; ++i)
+		{
+			if (!playerInGame[i] || i == skip)
+				continue;
+
+			let item = CreateLocalCopy(players[i].mo);
+			if (!item || item == self)
+				continue;
+
+			item.ClearCounters();
+			item.bSharingItem = true;
+			item.bDropped = item.bNeverLocal = true;
+			if (!item.CallTryPickup(players[i].mo))
+			{
+				item.Destroy();
+				continue;
+			}
+			item.bSharingItem = false;
+
+			if (!bQuiet)
+			{
+				PrintPickupMessage(i == consoleplayer, item.PickupMessage());
+
+				item.PlayPickupSound(players[i].mo);
+				if (!bNoScreenFlash && players[i].PlayerState != PST_DEAD)
+					players[i].BonusCount = BONUSADD;
+			}
+		}
+	}
+
 	//===========================================================================
 	//
 	// Inventory :: DoRespawn
@@ -371,7 +418,10 @@ class Inventory : Actor
 	{
 		Inventory copy;
 
-		Amount = MIN(Amount, MaxAmount);
+		// Clamping this on local copy creation presents too many possible
+		// pitfalls (e.g. Health items).
+		if (!IsCreatingLocalCopy())
+			Amount = MIN(Amount, MaxAmount);
 		if (GoAway ())
 		{
 			copy = Inventory(Spawn (GetClass()));
@@ -597,8 +647,17 @@ class Inventory : Actor
 		// unmorphed versions of a currently morphed actor cannot pick up anything. 
 		if (bUnmorphed) return false, null;
 
-		bool res;
-		if (CanPickup(toucher))
+		// [AA] starting with true, so that CanReceive can unset it,
+		// if necessary:
+		bool res = true;
+		class<Inventory> cls = self.GetClass();
+		// [AA] CanReceive lets the actor receiving the item process it first.
+		if (!toucher.CanReceive(self))
+		{
+			res = false;
+		}
+		// CanPickup processes restrictions by player class.
+		else if (CanPickup(toucher))
 		{
 			res = TryPickup(toucher);
 		}
@@ -637,6 +696,12 @@ class Inventory : Actor
 					}
 				}
 			}
+			// [AA] Let the toucher do something with the item they've just received:
+			toucher.HasReceived(self, cls);
+
+			// If the item can be shared, make sure every player gets a copy.
+			if (multiplayer && !deathmatch && !bDropped && ShouldShareItem(toucher))
+				ShareItemWithPlayers(toucher);
 		}
 		return res, toucher;
 	}
@@ -758,12 +823,17 @@ class Inventory : Actor
 
 	override void Touch (Actor toucher)
 	{
+		bool localPickUp;
 		let player = toucher.player;
-
-		// If a voodoo doll touches something, pretend the real player touched it instead.
-		if (player != NULL)
+		if (player)
 		{
+			// If a voodoo doll touches something, pretend the real player touched it instead.
 			toucher = player.mo;
+			// Client already picked this up, so ignore them.
+			if (HasPickedUpLocally(toucher))
+				return;
+
+			localPickUp = CanPickUpLocally(toucher) && !ShouldStay() && !ShouldRespawn();
 		}
 
 		bool localview = toucher.CheckLocalView();
@@ -771,9 +841,27 @@ class Inventory : Actor
 		if (!toucher.CanTouchItem(self))
 			return;
 
+		Inventory give = self;
+		if (localPickUp)
+		{
+			give = CreateLocalCopy(toucher);
+			if (!give)
+				return;
+
+			localPickUp = give != self;
+			if (localPickUp)
+				give.ClearCounters();
+		}
+
 		bool res;
-		[res, toucher] = CallTryPickup(toucher);
-		if (!res) return;
+		[res, toucher] = give.CallTryPickup(toucher);
+		if (!res)
+		{
+			if (give != self)
+				give.Destroy();
+
+			return;
+		}
 
 		// This is the only situation when a pickup flash should ever play.
 		if (PickupFlash != NULL && !ShouldStay())
@@ -783,13 +871,13 @@ class Inventory : Actor
 
 		if (!bQuiet)
 		{
-			PrintPickupMessage(localview, PickupMessage ());
+			PrintPickupMessage(localview, give.PickupMessage ());
 
 			// Special check so voodoo dolls picking up items cause the
 			// real player to make noise.
 			if (player != NULL)
 			{
-				PlayPickupSound (player.mo);
+				give.PlayPickupSound (player.mo);
 				if (!bNoScreenFlash && player.playerstate != PST_DEAD)
 				{
 					player.bonuscount = BONUSADD;
@@ -797,7 +885,7 @@ class Inventory : Actor
 			}
 			else
 			{
-				PlayPickupSound (toucher);
+				give.PlayPickupSound (toucher);
 			}
 		}							
 
@@ -818,6 +906,9 @@ class Inventory : Actor
 			Actor ac = player != NULL? Actor(player.mo) : toucher;
 			ac.GiveSecret(true, true);
 		}
+
+		if (localPickUp)
+			PickUpLocally(toucher);
 
 		//Added by MC: Check if item taken was the roam destination of any bot
 		for (int i = 0; i < MAXPLAYERS; i++)
@@ -852,6 +943,17 @@ class Inventory : Actor
 			Destroy();
 		}
 	}
+
+	//===========================================================================
+	//
+	// Inventory :: PreTravelled
+	//
+	// Called when an item in somebody's inventory is about to be carried
+	// over to another map, in case it needs to do special clean-up.
+	//
+	//===========================================================================
+
+	virtual void PreTravelled() {}
 
 	//===========================================================================
 	//
@@ -954,6 +1056,9 @@ class Inventory : Actor
 
 	protected bool GoAway ()
 	{
+		if (IsCreatingLocalCopy())
+			return true;
+
 		// Dropped items never stick around
 		if (bDropped)
 		{
@@ -986,8 +1091,60 @@ class Inventory : Actor
 		if (!GoAway ())
 		{
 			bSpecial = false;
+			if (!bNoBlockmap || !bNoSector)	// make sure that the item no longer interacts with the world for the short rest of its life.
+			{
+				A_ChangeLinkFlags(1, 1);
+			}
 			SetStateLabel("HoldAndDestroy");
 		}
+	}
+
+	// Check if the Actor can recieve a local copy of the item instead of outright taking it.
+	clearscope bool CanPickUpLocally(Actor other) const
+	{
+		return other && other.player
+				&& multiplayer && !deathmatch && sv_localitems
+				&& !bNeverLocal && (!bDropped || !sv_nolocaldrops);
+	}
+
+	// Check if a client has already picked up this item locally.
+	clearscope bool HasPickedUpLocally(Actor client) const
+	{
+		return pickedUp[client.PlayerNumber()];
+	}
+
+	// When items are dropped, clear their local pick ups.
+	void ClearLocalPickUps()
+	{
+		DisableLocalRendering(consoleplayer, false);
+		for (int i; i < MAXPLAYERS; ++i)
+			pickedUp[i] = false;
+	}
+
+	// Client picked up this item. Mark it as invisible to that specific player and
+	// prevent them from picking it up again.
+	protected void PickUpLocally(Actor client)
+	{
+		int pNum = client.PlayerNumber();
+		pickedUp[pNum] = true;
+		DisableLocalRendering(pNum, true);
+		bCountItem = bCountSecret = false;
+	}
+
+	// Force spawn a new version of the item. This needs to use CreateCopy so that
+	// any transferrable properties on the item get correctly set.
+	Inventory CreateLocalCopy(Actor client)
+	{
+		bCreatingCopy = true;
+		let item = CreateCopy(client);
+		bCreatingCopy = false;
+
+		return item;
+	}
+
+	protected clearscope bool IsCreatingLocalCopy() const
+	{
+		return bCreatingCopy;
 	}
 	
 	//===========================================================================
@@ -1006,6 +1163,10 @@ class Inventory : Actor
 	//===========================================================================
 
 	virtual void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor = null, Actor source = null, int flags = 0) {}
+
+	virtual Vector2 ModifyBob(Vector2 Bob, double ticfrac) {return Bob;}
+
+	virtual Vector3, Vector3 ModifyBob3D(Vector3 Translation, Vector3 Rotation, double ticfrac) {return Translation, Rotation;}
 	
 
 	virtual bool Use (bool pickup) { return false; }

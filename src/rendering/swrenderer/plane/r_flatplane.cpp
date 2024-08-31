@@ -22,9 +22,9 @@
 
 #include <stdlib.h>
 #include <float.h>
-#include "templates.h"
-#include "doomerrors.h"
-#include "w_wad.h"
+
+#include "engineerrors.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -50,7 +50,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
@@ -92,7 +92,7 @@ namespace swrenderer
 		pviewy = _yscale * pviewy;
 
 		// left to right mapping
-		planeang += (Thread->Viewport->viewpoint.Angles.Yaw - 90).Radians();
+		planeang += (Thread->Viewport->viewpoint.Angles.Yaw - DAngle::fromDeg(90)).Radians();
 
 		auto viewport = Thread->Viewport.get();
 
@@ -178,9 +178,9 @@ namespace swrenderer
 			double distance2 = viewport->PlaneDepth(y + 1, planeheight);
 			double xmagnitude = fabs(ystepscale * (distance2 - distance) * viewport->FocalLengthX);
 			double ymagnitude = fabs(xstepscale * (distance2 - distance) * viewport->FocalLengthX);
-			double magnitude = MAX(ymagnitude, xmagnitude);
+			double magnitude = max(ymagnitude, xmagnitude);
 			double min_lod = -1000.0;
-			drawerargs.SetTextureLOD(MAX(log2(magnitude) + r_lod_bias, min_lod));
+			drawerargs.SetTextureLOD(max(log2(magnitude) + r_lod_bias, min_lod));
 		}
 
 		if (plane_shade)
@@ -270,8 +270,6 @@ namespace swrenderer
 		drawerargs.SetDestX2(x2);
 
 		drawerargs.DrawSpan(Thread);
-		if (r_modelscene)
-			drawerargs.DrawDepthSpan(Thread, zbufferdepth, zbufferdepth);
 	}
 
 	/////////////////////////////////////////////////////////////////////////

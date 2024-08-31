@@ -2,18 +2,20 @@
 
 #include "tarray.h"
 #include "r_utility.h"
+#include "r_sections.h"
 #include "actor.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
+class FSkyBox;
 
 struct HWSkyInfo
 {
 	float x_offset[2];
 	float y_offset;		// doubleskies don't have a y-offset
-	FMaterial * texture[2];
+	FGameTexture * texture[2];
 	FTextureID skytexno1;
 	bool mirrored;
 	bool doublesky;
@@ -28,7 +30,7 @@ struct HWSkyInfo
 	{
 		return !!memcmp(this, &inf, sizeof(*this));
 	}
-	void init(HWDrawInfo *di, int sky1, PalEntry fadecolor);
+	void init(HWDrawInfo *di, sector_t* sec, int skypos, int sky1, PalEntry fadecolor);
 };
 
 struct HWHorizonInfo
@@ -72,9 +74,10 @@ public:
     virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos) { return PClip_Inside; }
     virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
     virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
-    virtual line_t *ClipLine() { return nullptr; }
+    virtual linebase_t *ClipLine() { return nullptr; }
 	virtual void * GetSource() const = 0;	// GetSource MUST be implemented!
 	virtual const char *GetName() = 0;
+	virtual bool AllowSSAO() { return true; }
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
@@ -127,6 +130,8 @@ struct FPortalSceneState
 	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil, HWDrawInfo *outer_di);
 };
 
+extern FPortalSceneState portalState;
+
     
 class HWScenePortalBase : public HWPortal
 {
@@ -142,7 +147,7 @@ public:
 	{
 		if (Setup(di, state, di->mClipper))
 		{
-			di->DrawScene(di, DM_PORTAL);
+			di->DrawScene(DM_PORTAL);
 			Shutdown(di, state);
 		}
 		else state.ClearScreen();
@@ -151,12 +156,8 @@ public:
 	virtual void Shutdown(HWDrawInfo *di, FRenderState &rstate) {}
 };
 
-struct HWLinePortal : public HWScenePortalBase
+struct HWLinePortal : public HWScenePortalBase, public linebase_t
 {
-	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	DVector2	delta;		// precalculated v2 - v1 for side checking
-
 	angle_t		angv1, angv2;	// for quick comparisons with a line or subsector
 
 	HWLinePortal(FPortalSceneState *state, line_t *line) : HWScenePortalBase(state)
@@ -187,12 +188,6 @@ struct HWLinePortal : public HWScenePortalBase
 	void CalcDelta()
 	{
 		delta = v2->fPos() - v1->fPos();
-	}
-
-	line_t *line()
-	{
-		vertex_t **pv = &v1;
-		return reinterpret_cast<line_t*>(pv);
 	}
 
 	int ClipSeg(seg_t *seg, const DVector3 &viewpos) override;
@@ -229,7 +224,7 @@ protected:
 	bool Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper) override;
 	virtual void * GetSource() const override { return glport; }
 	virtual const char *GetName() override;
-	virtual line_t *ClipLine() override { return line(); }
+	virtual linebase_t *ClipLine() override { return this; }
 	virtual void RenderAttached(HWDrawInfo *di) override;
 
 public:
@@ -254,6 +249,7 @@ protected:
 	virtual void * GetSource() const { return portal; }
 	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
+	virtual bool AllowSSAO() override;
 
 public:
 
@@ -356,10 +352,6 @@ struct HWSkyPortal : public HWPortal
 	HWSkyInfo * origin;
 	FSkyVertexBuffer *vertexBuffer;
 	friend struct HWEEHorizonPortal;
-
-	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
-	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
-	void RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
 
 protected:
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);

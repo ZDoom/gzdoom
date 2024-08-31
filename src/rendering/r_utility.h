@@ -33,19 +33,26 @@ struct FRenderViewpoint
 	double			Sin;			// sin(Angles.Yaw)
 	double			TanCos;			// FocalTangent * cos(Angles.Yaw)
 	double			TanSin;			// FocalTangent * sin(Angles.Yaw)
+	double			PitchCos;		// cos(Angles.Pitch)
+	double			PitchSin;		// sin(Angles.Pitch)
+	double			floordistfact;	// used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
+	double			cotfloor;		// used for isometric sprites Y-billboarding compensation in hw_sprites.cpp
+	angle_t		FrustAngle; 	// FrustumAngle() result
 
 	AActor			*camera;		// camera actor
 	sector_t		*sector;		// [RH] keep track of sector viewing from
 	DAngle			FieldOfView;	// current field of view
+	double			ScreenProj;	// Screen projection factor for orthographic projection
 
 	double			TicFrac;		// fraction of tic for interpolation
 	uint32_t		FrameTime;		// current frame's time in tics.
 	
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
-
-
-	void SetViewAngle(const FViewWindow &viewwindow);
+	bool			bForceNoViewer; // Never show the camera Actor.
+	void SetViewAngle(const FViewWindow& viewWindow);
+	bool IsAllowedOoB();				// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set
+	bool IsOrtho();					// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ORTHOGRAPHIC flag set
 
 };
 
@@ -91,17 +98,17 @@ const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never
 //
 //==========================================================================
 
-inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
+inline constexpr int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
-	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
+	return DMulScale (y-node->y, node->dx, node->x-x, node->dy, 32) > 0;
 }
 inline int R_PointOnSide(double x, double y, const node_t *node)
 {
-	return DMulScale32(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy) > 0;
+	return DMulScale(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy, 32) > 0;
 }
 inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
 {
-	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
+	return DMulScale(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy, 32) > 0;
 }
 
 // Used for interpolation waypoints.
@@ -118,7 +125,7 @@ void R_ClearInterpolationPath();
 void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
 void R_SetFOV (FRenderViewpoint &viewpoint, DAngle fov);
-void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor * camera);
+void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AActor* const camera);
 void R_SetViewAngle (FRenderViewpoint &viewpoint, const FViewWindow &viewwindow);
 
 // Called by startup code.
@@ -135,5 +142,6 @@ double R_ClampVisibility(double vis);
 extern void R_FreePastViewers ();
 extern void R_ClearPastViewer (AActor *actor);
 
+bool R_ShouldDrawSpriteShadow(AActor *thing);
 
 #endif

@@ -57,14 +57,14 @@ typedef enum
 #endif
 #endif
 
+// State updates, number of tics / second.
+constexpr int TICRATE = 35;
+
 // Global constants that were defines.
 enum
 {
 	// The maximum number of players, multiplayer/networking.
 	MAXPLAYERS = 8,
-
-	// State updates, number of tics / second.
-	TICRATE = 35,
 
 	// Amount of damage done by a telefrag.
 	TELEFRAG_DAMAGE = 1000000
@@ -99,130 +99,10 @@ enum ESkillLevels
 // a mode 1 keyboard scan code.
 //
 
-#define KEY_PAUSE				0xc5	// DIK_PAUSE
-#define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
-#define KEY_LEFTARROW			0xcb	// DIK_LEFT
-#define KEY_UPARROW 			0xc8	// DIK_UP
-#define KEY_DOWNARROW			0xd0	// DIK_DOWN
-#define KEY_ESCAPE				0x01	// DIK_ESCAPE
-#define KEY_ENTER				0x1c	// DIK_RETURN
-#define KEY_SPACE				0x39	// DIK_SPACE
-#define KEY_TAB 				0x0f	// DIK_TAB
-#define KEY_F1					0x3b	// DIK_F1
-#define KEY_F2					0x3c	// DIK_F2
-#define KEY_F3					0x3d	// DIK_F3
-#define KEY_F4					0x3e	// DIK_F4
-#define KEY_F5					0x3f	// DIK_F5
-#define KEY_F6					0x40	// DIK_F6
-#define KEY_F7					0x41	// DIK_F7
-#define KEY_F8					0x42	// DIK_F8
-#define KEY_F9					0x43	// DIK_F9
-#define KEY_F10 				0x44	// DIK_F10
-#define KEY_F11 				0x57	// DIK_F11
-#define KEY_F12 				0x58	// DIK_F12
-#define KEY_GRAVE				0x29	// DIK_GRAVE
-
-#define KEY_BACKSPACE			0x0e	// DIK_BACK
-
-#define KEY_EQUALS				0x0d	// DIK_EQUALS
-#define KEY_MINUS				0x0c	// DIK_MINUS
-
-#define KEY_LSHIFT				0x2A	// DIK_LSHIFT
-#define KEY_LCTRL				0x1d	// DIK_LCONTROL
-#define KEY_LALT				0x38	// DIK_LMENU
-
-#define	KEY_RSHIFT				KEY_LSHIFT
-#define KEY_RCTRL				KEY_LCTRL
-#define KEY_RALT				KEY_LALT
-
-#define KEY_INS 				0xd2	// DIK_INSERT
-#define KEY_DEL 				0xd3	// DIK_DELETE
-#define KEY_END 				0xcf	// DIK_END
-#define KEY_HOME				0xc7	// DIK_HOME
-#define KEY_PGUP				0xc9	// DIK_PRIOR
-#define KEY_PGDN				0xd1	// DIK_NEXT
-
-#define KEY_MOUSE1				0x100
-#define KEY_MOUSE2				0x101
-#define KEY_MOUSE3				0x102
-#define KEY_MOUSE4				0x103
-#define KEY_MOUSE5				0x104
-#define KEY_MOUSE6				0x105
-#define KEY_MOUSE7				0x106
-#define KEY_MOUSE8				0x107
-
-#define KEY_FIRSTJOYBUTTON		0x108
-#define KEY_JOY1				(KEY_FIRSTJOYBUTTON+0)
-#define KEY_JOY2				(KEY_FIRSTJOYBUTTON+1)
-#define KEY_JOY3				(KEY_FIRSTJOYBUTTON+2)
-#define KEY_JOY4				(KEY_FIRSTJOYBUTTON+3)
-#define KEY_JOY5				(KEY_FIRSTJOYBUTTON+4)
-#define KEY_JOY6				(KEY_FIRSTJOYBUTTON+5)
-#define KEY_JOY7				(KEY_FIRSTJOYBUTTON+6)
-#define KEY_JOY8				(KEY_FIRSTJOYBUTTON+7)
-#define KEY_LASTJOYBUTTON		0x187
-#define KEY_JOYPOV1_UP			0x188
-#define KEY_JOYPOV1_RIGHT		0x189
-#define KEY_JOYPOV1_DOWN		0x18a
-#define KEY_JOYPOV1_LEFT		0x18b
-#define KEY_JOYPOV2_UP			0x18c
-#define KEY_JOYPOV3_UP			0x190
-#define KEY_JOYPOV4_UP			0x194
-
-#define KEY_MWHEELUP			0x198
-#define KEY_MWHEELDOWN			0x199
-#define KEY_MWHEELRIGHT			0x19A
-#define KEY_MWHEELLEFT			0x19B
-
-#define KEY_JOYAXIS1PLUS		0x19C
-#define KEY_JOYAXIS1MINUS		0x19D
-#define KEY_JOYAXIS2PLUS		0x19E
-#define KEY_JOYAXIS2MINUS		0x19F
-#define KEY_JOYAXIS3PLUS		0x1A0
-#define KEY_JOYAXIS3MINUS		0x1A1
-#define KEY_JOYAXIS4PLUS		0x1A2
-#define KEY_JOYAXIS4MINUS		0x1A3
-#define KEY_JOYAXIS5PLUS		0x1A4
-#define KEY_JOYAXIS5MINUS		0x1A5
-#define KEY_JOYAXIS6PLUS		0x1A6
-#define KEY_JOYAXIS6MINUS		0x1A7
-#define KEY_JOYAXIS7PLUS		0x1A8
-#define KEY_JOYAXIS7MINUS		0x1A9
-#define KEY_JOYAXIS8PLUS		0x1AA
-#define KEY_JOYAXIS8MINUS		0x1AB
-#define NUM_JOYAXISBUTTONS		8
-
-#define KEY_PAD_LTHUMB_RIGHT	0x1AC
-#define KEY_PAD_LTHUMB_LEFT		0x1AD
-#define KEY_PAD_LTHUMB_DOWN		0x1AE
-#define KEY_PAD_LTHUMB_UP		0x1AF
-
-#define KEY_PAD_RTHUMB_RIGHT	0x1B0
-#define KEY_PAD_RTHUMB_LEFT		0x1B1
-#define KEY_PAD_RTHUMB_DOWN		0x1B2
-#define KEY_PAD_RTHUMB_UP		0x1B3
-
-#define KEY_PAD_DPAD_UP			0x1B4
-#define KEY_PAD_DPAD_DOWN		0x1B5
-#define KEY_PAD_DPAD_LEFT		0x1B6
-#define KEY_PAD_DPAD_RIGHT		0x1B7
-#define KEY_PAD_START			0x1B8
-#define KEY_PAD_BACK			0x1B9
-#define KEY_PAD_LTHUMB			0x1BA
-#define KEY_PAD_RTHUMB			0x1BB
-#define KEY_PAD_LSHOULDER		0x1BC
-#define KEY_PAD_RSHOULDER		0x1BD
-#define KEY_PAD_LTRIGGER		0x1BE
-#define KEY_PAD_RTRIGGER		0x1BF
-#define KEY_PAD_A				0x1C0
-#define KEY_PAD_B				0x1C1
-#define KEY_PAD_X				0x1C2
-#define KEY_PAD_Y				0x1C3
-
-#define NUM_KEYS				0x1C4
+#include "keydef.h"
 
 // [RH] dmflags bits (based on Q2's)
-enum
+enum : unsigned
 {
 	DF_NO_HEALTH			= 1 << 0,	// Do not spawn health items (DM)
 	DF_NO_ITEMS				= 1 << 1,	// Do not spawn powerups (DM)
@@ -256,12 +136,13 @@ enum
 	DF_COOP_LOSE_POWERUPS	= 1 << 28,	// Lose powerups when respawning in coop
 	DF_COOP_LOSE_AMMO		= 1 << 29,	// Lose ammo when respawning in coop
 	DF_COOP_HALVE_AMMO		= 1 << 30,	// Lose half your ammo when respawning in coop (but not less than the normal starting amount)
+	DF_INSTANT_REACTION		= 1u << 31,	// Monsters react instantly
 };
 
 // [BC] More dmflags. w00p!
-enum
+enum : unsigned
 {
-//	DF2_YES_IMPALING		= 1 << 0,	// Player gets implaed on MF2_IMPALE items
+//	DF2_YES_IMPALING		= 1 << 0,	// Player gets impaled on MF2_IMPALE items
 	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
 //	DF2_NO_RUNES			= 1 << 2,	// Don't spawn runes
 //	DF2_INSTANT_RETURN		= 1 << 3,	// Instantly return flags and skulls when player carrying it dies (ST/CTF)
@@ -289,6 +170,23 @@ enum
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
+	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
+	DF2_ALWAYS_SPAWN_MULTI	= 1 << 29,	// Always spawn multiplayer items
+	DF2_NOVERTSPREAD		= 1 << 30,	// Don't allow vertical spread for hitscan weapons (excluding ssg)
+	DF2_NO_EXTRA_AMMO		= 1u << 31,	// Don't add extra ammo when picking up weapons (like in original Doom)
+};
+
+// [Nash] dmflags3 in 2023 let's gooooo
+enum : unsigned
+{
+	DF3_NO_PLAYER_CLIP		= 1 << 0,	// Players can walk through and shoot through each other
+	DF3_COOP_SHARE_KEYS		= 1 << 1,	// Keys and other core items will be given to all players in coop
+	DF3_LOCAL_ITEMS			= 1 << 2,	// Items are picked up client-side rather than fully taken by the client who picked it up
+	DF3_NO_LOCAL_DROPS		= 1 << 3,	// Drops from Actors aren't picked up locally
+	DF3_NO_COOP_ONLY_ITEMS	= 1 << 4,	// Items that only appear in co-op are disabled
+	DF3_NO_COOP_ONLY_THINGS	= 1 << 5,	// Any Actor that only appears in co-op is disabled
+	DF3_REMEMBER_LAST_WEAP	= 1 << 6,	// When respawning in co-op, keep the last used weapon out instead of switching to the best new one.
+	DF3_PISTOL_START		= 1 << 7,	// Take player inventory when exiting to the next level.
 };
 
 // [RH] Compatibility flags.
@@ -319,10 +217,10 @@ enum : unsigned int
 	COMPATF_MINOTAUR		= 1 << 22,	// Minotaur's floor flame is exploded immediately when feet are clipped
 	COMPATF_MUSHROOM		= 1 << 23,	// Force original velocity calculations for A_Mushroom in Dehacked mods.
 	COMPATF_MBFMONSTERMOVE	= 1 << 24,	// Monsters are affected by friction and pushers/pullers.
-	COMPATF_CORPSEGIBS		= 1 << 25,	// Crushed monsters are turned into gibs, rather than replaced by gibs.
+	COMPATF_VILEGHOSTS		= 1 << 25,	// Crushed monsters are resurrected as ghosts.
 	COMPATF_NOBLOCKFRIENDS	= 1 << 26,	// Friendly monsters aren't blocked by monster-blocking lines.
 	COMPATF_SPRITESORT		= 1 << 27,	// Invert sprite sorting order for sprites of equal distance
-	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap anf hit check code.
+	COMPATF_HITSCAN			= 1 << 28,	// Hitscans use original blockmap and hit check code.
 	COMPATF_LIGHT			= 1 << 29,	// Find neighboring light level like Doom
 	COMPATF_POLYOBJ			= 1 << 30,	// Draw polyobjects the old fashioned way
 	COMPATF_MASKEDMIDTEX	= 1u << 31,	// Ignore compositing when drawing masked midtextures
@@ -339,6 +237,13 @@ enum : unsigned int
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
+	COMPATF2_AVOID_HAZARDS	= 1 << 12,	// another MBF thing.
+	COMPATF2_STAYONLIFT		= 1 << 13,	// yet another MBF thing.
+	COMPATF2_NOMBF21		= 1 << 14,	// disable MBF21 features that may clash with certain maps
+	COMPATF2_VOODOO_ZOMBIES = 1 << 15,	// [RL0] allow playerinfo, playerpawn, and voodoo health to all be different, and skip killing the player's mobj if a voodoo doll dies to allow voodoo zombies
+	COMPATF2_FDTELEPORT		= 1 << 16,	// Emulate Final Doom's teleporter z glitch.
+	COMPATF2_NOACSARGCHECK	= 1 << 17,	// Disable arg count checking for ACS
+
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -347,7 +252,6 @@ enum
 {
 	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
 	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
-	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' radius and height aren't restored properly when resurrected.
 	BCOMPATF_BADTELEPORTERS		= 1 << 3,	// Ignore tags on Teleport specials
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
 	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild
@@ -355,6 +259,8 @@ enum
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
 	BCOMPATF_CLIPMIDTEX			= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps, has no effect in the hardware renderer)
+	BCOMPATF_NOSECTIONMERGE		= 1 << 11,	// (for IWAD maps) keep separate sections for sectors with intra-sector linedefs. 
+	BCOMPATF_NOMIRRORS			= 1 << 12,	// disable mirrors, for maps that have broken setups.
 };
 
 // phares 3/20/98:

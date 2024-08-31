@@ -1,5 +1,4 @@
-cmake_minimum_required( VERSION 2.8.7 )
-project(GZDoom)
+cmake_minimum_required( VERSION 3.16 )
 
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )
@@ -8,7 +7,46 @@ if( COMMAND cmake_policy )
 	if( POLICY CMP0054 )
 		cmake_policy( SET CMP0054 NEW )
 	endif()
+	if ( POLICY CMP0067 )
+		cmake_policy( SET CMP0067 NEW )
+	endif()
+	if ( POLICY CMP0091 )
+		cmake_policy( SET CMP0091 NEW )
+		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	endif()
 endif()
+
+if (LIBVPX_VCPKG)
+	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-libvpx")
+endif()
+
+if (OPENAL_SOFT_VCPKG)
+	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-openal-soft")
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows" OR (NOT CMAKE_SYSTEM_NAME AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows"))
+	# Force static triplet on Windows
+	set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+endif()
+
+project(GZDoom)
+
+if (WIN32 AND VCPKG_TOOLCHAIN)
+	option(LIBVPX_VCPKG "Use libvpx from vcpkg" OFF)
+endif()
+
+if (VCPKG_TOOLCHAIN)
+	option(OPENAL_SOFT_VCPKG "Use OpenAL from vcpkg" OFF)
+endif()
+
+if (NOT VCPKG_TOOLCHAIN)
+	set(VCPKG_MANIFEST_FEATURES)
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF) 
+
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
@@ -66,7 +104,7 @@ function( add_pk3 PK3_NAME PK3_DIR )
 	# Phase 1: Create a list of all source files for this PK3 archive, except
 	#  for a couple of strife image file names that confuse CMake.
 	file(GLOB_RECURSE PK3_SRCS ${PK3_DIR}/*)
-	# Exclude from the source list some gzdoom .png files with brackets in the
+	# Exclude from the source list some files with brackets in the
 	# file names here, because they confuse CMake.
 	# This only affects the list of source files shown in the IDE.
 	# It does not actually remove the files from the PK3 archive.
@@ -127,25 +165,25 @@ else()
 endif()
 
 # Replacement variables for a possible long list of C/C++ compilers compatible with GCC
-if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" )
+if( "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" MATCHES "Clang" )
 	set( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE TRUE )
 else()
 	set( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE FALSE )
 endif()
 
-if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
-	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE TRUE )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
+	set( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE TRUE )
 else()
-	set( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE FALSE )
+	set( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE FALSE )
 endif()
 
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
 elseif( MSVC )
 	set( ZD_FASTMATH_FLAG "/fp:fast" )
@@ -155,6 +193,7 @@ macro( use_fast_math )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
 endmacro()
+
 
 include( CheckFunctionExists )
 
@@ -175,17 +214,18 @@ endmacro()
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
-find_package( JPEG )
-find_package( ZLIB )
+find_package( VPX )
 
 include( TargetArch )
 
-target_architecture(ZDOOM_TARGET_ARCH)
+target_architecture(TARGET_ARCHITECTURE)
 
-if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+if( ${TARGET_ARCHITECTURE} MATCHES "x86_64" )
 	set( HAVE_VM_JIT ON )
-	option (HAVE_VULKAN "Enable Vulkan support" ON)
 endif()
+
+option (HAVE_VULKAN "Enable Vulkan support" ON)
+option (HAVE_GLES2 "Enable GLES2 support" ON)
 
 # no, we're not using external asmjit for now, we made too many modifications to our's.
 # if the asmjit author uses our changes then we'll update this.
@@ -193,7 +233,6 @@ endif()
 #if( ${HAVE_VM_JIT} )
 #	find_package( asmjit )
 #endif()
-
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -203,68 +242,52 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
+	set( ALL_C_FLAGS "/GF /Gy /permissive- /utf-8" )
+
 	if ( HAVE_VULKAN )
-		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive- /DHAVE_VULKAN" )
-	else()
-		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive-" )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_VULKAN" )
+	endif()
+
+	if ( HAVE_GLES2 )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /DHAVE_GLES2" )
 	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
 
 
-#	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
-#		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
-#		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
-#		if (ZDOOM_USE_SSE2)
-#			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#		else ()
-#			if (MSVC_VERSION GREATER 1699)
-#				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
-#				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
-#			endif ()
-#		endif ()
-#	else()
-#		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#	endif()
 
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
 	if( ZDOOM_GENERATE_ASM )
-		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs /GS-" )
+		set( REL_C_FLAGS "/Oy /Oi /FAcs /GS-" )
 	else()
-		set( REL_C_FLAGS "/MT /Oy /Oi /GS-" )
+		set( REL_C_FLAGS "/Oy /Oi /GS-" )
 	endif()
 
 
 	# Debug allocations in debug builds
-	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
+	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
-	set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600" )
+	set( ALL_C_FLAGS "${ALL_C_FLAGS} /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS" )
 
-	# The CMake configurations set /GR and /MD by default, which conflict with our settings.
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL} )
-	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 	string(REPLACE "/Ob1 " "/Ob2 " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
-	string(REPLACE "/MDd " " " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
-	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
-	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
-	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 else()
 	set( REL_LINKER_FLAGS "" )
+	set( ALL_C_FLAGS "-ffp-contract=off" )
+
 	if ( HAVE_VULKAN )
-		set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_VULKAN" )
-	else()
-		set( ALL_C_FLAGS "-ffp-contract=off" )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -DHAVE_VULKAN" )
+	endif()
+
+	if ( HAVE_GLES2 )
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -DHAVE_GLES2" )
 	endif()
 
 	if ( UNIX )
 		include(CheckSymbolExists)
-		check_symbol_exists( "fts_set" "fts.h" HAVE_FTS )
+		check_symbol_exists( "fts_set" "sys/types.h;sys/stat.h;fts.h" HAVE_FTS )
 		if ( NOT HAVE_FTS )
 			include ( FindPkgConfig )
 			pkg_check_modules( MUSL_FTS musl-fts )
@@ -281,13 +304,8 @@ else()
 
 
 	if( APPLE )
-		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
-		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
-			# C++11 support using SDKs 10.7 and 10.8.
-			set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
-			set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
-		elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
+		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 			set( ALL_C_FLAGS "-static-libgcc" )
 		endif()
@@ -314,28 +332,21 @@ set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
-option(FORCE_INTERNAL_ZLIB "Use internal zlib")
-option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
 if (HAVE_VULKAN)
-	add_subdirectory( libraries/glslang/glslang)
-	add_subdirectory( libraries/glslang/spirv )
-	add_subdirectory( libraries/glslang/OGLCompilersDLL )
+	add_subdirectory( libraries/ZVulkan )
 endif()
 
-if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
-	message( STATUS "Using system zlib, includes found at ${ZLIB_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal zlib" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib alongside zdoom
-	add_subdirectory( libraries/zlib )
-	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/zlib )
-	set( ZLIB_LIBRARIES z )
-	set( ZLIB_LIBRARY z )
-endif()
+add_subdirectory( libraries/ZWidget )
+add_subdirectory( libraries/webp )
+
+add_subdirectory( libraries/discordrpc EXCLUDE_FROM_ALL )
+set( DRPC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/discordrpc/include" )
+set( DRPC_LIBRARIES discord-rpc )
+set( DRPC_LIBRARY discord-rpc )
 
 if( HAVE_VM_JIT AND UNIX )
 	check_symbol_exists( "backtrace" "execinfo.h" HAVE_BACKTRACE )
@@ -347,6 +358,7 @@ if( HAVE_VM_JIT AND UNIX )
 		else( HAVE_LIBEXECINFO )
 			set( HAVE_VM_JIT NO )
 		endif( HAVE_LIBEXECINFO )
+		set( CMAKE_REQUIRED_FLAGS )
 	endif( NOT HAVE_BACKTRACE )
 endif( HAVE_VM_JIT AND UNIX )
 
@@ -363,16 +375,6 @@ if( ${HAVE_VM_JIT} )
 	endif()
 endif()
 
-if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )
-	message( STATUS "Using system jpeg library, includes found at ${JPEG_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal jpeg library" )
-	add_subdirectory( libraries/jpeg )
-	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/jpeg )
-	set( JPEG_LIBRARIES jpeg )
-	set( JPEG_LIBRARY jpeg )
-endif()
-
 if( BZIP2_FOUND AND NOT FORCE_INTERNAL_BZIP2 )
 	message( STATUS "Using system bzip2 library, includes found at ${BZIP2_INCLUDE_DIR}" )
 else()
@@ -382,7 +384,6 @@ else()
 	set( BZIP2_LIBRARIES bz2 )
 	set( BZIP2_LIBRARY bz2 )
 endif()
-
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
 
@@ -405,12 +406,13 @@ install(DIRECTORY docs/
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
 
 add_subdirectory( libraries/lzma )
+add_subdirectory( libraries/miniz )
 add_subdirectory( tools )
-add_subdirectory( libraries/gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
+add_subdirectory( wadsrc_widepix )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

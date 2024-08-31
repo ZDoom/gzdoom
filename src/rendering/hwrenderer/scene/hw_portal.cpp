@@ -33,12 +33,15 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "flatvertices.h"
+#include "hw_clock.h"
+#include "hw_lighting.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
+
+void SetPlaneTextureRotation(FRenderState& state, HWSectorPlane* plane, FGameTexture* texture);
 
 //-----------------------------------------------------------------------------
 //
@@ -70,6 +73,7 @@ CCMD(gl_portalinfo)
 }
 
 static FString indent;
+FPortalSceneState portalState;
 
 //-----------------------------------------------------------------------------
 //
@@ -103,7 +107,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di, FRenderState &state)
 
 	if (gl_portalinfo)
 	{
-		indent.Truncate(long(indent.Len()-2));
+		indent.Truncate(indent.Len()-2);
 		Printf("%s}\n", indent.GetChars());
 		if (indent.Len() == 0) gl_portalinfo = false;
 	}
@@ -119,7 +123,6 @@ void FPortalSceneState::EndFrame(HWDrawInfo *di, FRenderState &state)
 //-----------------------------------------------------------------------------
 bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di, FRenderState &state)
 {
-	HWPortal * p;
 	HWPortal * best = nullptr;
 	unsigned bestindex = 0;
 
@@ -129,7 +132,7 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	auto &portals = outer_di->Portals;
 	for (int i = portals.Size() - 1; i >= 0; --i)
 	{
-		p = portals[i];
+		auto p = portals[i];
 		if (p->lines.Size() > 0 && p->IsSky())
 		{
 			// Cannot clear the depth buffer inside a portal recursion
@@ -412,7 +415,7 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 
-		if (deltaangle(endAngle, startAngle) < 0)
+		if (deltaangle(endAngle, startAngle) < nullAngle)
 		{
 			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
@@ -444,7 +447,7 @@ int HWLinePortal::ClipSeg(seg_t *seg, const DVector3 &viewpos)
 	{
 		return PClip_Inside;	// should be handled properly.
 	}
-	return P_ClipLineToPortal(linedef, line(), viewpos) ? PClip_InFront : PClip_Inside;
+	return P_ClipLineToPortal(linedef, this, viewpos.XY()) ? PClip_InFront : PClip_Inside;
 }
 
 int HWLinePortal::ClipSubsector(subsector_t *sub)
@@ -452,14 +455,14 @@ int HWLinePortal::ClipSubsector(subsector_t *sub)
 	// this seg is completely behind the mirror
 	for (unsigned int i = 0; i<sub->numlines; i++)
 	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), this) == 0) return PClip_Inside;
 	}
 	return PClip_InFront;
 }
 
 int HWLinePortal::ClipPoint(const DVector2 &pos)
 {
-	if (P_PointOnLineSidePrecise(pos, line()))
+	if (P_PointOnLineSidePrecise(pos, this))
 	{
 		return PClip_InFront;
 	}
@@ -560,7 +563,8 @@ bool HWMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clippe
 	angle_t af = di->FrustumAngle();
 	if (af < ANGLE_180) clipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + af, vp.Angles.Yaw.BAMs() - af);
 
-	clipper->SafeAddClipRange(linedef->v1, linedef->v2);
+	if(!di->Viewpoint.IsAllowedOoB())
+		clipper->SafeAddClipRange(linedef->v1, linedef->v2);
 	return true;
 }
 
@@ -714,6 +718,7 @@ void HWSkyboxPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 }
 
 const char *HWSkyboxPortal::GetName() { return "Skybox"; }
+bool HWSkyboxPortal::AllowSSAO() { return false; }	// [MK] sector skyboxes don't allow SSAO by default
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -775,6 +780,11 @@ void HWSectorStackPortal::SetupCoverage(HWDrawInfo *di)
 bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper)
 {
 	auto state = mState;
+	if (state->renderdepth > 100) // energency abort in case a map manages to set up a recursion.
+	{
+		return false;
+	}
+
 	FSectorPortalGroup *portal = origin;
 	auto &vp = di->Viewpoint;
 
@@ -947,12 +957,12 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 {
 	Clocker c(PortalAll);
 
-	FMaterial * gltexture;
 	HWSectorPlane * sp = &origin->plane;
 	auto &vp = di->Viewpoint;
 
-	gltexture = FMaterial::ValidateTexture(sp->texture, false, true);
-	if (!gltexture)
+	auto texture = TexMan.GetGameTexture(sp->texture, true);
+
+	if (!texture || !texture->isValid())
 	{
 		state.ClearScreen();
 		return;
@@ -960,24 +970,25 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetCameraPos(vp.Pos);
 
 
-	if (gltexture && gltexture->tex->isFullbright())
+	if (texture->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		di->SetColor(state, 255, 0, false, origin->colormap, 1.f);
-		di->SetFog(state, 255, 0, false, &origin->colormap, false);
+		SetColor(state, di->Level, di->lightmode, 255, 0, false, origin->colormap, 1.f);
+		SetFog(state, di->Level, di->lightmode, 255, 0, false, &origin->colormap, false);
 	}
 	else
 	{
 		int rel = getExtraLight();
-		di->SetColor(state, origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
-		di->SetFog(state, origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
+		SetColor(state, di->Level, di->lightmode, origin->lightlevel, rel, di->isFullbrightScene(), origin->colormap, 1.0f);
+		SetFog(state, di->Level, di->lightmode, origin->lightlevel, rel, di->isFullbrightScene(), &origin->colormap, false);
 	}
 
 
-	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+	state.EnableBrightmap(true);
+	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, NO_TRANSLATION, -1);
 	state.SetObjectColor(origin->specialcolor);
 
-	state.SetPlaneTextureRotation(sp, gltexture);
+	SetPlaneTextureRotation(state, sp, texture);
 	state.AlphaFunc(Alpha_GEqual, 0.f);
 	state.SetRenderStyle(STYLE_Source);
 
@@ -1019,7 +1030,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
 		HWSkyInfo skyinfo;
-		skyinfo.init(di, sector->sky, 0);
+		skyinfo.init(di, sector, sector_t::ceiling, sector->skytransfer, 0);
 		HWSkyPortal sky(screen->mSkyData, mState, &skyinfo, true);
 		sky.DrawContents(di, state);
 	}

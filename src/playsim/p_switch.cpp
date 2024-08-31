@@ -32,7 +32,7 @@
 **
 */
 
-#include "templates.h"
+
 
 #include "doomdef.h"
 #include "p_local.h"
@@ -41,12 +41,13 @@
 #include "m_random.h"
 #include "s_sound.h"
 #include "doomstat.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "textures.h"
 #include "actor.h"
 #include "actorinlines.h"
+#include "animations.h"
 
 static FRandom pr_switchanim ("AnimSwitch");
 
@@ -174,7 +175,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 	if (open.range <= 0)
 		goto onesided;
 
-	if ((TexMan.FindSwitch(side->GetTexture(side_t::top))) != NULL)
+	if ((TexAnim.FindSwitch(side->GetTexture(side_t::top))) != NULL)
 	{
 
 		// Check 3D floors on back side
@@ -194,11 +195,14 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			}
 		}
 
-		return (user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
+		if ((user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
 			? (user->Top() >= open.top)
-			: (user->Top() > open.top);
+			: (user->Top() > open.top))
+		{
+			return true;
+		}
 	}
-	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
+	if ((TexAnim.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
 		// Check 3D floors on back side
 		{
@@ -218,11 +222,14 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 			}
 		}
 
-		return (user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
+		if ((user->Level->i_compatflags2 & COMPATF2_CHECKSWITCHRANGE)
 			? (user->Z() <= open.bottom)
-			: (user->Z() < open.bottom);
+			: (user->Z() < open.bottom))
+		{
+			return true;
+		}
 	}
-	else if ((flags & ML_3DMIDTEX) || (TexMan.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
+	if ((flags & ML_3DMIDTEX) || (TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
 		// 3DMIDTEX lines will force a mid texture check if no switch is found on this line
 		// to keep compatibility with Eternity's implementation.
@@ -249,20 +256,20 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *quest)
 {
 	int texture;
-	int sound;
+	FSoundID sound;
 	FSwitchDef *Switch;
 
-	if ((Switch = TexMan.FindSwitch (side->GetTexture(side_t::top))) != NULL)
+	if ((Switch = TexAnim.FindSwitch (side->GetTexture(side_t::top))) != NULL)
 	{
 		texture = side_t::top;
 	}
-	else if ((Switch = TexMan.FindSwitch (side->GetTexture(side_t::bottom))) != NULL)
-	{
-		texture = side_t::bottom;
-	}
-	else if ((Switch = TexMan.FindSwitch (side->GetTexture(side_t::mid))) != NULL)
+	else if ((Switch = TexAnim.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
 		texture = side_t::mid;
+	}
+	else if ((Switch = TexAnim.FindSwitch (side->GetTexture(side_t::bottom))) != NULL)
+	{
+		texture = side_t::bottom;
 	}
 	else
 	{
@@ -274,7 +281,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *q
 	}
 
 	// EXIT SWITCH?
-	if (Switch->Sound != 0)
+	if (Switch->Sound != NO_SOUND)
 	{
 		sound = Switch->Sound;
 	}
@@ -353,7 +360,7 @@ template<> FSerializer &Serialize (FSerializer &arc, const char *key, FSwitchDef
 		FTextureID tex;
 		tex.SetInvalid();
 		Serialize(arc, key, tex, nullptr);
-		Switch = TexMan.FindSwitch(tex);
+		Switch = TexAnim.FindSwitch(tex);
 	}
 	return arc;
 }
@@ -403,7 +410,7 @@ void DActiveButton::Tick ()
 			{
 				m_Frame = -1;
 				S_Sound (Level, DVector3(m_Pos, 0), CHAN_VOICE, CHANF_LISTENERZ,
-					def->Sound != 0 ? FSoundID(def->Sound) : FSoundID("switches/normbutn"),
+					def->Sound != NO_SOUND ? FSoundID(def->Sound) : S_FindSound("switches/normbutn"),
 					1, ATTN_STATIC);
 				bFlippable = false;
 			}

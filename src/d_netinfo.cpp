@@ -50,6 +50,7 @@
 #include "serializer.h"
 #include "vm.h"
 #include "gstrings.h"
+#include "g_game.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -62,10 +63,13 @@ CVAR (Int,		team,					TEAM_NONE,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Bool,		fviewbob,               true,       CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	stillbob,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	wbobspeed,				1.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	wbobfire,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	playerclass,			"Fighter",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		classicflight,			false,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Bool,		vertspread,				false,		CVAR_USERINFO | CVAR_ARCHIVE);
 
 enum
 {
@@ -77,11 +81,14 @@ enum
 	INFO_Gender,
 	INFO_NeverSwitchOnPickup,
 	INFO_MoveBob,
+	INFO_FViewBob,
 	INFO_StillBob,
 	INFO_WBobSpeed,
+	INFO_WBobFire,
 	INFO_PlayerClass,
 	INFO_ColorSet,
 	INFO_ClassicFlight,
+	INFO_VertSpread,
 };
 
 const char *GenderNames[GENDER_MAX] = { "male", "female", "neutral", "other" };
@@ -154,7 +161,7 @@ int D_PlayerClassToInt (const char *classname)
 		{
 			auto type = PlayerClasses[i].Type;
 
-			if (type->GetDisplayName().IsNotEmpty() && stricmp(type->GetDisplayName(), classname) == 0)
+			if (type->GetDisplayName().IsNotEmpty() && type->GetDisplayName().CompareNoCase(classname) == 0)
 			{
 				return i;
 			}
@@ -190,7 +197,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		h, s, v);
 
-	if (teamplay && TeamLibrary.IsValidTeam((team = info->GetTeam())) && !Teams[team].GetAllowCustomPlayerColor())
+	if (teamplay && FTeam::IsValid((team = info->GetTeam())) && !Teams[team].GetAllowCustomPlayerColor())
 	{
 		// In team play, force the player to use the team's hue
 		// and adjust the saturation and value so that the team
@@ -257,7 +264,7 @@ int D_PickRandomTeam ()
 		if (playeringame[i])
 		{
 			team = players[i].userinfo.GetTeam();
-			if (TeamLibrary.IsValidTeam(team))
+			if (FTeam::IsValid(team))
 			{
 				if (Teams[team].m_iPresent++ == 0)
 				{
@@ -312,15 +319,15 @@ static void UpdateTeam (int pnum, int team, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 
-	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->GetTeam()))
+	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && FTeam::IsValid (info->GetTeam()))
 	{
-		Printf ("%s\n", GStrings("TXT_NO_TEAM_CHANGE"));
+		Printf ("%s\n", GStrings.GetString("TXT_NO_TEAM_CHANGE"));
 		return;
 	}
 
 	int oldteam;
 
-	if (!TeamLibrary.IsValidTeam (team))
+	if (!FTeam::IsValid (team))
 	{
 		team = TEAM_NONE;
 	}
@@ -330,14 +337,14 @@ static void UpdateTeam (int pnum, int team, bool update)
 	if (update && oldteam != team)
 	{
 		FString message;
-		if (TeamLibrary.IsValidTeam (team))
+		if (FTeam::IsValid (team))
 		{
-			message = GStrings("TXT_JOINED_TEAM");
+			message = GStrings.GetString("TXT_JOINED_TEAM");
 			message.Substitute("%t", Teams[team].GetName());
 		}
 		else
 		{
-			message = GStrings("TXT_LONER");
+			message = GStrings.GetString("TXT_LONER");
 		}
 		message.Substitute("%s", info->GetName());
 		Printf("%s\n", message.GetChars());
@@ -349,7 +356,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 		StatusBar->AttachToPlayer (&players[pnum]);
 	}
 	// Double-check
-	if (!TeamLibrary.IsValidTeam (team))
+	if (!FTeam::IsValid (team))
 	{
 		*static_cast<FIntCVar *>((*info)[NAME_Team]) = TEAM_NONE;
 	}
@@ -358,7 +365,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 int D_GetFragCount (player_t *player)
 {
 	const int team = player->userinfo.GetTeam();
-	if (!teamplay || !TeamLibrary.IsValidTeam(team))
+	if (!teamplay || !FTeam::IsValid(team))
 	{
 		return player->fragcount;
 	}
@@ -386,13 +393,16 @@ void D_SetupUserInfo ()
 	// Reset everybody's userinfo to a default state.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		players[i].userinfo.Reset();
+		players[i].userinfo.Reset(i);
 	}
 	// Initialize the console player's user info
 	coninfo = &players[consoleplayer].userinfo;
 
-	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->GetNext())
+	decltype(cvarMap)::Iterator it(cvarMap);
+	decltype(cvarMap)::Pair *pair;
+	while (it.NextPair(pair))
 	{
+		auto cvar = pair->Value;
 		if ((cvar->GetFlags() & (CVAR_USERINFO|CVAR_IGNORE)) == CVAR_USERINFO)
 		{
 			FBaseCVar **newcvar;
@@ -416,7 +426,7 @@ void D_SetupUserInfo ()
 	R_BuildPlayerTranslation(consoleplayer);
 }
 
-void userinfo_t::Reset()
+void userinfo_t::Reset(int pnum)
 {
 	// Clear this player's userinfo.
 	TMapIterator<FName, FBaseCVar *> it(*this);
@@ -429,8 +439,11 @@ void userinfo_t::Reset()
 	Clear();
 
 	// Create userinfo vars for this player, initialized to their defaults.
-	for (FBaseCVar *cvar = CVars; cvar != NULL; cvar = cvar->GetNext())
+	decltype(cvarMap)::Iterator it2(cvarMap);
+	decltype(cvarMap)::Pair *pair2;
+	while (it2.NextPair(pair2))
 	{
+		auto cvar = pair2->Value;
 		if ((cvar->GetFlags() & (CVAR_USERINFO|CVAR_IGNORE)) == CVAR_USERINFO)
 		{
 			ECVarType type;
@@ -445,8 +458,20 @@ void userinfo_t::Reset()
 			case NAME_PlayerClass:	type = CVAR_Int; break;
 			default:				type = cvar->GetRealType(); break;
 			}
-			newcvar = C_CreateCVar(NULL, type, cvar->GetFlags() & CVAR_MOD);
+			
+			int flags = cvar->GetFlags();
+			
+			newcvar = C_CreateCVar(NULL, type, (flags & CVAR_MOD) | ((flags & CVAR_ZS_CUSTOM) << 1) );
 			newcvar->SetGenericRepDefault(cvar->GetGenericRepDefault(CVAR_String), CVAR_String);
+
+			if(flags & CVAR_ZS_CUSTOM)
+			{
+				newcvar->SetExtraDataPointer(cvar); // store backing cvar
+			}
+
+			newcvar->pnum = pnum;
+			newcvar->userinfoName = cvarname;
+
 			Insert(cvarname, newcvar);
 		}
 	}
@@ -454,7 +479,7 @@ void userinfo_t::Reset()
 
 int userinfo_t::TeamChanged(int team)
 {
-	if (teamplay && !TeamLibrary.IsValidTeam(team))
+	if (teamplay && !FTeam::IsValid(team))
 	{ // Force players onto teams in teamplay mode
 		team = D_PickRandomTeam();
 	}
@@ -523,7 +548,8 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	FString escaped_val;
 	char foo[256];
 
-	if (cvar == &autoaim)
+#if 0
+	if (cvar == autoaim->get())
 	{
 		if (autoaim < 0.0f)
 		{
@@ -536,6 +562,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 			return;
 		}
 	}
+#endif
 
 	val = cvar->GetGenericRep (CVAR_String);
 	escaped_val = D_EscapeUserInfo(val.String);
@@ -544,7 +571,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
-	Net_WriteByte (DEM_UINFCHANGED);
+	Net_WriteInt8 (DEM_UINFCHANGED);
 	Net_WriteString (foo);
 }
 
@@ -565,7 +592,7 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 			{
 				return NULL;
 			}
-			bitdata = ReadByte (stream);
+			bitdata = ReadInt8 (stream);
 			mask = 1 << (bitdata & 31);
 			if (bitdata & 32)
 			{
@@ -581,8 +608,8 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 	{
 		switch (type)
 		{
-		case CVAR_Bool:		value.Bool = ReadByte (stream) ? 1 : 0;	break;
-		case CVAR_Int:		value.Int = ReadLong (stream);			break;
+		case CVAR_Bool:		value.Bool = ReadInt8 (stream) ? 1 : 0;	break;
+		case CVAR_Int:		value.Int = ReadInt32 (stream);			break;
 		case CVAR_Float:	value.Float = ReadFloat (stream);		break;
 		case CVAR_String:	value.String = ReadString (stream);		break;
 		default: break;	// Silence GCC
@@ -599,7 +626,8 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 		delete[] value.String;
 	}
 
-	if (var == &teamplay)
+#if 0
+	if (var == teamplay->get())
 	{
 		// Put players on teams if teamplay turned on
 		for (int i = 0; i < MAXPLAYERS; ++i)
@@ -610,6 +638,7 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 			}
 		}
 	}
+#endif
 
 	if (var)
 	{
@@ -622,35 +651,58 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 
 EXTERN_CVAR (Float, sv_gravity)
 
-void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type)
+bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 {
-	size_t namelen;
-
-	namelen = strlen (cvar->GetName ());
-
-	Net_WriteByte (DEM_SINFCHANGED);
-	Net_WriteByte ((uint8_t)(namelen | (type << 6)));
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
-	switch (type)
+	if (gamestate != GS_STARTUP && !demoplayback && !savegamerestore)
 	{
-	case CVAR_Bool:		Net_WriteByte (value.Bool);		break;
-	case CVAR_Int:		Net_WriteLong (value.Int);		break;
-	case CVAR_Float:	Net_WriteFloat (value.Float);	break;
-	case CVAR_String:	Net_WriteString (value.String);	break;
-	default: break; // Silence GCC
+		if (netgame && !players[consoleplayer].settings_controller)
+		{
+			Printf("Only setting controllers can change server CVAR %s\n", cvar->GetName());
+			cvar->MarkSafe();
+			return true;
+		}
+		size_t namelen;
+
+		namelen = strlen(cvar->GetName());
+
+		Net_WriteInt8(DEM_SINFCHANGED);
+		Net_WriteInt8((uint8_t)(namelen | (type << 6)));
+		Net_WriteBytes((uint8_t*)cvar->GetName(), (int)namelen);
+		switch (type)
+		{
+		case CVAR_Bool:		Net_WriteInt8(value.Bool);		break;
+		case CVAR_Int:		Net_WriteInt32(value.Int);		break;
+		case CVAR_Float:	Net_WriteFloat(value.Float);	break;
+		case CVAR_String:	Net_WriteString(value.String);	break;
+		default: break; // Silence GCC
+		}
+		return true;
 	}
+	return false;
 }
 
-void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
+bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 {
-	int namelen;
+	if (gamestate != GS_STARTUP && !demoplayback && !savegamerestore)
+	{
+		if (netgame && !players[consoleplayer].settings_controller)
+		{
+			if (!silent)
+			{
+				Printf("Only setting controllers can change server CVAR %s\n", cvar->GetName());
+			}
+			return true;
+		}
 
-	namelen = (int)strlen (cvar->GetName ());
+		int namelen = (int)strlen(cvar->GetName());
 
-	Net_WriteByte (DEM_SINFCHANGEDXOR);
-	Net_WriteByte ((uint8_t)namelen);
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), namelen);
-	Net_WriteByte (uint8_t(bitnum | (set << 5)));
+		Net_WriteInt8(DEM_SINFCHANGEDXOR);
+		Net_WriteInt8((uint8_t)namelen);
+		Net_WriteBytes((uint8_t*)cvar->GetName(), namelen);
+		Net_WriteInt8(uint8_t(bitnum | (set << 5)));
+		return true;
+	}
+	return false;
 }
 
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
@@ -660,7 +712,7 @@ void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
 	int len;
 	int type;
 
-	len = ReadByte (stream);
+	len = ReadInt8 (stream);
 	type = len >> 6;
 	len &= 0x3f;
 	if (len == 0)
@@ -689,67 +741,65 @@ static int namesortfunc(const void *a, const void *b)
 	return stricmp(name1->GetChars(), name2->GetChars());
 }
 
-void D_WriteUserInfoStrings (int pnum, uint8_t **stream, bool compact)
+FString D_GetUserInfoStrings(int pnum, bool compact)
 {
-	if (pnum >= MAXPLAYERS)
+	FString result;
+	if (pnum >= 0 && pnum < MAXPLAYERS)
 	{
-		WriteByte (0, stream);
-		return;
-	}
+		userinfo_t* info = &players[pnum].userinfo;
+		TArray<TMap<FName, FBaseCVar*>::Pair*> userinfo_pairs(info->CountUsed());
+		TMap<FName, FBaseCVar*>::Iterator it(*info);
+		TMap<FName, FBaseCVar*>::Pair* pair;
+		UCVarValue cval;
 
-	userinfo_t *info = &players[pnum].userinfo;
-	TArray<TMap<FName, FBaseCVar *>::Pair *> userinfo_pairs(info->CountUsed());
-	TMap<FName, FBaseCVar *>::Iterator it(*info);
-	TMap<FName, FBaseCVar *>::Pair *pair;
-	UCVarValue cval;
-
-	// Create a simple array of all userinfo cvars
-	while (it.NextPair(pair))
-	{
-		userinfo_pairs.Push(pair);
-	}
-	// For compact mode, these need to be sorted. Verbose mode doesn't matter.
-	if (compact)
-	{
-		qsort(&userinfo_pairs[0], userinfo_pairs.Size(), sizeof(pair), userinfosortfunc);
-		// Compact mode is signified by starting the string with two backslash characters.
-		// We output one now. The second will be output as part of the first value.
-		*(*stream)++ = '\\';
-	}
-	for (unsigned int i = 0; i < userinfo_pairs.Size(); ++i)
-	{
-		pair = userinfo_pairs[i];
-
-		if (!compact)
-		{ // In verbose mode, prepend the cvar's name
-			*stream += sprintf(*((char **)stream), "\\%s", pair->Key.GetChars());
-		}
-		// A few of these need special handling for compatibility reasons.
-		switch (pair->Key.GetIndex())
+		// Create a simple array of all userinfo cvars
+		while (it.NextPair(pair))
 		{
-		case NAME_Gender:
-			*stream += sprintf(*((char **)stream), "\\%s",
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_FEMALE ? "female" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_OBJECT ? "other" : "male");
-			break;
+			userinfo_pairs.Push(pair);
+		}
+		// For compact mode, these need to be sorted. Verbose mode doesn't matter.
+		if (compact)
+		{
+			qsort(&userinfo_pairs[0], userinfo_pairs.Size(), sizeof(pair), userinfosortfunc);
+			// Compact mode is signified by starting the string with two backslash characters.
+			// We output one now. The second will be output as part of the first value.
+			result += '\\';
+		}
+		for (unsigned int i = 0; i < userinfo_pairs.Size(); ++i)
+		{
+			pair = userinfo_pairs[i];
 
-		case NAME_PlayerClass:
-			*stream += sprintf(*((char **)stream), "\\%s", info->GetPlayerClassNum() == -1 ? "Random" :
-				D_EscapeUserInfo(info->GetPlayerClassType()->GetDisplayName().GetChars()).GetChars());
-			break;
+			if (!compact)
+			{ // In verbose mode, prepend the cvar's name
+				result.AppendFormat("\\%s", pair->Key.GetChars());
+			}
+			// A few of these need special handling for compatibility reasons.
+			switch (pair->Key.GetIndex())
+			{
+			case NAME_Gender:
+				result.AppendFormat("\\%s",
+					*static_cast<FIntCVar*>(pair->Value) == GENDER_FEMALE ? "female" :
+					*static_cast<FIntCVar*>(pair->Value) == GENDER_NEUTER ? "neutral" :
+					*static_cast<FIntCVar*>(pair->Value) == GENDER_OBJECT ? "other" : "male");
+				break;
 
-		case NAME_Skin:
-			*stream += sprintf(*((char **)stream), "\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name).GetChars());
-			break;
+			case NAME_PlayerClass:
+				result.AppendFormat("\\%s", info->GetPlayerClassNum() == -1 ? "Random" :
+					D_EscapeUserInfo(info->GetPlayerClassType()->GetDisplayName().GetChars()).GetChars());
+				break;
 
-		default:
-			cval = pair->Value->GetGenericRep(CVAR_String);
-			*stream += sprintf(*((char **)stream), "\\%s", cval.String);
-			break;
+			case NAME_Skin:
+				result.AppendFormat("\\%s", D_EscapeUserInfo(Skins[info->GetSkin()].Name.GetChars()).GetChars());
+				break;
+
+			default:
+				cval = pair->Value->GetGenericRep(CVAR_String);
+				result.AppendFormat("\\%s", cval.String);
+				break;
+			}
 		}
 	}
-	*(*stream)++ = '\0';
+	return result;
 }
 
 void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
@@ -820,18 +870,18 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			}
 			
 			// A few of these need special handling.
-			switch (keyname)
+			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
-				info->GenderChanged(value);
+				info->GenderChanged(value.GetChars());
 				break;
 
 			case NAME_PlayerClass:
-				info->PlayerClassChanged(value);
+				info->PlayerClassChanged(value.GetChars());
 				break;
 
 			case NAME_Skin:
-				info->SkinChanged(value, players[pnum].CurrentPlayerClass);
+				info->SkinChanged(value.GetChars(), players[pnum].CurrentPlayerClass);
 				if (players[pnum].mo != NULL)
 				{
 					if (players[pnum].cls != NULL &&
@@ -848,11 +898,11 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 				break;
 
 			case NAME_Team:
-				UpdateTeam(pnum, atoi(value), update);
+				UpdateTeam(pnum, atoi(value.GetChars()), update);
 				break;
 
 			case NAME_Color:
-				info->ColorChanged(value);
+				info->ColorChanged(value.GetChars());
 				break;
 
 			default:
@@ -904,12 +954,12 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 
 		while (it.NextPair(pair))
 		{
-			name = pair->Key;
+			name = pair->Key.GetChars();
 			name.ToLower();
 			switch (pair->Key.GetIndex())
 			{
 			case NAME_Skin:
-				string = Skins[info.GetSkin()].Name;
+				string = Skins[info.GetSkin()].Name.GetChars();
 				break;
 
 			case NAME_PlayerClass:
@@ -922,7 +972,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 				string = val.String;
 				break;
 			}
-			arc.StringPtr(name, string);
+			arc.StringPtr(name.GetChars(), string);
 		}
 		arc.EndObject();
 	}
@@ -934,7 +984,6 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *key;
 	const char *str;
 
-	info.Reset();
 	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{
@@ -945,7 +994,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 			FBaseCVar **cvar = info.CheckKey(name);
 			if (cvar != NULL && *cvar != NULL)
 			{
-				switch (name)
+				switch (name.GetIndex())
 				{
 				case NAME_Team:			info.TeamChanged(atoi(str)); break;
 				case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known

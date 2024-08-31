@@ -111,7 +111,7 @@ void FTagManager::RemoveLineIDs(int line)
 		{
 			while (allIDs[start].target == line)
 			{
-				allTags[start].tag = allTags[start].target = -1;
+				allIDs[start].tag = allIDs[start].target = -1;
 				start++;
 			}
 		}
@@ -312,6 +312,96 @@ void FTagManager::DumpTags()
 	{
 		Printf("Line %d, ID %d\n", allIDs[i].target, allIDs[i].tag);
 	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+int FTagManager::CountSectorTags(const sector_t *sector)
+{
+	int i = sector->Index();
+
+	if (SectorHasTags(i))
+	{
+		const int n = allTags.Size();
+		
+		int j = startForSector[i]; 
+		int c = 0;
+
+		while(j < n && allTags[j].target == i)
+		{
+			j++;
+			c++;
+		}
+
+		return c;
+	}
+
+	return 0;
+}
+
+int FTagManager::GetSectorTag(const sector_t *sector, int index)
+{
+	int i = sector->Index();
+
+	if (SectorHasTags(i))
+	{
+		const int n = allTags.Size();
+
+		int j = startForSector[i] + index;
+
+		return (j < n && allTags[j].target == i) ? allTags[j].tag : 0;
+	}
+
+	return 0;
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+int FTagManager::CountLineIDs(const line_t *line)
+{
+	int i = line->Index();
+
+	if (LineHasIDs(i))
+	{
+		const int n = allIDs.Size();
+
+		int j = startForLine[i];
+		int c = 0;
+
+		while(j < n && allIDs[j].target == i)
+		{
+			j++;
+			c++;
+		}
+
+		return c;
+	}
+
+	return 0;
+}
+
+int FTagManager::GetLineID(const line_t *line, int index)
+{
+	int i = line->Index();
+
+	if (LineHasIDs(i))
+	{
+		const int n = allIDs.Size();
+
+		int j = startForLine[i] + index;
+
+		return (j < n && allIDs[j].target == i) ? allIDs[j].tag : 0;
+	}
+
+	return 0;
 }
 
 //-----------------------------------------------------------------------------

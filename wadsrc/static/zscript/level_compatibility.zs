@@ -964,6 +964,14 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 			
+			case 'FAA0550BE9923B3A3332B4F7DB897A4A': // heretic.wad e2m7
+			{
+				// missing texture
+				TextureID looserck = TexMan.CheckForTexture("LOOSERCK", TexMan.Type_Wall);
+				SetWallTextureID( 629, Line.back,  Side.top, looserck);				
+				break;
+			}
+			
 			case 'CA3773ED313E8899311F3DD0CA195A68': // heretic.wad e3m6
 			{
 				// Quartz flask outside of map
@@ -984,6 +992,22 @@ class LevelCompatibility : LevelPostProcessor
 				SetWallTextureID(1274, Line.front, Side.top, cstlrck);
 				SetWallTextureID(1277, Line.back,  Side.top, cstlrck);
 				SetWallTextureID(1278, Line.front, Side.top, cstlrck);
+				break;
+			}
+
+			case '30D1480A6D4F3A3153739D4CCF659C4E': // heretic.wad E4M8
+			{
+				// multiplayer teleporter prevents exit on cooperative
+				SetThingFlags(78,MTF_DEATHMATCH);
+				break;
+			}
+
+			case '6CDA2721AA1076F063557CF89D88E92B': // hexen.wad map08
+			{
+				// Amulet of warding accidentally shifted outside of map
+				SetThingXY(256,-1632,2352);
+				// Icon of the defender outside of map
+				SetThingSkills(261,0);
 				break;
 			}
 
@@ -1010,6 +1034,12 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '775CBC35C0A58326FE87AAD638FF9E2A': // Strife1.wad map29
+			case 'A75099ACB622C7013EE737480FCB0D67': // SVE.wad map29
+				// disable teleporter that would always teleport into a blocking position.
+				ClearLineSpecial(271);
+				break;
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible
@@ -1031,6 +1061,20 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '55BF5BFAF086C904E7258258F9700155': // Eternal Doom map02
+			{
+				// unreachable monsters
+				SetThingFlags(274, GetThingFlags(274) | MTF_NOCOUNT);
+				SetThingFlags(275, GetThingFlags(275) | MTF_NOCOUNT);
+				SetThingFlags(276, GetThingFlags(276) | MTF_NOCOUNT);
+				SetThingFlags(277, GetThingFlags(277) | MTF_NOCOUNT);
+				SetThingFlags(278, GetThingFlags(278) | MTF_NOCOUNT);
+				SetThingFlags(279, GetThingFlags(279) | MTF_NOCOUNT);
+				SetThingFlags(280, GetThingFlags(280) | MTF_NOCOUNT);
+				SetThingFlags(281, GetThingFlags(281) | MTF_NOCOUNT);
+				break;
+			}
+
 			case '5C594C67CF7721005DE71429F9811370': // Eternal Doom map03
 			{
 				// fix broken staircase. The compatibility option is not sufficient
@@ -1038,6 +1082,31 @@ class LevelCompatibility : LevelPostProcessor
 				ClearSectorTags(212);
 				ClearSectorTags(213);
 				ClearSectorTags(214);
+				// unreachable secret
+				SetSectorSpecial(551, 0);
+				break;
+			}
+
+			case '9A4615498C3451413F1CD3D15099ACC7': // Eternal Doom map05
+			{
+				// an imp and two cyberdemons are located at the softlock area
+				SetThingFlags(272, GetThingFlags (272) | MTF_NOCOUNT);
+				SetThingFlags(273, GetThingFlags (273) | MTF_NOCOUNT);
+				SetThingFlags(274, GetThingFlags (274) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '8B55842D5A509902738040AF10B4E787': // Eternal Doom map10
+			{
+				// soulsphere at the end of the level is there merely to replicate the start of the next map
+				SetThingFlags(548, GetThingFlags (548) | MTF_NOCOUNT);
+				break;
+			}
+
+			case 'E5B4379151C2010B966CA37A9818C901': // Eternal Doom map12
+			{
+				// unreachable baron
+				SetThingFlags(177, GetThingFlags(177) | MTF_NOCOUNT);
 				break;
 			}
 		
@@ -1345,7 +1414,6 @@ class LevelCompatibility : LevelPostProcessor
 			case '11EA5B8357DEB70A8F00900117831191': // kdizd_12.pk3 z1m3
 			{
 				// Fix incorrectly tagged underwater sector which causes render glitches.
-				ClearSectorTags(7857);
 				AddSectorTag(7857, 82);
 				break;
 			}
@@ -1486,6 +1554,16 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineFlags(2038, Line.ML_REPEAT_SPECIAL);
 				SetLineFlags(2039, Line.ML_REPEAT_SPECIAL);
 				SetLineFlags(2040, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			case '145C4DFCF843F2B92C73036BA0E1D98A': // Hell Revealed MAP26
+			{
+				// The 4 archviles that produce the ghost monsters cannot be killed
+				// Make them not count so they still produce ghosts while allowing 100% kills.
+				SetThingFlags(320, GetThingFlags (320) | MTF_NOCOUNT);
+				SetThingFlags(347, GetThingFlags (347) | MTF_NOCOUNT);
+				SetThingFlags(495, GetThingFlags (495) | MTF_NOCOUNT);
+				SetThingFlags(496, GetThingFlags (496) | MTF_NOCOUNT);
 				break;
 			}
 
@@ -1944,9 +2022,194 @@ class LevelCompatibility : LevelPostProcessor
 			
 			case '2499CF9A9351BE9BC4E9C66FC9F291A7': // Requiem MAP23
 			{
+				// Have arch-vile who creates ghost monsters not count as a kill
+				SetThingFlags(0, GetThingFlags(0) | MTF_NOCOUNT);
 				// Remove secret at switch that can only be scored by crouching
 				SetSectorSpecial(240, 0);
 				break;
+			}
+
+			case '1497894956B3C8EBE8A240B7FDD99C6A': // Memento Mori 2 MAP25
+			{
+				// an imp is used for the lift activation and cannot be killed
+				SetThingFlags(51, GetThingFlags (51) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '51960F3E9D46449E98DBC7D97F49DB23': // Shotgun Symphony E1M1
+			{
+				// harmless cyberdemon included for the 'story' sake
+				SetThingFlags(158, GetThingFlags (158) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '60D362BAE16B4C10A1DCEE442C878CAE': // 50 Shades of Graytall MAP06
+			{
+				// there are four invisibility spheres used for decoration
+				SetThingFlags(144, GetThingFlags (144) | MTF_NOCOUNT);
+				SetThingFlags(145, GetThingFlags (145) | MTF_NOCOUNT);
+				SetThingFlags(194, GetThingFlags (194) | MTF_NOCOUNT);
+				SetThingFlags(195, GetThingFlags (195) | MTF_NOCOUNT);
+				break;
+			}
+
+			case 'C104E740CC3F70BCFD5D2EA8E833318D': // 50 Monsters MAP29
+			{
+				// there are two invisibility spheres used for decoration
+				SetThingFlags(111, GetThingFlags (111) | MTF_NOCOUNT);
+				SetThingFlags(112, GetThingFlags (112) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '76393C84102480A4C75A4674C9C3217A': // Deadly Standards 2 E2M8
+			{
+				// 923 lost souls are used as environmental hazard
+				for (int i = 267; i < 275; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 482; i < 491; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 510; i < 522; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 880; i < 1510; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 1622; i < 1660; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+
+				for (int i = 1682; i < 1820; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 1847; i < 1875; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 2110; i < 2114; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 2243; i < 2293; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+
+				SetThingFlags(493,  GetThingFlags (493)  | MTF_NOCOUNT);
+				SetThingFlags(573,  GetThingFlags (573)  | MTF_NOCOUNT);
+				SetThingFlags(613,  GetThingFlags (613)  | MTF_NOCOUNT);
+				SetThingFlags(614,  GetThingFlags (614)  | MTF_NOCOUNT);
+				SetThingFlags(1679, GetThingFlags (1679) | MTF_NOCOUNT);
+				SetThingFlags(1680, GetThingFlags (1680) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '42B4D294A60BE4E3500AF150291CF6D4': // Hell Ground MAP05
+			{
+				// 5 cyberdemons are located at the 'pain end' sector
+				for (int i = 523; i < 528; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '0C0513A9821F26F3D7997E3B0359A318': // Mayhem 1500 MAP06
+			{
+				// there's an archvile behind the bossbrain at the very end that can't be killed
+				SetThingFlags(61, GetThingFlags (61) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '00641DA23DDE998F6725BC5896A0DBC2': // 20 Years of Doom E1M8
+			{
+				// 32 lost souls are located at the 'pain end' sector
+				for (int i = 1965; i < 1975; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 2189; i < 2202; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 2311; i < 2320; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				break;
+			}
+
+			case 'EEBDD9CA280F6FF06C30AF2BEE85BF5F': // 2002ad10.wad E3M3
+			{
+				// swarm of cacodemons at the end meant to be pseudo-endless and not killed
+				for (int i = 467; i < 547; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '988DFF5BB7073B857DEE3957A91C8518': // Speed of Doom MAP14
+			{
+				// you can get only one of the soulspheres, the other, depending on your choice, becomes unavailable
+				SetThingFlags(1044, GetThingFlags (1044) | MTF_NOCOUNT);			
+				SetThingFlags(1045, GetThingFlags (1045) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '361734AC5D78E872A05335C83E4F6DB8': // inf-lutz.wad E3M8
+			{
+				// there is a trap with 10 cyberdemons at the end of the map, you are not meant to kill them
+				for (int i = 541; i < 546; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				for (int i = 638; i < 643; i++)
+					SetThingFlags (i, GetThingFlags (i) | MTF_NOCOUNT);
+				break;
+			}
+
+			case '8F844B272E7235E82EA78AD2A2EB2D4A': // Serenity E3M7
+			{
+				// two spheres can't be obtained and thus should not count towards 100% items
+				SetThingFlags(443, GetThingFlags (443) | MTF_NOCOUNT);
+				SetThingFlags(444, GetThingFlags (444) | MTF_NOCOUNT);
+				// one secret is unobtainable
+				SetSectorSpecial (97, 0);
+				break;
+			}
+
+			case 'A50AC05CCE4F07413A0C4883C5E24215': // dbimpact.wad e1m7
+			{
+				SetLineFlags(1461, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(1468, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case 'E0D747B9EE58A0CB74B9AD54423AC15C': // return01.wad e1m2
+			{
+				// fix broken switch to raise the exit bridge
+				SetLineSpecial(1248, Floor_RaiseByValue, 39, 8, 512);
+				break;
+			}
+
+			case '1C35384B22BD805F51B3B2C9D17D62E4': // 007ltsd.wad E4M7
+			{
+				// Fix impassable exit line
+				SetLineFlags(6842, 0, Line.ML_BLOCKING); 
+				break;
+			}
+			
+			case '50E394239FF64264950D11883E933553': // 1024.wad map05
+			{
+				// Change duplicate player 2 start to player 3 start
+				SetThingEdNum(59, 3);
+				break;
+			}
+
+			case '3F0965ADCEB2F4A7BF46FADF6DD941B0': // phocas2.wad map01
+			{
+				// turn map spot into teleport dest.
+				SetThingEdNum(699, 9044);
+				break;
+			}
+			
+			case 'C8E727FFBA0BA445666C80340BF3D0AC': // god_.WAD E1M2
+			{
+				// fix bad skill flags for a monster that's required to be killed.
+				SetThingSkills(1184, 1);
+				break;
+			}
+
+			case '3B4AAD34E46443BD505CC6053FCD842A': // pc_cp2.wad map38
+			{
+				// Emulate the effect of the hidden Commander Keen's death
+				// since the Keen actor is modified by DEHACKED and doesn't work as intended:
+
+				// 1) Replace the Keen with a zombieman
+				SetThingEdNum(101, 3004);
+
+				// 2) Set its special to emulate A_KeenDie
+				SetThingSpecial(101, Door_Open);
+				SetThingArgument(101, 0, 666);
+				SetThingArgument(101, 1, 16);
 			}
 		}
 	}

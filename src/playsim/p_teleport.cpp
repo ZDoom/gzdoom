@@ -60,7 +60,7 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 	else
 	{
 		double fogDelta = mobj->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
+		mo = Spawn(mobj->Level, (beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), pos.plusZ(fogDelta), ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)
@@ -128,7 +128,15 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 			}
 			else
 			{
-				pos.Z = floorheight;
+				if (!(thing->Level->i_compatflags2 & COMPATF2_FDTELEPORT) || !(flags & TELF_FDCOMPAT) || floorheight > thing->Z())
+				{
+					pos.Z = floorheight;
+				}
+				else
+				{
+					pos.Z = thing->Z();
+				}
+
 				if (!(flags & TELF_KEEPORIENTATION))
 				{
 					resetpitch = false;
@@ -145,8 +153,30 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		}
 		else
 		{
-			pos.Z = floorheight;
+			// emulation of Final Doom's teleport glitch.
+			// For walking monsters we still have to force them to the ground because the handling of off-ground monsters is different from vanilla.
+			if (!(thing->Level->i_compatflags2 & COMPATF2_FDTELEPORT) || !(flags & TELF_FDCOMPAT) || !(thing->flags & MF_NOGRAVITY) || floorheight > pos.Z)
+			{
+				pos.Z = floorheight;
+			}
+			else
+			{
+				pos.Z = thing->Z();
+			}
 		}
+	}
+	// [MK] notify thing of incoming teleport, check for an early cancel
+	// if it returns false
+	{
+		int nocancel = 1;
+		IFVIRTUALPTR(thing, AActor, PreTeleport)
+		{
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
+			VMReturn ret;
+			ret.IntAt(&nocancel);
+			VMCall(func, params, countof(params), &ret, 1);
+		}
+		if ( !nocancel ) return false;
 	}
 	if (!P_TeleportMove (thing, pos, false))
 	{
@@ -157,7 +187,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		player->viewz = thing->Z() + player->viewheight;
 		if (resetpitch)
 		{
-			player->mo->Angles.Pitch = 0.;
+			player->mo->Angles.Pitch = nullAngle;
 		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))
@@ -187,7 +217,7 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 			// [RH] Zoom player's field of vision
 			// [BC] && bHaltVelocity.
 			if (telezoom && thing->player->mo == thing && !(flags & TELF_KEEPVELOCITY))
-				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
+				thing->player->FOV = min (175.f, thing->player->DesiredFOV + 45.f);
 		}
 	}
 	// [BC] && bHaltVelocity.
@@ -213,6 +243,14 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		// killough 10/98: kill all bobbing velocity too
 		if (player)	player->Vel.Zero();
 	}
+	// [MK] notify thing of successful teleport
+	{
+		IFVIRTUALPTR(thing, AActor, PostTeleport)
+		{
+			VMValue params[] = { thing, pos.X, pos.Y, pos.Z, angle.Degrees(), flags };
+			VMCall(func, params, countof(params), nullptr, 1);
+		}
+	}
 	return true;
 }
 
@@ -224,7 +262,7 @@ DEFINE_ACTION_FUNCTION(AActor, Teleport)
 	PARAM_FLOAT(z);
 	PARAM_ANGLE(an);
 	PARAM_INT(flags);
-	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags));
+	ACTION_RETURN_BOOL(P_Teleport(self, DVector3(x, y, z), an, flags & ~TELF_FDCOMPAT));
 }
 
 //-----------------------------------------------------------------------------
@@ -338,10 +376,10 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 {
 	AActor *searcher;
 	double z;
-	DAngle angle = 0.;
+	DAngle angle = nullAngle;
 	double s = 0, c = 0;
 	double vx = 0, vy = 0;
-	DAngle badangle = 0.;
+	DAngle badangle = nullAngle;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -368,7 +406,7 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = line->Delta().Angle() - searcher->Angles.Yaw + 90.;
+		angle = line->Delta().Angle() - searcher->Angles.Yaw + DAngle::fromDeg(90.);
 		if (flags & TELF_ROTATEBOOMINVERSE) angle = -angle;
 
 		// Sine, cosine of angle adjustment
@@ -391,9 +429,9 @@ bool FLevelLocals::EV_Teleport (int tid, int tag, line_t *line, int side, AActor
 	}
 	if ((i_compatflags2 & COMPATF2_BADANGLES) && (thing->player != NULL))
 	{
-		badangle = 0.01;
+		badangle = DAngle::fromDeg(0.01);
 	}
-	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
+	if (P_Teleport (thing, DVector3(searcher->Pos().XY(), z), searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (line)
@@ -481,7 +519,7 @@ bool FLevelLocals::EV_SilentLineTeleport (line_t *line, int side, AActor *thing,
 
 			if (!reverse)
 			{
-				angle += 180.;
+				angle += DAngle::fromDeg(180.);
 				pos = 1 - pos;
 			}
 
@@ -637,14 +675,15 @@ bool FLevelLocals::EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
 	DAngle an = dest->Angles.Yaw - source->Angles.Yaw;
-	DVector2 off = victim->Pos() - source->Pos();
+	DVector2 off = victim->Pos().XY() - source->Pos().XY();
 	DAngle offAngle = victim->Angles.Yaw - source->Angles.Yaw;
 	DVector2 newp = { off.X * an.Cos() - off.Y * an.Sin(), off.X * an.Sin() + off.Y * an.Cos() };
 	double z = floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z();
+	int flags = fog ? (TELF_DESTFOG | TELF_SOURCEFOG | TELF_KEEPORIENTATION) : TELF_KEEPORIENTATION;
 
 	bool res =
 		P_Teleport (victim, DVector3(dest->Pos().XY() + newp, z),
-							0., fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
+							nullAngle, flags);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 
@@ -703,7 +742,7 @@ bool FLevelLocals::EV_TeleportGroup (int group_tid, AActor *victim, int source_t
 	if (moveSource && didSomething)
 	{
 		didSomething |=
-			P_Teleport (sourceOrigin, destOrigin->PosAtZ(floorz ? ONFLOORZ : destOrigin->Z()), 0., TELF_KEEPORIENTATION);
+			P_Teleport (sourceOrigin, destOrigin->PosAtZ(floorz ? ONFLOORZ : destOrigin->Z()), nullAngle, TELF_KEEPORIENTATION);
 		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 

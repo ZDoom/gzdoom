@@ -20,7 +20,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdlib.h>
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_bbox.h"
 
@@ -39,7 +39,7 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 #include "swrenderer/segments/r_portalsegment.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer
@@ -54,18 +54,6 @@ namespace swrenderer
 		floorclip = thread->FrameMemory->AllocMemory<short>(len);
 		memcpy(ceilingclip, topclip + x1, len * sizeof(short));
 		memcpy(floorclip, bottomclip + x1, len * sizeof(short));
-
-		for (int i = 0; i < x2 - x1; i++)
-		{
-			if (ceilingclip[i] < 0)
-				ceilingclip[i] = 0;
-			if (ceilingclip[i] >= viewheight)
-				ceilingclip[i] = viewheight - 1;
-			if (floorclip[i] < 0)
-				floorclip[i] = 0;
-			if (floorclip[i] >= viewheight)
-				floorclip[i] = viewheight - 1;
-		}
 
 		mirror = linedef->special == Line_Mirror;
 	}

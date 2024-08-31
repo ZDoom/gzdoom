@@ -33,6 +33,11 @@
 **
 */
 
+extend class Menu
+{
+	static native void StartGameDirect(bool hasPlayerClass, bool randomPlayerClass, Class<PlayerPawn> playerClass, int Episode, int Skill);
+}
+
 class PlayerMenu : ListMenu
 {
 	int mRotation;

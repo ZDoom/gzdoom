@@ -32,6 +32,7 @@
 #include "vm.h"
 #include "r_defs.h"
 #include "g_levellocals.h"
+#include "gamedata/g_mapinfo.h"
 #include "s_sound.h"
 #include "p_local.h"
 #include "v_font.h"
@@ -49,332 +50,57 @@
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
+#include "utf8.h"
 #include "fontinternals.h"
 #include "intermission/intermission.h"
+#include "menu.h"
+#include "c_cvars.h"
+#include "c_bind.h"
+#include "c_dispatch.h"
+#include "s_music.h"
+#include "texturemanager.h"
+#include "v_draw.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
 
 
-//=====================================================================================
-//
-// FString exports
-//
-//=====================================================================================
+void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
 
-static void LocalizeString(const FString &label, bool prefixed, FString *result)
-{
-	if (!prefixed) *result = GStrings(label);
-	else if (label[0] != '$') *result = label;
-	else *result = GStrings(&label[1]);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(label);
-	PARAM_BOOL(prefixed);
-	FString result;
-	LocalizeString(label, prefixed, &result);
-	ACTION_RETURN_STRING(result);
-}
-
-static void StringReplace(FString *self, const FString &s1, const FString &s2)
-{
-	self->Substitute(s1, s2);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Replace, StringReplace)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(s1);
-	PARAM_STRING(s2);
-	self->Substitute(s1, s2);
+	PARAM_OBJECT(viewpoint, AActor);
+	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
+	PARAM_FLOAT(fov);
+	SetCameraToTexture(viewpoint, texturename, fov);
 	return 0;
 }
 
-static void StringMid(FString *self, unsigned pos, unsigned len, FString *result)
+static void SetCameraTextureAspectRatio(const FString &texturename, double aspectScale, bool useTextureRatio)
 {
-	*result = self->Mid(pos, len);
+	FTextureID textureid = TexMan.CheckForTexture(texturename.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	if (textureid.isValid())
+	{
+		// Only proceed if the texture actually has a canvas.
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->isHardwareCanvas())
+		{
+			static_cast<FCanvasTexture *>(tex->GetTexture())->SetAspectRatio(aspectScale, useTextureRatio);
+		}
+	}
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Mid, StringMid)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(pos);
-	PARAM_UINT(len);
-	FString s = self->Mid(pos, len);
-	ACTION_RETURN_STRING(s);
-}
-
-static void StringLeft(FString *self, unsigned len, FString *result)
-{
-	*result = self->Left(len);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Left, StringLeft)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	FString s = self->Left(len);
-	ACTION_RETURN_STRING(s);
-}
-
-static void StringTruncate(FString *self, unsigned len)
-{
-	self->Truncate(len);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Truncate, StringTruncate)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	self->Truncate(len);
-	return 0;
-}
-
-static void StringRemove(FString *self, unsigned index, unsigned remlen)
-{
-	self->Remove(index, remlen);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Remove, StringRemove)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(index);
-	PARAM_UINT(remlen);
-	self->Remove(index, remlen);
-	return 0;
-}
-
-static void StringCharAt(FString *self, int pos, FString *result)
-{
-	if ((unsigned)pos >= self->Len()) *result = "";
-	else *result = FString((*self)[pos]);
-}
-// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharAt, StringCharAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	FString result;
-	StringCharAt(self, pos, &result);
-	ACTION_RETURN_STRING(result);
-}
-
-static int StringCharCodeAt(FString *self, int pos)
-{
-	if ((unsigned)pos >= self->Len()) return 0;
-	else return (*self)[pos];
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
-}
-
-static int StringByteAt(FString *self, int pos)
-{
-	if ((unsigned)pos >= self->Len()) return 0;
-	else return (uint8_t)((*self)[pos]);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	ACTION_RETURN_INT(StringByteAt(self, pos));
-}
-
-static void StringFilter(FString *self, FString *result)
-{
-	*result = strbin1(*self);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(strbin1(*self));
-}
-
-static int StringIndexOf(FString *self, const FString &substr, int startIndex)
-{
-	return self->IndexOf(substr, startIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(startIndex);
-	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
-}
-
-static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
-{
-	return self->LastIndexOfBroken(substr, endIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
-}
-
-static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
-{
-	return self->LastIndexOf(substr, endIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
-}
-
-static void StringToUpper(FString *self)
-{
-	self->ToUpper();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToUpper, StringToUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToUpper();
-	return 0;
-}
-
-static void StringToLower(FString *self)
-{
-	self->ToLower();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToLower();
-	return 0;
-}
-
-static void StringMakeUpper(FString *self, FString *out)
-{
-	*out = self->MakeUpper();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeUpper, StringMakeUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(self->MakeUpper());
-}
-
-static void StringMakeLower(FString *self, FString *out)
-{
-	*out = self->MakeLower();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(self->MakeLower());
-}
-
-static int StringCharUpper(int ch)
-{
-	return ch >= 0 && ch < 65536 ? upperforlower[ch] : ch;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharUpper, StringCharUpper)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraTextureAspectRatio, SetCameraTextureAspectRatio)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(ch);
-	ACTION_RETURN_INT(StringCharUpper(ch));
-}
-
-static int StringCharLower(int ch)
-{
-	return ch >= 0 && ch < 65536 ? lowerforupper[ch] : ch;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(ch);
-	ACTION_RETURN_INT(StringCharLower(ch));
-}
-
-
-static int StringToInt(FString *self, int base)
-{
-	return (int)self->ToLong(base);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(base);
-	ACTION_RETURN_INT((int)self->ToLong(base));
-}
-
-static double StringToDbl(FString *self)
-{
-	return self->ToDouble();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_FLOAT(self->ToDouble());
-}
-
-static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
-{
-	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_POINTER(tokens, TArray<FString>);
-	PARAM_STRING(delimiter);
-	PARAM_INT(keepEmpty);
-	StringSplit(self, tokens, delimiter, keepEmpty);
+	PARAM_STRING(texturename);
+	PARAM_FLOAT(aspect);
+	PARAM_BOOL(useTextureRatio);
+	SetCameraTextureAspectRatio(texturename, aspect, useTextureRatio);
 	return 0;
 }
-
-static int StringCodePointCount(FString *self)
-{
-	return (int)self->CharacterCount();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CodePointCount, StringCodePointCount)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_INT(StringCodePointCount(self));
-}
-
-static int StringNextCodePoint(FString *self, int inposition, int *position)
-{
-	int codepoint = self->GetNextCharacter(inposition);
-	if (position) *position = inposition;
-	return codepoint;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, GetNextCodePoint, StringNextCodePoint)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	if (numret > 0) ret[0].SetInt(self->GetNextCharacter(pos));
-	if (numret > 1) ret[1].SetInt(pos);
-	return numret;
-}
-
 
 //=====================================================================================
 //
@@ -744,6 +470,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTerrain, GetTerrain)
 	ACTION_RETURN_INT(GetTerrain(self, pos));
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetFloorTerrain, GetFloorTerrain_S)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	ACTION_RETURN_POINTER(GetFloorTerrain_S(self, pos));
+}
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CheckPortalPlane, CheckPortalPlane)
 {
@@ -830,7 +562,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
-	 self->SetXOffset(pos, o);
+	 self->SetYOffset(pos, o);
 	 return 0;
  }
 
@@ -915,7 +647,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetAngle(sector_t *self, int pos, double o)
  {
-	 self->SetAngle(pos, o);
+	 self->SetAngle(pos, DAngle::fromDeg(o));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAngle, SetAngle)
@@ -929,7 +661,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static double GetAngle(sector_t *self, int pos, bool addbase)
  {
-	 return self->GetAngle(pos, addbase).Degrees;
+	 return self->GetAngle(pos, addbase).Degrees();
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAngle, GetAngle)
@@ -937,12 +669,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_BOOL(addbase);
-	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees);
+	 ACTION_RETURN_FLOAT(self->GetAngle(pos, addbase).Degrees());
  }
 
  static void SetBase(sector_t *self, int pos, double o, double a)
  {
-	 self->SetBase(pos, o, a);
+	 self->SetBase(pos, o, DAngle::fromDeg(a));
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBase, SetBase)
@@ -1294,7 +1026,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetEnvironment(sector_t *self, const FString &env)
  {
-	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env);
+	 self->Level->Zones[self->ZoneNumber].Environment = S_FindEnvironment(env.GetChars());
  }
 
  DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetEnvironment, SetEnvironment)
@@ -1407,6 +1139,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 ACTION_RETURN_INT(self->e->XFloor.attached.Size());
  }
 
+ static int CountSectorTags(const sector_t *self)
+ {
+	 return level.tagManager.CountSectorTags(self);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, CountTags, CountSectorTags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_INT(level.tagManager.CountSectorTags(self));
+ }
+
+ static int GetSectorTag(const sector_t *self, int index)
+ {
+	 return level.tagManager.GetSectorTag(self, index);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetTag, GetSectorTag)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(index);
+	 ACTION_RETURN_INT(level.tagManager.GetSectorTag(self, index));
+ }
+
  static int Get3DFloorTexture(F3DFloor *self, int pos)
  {
  	 if ( pos )
@@ -1467,10 +1222,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 return self->getPortalAlignment();
  }
 
+ DEFINE_ACTION_FUNCTION(_Line, getPortalFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalFlags());
+ }
+
  DEFINE_ACTION_FUNCTION_NATIVE(_Line, getPortalAlignment, getPortalAlignment)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_INT(self->getPortalAlignment());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalType)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(self->getPortalType());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalDisplacement)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_VEC2(self->getPortalDisplacement());
+ }
+
+ DEFINE_ACTION_FUNCTION(_Line, getPortalAngleDiff)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_FLOAT(self->getPortalAngleDiff().Degrees());
  }
 
  static int LineIndex(line_t *self)
@@ -1482,6 +1261,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
 	 ACTION_RETURN_INT(LineIndex(self));
+ }
+
+ static int CountLineIDs(const line_t *self)
+ {
+	 return level.tagManager.CountLineIDs(self);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, CountIDs, CountLineIDs)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 ACTION_RETURN_INT(level.tagManager.CountLineIDs(self));
+ }
+
+ static int GetLineID(const line_t *self, int index)
+ {
+	 return level.tagManager.GetLineID(self, index);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Line, GetID, GetLineID)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	 PARAM_INT(index);
+	 ACTION_RETURN_INT(level.tagManager.GetLineID(self, index));
  }
 
  //===========================================================================
@@ -1698,11 +1500,38 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 ACTION_RETURN_POINTER(self->V2());
  }
 
- static void SetSideSpecialColor(side_t *self, int tier, int position, int color)
+ static int GetTextureFlags(side_t* self, int tier)
+ {
+	 return self->GetTextureFlags(tier);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, GetTextureFlags, GetTextureFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 ACTION_RETURN_INT(self->GetTextureFlags(tier));
+}
+
+ static void ChangeTextureFlags(side_t* self, int tier, int And, int Or)
+ {
+	 self->ChangeTextureFlags(tier, And, Or);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, ChangeTextureFlags, ChangeTextureFlags)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_INT(a);
+	 PARAM_INT(o);
+	 ChangeTextureFlags(self, tier, a, o);
+	 return 0;
+ }
+
+ static void SetSideSpecialColor(side_t *self, int tier, int position, int color, int useown)
  {
 	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
 	 {
-		 self->SetSpecialColor(tier, position, color);
+		 self->SetSpecialColor(tier, position, color, useown);
 	 }
  }
 
@@ -1712,7 +1541,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_INT(tier);
 	 PARAM_INT(position);
 	 PARAM_COLOR(color);
-	 SetSideSpecialColor(self, tier, position, color);
+	 PARAM_BOOL(useown)
+	 SetSideSpecialColor(self, tier, position, color, useown);
 	 return 0;
  }
 
@@ -1885,7 +1715,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_NAME(seq);
 	 PARAM_INT(state);
-	 F_StartIntermission(seq, (uint8_t)state);
+	 G_StartSlideshow(self, seq);
 	 return 0;
  }
 
@@ -1893,7 +1723,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  // This is needed to convert the strings to char pointers.
  static void ReplaceTextures(FLevelLocals *self, const FString &from, const FString &to, int flags)
  {
-	 self->ReplaceTextures(from, to, flags);
+	 self->ReplaceTextures(from.GetChars(), to.GetChars(), flags);
  }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
@@ -1902,22 +1732,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	PARAM_STRING(from);
 	PARAM_STRING(to);
 	PARAM_INT(flags);
-	self->ReplaceTextures(from, to, flags);
+	self->ReplaceTextures(from.GetChars(), to.GetChars(), flags);
 	return 0;
 }
-
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
-
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(viewpoint, AActor);
-	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
-	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
-	return 0;
-}
-
 
 //=====================================================================================
 //
@@ -2051,140 +1868,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Secplane, PointToDist, PointToDist)
 
 //=====================================================================================
 //
-// FFont exports
-//
-//=====================================================================================
-
-static FFont *GetFont(int name)
-{
-	return V_GetFont(FName(ENamedName(name)).GetChars());
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetFont, GetFont)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(name);
-	ACTION_RETURN_POINTER(GetFont(name));
-}
-
-static FFont *FindFont(int name)
-{
-	return FFont::FindFont(FName(ENamedName(name)));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFont, FindFont)
-{
-	PARAM_PROLOGUE;
-	PARAM_NAME(name);
-	ACTION_RETURN_POINTER(FFont::FindFont(name));
-}
-
-static int GetCharWidth(FFont *font, int code)
-{
-	return font->GetCharWidth(code);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCharWidth, GetCharWidth)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	PARAM_INT(code);
-	ACTION_RETURN_INT(self->GetCharWidth(code));
-}
-
-static int GetHeight(FFont *font)
-{
-	return font->GetHeight();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetHeight, GetHeight)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	ACTION_RETURN_INT(self->GetHeight());
-}
-
-static int GetDisplacement(FFont* font)
-{
-	return font->GetDisplacement();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplacement, GetDisplacement)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	ACTION_RETURN_INT(self->GetDisplacement());
-}
-
-double GetBottomAlignOffset(FFont *font, int c);
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	PARAM_INT(code);
-	ACTION_RETURN_FLOAT(GetBottomAlignOffset(self, code));
-}
-
-static int StringWidth(FFont *font, const FString &str)
-{
-	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
-	return font->StringWidth(txt);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	PARAM_STRING(str);
-	ACTION_RETURN_INT(StringWidth(self, str));
-}
-
-static int GetMaxAscender(FFont* font, const FString& str)
-{
-	const char* txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
-	return font->GetMaxAscender(txt);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	PARAM_STRING(str);
-	ACTION_RETURN_INT(GetMaxAscender(self, str));
-}
-
-static int CanPrint(FFont *font, const FString &str)
-{
-	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
-	return font->CanPrint(txt);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, CanPrint, CanPrint)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	PARAM_STRING(str);
-	ACTION_RETURN_INT(CanPrint(self, str));
-}
-
-static int FindFontColor(int name)
-{
-	return V_FindFontColor(ENamedName(name));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, FindFontColor, FindFontColor)
-{
-	PARAM_PROLOGUE;
-	PARAM_NAME(code);
-	ACTION_RETURN_INT((int)V_FindFontColor(code));
-}
-
-static void GetCursor(FFont *font, FString *result)
-{
-	*result = font->GetCursor();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetCursor, GetCursor)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FFont);
-	ACTION_RETURN_STRING(FString(self->GetCursor()));
-}
-
-//=====================================================================================
-//
 // WeaponSlots exports
 //
 //=====================================================================================
@@ -2203,7 +1886,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FWeaponSlots, LocateWeapon, LocateWeapon)
 	if (numret >= 1) ret[0].SetInt(retv);
 	if (numret >= 2) ret[1].SetInt(slot);
 	if (numret >= 3) ret[2].SetInt(index);
-	return MIN(numret, 3);
+	return min(numret, 3);
 }
 
 static PClassActor *GetWeapon(FWeaponSlots *self, int slot, int index)
@@ -2322,66 +2005,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetRandomSpot, GetRandomSpot)
 //
 //=====================================================================================
 
-static void SBar_SetSize(DBaseStatusBar *self, int rt, int vw, int vh, int hvw, int hvh)
-{
-	self->SetSize(rt, vw, vh, hvw, hvh);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetSize, SBar_SetSize)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(rt);
-	PARAM_INT(vw);
-	PARAM_INT(vh);
-	PARAM_INT(hvw);
-	PARAM_INT(hvh);
-	self->SetSize(rt, vw, vh, hvw, hvh);
-	return 0;
-}
-
-static void SBar_GetHUDScale(DBaseStatusBar *self, DVector2 *result)
-{
-	*result = self->GetHUDScale();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetHUDScale, SBar_GetHUDScale)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	ACTION_RETURN_VEC2(self->GetHUDScale());
-}
-
-static void BeginStatusBar(DBaseStatusBar *self, bool fs, int w, int h, int r)
-{
-	self->BeginStatusBar(w, h, r, fs);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, BeginStatusBar, BeginStatusBar)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_BOOL(fs);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	PARAM_INT(r);
-	self->BeginStatusBar(w, h, r, fs);
-	return 0;
-}
-
-static void BeginHUD(DBaseStatusBar *self, double a, bool fs, int w, int h)
-{
-	self->BeginHUD(w, h, a, fs);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, BeginHUD, BeginHUD)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_FLOAT(a);
-	PARAM_BOOL(fs);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	self->BeginHUD(w, h, a, fs);
-	return 0;
-}
-
 static void UpdateScreenGeometry(DBaseStatusBar *)
 {
 	setsizeneeded = true;
@@ -2474,7 +2097,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Draw, SBar_Draw)
 
 static void SetMugshotState(DBaseStatusBar *self, const FString &statename, bool wait, bool reset)
 {
-	self->mugshot.SetState(statename, wait, reset);
+	self->mugshot.SetState(statename.GetChars(), wait, reset);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetMugshotState, SetMugshotState)
@@ -2483,7 +2106,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetMugshotState, SetMugshotState)
 	PARAM_STRING(statename);
 	PARAM_BOOL(wait);
 	PARAM_BOOL(reset);
-	self->mugshot.SetState(statename, wait, reset);
+	self->mugshot.SetState(statename.GetChars(), wait, reset);
 	return 0;
 }
 
@@ -2499,30 +2122,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ScreenSizeChanged, SBar_ScreenSize
 	return 0;
 }
 
-static double StatusbarToRealCoords(DBaseStatusBar *self, double x, double y, double w, double h, double *py, double *pw, double *ph)
-{
-	self->StatusbarToRealCoords(x, y, w, h);
-	*py = y;
-	*pw = w;
-	*ph = h;
-	return x;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, StatusbarToRealCoords, StatusbarToRealCoords)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	self->StatusbarToRealCoords(x, y, w, h);
-	if (numret > 0) ret[0].SetFloat(x);
-	if (numret > 1) ret[1].SetFloat(y);
-	if (numret > 2) ret[2].SetFloat(w);
-	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
-}
-
 static int GetTopOfStatusbar(DBaseStatusBar *self)
 {
 	return self->GetTopOfStatusbar();
@@ -2532,131 +2131,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetTopOfStatusbar, GetTopOfStatusb
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	ACTION_RETURN_INT(self->GetTopOfStatusbar());
-}
-
-void SBar_DrawTexture(DBaseStatusBar *self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
-{
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawTexture, SBar_DrawTexture)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(texid);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_INT(flags);
-	PARAM_FLOAT(alpha);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	PARAM_FLOAT(scaleX);
-	PARAM_FLOAT(scaleY);
-	SBar_DrawTexture(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
-	return 0;
-}
-
-void SBar_DrawImage(DBaseStatusBar *self, const FString &texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
-{
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawImage, SBar_DrawImage)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_STRING(texid);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_INT(flags);
-	PARAM_FLOAT(alpha);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	PARAM_FLOAT(scaleX);
-	PARAM_FLOAT(scaleY);
-	SBar_DrawImage(self, texid, x, y, flags, alpha, w, h, scaleX, scaleY);
-	return 0;
-}
-
-void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY);
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawString, SBar_DrawString)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER_NOT_NULL(font, DHUDFont);
-	PARAM_STRING(string);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_INT(flags);
-	PARAM_INT(trans);
-	PARAM_FLOAT(alpha);
-	PARAM_INT(wrapwidth);
-	PARAM_INT(linespacing);
-	PARAM_FLOAT(scaleX);
-	PARAM_FLOAT(scaleY);
-	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing, scaleX, scaleY);
-	return 0;
-}
-
-static double SBar_TransformRect(DBaseStatusBar *self, double x, double y, double w, double h, int flags, double *py, double *pw, double *ph)
-{
-	self->TransformRect(x, y, w, h, flags);
-	*py = y;
-	*pw = w;
-	*ph = h;
-	return x;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, TransformRect, SBar_TransformRect)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	PARAM_INT(flags);
-	self->TransformRect(x, y, w, h, flags);
-	if (numret > 0) ret[0].SetFloat(x);
-	if (numret > 1) ret[1].SetFloat(y);
-	if (numret > 2) ret[2].SetFloat(w);
-	if (numret > 3) ret[3].SetFloat(h);
-	return MIN(4, numret);
-}
-
-static void SBar_Fill(DBaseStatusBar *self, int color, double x, double y, double w, double h, int flags)
-{
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->Fill(color, x, y, w, h, flags);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Fill, SBar_Fill)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_COLOR(color);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	PARAM_INT(flags);
-	SBar_Fill(self, color, x, y, w, h, flags);
-	return 0;
-}
-
-static void SBar_SetClipRect(DBaseStatusBar *self, double x, double y, double w, double h, int flags)
-{
-	self->SetClipRect(x, y, w, h, flags);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, SetClipRect, SBar_SetClipRect)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
-	PARAM_FLOAT(w);
-	PARAM_FLOAT(h);
-	PARAM_INT(flags);
-	self->SetClipRect(x, y, w, h, flags);
-	return 0;
 }
 
 static void GetGlobalACSString(int index, FString *result)
@@ -2713,21 +2187,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetGlobalACSArrayValue, GetGlobalA
 	ACTION_RETURN_INT(ACS_GlobalArrays[arrayno][index]);
 }
 
-void FormatNumber(int number, int minsize, int maxsize, int flags, const FString &prefix, FString *result);
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, FormatNumber, FormatNumber)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(number);
-	PARAM_INT(minsize);
-	PARAM_INT(maxsize);
-	PARAM_INT(flags);
-	PARAM_STRING(prefix);
-	FString fmt;
-	FormatNumber(number, minsize, maxsize, flags, prefix, &fmt);
-	ACTION_RETURN_STRING(fmt);
-}
-
 static void ReceivedWeapon(DBaseStatusBar *self)
 {
 	self->mugshot.Grin();
@@ -2742,7 +2201,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, ReceivedWeapon, ReceivedWeapon)
 
 static int GetMugshot(DBaseStatusBar *self, int accuracy, int stateflags, const FString &def_face)
 {
-	auto tex = self->mugshot.GetFace(self->CPlayer, def_face, accuracy, (FMugShot::StateFlags)stateflags);
+	auto tex = self->mugshot.GetFace(self->CPlayer, def_face.GetChars(), accuracy, (FMugShot::StateFlags)stateflags);
 	return (tex ? tex->GetID().GetIndex() : -1);
 }
 
@@ -2764,31 +2223,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 	FTextureID icon = FSetTextureID(GetInventoryIcon(item, flags, &applyscale));
 	if (numret >= 1) ret[0].SetInt(icon.GetIndex());
 	if (numret >= 2) ret[1].SetInt(applyscale);
-	return MIN(numret, 2);
+	return min(numret, 2);
 }
-
-//=====================================================================================
-//
-// 
-//
-//=====================================================================================
-
-DHUDFont *CreateHudFont(FFont *fnt, int spac, int mono, int sx, int sy)
-{
-	return (Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(fnt, FFont);
-	PARAM_INT(spac);
-	PARAM_INT(mono);
-	PARAM_INT(sx);
-	PARAM_INT(sy);
-	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
-}
-
 
 //=====================================================================================
 //
@@ -2905,7 +2341,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 
 	for (int j = 0; j < 16; ++j)
 	{
-		sprintf(md5string + j * 2, "%02x", self->md5[j]);
+		snprintf(md5string + j * 2, 3, "%02x", self->md5[j]);
 	}
 
 	ACTION_RETURN_STRING((const char*)md5string);
@@ -3053,6 +2489,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, Vec3Diff, Vec3Diff)
 	ACTION_RETURN_VEC3(VecDiff(self, DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(pg1);
+	PARAM_INT(pg2);
+
+	DVector2 ofs(0, 0);
+	if (pg1 != pg2)
+	{
+		unsigned i = pg1 + self->Displacements.size * pg2;
+		if (i < self->Displacements.data.Size())
+			ofs = self->Displacements.data[i].pos;
+	}
+
+	ACTION_RETURN_VEC2(ofs);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetPortalGroupCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_INT(self->Displacements.size);
+}
+
 void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, double tX, double tY, double tZ, double viewYaw, double viewPitch, int absolute, DVector3 *result)
 {
 	
@@ -3061,8 +2520,8 @@ void SphericalCoords(FLevelLocals *self, double vpX, double vpY, double vpZ, dou
 	auto vecTo = absolute ? target - viewpoint : VecDiff(self, viewpoint, target);
 	
 	*result = (DVector3(
-								deltaangle(vecTo.Angle(), viewYaw).Degrees,
-								deltaangle(vecTo.Pitch(), viewPitch).Degrees,
+								deltaangle(vecTo.Angle(), DAngle::fromDeg(viewYaw)).Degrees(),
+								deltaangle(vecTo.Pitch(), DAngle::fromDeg(viewPitch)).Degrees(),
 								vecTo.Length()
 								));
 
@@ -3084,6 +2543,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SphericalCoords, SphericalCoords)
 	ACTION_RETURN_VEC3(result);
 }
 
+static void LookupString(FLevelLocals *level, uint32_t index, FString *res)
+{
+	*res = level->Behaviors.LookupString(index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, LookupString, LookupString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_UINT(index);
+	FString res;
+	LookupString(self, index, &res);
+	ACTION_RETURN_STRING(res);
+}
 
 static int isFrozen(FLevelLocals *self)
 {
@@ -3115,20 +2587,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
 //
 //=====================================================================================
 
-static int GetRealTime()
-{
-	time_t now;
-	time(&now);
-	struct tm* timeinfo = localtime(&now);
-	return timeinfo ? timeinfo->tm_sec + timeinfo->tm_min * 60 + timeinfo->tm_hour * 3600 : 0;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetRealTime, GetRealTime)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(GetRealTime());
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 {
 	PARAM_PROLOGUE;
@@ -3140,16 +2598,199 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 	return numret;
 }
 
+DEFINE_ACTION_FUNCTION(_CVar, GetCVar)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	PARAM_POINTER(plyr, player_t);
+	ACTION_RETURN_POINTER(GetCVar(plyr ? int(plyr - players) : -1, name.GetChars()));
+}
+
+
+DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(music);
+	PARAM_INT(order);
+	PARAM_BOOL(looping);
+	PARAM_BOOL(force);
+	ACTION_RETURN_BOOL(S_ChangeMusic(music.GetChars(), order, looping, force));
+}
+
+
+DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
+{
+	PARAM_PROLOGUE;
+	if (numret > 0) ret[0].SetInt(viewwindowx);
+	if (numret > 1) ret[1].SetInt(viewwindowy);
+	if (numret > 2) ret[2].SetInt(viewwidth);
+	if (numret > 3) ret[3].SetInt(viewheight);
+	return min(numret, 4);
+}
+
+DEFINE_ACTION_FUNCTION(_Console, MidPrint)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_STRING(text);
+	PARAM_BOOL(bold);
+
+	const char* txt = text[0] == '$' ? GStrings.GetString(&text[1]) : text.GetChars();
+	C_MidPrint(fnt, txt, bold);
+	return 0;
+}
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
+
+static int isValid( level_info_t *info )
+{
+	return info->isValid();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, isValid, isValid)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(level_info_t);
+	ACTION_RETURN_BOOL(isValid(self));
+}
+
+static void LookupLevelName( level_info_t *info, FString *result )
+{
+	*result = info->LookupLevelName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, LookupLevelName, LookupLevelName)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(level_info_t);
+	FString rets;
+	LookupLevelName(self,&rets);
+	ACTION_RETURN_STRING(rets);
+}
+
+static int GetLevelInfoCount()
+{
+	return wadlevelinfos.Size();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, GetLevelInfoCount, GetLevelInfoCount)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(GetLevelInfoCount());
+}
+
+static level_info_t* GetLevelInfo( unsigned int index )
+{
+	if ( index >= wadlevelinfos.Size() )
+		return nullptr;
+	return &wadlevelinfos[index];
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, GetLevelInfo, GetLevelInfo)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_POINTER(GetLevelInfo(index));
+}
+
+static level_info_t* ZFindLevelInfo( const FString &mapname )
+{
+	return FindLevelInfo(mapname.GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, FindLevelInfo, ZFindLevelInfo)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	ACTION_RETURN_POINTER(ZFindLevelInfo(mapname));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, FindLevelByNum, FindLevelByNum)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(num);
+	ACTION_RETURN_POINTER(FindLevelByNum(num));
+}
+
+static int MapExists( const FString &mapname )
+{
+	return P_CheckMapData(mapname.GetChars());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_LevelInfo, MapExists, MapExists)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	ACTION_RETURN_BOOL(MapExists(mapname));
+}
+
+DEFINE_ACTION_FUNCTION(_LevelInfo, MapChecksum)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(mapname);
+	char md5string[33] = "";
+	MapData *map = P_OpenMapData(mapname.GetChars(), true);
+	if (map != nullptr)
+	{
+		uint8_t cksum[16];
+		map->GetChecksum(cksum);
+		for (int j = 0; j < 16; ++j)
+		{
+			snprintf(md5string + j * 2, 3, "%02x", cksum[j]);
+		}
+		delete map;
+	}
+	ACTION_RETURN_STRING((const char *)md5string);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+DEFINE_FIELD_X(LevelInfo, level_info_t, levelnum)
+DEFINE_FIELD_X(LevelInfo, level_info_t, MapName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, NextMap)
+DEFINE_FIELD_X(LevelInfo, level_info_t, NextSecretMap)
+DEFINE_FIELD_X(LevelInfo, level_info_t, SkyPic1)
+DEFINE_FIELD_X(LevelInfo, level_info_t, SkyPic2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, F1Pic)
+DEFINE_FIELD_X(LevelInfo, level_info_t, cluster)
+DEFINE_FIELD_X(LevelInfo, level_info_t, partime)
+DEFINE_FIELD_X(LevelInfo, level_info_t, sucktime)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, flags3)
+DEFINE_FIELD_X(LevelInfo, level_info_t, Music)
+DEFINE_FIELD_X(LevelInfo, level_info_t, LightningSound)
+DEFINE_FIELD_X(LevelInfo, level_info_t, LevelName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, AuthorName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, musicorder)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyspeed1)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyspeed2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, cdtrack)
+DEFINE_FIELD_X(LevelInfo, level_info_t, gravity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, aircontrol)
+DEFINE_FIELD_X(LevelInfo, level_info_t, airsupply)
+DEFINE_FIELD_X(LevelInfo, level_info_t, compatflags)
+DEFINE_FIELD_X(LevelInfo, level_info_t, compatflags2)
+DEFINE_FIELD_X(LevelInfo, level_info_t, deathsequence)
+DEFINE_FIELD_X(LevelInfo, level_info_t, fogdensity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, outsidefogdensity)
+DEFINE_FIELD_X(LevelInfo, level_info_t, skyfog)
+DEFINE_FIELD_X(LevelInfo, level_info_t, pixelstretch)
+DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectType)
+DEFINE_FIELD_X(LevelInfo, level_info_t, RedirectMapName)
+DEFINE_FIELD_X(LevelInfo, level_info_t, teamdamage)
+
 DEFINE_GLOBAL_NAMED(currentVMLevel, level)
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
 DEFINE_FIELD(FLevelLocals, sides)
 DEFINE_FIELD(FLevelLocals, vertexes)
+DEFINE_FIELD(FLevelLocals, linePortals)
 DEFINE_FIELD(FLevelLocals, sectorPortals)
 DEFINE_FIELD(FLevelLocals, time)
 DEFINE_FIELD(FLevelLocals, maptime)
@@ -3167,6 +2808,7 @@ DEFINE_FIELD(FLevelLocals, NextSecretMap)
 DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, AuthorName)
 DEFINE_FIELD(FLevelLocals, maptype)
+DEFINE_FIELD(FLevelLocals, LightningSound)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)
 DEFINE_FIELD(FLevelLocals, skytexture1)
@@ -3193,11 +2835,13 @@ DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags, compatflags)
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags2, compatflags2)
+DEFINE_FIELD(FLevelLocals, info);
 
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)
 DEFINE_FIELD_BIT(FLevelLocals, flags, sndseqtotalctrl, LEVEL_SNDSEQTOTALCTRL)
+DEFINE_FIELD_BIT(FLevelLocals, flags, useplayerstartz, LEVEL_USEPLAYERSTARTZ)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, allmap, LEVEL2_ALLMAP)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESACTIVATEIMPACT)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
@@ -3219,7 +2863,7 @@ DEFINE_FIELD_X(Sector, sector_t, SoundTarget)
 DEFINE_FIELD_X(Sector, sector_t, special)
 DEFINE_FIELD_X(Sector, sector_t, lightlevel)
 DEFINE_FIELD_X(Sector, sector_t, seqType)
-DEFINE_FIELD_X(Sector, sector_t, sky)
+DEFINE_FIELD_NAMED_X(Sector, sector_t, skytransfer, sky)
 DEFINE_FIELD_X(Sector, sector_t, SeqName)
 DEFINE_FIELD_X(Sector, sector_t, centerspot)
 DEFINE_FIELD_X(Sector, sector_t, validcount)
@@ -3264,6 +2908,7 @@ DEFINE_FIELD_X(Line, line_t, v1)
 DEFINE_FIELD_X(Line, line_t, v2)
 DEFINE_FIELD_X(Line, line_t, delta)
 DEFINE_FIELD_X(Line, line_t, flags)
+DEFINE_FIELD_X(Line, line_t, flags2)
 DEFINE_FIELD_X(Line, line_t, activation)
 DEFINE_FIELD_X(Line, line_t, special)
 DEFINE_FIELD_X(Line, line_t, args)
@@ -3298,24 +2943,14 @@ DEFINE_FIELD_X(F3DFloor, F3DFloor, alpha);
 
 DEFINE_FIELD_X(Vertex, vertex_t, p)
 
-DEFINE_FIELD(DBaseStatusBar, RelTop);
-DEFINE_FIELD(DBaseStatusBar, HorizontalResolution);
-DEFINE_FIELD(DBaseStatusBar, VerticalResolution);
 DEFINE_FIELD(DBaseStatusBar, Centering);
 DEFINE_FIELD(DBaseStatusBar, FixedOrigin);
-DEFINE_FIELD(DBaseStatusBar, CompleteBorder);
 DEFINE_FIELD(DBaseStatusBar, CrosshairSize);
 DEFINE_FIELD(DBaseStatusBar, Displacement);
 DEFINE_FIELD(DBaseStatusBar, CPlayer);
 DEFINE_FIELD(DBaseStatusBar, ShowLog);
-DEFINE_FIELD(DBaseStatusBar, Alpha);
-DEFINE_FIELD(DBaseStatusBar, drawOffset);
-DEFINE_FIELD(DBaseStatusBar, drawClip);
-DEFINE_FIELD(DBaseStatusBar, fullscreenOffsets);
-DEFINE_FIELD(DBaseStatusBar, defaultScale);
 DEFINE_FIELD(DBaseStatusBar, artiflashTick);
 DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 
-DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);

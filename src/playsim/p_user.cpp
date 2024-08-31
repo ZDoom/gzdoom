@@ -58,7 +58,7 @@
 **
 */
 
-#include "templates.h"
+
 #include "doomdef.h"
 #include "d_event.h"
 #include "p_local.h"
@@ -70,14 +70,15 @@
 #include "p_enemy.h"
 #include "a_sharedglobal.h"
 #include "a_keys.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "sbar.h"
 #include "intermission/intermission.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_net.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
@@ -92,6 +93,7 @@
 #include "v_video.h"
 #include "gstrings.h"
 #include "s_music.h"
+#include "d_main.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -99,18 +101,33 @@ static FRandom pr_skullpop ("SkullPop");
 CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_CHEAT)
 
 // Variables for prediction
-CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+// Deprecated
+CVAR(Bool, cl_noprediction, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CUSTOM_CVAR(Float, cl_predict_lerpscale, 0.05f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_rubberband_scale, 0.3f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	P_PredictionLerpReset();
+	if (self < 0.0f)
+		self = 0.0f;
+	else if (self > 1.0f)
+		self = 1.0f;
 }
-CUSTOM_CVAR(Float, cl_predict_lerpthreshold, 2.00f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, cl_rubberband_threshold, 20.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.1f)
 		self = 0.1f;
-	P_PredictionLerpReset();
+}
+CUSTOM_CVAR(Float, cl_rubberband_minmove, 20.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.1f)
+		self = 0.1f;
+}
+CUSTOM_CVAR(Float, cl_rubberband_limit, 756.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.0f)
+		self = 0.0f;
 }
 
 ColorSetList ColorSets;
@@ -123,13 +140,9 @@ CUSTOM_CVAR(Float, fov, 90.f, CVAR_ARCHIVE | CVAR_USERINFO | CVAR_NOINITCALL)
 	p->SetFOV(fov);
 }
 
-struct PredictPos
-{
-	int gametic;
-	DVector3 pos;
-	DRotator angles;
-} static PredictionLerpFrom, PredictionLerpResult, PredictionLast;
-static int PredictionLerptics;
+static DVector3 LastPredictedPosition;
+static int LastPredictedPortalGroup;
+static int LastPredictedTic;
 
 static player_t PredictionPlayerBackup;
 static AActor *PredictionActor;
@@ -148,6 +161,12 @@ static TArray<msecnode_t *> PredictionPortalSectors_sprev_Backup;
 static TArray<FLinePortal *> PredictionPortalLinesBackup;
 static TArray<portnode_t *> PredictionPortalLines_sprev_Backup;
 
+struct
+{
+	DVector3 Pos = {};
+	int Flags = 0;
+} static PredictionViewPosBackup;
+
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
 
@@ -155,13 +174,6 @@ FPlayerClass::FPlayerClass ()
 {
 	Type = NULL;
 	Flags = 0;
-}
-
-FPlayerClass::FPlayerClass (const FPlayerClass &other)
-{
-	Type = other.Type;
-	Flags = other.Flags;
-	Skins = other.Skins;
 }
 
 FPlayerClass::~FPlayerClass ()
@@ -227,7 +239,7 @@ void SetupPlayerClasses ()
 	for (unsigned i = 0; i < gameinfo.PlayerClasses.Size(); i++)
 	{
 		PClassActor *cls = PClass::FindActor(gameinfo.PlayerClasses[i]);
-		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i]))
+		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i].GetChars()))
 		{
 			newclass.Flags = 0;
 			newclass.Type = cls;
@@ -345,6 +357,8 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	ConversationFaceTalker = p.ConversationFaceTalker;
 	MUSINFOactor = p.MUSINFOactor;
 	MUSINFOtics = p.MUSINFOtics;
+	SoundClass = p.SoundClass;
+	angleOffsetTargets = p.angleOffsetTargets;
 	if (copyPSP)
 	{
 		// This needs to transfer ownership completely.
@@ -380,7 +394,7 @@ void player_t::SetLogNumber (int num)
 
 	// First look up TXT_LOGTEXT%d in the string table
 	mysnprintf(lumpname, countof(lumpname), "$TXT_LOGTEXT%d", num);
-	auto text = GStrings[lumpname+1];
+	auto text = GStrings.CheckString(lumpname+1);
 	if (text)
 	{
 		SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
@@ -388,17 +402,17 @@ void player_t::SetLogNumber (int num)
 	}
 
 	mysnprintf (lumpname, countof(lumpname), "LOG%d", num);
-	lumpnum = Wads.CheckNumForName (lumpname);
+	lumpnum = fileSystem.CheckNumForName (lumpname);
 	if (lumpnum != -1)
 	{
-		auto fn = Wads.GetLumpFile(lumpnum);
-		auto wadname = Wads.GetWadName(fn);
+		auto fn = fileSystem.GetFileContainer(lumpnum);
+		auto wadname = fileSystem.GetResourceFileName(fn);
 		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
 		{
 			// If this is an original IWAD text, try looking up its lower priority string version first.
 
 			mysnprintf(lumpname, countof(lumpname), "$TXT_ILOG%d", num);
-			auto text = GStrings[lumpname + 1];
+			auto text = GStrings.CheckString(lumpname + 1);
 			if (text)
 			{
 				SetLogText(lumpname);	// set the label, not the content, so that a language change can be picked up.
@@ -406,8 +420,8 @@ void player_t::SetLogNumber (int num)
 			}
 		}
 
-		auto lump = Wads.ReadLump(lumpnum);
-		SetLogText (lump.GetString());
+		auto lump = fileSystem.ReadFile(lumpnum);
+		SetLogText (lump.string());
 	}
 }
 
@@ -426,7 +440,7 @@ void player_t::SetLogText (const char *text)
 	if (mo && mo->CheckLocalView())
 	{
 		// Print log text to console
-		Printf(PRINT_NONOTIFY, TEXTCOLOR_GOLD "%s\n", LogText[0] == '$' ? GStrings(text + 1) : text);
+		Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_GOLD "%s\n", LogText[0] == '$' ? GStrings.GetString(text + 1) : text);
 	}
 }
 
@@ -434,7 +448,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_STRING(log);
-	self->SetLogText(log);
+	self->SetLogText(log.GetChars());
 	return 0;
 }
 
@@ -450,7 +464,7 @@ void player_t::SetSubtitle(int num, FSoundID soundid)
 	if (text != nullptr)
 	{
 		SubtitleText = lumpname;
-		int sl = soundid == 0 ? 7000 : std::max<int>(7000, S_GetMSLength(soundid));
+		int sl = soundid == NO_SOUND ? 7000 : max<int>(7000, S_GetMSLength(soundid));
 		SubtitleCounter = sl * TICRATE / 1000;
 	}
 }
@@ -482,7 +496,7 @@ void player_t::SetFOV(float fov)
 		{
 			if (consoleplayer == Net_Arbitrator)
 			{
-				Net_WriteByte(DEM_MYFOV);
+				Net_WriteInt8(DEM_MYFOV);
 			}
 			else
 			{
@@ -492,7 +506,7 @@ void player_t::SetFOV(float fov)
 		}
 		else
 		{
-			Net_WriteByte(DEM_MYFOV);
+			Net_WriteInt8(DEM_MYFOV);
 		}
 		Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
@@ -620,8 +634,8 @@ EXTERN_CVAR(Bool, cl_oldfreelooklimit);
 
 static int GetSoftPitch(bool down)
 {
-	int MAX_DN_ANGLE = MIN(56, (int)maxviewpitch); // Max looking down angle
-	int MAX_UP_ANGLE = MIN(32, (int)maxviewpitch); // Max looking up angle
+	int MAX_DN_ANGLE = min(56, (int)maxviewpitch); // Max looking down angle
+	int MAX_UP_ANGLE = min(32, (int)maxviewpitch); // Max looking up angle
 	return (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
 }
 
@@ -631,7 +645,7 @@ void player_t::SendPitchLimits() const
 	{
 		int uppitch, downpitch;
 
-		if (V_IsSoftwareRenderer())
+		if (!V_IsHardwareRenderer())
 		{
 			uppitch = GetSoftPitch(false);
 			downpitch = GetSoftPitch(true);
@@ -641,9 +655,9 @@ void player_t::SendPitchLimits() const
 			uppitch = downpitch = (int)maxviewpitch;
 		}
 
-		Net_WriteByte(DEM_SETPITCHLIMIT);
-		Net_WriteByte(uppitch);
-		Net_WriteByte(downpitch);
+		Net_WriteInt8(DEM_SETPITCHLIMIT);
+		Net_WriteInt8(uppitch);
+		Net_WriteInt8(downpitch);
 	}
 }
 
@@ -697,7 +711,7 @@ bool player_t::Resurrect()
 		P_BringUpWeapon(this);
 	}
 
-	if (morphTics)
+	if (mo->alternative != nullptr)
 	{
 		P_UnmorphActor(mo, mo);
 	}
@@ -719,7 +733,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	ACTION_RETURN_STRING(self->userinfo.GetName());
+	PARAM_UINT(charLimit);
+	ACTION_RETURN_STRING(self->userinfo.GetName(charLimit));
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)
@@ -788,10 +803,22 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
 	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobFire)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetWBobFire());
+}
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_FLOAT(self->userinfo.GetMoveBob());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetFViewBob)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->userinfo.GetFViewBob());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
@@ -820,16 +847,16 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		FString normspritename = sprites[self->SpawnState->sprite].name;
 		FString crouchspritename = sprites[crouchsprite].name;
 
-		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
+		int spritenorm = fileSystem.CheckNumForName((normspritename + "A1").GetChars(), FileSys::ns_sprites);
 		if (spritenorm == -1)
 		{
-			spritenorm = Wads.CheckNumForName(normspritename + "A0", ns_sprites);
+			spritenorm = fileSystem.CheckNumForName((normspritename + "A0").GetChars(), FileSys::ns_sprites);
 		}
 
-		int spritecrouch = Wads.CheckNumForName(crouchspritename + "A1", ns_sprites);
+		int spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A1").GetChars(), FileSys::ns_sprites);
 		if (spritecrouch == -1)
 		{
-			spritecrouch = Wads.CheckNumForName(crouchspritename + "A0", ns_sprites);
+			spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A0").GetChars(), FileSys::ns_sprites);
 		}
 
 		if (spritenorm == -1 || spritecrouch == -1)
@@ -838,10 +865,10 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 			return false;
 		}
 
-		int wadnorm = Wads.GetLumpFile(spritenorm);
-		int wadcrouch = Wads.GetLumpFile(spritenorm);
+		int wadnorm = fileSystem.GetFileContainer(spritenorm);
+		int wadcrouch = fileSystem.GetFileContainer(spritenorm);
 
-		if (wadnorm > Wads.GetMaxIwadNum() && wadcrouch <= Wads.GetMaxIwadNum())
+		if (wadnorm > fileSystem.GetMaxIwadNum() && wadcrouch <= fileSystem.GetMaxIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			return false;
@@ -885,12 +912,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
-	int sound = 0;
+	FSoundID sound = NO_SOUND;
 	int chan = CHAN_VOICE;
 
-	if (self->player == NULL || self->DeathSound != 0)
+	if (self->player == NULL || self->DeathSound != NO_SOUND)
 	{
-		if (self->DeathSound != 0)
+		if (self->DeathSound != NO_SOUND)
 		{
 			S_Sound (self, CHAN_VOICE, 0, self->DeathSound, 1, ATTN_NORM);
 		}
@@ -906,33 +933,33 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->Vel.Z <= -39)
 	{
-		sound = S_FindSkinnedSound (self, "*splat");
+		sound = S_FindSkinnedSound (self, S_FindSound("*splat"));
 		chan = CHAN_BODY;
 	}
 
-	if (!sound && self->special1<10)
+	if (!sound.isvalid() && self->special1<10)
 	{ // Wimpy death sound
-		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType);
+		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType.GetChars());
 	}
-	if (!sound && self->health <= -50)
+	if (!sound.isvalid() && self->health <= -50)
 	{
 		if (self->health > -100)
 		{ // Crazy death sound
-			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType);
+			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType.GetChars());
 		}
-		if (!sound)
+		if (!sound.isvalid())
 		{ // Extreme death sound
-			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType);
-			if (!sound)
+			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType.GetChars());
+			if (!sound.isvalid())
 			{
-				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType);
+				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType.GetChars());
 				chan = CHAN_BODY;
 			}
 		}
 	}
-	if (!sound)
+	if (!sound.isvalid())
 	{ // Normal death sound
-		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType);
+		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType.GetChars());
 	}
 
 	if (chan != CHAN_VOICE)
@@ -969,8 +996,8 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 	{
 		// Convert from default scale to skin scale.
 		DVector2 defscale = actor->GetDefault()->Scale;
-		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / defscale.X;
-		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / defscale.Y;
+		scale.X *= Skins[player->userinfo.GetSkin()].Scale.X / double(defscale.X);
+		scale.Y *= Skins[player->userinfo.GetSkin()].Scale.Y / double(defscale.Y);
 	}
 
 	// Set the crouch sprite?
@@ -1164,11 +1191,11 @@ void P_CheckEnvironment(player_t *player)
 		P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
 	}
 	if (player->mo->Vel.Z <= -player->mo->FloatVar(NAME_FallingScreamMinSpeed) &&
-		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && !player->morphTics &&
+		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && player->mo->alternative == nullptr &&
 		player->mo->waterlevel == 0)
 	{
-		int id = S_FindSkinnedSound(player->mo, "*falling");
-		if (id != 0 && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
+		auto id = S_FindSkinnedSound(player->mo, S_FindSound("*falling"));
+		if (id != NO_SOUND && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
 		{
 			S_Sound(player->mo, CHAN_VOICE, 0, id, 1, ATTN_NORM);
 		}
@@ -1231,6 +1258,17 @@ void P_PlayerThink (player_t *player)
 		I_Error ("No player %td start\n", player - players + 1);
 	}
 
+	for (unsigned int i = 0u; i < 3u; ++i)
+	{
+		if (fabs(player->angleOffsetTargets[i].Degrees()) >= EQUAL_EPSILON)
+		{
+			player->mo->Angles[i] += player->angleOffsetTargets[i];
+			player->mo->PrevAngles[i] = player->mo->Angles[i];
+		}
+
+		player->angleOffsetTargets[i] = nullAngle;
+	}
+
 	if (player->SubtitleCounter > 0)
 	{
 		player->SubtitleCounter--;
@@ -1246,7 +1284,7 @@ void P_PlayerThink (player_t *player)
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%f, %f, %f, %f) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->Angles.Yaw.Degrees, player->cmd.ucmd.buttons,
+			player->mo->Angles.Yaw.Degrees(), player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}
@@ -1256,6 +1294,11 @@ void P_PlayerThink (player_t *player)
 	player->original_cmd = cmd->ucmd;
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
+	player->cheats &= ~CF_INTERPVIEWANGLES;
+	player->cheats &= ~CF_SCALEDNOLERP;
+	player->cheats &= ~CF_NOFOVINTERP;
+	player->cheats &= ~CF_NOVIEWPOSINTERP;
+	player->mo->FloatVar("prevBob") = player->bob;
 
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, PlayerThink)
 	{
@@ -1266,23 +1309,25 @@ void P_PlayerThink (player_t *player)
 
 void P_PredictionLerpReset()
 {
-	PredictionLerptics = PredictionLast.gametic = PredictionLerpFrom.gametic = PredictionLerpResult.gametic = 0;
+	LastPredictedPosition = DVector3{};
+	LastPredictedPortalGroup = 0;
+	LastPredictedTic = -1;
 }
 
-bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
+void P_LerpCalculate(AActor* pmo, const DVector3& from, DVector3 &result, float scale, float threshold, float minMove)
 {
-	DVector3 vecFrom = from.pos;
-	DVector3 vecTo = to.pos;
-	DVector3 vecResult;
-	vecResult = vecTo - vecFrom;
-	vecResult *= scale;
-	vecResult = vecResult + vecFrom;
-	DVector3 delta = vecResult - vecTo;
+	DVector3 diff = pmo->Pos() - from;
+	diff.XY() += pmo->Level->Displacements.getOffset(pmo->Sector->PortalGroup, pmo->Level->PointInSector(from.XY())->PortalGroup);
+	double dist = diff.Length();
+	if (dist <= max<float>(threshold, minMove))
+	{
+		result = pmo->Pos();
+		return;
+	}
 
-	result.pos = pmo->Vec3Offset(vecResult - to.pos);
-
-	// As a fail safe, assume extrapolation is the threshold.
-	return (delta.LengthSquared() > cl_predict_lerpthreshold && scale <= 1.00f);
+	diff /= dist;
+	diff *= min<double>(dist * (1.0f - scale), dist - minMove);
+	result = pmo->Vec3Offset(-diff.X, -diff.Y, -diff.Z);
 }
 
 template<class nodetype, class linktype>
@@ -1383,8 +1428,7 @@ void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
 
-	if (cl_noprediction ||
-		singletics ||
+	if (singletics ||
 		demoplayback ||
 		player->mo == NULL ||
 		player != player->mo->Level->GetConsolePlayer() ||
@@ -1411,9 +1455,16 @@ void P_PredictPlayer (player_t *player)
 	PredictionActorBackupArray.Resize(act->GetClass()->Size);
 	memcpy(PredictionActorBackupArray.Data(), &act->snext, act->GetClass()->Size - ((uint8_t *)&act->snext - (uint8_t *)act));
 
+	// Since this is a DObject it needs to have its fields backed up manually for restore, otherwise any changes
+	// to it will be permanent while predicting. This is now auto-created on pawns to prevent creation spam.
+	if (act->ViewPos != nullptr)
+	{
+		PredictionViewPosBackup.Pos = act->ViewPos->Offset;
+		PredictionViewPosBackup.Flags = act->ViewPos->Flags;
+	}
+
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
-	act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 	player->cheats |= CF_PREDICTING;
 
 	BackupNodeList(act, act->touching_sectorlist, &sector_t::touching_thinglist, PredictionTouchingSectors_sprev_Backup, PredictionTouchingSectorsBackup);
@@ -1449,64 +1500,76 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
-	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
+	// called. Call order is preserved.
+	bool rubberband = false, rubberbandLimit = false;
+	DVector3 rubberbandPos = {};
+	const bool canRubberband = LastPredictedTic >= 0 && cl_rubberband_scale > 0.0f && cl_rubberband_scale < 1.0f;
+	const double rubberbandThreshold = max<float>(cl_rubberband_minmove, cl_rubberband_threshold);
 	for (int i = gametic; i < maxtic; ++i)
 	{
-		if (!NoInterpolateOld)
-			R_RebuildViewInterpolation(player);
+		// Make sure any portal paths have been cleared from the previous movement.
+		R_ClearInterpolationPath();
+		r_NoInterpolate = false;
+		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
+		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
+		// Got snagged on something. Start correcting towards the player's final predicted position. We're
+		// being intentionally generous here by not really caring how the player got to that position, only
+		// that they ended up in the same spot on the same tick.
+		if (canRubberband && LastPredictedTic == i)
+		{
+			DVector3 diff = player->mo->Pos() - LastPredictedPosition;
+			diff += player->mo->Level->Displacements.getOffset(player->mo->Sector->PortalGroup, LastPredictedPortalGroup);
+			double dist = diff.LengthSquared();
+			if (dist >= EQUAL_EPSILON * EQUAL_EPSILON && dist > rubberbandThreshold * rubberbandThreshold)
+			{
+				rubberband = true;
+				rubberbandPos = player->mo->Pos();
+				rubberbandLimit = cl_rubberband_limit > 0.0f && dist > cl_rubberband_limit * cl_rubberband_limit;
+			}
+		}
+
+		player->oldbuttons = player->cmd.ucmd.buttons;
 		player->cmd = localcmds[i % LOCALCMDTICS];
-		P_PlayerThink (player);
-		player->mo->Tick ();
-
-		if (CanLerp && PredictionLast.gametic > 0 && i == PredictionLast.gametic && !NoInterpolateOld)
-		{
-			// Z is not compared as lifts will alter this with no apparent change
-			// Make lerping less picky by only testing whole units
-			DoLerp = (int)PredictionLast.pos.X != (int)player->mo->X() || (int)PredictionLast.pos.Y != (int)player->mo->Y();
-
-			// Aditional Debug information
-			if (developer >= DMSG_NOTIFY && DoLerp)
-			{
-				DPrintf(DMSG_NOTIFY, "Lerp! Ltic (%d) && Ptic (%d) | Lx (%f) && Px (%f) | Ly (%f) && Py (%f)\n",
-					PredictionLast.gametic, i,
-					(PredictionLast.pos.X), (player->mo->X()),
-					(PredictionLast.pos.Y), (player->mo->Y()));
-			}
-		}
+		player->mo->ClearInterpolation();
+		player->mo->ClearFOVInterpolation();
+		P_PlayerThink(player);
+		player->mo->CallTick();
 	}
 
-	if (CanLerp)
+	if (rubberband)
 	{
-		if (NoInterpolateOld)
-			P_PredictionLerpReset();
+		DPrintf(DMSG_NOTIFY, "Prediction mismatch at (%.3f, %.3f, %.3f)\nExpected: (%.3f, %.3f, %.3f)\nCorrecting to (%.3f, %.3f, %.3f)\n",
+			LastPredictedPosition.X, LastPredictedPosition.Y, LastPredictedPosition.Z,
+			rubberbandPos.X, rubberbandPos.Y, rubberbandPos.Z,
+			player->mo->X(), player->mo->Y(), player->mo->Z());
 
-		else if (DoLerp)
+		if (rubberbandLimit)
 		{
-			// If lerping is already in effect, use the previous camera postion so the view doesn't suddenly snap
-			PredictionLerpFrom = (PredictionLerptics == 0) ? PredictionLast : PredictionLerpResult;
-			PredictionLerptics = 1;
+			// If too far away, instantly snap the player's view to their correct position.
+			player->mo->renderflags |= RF_NOINTERPOLATEVIEW;
 		}
-
-		PredictionLast.gametic = maxtic - 1;
-		PredictionLast.pos = player->mo->Pos();
-		//PredictionLast.portalgroup = player->mo->Sector->PortalGroup;
-
-		if (PredictionLerptics > 0)
+		else
 		{
-			if (PredictionLerpFrom.gametic > 0 &&
-				P_LerpCalculate(player->mo, PredictionLerpFrom, PredictionLast, PredictionLerpResult, (float)PredictionLerptics * cl_predict_lerpscale))
-			{
-				PredictionLerptics++;
-				player->mo->SetXYZ(PredictionLerpResult.pos);
-			}
-			else
-			{
-				PredictionLerptics = 0;
-			}
+			R_ClearInterpolationPath();
+			player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
+
+			DVector3 snapPos = {};
+			P_LerpCalculate(player->mo, LastPredictedPosition, snapPos, cl_rubberband_scale, cl_rubberband_threshold, cl_rubberband_minmove);
+			player->mo->PrevPortalGroup = LastPredictedPortalGroup;
+			player->mo->Prev = LastPredictedPosition;
+			const double zOfs = player->viewz - player->mo->Z();
+			player->mo->SetXYZ(snapPos);
+			player->viewz = snapPos.Z + zOfs;
 		}
 	}
+
+	// This is intentionally done after rubberbanding starts since it'll automatically smooth itself towards
+	// the right spot until it reaches it.
+	LastPredictedTic = maxtic;
+	LastPredictedPosition = player->mo->Pos();
+	LastPredictedPortalGroup = player->mo->Level->PointInSector(LastPredictedPosition)->PortalGroup;
 }
 
 void P_UnPredictPlayer ()
@@ -1546,6 +1609,12 @@ void P_UnPredictPlayer ()
 
 		act->UnlinkFromWorld(&ctx);
 		memcpy(&act->snext, PredictionActorBackupArray.Data(), PredictionActorBackupArray.Size() - ((uint8_t *)&act->snext - (uint8_t *)act));
+
+		if (act->ViewPos != nullptr)
+		{
+			act->ViewPos->Offset = PredictionViewPosBackup.Pos;
+			act->ViewPos->Flags = PredictionViewPosBackup.Flags;
+		}
 
 		// The blockmap ordering needs to remain unchanged, too.
 		// Restore sector links and refrences.
@@ -1608,6 +1677,7 @@ void player_t::Serialize(FSerializer &arc)
 
 	if (arc.isReading())
 	{
+		userinfo.Reset(mo->Level->PlayerNum(this));
 		ReadUserInfo(arc, userinfo, skinname);
 	}
 	else
@@ -1687,7 +1757,8 @@ void player_t::Serialize(FSerializer &arc)
 		("settings_controller", settings_controller)
 		("onground", onground)
 		("musinfoactor", MUSINFOactor)
-		("musinfotics", MUSINFOtics);
+		("musinfotics", MUSINFOtics)
+		("soundclass", SoundClass);
 
 	if (arc.isWriting ())
 	{
@@ -1698,7 +1769,7 @@ void player_t::Serialize(FSerializer &arc)
 	}
 	if (skinname.IsNotEmpty())
 	{
-		userinfo.SkinChanged(skinname, CurrentPlayerClass);
+		userinfo.SkinChanged(skinname.GetChars(), CurrentPlayerClass);
 	}
 }
 
@@ -1803,6 +1874,7 @@ DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
 DEFINE_FIELD_X(PlayerInfo, player_t, weapons)
 DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd.buttons, buttons)
+DEFINE_FIELD_X(PlayerInfo, player_t, SoundClass)
 
 DEFINE_FIELD_X(UserCmd, usercmd_t, buttons)
 DEFINE_FIELD_X(UserCmd, usercmd_t, pitch)

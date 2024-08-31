@@ -38,6 +38,7 @@ class WaterSplashBase : Actor
 		+NOGRAVITY
 		+DONTSPLASH
 		+DONTBLAST
+		+MOVEWITHSECTOR
 	}
 	States
 	{
@@ -58,6 +59,7 @@ class LavaSplash : Actor
 		+NOGRAVITY
 		+DONTSPLASH
 		+DONTBLAST
+		+MOVEWITHSECTOR
 	}
 	States
 	{
@@ -121,6 +123,7 @@ class SludgeSplash : Actor
 		+NOCLIP
 		+NOGRAVITY
 		+DONTSPLASH
+		+MOVEWITHSECTOR
 	}
 	States
 	{
@@ -174,6 +177,7 @@ class BloodSplashBase : Actor
 		+NOGRAVITY
 		+DONTSPLASH
 		+DONTBLAST
+		+MOVEWITHSECTOR
 	}
 	States
 	{
@@ -218,6 +222,7 @@ class SlimeSplash : Actor
 		+NOCLIP
 		+NOGRAVITY
 		+DONTSPLASH
+		+MOVEWITHSECTOR
 	}
 	States
 	{

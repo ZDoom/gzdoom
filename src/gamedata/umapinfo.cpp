@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "r_defs.h"
 #include "p_setup.h"
@@ -42,6 +42,7 @@ struct UMapEntry
 	FString InterText;
 	FString InterTextSecret;
 	TArray<FSpecialAction> BossActions;
+	bool BossCleared = false;
 
 	char levelpic[9] = "";
 	char nextmap[9] = "";
@@ -193,7 +194,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	else if (!pname.CompareNoCase("partime"))
 	{
 		scanner.MustGetValue(false);
-		mape->partime = TICRATE * scanner.Number;
+		mape->partime = scanner.Number;
 	}
 	else if (!pname.CompareNoCase("intertext"))
 	{
@@ -229,7 +230,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 
 			if (split.Size() > 1)
 			{
-				epi.mEpisodeName = strbin1(split[1]);
+				epi.mEpisodeName = strbin1(split[1].GetChars());
 			}
 			if (split.Size() > 2 && split[2].IsNotEmpty())
 			{
@@ -268,6 +269,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			// mark level free of boss actions
 			classnum = special = tag = -1;
 			mape->BossActions.Clear();
+			mape->BossCleared = true;
 		}
 		else
 		{
@@ -387,7 +389,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 {
 	for (auto &map : Maps)
 	{
-		auto levelinfo = FindLevelInfo(map.MapName, false);
+		auto levelinfo = FindLevelInfo(map.MapName.GetChars(), false);
 		if (levelinfo == nullptr)
 		{
 			// Map did not exist yet.
@@ -421,7 +423,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 			}
 			if (name != NAME_None)
 			{
-				levelinfo->NextMap.Format("enDSeQ%04x", int(name));
+				levelinfo->NextMap.Format("enDSeQ%04x", name.GetIndex());
 			}
 		}
 
@@ -441,16 +443,19 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.partime > 0) levelinfo->partime = map.partime;
 		if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
 		if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
+		/* UMAPINFO's intermusic is for the text screen, not the summary.
 		if (map.intermusic[0])
 		{
 			levelinfo->InterMusic = map.intermusic;
 			levelinfo->intermusicorder = 0;
 		}
-		if (map.BossActions.Size() > 0)
+		*/
+		if (map.BossActions.Size() > 0 || map.BossCleared)
 		{
 			// Setting a boss action will deactivate the flag based monster actions.
 			levelinfo->specialactions = std::move(map.BossActions);
 			levelinfo->flags &= ~(LEVEL_BRUISERSPECIAL | LEVEL_CYBORGSPECIAL | LEVEL_SPIDERSPECIAL | LEVEL_MAP07SPECIAL | LEVEL_MINOTAURSPECIAL | LEVEL_HEADSPECIAL | LEVEL_SORCERER2SPECIAL | LEVEL_SPECACTIONSMASK | LEVEL_SPECKILLMONSTERS);
+			levelinfo->flags3 &= ~(LEVEL3_E1M8SPECIAL | LEVEL3_E2M8SPECIAL | LEVEL3_E3M8SPECIAL | LEVEL3_E4M8SPECIAL | LEVEL3_E4M6SPECIAL);
 		}
 
 		const int exflags = FExitText::DEF_TEXT | FExitText::DEF_BACKDROP | FExitText::DEF_MUSIC;

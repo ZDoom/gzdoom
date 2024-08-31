@@ -28,10 +28,11 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
-#include "resourcefiles/resourcefile.h"
+#include "fs_filesystem.h"
 #include "doomdata.h"
 #include "r_defs.h"
 #include "nodebuild.h"
+#include "cmdlib.h"
 
 
 struct MapData
@@ -64,7 +65,6 @@ private:
 	FileReader nofile;
 public:
 	bool HasBehavior = false;
-	bool Encrypted = false;
 	bool isText = false;
 	bool InWad = false;
 	int lumpnum = -1;
@@ -141,8 +141,9 @@ MapData * P_OpenMapData(const char * mapname, bool justcheck);
 bool P_CheckMapData(const char * mapname);
 
 void P_SetupLevel (FLevelLocals *Level, int position, bool newGame);
+void P_LoadLightmap(MapData *map);
 
-void P_FreeLevelData();
+void P_FreeLevelData(bool fullgc = true);
 
 // Called by startup code.
 void P_Init (void);

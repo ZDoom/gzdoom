@@ -1,4 +1,5 @@
 
+
 layout(location = 0) in vec4 vTexCoord;
 layout(location = 1) in vec4 vColor;
 layout(location = 2) in vec4 pixelpos;
@@ -6,6 +7,7 @@ layout(location = 3) in vec3 glowdist;
 layout(location = 4) in vec3 gradientdist;
 layout(location = 5) in vec4 vWorldNormal;
 layout(location = 6) in vec4 vEyeNormal;
+layout(location = 9) in vec3 vLightmap;
 
 #ifdef NO_CLIPDISTANCE_SUPPORT
 layout(location = 7) in vec4 ClipDistanceA;
@@ -22,6 +24,7 @@ struct Material
 {
 	vec4 Base;
 	vec4 Bright;
+	vec4 Glow;
 	vec3 Normal;
 	vec3 Specular;
 	float Glossiness;
@@ -33,9 +36,34 @@ struct Material
 
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
-Material ProcessMaterial();
+Material ProcessMaterial(); // note that this is deprecated. Use SetupMaterial!
+void SetupMaterial(inout Material mat);
 vec4 ProcessLight(Material mat, vec4 color);
 vec3 ProcessMaterialLight(Material material, vec3 color);
+vec2 GetTexCoord();
+
+// These get Or'ed into uTextureMode because it only uses its 3 lowermost bits.
+const int TEXF_Brightmap = 0x10000;
+const int TEXF_Detailmap = 0x20000;
+const int TEXF_Glowmap = 0x40000;
+const int TEXF_ClampY = 0x80000;
+
+//===========================================================================
+//
+// RGB to HSV
+//
+//===========================================================================
+
+vec3 rgb2hsv(vec3 c)
+{
+	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+	vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+	vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+	float d = q.x - min(q.w, q.y);
+	float e = 1.0e-10;
+	return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
 
 //===========================================================================
 //
@@ -88,27 +116,27 @@ const int Tex_Blend_Alpha = 1;
 const int Tex_Blend_Screen = 2;
 const int Tex_Blend_Overlay = 3;
 const int Tex_Blend_Hardlight = 4;
- 
+
  vec4 ApplyTextureManipulation(vec4 texel, int blendflags)
  {
 	// Step 1: desaturate according to the material's desaturation factor. 
 	texel = dodesaturate(texel, uTextureModulateColor.a);
-	
+
 	// Step 2: Invert if requested
 	if ((blendflags & 8) != 0)
 	{
 		texel.rgb = vec3(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b);
 	}
-	
+
 	// Step 3: Apply additive color
 	texel.rgb += uTextureAddColor.rgb;
-	
+
 	// Step 4: Colorization, including gradient if set.
 	texel.rgb *= uTextureModulateColor.rgb;
-	
+
 	// Before applying the blend the value needs to be clamped to [0..1] range.
 	texel.rgb = clamp(texel.rgb, 0.0, 1.0);
-	
+
 	// Step 5: Apply a blend. This may just be a translucent overlay or one of the blend modes present in current Build engines.
 	if ((blendflags & 7) != 0)
 	{
@@ -153,47 +181,55 @@ const int Tex_Blend_Hardlight = 4;
 vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture(tex, st);
-	
+
 	//
 	// Apply texture modes
 	//
-	switch (uTextureMode)
+	switch (uTextureMode & 0xffff)
 	{
 		case 1:	// TM_STENCIL
 			texel.rgb = vec3(1.0,1.0,1.0);
 			break;
-			
+
 		case 2:	// TM_OPAQUE
 			texel.a = 1.0;
 			break;
-			
+
 		case 3:	// TM_INVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
 			break;
-			
+
 		case 4:	// TM_ALPHATEXTURE
 		{
 			float gray = grayscale(texel);
 			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
 			break;
 		}
-			
+
 		case 5:	// TM_CLAMPY
 			if (st.t < 0.0 || st.t > 1.0)
 			{
 				texel.a = 0.0;
 			}
 			break;
-			
+
 		case 6: // TM_OPAQUEINVERSE
 			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
 			break;
-			
+
 		case 7: //TM_FOGLAYER 
 			return texel;
 
 	}
-	
+
+	if ((uTextureMode & TEXF_ClampY) != 0)
+	{
+		if (st.t < 0.0 || st.t > 1.0)
+		{
+			texel.a = 0.0;
+		}
+	}
+
 	// Apply the texture modification colors.
 	int blendflags = int(uTextureAddColor.a);	// this alpha is unused otherwise
 	if (blendflags != 0)	
@@ -301,6 +337,16 @@ float R_DoomLightingEquation(float light)
 		z = pixelpos.w;
 	}
 
+	if ((uPalLightLevels >> 16) == 5) // gl_lightmode 5: Build software lighting emulation.
+	{
+		// This is a lot more primitive than Doom's lighting...
+		float numShades = float(uPalLightLevels & 255);
+		float curshade = (1.0 - light) * (numShades - 1.0);
+		float visibility = max(uGlobVis * uLightFactor * z, 0.0);
+		float shade = clamp((curshade + visibility), 0.0, numShades - 1.0);
+		return clamp(shade * uLightDist, 0.0, 1.0);
+	}
+
 	float colormap = R_DoomColormap(light, z);
 
 	if ((uPalLightLevels & 0xff) != 0)
@@ -312,10 +358,86 @@ float R_DoomLightingEquation(float light)
 
 //===========================================================================
 //
-// Check if light is in shadow according to its 1D shadow map
+// Check if light is in shadow
 //
 //===========================================================================
 
+#ifdef SUPPORTS_RAYTRACING
+
+bool traceHit(vec3 origin, vec3 direction, float dist)
+{
+	rayQueryEXT rayQuery;
+	rayQueryInitializeEXT(rayQuery, TopLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, origin, 0.01f, direction, dist);
+	while(rayQueryProceedEXT(rayQuery)) { }
+	return rayQueryGetIntersectionTypeEXT(rayQuery, true) != gl_RayQueryCommittedIntersectionNoneEXT;
+}
+
+vec2 softshadow[9 * 3] = vec2[](
+	vec2( 0.0, 0.0),
+	vec2(-2.0,-2.0),
+	vec2( 2.0, 2.0),
+	vec2( 2.0,-2.0),
+	vec2(-2.0, 2.0),
+	vec2(-1.0,-1.0),
+	vec2( 1.0, 1.0),
+	vec2( 1.0,-1.0),
+	vec2(-1.0, 1.0),
+
+	vec2( 0.0, 0.0),
+	vec2(-1.5,-1.5),
+	vec2( 1.5, 1.5),
+	vec2( 1.5,-1.5),
+	vec2(-1.5, 1.5),
+	vec2(-0.5,-0.5),
+	vec2( 0.5, 0.5),
+	vec2( 0.5,-0.5),
+	vec2(-0.5, 0.5),
+
+	vec2( 0.0, 0.0),
+	vec2(-1.25,-1.75),
+	vec2( 1.75, 1.25),
+	vec2( 1.25,-1.75),
+	vec2(-1.75, 1.75),
+	vec2(-0.75,-0.25),
+	vec2( 0.25, 0.75),
+	vec2( 0.75,-0.25),
+	vec2(-0.25, 0.75)
+);
+
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
+{
+	float shadowIndex = abs(lightcolorA) - 1.0;
+	if (shadowIndex >= 1024.0)
+		return 1.0; // Don't cast rays for this light
+
+	vec3 origin = pixelpos.xzy;
+	vec3 target = lightpos.xzy + 0.01; // nudge light position slightly as Doom maps tend to have their lights perfectly aligned with planes
+
+	vec3 direction = normalize(target - origin);
+	float dist = distance(origin, target);
+
+	if (uShadowmapFilter <= 0)
+	{
+		return traceHit(origin, direction, dist) ? 0.0 : 1.0;
+	}
+	else
+	{
+		vec3 v = (abs(direction.x) > abs(direction.y)) ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+		vec3 xdir = normalize(cross(direction, v));
+		vec3 ydir = cross(direction, xdir);
+
+		float sum = 0.0;
+		int step_count = uShadowmapFilter * 9;
+		for (int i = 0; i <= step_count; i++)
+		{
+			vec3 pos = target + xdir * softshadow[i].x + ydir * softshadow[i].y;
+			sum += traceHit(origin, normalize(pos - origin), dist) ? 0.0 : 1.0;
+		}
+		return sum / step_count;
+	}
+}
+
+#else
 #ifdef SUPPORTS_SHADOWMAPS
 
 float shadowDirToU(vec2 dir)
@@ -404,7 +526,7 @@ float sampleShadowmapPCF(vec3 planePoint, float v)
 
 	float sum = 0.0;
 	float step_count = uShadowmapFilter;
-		
+
 	texelPos -= step_count + 0.5;
 	for (float x = -step_count; x <= step_count; x++)
 	{
@@ -459,6 +581,7 @@ float shadowAttenuation(vec4 lightpos, float lightcolorA)
 	return 1.0;
 }
 
+#endif
 #endif
 
 float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)
@@ -526,6 +649,41 @@ vec3 ApplyNormalMap(vec2 texcoord)
 
 //===========================================================================
 //
+// Sets the common material properties.
+//
+//===========================================================================
+
+void SetMaterialProps(inout Material material, vec2 texCoord)
+{
+#ifdef NPOT_EMULATION
+	if (uNpotEmulation.y != 0.0)
+	{
+		float period = floor(texCoord.t / uNpotEmulation.y);
+		texCoord.s += uNpotEmulation.x * floor(mod(texCoord.t, uNpotEmulation.y));
+		texCoord.t = period + mod(texCoord.t, uNpotEmulation.y);
+	}
+#endif	
+	material.Base = getTexel(texCoord.st); 
+	material.Normal = ApplyNormalMap(texCoord.st);
+
+// OpenGL doesn't care, but Vulkan pukes all over the place if these texture samplings are included in no-texture shaders, even though never called.
+#ifndef NO_LAYERS
+	if ((uTextureMode & TEXF_Brightmap) != 0)
+		material.Bright = desaturate(texture(brighttexture, texCoord.st));
+
+	if ((uTextureMode & TEXF_Detailmap) != 0)
+	{
+		vec4 Detail = texture(detailtexture, texCoord.st * uDetailParms.xy) * uDetailParms.z;
+		material.Base.rgb *= Detail.rgb;
+	}
+
+	if ((uTextureMode & TEXF_Glowmap) != 0)
+		material.Glow = desaturate(texture(glowtexture, texCoord.st));
+#endif
+}
+
+//===========================================================================
+//
 // Calculate light
 //
 // It is important to note that the light color is not desaturated
@@ -541,7 +699,7 @@ vec3 ApplyNormalMap(vec2 texcoord)
 vec4 getLightColor(Material material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
-	
+
 	if (uLightLevel >= 0.0)
 	{
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel);
@@ -554,13 +712,13 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 		{
 			color.rgb *= uLightFactor - (fogdist / uLightDist) * (uLightFactor - 1.0);
 		}
-		
+
 		//
 		// apply light diminishing through fog equation
 		//
 		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
 	}
-	
+
 	//
 	// handle glowing walls
 	//
@@ -574,10 +732,31 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	}
 	color = min(color, 1.0);
 
+	// these cannot be safely applied by the legacy format where the implementation cannot guarantee that the values are set.
+#if !defined LEGACY_USER_SHADER && !defined NO_LAYERS
 	//
-	// apply brightmaps (or other light manipulation by custom shaders.
+	// apply glow 
+	//
+	color.rgb = mix(color.rgb, material.Glow.rgb, material.Glow.a);
+
+	//
+	// apply brightmaps 
+	//
+	color.rgb = min(color.rgb + material.Bright.rgb, 1.0);
+#endif
+
+	//
+	// apply other light manipulation by custom shaders, default is a NOP.
 	//
 	color = ProcessLight(material, color);
+
+	//
+	// apply lightmaps
+	//
+	if (vLightmap.z >= 0.0)
+	{
+		color.rgb += texture(LightMap, vLightmap).rgb;
+	}
 
 	//
 	// apply dynamic lights
@@ -606,7 +785,7 @@ vec3 AmbientOcclusionColor()
 {
 	float fogdist;
 	float fogfactor;
-			
+
 	//
 	// calculate fog factor
 	//
@@ -619,7 +798,7 @@ vec3 AmbientOcclusionColor()
 		fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 	}
 	fogfactor = exp2 (uFogDensity * fogdist);
-			
+
 	return mix(uFogColor.rgb, vec3(0.0), fogfactor);
 }
 
@@ -635,9 +814,25 @@ void main()
 	if (ClipDistanceA.x < 0 || ClipDistanceA.y < 0 || ClipDistanceA.z < 0 || ClipDistanceA.w < 0 || ClipDistanceB.x < 0) discard;
 #endif
 
+#ifndef LEGACY_USER_SHADER
+	Material material;
+
+	material.Base = vec4(0.0);
+	material.Bright = vec4(0.0);
+	material.Glow = vec4(0.0);
+	material.Normal = vec3(0.0);
+	material.Specular = vec3(0.0);
+	material.Glossiness = 0.0;
+	material.SpecularLevel = 0.0;
+	material.Metallic = 0.0;
+	material.Roughness = 0.0;
+	material.AO = 0.0;
+	SetupMaterial(material);
+#else
 	Material material = ProcessMaterial();
+#endif
 	vec4 frag = material.Base;
-	
+
 #ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
@@ -646,7 +841,7 @@ void main()
 	{
 		float fogdist = 0.0;
 		float fogfactor = 0.0;
-		
+
 		//
 		// calculate fog factor
 		//
@@ -662,10 +857,11 @@ void main()
 			}
 			fogfactor = exp2 (uFogDensity * fogdist);
 		}
-		
-		if (uTextureMode != 7)
+
+		if ((uTextureMode & 0xffff) != 7)
 		{
 			frag = getLightColor(material, fogdist, fogfactor);
+
 			//
 			// colored fog
 			//
@@ -681,7 +877,7 @@ void main()
 	}
 	else // simple 2D (uses the fog color to add a color overlay)
 	{
-		if (uTextureMode == 7)
+		if ((uTextureMode & 0xffff) == 7)
 		{
 			float gray = grayscale(frag);
 			vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
@@ -691,6 +887,27 @@ void main()
 		frag.rgb = frag.rgb + uFogColor.rgb;
 	}
 	FragColor = frag;
+
+#ifdef DITHERTRANS
+	int index = (int(pixelpos.x) % 8) * 8 + int(pixelpos.y) % 8;
+	const float DITHER_THRESHOLDS[64] =
+	{
+		1.0 / 65.0, 33.0 / 65.0, 9.0 / 65.0, 41.0 / 65.0, 3.0 / 65.0, 35.0 / 65.0, 11.0 / 65.0, 43.0 / 65.0,
+		49.0 / 65.0, 17.0 / 65.0, 57.0 / 65.0, 25.0 / 65.0, 51.0 / 65.0, 19.0 / 65.0, 59.0 / 65.0, 27.0 / 65.0,
+		13.0 / 65.0, 45.0 / 65.0, 5.0 / 65.0, 37.0 / 65.0, 15.0 / 65.0, 47.0 / 65.0, 7.0 / 65.0, 39.0 / 65.0,
+		61.0 / 65.0, 29.0 / 65.0, 53.0 / 65.0, 21.0 / 65.0, 63.0 / 65.0, 31.0 / 65.0, 55.0 / 65.0, 23.0 / 65.0,
+		4.0 / 65.0, 36.0 / 65.0, 12.0 / 65.0, 44.0 / 65.0, 2.0 / 65.0, 34.0 / 65.0, 10.0 / 65.0, 42.0 / 65.0,
+		52.0 / 65.0, 20.0 / 65.0, 60.0 / 65.0, 28.0 / 65.0, 50.0 / 65.0, 18.0 / 65.0, 58.0 / 65.0, 26.0 / 65.0,
+		16.0 / 65.0, 48.0 / 65.0, 8.0 / 65.0, 40.0 / 65.0, 14.0 / 65.0, 46.0 / 65.0, 6.0 / 65.0, 38.0 / 65.0,
+		64.0 / 65.0, 32.0 / 65.0, 56.0 / 65.0, 24.0 / 65.0, 62.0 / 65.0, 30.0 / 65.0, 54.0 / 65.0, 22.0 /65.0
+	};
+
+	vec3 fragHSV = rgb2hsv(FragColor.rgb);
+	float brightness = clamp(1.5*fragHSV.z, 0.1, 1.0);
+	if (DITHER_THRESHOLDS[index] < brightness) discard;
+	else FragColor *= 0.5;
+#endif
+
 #ifdef GBUFFER_PASS
 	FragFog = vec4(AmbientOcclusionColor(), 1.0);
 	FragNormal = vec4(vEyeNormal.xyz * 0.5 + 0.5, 1.0);

@@ -23,11 +23,12 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
+#include "i_interface.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -47,7 +48,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
@@ -62,7 +63,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
@@ -89,7 +90,7 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
-		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
+		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos.XY(), renderportal->CurrentPortal->dst))
 			return;
 
 		// transform the origin point
@@ -120,8 +121,8 @@ namespace swrenderer
 		// calculate edges of the shape
 		double psize = particle->size / 8.0;
 
-		x1 = MAX<int>(renderportal->WindowLeft, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
-		x2 = MIN<int>(renderportal->WindowRight, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
+		x1 = max<int>(renderportal->WindowLeft, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx - psize) * xscale));
+		x2 = min<int>(renderportal->WindowRight, thread->Viewport->viewwindow.centerx + xs_RoundToInt((tx + psize) * xscale));
 
 		if (x1 >= x2)
 			return;
@@ -222,7 +223,7 @@ namespace swrenderer
 		vis->floorclip = 0;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->bright != 0, false, false, false, true);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, map, particle->flags & SPF_FULLBRIGHT, false, false, false, true);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -231,7 +232,6 @@ namespace swrenderer
 	{
 		auto vis = this;
 
-		int spacing;
 		uint8_t color = vis->Light.BaseColormap->Maps[vis->startfrac];
 		int yl = vis->y1;
 		int ycount = vis->y2 - yl + 1;
@@ -250,33 +250,18 @@ namespace swrenderer
 		uint32_t alpha = fglevel * 256 / FRACUNIT;
 		
 		auto viewport = thread->Viewport.get();
-
-		spacing = viewport->RenderTarget->GetPitch();
+		auto drawers = thread->Drawers(viewport);
 
 		uint32_t fracstepx = PARTICLE_TEXTURE_SIZE * FRACUNIT / countbase;
 		uint32_t fracposx = fracstepx / 2;
 
 		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-		if (viewport->RenderTarget->IsBgra())
+		for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
 		{
-			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
-			{
-				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
-					continue;
-				uint32_t *dest = (uint32_t*)viewport->GetDest(x, yl);
-				thread->DrawQueue->Push<DrawParticleColumnRGBACommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
-			}
-		}
-		else
-		{
-			for (int x = x1; x < (x1 + countbase); x++, fracposx += fracstepx)
-			{
-				if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
-					continue;
-				uint8_t *dest = viewport->GetDest(x, yl);
-				thread->DrawQueue->Push<DrawParticleColumnPalCommand>(dest, yl, spacing, ycount, fg, alpha, fracposx);
-			}
+			if (translucentPass->ClipSpriteColumnWithPortals(x, vis))
+				continue;
+			drawers->DrawParticleColumn(x, yl, ycount, fg, alpha, fracposx);
 		}
 	}
 
@@ -301,7 +286,7 @@ namespace swrenderer
 				if (ds->drawsegclip.CurrentPortalUniq == CurrentPortalUniq)
 				{
 					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2), clip3DFloor);
+					renderer.Render(ds, max<int>(ds->x1, x1), min<int>(ds->x2, x2), clip3DFloor);
 				}
 			}
 		}

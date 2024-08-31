@@ -65,6 +65,11 @@ extend class StateProvider
 		if (!accurate)
 		{
 			ang += Random2[GunShot]() * (5.625 / 256);
+
+			if (GetCVar ("vertspread") && !sv_novertspread)
+			{
+				pitch += Random2[GunShot]() * (3.549 / 256);
+			}
 		}
 
 		LineAttack(ang, PLAYERMISSILERANGE, pitch, damage, 'Hitscan', pufftype);
@@ -80,7 +85,7 @@ extend class StateProvider
 			Weapon weap = player.ReadyWeapon;
 			if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 			{
-				if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
+				if (!weap.DepleteAmmo (weap.bAltFire, true))
 					return;
 
 				player.SetPsprite(PSP_FLASH, weap.FindState('Flash'), true);

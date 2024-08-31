@@ -39,10 +39,13 @@
 #include "v_text.h"
 #include "thingdef.h"
 #include "r_state.h"
+#include "templates.h"
+#include "codegen.h"
 
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
 FStateLabelStorage StateLabels;
+TMap<int, FState*> dehExtStates;
 
 // Each state is owned by an actor. Actors can own any number of
 // states, but a single state cannot be owned by more than one
@@ -64,22 +67,27 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 	PARAM_INT(skin);
 	PARAM_FLOAT(scalex);
 	PARAM_FLOAT(scaley);
+	PARAM_INT(spritenum);
+	PARAM_INT(framenum);
+
+	int sprnum = (spritenum == -1) ? self->sprite : spritenum;
+	int frnum = (framenum == -1) ? self->GetFrame() : framenum;
 
 	spriteframe_t *sprframe;
 	if (skin == 0)
 	{
-		sprframe = &SpriteFrames[sprites[self->sprite].spriteframes + self->GetFrame()];
+		sprframe = &SpriteFrames[sprites[sprnum].spriteframes + frnum];
 	}
 	else
 	{
-		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + self->GetFrame()];
+		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + frnum];
 		scalex = Skins[skin].Scale.X;
 		scaley = Skins[skin].Scale.Y;
 	}
 	if (numret > 0) ret[0].SetInt(sprframe->Texture[rotation].GetIndex());
 	if (numret > 1) ret[1].SetInt(!!(sprframe->Flip & (1 << rotation)));
 	if (numret > 2) ret[2].SetVector2(DVector2(scalex, scaley));
-	return MIN(3, numret);
+	return min(3, numret);
 }
 
 
@@ -128,9 +136,18 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 //
 //==========================================================================
 
-FString FState::StaticGetStateName(const FState *state)
+FString FState::StaticGetStateName(const FState *state, PClassActor *info)
 {
 	auto so = FState::StaticFindStateOwner(state);
+	if (so == nullptr)
+	{
+		so = FState::StaticFindStateOwner(state, info);
+	}
+	if (so == nullptr)
+	{
+		if (state->DehIndex > 0) return FStringf("DehExtraState.%d", state->DehIndex);
+		return "<unknown>";
+	}
 	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->GetStates()));
 }
 
@@ -202,7 +219,7 @@ TArray<FName> &MakeStateNameList(const char * fname)
 	// Handle the old names for the existing death states
 	char *name = copystring(fname);
 	firstpart = strtok(name, ".");
-	switch (firstpart)
+	switch (firstpart.GetIndex())
 	{
 	case NAME_Burn:
 		firstpart = NAME_Death;
@@ -370,7 +387,7 @@ FState *FStateLabelStorage::GetState(int pos, PClassActor *cls, bool exact)
 
 //==========================================================================
 //
-// State label conversion function for scripts
+// State label conversion functions for scripts
 //
 //==========================================================================
 
@@ -378,7 +395,7 @@ DEFINE_ACTION_FUNCTION(AActor, FindState)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(newstate);
-	PARAM_BOOL(exact)
+	PARAM_BOOL(exact);
 	ACTION_RETURN_STATE(StateLabels.GetState(newstate, self->GetClass(), exact));
 }
 
@@ -388,6 +405,15 @@ DEFINE_ACTION_FUNCTION(AActor, ResolveState)
 	PARAM_ACTION_PROLOGUE(AActor);
 	PARAM_STATE_ACTION(newstate);
 	ACTION_RETURN_STATE(newstate);
+}
+
+// find state by string instead of label
+DEFINE_ACTION_FUNCTION(AActor, FindStateByString)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_STRING(newstate);
+	PARAM_BOOL(exact);
+	ACTION_RETURN_STATE(self->GetClass()->FindStateByString(newstate.GetChars(), exact));
 }
 
 //==========================================================================
@@ -480,8 +506,10 @@ int FStateDefinitions::GetStateLabelIndex (FName statename)
 	{
 		return -1;
 	}
-	assert((size_t)std->State <= StateArray.Size() + 1);
-	return (int)((ptrdiff_t)std->State - 1);
+	if ((size_t)std->State <= StateArray.Size() + 1)
+		return (int)((ptrdiff_t)std->State - 1);
+	else
+		return -1;
 }
 
 //==========================================================================
@@ -520,7 +548,7 @@ static int labelcmp(const void *a, const void *b)
 {
 	FStateLabel *A = (FStateLabel *)a;
 	FStateLabel *B = (FStateLabel *)b;
-	return ((int)A->Label - (int)B->Label);
+	return ((int)A->Label.GetIndex() - (int)B->Label.GetIndex());
 }
 
 FStateLabels *FStateDefinitions::CreateStateLabelList(TArray<FStateDefine> & statelist)
@@ -691,7 +719,7 @@ void FStateDefinitions::RetargetStatePointers (intptr_t count, const char *targe
 			}
 			else
 			{
-				statelist[i].State = (FState *)copystring (target);
+				statelist[i].State = (FState *)FxAlloc.Strdup(target);
 				statelist[i].DefineFlags = SDF_LABEL;
 			}
 		}
@@ -792,7 +820,6 @@ FState *FStateDefinitions::ResolveGotoLabel (PClassActor *mytype, char *name)
 	{
 		Printf (TEXTCOLOR_RED "Attempt to get invalid state %s from actor %s.\n", label, type->TypeName.GetChars());
 	}
-	delete[] namestart;		// free the allocated string buffer
 	return state;
 }
 
@@ -856,7 +883,7 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 	// copy the text - this must be resolved later!
 	if (laststate != NULL)
 	{ // Following a state definition: Modify it.
-		laststate->NextState = (FState*)copystring(string);	
+		laststate->NextState = (FState*)FxAlloc.Strdup(string);
 		laststate->DefineFlags = SDF_LABEL;
 		laststatebeforelabel = NULL;
 		return true;
@@ -866,7 +893,7 @@ bool FStateDefinitions::SetGotoLabel(const char *string)
 		RetargetStates (lastlabel+1, string);
 		if (laststatebeforelabel != NULL)
 		{
-			laststatebeforelabel->NextState = (FState*)copystring(string);	
+			laststatebeforelabel->NextState = (FState*)FxAlloc.Strdup(string);
 			laststatebeforelabel->DefineFlags = SDF_LABEL;
 			laststatebeforelabel = NULL;
 		}
@@ -1020,6 +1047,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor)
 
 		for (i = 0; i < count; i++)
 		{
+			realstates[i].DehIndex = -1;
 			// resolve labels and jumps
 			switch (realstates[i].DefineFlags)
 			{
@@ -1065,16 +1093,20 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 {
 	for (int i = 0; i < StateList->NumLabels; i++)
 	{
-		if (StateList->Labels[i].State != NULL)
+		auto state = StateList->Labels[i].State;
+		if (state != NULL)
 		{
-			const PClassActor *owner = FState::StaticFindStateOwner(StateList->Labels[i].State);
+			const PClassActor *owner = FState::StaticFindStateOwner(state);
 			if (owner == NULL)
 			{
-				Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
+				if (state->DehIndex >= 0)
+					Printf(PRINT_LOG, "%s%s: DehExtra %d\n", prefix.GetChars(), state->DehIndex);
+				else
+					Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State).GetChars());
+				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(state).GetChars());
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)
@@ -1126,7 +1158,7 @@ DEFINE_ACTION_FUNCTION(FState, DistanceTo)
 	{
 		// Safely calculate the distance between two states.
 		auto o1 = FState::StaticFindStateOwner(self);
-		if (o1->OwnsState(other)) retv = int(other - self);
+		if (o1 && o1->OwnsState(other)) retv = int(other - self);
 	}
 	ACTION_RETURN_INT(retv);
 }

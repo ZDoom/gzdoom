@@ -19,6 +19,7 @@ class Peasant : StrifeHumanoid
 		MinMissileChance 150;
 		MaxStepHeight 16;
 		MaxDropoffHeight 32;
+		Tag "$TAG_PEASANT";
 		SeeSound "peasant/sight";
 		AttackSound "peasant/attack";
 		PainSound "peasant/pain";

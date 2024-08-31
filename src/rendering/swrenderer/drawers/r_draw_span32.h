@@ -51,14 +51,9 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawSpan32T : public DrawerCommand
+	class DrawSpan32T
 	{
-	protected:
-		SpanDrawerArgs args;
-
 	public:
-		DrawSpan32T(const SpanDrawerArgs &drawerargs) : args(drawerargs) { }
-
 		struct TextureData
 		{
 			uint32_t width;
@@ -72,12 +67,10 @@ namespace swrenderer
 			const uint32_t *source;
 		};
 
-		void Execute(DrawerThread *thread) override
+		static void DrawColumn(const SpanDrawerArgs& args)
 		{
 			using namespace DrawSpan32TModes;
 
-			if (thread->line_skipped_by_thread(args.DestY())) return;
-			
 			TextureData texdata;
 			texdata.width = args.TextureWidth();
 			texdata.height = args.TextureHeight();
@@ -101,8 +94,8 @@ namespace swrenderer
 						break;
 
 					texdata.source += texdata.width * texdata.height;
-					texdata.width = MAX<uint32_t>(texdata.width / 2, 1);
-					texdata.height = MAX<uint32_t>(texdata.height / 2, 1);
+					texdata.width = max<uint32_t>(texdata.width / 2, 1);
+					texdata.height = max<uint32_t>(texdata.height / 2, 1);
 					level--;
 				}
 			}
@@ -119,16 +112,16 @@ namespace swrenderer
 				if (is_nearest_filter)
 				{
 					if (is_64x64)
-						Loop<SimpleShade, NearestFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<SimpleShade, NearestFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<SimpleShade, NearestFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<SimpleShade, NearestFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 				else
 				{
 					if (is_64x64)
-						Loop<SimpleShade, LinearFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<SimpleShade, LinearFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<SimpleShade, LinearFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<SimpleShade, LinearFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 			}
 			else
@@ -136,22 +129,22 @@ namespace swrenderer
 				if (is_nearest_filter)
 				{
 					if (is_64x64)
-						Loop<AdvancedShade, NearestFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, NearestFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<AdvancedShade, NearestFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, NearestFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 				else
 				{
 					if (is_64x64)
-						Loop<AdvancedShade, LinearFilter, TextureSize64x64>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, LinearFilter, TextureSize64x64>(args, texdata, shade_constants);
 					else
-						Loop<AdvancedShade, LinearFilter, TextureSizeAny>(thread, texdata, shade_constants);
+						Loop<AdvancedShade, LinearFilter, TextureSizeAny>(args, texdata, shade_constants);
 				}
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT, typename TextureSizeT>
-		FORCEINLINE void Loop(DrawerThread *thread, TextureData texdata, ShadeConstants shade_constants)
+		FORCEINLINE static void Loop(const SpanDrawerArgs& args, TextureData texdata, ShadeConstants shade_constants)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -229,7 +222,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT, typename TextureSizeT>
-		FORCEINLINE uint32_t Sample(uint32_t width, uint32_t height, uint32_t xone, uint32_t yone, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, const uint32_t *source)
+		FORCEINLINE static uint32_t Sample(uint32_t width, uint32_t height, uint32_t xone, uint32_t yone, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, const uint32_t *source)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -291,7 +284,7 @@ namespace swrenderer
 		}
 
 		template<typename ShadeModeT>
-		FORCEINLINE BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_x)
+		FORCEINLINE static BgraColor Shade(BgraColor fgcolor, uint32_t light, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, const DrawerLight *lights, int num_lights, float viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -313,7 +306,7 @@ namespace swrenderer
 			return AddLights(material, fgcolor, lights, num_lights, viewpos_x);
 		}
 
-		FORCEINLINE BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_x)
+		FORCEINLINE static BgraColor AddLights(BgraColor material, BgraColor fgcolor, const DrawerLight *lights, int num_lights, float viewpos_x)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -331,13 +324,13 @@ namespace swrenderer
 
 				// L = light-pos
 				// dist = sqrt(dot(L, L))
-				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				// distance_attenuation = 1 - min(dist * (1/radius), 1)
 				float Lyz2 = light_y; // L.y*L.y + L.z*L.z
 				float Lx = light_x - viewpos_x;
 				float dist2 = Lyz2 + Lx * Lx;
 				float rcp_dist = 1.f/sqrt(dist2);
 				float dist = dist2 * rcp_dist;
-				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+				float distance_attenuation = 256.0f - min(dist * light_radius, 256.0f);
 
 				// The simple light type
 				float simple_attenuation = distance_attenuation;
@@ -355,17 +348,17 @@ namespace swrenderer
 				lit.b += (light_color.b * attenuation) >> 8;
 			}
 
-			lit.r = MIN<uint32_t>(lit.r, 256);
-			lit.g = MIN<uint32_t>(lit.g, 256);
-			lit.b = MIN<uint32_t>(lit.b, 256);
+			lit.r = min<uint32_t>(lit.r, 256);
+			lit.g = min<uint32_t>(lit.g, 256);
+			lit.b = min<uint32_t>(lit.b, 256);
 
-			fgcolor.r = MIN<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
-			fgcolor.g = MIN<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
-			fgcolor.b = MIN<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
+			fgcolor.r = min<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
+			fgcolor.g = min<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
+			fgcolor.b = min<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);
 			return fgcolor;
 		}
 
-		FORCEINLINE BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor)
+		FORCEINLINE static BgraColor Blend(BgraColor fgcolor, BgraColor bgcolor, uint32_t srcalpha, uint32_t destalpha, unsigned int ifgcolor)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -388,9 +381,9 @@ namespace swrenderer
 				bgcolor.b = bgcolor.b * destalpha;
 
 				BgraColor outcolor;
-				outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-				outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-				outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+				outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+				outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+				outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				return outcolor;
 			}
 			else
@@ -412,21 +405,21 @@ namespace swrenderer
 				BgraColor outcolor;
 				if (BlendT::Mode == (int)SpanBlendModes::AddClamp)
 				{
-					outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
-					outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
-					outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
+					outcolor.r = min<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+					outcolor.g = min<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+					outcolor.b = min<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 				}
 				else if (BlendT::Mode == (int)SpanBlendModes::SubClamp)
 				{
-					outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 				}
 				else if (BlendT::Mode == (int)SpanBlendModes::RevSubClamp)
 				{
-					outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
-					outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
-					outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
+					outcolor.r = max(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+					outcolor.g = max(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+					outcolor.b = max(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 				}
 				outcolor.a = 255;
 				return outcolor;

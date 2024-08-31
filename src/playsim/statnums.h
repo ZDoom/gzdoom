@@ -69,6 +69,7 @@ enum
 	STAT_ACTORMOVER,						// actor movers
 	STAT_SCRIPTS,							// The ACS thinker. This is to ensure that it can't tick before all actors called PostBeginPlay
 	STAT_BOT,								// Bot thinker
+	STAT_VISUALTHINKER,							// VisualThinker Thinker
 };
 
 #endif

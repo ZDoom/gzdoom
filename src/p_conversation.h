@@ -4,7 +4,7 @@
 #include <tarray.h>
 
 #include "s_sound.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 struct FStrifeDialogueReply;
 class FTexture;
@@ -29,7 +29,7 @@ struct FStrifeDialogueNode
 
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
-	FSoundID SpeakerVoice = 0;
+	FSoundID SpeakerVoice = NO_SOUND;
 	FString Backdrop;
 	FString Dialogue;
 	FString Goodbye; // must init to null for binary scripts to work as intended
@@ -71,8 +71,6 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, uint8_t **stream);
-
-class FileReader;
 
 
 #endif

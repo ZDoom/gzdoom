@@ -1,0 +1,20 @@
+/* Default classic keybindings for all games */
+
+ctrl +attack
+alt +strafe
+rightarrow +right
+leftarrow +left
+uparrow +forward
+downarrow +back
+, +moveleft
+. +moveright
+space +use
+mouse2 +strafe
+mouse3 +forward
+mouse4 +speed
+
+// Generic joystick buttons
+joy1 +attack
+joy2 +strafe
+joy3 +speed
+joy4 +use

@@ -43,7 +43,8 @@
 #include "p_lnspec.h"
 #include "p_local.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
+#include "backend/codegen_doom.h"
 #ifndef _MSC_VER
 #include "i_system.h"  // for strlwr()
 #endif // !_MSC_VER
@@ -169,7 +170,7 @@ do_goto:
 				statestring += '+';
 				statestring += sc.String;
 			}
-			if (!bag.statedef.SetGotoLabel(statestring))
+			if (!bag.statedef.SetGotoLabel(statestring.GetChars()))
 			{
 				sc.ScriptError("GOTO before first state");
 			}
@@ -206,7 +207,7 @@ do_stop:
 			{
 				do
 				{
-					bag.statedef.AddStateLabel(statestring);
+					bag.statedef.AddStateLabel(statestring.GetChars());
 					statestring = ParseStateString(sc);
 					if (!statestring.CompareNoCase("GOTO"))
 					{
@@ -229,7 +230,7 @@ do_stop:
 			}
 
 			scp = sc;
-			state.sprite = GetSpriteIndex(statestring);
+			state.sprite = GetSpriteIndex(statestring.GetChars());
 			state.Misc1 = state.Misc2 = 0;
 			sc.MustGetString();
 			statestring = sc.String;
@@ -247,7 +248,7 @@ do_stop:
 				sc.MustGetStringName(")");
 				if (min > max)
 				{
-					swapvalues(min, max);
+					std::swap(min, max);
 				}
 				state.Tics = min;
 				state.TicRange = max - min;
@@ -333,7 +334,7 @@ endofstate:
 				auto funcsym = CreateAnonymousFunction(actor->VMType, nullptr, state.UseFlags);
 				state.ActionFunc = FunctionBuildList.AddFunction(bag.Namespace, bag.Version, funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true, bag.statedef.GetStateCount(), int(statestring.Len()), sc.LumpNum);
 			}
-			int count = bag.statedef.AddStates(&state, statestring, scp);
+			int count = bag.statedef.AddStates(&state, statestring.GetChars(), scp);
 			if (count < 0)
 			{
 				sc.ScriptError("Invalid frame character string '%s'", statestring.GetChars());
@@ -475,7 +476,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 	// Otherwise, it's a sequence of actions.
 	if (!sc.Compare("{"))
 	{
-		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
+		FxExpression *call = ParseAction(sc, state, statestring, bag);
 		endswithret = true;
 		return new FxReturnStatement(call, sc);
 	}
@@ -559,14 +560,12 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 //
 //==========================================================================
 
-FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
+FxExpression* ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
 {
-	FxVMFunctionCall *call;
-
 	// Make the action name lowercase
 	strlwr (sc.String);
 
-	call = DoActionSpecials(sc, state, bag);
+	FxExpression *call = DoActionSpecials(sc, state, bag);
 	if (call != NULL)
 	{
 		return call;
@@ -579,7 +578,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 	{
 		FArgumentList args;
 		ParseFunctionParameters(sc, bag.Info, args, afd, statestring, &bag.statedef);
-		call = new FxVMFunctionCall(new FxSelf(sc), afd, args, sc, false);
+		call = new FxFunctionCall(symname, NAME_None, std::move(args), sc);
 		return call;
 	}
 	sc.ScriptError("Invalid parameter '%s'\n", sc.String);
@@ -703,7 +702,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 
 FName CheckCastKludges(FName in)
 {
-	switch (in)
+	switch (in.GetIndex())
 	{
 	case NAME_Int:
 		return NAME___decorate_internal_int__;

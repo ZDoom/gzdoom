@@ -34,18 +34,21 @@
 #ifndef __G_LEVEL_H__
 #define __G_LEVEL_H__
 
+#include "autosegs.h"
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
-#include "resourcefiles/file_zip.h"
+#include "screenjob.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
+#include "hw_viewpointuniforms.h"
 
 struct level_info_t;
 struct cluster_info_t;
 class FSerializer;
 
 #if defined(_MSC_VER)
-#pragma section(".yreg$u",read)
-#define MSVC_YSEG __declspec(allocate(".yreg$u"))
+#pragma section(SECTION_YREG,read)
+#define MSVC_YSEG __declspec(allocate(SECTION_YREG))
 #define GCC_YSEG
 #else
 #define MSVC_YSEG
@@ -72,9 +75,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, acsdefered_t &defer, a
 
 struct FIntermissionDescriptor;
 struct FIntermissionAction;
+struct CutsceneDef;
 
 struct FMapInfoParser
 {
+	FMapInfoParser(FScanner* parent)
+		: sc(parent ? &parent->GetSymbols() : nullptr)
+	{
+	}
 	enum EFormatType
 	{
 		FMT_Unknown,
@@ -94,6 +102,8 @@ struct FMapInfoParser
 
 	bool ParseLookupName(FString &dest);
 	void ParseMusic(FString &name, int &order);
+	void ParseCutscene(CutsceneDef& cdef);
+
 	//void ParseLumpOrTextureName(char *name);
 	void ParseLumpOrTextureName(FString &name);
 	void ParseExitText(FName formap, level_info_t *info);
@@ -249,6 +259,18 @@ enum ELevelFlags : unsigned int
 	LEVEL3_EXITSECRETUSED		= 0x00000040,
 	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
 	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
+	LEVEL3_PROPERMONSTERFALLINGDAMAGE	= 0x00000200,	// Properly apply falling damage to the monsters
+	LEVEL3_SKYBOXAO				= 0x00000400,	// Apply SSAO to sector skies
+	LEVEL3_E1M8SPECIAL			= 0x00000800,
+	LEVEL3_E2M8SPECIAL			= 0x00001000,
+	LEVEL3_E3M8SPECIAL			= 0x00002000,
+	LEVEL3_E4M8SPECIAL			= 0x00004000,
+	LEVEL3_E4M6SPECIAL			= 0x00008000,
+	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
+	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
+	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
+	LEVEL3_LIGHTCREATED		= 0x00080000,	// a light had been created in the last frame
+	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
 };
 
 
@@ -309,6 +331,7 @@ struct level_info_t
 	FString		SkyPic1;
 	FString		SkyPic2;
 	FString		FadeTable;
+	FString		CustomColorMap;
 	FString		F1Pic;
 	FString		BorderTexture;
 	FString		MapBackground;
@@ -322,12 +345,13 @@ struct level_info_t
 	uint32_t	flags2;
 	uint32_t	flags3;
 
+	FString		LightningSound = "world/thunder";
 	FString		Music;
 	FString		LevelName;
 	FString		AuthorName;
 	int8_t		WallVertLight, WallHorizLight;
 	int			musicorder;
-	FCompressedBuffer	Snapshot;
+	FileSys::FCompressedBuffer	Snapshot;
 	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
@@ -358,6 +382,11 @@ struct level_info_t
 	FName		RedirectType;
 	FString		RedirectMapName;
 
+	// CVAR Redirection: If the CVAR Bool returns true, then
+	// you go to the RedirectMap instead of this one.
+	FName		RedirectCVAR;
+	FString		RedirectCVARMapName;
+
 	FString		EnterPic;
 	FString		ExitPic;
 	FString 	InterMusic;
@@ -373,7 +402,7 @@ struct level_info_t
 
 	TArray<FSpecialAction> specialactions;
 
-	TArray<int> PrecacheSounds;
+	TArray<FSoundID> PrecacheSounds;
 	TArray<FString> PrecacheTextures;
 	TArray<FName> PrecacheClasses;
 	
@@ -389,6 +418,10 @@ struct level_info_t
 	FString		EDName;
 	FString		acsName;
 	bool		fs_nocheckposition;
+	ELightBlendMode lightblendmode;
+	ETonemapMode tonemap;
+	
+	CutsceneDef intro, outro;
 
 
 	level_info_t() 
@@ -418,6 +451,9 @@ struct cluster_info_t
 	FString		ExitText;
 	FString		EnterText;
 	FString		MessageMusic;
+	CutsceneDef intro;		// plays when entering this cluster, aside from starting a new game
+	CutsceneDef outro;		// plays when leaving this cluster
+	CutsceneDef gameover;	// when defined, plays when the player dies in this cluster
 	int			musicorder;
 	int			flags;
 	int			cdtrack;
@@ -472,6 +508,8 @@ enum ESkillProperty
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 	SKILLP_PlayerRespawn,
+	SKILLP_SpawnMulti,
+	SKILLP_InstantReaction,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -515,6 +553,8 @@ struct FSkillInfo
 	int RespawnLimit;
 	double Aggressiveness;
 	int SpawnFilter;
+	bool SpawnMulti;
+	bool InstantReaction;
 	int ACSReturn;
 	FString MenuName;
 	FString PicName;
@@ -555,6 +595,7 @@ struct FEpisode
 	FString mPicName;
 	char mShortcut;
 	bool mNoSkill;
+	CutsceneDef mIntro;
 };
 
 extern TArray<FEpisode> AllEpisodes;

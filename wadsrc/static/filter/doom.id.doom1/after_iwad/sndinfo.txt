@@ -1,0 +1,9 @@
+$musicalias D_E4M1 D_E3M4
+$musicalias D_E4M2 D_E3M2
+$musicalias D_E4M3 D_E3M3
+$musicalias D_E4M4 D_E1M5
+$musicalias D_E4M5 D_E2M7
+$musicalias D_E4M6 D_E2M4
+$musicalias D_E4M7 D_E2M6
+$musicalias D_E4M8 D_E2M5
+$musicalias D_E4M9 D_E1M9

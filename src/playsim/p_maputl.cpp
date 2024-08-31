@@ -415,11 +415,11 @@ bool AActor::FixMapthingPos()
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
-					ang += 90.;
+					ang += DAngle::fromDeg(90.);
 				}
 				else
 				{
-					ang -= 90.;
+					ang -= DAngle::fromDeg(90.);
 				}
 
 				// Get the distance we have to move the object away from the wall
@@ -527,10 +527,10 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 			}
 			else
 			{ // [RH] Link into every block this actor touches, not just the center one
-				x1 = MAX(0, x1);
-				y1 = MAX(0, y1);
-				x2 = MIN(Level->blockmap.bmapwidth - 1, x2);
-				y2 = MIN(Level->blockmap.bmapheight - 1, y2);
+				x1 = max(0, x1);
+				y1 = max(0, y1);
+				x2 = min(Level->blockmap.bmapwidth - 1, x2);
+				y2 = min(Level->blockmap.bmapheight - 1, y2);
 				for (int y = y1; y <= y2; ++y)
 				{
 					for (int x = x1; x <= x2; ++x)
@@ -889,7 +889,7 @@ void FMultiBlockLinesIterator::Reset()
 //===========================================================================
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = maxx = 0;
@@ -899,7 +899,7 @@ FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l)
 }
 
 FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l, int _minx, int _miny, int _maxx, int _maxy)
-: DynHash(0)
+: DynHash()
 {
 	Level = l;
 	minx = _minx;
@@ -910,13 +910,13 @@ FBlockThingsIterator::FBlockThingsIterator(FLevelLocals *l, int _minx, int _miny
 	Reset();
 }
 
-void FBlockThingsIterator::init(const FBoundingBox &box)
+void FBlockThingsIterator::init(const FBoundingBox &box, bool clearhash)
 {
 	maxy = Level->blockmap.GetBlockY(box.Top());
 	miny = Level->blockmap.GetBlockY(box.Bottom());
 	maxx = Level->blockmap.GetBlockX(box.Right());
 	minx = Level->blockmap.GetBlockX(box.Left());
-	ClearHash();
+	if (clearhash) ClearHash();
 	Reset();
 }
 
@@ -1139,7 +1139,7 @@ void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 	offset.X += checkpoint.X;
 	offset.Y += checkpoint.Y;
 	bbox.setBox(offset.X, offset.Y, checkpoint.Z);
-	blockIterator.init(bbox);
+	blockIterator.init(bbox, false);
 }
 
 //===========================================================================
@@ -1153,6 +1153,7 @@ void FMultiBlockThingsIterator::Reset()
 	index = -1;
 	portalflags = 0;
 	startIteratorForGroup(basegroup);
+	blockIterator.ClearHash();
 }
 
 //===========================================================================
@@ -1679,6 +1680,23 @@ FPathTraverse::~FPathTraverse()
 }
 
 
+//
+// P_CheckFov
+// Returns true if t2 is within t1's field of view.
+//
+int P_CheckFov(AActor* t1, AActor* t2, double fov)
+{
+	return absangle(t1->AngleTo(PARAM_NULLCHECK(t2,t2)), t1->Angles.Yaw) <= DAngle::fromDeg(fov);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFov, P_CheckFov)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(t, AActor);
+	PARAM_FLOAT(fov);
+	ACTION_RETURN_BOOL(P_CheckFov(self, t, fov));
+}
+
 //===========================================================================
 //
 // P_RoughMonsterSearch
@@ -1784,6 +1802,7 @@ struct BlockCheckInfo
 	bool onlyseekable;
 	bool frontonly;
 	divline_t frontline;
+	double fov;
 };
 
 //===========================================================================
@@ -1810,6 +1829,12 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 			{
 				continue;
 			}
+			// skip actors outside of specified FOV
+			if (info->fov > 0 && !P_CheckFov(mo, link->Me, info->fov))
+			{
+				continue;
+			}
+
 			if (mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;
@@ -1819,10 +1844,11 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 	return NULL;
 }
 
-AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool frontonly)
+AActor *P_RoughMonsterSearch(AActor *mo, int distance, bool onlyseekable, bool frontonly, double fov)
 {
 	BlockCheckInfo info;
 	info.onlyseekable = onlyseekable;
+	info.fov = fov;
 	if ((info.frontonly = frontonly))
 	{
 		info.frontline.x = mo->X();
@@ -1929,8 +1955,8 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 	auto dx = FloatToFixed(x - line->v1->fX());
 	auto dy = FloatToFixed(y - line->v1->fY());
 
-	auto left = FixedMul( int(delta.Y * 256) , dx );
-	auto right = FixedMul( dy , int(delta.X * 256) );
+	auto left = MulScale( int(delta.Y * 256) , dx, 16 );
+	auto right = MulScale( dy , int(delta.X * 256), 16 );
 
 	if (right < left)
 		return 0;		// front side
@@ -2015,5 +2041,93 @@ subsector_t *FLevelLocals::PointInRenderSubsector (fixed_t x, fixed_t y)
 	while (!((size_t)node & 1));
 	
 	return (subsector_t *)((uint8_t *)node - 1);
+}
+
+
+//==========================================================================
+//
+// FBoundingBox :: BoxOnLineSide
+//
+// Considers the line to be infinite
+// Returns side 0 or 1, -1 if box crosses the line.
+//
+//==========================================================================
+
+int BoxOnLineSide(const FBoundingBox &box, const line_t* ld)
+{
+	int p1;
+	int p2;
+
+	if (ld->Delta().X == 0)
+	{ // ST_VERTICAL
+		p1 = box.Right() < ld->v1->fX();
+		p2 = box.Left() < ld->v1->fX();
+		if (ld->Delta().Y < 0)
+		{
+			p1 ^= 1;
+			p2 ^= 1;
+		}
+	}
+	else if (ld->Delta().Y == 0)
+	{ // ST_HORIZONTAL:
+		p1 = box.Top() > ld->v1->fY();
+		p2 = box.Bottom() > ld->v1->fY();
+		if (ld->Delta().X < 0)
+		{
+			p1 ^= 1;
+			p2 ^= 1;
+		}
+	}
+	else if ((ld->Delta().X * ld->Delta().Y) >= 0)
+	{ // ST_POSITIVE:
+		p1 = P_PointOnLineSide(box.Left(), box.Top(), ld);
+		p2 = P_PointOnLineSide(box.Right(), box.Bottom(), ld);
+	}
+	else
+	{ // ST_NEGATIVE:
+		p1 = P_PointOnLineSide(box.Right(), box.Top(), ld);
+		p2 = P_PointOnLineSide(box.Left(), box.Bottom(), ld);
+	}
+
+	return (p1 == p2) ? p1 : -1;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, PointOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_POINTER(l, line_t);
+	PARAM_BOOL(precise);
+
+	int res;
+	if (precise) // allow forceful overriding of compat flag
+		res = P_PointOnLineSidePrecise(x, y, l);
+	else
+		res = P_PointOnLineSide(x, y, l);
+
+	ACTION_RETURN_INT(res);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, ActorOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_OBJECT(mo, AActor);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, BoxOnLineSide)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(radius);
+	PARAM_POINTER(l, line_t);
+
+	FBoundingBox box(x, y, radius);
+	ACTION_RETURN_INT(BoxOnLineSide(box, l));
 }
 

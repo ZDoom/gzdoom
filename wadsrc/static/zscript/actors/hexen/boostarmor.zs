@@ -32,7 +32,7 @@ class ArtiBoostArmor : Inventory
 
 			for (int i = 0; i < 4; ++i)
 			{
-				armor = HexenArmor(Spawn("HexenArmor"));
+				armor = HexenArmor(Spawn(GetHexenArmorClass()));
 				armor.bDropped = true;
 				armor.health = i;
 				armor.Amount = 1;

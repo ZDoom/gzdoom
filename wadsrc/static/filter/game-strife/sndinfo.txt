@@ -107,6 +107,7 @@ menu/invalid		dsoof		// Menu not available
 menu/dismiss		dsswish		// Dismiss a prompt message
 menu/choose		dsrifl		// Choose a menu item
 menu/clear		dsmtalht	// Close top menu
+$alias menu/advance menu/choose
 
 misc/startupdone	dspsdtha
 misc/teleport		dstelept

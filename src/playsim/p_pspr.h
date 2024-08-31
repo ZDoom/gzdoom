@@ -30,7 +30,8 @@
 #ifndef __P_PSPR_H__
 #define __P_PSPR_H__
 
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
+#include "palettecontainer.h"
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
@@ -40,6 +41,8 @@
 #define WEAPONTOP				32.
 #define WEAPON_FUDGE_Y			0.375
 struct FTranslatedLineTarget;
+struct FState;
+class player_t;
 
 //
 // Overlay psprites are scaled shapes
@@ -49,6 +52,7 @@ struct FTranslatedLineTarget;
 enum PSPLayers
 {
 	PSP_STRIFEHANDS = -1,
+	PSP_CALLERID = 0,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 	PSP_TARGETCENTER = INT_MAX - 2,
@@ -68,7 +72,23 @@ enum PSPFlags
 	PSPF_FORCEALPHA		= 1 << 7,
 	PSPF_FORCESTYLE		= 1 << 8,
 	PSPF_MIRROR			= 1 << 9,
-	PSPF_PLAYERTRANSLATED = 1 << 10
+	PSPF_PLAYERTRANSLATED = 1 << 10,
+	PSPF_PIVOTPERCENT	= 1 << 11,
+	PSPF_INTERPOLATE	= 1 << 12,
+};
+
+enum PSPAlign
+{
+	PSPA_TOP = 0,
+	PSPA_CENTER,
+	PSPA_BOTTOM,
+	PSPA_LEFT = PSPA_TOP,
+	PSPA_RIGHT = 2
+};
+
+struct WeaponInterp
+{
+	FVector2 v[4];
 };
 
 class DPSprite : public DObject
@@ -81,23 +101,34 @@ public:
 	static void NewTick();
 	void SetState(FState *newstate, bool pending = false);
 
-	int			GetID()		const { return ID; }
-	int			GetSprite()	const { return Sprite; }
-	int			GetFrame()	const { return Frame; }
-	int			GetTics()   const {	return Tics; }
-	FState*		GetState()	const { return State; }
-	DPSprite*	GetNext()	      { return Next; }
-	AActor*		GetCaller()	      { return Caller; }
-	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
-	void		ResetInterpolation() { oldx = x; oldy = y; }
+	int			GetID()							const { return ID; }
+	int			GetSprite()						const { return Sprite; }
+	int			GetFrame()						const { return Frame; }
+	int			GetTics()						const {	return Tics; }
+	FTranslationID	GetTranslation()					  { return Translation; }
+	FState*		GetState()						const { return State; }
+	DPSprite*	GetNext()							  { return Next; }
+	AActor*		GetCaller()							  { return Caller; }
+	void		SetCaller(AActor *newcaller)		  { Caller = newcaller; }
+	void		ResetInterpolation()				  { oldx = x; oldy = y; Prev = Vert; InterpolateTic = false; }
 	void OnDestroy() override;
 	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 	float GetYAdjust(bool fullscreen);
 
+	int HAlign, VAlign;		// Horizontal and vertical alignment
+	DVector2 baseScale;		// Base scale (set by weapon); defaults to (1.0, 1.2) since that's Doom's native aspect ratio
+	DAngle rotation;		// How much rotation to apply.
+	DVector2 pivot;			// pivot points
+	DVector2 scale;			// Dynamic scale (set by A_Overlay functions)
 	double x, y, alpha;
 	double oldx, oldy;
+	bool InterpolateTic;	// One tic interpolation (WOF_INTERPOLATE)
+	DVector2 Coord[4];		// Offsets
+	WeaponInterp Prev;		// Interpolation
+	WeaponInterp Vert;		// Current Position
 	bool firstTic;
 	int Tics;
+	FTranslationID Translation;
 	int Flags;
 	FRenderStyle Renderstyle;
 
@@ -126,6 +157,7 @@ void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending = 
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);
 void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
+void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation, double ticfrac);
 DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
 AActor *P_AimTarget(AActor *mo);
 

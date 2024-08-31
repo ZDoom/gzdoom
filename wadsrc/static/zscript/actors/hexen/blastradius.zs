@@ -60,7 +60,7 @@ extend class Actor
 			(victim.radius + 1) * cos(ang),
 			(victim.radius + 1) * sin(ang),
 			(victim.Height / 2) - victim.Floorclip);
-		Actor mo = Spawn (blasteffect, spawnpos, ALLOW_REPLACE);
+		Actor mo = blasteffect? Spawn (blasteffect, spawnpos, ALLOW_REPLACE) : null;
 		if (mo)
 		{
 			mo.Vel.XY = victim.Vel.XY;
@@ -146,6 +146,11 @@ extend class Actor
 			if (mo.CurSector.PortalGroup != CurSector.PortalGroup && !CheckSight(mo))
 			{
 				// in another region and cannot be seen.
+				continue;
+			}
+			if ((blastflags & BF_ONLYVISIBLETHINGS) && !isVisible(mo, true)) 
+			{
+				//only blast if target can bee seen by calling actor
 				continue;
 			}
 			BlastActor (mo, strength, speed, blasteffect, !!(blastflags & BF_NOIMPACTDAMAGE));

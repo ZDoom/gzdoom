@@ -35,11 +35,11 @@
 **
 */
 
-#include "templates.h"
+
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "p_terrain.h"
 #include "d_player.h"
@@ -217,10 +217,11 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 			// Player must be on top of the floor to be affected...
 			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
 		}
-		else
+		else 
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
+			if ((rover->flags & FF_NODAMAGE) ||
+				player->mo->Z() > rover->top.plane->ZatPoint(player->mo) ||
 				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
@@ -779,7 +780,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 
 			double low1 = (open.lowfloorthroughportal & 1) ? open.lowfloor : lowestfloor[0];
 			double low2 = (open.lowfloorthroughportal & 2) ? open.lowfloor : lowestfloor[1];
-			open.lowfloor = MIN(low1, low2);
+			open.lowfloor = min(low1, low2);
 		}
     }
 }

@@ -51,6 +51,17 @@ DEFINE_FIELD(FSectorPortal, mDisplacement);
 DEFINE_FIELD(FSectorPortal, mPlaneZ);
 DEFINE_FIELD(FSectorPortal, mSkybox);
 
+DEFINE_FIELD(FLinePortal, mOrigin);
+DEFINE_FIELD(FLinePortal, mDestination);
+DEFINE_FIELD(FLinePortal, mDisplacement);
+DEFINE_FIELD(FLinePortal, mType);
+DEFINE_FIELD(FLinePortal, mFlags);
+DEFINE_FIELD(FLinePortal, mDefFlags);
+DEFINE_FIELD(FLinePortal, mAlign);
+DEFINE_FIELD(FLinePortal, mAngleDiff);
+DEFINE_FIELD(FLinePortal, mSinRot);
+DEFINE_FIELD(FLinePortal, mCosRot);
+
 //============================================================================
 //
 // BuildBlockmap
@@ -175,7 +186,7 @@ void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 //
 //============================================================================
 
-line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag)
+line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag, int matchtype)
 {
 	if (tag)
 	{
@@ -184,7 +195,7 @@ line_t *FLevelLocals::FindPortalDestination(line_t *src, int tag)
 
 		while ((lineno = it.Next()) >= 0)
 		{
-			if (&lines[lineno] != src)
+			if (&lines[lineno] != src && (matchtype == -1 || matchtype == lines[lineno].special))
 			{
 				return &lines[lineno];
 			}
@@ -208,9 +219,9 @@ static void SetPortalRotation(FLinePortal *port)
 		{
 			line_t *dst = port->mDestination;
 			line_t *line = port->mOrigin;
-			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + 180.;
-			port->mSinRot = sindeg(angle.Degrees);	// Here precision matters so use the slower but more precise versions.
-			port->mCosRot = cosdeg(angle.Degrees);
+			DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + DAngle::fromDeg(180.);
+			port->mSinRot = sindeg(angle.Degrees());	// Here precision matters so use the slower but more precise versions.
+			port->mCosRot = cosdeg(angle.Degrees());
 			port->mAngleDiff = angle;
 			if ((line->sidedef[0]->Flags & WALLF_POLYOBJ) || (dst->sidedef[0]->Flags & WALLF_POLYOBJ))
 			{
@@ -226,7 +237,7 @@ static void SetPortalRotation(FLinePortal *port)
 			// Linked portals have no angular difference.
 			port->mSinRot = 0.;
 			port->mCosRot = 1.;
-			port->mAngleDiff = 0.;
+			port->mAngleDiff = nullAngle;
 		}
 	}
 }
@@ -388,13 +399,13 @@ bool FLevelLocals::ChangePortal(line_t *ln, int thisid, int destid)
 //
 //============================================================================
 
-inline int P_GetLineSide(const DVector2 &pos, const line_t *line)
+inline int P_GetLineSide(const DVector2 &pos, const linebase_t *line)
 {
 	double v = (pos.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pos.X) * line->Delta().Y;
 	return v < -1. / 65536. ? -1 : v > 1. / 65536 ? 1 : 0;
 }
 
-bool P_ClipLineToPortal(line_t* line, line_t* portal, DVector2 view, bool partial, bool samebehind)
+bool P_ClipLineToPortal(linebase_t* line, linebase_t* portal, DVector2 view, bool partial, bool samebehind)
 {
 	int behind1 = P_GetLineSide(line->v1->fPos(), portal);
 	int behind2 = P_GetLineSide(line->v2->fPos(), portal);
@@ -540,7 +551,6 @@ unsigned FLevelLocals::GetSkyboxPortal(AActor *actor)
 		if (sectorPortals[i].mSkybox == actor) return i;
 	}
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = PORTS_SKYVIEWPOINT;
 	sectorPortals[i].mFlags = actor->GetClass()->IsDescendantOf("SkyCamCompat") ? 0 : PORTSF_SKYFLATONLY;
 	sectorPortals[i].mSkybox = actor;
@@ -565,7 +575,6 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetSkyboxPortal)
 unsigned FLevelLocals::GetPortal(int type, int plane, sector_t *from, sector_t *to, const DVector2 &displacement)
 {
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = type;
 	sectorPortals[i].mPlane = plane;
 	sectorPortals[i].mOrigin = from;
@@ -586,7 +595,6 @@ unsigned FLevelLocals::GetPortal(int type, int plane, sector_t *from, sector_t *
 unsigned FLevelLocals::GetStackPortal(AActor *point, int plane)
 {
 	unsigned i = sectorPortals.Reserve(1);
-	memset(&sectorPortals[i], 0, sizeof(sectorPortals[i]));
 	sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;
 	sectorPortals[i].mPlane = plane;
 	sectorPortals[i].mOrigin = point->target->Sector;
@@ -1079,7 +1087,7 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 
 			FBoundingBox box(position.X + disp.pos.X, position.Y + disp.pos.Y, checkradius);
 
-			if (!box.inRange(ld) || box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
+			if (!inRange(box, ld) || BoxOnLineSide(box, linkedPortals[i]->mOrigin) != -1) continue;	// not touched
 			foundPortals.Push(linkedPortals[i]);
 		}
 		bool foundone = true;
@@ -1138,7 +1146,7 @@ bool FLevelLocals::CollectConnectedGroups(int startgroup, const DVector3 &positi
 				line_t *ld;
 				while ((ld = it.Next()))
 				{
-					if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+					if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 						continue;
 
 					if (!(thisgroup & FPortalGroupArray::LOWER))

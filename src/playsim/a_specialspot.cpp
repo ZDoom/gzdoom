@@ -35,7 +35,7 @@
 #include "a_specialspot.h"
 #include "p_local.h"
 #include "doomstat.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "a_pickups.h"
 #include "vm.h"
 

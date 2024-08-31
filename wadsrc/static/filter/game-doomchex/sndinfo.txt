@@ -321,6 +321,9 @@ spider/attack			dsshotgn
 spider/death			dsspidth
 spider/walk			dsmetal
 
+$limit spider/sight 4
+$limit spider/death 4
+
 // Arachnotron
 
 baby/sight			dsbspsit
@@ -341,6 +344,8 @@ cyber/pain			dsdmpain
 cyber/death			dscybdth
 cyber/hoof			dshoof
 
+$limit cyber/sight 4
+$limit cyber/death 4
 // Pain Elemental
 
 pain/sight			dspesit
@@ -440,6 +445,7 @@ menu/invalid			dsoof		// Menu not available
 menu/dismiss			dsswtchx	// Dismiss a prompt message
 menu/choose			dspistol	// Choose a menu item
 menu/clear			dsswtchx	// Close top menu
+$alias menu/advance menu/choose	// Open a submenu
 
 $random menu/quit1 { player/male/death1 demon/pain grunt/pain misc/gibbed misc/teleport grunt/sight1 grunt/sight3 demon/melee }
 $random menu/quit2 { vile/active misc/p_pkup brain/cube misc/gibbed skeleton/swing knight/death baby/active demon/melee  }

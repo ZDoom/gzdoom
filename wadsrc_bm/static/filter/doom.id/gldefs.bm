@@ -1265,19 +1265,19 @@ brightmap sprite SPIDA1D1
 	disablefullbright
 }
 
-brightmap sprite SPIDA2D8
+brightmap sprite SPIDA2A8
 {
 	iwad
 	disablefullbright
 }
 
-brightmap sprite SPIDA3D7
+brightmap sprite SPIDA3A7
 {
 	iwad
 	disablefullbright
 }
 
-brightmap sprite SPIDA4D6
+brightmap sprite SPIDA4A6
 {
 	iwad
 	disablefullbright

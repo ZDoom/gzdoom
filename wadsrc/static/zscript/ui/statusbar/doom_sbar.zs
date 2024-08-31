@@ -66,7 +66,7 @@ class DoomStatusBar : BaseStatusBar
 		
 		if (CPlayer.mo.InvSel != null && !Level.NoInventoryBar)
 		{
-			DrawInventoryIcon(CPlayer.mo.InvSel, (160, 198));
+			DrawInventoryIcon(CPlayer.mo.InvSel, (160, 198), DI_DIMDEPLETED);
 			if (CPlayer.mo.InvSel.Amount > 1)
 			{
 				DrawString(mAmountFont, FormatNumber(CPlayer.mo.InvSel.Amount), (175, 198-mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
@@ -146,7 +146,7 @@ class DoomStatusBar : BaseStatusBar
 		DrawImage(berserk? "PSTRA0" : "MEDIA0", (20, -2));
 		DrawString(mHUDFont, FormatNumber(CPlayer.health, 3), (44, -20));
 		
-		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		let armor = CPlayer.mo.FindInventory("BasicArmor", true);
 		if (armor != null && armor.Amount > 0)
 		{
 			DrawInventoryIcon(armor, (20, -22));
@@ -169,15 +169,17 @@ class DoomStatusBar : BaseStatusBar
 		}
 		if (!isInventoryBarVisible() && !Level.NoInventoryBar && CPlayer.mo.InvSel != null)
 		{
-			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17));
+			DrawInventoryIcon(CPlayer.mo.InvSel, (-14, invY + 17), DI_DIMDEPLETED);
 			DrawString(mHUDFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (-30, invY), DI_TEXT_ALIGN_RIGHT);
 		}
 		if (deathmatch)
 		{
 			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (-3, 1), DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD);
 		}
-		
-		DrawFullscreenKeys();
+		else
+		{
+			DrawFullscreenKeys();
+		}
 		
 		if (isInventoryBarVisible())
 		{

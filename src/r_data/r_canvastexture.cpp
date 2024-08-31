@@ -38,6 +38,8 @@
 #include "r_canvastexture.h"
 #include "g_levellocals.h"
 #include "serializer.h"
+#include "serialize_obj.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -55,10 +57,11 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
 	{
 		return;
 	}
-	texture = static_cast<FCanvasTexture *>(TexMan.GetTexture(picnum));
+	auto gt = TexMan.GetGameTexture(picnum);
+	texture = static_cast<FCanvasTexture *>(gt->GetTexture());
 	if (!texture->bHasCanvas)
 	{
-		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
+		Printf ("%s is not a valid target for a camera\n", gt->GetName().GetChars());
 		return;
 	}
 
@@ -95,12 +98,12 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
 
 void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov)
 {
-	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	FTextureID textureid = TexMan.CheckForTexture(texturename.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 	if (textureid.isValid())
 	{
 		// Only proceed if the texture actually has a canvas.
-		FTexture *tex = TexMan.GetTexture(textureid);
-		if (tex && tex->isCanvas())
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->isHardwareCanvas()) // Q: how to deal with the software renderer here?
 		{
 			viewpoint->Level->canvasTextureInfo.Add(viewpoint, textureid, fov);
 		}

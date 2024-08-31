@@ -1,4 +1,5 @@
 Background wimap0
+Screensize 320 200
 Splat wisplat
 Pointer wiurh0 wiurh1
 

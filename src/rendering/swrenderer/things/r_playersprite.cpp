@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <algorithm>
 #include "p_lnspec.h"
-#include "templates.h"
+
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_playersprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -52,19 +52,21 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
+#include "texturemanager.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
+#include "v_draw.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
@@ -95,8 +97,6 @@ namespace swrenderer
 			(r_deathcamera && Thread->Viewport->viewpoint.camera->health <= 0))
 			return;
 		
-		renderHUDModel = r_modelscene && IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
-
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
 		auto nc = !!(Thread->Viewport->Level()->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
@@ -207,7 +207,7 @@ namespace swrenderer
 		spriteframe_t*		sprframe;
 		FTextureID			picnum;
 		uint16_t				flip;
-		FTexture*			tex;
+		FGameTexture*			tex;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
 
@@ -227,7 +227,7 @@ namespace swrenderer
 
 		picnum = sprframe->Texture[0];
 		flip = sprframe->Flip & 1;
-		tex = TexMan.GetTexture(picnum);
+		tex = TexMan.GetGameTexture(picnum);
 
 		if (!tex->isValid())
 			return;
@@ -254,19 +254,14 @@ namespace swrenderer
 			sy += wy;
 		}
 		
-		if (renderHUDModel)
-		{
-			RenderHUDModel(Thread, pspr, (float)sx, (float)sy);
-			return;
-		}
-
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;
-		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
+		double pspriteyscale = pspritexscale * pspr->baseScale.Y * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
+		pspritexscale *= pspr->baseScale.X; // [XA] don't accidentally apply this to the Y calculation above; math be weird
 		double pspritexiscale = 1 / pspritexscale;
 
-		int tleft = tex->GetDisplayLeftOffset();
+		int tleft = tex->GetDisplayLeftOffset(0);
 		int twidth = tex->GetDisplayWidth();
 
 		// calculate edges of the shape
@@ -289,8 +284,9 @@ namespace swrenderer
 
 		vis.renderflags = owner->renderflags;
 
-		FSoftwareTexture *stex = tex->GetSoftwareTexture();
-		vis.texturemid = (BASEYCENTER - sy) * stex->GetScale().Y + stex->GetTopOffset(0);
+		FSoftwareTexture* stex = GetSoftwareTexture(tex);
+		double textureadj = (120.0f / pspr->baseScale.Y) - BASEYCENTER; // [XA] scale relative to weapon baseline
+		vis.texturemid = (BASEYCENTER - sy - textureadj) * stex->GetScale().Y + stex->GetTopOffset(0);
 
 		// Force it to use software rendering when drawing to a canvas texture.
 		bool renderToCanvas = viewport->RenderingToCanvas;
@@ -310,6 +306,10 @@ namespace swrenderer
 		vis.xscale = FLOAT2FIXED(pspritexscale / stex->GetScale().X);
 		vis.yscale = float(pspriteyscale / stex->GetScale().Y);
 		vis.pic = stex;
+
+		auto itrans = pspr->GetTranslation();
+		if ((pspr->Flags & PSPF_PLAYERTRANSLATED)) itrans = owner->Translation;
+		vis.Translation = itrans;
 
 		// If flip is used, provided that it's not already flipped (that would just invert itself)
 		// (It's an XOR...)
@@ -377,7 +377,7 @@ namespace swrenderer
 
 				if (visstyle.Invert)
 				{
-					vis.Light.BaseColormap = &SpecialSWColormaps[INVERSECOLORMAP];
+					vis.Light.BaseColormap = &SpecialSWColormaps[REALINVERSECOLORMAP];
 					vis.Light.ColormapNum = 0;
 					noaccel = true;
 				}
@@ -432,6 +432,8 @@ namespace swrenderer
 				accelSprite.x1 = x1;
 				accelSprite.flip = vis.xiscale < 0;
 
+				accelSprite.Translation = itrans;
+
 				if (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
 					vis.Light.BaseColormap < &SpecialSWColormaps[SpecialColormaps.Size()])
 				{
@@ -461,12 +463,12 @@ namespace swrenderer
 	{
 		for (const HWAccelPlayerSprite &sprite : AcceleratedSprites)
 		{
-			screen->DrawTexture(sprite.pic->GetTexture(),
+			DrawTexture(twod, sprite.pic->GetTexture(),
 				viewwindowx + sprite.x1,
 				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),
 				DTA_DestHeightF, sprite.pic->GetHeight() * sprite.yscale,
-				DTA_TranslationIndex, sprite.Translation,
+				DTA_TranslationIndex, sprite.Translation.index(),
 				DTA_FlipX, sprite.flip,
 				DTA_TopOffset, 0,
 				DTA_LeftOffset, 0,

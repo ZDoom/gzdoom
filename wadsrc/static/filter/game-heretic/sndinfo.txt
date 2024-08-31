@@ -283,6 +283,7 @@ menu/change			keyup
 menu/invalid			plroof
 menu/dismiss			dorcls
 menu/clear			dorcls
+$alias menu/advance menu/choose
 
 misc/secret			dssecret
 

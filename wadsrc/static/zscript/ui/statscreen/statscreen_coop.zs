@@ -23,7 +23,7 @@ class CoopStatusScreen : StatusScreen
 		FontScale = max(screen.GetHeight() / 400, 1);
 		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
 
-		cnt_pause = Thinker.TICRATE;
+		cnt_pause = GameTicRate;
 
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
@@ -35,6 +35,8 @@ class CoopStatusScreen : StatusScreen
 
 			dofrags += fragSum (i);
 		}
+
+		cnt_otherkills = 0;
 
 		dofrags = !!dofrags;
 	}
@@ -53,7 +55,7 @@ class CoopStatusScreen : StatusScreen
 		bool stillticking;
 		bool autoskip = autoSkip();
 
-		if ((acceleratestage || autoskip) && ng_state != 10)
+		if ((acceleratestage || autoskip) && ng_state != 12)
 		{
 			acceleratestage = 0;
 
@@ -69,8 +71,13 @@ class CoopStatusScreen : StatusScreen
 				if (dofrags)
 					cnt_frags[i] = fragSum (i);
 			}
+			cnt_otherkills = otherkills;
+
+			cnt_time = Thinker.Tics2Seconds(Plrs[me].stime);
+			cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
+
 			PlaySound("intermission/nextstage");
-			ng_state = 10;
+			ng_state = 12;
 		}
 
 		if (ng_state == 2)
@@ -92,7 +99,14 @@ class CoopStatusScreen : StatusScreen
 				else
 					stillticking = true;
 			}
-		
+
+			cnt_otherkills += 2;
+
+			if (cnt_otherkills > otherkills)
+				cnt_otherkills = otherkills;
+			else
+				stillticking = true;
+
 			if (!stillticking)
 			{
 				PlaySound("intermission/nextstage");
@@ -146,10 +160,35 @@ class CoopStatusScreen : StatusScreen
 			if (!stillticking)
 			{
 				PlaySound("intermission/nextstage");
-				ng_state += 1 + 2*!dofrags;
+				ng_state ++;
 			}
 		}
 		else if (ng_state == 8)
+		{
+			if (!(bcnt&3))
+				PlaySound("intermission/tick");
+
+			stillticking = false;
+
+			cnt_time += 3;
+			cnt_total_time += 3;
+
+			int sec = Thinker.Tics2Seconds(Plrs[me].stime);
+			if (cnt_time > sec)
+			{
+				cnt_time = sec;
+				cnt_total_time = Thinker.Tics2Seconds(wbs.totaltime);
+			}
+			else
+				stillticking = true;
+
+			if (!stillticking)
+			{
+				PlaySound("intermission/nextstage");
+				ng_state += 1 + 2*!dofrags;
+			}
+		}
+		else if (ng_state == 10)
 		{
 			if (!(bcnt&3))
 				PlaySound("intermission/tick");
@@ -175,18 +214,10 @@ class CoopStatusScreen : StatusScreen
 				ng_state++;
 			}
 		}
-		else if (ng_state == 10)
+		else if (ng_state == 12)
 		{
-			int i;
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				// If the player is in the game and not ready, stop checking
-				if (playeringame[i] && players[i].Bot == NULL && !playerready[i])
-					break;
-			}
-
 			// All players are ready; proceed.
-			if ((i == MAXPLAYERS && acceleratestage) || autoskip)
+			if ((acceleratestage) || autoskip)
 			{
 				PlaySound("intermission/pastcoopstats");
 				initShowNextLoc();
@@ -197,7 +228,7 @@ class CoopStatusScreen : StatusScreen
 			if (!--cnt_pause)
 			{
 				ng_state++;
-				cnt_pause = Thinker.TICRATE;
+				cnt_pause = GameTicRate;
 			}
 		}
 	}
@@ -272,7 +303,7 @@ class CoopStatusScreen : StatusScreen
 
 			screen.Dim(player.GetDisplayColor(), 0.8f, x, y - ypadding, (secret_x - x) + (8 * CleanXfac), lineheight);
 
-			if (playerready[i] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
+			//if (playerready[i] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
 				screen.DrawTexture(readyico, true, x - (readysize.Y * CleanXfac), y, DTA_CleanNoMove, true);
 
 			Color thiscolor = GetRowColor(player, i == consoleplayer);
@@ -296,8 +327,14 @@ class CoopStatusScreen : StatusScreen
 			y += lineheight + CleanYfac;
 		}
 
-		// Draw "MISSED" line
+		// Draw "OTHER" line
 		y += 3 * CleanYfac;
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_OTHER"), FontScale, Font.CR_DARKGRAY);
+		drawPercentScaled(displayFont, kills_x, y, cnt_otherkills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
+		missed_kills -= cnt_otherkills;
+
+		// Draw "MISSED" line
+		y += height + 3 * CleanYfac;
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_MISSED"), FontScale, Font.CR_DARKGRAY);
 		drawPercentScaled(displayFont, kills_x, y, missed_kills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
 		if (ng_state >= 4)
@@ -320,6 +357,16 @@ class CoopStatusScreen : StatusScreen
 			{
 				drawNumScaled(displayFont, secret_x, y, FontScale, wbs.maxsecret, 0, textcolor);
 			}
+		}
+
+		// Draw "TIME" line
+		y += height + 3 * CleanYfac;
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$TXT_IMTIME"), FontScale, textcolor);
+
+		if (ng_state >= 8)
+		{
+			drawTimeScaled(displayFont, kills_x, y, cnt_time, FontScale, textcolor);
+			drawTimeScaled(displayFont, secret_x, y, cnt_total_time, FontScale, textcolor);
 		}
 	}
 }

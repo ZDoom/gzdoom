@@ -39,6 +39,21 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 
+static TMap<FCanvasTexture*, FSWCanvasTexture*> canvasMap;
+
+FSWCanvasTexture* GetSWCamTex(FCanvasTexture* camtex)
+{
+	auto p = canvasMap.CheckKey(camtex);
+	return p ? *p : nullptr;
+}
+
+FSWCanvasTexture::FSWCanvasTexture(FGameTexture* source) : FSoftwareTexture(source) 
+{
+	// The SW renderer needs to link the canvas textures, but let's do that outside the texture manager.
+	auto camtex = static_cast<FCanvasTexture*>(source->GetTexture());
+	canvasMap.Insert(camtex, this);
+}
+
 
 FSWCanvasTexture::~FSWCanvasTexture()
 {
@@ -62,9 +77,9 @@ FSWCanvasTexture::~FSWCanvasTexture()
 //
 //==========================================================================
 
-const uint8_t *FSWCanvasTexture::GetPixels(int style)
+const uint8_t *FSWCanvasTexture::GetPixelsLocked(int style)
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (Canvas == nullptr)
 	{
 		MakeTexture();
@@ -79,9 +94,9 @@ const uint8_t *FSWCanvasTexture::GetPixels(int style)
 //
 //==========================================================================
 
-const uint32_t *FSWCanvasTexture::GetPixelsBgra()
+const uint32_t *FSWCanvasTexture::GetPixelsBgraLocked()
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (CanvasBgra == nullptr)
 	{
 		MakeTextureBgra();
@@ -181,5 +196,5 @@ void FSWCanvasTexture::UpdatePixels(bool truecolor)
 		ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), Canvas->GetPixels(), GetWidth(), GetHeight(), Canvas->GetPitch(), GPalette.Remap);
 	}
 
-	static_cast<FCanvasTexture*>(mTexture)->SetUpdated(false);
+	static_cast<FCanvasTexture*>(mSource)->SetUpdated(false);
 }

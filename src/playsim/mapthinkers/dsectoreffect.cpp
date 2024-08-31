@@ -30,7 +30,8 @@
 #include "g_levellocals.h"
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
 
@@ -318,7 +319,7 @@ EMoveResult sector_t::MoveCeiling(double speed, double dest, int crush, int dire
 			ceilingplane.setD(dest);
 			flag = P_ChangeSector (this, crush, move, 1, false);
 
-			if (flag)
+			if (flag && !(crush >= 0 && !hexencrush && movedest == dest))
 			{
 				ceilingplane.setD(lastpos);
 				P_ChangeSector (this, crush, -move, 1, true);

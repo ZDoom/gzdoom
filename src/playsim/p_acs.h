@@ -37,13 +37,13 @@
 
 #include "doomtype.h"
 #include "dthinker.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
+#include "files.h"
 
 #define LOCAL_SIZE				20
 #define NUM_MAPVARS				128
 
 class FFont;
-class FileReader;
 struct line_t;
 class FSerializer;
 

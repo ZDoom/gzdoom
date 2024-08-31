@@ -1,0 +1,9 @@
+$musicalias d_inter d_e2m3
+$musicalias d_e2m5 d_e1m7
+$musicalias d_e3m5 d_e1m7
+$musicalias d_e3m1 d_e2m9
+$musicalias d_e3m4 d_e1m8
+$musicalias d_e3m5 d_e1m7
+$musicalias d_e3m6 d_e1m6
+$musicalias d_e3m7 d_e2m7
+$musicalias d_e3m9 d_e1m9

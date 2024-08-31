@@ -45,15 +45,17 @@
 #include "scene/r_opaque_pass.h"
 #include "scene/r_3dfloors.h"
 #include "scene/r_portal.h"
-#include "textures/textures.h"
-#include "r_data/voxels.h"
+#include "textures.h"
+#include "voxels.h"
 #include "drawers/r_draw_rgba.h"
 #include "p_setup.h"
 #include "g_levellocals.h"
 #include "image.h"
 #include "imagehelpers.h"
+#include "texturemanager.h"
+#include "d_main.h"
 
-// [BB] Use ZDoom's freelook limit for the sotfware renderer.
+// [BB] Use ZDoom's freelook limit for the software renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
 CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -81,13 +83,13 @@ FRenderer *CreateSWRenderer()
 	return new FSoftwareRenderer;
 }
 
-void FSoftwareRenderer::PreparePrecache(FTexture *ttex, int cache)
+void FSoftwareRenderer::PreparePrecache(FGameTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (ttex != nullptr && ttex->isValid() && !ttex->isCanvas())
+	if (ttex != nullptr && ttex->isValid() && !ttex->isSoftwareCanvas())
 	{
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
+		FSoftwareTexture *tex = GetSoftwareTexture(ttex);
 
 		if (tex->CheckPixels())
 		{
@@ -95,18 +97,18 @@ void FSoftwareRenderer::PreparePrecache(FTexture *ttex, int cache)
 		}
 		else if (cache != 0)
 		{
-			FImageSource::RegisterForPrecache(ttex->GetImage());
+			FImageSource::RegisterForPrecache(ttex->GetTexture()->GetImage(), V_IsTrueColor());
 		}
 	}
 }
 
-void FSoftwareRenderer::PrecacheTexture(FTexture *ttex, int cache)
+void FSoftwareRenderer::PrecacheTexture(FGameTexture *ttex, int cache)
 {
 	bool isbgra = V_IsTrueColor();
 
-	if (ttex != nullptr && ttex->isValid() && !ttex->isCanvas())
+	if (ttex != nullptr && ttex->isValid() && !ttex->isSoftwareCanvas())
 	{
-		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
+		FSoftwareTexture *tex = GetSoftwareTexture(ttex);
 		if (cache & FTextureManager::HIT_Columnmode)
 		{
 			const FSoftwareTextureSpan *spanp;
@@ -172,12 +174,12 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 	FImageSource::BeginPrecaching();
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		PreparePrecache(TexMan.ByIndex(i), texhitlist[i]);
+		PreparePrecache(TexMan.GameByIndex(i), texhitlist[i]);
 	}
 
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
+		PrecacheTexture(TexMan.GameByIndex(i), texhitlist[i]);
 	}
 	FImageSource::EndPrecaching();
 }
@@ -226,6 +228,8 @@ void FSoftwareRenderer::SetClearColor(int color)
 	mScene.SetClearColor(color);
 }
 
+FSWCanvasTexture* GetSWCamTex(FCanvasTexture* camtex);
+
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewpoint, double fov)
 {
 	auto renderTarget = mScene.MainThread()->Viewport->RenderTarget;
@@ -236,7 +240,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	cameraViewpoint = r_viewpoint;
 	cameraViewwindow = r_viewwindow;
 
-	auto tex = static_cast<FSWCanvasTexture*>(camtex->GetSoftwareTexture());
+	auto tex = GetSWCamTex(camtex);
+	if (!tex) return;
 	
 	DCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
@@ -245,7 +250,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	CameraLight savedCameraLight = *CameraLight::Instance();
 
 	DAngle savedfov = cameraViewpoint.FieldOfView;
-	R_SetFOV (cameraViewpoint, fov);
+	R_SetFOV (cameraViewpoint, DAngle::fromDeg(fov));
 
 	mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
 
@@ -266,9 +271,13 @@ void FSoftwareRenderer::SetColormap(FLevelLocals *Level)
 	NormalLight.Maps = realcolormaps.Maps;
 	NormalLight.ChangeColor(PalEntry(255, 255, 255), 0);
 	NormalLight.ChangeFade(Level->fadeto);
-	if (Level->fadeto == 0)
+	if(Level->globalcolormap != 0) // this deliberately ignores the translated value and goes directly to the source.
 	{
-		SetDefaultColormap(Level->info->FadeTable);
+		SetDefaultColormap(Level->info->CustomColorMap.GetChars());
+	}
+	else if (Level->fadeto == 0)
+	{
+		SetDefaultColormap(Level->info->FadeTable.GetChars());
 	}
 }
 

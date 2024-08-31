@@ -42,6 +42,7 @@
 #include "t_script.h"
 #include "a_pickups.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 
@@ -53,7 +54,7 @@
 
 int intvalue(const svalue_t &v)
 {
-	return (v.type == svt_string ? atoi(v.string) :       
+	return (v.type == svt_string ? atoi(v.string.GetChars()) :
 	v.type == svt_fixed ? (int)(v.value.f / 65536.) : 
 	v.type == svt_mobj ? -1 : v.value.i );
 }
@@ -67,7 +68,7 @@ int intvalue(const svalue_t &v)
 fsfix fixedvalue(const svalue_t &v)
 {
 	return (v.type == svt_fixed ? v.value.f :
-	v.type == svt_string ? (fsfix)(atof(v.string) * 65536.) :
+	v.type == svt_string ? (fsfix)(atof(v.string.GetChars()) * 65536.) :
 	v.type == svt_mobj ? -65536 : v.value.i * 65536 );
 }
 
@@ -80,7 +81,7 @@ fsfix fixedvalue(const svalue_t &v)
 double floatvalue(const svalue_t &v)
 {
 	return 
-		v.type == svt_string ? atof(v.string) :       
+		v.type == svt_string ? atof(v.string.GetChars()) :
 		v.type == svt_fixed ? v.value.f / 65536. : 
 		v.type == svt_mobj ? -1. : (double)v.value.i;
 }
@@ -98,11 +99,11 @@ const char *stringvalue(const svalue_t & v)
 	switch(v.type)
     {
 	case svt_string:
-		return v.string;
+		return v.string.GetChars();
 		
 	case svt_mobj:
 		// return the class name
-		return (const char *)v.value.mobj->GetClass()->TypeName;
+		return (const char *)v.value.mobj->GetClass()->TypeName.GetChars();
 		
 	case svt_fixed:
 		{
@@ -348,7 +349,7 @@ DFsVariable *DFsScript::VariableForName(const char *name)
 	
 	while(current)
     {
-		if(!strcmp(name, current->Name))        // found it?
+		if(!strcmp(name, current->Name.GetChars()))        // found it?
 			return current;         
 		current = current->next;        // check next in chain
     }
@@ -428,7 +429,7 @@ void DFsScript::ClearVariables(bool complete)
 
 char *DFsScript::LabelValue(const svalue_t &v)
 {
-	if (v.type == svt_label) return data + v.value.i;
+	if (v.type == svt_label) return Data.Data() + v.value.i;
 	else return NULL;
 }
 

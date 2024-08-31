@@ -169,11 +169,7 @@ class IceGuyFX : Actor
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			Actor mo = SpawnMissileAngleZ (pos.z+3, "IceGuyFX2", i*45., -0.3);
-			if (mo)
-			{
-				mo.target = target;
-			}
+			SpawnMissileAngleZ (pos.z+3, "IceGuyFX2", i*45., -0.3, target);
 		}
 	}
 }

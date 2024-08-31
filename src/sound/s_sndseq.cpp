@@ -28,15 +28,17 @@
 #include "m_random.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "p_local.h"
 #include "po_man.h"
 #include "gi.h"
 #include "c_dispatch.h"
+#include "i_interface.h"
 
 #include "g_level.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
@@ -47,10 +49,13 @@
 #define GetData(a)			(int32_t(a) >> 8 )
 #define GetFloatData(a)		float((int32_t(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
-#define HexenPlatSeq(a)		(a)
-#define HexenDoorSeq(a)		((a) | 0x40)
-#define HexenEnvSeq(a)		((a) | 0x80)
-#define HexenLastSeq		(0xff)
+#define HexenPlatSeqStart	(0)
+#define HexenDoorSeqStart	(MAX_SNDSEQS)
+#define HexenEnvSeqStart	(MAX_SNDSEQS << 1)
+#define HexenPlatSeq(a)		((a) | (HexenPlatSeqStart))
+#define HexenDoorSeq(a)		((a) | (HexenDoorSeqStart))
+#define HexenEnvSeq(a)		((a) | (HexenEnvSeqStart))
+#define HexenLastSeq		((MAX_SNDSEQS << 2) - 1)
 
 // TYPES -------------------------------------------------------------------
 
@@ -105,7 +110,7 @@ typedef enum
 struct hexenseq_t
 {
 	ENamedName	Name;
-	uint8_t		Seqs[4];
+	uint16_t	Seqs[4];
 };
 
 class DSeqActorNode : public DSeqNode
@@ -150,7 +155,7 @@ public:
 	}
 	bool IsPlaying()
 	{
-		return S_GetSoundPlayingInfo (m_Poly, m_CurrentSoundID);
+		return m_CurrentSoundID.isvalid() && S_GetSoundPlayingInfo (m_Poly, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -179,7 +184,7 @@ public:
 	}
 	bool IsPlaying()
 	{
-		return S_GetSoundPlayingInfo (m_Sector, m_CurrentSoundID);
+		return m_CurrentSoundID.isvalid() && S_GetSoundPlayingInfo (m_Sector, m_CurrentSoundID);
 	}
 	void *Source()
 	{
@@ -281,7 +286,7 @@ static const hexenseq_t HexenSequences[] = {
 	{ NAME_None, {0} }
 };
 
-static int SeqTrans[64*3];
+static int SeqTrans[MAX_SNDSEQS*3];
 
 static FRandom pr_sndseq ("SndSeq");
 
@@ -308,7 +313,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 	unsigned int i;
 	FName seqName = NAME_None;
 	int delayTics = 0;
-	FSoundID id = 0;
+	FSoundID id = NO_SOUND;
 	float volume;
 	float atten = ATTN_NORM;
 	int seqnum;
@@ -391,7 +396,7 @@ void DSeqNode::OnDestroy()
 		m_ParentSeqNode->m_ChildSeqNode = nullptr;
 		m_ParentSeqNode = nullptr;
 	}
-	if (Level->SequenceListHead == this)
+	if (Level && Level->SequenceListHead == this)
 	{
 		Level->SequenceListHead = m_Next;
 		GC::WriteBarrier(m_Next);
@@ -429,7 +434,7 @@ void DSeqNode::AddChoice (int seqnum, seqtype_t type)
 DEFINE_ACTION_FUNCTION(DSeqNode, AddChoice)
 {
 	PARAM_SELF_PROLOGUE(DSeqNode);
-	PARAM_NAME(seq);
+	PARAM_INT(seq);
 	PARAM_INT(mode);
 	self->AddChoice(seq, seqtype_t(mode));
 	return 0;
@@ -490,7 +495,7 @@ static void AssignTranslations (FScanner &sc, int seq, seqtype_t type)
 	{
 		if (IsNum(sc.String))
 		{
-			SeqTrans[(atoi(sc.String) & 63) + type * 64] = seq;
+			SeqTrans[(atoi(sc.String) & (MAX_SNDSEQS - 1)) + type * MAX_SNDSEQS] = seq;
 		}
 	}
 	sc.UnGet();
@@ -510,7 +515,7 @@ static void AssignHexenTranslations (void)
 	{
 		for (seq = 0; seq < Sequences.Size(); seq++)
 		{
-			if (Sequences[seq] != NULL && HexenSequences[i].Name == Sequences[seq]->SeqName)
+			if (Sequences[seq] != NULL && Sequences[seq]->SeqName == HexenSequences[i].Name)
 				break;
 		}
 		if (seq == Sequences.Size())
@@ -520,16 +525,16 @@ static void AssignHexenTranslations (void)
 		{
 			int trans;
 
-			if (HexenSequences[i].Seqs[j] & 0x40)
+			if (HexenSequences[i].Seqs[j] & HexenDoorSeqStart)
 			{
-				trans = 64 * SEQ_DOOR;
+				trans = MAX_SNDSEQS * SEQ_DOOR;
 			}
-			else if (HexenSequences[i].Seqs[j] & 0x80)
-				trans = 64 * SEQ_ENVIRONMENT;
+			else if (HexenSequences[i].Seqs[j] & HexenEnvSeqStart)
+				trans = MAX_SNDSEQS * SEQ_ENVIRONMENT;
 			else
-				trans = 64 * SEQ_PLATFORM;
+				trans = MAX_SNDSEQS * SEQ_PLATFORM;
 
-			SeqTrans[trans + (HexenSequences[i].Seqs[j] & 0x3f)] = seq;
+			SeqTrans[trans + (HexenSequences[i].Seqs[j] & (MAX_SNDSEQS - 1))] = seq;
 		}
 	}
 }
@@ -565,7 +570,7 @@ void S_ParseSndSeq (int levellump)
 	char seqtype = ':';
 	FName seqname = NAME_None;
 	FName slot = NAME_None;
-	int stopsound;
+	FSoundID stopsound;
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
@@ -576,12 +581,12 @@ void S_ParseSndSeq (int levellump)
 	S_ClearSndSeq();
 
 	// be gone, compiler warnings
-	stopsound = 0;
+	stopsound = NO_SOUND;
 
 	memset (SeqTrans, -1, sizeof(SeqTrans));
 	lastlump = 0;
 
-	while (((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
+	while (((lump = fileSystem.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
 	{
 		if (lump == -1)
 		{
@@ -613,7 +618,7 @@ void S_ParseSndSeq (int levellump)
 					Sequences.Push (NULL);
 				}
 				ScriptTemp.Clear();
-				stopsound = 0;
+				stopsound = NO_SOUND;
 				slot = NAME_None;
 				if (seqtype == '[')
 				{
@@ -631,7 +636,7 @@ void S_ParseSndSeq (int levellump)
 				if (sc.String[0] == ']')
 				{ // End of this definition
 					ScriptTemp[0] = MakeCommand(SS_CMD_SELECT, (ScriptTemp.Size()-1)/2);
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound.index(), ScriptTemp);
 					curseq = -1;
 					sc.SetCMode (false);
 				}
@@ -642,7 +647,7 @@ void S_ParseSndSeq (int levellump)
 					{
 						ScriptTemp.Push (sc.Number);
 						sc.MustGetString();
-						ScriptTemp.Push (FName(sc.String));
+						ScriptTemp.Push (FName(sc.String).GetIndex());
 					}
 					else
 					{
@@ -656,30 +661,30 @@ void S_ParseSndSeq (int levellump)
 			{
 				case SS_STRING_PLAYUNTILDONE:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					ScriptTemp.Push(MakeCommand(SS_CMD_WAITUNTILDONE, 0));
 					break;
 
 				case SS_STRING_PLAY:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					break;
 
 				case SS_STRING_PLAYTIME:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand(SS_CMD_PLAY, S_FindSound (sc.String).index()));
 					sc.MustGetNumber ();
 					ScriptTemp.Push(MakeCommand(SS_CMD_DELAY, sc.Number));
 					break;
 
 				case SS_STRING_PLAYREPEAT:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYREPEAT, S_FindSound (sc.String).index()));
 					break;
 
 				case SS_STRING_PLAYLOOP:
 					sc.MustGetString ();
-					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc.String)));
+					ScriptTemp.Push(MakeCommand (SS_CMD_PLAYLOOP, S_FindSound (sc.String).index()));
 					sc.MustGetNumber ();
 					ScriptTemp.Push(sc.Number);
 					break;
@@ -700,7 +705,7 @@ void S_ParseSndSeq (int levellump)
 					delaybase = sc.Number;
 					ScriptTemp.Push(MakeCommand(SS_CMD_DELAYRAND, sc.Number));
 					sc.MustGetNumber ();
-					ScriptTemp.Push(MAX(1, sc.Number - delaybase + 1));
+					ScriptTemp.Push(max(1, sc.Number - delaybase + 1));
 					break;
 
 				case SS_STRING_VOLUME:		// volume is in range 0..100
@@ -728,7 +733,7 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_NOSTOPCUTOFF:
-					stopsound = -1;
+					stopsound = INVALID_SOUND;
 					ScriptTemp.Push(MakeCommand(SS_CMD_STOPSOUND, 0));
 					break;
 
@@ -754,7 +759,7 @@ void S_ParseSndSeq (int levellump)
 					break;
 
 				case SS_STRING_END:
-					AddSequence (curseq, seqname, slot, stopsound, ScriptTemp);
+					AddSequence (curseq, seqname, slot, stopsound.index(), ScriptTemp);
 					curseq = -1;
 					break;
 
@@ -791,13 +796,13 @@ static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, c
 	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
-	Sequences[curseq]->StopSound = FSoundID(stopsound);
+	Sequences[curseq]->StopSound = FSoundID::fromInt(stopsound);
 	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }
 
 DSeqNode::DSeqNode (FLevelLocals *l, int sequence, int modenum)
-: m_CurrentSoundID(0), m_ModeNum(modenum), m_SequenceChoices(0)
+: m_CurrentSoundID(NO_SOUND), m_ModeNum(modenum), m_SequenceChoices(0)
 {
 	Level = l;
 	ActivateSequence (sequence);
@@ -823,15 +828,15 @@ void DSeqNode::ActivateSequence (int sequence)
 	m_Sequence = sequence;
 	m_DelayTics = 0;
 	m_StopSound = Sequences[sequence]->StopSound;
-	m_CurrentSoundID = 0;
+	m_CurrentSoundID = NO_SOUND;
 	m_Volume = 1;			// Start at max volume...
 	m_Atten = ATTN_IDLE;	// ...and idle attenuation
 }
 
-DSeqActorNode::DSeqActorNode (AActor *actor, int sequence, int modenum)
-	: DSeqNode (actor->Level, sequence, modenum),
-	  m_Actor (actor)
+DSeqActorNode::DSeqActorNode(AActor* actor, int sequence, int modenum)
+	: DSeqNode(actor->Level, sequence, modenum)
 {
+	m_Actor = actor;
 }
 
 DSeqPolyNode::DSeqPolyNode (FPolyObj *poly, int sequence, int modenum)
@@ -859,9 +864,9 @@ static bool TwiddleSeqNum (int &sequence, seqtype_t type)
 	{
 		// [GrafZahl] Needs some range checking:
 		// Sector_ChangeSound doesn't do it so this makes invalid sequences play nothing.
-		if (sequence >= 0 && sequence < 64)
+		if (sequence >= 0 && sequence < MAX_SNDSEQS)
 		{
-			sequence = SeqTrans[sequence + type * 64];
+			sequence = SeqTrans[sequence + type * MAX_SNDSEQS];
 		}
 		else
 		{
@@ -1122,27 +1127,27 @@ void SN_DoStop (FLevelLocals *Level, void *source)
 
 void DSeqActorNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Actor, CHAN_BODY);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }
 
 void DSeqSectorNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Sector, Channel & 7);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }
 
 void DSeqPolyNode::OnDestroy ()
 {
-	if (m_StopSound >= 0)
+	if (m_StopSound != INVALID_SOUND)
 		S_StopSound (m_Poly, CHAN_BODY);
-	if (m_StopSound >= 1)
+	if (m_StopSound.isvalid())
 		MakeSound (0, m_StopSound);
 	Super::OnDestroy();
 }
@@ -1199,7 +1204,7 @@ void DSeqNode::Tick ()
 		case SS_CMD_PLAY:
 			if (!IsPlaying())
 			{
-				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
+				m_CurrentSoundID = FSoundID::fromInt(GetData(*m_SequencePtr));
 				MakeSound (0, m_CurrentSoundID);
 			}
 			m_SequencePtr++;
@@ -1209,7 +1214,7 @@ void DSeqNode::Tick ()
 			if (!IsPlaying())
 			{
 				m_SequencePtr++;
-				m_CurrentSoundID = 0;
+				m_CurrentSoundID = NO_SOUND;
 			}
 			else
 			{
@@ -1221,7 +1226,7 @@ void DSeqNode::Tick ()
 			if (!IsPlaying())
 			{
 				// Does not advance sequencePtr, so it will repeat as necessary.
-				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
+				m_CurrentSoundID = FSoundID::fromInt(GetData(*m_SequencePtr));
 				MakeSound (CHANF_LOOP, m_CurrentSoundID);
 			}
 			return;
@@ -1229,7 +1234,7 @@ void DSeqNode::Tick ()
 		case SS_CMD_PLAYLOOP:
 			// Like SS_CMD_PLAYREPEAT, sequencePtr is not advanced, so this
 			// command will repeat until the sequence is stopped.
-			m_CurrentSoundID = FSoundID(GetData(m_SequencePtr[0]));
+			m_CurrentSoundID = FSoundID::fromInt(GetData(m_SequencePtr[0]));
 			MakeSound (0, m_CurrentSoundID);
 			m_DelayTics = m_SequencePtr[1];
 			return;
@@ -1268,13 +1273,13 @@ void DSeqNode::Tick ()
 		case SS_CMD_DELAY:
 			m_DelayTics = GetData(*m_SequencePtr);
 			m_SequencePtr++;
-			m_CurrentSoundID = 0;
+			m_CurrentSoundID = NO_SOUND;
 			return;
 
 		case SS_CMD_DELAYRAND:
 			m_DelayTics = GetData(m_SequencePtr[0]) + pr_sndseq(m_SequencePtr[1]);
 			m_SequencePtr += 2;
-			m_CurrentSoundID = 0;
+			m_CurrentSoundID = NO_SOUND;
 			return;
 
 		case SS_CMD_VOLUME:
@@ -1378,7 +1383,7 @@ void SN_StopAllSequences (FLevelLocals *Level)
 	for (node = Level->SequenceListHead; node; )
 	{
 		DSeqNode *next = node->NextSequence();
-		node->m_StopSound = 0; // don't play any stop sounds
+		node->m_StopSound = NO_SOUND; // don't play any stop sounds
 		node->Destroy ();
 		node = next;
 	}
@@ -1439,7 +1444,7 @@ void SN_MarkPrecacheSounds(int sequence, seqtype_t type)
 			int cmd = GetCommand(seq->Script[i]);
 			if (cmd == SS_CMD_PLAY || cmd == SS_CMD_PLAYREPEAT || cmd == SS_CMD_PLAYLOOP)
 			{
-				soundEngine->MarkUsed(GetData(seq->Script[i]));
+				soundEngine->MarkUsed(FSoundID::fromInt(GetData(seq->Script[i])));
 			}
 		}
 	}
@@ -1463,7 +1468,7 @@ DEFINE_ACTION_FUNCTION(DSeqNode, MarkPrecacheSounds)
 //==========================================================================
 
 void SN_ChangeNodeData (FLevelLocals *Level, int nodeNum, int seqOffset, int delayTics, float volume,
-	int currentSoundID)
+	FSoundID currentSoundID)
 {
 	int i;
 	DSeqNode *node;

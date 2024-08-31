@@ -5,6 +5,7 @@ class RandomSpawnerTracker {
 
 	protected int size;
 	protected Array<Class<Actor>> origin;
+	protected Array<Class<Actor>> destClass;
 	protected Array<Actor> dest;
 
 	static RandomSpawnerTracker Get() {
@@ -28,10 +29,29 @@ class RandomSpawnerTracker {
 		return from.class;
 	}
 
+	virtual protected void Delete(int index) {
+		self.origin.Delete(index);
+		self.destClass.delete(index);
+		self.dest.delete(index);
+		self.size--;
+	}
+
 	void RegisterSpawn(Actor from, Actor dest) {
-		let root = FindRootClass(from);
+		let root = from.class;
+
+		// find intermediary link to remove
+		// (this prevents intermediary spawns from lingering without GC)
+		for (int i = 0; i < size; i++) {
+			if (self.dest[i] == from) {
+				root = self.origin[i];
+				self.Delete(i);
+				break;
+			}
+		}
+
 		self.origin.Append(root);
 		self.dest.Append(dest);
+		self.destClass.append(dest);
 		size++;
 	}
 
@@ -44,6 +64,7 @@ class RandomSpawnerTracker {
 		return null;
 	}
 }
+
 
 // Random spawner ----------------------------------------------------------
 
@@ -277,7 +298,7 @@ class RandomSpawner : Actor
 			// Bouncecount is used to count how many recursions we're in.
 			if (newmobj is 'RandomSpawner') 
 				newmobj.bouncecount = ++bouncecount;
-				
+
 			// If the spawned actor has either of those flags, it's a boss.
 			if (newmobj.bBossDeath || newmobj.bBoss)
 				boss = true;
@@ -288,7 +309,7 @@ class RandomSpawner : Actor
 
 			// Track random spawner activity so mods can interface with it
 			RandomSpawnerTracker.Get().RegisterSpawn(self, newmobj);
-			
+
 			PostSpawn(newmobj);
 		}
 		if (boss)

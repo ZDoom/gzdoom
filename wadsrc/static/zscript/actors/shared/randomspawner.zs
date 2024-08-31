@@ -29,22 +29,22 @@ class RandomSpawnerTracker : Thinker {
 		self.size--;
 	}
 
-	void RegisterSpawn(Actor from, Actor dest) {
+	void RegisterSpawn(Actor from, Actor spawned) {
 		let root = from.GetClass();
 
 		// find intermediary link to remove
 		// (this prevents intermediary spawns from lingering without GC)
 		for (int i = 0; i < size; i++) {
-			if (self.dest[i] == from) {
+			if (dest[i] == from) {
 				root = self.origin[i];
 				self.Delete(i);
 				break;
 			}
 		}
 
-		self.origin.Append(root);
-		self.dest.Append(dest);
-		self.destClass.append(dest);
+		origin.Push(root);
+		dest.Push(spawned);
+		destClass.Push(spawned.GetClass());
 		size++;
 	}
 

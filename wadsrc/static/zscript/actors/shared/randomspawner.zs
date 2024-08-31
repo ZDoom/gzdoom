@@ -1,14 +1,51 @@
+// Random spawner tracker singleton ----------------------------------------
 
-// Random spawner ----------------------------------------------------------
+class RandomSpawnerTracker {
+	static RandomSpawnerTracker instance;
 
-extend class Actor {
-	Class<Actor> originSpawner;
+	protected int size;
+	protected Array<Class<Actor>> origin;
+	protected Array<Actor> dest;
 
-	/// Get class of thing that originally spawned this thing.
-	Class<Actor> GetOriginSpawner() {
-		return originSpawner != null ? originSpawner : GetClass();
+	static RandomSpawnerTracker Get() {
+		if (instance == null) {
+			instance = new("RandomSpawnerTracker");
+			instance.Init();
+		}
+		return instance;
+	}
+
+	virtual protected void Init() {
+		size = 0;
+	}
+
+	virtual protected Class<Actor> FindRootClass(Actor from) {
+		for (int i = 0; i < size; i++) {
+			if (dest[i] = from) {
+				return origin[i];
+			}
+		}
+		return from.class;
+	}
+
+	void RegisterSpawn(Actor from, Actor dest) {
+		let root = FindRootClass(from);
+		self.origin.Append(root);
+		self.dest.Append(dest);
+		size++;
+	}
+
+	Class<Actor> GetSpawnOrigin(Actor Other) {
+		for (int i = 0; i < size; i++) {
+			if (dest[i] == Other) {
+				return origin[i];
+			}
+		}
+		return null;
 	}
 }
+
+// Random spawner ----------------------------------------------------------
 
 class RandomSpawner : Actor
 {
@@ -241,9 +278,6 @@ class RandomSpawner : Actor
 			if (newmobj is 'RandomSpawner') 
 				newmobj.bouncecount = ++bouncecount;
 				
-			// Keep track of this spawner (or a previous one) in the spawned actor.
-			newmobj.originSpawner = GetOriginSpawner();
-			
 			// If the spawned actor has either of those flags, it's a boss.
 			if (newmobj.bBossDeath || newmobj.bBoss)
 				boss = true;
@@ -252,6 +286,9 @@ class RandomSpawner : Actor
 			if (rep && (rep.bBossDeath || rep.bBoss))
 				boss = true;
 
+			// Track random spawner activity so mods can interface with it
+			RandomSpawnerTracker.Get().RegisterSpawn(self, newmobj);
+			
 			PostSpawn(newmobj);
 		}
 		if (boss)

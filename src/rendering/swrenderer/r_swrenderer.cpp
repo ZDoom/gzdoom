@@ -198,8 +198,6 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 	});
 }
 
-void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
-
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	DCanvas pic(width, height, false);
@@ -211,7 +209,13 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 	r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 
-	DoWriteSavePic(file, SS_PAL, pic.GetPixels(), width, height, r_viewpoint.sector, false);
+	PalEntry palette[256];
+	PalEntry modulateColor;
+	auto blend = V_CalcBlend(r_viewpoint.sector, &modulateColor);
+	// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
+	DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W * 255));
+
+	M_CreatePNG(file, pic.GetPixels(), palette , SS_PAL, width, height, width, vid_gamma);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()

@@ -199,56 +199,6 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	return mainvp.sector;
 }
 
-void DoWriteSavePic(FileWriter* file, ESSType ssformat, uint8_t* scr, int width, int height, sector_t* viewsector, bool upsidedown)
-{
-	PalEntry palette[256];
-	PalEntry modulateColor;
-	auto blend = V_CalcBlend(viewsector, &modulateColor);
-	int pixelsize = 1;
-	// Apply the screen blend, because the renderer does not provide this.
-	if (ssformat == SS_RGB)
-	{
-		int numbytes = width * height * 3;
-		pixelsize = 3;
-		if (modulateColor != 0xffffffff)
-		{
-			float r = modulateColor.r / 255.f;
-			float g = modulateColor.g / 255.f;
-			float b = modulateColor.b / 255.f;
-			for (int i = 0; i < numbytes; i += 3)
-			{
-				scr[i] = uint8_t(scr[i] * r);
-				scr[i + 1] = uint8_t(scr[i + 1] * g);
-				scr[i + 2] = uint8_t(scr[i + 2] * b);
-			}
-		}
-		float iblendfac = 1.f - blend.W;
-		blend.X *= blend.W;
-		blend.Y *= blend.W;
-		blend.Z *= blend.W;
-		for (int i = 0; i < numbytes; i += 3)
-		{
-			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
-			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
-			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
-		}
-	}
-	else
-	{
-		// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
-		DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W * 255));
-	}
-
-	int pitch = width * pixelsize;
-	if (upsidedown)
-	{
-		scr += ((height - 1) * width * pixelsize);
-		pitch *= -1;
-	}
-
-	M_CreatePNG(file, scr, ssformat == SS_PAL ? palette : nullptr, ssformat, width, height, pitch, vid_gamma);
-}
-
 //===========================================================================
 //
 // Render the view to a savegame picture
@@ -294,7 +244,43 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		TArray<uint8_t> scr(width * height * 3, true);
 		screen->CopyScreenToBuffer(width, height, scr.Data());
 
-		DoWriteSavePic(file, SS_RGB, scr.Data(), width, height, viewsector, screen->FlipSavePic());
+		// Apply the screen blend, because the renderer does not provide this.
+		PalEntry modulateColor;
+		auto blend = V_CalcBlend(viewsector, &modulateColor);
+		int numbytes = width * height * 3;
+		if (modulateColor != 0xffffffff)
+		{
+			float r = modulateColor.r / 255.f;
+			float g = modulateColor.g / 255.f;
+			float b = modulateColor.b / 255.f;
+			for (int i = 0; i < numbytes; i += 3)
+			{
+				scr[i] = uint8_t(scr[i] * r);
+				scr[i + 1] = uint8_t(scr[i + 1] * g);
+				scr[i + 2] = uint8_t(scr[i + 2] * b);
+			}
+		}
+		float iblendfac = 1.f - blend.W;
+		blend.X *= blend.W;
+		blend.Y *= blend.W;
+		blend.Z *= blend.W;
+		for (int i = 0; i < numbytes; i += 3)
+		{
+			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
+			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
+			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
+		}
+
+		uint8_t * scrP = scr.Data();
+
+		int pitch = width * 3;
+		if(screen->FlipSavePic())
+		{
+			scrP += ((height - 1) * width * 3);
+			pitch *= -1;
+		}
+
+		M_CreatePNG(file, scrP, nullptr , SS_RGB, width, height, pitch, vid_gamma);
 
 		// Switch back the screen render buffers
 		screen->SetViewportRects(nullptr);

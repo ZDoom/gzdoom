@@ -72,10 +72,7 @@ class FBitmap;
 
 bool M_IsPNG(FileSys::FileReader &fr);
 
-
 bool M_GetPNGSize(FileSys::FileReader &fr, uint32_t &width, uint32_t &height, int32_t *ofs_x = nullptr, int32_t *ofs_y = nullptr, bool *isMasked = nullptr);
-
-//bool M_ReadPNG(FileSys::FileReader &fr, FBitmap * out);
 
 bool M_ReadPNG(FileSys::FileReader &&fr, FBitmap * out);
 

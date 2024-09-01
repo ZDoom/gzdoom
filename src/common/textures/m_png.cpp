@@ -243,7 +243,7 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 //
 //==========================================================================
 
-void PNGRead(png_structp readp, png_bytep dest, png_size_t count)
+static void PNGRead(png_structp readp, png_bytep dest, png_size_t count)
 {
 	FileReader * fr = static_cast<FileReader*>(png_get_io_ptr(readp));
 
@@ -253,7 +253,7 @@ void PNGRead(png_structp readp, png_bytep dest, png_size_t count)
 	}
 }
 
-bool Internal_ReadPNG (FileReader * fr, FBitmap * out, int(*callback)(png_structp, png_unknown_chunkp), void * data, int start)
+static bool Internal_ReadPNG (FileReader * fr, FBitmap * out, int(*callback)(png_structp, png_unknown_chunkp), void * data, int start)
 {
 	TArray<uint8_t *> rows;
 
@@ -404,26 +404,6 @@ bool M_GetPNGSize(FileReader &fr, uint32_t &width, uint32_t &height, int32_t *of
 	png_destroy_read_struct(&readp, &infop, nullptr);
 
 	return true;
-}
-
-bool M_ReadPNG(FileReader &fr, FBitmap * out)
-{
-	if(!M_IsPNG(fr))
-	{ // Does not have PNG signature
-		return false;
-	}
-
-	// It looks like a PNG so far, so start creating a PNGHandle for it
-	FileReader png(std::move(fr));
-	if(Internal_ReadPNG(&png, out, nullptr, nullptr, 8))
-	{
-		return true;
-	}
-	else
-	{
-		fr = std::move(png);	// need to get the reader back if this function failed.
-		return false;
-	}
 }
 
 bool M_ReadPNG(FileReader &&fr, FBitmap * out)

@@ -148,7 +148,7 @@ CCMD (maxdrawdist)
 
 	if (argv.argc() < 2)
 	{
-		Printf ("maxdrawdist %.1f (default: -1.0, not applied of <= 0.0)\n", level.maxdrawdist);
+		Printf ("maxdrawdist %.1f (default: -1.0, not applied if <= 0.0)\n", level.maxdrawdist);
 	}
 	else
 	{
@@ -1165,7 +1165,7 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		else
 			color = pr_hom();
 
-		if (hom == 5 && gl_fogmode != 0)
+		if ((hom == 5 || actor->Level->flags3 & LEVEL3_VOIDFADETOFOG) && gl_fogmode != 0)
 		{
 			screen->SetClearColorFog(viewPoint.sector->Colormap.FadeColor,
 									 viewPoint.sector->Colormap.FogDensity > 0 ?

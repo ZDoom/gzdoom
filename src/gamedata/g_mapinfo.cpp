@@ -1828,6 +1828,7 @@ MapFlagHandlers[] =
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
 	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
 	{ "nofogofwar",					MITYPE_SETFLAG3,	LEVEL3_NOFOGOFWAR, 0 },
+	{ "voidfadetofog",					MITYPE_SETFLAG3,	LEVEL3_VOIDFADETOFOG, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "nopassover",						MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
 	{ "passover",						MITYPE_CLRCOMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },

@@ -456,7 +456,8 @@ namespace swrenderer
 		};
 		int boxpos;
 		bool distcheck;
-		double maxdist = level.maxdrawdist / r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
+		double maxdist = level.maxdrawdist;
+		if (r_viewpoint.FieldOfView.Degrees() > 0.0) maxdist /= r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
 		
 		const int* check;
 

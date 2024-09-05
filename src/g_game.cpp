@@ -2333,7 +2333,7 @@ static void PutSaveComment (FSerializer &arc)
 	arc.AddString("Comment", comment.GetChars());
 }
 
-static void PutSavePic (FileWriter *file, int width, int height)
+static void PutSavePic (FileWriter *file, int width, int height, const TArray<std::pair<FString, FString>> &text)
 {
 	if (width <= 0 || height <= 0 || !storesavepic)
 	{
@@ -2343,7 +2343,7 @@ static void PutSavePic (FileWriter *file, int width, int height)
 	{
 		D_Render([&]()
 			{
-				WriteSavePic(&players[consoleplayer], file, width, height);
+				WriteSavePic(&players[consoleplayer], file, width, height, text);
 			}, false);
 	}
 }
@@ -2403,16 +2403,19 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	savegameglobals.OpenWriter(save_formatted);
 
 	SaveVersion = SAVEVER;
-	PutSavePic(&savepic, SAVEPICWIDTH, SAVEPICHEIGHT);
-	mysnprintf(buf, countof(buf), GAMENAME " %s", GetVersionString());
+
 	// put some basic info into the PNG so that this isn't lost when the image gets extracted.
-	M_AppendPNGText(&savepic, "Software", buf);
-	M_AppendPNGText(&savepic, "Title", description);
-	M_AppendPNGText(&savepic, "Current Map", primaryLevel->MapName.GetChars());
-	M_FinishPNG(&savepic);
+	FString software(GAMENAME " ");
+	software += GetVersionString();
+
+	TArray<std::pair<FString, FString>> text;
+	text.Push({"Software", software});
+	text.Push({"Title", description});
+	text.Push({"Current Map", primaryLevel->MapName});
+	PutSavePic(&savepic, SAVEPICWIDTH, SAVEPICHEIGHT, text);
 
 	int ver = SAVEVER;
-	savegameinfo.AddString("Software", buf)
+	savegameinfo.AddString("Software", software.GetChars())
 		.AddString("Engine", GAMESIG)
 		("Save Version", ver)
 		.AddString("Title", description)

@@ -335,17 +335,15 @@ void M_LoadDefaults ()
 //
 // WritePNGfile
 //
-void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
-				   ESSType color_type, int width, int height, int pitch, float gamma)
+void WritePNGfile (FileWriter *file, const uint8_t *buffer, ESSType color_type, int width, int height, bool flip, float gamma)
 {
 	FString software(GAMENAME " ");
-
 	software += GetVersionString();
 
+	TArray<std::pair<FString, FString>> text;
+	text.Push({"Software", software});
 
-	if (!M_CreatePNG (file, buffer, palette, color_type, width, height, pitch, gamma) ||
-		!M_AppendPNGText (file, "Software", software.GetChars()) ||
-		!M_FinishPNG (file))
+	if (!M_WritePNG(buffer, width, height, nullptr, gamma, color_type == SS_BGRA, flip, text, *file))
 	{
 		Printf ("%s\n", GStrings.GetString("TXT_SCREENSHOTERR"));
 	}
@@ -454,8 +452,7 @@ void M_ScreenShot (const char *filename)
 			return;
 		}
 
-		WritePNGfile(file, buffer.Data(), nullptr, color_type,
-			screen->GetWidth(), screen->GetHeight(), pitch, gamma);
+		WritePNGfile(file, buffer.Data(), color_type, screen->GetWidth(), screen->GetHeight(), pitch < 0, gamma);
 		
 		delete file;
 

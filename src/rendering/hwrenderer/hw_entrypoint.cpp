@@ -205,11 +205,11 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 //
 //===========================================================================
 
-void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
+void WriteSavePic(player_t* player, FileWriter* file, int width, int height, const TArray<std::pair<FString, FString>> &text)
 {
 	if (!V_IsHardwareRenderer())
 	{
-		SWRenderer->WriteSavePic(player, file, width, height);
+		SWRenderer->WriteSavePic(player, file, width, height, text);
 	}
 	else
 	{
@@ -271,16 +271,7 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
 		}
 
-		uint8_t * scrP = scr.Data();
-
-		int pitch = width * 3;
-		if(screen->FlipSavePic())
-		{
-			scrP += ((height - 1) * width * 3);
-			pitch *= -1;
-		}
-
-		M_CreatePNG(file, scrP, nullptr , SS_RGB, width, height, pitch, vid_gamma);
+		M_WritePNG(scr.Data(), width, height, nullptr, vid_gamma, false, screen->FlipSavePic(), text, *file);
 
 		// Switch back the screen render buffers
 		screen->SetViewportRects(nullptr);

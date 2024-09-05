@@ -465,6 +465,15 @@ size_t FileWriter::Write(const void *buffer, size_t len)
 	}
 }
 
+
+void FileWriter::Flush()
+{
+	if (File != nullptr)
+	{
+		fflush(File);
+	}
+}
+
 ptrdiff_t FileWriter::Tell()
 {
 	if (File != nullptr)

@@ -15,7 +15,7 @@ struct FSoftwareRenderer : public FRenderer
 	void RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch) override;
 
 	// renders view to a savegame picture
-	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
+	void WriteSavePic (player_t *player, FileWriter *file, int width, int height, const TArray<std::pair<FString, FString>> &text) override;
 
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	void DrawRemainingPlayerSprites() override;

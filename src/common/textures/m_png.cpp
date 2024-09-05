@@ -46,7 +46,6 @@
 
 #include <csetjmp>
 
-#include "m_crc32.h"
 #include "m_swap.h"
 #if __has_include("c_cvars.h")
 #include "c_cvars.h"
@@ -58,113 +57,7 @@
 
 #include "vectors.h"
 
-// MACROS ------------------------------------------------------------------
-
-// The maximum size of an IDAT chunk ZDoom will write. This is also the
-// size of the compression buffer it allocates on the stack.
-#define PNG_WRITE_SIZE	32768
-
 // TYPES -------------------------------------------------------------------
-
-struct IHDR
-{
-	uint32_t		Width;
-	uint32_t		Height;
-	uint8_t		BitDepth;
-	uint8_t		ColorType;
-	uint8_t		Compression;
-	uint8_t		Filter;
-	uint8_t		Interlace;
-};
-
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static inline void MakeChunk (void *where, uint32_t type, size_t len);
-static inline void StuffPalette (const PalEntry *from, uint8_t *to);
-static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// allow this to compile without CVARs.
-#if __has_include("c_cvars.h")
-CUSTOM_CVAR(Int, png_level, 5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0)
-		self = 0;
-	else if (self > 9)
-		self = 9;
-}
-CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-#else
-const int png_level = 5;
-const float png_gamma = 0;
-#endif
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-// M_CreatePNG
-//
-// Passed a newly-created file, writes the PNG signature and IHDR, gAMA, and
-// PLTE chunks. Returns true if everything went as expected.
-//
-//==========================================================================
-
-bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
-				  ESSType color_type, int width, int height, int pitch, float gamma)
-{
-	uint8_t work[8 +				// signature
-			  12+2*4+5 +		// IHDR
-			  12+4 +			// gAMA
-			  12+256*3];		// PLTE
-	uint32_t *const sig = (uint32_t *)&work[0];
-	IHDR *const ihdr = (IHDR *)&work[8 + 8];
-	uint32_t *const gama = (uint32_t *)((uint8_t *)ihdr + 2*4+5 + 12);
-	uint8_t *const plte = (uint8_t *)gama + 4 + 12;
-	size_t work_len;
-
-	sig[0] = MAKE_ID(137,'P','N','G');
-	sig[1] = MAKE_ID(13,10,26,10);
-
-	ihdr->Width = BigLong(width);
-	ihdr->Height = BigLong(height);
-	ihdr->BitDepth = 8;
-	ihdr->ColorType = color_type == SS_PAL ? 3 : 2;
-	ihdr->Compression = 0;
-	ihdr->Filter = 0;
-	ihdr->Interlace = 0;
-	MakeChunk (ihdr, MAKE_ID('I','H','D','R'), 2*4+5);
-
-	// Assume a display exponent of 2.2 (100000/2.2 ~= 45454.5)
-	*gama = BigLong (int (45454.5f * (png_gamma == 0.f ? gamma : png_gamma)));
-	MakeChunk (gama, MAKE_ID('g','A','M','A'), 4);
-
-	if (color_type == SS_PAL)
-	{
-		StuffPalette (palette, plte);
-		MakeChunk (plte, MAKE_ID('P','L','T','E'), 256*3);
-		work_len = sizeof(work);
-	}
-	else
-	{
-		work_len = sizeof(work) - (12+256*3);
-	}
-
-	if (file->Write (work, work_len) != work_len)
-		return false;
-
-	return M_SaveBitmap (buffer, color_type, width, height, pitch, file);
-}
 
 //==========================================================================
 //
@@ -187,59 +80,9 @@ bool M_CreateDummyPNG (FileWriter *file)
 	return file->Write (dummyPNG, sizeof(dummyPNG)) == sizeof(dummyPNG);
 }
 
-
 //==========================================================================
 //
-// M_FinishPNG
-//
-// Writes an IEND chunk to a PNG file. The file is left opened.
-//
-//==========================================================================
-
-bool M_FinishPNG (FileWriter *file)
-{
-	static const uint8_t iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
-	return file->Write (iend, 12) == 12;
-}
-
-//==========================================================================
-//
-// M_AppendPNGText
-//
-// Appends a PNG tEXt chunk to the file
-//
-//==========================================================================
-
-bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
-{
-	struct { uint32_t len, id; char key[80]; } head;
-	int len = (int)strlen (text);
-	int keylen = min ((int)strlen (keyword), 79);
-	uint32_t crc;
-
-	head.len = BigLong(len + keylen + 1);
-	head.id = MAKE_ID('t','E','X','t');
-	memset (&head.key, 0, sizeof(head.key));
-	strncpy (head.key, keyword, keylen);
-	head.key[keylen] = 0;
-
-	if ((int)file->Write (&head, keylen + 9) == keylen + 9 &&
-		(int)file->Write (text, len) == len)
-	{
-		crc = CalcCRC32 ((uint8_t *)&head+4, keylen + 5);
-		if (len != 0)
-		{
-			crc = AddCRC32 (crc, (uint8_t *)text, len);
-		}
-		crc = BigLong(crc);
-		return file->Write (&crc, 4) == 4;
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// PNG READING
+// PNG Reading
 //
 //==========================================================================
 
@@ -251,6 +94,23 @@ static void PNGRead(png_structp readp, png_bytep dest, png_size_t count)
 	{
 		png_error(readp, "PNG file too short");
 	}
+}
+
+static void PNGWrite(png_structp readp, png_bytep dest, png_size_t count)
+{
+	FileWriter * fw = static_cast<FileWriter*>(png_get_io_ptr(readp));
+
+	if(fw->Write(dest, count) != count)
+	{
+		png_error(readp, "PNG file too short");
+	}
+}
+
+static void PNGFlush(png_structp readp)
+{
+	FileWriter * fw = static_cast<FileWriter*>(png_get_io_ptr(readp));
+
+	fw->Flush();
 }
 
 static bool Internal_ReadPNG (FileReader * fr, FBitmap * out, int(*callback)(png_structp, png_unknown_chunkp), void * data, int start)
@@ -316,7 +176,7 @@ static bool Internal_ReadPNG (FileReader * fr, FBitmap * out, int(*callback)(png
 
 	rows.Resize(height);
 
-	for(int i = 0; i < height; i++)
+	for(unsigned i = 0; i < height; i++)
 	{
 		rows[i] = out->GetPixels() + (4 * width * i);
 	}
@@ -418,25 +278,6 @@ bool M_ReadPNG(FileReader &&fr, FBitmap * out)
 	return Internal_ReadPNG(&png, out, nullptr, nullptr, 8);
 }
 
-// PRIVATE CODE ------------------------------------------------------------
-
-//==========================================================================
-//
-// MakeChunk
-//
-// Prepends the chunk length and type and appends the chunk's CRC32.
-// There must be 8 bytes available before the chunk passed and 4 bytes
-// after the chunk.
-//
-//==========================================================================
-
-static inline void MakeChunk (void *where, uint32_t type, size_t len)
-{
-	uint8_t *const data = (uint8_t *)where;
-	*(uint32_t *)(data - 8) = BigLong ((unsigned int)len);
-	*(uint32_t *)(data - 4) = type;
-	*(uint32_t *)(data + len) = BigLong ((unsigned int)CalcCRC32 (data-4, (unsigned int)(len+4)));
-}
 
 //==========================================================================
 //
@@ -446,7 +287,7 @@ static inline void MakeChunk (void *where, uint32_t type, size_t len)
 //
 //==========================================================================
 
-static void StuffPalette (const PalEntry *from, uint8_t *to)
+static void StuffPalette(const PalEntry *from, uint8_t *to)
 {
 	for (int i = 256; i > 0; --i)
 	{
@@ -458,160 +299,97 @@ static void StuffPalette (const PalEntry *from, uint8_t *to)
 	}
 }
 
-#define SelectFilter(x,y,z)		0
-
 //==========================================================================
 //
-// M_SaveBitmap
-//
-// Given a bitmap, creates one or more IDAT chunks in the given file.
-// Returns true on success.
+// PNG Writing
 //
 //==========================================================================
 
-bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height, int pitch, FileWriter *file)
+bool M_WritePNG(const uint8_t * buffer, uint32_t width, uint32_t height, const PalEntry (*palette)[256], double gamma, bool bgra, bool upside_down, const TArray<std::pair<FString, FString>> &text, FileWriter &out)
 {
-	TArray<Byte> temprow_storage;
+	TArray<const uint8_t *> rows;
+	TArray<png_text> txt;
+	TArray<uint8_t> pal;
 
-	static const unsigned temprow_count = 1;
+	png_structp writep = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 
-	const unsigned temprow_size = 1 + width * 3;
-	temprow_storage.Resize(temprow_size * temprow_count);
-
-	Byte* temprow[temprow_count];
-
-	for (unsigned i = 0; i < temprow_count; ++i)
-	{
-		temprow[i] = &temprow_storage[temprow_size * i];
-	}
-
-	TArray<Byte> array(PNG_WRITE_SIZE, true);
-	auto buffer = array.data();
-	z_stream stream;
-	int err;
-	int y;
-
-	stream.next_in = Z_NULL;
-	stream.avail_in = 0;
-	stream.zalloc = Z_NULL;
-	stream.zfree = Z_NULL;
-	err = deflateInit (&stream, png_level);
-
-	if (err != Z_OK)
+	if(!writep)
 	{
 		return false;
 	}
 
-	y = height;
-	stream.next_out = buffer;
-	stream.avail_out = sizeof(buffer);
+	png_infop infop = png_create_info_struct(writep);
 
-	temprow[0][0] = 0;
-
-	while (y-- > 0 && err == Z_OK)
+	if(!infop)
 	{
-		switch (color_type)
-		{
-		case SS_PAL:
-			memcpy(&temprow[0][1], from, width);
-			// always use filter type 0 for paletted images
-			stream.next_in = temprow[0];
-			stream.avail_in = width + 1;
-			break;
-
-		case SS_RGB:
-			memcpy(&temprow[0][1], from, width*3);
-			stream.next_in = temprow[SelectFilter(temprow, prior, width)];
-			stream.avail_in = width * 3 + 1;
-			break;
-
-		case SS_BGRA:
-			for (int x = 0; x < width; ++x)
-			{
-				temprow[0][x*3 + 1] = from[x*4 + 2];
-				temprow[0][x*3 + 2] = from[x*4 + 1];
-				temprow[0][x*3 + 3] = from[x*4];
-			}
-			stream.next_in = temprow[SelectFilter(temprow, prior, width)];
-			stream.avail_in = width * 3 + 1;
-			break;
-		}
-
-		from += pitch;
-
-		err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
-		if (err != Z_OK)
-		{
-			break;
-		}
-		while (stream.avail_out == 0)
-		{
-			if (!WriteIDAT (file, buffer, sizeof(buffer)))
-			{
-				return false;
-			}
-			stream.next_out = buffer;
-			stream.avail_out = sizeof(buffer);
-			if (stream.avail_in != 0)
-			{
-				err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
-				if (err != Z_OK)
-				{
-					break;
-				}
-			}
-		}
-	}
-
-	while (err == Z_OK)
-	{
-		err = deflate (&stream, Z_FINISH);
-		if (err != Z_OK)
-		{
-			break;
-		}
-		if (stream.avail_out == 0)
-		{
-			if (!WriteIDAT (file, buffer, sizeof(buffer)))
-			{
-				return false;
-			}
-			stream.next_out = buffer;
-			stream.avail_out = sizeof(buffer);
-		}
-	}
-
-	deflateEnd (&stream);
-
-	if (err != Z_STREAM_END)
-	{
+		png_destroy_write_struct(&writep, nullptr);
 		return false;
 	}
-	return WriteIDAT (file, buffer, sizeof(buffer)-stream.avail_out);
-}
 
-//==========================================================================
-//
-// WriteIDAT
-//
-// Writes a single IDAT chunk to the file. Returns true on success.
-//
-//==========================================================================
-
-static bool WriteIDAT (FileWriter *file, const uint8_t *data, int len)
-{
-	uint32_t foo[2], crc;
-
-	foo[0] = BigLong (len);
-	foo[1] = MAKE_ID('I','D','A','T');
-	crc = CalcCRC32 ((uint8_t *)&foo[1], 4);
-	crc = BigLong ((unsigned int)AddCRC32 (crc, data, len));
-
-	if (file->Write (foo, 8) != 8 ||
-		file->Write (data, len) != (size_t)len ||
-		file->Write (&crc, 4) != 4)
+	if(setjmp(png_jmpbuf(writep)))
 	{
+		png_destroy_write_struct(&writep, &infop);
 		return false;
 	}
+
+	png_set_write_fn(writep, &out, &PNGWrite, &PNGFlush);
+
+	png_set_compression_level(writep, Z_BEST_COMPRESSION);
+
+	png_set_IHDR(writep, infop, width, height, 8, palette ? PNG_COLOR_TYPE_PALETTE : (bgra ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB), PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+	if(palette)
+	{
+		pal.Resize(3 * 256);
+		StuffPalette(*palette, pal.Data());
+		png_set_PLTE(writep, infop, (const png_color*) pal.Data(), 256);
+	}
+
+	png_set_gAMA(writep, infop, gamma);
+
+	uint8_t trans = 0;
+
+	png_set_tRNS(writep, infop, &trans, 1, 0);
+
+	txt.Resize(text.Size());
+	for(unsigned i = 0; i < text.Size(); i++)
+	{
+		txt[i].compression = -1;
+		txt[i].key = (char*) text[i].first.GetChars();
+		txt[i].text = (char*) text[i].second.GetChars();
+		txt[i].text_length = text[i].second.Len();
+		txt[i].itxt_length = 0;
+		txt[i].lang = nullptr;
+		txt[i].lang_key = nullptr;
+	}
+
+	png_set_text(writep, infop, txt.Data(), txt.Size());
+
+	rows.Resize(height);
+
+	int bpp = palette ? 1 : (bgra ? 4 : 3);
+
+	if(upside_down)
+	{
+		for(unsigned i = height; i > 0; i--)
+		{
+			rows[i] = buffer + (bpp * width * (i - 1));
+		}
+	}
+	else
+	{
+		for(unsigned i = 0; i < height; i++)
+		{
+			rows[i] = buffer + (bpp * width * i);
+		}
+	}
+
+	png_set_rows(writep, infop, (png_bytepp) rows.Data());
+	png_write_png(writep, infop, (!palette && bgra) ? PNG_TRANSFORM_BGR : 0, nullptr);
+	png_write_end(writep, infop);
+
+	png_destroy_write_struct(&writep, &infop);
+
 	return true;
 }
+

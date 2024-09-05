@@ -198,7 +198,7 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *vide
 	});
 }
 
-void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
+void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height, const TArray<std::pair<FString, FString>> &text)
 {
 	DCanvas pic(width, height, false);
 
@@ -215,7 +215,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
 	DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W * 255));
 
-	M_CreatePNG(file, pic.GetPixels(), palette , SS_PAL, width, height, width, vid_gamma);
+	M_WritePNG(pic.GetPixels(), width, height, &palette, vid_gamma, false, false, text, *file);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()

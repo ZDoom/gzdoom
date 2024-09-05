@@ -327,7 +327,7 @@ public:
 
 void CleanSWDrawer();
 sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
-void WriteSavePic(player_t* player, FileWriter* file, int width, int height);
+void WriteSavePic(player_t* player, FileWriter* file, int width, int height, const TArray<std::pair<FString, FString>> &text);
 sector_t* RenderView(player_t* player);
 
 

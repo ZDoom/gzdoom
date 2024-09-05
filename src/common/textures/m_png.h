@@ -33,38 +33,13 @@
 **
 */
 
+#include <utility>
+#include <variant>
 #include <stdio.h>
 #include "zstring.h"
 #include "files.h"
 #include "palentry.h"
-
-// Screenshot buffer image data types
-enum ESSType
-{
-	SS_PAL,
-	SS_RGB,
-	SS_BGRA
-};
-
-// PNG Writing --------------------------------------------------------------
-
-// Start writing an 8-bit palettized PNG file.
-// The passed file should be a newly created file.
-// This function writes the PNG signature and the IHDR, gAMA, PLTE, and IDAT
-// chunks.
-bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *pal,
-				  ESSType color_type, int width, int height, int pitch, float gamma);
-
-// Creates a grayscale 1x1 PNG file. Used for savegames without savepics.
-bool M_CreateDummyPNG (FileWriter *file);
-
-// Adds a tEXt chunk to a PNG file started with M_CreatePNG.
-bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text);
-
-// Appends the IEND chunk to a PNG file.
-bool M_FinishPNG (FileWriter *file);
-
-bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height, int pitch, FileWriter *file);
+#include "tarray.h"
 
 // PNG Reading --------------------------------------------------------------
 
@@ -79,5 +54,19 @@ bool M_ReadPNG(FileSys::FileReader &&fr, FBitmap * out);
 class FGameTexture;
 
 FGameTexture *PNGTexture_CreateFromFile(FileSys::FileReader &&fr, const FString &filename);
+
+// PNG Writing --------------------------------------------------------------
+
+enum ESSType
+{
+	SS_PAL,
+	SS_RGB,
+	SS_BGRA
+};
+
+//palette = null, buffer must be rgb or bgra, 24/32 bpp
+//palette = non-null, buffer must be indices, 8 bpp
+bool M_WritePNG(const uint8_t * buffer, uint32_t width, uint32_t height, const PalEntry (*palette)[256], double gamma, bool bgra, bool upside_down, const TArray<std::pair<FString, FString>> &text, FileWriter &out);
+bool M_CreateDummyPNG (FileWriter *file);
 
 #endif

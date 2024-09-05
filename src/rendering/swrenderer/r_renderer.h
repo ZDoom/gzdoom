@@ -26,7 +26,7 @@ struct FRenderer
 	virtual void RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch) = 0;
 
 	// renders view to a savegame picture
-	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height) = 0;
+	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height, const TArray<std::pair<FString, FString>> &text) = 0;
 
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() = 0;

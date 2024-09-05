@@ -384,6 +384,7 @@ public:
 	static FileWriter *Open(const char *filename);
 
 	virtual size_t Write(const void *buffer, size_t len);
+	virtual void Flush();
 	virtual ptrdiff_t Tell();
 	virtual ptrdiff_t Seek(ptrdiff_t offset, int mode);
 	size_t Printf(const char *fmt, ...);

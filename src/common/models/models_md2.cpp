@@ -358,6 +358,21 @@ int FDMDModel::FindFrame(const char* name, bool nodefault)
 	return FErr_NotFound;
 }
 
+int FDMDModel::FindFirstFrame(FName name)
+{
+	return 0;
+}
+
+int FDMDModel::FindLastFrame(FName name)
+{
+	return info.numFrames;
+}
+
+double FDMDModel::FindFramerate(FName name)
+{
+	return 10.0;
+}
+
 //===========================================================================
 //
 //

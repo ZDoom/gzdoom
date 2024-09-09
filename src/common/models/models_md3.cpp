@@ -339,6 +339,21 @@ int FMD3Model::FindFrame(const char* name, bool nodefault)
 	return FErr_NotFound;
 }
 
+int FMD3Model::FindFirstFrame(FName name)
+{
+	return 0;
+}
+
+int FMD3Model::FindLastFrame(FName name)
+{
+	return Frames.Size();
+}
+
+double FMD3Model::FindFramerate(FName name)
+{
+	return 15.0;
+}
+
 //===========================================================================
 //
 //

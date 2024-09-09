@@ -232,6 +232,21 @@ int FUE1Model::FindFrame(const char* name, bool nodefault)
 	return index;
 }
 
+int FUE1Model::FindFirstFrame(FName name)
+{
+	return 0;
+}
+
+int FUE1Model::FindLastFrame(FName name)
+{
+	return numFrames;
+}
+
+double FUE1Model::FindFramerate(FName name)
+{
+	return 30.0;
+}
+
 void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
 {
 	// the moment of magic

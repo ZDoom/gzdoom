@@ -434,13 +434,19 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				animationid = smf->animationIDs[i];
 			}
-			if(!is_decoupled)
+			//modelFrame
+			if (is_decoupled && decoupled_next_frame != -1)
 			{
-				//modelFrame
+				//[LemonKing] Set modelframe to use decoupled frame data
+				modelframe = decoupled_main_frame;
+				modelframenext = decoupled_next_frame;
+			}
+			else
+			{
 				if (actor->modelData->modelFrameGenerators.Size() > i
-				 && (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
-				 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
-				   ) {
+					&& (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
+					&& smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
+					) {
 					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
 
 					if (smfNext) 

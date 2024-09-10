@@ -324,25 +324,28 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		return;
 	}
 
-	auto &clipperv = *vClipper;
-	angle_t startPitch = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), currentsector->floorplane.ZatPoint(seg->v1));
-	angle_t endPitch = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), currentsector->ceilingplane.ZatPoint(seg->v1));
-	angle_t startPitch2 = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), currentsector->floorplane.ZatPoint(seg->v2));
-	angle_t endPitch2 = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), currentsector->ceilingplane.ZatPoint(seg->v2));
-	angle_t temp;
-	// Wall can be tilted from viewpoint perspective. Find vertical extent on screen in psuedopitch units (0 to 2, bottom to top)
-	if(int(startPitch) > int(startPitch2)) // Handle zero crossing
+	if (Viewpoint.IsAllowedOoB()) // No need for vertical clipping if viewpoint not allowed out of bounds
 	{
-		temp = startPitch; startPitch = startPitch2; startPitch2 = temp; // exchange
-	}
-	if(int(endPitch) > int(endPitch2)) // Handle zero crossing
-	{
-		temp = endPitch; endPitch = endPitch2; endPitch2 = temp; // exchange
-	}
+		auto &clipperv = *vClipper;
+		angle_t startPitch = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), currentsector->floorplane.ZatPoint(seg->v1));
+		angle_t endPitch = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), currentsector->ceilingplane.ZatPoint(seg->v1));
+		angle_t startPitch2 = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), currentsector->floorplane.ZatPoint(seg->v2));
+		angle_t endPitch2 = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), currentsector->ceilingplane.ZatPoint(seg->v2));
+		angle_t temp;
+		// Wall can be tilted from viewpoint perspective. Find vertical extent on screen in psuedopitch units (0 to 2, bottom to top)
+		if(int(startPitch) > int(startPitch2)) // Handle zero crossing
+		{
+			temp = startPitch; startPitch = startPitch2; startPitch2 = temp; // exchange
+		}
+		if(int(endPitch) > int(endPitch2)) // Handle zero crossing
+		{
+			temp = endPitch; endPitch = endPitch2; endPitch2 = temp; // exchange
+		}
 
-	if (!clipperv.SafeCheckRange(startPitch, endPitch2))
-	{
-		return;
+		if (!clipperv.SafeCheckRange(startPitch, endPitch2))
+		{
+			return;
+		}
 	}
 
 	if (!r_radarclipper || (Level->flags3 & LEVEL3_NOFOGOFWAR) || clipperr.SafeCheckRange(startAngleR, endAngleR))
@@ -734,7 +737,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		int count = sub->numlines;
 		seg_t * seg = sub->firstline;
 		bool anglevisible = false;
-		bool pitchvisible = false;
+		bool pitchvisible = !(Viewpoint.IsAllowedOoB()); // No vertical clipping if viewpoint is not allowed out of bounds
 		bool radarvisible = false;
 		angle_t pitchtemp;
 		angle_t pitchmin = ANGLE_90;
@@ -751,15 +754,21 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				angle_t endAngleR = clipperr.PointToPseudoAngle(seg->v1->fX(), seg->v1->fY());
 				if (startAngleR-endAngleR >= ANGLE_180)
 					radarvisible |= (clipperr.SafeCheckRange(startAngleR, endAngleR) || (Level->flags3 & LEVEL3_NOFOGOFWAR) || ((sub->flags & SSECMF_DRAWN) && !deathmatch));
-				pitchmin = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->floorplane.ZatPoint(seg->v1));
-				pitchmax = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->ceilingplane.ZatPoint(seg->v1));
-				pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
+				if (!pitchvisible)
+				{
+					pitchmin = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->floorplane.ZatPoint(seg->v1));
+					pitchmax = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->ceilingplane.ZatPoint(seg->v1));
+					pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
+				}
 				if (pitchvisible && anglevisible && radarvisible) break;
-				pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->floorplane.ZatPoint(seg->v2));
-				if (int(pitchmin) > int(pitchtemp)) pitchmin = pitchtemp;
-				pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->ceilingplane.ZatPoint(seg->v2));
-				if (int(pitchmax) < int(pitchtemp)) pitchmax = pitchtemp;
-				pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
+				if (!pitchvisible)
+				{
+					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->floorplane.ZatPoint(seg->v2));
+					if (int(pitchmin) > int(pitchtemp)) pitchmin = pitchtemp;
+					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->ceilingplane.ZatPoint(seg->v2));
+					if (int(pitchmax) < int(pitchtemp)) pitchmax = pitchtemp;
+					pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
+				}
 				if (pitchvisible && anglevisible && radarvisible) break;
 			}
 			seg++;

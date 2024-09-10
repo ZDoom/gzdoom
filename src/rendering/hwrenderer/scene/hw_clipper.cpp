@@ -39,6 +39,11 @@
 #include "g_levellocals.h"
 #include "basics.h"
 
+#if defined(__SSE2__) || defined(_M_X64)
+#include <immintrin.h>
+#define USE_SSE2
+#endif
+
 unsigned Clipper::starttime;
 
 Clipper::Clipper()
@@ -440,7 +445,17 @@ angle_t Clipper::PointToPseudoPitch(double x, double y, double z)
 	}
 	else
 	{
+#ifdef USE_SSE2
+		__m128 mvecx = _mm_set_ss(vecx);
+		__m128 mvecy = _mm_set_ss(vecy);
+		__m128 mvecz = _mm_set_ss(vecz);
+		__m128 dot = _mm_add_ss(_mm_mul_ss(mvecx, mvecx), _mm_mul_ss(mvecy, mvecy));
+		__m128 notsignbit = _mm_castsi128_ps(_mm_cvtsi32_si128(~(1 << 31)));
+		__m128 fabsvecz = _mm_and_ps(mvecz, notsignbit);
+		double result = _mm_cvtss_f32((_mm_div_ss(mvecz, _mm_add_ss(_mm_sqrt_ss(dot), fabsvecz))));
+#else
 		double result = vecz / (g_sqrt(vecx*vecx + vecy*vecy) + fabs(vecz)); // -ffast-math compile flag applies to this file, yes?
+#endif
 		if ((vecx * viewpoint->TanCos + vecy * viewpoint->TanSin) <= 0.0) // Point is behind viewpoint
 		{
 			result = 2.0 - result;

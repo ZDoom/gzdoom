@@ -306,7 +306,8 @@ void FImageSource::EndPrecaching()
 
 void FImageSource::RegisterForPrecache(FImageSource *img, bool requiretruecolor)
 {
-	img->CollectForPrecache(precacheInfo, requiretruecolor);
+	if (img)
+		img->CollectForPrecache(precacheInfo, requiretruecolor);
 }
 
 //==========================================================================

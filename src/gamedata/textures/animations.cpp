@@ -1146,7 +1146,10 @@ void FTextureAnimator::UpdateAnimations (uint64_t mstime)
 		if (updated)
 		{
 			fire->texture->CleanHardwareData();
-			delete fire->texture->GetSoftwareTexture();
+
+			if (fire->texture->GetSoftwareTexture())
+				delete fire->texture->GetSoftwareTexture();
+
 			fire->texture->SetSoftwareTexture(nullptr);
 		}
 	}

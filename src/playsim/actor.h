@@ -702,8 +702,8 @@ enum EViewPosFlags // [MC] Flags for SetViewPos.
 
 enum EAnimOverrideFlags
 {
-	ANIMOVERRIDE_NONE	= 1 << 0, // no animation
-	ANIMOVERRIDE_LOOP	= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
+	ANIMOVERRIDE_NONE			= 1 << 0, // no animation
+	ANIMOVERRIDE_LOOP			= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
 };
 
 struct AnimOverride

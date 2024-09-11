@@ -258,7 +258,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	renderer->EndDrawHUDModel(playermo->RenderStyle, smf_flags);
 }
 
-double getCurrentFrame(const AnimOverride &anim, double tic)
+double getCurrentFrame(const AnimOverride &anim, double tic, bool *looped)
 {
 	if(anim.framerate <= 0) return anim.startFrame;
 
@@ -268,6 +268,7 @@ double getCurrentFrame(const AnimOverride &anim, double tic)
 
 	if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
 	{
+		if(looped) *looped = true;
 		frame = frame - duration;
 		return fmod(frame, anim.lastFrame - anim.loopFrame) + anim.loopFrame;
 	}
@@ -277,15 +278,26 @@ double getCurrentFrame(const AnimOverride &anim, double tic)
 	}
 }
 
-static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
+static void fixFrame(const AnimOverride &anim, double frame, double &inter, int &prev, int &next, bool looped)
 {
-	double frame = getCurrentFrame(anim, tic);
-
 	prev = int(floor(frame));
+
+	int startFrame = (looped ? anim.startFrame : anim.loopFrame);
+
+	if(prev < startFrame) prev = anim.lastFrame;
 
 	inter = frame - prev;
 
 	next = int(ceil(frame));
+
+	if(next > anim.lastFrame) next = startFrame;
+}
+
+static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
+{
+	bool looped = false;
+	double frame = getCurrentFrame(anim, tic, &looped);
+	fixFrame(anim, frame, inter, prev, next, looped);
 }
 
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
@@ -325,17 +337,8 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				inter = (tic - (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchOffset)) / actor->modelData->curAnim.switchOffset;
 
-				double nextFrame = actor->modelData->curAnim.startFrame;
-
-				double prevFrame = actor->modelData->prevAnim.startFrame;
-
-				decoupled_next_prev_frame = floor(nextFrame);
-				decoupled_next_frame = ceil(nextFrame);
-				inter_next = nextFrame - floor(nextFrame);
-
-				decoupled_main_prev_frame = floor(prevFrame);
-				decoupled_main_frame = ceil(prevFrame);
-				inter_main = prevFrame - floor(prevFrame);
+				fixFrame(actor->modelData->curAnim, actor->modelData->curAnim.startFrame, inter_next, decoupled_next_prev_frame, decoupled_next_frame, false);
+				fixFrame(actor->modelData->prevAnim, actor->modelData->prevAnim.startFrame, inter_main, decoupled_main_prev_frame, decoupled_main_frame, actor->modelData->prevAnim.flags & ANIMOVERRIDE_LOOP);
 			}
 			else
 			{

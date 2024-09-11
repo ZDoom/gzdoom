@@ -299,6 +299,7 @@ public:
 	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
 	void SetupView(FRenderState &state, float vx, float vy, float vz, bool mirror, bool planemirror);
 	angle_t FrustumAngle();
+	angle_t FrustumAngleOoB();
 
 	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);

@@ -364,6 +364,21 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 
 angle_t HWDrawInfo::FrustumAngle()
 {
+	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees());
+
+	// If the pitch is larger than this you can look all around at a FOV of 90°
+	if (tilt > 46.0f) return 0xffffffff;
+
+	// ok, this is a gross hack that barely works...
+	// but at least it doesn't overestimate too much...
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees() * 48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
+	angle_t a1 = DAngle::fromDeg(floatangle).BAMs();
+	if (a1 >= ANGLE_180) return 0xffffffff;
+	return a1;
+}
+
+angle_t HWDrawInfo::FrustumAngleOoB() // used if viewpoint is allowed out of bounds
+{
 	// If pitch is larger than this you can look all around at an FOV of 90 degrees
 	if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 89.0)  return 0xffffffff;
 	int aspMult = AspectMultiplier(r_viewwindow.WidescreenRatio); // 48 == square window
@@ -456,7 +471,7 @@ HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 void HWDrawInfo::CreateScene(bool drawpsprites)
 {
 	const auto &vp = Viewpoint;
-	angle_t a1 = FrustumAngle(); // horizontally clip the back of the viewport
+	angle_t a1 = Viewpoint.IsAllowedOoB() ? FrustumAngleOoB() : FrustumAngle(); // horizontally clip the back of the viewport
 	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 	Viewpoint.FrustAngle = a1;
 	if (Viewpoint.IsAllowedOoB()) // No need for vertical clipper if viewpoint not allowed out of bounds

@@ -5176,9 +5176,23 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		return;
 	}
 
+
+	if(self->modelData->curAnim.startTic > tic)
+	{	// force instant switch if interpolating
+		flags |= SAF_INSTANT;
+	}
+
 	if(!(flags & SAF_INSTANT))
 	{
 		self->modelData->prevAnim = self->modelData->curAnim;
+		
+		bool looped = false;
+		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic, &looped);
+
+		if(!looped)
+		{
+			self->modelData->prevAnim.flags &= ~ANIMOVERRIDE_LOOP;
+		}
 	}
 
 	int animEnd = mdl->FindLastFrame(animName);
@@ -5218,14 +5232,6 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(!(flags & SAF_INSTANT))
 	{
-		bool looped = false;
-		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic, &looped);
-		
-		if(!looped)
-		{
-			self->modelData->prevAnim.flags &= ~ANIMOVERRIDE_LOOP;
-		}
-		
 		int startTic = floor(tic) + interpolateTics;
 		self->modelData->curAnim.startTic = startTic;
 		self->modelData->curAnim.switchOffset = startTic - tic;

@@ -166,6 +166,19 @@ CCMD (maxdrawdist)
 				}
 			}
 		}
+		else // revert to default
+		{
+			level.fogdensity = level.info->fogdensity;
+			level.outsidefogdensity = level.info->outsidefogdensity;
+			level.skyfog = level.info->skyfog;
+			for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+			{
+				if (level.sectors[kk].Colormap.FadeColor == PalEntry(1, 1, 1))
+				{
+					level.sectors[kk].Colormap.FadeColor.SetRGB(level.fadeto); // revert
+				}
+			}
+		}
 		level.maxdrawdist = strtod(argv[1], nullptr);
 	}
 }

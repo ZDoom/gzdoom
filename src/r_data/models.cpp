@@ -258,7 +258,7 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 	renderer->EndDrawHUDModel(playermo->RenderStyle, smf_flags);
 }
 
-double getCurrentFrame(const AnimOverride &anim, double tic, bool *looped)
+double getCurrentFrame(const ModelAnim &anim, double tic, bool *looped)
 {
 	if(anim.framerate <= 0) return anim.startFrame;
 
@@ -266,7 +266,7 @@ double getCurrentFrame(const AnimOverride &anim, double tic, bool *looped)
 
 	double duration = double(anim.lastFrame) - anim.startFrame;
 
-	if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
+	if((anim.flags & MODELANIM_LOOP) && frame >= duration)
 	{
 		if(looped) *looped = true;
 		frame = frame - duration;
@@ -278,26 +278,37 @@ double getCurrentFrame(const AnimOverride &anim, double tic, bool *looped)
 	}
 }
 
-static void fixFrame(const AnimOverride &anim, double frame, double &inter, int &prev, int &next, bool looped)
+void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter)
 {
-	prev = int(floor(frame));
+	bool looped = false;
+
+	double frame = getCurrentFrame(anim, tic, &looped);
+
+	inter.frame1 = int(floor(frame));
+
+	inter.inter = frame - inter.frame1;
+
+	inter.frame2 = int(ceil(frame));
 
 	int startFrame = (looped ? anim.startFrame : anim.loopFrame);
 
-	if(prev < startFrame) prev = anim.lastFrame;
-
-	inter = frame - prev;
-
-	next = int(ceil(frame));
-
-	if(next > anim.lastFrame) next = startFrame;
+	if(inter.frame1 < startFrame) inter.frame1 = anim.lastFrame;
+	if(inter.frame2 > anim.lastFrame) inter.frame2 = startFrame;
 }
 
-static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
+void calcFrames(const ModelAnim &curAnim, double tic, ModelAnimFrameInterp &to, float &inter)
 {
-	bool looped = false;
-	double frame = getCurrentFrame(anim, tic, &looped);
-	fixFrame(anim, frame, inter, prev, next, looped);
+	if(curAnim.startTic > tic)
+	{
+		inter = (tic - (curAnim.startTic - curAnim.switchOffset)) / curAnim.switchOffset;
+
+		calcFrame(curAnim, curAnim.startTic, to);
+	}
+	else
+	{
+		inter = -1.0f;
+		calcFrame(curAnim, tic, to);
+	}
 }
 
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
@@ -308,17 +319,11 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	int smf_flags = smf->getFlags(actor->modelData);
 
 	const FSpriteModelFrame * smfNext = nullptr;
-	double inter = 0.;
-	double inter_main = -1.f;
-	double inter_next = -1.f;
+	float inter = 0.;
 
 	bool is_decoupled = (actor->flags9 & MF9_DECOUPLEDANIMATIONS);
 
-	int decoupled_main_prev_frame = -1;
-	int decoupled_next_prev_frame = -1;
-	
-	int decoupled_main_frame = -1;
-	int decoupled_next_frame = -1;
+	ModelAnimFrameInterp decoupled_frame;
 
 	// if prev_frame == -1: interpolate(main_frame, next_frame, inter), else: interpolate(interpolate(main_prev_frame, main_frame, inter_main), interpolate(next_prev_frame, next_frame, inter_next), inter)
 	// 4-way interpolation is needed to interpolate animation switches between animations that aren't 35hz
@@ -326,24 +331,15 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	if(is_decoupled)
 	{
 		smfNext = smf = &BaseSpriteModelFrames[actor->GetClass()];
-		if(actor->modelData && !(actor->modelData->curAnim.flags & ANIMOVERRIDE_NONE))
+		if(actor->modelData && !(actor->modelData->curAnim.flags & MODELANIM_NONE))
 		{
 			double tic = actor->Level->totaltime;
 			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
 			{
 				tic += I_GetTimeFrac();
 			}
-			if(actor->modelData->curAnim.startTic > tic)
-			{
-				inter = (tic - (actor->modelData->curAnim.startTic - actor->modelData->curAnim.switchOffset)) / actor->modelData->curAnim.switchOffset;
 
-				fixFrame(actor->modelData->curAnim, actor->modelData->curAnim.startFrame, inter_next, decoupled_next_prev_frame, decoupled_next_frame, false);
-				fixFrame(actor->modelData->prevAnim, actor->modelData->prevAnim.startFrame, inter_main, decoupled_main_prev_frame, decoupled_main_frame, actor->modelData->prevAnim.flags & ANIMOVERRIDE_LOOP);
-			}
-			else
-			{
-				calcFrame(actor->modelData->curAnim, tic, inter, decoupled_main_frame, decoupled_next_frame);
-			}
+			calcFrames(actor->modelData->curAnim, tic, decoupled_frame, inter);
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))
@@ -543,14 +539,14 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 					if(is_decoupled)
 					{
-						if(decoupled_main_frame != -1)
+						if(decoupled_frame.frame1 != -1)
 						{
-							boneData = animation->CalculateBones(decoupled_main_frame, decoupled_next_frame, inter, decoupled_main_prev_frame, inter_main, decoupled_next_prev_frame, inter_next, animationData, actor->boneComponentData, i);
+							boneData = animation->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, animationData, actor->boneComponentData, i);
 						}
 					}
 					else
 					{
-						boneData = animation->CalculateBones(modelframe, modelframenext, nextFrame ? inter : -1.f, 0, -1.f, 0, -1.f, animationData, actor->boneComponentData, i);
+						boneData = animation->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData, actor->boneComponentData, i);
 					}
 					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;
@@ -559,14 +555,14 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				{
 					if(is_decoupled)
 					{
-						if(decoupled_main_frame != -1)
+						if(decoupled_frame.frame1 != -1)
 						{
-							boneData = mdl->CalculateBones(decoupled_main_frame, decoupled_next_frame, inter, decoupled_main_prev_frame, inter_main, decoupled_next_prev_frame, inter_next, nullptr, actor->boneComponentData, i);
+							boneData = mdl->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, nullptr, actor->boneComponentData, i);
 						}
 					}
 					else
 					{
-						boneData = mdl->CalculateBones(modelframe, modelframenext, nextFrame ? inter : -1.f, 0, -1.f, 0, -1.f, nullptr, actor->boneComponentData, i);
+						boneData = mdl->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, nullptr, actor->boneComponentData, i);
 					}
 					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
 					evaluatedSingle = true;

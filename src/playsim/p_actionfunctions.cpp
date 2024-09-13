@@ -5128,7 +5128,8 @@ enum ESetAnimationFlags
 	SAF_NOOVERRIDE = 1 << 2,
 };
 
-extern double getCurrentFrame(const AnimOverride &anim, double tic, bool *looped);
+double getCurrentFrame(const ModelAnim &anim, double tic, bool *looped);
+void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter);
 
 void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac)
 {
@@ -5150,7 +5151,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(animName == NAME_None)
 	{
-		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		self->modelData->curAnim.flags = MODELANIM_NONE;
 		return;
 	}
 
@@ -5165,12 +5166,12 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	int animStart = mdl->FindFirstFrame(animName);
 	if(animStart == FErr_NotFound)
 	{
-		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("Could not find animation %s\n", animName.GetChars());
 		return;
 	}
 
-	if((flags & SAF_NOOVERRIDE) && self->modelData->curAnim.flags != ANIMOVERRIDE_NONE && self->modelData->curAnim.firstFrame == animStart)
+	if((flags & SAF_NOOVERRIDE) && self->modelData->curAnim.flags != MODELANIM_NONE && self->modelData->curAnim.firstFrame == animStart)
 	{
 		//same animation as current, skip setting it
 		return;
@@ -5184,14 +5185,15 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(!(flags & SAF_INSTANT))
 	{
-		self->modelData->prevAnim = self->modelData->curAnim;
-		
-		bool looped = false;
-		self->modelData->prevAnim.startFrame = getCurrentFrame(self->modelData->prevAnim, tic, &looped);
-
-		if(!looped)
+		if(self->modelData->curAnim.startTic > tic)
 		{
-			self->modelData->prevAnim.flags &= ~ANIMOVERRIDE_LOOP;
+			//TODO
+		}
+		else
+		{
+			self->modelData->prevAnim = ModelAnimFrameInterp{}; 
+
+			calcFrame(self->modelData->curAnim, tic, std::get<ModelAnimFrameInterp>(self->modelData->prevAnim));
 		}
 	}
 
@@ -5206,19 +5208,19 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(startFrame >= len)
 	{
-		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(loopFrame >= len)
 	{
-		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(endFrame >= len)
 	{
-		self->modelData->curAnim.flags = ANIMOVERRIDE_NONE;
+		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
 		return;
 	}
@@ -5227,12 +5229,12 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	self->modelData->curAnim.lastFrame = endFrame < 0 ? animEnd - 1 : animStart + endFrame;
 	self->modelData->curAnim.startFrame = startFrame < 0 ? animStart : animStart + startFrame;
 	self->modelData->curAnim.loopFrame = loopFrame < 0 ? animStart : animStart + loopFrame;
-	self->modelData->curAnim.flags = (flags&SAF_LOOP) ? ANIMOVERRIDE_LOOP : 0;
+	self->modelData->curAnim.flags = (flags & SAF_LOOP) ? MODELANIM_LOOP : 0;
 	self->modelData->curAnim.framerate = (float)framerate;
 
 	if(!(flags & SAF_INSTANT))
 	{
-		int startTic = floor(tic) + interpolateTics;
+		int startTic = int(floor(tic)) + interpolateTics;
 		self->modelData->curAnim.startTic = startTic;
 		self->modelData->curAnim.switchOffset = startTic - tic;
 	}
@@ -5264,7 +5266,7 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 
 	EnsureModelData(self);
 
-	if(self->modelData->curAnim.flags & ANIMOVERRIDE_NONE) return;
+	if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
 
 	if(framerate < 0)
 	{

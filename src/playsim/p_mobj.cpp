@@ -1443,7 +1443,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, AnimModelOverride &amo
 	return arc;
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def)
+FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelAnim &ao, struct ModelAnim *def)
 {
 	arc.BeginObject(key);
 	arc("firstFrame", ao.firstFrame);
@@ -1454,6 +1454,64 @@ FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &a
 	arc("framerate", ao.framerate);
 	arc("startTic", ao.startTic);
 	arc("switchOffset", ao.switchOffset);
+	arc.EndObject();
+	return arc;
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnimFrame &ao, ModelAnimFrame *def)
+{
+	arc.BeginObject(key);
+	if(arc.isReading())
+	{
+		if(arc.HasKey("firstFrame"))
+		{ // legacy save, clear interpolation
+			ao = nullptr;
+		}
+		else
+		{
+			FString type = "nullptr";
+			arc("type", type);
+			if(type.Compare("nullptr") == 0)
+			{
+				ao = nullptr;
+			}
+			else if(type.Compare("interp") == 0)
+			{
+				ModelAnimFrameInterp tmp;
+				arc("inter", tmp.inter);
+				arc("frame1", tmp.frame1);
+				arc("frame2", tmp.frame2);
+				ao = tmp;
+			}
+			else if(type.Compare("precalcIQM") == 0)
+			{
+				//TODO, unreachable
+				ao = nullptr;
+			}
+		}
+	}
+	else // if(arc.isWriting())
+	{
+		if(std::holds_alternative<std::nullptr_t>(ao))
+		{
+			FString tmp = "nullptr";
+			arc("type", tmp);
+		}
+		else if(std::holds_alternative<ModelAnimFrameInterp>(ao))
+		{
+			FString type = "interp";
+			arc("type", type);
+			arc("inter", std::get<ModelAnimFrameInterp>(ao).inter);
+			arc("frame1", std::get<ModelAnimFrameInterp>(ao).frame1);
+			arc("frame2", std::get<ModelAnimFrameInterp>(ao).frame2);
+		}
+		else if(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(ao))
+		{
+			//TODO
+			FString type = "nullptr";
+			arc("type", type);
+		}
+	}
 	arc.EndObject();
 	return arc;
 }
@@ -3862,7 +3920,7 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & ANIMOVERRIDE_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
 			{
 				modelData->curAnim.startTic += 1;
 			}
@@ -3915,7 +3973,7 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & ANIMOVERRIDE_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
 			{
 				modelData->curAnim.startTic += 1;
 			}

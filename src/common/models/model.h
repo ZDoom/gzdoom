@@ -97,6 +97,8 @@ public:
 	virtual float getAspectFactor(float vscale) { return 1.f; }
 	virtual const TArray<TRS>* AttachAnimationData() { return nullptr; };
 
+	virtual ModelAnimFrame PrecalculateFrame(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) { return nullptr; };
+
 	virtual const TArray<VSMatrix> CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) { return {}; };
 
 	void SetVertexBuffer(int type, IModelVertexBuffer *buffer) { mVBuf[type] = buffer; }

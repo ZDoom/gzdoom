@@ -5128,9 +5128,6 @@ enum ESetAnimationFlags
 	SAF_NOOVERRIDE = 1 << 2,
 };
 
-double getCurrentFrame(const ModelAnim &anim, double tic, bool *looped);
-void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter);
-
 void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
@@ -5177,17 +5174,39 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		return;
 	}
 
-
-	if(self->modelData->curAnim.startTic > tic)
-	{	// force instant switch if interpolating
-		flags |= SAF_INSTANT;
-	}
-
 	if(!(flags & SAF_INSTANT))
 	{
 		if(self->modelData->curAnim.startTic > tic)
 		{
-			//TODO
+			ModelAnimFrameInterp to;
+			float inter;
+
+			calcFrames(self->modelData->curAnim, tic, to, inter);
+
+			const TArray<TRS>* animationData = nullptr;
+
+			int animationid = -1;
+
+			const FSpriteModelFrame * smf = &BaseSpriteModelFrames[self->GetClass()];
+
+			if (self->modelData->animationIDs.Size() > 0 && self->modelData->animationIDs[0] >= 0)
+			{
+				animationid = self->modelData->animationIDs[0];
+			}
+			else if(smf->modelsAmount > 0)
+			{
+				animationid = smf->animationIDs[0];
+			}
+
+			FModel* animation = mdl;
+
+			if (animationid >= 0)
+			{
+				animation = Models[animationid];
+				animationData = animation->AttachAnimationData();
+			}
+
+			self->modelData->prevAnim = animation->PrecalculateFrame(self->modelData->prevAnim, to, inter, animationData, self->boneComponentData, 0);
 		}
 		else
 		{
@@ -5195,6 +5214,10 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 			calcFrame(self->modelData->curAnim, tic, std::get<ModelAnimFrameInterp>(self->modelData->prevAnim));
 		}
+	}
+	else
+	{
+		self->modelData->prevAnim = nullptr;
 	}
 
 	int animEnd = mdl->FindLastFrame(animName);

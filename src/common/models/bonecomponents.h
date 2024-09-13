@@ -50,3 +50,7 @@ struct ModelAnim
 static_assert(sizeof(ModelAnim) == sizeof(double) * 6);
 
 using ModelAnimFrame = std::variant<std::nullptr_t, ModelAnimFrameInterp, ModelAnimFramePrecalculatedIQM>;
+
+double getCurrentFrame(const ModelAnim &anim, double tic, bool *looped);
+void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter);
+void calcFrames(const ModelAnim &curAnim, double tic, ModelAnimFrameInterp &to, float &inter);

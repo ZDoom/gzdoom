@@ -152,6 +152,20 @@ CCMD (maxdrawdist)
 	}
 	else
 	{
+		if (strtod(argv[1], nullptr) > 0.0)
+		{
+			int newdensity = clamp<int> ((int)(192000.0 / strtod(argv[1], nullptr)), 0, 255);
+			level.fogdensity = max(newdensity, level.info->fogdensity);
+			level.outsidefogdensity = max(newdensity, level.info->outsidefogdensity);
+			level.skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOFOG)
+			for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+			{
+				if (level.sectors[kk].Colormap.FadeColor == 0) // if no fade set (in mapinfo)
+				{
+					level.sectors[kk].SetFade(PalEntry(1, 1, 1)); // fade to black
+				}
+			}
+		}
 		level.maxdrawdist = strtod(argv[1], nullptr);
 	}
 }

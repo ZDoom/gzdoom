@@ -3281,6 +3281,27 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 			seg++;
 		}
 	}
+	// [DVR] Make level foggy if maxdrawdist was set
+	if (Level->maxdrawdist > 0.0)
+	{
+		int newdensity = clamp<int> ((int)(192000.0 / Level->maxdrawdist), 0, 255);
+		if (Level->fogdensity < newdensity)
+		{
+			Level->fogdensity = newdensity;
+		}
+		if (Level->outsidefogdensity < newdensity)
+		{
+			Level->outsidefogdensity = newdensity;
+		}
+		Level->skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOFOG)
+		for (unsigned int ll = 0; ll < Level->sectors.Size(); ll++)
+		{
+			if (Level->sectors[ll].Colormap.FadeColor == 0) // if no fade set (in mapinfo)
+			{
+				Level->sectors[ll].SetFade(PalEntry(1, 1, 1)); // fade to black
+			}
+		}
+	}
 }
 
 //==========================================================================

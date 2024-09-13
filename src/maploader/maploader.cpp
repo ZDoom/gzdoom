@@ -3293,7 +3293,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		{
 			Level->outsidefogdensity = newdensity;
 		}
-		Level->skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOFOG)
+		Level->skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOCLEAR)
 		for (unsigned int ll = 0; ll < Level->sectors.Size(); ll++)
 		{
 			if (Level->sectors[ll].Colormap.FadeColor == 0) // if no fade set (in mapinfo)

@@ -157,7 +157,7 @@ CCMD (maxdrawdist)
 			int newdensity = clamp<int> ((int)(192000.0 / strtod(argv[1], nullptr)), 0, 255);
 			level.fogdensity = max(newdensity, level.info->fogdensity);
 			level.outsidefogdensity = max(newdensity, level.info->outsidefogdensity);
-			level.skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOFOG)
+			level.skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOCLEAR)
 			for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
 			{
 				if (level.sectors[kk].Colormap.FadeColor == 0) // if no fade set (in mapinfo)
@@ -1192,7 +1192,16 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		else
 			color = pr_hom();
 
-		if ((hom == 5 || actor->Level->flags3 & LEVEL3_VOIDFADETOFOG) && gl_fogmode != 0)
+		screen->SetClearColor(color);
+		SWRenderer->SetClearColor(color);
+	}
+    else
+	{
+		if ((actor->Level->flags3 & LEVEL3_VOIDFADETOCLEAR) || (gl_fogmode == 0))
+		{
+			screen->SetClearColor(GPalette.BlackIndex);
+		}
+		else
 		{
 			screen->SetClearColorFog(viewPoint.sector->Colormap.FadeColor,
 									 viewPoint.sector->Colormap.FogDensity > 0 ?
@@ -1200,14 +1209,6 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 									  viewPoint.sector->Colormap.FogDensity) : actor->Level->fogdensity,
 									 actor->Level->maxdrawdist);
 		}
-		else
-			screen->SetClearColor(color);
-
-		SWRenderer->SetClearColor(color);
-	}
-    else
-	{
-		screen->SetClearColor(GPalette.BlackIndex);
     }
 	
 	

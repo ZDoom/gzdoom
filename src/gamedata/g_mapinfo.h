@@ -271,7 +271,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
 	LEVEL3_LIGHTCREATED		= 0x00080000,	// a light had been created in the last frame
 	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
-	LEVEL3_VOIDFADETOFOG		= 0x00200000,	// sets r_clearbuffer (void space) color to fog fade color
+	LEVEL3_VOIDFADETOCLEAR		= 0x00200000,	// sets r_clearbuffer (void space) color to clear color (default is fog/fade color)
 };
 
 

@@ -530,43 +530,30 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			}
 
 			// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
-			if ((!(smf_flags & MDL_MODELSAREATTACHMENTS) && !is_decoupled) || !evaluatedSingle)
+			if(!evaluatedSingle)
 			{
+				FModel* animation = mdl;
+				const TArray<TRS>* animationData = nullptr;
+
 				if (animationid >= 0)
 				{
-					FModel* animation = Models[animationid];
+					animation = Models[animationid];
 					const TArray<TRS>* animationData = animation->AttachAnimationData();
+				}
 
-					if(is_decoupled)
+				if(is_decoupled)
+				{
+					if(decoupled_frame.frame1 != -1)
 					{
-						if(decoupled_frame.frame1 != -1)
-						{
-							boneData = animation->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, animationData, actor->boneComponentData, i);
-						}
+						boneData = animation->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, animationData, actor->boneComponentData, i);
 					}
-					else
-					{
-						boneData = animation->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData, actor->boneComponentData, i);
-					}
-					boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
-					evaluatedSingle = true;
 				}
 				else
 				{
-					if(is_decoupled)
-					{
-						if(decoupled_frame.frame1 != -1)
-						{
-							boneData = mdl->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, nullptr, actor->boneComponentData, i);
-						}
-					}
-					else
-					{
-						boneData = mdl->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, nullptr, actor->boneComponentData, i);
-					}
-					boneStartingPosition = renderer->SetupFrame(mdl, 0, 0, 0, boneData, -1);
-					evaluatedSingle = true;
+					boneData = animation->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData, actor->boneComponentData, i);
 				}
+				boneStartingPosition = renderer->SetupFrame(animation, 0, 0, 0, boneData, -1);
+				evaluatedSingle = (smf_flags & MDL_MODELSAREATTACHMENTS) || is_decoupled;
 			}
 
 			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : -1.f, translation, ssidp, boneData, boneStartingPosition);

@@ -46,6 +46,7 @@ public:
 		numFrames = 0;
 		numPolys = 0;
 		numGroups = 0;
+		aniMethod = AM_LegacyAnimation;
 	}
 	~FUE1Model();
 

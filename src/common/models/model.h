@@ -73,6 +73,13 @@ enum EFrameError
 	FErr_Singleframe = -3
 };
 
+enum EAnimationMethod
+{
+	AM_None = 0x0,
+	AM_LegacyAnimation = 0x1,
+	AM_ModernAnimation = 0x2
+};
+
 class FModel
 {
 public:
@@ -101,6 +108,7 @@ public:
 	void DestroyVertexBuffer();
 
 	bool hasSurfaces = false;
+	int aniMethod = AM_None;
 
 	FString mFileName;
 	std::pair<FString, FString> mFilePath;

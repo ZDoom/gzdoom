@@ -63,7 +63,10 @@ class FMD3Model : public FModel
 	TArray<MD3Surface> Surfaces;
 
 public:
-	FMD3Model() = default;
+	FMD3Model()
+	{
+		aniMethod = AM_LegacyAnimation;
+	};
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
 	virtual int FindFrame(const char* name, bool nodefault) override;

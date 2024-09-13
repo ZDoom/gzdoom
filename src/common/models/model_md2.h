@@ -108,7 +108,8 @@ public:
 		info.numLODs = 0;
 		texCoords = NULL;
 		framevtx = NULL;
-	}
+		aniMethod = AM_LegacyAnimation;
+	};
 	virtual ~FDMDModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;

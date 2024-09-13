@@ -5182,11 +5182,6 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 
 	int animEnd = mdl->FindLastFrame(animName);
-
-	if(framerate < 0)
-	{
-		framerate = mdl->FindFramerate(animName);
-	}
 	
 	int len = animEnd - animStart;
 
@@ -5253,11 +5248,6 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 	EnsureModelData(self);
 
 	if(self->modelData->curAnim.flags & ANIMOVERRIDE_NONE) return;
-
-	if(framerate < 0)
-	{
-		ThrowAbortException(X_OTHER, "Cannot set negative framerate");
-	}
 
 
 	double tic = self->Level->totaltime;

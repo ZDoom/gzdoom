@@ -260,32 +260,85 @@ void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, FVector3 translatio
 
 double getCurrentFrame(const AnimOverride &anim, double tic)
 {
-	if(anim.framerate <= 0) return anim.startFrame;
-
 	double frame = ((tic - anim.startTic) / GameTicRate) * anim.framerate; // position in frames
 
 	double duration = double(anim.lastFrame) - anim.startFrame;
 
-	if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
+	if(anim.framerate >= 0)
 	{
-		frame = frame - duration;
-		return fmod(frame, anim.lastFrame - anim.loopFrame) + anim.loopFrame;
+		// Forwards Animation
+		if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
+		{
+			return fmod(frame, anim.lastFrame - anim.loopFrame) + anim.loopFrame;
+		}
+		else
+		{
+			return min(frame, duration) + anim.startFrame;
+		}
 	}
 	else
 	{
-		return min(frame, duration) + anim.startFrame;
+		// Reverse Animation
+		frame = abs(frame);
+
+		if((anim.flags & ANIMOVERRIDE_LOOP) && frame >= duration)
+		{
+			return anim.loopFrame + (anim.lastFrame - anim.loopFrame) - fmod(frame, anim.lastFrame - anim.loopFrame);
+		}
+		else
+		{
+			frame = anim.lastFrame - frame;
+			return (frame < anim.startFrame) ? anim.startFrame : frame;
+		}
 	}
 }
 
 static void calcFrame(const AnimOverride &anim, double tic, double &inter, int &prev, int &next)
 {
 	double frame = getCurrentFrame(anim, tic);
+	double frameRate = anim.framerate;
 
-	prev = int(floor(frame));
+	if(frameRate >= 0)
+	{
+		// Forwards Animation
+		prev = int(floor(frame));
+		next = int(ceil(frame));
+		inter = frame - prev;
 
-	inter = frame - prev;
+		if(anim.flags & ANIMOVERRIDE_LOOP)
+		{
+			if(next >= anim.lastFrame)
+			{
+				next = anim.loopFrame;
+				inter = (frame - prev) / (anim.lastFrame - prev);
+			}
+			else if(prev < anim.startFrame)
+			{
 
-	next = int(ceil(frame));
+				prev = anim.startFrame;
+			}
+		}
+	}
+	else
+	{
+		// Reverse Animation
+		prev = int(ceil(frame));
+		next = int(floor(frame));
+		inter = prev - frame;
+
+		if(anim.flags & ANIMOVERRIDE_LOOP)
+		{
+			if (next <= anim.startFrame)
+			{
+				next = anim.lastFrame;
+				inter = (prev - frame) / (prev - anim.startFrame);
+			}
+			else if(prev > anim.lastFrame)
+			{
+				prev = anim.lastFrame;
+			}
+		}
+	}
 }
 
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
@@ -349,7 +402,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		if (curState != nextState && nextState)
 		{
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
-			float ticFraction = 0.;
+			double ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
 			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
 			{
@@ -403,6 +456,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 	{
 		int modelid = -1;
 		int animationid = -1;
+		int animationMethod = AM_None;
 		int modelframe = -1;
 		int modelframenext = -1;
 		FTextureID skinid(nullptr);
@@ -425,6 +479,13 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				modelid = smf->modelIDs[i];
 			}
 
+			//animationMethod
+			if(modelid != -1)
+			{
+				FModel* mdl = Models[modelid];
+				animationMethod = mdl->aniMethod;
+			}
+
 			//animationID
 			if (actor->modelData->animationIDs.Size() > i && actor->modelData->animationIDs[i] >= 0)
 			{
@@ -434,12 +495,21 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				animationid = smf->animationIDs[i];
 			}
+
 			//modelFrame
-			if (is_decoupled && decoupled_next_frame != -1)
+			if((animationMethod == AM_LegacyAnimation) && is_decoupled && decoupled_main_frame != -1 && decoupled_next_frame != -1)
 			{
-				//[LemonKing] Set modelframe to use decoupled frame data
-				modelframe = decoupled_main_frame;
-				modelframenext = decoupled_next_frame;
+				//[LemonKing] Set Legacy Animations to use decoupled modelframe data
+				if(inter_main != -1 && inter_next != -1)
+				{
+					modelframe = decoupled_main_prev_frame * (1.0 - inter_main) + decoupled_main_frame * inter_main;
+					modelframenext = decoupled_next_prev_frame * (1.0 - inter_next) + decoupled_next_frame * inter_next;
+				}
+				else
+				{
+					modelframe = decoupled_main_frame;
+					modelframenext = decoupled_next_frame;
+				}
 			}
 			else
 			{

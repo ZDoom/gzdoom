@@ -13,6 +13,7 @@ IMPLEMENT_CLASS(DBoneComponents, false, false);
 
 IQMModel::IQMModel()
 {
+	aniMethod = AM_ModernAnimation;
 }
 
 IQMModel::~IQMModel()

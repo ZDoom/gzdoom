@@ -183,6 +183,33 @@ CCMD (maxdrawdist)
 	}
 }
 
+CCMD (setfade)
+{
+	FString colorstring;
+	uint32_t color;
+
+	if (argv.argc() < 2)
+	{
+		Printf ("setfade <color>\n");
+	}
+	else
+	{
+		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
+		{
+			color = V_GetColorFromString (colorstring.GetChars());
+		}
+		else
+		{
+			color = V_GetColorFromString (argv[1]);
+		}
+		level.fadeto = color;
+		for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+		{
+			level.sectors[kk].SetFade(color);
+		}
+	}
+}
+
 int 			viewwindowx;
 int 			viewwindowy;
 int				viewwidth;
@@ -1208,6 +1235,7 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 									 (actor->Level->skyfog > 0 ? actor->Level->skyfog :
 									  viewPoint.sector->Colormap.FogDensity) : actor->Level->fogdensity,
 									 actor->Level->maxdrawdist);
+			SWRenderer->SetClearColor(viewPoint.sector->Colormap.FadeColor);
 		}
     }
 	

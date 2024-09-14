@@ -98,7 +98,7 @@ namespace swrenderer
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(player->camera->Level, MainThread(), width, height, trueratio);
 
-		if (r_clearbuffer != 0 || r_debug_draw != 0)
+		if (r_clearbuffer != 0 || r_debug_draw != 0 || ((player->camera->Level->maxdrawdist > 0.0) && !(player->camera->Level->flags3 & LEVEL3_VOIDFADETOCLEAR)))
 		{
 			if (!viewport->RenderTarget->IsBgra())
 			{

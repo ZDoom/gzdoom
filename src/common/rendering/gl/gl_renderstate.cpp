@@ -124,6 +124,7 @@ bool FGLRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mStreamData.uDesaturationFactor);
 	activeShader->muFogEnabled.Set(fogset);
+	activeShader->muMaxDrawFogTurnOn.Set(mMaxDrawFogTurnOn);
 
 	activeShader->muTextureMode.Set(GetTextureModeAndFlags(mTempTM));
 	activeShader->muLightParms.Set(mLightParms);

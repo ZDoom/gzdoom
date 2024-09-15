@@ -154,7 +154,7 @@ CCMD (maxdrawdist)
 	{
 		if (strtod(argv[1], nullptr) > 0.0)
 		{
-			int newdensity = clamp<int> ((int)(192000.0 / strtod(argv[1], nullptr)), 0, 255);
+			int newdensity = clamp<int> ((int)(19200.0 / strtod(argv[1], nullptr)), 1, 255); // Let minimum be 1 to set the correct flags
 			level.fogdensity = max(newdensity, level.info->fogdensity);
 			level.outsidefogdensity = max(newdensity, level.info->outsidefogdensity);
 			level.skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOCLEAR)

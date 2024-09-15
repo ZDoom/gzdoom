@@ -54,6 +54,7 @@ struct PushConstants
 	int uBoneIndexBase;
 
 	int uDataIndex;
+	float uMaxDrawFogTurnOn;
 	int padding1, padding2, padding3;
 };
 

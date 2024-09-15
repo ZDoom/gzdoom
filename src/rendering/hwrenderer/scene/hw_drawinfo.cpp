@@ -505,6 +505,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 void HWDrawInfo::RenderScene(FRenderState &state)
 {
 	const auto &vp = Viewpoint;
+	state.SetMaxDrawFog((float)(Level->maxdrawdist));
 	RenderAll.Clock();
 
 	state.SetDepthMask(true);

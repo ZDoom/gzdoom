@@ -855,6 +855,13 @@ void main()
 			{
 				fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 			}
+			if (uMaxDrawFogTurnOn > 0.0)
+			{
+				if (fogdist > uMaxDrawFogTurnOn)
+				{
+					fogdist = fogdist + 30.0 * (fogdist - uMaxDrawFogTurnOn);
+				}
+			}
 			fogfactor = exp2 (uFogDensity * fogdist);
 		}
 

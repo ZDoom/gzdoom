@@ -383,6 +383,7 @@ void VkRenderState::ApplyPushConstants()
 	mPushConstants.uLightLevel = mLightParms[3];
 	mPushConstants.uAlphaThreshold = mAlphaThreshold;
 	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+	mPushConstants.uMaxDrawFogTurnOn = mMaxDrawFogTurnOn;
 
 	if (mMaterial.mMaterial)
 	{

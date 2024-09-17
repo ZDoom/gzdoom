@@ -290,7 +290,7 @@ void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter)
 
 	inter.frame2 = int(ceil(frame));
 
-	int startFrame = (looped ? anim.startFrame : anim.loopFrame);
+	int startFrame = (looped ? anim.loopFrame : anim.startFrame);
 
 	if(inter.frame1 < startFrame) inter.frame1 = anim.lastFrame;
 	if(inter.frame2 > anim.lastFrame) inter.frame2 = startFrame;

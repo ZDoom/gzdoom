@@ -254,6 +254,13 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 		return false;
 	}
 
+	if ((activationType & (SPAC_Cross|SPAC_PCross)) && (lineActivation & SPAC_Walking))
+	{
+		// not on floor
+		if ((mo->Pos().Z > mo->floorz) && !(mo->flags2 & MF2_ONMOBJ))
+			return false;
+	}
+
 	if (lineActivation & SPAC_UseThrough)
 	{
 		lineActivation |= SPAC_Use;

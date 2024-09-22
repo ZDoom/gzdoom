@@ -3583,6 +3583,20 @@ FUNC(LS_Sector_SetHealth)
 	return true;
 }
 
+FUNC(LS_PlayCutscene)
+// PlayCutscene (name, name2)
+{
+	if (arg1 > arg0)
+	{
+		Level->PlayMidLevelCutsceneNum((M_Random() % (arg1 - arg0)) + arg0);
+	}
+	else
+	{
+		Level->PlayMidLevelCutsceneNum(arg0);
+	}
+	return true;
+}
+
 static lnSpecFunc LineSpecials[] =
 {
 	/*   0 */ LS_NOP,
@@ -3870,7 +3884,8 @@ static lnSpecFunc LineSpecials[] =
 	/* 281 */ LS_Line_SetAutomapFlags,
 	/* 282 */ LS_Line_SetAutomapStyle,
 	/* 283 */ LS_Polyobj_StopSound,
-	/* 284 */ LS_Generic_CrusherDist
+	/* 284 */ LS_Generic_CrusherDist,
+	/* 285 */ LS_PlayCutscene
 };
 
 #define DEFINE_SPECIAL(name, num, min, max, mmax) {#name, num, min, max, mmax},

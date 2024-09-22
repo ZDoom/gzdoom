@@ -852,6 +852,8 @@ xx(Exclude)
 xx(Userstring)
 xx(Sky)
 xx(Pagename)
+xx(Cutscenename)
+xx(Cutscenenum)
 
 // Lightmap/ZDRay keywords
 xx(lm_sampledist)

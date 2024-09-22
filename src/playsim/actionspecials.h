@@ -273,6 +273,7 @@ DEFINE_SPECIAL(Line_SetAutomapFlags, 281, 3, 3, 3)
 DEFINE_SPECIAL(Line_SetAutomapStyle, 282, 2, 2, 2)
 DEFINE_SPECIAL(Polyobj_StopSound, 283, 1, 1, 1)
 DEFINE_SPECIAL(Generic_CrusherDist, 284, 5, 5, 5)
+DEFINE_SPECIAL(PlayCutscene, 285, 1, 2, 2)
 
 DEFINE_SPECIAL(Line_QuickPortal, 301, -1, -1, 1)
 

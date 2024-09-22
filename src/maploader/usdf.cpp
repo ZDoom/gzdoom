@@ -321,6 +321,8 @@ class USDFParser : public UDMFParserBase
 		FString SpeakerName;
 		FString Dialogue;
 		FString Goodbye;
+		FString CutsceneName;
+		int iter;
 
 		while (!sc.CheckToken('}'))
 		{
@@ -335,6 +337,30 @@ class USDFParser : public UDMFParserBase
 						sc.ScriptMessage("'PageName' keyword only supported in the GZDoom namespace!");
 					else
 						node->ThisNodeName = CheckString(key);
+					break;
+
+				case NAME_Cutscenenum:
+					if (namespace_bits != Gz)
+						sc.ScriptMessage("'CutsceneNum' keyword only supported in the GZDoom namespace!");
+					else
+						node->CutsceneNum = CheckInt(key);
+					break;
+
+				case NAME_Cutscenename:
+					if (namespace_bits != Gz)
+						sc.ScriptMessage("'CutsceneName' keyword only supported in the GZDoom namespace!");
+					else
+					{
+						CutsceneName = CheckString(key);
+						for (iter = 0; iter < Level->info->cutscenes.Size(); iter++)
+						{
+							if (strcmp(Level->info->cutscenes[iter].GetName(), CutsceneName.GetChars()) == 0)
+							{
+								break;
+							}
+						}
+						node->CutsceneNum = iter;
+					}
 					break;
 
 				case NAME_Name:

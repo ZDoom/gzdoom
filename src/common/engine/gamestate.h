@@ -15,6 +15,7 @@ enum gamestate_t : int
 	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
 	GS_INTRO,
 	GS_CUTSCENE,
+	GS_MIDLEVELCUTSCENE,
 
 	GS_MENUSCREEN = GS_DEMOSCREEN,
 

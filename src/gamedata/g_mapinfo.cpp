@@ -308,6 +308,7 @@ void level_info_t::Reset()
 	skyrotatevector2 = FVector3(0, 0, 1);
 	lightblendmode = ELightBlendMode::DEFAULT;
 	tonemap = ETonemapMode::None;
+	cutscenes.Clear();
 }
 
 
@@ -788,6 +789,7 @@ void FMapInfoParser::ParseCutscene(CutsceneDef& cdef)
 		else if (sc.Compare("sound")) { ParseAssign(); sc.MustGetString(); cdef.soundName = sc.String; }
 		else if (sc.Compare("soundid")) { ParseAssign(); sc.MustGetNumber(); cdef.soundID = sc.Number; }
 		else if (sc.Compare("fps")) { ParseAssign();  sc.MustGetNumber();  cdef.framespersec = sc.Number; }
+		else if (sc.Compare("name")) { ParseAssign(); sc.MustGetString(); cdef.cutsceneName = sc.String; }
 		//else if (sc.Compare("transitiononly")) cdef.transitiononly = true;
 		else if (sc.Compare("delete")) { cdef.function = "none"; cdef.video = ""; } // this means 'play nothing', not 'not defined'.
 		else if (sc.Compare("clear")) cdef = {};
@@ -1692,6 +1694,13 @@ DEFINE_MAP_OPTION(intro, true)
 DEFINE_MAP_OPTION(outro, true)
 {
 	parse.ParseCutscene(info->outro);
+}
+
+DEFINE_MAP_OPTION(cutscene, true)
+{
+	CutsceneDef tempcutscene;
+	parse.ParseCutscene(tempcutscene);
+	info->cutscenes.Push(tempcutscene);
 }
 
 

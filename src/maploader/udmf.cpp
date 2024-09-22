@@ -149,6 +149,19 @@ namespace
 }
 #define CHECK_N(f) if (!(namespace_bits&(f))) break;
 
+static int P_GetCutsceneNum(FLevelLocals *lev, const char* SceneName)
+{
+	unsigned int iter;
+	for (iter = 0; iter < lev->info->cutscenes.Size(); iter++)
+	{
+		if (strcmp(lev->info->cutscenes[iter].GetName(), SceneName) == 0)
+		{
+			break;
+		}
+	}
+	return (int)iter;
+}
+
 //===========================================================================
 //
 // Common parsing routines
@@ -820,6 +833,17 @@ public:
 		{
 			th->args[1] = -FName(arg1str).GetIndex();
 		}
+		if (th->special == PlayCutscene)
+		{
+			if (arg0str.IsNotEmpty())
+			{
+				th->args[0] = P_GetCutsceneNum(Level, arg0str.GetChars());
+			}
+			if (arg1str.IsNotEmpty())
+			{
+				th->args[1] = P_GetCutsceneNum(Level, arg1str.GetChars());
+			}
+		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
 		if (namespc == NAME_ZDoomTranslated)
@@ -1232,6 +1256,17 @@ public:
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(ld->special) || ld->special == 0))
 		{
 			ld->args[1] = -FName(arg1str).GetIndex();
+		}
+		if (ld->special == PlayCutscene)
+		{
+			if (arg0str.IsNotEmpty())
+			{
+				ld->args[0] = P_GetCutsceneNum(Level, arg0str.GetChars());
+			}
+			if (arg1str.IsNotEmpty())
+			{
+				ld->args[1] = P_GetCutsceneNum(Level, arg1str.GetChars());
+			}
 		}
 		if ((ld->flags & ML_3DMIDTEX_IMPASS) && !(ld->flags & ML_3DMIDTEX)) // [TP]
 		{

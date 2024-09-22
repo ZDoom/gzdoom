@@ -99,6 +99,8 @@ enum gameaction_t : int
 	ga_intro,
 	ga_intermission,
 	ga_titleloop,
+	ga_playmidlevelcutscene,
+	ga_endmidlevelcutscene,
 };
 
 extern	gameaction_t	gameaction;

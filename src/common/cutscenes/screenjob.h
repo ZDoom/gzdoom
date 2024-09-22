@@ -21,6 +21,7 @@ enum
 
 struct CutsceneDef
 {
+	FString cutsceneName;
 	FString video;
 	FString function;
 	FString soundName;
@@ -30,6 +31,7 @@ struct CutsceneDef
 
 	void Create(DObject* runner);
 	bool isdefined() { return video.IsNotEmpty() || function.IsNotEmpty(); }
+	const char* GetName() { return cutsceneName.GetChars(); }
 	int GetSound();
 };
 

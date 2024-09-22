@@ -422,6 +422,7 @@ struct level_info_t
 	ETonemapMode tonemap;
 	
 	CutsceneDef intro, outro;
+	TArray<CutsceneDef> cutscenes;
 
 
 	level_info_t() 

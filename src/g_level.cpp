@@ -109,6 +109,7 @@ EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (String, playerclass)
+EXTERN_CVAR (Bool, enablemidlevelcutscenes)
 
 extern uint8_t globalfreeze, globalchangefreeze;
 
@@ -1032,6 +1033,35 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 		}
 	}
 	return controller;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void RunMidLevelCutscene(level_info_t* inMap, CutsceneDef* inCutscene)
+{
+	if (!multiplayer && !deathmatch) // single-player mode only
+	{
+		S_PauseMusic();
+		cutscene.runner = CreateRunner(false);
+		GC::WriteBarrier(cutscene.runner);
+		cutscene.completion = [](bool) { gameaction = ga_endmidlevelcutscene; };
+
+		CreateCutscene(inCutscene, cutscene.runner, inMap);
+
+		if (!ScreenJobValidate())
+		{
+			DeleteScreenJob();
+			if (cutscene.completion) cutscene.completion(false);
+			cutscene.completion = nullptr;
+			S_ChangeMusic(inMap->Music.GetChars(), inMap->musicorder);
+			return;
+		}
+		gameaction = ga_playmidlevelcutscene;
+	}
 }
 
 //=============================================================================
@@ -2237,6 +2267,50 @@ void FLevelLocals::Tick ()
 	if (Scrolls.Size() > 0)
 	{
 		memset (&Scrolls[0], 0, sizeof(Scrolls[0])*Scrolls.Size());
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FLevelLocals::PlayMidLevelCutscene(const char *SceneName)
+{
+	if (enablemidlevelcutscenes && info->cutscenes.Size() > 0 && gamestate == GS_LEVEL)
+	{
+		unsigned int iter;
+		for (iter = 0; iter < info->cutscenes.Size(); iter++)
+		{
+			if (strcmp(info->cutscenes[iter].GetName(), SceneName) == 0)
+			{
+				break;
+			}
+		}
+		if (iter < info->cutscenes.Size()) // Cutscene found
+		{
+			// Printf("Playing Cutscene %s ...", SceneName);
+			RunMidLevelCutscene(info, &info->cutscenes[iter]);
+			// Printf(" done.\n");
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FLevelLocals::PlayMidLevelCutsceneNum(int iter)
+{
+	if (enablemidlevelcutscenes && info->cutscenes.Size() > 0 && iter > -1 && gamestate == GS_LEVEL)
+	{
+		if (iter < info->cutscenes.Size()) // Cutscene found
+		{
+			// Printf("Playing Cutscene %s ...", SceneName);
+			RunMidLevelCutscene(info, &info->cutscenes[iter]);
+			// Printf(" done.\n");
+		}
 	}
 }
 

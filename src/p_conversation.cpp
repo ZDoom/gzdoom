@@ -75,6 +75,7 @@ static void PickConversationReply (int replyindex);
 static void TerminalResponse (const char *str);
 
 CVAR(Bool, dlg_vgafont, false, CVAR_ARCHIVE)
+EXTERN_CVAR (Bool, enablemidlevelcutscenes)
 
 //============================================================================
 //
@@ -394,8 +395,13 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		}
 	}
 
+	if (enablemidlevelcutscenes && CurNode->CutsceneNum > -1)
+	{
+		Level->PlayMidLevelCutsceneNum(CurNode->CutsceneNum);
+		CurNode->CutsceneNum = -1; // Don't ever play this again
+	}
 	// [Nash] Play voice clip from the actor so that positional audio can be heard by all players
-	if (CurNode->SpeakerVoice != NO_SOUND) S_Sound(npc, CHAN_VOICE, CHANF_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
+	else if (CurNode->SpeakerVoice != NO_SOUND) S_Sound(npc, CHAN_VOICE, CHANF_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 
 	// The rest is only done when the conversation is actually displayed.
 	if (pc->player == Level->GetConsolePlayer())
@@ -740,6 +746,7 @@ DEFINE_FIELD(FStrifeDialogueNode, ItemCheckNode);
 DEFINE_FIELD(FStrifeDialogueNode, SpeakerType);
 DEFINE_FIELD(FStrifeDialogueNode, SpeakerName);
 DEFINE_FIELD(FStrifeDialogueNode, SpeakerVoice);
+DEFINE_FIELD(FStrifeDialogueNode, CutsceneNum);
 DEFINE_FIELD(FStrifeDialogueNode, Backdrop);
 DEFINE_FIELD(FStrifeDialogueNode, Dialogue);
 DEFINE_FIELD(FStrifeDialogueNode, Goodbye);

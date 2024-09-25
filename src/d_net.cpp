@@ -1876,7 +1876,7 @@ void TryRunTics (void)
 	int 		counts;
 	int 		numplaying;
 
-	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated()));
+	bool doWait = (cl_capfps || pauseext);
 
 	// get real tics
 	if (doWait)

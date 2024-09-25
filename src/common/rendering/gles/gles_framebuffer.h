@@ -66,6 +66,7 @@ public:
     FTexture *WipeEndScreen() override;
 
 	int camtexcount = 0;
+	int vsyncstate = -2;
 };
 
 }

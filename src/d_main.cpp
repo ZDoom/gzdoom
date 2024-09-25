@@ -733,6 +733,8 @@ CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
+EXTERN_CVAR(Bool, vid_vsync)
+EXTERN_CVAR(Bool, cl_capfps)
 static uint32_t GetCaps()
 {
 	ActorRenderFeatureFlags FlagSet;
@@ -1060,6 +1062,8 @@ void D_Display ()
 			//stb.Unclock();
 			//Printf("Stbar = %f\n", stb.TimeMS());
 		}
+
+		screen->SetVSync(vid_vsync);
 	}
 	else
 	{
@@ -1086,6 +1090,9 @@ void D_Display ()
 			default:
 				break;
 		}
+
+		// We don't want to fry GPUs here if the map is not rendered.
+		screen->SetVSync(vid_vsync || !(cl_capfps && pauseext));
 	}
 	if (!hud_toggled)
 	{

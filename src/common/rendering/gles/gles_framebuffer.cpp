@@ -66,6 +66,9 @@ EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, gl_pipeline_depth);
 
 EXTERN_CVAR(Bool, gl_sort_textures);
+#ifdef _WIN32
+EXTERN_CVAR(Bool, gl_control_tear)
+#endif
 
 extern bool vid_hdr_active;
 
@@ -266,7 +269,16 @@ void OpenGLFrameBuffer::Swap()
 
 void OpenGLFrameBuffer::SetVSync(bool vsync)
 {
-	Super::SetVSync(vsync);
+#ifdef _WIN32
+	int newvsyncstate = vsync ? (gl_control_tear ? -1 : 1) : 0;
+#else
+	int newvsyncstate = !!vsync;
+#endif
+	if (newvsyncstate != vsyncstate)
+	{
+		vsyncstate = newvsyncstate;
+		Super::SetVSync(vsync);
+	}
 }
 
 //===========================================================================

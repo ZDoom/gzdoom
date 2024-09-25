@@ -66,6 +66,9 @@ EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, gl_pipeline_depth);
+#ifdef _WIN32
+EXTERN_CVAR(Bool, gl_control_tear)
+#endif
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -296,17 +299,27 @@ void OpenGLFrameBuffer::Swap()
 
 void OpenGLFrameBuffer::SetVSync(bool vsync)
 {
-	// Switch to the default frame buffer because some drivers associate the vsync state with the bound FB object.
-	GLint oldDrawFramebufferBinding = 0, oldReadFramebufferBinding = 0;
-	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFramebufferBinding);
-	glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFramebufferBinding);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+#ifdef _WIN32
+	int newvsyncstate = vsync ? (gl_control_tear ? -1 : 1) : 0;
+#else
+	int newvsyncstate = !!vsync;
+#endif
+	if (newvsyncstate != vsyncstate)
+	{
+		vsyncstate = newvsyncstate;
 
-	Super::SetVSync(vsync);
+		// Switch to the default frame buffer because some drivers associate the vsync state with the bound FB object.
+		GLint oldDrawFramebufferBinding = 0, oldReadFramebufferBinding = 0;
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &oldDrawFramebufferBinding);
+		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &oldReadFramebufferBinding);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, oldDrawFramebufferBinding);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, oldReadFramebufferBinding);
+		Super::SetVSync(vsync);
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, oldDrawFramebufferBinding);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, oldReadFramebufferBinding);
+	}
 }
 
 //===========================================================================

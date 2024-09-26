@@ -173,8 +173,7 @@ void VkCommandBufferManager::WaitForCommands(bool finish, bool uploadOnly)
 
 	if (finish)
 	{
-		if (!fb->GetVSync())
-			fb->FPSLimit();
+		fb->FPSLimit();
 		fb->GetFramebufferManager()->QueuePresent();
 	}
 

@@ -3936,7 +3936,7 @@ void D_Cleanup()
 //
 //==========================================================================
 
-UNSAFE_CCMD(restart)
+UNSAFE_CCMD(debug_restart)
 {
 	// remove command line args that would get in the way during restart
 	Args->RemoveArgs("-iwad");

@@ -296,6 +296,8 @@ void level_info_t::Reset()
 	skyfog = 0;
 	pixelstretch = 1.2f;
 
+	maxdrawdist = -1.f; // <= 0 means not applied
+
 	specialactions.Clear();
 	DefaultEnvironment = 0;
 	PrecacheSounds.Clear();
@@ -1216,6 +1218,13 @@ DEFINE_MAP_OPTION(gravity, true)
 	info->gravity = parse.sc.Float;
 }
 
+DEFINE_MAP_OPTION(maxdrawdist, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->maxdrawdist = parse.sc.Float;
+}
+
 DEFINE_MAP_OPTION(nogravity, true)
 {
 	info->gravity = DBL_MAX;
@@ -1694,7 +1703,6 @@ DEFINE_MAP_OPTION(outro, true)
 	parse.ParseCutscene(info->outro);
 }
 
-
 //==========================================================================
 //
 // All flag based map options 
@@ -1820,6 +1828,7 @@ MapFlagHandlers[] =
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
 	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
 	{ "nofogofwar",					MITYPE_SETFLAG3,	LEVEL3_NOFOGOFWAR, 0 },
+	{ "voidfadetoclear",				MITYPE_SETFLAG3,	LEVEL3_VOIDFADETOCLEAR, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "nopassover",						MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
 	{ "passover",						MITYPE_CLRCOMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },

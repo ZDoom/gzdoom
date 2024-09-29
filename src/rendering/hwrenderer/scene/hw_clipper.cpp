@@ -596,3 +596,62 @@ bool Clipper::CheckBoxOrthoPitch(const float *bspcoord)
 
 	return (pitchmax != pitchmin); // SafeCheckRange(pitchmin, pitchmax);
 }
+
+bool Clipper::CheckBoxClosestDist(const float *bspcoord)
+{
+	int        boxpos;
+	bool distcheck;
+	double maxdist = level.maxdrawdist;
+	if (r_viewpoint.FieldOfView.Degrees() > 0.0) maxdist /= r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
+	angle_t angle1, angle2;
+
+	const uint8_t* check;
+	
+	// Find the corners of the box
+	// that define the edges from current viewpoint.
+	auto &vp = viewpoint;
+	DVector3 vpPos = vp->Pos;
+	if (viewpoint->IsOrtho())
+	{
+		vpPos = viewpoint->camera->Pos();
+	}
+	boxpos = (vpPos.X <= bspcoord[BOXLEFT] ? 0 : vpPos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(vpPos.Y >= bspcoord[BOXTOP ] ? 0 : vpPos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+	
+	check = checkcoord[boxpos];
+	angle1 = PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
+	angle2 = PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
+
+	switch (boxpos) // Distcheck if the closer corner is poking into the view area
+	{
+	case 0:
+		distcheck = (vpPos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXTOP])).Length() < maxdist;
+		break;
+	case 1:
+		distcheck = (vpPos.Y - bspcoord[BOXTOP]) < maxdist;
+		break;
+	case 2:
+		distcheck = (vpPos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXTOP])).Length() < maxdist;
+		break;
+	case 4:
+		distcheck = (bspcoord[BOXLEFT] - vpPos.X) < maxdist;
+		break;
+	case 6:
+		distcheck = (vpPos.X - bspcoord[BOXRIGHT]) < maxdist;
+		break;
+	case 8:
+		distcheck = (vpPos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+		break;
+	case 9:
+		distcheck = (bspcoord[BOXBOTTOM] - vpPos.Y) < maxdist;
+		break;
+	case 10:
+		distcheck = (vpPos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+		break;
+	default:
+		distcheck = true;
+		break;
+	}
+
+	return distcheck;
+}

@@ -275,6 +275,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		#define uLightFactor uLightAttr.g
 		#define uLightDist uLightAttr.r
 		uniform int uFogEnabled;
+		uniform float uMaxDrawFogTurnOn;
 
 		// dynamic lights
 		uniform int uLightIndex;
@@ -579,6 +580,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	muDesaturation.Init(hShader, "uDesaturationFactor");
 	muFogEnabled.Init(hShader, "uFogEnabled");
+	muMaxDrawFogTurnOn.Init(hShader, "uMaxDrawFogTurnOn");
 	muTextureMode.Init(hShader, "uTextureMode");
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");

@@ -1829,6 +1829,7 @@ void FLevelLocals::Init()
 	outsidefog = info->outsidefog;
 	WallVertLight = info->WallVertLight*2;
 	WallHorizLight = info->WallHorizLight*2;
+	maxdrawdist = info->maxdrawdist;
 	if (info->gravity != 0.f)
 	{
 		if (info->gravity == DBL_MAX) gravity = 0;

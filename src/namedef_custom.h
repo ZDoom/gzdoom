@@ -817,6 +817,7 @@ xx(floorglowheight)
 xx(ceilingglowcolor)
 xx(ceilingglowheight)
 xx(fogdensity)
+xx(maxdrawdist)
 
 xx(HealthFloor)
 xx(HealthCeiling)

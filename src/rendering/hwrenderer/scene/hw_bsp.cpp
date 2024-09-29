@@ -968,14 +968,26 @@ void HWDrawInfo::RenderBSPNode (void *node)
 			if (!(no_renderflags[bsp->Index()] & SSRF_SEEN))
 				return;
 		}
+
 		if (Viewpoint.IsOrtho())
 		{
+			// Check max draw distance
+			if (r_radarclipper && level.maxdrawdist > 0 && !rClipper->CheckBoxClosestDist(bsp->bbox[side]))
+			{
+				return;
+			}
 			if (!vClipper->CheckBoxOrthoPitch(bsp->bbox[side]))
 			{
 				if (!(no_renderflags[bsp->Index()] & SSRF_SEEN))
 					return;
 			}
 		}
+		else if (level.maxdrawdist > 0 && !mClipper->CheckBoxClosestDist(bsp->bbox[side]))
+		{
+			// Check max draw distance
+			return;
+		}
+
 
 		node = bsp->children[side];
 	}
@@ -991,6 +1003,7 @@ void HWDrawInfo::RenderOrthoNoFog()
 		double vydbl = Viewpoint.camera->Y();
 		double ext = Viewpoint.camera->ViewPos->Offset.Length() ?
 			3.0 * Viewpoint.camera->ViewPos->Offset.Length() : 100.0;
+		if (Level->maxdrawdist > 0.0) ext = min(ext, Level->maxdrawdist);
 		FBoundingBox viewbox(vxdbl, vydbl, ext);
 
 		for (unsigned int kk = 0; kk < Level->subsectors.Size(); kk++)

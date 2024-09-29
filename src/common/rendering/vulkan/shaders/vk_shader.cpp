@@ -273,6 +273,7 @@ static const char *shaderBindings = R"(
 		int uBoneIndexBase;
 
 		int uDataIndex;
+		float uMaxDrawFogTurnOn;
 		int padding2, padding3;
 	};
 

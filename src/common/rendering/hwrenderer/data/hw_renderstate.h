@@ -224,6 +224,7 @@ protected:
 	int mTextureModeFlags;
 	int mSoftLight;
 	float mLightParms[4];
+	float mMaxDrawFogTurnOn;
 
 	float mAlphaThreshold;
 	float mClipSplit[2];
@@ -260,6 +261,7 @@ public:
 		mBrightmapEnabled = mGradientEnabled = mFogEnabled = mGlowEnabled = false;
 		mFogColor = 0xffffffff;
 		mStreamData.uFogColor = mFogColor;
+		mMaxDrawFogTurnOn = -1.0;
 		mTextureMode = -1;
 		mTextureClamp = 0;
 		mTextureModeFlags = 0;
@@ -546,6 +548,11 @@ public:
 		mFogColor = c;
 		mStreamData.uFogColor = mFogColor;
 		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
+	}
+
+	void SetMaxDrawFog(float maxdrawdist)
+	{
+		mMaxDrawFogTurnOn = 0.5 * maxdrawdist;
 	}
 
 	void SetLightParms(float f, float d)

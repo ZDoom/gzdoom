@@ -82,6 +82,7 @@ namespace swrenderer
 		void RenderBSPNode(void *node);
 		void RenderSubsector(subsector_t *sub);
 		bool CheckBBox(float *bspcoord);
+		bool CheckBoxClosestDist(const float *bspcoord);
 
 		void AddPolyobjs(subsector_t *sub);
 

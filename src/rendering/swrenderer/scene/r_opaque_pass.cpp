@@ -438,6 +438,75 @@ namespace swrenderer
 		return Thread->ClipSegments->IsVisible(sx1, sx2);
 	}
 
+	bool RenderOpaquePass::CheckBoxClosestDist(const float *bspcoord)
+	{
+		static const int checkcoord[12][4] =
+		{
+			{ 3,0,2,1 },
+			{ 3,0,2,0 },
+			{ 3,1,2,0 },
+			{ 0 },
+			{ 2,0,2,1 },
+			{ 0,0,0,0 },
+			{ 3,1,3,0 },
+			{ 0 },
+			{ 2,0,3,1 },
+			{ 2,1,3,1 },
+			{ 2,1,3,0 }
+		};
+		int boxpos;
+		bool distcheck;
+		double maxdist = level.maxdrawdist;
+		if (r_viewpoint.FieldOfView.Degrees() > 0.0) maxdist /= r_viewpoint.FieldOfView.Sin(); // dividing by Sin(fov) for sniper scopes
+		
+		const int* check;
+
+		double	 			x1, y1, x2, y2;
+		double				rx1, ry1, rx2, ry2;
+		int					sx1, sx2;
+	
+		// Find the corners of the box
+		// that define the edges from current viewpoint.
+		auto &vp = Thread->Viewport->viewpoint;
+		boxpos = (vp.Pos.X <= bspcoord[BOXLEFT] ? 0 : vp.Pos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(vp.Pos.Y >= bspcoord[BOXTOP ] ? 0 : vp.Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+
+		check = checkcoord[boxpos];
+
+		switch (boxpos) // Distcheck if the closer corner is poking into the view area
+		{
+		case 0:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXTOP])).Length() < maxdist;
+			break;
+		case 1:
+			distcheck = (vp.Pos.Y - bspcoord[BOXTOP]) < maxdist;
+			break;
+		case 2:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXTOP])).Length() < maxdist;
+			break;
+		case 4:
+			distcheck = (bspcoord[BOXLEFT] - vp.Pos.X) < maxdist;
+			break;
+		case 6:
+			distcheck = (vp.Pos.X - bspcoord[BOXRIGHT]) < maxdist;
+			break;
+		case 8:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXLEFT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+			break;
+		case 9:
+			distcheck = (bspcoord[BOXBOTTOM] - vp.Pos.Y) < maxdist;
+			break;
+		case 10:
+			distcheck = (vp.Pos.XY() - DVector2(bspcoord[BOXRIGHT], bspcoord[BOXBOTTOM])).Length() < maxdist;
+			break;
+		default:
+			distcheck = true;
+			break;
+		}
+		return distcheck;
+	}
+
+
 	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)
 	{
 		Thread->PreparePolyObject(sub);
@@ -861,6 +930,10 @@ namespace swrenderer
 			// Possibly divide back space (away from the viewer).
 			side ^= 1;
 			if (!CheckBBox(bsp->bbox[side]))
+				return;
+
+			// Check max draw distance
+			if (level.maxdrawdist > 0 && !CheckBoxClosestDist(bsp->bbox[side]))
 				return;
 
 			node = bsp->children[side];

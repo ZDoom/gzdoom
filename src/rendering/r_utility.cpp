@@ -73,6 +73,7 @@ const float MY_SQRT2    = 1.41421356237309504880; // sqrt(2)
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Int, gl_fogmode)
 
 // TYPES -------------------------------------------------------------------
 
@@ -102,7 +103,7 @@ static TArray<DVector3a> InterpolationPath;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (Bool, r_deathcamera, false, CVAR_ARCHIVE)
-CVAR (Int, r_clearbuffer, 0, 0)
+CVARD (Int, r_clearbuffer, 0, 0, "Color of the void. 0: Normal, 1: Black (even software renderer), 2: White, 3: Oscillating, 4: Chirp colors, 5: Fog color (hardware renderer only), >5: Random color.")
 CVAR (Bool, r_drawvoxels, true, 0)
 CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 CVARD (Bool, r_radarclipper, false, CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_CHEAT, "Use the horizontal clipper from camera->tracer's perspective")
@@ -140,6 +141,73 @@ CUSTOM_CVARD(Float, r_actorspriteshadowfadeheight, 0.0, CVAR_ARCHIVE | CVAR_GLOB
 		self = 0.f;
 	else if (self > 8192.f)
 		self = 8192.f;
+}
+
+CCMD (maxdrawdist)
+{
+
+	if (argv.argc() < 2)
+	{
+		Printf ("maxdrawdist %.1f (default: -1.0, not applied if <= 0.0)\n", level.maxdrawdist);
+	}
+	else
+	{
+		if (strtod(argv[1], nullptr) > 0.0)
+		{
+			int newdensity = clamp<int> ((int)(19200.0 / strtod(argv[1], nullptr)), 1, 255); // Let minimum be 1 to set the correct flags
+			level.fogdensity = max(newdensity, level.info->fogdensity);
+			level.outsidefogdensity = max(newdensity, level.info->outsidefogdensity);
+			level.skyfog = 255; // blanket the sky with thick fog to prevent pop-in (see also r_clearbuffer = 5 or LEVEL3_VOIDFADETOCLEAR)
+			for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+			{
+				if (level.sectors[kk].Colormap.FadeColor == 0) // if no fade set (in mapinfo)
+				{
+					level.sectors[kk].SetFade(PalEntry(1, 1, 1)); // fade to black
+				}
+			}
+		}
+		else // revert to default
+		{
+			level.fogdensity = level.info->fogdensity;
+			level.outsidefogdensity = level.info->outsidefogdensity;
+			level.skyfog = level.info->skyfog;
+			for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+			{
+				if (level.sectors[kk].Colormap.FadeColor == PalEntry(1, 1, 1))
+				{
+					level.sectors[kk].Colormap.FadeColor.SetRGB(level.fadeto); // revert
+				}
+			}
+		}
+		level.maxdrawdist = strtod(argv[1], nullptr);
+	}
+}
+
+CCMD (setfade)
+{
+	FString colorstring;
+	uint32_t color;
+
+	if (argv.argc() < 2)
+	{
+		Printf ("setfade <color>\n");
+	}
+	else
+	{
+		if ( !(colorstring = V_GetColorStringByName (argv[1])).IsEmpty() )
+		{
+			color = V_GetColorFromString (colorstring.GetChars());
+		}
+		else
+		{
+			color = V_GetColorFromString (argv[1]);
+		}
+		level.fadeto = color;
+		for (unsigned int kk = 0; kk < level.sectors.Size(); kk++)
+		{
+			level.sectors[kk].SetFade(color);
+		}
+	}
 }
 
 int 			viewwindowx;
@@ -1156,7 +1224,19 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	}
     else
 	{
-		screen->SetClearColor(GPalette.BlackIndex);
+		if ((actor->Level->flags3 & LEVEL3_VOIDFADETOCLEAR) || (gl_fogmode == 0))
+		{
+			screen->SetClearColor(GPalette.BlackIndex);
+		}
+		else
+		{
+			screen->SetClearColorFog(viewPoint.sector->Colormap.FadeColor,
+									 viewPoint.sector->Colormap.FogDensity > 0 ?
+									 (actor->Level->skyfog > 0 ? actor->Level->skyfog :
+									  viewPoint.sector->Colormap.FogDensity) : actor->Level->fogdensity,
+									 actor->Level->maxdrawdist);
+			SWRenderer->SetClearColor(viewPoint.sector->Colormap.FadeColor);
+		}
     }
 	
 	

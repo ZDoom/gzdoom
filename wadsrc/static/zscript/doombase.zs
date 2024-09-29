@@ -363,6 +363,7 @@ struct LevelInfo native
 	native readonly name RedirectType;
 	native readonly String RedirectMapName;
 	native readonly double teamdamage;
+	native readonly double maxdrawdist;
 
 	native bool isValid() const;
 	native String LookupLevelName() const;

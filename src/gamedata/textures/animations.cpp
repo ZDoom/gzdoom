@@ -62,7 +62,12 @@ static FRandom pr_animatepictures ("AnimatePics");
 
 void FTextureAnimator::DeleteAll()
 {
+	for (unsigned int i = 0; i < mFireTextures.Size(); i++)
+	{
+		mFireTextures[i].texture->CleanHardwareData(true);
+	}
 	mAnimations.Clear();
+	mFireTextures.Clear();
 
 	for (unsigned i = 0; i < mSwitchDefs.Size(); i++)
 	{
@@ -347,6 +352,10 @@ void FTextureAnimator::InitAnimDefs ()
 				{
 					TexMan.GameTexture(picnum)->SetSkyOffset(sc.Number);
 				}
+			}
+			else if (sc.Compare("firetexture"))
+			{
+				ParseFireTexture (sc);
 			}
 			else
 			{
@@ -782,6 +791,84 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	viewer->SetDisplaySize((float)fitwidth, (float)fitheight);
 }
 
+void FTextureAnimator::ParseFireTexture(FScanner& sc)
+{
+	FString picname;
+	FFireTexture fireTexture;
+	TArray<PalEntry> palette;
+	uint32_t duration;
+
+	sc.MustGetString();
+	picname = sc.String;
+	sc.MustGetStringName("tics");
+	sc.MustGetValue(true);
+	duration = uint32_t(sc.Float * 1000 / TICRATE);
+
+	FGameTexture* gametex = MakeGameTexture(new FireTexture(), picname.GetChars(), ETextureType::Wall);
+	// No decals here.
+	gametex->SetNoDecals(true);
+	if (sc.GetString())
+	{
+		if (sc.Compare("allowdecals"))
+		{
+			gametex->SetNoDecals(false);
+		}
+		else
+		{
+			sc.UnGet();
+		}
+	}
+	while (sc.GetString())
+	{
+		if (sc.Compare("color"))
+		{
+			uint8_t r, g, b, a;
+			sc.MustGetValue(false);
+			r = sc.Number;
+			sc.MustGetValue(false);
+			g = sc.Number;
+			sc.MustGetValue(false);;
+			b = sc.Number;
+			sc.MustGetValue(false);
+			a = sc.Number;
+			palette.Push(PalEntry(a, r, g, b));
+			if (a != 255 && a != 0);
+				gametex->SetTranslucent(true);
+
+			if (palette.Size() > 256)
+			{
+				sc.ScriptError("Too many colors specified!");
+			}
+		}
+		else if (sc.Compare("palette"))
+		{
+			uint8_t index = 0;
+			sc.MustGetValue(false);
+			index = sc.Number;
+			PalEntry pal = GPalette.BaseColors[index];
+			pal.a = pal.isBlack() ? 0 : 255;
+			palette.Push(pal);
+
+			if (palette.Size() > 256)
+			{
+				sc.ScriptError("Too many colors specified!");
+			}
+		}
+		else
+		{
+			sc.UnGet();
+			break;
+		}
+	}
+
+	fireTexture.texture = gametex;
+	fireTexture.Duration = duration;
+	fireTexture.SwitchTime = 0;
+	static_cast<FireTexture*>(gametex->GetTexture())->SetPalette(palette);
+	mFireTextures.Push(fireTexture);
+	TexMan.AddGameTexture(gametex);
+}
+
 //==========================================================================
 //
 // FTextureAnimator :: FixAnimations
@@ -1040,6 +1127,32 @@ FTextureID FTextureAnimator::UpdateStandaloneAnimation(FStandaloneAnimation &ani
 
 void FTextureAnimator::UpdateAnimations (uint64_t mstime)
 {
+	for (unsigned int i = 0; i < mFireTextures.Size(); i++)
+	{
+		FFireTexture* fire = &mFireTextures[i];
+		bool updated = false;
+
+		if (fire->SwitchTime == 0)
+		{
+			fire->SwitchTime = mstime + fire->Duration;
+		}
+		else while (fire->SwitchTime <= mstime)
+		{
+			static_cast<FireTexture*>(fire->texture->GetTexture())->Update();
+			fire->SwitchTime = mstime + fire->Duration;
+			updated = true;
+		}
+
+		if (updated)
+		{
+			fire->texture->CleanHardwareData();
+
+			if (fire->texture->GetSoftwareTexture())
+				delete fire->texture->GetSoftwareTexture();
+
+			fire->texture->SetSoftwareTexture(nullptr);
+		}
+	}
 	for (unsigned int j = 0; j < mAnimations.Size(); ++j)
 	{
 		FAnimDef *anim = &mAnimations[j];

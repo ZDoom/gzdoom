@@ -120,7 +120,12 @@ public:
 	void BuildVertexBuffer(FModelRenderer* renderer) override;
 	void AddSkins(uint8_t* hitlist, const FTextureID* surfaceskinids) override;
 	const TArray<TRS>* AttachAnimationData() override;
-	const TArray<VSMatrix> CalculateBones(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
+
+	ModelAnimFrame PrecalculateFrame(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
+	const TArray<VSMatrix> CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, DBoneComponents* bones, int index) override;
+
+	ModelAnimFramePrecalculatedIQM CalculateFrameIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData, DBoneComponents* bones, int index);
+	const TArray<VSMatrix> CalculateBonesIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData, DBoneComponents* bones, int index);
 
 private:
 	void LoadGeometry();

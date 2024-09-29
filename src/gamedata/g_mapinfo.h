@@ -269,7 +269,8 @@ enum ELevelFlags : unsigned int
 	LEVEL3_NOSHADOWMAP			= 0x00010000,	// disables shadowmaps for a given level.
 	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
 	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
-	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
+	LEVEL3_LIGHTCREATED		= 0x00080000,	// a light had been created in the last frame
+	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
 };
 
 
@@ -509,6 +510,7 @@ enum ESkillProperty
 	SKILLP_PlayerRespawn,
 	SKILLP_SpawnMulti,
 	SKILLP_InstantReaction,
+	SKILLP_SpawnMultiCoopOnly,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -554,6 +556,7 @@ struct FSkillInfo
 	int SpawnFilter;
 	bool SpawnMulti;
 	bool InstantReaction;
+	bool SpawnMultiCoopOnly;
 	int ACSReturn;
 	FString MenuName;
 	FString PicName;

@@ -1236,6 +1236,7 @@ void G_Ticker ()
 		case ga_intro:
 			gamestate = GS_INTRO;
 			gameaction = ga_nothing;
+			C_HideConsole(); // On some systems, console is open during intro
 			break;
 
 

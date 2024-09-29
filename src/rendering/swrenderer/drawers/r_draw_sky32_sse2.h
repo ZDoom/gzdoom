@@ -64,6 +64,7 @@ namespace swrenderer
 				{
 					uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 					*dest = source0[sample_index];
+					*dest |= 0xff000000;
 					dest += pitch;
 					frac += fracstep;
 				}
@@ -90,6 +91,7 @@ namespace swrenderer
 			{
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
+				fg |= 0xff000000;
 
 				__m128i alpha = _mm_set1_epi16(max(min(frac >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
@@ -108,6 +110,7 @@ namespace swrenderer
 			{
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				*dest = source0[sample_index];
+				*dest |= 0xff000000;
 
 				frac += fracstep;
 				dest += pitch;
@@ -119,6 +122,7 @@ namespace swrenderer
 			{
 				uint32_t sample_index = (((((uint32_t)frac) << 8) >> FRACBITS) * textureheight0) >> FRACBITS;
 				uint32_t fg = source0[sample_index];
+				fg |= 0xff000000;
 
 				__m128i alpha = _mm_set1_epi16(max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0));
 				__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
@@ -173,6 +177,7 @@ namespace swrenderer
 					{
 						uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 						fg = source1[sample_index2];
+						fg |= 0xff000000;
 					}
 
 					*dest = fg;
@@ -218,6 +223,7 @@ namespace swrenderer
 				{
 					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
+					fg |= 0xff000000;
 				}
 
 				__m128i alpha = _mm_set1_epi16(max(min(frac >> (16 - start_fade), 256), 0));
@@ -241,6 +247,7 @@ namespace swrenderer
 				{
 					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
+					fg |= 0xff000000;
 				}
 				*dest = fg;
 
@@ -258,6 +265,7 @@ namespace swrenderer
 				{
 					uint32_t sample_index2 = min(sample_index, maxtextureheight1);
 					fg = source1[sample_index2];
+					fg |= 0xff000000;
 				}
 
 				__m128i alpha = _mm_set1_epi16(max(min(((2 << 24) - frac) >> (16 - start_fade), 256), 0));

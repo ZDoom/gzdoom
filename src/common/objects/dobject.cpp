@@ -330,6 +330,7 @@ void DObject::Destroy ()
 	}
 	OnDestroy();
 	ObjectFlags = (ObjectFlags & ~OF_Fixed) | OF_EuthanizeMe;
+	GC::WriteBarrier(this);
 }
 
 DEFINE_ACTION_FUNCTION(DObject, Destroy)

@@ -1906,8 +1906,8 @@ class PlayerPawn : Actor
 		// it provides player class based protection that should not affect
 		// any other protection item.
 		let myclass = GetClass();
-		GiveInventoryType('HexenArmor');
-		let harmor = HexenArmor(FindInventory('HexenArmor'));
+		GiveInventoryType(GetHexenArmorClass());
+		let harmor = HexenArmor(FindInventory('HexenArmor', true));
 
 		harmor.Slots[4] = self.HexenArmor[0];
 		for (int i = 0; i < 4; ++i)
@@ -1918,7 +1918,7 @@ class PlayerPawn : Actor
 		// BasicArmor must come right after that. It should not affect any
 		// other protection item as well but needs to process the damage
 		// before the HexenArmor does.
-		GiveInventoryType('BasicArmor');
+		GiveInventoryType(GetBasicArmorClass());
 
 		// Now add the items from the DECORATE definition
 		let di = GetDropItems();

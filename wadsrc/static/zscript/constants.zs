@@ -267,6 +267,7 @@ enum EExplodeFlags
 	XF_THRUSTLESS = 64,
 	XF_NOALLIES = 128,
 	XF_CIRCULAR = 256,
+	XF_CIRCULARTHRUST = 512,
 };
 
 // Flags for A_RadiusThrust
@@ -276,6 +277,7 @@ enum ERadiusThrustFlags
 	RTF_NOIMPACTDAMAGE = 2,
 	RTF_NOTMISSILE = 4,
 	RTF_THRUSTZ = 16,
+	RTF_CIRCULARTHRUST = 512,
 };
 
 // Flags for A_RadiusDamageSelf
@@ -421,8 +423,10 @@ enum EActivationFlags
 // [MC] Flags for SetViewPos.
 enum EViewPosFlags
 {
-	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
-	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
+	VPSF_ABSOLUTEOFFSET =		1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =			1 << 2,			// Use absolute position.
+	VPSF_ALLOWOUTOFBOUNDS =	1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
+	VPSF_ORTHOGRAPHIC =		1 << 4,			// Use orthographic projection (hardware renderer only).
 };
 
 // Flags for A_TakeInventory and A_TakeFromTarget
@@ -718,6 +722,7 @@ enum EParticleFlags
 	SPF_FACECAMERA				= 1 << 11,
 	SPF_NOFACECAMERA			= 1 << 12,
 	SPF_ROLLCENTER				= 1 << 13,
+	SPF_NOMIPMAP				= 1 << 14,
 
 	SPF_RELATIVE				= SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
 };
@@ -1021,6 +1026,7 @@ enum ESkillProperty
 	SKILLP_PlayerRespawn,
 	SKILLP_SpawnMulti,
 	SKILLP_InstantReaction,
+	SKILLP_SpawnMultiCoopOnly,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -1250,7 +1256,8 @@ enum RadiusDamageFlags
 	RADF_OLDRADIUSDAMAGE = 32,
 	RADF_THRUSTLESS = 64,
 	RADF_NOALLIES = 128,
-	RADF_CIRCULAR = 256
+	RADF_CIRCULAR = 256,
+	RADF_CIRCULARTHRUST = 512,
 };
 
 enum IntermissionSequenceType

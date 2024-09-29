@@ -501,6 +501,9 @@ enum ActorRenderFlag2
 	RF2_FLIPSPRITEOFFSETX		= 0x0010,
 	RF2_FLIPSPRITEOFFSETY		= 0x0020,
 	RF2_CAMFOLLOWSPLAYER		= 0x0040,	// Matches the cam's base position and angles to the main viewpoint.
+	RF2_NOMIPMAP				= 0x0080,	// [Nash] forces no mipmapping on sprites. Useful for tiny sprites that need to remain visually crisp
+	RF2_ISOMETRICSPRITES		= 0x0100,
+	RF2_SQUAREPIXELS		= 0x0200,	// apply +ROLLSPRITE scaling math so that non rolling sprites get the same scaling
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -691,26 +694,10 @@ struct FDropItem
 
 enum EViewPosFlags // [MC] Flags for SetViewPos.
 {
-	VPSF_ABSOLUTEOFFSET =	1 << 1,			// Don't include angles.
-	VPSF_ABSOLUTEPOS =		1 << 2,			// Use absolute position.
-};
-
-enum EAnimOverrideFlags
-{
-	ANIMOVERRIDE_NONE	= 1 << 0, // no animation
-	ANIMOVERRIDE_LOOP	= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
-};
-
-struct AnimOverride
-{
-	int firstFrame;
-	int lastFrame;
-	int loopFrame;
-	double startFrame;
-	int flags = ANIMOVERRIDE_NONE;
-	float framerate;
-	double startTic; // when the current animation started (changing framerates counts as restarting) (or when animation starts if interpolating from previous animation)
-	double switchTic; // when the animation was changed -- where to interpolate the switch from
+	VPSF_ABSOLUTEOFFSET =		1 << 1,			// Don't include angles.
+	VPSF_ABSOLUTEPOS =			1 << 2,			// Use absolute position.
+	VPSF_ALLOWOUTOFBOUNDS =	1 << 3,			// Allow viewpoint to go out of bounds (hardware renderer only).
+	VPSF_ORTHOGRAPHIC =		1 << 4,			// Use orthographic projection (hardware renderer only).
 };
 
 struct ModelOverride
@@ -748,8 +735,8 @@ public:
 	int							overrideFlagsSet;
 	int							overrideFlagsClear;
 
-	AnimOverride curAnim;
-	AnimOverride prevAnim; // used for interpolation when switching anims
+	ModelAnim curAnim;
+	ModelAnimFrame prevAnim; // used for interpolation when switching anims
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;
@@ -774,6 +761,9 @@ public:
 
 	void Set(DVector3 &off, int f = -1)
 	{
+		ZeroSubnormalsF(off.X);
+		ZeroSubnormalsF(off.Y);
+		ZeroSubnormalsF(off.Z);
 		Offset = off;
 
 		if (f > -1)
@@ -1119,6 +1109,8 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DVector2		AutomapOffsets;		// Offset the actors' sprite view on the automap by these coordinates.
+	float			isoscaleY;				// Y-scale to compensate for Y-billboarding for isometric sprites
+	float			isotheta;				// Rotation angle to compensate for Y-billboarding for isometric sprites
 	DRotator		Angles;
 	DRotator		ViewAngles;			// Angle offsets for cameras
 	TObjPtr<DViewPosition*> ViewPos;			// Position offsets for cameras
@@ -1312,6 +1304,7 @@ public:
 	uint8_t FloatBobPhase;
 	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	double FloatBobStrength;
+	double FloatBobFactor;
 	PalEntry BloodColor;
 	FTranslationID BloodTranslation;
 
@@ -1402,6 +1395,7 @@ public:
 	bool IsMapActor();
 	bool SetState (FState *newstate, bool nofunction=false);
 	void SplashCheck();
+	void PlayDiveOrSurfaceSounds(int oldlevel = 0);
 	bool UpdateWaterLevel (bool splash=true);
 	bool isFast();
 	bool isSlow();
@@ -1530,9 +1524,13 @@ public:
 	{
 		return Z() + Height;
 	}
+	double CenterOffset() const
+	{
+		return Height / 2;
+	}
 	double Center() const
 	{
-		return Z() + Height/2;
+		return Z() + CenterOffset();
 	}
 	void SetZ(double newz, bool moving = true)
 	{
@@ -1607,6 +1605,11 @@ public:
 	{
 		Vel.X += speed * angle.Cos();
 		Vel.Y += speed * angle.Sin();
+	}
+
+	void Thrust(const DVector3& vel)
+	{
+		Vel += vel;
 	}
 
 	void Vel3DFromAngle(DAngle angle, DAngle pitch, double speed)

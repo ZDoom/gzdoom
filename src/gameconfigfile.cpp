@@ -189,7 +189,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey("Path", SHARE_DIR "/doom/fm_banks", true);
 		SetValueForKey("Path", SHARE_DIR "/games/doom/soundfonts", true);
 		SetValueForKey("Path", SHARE_DIR "/games/doom/fm_banks", true);
-
+		SetValueForKey("Path", "/usr/share/soundfonts", true);
 #endif
 	}
 

@@ -114,6 +114,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                   // texture to behave like an impassable line (projectiles
                                   // pass through it).
       checkswitchrange = <bool>;  // Switches can only be activated when vertically reachable.
+      walking = <bool>;           // Crossing activation checks if creature is on the ground, and fails if they are not.
       blockprojectiles = <bool>;  // Line blocks all projectiles
       blockuse = <bool>;          // Line blocks all use actions
       blocksight = <bool>;        // Line blocks monster line of sight

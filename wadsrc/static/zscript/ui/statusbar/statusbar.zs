@@ -430,7 +430,7 @@ class BaseStatusBar : StatusBarCore native
 	
 	int GetArmorAmount()
 	{
-		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		let armor = CPlayer.mo.FindInventory("BasicArmor", true);
 		return armor? armor.Amount : 0;
 	}
 	
@@ -451,13 +451,13 @@ class BaseStatusBar : StatusBarCore native
 	int GetArmorSavePercent()
 	{
 		double add = 0;
-		let harmor = HexenArmor(CPlayer.mo.FindInventory("HexenArmor"));
+		let harmor = HexenArmor(CPlayer.mo.FindInventory("HexenArmor", true));
 		if(harmor != NULL)
 		{
 			add = harmor.Slots[0] + harmor.Slots[1] + harmor.Slots[2] + harmor.Slots[3] + harmor.Slots[4];
 		}
 		//Hexen counts basic armor also so we should too.
-		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
+		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor", true));
 		if(armor != NULL && armor.Amount > 0)
 		{
 			add += armor.SavePercent * 100;
@@ -771,7 +771,7 @@ class BaseStatusBar : StatusBarCore native
 
 	void DrawHexenArmor(int armortype, String image, Vector2 pos, int flags = 0, double alpha = 1.0, Vector2 boxsize = (-1, -1), Vector2 scale = (1.,1.))
 	{
-		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor"));
+		let harmor = HexenArmor(statusBar.CPlayer.mo.FindInventory("HexenArmor", true));
 		if (harmor != NULL)
 		{
 			let slotval = harmor.Slots[armorType];

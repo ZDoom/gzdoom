@@ -1002,6 +1002,10 @@ public:
 			// This switch contains all keys of the UDMF base spec which only apply to Hexen format specials
 			if (!isTranslated) switch (key.GetIndex())
 			{
+			case NAME_Walking:
+				Flag(ld->activation, SPAC_Walking, key);
+				continue;
+
 			case NAME_Playercross:
 				Flag(ld->activation, SPAC_Cross, key); 
 				continue;
@@ -1166,7 +1170,7 @@ public:
 				ld->healthgroup = CheckInt(key);
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:
@@ -1516,7 +1520,7 @@ public:
 					sd->Flags |= WALLF_EXTCOLOR;
 				break;
 
-			case NAME_lm_sampledist_line:
+			case NAME_lm_sampledist:
 			case NAME_lm_sampledist_top:
 			case NAME_lm_sampledist_mid:
 			case NAME_lm_sampledist_bot:

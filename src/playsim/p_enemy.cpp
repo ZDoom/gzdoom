@@ -1835,14 +1835,6 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		if (!P_IsVisible (actor, player->mo, allaround, params))
 			continue;			// out of sight
 
-		// [SP] Deathmatch fixes - if we have MF_FRIENDLY we're definitely in deathmatch
-		// We're going to ignore our master, but go after his enemies.
-		if ( actor->flags & MF_FRIENDLY )
-		{
-			if ( actor->IsFriend(player->mo) )
-				continue;
-		}
-
 		// [RC] Well, let's let special monsters with this flag active be able to see
 		// the player then, eh?
 		if(!(actor->flags6 & MF6_SEEINVISIBLE)) 

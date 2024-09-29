@@ -110,7 +110,7 @@ extend class Actor
 
 	bool CheckArmorType(name Type, int amount = 1)
 	{
-		let myarmor = BasicArmor(FindInventory("BasicArmor"));
+		let myarmor = BasicArmor(FindInventory("BasicArmor", true));
 		return myarmor != null && myarmor.ArmorType == type && myarmor.Amount >= amount;
 	}
 

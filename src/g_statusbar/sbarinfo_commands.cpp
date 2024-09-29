@@ -276,7 +276,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				int armorType = type - HEXENARMOR_ARMOR;
 			
-				auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
+				auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor, true);
 				if (harmor != NULL)
 				{
 					double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
@@ -596,7 +596,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 			}
 			else if(condition == ARMORTYPE)
 			{
-				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor);
+				auto armor = statusBar->CPlayer->mo->FindInventory(NAME_BasicArmor, true);
 				if(armor != NULL)
 				{
 					auto n = armor->NameVar(NAME_ArmorType).GetIndex();
@@ -924,6 +924,7 @@ class CommandDrawString : public SBarInfoCommand
 					break;
 				default:
 					str = GStrings.localize(label.GetChars());
+					RealignString();
 					break;
 			}
 		}
@@ -1412,7 +1413,7 @@ class CommandDrawNumber : public CommandDrawString
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor, true);
 					if(harmor != NULL)
 					{
 						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);
@@ -2774,7 +2775,7 @@ class CommandDrawBar : public SBarInfoCommand
 				case SAVEPERCENT:
 				{
 					double add = 0;
-					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor);
+					auto harmor = statusBar->CPlayer->mo->FindInventory(NAME_HexenArmor, true);
 					if (harmor != NULL)
 					{
 						double *Slots = (double*)harmor->ScriptVar(NAME_Slots, nullptr);

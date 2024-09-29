@@ -148,6 +148,8 @@ struct gameinfo_t
 	FString SkyFlatName;
 	FString ArmorIcon1;
 	FString ArmorIcon2;
+	FName BasicArmorClass;
+	FName HexenArmorClass;
 	FString PauseSign;
 	FString Endoom;
 	double Armor2Percent;

@@ -267,7 +267,7 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 	}
 	else
 	{
-		if ((GetForegroundWindow() != mainwindow.GetHandle()) || preferNative || !use_mouse)
+		if (preferNative || !use_mouse)
 		{
 			want_native = true;
 		}
@@ -284,6 +284,10 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 	}
 
 	if (!want_native && eventhandlerresult)
+		want_native = true;
+
+	// The application should *never* grab the mouse cursor if its window doesn't have the focus.
+	if (GetForegroundWindow() != mainwindow.GetHandle())
 		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);

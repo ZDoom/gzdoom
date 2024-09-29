@@ -143,6 +143,15 @@ enum EPrintLevel
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
+enum EDebugLevel
+{
+	DMSG_OFF,		// no developer messages.
+	DMSG_ERROR,		// general notification messages
+	DMSG_WARNING,	// warnings
+	DMSG_NOTIFY,	// general notification messages
+	DMSG_SPAMMY,	// for those who want to see everything, regardless of its usefulness.
+};
+
 enum EConsoleState
 {
 	c_up = 0,
@@ -657,6 +666,7 @@ struct Font native
 	native BrokenLines BreakLines(String text, int maxlen);
 	native int GetGlyphHeight(int code);
 	native int GetDefaultKerning();
+	native TextureID, int GetChar(int c);
 }
 
 struct Console native
@@ -664,6 +674,7 @@ struct Console native
 	native static void HideConsole();
 	native static vararg void Printf(string fmt, ...);
 	native static vararg void PrintfEx(int printlevel, string fmt, ...);
+	native static vararg void DebugPrintf(int debuglevel, string fmt, ...);
 }
 
 struct CVar native

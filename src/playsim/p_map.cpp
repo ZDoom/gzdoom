@@ -82,6 +82,7 @@
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
 #include "vm.h"
+#include "d_main.h"
 
 #include "decallib.h"
 
@@ -5577,33 +5578,42 @@ void R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double
 {
 	const DAngle baseYaw = dir.Angle();
 	FTraceResults trace = {};
-	if (Trace(viewPoint.Pos, viewPoint.sector, dir, distance, 0u, 0u, nullptr, trace))
+	if (viewPoint.IsAllowedOoB() && V_IsHardwareRenderer())
+	{
+		viewPoint.Pos += dir * distance;
+		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(viewPoint.Pos)->sector;
+	}
+	else if (Trace(viewPoint.Pos, viewPoint.sector, dir, distance, 0u, 0u, nullptr, trace))
 	{
 		viewPoint.Pos = trace.HitPos - trace.HitVector * min<double>(5.0, trace.Distance);
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(viewPoint.Pos)->sector;
+		viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	}
 	else
 	{
 		viewPoint.Pos = trace.HitPos;
 		viewPoint.sector = trace.Sector;
+		viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	}
 
-	viewPoint.Angles.Yaw += deltaangle(baseYaw, trace.SrcAngleFromTarget);
 	// TODO: Why does this even need to be done? Please fix tracers already.
-	if (dir.Z < 0.0)
+	if (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer())
 	{
-		while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+		if (dir.Z < 0.0)
 		{
-			viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
-			viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+			while (!viewPoint.sector->PortalBlocksMovement(sector_t::floor) && viewPoint.Pos.Z < viewPoint.sector->GetPortalPlaneZ(sector_t::floor))
+			{
+				viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::floor);
+				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::floor)->mDestination;
+			}
 		}
-	}
-	else if (dir.Z > 0.0)
-	{
-		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+		else if (dir.Z > 0.0)
 		{
-			viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
+			while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && viewPoint.Pos.Z > viewPoint.sector->GetPortalPlaneZ(sector_t::ceiling))
+			{
+				viewPoint.Pos += viewPoint.sector->GetPortalDisplacement(sector_t::ceiling);
+				viewPoint.sector = viewPoint.sector->GetPortal(sector_t::ceiling)->mDestination;
+			}
 		}
 	}
 }
@@ -6169,7 +6179,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, double 
 			continue;
 
 		//[inkoalawetrust] Don't harm actors friendly to the explosions' source. But do harm the source.
-		if ((flags & RADF_NOALLIES) && bombsource->IsFriend(thing) && !(thing == bombsource || thing == bombspot))
+		if ((flags & RADF_NOALLIES) && bombsource && bombsource->IsFriend(thing) && !(thing == bombsource || thing == bombspot))
 			continue;
 
 		if (bombsource && thing != bombsource && bombsource->player && P_ShouldPassThroughPlayer(bombsource, thing))
@@ -6226,24 +6236,44 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, double 
 							if (!(thing->flags7 & MF7_DONTTHRUST))
 							{
 								thrust = points * 0.5 / (double)thing->Mass;
+
 								if (bombsource == thing)
 								{
 									thrust *= selfthrustscale;
 								}
-								vz = (thing->Center() - bombspot->Z()) * thrust;
-								if (bombsource != thing)
+
+								if (flags & RADF_CIRCULARTHRUST)
 								{
-									vz *= 0.5;
+									auto dir = bombspot->Vec3To(thing);
+									dir.Z += thing->CenterOffset() - bombspot->CenterOffset();
+
+									if (!dir.isZero())
+									{
+										dir.MakeUnit();
+										thing->Thrust(dir * thrust);
+									}
 								}
 								else
 								{
-									vz *= 0.8;
-								}
-								thing->Thrust(bombspot->AngleTo(thing), thrust);
-								if (!(flags & RADF_NODAMAGE) || (flags & RADF_THRUSTZ))
-								{
-									if (!(thing->Level->i_compatflags2 & COMPATF2_EXPLODE1) || (flags & RADF_THRUSTZ))
-										thing->Vel.Z += vz;	// this really doesn't work well
+									thing->Thrust(bombspot->AngleTo(thing), thrust);
+
+									if (!(flags & RADF_NODAMAGE) || (flags & RADF_THRUSTZ))
+									{
+										if (!(thing->Level->i_compatflags2 & COMPATF2_EXPLODE1) || (flags & RADF_THRUSTZ))
+										{
+											vz = (thing->Center() - bombspot->Z()) * thrust;
+											if (bombsource != thing)
+											{
+												vz *= 0.5;
+											}
+											else
+											{
+												vz *= 0.8;
+											}
+										
+											thing->Vel.Z += vz;	// this really doesn't work well
+										}
+									}
 								}
 							}
 						}

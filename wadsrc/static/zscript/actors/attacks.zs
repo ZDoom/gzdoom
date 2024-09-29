@@ -609,6 +609,7 @@ extend class Actor
 		if (flags & XF_THRUSTLESS) pflags |= RADF_THRUSTLESS;
 		if (flags & XF_NOALLIES) pflags |= RADF_NOALLIES;
 		if (flags & XF_CIRCULAR) pflags |= RADF_CIRCULAR;
+		if (flags & XF_CIRCULARTHRUST) pflags |= RADF_CIRCULARTHRUST;
 
 		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
 		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);
@@ -626,7 +627,7 @@ extend class Actor
 	}
 
 	deprecated("2.3", "For Dehacked use only")
-	void A_RadiusDamage(int dam, double dist)
+	void A_RadiusDamage(int dam, int dist)
 	{
 		A_Explode(dam, dist);
 	}

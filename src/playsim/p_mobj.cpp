@@ -289,6 +289,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("inventoryid", InventoryID)
 		A("floatbobphase", FloatBobPhase)
 		A("floatbobstrength", FloatBobStrength)
+		A("floatbobfactor", FloatBobFactor)
 		A("translation", Translation)
 		A("bloodcolor", BloodColor)
 		A("bloodtranslation", BloodTranslation)
@@ -1443,7 +1444,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, AnimModelOverride &amo
 	return arc;
 }
 
-FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def)
+FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelAnim &ao, struct ModelAnim *def)
 {
 	arc.BeginObject(key);
 	arc("firstFrame", ao.firstFrame);
@@ -1453,7 +1454,65 @@ FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &a
 	arc("flags", ao.flags);
 	arc("framerate", ao.framerate);
 	arc("startTic", ao.startTic);
-	arc("switchTic", ao.switchTic);
+	arc("switchOffset", ao.switchOffset);
+	arc.EndObject();
+	return arc;
+}
+
+FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnimFrame &ao, ModelAnimFrame *def)
+{
+	arc.BeginObject(key);
+	if(arc.isReading())
+	{
+		if(arc.HasKey("firstFrame"))
+		{ // legacy save, clear interpolation
+			ao = nullptr;
+		}
+		else
+		{
+			FString type = "nullptr";
+			arc("type", type);
+			if(type.Compare("nullptr") == 0)
+			{
+				ao = nullptr;
+			}
+			else if(type.Compare("interp") == 0)
+			{
+				ModelAnimFrameInterp tmp;
+				arc("inter", tmp.inter);
+				arc("frame1", tmp.frame1);
+				arc("frame2", tmp.frame2);
+				ao = tmp;
+			}
+			else if(type.Compare("precalcIQM") == 0)
+			{
+				//TODO, unreachable
+				ao = nullptr;
+			}
+		}
+	}
+	else // if(arc.isWriting())
+	{
+		if(std::holds_alternative<std::nullptr_t>(ao))
+		{
+			FString tmp = "nullptr";
+			arc("type", tmp);
+		}
+		else if(std::holds_alternative<ModelAnimFrameInterp>(ao))
+		{
+			FString type = "interp";
+			arc("type", type);
+			arc("inter", std::get<ModelAnimFrameInterp>(ao).inter);
+			arc("frame1", std::get<ModelAnimFrameInterp>(ao).frame1);
+			arc("frame2", std::get<ModelAnimFrameInterp>(ao).frame2);
+		}
+		else if(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(ao))
+		{
+			//TODO
+			FString type = "nullptr";
+			arc("type", type);
+		}
+	}
 	arc.EndObject();
 	return arc;
 }
@@ -2937,7 +2996,7 @@ void AActor::CallFallAndSink(double grav, double oldfloorz)
 	}
 	else
 	{
-	FallAndSink(grav, oldfloorz);
+		FallAndSink(grav, oldfloorz);
 	}
 }
 
@@ -3861,6 +3920,12 @@ void AActor::Tick ()
 			{
 				special2++;
 			}
+
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			{
+				modelData->curAnim.startTic += 1;
+			}
+
 			return;
 		}
 
@@ -3908,6 +3973,12 @@ void AActor::Tick ()
 			{
 				special2++;
 			}
+
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			{
+				modelData->curAnim.startTic += 1;
+			}
+
 			return;
 		}
 
@@ -4604,6 +4675,23 @@ void AActor::SplashCheck()
 
 //==========================================================================
 //
+// AActor::PlayDiveOrSurfaceSounds
+//
+// Plays diving or surfacing sounds for the player
+//
+//==========================================================================
+
+void AActor::PlayDiveOrSurfaceSounds(int oldlevel)
+{
+	IFVIRTUAL(AActor, PlayDiveOrSurfaceSounds)
+	{
+		VMValue params[2] = { (DObject *)this, oldlevel };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+//==========================================================================
+//
 // AActor::UpdateWaterLevel
 //
 // Returns true if actor should splash
@@ -4625,21 +4713,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 
 	if (player != nullptr)
 	{
-		if (oldlevel < 3 && waterlevel == 3)
-		{
-			// Our head just went under.
-			S_Sound(this, CHAN_VOICE, 0, "*dive", 1, ATTN_NORM);
-		}
-		else if (oldlevel == 3 && waterlevel < 3)
-		{
-			// Our head just came up.
-			if (player->air_finished > Level->maptime)
-			{
-				// We hadn't run out of air yet.
-				S_Sound(this, CHAN_VOICE, 0, "*surface", 1, ATTN_NORM);
-			}
-			// If we were running out of air, then ResetAirSupply() will play *gasp.
-		}
+		PlayDiveOrSurfaceSounds(oldlevel);
 	}
 
 	return false;	// we did the splash ourselves
@@ -5742,6 +5816,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	AActor *mobj;
 
 	bool spawnmulti = G_SkillProperty(SKILLP_SpawnMulti) || !!(dmflags2 & DF2_ALWAYS_SPAWN_MULTI);
+	bool spawnmulti_cooponly = G_SkillProperty(SKILLP_SpawnMultiCoopOnly);
 
 	if (mthing->EdNum == 0 || mthing->EdNum == -1)
 		return NULL;
@@ -5822,9 +5897,9 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		{
 			mask = MTF_COOPERATIVE;
 		}
-		else if (spawnmulti)
+		else if (spawnmulti || spawnmulti_cooponly)
 		{
-			mask = MTF_COOPERATIVE|MTF_SINGLE;
+			mask = spawnmulti_cooponly ? MTF_COOPERATIVE : (MTF_COOPERATIVE|MTF_SINGLE);
 		}
 		else
 		{

@@ -178,6 +178,7 @@ class Actor : Thinker native
 	native name DamageTypeReceived;
 	native uint8 FloatBobPhase;
 	native double FloatBobStrength;
+	native double FloatBobFactor;
 	native int RipperLevel;
 	native int RipLevelMin;
 	native int RipLevelMax;
@@ -413,6 +414,7 @@ class Actor : Thinker native
 		FloatSpeed 4;
 		FloatBobPhase -1;	// randomly initialize by default
 		FloatBobStrength 1.0;
+		FloatBobFactor 1.0;
 		Gravity 1;
 		Friction 1;
 		DamageFactor 1.0;		// damage multiplier as target of damage.
@@ -534,7 +536,9 @@ class Actor : Thinker native
 	// [AA] Called by inventory items at the end of CallTryPickup to let actors
 	// do something with the items they've received. 'Item' might be null for
 	// items that disappear on pickup.
-	virtual void HasReceived(Inventory item) {}
+	// 'itemcls' is passed unconditionally, so it can still be read even if
+	// 'item' is null due to being destroyed with GoAwayAndDie() on pickup.
+	virtual void HasReceived(Inventory item, class<Inventory> itemcls = null) {}
 
   // Called in TryMove if the mover ran into another Actor. This isn't called on players
 	// if they're currently predicting. Guarantees collisions unlike CanCollideWith.
@@ -705,7 +709,7 @@ class Actor : Thinker native
 	native void SoundAlert(Actor target, bool splash = false, double maxdist = 0);
 	native void ClearBounce();
 	native TerrainDef GetFloorTerrain();
-	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibilityö. */);
+	native bool CheckLocalView(int consoleplayer = -1 /* parameter is not used anymore but needed for backward compatibility. */);
 	native bool CheckNoDelay();
 	native bool UpdateWaterLevel (bool splash = true);
 	native bool IsZeroDamage();
@@ -713,6 +717,7 @@ class Actor : Thinker native
 	native void ClearFOVInterpolation();
 	native clearscope Vector3 PosRelative(sector sec) const;
 	native void RailAttack(FRailParams p);
+	native clearscope Name GetDecalName() const;
 		
 	native void HandleSpawnFlags();
 	native void ExplodeMissile(line lin = null, Actor target = null, bool onsky = false);
@@ -1447,6 +1452,25 @@ class Actor : Thinker native
 		if (self.player.mo == self)
 		{
 			self.player.deltaviewheight = self.Vel.Z / 8.;
+		}
+	}
+
+	virtual void PlayDiveOrSurfaceSounds(int oldlevel)
+	{
+		if (oldlevel < 3 && WaterLevel == 3)
+		{
+			// Our head just went under.
+			A_StartSound("*dive", CHAN_VOICE, attenuation: ATTN_NORM);
+		}
+		else if (oldlevel == 3 && WaterLevel < 3)
+		{
+			// Our head just came up.
+			if (player.air_finished > Level.maptime)
+			{
+				// We hadn't run out of air yet.
+				A_StartSound("*surface", CHAN_VOICE, attenuation: ATTN_NORM);
+			}
+			// If we were running out of air, then ResetAirSupply() will play *gasp.
 		}
 	}
 

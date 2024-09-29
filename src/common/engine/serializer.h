@@ -9,6 +9,7 @@
 #include "palentry.h"
 #include "name.h"
 #include "dictionary.h"
+#include "bonecomponents.h"
 
 extern bool save_full;
 
@@ -247,7 +248,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString 
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &mo, struct ModelOverride *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimModelOverride &mo, struct AnimModelOverride *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimOverride &ao, struct AnimOverride *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnim &ao, ModelAnim *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnimFrame &ao, ModelAnimFrame *def);
 FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
 
 void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);

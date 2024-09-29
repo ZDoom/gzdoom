@@ -347,7 +347,7 @@ extend class PlayerPawn
 		}
 
 		// Reset the base AC of the player's Hexen armor back to its default.
-		let hexArmor = HexenArmor(alt.FindInventory("HexenArmor"));
+		let hexArmor = HexenArmor(alt.FindInventory("HexenArmor", true));
 		if (hexArmor)
 			hexArmor.Slots[4] = alt.HexenArmor[0];
 

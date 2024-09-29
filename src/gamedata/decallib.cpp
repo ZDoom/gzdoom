@@ -205,6 +205,11 @@ const FDecalTemplate *FDecalBase::GetDecal () const
 	return NULL;
 }
 
+FName FDecalBase::GetDecalName() const
+{
+	return Name;
+}
+
 void FDecalTemplate::ReplaceDecalRef(FDecalBase *from, FDecalBase *to)
 {
 	if (LowerDecal == from)

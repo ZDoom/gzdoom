@@ -281,6 +281,7 @@ class Inventory : Actor
 			if (!item || item == self)
 				continue;
 
+			item.ClearCounters();
 			item.bSharingItem = true;
 			item.bDropped = item.bNeverLocal = true;
 			if (!item.CallTryPickup(players[i].mo))
@@ -646,9 +647,10 @@ class Inventory : Actor
 		// unmorphed versions of a currently morphed actor cannot pick up anything. 
 		if (bUnmorphed) return false, null;
 
-		//[AA] starting with true, so that CanReceive can unset it,
+		// [AA] starting with true, so that CanReceive can unset it,
 		// if necessary:
 		bool res = true;
+		class<Inventory> cls = self.GetClass();
 		// [AA] CanReceive lets the actor receiving the item process it first.
 		if (!toucher.CanReceive(self))
 		{
@@ -695,7 +697,7 @@ class Inventory : Actor
 				}
 			}
 			// [AA] Let the toucher do something with the item they've just received:
-			toucher.HasReceived(self);
+			toucher.HasReceived(self, cls);
 
 			// If the item can be shared, make sure every player gets a copy.
 			if (multiplayer && !deathmatch && !bDropped && ShouldShareItem(toucher))
@@ -847,6 +849,8 @@ class Inventory : Actor
 				return;
 
 			localPickUp = give != self;
+			if (localPickUp)
+				give.ClearCounters();
 		}
 
 		bool res;
@@ -1124,6 +1128,7 @@ class Inventory : Actor
 		int pNum = client.PlayerNumber();
 		pickedUp[pNum] = true;
 		DisableLocalRendering(pNum, true);
+		bCountItem = bCountSecret = false;
 	}
 
 	// Force spawn a new version of the item. This needs to use CreateCopy so that

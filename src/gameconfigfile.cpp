@@ -125,6 +125,9 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
 		SetValueForKey ("Path", "/usr/share/doom", true);
 		SetValueForKey ("Path", "/usr/share/games/doom", true);
+		SetValueForKey ("Path", SHARE_DIR "/doom", true);
+		SetValueForKey ("Path", SHARE_DIR "/games/doom", true);
+
 #endif
 	}
 
@@ -143,6 +146,8 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		SetValueForKey ("Path", SHARE_DIR, true);
+		SetValueForKey ("Path", SHARE_DIR "/doom", true);
+		SetValueForKey ("Path", SHARE_DIR "/games/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
 		SetValueForKey ("Path", "/usr/share/doom", true);
@@ -180,6 +185,10 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey("Path", "/usr/share/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/share/games/doom/soundfonts", true);
 		SetValueForKey("Path", "/usr/share/games/doom/fm_banks", true);
+		SetValueForKey("Path", SHARE_DIR "/doom/soundfonts", true);
+		SetValueForKey("Path", SHARE_DIR "/doom/fm_banks", true);
+		SetValueForKey("Path", SHARE_DIR "/games/doom/soundfonts", true);
+		SetValueForKey("Path", SHARE_DIR "/games/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/share/soundfonts", true);
 #endif
 	}

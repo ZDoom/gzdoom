@@ -1162,6 +1162,17 @@ DEFINE_ACTION_FUNCTION(_Console, PrintfEx)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Console, DebugPrintf)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(debugLevel);
+	PARAM_VA_POINTER(va_reginfo);
+
+	FString s = FStringFormat(VM_ARGS_NAMES, 1);
+	DPrintf(debugLevel, "%s\n", s.GetChars());
+	return 0;
+}
+
 static void StopAllSounds()
 {
 	soundEngine->StopAllChannels();

@@ -333,8 +333,13 @@ extend class Actor
 		// destroy something we already processed, we've already destroyed it,
 		// so it won't have anything to destroy.
 
-		let last = self;
+		if (player != null)
+		{
+			player.ReadyWeapon = null;
+			player.PendingWeapon = WP_NOCHANGE;
+		}
 
+		let last = self;
 		while (last.inv != NULL)
 		{
 			let inv = last.inv;
@@ -347,11 +352,6 @@ extend class Actor
 			{
 				last = inv;
 			}
-		}
-		if (player != null)
-		{
-			player.ReadyWeapon = null;
-			player.PendingWeapon = WP_NOCHANGE;
 		}
 	}
 

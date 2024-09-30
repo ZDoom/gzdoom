@@ -592,6 +592,10 @@ void DShape2D::OnDestroy() {
 
 void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 {
+	// bail if shape is null (shouldn't happen but it might)
+	if (!shape)
+		ThrowAbortException(X_OTHER, "shape is null");
+
 	// [MK] bail out if vertex/coord array sizes are mismatched
 	if ( shape->mVertices.Size() != shape->mCoords.Size() )
 		ThrowAbortException(X_OTHER, "Mismatch in vertex/coord count: %u != %u", shape->mVertices.Size(), shape->mCoords.Size());

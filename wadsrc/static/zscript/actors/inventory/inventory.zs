@@ -940,7 +940,6 @@ class Inventory : Actor
 		}
 		else
 		{
-			Owner = null;
 			Destroy();
 		}
 	}

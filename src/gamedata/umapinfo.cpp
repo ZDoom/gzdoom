@@ -460,7 +460,6 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.enteranim[0]) levelinfo->EnterAnim = map.enteranim;
 		if (map.exitanim[0]) levelinfo->ExitAnim = map.exitanim;
 		levelinfo->broken_id24_levelnum = map.id24_levelnum;
-		Printf("%s: id24 levelnum = %d\n", map.MapName.GetChars(), map.id24_levelnum);
 		/* UMAPINFO's intermusic is for the text screen, not the summary.
 		if (map.intermusic[0])
 		{

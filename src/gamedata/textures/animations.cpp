@@ -832,8 +832,10 @@ void FTextureAnimator::ParseFireTexture(FScanner& sc)
 			sc.MustGetValue(false);
 			a = sc.Number;
 			palette.Push(PalEntry(a, r, g, b));
-			if (a != 255 && a != 0);
+			if (a != 255 && a != 0)
+			{
 				gametex->SetTranslucent(true);
+			}
 
 			if (palette.Size() > 256)
 			{

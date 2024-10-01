@@ -350,6 +350,7 @@ struct level_info_t
 	FString		LightningSound = "world/thunder";
 	FString		Music;
 	FString		LevelName;
+	FString		MapLabel;
 	FString		AuthorName;
 	int8_t		WallVertLight, WallHorizLight;
 	int			musicorder;

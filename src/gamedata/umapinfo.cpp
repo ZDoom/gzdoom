@@ -41,6 +41,8 @@ struct UMapEntry
 	FString LevelName;
 	FString InterText;
 	FString InterTextSecret;
+	FString author;
+	FString label;
 	TArray<FSpecialAction> BossActions;
 	bool BossCleared = false;
 
@@ -138,6 +140,16 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape, int *id24_l
 	{
 		scanner.MustGetToken(TK_StringConst);
 		mape->LevelName = scanner.String;
+	}
+	else if (!pname.CompareNoCase("author"))
+	{
+		scanner.MustGetToken(TK_StringConst);
+		mape->author = scanner.String;
+	}
+	else if (!pname.CompareNoCase("label"))
+	{
+		scanner.MustGetToken(TK_StringConst);
+		mape->label = scanner.String;
 	}
 	else if (!pname.CompareNoCase("next"))
 	{
@@ -416,6 +428,14 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		{
 			levelinfo->LevelName = map.LevelName;
 			levelinfo->PName = "";	// clear the map name patch to force the string version to be shown - unless explicitly overridden right next.
+		}
+		if (map.author.IsNotEmpty())
+		{
+			levelinfo->AuthorName = map.author;
+		}
+		if (map.label.IsNotEmpty())
+		{
+			levelinfo->MapLabel = map.label;
 		}
 		if (map.levelpic[0]) levelinfo->PName = map.levelpic;
 		if (map.nextmap[0]) levelinfo->NextMap = map.nextmap;

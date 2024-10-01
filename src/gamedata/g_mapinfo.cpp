@@ -2401,9 +2401,13 @@ static void SetLevelNum (level_info_t *info, int num)
 	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
 	{
 		if (wadlevelinfos[i].levelnum == num)
+		{
 			wadlevelinfos[i].levelnum = 0;
+			wadlevelinfos[i].broken_id24_levelnum = 0;
+		}
 	}
 	info->levelnum = num;
+	info->broken_id24_levelnum = num;	// at least make it work - somehow.
 }
 
 //==========================================================================

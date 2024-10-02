@@ -87,6 +87,8 @@ class PlayerPawn : Actor
 	flagdef CanSuperMorph: PlayerFlags, 1;
 	flagdef CrouchableMorph: PlayerFlags, 2;
 	flagdef WeaponLevel2Ended: PlayerFlags, 3;
+	//PF_VOODOO_ZOMBIE
+	flagdef MakeFootsteps: PlayerFlags, 5; //[inkoalawetrust] Use footstep system virtual.
 
 	enum EPrivatePlayerFlags
 	{
@@ -1690,6 +1692,7 @@ class PlayerPawn : Actor
 		CheckPitch();
 		HandleMovement();
 		CalcHeight ();
+		if (bMakeFootsteps) MakeFootsteps();
 
 		if (!(player.cheats & CF_PREDICTING))
 		{
@@ -1715,6 +1718,45 @@ class PlayerPawn : Actor
 			player.mo.CheckPoison();
 			player.mo.CheckDegeneration();
 			player.mo.CheckAirSupply();
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// Handle player footstep sounds.
+	// Default footstep handling.
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void MakeFootsteps()
+	{
+		if (pos.z > floorz) return;
+
+		let Ground = GetFloorTerrain();
+		let cmd = player.cmd;
+
+		if (Ground && (cmd.forwardMove != 0 || cmd.sideMove != 0))
+		{
+			bool Running = (cmd.buttons & BT_RUN); //Holding down run key, or it's toggled.
+			int Delay = !Running ? Ground.WalkStepTics : Ground.RunStepTics;
+
+			if (Delay <= 0) return;
+
+			//Apparently most people walk with their right foot first, so assume that here.
+			bool LeftStep; //Prevent the right step playing twice.
+			if (GetAge() % (Delay*2) == 0)
+			{
+				A_StartSound (Ground.LeftStepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
+				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
+				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
+				LeftStep = True;
+			}
+			if (!LeftStep && GetAge() % Delay == 0)
+			{
+				A_StartSound (Ground.RightStepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
+				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
+				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
+			}
 		}
 	}
 

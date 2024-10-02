@@ -6630,7 +6630,13 @@ int P_GetThingFloorType (AActor *thing)
 // Returns true if hit liquid and splashed, false if not.
 //---------------------------------------------------------------------------
 
-bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool checkabove, bool alert, bool force)
+enum HitWaterFlags
+{
+	THW_SMALL	= 1 << 0,
+	THW_NOVEL	= 1 << 1,
+};
+
+bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool checkabove, bool alert, bool force, int flags)
 {
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
 		return false;
@@ -6718,13 +6724,16 @@ foundone:
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
-	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->Vel.Z >= -6) && !force)
+	if (!(flags & THW_NOVEL) && ((thing->flags3 & MF3_ISMONSTER || thing->player) && thing->Vel.Z >= -6) && !force)
+	{
+		Printf("Aborting P_HitWater().");
 		return Terrains[terrainnum].IsLiquid;
+	}
 
 	splash = &Splashes[splashnum];
 
 	// Small splash for small masses
-	if (thing->Mass < 10)
+	if (flags & THW_SMALL || thing->Mass < 10)
 		smallsplash = true;
 
 	if (!(thing->flags3 & MF3_DONTSPLASH))
@@ -6789,7 +6798,8 @@ DEFINE_ACTION_FUNCTION(AActor, HitWater)
 	PARAM_BOOL(checkabove);
 	PARAM_BOOL(alert);
 	PARAM_BOOL(force);
-	ACTION_RETURN_BOOL(P_HitWater(self, sec, DVector3(x, y, z), checkabove, alert, force));
+	PARAM_INT(flags);
+	ACTION_RETURN_BOOL(P_HitWater(self, sec, DVector3(x, y, z), checkabove, alert, force, flags));
 }
 
 

@@ -352,7 +352,7 @@ void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile ver
 void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitscan version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
-bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
+bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false, int flags = 0);
 
 
 struct FRailParams

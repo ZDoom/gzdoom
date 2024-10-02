@@ -77,13 +77,14 @@ enum ETerrainKeywords
 	TR_DAMAGETIMEMASK,
 	TR_FOOTCLIP,
 	TR_STEPVOLUME,
-	TR_WALKINGSTEPTIME,
-	TR_RUNNINGSTEPTIME,
+	TR_WALKSTEPTICS,
+	TR_RUNSTEPTICS,
 	TR_LEFTSTEPSOUNDS,
 	TR_RIGHTSTEPSOUNDS,
 	TR_LIQUID,
 	TR_FRICTION,
-	TR_ALLOWPROTECTION
+	TR_ALLOWPROTECTION,
+	TR_STEPSOUNDS
 };
 
 enum EGenericType
@@ -179,14 +180,15 @@ static const char *TerrainKeywords[] =
 	"damagetimemask",
 	"footclip",
 	"stepvolume",
-	"walkingsteptime",
-	"runningsteptime",
+	"walksteptics",
+	"runsteptics",
 	"leftstepsounds",
 	"rightstepsounds",
 	"liquid",
 	"friction",
 	"allowprotection",
 	"damageonland",
+	"stepsounds",
 	NULL
 };
 
@@ -223,6 +225,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Custom, {(size_t)ParseFriction} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, AllowProtection)} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, DamageOnLand)} },
+	{ GEN_Sound,  {myoffsetof(FTerrainDef, StepSound)} },
 };
 
 
@@ -599,7 +602,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Time:
 			sc.MustGetFloat ();
-			SET_FIELD (int, (int)(sc.Float * TICRATE));
+			SET_FIELD (int, (int)(sc.Float));
 			break;
 
 		case GEN_Bool:
@@ -747,3 +750,4 @@ DEFINE_FIELD(FTerrainDef, AllowProtection)
 DEFINE_FIELD(FTerrainDef, DamageOnLand)
 DEFINE_FIELD(FTerrainDef, Friction)
 DEFINE_FIELD(FTerrainDef, MoveFactor)
+DEFINE_FIELD(FTerrainDef, StepSound)

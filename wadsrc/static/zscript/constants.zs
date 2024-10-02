@@ -1466,6 +1466,12 @@ enum ECompatFlags
 	COMPATF2_VOODOO_ZOMBIES = 1 << 15,  // allow playerinfo, playerpawn, and voodoo health to all be different, and allow monster targetting of 'dead' players that have positive health
 };
 
+enum HitWaterFlags
+{
+	THW_SMALL	= 1 << 0,
+	THW_NOVEL	= 1 << 1,
+};
+
 const M_E        = 2.7182818284590452354;  // e
 const M_LOG2E    = 1.4426950408889634074;  // log_2 e
 const M_LOG10E   = 0.43429448190325182765; // log_10 e

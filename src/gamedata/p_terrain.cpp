@@ -77,8 +77,8 @@ enum ETerrainKeywords
 	TR_DAMAGETIMEMASK,
 	TR_FOOTCLIP,
 	TR_STEPVOLUME,
-	TR_WALKINGSTEPTIME,
-	TR_RUNNINGSTEPTIME,
+	TR_WALKSTEPTICS,
+	TR_RUNSTEPTICS,
 	TR_LEFTSTEPSOUNDS,
 	TR_RIGHTSTEPSOUNDS,
 	TR_LIQUID,
@@ -179,8 +179,8 @@ static const char *TerrainKeywords[] =
 	"damagetimemask",
 	"footclip",
 	"stepvolume",
-	"walkingsteptime",
-	"runningsteptime",
+	"walksteptics",
+	"runsteptics",
 	"leftstepsounds",
 	"rightstepsounds",
 	"liquid",
@@ -599,7 +599,7 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 
 		case GEN_Time:
 			sc.MustGetFloat ();
-			SET_FIELD (int, (int)(sc.Float * TICRATE));
+			SET_FIELD (int, (int)(sc.Float));
 			break;
 
 		case GEN_Bool:

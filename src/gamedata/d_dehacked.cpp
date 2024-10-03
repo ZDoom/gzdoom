@@ -3961,6 +3961,7 @@ void SetFriendly(AActor* a)
 {
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
 	a->flags |= MF_FRIENDLY;
+	a->flags3 |= MF3_NOBLOCKMONST;
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
 }
 
@@ -3968,6 +3969,7 @@ void ClearFriendly(AActor* a)
 {
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
 	a->flags &= ~MF_FRIENDLY;
+	a->flags3 &= ~MF3_NOBLOCKMONST;
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
 }
 
@@ -4123,7 +4125,7 @@ static FlagHandler flag1handlers[32] = {
 	{ SetTranslation2, ClearTranslation2, CheckTranslation2 },
 	F6(MF6_TOUCHY),
 	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
-	F(MF_FRIENDLY),
+	{ SetFriendly, ClearFriendly, [](AActor* a)->bool { return a->flags & MF_FRIENDLY; } },
 	{ SetTranslucent, ClearTranslucent, CheckTranslucent },
 };
 

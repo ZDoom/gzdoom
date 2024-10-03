@@ -381,6 +381,7 @@ enum //Key words
 	SBARINFO_MUGSHOT,
 	SBARINFO_CREATEPOPUP,
 	SBARINFO_PROTRUSION,
+	SBARINFO_APPENDSTATUSBAR,
 };
 
 enum //Bar types
@@ -410,6 +411,7 @@ static const char *SBarInfoTopLevel[] =
 	"mugshot",
 	"createpopup",
 	"protrusion",
+	"appendstatusbar",
 	NULL
 };
 
@@ -629,6 +631,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 				sc.MustGetToken(';');
 				break;
 			case SBARINFO_STATUSBAR:
+			case SBARINFO_APPENDSTATUSBAR:
 			{
 				if(!baseSet) //If the user didn't explicitly define a base, do so now.
 					gameType = GAME_Any;
@@ -638,11 +641,16 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 					barNum = sc.MustMatchString(StatusBars);
 				}
-				if (this->huds[barNum] != NULL)
+				// SBARINFO_APPENDSTATUSBAR shouldn't delete the old HUD if it exists.
+				const bool append = (sc.MustMatchString(SBarInfoTopLevel) == SBARINFO_APPENDSTATUSBAR);
+				if (!append)
 				{
-					delete this->huds[barNum];
+					if (this->huds[barNum] != NULL)
+					{
+						delete this->huds[barNum];
+					}
+					this->huds[barNum] = new SBarInfoMainBlock(this);
 				}
-				this->huds[barNum] = new SBarInfoMainBlock(this);
 				if(barNum == STBAR_AUTOMAP)
 				{
 					automapbar = true;

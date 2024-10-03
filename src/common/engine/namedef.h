@@ -278,6 +278,8 @@ xx(BuiltinNameToClass)
 xx(BuiltinClassCast)
 xx(BuiltinFunctionPtrCast)
 xx(BuiltinFindTranslation)
+xx(HandleDeprecatedFlags)
+xx(CheckDeprecatedFlags)
 
 xx(ScreenJobRunner)
 xx(Action)

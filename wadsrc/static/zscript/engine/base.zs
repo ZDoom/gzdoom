@@ -760,6 +760,8 @@ class Object native
 	private native static Class<Object> BuiltinNameToClass(Name nm, Class<Object> filter);
 	private native static Object BuiltinClassCast(Object inptr, Class<Object> test);
 	private native static Function<void> BuiltinFunctionPtrCast(Function<void> inptr, voidptr newtype);
+	private native static void HandleDeprecatedFlags(Object obj, bool set, int index);
+	private native static bool CheckDeprecatedFlags(Object obj, int index);
 	
 	native static uint MSTime();
 	native static double MSTimeF();

@@ -920,6 +920,18 @@ void SynthesizeFlagFields()
 				{
 					cls->VMType->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
 				}
+				else if (fl.Defs[i].flagbit == DEPF_MISSILEMORE || fl.Defs[i].flagbit == DEPF_MISSILEEVENMORE) // these need script side emulation because they have been around for many years.
+				{
+					auto field = cls->VMType->AddNativeField(FStringf("b%s", fl.Defs[i].name), TypeSInt32, 0, VARF_Native);
+					if (field)
+					{
+						// these are deprecated so flag accordingly with a proper message.
+						field->DeprecationMessage = "Use missilechancemult property instead";
+						field->mVersion = MakeVersion(4, 13, 0);
+						field->Flags |= VARF_Deprecated;
+						field->BitValue = fl.Defs[i].flagbit + 64;
+					}
+				}
 			}
 		}
 	}

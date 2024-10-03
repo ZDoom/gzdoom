@@ -2828,83 +2828,104 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 
 	// Special case: Assignment to a bitfield.
 	IsBitWrite = Base->GetBitValue();
+	if (IsBitWrite >= 0x10000)
+	{
+		// internal flags - need more here
+		IsBitWrite &= 0xffff;
+	}
 	return this;
 }
 
 ExpEmit FxAssign::Emit(VMFunctionBuilder *build)
 {
-	static const uint8_t loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
-	assert(Base->ValueType->GetRegType() == Right->ValueType->GetRegType());
-
-	ExpEmit pointer = Base->Emit(build);
-	Address = pointer;
-
-	ExpEmit result;
-	bool intconst = false;
-	int intconstval = 0;
-
-	if (Right->isConstant() && Right->ValueType->GetRegType() == REGT_INT)
+	if (IsBitWrite < 64)
 	{
-		intconst = true;
-		intconstval = static_cast<FxConstant*>(Right)->GetValue().GetInt();
-		result.Konst = true;
-		result.RegType = REGT_INT;
-	}
-	else
-	{
-		result = Right->Emit(build);
-	}
-	assert(result.RegType <= REGT_TYPE);
+		static const uint8_t loadops[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+		assert(Base->ValueType->GetRegType() == Right->ValueType->GetRegType());
 
-	if (pointer.Target)
-	{
-		if (result.Konst)
+		ExpEmit pointer = Base->Emit(build);
+		Address = pointer;
+
+		ExpEmit result;
+		bool intconst = false;
+		int intconstval = 0;
+
+		if (Right->isConstant() && Right->ValueType->GetRegType() == REGT_INT)
 		{
-			if (intconst) build->EmitLoadInt(pointer.RegNum, intconstval);
-			else build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
+			intconst = true;
+			intconstval = static_cast<FxConstant*>(Right)->GetValue().GetInt();
+			result.Konst = true;
+			result.RegType = REGT_INT;
 		}
 		else
 		{
-			build->Emit(Right->ValueType->GetMoveOp(), pointer.RegNum, result.RegNum);
+			result = Right->Emit(build);
 		}
-	}
-	else
-	{
-		if (result.Konst)
+		assert(result.RegType <= REGT_TYPE);
+
+		if (pointer.Target)
 		{
-			ExpEmit temp(build, result.RegType);
-			if (intconst) build->EmitLoadInt(temp.RegNum, intconstval);
-			else build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
+			if (result.Konst)
+			{
+				if (intconst) build->EmitLoadInt(pointer.RegNum, intconstval);
+				else build->Emit(loadops[result.RegType], pointer.RegNum, result.RegNum);
+			}
+			else
+			{
+				build->Emit(Right->ValueType->GetMoveOp(), pointer.RegNum, result.RegNum);
+			}
+		}
+		else
+		{
+			if (result.Konst)
+			{
+				ExpEmit temp(build, result.RegType);
+				if (intconst) build->EmitLoadInt(temp.RegNum, intconstval);
+				else build->Emit(loadops[result.RegType], temp.RegNum, result.RegNum);
+				result.Free(build);
+				result = temp;
+			}
+
+			if (IsBitWrite == -1)
+			{
+				build->Emit(Base->ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+			}
+			else
+			{
+				build->Emit(OP_SBIT, pointer.RegNum, result.RegNum, 1 << IsBitWrite);
+			}
+		}
+
+		if (AddressRequested)
+		{
 			result.Free(build);
-			result = temp;
+			return pointer;
 		}
 
-		if (IsBitWrite == -1)
-		{
-			build->Emit(Base->ValueType->GetStoreOp(), pointer.RegNum, result.RegNum, build->GetConstantInt(0));
+		pointer.Free(build);
+
+		if (intconst)
+		{	//fix int constant return for assignment
+			return Right->Emit(build);
 		}
 		else
 		{
-			build->Emit(OP_SBIT, pointer.RegNum, result.RegNum, 1 << IsBitWrite);
+			return result;
 		}
-
-	}
-
-	if (AddressRequested)
-	{
-		result.Free(build);
-		return pointer;
-	}
-
-	pointer.Free(build);
-
-	if(intconst)
-	{	//fix int constant return for assignment
-		return Right->Emit(build);
 	}
 	else
 	{
-		return result;
+		VMFunction* callfunc;
+		auto sym = FindBuiltinFunction(NAME_HandleDeprecatedFlags);
+
+		assert(sym);
+		callfunc = sym->Variants[0].Implementation;
+
+		FunctionCallEmitter emitters(callfunc);
+		emitters.AddParameter(build, Base);
+		emitters.AddParameter(build, Right);
+		emitters.AddParameterIntConst(IsBitWrite - 64);
+		return emitters.EmitCall(build);
 	}
 }
 
@@ -2934,23 +2955,40 @@ FxExpression *FxAssignSelf::Resolve(FCompileContext &ctx)
 
 ExpEmit FxAssignSelf::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
-	if (!pointer.Target)
+	if (Assignment->IsBitWrite < 64)
 	{
-		ExpEmit out(build, ValueType->GetRegType(), ValueType->GetRegCount());
-		if (Assignment->IsBitWrite != -1)
+		ExpEmit pointer = Assignment->Address; // FxAssign should have already emitted it
+		if (!pointer.Target)
 		{
-			build->Emit(OP_LBIT, out.RegNum, pointer.RegNum, 1 << Assignment->IsBitWrite);
+			ExpEmit out(build, ValueType->GetRegType(), ValueType->GetRegCount());
+			if (Assignment->IsBitWrite == -1)
+			{
+				build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+			}
+			else
+			{
+				build->Emit(OP_LBIT, out.RegNum, pointer.RegNum, 1 << Assignment->IsBitWrite);
+			}
+			return out;
 		}
 		else
 		{
-			build->Emit(ValueType->GetLoadOp(), out.RegNum, pointer.RegNum, build->GetConstantInt(0));
+			return pointer;
 		}
-		return out;
 	}
 	else
 	{
-		return pointer;
+		VMFunction* callfunc;
+		auto sym = FindBuiltinFunction(NAME_CheckDeprecatedFlags);
+
+		assert(sym);
+		callfunc = sym->Variants[0].Implementation;
+
+		FunctionCallEmitter emitters(callfunc);
+		emitters.AddParameter(build, Assignment->Base);
+		emitters.AddParameterIntConst(Assignment->IsBitWrite - 64);
+		emitters.AddReturn(REGT_INT);
+		return emitters.EmitCall(build);
 	}
 }
 
@@ -7728,56 +7766,73 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 
 ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit obj = classx->Emit(build);
-	assert(obj.RegType == REGT_POINTER);
-
-	if (obj.Konst)
+	if (membervar->BitValue < 64 || AddressRequested)
 	{
-		// If the situation where we are dereferencing a constant
-		// pointer is common, then it would probably be worthwhile
-		// to add new opcodes for those. But as of right now, I
-		// don't expect it to be a particularly common case.
-		ExpEmit newobj(build, REGT_POINTER);
-		build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
-		obj = newobj;
-	}
+		ExpEmit obj = classx->Emit(build);
+		assert(obj.RegType == REGT_POINTER);
 
-	if (membervar->Flags & VARF_Meta)
-	{
-		obj.Free(build);
-		ExpEmit meta(build, REGT_POINTER);
-		build->Emit(OP_META, meta.RegNum, obj.RegNum);
-		obj = meta;
-	}
-
-	if (AddressRequested)
-	{
-		if (membervar->Offset == 0)
+		if (obj.Konst)
 		{
-			return obj;
+			// If the situation where we are dereferencing a constant
+			// pointer is common, then it would probably be worthwhile
+			// to add new opcodes for those. But as of right now, I
+			// don't expect it to be a particularly common case.
+			ExpEmit newobj(build, REGT_POINTER);
+			build->Emit(OP_LKP, newobj.RegNum, obj.RegNum);
+			obj = newobj;
+		}
+
+		if (membervar->Flags & VARF_Meta)
+		{
+			obj.Free(build);
+			ExpEmit meta(build, REGT_POINTER);
+			build->Emit(OP_META, meta.RegNum, obj.RegNum);
+			obj = meta;
+		}
+
+		if (AddressRequested)
+		{
+			if (membervar->Offset == 0)
+			{
+				return obj;
+			}
+			obj.Free(build);
+			ExpEmit out(build, REGT_POINTER);
+			build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->Offset));
+			return out;
+		}
+
+		int offsetreg = build->GetConstantInt((int)membervar->Offset);
+		ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
+
+		if (membervar->BitValue == -1)
+		{
+			build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
+		}
+		else
+		{
+			ExpEmit out(build, REGT_POINTER);
+			build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, offsetreg);
+			build->Emit(OP_LBIT, loc.RegNum, out.RegNum, 1 << membervar->BitValue);
+			out.Free(build);
 		}
 		obj.Free(build);
-		ExpEmit out(build, REGT_POINTER);
-		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, build->GetConstantInt((int)membervar->Offset));
-		return out;
-	}
-
-	int offsetreg = build->GetConstantInt((int)membervar->Offset);
-	ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
-
-	if (membervar->BitValue == -1)
-	{
-		build->Emit(membervar->Type->GetLoadOp(), loc.RegNum, obj.RegNum, offsetreg);
+		return loc;
 	}
 	else
 	{
-		ExpEmit out(build, REGT_POINTER);
-		build->Emit(OP_ADDA_RK, out.RegNum, obj.RegNum, offsetreg);
-		build->Emit(OP_LBIT, loc.RegNum, out.RegNum, 1 << membervar->BitValue);
-		out.Free(build);
+		VMFunction* callfunc;
+		auto sym = FindBuiltinFunction(NAME_CheckDeprecatedFlags);
+
+		assert(sym);
+		callfunc = sym->Variants[0].Implementation;
+
+		FunctionCallEmitter emitters(callfunc);
+		emitters.AddParameter(build, classx);
+		emitters.AddParameterIntConst(membervar->BitValue - 64);
+		emitters.AddReturn(REGT_INT);
+		return emitters.EmitCall(build);
 	}
-	obj.Free(build);
-	return loc;
 }
 
 

@@ -361,6 +361,15 @@ void HandleDeprecatedFlags(AActor *actor, int set, int index)
 	}
 }
 
+// the interface here works on object, but currently all deprecated flags affect subclasses of Actor only
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, HandleDeprecatedFlags, HandleDeprecatedFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(set);
+	PARAM_INT(index);
+	HandleDeprecatedFlags(self, set, index);
+	return 0;
+}
 //===========================================================================
 //
 // CheckDeprecatedFlags
@@ -427,6 +436,13 @@ int CheckDeprecatedFlags(AActor *actor, int index)
 	}
 
 	return false; // Any entirely unknown flag is not set
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, CheckDeprecatedFlags, CheckDeprecatedFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(index);
+	ACTION_RETURN_INT(CheckDeprecatedFlags(self, index));
 }
 
 //==========================================================================

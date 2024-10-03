@@ -164,13 +164,17 @@ extend class Actor
 	void A_SentinelRefire()
 	{
 		A_FaceTarget ();
+		if (HitFriend())
+		{
+			SetState(SeeState);
+			return;
+		}
 
 		if (random[SentinelRefire]() >= 30)
 		{
 			if (target == NULL ||
 				target.health <= 0 ||
 				!CheckSight (target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES) ||
-				HitFriend() ||
 				(MissileState == NULL && !CheckMeleeRange()) ||
 				random[SentinelRefire]() < 40)
 			{

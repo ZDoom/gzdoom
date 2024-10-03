@@ -16,8 +16,8 @@ class Cyberdemon : Actor
 		PainChance 20;
 		Monster;
 		MinMissileChance 160;
+		MissileChanceMult 0.5;
 		+BOSS 
-		+MISSILEMORE
 		+FLOORCLIP
 		+NORADIUSDMG
 		+DONTMORPH

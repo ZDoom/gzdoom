@@ -475,7 +475,7 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 		AActor *defaults = (AActor*)bag.Info->Defaults;
 		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
 		{
-			HandleDeprecatedFlags(defaults, bag.Info, mod=='+', fd->flagbit);
+			HandleDeprecatedFlags(defaults, mod=='+', fd->flagbit);
 		}
 		else
 		{

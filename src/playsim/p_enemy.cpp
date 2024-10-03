@@ -373,8 +373,7 @@ static int P_CheckMissileRange (AActor *actor)
 	if (actor->MeleeState != nullptr && dist < actor->meleethreshold)
 		return false;	// From the Revenant: close enough for fist attack
 
-	if (actor->flags4 & MF4_MISSILEMORE) dist *= 0.5;
-	if (actor->flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
+	dist *= actor->missilechancemult;
 
 	int mmc = int(actor->MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= min(int(dist), mmc);

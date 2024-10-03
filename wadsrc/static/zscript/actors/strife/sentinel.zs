@@ -11,6 +11,7 @@ class Sentinel : Actor
 		Radius 23;
 		Height 53;
 		Mass 300;
+		MissileChanceMult 0.5;
 		Monster;
 		+SPAWNCEILING
 		+NOGRAVITY
@@ -18,7 +19,6 @@ class Sentinel : Actor
 		+NOBLOOD
 		+NOBLOCKMONST
 		+INCOMBAT
-		+MISSILEMORE
 		+LOOKALLAROUND
 		+NEVERRESPAWN
 		MinMissileChance 150;

@@ -13,9 +13,9 @@ class SpiderMastermind : Actor
 		Mass 1000;
 		Speed 12;
 		PainChance 40;
+		MissileChanceMult 0.5;
 		Monster;
 		+BOSS
-		+MISSILEMORE
 		+FLOORCLIP
 		+NORADIUSDMG
 		+DONTMORPH

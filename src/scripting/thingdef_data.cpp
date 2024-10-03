@@ -75,8 +75,8 @@ extern float			BackbuttonAlpha;
 #define DEFINE_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
 #define DEFINE_PROTECTED_FLAG(prefix, name, type, variable) { (unsigned int)prefix##_##name, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_ReadOnly|VARF_InternalAccess }
 #define DEFINE_FLAG2(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native }
-#define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_Deprecated }
-#define DEFINE_DEPRECATED_FLAG(name) { DEPF_##name, #name, -1, 0, true }
+#define DEFINE_FLAG2_DEPRECATED(symbol, name, type, variable, version) { (unsigned int)symbol, #name, (int)(size_t)&((type*)1)->variable - 1, sizeof(((type *)0)->variable), VARF_Native|VARF_Deprecated }
+#define DEFINE_DEPRECATED_FLAG(name, version) { DEPF_##name, #name, -1, 0, VARF_Deprecated, version }
 #define DEFINE_DUMMY_FLAG(name, deprec) { DEPF_UNUSED, #name, -1, 0, deprec? VARF_Deprecated:0 }
 
 // internal flags. These do not get exposed to actor definitions but scripts need to be able to access them as variables.
@@ -210,8 +210,6 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF4, ACTLIKEBRIDGE, AActor, flags4),
 	DEFINE_FLAG(MF4, STRIFEDAMAGE, AActor, flags4),
 	DEFINE_FLAG(MF4, CANUSEWALLS, AActor, flags4),
-	DEFINE_FLAG(MF4, MISSILEMORE, AActor, flags4),
-	DEFINE_FLAG(MF4, MISSILEEVENMORE, AActor, flags4),
 	DEFINE_FLAG(MF4, FORCERADIUSDMG, AActor, flags4),
 	DEFINE_FLAG(MF4, DONTFALL, AActor, flags4),
 	DEFINE_FLAG(MF4, SEESDAGGERS, AActor, flags4),
@@ -410,6 +408,11 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG2(BOUNCE_NotOnSky, DONTBOUNCEONSKY, AActor, BounceFlags),
 	
 	DEFINE_FLAG2(OF_Transient, NOSAVEGAME, AActor, ObjectFlags),
+
+	// Deprecated flags which need a ZScript workaround.
+	DEFINE_DEPRECATED_FLAG(MISSILEMORE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(MISSILEEVENMORE, MakeVersion(4, 13, 0)),
+
 };
 
 // These won't be accessible through bitfield variables
@@ -417,24 +420,25 @@ static FFlagDef MoreFlagDefs[] =
 {
 
 	// Deprecated flags. Handling must be performed in HandleDeprecatedFlags
-	DEFINE_DEPRECATED_FLAG(FIREDAMAGE),
-	DEFINE_DEPRECATED_FLAG(ICEDAMAGE),
-	DEFINE_DEPRECATED_FLAG(LOWGRAVITY),
-	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE),
-	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE),
-	DEFINE_DEPRECATED_FLAG(QUARTERGRAVITY),
-	DEFINE_DEPRECATED_FLAG(FIRERESIST),
-	DEFINE_DEPRECATED_FLAG(HERETICBOUNCE),
-	DEFINE_DEPRECATED_FLAG(HEXENBOUNCE),
-	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE),
-	DEFINE_DEPRECATED_FLAG(HIGHERMPROB),
+	// Note: Although deprecated since DECORATE times, they were never actually flagged as deprecated before 4.13.0 and no message was output...
+	DEFINE_DEPRECATED_FLAG(FIREDAMAGE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(ICEDAMAGE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(LOWGRAVITY, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(SHORTMISSILERANGE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(LONGMELEERANGE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(QUARTERGRAVITY, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(FIRERESIST, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(HERETICBOUNCE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(HEXENBOUNCE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(DOOMBOUNCE, MakeVersion(4, 13, 0)),
+	DEFINE_DEPRECATED_FLAG(HIGHERMPROB, MakeVersion(4, 13, 0)),
 
 	// Deprecated flags with no more existing functionality.
 	DEFINE_DUMMY_FLAG(FASTER, true),				// obsolete, replaced by 'Fast' state flag
 	DEFINE_DUMMY_FLAG(FASTMELEE, true),			// obsolete, replaced by 'Fast' state flag
 
 	// Deprecated name as an alias
-	DEFINE_FLAG2_DEPRECATED(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4),
+	DEFINE_FLAG2_DEPRECATED(MF4_DONTHARMCLASS, DONTHURTSPECIES, AActor, flags4, 0),
 
 	// Various Skulltag flags that are quite irrelevant to ZDoom
 	// [BC] New DECORATE flag defines here.

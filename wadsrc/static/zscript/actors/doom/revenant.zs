@@ -15,7 +15,7 @@ class Revenant : Actor
 		PainChance 100;
 		Monster;
 		MeleeThreshold 196;
-		+MISSILEMORE 
+		MissileChanceMult 0.5;
 		+FLOORCLIP
 		SeeSound "skeleton/sight";
 		PainSound "skeleton/pain";

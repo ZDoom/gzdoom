@@ -262,8 +262,8 @@ enum ActorFlag4
 	MF4_STRIFEDAMAGE	= 0x00000100,	// Strife projectiles only do up to 4x damage, not 8x
 
 	MF4_CANUSEWALLS		= 0x00000200,	// Can activate 'use' specials
-	MF4_MISSILEMORE		= 0x00000400,	// increases the chance of a missile attack
-	MF4_MISSILEEVENMORE	= 0x00000800,	// significantly increases the chance of a missile attack
+	//		= 0x00000400,
+	//		= 0x00000800,
 	MF4_FORCERADIUSDMG	= 0x00001000,	// if put on an object it will override MF3_NORADIUSDMG
 	MF4_DONTFALL		= 0x00002000,	// Doesn't have NOGRAVITY disabled when dying.
 	MF4_SEESDAGGERS		= 0x00004000,	// This actor can see you striking with a dagger
@@ -1255,6 +1255,7 @@ public:
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
 	double			maxtargetrange;	// any target farther away cannot be attacked
+	double			missilechancemult; // distance multiplier for CheckMeleeRange, formerly done with MISSILE(EVEN)MORE flags.
 	double			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	double			wallbouncefactor;	// The bounce factor for walls can be different.
 	double			Gravity;		// [GRB] Gravity factor

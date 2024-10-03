@@ -187,6 +187,7 @@ class Actor : Thinker native
 	native Actor Alternative;
 	native Actor goal;
 	native uint8 MinMissileChance;
+	native double MissileChanceMult;
 	native int8 LastLookPlayerNumber;
 	native uint SpawnFlags;
 	native double meleethreshold;
@@ -339,6 +340,7 @@ class Actor : Thinker native
 	property WeaveIndexXY: WeaveIndexXY;
 	property WeaveIndexZ: WeaveIndexZ;
 	property MinMissileChance: MinMissileChance;
+	property MissileChanceMult: MissileChanceMult;
 	property MaxStepHeight: MaxStepHeight;
 	property MaxDropoffHeight: MaxDropoffHeight;
 	property MaxSlopeSteepness: MaxSlopeSteepness;

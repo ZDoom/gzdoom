@@ -13,12 +13,12 @@ class HereticImp : Actor
 		Mass 50;
 		Speed 10;
 		Painchance 200;
+		MissileChanceMult 0.5;
 		Monster;
 		+FLOAT
 		+NOGRAVITY
 		+SPAWNFLOAT
 		+DONTOVERLAP
-		+MISSILEMORE
 		SeeSound "himp/sight";
 		AttackSound "himp/attack";
 		PainSound "himp/pain";
@@ -159,7 +159,7 @@ class HereticImpLeader : HereticImp
 	{
 		Species "HereticImpLeader";
 		Health 80;
-		-MISSILEMORE
+		MissileChanceMult 1;
 		AttackSound "himp/leaderattack";
 	}
 	States

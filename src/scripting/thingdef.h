@@ -66,12 +66,13 @@ struct FFlagDef
 	int structoffset;
 	int fieldsize;
 	int varflags;
+	VersionInfo deprecationVersion;
 };
 
 void FinalizeClass(PClass *cls, FStateDefinitions &statedef);
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2, bool strict = false);
-void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
-bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index);
+void HandleDeprecatedFlags(AActor *defaults, int set, int index);
+int CheckDeprecatedFlags(AActor *actor, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
 void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
 bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printerror = true);
@@ -229,6 +230,9 @@ enum
 	DEPF_DOOMBOUNCE = 11,
 	DEPF_INTERHUBSTRIP = 12,
 	DEPF_HIGHERMPROB = 13,
+	// all that follow need ZScript emulation!
+	DEPF_MISSILEMORE = 14,
+	DEPF_MISSILEEVENMORE = 15
 };
 
 // Types of old style decorations

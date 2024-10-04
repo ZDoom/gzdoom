@@ -83,7 +83,8 @@ enum ETerrainKeywords
 	TR_RIGHTSTEPSOUNDS,
 	TR_LIQUID,
 	TR_FRICTION,
-	TR_ALLOWPROTECTION
+	TR_ALLOWPROTECTION,
+	TR_STEPSOUNDS
 };
 
 enum EGenericType
@@ -187,6 +188,7 @@ static const char *TerrainKeywords[] =
 	"friction",
 	"allowprotection",
 	"damageonland",
+	"stepsounds",
 	NULL
 };
 
@@ -223,6 +225,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Custom, {(size_t)ParseFriction} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, AllowProtection)} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, DamageOnLand)} },
+	{ GEN_Sound,  {myoffsetof(FTerrainDef, StepSound)} },
 };
 
 
@@ -747,3 +750,4 @@ DEFINE_FIELD(FTerrainDef, AllowProtection)
 DEFINE_FIELD(FTerrainDef, DamageOnLand)
 DEFINE_FIELD(FTerrainDef, Friction)
 DEFINE_FIELD(FTerrainDef, MoveFactor)
+DEFINE_FIELD(FTerrainDef, StepSound)

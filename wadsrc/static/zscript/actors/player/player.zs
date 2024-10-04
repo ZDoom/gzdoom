@@ -1742,6 +1742,15 @@ class PlayerPawn : Actor
 
 			if (Delay <= 0) return;
 
+			//Generic foot-agnostic sound takes precedence.
+			if (Ground.StepSound && GetAge() % Delay == 0)
+			{
+				A_StartSound (Ground.StepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
+				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
+				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
+				return;
+			}
+
 			//Apparently most people walk with their right foot first, so assume that here.
 			bool LeftStep; //Prevent the right step playing twice.
 			if (GetAge() % (Delay*2) == 0)

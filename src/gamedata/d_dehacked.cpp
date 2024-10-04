@@ -3952,7 +3952,7 @@ void ClearCountitem(AActor* a)
 {
 	if (a->flags & MF_COUNTITEM)
 	{
-		a->flags |= MF_COUNTITEM;
+		a->flags &= ~MF_COUNTITEM;
 		a->Level->total_items--;
 	}
 }

@@ -118,7 +118,7 @@ class Acolyte : StrifeHumanoid
 	void A_BeShadowyFoe()
 	{
 		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
-		bFriendly = false;
+		A_SetFriendly(false);
 	}
 
 	//============================================================================

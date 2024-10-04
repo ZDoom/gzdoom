@@ -250,7 +250,7 @@ extend class Actor
 				else if (originator.player)
 				{
 					// A player always spawns a monster friendly to him
-					mo.bFriendly = true;
+					mo.A_SetFriendly(true);
 					mo.SetFriendPlayer(originator.player);
 
 					Actor attacker=originator.player.attacker;

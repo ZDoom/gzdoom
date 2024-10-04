@@ -490,6 +490,11 @@ void SBarInfo::ParseSBarInfo(int lump)
 			continue;
 		}
 		int baselump = -2;
+		FString SBarInfoTopLevelString;
+		if(sc.GetString(SBarInfoTopLevelString))
+		{ // Store the string if the next token is a string, and revert scanner state afterwards
+			sc.UnGet();
+		}
 		switch(sc.MustMatchString(SBarInfoTopLevel))
 		{
 			case SBARINFO_BASE:
@@ -642,7 +647,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					barNum = sc.MustMatchString(StatusBars);
 				}
 				// SBARINFO_APPENDSTATUSBAR shouldn't delete the old HUD if it exists.
-				const bool append = (sc.MustMatchString(SBarInfoTopLevel) == SBARINFO_APPENDSTATUSBAR);
+				const bool append = (SBarInfoTopLevelString.CompareNoCase("appendstatusbar") == 0);
 				if (!append)
 				{
 					if (this->huds[barNum] != NULL)

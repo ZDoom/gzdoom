@@ -1,9 +1,68 @@
+// Random spawner tracker singleton ----------------------------------------
+
+class RandomSpawnerTracker : Thinker {
+	protected int size;
+	protected Array<Class<Actor> > origin;
+	protected Array<Class<Actor> > destClass;
+	protected Array<Actor> dest;
+
+	static RandomSpawnerTracker Get() {
+		RandomSpawnerTracker instance = RandomSpawnerTracker(ThinkerIterator.Create("RandomSpawnerTracker").Next());
+		
+		if (instance == null) {
+			instance = new("RandomSpawnerTracker");
+			instance.Init();
+		}
+		
+		return instance;
+	}
+
+	virtual protected void Init() {
+		size = 0;
+	}
+
+
+	virtual protected void Delete(int index) {
+		self.origin.Delete(index);
+		self.destClass.delete(index);
+		self.dest.delete(index);
+		self.size--;
+	}
+
+	void RegisterSpawn(Actor from, Actor spawned) {
+		let root = from.GetClass();
+
+		// find intermediary link to remove
+		// (this prevents intermediary spawns from lingering without GC)
+		for (int i = 0; i < size; i++) {
+			if (dest[i] == from) {
+				root = self.origin[i];
+				self.Delete(i);
+				break;
+			}
+		}
+
+		origin.Push(root);
+		dest.Push(spawned);
+		destClass.Push(spawned.GetClass());
+		size++;
+	}
+
+	Class<Actor>, bool GetSpawnOrigin(Actor Other) {
+		for (int i = 0; i < size; i++) {
+			if (dest[i] == Other) {
+				return origin[i], true;
+			}
+		}
+		return Other.GetClass(), false;
+	}
+}
+
 
 // Random spawner ----------------------------------------------------------
 
 class RandomSpawner : Actor
 {
-	
 	const MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough, honestly.
 	
 	Default
@@ -230,8 +289,9 @@ class RandomSpawner : Actor
 			if (newmobj.bMissile && !(newmobj is 'RandomSpawner'))
 				newmobj.CheckMissileSpawn(0);
 			// Bouncecount is used to count how many recursions we're in.
-			if (newmobj is 'RandomSpawner')
+			if (newmobj is 'RandomSpawner') 
 				newmobj.bouncecount = ++bouncecount;
+
 			// If the spawned actor has either of those flags, it's a boss.
 			if (newmobj.bBossDeath || newmobj.bBoss)
 				boss = true;
@@ -239,6 +299,9 @@ class RandomSpawner : Actor
 			readonly<Actor> rep = GetDefaultByType(GetReplacee(GetClass()));
 			if (rep && (rep.bBossDeath || rep.bBoss))
 				boss = true;
+
+			// Track random spawner activity so mods can interface with it
+			RandomSpawnerTracker.Get().RegisterSpawn(self, newmobj);
 
 			PostSpawn(newmobj);
 		}

@@ -1740,32 +1740,26 @@ class PlayerPawn : Actor
 			bool Running = (cmd.buttons & BT_RUN); //Holding down run key, or it's toggled.
 			int Delay = !Running ? Ground.WalkStepTics : Ground.RunStepTics;
 
-			if (Delay <= 0) return;
+			if (Delay <= 0 || GetAge() % Delay != 0) return;
+
+			Sound Step = Ground.StepSound;
 
 			//Generic foot-agnostic sound takes precedence.
-			if (Ground.StepSound && GetAge() % Delay == 0)
+			if (!Step)
 			{
-				A_StartSound (Ground.StepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
-				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
-				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
-				return;
+				//Apparently most people walk with their right foot first, so assume that here.
+				if (GetAge() % (Delay*2) == 0)
+					Step = Ground.LeftStepSound;
+				else
+					Step = Ground.RightStepSound;
 			}
 
-			//Apparently most people walk with their right foot first, so assume that here.
-			bool LeftStep; //Prevent the right step playing twice.
-			if (GetAge() % (Delay*2) == 0)
-			{
-				A_StartSound (Ground.LeftStepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
-				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
-				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
-				LeftStep = True;
-			}
-			if (!LeftStep && GetAge() % Delay == 0)
-			{
-				A_StartSound (Ground.RightStepSound,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
-				bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
-				HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
-			}
+			if (Step)
+				A_StartSound (Step,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
+
+			//Steps make splashes regardless.
+			bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
+			HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
 		}
 	}
 

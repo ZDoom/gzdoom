@@ -6725,10 +6725,7 @@ foundone:
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
 	if (!(flags & THW_NOVEL) && ((thing->flags3 & MF3_ISMONSTER || thing->player) && thing->Vel.Z >= -6) && !force)
-	{
-		Printf("Aborting P_HitWater().");
 		return Terrains[terrainnum].IsLiquid;
-	}
 
 	splash = &Splashes[splashnum];
 

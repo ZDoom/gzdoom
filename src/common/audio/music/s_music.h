@@ -74,6 +74,7 @@ struct MidiDeviceSetting
 typedef TMap<int, MidiDeviceSetting> MidiDeviceMap;
 typedef TMap<int, float> MusicVolumeMap;
 
+extern TMap<int, int> ModPlayers;
 extern MidiDeviceMap MidiDevices;
 extern MusicVolumeMap MusicVolumes;
 extern MusicCallbacks mus_cb;

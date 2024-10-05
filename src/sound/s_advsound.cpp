@@ -147,6 +147,7 @@ enum SICommands
 	SI_EDFOverride,
 	SI_Attenuation,
 	SI_PitchSet,
+	SI_ModPlayer,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -236,7 +237,8 @@ static const char *SICommandStrings[] =
 	"$edfoverride",
 	"$attenuation",
 	"$pitchset",
-	NULL
+	"$modplayer",
+	nullptr
 };
 
 static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
@@ -571,6 +573,7 @@ void S_ClearSoundData()
 	MusicAliases.Clear();
 	MidiDevices.Clear();
 	HexenMusic.Clear();
+	ModPlayers.Clear();
 }
 
 //==========================================================================
@@ -1109,9 +1112,23 @@ static void S_AddSNDINFO (int lump)
 					sc.RestorePos(save);
 					sc.MustGetString();
 				}
-				if (lumpnum >= 0) MidiDevices[lumpnum] = devset;
+				if (lumpnum >= 0) MidiDevices.Insert(lumpnum, devset);
 				}
 				break;
+
+			case SI_ModPlayer: {
+				sc.MustGetString();
+				int lumpnum = mus_cb.FindMusic(sc.String);
+				int player;
+				FScanner::SavedPos save = sc.SavePos();
+
+				sc.MustGetString();
+				if (sc.Compare("XMP") || sc.Compare("libXMP")) player = 0;
+				else if (sc.Compare("dumb") || sc.Compare("libdumb")) player = 1;
+				else sc.ScriptError("Unknown Module player %s\n", sc.String);
+				if (lumpnum >= 0) ModPlayers.Insert(lumpnum, player);
+			}
+			break;
 
 			case SI_IfDoom: //also Chex
 			case SI_IfStrife:

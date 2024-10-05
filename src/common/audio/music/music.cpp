@@ -74,6 +74,7 @@ float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 MusicVolumeMap MusicVolumes;
 MidiDeviceMap MidiDevices;
+TMap<int, int> ModPlayers;
 
 static int DefaultFindMusic(const char* fn)
 {
@@ -93,6 +94,7 @@ EXTERN_CVAR(Float, fluid_gain)
 
 CVAR(Bool, mus_calcgain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
 CVAR(Bool, mus_usereplaygain, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.
+CVAR(Int, mod_preferred_player, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)// toggle between libXMP and Dumb. Unlike other sound CVARs this is not directly mapped to ZMusic's config.
 
 // CODE --------------------------------------------------------------------
 
@@ -769,6 +771,7 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	{
 		int lumpnum = mus_cb.FindMusic(musicname);
 		MidiDeviceSetting* devp = MidiDevices.CheckKey(lumpnum);
+		int* mplay = ModPlayers.CheckKey(lumpnum);
 
 		auto volp = MusicVolumes.CheckKey(lumpnum);
 		if (volp)
@@ -781,6 +784,12 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 			CheckReplayGain(musicname, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
 		}
 		auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
+		int mod_player = mplay? *mplay : *mod_preferred_player;
+		int scratch;
+
+		// This config var is only effective when opening a music stream so there's no need for active synchronization. Setting it here is sufficient.
+		// Ideally this should have been a parameter to ZMusic_OpenSong, but that would have necessitated an API break.
+		ChangeMusicSettingInt(zmusic_mod_preferredplayer, mus_playing.handle, mod_player, &scratch);
 		mus_playing.handle = ZMusic_OpenSong(mreader, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
 		if (mus_playing.handle == nullptr)
 		{

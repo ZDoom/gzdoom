@@ -70,7 +70,7 @@ protected:
 	FGameTexture* NetTexture = nullptr;
 public:
 	FStartScreen(int maxp) { MaxPos = maxp; }
-	virtual ~FStartScreen() = default;
+	virtual ~FStartScreen();
 	void Render(bool force = false);
 	bool Progress(int);
 	void NetProgress(int count);

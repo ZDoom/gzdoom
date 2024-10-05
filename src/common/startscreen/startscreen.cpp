@@ -372,6 +372,13 @@ FStartScreen* GetGameStartScreen(int max_progress)
 	return nullptr;
 }
 
+FStartScreen::~FStartScreen()
+{
+	if (StartupTexture) delete StartupTexture;
+	if (HeaderTexture) delete HeaderTexture;
+	if (NetTexture) delete NetTexture;
+}
+
 //==========================================================================
 //
 // ST_Util_ClearBlock

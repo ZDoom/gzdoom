@@ -330,7 +330,8 @@ void PType::StaticInit()
 
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeRawFunction = new PPointer;
-		TypeRawFunction->mDescriptiveName = "Raw Function Pointer";
+	TypeRawFunction->mDescriptiveName = "Raw Function Pointer";
+	TypeTable.AddType(TypeRawFunction, NAME_None);
 	TypeVMFunction = NewPointer(NewStruct("VMFunction", nullptr, true));
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
 	TypeStringStruct = NewStruct("Stringstruct", nullptr, true);

@@ -248,6 +248,9 @@ public:
 	void Serialize(FSerializer &arc, bool hubload);
 	DThinker *FirstThinker (int statnum);
 
+	void PlayMidLevelCutscene(const char *SceneName);
+	void PlayMidLevelCutsceneNum(int iter);
+
 	// g_Game
 	void PlayerReborn (int player);
 	bool CheckSpot (int playernum, FPlayerStart *mthing);

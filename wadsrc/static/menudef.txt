@@ -2060,11 +2060,17 @@ OptionValue ModVolumeRamps
 	2.0, "$OPTVAL_FULLRAMPING"
 }
 
+OptionValue ModReplayers
+{
+	0.0, "$OPTVAL_LIBXMP"
+	1.0, "$OPTVAL_DUMB"
+}
 
 
 OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
+	Option "$MODMNU_REPLAYER",				"mod_preferred_player", "ModReplayers"
 	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 0.25, 4, 0.1, 1
 	Option "$ADVSNDMNU_SAMPLERATE",			"mod_samplerate", "SampleRates"
 	Option "$MODMNU_QUALITY",				"mod_interp", "ModQuality"

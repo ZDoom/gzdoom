@@ -426,8 +426,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
       lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8
-      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default = "FFFFFF"
-      SoftShadowRadius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
+      lm_suncolor = <int>;          // ZDRay lightmap sun color. Default is white (0xFFFFFF).
+
+      light_softshadowradius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
 
       friendlyseeblocks = <int>;    // How far (in block units) a friendly monster can see other monsters. Default 10
 

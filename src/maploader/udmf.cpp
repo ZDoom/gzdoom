@@ -791,6 +791,7 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
+			case NAME_light_softshadowradius:
 			case NAME_lm_suncolor:
 			case NAME_lm_sampledist:
 				CHECK_N(Zd | Zdt)

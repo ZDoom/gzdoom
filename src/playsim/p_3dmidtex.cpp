@@ -229,6 +229,8 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 {
 	if (line->sidedef[0]==NULL || line->sidedef[1]==NULL) return false;
 	
+	assert(sideno >= 0 && sideno <= 1);
+
 	side_t *side = line->sidedef[sideno];
 	FTextureID texnum = side->GetTexture(side_t::mid);
 	if (!texnum.isValid()) return false;
@@ -265,6 +267,9 @@ DEFINE_ACTION_FUNCTION(_Line, GetMidTexturePosition)
 	PARAM_INT(side);
 	double top = 0.0;
 	double bottom = 0.0;
+
+	if(side < 0) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "side is negative");
+	else if(side > 1) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "side is greater than one");
 
 	bool res = P_GetMidTexturePosition(self,side,&top,&bottom);
 	if (numret > 2) ret[2].SetFloat(bottom);

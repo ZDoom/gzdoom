@@ -43,6 +43,8 @@
 #include "s_soundinternal.h"
 #include "i_time.h"
 
+EXTERN_CVAR(Bool, cl_capfps)
+
 class FBurnTexture : public FTexture
 {
 	TArray<uint32_t> WorkBuffer;
@@ -163,6 +165,8 @@ protected:
 public:
 	virtual ~Wiper();
 	virtual bool Run(int ticks) = 0;
+	virtual bool RunInterpolated(double ticks) { return true; };
+	virtual bool Interpolatable() { return false; }
 	virtual void SetTextures(FGameTexture* startscreen, FGameTexture* endscreen)
 	{
 		startScreen = startscreen;
@@ -177,9 +181,11 @@ class Wiper_Crossfade : public Wiper
 {
 public:
 	bool Run(int ticks) override;
+	bool RunInterpolated(double ticks) override;
+	bool Interpolatable() override { return true; }
 	
 private:
-	int Clock = 0;
+	float Clock = 0;
 };
 
 class Wiper_Melt : public Wiper
@@ -187,10 +193,12 @@ class Wiper_Melt : public Wiper
 public:
 	Wiper_Melt();
 	bool Run(int ticks) override;
+	bool RunInterpolated(double ticks) override;
+	bool Interpolatable() override { return true; }
 	
 private:
 	enum { WIDTH = 320, HEIGHT = 200 };
-	int y[WIDTH];
+	double y[WIDTH];
 };
 
 class Wiper_Burn : public Wiper
@@ -268,7 +276,23 @@ bool Wiper_Crossfade::Run(int ticks)
 	Clock += ticks;
 	DrawTexture(twod, startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
 	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, DTA_Alpha, clamp(Clock / 32.f, 0.f, 1.f), TAG_DONE);
-	return Clock >= 32;
+	return Clock >= 32.;
+}
+
+//==========================================================================
+//
+// OpenGLFrameBuffer :: Wiper_Crossfade :: Run
+//
+// Fades the old screen into the new one over 32 ticks.
+//
+//==========================================================================
+
+bool Wiper_Crossfade::RunInterpolated(double ticks)
+{
+	Clock += ticks;
+	DrawTexture(twod, startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
+	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, DTA_Alpha, clamp(Clock / 32.f, 0.f, 1.f), TAG_DONE);
+	return Clock >= 32.;
 }
 
 //==========================================================================
@@ -282,7 +306,7 @@ Wiper_Melt::Wiper_Melt()
 	y[0] = -(M_Random() & 15);
 	for (int i = 1; i < WIDTH; ++i)
 	{
-		y[i] = clamp(y[i-1] + (M_Random() % 3) - 1, -15, 0);
+		y[i] = clamp(y[i-1] + (double)(M_Random() % 3) - 1., -15., 0.);
 	}
 }
 
@@ -307,25 +331,25 @@ bool Wiper_Melt::Run(int ticks)
 		{
 			if (y[i] < HEIGHT)
 			{
-				if (y[i] < 0)
-					y[i]++;
-				else if (y[i] < 16)
-					y[i] += y[i] + 1;
+				if (y[i] < 0.)
+					y[i] = y[i] + 1.;
+				else if (y[i] < 16.)
+					y[i] += y[i] + 1.;
 				else
-					y[i] = min<int>(y[i] + 8, HEIGHT);
+					y[i] = min<double>(y[i] + 8., HEIGHT);
 				done = false;
 			}
 			if (ticks == 0)
 			{
 				struct {
 					int32_t x;
-					int32_t y;
+					double y;
 				} dpt;
 				struct {
 					int32_t left;
-					int32_t top;
+					double top;
 					int32_t right;
-					int32_t bottom;
+					double bottom;
 				} rect;
 				
 				// Only draw for the final tick.
@@ -333,7 +357,7 @@ bool Wiper_Melt::Run(int ticks)
 				int w = startScreen->GetTexelWidth();
 				int h = startScreen->GetTexelHeight();
 				dpt.x = i * w / WIDTH;
-				dpt.y = max(0, y[i] * h / HEIGHT);
+				dpt.y = max(0., y[i] * (double)h / (double)HEIGHT);
 				rect.left = dpt.x;
 				rect.top = 0;
 				rect.right = (i + 1) * w / WIDTH;
@@ -343,6 +367,77 @@ bool Wiper_Melt::Run(int ticks)
 					DrawTexture(twod, startScreen, 0, dpt.y, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, DTA_Masked, false, TAG_DONE);
 				}
 			}
+		}
+	}
+	return done;
+}
+
+//==========================================================================
+//
+// Wiper_Melt :: RunInterpolated
+//
+// Melts the old screen into the new one over 32 ticks (interpolated).
+//
+//==========================================================================
+
+bool Wiper_Melt::RunInterpolated(double ticks)
+{
+	bool done = false;
+	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
+
+	// Copy the old screen in vertical strips on top of the new one.
+	while (ticks > 0.)
+	{
+		done = true;
+		for (int i = 0; i < WIDTH; i++)
+		{
+			if (y[i] < (double)HEIGHT)
+			{
+				if (ticks > 0. && ticks < 1.)
+				{
+					if (y[i] < 0)
+						y[i] += ticks;
+					else if (y[i] < 16)
+						y[i] += (y[i] + 1) * ticks;
+					else
+						y[i] = min<double>(y[i] + (8 * ticks), (double)HEIGHT);
+				}
+				else if (y[i] < 0.)
+					y[i] = y[i] + 1.;
+				else if (y[i] < 16.)
+					y[i] += y[i] + 1.;
+				else
+					y[i] = min<double>(y[i] + 8., HEIGHT);
+				done = false;
+			}
+		}
+		ticks -= 1.;
+	}
+	for (int i = 0; i < WIDTH; i++)
+	{
+		struct {
+			int32_t x;
+			double y;
+		} dpt;
+		struct {
+			int32_t left;
+			double top;
+			int32_t right;
+			double bottom;
+		} rect;
+
+		// Only draw for the final tick.
+		int w = startScreen->GetTexelWidth();
+		double h = startScreen->GetTexelHeight();
+		dpt.x = i * w / WIDTH;
+		dpt.y = max(0., y[i] * (double)h / (double)HEIGHT);
+		rect.left = dpt.x;
+		rect.top = 0;
+		rect.right = (i + 1) * w / WIDTH;
+		rect.bottom = h - dpt.y;
+		if (rect.bottom > rect.top)
+		{
+			DrawTexture(twod, startScreen, 0, dpt.y, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_ClipLeft, rect.left, DTA_ClipRight, rect.right, DTA_Masked, false, TAG_DONE);
 		}
 	}
 	return done;
@@ -423,6 +518,7 @@ void PerformWipe(FTexture* startimg, FTexture* endimg, int wipe_type, bool stops
 {
 	// wipe update
 	uint64_t wipestart, nowtime, diff;
+	double diff_frac;
 	bool done;
 
 	GSnd->SetSfxPaused(true, 1);
@@ -438,20 +534,34 @@ void PerformWipe(FTexture* startimg, FTexture* endimg, int wipe_type, bool stops
 
 	do
 	{
-		do
+		if (wiper->Interpolatable() && !cl_capfps)
 		{
-			I_WaitVBL(2);
 			nowtime = I_msTime();
-			diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
-		} while (diff < 1);
-		wipestart = nowtime;
-		twod->Begin(screen->GetWidth(), screen->GetHeight());
-		done = wiper->Run(1);
-		if (overlaydrawer) overlaydrawer();
-		twod->End();
-		screen->Update();
-		twod->OnFrameDone();
-
+			diff_frac = (nowtime - wipestart) * 40. / 1000.;	// Using 35 here feels too slow.
+			wipestart = nowtime;
+			twod->Begin(screen->GetWidth(), screen->GetHeight());
+			done = wiper->RunInterpolated(diff_frac);
+			if (overlaydrawer) overlaydrawer();
+			twod->End();
+			screen->Update();
+			twod->OnFrameDone();
+		}
+		else
+		{
+			do
+			{
+				I_WaitVBL(2);
+				nowtime = I_msTime();
+				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
+			} while (diff < 1);
+			wipestart = nowtime;
+			twod->Begin(screen->GetWidth(), screen->GetHeight());
+			done = wiper->Run(1);
+			if (overlaydrawer) overlaydrawer();
+			twod->End();
+			screen->Update();
+			twod->OnFrameDone();
+		}
 	} while (!done);
 	delete wiper;
 	I_FreezeTime(false);

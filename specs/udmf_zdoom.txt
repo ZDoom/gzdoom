@@ -586,23 +586,29 @@ arg0str in dynamic lights.
 Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
 
-1.31 22.12.2019
+1.31 31.10.2018
+Added destructible level geometry properties.
+
+1.32 22.12.2019
 Coloriation options added
 
-1.32 28.06.2021
+1.33 28.06.2021
 Blocklandmonsters MBF21 flag
 
-1.33 06.11.2021
+1.34 06.11.2021
 Added separate light levels for sidedef tiers (top/mid/bottom)
 
-1.34 11.09.2023
+1.35 11.09.2023
 Added/updated ZDRay/lightmap-related properties.
 
-1.35 15.09.2023
+1.36 15.09.2023
 fixed omissions: Blocklandmonsters and Blockfloaters line flags.
 
-1.36 20.10.2023
-Sidedef skewing properties
+1.37 20.10.2023
+Sidedef skewing properties added
+
+1.38 30.09.2024
+Hurtmonsters and harminair added.
 
 ===============================================================================
 EOF

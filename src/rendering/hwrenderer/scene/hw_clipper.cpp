@@ -477,7 +477,7 @@ angle_t Clipper::PointToPseudoOrthoAngle(double x, double y)
 		angle_t af = viewpoint->FrustAngle;
 		double xproj = disp.XY().Length() * deltaangle(disp.Angle(), viewpoint->Angles.Yaw).Sin();
 		xproj *= viewpoint->ScreenProj;
-		if (fabs(xproj) < 2.0)
+		if (fabs(xproj) < r_viewwindow.WidescreenRatio*1.13) // 2.0)
 		{
 			return AngleToPseudo( viewpoint->Angles.Yaw.BAMs() - xproj * 0.5 * af );
 		}

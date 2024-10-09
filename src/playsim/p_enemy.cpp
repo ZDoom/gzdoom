@@ -1543,6 +1543,83 @@ int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 //
 //============================================================================
 
+bool ValidEnemyInBlock (AActor *lookee, AActor *other, void *lookparams)
+{
+	FLookExParams* params = (FLookExParams*)lookparams;
+
+	if (!(other->flags & MF_SHOOTABLE))
+		return false;			// not shootable (observer or dead)
+
+	if (other == lookee)
+		return false;			// is self
+
+	if (other->health <= 0)
+		return false;			// dead
+
+	if (other->flags2 & MF2_DORMANT)
+		return false;			// don't target dormant things
+
+	if (!(other->flags3 & MF3_ISMONSTER))
+		return false;			// don't target it if it isn't a monster (could be a barrel)
+
+	if (other->flags7 & MF7_NEVERTARGET)
+		return false;
+
+	bool keepChecking = false;
+	if (lookee->flags & MF_FRIENDLY)
+	{
+		if (other->flags & MF_FRIENDLY)
+		{
+			if (!lookee->IsFriend(other))
+			{
+				// This is somebody else's friend, so go after it
+				keepChecking = true;
+			}
+			else if (other->target != NULL && !(other->target->flags & MF_FRIENDLY))
+			{
+				other = other->target;
+				if (!(other->flags & MF_SHOOTABLE) ||
+					other->health <= 0 ||
+					(other->flags2 & MF2_DORMANT))
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			keepChecking = true;
+		}
+	}
+	else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && other->flags & MF_FRIENDLY)
+	{
+		keepChecking = true;
+	}
+
+	// [MBF] If the monster is already engaged in a one-on-one attack
+	// with a healthy friend, don't attack around 60% the time.
+
+	// [GrafZahl] This prevents friendlies from attacking all the same 
+	// target.
+
+	if (keepChecking)
+	{
+		AActor* targ = other->target;
+		if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend(targ) &&
+			targ->health * 2 >= targ->SpawnHealth())
+		{
+			return false;
+		}
+	}
+
+	// [KS] Hey, shouldn't there be a check for MF3_NOSIGHTCHECK here?
+
+	if (!keepChecking || !P_IsVisible(lookee, other, true, params))
+		return false;			// out of sight
+
+	return true;
+}
+
 AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 {
 	FBlockNode *block;
@@ -1552,80 +1629,10 @@ AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 	
 	for (block = lookee->Level->blockmap.blocklinks[index]; block != NULL; block = block->NextActor)
 	{
-		link = block->Me;
-
-        if (!(link->flags & MF_SHOOTABLE))
-			continue;			// not shootable (observer or dead)
-
-		if (link == lookee)
+		if (!ValidEnemyInBlock(lookee, block->Me, params))
 			continue;
 
-		if (link->health <= 0)
-			continue;			// dead
-
-		if (link->flags2 & MF2_DORMANT)
-			continue;			// don't target dormant things
-
-		if (!(link->flags3 & MF3_ISMONSTER))
-			continue;			// don't target it if it isn't a monster (could be a barrel)
-
-		if (link->flags7 & MF7_NEVERTARGET)
-			continue;
-
-		other = NULL;
-		if (lookee->flags & MF_FRIENDLY)
-		{
-			if (link->flags & MF_FRIENDLY)
-			{
-				if (!lookee->IsFriend(link))
-				{
-					// This is somebody else's friend, so go after it
-					other = link;
-				}
-				else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
-				{
-					other = link->target;
-					if (!(other->flags & MF_SHOOTABLE) ||
-						other->health <= 0 ||
-						(other->flags2 & MF2_DORMANT))
-					{
-						other = NULL;;
-					}
-				}
-			}
-			else
-			{
-				other = link;
-			}
-		}
-		else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && link->flags & MF_FRIENDLY)
-		{
-			other = link;
-		}
-
-		// [MBF] If the monster is already engaged in a one-on-one attack
-		// with a healthy friend, don't attack around 60% the time.
-		
-		// [GrafZahl] This prevents friendlies from attacking all the same 
-		// target.
-		
-		if (other)
-		{
-			AActor *targ = other->target;
-			if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend (targ) &&
-				targ->health*2 >= targ->SpawnHealth())
-			{
-				continue;
-			}
-		}
-
-		// [KS] Hey, shouldn't there be a check for MF3_NOSIGHTCHECK here?
-
-		if (other == NULL || !P_IsVisible (lookee, other, true, params))
-			continue;			// out of sight
-
-
-		return other;
+		return block->Me;
 	}
 	return NULL;
 }

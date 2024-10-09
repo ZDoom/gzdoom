@@ -1309,15 +1309,6 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
-//============================================================================
-//
-// LookForEnemiesEx
-//
-// [inkoalawetrust] Return a script array of all valid enemies of the caller
-// in range. For ZScript.
-//
-//============================================================================
-
 bool isTargetablePlayer(AActor *actor, player_t *player, INTBOOL allaround, void* lookparams)
 {
 	FLookExParams* params = (FLookExParams*)lookparams;
@@ -1435,6 +1426,15 @@ bool ValidEnemyInBlock(AActor* lookee, AActor* other, void* lookparams)
 	return true;
 }
 
+//============================================================================
+//
+// LookForEnemiesEx
+//
+// [inkoalawetrust] Return a script array of all valid enemies of the caller
+// in range. For ZScript.
+//
+//============================================================================
+
 DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -1443,6 +1443,9 @@ DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
 	PARAM_BOOL(noPlayers);
 	PARAM_BOOL(allaround);
 	PARAM_POINTER(params, FLookExParams);
+
+	if (targets == nullptr)
+		ThrowAbortException(X_WRITE_NIL,"No targets array passed");
 
 	if (range == -1)
 		range = self->friendlyseeblocks * FBlockmap::MAPBLOCKUNITS;

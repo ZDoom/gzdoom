@@ -71,9 +71,9 @@ jobs:
         fi
         mkdir build
         if [[ "${{ runner.os }}" == 'macOS' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.9-macos.tar.xz
+          export ZMUSIC_PACKAGE=zmusic-1.1.14-macos-static.tar.xz
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
+          export ZMUSIC_PACKAGE=zmusic-1.1.14-linux.tar.xz
         fi
         if [[ -n "${ZMUSIC_PACKAGE}" ]]; then
           cd build

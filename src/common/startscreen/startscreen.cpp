@@ -699,8 +699,8 @@ void FStartScreen::Render(bool force)
 		twod->OnFrameDone();
 	}
 	auto newtime = I_msTime();
-	if ((newtime - nowtime) * 2.0 > minwaittime) // slow down drawing the start screen if we're on a slow GPU!
-		minwaittime = (newtime - nowtime) * 2.0;
+	if ((newtime - nowtime) * 2 > minwaittime) // slow down drawing the start screen if we're on a slow GPU!
+		minwaittime = (newtime - nowtime) * 2;
 }
 
 FImageSource* CreateStartScreenTexture(FBitmap& srcdata);

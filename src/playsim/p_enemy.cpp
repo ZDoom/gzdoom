@@ -1309,6 +1309,117 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 	return P_CheckSight(lookee, other, SF_SEEPASTSHOOTABLELINES);
 }
 
+//============================================================================
+//
+// LookForEnemiesEx
+//
+// [inkoalawetrust] Return a script array of all valid enemies of the caller
+// in range. For ZScript.
+//
+//============================================================================
+
+//TODO: Add optional checks for players in the check zone? Same ones like P_LookForPlayers(), like if they got CF_NOTARGET and the sneaky MF_SHADOW stuff.
+bool ValidEnemyInBlock(AActor* lookee, AActor* other, void* lookparams)
+{
+	FLookExParams* params = (FLookExParams*)lookparams;
+
+	if (!(other->flags & MF_SHOOTABLE))
+		return false;			// not shootable (observer or dead)
+
+	if (other == lookee)
+		return false;			// is self
+
+	if (other->health <= 0)
+		return false;			// dead
+
+	if (other->flags2 & MF2_DORMANT)
+		return false;			// don't target dormant things
+
+	if (!(other->flags3 & MF3_ISMONSTER))
+		return false;			// don't target it if it isn't a monster (could be a barrel)
+
+	if (other->flags7 & MF7_NEVERTARGET)
+		return false;
+
+	bool keepChecking = false;
+	if (lookee->flags & MF_FRIENDLY)
+	{
+		if (other->flags & MF_FRIENDLY)
+		{
+			if (!lookee->IsFriend(other))
+			{
+				// This is somebody else's friend, so go after it
+				keepChecking = true;
+			}
+			else if (other->target != NULL && !(other->target->flags & MF_FRIENDLY))
+			{
+				other = other->target;
+				if (!(other->flags & MF_SHOOTABLE) ||
+					other->health <= 0 ||
+					(other->flags2 & MF2_DORMANT))
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			keepChecking = true;
+		}
+	}
+	else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && other->flags & MF_FRIENDLY)
+	{
+		keepChecking = true;
+	}
+
+	// [MBF] If the monster is already engaged in a one-on-one attack
+	// with a healthy friend, don't attack around 60% the time.
+
+	// [GrafZahl] This prevents friendlies from attacking all the same 
+	// target.
+
+	if (keepChecking)
+	{
+		AActor* targ = other->target;
+		if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend(targ) &&
+			targ->health * 2 >= targ->SpawnHealth())
+		{
+			return false;
+		}
+	}
+
+	// [KS] Hey, shouldn't there be a check for MF3_NOSIGHTCHECK here?
+
+	if (!keepChecking || !P_IsVisible(lookee, other, true, params))
+		return false;			// out of sight
+
+	return true;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OUTPOINTER(targets,TArray<AActor*>);
+	PARAM_FLOAT(range);
+	PARAM_BOOL(allaround);
+	PARAM_POINTER(params, FLookExParams);
+
+	if (range == -1)
+		range = self->friendlyseeblocks * FBlockmap::MAPBLOCKUNITS;
+
+	FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+	FMultiBlockThingsIterator it(check, self, range, false);
+	FMultiBlockThingsIterator::CheckResult cres;
+
+	while (it.Next(&cres))
+	{
+		if (cres.thing->player == nullptr && ValidEnemyInBlock(cres.thing, self, params))
+			targets->Push(cres.thing);
+	}
+
+	ACTION_RETURN_INT(targets->Size());
+}
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_LookForMonsters
@@ -1542,83 +1653,6 @@ int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 // friendlies in this mapblock to find non-friendlies in other mapblocks.
 //
 //============================================================================
-
-bool ValidEnemyInBlock (AActor *lookee, AActor *other, void *lookparams)
-{
-	FLookExParams* params = (FLookExParams*)lookparams;
-
-	if (!(other->flags & MF_SHOOTABLE))
-		return false;			// not shootable (observer or dead)
-
-	if (other == lookee)
-		return false;			// is self
-
-	if (other->health <= 0)
-		return false;			// dead
-
-	if (other->flags2 & MF2_DORMANT)
-		return false;			// don't target dormant things
-
-	if (!(other->flags3 & MF3_ISMONSTER))
-		return false;			// don't target it if it isn't a monster (could be a barrel)
-
-	if (other->flags7 & MF7_NEVERTARGET)
-		return false;
-
-	bool keepChecking = false;
-	if (lookee->flags & MF_FRIENDLY)
-	{
-		if (other->flags & MF_FRIENDLY)
-		{
-			if (!lookee->IsFriend(other))
-			{
-				// This is somebody else's friend, so go after it
-				keepChecking = true;
-			}
-			else if (other->target != NULL && !(other->target->flags & MF_FRIENDLY))
-			{
-				other = other->target;
-				if (!(other->flags & MF_SHOOTABLE) ||
-					other->health <= 0 ||
-					(other->flags2 & MF2_DORMANT))
-				{
-					return false;
-				}
-			}
-		}
-		else
-		{
-			keepChecking = true;
-		}
-	}
-	else if (lookee->flags8 & MF8_SEEFRIENDLYMONSTERS && other->flags & MF_FRIENDLY)
-	{
-		keepChecking = true;
-	}
-
-	// [MBF] If the monster is already engaged in a one-on-one attack
-	// with a healthy friend, don't attack around 60% the time.
-
-	// [GrafZahl] This prevents friendlies from attacking all the same 
-	// target.
-
-	if (keepChecking)
-	{
-		AActor* targ = other->target;
-		if (targ && targ->target == other && pr_skiptarget() > 100 && lookee->IsFriend(targ) &&
-			targ->health * 2 >= targ->SpawnHealth())
-		{
-			return false;
-		}
-	}
-
-	// [KS] Hey, shouldn't there be a check for MF3_NOSIGHTCHECK here?
-
-	if (!keepChecking || !P_IsVisible(lookee, other, true, params))
-		return false;			// out of sight
-
-	return true;
-}
 
 AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 {

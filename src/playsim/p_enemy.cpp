@@ -1318,7 +1318,46 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 //
 //============================================================================
 
-//TODO: Add optional checks for players in the check zone? Same ones like P_LookForPlayers(), like if they got CF_NOTARGET and the sneaky MF_SHADOW stuff.
+bool isTargetablePlayer(AActor *actor, player_t *player, INTBOOL allaround, void* lookparams)
+{
+	FLookExParams* params = (FLookExParams*)lookparams;
+
+	if (!(player->mo->flags & MF_SHOOTABLE))
+		return false;			// not shootable (observer or dead)
+
+	if (actor->IsFriend(player->mo))
+		return false;			// same +MF_FRIENDLY, ignore
+
+	if (player->cheats & CF_NOTARGET)
+		return false;			// no target
+
+	if (player->health <= 0)
+		return false;			// dead
+
+	if (!P_IsVisible(actor, player->mo, allaround, params))
+		return false;			// out of sight
+
+	// [RC] Well, let's let special monsters with this flag active be able to see
+	// the player then, eh?
+	if (!(actor->flags6 & MF6_SEEINVISIBLE))
+	{
+		if ((player->mo->flags & MF_SHADOW && !(actor->Level->i_compatflags & COMPATF_INVISIBILITY)) ||
+			player->mo->flags3 & MF3_GHOST)
+		{
+			if (player->mo->Distance2D(actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5 * 5)
+			{ // Player is sneaking - can't detect
+				return false;
+			}
+			if (pr_lookforplayers() < 225)
+			{ // Player isn't sneaking, but still didn't detect
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 bool ValidEnemyInBlock(AActor* lookee, AActor* other, void* lookparams)
 {
 	FLookExParams* params = (FLookExParams*)lookparams;
@@ -1401,6 +1440,7 @@ DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OUTPOINTER(targets,TArray<AActor*>);
 	PARAM_FLOAT(range);
+	PARAM_BOOL(noPlayers);
 	PARAM_BOOL(allaround);
 	PARAM_POINTER(params, FLookExParams);
 
@@ -1413,7 +1453,8 @@ DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
 
 	while (it.Next(&cres))
 	{
-		if (cres.thing->player == nullptr && ValidEnemyInBlock(cres.thing, self, params))
+		if (cres.thing->player == nullptr && ValidEnemyInBlock(cres.thing, self, params) ||
+			!noPlayers && cres.thing->player && isTargetablePlayer(self, cres.thing->player, allaround, params))
 			targets->Push(cres.thing);
 	}
 
@@ -1866,38 +1907,8 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 		player = actor->Level->Players[pnum];
 
-		if (!(player->mo->flags & MF_SHOOTABLE))
-			continue;			// not shootable (observer or dead)
-
-		if (actor->IsFriend(player->mo))
-			continue;			// same +MF_FRIENDLY, ignore
-
-		if (player->cheats & CF_NOTARGET)
-			continue;			// no target
-
-		if (player->health <= 0)
-			continue;			// dead
-
-		if (!P_IsVisible (actor, player->mo, allaround, params))
-			continue;			// out of sight
-
-		// [RC] Well, let's let special monsters with this flag active be able to see
-		// the player then, eh?
-		if(!(actor->flags6 & MF6_SEEINVISIBLE)) 
-		{
-			if ((player->mo->flags & MF_SHADOW && !(actor->Level->i_compatflags & COMPATF_INVISIBILITY)) ||
-				player->mo->flags3 & MF3_GHOST)
-			{
-				if (player->mo->Distance2D (actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5*5)
-				{ // Player is sneaking - can't detect
-					continue;
-				}
-				if (pr_lookforplayers() < 225)
-				{ // Player isn't sneaking, but still didn't detect
-					continue;
-				}
-			}
-		}
+		if (!isTargetablePlayer(actor, player, allaround, params))
+			continue;
 		
 		// [RH] Need to be sure the reactiontime is 0 if the monster is
 		//		leaving its goal to go after a player.

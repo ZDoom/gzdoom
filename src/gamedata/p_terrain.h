@@ -118,6 +118,7 @@ struct FTerrainDef
 	bool DamageOnLand;
 	double Friction;
 	double MoveFactor;
+	FSoundID StepSound;
 };
 
 extern TArray<FSplashDef> Splashes;

@@ -366,6 +366,7 @@ angle_t HWDrawInfo::FrustumAngle()
 {
 	// If pitch is larger than this you can look all around at an FOV of 90 degrees
 	if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 89.0)  return 0xffffffff;
+	else if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 46.0 && !Viewpoint.IsAllowedOoB())  return 0xffffffff; // Just like 4.12.2 and older did
 	int aspMult = AspectMultiplier(r_viewwindow.WidescreenRatio); // 48 == square window
 	double absPitch = fabs(Viewpoint.HWAngles.Pitch.Degrees());
 	 // Smaller aspect ratios still clip too much. Need a better solution

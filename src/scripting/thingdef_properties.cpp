@@ -176,7 +176,7 @@ bool ModActorFlag(AActor *actor, const FString &flagname, bool set, bool printer
 
 			if (fd->structoffset == -1)
 			{
-				HandleDeprecatedFlags(actor, cls, set, fd->flagbit);
+				HandleDeprecatedFlags(actor, set, fd->flagbit);
 			}
 			else
 			{
@@ -214,7 +214,7 @@ INTBOOL CheckActorFlag(AActor *owner, FFlagDef *fd)
 {
 	if (fd->structoffset == -1)
 	{
-		return CheckDeprecatedFlags(owner, owner->GetClass(), fd->flagbit);
+		return CheckDeprecatedFlags(owner, fd->flagbit);
 	}
 	else
 #ifdef __BIG_ENDIAN__
@@ -270,70 +270,106 @@ INTBOOL CheckActorFlag(AActor *owner, const char *flagname, bool printerror)
 // Handles the deprecated flags and sets the respective properties
 // to appropriate values. This is solely intended for backwards
 // compatibility so mixing this with code that is aware of the real
-// properties is not recommended
+// properties is not recommended and may not do what is expected
 //
 //===========================================================================
-void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index)
+void HandleDeprecatedFlags(AActor *actor, int set, int index)
 {
 	switch (index)
 	{
 	case DEPF_FIREDAMAGE:
-		defaults->DamageType = set? NAME_Fire : NAME_None;
+		actor->DamageType = set? NAME_Fire : NAME_None;
 		break;
 	case DEPF_ICEDAMAGE:
-		defaults->DamageType = set? NAME_Ice : NAME_None;
+		actor->DamageType = set? NAME_Ice : NAME_None;
 		break;
 	case DEPF_LOWGRAVITY:
-		defaults->Gravity = set ? 1. / 8 : 1.;
+		actor->Gravity = set ? 1. / 8 : 1.;
 		break;
 	case DEPF_SHORTMISSILERANGE:
-		defaults->maxtargetrange = set? 896. : 0.;
+		actor->maxtargetrange = set? 896. : 0.;
 		break;
 	case DEPF_LONGMELEERANGE:
-		defaults->meleethreshold = set? 196. : 0.;
+		actor->meleethreshold = set? 196. : 0.;
 		break;
 	case DEPF_QUARTERGRAVITY:
-		defaults->Gravity = set ? 1. / 4 : 1.;
+		actor->Gravity = set ? 1. / 4 : 1.;
 		break;
 	case DEPF_FIRERESIST:
-		info->SetDamageFactor(NAME_Fire, set ? 0.5 : 1.);
+		actor->GetClass()->SetDamageFactor(NAME_Fire, set ? 0.5 : 1.);
 		break;
 	// the bounce flags will set the compatibility bounce modes to remain compatible
 	case DEPF_HERETICBOUNCE:
-		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
-		if (set) defaults->BounceFlags |= BOUNCE_HereticCompat;
+		actor->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
+		if (set) actor->BounceFlags |= BOUNCE_HereticCompat;
 		break;
 	case DEPF_HEXENBOUNCE:
-		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
-		if (set) defaults->BounceFlags |= BOUNCE_HexenCompat;
+		actor->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
+		if (set) actor->BounceFlags |= BOUNCE_HexenCompat;
 		break;
 	case DEPF_DOOMBOUNCE:
-		defaults->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
-		if (set) defaults->BounceFlags |= BOUNCE_DoomCompat;
+		actor->BounceFlags &= ~(BOUNCE_TypeMask|BOUNCE_UseSeeSound);
+		if (set) actor->BounceFlags |= BOUNCE_DoomCompat;
 		break;
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{
-			defaults->PointerVar<PClass>(NAME_PickupFlash) = FindClassTentative("PickupFlash", RUNTIME_CLASS(AActor));
+			actor->PointerVar<PClass>(NAME_PickupFlash) = FindClassTentative("PickupFlash", RUNTIME_CLASS(AActor));
 		}
 		else
 		{
-			defaults->PointerVar<PClass>(NAME_PickupFlash) = nullptr;
+			actor->PointerVar<PClass>(NAME_PickupFlash) = nullptr;
 		}
 		break;
 	case DEPF_INTERHUBSTRIP: // Old system was 0 or 1, so if the flag is cleared, assume 1.
-		defaults->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
+		actor->IntVar(NAME_InterHubAmount) = set ? 0 : 1;
 		break;
 
 	case DEPF_HIGHERMPROB:
-		defaults->MinMissileChance = set ? 160 : 200;
+		actor->MinMissileChance = set ? 160 : 200;
 		break;
+
+	case DEPF_MISSILEMORE:
+		if (set)
+		{
+			if (actor->missilechancemult == 0.125) actor->missilechancemult = 0.0625;
+			else actor->missilechancemult = 0.5;
+		}
+		else
+		{
+			if (actor->missilechancemult == 0.0625) actor->missilechancemult = 0.125;
+			else actor->missilechancemult = 1;
+		}
+		break;
+
+	case DEPF_MISSILEEVENMORE:
+		if (set)
+		{
+			if (actor->missilechancemult == 0.5) actor->missilechancemult = 0.0625;
+			else actor->missilechancemult = 0.125;
+		}
+		else
+		{
+			if (actor->missilechancemult == 0.0625) actor->missilechancemult = 0.5;
+			else actor->missilechancemult = 1;
+		}
+		break;
+
 
 	default:
 		break;	// silence GCC
 	}
 }
 
+// the interface here works on object, but currently all deprecated flags affect subclasses of Actor only
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, HandleDeprecatedFlags, HandleDeprecatedFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(set);
+	PARAM_INT(index);
+	HandleDeprecatedFlags(self, set, index);
+	return 0;
+}
 //===========================================================================
 //
 // CheckDeprecatedFlags
@@ -344,7 +380,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 //
 //===========================================================================
 
-bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
+int CheckDeprecatedFlags(AActor *actor, int index)
 {
 	// A deprecated flag is false if
 	// a) it hasn't been added here
@@ -368,7 +404,7 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 	case DEPF_QUARTERGRAVITY:
 		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
-		for (auto &df : info->ActorInfo()->DamageFactors)
+		for (auto &df : actor->GetClass()->ActorInfo()->DamageFactors)
 		{
 			if (df.first == NAME_Fire) return df.second == 0.5;
 		}
@@ -387,13 +423,26 @@ bool CheckDeprecatedFlags(AActor *actor, PClassActor *info, int index)
 		return actor->PointerVar<PClass>(NAME_PickupFlash) == PClass::FindClass(NAME_PickupFlash);
 
 	case DEPF_INTERHUBSTRIP:
-		return !(actor->IntVar(NAME_InterHubAmount));
+		return actor->IntVar(NAME_InterHubAmount) == 0;
 
 	case DEPF_HIGHERMPROB:
 		return actor->MinMissileChance <= 160;
+
+	case DEPF_MISSILEMORE:
+		return actor->missilechancemult == 0.5 || actor->missilechancemult == 0.0625;
+
+	case DEPF_MISSILEEVENMORE:
+		return actor->missilechancemult == 0.125 || actor->missilechancemult == 0.0625;
 	}
 
 	return false; // Any entirely unknown flag is not set
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, CheckDeprecatedFlags, CheckDeprecatedFlags)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(index);
+	ACTION_RETURN_INT(CheckDeprecatedFlags(self, index));
 }
 
 //==========================================================================
@@ -640,6 +689,16 @@ DEFINE_PROPERTY(floatbobstrength, F, Actor)
 {
 	PROP_DOUBLE_PARM(id, 0);
 	defaults->FloatBobStrength = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(floatbobfactor, F, Actor)
+{
+	PROP_DOUBLE_PARM(id, 0);
+	if (id <= 0) I_Error ("FloatBobFactor must be above 0.0");
+	defaults->FloatBobFactor = id;
 }
 
 //==========================================================================

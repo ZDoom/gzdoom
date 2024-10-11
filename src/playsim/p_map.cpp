@@ -6236,24 +6236,44 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, double 
 							if (!(thing->flags7 & MF7_DONTTHRUST))
 							{
 								thrust = points * 0.5 / (double)thing->Mass;
+
 								if (bombsource == thing)
 								{
 									thrust *= selfthrustscale;
 								}
-								vz = (thing->Center() - bombspot->Z()) * thrust;
-								if (bombsource != thing)
+
+								if (flags & RADF_CIRCULARTHRUST)
 								{
-									vz *= 0.5;
+									auto dir = bombspot->Vec3To(thing);
+									dir.Z += thing->CenterOffset() - bombspot->CenterOffset();
+
+									if (!dir.isZero())
+									{
+										dir.MakeUnit();
+										thing->Thrust(dir * thrust);
+									}
 								}
 								else
 								{
-									vz *= 0.8;
-								}
-								thing->Thrust(bombspot->AngleTo(thing), thrust);
-								if (!(flags & RADF_NODAMAGE) || (flags & RADF_THRUSTZ))
-								{
-									if (!(thing->Level->i_compatflags2 & COMPATF2_EXPLODE1) || (flags & RADF_THRUSTZ))
-										thing->Vel.Z += vz;	// this really doesn't work well
+									thing->Thrust(bombspot->AngleTo(thing), thrust);
+
+									if (!(flags & RADF_NODAMAGE) || (flags & RADF_THRUSTZ))
+									{
+										if (!(thing->Level->i_compatflags2 & COMPATF2_EXPLODE1) || (flags & RADF_THRUSTZ))
+										{
+											vz = (thing->Center() - bombspot->Z()) * thrust;
+											if (bombsource != thing)
+											{
+												vz *= 0.5;
+											}
+											else
+											{
+												vz *= 0.8;
+											}
+										
+											thing->Vel.Z += vz;	// this really doesn't work well
+										}
+									}
 								}
 							}
 						}

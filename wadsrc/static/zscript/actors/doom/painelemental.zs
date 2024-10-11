@@ -218,7 +218,7 @@ extend class Actor
 	{
 		if (target && IsFriend(target))
 		{ // And I thought you were my friend!
-			bFriendly = false;
+			A_SetFriendly(false);
 		}
 		A_NoBlocking();
 		A_PainShootSkull(spawntype, angle + 90);

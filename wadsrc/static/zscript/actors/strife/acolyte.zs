@@ -118,7 +118,7 @@ class Acolyte : StrifeHumanoid
 	void A_BeShadowyFoe()
 	{
 		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
-		bFriendly = false;
+		A_SetFriendly(false);
 	}
 
 	//============================================================================
@@ -155,7 +155,7 @@ class AcolyteTan : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		DropItem "ClipOfBullets";
 	}
 }
@@ -166,7 +166,7 @@ class AcolyteRed : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		Translation 0;
 	}
 }
@@ -177,7 +177,7 @@ class AcolyteRust : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		Translation 1;
 	}
 }
@@ -188,7 +188,7 @@ class AcolyteGray : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		Translation 2;
 	}
 }
@@ -199,7 +199,7 @@ class AcolyteDGreen : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		Translation 3;
 	}
 }
@@ -210,7 +210,7 @@ class AcolyteGold : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE +MISSILEEVENMORE
+		MissileChanceMult 0.0625;
 		Translation 4;
 	}
 }
@@ -243,7 +243,7 @@ class AcolyteShadow : Acolyte
 {
 	Default
 	{
-		+MISSILEMORE
+		MissileChanceMult 0.5;
 		DropItem "ClipOfBullets";
 	}
 	States

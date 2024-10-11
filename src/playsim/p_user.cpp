@@ -520,6 +520,23 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetFOV)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSkin)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(skinIndex);
+	if (skinIndex >= 0 && skinIndex < Skins.size())
+	{
+		// commented code - cvar_set calls this automatically, along with saving the skin selection.
+		//self->userinfo.SkinNumChanged(skinIndex);
+		cvar_set("skin", Skins[skinIndex].Name.GetChars());
+		ACTION_RETURN_INT(self->userinfo.GetSkin());
+	}
+	else
+	{
+		ACTION_RETURN_INT(-1);
+	}
+}
+
 //===========================================================================
 //
 // EnumColorsets
@@ -771,6 +788,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	ACTION_RETURN_INT(self->userinfo.GetSkin());
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkinCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(Skins.size());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)
@@ -1181,15 +1204,6 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, CheckMusicChange)
 
 void P_CheckEnvironment(player_t *player)
 {
-	P_PlayerOnSpecial3DFloor(player);
-	P_PlayerInSpecialSector(player);
-
-	if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPoint(player->mo)) ||
-		player->mo->waterlevel)
-	{
-		// Player must be touching the floor
-		P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
-	}
 	if (player->mo->Vel.Z <= -player->mo->FloatVar(NAME_FallingScreamMinSpeed) &&
 		player->mo->Vel.Z >= -player->mo->FloatVar(NAME_FallingScreamMaxSpeed) && player->mo->alternative == nullptr &&
 		player->mo->waterlevel == 0)

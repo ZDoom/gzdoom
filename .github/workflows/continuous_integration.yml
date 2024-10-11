@@ -26,14 +26,14 @@ jobs:
           build_type: Release
 
         - name: macOS
-          os: macos-12
-          deps_cmdline: brew install libvpx webp
+          os: macos-14
+          deps_cmdline: brew install libvpx
           build_type: Release
 
         - name: macOS
-          os: macos-12
+          os: macos-14
           extra_options: -G Xcode -DDYN_OPENAL=OFF
-          deps_cmdline: brew install libvpx webp
+          deps_cmdline: brew install libvpx
           build_type: Debug
 
         - name: Linux GCC 9
@@ -71,9 +71,9 @@ jobs:
         fi
         mkdir build
         if [[ "${{ runner.os }}" == 'macOS' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.9-macos.tar.xz
+          export ZMUSIC_PACKAGE=zmusic-1.1.14-macos-arm.tar.xz
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          export ZMUSIC_PACKAGE=zmusic-1.1.9-linux.tar.xz
+          export ZMUSIC_PACKAGE=zmusic-1.1.14-linux.tar.xz
         fi
         if [[ -n "${ZMUSIC_PACKAGE}" ]]; then
           cd build
@@ -115,7 +115,7 @@ jobs:
 
     - name: Upload Package
       if: runner.os == 'Windows'  # Remove to store packages of all targets
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: build/package
         name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}

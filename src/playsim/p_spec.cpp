@@ -100,7 +100,7 @@
 #include "c_console.h"
 #include "p_spec_thinkers.h"
 
-static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
+static FRandom pr_actorinspecialsector ("ActorInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 EXTERN_CVAR(Bool, forcewater)
@@ -252,6 +252,13 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType,
 	if ((line->flags & ML_FIRSTSIDEONLY && side == 1) || line->special == 0)
 	{
 		return false;
+	}
+
+	if ((activationType & (SPAC_Cross|SPAC_MCross)) && (lineActivation & SPAC_Walking))
+	{
+		// not on floor
+		if ((mo->Pos().Z > mo->floorz) && !(mo->flags2 & MF2_ONMOBJ))
+			return false;
 	}
 
 	if (lineActivation & SPAC_UseThrough)
@@ -412,22 +419,18 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 }
 
 //
-// P_PlayerInSpecialSector
+// P_ActorInSpecialSector
 // Called every tic frame
-//	that the player origin is in a special sector
+//	that the actor origin is in a special sector
 //
-void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
+void P_ActorInSpecialSector (AActor *victim, sector_t * sector)
 {
 	if (sector == NULL)
-	{
-		// Falling, not all the way down yet?
-		sector = player->mo->Sector;
-		if (!player->mo->isAtZ(sector->LowestFloorAt(player->mo))
-			&& !player->mo->waterlevel)
-		{
-			return;
-		}
-	}
+		sector = victim->Sector;
+
+	// Falling, not all the way down yet?
+	if (!(sector->MoreFlags & SECMF_HARMINAIR) && !victim->isAtZ(sector->LowestFloorAt(victim)) && !victim->waterlevel)
+		return;
 
 	// Has hit ground.
 
@@ -438,7 +441,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	if (sector->damageinterval <= 0)
 		sector->damageinterval = 32; // repair invalid damageinterval values
 
-	if (sector->Flags & (SECF_EXIT1 | SECF_EXIT2))
+	if (victim->player && sector->Flags & (SECF_EXIT1 | SECF_EXIT2))
 	{
 		for (int i = 0; i < MAXPLAYERS; i++)
 			if (playeringame[i])
@@ -457,7 +460,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		// different damage types yet, so that's not happening for now.
 		// [MK] account for subclasses that may have "Full" protection (i.e.: prevent leaky damage)
 		int ironfeet = 0;
-		for (auto i = player->mo->Inventory; i != NULL; i = i->Inventory)
+		for (auto i = victim->Inventory; i != NULL; i = i->Inventory)
 		{
 			if (i->IsKindOf(NAME_PowerIronFeet))
 			{
@@ -469,28 +472,28 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 			}
 		}
 
-		if (sector->Flags & SECF_ENDGODMODE) player->cheats &= ~CF_GODMODE;
-		if ((ironfeet == 0 || (ironfeet < 2 && pr_playerinspecialsector() < sector->leakydamage)))
+		if (victim->player && sector->Flags & SECF_ENDGODMODE) victim->player->cheats &= ~CF_GODMODE;
+		if ((ironfeet == 0 || (ironfeet < 2 && pr_actorinspecialsector() < sector->leakydamage)))
 		{
-			if (sector->Flags & SECF_HAZARD)
+			if (victim->player && sector->Flags & SECF_HAZARD)
 			{
-				player->hazardcount += sector->damageamount;
-				player->hazardtype = sector->damagetype;
-				player->hazardinterval = sector->damageinterval;
+				victim->player->hazardcount += sector->damageamount;
+				victim->player->hazardtype = sector->damagetype;
+				victim->player->hazardinterval = sector->damageinterval;
 			}
 			else if (Level->time % sector->damageinterval == 0)
 			{
-				if (!(player->cheats & (CF_GODMODE | CF_GODMODE2)))
+				if (!(victim->player && victim->player->cheats & (CF_GODMODE | CF_GODMODE2)))
 				{
-					P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+					P_DamageMobj(victim, NULL, NULL, sector->damageamount, sector->damagetype);
 				}
-				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
+				if (victim->player && (sector->Flags & SECF_ENDLEVEL) && victim->player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
 					Level->ExitLevel(0, false);
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
-					P_HitWater(player->mo, player->mo->Sector, player->mo->Pos(), false, true, true);
+					P_HitWater(victim, victim->Sector, victim->Pos(), false, true, true);
 				}
 			}
 		}
@@ -499,14 +502,14 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		if (Level->time % sector->damageinterval == 0)
 		{
-			P_GiveBody(player->mo, -sector->damageamount, 100);
+			P_GiveBody(victim, -sector->damageamount, 100);
 		}
 	}
 
-	if (sector->isSecret())
+	if (victim->player && sector->isSecret())
 	{
 		sector->ClearSecret();
-		P_GiveSecret(Level, player->mo, true, true, sector->Index());
+		P_GiveSecret(Level, victim, true, true, sector->Index());
 	}
 }
 
@@ -645,13 +648,13 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
 
 //============================================================================
 //
-// P_PlayerOnSpecialFlat
+// P_ActorOnSpecialFlat
 //
 //============================================================================
 
-void P_PlayerOnSpecialFlat (player_t *player, int floorType)
+void P_ActorOnSpecialFlat (AActor *victim, int floorType)
 {
-	auto Level = player->mo->Level;
+	auto Level = victim->Level;
 
 	if (Terrains[floorType].DamageAmount &&
 		!(Level->time % (Terrains[floorType].DamageTimeMask+1)))
@@ -661,7 +664,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 		if (Terrains[floorType].AllowProtection)
 		{
 			auto pitype = PClass::FindActor(NAME_PowerIronFeet);
-			for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
+			for (ironfeet = victim->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
 			{
 				if (ironfeet->IsKindOf (pitype))
 					break;
@@ -671,19 +674,17 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 		int damage = 0;
 		if (ironfeet == NULL)
 		{
-			damage = P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
+			damage = P_DamageMobj (victim, NULL, NULL, Terrains[floorType].DamageAmount,
 				Terrains[floorType].DamageMOD);
 		}
 		if (damage > 0 && Terrains[floorType].Splash != -1)
 		{
-			S_Sound (player->mo, CHAN_AUTO, 0,
+			S_Sound (victim, CHAN_AUTO, 0,
 				Splashes[Terrains[floorType].Splash].NormalSplashSound, 1,
 				ATTN_IDLE);
 		}
 	}
 }
-
-
 
 //
 // P_UpdateSpecials

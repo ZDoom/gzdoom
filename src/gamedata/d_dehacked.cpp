@@ -1153,7 +1153,7 @@ static const struct DehFlags2 deh_mobjflags_mbf21[] = {
   {"NORADIUSDMG",    [](AActor* defaults) { defaults->flags3 |= MF3_NORADIUSDMG; }}, // doesn't take splash damage
   {"FORCERADIUSDMG", [](AActor* defaults) { defaults->flags4 |= MF4_FORCERADIUSDMG; }}, // causes splash damage even if target immune
   {"HIGHERMPROB",    [](AActor* defaults) { defaults->MinMissileChance = 160; }}, // higher missile attack probability
-  {"RANGEHALF",      [](AActor* defaults) { defaults->flags4 |= MF4_MISSILEMORE; }}, // use half distance for missile attack probability
+  {"RANGEHALF",      [](AActor* defaults) { defaults->missilechancemult = 0.5; }}, // use half distance for missile attack probability
   {"NOTHRESHOLD",    [](AActor* defaults) { defaults->flags4 |= MF4_QUICKTORETALIATE; }}, // no targeting threshold
   {"LONGMELEE",      [](AActor* defaults) { defaults->meleethreshold = 196; }}, // long melee range
   {"BOSS",           [](AActor* defaults) { defaults->flags2 |= MF2_BOSS; defaults->flags3 |= MF3_NORADIUSDMG; }}, // full volume see / death sound + splash immunity
@@ -1174,9 +1174,10 @@ static void ClearBits2Stuff(AActor* defaults)
 	defaults->maxtargetrange = 0;
 	defaults->MinMissileChance = 200;
 	defaults->meleethreshold = 0;
+	defaults->missilechancemult = 1;
 	defaults->flags2 &= ~(MF2_BOSS | MF2_RIP);
 	defaults->flags3 &= ~(MF3_NOTARGET | MF3_NORADIUSDMG | MF3_FULLVOLDEATH);
-	defaults->flags4 &= ~(MF4_MISSILEMORE | MF4_QUICKTORETALIATE | MF4_FORCERADIUSDMG);
+	defaults->flags4 &= ~(MF4_QUICKTORETALIATE | MF4_FORCERADIUSDMG);
 	defaults->flags8 &= ~(MF8_E1M8BOSS | MF8_E2M8BOSS | MF8_E3M8BOSS | MF8_E4M8BOSS | MF8_E4M6BOSS | MF8_MAP07BOSS1 | MF8_MAP07BOSS2 | MF8_FULLVOLSEE);
 }
 
@@ -1437,6 +1438,27 @@ static int PatchThing (int thingy, int flags)
 			}
 			DPrintf(DMSG_SPAMMY, "MBF21 Bits: %d (0x%08x)\n", info->flags.GetValue(), info->flags.GetValue());
 		}
+		// New fields from Crispy Doom
+		else if (!stricmp(Line1, "Melee threshold"))
+		{
+			info->meleethreshold = DEHToDouble(val);
+		}
+		else if (!stricmp(Line1, "Max target range"))
+		{
+			// [crispy] Maximum distance range to start shooting (zero for unlimited)
+			info->maxtargetrange = DEHToDouble(val);
+		}
+		else if (!stricmp(Line1, "Min missile chance"))
+		{
+			// [crispy] Minimum chance for firing a missile
+			info->MinMissileChance = DEHToDouble(val);
+		}
+		else if (!stricmp(Line1, "Missile chance multiplier"))
+		{
+			// [crispy] Multiplies the chance of firing a missile (65536 = normal chance)
+			info->missilechancemult = DEHToDouble(val);
+		}
+
 		else if (linelen > 6)
 		{
 			if (stricmp (Line1 + linelen - 6, " frame") == 0)
@@ -3861,7 +3883,7 @@ struct FlagHandler
 #define F4(flag) { [](AActor* a) { a->flags4 |= flag; }, [](AActor* a) { a->flags4 &= ~flag; }, [](AActor* a)->bool { return a->flags4 & flag; } }
 #define F6(flag) { [](AActor* a) { a->flags6 |= flag; }, [](AActor* a) { a->flags6 &= ~flag; }, [](AActor* a)->bool { return a->flags6 & flag; } }
 #define F8(flag) { [](AActor* a) { a->flags8 |= flag; }, [](AActor* a) { a->flags8 &= ~flag; }, [](AActor* a)->bool { return a->flags8 & flag; } }
-#define DEPF(flag) { [](AActor* a) { HandleDeprecatedFlags(a, nullptr, true, flag); }, [](AActor* a) { HandleDeprecatedFlags(a, nullptr, false, flag); }, [](AActor* a)->bool { return CheckDeprecatedFlags(a, nullptr, flag); } }
+#define DEPF(flag) { [](AActor* a) { HandleDeprecatedFlags(a, true, flag); }, [](AActor* a) { HandleDeprecatedFlags(a, false, flag); }, [](AActor* a)->bool { return !!CheckDeprecatedFlags(a, flag); } }
 
 void SetNoSector(AActor* a) 
 { 
@@ -3930,7 +3952,7 @@ void ClearCountitem(AActor* a)
 {
 	if (a->flags & MF_COUNTITEM)
 	{
-		a->flags |= MF_COUNTITEM;
+		a->flags &= ~MF_COUNTITEM;
 		a->Level->total_items--;
 	}
 }
@@ -3939,6 +3961,7 @@ void SetFriendly(AActor* a)
 {
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
 	a->flags |= MF_FRIENDLY;
+	a->flags3 |= MF3_NOBLOCKMONST;
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
 }
 
@@ -3946,6 +3969,7 @@ void ClearFriendly(AActor* a)
 {
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters--;
 	a->flags &= ~MF_FRIENDLY;
+	a->flags3 &= ~MF3_NOBLOCKMONST;
 	if (a->CountsAsKill() && a->health > 0) a->Level->total_monsters++;
 }
 
@@ -4101,7 +4125,7 @@ static FlagHandler flag1handlers[32] = {
 	{ SetTranslation2, ClearTranslation2, CheckTranslation2 },
 	F6(MF6_TOUCHY),
 	{ SetBounces, ClearBounces, [](AActor* a)->bool { return a->BounceFlags & BOUNCE_DEH; } },
-	F(MF_FRIENDLY),
+	{ SetFriendly, ClearFriendly, [](AActor* a)->bool { return a->flags & MF_FRIENDLY; } },
 	{ SetTranslucent, ClearTranslucent, CheckTranslucent },
 };
 
@@ -4112,7 +4136,7 @@ static FlagHandler flag2handlers[32] = {
 	F3(MF3_NORADIUSDMG),
 	F4(MF4_FORCERADIUSDMG),
 	DEPF(DEPF_HIGHERMPROB),
-	F4(MF4_MISSILEMORE),
+	DEPF(DEPF_MISSILEMORE),
 	F4(MF4_QUICKTORETALIATE),
 	DEPF(DEPF_LONGMELEERANGE),
 	{ SetBoss, ClearBoss, [](AActor* a)->bool { return a->flags2 & MF2_BOSS; } },

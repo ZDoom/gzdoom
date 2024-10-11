@@ -14,8 +14,9 @@ class LostSoul : Actor
 		Speed 8;
 		Damage 3;
 		PainChance 256;
+		MissileChanceMult 0.5;
 		Monster;
-		+FLOAT +NOGRAVITY +MISSILEMORE +DONTFALL +NOICEDEATH +ZDOOMTRANS +RETARGETAFTERSLAM
+		+FLOAT +NOGRAVITY +DONTFALL +NOICEDEATH +ZDOOMTRANS +RETARGETAFTERSLAM
 		AttackSound "skull/melee";
 		PainSound "skull/pain";
 		DeathSound "skull/death";

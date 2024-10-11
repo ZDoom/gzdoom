@@ -41,6 +41,8 @@ struct UMapEntry
 	FString LevelName;
 	FString InterText;
 	FString InterTextSecret;
+	FString author;
+	FString label;
 	TArray<FSpecialAction> BossActions;
 	bool BossCleared = false;
 
@@ -52,10 +54,13 @@ struct UMapEntry
 	char endpic[9] = "";
 	char exitpic[9] = "";
 	char enterpic[9] = "";
+	char exitanim[9] = "";
+	char enteranim[9] = "";
 	char interbackdrop[9] = "FLOOR4_8";
 	char intermusic[9] = "";
 	int partime = 0;
 	int nointermission = 0;
+	int id24_levelnum = 0;	// note that this one's semantics are massively screwed up. Only to be used for ID24-style intermissions.
 };
 
 static TArray<UMapEntry> Maps;
@@ -122,7 +127,7 @@ static int ParseLumpName(FScanner &scanner, char *buffer)
 //
 // -----------------------------------------------
 
-static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
+static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape, int *id24_levelnum)
 {
 	// find the next line with content.
 	// this line is no property.
@@ -135,6 +140,16 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	{
 		scanner.MustGetToken(TK_StringConst);
 		mape->LevelName = scanner.String;
+	}
+	else if (!pname.CompareNoCase("author"))
+	{
+		scanner.MustGetToken(TK_StringConst);
+		mape->author = scanner.String;
+	}
+	else if (!pname.CompareNoCase("label"))
+	{
+		scanner.MustGetToken(TK_StringConst);
+		mape->label = scanner.String;
 	}
 	else if (!pname.CompareNoCase("next"))
 	{
@@ -185,6 +200,14 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	else if (!pname.CompareNoCase("enterpic"))
 	{
 		ParseLumpName(scanner, mape->enterpic);
+	}
+	else if (!pname.CompareNoCase("exitanim"))
+	{
+		ParseLumpName(scanner, mape->exitanim);
+	}
+	else if (!pname.CompareNoCase("enteranim"))
+	{
+		ParseLumpName(scanner, mape->enteranim);
 	}
 	else if (!pname.CompareNoCase("nointermission"))
 	{
@@ -244,6 +267,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			epi.mEpisodeMap = mape->MapName;
 			epi.mPicName = split[0];
 			epi.mNoSkill = false;
+			mape->id24_levelnum = *id24_levelnum = 1;
 
 			unsigned i;
 			for (i = 0; i < AllEpisodes.Size(); i++)
@@ -314,15 +338,16 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 //
 // -----------------------------------------------
 
-static int ParseMapEntry(FScanner &scanner, UMapEntry *val)
+static int ParseMapEntry(FScanner &scanner, UMapEntry *val, int *id24_levelnum)
 {
 	scanner.MustGetToken(TK_Identifier);
 
 	val->MapName = scanner.String;
+	val->id24_levelnum = ++(*id24_levelnum);
 	scanner.MustGetToken('{');
 	while(!scanner.CheckToken('}'))
 	{
-		ParseStandardProperty(scanner, val);
+		ParseStandardProperty(scanner, val, id24_levelnum);
 	}
 	return 1;
 }
@@ -338,12 +363,13 @@ int ParseUMapInfo(int lumpnum)
 	FScanner scanner(lumpnum);
 	unsigned int i;
 
+	int id24_levelnum = 1;
 	while (scanner.GetToken())
 	{
 		scanner.TokenMustBe(TK_Map);
 
 		UMapEntry parsed;
-		ParseMapEntry(scanner, &parsed);
+		ParseMapEntry(scanner, &parsed, &id24_levelnum);
 
 		// Endpic overrides level exits.
 		if (parsed.endpic[0])
@@ -403,6 +429,14 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 			levelinfo->LevelName = map.LevelName;
 			levelinfo->PName = "";	// clear the map name patch to force the string version to be shown - unless explicitly overridden right next.
 		}
+		if (map.author.IsNotEmpty())
+		{
+			levelinfo->AuthorName = map.author;
+		}
+		if (map.label.IsNotEmpty())
+		{
+			levelinfo->MapLabel = map.label;
+		}
 		if (map.levelpic[0]) levelinfo->PName = map.levelpic;
 		if (map.nextmap[0]) levelinfo->NextMap = map.nextmap;
 		else if (map.endpic[0])
@@ -443,6 +477,9 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.partime > 0) levelinfo->partime = map.partime;
 		if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
 		if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
+		if (map.enteranim[0]) levelinfo->EnterAnim = map.enteranim;
+		if (map.exitanim[0]) levelinfo->ExitAnim = map.exitanim;
+		levelinfo->broken_id24_levelnum = map.id24_levelnum;
 		/* UMAPINFO's intermusic is for the text screen, not the summary.
 		if (map.intermusic[0])
 		{

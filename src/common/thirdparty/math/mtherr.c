@@ -106,7 +106,7 @@ int mtherr(char* name, int code)
  * which is supposed to be the name of the
  * function in which the error occurred:
  */
-printf( "\n%s ", name );
+//printf( "\n%s ", name );
 
 /* Set global error message word */
 merror = code;
@@ -116,7 +116,7 @@ merror = code;
  */
 if( (code <= 0) || (code >= 7) )
 	code = 0;
-printf( "%s error\n", ermsg[code] );
+//printf( "%s error\n", ermsg[code] );
 
 /* Return to calling
  * program

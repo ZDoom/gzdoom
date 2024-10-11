@@ -804,6 +804,7 @@ public:
 				th->friendlyseeblocks = CheckInt(key);
 				break;
 
+			case NAME_light_softshadowradius:
 			case NAME_lm_suncolor:
 			case NAME_lm_sampledist:
 				CHECK_N(Zd | Zdt)
@@ -1026,6 +1027,10 @@ public:
 			// This switch contains all keys of the UDMF base spec which only apply to Hexen format specials
 			if (!isTranslated) switch (key.GetIndex())
 			{
+			case NAME_Walking:
+				Flag(ld->activation, SPAC_Walking, key);
+				continue;
+
 			case NAME_Playercross:
 				Flag(ld->activation, SPAC_Cross, key); 
 				continue;
@@ -2007,6 +2012,14 @@ public:
 
 				case NAME_damagehazard:
 					Flag(sec->Flags, SECF_HAZARD, key);
+					break;
+
+				case NAME_hurtmonsters:
+					Flag(sec->MoreFlags, SECMF_HURTMONSTERS, key);
+					break;
+
+				case NAME_harminair:
+					Flag(sec->MoreFlags, SECMF_HARMINAIR, key);
 					break;
 
 				case NAME_floorterrain:

@@ -148,6 +148,7 @@ class Actor : Thinker native
 	native Actor Target;
 	native Actor Master;
 	native Actor Tracer;
+	native readonly Actor DamageSource;
 	native Actor LastHeard;
 	native Actor LastEnemy;
 	native Actor LastLookActor;
@@ -178,6 +179,7 @@ class Actor : Thinker native
 	native name DamageTypeReceived;
 	native uint8 FloatBobPhase;
 	native double FloatBobStrength;
+	native double FloatBobFactor;
 	native int RipperLevel;
 	native int RipLevelMin;
 	native int RipLevelMax;
@@ -185,6 +187,7 @@ class Actor : Thinker native
 	native Actor Alternative;
 	native Actor goal;
 	native uint8 MinMissileChance;
+	native double MissileChanceMult;
 	native int8 LastLookPlayerNumber;
 	native uint SpawnFlags;
 	native double meleethreshold;
@@ -337,6 +340,7 @@ class Actor : Thinker native
 	property WeaveIndexXY: WeaveIndexXY;
 	property WeaveIndexZ: WeaveIndexZ;
 	property MinMissileChance: MinMissileChance;
+	property MissileChanceMult: MissileChanceMult;
 	property MaxStepHeight: MaxStepHeight;
 	property MaxDropoffHeight: MaxDropoffHeight;
 	property MaxSlopeSteepness: MaxSlopeSteepness;
@@ -403,6 +407,7 @@ class Actor : Thinker native
 		RenderStyle 'Normal';
 		Alpha 1;
 		MinMissileChance 200;
+		MissileChanceMult 1.0;
 		MeleeRange 64 - MELEEDELTA;
 		MaxDropoffHeight 24;
 		MaxStepHeight 24;
@@ -413,6 +418,7 @@ class Actor : Thinker native
 		FloatSpeed 4;
 		FloatBobPhase -1;	// randomly initialize by default
 		FloatBobStrength 1.0;
+		FloatBobFactor 1.0;
 		Gravity 1;
 		Friction 1;
 		DamageFactor 1.0;		// damage multiplier as target of damage.
@@ -715,6 +721,7 @@ class Actor : Thinker native
 	native void ClearFOVInterpolation();
 	native clearscope Vector3 PosRelative(sector sec) const;
 	native void RailAttack(FRailParams p);
+	native clearscope Name GetDecalName() const;
 		
 	native void HandleSpawnFlags();
 	native void ExplodeMissile(line lin = null, Actor target = null, bool onsky = false);

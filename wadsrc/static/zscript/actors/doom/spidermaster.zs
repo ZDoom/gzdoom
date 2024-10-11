@@ -13,9 +13,9 @@ class SpiderMastermind : Actor
 		Mass 1000;
 		Speed 12;
 		PainChance 40;
+		MissileChanceMult 0.5;
 		Monster;
 		+BOSS
-		+MISSILEMORE
 		+FLOORCLIP
 		+NORADIUSDMG
 		+DONTMORPH
@@ -73,12 +73,16 @@ extend class Actor
 {
 	void A_SpidRefire()
 	{
+		if (HitFriend())
+		{
+			SetState(SeeState);
+			return;
+		}
 		// keep firing unless target got out of sight
 		A_FaceTarget();
 		if (Random[CPosRefire](0, 255) >= 10)
 		{
 			if (!target
-				|| HitFriend()
 				|| target.health <= 0
 				|| !CheckSight(target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
 			{

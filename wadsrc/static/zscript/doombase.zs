@@ -345,6 +345,7 @@ struct LevelInfo native
 	native readonly String LightningSound;
 	native readonly String Music;
 	native readonly String LevelName;
+	native readonly String MapLabel;
 	native readonly String AuthorName;
 	native readonly int musicorder;
 	native readonly float skyspeed1;

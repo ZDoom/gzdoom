@@ -373,8 +373,7 @@ static int P_CheckMissileRange (AActor *actor)
 	if (actor->MeleeState != nullptr && dist < actor->meleethreshold)
 		return false;	// From the Revenant: close enough for fist attack
 
-	if (actor->flags4 & MF4_MISSILEMORE) dist *= 0.5;
-	if (actor->flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
+	dist *= actor->missilechancemult;
 
 	int mmc = int(actor->MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= min(int(dist), mmc);
@@ -465,6 +464,12 @@ static int P_IsUnderDamage(AActor* actor)
 				dir |= cl->getDirection();
 		}
 		// Q: consider crushing 3D floors too?
+		// [inkoalawetrust] Check for sectors that can harm the actor.
+		if (!(actor->flags9 & MF9_NOSECTORDAMAGE) && seclist->m_sector->damageamount > 0)
+		{
+			if (seclist->m_sector->MoreFlags & SECMF_HARMINAIR || actor->isAtZ(seclist->m_sector->LowestFloorAt(actor)) || actor->waterlevel)
+				return (actor->player || (actor->player == nullptr && seclist->m_sector->MoreFlags & SECMF_HURTMONSTERS))  ? -1 : 0;
+		}
 	}
 	return dir;
 }
@@ -1834,14 +1839,6 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 		if (!P_IsVisible (actor, player->mo, allaround, params))
 			continue;			// out of sight
-
-		// [SP] Deathmatch fixes - if we have MF_FRIENDLY we're definitely in deathmatch
-		// We're going to ignore our master, but go after his enemies.
-		if ( actor->flags & MF_FRIENDLY )
-		{
-			if ( actor->IsFriend(player->mo) )
-				continue;
-		}
 
 		// [RC] Well, let's let special monsters with this flag active be able to see
 		// the player then, eh?

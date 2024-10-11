@@ -795,13 +795,14 @@ void ZCCDoomCompiler::ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg)
 	auto fd = FindFlag(cls, n1, n2, true);
 	if (fd != nullptr)
 	{
-		if (fd->varflags & VARF_Deprecated)
+		if ((fd->varflags & VARF_Deprecated) && fd->deprecationVersion <= this->mVersion)
 		{
-			Warn(flg, "Deprecated flag '%s%s%s' used", n1, n2 ? "." : "", n2 ? n2 : "");
+			Warn(flg, "Deprecated flag '%s%s%s' used, deprecated since %d.%d.%d", n1, n2 ? "." : "", n2 ? n2 : "", 
+				fd->deprecationVersion.major, fd->deprecationVersion.minor, fd->deprecationVersion.revision);
 		}
 		if (fd->structoffset == -1)
 		{
-			HandleDeprecatedFlags((AActor*)cls->Defaults, cls, flg->set, fd->flagbit);
+			HandleDeprecatedFlags((AActor*)cls->Defaults, flg->set, fd->flagbit);
 		}
 		else
 		{

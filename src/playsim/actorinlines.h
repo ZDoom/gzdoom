@@ -69,7 +69,7 @@ inline double AActor::GetBobOffset(double ticfrac) const
 	{
 		return 0;
 	}
-	return BobSin(FloatBobPhase + Level->maptime + ticfrac) * FloatBobStrength;
+	return BobSin(FloatBobPhase + Level->maptime * FloatBobFactor + ticfrac) * FloatBobStrength;
 }
 
 inline double AActor::GetCameraHeight() const

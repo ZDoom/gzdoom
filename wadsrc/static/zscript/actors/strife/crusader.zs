@@ -11,10 +11,10 @@ class Crusader : Actor
 		Mass 400;
 		Health 400;
 		Painchance 128;
+		MissileChanceMult 0.5;
 		Monster;
 		+FLOORCLIP
 		+DONTMORPH
-		+MISSILEMORE
 		+INCOMBAT
 		+NOICEDEATH
 		+NOBLOOD

@@ -114,6 +114,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                   // texture to behave like an impassable line (projectiles
                                   // pass through it).
       checkswitchrange = <bool>;  // Switches can only be activated when vertically reachable.
+      walking = <bool>;           // Crossing activation checks if creature is on the ground, and fails if they are not.
       blockprojectiles = <bool>;  // Line blocks all projectiles
       blockuse = <bool>;          // Line blocks all use actions
       blocksight = <bool>;        // Line blocks monster line of sight
@@ -306,6 +307,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       leakiness = <int>;              // Probability of leaking through radiation suit (0 = never, 256 = always), default = 0.
       damageterraineffect = <bool>;   // Will spawn a terrain splash when damage is inflicted. Default = false.
       damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
+      hurtmonsters = <bool>;          // Non-players like monsters and decorations are hurt by this sector in the same manner as player. Doesn't work with damagehazard.
+      harminair = <bool>;             // Actors in this sector are harmed by the damage effects of the floor even if they aren't touching it.
       floorterrain = <string>;        // Sets the terrain for the sector's floor. Default = 'use the flat texture's terrain definition.'
       ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
       floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)
@@ -423,8 +426,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
       lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8
-      lm_suncolor = <string>;       // ZDRay lightmap sun color in hex. Default = "FFFFFF"
-      SoftShadowRadius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
+      lm_suncolor = <int>;          // ZDRay lightmap sun color. Default is white (0xFFFFFF).
+
+      light_softshadowradius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
 
       friendlyseeblocks = <int>;    // How far (in block units) a friendly monster can see other monsters. Default 10
 
@@ -582,23 +586,29 @@ arg0str in dynamic lights.
 Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
 
-1.31 22.12.2019
+1.31 31.10.2018
+Added destructible level geometry properties.
+
+1.32 22.12.2019
 Coloriation options added
 
-1.32 28.06.2021
+1.33 28.06.2021
 Blocklandmonsters MBF21 flag
 
-1.33 06.11.2021
+1.34 06.11.2021
 Added separate light levels for sidedef tiers (top/mid/bottom)
 
-1.34 11.09.2023
+1.35 11.09.2023
 Added/updated ZDRay/lightmap-related properties.
 
-1.35 15.09.2023
+1.36 15.09.2023
 fixed omissions: Blocklandmonsters and Blockfloaters line flags.
 
-1.36 20.10.2023
-Sidedef skewing properties
+1.37 20.10.2023
+Sidedef skewing properties added
+
+1.38 30.09.2024
+Hurtmonsters and harminair added.
 
 ===============================================================================
 EOF

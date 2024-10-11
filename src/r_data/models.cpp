@@ -538,7 +538,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				if (animationid >= 0)
 				{
 					animation = Models[animationid];
-					const TArray<TRS>* animationData = animation->AttachAnimationData();
+					animationData = animation->AttachAnimationData();
 				}
 
 				if(is_decoupled)

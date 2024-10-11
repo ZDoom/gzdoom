@@ -57,6 +57,9 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 
+#include "serializer.h"
+#include "s_music.h"
+
 CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
@@ -109,6 +112,8 @@ class DInterBackground : public DObject
 	{
 		ANIM_ALWAYS,	// determined by patch entry
 		ANIM_PIC,		// continuous
+		ANIM_FRAME,     // determined by frame properties
+		ANIM_NONE,      // frozen (used for infinite duration frames)
 
 		// condition bitflags
 		ANIM_IFVISITED = 8,
@@ -137,13 +142,41 @@ class DInterBackground : public DObject
 		FString Level;
 	};
 
+	struct frame_t
+	{
+		FTextureID	image;
+		uint32_t	type;
+		// In tics!
+		int         duration;
+		int         max_duration;
+	};
+
+	enum ECondition
+	{
+		COND_NONE = 0, // None.
+		COND_GREATER = 1, // Parameter is greater than current map number.
+		COND_EQUAL = 2, // Parameter is equal to current map number.
+		COND_VISITED = 3, // Map number corresponding to parameter is visited.
+		COND_NOTSECRET = 4, // Current map is not a secret one.
+		COND_SECRETVISTED = 5, // Any secret map was visited.
+		COND_TALLY = 6, // Tally screen.
+		COND_ENTERING = 7, // "Entering" screen.
+	};
+
+	struct condition_t
+	{
+		ECondition condition;
+		int param;
+	};
+
 	struct in_anim_t
 	{
 		int			type;	// Made an int so I can use '|'
 		int 		period;	// period in tics between animations
 		yahpt_t 	loc;	// location of animation
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-		TArray<FTextureID>	frames;	// actual graphics for frames of animations
+		TArray<frame_t>	frames;	// actual graphics for frames of animations
+		TArray<condition_t> conditions; // conditions to display the animation
 
 									// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
@@ -162,9 +195,15 @@ class DInterBackground : public DObject
 		}
 	};
 
+	struct in_layer_t
+	{
+		TArray<in_anim_t> anims;
+		TArray<condition_t> conditions; // conditions to display the animations.
+	};
+
 private:
 	TArray<lnode_t> lnodes;
-	TArray<in_anim_t> anims;
+	TArray<in_layer_t> layers;
 	int				bcnt = 0;				// used for timing of background animation
 	TArray<FTextureID> yah; 		// You Are Here graphic
 	FTextureID		splat{};		// splat
@@ -174,12 +213,14 @@ private:
 	int			bgwidth = -1;
 	int			bgheight = -1;
 	bool		tilebackground = false;
+	FString		muslump;
 
 
 public:
 
 	DInterBackground(wbstartstruct_t *wbst);
 	bool LoadBackground(bool isenterpic);
+	bool IsUsingMusic();
 	void updateAnimatedBack();
 	void drawBackground(int state, bool drawsplat, bool snl_pointeron);
 
@@ -242,6 +283,70 @@ private:
 			}
 		}
 	}
+
+	//====================================================================
+	//
+	// Draws the splats and the 'You are here' arrows
+	//
+	//====================================================================
+	bool ConditionsMet(int state, TArray<condition_t>& conditions)
+	{
+		for (auto& condition : conditions)
+		{
+			switch (condition.condition)
+			{
+				case ECondition::COND_NONE:
+					break;
+				case ECondition::COND_EQUAL:
+				{
+					auto* li = FindLevelInfo(state != StatCount ? wbs->next.GetChars() : wbs->current.GetChars());
+					if (!li)
+						return false;
+					if (li->broken_id24_levelnum != condition.param)
+						return false;
+					break;
+				}
+				case ECondition::COND_GREATER:
+				{
+					auto* li = FindLevelInfo(state != StatCount ? wbs->next.GetChars() : wbs->current.GetChars());
+					if (!li)
+						return false;
+					if (li->broken_id24_levelnum <= condition.param)
+						return false;
+					break;
+				}
+				case ECondition::COND_VISITED:
+				{
+					auto* li = FindLevelByNum(condition.param);
+					if (li == NULL || !(li->flags & LEVEL_VISITED))
+						return false;
+					break;
+				}
+				case ECondition::COND_NOTSECRET:
+				{
+					auto* li = FindLevelInfo(state != StatCount ? wbs->next.GetChars() : wbs->current.GetChars());
+					if (!li)
+						return false;
+					if (li->flags3 & LEVEL3_SECRET)
+						return false;
+					break;
+				}
+				case ECondition::COND_SECRETVISTED:
+					if (!SecretLevelVisited())
+						return false;
+					break;
+				case ECondition::COND_TALLY:
+					if (state != StatCount)
+						return false;
+					break;
+				case ECondition::COND_ENTERING:
+					if (state == StatCount)
+						return false;
+					break;
+			}
+		}
+		return true;
+	}
 };
 
 DInterBackground:: DInterBackground(wbstartstruct_t *wbst)
@@ -270,11 +375,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 {
 	const char* lumpname = nullptr;
 	const char* exitpic = nullptr;
+	const char* exitanim = nullptr;
 	char buffer[10];
 	in_anim_t an;
 	lnode_t pt;
 	FTextureID texture;
 	bool noautostartmap = false;
+	bool id24anim = false;
 
 	bcnt = 0;
 
@@ -284,8 +391,17 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	level_info_t* li = FindLevelInfo(wbs->current.GetChars());
 	if (li != nullptr)
 	{
-		exitpic = li->ExitPic.GetChars();
-		if (li->ExitPic.IsNotEmpty()) tilebackground = false;
+		if (li->ExitAnim.IsNotEmpty())
+		{
+			id24anim = true;
+			exitpic = li->ExitAnim.GetChars();
+			tilebackground = false;
+		}
+		else
+		{
+			exitpic = li->ExitPic.GetChars();
+			if (li->ExitPic.IsNotEmpty()) tilebackground = false;
+		}
 	}
 	lumpname = exitpic;
 
@@ -294,8 +410,17 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		level_info_t* li = FindLevelInfo(wbs->next.GetChars());
 		if (li != NULL)
 		{
-			lumpname = li->EnterPic.GetChars();
-			if (li->EnterPic.IsNotEmpty()) tilebackground = false;
+			if (li->EnterAnim.IsNotEmpty())
+			{
+				id24anim = true;
+				lumpname = li->EnterAnim.GetChars();
+				tilebackground = false;
+			}
+			else
+			{
+				lumpname = li->EnterPic.GetChars();
+				if (li->EnterPic.IsNotEmpty()) tilebackground = false;
+			}
 		}
 	}
 
@@ -382,12 +507,251 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	}
 
 	lnodes.Clear();
-	anims.Clear();
+	layers.Clear();
 	yah.Clear();
 	splat.SetInvalid();
+	if (!id24anim)
+		layers.Resize(1);
 
+	if (id24anim)
+	{
+		try
+		{
+			int lumpnum = fileSystem.CheckNumForFullName(lumpname, true);
+			if (lumpnum == -1)
+			{
+				I_Error("Intermission animation lump %s not found!", lumpname);
+			}
+			auto data = fileSystem.ReadFile(lumpnum);
+			FSerializer jsonReader;
+			jsonReader.mLumpName = fileSystem.GetFileFullPath(lumpnum);
+			lumpname = jsonReader.mLumpName.GetChars();
+			if (jsonReader.OpenReader(data.string(), data.size()))
+			{
+				FString type = jsonReader.GetString("type");
+				if (type.Compare("interlevel"))
+				{
+					I_Error("Interlevel lump %s is not interlevel!", lumpname);
+				}
+				if (jsonReader.BeginObject("data"))
+				{
+					FString music = jsonReader.GetString("music");
+					if (music.IsEmpty())
+					{
+						I_Error("No music lump specified for intermission animation %s!", lumpname);
+					}
+					muslump = music;
+					if (!MusicExists(muslump.GetChars()))
+					{
+						I_Error("Music lump %s not found!", muslump.GetChars());
+					}
+				
+					// Check for background lump.
+					FString backgroundimage = jsonReader.GetString("backgroundimage");
+					texture = TexMan.CheckForTexture(backgroundimage.GetChars(), ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+					if (!texture.isValid())
+					{
+						if (backgroundimage.IsEmpty())
+						{
+							I_Error("No background image specified for intermission animation %s!", lumpname);
+						}
+						else
+						{
+							I_Error("Texture %s not found!", backgroundimage.GetChars());
+						}
+					}
+
+					if (!jsonReader.IsKeyNull("layers") && jsonReader.BeginArray("layers"))
+					{
+						int size = jsonReader.ArraySize();
+
+						if (size == 0)
+							I_Error("Zero-length 'layers' array in %s", lumpname);
+
+						for (int i = 0; i < size; i++)
+						{
+							if (jsonReader.BeginObject(nullptr))
+							{
+								layers.Reserve(1);
+								auto& layer = layers.back();
+								if (!jsonReader.IsKeyNull("conditions") && jsonReader.BeginArray("conditions"))
+								{
+									int condition_size = jsonReader.ArraySize();
+									if (condition_size == 0)
+									{
+										I_Error("Condition array empty and not null for layer %d in lump %s", layers.Size(), lumpname);
+									}
+									for (int j = 0; j < condition_size; j++)
+									{
+										if (jsonReader.BeginObject(nullptr))
+										{
+											ECondition cond = COND_NONE;
+											int param = 0;
+											::Serialize(jsonReader, "condition", (int&)cond, nullptr);
+											::Serialize(jsonReader, "param", param, nullptr);
+											layer.conditions.Push(condition_t{ cond, param });
+											jsonReader.EndObject();
+										}
+									}
+									jsonReader.EndArray();
+								}
+
+								// Read anims.
+								if (jsonReader.BeginArray("anims"))
+								{
+									int anim_size = jsonReader.ArraySize();
+									if (anim_size == 0)
+									{
+										I_Error("No animations defined for layer %d in lump %s", layers.Size(), lumpname);
+									}
+
+									for (int j = 0; j < anim_size; j++)
+									{
+										if (jsonReader.BeginObject(nullptr))
+										{
+											layer.anims.Reserve(1);
+											auto& anim = layer.anims.back();
+
+											anim.Reset();
+											anim.type = ANIM_FRAME;
+											anim.ctr = 0;
+											anim.data = 0;
+										
+											::Serialize(jsonReader, "x", anim.loc.x, nullptr);
+											::Serialize(jsonReader, "y", anim.loc.y, nullptr);
+
+											if (!jsonReader.IsKeyNull("conditions") && jsonReader.BeginArray("conditions"))
+											{
+												int condition_size = jsonReader.ArraySize();
+												if (condition_size == 0)
+												{
+													I_Error("Condition array empty and not null for anim %d, layer %d in lump %s", layer.anims.Size(), layers.Size(), lumpname);
+												}
+												for (int k = 0; k < condition_size; k++)
+												{
+													if (jsonReader.BeginObject(nullptr))
+													{
+														ECondition cond = COND_NONE;
+														int param = 0;
+														::Serialize(jsonReader, "condition", (int&)cond, nullptr);
+														::Serialize(jsonReader, "param", param, nullptr);
+														anim.conditions.Push(condition_t{ cond, param });
+														jsonReader.EndObject();
+													}
+												}
+												jsonReader.EndArray();
+											}
+
+											if (jsonReader.BeginArray("frames"))
+											{
+												int frames = jsonReader.ArraySize();
+
+												if (frames == 0)
+												{
+													I_Error("No frames defined for anim %d, layer %d in lump %s", layer.anims.Size(), layers.Size(), lumpname);
+												}
+												for (int k = 0; k < frames; k++)
+												{
+													if (jsonReader.BeginObject(nullptr))
+													{
+														double duration = 0.0;
+														double maxduration = 0.0;
+														anim.frames.Reserve(1);
+														auto& frame = anim.frames.back();
+
+														::Serialize(jsonReader, "duration", duration, nullptr);
+														::Serialize(jsonReader, "maxduration", maxduration, nullptr);
+														::Serialize(jsonReader, "type", frame.type, nullptr);
+
+														FString image = jsonReader.GetString("image");
+														if (image.IsEmpty())
+														{
+															I_Error("No image defined for frame %d, anim %d, layer %d in lump %s", anim.frames.Size(), layer.anims.Size(), layers.Size(), lumpname);
+														}
+
+														frame.image = TexMan.CheckForTexture(image.GetChars(), ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+														if (!frame.image.isValid())
+														{
+															I_Error("Texture '%s' not found!", image.GetChars());
+														}
+
+														frame.duration = round(duration * (double)TICRATE);
+														frame.max_duration = round(maxduration * (double)TICRATE);
+
+														if (frame.duration <= 0 && duration > 0.0)
+														{
+															frame.duration = 1;
+														}
+
+														if (frame.max_duration <= 0 && maxduration > 0.0)
+														{
+															frame.max_duration = 1;
+														}
+
+														if (anim.frames.Size() == 1)
+														{
+															if (frame.type & 0x1000)
+															{
+																frame.type &= ~0x1000;
+																anim.nexttic = 1 + (M_Random() % frame.duration);
+															}
+															else
+															{
+
+																switch (frame.type)
+																{
+																case 0x1:
+																	anim.type = ANIM_NONE;
+																	break;
+																case 0x4:
+																	anim.nexttic = 1 + M_Random(frame.max_duration - frame.duration + 1) + frame.duration;
+																	break;
+																case 0x2:
+																	anim.nexttic = 1 + frame.duration;
+																	break;
+																}
+															}
+														}
+
+														jsonReader.EndObject();
+													}
+												}
+												jsonReader.EndArray();
+											}
+
+											jsonReader.EndObject();
+										}
+									}
+
+									jsonReader.EndArray();
+								}
+
+								jsonReader.EndObject();
+							}
+						}
+						jsonReader.EndArray();
+					}
+
+					jsonReader.EndObject();
+				}
+				jsonReader.Close();
+			}
+		}
+		// This is deliberate. Errors coming from here shouldn't cause a console abort.
+		catch (CRecoverableError& error)
+		{
+			Printf(TEXTCOLOR_RED "Failed to parse intermission anim definition %s: %s.\nFalling back to non-anim definitions.\n", lumpname, error.GetMessage());
+
+			if (isenterpic)
+				li->EnterAnim = "";
+			else
+				li->ExitAnim = "";
+
+			return LoadBackground(isenterpic);
+		}
+	}
 	// a name with a starting '$' indicates an intermission script
-	if (*lumpname != '$')
+	else if (*lumpname != '$')
 	{
 		texture = TexMan.CheckForTexture(lumpname, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
 	}
@@ -520,18 +884,20 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.frames.Push(TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny));
+							auto textureId = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+							an.frames.Push(frame_t{ textureId, 0, 0, 0 });
 						}
 						else
 						{
 							while (!sc.CheckString("}"))
 							{
 								sc.MustGetString();
-								an.frames.Push(TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny));
+								auto textureId = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+								an.frames.Push(frame_t{ textureId, 0, 0, 0 });
 							}
 						}
 						an.ctr = -1;
-						anims.Push(an);
+						layers[0].anims.Push(an);
 						break;
 
 					case 13:		// Pic
@@ -542,8 +908,8 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						an.loc.y = sc.Number;
 						sc.MustGetString();
 						an.frames.Reserve(1);	// allocate exactly one element
-						an.frames[0] = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
-						anims.Push(an);
+						an.frames[0].image = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+						layers[0].anims.Push(an);
 						break;
 
 					default:
@@ -554,6 +920,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		}
 		else
 		{
+			
 			Printf("Intermission script %s not found!\n", lumpname + 1);
 			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
@@ -585,27 +952,59 @@ void DInterBackground::updateAnimatedBack()
 	unsigned int i;
 
 	bcnt++;
-	for (i = 0; i<anims.Size(); i++)
+	if (bcnt == 1 && muslump.IsNotEmpty())
 	{
-		in_anim_t * a = &anims[i];
-		switch (a->type & ANIM_TYPE)
+		S_ChangeMusic(muslump.GetChars());
+	}
+
+	for (auto& layer : layers)
+	{
+		auto& anims = layer.anims;
+		for (i = 0; i < anims.Size(); i++)
 		{
-		case ANIM_ALWAYS:
-			if (bcnt >= a->nexttic)
+			in_anim_t* a = &anims[i];
+			switch (a->type & ANIM_TYPE)
 			{
-				if (++a->ctr >= (int)a->frames.Size())
+			case ANIM_NONE:
+				break;
+
+			case ANIM_FRAME:
+				if (bcnt >= a->nexttic)
 				{
-					if (a->data == 0) a->ctr = 0;
-					else a->ctr--;
+					if (++a->ctr >= (int)a->frames.Size())
+						a->ctr = 0;
+
+					switch (a->frames[a->ctr].type & 0x7) {
+					case 0x1:
+						a->type &= ANIM_CONDITION;
+						a->type = ANIM_NONE;
+						break;
+					case 0x4:
+						a->nexttic = bcnt + M_Random(a->frames[a->ctr].max_duration - a->frames[a->ctr].duration + 1) + a->frames[a->ctr].duration;
+						break;
+					case 0x2:
+						a->nexttic = bcnt + a->frames[a->ctr].duration;
+						break;
+					}
 				}
-				a->nexttic = bcnt + a->period;
+				break;
+			case ANIM_ALWAYS:
+				if (bcnt >= a->nexttic)
+				{
+					if (++a->ctr >= (int)a->frames.Size())
+					{
+						if (a->data == 0) a->ctr = 0;
+						else a->ctr--;
+					}
+					a->nexttic = bcnt + a->period;
+				}
+				break;
+
+			case ANIM_PIC:
+				a->ctr = 0;
+				break;
+
 			}
-			break;
-
-		case ANIM_PIC:
-			a->ctr = 0;
-			break;
-
 		}
 	}
 }
@@ -656,51 +1055,59 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		ClearRect(twod, 0, 0, twod->GetWidth(), twod->GetHeight(), 0, 0);
 	}
 
-	for (i = 0; i<anims.Size(); i++)
+	for (auto& layer : layers)
 	{
-		in_anim_t * a = &anims[i];
-		level_info_t *li;
+		auto& anims = layer.anims;
 
-		switch (a->type & ANIM_CONDITION)
+		if (!ConditionsMet(state, layer.conditions))
+			continue;
+
+		for (i = 0; i < anims.Size(); i++)
 		{
-		case ANIM_IFVISITED:
-			li = FindLevelInfo(a->LevelName.GetChars());
-			if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
-			break;
+			in_anim_t* a = &anims[i];
+			level_info_t* li;
 
-		case ANIM_IFNOTVISITED:
-			li = FindLevelInfo(a->LevelName.GetChars());
-			if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
-			break;
+			switch (a->type & ANIM_CONDITION)
+			{
+			case ANIM_IFVISITED:
+				li = FindLevelInfo(a->LevelName.GetChars());
+				if (li == NULL || !(li->flags & LEVEL_VISITED)) continue;
+				break;
 
-			// StatCount means 'leaving' - everything else means 'entering'!
-		case ANIM_IFENTERING:
-			if (state == StatCount || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
-			break;
+			case ANIM_IFNOTVISITED:
+				li = FindLevelInfo(a->LevelName.GetChars());
+				if (li == NULL || (li->flags & LEVEL_VISITED)) continue;
+				break;
 
-		case ANIM_IFNOTENTERING:
-			if (state != StatCount && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
-			break;
+				// StatCount means 'leaving' - everything else means 'entering'!
+			case ANIM_IFENTERING:
+				if (state == StatCount || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
+				break;
 
-		case ANIM_IFLEAVING:
-			if (state != StatCount || a->LevelName.CompareNoCase(wbs->current, 8)) continue;
-			break;
+			case ANIM_IFNOTENTERING:
+				if (state != StatCount && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
+				break;
 
-		case ANIM_IFNOTLEAVING:
-			if (state == StatCount && !a->LevelName.CompareNoCase(wbs->current, 8)) continue;
-			break;
+			case ANIM_IFLEAVING:
+				if (state != StatCount || a->LevelName.CompareNoCase(wbs->current, 8)) continue;
+				break;
 
-		case ANIM_IFTRAVELLING:
-			if (a->LevelName2.CompareNoCase(wbs->current, 8) || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
-			break;
+			case ANIM_IFNOTLEAVING:
+				if (state == StatCount && !a->LevelName.CompareNoCase(wbs->current, 8)) continue;
+				break;
 
-		case ANIM_IFNOTTRAVELLING:
-			if (!a->LevelName2.CompareNoCase(wbs->current, 8) && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
-			break;
+			case ANIM_IFTRAVELLING:
+				if (a->LevelName2.CompareNoCase(wbs->current, 8) || a->LevelName.CompareNoCase(wbs->next, 8)) continue;
+				break;
+
+			case ANIM_IFNOTTRAVELLING:
+				if (!a->LevelName2.CompareNoCase(wbs->current, 8) && !a->LevelName.CompareNoCase(wbs->next, 8)) continue;
+				break;
+			}
+			if (a->ctr >= 0 && ConditionsMet(state, a->conditions))
+				DrawTexture(twod, a->frames[a->ctr].image, false, a->loc.x, a->loc.y,
+					DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, FSMode_ScaleToFit43, TAG_DONE);
 		}
-		if (a->ctr >= 0)
-			DrawTexture(twod, a->frames[a->ctr], false, a->loc.x, a->loc.y,
-				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, DTA_FullscreenScale, FSMode_ScaleToFit43, TAG_DONE);
 	}
 
 	if (drawsplat)
@@ -729,6 +1136,23 @@ DEFINE_ACTION_FUNCTION(DInterBackground, drawBackground)
 	PARAM_BOOL(pointer);
 	self->drawBackground(state, splat, pointer);
 	return 0;
+}
+
+//====================================================================
+//
+//
+//
+//====================================================================
+
+bool DInterBackground::IsUsingMusic()
+{
+	return muslump.IsNotEmpty();
+}
+
+DEFINE_ACTION_FUNCTION(DInterBackground, IsUsingMusic)
+{
+	PARAM_SELF_PROLOGUE(DInterBackground);
+	ACTION_RETURN_BOOL(self->IsUsingMusic());
 }
 
 IMPLEMENT_CLASS(DInterBackground, true, false)

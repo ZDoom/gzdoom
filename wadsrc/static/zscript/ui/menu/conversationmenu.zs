@@ -41,6 +41,7 @@ struct StrifeDialogueNode native version("2.4")
 	native Class<Actor> SpeakerType;
 	native String SpeakerName;
 	native Sound SpeakerVoice;
+	native int CutsceneNum;
 	native String Backdrop;
 	native String Dialogue;
 	native String Goodbye;

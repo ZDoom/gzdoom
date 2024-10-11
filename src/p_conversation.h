@@ -30,6 +30,7 @@ struct FStrifeDialogueNode
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
 	FSoundID SpeakerVoice = NO_SOUND;
+	int CutsceneNum = -1; // cutscene index in Level->info->cutscenes array
 	FString Backdrop;
 	FString Dialogue;
 	FString Goodbye; // must init to null for binary scripts to work as intended

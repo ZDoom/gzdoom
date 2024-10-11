@@ -1079,6 +1079,7 @@ void D_Display ()
 				break;
 				
 		case GS_CUTSCENE:
+		case GS_MIDLEVELCUTSCENE:
 		case GS_INTRO:
 			ScreenJobDraw();
 			break;

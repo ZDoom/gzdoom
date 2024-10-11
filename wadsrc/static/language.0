@@ -892,3 +892,4 @@ Enable this controller,JOYMNU_JOYENABLE,Option to enable or disable individual c
 Open Main Menu,CNTRLMNU_OPEN_MAIN,,,,Otevřít hlavní menu,Åbn hovedmenuen,Hauptmenü öffnen,,Malfermi ĉefan menuon,Abrir el menú principal,,Avaa päävalikko,Ouvrir le menu principal,Otvori glavni izbornik,Főmenü megnyitása,Apri il menu principale,メインメニューを開く,메인 메뉴 열기,Hoofdmenu openen,Åpne hovedmenyen,Otwórz meny główne,Abrir menu principal,,Deschideți meniul principal,Открыть главное меню,Отворите главни мени,Öppna huvudmenyn,Ana Menüyü Aç,Відкрити головне меню,
 ,,New content,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Module replayer,MODMNU_REPLAYER,,,,Nastavení přehrávače modulů,Modulafspiller,Modul-Spieler,,Legilo de moduloj,Reproductor de módulos,,,Lecteur de module,,,Module replayer,,,Module replayer,Modulavspiller,,Reprodutor de módulos,,Redare a modulelor,,,Modulåterspelare,,Module replayer,
+Play mid-level cutscenes,GMPLYMNU_MCUTSCENES,,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -1695,6 +1695,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  }
  
  //==========================================================================
+ //
+ //
+ //==========================================================================
+
+static void PlayMidLevelCutscene(FLevelLocals *self, const FString &SceneName)
+ {
+	 return self->PlayMidLevelCutscene(SceneName.GetChars());
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, PlayMidLevelCutscene, PlayMidLevelCutscene)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	 PARAM_STRING(SceneName);
+	 self->PlayMidLevelCutscene(SceneName.GetChars());
+	 ACTION_RETURN_BOOL(true);
+ }
+
+ //==========================================================================
 //
 // ZScript counterpart to ACS ChangeSky, uses TextureIDs
 //

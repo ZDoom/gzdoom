@@ -35,7 +35,7 @@ struct event_t;
 #include "dobjgc.h"
 #include "name.h"
 #include "gamestate.h"
-
+#include "screenjob.h"
 
 // wipegamestate can be set to -1
 //	to force a wipe on the next draw
@@ -108,6 +108,7 @@ FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname);
 
 class DIntermissionController;
 struct level_info_t;
+void RunMidLevelCutscene(level_info_t* inMap, CutsceneDef* inCutscene);
 void RunIntermission(level_info_t* oldlevel, level_info_t* newlevel, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf);
 
 extern const AActor *SendItemUse, *SendItemDrop;

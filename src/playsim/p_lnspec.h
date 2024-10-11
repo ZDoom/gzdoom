@@ -216,6 +216,8 @@ static inline bool P_IsACSSpecial(int specnum)
 			specnum == ACS_ExecuteAlways;
 }
 
+static int P_GetCutsceneNum(FLevelLocals *lev, const char* SceneName);
+
 FLineSpecial *P_GetLineSpecialInfo(int num);
 int P_GetMaxLineSpecial();
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);

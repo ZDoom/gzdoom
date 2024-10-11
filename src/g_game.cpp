@@ -988,7 +988,7 @@ bool G_Responder (event_t *ev)
 	if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 		return true;
 	
-	if (gamestate == GS_INTRO || gamestate == GS_CUTSCENE)
+	if (gamestate == GS_INTRO || gamestate == GS_CUTSCENE || gamestate == GS_MIDLEVELCUTSCENE)
 	{
 		return ScreenJobResponder(ev);
 	}
@@ -1238,8 +1238,17 @@ void G_Ticker ()
 			gameaction = ga_nothing;
 			C_HideConsole(); // On some systems, console is open during intro
 			break;
-
-
+		case ga_playmidlevelcutscene: // This should never be reached in multiplayer
+			buttonMap.ResetButtonStates(); // clear cmd building stuff
+			gamestate = GS_MIDLEVELCUTSCENE;
+			gameaction = ga_nothing;
+			break;
+		case ga_endmidlevelcutscene: // This should never be reached in multiplayer
+			buttonMap.ResetButtonStates(); // clear cmd building stuff
+			primaryLevel->SetMusic();
+			gamestate = GS_LEVEL;
+			gameaction = ga_nothing;
+			break;
 
 		default:
 		case ga_nothing:
@@ -1343,6 +1352,7 @@ void G_Ticker ()
 		break;
 
 	case GS_CUTSCENE:
+	case GS_MIDLEVELCUTSCENE:
 	case GS_INTRO:
 		if (ScreenJobTick())
 		{
@@ -2236,6 +2246,7 @@ CUSTOM_CVAR (Int, quicksaverotationcount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (self < 1)
 		self = 1;
 }
+CVAR (Bool, enablemidlevelcutscenes, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void G_DoAutoSave ()
 {

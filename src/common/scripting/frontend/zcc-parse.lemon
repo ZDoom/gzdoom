@@ -988,6 +988,56 @@ aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
 	X = arr;
 }
 
+aggregate_type(X) ::= ARRAY(T) LT CLASS(A) LT dottable_id(B) RSH . /* TArray<class<type>> */
+{
+	NEW_AST_NODE(ClassType,cls,A);
+	cls->ArraySize = NULL;
+	cls->Restriction = B;
+	NEW_AST_NODE(DynArrayType,arr,T);
+	arr->ElementType = cls;
+	X = arr;
+}
+
+aggregate_type(X) ::= ARRAY(T) LT READONLY LT IDENTIFIER(A) RSH . /* TArray<readonly<type>> */
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	type->ArraySize = NULL;
+	id->Id = A.Name();
+	NEW_AST_NODE(DynArrayType,arr,T);
+	arr->ElementType = type;
+	X = arr;
+}
+
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA CLASS(B) LT dottable_id(C) RSH . /* Map<k, class<v>> */
+{
+	NEW_AST_NODE(ClassType,cls,B);
+	cls->ArraySize = NULL;
+	cls->Restriction = C;
+	NEW_AST_NODE(MapType,map,T);
+	map->KeyType = A;
+	map->ValueType = cls;
+	X = map;
+}
+
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA READONLY LT IDENTIFIER(B) RSH . /* Map<k, class<v>> */
+{
+	NEW_AST_NODE(BasicType, type, B);
+	NEW_AST_NODE(Identifier, id, B);
+	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	type->ArraySize = NULL;
+	id->Id = B.Name();
+	NEW_AST_NODE(MapType,map,T);
+	map->KeyType = A;
+	map->ValueType = type;
+	X = map;
+}
+
 aggregate_type(X) ::= func_ptr_type(A). { X = A; /*X-overwrites-A*/ }
 
 %type func_ptr_type {ZCC_FuncPtrType *}

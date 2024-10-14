@@ -1038,7 +1038,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		r.Scale(sprscale.X, isSpriteShadow ? sprscale.Y * 0.15 * thing->isoscaleY : sprscale.Y * thing->isoscaleY);
 
-		if ((thing->renderflags & RF_ROLLSPRITE) || (thing->renderflags2 & RF2_SQUAREPIXELS))
+		if (thing->renderflags2 & RF2_SQUAREPIXELS)
 		{
 			double ps = di->Level->pixelstretch;
 			double mult = 1.0 / sqrt(ps); // shrink slightly
@@ -1621,7 +1621,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	auto r = spi.GetSpriteRect();
 	r.Scale(spr->Scale.X, spr->Scale.Y);
 
-	if (spr->PT.flags & SPF_ROLL)
+	if (spr->PT.flags & SPF_SQUAREPIXELS)
 	{
 		double ps = di->Level->pixelstretch;
 		double mult = 1.0 / sqrt(ps); // shrink slightly

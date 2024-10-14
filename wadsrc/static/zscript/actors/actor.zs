@@ -854,7 +854,7 @@ class Actor : Thinker native
 	native int LookForEnemiesEx(out Array<Actor> targets, double range = -1, bool noPlayers = true, bool allaround = false, LookExParams params = null);
 	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
 	native clearscope double DistanceBySpeed(Actor other, double speed) const;
-	native name GetSpecies();
+	native clearscope name GetSpecies();
 	native void PlayActiveSound();
 	native void Howl();
 	native void DrawSplash (int count, double angle, int kind);

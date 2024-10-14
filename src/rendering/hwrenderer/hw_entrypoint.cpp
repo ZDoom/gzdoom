@@ -362,7 +362,7 @@ sector_t* RenderView(player_t* player)
 		// Draw all canvases that changed
 		for (FCanvas* canvas : AllCanvases)
 		{
-			if (canvas->Tex->CheckNeedsUpdate())
+			if (canvas->Tex && canvas->Tex->CheckNeedsUpdate())
 			{
 				screen->RenderTextureView(canvas->Tex, [=](IntRect& bounds)
 					{

@@ -851,6 +851,7 @@ class Actor : Thinker native
 	native bool LookForTid(bool allaround, LookExParams params = null);
 	native bool LookForEnemies(bool allaround, LookExParams params = null);
 	native bool LookForPlayers(bool allaround, LookExParams params = null);
+	native int LookForEnemiesEx(out Array<Actor> targets, double range = -1, bool noPlayers = true, bool allaround = false, LookExParams params = null);
 	native bool TeleportMove(Vector3 pos, bool telefrag, bool modifyactor = true);
 	native clearscope double DistanceBySpeed(Actor other, double speed) const;
 	native name GetSpecies();

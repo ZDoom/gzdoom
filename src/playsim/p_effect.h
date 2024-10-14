@@ -70,6 +70,7 @@ enum EParticleFlags
 	SPF_NOFACECAMERA			= 1 << 12,
 	SPF_ROLLCENTER				= 1 << 13,
 	SPF_NOMIPMAP				= 1 << 14,
+	SPF_STRETCHPIXELS			= 1 << 15,
 };
 
 class DVisualThinker;

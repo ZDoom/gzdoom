@@ -689,6 +689,7 @@ struct CVar native
 	};
 
 	native static CVar FindCVar(Name name);
+	native static bool SaveConfig();
 	bool GetBool() { return GetInt(); }
 	native int GetInt();
 	native double GetFloat();

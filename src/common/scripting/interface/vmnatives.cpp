@@ -1033,10 +1033,15 @@ DEFINE_ACTION_FUNCTION(_CVar, FindCVar)
 	ACTION_RETURN_POINTER(FindCVar(name.GetChars(), nullptr));
 }
 
-DEFINE_ACTION_FUNCTION(_CVar, SaveConfig)
+static int SaveConfig()
+{
+	return M_SaveDefaults(nullptr);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_CVar, SaveConfig, SaveConfig)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_BOOL(M_SaveDefaults(nullptr));
+	ACTION_RETURN_INT(M_SaveDefaults(nullptr));
 }
 
 //=============================================================================

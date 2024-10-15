@@ -1359,6 +1359,13 @@ else()
 endif()
 
 if( MSVC )
+	option ( CONSOLE_MODE "Compile as a console application" OFF )
+	if ( CONSOLE_MODE )
+		set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE /ENTRY:wWinMainCRTStartup" )
+	else()
+		set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup" )
+	endif()
+
 	option( ZDOOM_GENERATE_MAPFILE "Generate .map file for debugging." OFF )
 	set( LINKERSTUFF "/MANIFEST:NO" )
 

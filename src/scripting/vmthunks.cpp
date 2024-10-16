@@ -871,6 +871,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetPlaneReflectivity(sector_t* self, int pos, double val)
  {
+	 if (pos < 0 || pos > 1) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "pos must be either 0 or 1");
 	 self->SetPlaneReflectivity(pos, val);
  }
 
@@ -885,6 +886,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static double GetPlaneReflectivity(sector_t* self, int pos)
  {
+	 if (pos < 0 || pos > 1) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "pos must be either 0 or 1");
 	 return self->GetPlaneReflectivity(pos);
  }
 

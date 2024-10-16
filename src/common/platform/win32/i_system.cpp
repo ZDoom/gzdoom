@@ -102,6 +102,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void DestroyCustomCursor();
+bool isConsoleApp();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -306,6 +307,7 @@ static void PrintToStdOut(const char *cpt, HANDLE StdOut)
 			else break;
 		}
 	}
+
 	DWORD bytes_written;
 	WriteFile(StdOut, printData.GetChars(), (DWORD)printData.Len(), &bytes_written, NULL);
 	if (terminal) 

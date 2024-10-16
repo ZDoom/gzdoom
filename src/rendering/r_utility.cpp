@@ -704,7 +704,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
 	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
-		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length(); // [DVR] Estimated. +/-1 should be top/bottom of screen.
+		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length() / tan (FieldOfView.Radians()*0.5); // [DVR] Estimated. +/-1 should be top/bottom of screen.
 
 }
 

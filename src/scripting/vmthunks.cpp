@@ -880,7 +880,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(val)
-	 self->SetPlaneReflectivity(pos, val);
+	 SetPlaneReflectivity(self, pos, val);
 	 return 0;
  }
 
@@ -894,7 +894,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
  {
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
-	 ACTION_RETURN_FLOAT(self->GetPlaneReflectivity(pos));
+	 ACTION_RETURN_FLOAT(GetPlaneReflectivity(self, pos));
  }
 
  static int PortalBlocksView(sector_t *self, int pos)

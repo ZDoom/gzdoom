@@ -197,10 +197,14 @@ int DoMain (HINSTANCE hInstance)
 
 		SetConsoleCP(CP_UTF8);
 		SetConsoleOutputCP(CP_UTF8);
+
 		DWORD mode;
 
-		if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-			FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
+		if (GetConsoleMode(StdOut, &mode))
+		{
+			if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+				FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
+		}
 	}
 	else if (Args->CheckParm("-stdout") || Args->CheckParm("-norun"))
 	{

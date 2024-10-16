@@ -40,6 +40,7 @@
 #include "r_sky.h"
 #include "p_terrain.h"
 #include "p_effect.h"
+#include "vm.h"
 
 #include "hwrenderer/data/buffers.h"
 
@@ -1031,11 +1032,13 @@ public:
 
 	void SetPlaneReflectivity(int pos, double val)
 	{
+		if (pos < 0 || pos > 1) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "pos must be either 0 or 1");
 		reflect[pos] = val;
 	}
 
 	double GetPlaneReflectivity(int pos)
 	{
+		if (pos < 0 || pos > 1) ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "pos must be either 0 or 1");
 		return reflect[pos];
 	}
 

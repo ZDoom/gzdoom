@@ -553,6 +553,8 @@ struct Sector native play
 	native void ChangeLightLevel(int newval);
 	native void SetLightLevel(int newval);
 	native clearscope int GetLightLevel() const;
+	native void SetPlaneReflectivity(int pos, double val);
+	native clearscope double GetPlaneReflectivity(int pos);
 	native void AdjustFloorClip();
 	native clearscope bool IsLinked(Sector other, bool ceiling) const;
 

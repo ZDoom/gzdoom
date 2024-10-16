@@ -869,6 +869,32 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 ACTION_RETURN_INT(self->GetLightLevel());
  }
 
+ static void SetPlaneReflectivity(sector_t* self, int pos, double val)
+ {
+	 self->SetPlaneReflectivity(pos, val);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetPlaneReflectivity, SetPlaneReflectivity)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 PARAM_FLOAT(val)
+	 self->SetPlaneReflectivity(pos, val);
+	 return 0;
+ }
+
+ static double GetPlaneReflectivity(sector_t* self, int pos)
+ {
+	 return self->GetPlaneReflectivity(pos);
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetPlaneReflectivity, GetPlaneReflectivity)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(pos);
+	 ACTION_RETURN_FLOAT(self->GetPlaneReflectivity(pos));
+ }
+
  static int PortalBlocksView(sector_t *self, int pos)
  {
 	 return self->PortalBlocksView(pos);

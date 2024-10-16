@@ -45,11 +45,6 @@
 #include <shellapi.h>
 #include <VersionHelpers.h>
 
-#include <iostream>
-#include <fstream>
-#include <io.h>
-#include <fcntl.h>
-
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif

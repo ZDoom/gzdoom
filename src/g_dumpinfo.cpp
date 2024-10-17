@@ -141,30 +141,58 @@ CCMD (spray)
 
 CCMD (mapchecksum)
 {
-	MapData *map;
-	uint8_t cksum[16];
-	
-	if (argv.argc() < 2)
+	if (argv.argc() == 1)
+	{  //current map
+		const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(level.lumpnum));
+
+		for (size_t i = 0; i < 16; ++i)
+		{
+			Printf("%02X", level.md5[i]);
+		}
+
+		Printf(" // %s %s\n", wadname, level.MapName.GetChars());
+	}
+	else if (argv.argc() < 2)
 	{
 		Printf("Usage: mapchecksum <map> ...\n");
 	}
-	for (int i = 1; i < argv.argc(); ++i)
+	else
 	{
-		map = P_OpenMapData(argv[i], true);
-		if (map == NULL)
+		MapData *map;
+		uint8_t cksum[16];
+
+		for (int i = 1; i < argv.argc(); ++i)
 		{
-			Printf("Cannot load %s as a map\n", argv[i]);
-		}
-		else
-		{
-			map->GetChecksum(cksum);
-			const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum));
-			delete map;
-			for (size_t j = 0; j < sizeof(cksum); ++j)
+			if(argv[i] == "*")
 			{
-				Printf("%02X", cksum[j]);
+				const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(level.lumpnum));
+
+				for (size_t i = 0; i < 16; ++i)
+				{
+					Printf("%02X", level.md5[i]);
+				}
+
+				Printf(" // %s %s\n", wadname, level.MapName.GetChars());
 			}
-			Printf(" // %s %s\n", wadname, argv[i]);
+			else
+			{
+				map = P_OpenMapData(argv[i], true);
+				if (map == NULL)
+				{
+					Printf("Cannot load %s as a map\n", argv[i]);
+				}
+				else
+				{
+					map->GetChecksum(cksum);
+					const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum));
+					delete map;
+					for (size_t j = 0; j < sizeof(cksum); ++j)
+					{
+						Printf("%02X", cksum[j]);
+					}
+					Printf(" // %s %s\n", wadname, argv[i]);
+				}
+			}
 		}
 	}
 }

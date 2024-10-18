@@ -383,7 +383,6 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF2, FLIPSPRITEOFFSETX, AActor, renderflags2),
 	DEFINE_FLAG(RF2, FLIPSPRITEOFFSETY, AActor, renderflags2),
 	DEFINE_FLAG(RF2, CAMFOLLOWSPLAYER, AActor, renderflags2),
-	DEFINE_FLAG(RF2, NOMIPMAP, AActor, renderflags2),
 	DEFINE_FLAG(RF2, ISOMETRICSPRITES, AActor, renderflags2),
 	DEFINE_FLAG(RF2, SQUAREPIXELS, AActor, renderflags2),
 

@@ -393,8 +393,6 @@ public:
 	TArray<lightlist_t> *lightlist;
 	DRotator Angles;
 
-	bool nomipmap; // force the sprite to have no mipmaps (ensures tiny sprites in the distance stay crisp)
-
 	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 	bool CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp);

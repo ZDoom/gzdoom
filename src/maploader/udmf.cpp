@@ -1979,14 +1979,6 @@ public:
 					Flag(sec->Flags, SECF_HAZARD, key);
 					break;
 
-				case NAME_hurtmonsters:
-					Flag(sec->MoreFlags, SECMF_HURTMONSTERS, key);
-					break;
-
-				case NAME_harminair:
-					Flag(sec->MoreFlags, SECMF_HARMINAIR, key);
-					break;
-
 				case NAME_floorterrain:
 					sec->terrainnum[sector_t::floor] = P_FindTerrain(CheckString(key));
 					break;

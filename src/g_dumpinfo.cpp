@@ -163,7 +163,7 @@ CCMD (mapchecksum)
 
 		for (int i = 1; i < argv.argc(); ++i)
 		{
-			if(argv[i] == "*")
+			if(!strcmp(argv[i], "*"))
 			{
 				const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(level.lumpnum));
 

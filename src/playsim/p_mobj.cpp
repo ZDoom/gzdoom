@@ -4436,11 +4436,7 @@ void AActor::Tick ()
 		if (ObjectFlags & OF_EuthanizeMe) return;
 	}
 	//[inkoalawetrust] Genericized level damage handling that makes sector, 3D floor, and TERRAIN flat damage affect monsters and other NPCs too.
-	bool afsdnope = !!(flags9 & MF9_NOSECTORDAMAGE);
-	bool afsdforce = !!(flags9 & MF9_FORCESECTORDAMAGE);
-	bool sfhurtmonsters = !!(Sector->MoreFlags & SECMF_HURTMONSTERS);
-	bool isplayer = (player != nullptr) && (this == player->mo);
-	if ((!afsdnope || afsdforce) && (isplayer || sfhurtmonsters || afsdforce))
+	if (!(flags9 & MF9_NOSECTORDAMAGE) && (player || (player == nullptr && Sector->MoreFlags & SECMF_HURTMONSTERS)))
 	{
 		P_ActorOnSpecial3DFloor(this);
 		P_ActorInSpecialSector(this,Sector);

@@ -162,6 +162,7 @@ static int nulPrintf(FSMessageLevel msg, const char* fmt, ...)
 
 FResourceFile *FResourceFile::DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
+	if (!file.isOpen()) return nullptr;
 	if (Printf == nullptr) Printf = nulPrintf;
 	for(auto func : funcs)
 	{

@@ -435,6 +435,11 @@ struct Sector native play
 		SECMF_UNDERWATERMASK	= 32+64,
 		SECMF_DRAWN			= 128,	// sector has been drawn at least once
 		SECMF_HIDDEN			= 256,	// Do not draw on textured automap
+		SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
+		SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
+		SECMF_LIFT				= 2048,	// For MBF monster AI
+		SECMF_HURTMONSTERS		= 4096, // Monsters in this sector are hurt like players.
+		SECMF_HARMINAIR			= 8192, // Actors in this sector are also hurt mid-air.
 	}
 	native uint16		MoreFlags;
 	
@@ -452,6 +457,9 @@ struct Sector native play
 		SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
 		SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
 		SECF_NOATTACK		= 2048,	// monsters cannot start attacks in this sector.
+		SECF_EXIT1			= 4096,
+		SECF_EXIT2			= 8192,
+		SECF_KILLMONSTERS	= 16384,// Monsters in this sector are instantly killed.
 
 		SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
 		SECF_SECRET			= 1 << 31,	// a secret sector

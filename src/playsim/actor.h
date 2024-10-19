@@ -445,7 +445,6 @@ enum ActorFlag9
 	MF9_DECOUPLEDANIMATIONS		= 0x00000010,	// [RL0] Decouple model animations from states
 	MF9_NOSECTORDAMAGE			= 0x00000020,	// [inkoalawetrust] Actor ignores any sector-based damage (i.e damaging floors, NOT crushers)
 	MF9_ISPUFF					= 0x00000040,	// [AA] Set on actors by P_SpawnPuff
-	MF9_FORCESECTORDAMAGE		= 0x00000080,	// [inkoalawetrust] Actor ALWAYS takes hurt floor damage if there's any. Even if the floor doesn't have SECMF_HURTMONSTERS.
 };
 
 // --- mobj.renderflags ---

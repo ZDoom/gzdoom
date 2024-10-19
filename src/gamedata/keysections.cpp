@@ -100,12 +100,11 @@ CCMD (addkeysection)
 		}
 
 		// Limit the ini name to 32 chars
-		if (strlen (argv[2]) > 32)
-			argv[2][32] = 0;
+		FString name(argv[2], 32);
 
 		for (unsigned i = 0; i < KeySections.Size(); i++)
 		{
-			if (KeySections[i].mTitle.CompareNoCase(argv[2]) == 0)
+			if (KeySections[i].mTitle.CompareNoCase(name) == 0)
 			{
 				CurrentKeySection = i;
 				return;

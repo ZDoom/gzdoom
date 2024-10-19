@@ -248,7 +248,7 @@ CCMD (vid_scaletoheight)
 	}
 }
 
-inline bool atob(char* I)
+inline bool atob(const char* I)
 {
     if (stricmp (I, "true") == 0 || stricmp (I, "1") == 0)
         return true;

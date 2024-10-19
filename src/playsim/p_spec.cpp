@@ -434,6 +434,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		{
 			return;
 		}
+	}
 
 	// Has hit ground.
 

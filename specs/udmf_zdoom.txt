@@ -307,6 +307,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       leakiness = <int>;              // Probability of leaking through radiation suit (0 = never, 256 = always), default = 0.
       damageterraineffect = <bool>;   // Will spawn a terrain splash when damage is inflicted. Default = false.
       damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
+      hurtmonsters = <bool>;          // Non-players like monsters and decorations are hurt by this sector in the same manner as player. Doesn't work with damagehazard.
+      harminair = <bool>;             // Actors in this sector are harmed by the damage effects of the floor even if they aren't touching it.
       floorterrain = <string>;        // Sets the terrain for the sector's floor. Default = 'use the flat texture's terrain definition.'
       ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
       floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)

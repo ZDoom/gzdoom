@@ -35,6 +35,7 @@
 #include "dsectoreffect.h"
 #include "doomdata.h"
 #include "r_state.h"
+#include "d_player.h"
 
 class FScanner;
 struct level_info_t;
@@ -90,12 +91,21 @@ bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVect
 bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
 bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
-void 	P_ActorInSpecialSector (AActor *victim, sector_t * sector=NULL);
+void 	P_ActorInSpecialSector (AActor *victim, sector_t * sector = NULL, F3DFloor* Ffloor = NULL);
 void	P_ActorOnSpecialFlat (AActor *victim, int floorType);
 void	P_SectorDamage(FLevelLocals *Level, int tag, int amount, FName type, PClassActor *protectClass, int flags);
 void	P_SetSectorFriction (FLevelLocals *level, int tag, int amount, bool alterFlag);
 double FrictionToMoveFactor(double friction);
 void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool playsound, int sectornum);
+
+inline bool checkForSpecialSector(AActor* mo, sector_t* sec)
+{
+	bool afsdnope = !!(mo->flags9 & MF9_NOSECTORDAMAGE);
+	bool afsdforce = !!(mo->flags9 & MF9_FORCESECTORDAMAGE);
+	bool sfhurtmonsters = !!(sec->MoreFlags & SECMF_HURTMONSTERS);
+	bool isplayer = (mo->player != nullptr) && (mo == mo->player->mo);
+	return ((!afsdnope || afsdforce) && (isplayer || sfhurtmonsters || afsdforce));
+}
 
 //
 // getNextSector()

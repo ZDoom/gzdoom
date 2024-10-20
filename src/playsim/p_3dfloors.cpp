@@ -210,12 +210,13 @@ void P_ActorOnSpecial3DFloor(AActor* victim)
 	{
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->flags & FF_FIX) continue;
-
+		if (!checkForSpecialSector(victim, rover->model)) continue;
+		
 		// Check the 3D floor's type...
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(victim->Z() != rover->top.plane->ZatPoint(victim)) continue;
+			if (victim->Z() != rover->top.plane->ZatPoint(victim)) continue;
 		}
 		else 
 		{
@@ -227,7 +228,7 @@ void P_ActorOnSpecial3DFloor(AActor* victim)
 		}
 
 		// Apply sector specials
-		P_ActorInSpecialSector(victim, rover->model);
+		P_ActorInSpecialSector(victim, rover->model,rover);
 
 		// Apply flat specials (using the ceiling!)
 		P_ActorOnSpecialFlat(victim, rover->model->GetTerrain(rover->top.isceiling));

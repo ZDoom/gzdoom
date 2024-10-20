@@ -423,15 +423,23 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 // Called every tic frame
 //	that the actor origin is in a special sector
 //
-void P_ActorInSpecialSector (AActor *victim, sector_t * sector)
+void P_ActorInSpecialSector (AActor *victim, sector_t * sector, F3DFloor* Ffloor)
 {
 	if (sector == NULL)
 		sector = victim->Sector;
 
 	// Falling, not all the way down yet?
-	if (!(sector->MoreFlags & SECMF_HARMINAIR) && !victim->isAtZ(sector->LowestFloorAt(victim)) && !victim->waterlevel)
-		return;
-
+	if (Ffloor != nullptr && !(Ffloor->flags & FF_SOLID)) Printf("this 3d floor is not solid\n");
+	bool evilAir = (sector->MoreFlags & SECMF_HARMINAIR);
+	bool SolidFfloor = Ffloor != nullptr && (Ffloor->flags & FF_SOLID);
+	if ((!evilAir && !(Ffloor != nullptr && !SolidFfloor)) && !victim->waterlevel)
+	{
+		// [inkoalawetrust] Check for 3D floors differently, because non-FF_INVERTSECTOR ffloors have their floor plane as the 3D floor BOTTOM.
+		double theZ = Ffloor == nullptr ? sector->LowestFloorAt(victim) : Ffloor->top.plane->ZatPoint(victim);
+		if (!victim->isAtZ(theZ))
+			return;
+	}
+	
 	// Has hit ground.
 
 	auto Level = sector->Level;

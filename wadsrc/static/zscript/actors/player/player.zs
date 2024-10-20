@@ -1728,39 +1728,55 @@ class PlayerPawn : Actor
 	//
 	//---------------------------------------------------------------------------
 
+	int footstepCounter;
+
 	virtual void MakeFootsteps()
 	{
-		if (pos.z > floorz) return;
+		if(pos.z > floorz) return;
 
 		let Ground = GetFloorTerrain();
-		let cmd = player.cmd;
 
-		if (Ground && (cmd.forwardMove != 0 || cmd.sideMove != 0))
+		if(Ground && (player.cmd.forwardMove != 0 || player.cmd.sideMove != 0))
 		{
-			bool Running = (cmd.buttons & BT_RUN); //Holding down run key, or it's toggled.
-			int Delay = !Running ? Ground.WalkStepTics : Ground.RunStepTics;
+			int Delay = (player.cmd.buttons & BT_RUN) ? Ground.RunStepTics : Ground.WalkStepTics;
 
-			if (Delay <= 0 || GetAge() % Delay != 0) return;
+			if((player.cmd.buttons ^ player.oldbuttons) & BT_RUN) footstepCounter = 0; // zero out counter when starting/stopping a run
 
-			Sound Step = Ground.StepSound;
-
-			//Generic foot-agnostic sound takes precedence.
-			if (!Step)
+			if(Delay > 0 && (footstepCounter % Delay == 0))
 			{
-				//Apparently most people walk with their right foot first, so assume that here.
-				if (GetAge() % (Delay*2) == 0)
-					Step = Ground.LeftStepSound;
-				else
-					Step = Ground.RightStepSound;
+				Sound Step = Ground.StepSound;
+
+				//Generic foot-agnostic sound takes precedence.
+				if(!Step)
+				{
+					//Apparently most people walk with their right foot first, so assume that here.
+					if (footstepCounter == 0)
+					{
+						Step = Ground.LeftStepSound;
+					}
+					else
+					{
+						Step = Ground.RightStepSound;
+					}
+				}
+
+				if(Step)
+				{
+					A_StartSound(Step, flags: CHANF_OVERLAP, volume: Ground.StepVolume);
+				}
+
+				//Steps make splashes regardless.
+				bool Heavy = (Mass >= 200) ? 0 : THW_SMALL; //Big player makes big splash.
+				HitWater(CurSector, (Pos.XY, CurSector.FloorPlane.ZatPoint(Pos.XY)), true, false, flags: Heavy | THW_NOVEL);
 			}
 
-			if (Step)
-				A_StartSound (Step,flags:CHANF_OVERLAP,volume:Ground.StepVolume);
-
-			//Steps make splashes regardless.
-			bool Heavy = Mass >= 200 ? 0 : THW_SMALL; //Big player makes big splash.
-			HitWater (CurSector,(Pos.XY,CurSector.FloorPlane.ZatPoint(Pos.XY)),True,False,flags:Heavy|THW_NOVEL);
+			footstepCounter = (footstepCounter + 1) % (Delay * 2);
 		}
+		else
+		{
+			footstepCounter = 0;
+		}
+
 	}
 
 	//---------------------------------------------------------------------------

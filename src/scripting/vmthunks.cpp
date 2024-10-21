@@ -2266,7 +2266,8 @@ void FormatMapName(FLevelLocals *self, int cr, FString *result)
 	// If a label is specified, use it uncontitionally here.
 	if (self->info->MapLabel.IsNotEmpty())
 	{
-		*result << self->info->MapLabel << ": ";
+		if (self->info->MapLabel.Compare("*"))
+			*result << self->info->MapLabel << ": ";
 	}
 	else if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
 	{

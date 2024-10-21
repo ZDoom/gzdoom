@@ -148,8 +148,22 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape, int *id24_l
 	}
 	else if (!pname.CompareNoCase("label"))
 	{
-		scanner.MustGetToken(TK_StringConst);
-		mape->label = scanner.String;
+		if (scanner.CheckToken(TK_Identifier))
+		{
+			if (!stricmp(scanner.String, "clear"))
+			{
+				mape->label = "*";
+			}
+			else
+			{
+				scanner.ScriptError("Either 'clear' or string constant expected");
+			}
+		}
+		else
+		{
+			scanner.MustGetToken(TK_StringConst);
+			mape->label = scanner.String;
+		}
 	}
 	else if (!pname.CompareNoCase("next"))
 	{

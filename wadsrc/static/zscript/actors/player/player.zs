@@ -1754,7 +1754,7 @@ class PlayerPawn : Actor
 
 		if(Step)
 		{
-			A_StartSound(Step, flags: CHANF_OVERLAP, volume: Ground.StepVolume);
+			A_StartSound(Step, flags: CHANF_OVERLAP, volume: Ground.StepVolume * snd_footstepvolume);
 		}
 
 		//Steps make splashes regardless.

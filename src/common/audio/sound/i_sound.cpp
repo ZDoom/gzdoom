@@ -62,6 +62,9 @@ CUSTOM_CVAR(Int, snd_samplerate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, snd_buffersize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, snd_hrtf, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+CVAR(Float, snd_footstepvolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+
 #if !defined(NO_OPENAL)	
 #define DEF_BACKEND "openal"
 #else

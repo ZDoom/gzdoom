@@ -188,6 +188,8 @@ static const char *TerrainKeywords[] =
 	"allowprotection",
 	"damageonland",
 	"stepsounds",
+	"stepdistance",
+	"stepdistanceminvel",
 	NULL
 };
 
@@ -225,6 +227,8 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, AllowProtection)} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, DamageOnLand)} },
 	{ GEN_Sound,  {myoffsetof(FTerrainDef, StepSound)} },
+	{ GEN_Double,  {myoffsetof(FTerrainDef, StepDistance)} },
+	{ GEN_Double,  {myoffsetof(FTerrainDef, StepDistanceMinVel)} },
 };
 
 
@@ -745,3 +749,5 @@ DEFINE_FIELD(FTerrainDef, DamageOnLand)
 DEFINE_FIELD(FTerrainDef, Friction)
 DEFINE_FIELD(FTerrainDef, MoveFactor)
 DEFINE_FIELD(FTerrainDef, StepSound)
+DEFINE_FIELD(FTerrainDef, StepDistance)
+DEFINE_FIELD(FTerrainDef, StepDistanceMinVel)

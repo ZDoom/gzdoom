@@ -1729,6 +1729,38 @@ class PlayerPawn : Actor
 	//---------------------------------------------------------------------------
 
 	int footstepCounter;
+	double footstepLength;
+	bool footstepFoot;
+
+	void DoFootstep(TerrainDef Ground)
+	{
+		Sound Step = Ground.StepSound;
+
+		//Generic foot-agnostic sound takes precedence.
+		if(!Step)
+		{
+			//Apparently most people walk with their right foot first, so assume that here.
+			if (!footstepFoot)
+			{
+				Step = Ground.LeftStepSound;
+			}
+			else
+			{
+				Step = Ground.RightStepSound;
+			}
+
+			footstepFoot = !footstepFoot;
+		}
+
+		if(Step)
+		{
+			A_StartSound(Step, flags: CHANF_OVERLAP, volume: Ground.StepVolume);
+		}
+
+		//Steps make splashes regardless.
+		bool Heavy = (Mass >= 200) ? 0 : THW_SMALL; //Big player makes big splash.
+		HitWater(CurSector, (Pos.XY, CurSector.FloorPlane.ZatPoint(Pos.XY)), true, false, flags: Heavy | THW_NOVEL);
+	}
 
 	virtual void MakeFootsteps()
 	{
@@ -1740,41 +1772,51 @@ class PlayerPawn : Actor
 		{
 			int Delay = (player.cmd.buttons & BT_RUN) ? Ground.RunStepTics : Ground.WalkStepTics;
 
-			if((player.cmd.buttons ^ player.oldbuttons) & BT_RUN) footstepCounter = 0; // zero out counter when starting/stopping a run
-
-			if(Delay > 0 && (footstepCounter % Delay == 0))
-			{
-				Sound Step = Ground.StepSound;
-
-				//Generic foot-agnostic sound takes precedence.
-				if(!Step)
-				{
-					//Apparently most people walk with their right foot first, so assume that here.
-					if (footstepCounter == 0)
-					{
-						Step = Ground.LeftStepSound;
-					}
-					else
-					{
-						Step = Ground.RightStepSound;
-					}
-				}
-
-				if(Step)
-				{
-					A_StartSound(Step, flags: CHANF_OVERLAP, volume: Ground.StepVolume);
-				}
-
-				//Steps make splashes regardless.
-				bool Heavy = (Mass >= 200) ? 0 : THW_SMALL; //Big player makes big splash.
-				HitWater(CurSector, (Pos.XY, CurSector.FloorPlane.ZatPoint(Pos.XY)), true, false, flags: Heavy | THW_NOVEL);
+			if((player.cmd.buttons ^ player.oldbuttons) & BT_RUN)
+			{ // zero out counters when starting/stopping a run
+				footstepCounter = 0;
+				footstepLength = Ground.StepDistance;
 			}
 
-			footstepCounter = (footstepCounter + 1) % (Delay * 2);
+			if(Ground.StepDistance > 0)
+			{ // distance-based terrain
+				footstepCounter = 0;
+
+				double moveVel = vel.xy.length();
+
+				if(moveVel > Ground.StepDistanceMinVel)
+				{
+					footstepLength += moveVel;
+
+					while(footstepLength > Ground.StepDistance)
+					{
+						footstepLength -= Ground.StepDistance;
+						DoFootstep(Ground);
+					}
+				}
+				else
+				{
+					footstepLength = Ground.StepDistance;
+				}
+
+			}
+			else if(Delay > 0)
+			{ // delay-based terrain
+				footstepLength = 0;
+				
+				if(footstepCounter % Delay == 0)
+				{
+					DoFootstep(Ground);
+				}
+
+				footstepCounter = (footstepCounter + 1) % Delay;
+			}
 		}
 		else
 		{
 			footstepCounter = 0;
+			footstepLength = Ground.StepDistance;
+			footstepFoot = false;
 		}
 
 	}

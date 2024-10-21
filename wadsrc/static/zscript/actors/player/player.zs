@@ -2334,6 +2334,24 @@ class PlayerPawn : Actor
 		return ReadyWeapon;
 	}
 
+	Weapon CallModifyPickWeapon(int slot, bool checkammo, Weapon pick)
+	{
+		let cur = inv;
+		
+		if(cur) do
+		{
+			pick = cur.ModifyPickWeapon(slot, checkammo, pick);
+		}
+		while(cur = cur.inv)
+		
+		return pick;
+	}
+
+	Weapon FindWeapon(int slot, bool checkammo)
+	{
+		return CallModifyPickWeapon(slot, checkammo, PickWeapon(slot, checkammo));
+	}
+
 	//===========================================================================
 	//
 	// FindMostRecentWeapon
@@ -2438,6 +2456,24 @@ class PlayerPawn : Actor
 		return ReadyWeapon;
 	}
 
+	Weapon CallModifyPickNextWeapon(Weapon pick)
+	{
+		let cur = inv;
+		
+		if(cur) do
+		{
+			pick = cur.ModifyPickNextWeapon(pick);
+		}
+		while(cur = cur.inv)
+		
+		return pick;
+	}
+
+	Weapon FindNextWeapon()
+	{
+		return CallModifyPickNextWeapon(PickNextWeapon());
+	}
+
 	//===========================================================================
 	//
 	// FWeaponSlots :: PickPrevWeapon
@@ -2489,6 +2525,24 @@ class PlayerPawn : Actor
 			} while ((slot != startslot || index != startindex) && slotschecked <= NUM_WEAPON_SLOTS);
 		}
 		return player.ReadyWeapon;
+	}
+
+	Weapon CallModifyPickPrevWeapon(Weapon pick)
+	{
+		let cur = inv;
+		
+		if(cur) do
+		{
+			pick = cur.ModifyPickPrevWeapon(pick);
+		}
+		while(cur = cur.inv)
+		
+		return pick;
+	}
+
+	Weapon FindPrevWeapon()
+	{
+		return CallModifyPickPrevWeapon(PickPrevWeapon());
 	}
 
 	//============================================================================

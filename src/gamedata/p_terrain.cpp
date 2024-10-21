@@ -96,7 +96,6 @@ enum EGenericType
 	GEN_Splash,
 	GEN_Float,
 	GEN_Double,
-	GEN_Time,
 	GEN_Bool,
 	GEN_Int,
 	GEN_Custom,
@@ -217,8 +216,8 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageTimeMask)} },
 	{ GEN_Double, {myoffsetof(FTerrainDef, FootClip)} },
 	{ GEN_Float,  {myoffsetof(FTerrainDef, StepVolume)} },
-	{ GEN_Time,   {myoffsetof(FTerrainDef, WalkStepTics)} },
-	{ GEN_Time,   {myoffsetof(FTerrainDef, RunStepTics)} },
+	{ GEN_Int,   {myoffsetof(FTerrainDef, WalkStepTics)} },
+	{ GEN_Int,   {myoffsetof(FTerrainDef, RunStepTics)} },
 	{ GEN_Sound,  {myoffsetof(FTerrainDef, LeftStepSound)} },
 	{ GEN_Sound,  {myoffsetof(FTerrainDef, RightStepSound)} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, IsLiquid)} },
@@ -598,11 +597,6 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		case GEN_Double:
 			sc.MustGetFloat();
 			SET_FIELD(double, sc.Float);
-			break;
-
-		case GEN_Time:
-			sc.MustGetFloat ();
-			SET_FIELD (int, (int)(sc.Float));
 			break;
 
 		case GEN_Bool:

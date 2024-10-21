@@ -76,7 +76,7 @@ IWad
 
 IWad
 {
-	Name = "Hacx: Twitch'n Kill"
+	Name = "Hacx: Twitch 'n Kill"
 	Game = "Doom"
 	Config = "Hacx"
 	Autoname = "hacx.hacx1"
@@ -719,11 +719,11 @@ Order	// Order in the IWAD selection box
 	"DOOM: KEX Edition"
 	"DOOM: Unity Edition"
 	"Final Doom: Plutonia Experiment"
-	"Final Doom: Plutonia Experiment: Unity Edition"
 	"Final Doom: Plutonia Experiment: KEX Edition"
+	"Final Doom: Plutonia Experiment: Unity Edition"
 	"Final Doom: TNT - Evilution"
-	"Final Doom: TNT - Evilution: Unity Edition"
 	"Final Doom: TNT - Evilution: KEX Edition"
+	"Final Doom: TNT - Evilution: Unity Edition"
 	"Freedoom: Phase 1"
 	"Freedoom: Phase 2"
 	"FreeDM"
@@ -742,7 +742,7 @@ Order	// Order in the IWAD selection box
 	"Chex(R) Quest 3"
 	"Action Doom 2: Urban Brawl"
 	"Harmony"
-	"Hacx: Twitch'n Kill"
+	"Hacx: Twitch 'n Kill"
 	"Hacx 2.0"
 	"The Adventures of Square"
 	"The Adventures of Square (Square-ware)"

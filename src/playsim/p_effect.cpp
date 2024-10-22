@@ -1006,6 +1006,7 @@ void DVisualThinker::Construct()
 	PT.subsector = nullptr;
 	cursector = nullptr;
 	PT.color = 0xffffff;
+	sprite = -1;
 	AnimatedTexture.SetNull();
 }
 
@@ -1110,7 +1111,7 @@ void DVisualThinker::Tick()
 		return;
 
 	// There won't be a standard particle for this, it's only for graphics.
-	if (!PT.texture.isValid())
+	if (!PT.texture.isValid() && (sprite == -1))
 	{
 		Printf("No valid texture, destroyed");
 		Destroy();
@@ -1325,3 +1326,5 @@ DEFINE_FIELD(DVisualThinker, PrevRoll);
 DEFINE_FIELD(DVisualThinker, Translation);
 DEFINE_FIELD(DVisualThinker, LightLevel);
 DEFINE_FIELD(DVisualThinker, cursector);
+DEFINE_FIELD(DVisualThinker, sprite);
+DEFINE_FIELD(DVisualThinker, frame);

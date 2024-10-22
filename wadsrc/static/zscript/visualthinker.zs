@@ -30,6 +30,9 @@ Class VisualThinker : Thinker native
 	native void SetRenderStyle(int mode); // see ERenderStyle
 	native bool IsFrozen();
 
+	native SpriteID sprite;
+	native uint8 frame;
+
 	native protected void UpdateSector(); // needs to be called if the thinker is set to a non-ticking statnum and the position is modified (or if Tick is overriden and doesn't call Super.Tick())
 	native protected void UpdateSpriteInfo(); // needs to be called every time the texture is updated if the thinker uses SPF_LOCAL_ANIM and is set to a non-ticking statnum (or if Tick is overriden and doesn't call Super.Tick())
 

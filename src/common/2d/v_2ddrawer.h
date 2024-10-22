@@ -8,6 +8,7 @@
 #include "renderstyle.h"
 #include "dobject.h"
 #include "refcounted.h"
+#include "printf.h"
 
 struct DrawParms;
 struct FColormap;
@@ -279,6 +280,7 @@ public:
 class FCanvas : public DObject
 {
 	DECLARE_CLASS(FCanvas, DObject)
+	void OnDestroy() override { I_Error("Calling Destroy on a canvas object is not allowed."); }
 public:
 	F2DDrawer Drawer;
 	FCanvasTexture* Tex = nullptr;

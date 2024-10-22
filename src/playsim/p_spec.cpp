@@ -429,7 +429,6 @@ void P_ActorInSpecialSector (AActor *victim, sector_t * sector, F3DFloor* Ffloor
 		sector = victim->Sector;
 
 	// Falling, not all the way down yet?
-	if (Ffloor != nullptr && !(Ffloor->flags & FF_SOLID)) Printf("this 3d floor is not solid\n");
 	bool evilAir = (sector->MoreFlags & SECMF_HARMINAIR);
 	bool SolidFfloor = Ffloor != nullptr && (Ffloor->flags & FF_SOLID);
 	if ((!evilAir && !(Ffloor != nullptr && !SolidFfloor)) && !victim->waterlevel)

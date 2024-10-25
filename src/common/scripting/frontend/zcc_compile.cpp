@@ -2286,6 +2286,11 @@ PType *ZCCCompiler::ResolveArraySize(PType *baseType, ZCC_Expression *arraysize,
 			Error(arraysize, "Array size must be positive");
 			return TypeError;
 		}
+		if (uint64_t(size) * baseType->Size > 0x7fffffff)
+		{
+			Error(arraysize, "Array size overflow. Total size must be less than 2GB");
+			return TypeError;
+		}
 		baseType = NewArray(baseType, size);
 	}
 

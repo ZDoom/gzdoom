@@ -343,8 +343,12 @@ static void LevelStatEntry(FSessionStatistics *es, const char *level, const char
 	time (&clock);
 	lt = localtime (&clock);
 
-	strcpy(s.name, level);
-	strcpy(s.info, text);
+	strncpy(s.name, level, sizeof(s.name) - 1);
+	s.name[sizeof(s.name) - 1] = '\0';
+
+	strncpy(s.info, text, sizeof(s.info) - 1);
+	s.info[sizeof(s.info) - 1] = '\0';
+
 	s.timeneeded=playtime;
 	es->levelstats.Push(s);
 }

@@ -12640,6 +12640,15 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 	if (ValueType->RegType == REGT_NIL && ValueType != TypeAuto)
 	{
 		auto sfunc = static_cast<VMScriptFunction *>(ctx.Function->Variants[0].Implementation);
+
+		const unsigned MAX_STACK_ALLOC = 512 * 1024; // Windows stack is 1 MB, but we cannot go up there without problems
+		if (uint64_t(ValueType->Size) + uint64_t(sfunc->ExtraSpace) > MAX_STACK_ALLOC)
+		{
+			ScriptPosition.Message(MSG_ERROR, "%s exceeds max. allowed size of 512kb for local variables at variable %s", sfunc->Name.GetChars(), Name.GetChars());
+			delete this;
+			return nullptr;
+		}
+
 		StackOffset = sfunc->AllocExtraStack(ValueType);
 
 		if (Init != nullptr)

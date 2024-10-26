@@ -167,6 +167,7 @@ FRenderViewpoint::FRenderViewpoint()
 	sector = nullptr;
 	FieldOfView =  DAngle::fromDeg(90.); // Angles in the SCREENWIDTH wide window
 	ScreenProj = 0.0;
+	ScreenProjX = 0.0;
 	TicFrac = 0.0;
 	FrameTime = 0;
 	extralight = 0;
@@ -704,7 +705,10 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
 
 	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
+	{
 		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length() / tan (FieldOfView.Radians()*0.5); // [DVR] Estimated. +/-1 should be top/bottom of screen.
+		ScreenProjX = ScreenProj * 0.5 / viewWindow.WidescreenRatio;
+	}
 
 }
 

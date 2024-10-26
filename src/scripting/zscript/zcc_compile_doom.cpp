@@ -724,8 +724,15 @@ void ZCCDoomCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt 
 	}
 	else if (namenode->SiblingNext->SiblingNext == namenode)
 	{
+		FName name(namenode->Id);
+
+		if(name == NAME_self)
+		{
+			name = cls->TypeName;
+		}
+
 		// a two-name property
-		propname << FName(namenode->Id).GetChars() << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
+		propname << name.GetChars() << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
 	}
 	else
 	{
@@ -784,6 +791,13 @@ void ZCCDoomCompiler::ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg)
 	else if (namenode->SiblingNext->SiblingNext == namenode)
 	{
 		// a two-name flag
+
+		if(namenode->Id == NAME_self)
+		{
+			n1 = cls->TypeName.GetChars();
+		}
+
+
 		n2 = FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
 	}
 	else

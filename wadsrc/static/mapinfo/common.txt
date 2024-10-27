@@ -78,6 +78,7 @@ DoomEdNums
   9081 = SkyPicker
   9082 = SectorSilencer
   9083 = SkyCamCompat
+  9084 = OrthographicCamera
   9200 = Decal
   9300 = "$PolyAnchor"
   9301 = "$PolySpawn"

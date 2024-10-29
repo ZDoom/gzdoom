@@ -238,7 +238,7 @@ Class OrthographicCamera : Actor
 	}
 
 	private int current;
-	private void UpdateViewPos()
+	protected void UpdateViewPos()
 	{
 		current = args[0];
 		SetViewPos((-abs(max(1.0, double(current))), 0, 0), VPSF_ORTHOGRAPHIC|VPSF_ALLOWOUTOFBOUNDS);

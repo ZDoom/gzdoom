@@ -237,7 +237,7 @@ Class OrthographicCamera : Actor
 		Super.Tick();
 	}
 
-	private int current;
+	protected int current;
 	protected void UpdateViewPos()
 	{
 		current = args[0];

@@ -149,6 +149,7 @@ struct FLevelLocals
 	int GetCompatibility2(int mask);
 	void ApplyCompatibility();
 	void ApplyCompatibility2();
+	AActor* SelectActorFromTID(int tid, size_t index, AActor* defactor);
 
 	void Init();
 
@@ -315,23 +316,6 @@ public:
 	AActor *SingleActorFromTID(int tid, AActor *defactor)
 	{
 		return tid == 0 ? defactor : GetActorIterator(tid).Next();
-	}
-	AActor* SelectActorFromTID(int tid, size_t index, AActor *defactor)
-	{
-		if (tid == 0)
-			return defactor;
-
-		AActor* actor = nullptr;
-		size_t cur = 0u;
-		auto it = GetActorIterator(tid);
-		while ((actor = it.Next()) != nullptr)
-		{
-			if (cur == index)
-				return actor;
-			++cur;
-		}
-
-		return nullptr;
 	}
 
 	bool SectorHasTags(sector_t *sector)

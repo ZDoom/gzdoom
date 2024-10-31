@@ -2400,6 +2400,24 @@ void FLevelLocals::ApplyCompatibility2()
 	i_compatflags2 = GetCompatibility2(compatflags2) | ii_compatflags2;
 }
 
+AActor* FLevelLocals::SelectActorFromTID(int tid, size_t index, AActor* defactor)
+{
+	if (tid == 0)
+		return defactor;
+
+	AActor* actor = nullptr;
+	size_t cur = 0u;
+	auto it = GetActorIterator(tid);
+	while ((actor = it.Next()) != nullptr)
+	{
+		if (cur == index)
+			return actor;
+		++cur;
+	}
+
+	return nullptr;
+}
+
 //==========================================================================
 // IsPointInMap
 //

@@ -106,50 +106,45 @@ static const struct ColorList {
 	{NULL, 0, 0, 0 }
 };
 
-inline particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
+static void FreeParticle(FLevelLocals* Level, particle_t* particle)
 {
-	particle_t *result = nullptr;
-	// [MC] Thanks to RaveYard and randi for helping me with this addition.
-	// Array's filled up
-	if (Level->InactiveParticles == NO_PARTICLE)
+	auto prev = particle->tprev == NO_PARTICLE? nullptr : &Level->Particles[particle->tprev];
+	int pindex = (int)(particle - Level->Particles.Data());
+	auto tnext = particle->tnext;
+	assert(!prev || (prev->tnext == pindex));
+	if (prev)
+		prev->tnext = tnext;
+	else
+		Level->ActiveParticles = tnext;
+
+	if (tnext != NO_PARTICLE)
 	{
-		if (replace)
-		{
-			result = &Level->Particles[Level->OldestParticle];
+		particle_t* next = &Level->Particles[tnext];
+		assert(next->tprev == pindex);
+		next->tprev = particle->tprev;
+	}
+	if (Level->OldestParticle == pindex)
+	{
+		assert(tnext == NO_PARTICLE);
+		Level->OldestParticle = particle->tprev;
+	}
+	memset(particle, 0, sizeof(particle_t));
+	particle->tnext = Level->InactiveParticles;
+	Level->InactiveParticles = pindex;
+}
 
-			// There should be NO_PARTICLE for the oldest's tnext
-			if (result->tprev != NO_PARTICLE)
-			{
-				// tnext: youngest to oldest
-				// tprev: oldest to youngest
-				
-				// 2nd oldest -> oldest
-				particle_t *nbottom = &Level->Particles[result->tprev];
-				nbottom->tnext = NO_PARTICLE;
-
-				// now oldest becomes youngest
-				Level->OldestParticle = result->tprev;
-				result->tnext = Level->ActiveParticles;
-				result->tprev = NO_PARTICLE;
-				Level->ActiveParticles = uint32_t(result - Level->Particles.Data());
-
-				// youngest -> 2nd youngest
-				particle_t* ntop = &Level->Particles[result->tnext];
-				ntop->tprev = Level->ActiveParticles;
-			}
-			// [MC] Future proof this by resetting everything when replacing a particle.
-			auto tnext = result->tnext;
-			auto tprev = result->tprev;
-			*result = {};
-			result->tnext = tnext;
-			result->tprev = tprev;
-		}
-		return result;
+static particle_t *NewParticle (FLevelLocals *Level, bool replace = false)
+{
+	// Array's filled up
+	if (Level->InactiveParticles == NO_PARTICLE && Level->OldestParticle != NO_PARTICLE)
+	{
+		if (!replace) return nullptr;
+		FreeParticle(Level, &Level->Particles[Level->OldestParticle]);
 	}
 	
 	// Array isn't full.
 	uint32_t current = Level->ActiveParticles;
-	result = &Level->Particles[Level->InactiveParticles];
+	auto result = &Level->Particles[Level->InactiveParticles];
 	Level->InactiveParticles = result->tnext;
 	result->tnext = current;
 	result->tprev = NO_PARTICLE;
@@ -310,19 +305,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
-			*particle = {};
-			if (prev)
-				prev->tnext = i;
-			else
-				Level->ActiveParticles = i;
-
-			if (i != NO_PARTICLE)
-			{
-				particle_t *next = &Level->Particles[i];
-				next->tprev = particle->tprev;
-			}
-			particle->tnext = Level->InactiveParticles;
-			Level->InactiveParticles = (int)(particle - Level->Particles.Data());
+			FreeParticle(Level, particle);
 			continue;
 		}
 

@@ -49,9 +49,6 @@
 #include "v_text.h"
 #include "m_argv.h"
 #include "v_video.h"
-#ifndef _MSC_VER
-#include "i_system.h"  // for strlwr()
-#endif // !_MSC_VER
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);
@@ -945,15 +942,12 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		"Spawn", "See", "Melee", "Missile", "Pain", "Death", "XDeath", "Burn", 
 		"Ice", "Raise", "Crash", "Crush", "Wound", "Disintegrate", "Heal", NULL };
 
-	strlwr (sc.String);
-
 	FString propname = sc.String;
 
 	if (sc.CheckString ("."))
 	{
 		sc.MustGetString ();
 		propname += '.';
-		strlwr (sc.String);
 		propname += sc.String;
 	}
 	else

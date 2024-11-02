@@ -45,9 +45,6 @@
 #include "thingdef.h"
 #include "codegen.h"
 #include "backend/codegen_doom.h"
-#ifndef _MSC_VER
-#include "i_system.h"  // for strlwr()
-#endif // !_MSC_VER
 
 //==========================================================================
 //***
@@ -562,11 +559,8 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 
 FxExpression* ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag)
 {
-	// Make the action name lowercase
-	strlwr (sc.String);
-
 	FxExpression *call = DoActionSpecials(sc, state, bag);
-	if (call != NULL)
+	if (call != nullptr)
 	{
 		return call;
 	}

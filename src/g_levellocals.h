@@ -167,8 +167,8 @@ private:
 
 	void SerializePlayers(FSerializer &arc, bool skipload);
 	void CopyPlayer(player_t *dst, player_t *src, const char *name);
-	void ReadOnePlayer(FSerializer &arc, bool skipload);
-	void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
+	void ReadOnePlayer(FSerializer &arc, bool fromHub);
+	void ReadMultiplePlayers(FSerializer &arc, int numPlayers, bool fromHub);
 	void SerializeSounds(FSerializer &arc);
 	void PlayerSpawnPickClass (int playernum);
 

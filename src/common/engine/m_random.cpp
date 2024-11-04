@@ -388,6 +388,21 @@ FRandom *FRandom::StaticFindRNG (const char *name, bool client)
 	return probe;
 }
 
+void FRandom::SaveRNGState(TArray<FRandom>& backups)
+{
+	for (auto cur = RNGList; cur != nullptr; cur = cur->Next)
+		backups.Push(*cur);
+}
+
+void FRandom::RestoreRNGState(TArray<FRandom>& backups)
+{
+	unsigned int i = 0u;
+	for (auto cur = RNGList; cur != nullptr; cur = cur->Next)
+		*cur = backups[i++];
+
+	backups.Clear();
+}
+
 //==========================================================================
 //
 // FRandom :: StaticPrintSeeds

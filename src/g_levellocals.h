@@ -199,7 +199,7 @@ public:
 	void ClearDynamic3DFloorData();
 	void WorldDone(void);
 	void AirControlChanged();
-	AActor *SelectTeleDest(int tid, int tag, bool norandom);
+	AActor *SelectTeleDest(int tid, int tag, bool norandom, bool isPlayer);
 	bool AlignFlat(int linenum, int side, int fc);
 	void ReplaceTextures(const char *fromname, const char *toname, int flags);
 

@@ -144,6 +144,8 @@ static DVector3 LastPredictedPosition;
 static int LastPredictedPortalGroup;
 static int LastPredictedTic;
 
+static TArray<FRandom> PredictionRNG;
+
 static player_t PredictionPlayerBackup;
 static AActor *PredictionActor;
 static TArray<uint8_t> PredictionActorBackupArray;
@@ -1461,6 +1463,8 @@ void P_PredictPlayer (player_t *player)
 		return;
 	}
 
+	FRandom::SaveRNGState(PredictionRNG);
+
 	// Save original values for restoration later
 	PredictionPlayerBackup.CopyFrom(*player, false);
 
@@ -1599,6 +1603,8 @@ void P_UnPredictPlayer ()
 		{
 			// Q: Can this happen? If yes, can we continue?
 		}
+
+		FRandom::RestoreRNGState(PredictionRNG);
 
 		AActor *savedcamera = player->camera;
 

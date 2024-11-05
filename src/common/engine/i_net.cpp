@@ -521,7 +521,7 @@ void SendAbort (void)
 	}
 }
 
-static void SendConAck (int num_connected, int num_needed)
+void SendConAck (int num_connected, int num_needed)
 {
 	PreGamePacket packet;
 

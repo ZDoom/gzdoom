@@ -879,10 +879,18 @@ void FFunctionBuildList::Build()
 		{
 			if (!item.Code->CheckReturn())
 			{
-				auto newcmpd = new FxCompoundStatement(item.Code->ScriptPosition);
-				newcmpd->Add(item.Code);
-				newcmpd->Add(new FxReturnStatement(nullptr, item.Code->ScriptPosition));
-				item.Code = newcmpd->Resolve(ctx);
+				if (ctx.ReturnProto == nullptr || !ctx.ReturnProto->ReturnTypes.Size())
+				{
+					auto newcmpd = new FxCompoundStatement(item.Code->ScriptPosition);
+					newcmpd->Add(item.Code);
+					newcmpd->Add(new FxReturnStatement(nullptr, item.Code->ScriptPosition));
+					item.Code = newcmpd->Resolve(ctx);
+				}
+				else
+				{
+					item.Code->ScriptPosition.Message(MSG_ERROR, "Missing return statement in %s", item.PrintableName.GetChars());
+					continue;
+				}
 			}
 
 			item.Proto = ctx.ReturnProto;

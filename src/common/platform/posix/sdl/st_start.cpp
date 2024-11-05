@@ -57,6 +57,7 @@ class FTTYStartupScreen : public FStartupScreen
 		void NetInit(const char *message, int num_players);
 		void NetProgress(int count);
 		void NetDone();
+		void NetClose();
 		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 	protected:
 		bool DidNetInit;
@@ -235,6 +236,11 @@ void FTTYStartupScreen::NetProgress(int count)
 		fprintf (stderr, "%*c[%2d/%2d]", NetMaxPos + 1 - NetCurPos, ' ', NetCurPos, NetMaxPos);
 		fflush (stderr);
 	}
+}
+
+void FTTYStartupScreen::NetClose()
+{
+	// TODO: Implement this
 }
 
 //===========================================================================

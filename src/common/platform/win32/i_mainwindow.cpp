@@ -128,6 +128,11 @@ void MainWindow::HideNetStartPane()
 	NetStartWindow::HideNetStartPane();
 }
 
+void MainWindow::CloseNetStartPane()
+{
+	NetStartWindow::NetClose();
+}
+
 void MainWindow::SetNetStartProgress(int pos)
 {
 	NetStartWindow::SetNetStartProgress(pos);

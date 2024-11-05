@@ -64,6 +64,12 @@ bool NetStartWindow::RunMessageLoop(bool (*newtimer_callback)(void*), void* newu
 	return Instance->exitreason;
 }
 
+void NetStartWindow::NetClose()
+{
+	if (Instance != nullptr)
+		Instance->OnClose();
+}
+
 NetStartWindow::NetStartWindow() : Widget(nullptr, WidgetType::Window)
 {
 	SetWindowBackground(Colorf::fromRgba8(51, 51, 51));

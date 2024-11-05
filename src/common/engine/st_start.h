@@ -55,6 +55,7 @@ public:
 	virtual void NetInit(const char *message, int num_players) {}
 	virtual void NetProgress(int count) {}
 	virtual void NetDone() {}
+	virtual void NetClose() {}
 	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata) { return false; }
 	virtual void AppendStatusLine(const char* status) {}
 	virtual void LoadingStatus(const char* message, int colors) {}
@@ -74,6 +75,7 @@ public:
 	void NetProgress(int count);
 	void NetMessage(const char* format, ...);	// cover for printf
 	void NetDone();
+	void NetClose();
 	bool NetLoop(bool (*timer_callback)(void*), void* userdata);
 protected:
 	int NetMaxPos, NetCurPos;

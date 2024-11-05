@@ -14,6 +14,7 @@ public:
 	static void HideNetStartPane();
 	static void SetNetStartProgress(int pos);
 	static bool RunMessageLoop(bool (*timer_callback)(void*), void* userdata);
+	static void NetClose();
 
 private:
 	NetStartWindow();

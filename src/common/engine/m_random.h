@@ -44,9 +44,9 @@ class FSerializer;
 class FRandom : public SFMTObj
 {
 public:
-	FRandom (bool client);
-	FRandom (const char *name, bool client);
-	~FRandom ();
+	FRandom() : FRandom(false) {}
+	FRandom(const char* name) : FRandom(name, false) {}
+	~FRandom();
 
 	int Seed() const
 	{
@@ -178,6 +178,10 @@ public:
 	static void StaticPrintSeeds ();
 #endif
 
+protected:
+	FRandom(bool client);
+	FRandom(const char* name, bool client);
+
 private:
 #ifndef NDEBUG
 	const char *Name;
@@ -189,6 +193,13 @@ private:
 	static FRandom *RNGList, *CRNGList;
 };
 
+class FCRandom : public FRandom
+{
+public:
+	FCRandom() : FRandom(true) {}
+	FCRandom(const char* name) : FRandom(name, true) {}
+};
+
 extern uint32_t rngseed;			// The starting seed (not part of state)
 
 extern uint32_t staticrngseed;		// Static rngseed that can be set by the user
@@ -196,6 +207,6 @@ extern bool use_staticrng;
 
 
 // M_Random can be used for numbers that do not affect gameplay
-extern FRandom M_Random;
+extern FCRandom M_Random;
 
 #endif

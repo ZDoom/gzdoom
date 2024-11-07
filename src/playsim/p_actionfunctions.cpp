@@ -73,19 +73,19 @@
 #include "shadowinlines.h"
 #include "i_time.h"
 
-static FRandom pr_camissile ("CustomActorfire", false);
-static FRandom pr_cabullet ("CustomBullet", false);
-static FRandom pr_cwjump ("CustomWpJump", false);
-static FRandom pr_cwpunch ("CustomWpPunch", false);
-static FRandom pr_grenade ("ThrowGrenade", false);
-	   FRandom pr_crailgun ("CustomRailgun", false);
-static FRandom pr_spawndebris ("SpawnDebris", false);
-static FRandom pr_spawnitemex ("SpawnItemEx", false);
-static FRandom pr_burst ("Burst", false);
-static FRandom pr_monsterrefire ("MonsterRefire", false);
-static FRandom pr_teleport("A_Teleport", false);
-static FRandom pr_bfgselfdamage("BFGSelfDamage", false);
-	   FRandom pr_cajump("CustomJump", false);
+static FRandom pr_camissile ("CustomActorfire");
+static FRandom pr_cabullet ("CustomBullet");
+static FRandom pr_cwjump ("CustomWpJump");
+static FRandom pr_cwpunch ("CustomWpPunch");
+static FRandom pr_grenade ("ThrowGrenade");
+	   FRandom pr_crailgun ("CustomRailgun");
+static FRandom pr_spawndebris ("SpawnDebris");
+static FRandom pr_spawnitemex ("SpawnItemEx");
+static FRandom pr_burst ("Burst");
+static FRandom pr_monsterrefire ("MonsterRefire");
+static FRandom pr_teleport("A_Teleport");
+static FRandom pr_bfgselfdamage("BFGSelfDamage");
+	   FRandom pr_cajump("CustomJump");
 
 //==========================================================================
 //
@@ -746,7 +746,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopSoundEx)
 // Generic seeker missile function
 //
 //==========================================================================
-static FRandom pr_seekermissile ("SeekerMissile", false);
+static FRandom pr_seekermissile ("SeekerMissile");
 enum
 {
 	SMF_LOOK = 1,

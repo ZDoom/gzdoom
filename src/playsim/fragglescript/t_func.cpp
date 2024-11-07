@@ -56,7 +56,7 @@
 
 using namespace FileSys;
 
-static FRandom pr_script("FScript", false);
+static FRandom pr_script("FScript");
 
 // functions. FParser::SF_ means Script Function not, well.. heh, me
 

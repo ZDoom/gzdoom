@@ -93,8 +93,8 @@
 #include "fs_findfile.h"
 
 
-static FRandom pr_dmspawn ("DMSpawn", false);
-static FRandom pr_pspawn ("PlayerSpawn", false);
+static FRandom pr_dmspawn ("DMSpawn");
+static FRandom pr_pspawn ("PlayerSpawn");
 
 extern int startpos, laststartpos;
 

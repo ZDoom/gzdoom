@@ -79,11 +79,11 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-FRandom pr_exrandom("EX_Random", false);
+FRandom pr_exrandom("EX_Random");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FRandom M_Random(true);
+FCRandom M_Random;
 
 // Global seed. This is modified predictably to initialize every RNG.
 uint32_t rngseed;
@@ -145,7 +145,7 @@ FRandom::FRandom (bool client)
 #ifndef NDEBUG
 	Name = NULL;
 #endif
-	if (client)
+	if (bClient)
 	{
 		Next = CRNGList;
 		CRNGList = this;
@@ -178,7 +178,7 @@ FRandom::FRandom (const char *name, bool client) : bClient(client)
 #endif
 
 	// Insert the RNG in the list, sorted by CRC
-	FRandom **prev = (client ? &CRNGList : &RNGList), * probe = (client ? CRNGList : RNGList);
+	FRandom **prev = (bClient ? &CRNGList : &RNGList), * probe = (bClient ? CRNGList : RNGList);
 
 	while (probe != NULL && probe->NameCRC < NameCRC)
 	{

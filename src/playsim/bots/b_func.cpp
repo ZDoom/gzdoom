@@ -54,7 +54,7 @@
 #include "p_checkposition.h"
 #include "actorinlines.h"
 
-static FRandom pr_botdofire ("BotDoFire", false);
+static FRandom pr_botdofire ("BotDoFire");
 
 
 //Checks TRUE reachability from bot to a looker.

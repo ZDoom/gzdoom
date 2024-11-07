@@ -1163,7 +1163,7 @@ TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 // This is overridden to use a synchronized RNG.
 // 
 //==========================================================================
-static FRandom pr_randsound("RandSound", true);
+static FCRandom pr_randsound("RandSound");
 
 FSoundID DoomSoundEngine::PickReplacement(FSoundID refid)
 {

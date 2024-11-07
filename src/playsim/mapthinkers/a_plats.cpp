@@ -37,7 +37,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 
-static FRandom pr_doplat ("DoPlat", false);
+static FRandom pr_doplat ("DoPlat");
 
 IMPLEMENT_CLASS(DPlat, false, false)
 

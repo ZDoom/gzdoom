@@ -49,7 +49,7 @@
 #include "actorinlines.h"
 #include "animations.h"
 
-static FRandom pr_switchanim ("AnimSwitch", true);
+static FCRandom pr_switchanim ("AnimSwitch");
 
 class DActiveButton : public DThinker
 {

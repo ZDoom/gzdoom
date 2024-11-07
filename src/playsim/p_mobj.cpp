@@ -122,29 +122,29 @@ EXTERN_CVAR (Int,  cl_rockettrails)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FRandom pr_explodemissile ("ExplodeMissile", false);
-static FRandom pr_reflect ("Reflect", false);
-static FRandom pr_nightmarerespawn ("NightmareRespawn", false);
-static FRandom pr_botspawnmobj ("BotSpawnActor", false);
-static FRandom pr_spawnmapthing ("SpawnMapThing", false);
-static FRandom pr_spawnpuff ("SpawnPuff", false);
-static FRandom pr_spawnblood ("SpawnBlood", false);
-static FRandom pr_splatter ("BloodSplatter", false);
-static FRandom pr_takedamage ("TakeDamage", false);
-static FRandom pr_splat ("FAxeSplatter", false);
-static FRandom pr_ripperblood ("RipperBlood", false);
-static FRandom pr_chunk ("Chunk", false);
-static FRandom pr_checkmissilespawn ("CheckMissileSpawn", false);
-static FRandom pr_missiledamage ("MissileDamage", false);
-static FRandom pr_multiclasschoice ("MultiClassChoice", false);
-static FRandom pr_rockettrail("RocketTrail", false);
-static FRandom pr_uniquetid("UniqueTID", false);
+static FRandom pr_explodemissile ("ExplodeMissile");
+static FRandom pr_reflect ("Reflect");
+static FRandom pr_nightmarerespawn ("NightmareRespawn");
+static FRandom pr_botspawnmobj ("BotSpawnActor");
+static FRandom pr_spawnmapthing ("SpawnMapThing");
+static FRandom pr_spawnpuff ("SpawnPuff");
+static FRandom pr_spawnblood ("SpawnBlood");
+static FRandom pr_splatter ("BloodSplatter");
+static FRandom pr_takedamage ("TakeDamage");
+static FRandom pr_splat ("FAxeSplatter");
+static FRandom pr_ripperblood ("RipperBlood");
+static FRandom pr_chunk ("Chunk");
+static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
+static FRandom pr_missiledamage ("MissileDamage");
+static FRandom pr_multiclasschoice ("MultiClassChoice");
+static FRandom pr_rockettrail("RocketTrail");
+static FRandom pr_uniquetid("UniqueTID");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FRandom pr_spawnmobj ("SpawnActor", false);
-FRandom pr_bounce("Bounce", false);
-FRandom pr_spawnmissile("SpawnMissile", false);
+FRandom pr_spawnmobj ("SpawnActor");
+FRandom pr_bounce("Bounce");
+FRandom pr_spawnmissile("SpawnMissile");
 
 CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_NOINITCALL)
 {
@@ -7956,7 +7956,7 @@ void AActor::SetTranslation(FName trname)
 // PROP A_RestoreSpecialPosition
 //
 //---------------------------------------------------------------------------
-static FRandom pr_restore("RestorePos", false);
+static FRandom pr_restore("RestorePos");
 
 void AActor::RestoreSpecialPosition()
 {

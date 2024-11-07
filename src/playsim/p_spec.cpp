@@ -100,7 +100,7 @@
 #include "c_console.h"
 #include "p_spec_thinkers.h"
 
-static FRandom pr_actorinspecialsector ("ActorInSpecialSector", false);
+static FRandom pr_actorinspecialsector ("ActorInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 EXTERN_CVAR(Bool, forcewater)

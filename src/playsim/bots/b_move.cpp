@@ -53,9 +53,9 @@
 #include "p_checkposition.h"
 #include "actorinlines.h"
 
-static FRandom pr_botopendoor ("BotOpenDoor", false);
-static FRandom pr_bottrywalk ("BotTryWalk", false);
-static FRandom pr_botnewchasedir ("BotNewChaseDir", false);
+static FRandom pr_botopendoor ("BotOpenDoor");
+static FRandom pr_bottrywalk ("BotTryWalk");
+static FRandom pr_botnewchasedir ("BotNewChaseDir");
 
 // borrow some tables from p_enemy.cpp
 extern dirtype_t opposite[9];

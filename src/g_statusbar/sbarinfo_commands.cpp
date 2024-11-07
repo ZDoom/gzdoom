@@ -3225,9 +3225,9 @@ class CommandDrawGem : public SBarInfoCommand
 		int					goalValue;
 	private:
 		int					chainWiggle;
-		static FRandom		pr_chainwiggle;
+		static FCRandom		pr_chainwiggle;
 };
-FRandom CommandDrawGem::pr_chainwiggle(true); //use the same method of chain wiggling as heretic.
+FCRandom CommandDrawGem::pr_chainwiggle; //use the same method of chain wiggling as heretic.
 
 ////////////////////////////////////////////////////////////////////////////////
 

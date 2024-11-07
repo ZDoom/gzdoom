@@ -95,7 +95,7 @@
 #include "s_music.h"
 #include "d_main.h"
 
-static FRandom pr_skullpop ("SkullPop", false);
+static FRandom pr_skullpop ("SkullPop");
 
 // [SP] Allows respawn in single player
 CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_CHEAT)

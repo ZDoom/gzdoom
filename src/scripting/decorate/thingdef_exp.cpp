@@ -576,7 +576,7 @@ static FRandom *ParseRNG(FScanner &sc, bool client)
 	}
 	else
 	{
-		rng = &pr_exrandom;
+		rng = client ? &M_Random : &pr_exrandom;
 	}
 	return rng;
 }

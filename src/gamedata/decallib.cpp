@@ -60,8 +60,8 @@ static TArray<uint8_t> DecalTranslations;
 // Sometimes two machines in a game will disagree on the state of
 // decals. I do not know why.
 
-static FRandom pr_decalchoice ("DecalChoice", true);
-static FRandom pr_decal ("Decal", true);
+static FCRandom pr_decalchoice ("DecalChoice");
+static FCRandom pr_decal ("Decal");
 
 class FDecalGroup : public FDecalBase
 {

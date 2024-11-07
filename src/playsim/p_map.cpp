@@ -103,10 +103,10 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 static void SpawnShootDecal(AActor *t1, AActor *defaults, const FTraceResults &trace);
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff);
 
-static FRandom pr_tracebleed("TraceBleed", false);
-static FRandom pr_checkthing("CheckThing", false);
-static FRandom pr_lineattack("LineAttack", false);
-static FRandom pr_crunch("DoCrunch", false);
+static FRandom pr_tracebleed("TraceBleed");
+static FRandom pr_checkthing("CheckThing");
+static FRandom pr_lineattack("LineAttack");
+static FRandom pr_crunch("DoCrunch");
 
 // keep track of special lines as they are hit,
 // but don't process them until the move is proven valid

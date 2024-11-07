@@ -52,7 +52,7 @@
 #include "d_player.h"
 #include "actorinlines.h"
 
-static FRandom pr_botmove ("BotMove", false);
+static FRandom pr_botmove ("BotMove");
 
 //This function is called each tic for each bot,
 //so this is what the bot does.

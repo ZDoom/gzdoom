@@ -95,7 +95,7 @@ static DCeiling::ECrushMode CRUSHTYPE(int a, bool withslowdown)
 	return withslowdown? DCeiling::ECrushMode::crushSlowdown : DCeiling::ECrushMode::crushDoom;
 }
 
-static FRandom pr_glass ("GlassBreak", false);
+static FRandom pr_glass ("GlassBreak");
 
 // There are aliases for the ACS specials that take names instead of numbers.
 // This table maps them onto the real number-based specials.

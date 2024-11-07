@@ -117,8 +117,6 @@ static SOCKET mysocket = INVALID_SOCKET;
 static sockaddr_in sendaddress[MAXNETNODES];
 static uint8_t sendplayer[MAXNETNODES];
 
-constexpr int NET_EXIT = 0x80;
-
 #ifdef __WIN32__
 const char *neterror (void);
 #else
@@ -308,7 +306,7 @@ void PacketGet (void)
 					GetPlayerName(node).GetChars());
 			}
 
-			doomcom.data[0] = NET_EXIT;
+			doomcom.data[0] = NCMD_EXIT;
 			c = 1;
 		}
 		else if (err != WSAEWOULDBLOCK)
@@ -346,11 +344,8 @@ void PacketGet (void)
 	}
 	else if (c > 0)
 	{	//The packet is not from any in-game node, so we might as well discard it.
-		// Don't show the message for disconnect notifications.
-		if (TransmitBuffer[0] != NET_EXIT)
+		if (TransmitBuffer[0] == PRE_FAKE)
 		{
-			if (TransmitBuffer[0] != PRE_FAKE)
-				DPrintf(DMSG_WARNING, "Dropped packet: Unknown host (%s:%d)\n", inet_ntoa(fromaddress.sin_addr), fromaddress.sin_port);
 			// If it's someone waiting in the lobby, let them know the game already started
 			uint8_t msg[] = { PRE_FAKE, PRE_IN_PROGRESS };
 			PreSend(msg, 2, &fromaddress);

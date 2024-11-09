@@ -121,11 +121,18 @@ TArray<spechit_t> portalhit;
 //
 //==========================================================================
 
-bool P_ShouldPassThroughPlayer(AActor *self, AActor *other)
+static int P_ShouldPassThroughPlayer(AActor *self, AActor *other)
 {
   return (dmflags3 & DF3_NO_PLAYER_CLIP) &&
           other->player && other->player->mo == other &&
           self->IsFriend(other);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ShouldPassThroughPlayer, P_ShouldPassThroughPlayer)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_BOOL(P_ShouldPassThroughPlayer(self, other));
 }
 
 //==========================================================================

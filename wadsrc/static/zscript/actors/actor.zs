@@ -844,6 +844,7 @@ class Actor : Thinker native
 	native void Thrust(double speed = 1e37, double angle = 1e37);
 	native clearscope bool isFriend(Actor other) const;
 	native clearscope bool isHostile(Actor other) const;
+	native clearscope bool ShouldPassThroughPlayer(Actor other) const;
 	native void AdjustFloorClip();
 	native clearscope DropItem GetDropItems() const;
 	native void CopyFriendliness (Actor other, bool changeTarget, bool resetHealth = true);

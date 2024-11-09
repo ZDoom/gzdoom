@@ -139,6 +139,11 @@ extend class Actor
 			{	// Must be monster, player, missile, touchy or vulnerable
 				continue;
 			}
+			if (player && ShouldPassThroughPlayer(mo))
+			{
+				// Don't blast friendly players if collision is disabled.
+				continue;
+			}
 			if (Distance2D(mo) > radius)
 			{ // Out of range
 				continue;

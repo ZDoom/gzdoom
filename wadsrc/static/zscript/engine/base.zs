@@ -779,6 +779,11 @@ class Object native
 
 	native static Function<void> FindFunction(Class<Object> cls, Name fn);
 
+	native clearscope static Object GetNetworkEntity(uint id);
+	native play void EnableNetworking(bool enable);
+	native clearscope uint GetNetworkID() const;
+	native clearscope bool IsClientside() const;
+
 	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.

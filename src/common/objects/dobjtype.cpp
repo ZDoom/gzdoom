@@ -440,7 +440,7 @@ DObject *PClass::CreateNew()
 	ConstructNative (mem);
 
 	if (Defaults != nullptr)
-		((DObject *)mem)->ObjectFlags |= ((DObject *)Defaults)->ObjectFlags & OF_Transient;
+		((DObject *)mem)->ObjectFlags |= ((DObject *)Defaults)->ObjectFlags & (OF_Transient | OF_ClientSide);
 
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
 	InitializeSpecials(mem, Defaults, &PClass::SpecialInits);

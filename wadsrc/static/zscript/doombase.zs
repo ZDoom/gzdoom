@@ -140,9 +140,6 @@ extend class Object
 	native static void MarkSound(Sound snd);
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
-	native clearscope static Object GetNetworkEntity(uint id);
-	native play void EnableNetworking(bool enable);
-	native clearscope uint GetNetworkID() const;
 }
 
 class Thinker : Object native play
@@ -199,6 +196,7 @@ class Thinker : Object native play
 class ThinkerIterator : Object native
 {
 	native static ThinkerIterator Create(class<Object> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
+	native static ThinkerIterator CreateClientside(class<Thinker> type = "Actor", int statnum=Thinker.MAX_STATNUM+1);
 	native Thinker Next(bool exact = false);
 	native void Reinit();
 }
@@ -499,7 +497,7 @@ struct LevelLocals native
 	native bool IsFreelookAllowed() const;
 	native void StartIntermission(Name type, int state) const;
 	native play SpotState GetSpotState(bool create = true);
-	native int FindUniqueTid(int start = 0, int limit = 0);
+	native int FindUniqueTid(int start = 0, int limit = 0, bool clientside = false);
 	native uint GetSkyboxPortal(Actor actor);
 	native void ReplaceTextures(String from, String to, int flags);
     clearscope native HealthGroup FindHealthGroup(int id);
@@ -535,9 +533,11 @@ struct LevelLocals native
 	native void ChangeSky(TextureID sky1, TextureID sky2 );
 	native void ForceLightning(int mode = 0, sound tempSound = "");
 
+	native clearscope Thinker CreateClientsideThinker(class<Thinker> type, int statnum = Thinker.STAT_DEFAULT);
 	native SectorTagIterator CreateSectorTagIterator(int tag, line defline = null);
 	native LineIdIterator CreateLineIdIterator(int tag);
 	native ActorIterator CreateActorIterator(int tid, class<Actor> type = "Actor");
+	native ActorIterator CreateClientSideActorIterator(int tid, class<Actor> type = "Actor");
 
 	String TimeFormatted(bool totals = false)
 	{

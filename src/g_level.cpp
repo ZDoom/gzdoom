@@ -457,7 +457,7 @@ void G_NewInit ()
 	int i;
 
 	// Destory all old player refrences that may still exist
-	TThinkerIterator<AActor> it(primaryLevel, NAME_PlayerPawn, STAT_TRAVELLING);
+	TThinkerIterator<AActor> it(primaryLevel, NAME_PlayerPawn, STAT_TRAVELLING, false);
 	AActor *pawn, *next;
 
 	next = it.Next();
@@ -473,6 +473,7 @@ void G_NewInit ()
 	// Destroy thinkers that may remain after change level failure
 	// Usually, the list contains just a sentinel when such error occurred
 	primaryLevel->Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
+	primaryLevel->ClientsideThinkers.DestroyThinkersInList(STAT_TRAVELLING); // This isn't currently supported, but maybe in the future
 
 	G_ClearSnapshots ();
 	netgame = false;
@@ -586,6 +587,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	for (auto Level : AllLevels())
 	{
 		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
+		Level->ClientsideThinkers.DestroyThinkersInList(STAT_STATIC);
 	}
 
 	if (paused)
@@ -1780,6 +1782,7 @@ int FLevelLocals::FinishTravel ()
 	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
 	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
 	Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
+	ClientsideThinkers.DestroyThinkersInList(STAT_TRAVELLING);
 	return failnum;
 }
  
@@ -2284,6 +2287,7 @@ void FLevelLocals::Mark()
 	GC::Mark(SpotState);
 	GC::Mark(FraggleScriptThinker);
 	GC::Mark(ACSThinker);
+	GC::Mark(ClientSideACSThinker);
 	GC::Mark(automap);
 	GC::Mark(interpolator.Head);
 	GC::Mark(SequenceListHead);
@@ -2296,6 +2300,7 @@ void FLevelLocals::Mark()
 		GC::Mark(localEventManager->LastEventHandler);
 	}
 	Thinkers.MarkRoots();
+	ClientsideThinkers.MarkRoots();
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

@@ -269,6 +269,66 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 
 //==========================================================================
 //
+// This version doesn't modify the level since that's already been done by
+// the networked ticking. This also runs while the player is predicting
+// to make sure it keeps ticking regardless of network game status.
+//
+//==========================================================================
+
+void FThinkerCollection::RunClientsideThinkers(FLevelLocals* Level)
+{
+	int i, count;
+
+	bool dolights;
+	if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+	{
+		dolights = true;// Level->lights || (Level->flags3 & LEVEL3_LIGHTCREATED);
+	}
+	else
+	{
+		dolights = false;
+	}
+
+	auto recreateLights = [=]() {
+		auto it = Level->GetClientsideThinkerIterator<AActor>();
+
+		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
+		while (auto ac = it.Next())
+		{
+			if (ac->flags8 & MF8_RECREATELIGHTS)
+			{
+				ac->flags8 &= ~MF8_RECREATELIGHTS;
+				if (dolights) ac->SetDynamicLights();
+			}
+			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
+			if ((ac->effects || ac->fountaincolor) && ac->ShouldRenderLocally() && !Level->isFrozen())
+			{
+				P_RunEffect(ac, ac->effects);
+			}
+		}
+	};
+
+	// Tick every thinker left from last time
+	for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+	{
+		Thinkers[i].TickThinkers(nullptr);
+	}
+
+	// Keep ticking the fresh thinkers until there are no new ones.
+	do
+	{
+		count = 0;
+		for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+		{
+			count += FreshThinkers[i].TickThinkers(&Thinkers[i]);
+		}
+	} while (count != 0);
+
+	recreateLights();
+}
+
+//==========================================================================
+//
 // Destroy every thinker
 //
 //==========================================================================
@@ -784,6 +844,11 @@ DThinker *FLevelLocals::FirstThinker (int statnum)
 	return Thinkers.FirstThinker(statnum);
 }
 
+DThinker* FLevelLocals::FirstClientsideThinker(int statnum)
+{
+	return ClientsideThinkers.FirstThinker(statnum);
+}
+
 //==========================================================================
 //
 //
@@ -797,7 +862,10 @@ void DThinker::ChangeStatNum (int statnum)
 		statnum = MAX_STATNUM;
 	}
 	Remove();
-	Level->Thinkers.Link(this, statnum);
+	if (IsClientside())
+		Level->ClientsideThinkers.Link(this, statnum);
+	else
+		Level->Thinkers.Link(this, statnum);
 }
 
 static void ChangeStatNum(DThinker *thinker, int statnum)
@@ -923,8 +991,9 @@ size_t DThinker::PropagateMark()
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum) : Level(l)
+FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, bool clientside) : Level(l)
 {
+	m_ThinkerPool = clientside ? &Level->ClientsideThinkers : &Level->Thinkers;
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		m_Stat = STAT_FIRST_THINKING;
@@ -945,8 +1014,9 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int sta
 //
 //==========================================================================
 
-FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, DThinker *prev) : Level(l)
+FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, DThinker *prev, bool clientside) : Level(l)
 {
+	m_ThinkerPool = clientside ? &Level->ClientsideThinkers : &Level->Thinkers;
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		m_Stat = STAT_FIRST_THINKING;
@@ -977,7 +1047,7 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int sta
 
 void FThinkerIterator::Reinit ()
 {
-	m_CurrThinker = Level->Thinkers.Thinkers[m_Stat].GetHead();
+	m_CurrThinker = m_ThinkerPool->Thinkers[m_Stat].GetHead();
 	m_SearchingFresh = false;
 }
 
@@ -1018,7 +1088,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 			}
 			if ((m_SearchingFresh = !m_SearchingFresh))
 			{
-				m_CurrThinker = Level->Thinkers.FreshThinkers[m_Stat].GetHead();
+				m_CurrThinker = m_ThinkerPool->FreshThinkers[m_Stat].GetHead();
 			}
 		} while (m_SearchingFresh);
 		if (m_SearchStats)
@@ -1029,7 +1099,7 @@ DThinker *FThinkerIterator::Next (bool exact)
 				m_Stat = STAT_FIRST_THINKING;
 			}
 		}
-		m_CurrThinker = Level->Thinkers.Thinkers[m_Stat].GetHead();
+		m_CurrThinker = m_ThinkerPool->Thinkers[m_Stat].GetHead();
 		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return nullptr;

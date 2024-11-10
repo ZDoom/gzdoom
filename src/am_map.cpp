@@ -261,7 +261,7 @@ CCMD(togglemap)
 {
 	if (gameaction == ga_nothing)
 	{
-		gameaction = ga_togglemap;
+		AM_ToggleMap();
 	}
 }
 

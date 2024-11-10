@@ -41,8 +41,8 @@ class DThinkerIterator : public DObject, public FThinkerIterator
 	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
 
 public:
-	DThinkerIterator(FLevelLocals *Level, PClass *cls, int statnum = MAX_STATNUM + 1)
-		: FThinkerIterator(Level, cls, statnum)
+	DThinkerIterator(FLevelLocals *Level, PClass *cls, int statnum = MAX_STATNUM + 1, bool clientside = false)
+		: FThinkerIterator(Level, cls, statnum, clientside)
 	{
 	}
 };
@@ -60,6 +60,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
 	PARAM_CLASS(type, DThinker);
 	PARAM_INT(statnum);
 	ACTION_RETURN_OBJECT(CreateThinkerIterator(type, statnum));
+}
+
+static DThinkerIterator* CreateClientsideThinkerIterator(PClass* type, int statnum)
+{
+	return Create<DThinkerIterator>(currentVMLevel, type, statnum, true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, CreateClientside, CreateClientsideThinkerIterator)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, DThinker);
+	PARAM_INT(statnum);
+	ACTION_RETURN_OBJECT(CreateClientsideThinkerIterator(type, statnum));
 }
 
 static DThinker *NextThinker(DThinkerIterator *self, bool exact)
@@ -363,6 +376,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateActorIterator, CreateActI)
 	PARAM_INT(tid);
 	PARAM_CLASS(type, AActor);
 	ACTION_RETURN_OBJECT(CreateActI(self, tid, type));
+}
+
+static DActorIterator* CreateClientSideActI(FLevelLocals* Level, int tid, PClassActor* type)
+{
+	return Create<DActorIterator>(Level->ClientSideTIDHash, type, tid);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateClientSideActorIterator, CreateClientSideActI)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(tid);
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_OBJECT(CreateClientSideActI(self, tid, type));
 }
 
 static AActor *NextActI(DActorIterator *self)

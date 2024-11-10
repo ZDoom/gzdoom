@@ -38,10 +38,60 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "g_game.h"
+#include "am_map.h"
 #include "i_interface.h"
 
 extern gamestate_t wipegamestate;
 extern uint8_t globalfreeze, globalchangefreeze;
+
+void C_Ticker();
+void M_Ticker();
+
+//==========================================================================
+//
+// P_RunClientsideLogic
+//
+// Handles all logic that should be ran every tick including while
+// predicting. Only put non-playsim behaviors in here to avoid desyncs
+// when playing online.
+//
+//==========================================================================
+
+void P_RunClientsideLogic()
+{
+	C_Ticker();
+	M_Ticker();
+
+	// [ZZ] also tick the UI part of the events
+	primaryLevel->localEventManager->UiTick();
+
+	if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
+	{
+		for (auto level : AllLevels())
+		{
+			auto it = level->GetClientsideThinkerIterator<AActor>();
+			AActor* ac = nullptr;
+			while ((ac = it.Next()) != nullptr)
+			{
+				ac->ClearInterpolation();
+				ac->ClearFOVInterpolation();
+			}
+
+			P_ThinkParticles(level);	// [RH] make the particles think
+
+			level->ClientsideThinkers.RunClientsideThinkers(level);
+		}
+
+		StatusBar->CallTick();
+
+		// TODO: Should this be called on all maps...?
+		if (gamestate == GS_LEVEL)
+			primaryLevel->automap->Ticker();
+	}
+
+	// [MK] Additional ticker for UI events right after all others
+	primaryLevel->localEventManager->PostUiTick();
+}
 
 //==========================================================================
 //
@@ -196,8 +246,6 @@ void P_Ticker (void)
 			ac->ClearFOVInterpolation();
 		}
 
-		P_ThinkParticles(Level);	// [RH] make the particles think
-
 		for (i = 0; i < MAXPLAYERS; i++)
 			if (Level->PlayerInGame(i))
 				P_PlayerThink(Level->Players[i]);
@@ -222,5 +270,4 @@ void P_Ticker (void)
 		if (players[consoleplayer].mo->Vel.Length() > primaryLevel->max_velocity) { primaryLevel->max_velocity = players[consoleplayer].mo->Vel.Length(); }
 		primaryLevel->avg_velocity += (players[consoleplayer].mo->Vel.Length() - primaryLevel->avg_velocity) / primaryLevel->maptime;
 	}
-	StatusBar->CallTick();		// Status bar should tick AFTER the thinkers to properly reflect the level's state at this time.
 }

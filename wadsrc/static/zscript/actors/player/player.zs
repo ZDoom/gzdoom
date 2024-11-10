@@ -2347,9 +2347,16 @@ class PlayerPawn : Actor
 		return pick;
 	}
 
+	virtual Weapon PostFindWeapon(int slot, bool checkammo, Weapon orig, Weapon mod)
+	{
+		return mod;
+	}
+
 	Weapon FindWeapon(int slot, bool checkammo)
 	{
-		return CallModifyPickWeapon(slot, checkammo, PickWeapon(slot, checkammo));
+		let orig = PickWeapon(slot, checkammo);
+		let mod = CallModifyPickWeapon(slot, checkammo, orig);
+		return PostFindWeapon(slot, checkammo, orig, mod);
 	}
 
 	//===========================================================================
@@ -2469,9 +2476,16 @@ class PlayerPawn : Actor
 		return pick;
 	}
 
+	virtual Weapon PostFindNextWeapon(Weapon orig, Weapon mod)
+	{
+		return mod;
+	}
+
 	Weapon FindNextWeapon()
 	{
-		return CallModifyPickNextWeapon(PickNextWeapon());
+		let orig = PickNextWeapon();
+		let mod = CallModifyPickNextWeapon(orig);
+		return PostFindNextWeapon(orig, mod);
 	}
 
 	//===========================================================================
@@ -2540,9 +2554,16 @@ class PlayerPawn : Actor
 		return pick;
 	}
 
+	virtual Weapon PostFindPrevWeapon(Weapon orig, Weapon mod)
+	{
+		return mod;
+	}
+
 	Weapon FindPrevWeapon()
 	{
-		return CallModifyPickPrevWeapon(PickPrevWeapon());
+		let orig = PickPrevWeapon();
+		let mod = CallModifyPickPrevWeapon(orig);
+		return PostFindPrevWeapon(orig, mod);
 	}
 
 	//============================================================================

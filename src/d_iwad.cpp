@@ -454,29 +454,48 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 
 void FIWadManager::CollectSearchPaths()
 {
-	if (GameConfig->SetSection("IWADSearch.Directories"))
-	{
-		const char *key;
-		const char *value;
-
-		while (GameConfig->NextInSection(key, value))
+	int JR_int = 0;
+	if JR_int == 0
 		{
-			if (stricmp(key, "Path") == 0)
+		cout << "do you want to search for .WAD files? Type y for yes or n for no";
+		if cin >> "y" or "Y"
+		{
+			if (GameConfig->SetSection("IWADSearch.Directories"))
 			{
-				FString nice = NicePath(value);
-				if (nice.Len() > 0) mSearchPaths.Push(nice);
+				const char *key;
+				const char *value;
+		
+				while (GameConfig->NextInSection(key, value))
+				{
+					if (stricmp(key, "Path") == 0)
+					{
+						FString nice = NicePath(value);
+						if (nice.Len() > 0) mSearchPaths.Push(nice);
+					}
+				}
 			}
-		}
-	}
-	mSearchPaths.Append(I_GetGogPaths());
-	mSearchPaths.Append(I_GetSteamPath());
-	mSearchPaths.Append(I_GetBethesdaPath());
+			mSearchPaths.Append(I_GetGogPaths());
+			mSearchPaths.Append(I_GetSteamPath());
+			mSearchPaths.Append(I_GetBethesdaPath());
+		
+			// Unify and remove trailing slashes
+			for (auto &str : mSearchPaths)
+			{
+				FixPathSeperator(str);
+				if (str.Back() == '/') str.Truncate(str.Len() - 1);
+			}
 
-	// Unify and remove trailing slashes
-	for (auto &str : mSearchPaths)
-	{
-		FixPathSeperator(str);
-		if (str.Back() == '/') str.Truncate(str.Len() - 1);
+			JR_int = 1
+		}
+		elif cin >> "n" or "N"
+		{
+			cout << "ok";
+			JR_int = 1
+		}
+		else:
+		{
+			cout << "please enter either y or n";
+		}
 	}
 }
 

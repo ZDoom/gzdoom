@@ -1409,6 +1409,8 @@ enum ELevelFlags
 	LEVEL3_AVOIDMELEE			= 0x00020000,	// global flag needed for proper MBF support.
 	LEVEL3_NOJUMPDOWN			= 0x00040000,	// only for MBF21. Inverse of MBF's dog_jumping flag.
 	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
+	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
+	LEVEL3_SECRET				= 0x00200000,	// level is a secret level
 };
 
 // [RH] Compatibility flags.

@@ -1006,7 +1006,6 @@ void DVisualThinker::Construct()
 	PT.subsector = nullptr;
 	cursector = nullptr;
 	PT.color = 0xffffff;
-	spr = new HWSprite();
 	AnimatedTexture.SetNull();
 }
 
@@ -1018,11 +1017,6 @@ DVisualThinker::DVisualThinker()
 void DVisualThinker::OnDestroy()
 {
 	PT.alpha = 0.0; // stops all rendering.
-	if(spr)
-	{
-		delete spr;
-		spr = nullptr;
-	}
 	Super::OnDestroy();
 }
 

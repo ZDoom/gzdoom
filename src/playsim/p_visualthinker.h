@@ -39,7 +39,6 @@ public:
 
 	// internal only variables
 	particle_t		PT;
-	HWSprite		*spr; //in an effort to cache the result. 
 
 	DVisualThinker();
 	void Construct();

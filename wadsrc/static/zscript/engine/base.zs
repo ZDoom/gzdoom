@@ -15,27 +15,29 @@ enum ESoundFlags
 	// modifier flags
 	CHAN_LISTENERZ = 8,
 	CHAN_MAYBE_LOCAL = 16,
-	CHAN_UI = 32,
-	CHAN_NOPAUSE = 64,
+	CHAN_UI = 32,								// Do not record sound in savegames.
+	CHAN_NOPAUSE = 64,							// Do not pause this sound in menus.
 	CHAN_LOOP = 256,
 	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
-	CHAN_NOSTOP = 4096,
-	CHAN_OVERLAP = 8192,
+	CHAN_NOSTOP = 4096,							// only for A_PlaySound. Does not start if channel is playing something.
+	CHAN_OVERLAP = 8192,						// [MK] Does not stop any sounds in the channel and instead plays over them.
 
 	// Same as above, with an F appended to allow better distinction of channel and channel flags.
-	CHANF_DEFAULT = 0,	// just to make the code look better and avoid literal 0's.
+	CHANF_DEFAULT = 0,			// just to make the code look better and avoid literal 0's.
 	CHANF_LISTENERZ = 8,
 	CHANF_MAYBE_LOCAL = 16,
-	CHANF_UI = 32,
-	CHANF_NOPAUSE = 64,
+	CHANF_UI = 32,				// Do not record sound in savegames.
+	CHANF_NOPAUSE = 64,			// Do not pause this sound in menus.
 	CHANF_LOOP = 256,
-	CHANF_NOSTOP = 4096,
-	CHANF_OVERLAP = 8192,
-	CHANF_LOCAL = 16384,
+	CHANF_NOSTOP = 4096,		// only for A_PlaySound. Does not start if channel is playing something.
+	CHANF_OVERLAP = 8192,		// [MK] Does not stop any sounds in the channel and instead plays over them.
+	CHANF_LOCAL = 16384,		// only plays locally for the calling actor
+	CHANF_TRANSIENT = 32768,    // Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
+	CHANF_FORCE = 65536,		// Start, even if sound is paused.
+	CHANF_SINGULAR = 0x20000,	// Only start if no sound of this name is already playing.
 
 
 	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
-
 };
 
 // sound attenuation values

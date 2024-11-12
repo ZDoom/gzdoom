@@ -1090,6 +1090,19 @@ void DVisualThinker::UpdateSpriteInfo()
 	}
 }
 
+static void UpdateSpriteInfo(DVisualThinker * self)
+{
+	self->UpdateSpriteInfo();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, UpdateSpriteInfo, UpdateSpriteInfo)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	self->UpdateSpriteInfo();
+	return 0;
+}
+
+
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.
 void DVisualThinker::Tick()
 {

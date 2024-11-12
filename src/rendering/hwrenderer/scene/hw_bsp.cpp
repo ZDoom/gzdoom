@@ -44,6 +44,8 @@
 #include "hw_vertexbuilder.h"
 #include "hw_walldispatcher.h"
 
+#include "p_visualthinker.h"
+
 #ifdef ARCH_IA32
 #include <immintrin.h>
 #endif // ARCH_IA32

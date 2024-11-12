@@ -1045,6 +1045,33 @@ static DVisualThinker* SpawnVisualThinker(FLevelLocals* Level, PClass* type)
 	return DVisualThinker::NewVisualThinker(Level, type);
 }
 
+void DVisualThinker::UpdateSector(subsector_t * newSubsector)
+{
+	assert(newSubsector);
+	if(PT.subsector != newSubsector)
+	{
+		PT.subsector = newSubsector;
+		cursector = newSubsector->sector;
+	}
+}
+
+void DVisualThinker::UpdateSector()
+{
+	UpdateSector(Level->PointInRenderSubsector(PT.Pos));
+}
+
+static void UpdateSector(DVisualThinker * self)
+{
+	self->UpdateSector();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, UpdateSector, UpdateSector)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	self->UpdateSector();
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThinker)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
@@ -1092,27 +1119,27 @@ void DVisualThinker::Tick()
 	PT.Pos.Y = newxy.Y;
 	PT.Pos.Z += PT.Vel.Z;
 
-	PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-	cursector = PT.subsector->sector;
+	subsector_t * ss = Level->PointInRenderSubsector(PT.Pos);
+
 	// Handle crossing a sector portal.
-	if (!cursector->PortalBlocksMovement(sector_t::ceiling))
+	if (!ss->sector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		if (PT.Pos.Z > cursector->GetPortalPlaneZ(sector_t::ceiling))
+		if (PT.Pos.Z > ss->sector->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			PT.Pos += cursector->GetPortalDisplacement(sector_t::ceiling);
-			PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-			cursector = PT.subsector->sector;
+			PT.Pos += ss->sector->GetPortalDisplacement(sector_t::ceiling);
+			ss = Level->PointInRenderSubsector(PT.Pos);
 		}
 	}
-	else if (!cursector->PortalBlocksMovement(sector_t::floor))
+	else if (!ss->sector->PortalBlocksMovement(sector_t::floor))
 	{
-		if (PT.Pos.Z < cursector->GetPortalPlaneZ(sector_t::floor))
+		if (PT.Pos.Z < ss->sector->GetPortalPlaneZ(sector_t::floor))
 		{
-			PT.Pos += cursector->GetPortalDisplacement(sector_t::floor);
-			PT.subsector = Level->PointInRenderSubsector(PT.Pos);
-			cursector = PT.subsector->sector;
+			PT.Pos += ss->sector->GetPortalDisplacement(sector_t::floor);
+			ss = Level->PointInRenderSubsector(PT.Pos);
 		}
 	}
+    
+	UpdateSector(ss);
 	UpdateSpriteInfo();
 }
 

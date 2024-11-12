@@ -60,6 +60,8 @@
 #include "hw_renderstate.h"
 #include "quaternion.h"
 
+#include "p_visualthinker.h"
+
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern uint32_t r_renderercaps;

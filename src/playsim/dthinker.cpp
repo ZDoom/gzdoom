@@ -46,6 +46,8 @@
 #include "g_cvars.h"
 #include "d_main.h"
 
+#include "p_visualthinker.h"
+
 static int ThinkCount;
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;

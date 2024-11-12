@@ -46,6 +46,8 @@
 #include "symbols.h"
 #include "types.h"
 
+#include "p_visualthinker.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -421,7 +423,7 @@ PClass *PClass::FindClass (FName zaname)
 //
 //==========================================================================
 
-DObject *PClass::CreateNew()
+DObject *PClass::CreateNew(int *statnum)
 {
 	uint8_t *mem = (uint8_t *)M_Malloc (Size);
 	assert (mem != nullptr);
@@ -444,6 +446,12 @@ DObject *PClass::CreateNew()
 
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
 	InitializeSpecials(mem, Defaults, &PClass::SpecialInits);
+    
+    if(statnum && ((DObject *)mem)->IsKindOf(RUNTIME_CLASS(DVisualThinker)))
+    {
+        *statnum = STAT_VISUALTHINKER;
+    }
+    
 	return (DObject *)mem;
 }
 

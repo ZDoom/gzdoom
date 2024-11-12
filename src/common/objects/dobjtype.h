@@ -90,7 +90,7 @@ public:
 	PClass();
 	~PClass();
 	void InsertIntoHash(bool native);
-	DObject *CreateNew();
+	DObject *CreateNew(int *statnum = nullptr);
 	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr, int fileno = 0);
 
 	void InitializeActorInfo();

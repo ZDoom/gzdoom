@@ -364,9 +364,9 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->sizestep = sizestep;
 		particle->texture = texture;
 		particle->style = style;
-		particle->Roll = startroll;
-		particle->RollVel = rollvel;
-		particle->RollAcc = rollacc;
+		particle->Roll = (float)startroll;
+		particle->RollVel = (float)rollvel;
+		particle->RollAcc = (float)rollacc;
 		particle->flags = flags;
 		if(flags & SPF_LOCAL_ANIM)
 		{
@@ -1125,7 +1125,7 @@ int DVisualThinker::GetLightLevel(sector_t* rendersector) const
 {
 	int lightlevel = rendersector->GetSpriteLight();
 
-	if (bAddLightLevel)
+	if (flags & VTF_AddLightLevel)
 	{
 		lightlevel += LightLevel;
 	}
@@ -1138,7 +1138,7 @@ int DVisualThinker::GetLightLevel(sector_t* rendersector) const
 
 FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
 {
-	if (bDontInterpolate) return FVector3(PT.Pos);
+	if (flags & VTF_DontInterpolate) return FVector3(PT.Pos);
 
 	DVector3 proc = Prev + (ticFrac * (PT.Pos - Prev));
 	return FVector3(proc);
@@ -1147,7 +1147,7 @@ FVector3 DVisualThinker::InterpolatedPosition(double ticFrac) const
 
 float DVisualThinker::InterpolatedRoll(double ticFrac) const
 {
-	if (bDontInterpolate) return PT.Roll;
+	if (flags & VTF_DontInterpolate) return PT.Roll;
 
 	return float(PrevRoll + (PT.Roll - PrevRoll) * ticFrac);
 }
@@ -1227,9 +1227,9 @@ int DVisualThinker::GetRenderStyle()
 float DVisualThinker::GetOffset(bool y) const // Needed for the renderer.
 {
 	if (y)
-		return (float)(bFlipOffsetY ? Offset.Y : -Offset.Y);
+		return (float)((flags & VTF_FlipOffsetY) ? Offset.Y : -Offset.Y);
 	else
-		return (float)(bFlipOffsetX ? Offset.X : -Offset.X);
+		return (float)((flags & VTF_FlipOffsetX) ? Offset.X : -Offset.X);
 }
 
 void DVisualThinker::Serialize(FSerializer& arc)
@@ -1250,14 +1250,9 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("translation", Translation)
 		("cursector", cursector)
 		("scolor", PT.color)
-		("flipx", bXFlip)
-		("flipy", bYFlip)
-		("dontinterpolate", bDontInterpolate)
-		("addlightlevel", bAddLightLevel)
-		("flipoffsetx", bFlipOffsetX)
-		("flipoffsetY", bFlipOffsetY)
 		("lightlevel", LightLevel)
-		("flags", PT.flags);
+		("flags", PT.flags)
+		("visualThinkerFlags", flags);
 		
 }
 
@@ -1269,6 +1264,7 @@ DEFINE_FIELD_NAMED(DVisualThinker, PT.Roll, Roll);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.alpha, Alpha);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.texture, Texture);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.flags, Flags);
+DEFINE_FIELD_NAMED(DVisualThinker, flags, VisualThinkerFlags);
 
 DEFINE_FIELD(DVisualThinker, Prev);
 DEFINE_FIELD(DVisualThinker, Scale);
@@ -1277,9 +1273,3 @@ DEFINE_FIELD(DVisualThinker, PrevRoll);
 DEFINE_FIELD(DVisualThinker, Translation);
 DEFINE_FIELD(DVisualThinker, LightLevel);
 DEFINE_FIELD(DVisualThinker, cursector);
-DEFINE_FIELD(DVisualThinker, bXFlip);
-DEFINE_FIELD(DVisualThinker, bYFlip);
-DEFINE_FIELD(DVisualThinker, bDontInterpolate);
-DEFINE_FIELD(DVisualThinker, bAddLightLevel);
-DEFINE_FIELD(DVisualThinker, bFlipOffsetX);
-DEFINE_FIELD(DVisualThinker, bFlipOffsetY);

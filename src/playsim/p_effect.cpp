@@ -1254,12 +1254,24 @@ float DVisualThinker::GetOffset(bool y) const // Needed for the renderer.
 		return (float)((flags & VTF_FlipOffsetX) ? Offset.X : -Offset.X);
 }
 
+
+FSerializer& Serialize(FSerializer& arc, const char* key, FStandaloneAnimation& value, FStandaloneAnimation* defval)
+{
+	arc.BeginObject(key);
+	arc("SwitchTic",	value.SwitchTic);
+	arc("AnimIndex",	value.AnimIndex);
+	arc("CurFrame",		value.CurFrame);
+	arc("Ok",			value.ok);
+	arc("AnimType",		value.AnimType);
+	arc.EndObject();
+	return arc;
+}
+
 void DVisualThinker::Serialize(FSerializer& arc)
 {
 	Super::Serialize(arc);
 
-	arc
-		("pos", PT.Pos)
+	arc ("pos", PT.Pos)
 		("vel", PT.Vel)
 		("prev", Prev)
 		("scale", Scale)
@@ -1273,9 +1285,14 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("cursector", cursector)
 		("scolor", PT.color)
 		("lightlevel", LightLevel)
+		("animData", PT.animData)
 		("flags", PT.flags)
 		("visualThinkerFlags", flags);
-		
+    
+    if(arc.isReading())
+    {
+        UpdateSector();
+    }
 }
 
 IMPLEMENT_CLASS(DVisualThinker, false, false);

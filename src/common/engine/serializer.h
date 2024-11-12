@@ -252,7 +252,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, struct ModelOverride &
 FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimModelOverride &mo, struct AnimModelOverride *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnim &ao, ModelAnim *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnimFrame &ao, ModelAnimFrame *def);
-FSerializer& Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
+FSerializer &Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
+FSerializer &Serialize(FSerializer& arc, const char* key, struct FStandaloneAnimation& value, struct FStandaloneAnimation* defval);
 
 void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);
 

@@ -414,7 +414,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
 		gl_billboard_faces_camera
 		|| ((actor && (!(actor->renderflags2 & RF2_BILLBOARDNOFACECAMERA) && (actor->renderflags2 & RF2_BILLBOARDFACECAMERA)))
-		|| (particle && (!(particle->flags & SPF_NOFACECAMERA) && (particle->flags & SPF_FACECAMERA))));
+		|| (particle && particle->texture.isValid() && (!(particle->flags & SPF_NOFACECAMERA) && (particle->flags & SPF_FACECAMERA))));
 
 	// [Nash] has +ROLLSPRITE
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
@@ -1409,10 +1409,8 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	if (!particle || particle->alpha <= 0)
 		return;
 
-	if (spr && spr->PT.texture.isNull() && (spr->sprite == -1))
-	{
+	if (spr && spr->PT.texture.isNull())
 		return;
-	}
 
 	lightlevel = hw_ClampLight(spr ? spr->GetLightLevel(sector) : sector->GetSpriteLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
@@ -1485,7 +1483,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	}
 	else
 	{
-		bool has_texture = particle->texture.isValid() || !!spr;
+		bool has_texture = particle->texture.isValid();
 		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
 		
 		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
@@ -1507,19 +1505,6 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 				else if(has_texture)
 				{
 					lump = particle->texture;
-					if (spr && !lump.isValid())
-					{
-						bool mirror = false;
-						DVector3 thingpos = (DVector3)spr->InterpolatedPosition(vp.TicFrac);
-						DAngle ang = (thingpos - vp.Pos).Angle();
-						if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
-
-						bool spriteflip = false; // !!(thing->renderflags & RF_SPRITEFLIP)
-
-						int rot;
-						rot = -1;
-						lump = sprites[spr->sprite].GetSpriteFrame(spr->frame, rot, ang, &mirror, spriteflip);
-					}
 				}
 				else
 				{

@@ -37,8 +37,6 @@ public:
 	sector_t		*cursector;
 
 	int flags;
-	int				sprite;				// used to find patch_t and flip value
-	uint8_t			frame;				// sprite frame to draw
 
 	// internal only variables
 	particle_t		PT;

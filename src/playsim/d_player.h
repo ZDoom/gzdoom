@@ -322,8 +322,8 @@ public:
 	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;
 	ticcmd_t	cmd = {};
-	usercmd_t	original_cmd;
-	uint32_t		original_oldbuttons;
+	usercmd_t	original_cmd = {};
+	uint32_t		original_oldbuttons = 0;
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
@@ -340,7 +340,7 @@ public:
 	// mo->velx and mo->vely represent true velocity experienced by player.
 	// This only represents the thrust that the player applies himself.
 	// This avoids anomalies with such things as Boom ice and conveyors.
-	DVector2 Vel = { 0,0 };
+	DVector2 Vel;
 
 	bool		centering = false;
 	uint8_t		turnticks = 0;
@@ -419,10 +419,10 @@ public:
 	FString		SoundClass;
 	FString		LogText;	// [RH] Log for Strife
 	FString		SubtitleText;
-	int			SubtitleCounter;
+	int			SubtitleCounter = 0;
 
-	DAngle			MinPitch = nullAngle;	// Viewpitch limits (negative is up, positive is down)
-	DAngle			MaxPitch = nullAngle;
+	DAngle			MinPitch;	// Viewpitch limits (negative is up, positive is down)
+	DAngle			MaxPitch;
 
 	double crouchfactor = 0;
 	double crouchoffset = 0;
@@ -432,7 +432,7 @@ public:
 
 	// [CW] I moved these here for multiplayer conversation support.
 	TObjPtr<AActor*> ConversationNPC = MakeObjPtr<AActor*>(nullptr), ConversationPC = MakeObjPtr<AActor*>(nullptr);
-	DAngle ConversationNPCAngle = nullAngle;
+	DAngle ConversationNPCAngle;
 	bool ConversationFaceTalker = false;
 
 	DVector3 LastSafePos = {}; // Mark the last known safe location the player was standing.

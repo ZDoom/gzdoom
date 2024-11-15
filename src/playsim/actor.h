@@ -756,12 +756,6 @@ public:
 	int			Flags;
 
 	// Functions
-	DViewPosition()
-	{
-		Offset = { 0,0,0 };
-		Flags = 0;
-	}
-
 	void Set(DVector3 &off, int f = -1)
 	{
 		ZeroSubnormalsF(off.X);
@@ -777,6 +771,8 @@ public:
 	{
 		return Offset.isZero();
 	}
+
+	void Serialize(FSerializer& arc) override;
 };
 
 const double MinVel = EQUAL_EPSILON;

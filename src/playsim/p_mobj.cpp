@@ -1545,6 +1545,13 @@ void DActorModelData::OnDestroy()
 	animationIDs.Reset();
 }
 
+void DViewPosition::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+	arc("offset", Offset)
+		("flags", Flags);
+}
+
 //----------------------------------------------------------------------------
 //
 // PROC P_ExplodeMissile

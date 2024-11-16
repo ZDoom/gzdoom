@@ -306,7 +306,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info);
 class player_t
 {
 public:
-	player_t() = default;
+	player_t() { angleOffsetTargets.Zero(); }
 	~player_t();
 	player_t &operator= (const player_t &p) = delete;
 	void CopyFrom(player_t &src, bool copyPSP);
@@ -340,7 +340,7 @@ public:
 	// mo->velx and mo->vely represent true velocity experienced by player.
 	// This only represents the thrust that the player applies himself.
 	// This avoids anomalies with such things as Boom ice and conveyors.
-	DVector2 Vel;
+	DVector2 Vel = { 0.0, 0.0 };
 
 	bool		centering = false;
 	uint8_t		turnticks = 0;
@@ -421,8 +421,8 @@ public:
 	FString		SubtitleText;
 	int			SubtitleCounter = 0;
 
-	DAngle			MinPitch;	// Viewpitch limits (negative is up, positive is down)
-	DAngle			MaxPitch;
+	DAngle			MinPitch = nullAngle;	// Viewpitch limits (negative is up, positive is down)
+	DAngle			MaxPitch = nullAngle;
 
 	double crouchfactor = 0;
 	double crouchoffset = 0;
@@ -432,7 +432,7 @@ public:
 
 	// [CW] I moved these here for multiplayer conversation support.
 	TObjPtr<AActor*> ConversationNPC = MakeObjPtr<AActor*>(nullptr), ConversationPC = MakeObjPtr<AActor*>(nullptr);
-	DAngle ConversationNPCAngle;
+	DAngle ConversationNPCAngle = nullAngle;
 	bool ConversationFaceTalker = false;
 
 	DVector3 LastSafePos = {}; // Mark the last known safe location the player was standing.

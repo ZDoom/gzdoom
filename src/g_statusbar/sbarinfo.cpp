@@ -490,12 +490,9 @@ void SBarInfo::ParseSBarInfo(int lump)
 			continue;
 		}
 		int baselump = -2;
-		FString SBarInfoTopLevelString;
-		if(sc.GetString(SBarInfoTopLevelString))
-		{ // Store the string if the next token is a string, and revert scanner state afterwards
-			sc.UnGet();
-		}
-		switch(sc.MustMatchString(SBarInfoTopLevel))
+		// Store the command, used for the switch statement and case SBARINFO_APPENDSTATUSBAR.
+		const int command = sc.MustMatchString(SBarInfoTopLevel);
+		switch(command)
 		{
 			case SBARINFO_BASE:
 				baseSet = true;
@@ -647,14 +644,17 @@ void SBarInfo::ParseSBarInfo(int lump)
 					barNum = sc.MustMatchString(StatusBars);
 				}
 				// SBARINFO_APPENDSTATUSBAR shouldn't delete the old HUD if it exists.
-				const bool append = (SBarInfoTopLevelString.CompareNoCase("appendstatusbar") == 0);
-				if (!append)
+				if (command != SBARINFO_APPENDSTATUSBAR)
 				{
 					if (this->huds[barNum] != NULL)
 					{
 						delete this->huds[barNum];
 					}
 					this->huds[barNum] = new SBarInfoMainBlock(this);
+				}
+				else if (this->huds[barNum] == NULL)
+				{
+					sc.ScriptError( "AppendStatusBar can't be used on a HUD that doesn't exist yet." );
 				}
 				if(barNum == STBAR_AUTOMAP)
 				{

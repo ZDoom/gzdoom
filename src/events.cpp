@@ -719,7 +719,7 @@ bool EventManager::WorldHitscanPreFired(AActor* actor, DAngle angle, double dist
 	return ret;
 }
 
-void EventManager::WorldHitscanFired(AActor* actor, DVector3 AttackPos, DVector3 DamagePosition, AActor* Inflictor, int flags)
+void EventManager::WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
@@ -1795,7 +1795,7 @@ bool DStaticEventHandler::WorldHitscanPreFired(AActor* actor, DAngle angle, doub
 	return false;
 }
 
-void DStaticEventHandler::WorldHitscanFired(AActor* actor, DVector3 AttackPos, DVector3 DamagePosition, AActor* Inflictor, int flags)
+void DStaticEventHandler::WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
 {
 	IFVIRTUAL(DStaticEventHandler, WorldHitscanFired)
 	{

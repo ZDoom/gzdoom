@@ -464,7 +464,8 @@ bool P_NoInterpolation(player_t const *player, AActor const *actor)
 		&& player->mo->reactiontime == 0
 		&& !NoInterpolateView
 		&& !paused
-		&& !LocalKeyboardTurner;
+		&& !LocalKeyboardTurner
+		&& !player->mo->isFrozen();
 }
 
 //==========================================================================

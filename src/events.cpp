@@ -737,6 +737,18 @@ void EventManager::WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* s
 		handler->WorldThingDamaged(actor, inflictor, source, damage, mod, flags, angle);
 }
 
+void EventManager::WorldThingGoalReached(AActor* actor, AActor* oldgoal)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingGoalReached(actor, oldgoal);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingGoalReached(actor, oldgoal);
+}
+
 void EventManager::WorldThingDestroyed(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -1771,6 +1783,20 @@ void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AA
 		e.DamageType = mod;
 		e.DamageFlags = flags;
 		e.DamageAngle = angle;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::WorldThingGoalReached(AActor* actor, AActor* oldgoal)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingGoalReached)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FWorldEvent e = owner->SetupWorldEvent();
+		e.Thing = actor;
+		e.Inflictor = oldgoal;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}

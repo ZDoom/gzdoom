@@ -74,9 +74,9 @@ struct WorldEvent native play version("2.4")
     native readonly bool IsReopen;
     // for unloaded, name of next map (if any)
     native readonly String NextMap;
-    // for thingspawned/thingdied/thingdestroyed/thingground
+    // for thingspawned/thingdied/thingdestroyed/thingground/thinggoalreached
     native readonly Actor Thing;
-    // for thingdied. can be null
+    // for thingdied. can be null. [MC] Also used for ThingGoalReached, inflictor is the old goal.
     native readonly Actor Inflictor;
     // for thingdamaged, line/sector damaged
     native readonly int Damage;
@@ -154,6 +154,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void WorldThingGround(WorldEvent e) {}
     virtual void WorldThingRevived(WorldEvent e) {}
     virtual void WorldThingDamaged(WorldEvent e) {}
+    virtual void WorldThingGoalReached(WorldEvent e) {}
     virtual void WorldThingDestroyed(WorldEvent e) {}
     virtual void WorldLinePreActivated(WorldEvent e) {}
     virtual void WorldLineActivated(WorldEvent e) {}

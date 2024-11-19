@@ -51,6 +51,7 @@
 #include "actorinlines.h"
 #include "a_ceiling.h"
 #include "shadowinlines.h"
+#include "events.h"
 
 #include "gi.h"
 
@@ -2549,7 +2550,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	// [RH] Don't attack if just moving toward goal
 	if (actor->target == actor->goal || (actor->flags5&MF5_CHASEGOAL && actor->goal != NULL))
 	{
-		AActor * savedtarget = actor->target;
+		AActor *savedtarget = actor->target;
+		AActor *savedgoal = actor->goal;
 		actor->target = actor->goal;
 		bool result = P_CheckMeleeRange(actor);
 		actor->target = savedtarget;
@@ -2572,7 +2574,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			DAngle lastgoalang = actor->goal->Angles.Yaw;
 			int delay;
 			AActor * newgoal = iterator.Next ();
-			if (newgoal != NULL && actor->goal == actor->target)
+			if (newgoal != nullptr && actor->goal == actor->target)
 			{
 				delay = newgoal->args[1];
 				actor->reactiontime = delay * TICRATE + actor->Level->maptime;
@@ -2592,6 +2594,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 			actor->flags7 &= ~MF7_INCHASE;
 			actor->goal = newgoal;
+			if (actor->goal != savedgoal)
+				actor->Level->localEventManager->WorldThingGoalReached(actor, savedgoal);
 			return;
 		}
 		if (actor->goal == actor->target) goto nomissile;

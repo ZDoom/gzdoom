@@ -310,6 +310,7 @@ public:
 	void WorldThingGround(AActor* actor, FState* st);
 	void WorldThingRevived(AActor* actor);
 	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
+	void WorldThingGoalReached(AActor* actor, AActor* oldgoal);
 	void WorldThingDestroyed(AActor* actor);
 	void WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 	void WorldLineActivated(line_t* line, AActor* actor, int activationType);
@@ -471,8 +472,10 @@ struct EventManager
 	void WorldThingGround(AActor* actor, FState* st);
 	// called after AActor::Revive.
 	void WorldThingRevived(AActor* actor);
-	// called before P_DamageMobj and before AActor::DamageMobj virtuals.
+	// called after damage has been dealt
 	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
+	// called when the actor changes goals. Goal is the OLD goal.
+	void WorldThingGoalReached(AActor* actor, AActor* oldgoal);
 	// called before AActor::Destroy of each actor.
 	void WorldThingDestroyed(AActor* actor);
 	// called in P_ActivateLine before executing special, set shouldactivate to false to prevent activation.

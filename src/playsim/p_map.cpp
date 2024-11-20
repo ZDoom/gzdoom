@@ -5416,7 +5416,7 @@ void P_RailAttack(FRailParams *p)
 	// disabled because not complete yet.
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? TRACE_ReportPortals : TRACE_PCross | TRACE_Impact | TRACE_ReportPortals;
 
-	if (source->Level->localEventManager->WorldHitscanPreFired(source, source->Angles.Yaw + p->angleoffset, p->distance, source->Angles.Pitch + p->pitchoffset, p->damage, damagetype, puffclass, flags, p->offset_z, 0, p->offset_xy))
+	if (source->Level->localEventManager->WorldRailgunPreFired(damagetype, puffclass, p))
 	{
 		return;
 	}

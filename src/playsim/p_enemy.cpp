@@ -2371,6 +2371,20 @@ nosee:
 	return 0;
 }
 
+void GoalReached(AActor* self, AActor* oldgoal)
+{
+	if (self && self->Level)
+		self->Level->localEventManager->WorldThingGoalReached(self, oldgoal);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GoalReached)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(oldgoal, AActor);
+	GoalReached(self, oldgoal);
+	return 0;
+}
+
 //=============================================================================
 //
 // A_Chase
@@ -2594,8 +2608,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			}
 			actor->flags7 &= ~MF7_INCHASE;
 			actor->goal = newgoal;
-			if (actor->goal != savedgoal)
-				actor->Level->localEventManager->WorldThingGoalReached(actor, savedgoal);
+			GoalReached(actor, savedgoal);
 			return;
 		}
 		if (actor->goal == actor->target) goto nomissile;

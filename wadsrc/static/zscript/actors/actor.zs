@@ -813,6 +813,9 @@ class Actor : Thinker native
 		movecount = random[TryWalk](0, 15);
 		return true;
 	}
+
+	// Calls WorldThingGoalReached.
+	native void GoalReached(Actor oldgoal);
 	
 	native bool TryMove(vector2 newpos, int dropoff, bool missilecheck = false, FCheckPosition tm = null);
 	native bool CheckMove(vector2 newpos, int flags = 0, FCheckPosition tm = null);

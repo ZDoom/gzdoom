@@ -719,6 +719,27 @@ bool EventManager::WorldHitscanPreFired(AActor* actor, DAngle angle, double dist
 	return ret;
 }
 
+bool EventManager::WorldRailgunPreFired(FName damageType, PClassActor* pufftype, FRailParams* param)
+{
+	auto actor = param->source;
+
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return false;
+
+	bool ret = false;
+
+	if (ShouldCallStatic(true)) ret = staticEventManager.WorldRailgunPreFired(damageType, pufftype, param);
+
+	if (!ret)
+	{
+		for (DStaticEventHandler* handler = FirstEventHandler; handler && ret == false; handler = handler->next)
+			ret = handler->WorldRailgunPreFired(damageType, pufftype, param);
+	}
+
+	return ret;
+}
+
 void EventManager::WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -1064,6 +1085,8 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, AttackOffsetForward);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, AttackOffsetSide);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, AttackZ);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, AttackPuffType);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, RailParams);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, AttackLineFlags);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
@@ -1784,7 +1807,37 @@ bool DStaticEventHandler::WorldHitscanPreFired(AActor* actor, DAngle angle, doub
 		e.AttackOffsetForward = offsetforward;
 		e.AttackOffsetSide = offsetside;
 		e.AttackZ = sz;
-		e.DamageFlags = flags;
+		e.AttackLineFlags = flags;
+		int processed;
+		VMReturn results[1] = { &processed };
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, results, 1);
+		return !!processed;
+	}
+
+	return false;
+}
+
+bool DStaticEventHandler::WorldRailgunPreFired(FName damageType, PClassActor* pufftype, FRailParams* param)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldRailgunPreFired)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return false;
+		FWorldEvent e = owner->SetupWorldEvent();
+		e.Thing = param->source;
+		e.AttackPuffType = pufftype;
+		e.DamageType = damageType;
+		e.Damage = param->damage;
+		e.AttackOffsetForward = 0;
+		e.AttackOffsetSide = param->offset_xy;
+		e.AttackDistance = param->distance;
+		e.AttackZ = param->offset_z;
+		e.AttackAngle = e.Thing->Angles.Yaw + param->angleoffset;
+		e.AttackPitch = e.Thing->Angles.Pitch + param->pitchoffset;
+		e.RailParams = *param;
+		e.RailParams.puff = pufftype;
+
 		int processed;
 		VMReturn results[1] = { &processed };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -1806,7 +1859,7 @@ void DStaticEventHandler::WorldHitscanFired(AActor* actor, const DVector3& Attac
 		e.AttackPos = AttackPos;
 		e.DamagePosition = DamagePosition;
 		e.Inflictor = Inflictor;
-		e.DamageFlags = flags;
+		e.AttackLineFlags = flags;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}

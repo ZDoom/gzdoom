@@ -752,6 +752,18 @@ void EventManager::WorldHitscanFired(AActor* actor, const DVector3& AttackPos, c
 		handler->WorldHitscanFired(actor, AttackPos, DamagePosition, Inflictor, flags);
 }
 
+void EventManager::WorldRailgunFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
+{
+	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
+	if (actor->ObjectFlags & OF_EuthanizeMe)
+		return;
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldRailgunFired(actor, AttackPos, DamagePosition, Inflictor, flags);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->WorldRailgunFired(actor, AttackPos, DamagePosition, Inflictor, flags);
+}
+
 void EventManager::WorldThingGround(AActor* actor, FState* st)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
@@ -1851,6 +1863,23 @@ bool DStaticEventHandler::WorldRailgunPreFired(FName damageType, PClassActor* pu
 void DStaticEventHandler::WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
 {
 	IFVIRTUAL(DStaticEventHandler, WorldHitscanFired)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FWorldEvent e = owner->SetupWorldEvent();
+		e.Thing = actor;
+		e.AttackPos = AttackPos;
+		e.DamagePosition = DamagePosition;
+		e.Inflictor = Inflictor;
+		e.AttackLineFlags = flags;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::WorldRailgunFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldRailgunFired)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;

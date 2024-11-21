@@ -5577,7 +5577,7 @@ void P_RailAttack(FRailParams *p)
 		}
 	}
 
-	source->Level->localEventManager->WorldHitscanFired(source, start, trace.HitPos, thepuff, flags);
+	source->Level->localEventManager->WorldRailgunFired(source, start, trace.HitPos, thepuff, flags);
 
 	if (thepuff != NULL)
 	{

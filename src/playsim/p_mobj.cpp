@@ -7806,6 +7806,19 @@ void AActor::Revive()
 	target = nullptr;
 	lastenemy = nullptr;
 
+	// Make sure to clear poison damage.
+	PoisonDamageReceived = 0;
+	PoisonDamageTypeReceived = NAME_None;
+	PoisonDurationReceived = 0;
+	PoisonPeriodReceived = 0;
+	Poisoner = nullptr;
+	if (player != nullptr)
+	{
+		player->poisoncount = 0;
+		player->poisoner = nullptr;
+		player->poisontype = player->poisonpaintype = NAME_None;
+	}
+
 	// [RH] If it's a monster, it gets to count as another kill
 	if (CountsAsKill())
 	{

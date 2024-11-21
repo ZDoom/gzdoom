@@ -2107,10 +2107,13 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	while (it.Next(&cres))
 	{
 		AActor *thing = cres.thing;
+		if (!quick && onmobj != NULL && thing->Top() < onmobj->Top())
+		{ // something higher is in the way
+			continue;
+		}
 
-		double blockdist = thing->radius + actor->radius;
-		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
-		{
+		if (thing == actor)
+		{ // Don't clip against self.
 			continue;
 		}
 		if (thing->flags2 & MF2_THRUACTORS)
@@ -2121,19 +2124,24 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{
 			continue;
 		}
-		if ((actor->flags6 & MF6_THRUSPECIES) && (thing->GetSpecies() == actor->GetSpecies()))
-		{
-			continue;
-		}
 		if (!(thing->flags & MF_SOLID))
 		{ // Can't hit thing
 			continue;
 		}
-		if (thing->flags & (MF_SPECIAL | MF_NOCLIP))
+		if ((thing->flags & (MF_SPECIAL | MF_NOCLIP)) || (thing->flags6 & MF6_TOUCHY))
 		{ // [RH] Specials and noclippers don't block moves
 			continue;
 		}
-		if (thing->flags & (MF_CORPSE))
+		const double blockdist = thing->radius + actor->radius;
+		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
+		{
+			continue;
+		}
+		if ((actor->flags6 & MF6_THRUSPECIES) && thing->GetSpecies() == actor->GetSpecies())
+		{
+			continue;
+		}
+		if (thing->flags & MF_CORPSE)
 		{ // Corpses need a few more checks
 			if (!(actor->flags & MF_ICECORPSE))
 				continue;
@@ -2142,33 +2150,78 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		{ // [RH] Only bridges block pickup items
 			continue;
 		}
-		if (thing == actor)
-		{ // Don't clip against self
-			continue;
-		}
-		if ((actor->flags & MF_MISSILE) && (thing == actor->target))
-		{ // Don't clip against whoever shot the missile.
+		if (actor->player != nullptr && P_ShouldPassThroughPlayer(actor, thing))
+		{
 			continue;
 		}
 		if (actor->Z() > thing->Top())
 		{ // over thing
 			continue;
 		}
-		else if (actor->Top() <= thing->Z())
+		if (actor->Top() <= thing->Z())
 		{ // under thing
 			continue;
 		}
-		else if (!quick && onmobj != NULL && thing->Top() < onmobj->Top())
-		{ // something higher is in the way
-			continue;
-		}
-		else if (!P_CanCollideWith(actor, thing))
+		if (!P_CanCollideWith(actor, thing))
 		{ // If they cannot collide, they cannot block each other.
 			continue;
 		}
-		if (actor->player && P_ShouldPassThroughPlayer(actor, thing))
+		if ((actor->flags & MF_MISSILE) || ((actor->BounceFlags & BOUNCE_MBF) && !(actor->flags & MF_SOLID)))
 		{
-			continue;
+			if (thing->flags2 & MF2_NONSHOOTABLE)
+			{
+				continue;
+			}
+			if ((thing->flags3 & MF3_GHOST) && (actor->flags2 & MF2_THRUGHOST))
+			{
+				continue;
+			}
+			if ((thing->flags4 & MF4_SPECTRAL) && !(actor->flags4 & MF4_SPECTRAL))
+			{
+				continue;
+			}
+			if (actor->target != nullptr)
+			{
+				if ((actor->flags6 & MF6_MTHRUSPECIES) && actor->target->GetSpecies() == thing->GetSpecies())
+				{
+					continue;
+				}
+				if (actor->target == thing)
+				{
+					if (!(actor->flags8 & MF8_HITOWNER))
+					{
+						continue;
+					}
+				}
+				else if (actor->target->player != nullptr && P_ShouldPassThroughPlayer(actor->target, thing))
+				{
+					continue;
+				}
+			}
+			if ((thing->flags7 & MF7_THRUREFLECT) && (thing->flags2 & MF2_REFLECTIVE) && (actor->flags & MF_MISSILE))
+			{
+				continue;
+			}
+
+			double clipheight = thing->Height;
+			if (thing->projectilepassheight > 0)
+			{
+				clipheight = thing->projectilepassheight;
+			}
+			else if (thing->projectilepassheight < 0 && (thing->Level->i_compatflags & COMPATF_MISSILECLIP))
+			{
+				clipheight = -thing->projectilepassheight;
+			}
+			if (actor->Z() > thing->Z() + clipheight)
+			{ // Over thing
+				continue;
+			}
+			if ((actor->flags2 & MF2_RIP) && !(thing->flags5 & MF5_DONTRIP)
+				&& (!(actor->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
+				&& CheckRipLevel(thing, actor))
+			{
+				continue;
+			}
 		}
 
 		onmobj = thing;

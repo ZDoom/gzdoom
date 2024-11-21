@@ -167,6 +167,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual void WorldThingDestroyed(WorldEvent e) {}
     virtual bool WorldHitscanPreFired(WorldEvent e) { return false; }
     virtual bool WorldRailgunPreFired(WorldEvent e) { return false; }
+    virtual void WorldRailgunFired(WorldEvent e) {}
     virtual void WorldHitscanFired(WorldEvent e) {}
     virtual void WorldLinePreActivated(WorldEvent e) {}
     virtual void WorldLineActivated(WorldEvent e) {}

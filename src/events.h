@@ -315,6 +315,7 @@ public:
 	bool WorldHitscanPreFired(AActor* actor, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, double sz, double offsetforward, double offsetside);
 	bool WorldRailgunPreFired(FName damageType, PClassActor* pufftype, FRailParams* param);
 	void WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags);
+	void WorldRailgunFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags);
 	void WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 	void WorldLineActivated(line_t* line, AActor* actor, int activationType);
 	int WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius);
@@ -485,6 +486,8 @@ struct EventManager
 	bool WorldHitscanPreFired(AActor* actor, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, double sz, double offsetforward, double offsetside);
 	// called when a hitscan attack has been fired
 	void WorldHitscanFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags);
+	// called when a railgun attack has been fired
+	void WorldRailgunFired(AActor* actor, const DVector3& AttackPos, const DVector3& DamagePosition, AActor* Inflictor, int flags);
 	// called when a railgun attack has been fired (can be overridden to block it)
 	bool WorldRailgunPreFired(FName damageType, PClassActor* pufftype, FRailParams* param);
 	// called inside AActor::Grind just before the corpse is destroyed

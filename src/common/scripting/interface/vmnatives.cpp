@@ -41,7 +41,6 @@
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
-#include "m_misc.h"
 
 #include "menu.h"
 #include "vm.h"
@@ -1031,17 +1030,6 @@ DEFINE_ACTION_FUNCTION(_CVar, FindCVar)
 	PARAM_PROLOGUE;
 	PARAM_NAME(name);
 	ACTION_RETURN_POINTER(FindCVar(name.GetChars(), nullptr));
-}
-
-static int SaveConfig()
-{
-	return M_SaveDefaults(nullptr);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_CVar, SaveConfig, SaveConfig)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(M_SaveDefaults(nullptr));
 }
 
 //=============================================================================

@@ -56,6 +56,7 @@
 #include "r_data/r_interpolate.h"
 #include "doom_aabbtree.h"
 #include "doom_levelmesh.h"
+#include "p_visualthinker.h"
 
 //============================================================================
 //
@@ -425,7 +426,12 @@ public:
 
 	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
 	{
-		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew(&statnum));
+		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
+		if (statnum && thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker)))
+		{
+			statnum = STAT_VISUALTHINKER;
+		}
+
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
 		Thinkers.Link(thinker, statnum);

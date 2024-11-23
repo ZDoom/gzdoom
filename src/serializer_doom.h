@@ -42,6 +42,7 @@ FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* def
 FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_t *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def);
+FSerializer& Serialize(FSerializer& arc, const char* key, struct FStandaloneAnimation& value, struct FStandaloneAnimation* defval);
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);

@@ -99,6 +99,7 @@ static FRandom pr_skullpop ("SkullPop");
 
 // [SP] Allows respawn in single player
 CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_CHEAT)
+CVAR(Float, snd_footstepvolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // Variables for prediction
 CVAR(Bool, cl_predict_specials, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

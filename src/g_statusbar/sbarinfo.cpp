@@ -654,7 +654,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 				}
 				else if (this->huds[barNum] == NULL)
 				{
-					sc.ScriptError( "AppendStatusBar can't be used on a HUD that doesn't exist yet." );
+					sc.ScriptError("Status bar '%s' has not been created and cannot be appended to. Use 'StatusBar' instead.", StatusBars[barNum]);
 				}
 				if(barNum == STBAR_AUTOMAP)
 				{

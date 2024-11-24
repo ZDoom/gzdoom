@@ -129,6 +129,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, NextSpecialSector, P_NextSpecialSector)
 	ACTION_RETURN_POINTER(P_NextSpecialSector(self, type, nogood));
 }
 
+bool sector_t::IsDangerous(const DVector3& pos, double height) const
+{
+	if (damageamount > 0)
+		return true;
+
+	auto cl = dyn_cast<DCeiling>(ceilingdata.Get());
+	if (cl != nullptr && cl->getCrush() > 0)
+		return true;
+
+	for (auto rover : e->XFloor.ffloors)
+	{
+		if ((rover->flags & FF_EXISTS) && rover->model->damageamount > 0
+			&& pos.Z <= rover->top.plane->ZatPoint(pos)
+			&& pos.Z + height >= rover->bottom.plane->ZatPoint(pos))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //
 // P_FindLowestFloorSurrounding()
 // FIND LOWEST FLOOR HEIGHT IN SURROUNDING SECTORS

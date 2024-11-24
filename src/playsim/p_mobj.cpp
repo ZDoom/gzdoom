@@ -5594,16 +5594,13 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	PlayerSpawnPickClass(playernum);
 
-	if (( dmflags2 & DF2_SAME_SPAWN_SPOT ) &&
-		( p->playerstate == PST_REBORN ) &&
-		( deathmatch == false ) &&
-		( gameaction != ga_worlddone ) &&
-		( p->mo != NULL ) && 
-		( !(p->mo->Sector->Flags & SECF_NORESPAWN) ) &&
-		( NULL != p->attacker ) &&							// don't respawn on damaging floors
-		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))	// this really should be a bit smarter...
+	if ((dmflags2 & DF2_SAME_SPAWN_SPOT) && !deathmatch
+		&& p->mo != nullptr && p->playerstate == PST_REBORN
+		&& gameaction != ga_worlddone
+		&& !(p->mo->Sector->Flags & SECF_NORESPAWN)
+		&& p->LastDamageType != NAME_Suicide)
 	{
-		spawn = p->mo->Pos();
+		spawn = p->LastSafePos;
 		SpawnAngle = p->mo->Angles.Yaw;
 	}
 	else

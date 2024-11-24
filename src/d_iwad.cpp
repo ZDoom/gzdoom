@@ -314,7 +314,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
-void GetReserved(FileSys::LumpFilterInfo& lfi);
+void GetReserved(FileSys::FileSystemFilterInfo& lfi);
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
@@ -322,10 +322,10 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 	std::vector<std::string> fns;
 	fns.push_back(firstfn);
 	if (optfn) fns.push_back(optfn);
-	FileSys::LumpFilterInfo lfi;
+	FileSys::FileSystemFilterInfo lfi;
 	GetReserved(lfi);
 
-	if (check.InitMultipleFiles(fns, &lfi, nullptr))
+	if (check.Initialize(fns, &lfi, nullptr))
 	{
 		// this is for the IWAD picker. As we have a filesystem open here that contains the base files, it is the easiest place to load the strings early.
 		GStrings.LoadStrings(check, language);
@@ -350,7 +350,8 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 int FIWadManager::ScanIWAD (const char *iwad)
 {
 	FileSystem check;
-	check.InitSingleFile(iwad, nullptr);
+	std::vector<std::string> list({ iwad });
+	check.Initialize(list, nullptr);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
@@ -373,14 +374,13 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		memset(&mLumpsFound[0], 0, mLumpsFound.Size() * sizeof(mLumpsFound[0]));
 		for(int ii = 0; ii < check.GetNumEntries(); ii++)
 		{
-
-			CheckFileName(check.GetFileShortName(ii));
-			auto full = check.GetFileName(ii, false);
+			auto full = check.GetFileName(ii);
 			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
 				FString mapname(&full[5], strcspn(&full[5], "."));
 				CheckFileName(mapname.GetChars());
 			}
+			else CheckFileName(full);
 		}
 	}
 	for (unsigned i = 0; i< mIWadInfos.Size(); i++)
@@ -404,11 +404,11 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 {
 	FileSystem check;
 
-	FileSys::LumpFilterInfo lfi;
+	FileSys::FileSystemFilterInfo lfi;
 	GetReserved(lfi);
 
 	std::vector<std::string> filenames = { fn };
-	if (check.InitMultipleFiles(filenames, &lfi, nullptr))
+	if (check.Initialize(filenames, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)

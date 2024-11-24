@@ -44,7 +44,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilterInfo*)
+static bool OpenSSI(FResourceFile* file, int version, int EntryCount, FileSystemFilterInfo*)
 {
 	uint32_t NumLumps = EntryCount * 2;
 	auto Entries = file->AllocateEntries(NumLumps);
@@ -65,7 +65,6 @@ static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilter
 		Entries[i].Position = j;
 		Entries[i].CompressedSize = Entries[i].Length = flength;
 		Entries[i].Flags = 0;
-		Entries[i].Namespace = ns_global;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].ResourceID = -1;
 		Entries[i].FileName = file->NormalizeFileName(fn);
@@ -78,7 +77,6 @@ static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilter
 		Entries[i + 1].Position = j;
 		Entries[i + 1].CompressedSize = Entries[i + 1].Length = flength;
 		Entries[i + 1].Flags = 0;
-		Entries[i + 1].Namespace = ns_global;
 		Entries[i + 1].ResourceID = -1;
 		Entries[i + 1].FileName = file->NormalizeFileName(fn);
 		Entries[i + 1].Method = METHOD_STORED;
@@ -99,7 +97,7 @@ static bool OpenSSI(FResourceFile* file, int version, int EntryCount, LumpFilter
 //
 //==========================================================================
 
-FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile* CheckSSI(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char zerobuf[72];
 	char buf[72];
@@ -129,7 +127,7 @@ FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* 
 			{
 				if (!skipstring(70)) return nullptr;
 			}
-			auto ssi = new FResourceFile(filename, file, sp);
+			auto ssi = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS | FResourceFile::SHORTNAMES);
 			if (OpenSSI(ssi, version, numfiles, filter)) return ssi;
 			file = ssi->Destroy();
 		}

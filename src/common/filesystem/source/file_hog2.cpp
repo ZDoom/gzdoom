@@ -1,10 +1,10 @@
 /*
 ** file_hog.cpp
 **
-** reads Descent .hog files
+** reads Descent 3 .hog2 files
 **
 **---------------------------------------------------------------------------
-** Copyright 2023 Christoph Oelckers
+** Copyright 2024 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -43,37 +43,35 @@ namespace FileSys {
 
 
 
-
-static bool OpenHog(FResourceFile* rf, FileSystemFilterInfo* filter)
+static bool OpenHog2(FResourceFile* rf, FileSystemFilterInfo* filter)
 {
     auto Reader = rf->GetContainerReader();
     FileReader::Size length = Reader->GetLength();
 
-    std::vector<FResourceEntry> entries;
-    // Hogs store their data as a list of file records, each containing a name, length and the actual data.
-    // To read the directory the entire file must be scanned.
-    while (Reader->Tell() <= length)
-    {
-        char name[13];
-
-        auto r = Reader->Read(&name, 13);
-        if (r < 13) break;
-        name[12] = 0;
-        uint32_t elength = Reader->ReadUInt32();
-
-        FResourceEntry Entry;
-        Entry.Position = Reader->Tell();
-        Entry.CompressedSize = Entry.Length = elength;
-        Entry.Flags = 0;
+	uint32_t numfiles = Reader->ReadUInt32();
+	uint32_t offset = Reader->ReadUInt32();	    // offset to first file (end of file list)
+	Reader->Seek(56, FileReader::SeekEnd);		// filled with FF
+    auto Entries = rf->AllocateEntries((int)numfiles);
+	
+    for(uint32_t i = 0; i < numfiles; i++)
+	{
+        char name[37];
+		Reader->Read(name, 36);
+		name[36] = 0;
+		Reader->ReadUInt32();
+		uint32_t size = Reader->ReadUInt32();;
+		Reader->ReadUInt32();
+		
+		FResourceEntry& Entry = Entries[i];
+        Entry.Position = offset;
+        Entry.CompressedSize = Entry.Length = size;
+        Entry.Flags = RESFF_FULLPATH;
         Entry.CRC32 = 0;
         Entry.ResourceID = -1;
         Entry.Method = METHOD_STORED;
         Entry.FileName = rf->NormalizeFileName(name);
-        entries.push_back(Entry);
-        Reader->Seek(elength, FileReader::SeekCur);
+		offset += size;
     }
-    auto Entries = rf->AllocateEntries((int)entries.size());
-    memcpy(Entries, entries.data(), entries.size() * sizeof(Entries[0]));
     rf->GenerateHash();
     return true;
 }
@@ -85,18 +83,18 @@ static bool OpenHog(FResourceFile* rf, FileSystemFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile* CheckHog(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile* CheckHog2(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
-    char head[3];
+    char head[4];
 
-    if (file.GetLength() >= 20)
+    if (file.GetLength() >= 68)
     {
         file.Seek(0, FileReader::SeekSet);
-        file.Read(&head, 3);
-        if (!memcmp(head, "DHF", 3))
+        file.Read(&head, 4);
+        if (!memcmp(head, "HOG2", 4))
         {
-            auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS | FResourceFile::SHORTNAMES);
-            if (OpenHog(rf, filter)) return rf;
+            auto rf = new FResourceFile(filename, file, sp, 0);
+            if (OpenHog2(rf, filter)) return rf;
             file = rf->Destroy();
         }
         file.Seek(0, FileReader::SeekSet);
@@ -106,3 +104,4 @@ FResourceFile* CheckHog(const char* filename, FileReader& file, FileSystemFilter
 
 
 }
+

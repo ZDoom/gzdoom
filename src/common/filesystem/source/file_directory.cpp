@@ -57,11 +57,11 @@ class FDirectory : public FResourceFile
 	const char** SystemFilePath;
 
 
-	int AddDirectory(const char* dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
+	int AddDirectory(const char* dirpath, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
 
 public:
 	FDirectory(const char * dirname, StringPool* sp, bool nosubdirflag = false);
-	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
+	bool Open(FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
 	FileReader GetEntryReader(uint32_t entry, int, int) override;
 };
 
@@ -74,7 +74,7 @@ public:
 //==========================================================================
 
 FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag)
-	: FResourceFile("", sp), nosubdir(nosubdirflag)
+	: FResourceFile("", sp, 0), nosubdir(nosubdirflag)
 {
 	auto fn = FS_FullPath(directory);
 	if (fn.back() != '/') fn += '/';
@@ -87,7 +87,7 @@ FDirectory::FDirectory(const char * directory, StringPool* sp, bool nosubdirflag
 //
 //==========================================================================
 
-int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+int FDirectory::AddDirectory(const char *dirpath, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	int count = 0;
 
@@ -141,7 +141,6 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 					Entries[count].Flags = RESFF_FULLPATH;
 					Entries[count].ResourceID = -1;
 					Entries[count].Method = METHOD_STORED;
-					Entries[count].Namespace = ns_global;
 					Entries[count].Position = count;
 					count++;
 				}
@@ -157,7 +156,7 @@ int FDirectory::AddDirectory(const char *dirpath, LumpFilterInfo* filter, FileSy
 //
 //==========================================================================
 
-bool FDirectory::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
+bool FDirectory::Open(FileSystemFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	NumLumps = AddDirectory(FileName, filter, Printf);
 	PostProcessArchive(filter);
@@ -193,7 +192,7 @@ FileReader FDirectory::GetEntryReader(uint32_t entry, int readertype, int)
 //
 //==========================================================================
 
-FResourceFile *CheckDir(const char *filename, bool nosubdirflag, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckDir(const char *filename, bool nosubdirflag, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	auto rf = new FDirectory(filename, sp, nosubdirflag);
 	if (rf->Open(filter, Printf)) return rf;

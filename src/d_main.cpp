@@ -123,8 +123,6 @@
 #include "i_system.h"  // for SHARE_DIR
 #endif // __unix__
 
-using namespace FileSys;
-
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)
@@ -1265,7 +1263,7 @@ void D_DoomLoop ()
 			}
 			D_ErrorCleanup ();
 		}
-		catch (const FileSystemException& error) // in case this propagates up to here it should be treated as a recoverable error.
+		catch (const FileSys::FileSystemException& error) // in case this propagates up to here it should be treated as a recoverable error.
 		{
 			if (error.what())
 			{
@@ -1945,7 +1943,7 @@ static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, co
 	return iwad;
 }
 
-void GetReserved(LumpFilterInfo& lfi)
+void GetReserved(FileSys::FileSystemFilterInfo& lfi)
 {
 	lfi.reservedFolders = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/",
 	"materials/", "models/", "fonts/", "brightmaps/" };
@@ -1957,11 +1955,11 @@ static FString CheckGameInfo(std::vector<std::string> & pwads)
 {
 	FileSystem check;
 
-	LumpFilterInfo lfi;
+	FileSys::FileSystemFilterInfo lfi;
 	GetReserved(lfi);
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
-	if (check.InitMultipleFiles(pwads, &lfi, nullptr))
+	if (check.Initialize(pwads, &lfi, nullptr))
 	{
 		int num = check.CheckNumForName("GAMEINFO");
 		if (num >= 0)
@@ -2250,48 +2248,48 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 	bool MNTRZfound = false;
 	const char* altbigfont = gameinfo.gametype == GAME_Strife ? "SBIGFONT" : (gameinfo.gametype & GAME_Raven) ? "HBIGFONT" : "DBIGFONT";
 
-	static const uint32_t HereticRenames[] =
-	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
+	static const char HereticRenames[][4] =
+	{ {'H','E','A','D'}, {'L','I','C','H'},		// Ironlich
 	};
 
-	static const uint32_t HexenRenames[] =
-	{ MAKE_ID('B','A','R','L'), MAKE_ID('Z','B','A','R'),		// ZBarrel
-	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','_','1'),		// MeshArmor
-	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','_','2'),		// FalconShield
-	  MAKE_ID('A','R','M','3'), MAKE_ID('A','R','_','3'),		// PlatinumHelm
-	  MAKE_ID('A','R','M','4'), MAKE_ID('A','R','_','4'),		// AmuletOfWarding
-	  MAKE_ID('S','U','I','T'), MAKE_ID('Z','S','U','I'),		// ZSuitOfArmor and ZArmorChunk
-	  MAKE_ID('T','R','E','1'), MAKE_ID('Z','T','R','E'),		// ZTree and ZTreeDead
-	  MAKE_ID('T','R','E','2'), MAKE_ID('T','R','E','S'),		// ZTreeSwamp150
-	  MAKE_ID('C','A','N','D'), MAKE_ID('B','C','A','N'),		// ZBlueCandle
-	  MAKE_ID('R','O','C','K'), MAKE_ID('R','O','K','K'),		// rocks and dirt in a_debris.cpp
-	  MAKE_ID('W','A','T','R'), MAKE_ID('H','W','A','T'),		// Strife also has WATR
-	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
-	  MAKE_ID('E','G','G','M'), MAKE_ID('P','R','K','M'),		// PorkFX
-	  MAKE_ID('I','N','V','U'), MAKE_ID('D','E','F','N'),		// Icon of the Defender
+	static const char HexenRenames[][4] =
+	{ {'B','A','R','L'}, {'Z','B','A','R'},		// ZBarrel
+	  {'A','R','M','1'}, {'A','R','_','1'},		// MeshArmor
+	  {'A','R','M','2'}, {'A','R','_','2'},		// FalconShield
+	  {'A','R','M','3'}, {'A','R','_','3'},		// PlatinumHelm
+	  {'A','R','M','4'}, {'A','R','_','4'},		// AmuletOfWarding
+	  {'S','U','I','T'}, {'Z','S','U','I'},		// ZSuitOfArmor and ZArmorChunk
+	  {'T','R','E','1'}, {'Z','T','R','E'},		// ZTree and ZTreeDead
+	  {'T','R','E','2'}, {'T','R','E','S'},		// ZTreeSwamp150
+	  {'C','A','N','D'}, {'B','C','A','N'},		// ZBlueCandle
+	  {'R','O','C','K'}, {'R','O','K','K'},		// rocks and dirt in a_debris.cpp
+	  {'W','A','T','R'}, {'H','W','A','T'},		// Strife also has WATR
+	  {'G','I','B','S'}, {'P','O','L','5'},		// RealGibs
+	  {'E','G','G','M'}, {'P','R','K','M'},		// PorkFX
+	  {'I','N','V','U'}, {'D','E','F','N'},		// Icon of the Defender
 	};
 
-	static const uint32_t StrifeRenames[] =
-	{ MAKE_ID('M','I','S','L'), MAKE_ID('S','M','I','S'),		// lots of places
-	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','M','3'),		// MetalArmor
-	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','M','4'),		// LeatherArmor
-	  MAKE_ID('P','M','A','P'), MAKE_ID('S','M','A','P'),		// StrifeMap
-	  MAKE_ID('T','L','M','P'), MAKE_ID('T','E','C','H'),		// TechLampSilver and TechLampBrass
-	  MAKE_ID('T','R','E','1'), MAKE_ID('T','R','E','T'),		// TreeStub
-	  MAKE_ID('B','A','R','1'), MAKE_ID('B','A','R','C'),		// BarricadeColumn
-	  MAKE_ID('S','H','T','2'), MAKE_ID('M','P','U','F'),		// MaulerPuff
-	  MAKE_ID('B','A','R','L'), MAKE_ID('B','B','A','R'),		// StrifeBurningBarrel
-	  MAKE_ID('T','R','C','H'), MAKE_ID('T','R','H','L'),		// SmallTorchLit
-	  MAKE_ID('S','H','R','D'), MAKE_ID('S','H','A','R'),		// glass shards
-	  MAKE_ID('B','L','S','T'), MAKE_ID('M','A','U','L'),		// Mauler
-	  MAKE_ID('L','O','G','G'), MAKE_ID('L','O','G','W'),		// StickInWater
-	  MAKE_ID('V','A','S','E'), MAKE_ID('V','A','Z','E'),		// Pot and Pitcher
-	  MAKE_ID('C','N','D','L'), MAKE_ID('K','N','D','L'),		// Candle
-	  MAKE_ID('P','O','T','1'), MAKE_ID('M','P','O','T'),		// MetalPot
-	  MAKE_ID('S','P','I','D'), MAKE_ID('S','T','L','K'),		// Stalker
+	static const char StrifeRenames[][4] =
+	{ {'M','I','S','L'}, {'S','M','I','S'},		// lots of places
+	  {'A','R','M','1'}, {'A','R','M','3'},		// MetalArmor
+	  {'A','R','M','2'}, {'A','R','M','4'},		// LeatherArmor
+	  {'P','M','A','P'}, {'S','M','A','P'},		// StrifeMap
+	  {'T','L','M','P'}, {'T','E','C','H'},		// TechLampSilver and TechLampBrass
+	  {'T','R','E','1'}, {'T','R','E','T'},		// TreeStub
+	  {'B','A','R','1'}, {'B','A','R','C'},		// BarricadeColumn
+	  {'S','H','T','2'}, {'M','P','U','F'},		// MaulerPuff
+	  {'B','A','R','L'}, {'B','B','A','R'},		// StrifeBurningBarrel
+	  {'T','R','C','H'}, {'T','R','H','L'},		// SmallTorchLit
+	  {'S','H','R','D'}, {'S','H','A','R'},		// glass shards
+	  {'B','L','S','T'}, {'M','A','U','L'},		// Mauler
+	  {'L','O','G','G'}, {'L','O','G','W'},		// StickInWater
+	  {'V','A','S','E'}, {'V','A','Z','E'},		// Pot and Pitcher
+	  {'C','N','D','L'}, {'K','N','D','L'},		// Candle
+	  {'P','O','T','1'}, {'M','P','O','T'},		// MetalPot
+	  {'S','P','I','D'}, {'S','T','L','K'},		// Stalker
 	};
 
-	const uint32_t* renames;
+	const char (*renames)[4];
 	int numrenames;
 
 	switch (gameinfo.gametype)
@@ -2327,8 +2325,8 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 		// some frames need to be renamed.
 		if (fileSystem.GetFileNamespace(i) == ns_sprites)
 		{
-			auto& shortName = fileSystem.GetShortName(i);
-			if (shortName.dword == MAKE_ID('M', 'N', 'T', 'R') && shortName.String[4] == 'Z')
+			auto shortName = fileSystem.GetShortName(i);
+			if (!memcmp(shortName, "MNTRZ", 5))
 			{
 				MNTRZfound = true;
 				break;
@@ -2340,7 +2338,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 
 	for (uint32_t i = 0; i < NumFiles; i++)
 	{
-		auto& shortName = fileSystem.GetShortName(i);
+		auto shortName = fileSystem.GetShortName(i);
 		if (fileSystem.GetFileNamespace(i) == ns_sprites)
 		{
 			// Only sprites in the IWAD normally get renamed
@@ -2348,30 +2346,30 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 			{
 				for (int j = 0; j < numrenames; ++j)
 				{
-					if (shortName.dword == renames[j * 2])
+					if (!memcmp(shortName, &renames[j * 8], 4))
 					{
-						shortName.dword = renames[j * 2 + 1];
+						memcpy(shortName, renames[j * 8 + 4], 4);
 					}
 				}
 				if (gameinfo.gametype == GAME_Hexen)
 				{
 					if (fileSystem.CheckFileName(i, "ARTIINVU"))
 					{
-						shortName.String[4] = 'D'; shortName.String[5] = 'E';
-						shortName.String[6] = 'F'; shortName.String[7] = 'N';
+						shortName[4] = 'D'; shortName[5] = 'E';
+						shortName[6] = 'F'; shortName[7] = 'N';
 					}
 				}
 			}
 
 			if (!MNTRZfound)
 			{
-				if (shortName.dword == MAKE_ID('M', 'N', 'T', 'R'))
+				if (!memcmp(shortName, "MNTR", 4))
 				{
 					for (size_t fi : {4, 6})
 					{
-						if (shortName.String[fi] >= 'F' && shortName.String[fi] <= 'K')
+						if (shortName[fi] >= 'F' && shortName[fi] <= 'K')
 						{
-							shortName.String[fi] += 'U' - 'F';
+							shortName[fi] += 'U' - 'F';
 						}
 					}
 				}
@@ -2381,23 +2379,23 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 			// the same blood states can be used everywhere
 			if (!(gameinfo.gametype & GAME_DoomChex))
 			{
-				if (shortName.dword == MAKE_ID('B', 'L', 'O', 'D'))
+				if (!memcmp(shortName, "BLOD", 4))
 				{
-					shortName.dword = MAKE_ID('B', 'L', 'U', 'D');
+					memcpy(shortName, "BLUD", 4);
 				}
 			}
 		}
 		else if (fileSystem.GetFileNamespace(i) == ns_global)
 		{
 			int fn = fileSystem.GetFileContainer(i);
-			if (fn >= fileSystem.GetIwadNum() && fn <= fileSystem.GetMaxIwadNum() && deletelumps.Find(shortName.String) < deletelumps.Size())
+			if (fn >= fileSystem.GetIwadNum() && fn <= fileSystem.GetMaxIwadNum() && deletelumps.Find(shortName) < deletelumps.Size())
 			{
-				shortName.String[0] = 0;	// Lump must be deleted from directory.
+				shortName[0] = 0;	// Lump must be deleted from directory.
 			}
 			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
-			else if (!strcmp(shortName.String, altbigfont))
+			else if (!strcmp(shortName, altbigfont))
 			{
-				strcpy(shortName.String, "BIGFONT");
+				strcpy(shortName, "BIGFONT");
 			}
 		}
 	}
@@ -2467,18 +2465,16 @@ void RenameNerve(FileSystem& fileSystem)
 
 	for (int i = fileSystem.GetFirstEntry(w); i <= fileSystem.GetLastEntry(w); i++)
 	{
-		auto& shortName = fileSystem.GetShortName(i);
+		auto shortName = fileSystem.GetShortName(i);
 		// Only rename the maps from NERVE.WAD
-		if (shortName.dword == MAKE_ID('C', 'W', 'I', 'L'))
+		if (!memcmp(shortName, "CWILV", 5))
 		{
-			shortName.String[0] = 'N';
+			shortName[0] = 'N';
 		}
-		else if (shortName.dword == MAKE_ID('M', 'A', 'P', '0'))
+		else if (!memcmp(shortName, "MAP0", 4))
 		{
-			shortName.String[6] = shortName.String[4];
-			shortName.String[5] = '0';
-			shortName.String[4] = 'L';
-			shortName.dword = MAKE_ID('L', 'E', 'V', 'E');
+			shortName[6] = shortName[4];
+			memcpy(shortName, "LEVEL0", 6);
 		}
 	}
 }
@@ -2560,8 +2556,8 @@ void FixMacHexen(FileSystem& fileSystem)
 
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{
-		auto& shortName = fileSystem.GetShortName(i);
-		shortName.String[0] = '\0';
+		auto shortName = fileSystem.GetShortName(i);
+		memcpy(shortName, "\0\0\0\0\0\0\0", 8); // these get compared with memcmp so all 8 bytes need to get cleared.
 	}
 }
 
@@ -2572,21 +2568,21 @@ static void FindStrifeTeaserVoices(FileSystem& fileSystem)
 		unsigned NumFiles = fileSystem.GetNumEntries();
 		for (uint32_t i = 0; i < NumFiles; i++)
 		{
-			auto& shortName = fileSystem.GetShortName(i);
+			auto shortName = fileSystem.GetShortName(i);
 			if (fileSystem.GetFileNamespace(i) == ns_global)
 			{
-				// Only sprites in the IWAD normally get renamed
+				// Strife teaser voices are not in the expected namespace.
 				if (fileSystem.GetFileContainer(i) == fileSystem.GetIwadNum())
 				{
-					if (shortName.String[0] == 'V' &&
-						shortName.String[1] == 'O' &&
-						shortName.String[2] == 'C')
+					if (shortName[0] == 'V' &&
+						shortName[1] == 'O' &&
+						shortName[2] == 'C')
 					{
 						int j;
 
 						for (j = 3; j < 8; ++j)
 						{
-							if (shortName.String[j] != 0 && !isdigit(shortName.String[j]))
+							if (shortName[j] != 0 && !isdigit(shortName[j]))
 								break;
 						}
 						if (j == 8)
@@ -3048,7 +3044,7 @@ static bool FileNameCheck(const char* base, const char* path)
 	return true;
 }
 
-static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
+static int FileSystemPrintf(FileSys::FSMessageLevel level, const char* fmt, ...)
 {
 	va_list arg;
 	va_start(arg, fmt);
@@ -3056,22 +3052,22 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 	text.VFormat(fmt, arg);
 	switch (level)
 	{
-	case FSMessageLevel::Error:
+	case FileSys::FSMessageLevel::Error:
 		return Printf(TEXTCOLOR_RED "%s", text.GetChars());
 		break;
-	case FSMessageLevel::Warning:
+	case FileSys::FSMessageLevel::Warning:
 		Printf(TEXTCOLOR_YELLOW "%s", text.GetChars());
 		break;
-	case FSMessageLevel::Attention:
+	case FileSys::FSMessageLevel::Attention:
 		Printf(TEXTCOLOR_BLUE "%s", text.GetChars());
 		break;
-	case FSMessageLevel::Message:
+	case FileSys::FSMessageLevel::Message:
 		Printf("%s", text.GetChars());
 		break;
-	case FSMessageLevel::DebugWarn:
+	case FileSys::FSMessageLevel::DebugWarn:
 		DPrintf(DMSG_WARNING, "%s", text.GetChars());
 		break;
-	case FSMessageLevel::DebugNotify:
+	case FileSys::FSMessageLevel::DebugNotify:
 		DPrintf(DMSG_NOTIFY, "%s", text.GetChars());
 		break;
 	}
@@ -3143,7 +3139,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
 
-	LumpFilterInfo lfi;
+	FileSys::FileSystemFilterInfo lfi;
 
 	static const struct { int match; const char* name; } blanket[] =
 	{
@@ -3184,7 +3180,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	);
 
 	bool allowduplicates = Args->CheckParm("-allowduplicates");
-	if (!fileSystem.InitMultipleFiles(allwads, &lfi, FileSystemPrintf, allowduplicates))
+	if (!fileSystem.Initialize(allwads, &lfi, FileSystemPrintf, allowduplicates))
 	{
 		I_FatalError("FileSystem: no files found");
 	}

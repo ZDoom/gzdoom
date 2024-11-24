@@ -50,7 +50,6 @@
 #include "basics.h"
 #include "cmdlib.h"
 
-using namespace FileSys;
 FTextureManager TexMan;
 
 
@@ -585,7 +584,7 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 				}
 				progressFunc();
 			}
-			else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & RESFF_MAYBEFLAT)
+			else if (ns == ns_flats && fileSystem.GetFileNamespace(firsttx) == ns_maybeflat)
 			{
 				if (fileSystem.CheckNumForName(Name, ns) < firsttx)
 				{
@@ -1421,12 +1420,11 @@ int FTextureManager::GuesstimateNumTextures ()
 		case ns_hires:
 		case ns_patches:
 		case ns_graphics:
+		case ns_maybeflat:
 			numtex++;
 			break;
 
 		default:
-			if (fileSystem.GetFileFlags(i) & RESFF_MAYBEFLAT) numtex++;
-
 			break;
 		}
 	}

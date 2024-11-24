@@ -41,11 +41,10 @@ namespace FileSys {
 //
 //==========================================================================
 
-static bool OpenLump(FResourceFile* file, LumpFilterInfo*)
+static bool OpenLump(FResourceFile* file, FileSystemFilterInfo*)
 {
 	auto Entries = file->AllocateEntries(1);
 	Entries[0].FileName = file->NormalizeFileName(ExtractBaseName(file->GetFileName(), true).c_str());
-	Entries[0].Namespace = ns_global;
 	Entries[0].ResourceID = -1;
 	Entries[0].Position = 0;
 	Entries[0].CompressedSize = Entries[0].Length = file->GetContainerReader()->GetLength();
@@ -60,10 +59,10 @@ static bool OpenLump(FResourceFile* file, LumpFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckLump(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckLump(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	// always succeeds
-	auto rf = new FResourceFile(filename, file, sp);
+	auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS);
 	if (OpenLump(rf, filter)) return rf;
 	file = rf->Destroy();
 	return NULL;

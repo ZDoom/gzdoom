@@ -1096,6 +1096,7 @@ set (PCH_SOURCES
 	common/engine/cycler.cpp
 	common/engine/d_event.cpp
 	common/engine/date.cpp
+	common/engine/filesys_doom.cpp
 	common/engine/stats.cpp
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
@@ -1230,6 +1231,7 @@ set( GAME_SOURCES
 	common/filesystem/source/file_whres.cpp
 	common/filesystem/source/file_ssi.cpp
 	common/filesystem/source/file_hog.cpp
+	common/filesystem/source/file_hog2.cpp
 	common/filesystem/source/file_mvl.cpp
 	common/filesystem/source/file_directory.cpp
 	common/filesystem/source/resourcefile.cpp

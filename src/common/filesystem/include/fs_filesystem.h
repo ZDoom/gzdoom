@@ -13,15 +13,6 @@
 
 namespace FileSys {
 	
-union LumpShortName
-{
-	char		String[9];
-
-	uint32_t		dword;			// These are for accessing the first 4 or 8 chars of
-	uint64_t		qword;			// Name as a unit without breaking strict aliasing rules
-};
-
-
 struct FolderEntry
 {
 	const char *name;
@@ -32,7 +23,12 @@ class FileSystem
 {
 public:
 	FileSystem();
-	~FileSystem ();
+	virtual ~FileSystem ();
+	// do not copy!
+	FileSystem(const FileSystem& other) = delete;
+	FileSystem& operator =(const FileSystem& other) = delete;
+
+	bool Initialize(std::vector<std::string>& filenames, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false);
 
 	// The wadnum for the IWAD
 	int GetIwadNum() { return IwadIndex; }
@@ -41,9 +37,6 @@ public:
 	int GetMaxIwadNum() { return MaxIwadIndex; }
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
-	bool InitSingleFile(const char *filename, FileSystemMessageFunc Printf = nullptr);
-	bool InitMultipleFiles (std::vector<std::string>& filenames, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false);
-	void AddFile (const char *filename, FileReader *wadinfo, LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	int CheckIfResourceFileLoaded (const char *name) noexcept;
 	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}
 
@@ -53,30 +46,16 @@ public:
 	int GetFirstEntry(int wadnum) const noexcept;
 	int GetLastEntry(int wadnum) const noexcept;
     int GetEntryCount(int wadnum) const noexcept;
+	int GetResourceFileFlags(int wadnum) const noexcept;
 
-	int CheckNumForName (const char *name, int namespc) const;
-	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true) const;
-	int GetNumForName (const char *name, int namespc) const;
-
-	inline int CheckNumForName (const uint8_t *name) const { return CheckNumForName ((const char *)name, ns_global); }
-	inline int CheckNumForName (const char *name) const { return CheckNumForName (name, ns_global); }
-	inline int CheckNumForName (const uint8_t *name, int ns) const { return CheckNumForName ((const char *)name, ns); }
-	inline int GetNumForName (const char *name) const { return GetNumForName (name, ns_global); }
-	inline int GetNumForName (const uint8_t *name) const { return GetNumForName ((const char *)name); }
-	inline int GetNumForName (const uint8_t *name, int ns) const { return GetNumForName ((const char *)name, ns); }
-
-	int CheckNumForFullName (const char *cname, bool trynormal = false, int namespc = ns_global, bool ignoreext = false) const;
+	int CheckNumForFullName (const char *cname, bool ignoreext = false) const;
 	int CheckNumForFullNameInFile (const char *name, int wadfile) const;
 	int GetNumForFullName (const char *name) const;
-	int CheckNumForAnyName(const char* cname, namespace_t namespc = ns_global) const
-	{
-		return CheckNumForFullName(cname, true, namespc);
-	}
-
 	int FindFile(const char* name) const
 	{
 		return CheckNumForFullName(name);
 	}
+
 
 	bool FileExists(const char* name) const
 	{
@@ -88,14 +67,12 @@ public:
 		return FindFile(name.c_str()) >= 0;
 	}
 
-	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 
 	void ReadFile (int lump, void *dest);
 	// These should only be used if the file data really needs padding.
 	FileData ReadFile (int lump);
-	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
 	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
 
 	FileReader OpenFileReader(int lump, int readertype, int readerflags);		// opens a reader that redirects to the containing file's one.
@@ -112,29 +89,21 @@ public:
 	}
 
 
-	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
-	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	int FindLumpFullName(const char* name, int* lastlump, bool noext = false);
-	bool CheckFileName (int lump, const char *name);	// [RH] True if lump's name == name
 
 	int FindFileWithExtensions(const char* name, const char* const* exts, int count) const;
 	int FindResource(int resid, const char* type, int filenum = -1) const noexcept;
 	int GetResource(int resid, const char* type, int filenum = -1) const;
 
 
-	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
-
-	ptrdiff_t FileLength (int lump) const;
+	ptrdiff_t FileLength(int lump) const;
 	int GetFileFlags (int lump);					// Return the flags for this lump
-	const char* GetFileShortName(int lump) const;
-	const char *GetFileName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
+	const char* GetFileName(int lump) const;	// Gets uninterpreted name from the FResourceFile
 	std::string GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
-	int GetFileContainer (int lump) const;				// [RH] Returns wadnum for a specified lump
-	int GetFileNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
-	void SetFileNamespace(int lump, int ns);
+	int GetFileContainer (int lump) const;			
+	// [RH] Returns wadnum for a specified lump
 	int GetResourceId(int lump) const;				// Returns the RFF index number for this lump
 	const char* GetResourceType(int lump) const;
-	bool CheckFileName (int lump, const char *name) const;	// [RH] Returns true if the names match
 	unsigned GetFilesInFolder(const char *path, std::vector<FolderEntry> &result, bool atomic) const;
 
 	int GetNumEntries() const
@@ -149,18 +118,16 @@ public:
 
 	int AddFromBuffer(const char* name, char* data, int size, int id, int flags);
 	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
-	void InitHashChains();
 
 protected:
 
 	struct LumpRecord;
+	const uint32_t NULL_INDEX = 0xffffffff;
 
 	std::vector<FResourceFile *> Files;
 	std::vector<LumpRecord> FileInfo;
 
 	std::vector<uint32_t> Hashes;	// one allocation for all hash lists.
-	uint32_t *FirstLumpIndex = nullptr;	// [RH] Hashing stuff moved out of lumpinfo structure
-	uint32_t *NextLumpIndex = nullptr;
 
 	uint32_t *FirstLumpIndex_FullName = nullptr;	// The same information for fully qualified paths from .zips
 	uint32_t *NextLumpIndex_FullName = nullptr;
@@ -182,7 +149,24 @@ protected:
 private:
 	void DeleteAll();
 	void MoveLumpsInFolder(const char *);
+	void AddFile(const char* filename, FileReader* wadinfo, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
+protected:
+
+	// These two functions must be overridden by subclasses which want to extend the file system.
+	virtual bool InitFiles(std::vector<std::string>& filenames, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false);
+public:
+	virtual void InitHashChains();
 
 };
+
+//djb2 hash algorithm with case insensitivity hack
+inline static uint32_t MakeHash(const char* str, size_t length = SIZE_MAX)
+{
+	uint32_t hash = 5381;
+	uint32_t c;
+	while (length-- > 0 && (c = *str++)) hash = hash * 33 + (c | 32);
+	return hash;
+}
+
 
 }

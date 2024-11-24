@@ -16,7 +16,7 @@ std::string ExtractBaseName(const char* path, bool include_extension = false);
 void strReplace(std::string& str, const char* from, const char* to);
 
 // user context in which the file system gets opened. This also contains a few callbacks to avoid direct dependencies on the engine.
-struct LumpFilterInfo
+struct FileSystemFilterInfo
 {
 	std::vector<std::string> gameTypeFilter;	// this can contain multiple entries
 
@@ -45,45 +45,10 @@ using FileSystemMessageFunc = int(*)(FSMessageLevel msglevel, const char* format
 
 class FResourceFile;
 
-}
-
-// [RH] Namespaces from BOOM.
-// These are needed here in the low level part so that WAD files can be properly set up.
-typedef enum {
-	ns_hidden = -1,
-
-	ns_global = 0,
-	ns_sprites,
-	ns_flats,
-	ns_colormaps,
-	ns_acslibrary,
-	ns_newtextures,
-	ns_bloodraw,	// no longer used - kept for ZScript.
-	ns_bloodsfx,	// no longer used - kept for ZScript.
-	ns_bloodmisc,	// no longer used - kept for ZScript.
-	ns_strifevoices,
-	ns_hires,
-	ns_voxels,
-
-	// These namespaces are only used to mark lumps in special subdirectories
-	// so that their contents doesn't interfere with the global namespace.
-	// searching for data in these namespaces works differently for lumps coming
-	// from Zips or other files.
-	ns_specialzipdirectory,
-	ns_sounds,
-	ns_patches,
-	ns_graphics,
-	ns_music,
-
-	ns_firstskin,
-} namespace_t;
-
-namespace FileSys {
 
 enum ELumpFlags
 {
-	RESFF_MAYBEFLAT = 1,	// might be a flat inside a WAD outside F_START/END
-	RESFF_FULLPATH = 2,		// contains a full path. This will trigger extended namespace checks when looking up short names.
+	RESFF_FULLPATH = 2,		// contains a full path.
 	RESFF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
 	RESFF_SHORTNAME = 8,	// the stored name is a short extension-less name
 	RESFF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
@@ -104,11 +69,10 @@ struct FResourceEntry
 	size_t CompressedSize;
 	const char* FileName;
 	size_t Position;
-	int ResourceID;
+	int ResourceID; // Only Blood RFF uses this natively.
 	uint32_t CRC32;
 	uint16_t Flags;
 	uint16_t Method;
-	int16_t Namespace;
 };
 
 void SetMainThread();
@@ -116,17 +80,25 @@ void SetMainThread();
 class FResourceFile
 {
 public:
-	FResourceFile(const char* filename, StringPool* sp);
-	FResourceFile(const char* filename, FileReader& r, StringPool* sp);
-	const char* NormalizeFileName(const char* fn, int fallbackcp = 0);
+	enum
+	{
+		// descibes which kind of limitations this file type has.
+		NO_FOLDERS = 1,			// no paths - only one rpot folder (e.g. Build GRP, Blood RFF, Descent HOG
+		NO_EXTENSIONS = 2,		// no extensions for file names (e.g. Doom WADs.)
+		SHORTNAMES = 4,			// Name is (at most) 8.3 DOS ASCII format, (8.0 in case of WAD)
+	};
+	FResourceFile(const char* filename, StringPool* sp, int flags);
+	FResourceFile(const char* filename, FileReader& r, StringPool* sp, int flags);
+	const char* NormalizeFileName(const char* fn, int fallbackcp = 0, bool allowbackslash = false);
 	FResourceEntry* AllocateEntries(int count);
 	void GenerateHash();
-	void PostProcessArchive(LumpFilterInfo* filter);
+	void PostProcessArchive(FileSystemFilterInfo* filter);
 protected:
 	FileReader Reader;
 	const char* FileName;
 	FResourceEntry* Entries = nullptr;
 	uint32_t NumLumps;
+	int flags = 0;
 	char Hash[48];
 	StringPool* stringpool;
 
@@ -136,7 +108,7 @@ protected:
 		Entries[entry].Flags &= ~RESFF_NEEDFILESTART;
 	}
 	bool IsFileInFolder(const char* const resPath);
-	void CheckEmbedded(uint32_t entry, LumpFilterInfo* lfi);
+	void CheckEmbedded(uint32_t entry, FileSystemFilterInfo* lfi);
 
 private:
 	uint32_t FirstLump;
@@ -144,18 +116,19 @@ private:
 	int FilterLumps(const std::string& filtername, uint32_t max);
 	bool FindPrefixRange(const char* filter, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(uint32_t max);
-	void FindCommonFolder(LumpFilterInfo* filter);
-	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+	void FindCommonFolder(FileSystemFilterInfo* filter);
+	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
 public:
-	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool containeronly = false, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
-	static FResourceFile *OpenResourceFile(const char *filename, bool containeronly = false, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
-	static FResourceFile *OpenDirectory(const char *filename, LumpFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool containeronly = false, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
+	static FResourceFile *OpenResourceFile(const char *filename, bool containeronly = false, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
+	static FResourceFile *OpenDirectory(const char *filename, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, StringPool* sp = nullptr);
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
 	FileReader *GetContainerReader() { return Reader.isOpen()? &Reader : nullptr; }
 	const char* GetFileName() const { return FileName; }
 	uint32_t GetFirstEntry() const { return FirstLump; }
+	int GetFlags() const noexcept { return flags; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }
 
@@ -177,11 +150,6 @@ public:
 	int GetEntryFlags(uint32_t entry)
 	{
 		return (entry < NumLumps) ? Entries[entry].Flags : 0;
-	}
-
-	int GetEntryNamespace(uint32_t entry)
-	{
-		return (entry < NumLumps) ? Entries[entry].Namespace : (int)ns_hidden;
 	}
 
 	int GetEntryResourceID(uint32_t entry)

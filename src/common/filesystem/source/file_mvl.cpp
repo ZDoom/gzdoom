@@ -43,7 +43,7 @@ namespace FileSys {
 
 
 
-static bool OpenMvl(FResourceFile* rf, LumpFilterInfo* filter)
+static bool OpenMvl(FResourceFile* rf, FileSystemFilterInfo* filter)
 {
     auto Reader = rf->GetContainerReader();
     auto count = Reader->ReadUInt32();
@@ -75,7 +75,7 @@ static bool OpenMvl(FResourceFile* rf, LumpFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile* CheckMvl(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile* CheckMvl(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
     char head[4];
 
@@ -85,7 +85,7 @@ FResourceFile* CheckMvl(const char* filename, FileReader& file, LumpFilterInfo* 
         file.Read(&head, 4);
         if (!memcmp(head, "DMVL", 4))
         {
-            auto rf = new FResourceFile(filename, file, sp);
+            auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS | FResourceFile::SHORTNAMES);
             if (OpenMvl(rf, filter)) return rf;
             file = rf->Destroy();
         }

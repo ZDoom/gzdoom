@@ -177,7 +177,7 @@ class F7ZFile : public FResourceFile
 
 public:
 	F7ZFile(const char * filename, FileReader &filer, StringPool* sp);
-	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
+	bool Open(FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
 	virtual ~F7ZFile();
 	FileData Read(uint32_t entry) override;
 	FileReader GetEntryReader(uint32_t entry, int, int) override;
@@ -192,7 +192,7 @@ public:
 //==========================================================================
 
 F7ZFile::F7ZFile(const char * filename, FileReader &filer, StringPool* sp)
-	: FResourceFile(filename, filer, sp) 
+	: FResourceFile(filename, filer, sp, 0) 
 {
 	Archive = nullptr;
 }
@@ -204,7 +204,7 @@ F7ZFile::F7ZFile(const char * filename, FileReader &filer, StringPool* sp)
 //
 //==========================================================================
 
-bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
+bool F7ZFile::Open(FileSystemFilterInfo *filter, FileSystemMessageFunc Printf)
 {
 	Archive = new C7zArchive(Reader);
 	int skipped = 0;
@@ -268,7 +268,6 @@ bool F7ZFile::Open(LumpFilterInfo *filter, FileSystemMessageFunc Printf)
 		Entries[j].Length = SzArEx_GetFileSize(archPtr, i);
 		Entries[j].Flags = RESFF_FULLPATH|RESFF_COMPRESSED;
 		Entries[j].ResourceID = -1;
-		Entries[j].Namespace = ns_global;
 		Entries[j].Method = METHOD_INVALID;
 		Entries[j].Position = i;
 		j++;
@@ -351,7 +350,7 @@ FileReader F7ZFile::GetEntryReader(uint32_t entry, int, int)
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *Check7Z(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[k7zSignatureSize];
 

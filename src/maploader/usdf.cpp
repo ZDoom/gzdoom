@@ -562,7 +562,7 @@ public:
 	bool Parse(MapLoader *loader,int lumpnum, FileReader &lump, int lumplen)
 	{
 		Level = loader->Level;
-		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), lump.Read(lumplen));
+		sc.OpenMem(fileSystem.GetFileName(lumpnum), lump.Read(lumplen));
 		sc.SetCMode(true);
 		// Namespace must be the first field because everything else depends on it.
 		if (sc.CheckString("namespace"))

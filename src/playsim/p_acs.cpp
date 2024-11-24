@@ -1963,7 +1963,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len,
 	else
 	{
 		delete behavior;
-		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetFileFullName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetFileName(lumpnum));
 		return NULL;
 	}
 }

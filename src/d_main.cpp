@@ -3998,7 +3998,7 @@ CCMD(fs_dir)
 	for (int i = 0; i < numfiles; i++)
 	{
 		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
-		auto fn1 = fileSystem.GetFileFullName(i);
+		auto fn1 = fileSystem.GetFileName(i);
 		auto fns = fileSystem.GetFileShortName(i);
 		auto fnid = fileSystem.GetResourceId(i);
 		auto length = fileSystem.FileLength(i);

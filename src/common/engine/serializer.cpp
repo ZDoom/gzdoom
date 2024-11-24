@@ -1181,7 +1181,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 
 			if (TexMan.GetLinkedTexture(lump) == pic)
 			{
-				name = fileSystem.GetFileFullName(lump);
+				name = fileSystem.GetFileName(lump);
 			}
 			else
 			{

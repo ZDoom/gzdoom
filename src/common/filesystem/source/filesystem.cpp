@@ -1051,7 +1051,7 @@ const char* FileSystem::GetFileShortName(int lump) const
 //
 //==========================================================================
 
-const char *FileSystem::GetFileFullName (int lump, bool returnshort) const
+const char *FileSystem::GetFileName (int lump, bool returnshort) const
 {
 	if ((size_t)lump >= NumEntries)
 		return NULL;
@@ -1078,7 +1078,7 @@ std::string FileSystem::GetFileFullPath(int lump) const
 	{
 		foo = GetResourceFileName(FileInfo[lump].rfnum);
 		foo += ':';
-		foo += +GetFileFullName(lump);
+		foo += +GetFileName(lump);
 	}
 	return foo;
 }

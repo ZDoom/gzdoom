@@ -375,7 +375,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		{
 
 			CheckFileName(check.GetFileShortName(ii));
-			auto full = check.GetFileFullName(ii, false);
+			auto full = check.GetFileName(ii, false);
 			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
 				FString mapname(&full[5], strcspn(&full[5], "."));

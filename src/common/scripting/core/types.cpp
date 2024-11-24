@@ -2585,7 +2585,7 @@ static void PMapValueWriter(FSerializer &ar, const M *map, const PMap *m)
 
 						if (TexMan.GetLinkedTexture(lump) == tex)
 						{
-							name = fileSystem.GetFileFullName(lump);
+							name = fileSystem.GetFileName(lump);
 						}
 						else
 						{

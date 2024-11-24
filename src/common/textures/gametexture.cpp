@@ -185,7 +185,7 @@ void FGameTexture::AddAutoMaterials()
 			auto lump = fileSystem.CheckNumForFullName(lookup.GetChars(), false, FileSys::ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
 					this->*(layer.pointer) = bmtex->GetTexture();
@@ -202,7 +202,7 @@ void FGameTexture::AddAutoMaterials()
 			auto lump = fileSystem.CheckNumForFullName(lookup.GetChars(), false, FileSys::ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
 					if (this->Layers == nullptr) this->Layers = std::make_unique<FMaterialLayers>();

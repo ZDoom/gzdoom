@@ -309,7 +309,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	FVoxel *vox = R_LoadKVX(lumpnum);
 	if (vox == NULL)
 	{
-		Printf("%s is not a valid voxel file\n", fileSystem.GetFileFullName(lumpnum));
+		Printf("%s is not a valid voxel file\n", fileSystem.GetFileName(lumpnum));
 		return NULL;
 	}
 	else

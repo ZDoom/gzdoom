@@ -258,7 +258,7 @@ void InitBuildTiles()
 	int numlumps = fileSystem.GetNumEntries();
 	for (int i = 0; i < numlumps; i++)
 	{
-		const char* name = fileSystem.GetFileFullName(i);
+		const char* name = fileSystem.GetFileName(i);
 		if (fileSystem.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
 		FString base = ExtractFileBase(name, true);
 		base.ToLower();

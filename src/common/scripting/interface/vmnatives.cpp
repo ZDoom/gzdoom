@@ -426,7 +426,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 			// Textures for full path names do not have their own name, they merely link to the source lump.
 			auto lump = tex->GetSourceLump();
 			if (TexMan.GetLinkedTexture(lump) == tex)
-				retval = fileSystem.GetFileFullName(lump);
+				retval = fileSystem.GetFileName(lump);
 		}
 	}
 	ACTION_RETURN_STRING(retval);
@@ -850,7 +850,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_STRING(fileSystem.GetFileFullName(lump));
+	ACTION_RETURN_STRING(fileSystem.GetFileName(lump));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)

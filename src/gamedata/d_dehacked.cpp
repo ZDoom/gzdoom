@@ -3098,7 +3098,7 @@ CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
 {
-	const char* const fullName  = fileSystem.GetFileFullName(lumpnum);
+	const char* const fullName  = fileSystem.GetFileName(lumpnum);
 	const char* const extension = strrchr(fullName, '.');
 
 	return NULL != extension && strchr(fullName, '/') == NULL

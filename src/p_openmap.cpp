@@ -167,18 +167,18 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
 			map->MapLumps[0].Reader = fileSystem.ReopenFileReader(lump_name);
-			strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(lump_name), 8);
+			strncpy(map->MapLumps[0].Name, fileSystem.GetFileName(lump_name), 8);
 			map->InWad = true;
 
 			int index = 0;
 
-			if (stricmp(fileSystem.GetFileFullName(lump_name + 1), "TEXTMAP") != 0)
+			if (stricmp(fileSystem.GetFileName(lump_name + 1), "TEXTMAP") != 0)
 			{
 				for(int i = 1;; i++)
 				{
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
-					const char * lumpname = fileSystem.GetFileFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetFileName(lump_name + i);
 					try
 					{
 						index = GetMapIndex(mapname, index, lumpname, !justcheck);
@@ -208,7 +208,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				map->MapLumps[1].Reader = fileSystem.ReopenFileReader(lump_name + 1);
 				for(int i = 2;; i++)
 				{
-					const char * lumpname = fileSystem.GetFileFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetFileName(lump_name + i);
 
 					if (lumpname == NULL)
 					{
@@ -264,7 +264,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			}
 			map->lumpnum = lump_wad;
 			auto reader = fileSystem.ReopenFileReader(lump_wad);
-			map->resource = FResourceFile::OpenResourceFile(fileSystem.GetFileFullName(lump_wad), reader, true);
+			map->resource = FResourceFile::OpenResourceFile(fileSystem.GetFileName(lump_wad), reader, true);
 			wadReader = map->resource->GetContainerReader();
 		}
 	}

@@ -120,7 +120,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 	buffer.Format("%s%s", path, fn);
 
 	int texlump = FindGFXFile(buffer);
-	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileFullName(texlump);
+	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileName(texlump);
 	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ForceLookup);
 }
 

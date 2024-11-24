@@ -727,7 +727,7 @@ static int FindGLNodesInWAD(int labellump)
 	int wadfile = fileSystem.GetFileContainer(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetFileName(labellump));
 	if (glheader.Len()<=8)
 	{
 		int gllabel = fileSystem.CheckNumForName(glheader.GetChars(), FileSys::ns_global, wadfile);
@@ -748,7 +748,7 @@ static int FindGLNodesInWAD(int labellump)
 				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
 					auto mem = fileSystem.ReadFile(lump);
-					if (MatchHeader(fileSystem.GetFileFullName(labellump), GetStringFromLump(lump).GetChars())) return lump;
+					if (MatchHeader(fileSystem.GetFileName(labellump), GetStringFromLump(lump).GetChars())) return lump;
 				}
 			}
 		}
@@ -881,7 +881,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetFileName(map->lumpnum), 8);
 				}
 			}
 		}

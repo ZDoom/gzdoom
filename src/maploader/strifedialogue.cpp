@@ -195,7 +195,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 
 	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
+		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
 		return false;
 	}
 
@@ -215,7 +215,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
 				return false;
 			}
 			numnodes /= 1516;
@@ -225,7 +225,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
 				return false;
 			}
 			numnodes /= 1488;

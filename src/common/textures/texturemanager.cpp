@@ -457,7 +457,7 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 			str = fileSystem.GetFileShortName(lumpnum);
 		else
 		{
-			auto fn = fileSystem.GetFileFullName(lumpnum);
+			auto fn = fileSystem.GetFileName(lumpnum);
 			str = ExtractFileBase(fn);
 		}
 		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str.GetChars(), usetype);

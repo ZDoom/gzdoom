@@ -2572,7 +2572,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 				{ // slide against wall
 					if (BlockingLine != NULL &&
 						mo->player && mo->waterlevel && mo->waterlevel < 3 &&
-						(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove) &&
+						(mo->player->cmd.forwardmove | mo->player->cmd.sidemove) &&
 						mo->BlockingLine->sidedef[1] != NULL)
 					{
 						double spd = mo->FloatVar(NAME_WaterClimbSpeed);
@@ -2811,7 +2811,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 	// moving corresponding player:
 	if (fabs(mo->Vel.X) < STOPSPEED && fabs(mo->Vel.Y) < STOPSPEED
 		&& (!player || (player->mo != mo)
-			|| !(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove)))
+			|| !(player->cmd.forwardmove | player->cmd.sidemove)))
 	{
 		// if in a walking frame, stop moving
 		// killough 10/98:
@@ -3273,7 +3273,7 @@ void AActor::FallAndSink(double grav, double oldfloorz)
 		double startvelz = Vel.Z;
 
 		if (waterlevel == 0 || (player &&
-			!(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove)))
+			!(player->cmd.forwardmove | player->cmd.sidemove)))
 		{
 			// [RH] Double gravity only if running off a ledge. Coming down from
 			// an upward thrust (e.g. a jump) should not double it.
@@ -6101,7 +6101,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		p->cheats = CF_CHASECAM;
 
 	// setup gun psprite
-	if (!(flags & SPF_TEMPPLAYER))
+	if (!(flags & SPF_TEMPPLAYER) || oldactor == nullptr)
 	{ // This can also start a script so don't do it for the dummy player.
 		P_SetupPsprites (p, !!(flags & SPF_WEAPONFULLYUP));
 	}
@@ -6156,7 +6156,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	}
 
 	// [BC] Do script stuff
-	if (!(flags & SPF_TEMPPLAYER))
+	if (!(flags & SPF_TEMPPLAYER) || oldactor == nullptr)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{

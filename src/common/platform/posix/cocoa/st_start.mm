@@ -115,6 +115,11 @@ void FBasicStartupScreen::NetClose()
 	FConsoleWindow::GetInstance().NetClose();
 }
 
+bool FBasicStartupScreen::ShouldStartNet()
+{
+	return FConsoleWindow::GetInstance().ShouldStartNet();
+}
+
 bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const userData)
 {
 	while (true)

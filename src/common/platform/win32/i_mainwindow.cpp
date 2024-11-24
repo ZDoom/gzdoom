@@ -133,6 +133,11 @@ void MainWindow::CloseNetStartPane()
 	NetStartWindow::NetClose();
 }
 
+bool MainWindow::ShouldStartNetGame()
+{
+	return NetStartWindow::ShouldStartNetGame();
+}
+
 void MainWindow::SetNetStartProgress(int pos)
 {
 	NetStartWindow::SetNetStartProgress(pos);

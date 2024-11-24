@@ -50,6 +50,7 @@
 #define NETD_ID		BIGE_ID('N','E','T','D')
 #define WEAP_ID		BIGE_ID('W','E','A','P')
 
+constexpr int MoreButtons = 0x80;
 
 struct zdemoheader_s {
 	uint8_t	demovermajor;
@@ -165,6 +166,7 @@ enum EDemoCommand
 	DEM_ENDSCREENJOB,
 	DEM_ZSC_CMD,		// 74 String: Command, Word: Byte size of command
 	DEM_CHANGESKILL,	// 75 Int: Skill
+	DEM_KICK,			// 76 Byte: Player number
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -230,23 +232,14 @@ void StartChunk (int id, uint8_t **stream);
 void FinishChunk (uint8_t **stream);
 void SkipChunk (uint8_t **stream);
 
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
+// Returns the number of bytes written to the stream
+int UnpackUserCmd(usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
+int PackUserCmd(const usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
+int WriteUserCmdMessage(const usercmd_t& ucmd, const usercmd_t *basis, uint8_t*& stream);
 
-// The data sampled per tick (single player)
-// and transmitted to other peers (multiplayer).
-// Mainly movements/button commands per game tick,
-// plus a checksum for internal state consistency.
-struct ticcmd_t
-{
-	usercmd_t	ucmd;
-	int16_t		consistancy;	// checks for net game
-};
-
-int SkipTicCmd (uint8_t **stream, int count);
-void ReadTicCmd (uint8_t **stream, int player, int tic);
-void RunNetSpecs (int player, int buf);
+int SkipUserCmdMessage(uint8_t*& stream);
+int ReadUserCmdMessage(uint8_t*& stream, int player, int tic);
+void RunPlayerCommands(int player, int tic);
 
 uint8_t ReadInt8 (uint8_t **stream);
 int16_t ReadInt16 (uint8_t **stream);

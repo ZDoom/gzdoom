@@ -15,6 +15,7 @@ public:
 	static void SetNetStartProgress(int pos);
 	static bool RunMessageLoop(bool (*timer_callback)(void*), void* userdata);
 	static void NetClose();
+	static bool ShouldStartNetGame();
 
 private:
 	NetStartWindow();
@@ -25,6 +26,7 @@ private:
 protected:
 	void OnClose() override;
 	void OnGeometryChanged() override;
+	virtual void ForceStart();
 
 private:
 	void OnCallbackTimerExpired();
@@ -32,6 +34,7 @@ private:
 	TextLabel* MessageLabel = nullptr;
 	TextLabel* ProgressLabel = nullptr;
 	PushButton* AbortButton = nullptr;
+	PushButton* ForceStartButton = nullptr;
 
 	Timer* CallbackTimer = nullptr;
 
@@ -41,6 +44,7 @@ private:
 	void* userdata = nullptr;
 
 	bool exitreason = false;
+	bool shouldstart = false;
 
 	std::exception_ptr CallbackException;
 

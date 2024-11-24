@@ -146,10 +146,17 @@ static int FontScale;
 //
 //==========================================================================
 
-void HU_DrawScores (player_t *player)
+void HU_DrawScores(player_t* player)
 {
 	displayFont = NewSmallFont;
-	FontScale = max(screen->GetHeight() / 400, 1);
+	FontScale = max<int>(screen->GetHeight() / 400, 1);
+
+	int numPlayers = 0;
+	for (int i = 0; i < MAXPLAYERS; ++i)
+		numPlayers += playeringame[i];
+
+	if (numPlayers > 8)
+		FontScale = static_cast<int>(ceil(FontScale * 0.75));
 
 	if (deathmatch)
 	{
@@ -158,39 +165,34 @@ void HU_DrawScores (player_t *player)
 			if (!sb_teamdeathmatch_enable)
 				return;
 		}
-		else
+		else if (!sb_deathmatch_enable)
 		{
-			if (!sb_deathmatch_enable)
-				return;
+			return;
 		}
 	}
-	else
+	else if (!multiplayer || !sb_cooperative_enable)
 	{
-		if (!sb_cooperative_enable || !multiplayer)
-			return;
+		return;
 	}
 
-	int i, j;
-	player_t *sortedplayers[MAXPLAYERS];
-
+	player_t* sortedPlayers[MAXPLAYERS];
 	if (player->camera && player->camera->player)
 		player = player->camera->player;
 
-	sortedplayers[MAXPLAYERS-1] = player;
-	for (i = 0, j = 0; j < MAXPLAYERS - 1; i++, j++)
+	sortedPlayers[MAXPLAYERS - 1] = player;
+	for (int i = 0, j = 0; j < MAXPLAYERS - 1; ++i, ++j)
 	{
 		if (&players[i] == player)
-			i++;
-		sortedplayers[j] = &players[i];
+			++i;
+		sortedPlayers[j] = &players[i];
 	}
 
 	if (teamplay && deathmatch)
-		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compareteams);
+		qsort(sortedPlayers, MAXPLAYERS, sizeof(player_t*), compareteams);
 	else
-		qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), comparepoints);
+		qsort(sortedPlayers, MAXPLAYERS, sizeof(player_t*), comparepoints);
 
-	HU_DoDrawScores (player, sortedplayers);
-
+	HU_DoDrawScores(player, sortedPlayers);
 }
 
 //==========================================================================
@@ -201,39 +203,37 @@ void HU_DrawScores (player_t *player)
 //
 //==========================================================================
 
-void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight)
+void HU_GetPlayerWidths(int& maxNameWidth, int& maxScoreWidth, int& maxIconHeight)
 {
-	displayFont = NewSmallFont;
-	maxnamewidth = displayFont->StringWidth("Name");
-	maxscorewidth = 0;
-	maxiconheight = 0;
+	constexpr char NameLabel[] = "Name";
 
-	for (int i = 0; i < MAXPLAYERS; i++)
+	displayFont = NewSmallFont;
+	maxNameWidth = displayFont->StringWidth(NameLabel);
+	maxScoreWidth = 0;
+	maxIconHeight = 0;
+
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i])
+		if (!playeringame[i])
+			continue;
+
+		int width = displayFont->StringWidth(players[i].userinfo.GetName(16));
+		if (width > maxNameWidth)
+			maxNameWidth = width;
+
+		auto icon = FSetTextureID(players[i].mo->IntVar(NAME_ScoreIcon));
+		if (icon.isValid())
 		{
-			int width = displayFont->StringWidth(players[i].userinfo.GetName());
-			if (width > maxnamewidth)
-			{
-				maxnamewidth = width;
-			}
-			auto icon = FSetTextureID(players[i].mo->IntVar(NAME_ScoreIcon));
-			if (icon.isValid())
-			{
-				auto pic = TexMan.GetGameTexture(icon);
-				width = int(pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2.5);
-				if (width > maxscorewidth)
-				{
-					maxscorewidth = width;
-				}
-				// The icon's top offset does not count toward its height, because
-				// zdoom.pk3's standard Hexen class icons are designed that way.
-				int height = int(pic->GetDisplayHeight() - pic->GetDisplayTopOffset() + 0.5);
-				if (height > maxiconheight)
-				{
-					maxiconheight = height;
-				}
-			}
+			auto pic = TexMan.GetGameTexture(icon);
+			width = int(pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2.5);
+			if (width > maxScoreWidth)
+				maxScoreWidth = width;
+
+			// The icon's top offset does not count toward its height, because
+			// zdoom.pk3's standard Hexen class icons are designed that way.
+			int height = int(pic->GetDisplayHeight() - pic->GetDisplayTopOffset() + 0.5);
+			if (height > maxIconHeight)
+				maxIconHeight = height;
 		}
 	}
 }
@@ -249,16 +249,9 @@ static void HU_DrawFontScaled(double x, double y, int color, const char *text)
 	DrawText(twod, displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, twod->GetWidth() / FontScale, DTA_VirtualHeight, twod->GetHeight() / FontScale, TAG_END);
 }
 
-static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
+static void HU_DoDrawScores(player_t* player, player_t* sortedPlayers[MAXPLAYERS])
 {
-	int color;
-	int height, lineheight;
-	unsigned int i;
-	int maxnamewidth, maxscorewidth, maxiconheight;
-	int numTeams = 0;
-	int x, y, ypadding, bottom;
-	int col2, col3, col4, col5;
-	
+	int color = sb_cooperative_headingcolor;
 	if (deathmatch)
 	{
 		if (teamplay)
@@ -266,86 +259,77 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		else
 			color = sb_deathmatch_headingcolor;
 	}
-	else
-	{
-		color = sb_cooperative_headingcolor;
-	}
 
-	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
-	height = displayFont->GetHeight() * FontScale;
-	lineheight = max(height, maxiconheight * CleanYfac);
-	ypadding = (lineheight - height + 1) / 2;
+	int maxNameWidth, maxScoreWidth, maxIconHeight;
+	HU_GetPlayerWidths(maxNameWidth, maxScoreWidth, maxIconHeight);
+	int height = displayFont->GetHeight() * FontScale;
+	int lineHeight = max<int>(height, maxIconHeight * CleanYfac);
+	int yPadding = (lineHeight - height + 1) / 2;
 
-	bottom = StatusBar->GetTopOfStatusbar();
-	y = max(48*CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
+	int bottom = StatusBar->GetTopOfStatusbar();
+	int y = max<int>(48 * CleanYfac, (bottom - MAXPLAYERS * (height + CleanYfac + 1)) / 2);
 
-	HU_DrawTimeRemaining (bottom - height);
+	HU_DrawTimeRemaining(bottom - height);
 
 	if (teamplay && deathmatch)
 	{
 		y -= (BigFont->GetHeight() + 8) * CleanYfac;
 
-		for (i = 0; i < Teams.Size (); i++)
+		for (size_t i = 0u; i < Teams.Size(); ++i)
 		{
 			Teams[i].m_iPlayerCount = 0;
 			Teams[i].m_iScore = 0;
 		}
 
-		for (i = 0; i < MAXPLAYERS; ++i)
+		int numTeams = 0;
+		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (playeringame[sortedplayers[i]-players] && FTeam::IsValid (sortedplayers[i]->userinfo.GetTeam()))
+			if (playeringame[sortedPlayers[i]-players] && FTeam::IsValid(sortedPlayers[i]->userinfo.GetTeam()))
 			{
-				if (Teams[sortedplayers[i]->userinfo.GetTeam()].m_iPlayerCount++ == 0)
-				{
-					numTeams++;
-				}
+				if (Teams[sortedPlayers[i]->userinfo.GetTeam()].m_iPlayerCount++ == 0)
+					++numTeams;
 
-				Teams[sortedplayers[i]->userinfo.GetTeam()].m_iScore += sortedplayers[i]->fragcount;
+				Teams[sortedPlayers[i]->userinfo.GetTeam()].m_iScore += sortedPlayers[i]->fragcount;
 			}
 		}
 
-		int scorexwidth = twod->GetWidth() / max(8, numTeams);
-		int numscores = 0;
-		int scorex;
-
-		for (i = 0; i < Teams.Size(); ++i)
+		int scoreXWidth = twod->GetWidth() / max<int>(8, numTeams);
+		int numScores = 0;
+		for (size_t i = 0u; i < Teams.Size(); ++i)
 		{
 			if (Teams[i].m_iPlayerCount)
-			{
-				numscores++;
-			}
+				++numScores;
 		}
 
-		scorex = (twod->GetWidth() - scorexwidth * (numscores - 1)) / 2;
-
-		for (i = 0; i < Teams.Size(); ++i)
+		int scoreX = (twod->GetWidth() - scoreXWidth * (numScores - 1)) / 2;
+		for (size_t i = 0u; i < Teams.Size(); ++i)
 		{
-			if (Teams[i].m_iPlayerCount)
-			{
-				char score[80];
-				mysnprintf (score, countof(score), "%d", Teams[i].m_iScore);
+			if (!Teams[i].m_iPlayerCount)
+				continue;
 
-				DrawText(twod, BigFont, Teams[i].GetTextColor(),
-					scorex - BigFont->StringWidth(score)*CleanXfac/2, y, score,
-					DTA_CleanNoMove, true, TAG_DONE);
+			char score[80];
+			mysnprintf(score, countof(score), "%d", Teams[i].m_iScore);
 
-				scorex += scorexwidth;
-			}
+			DrawText(twod, BigFont, Teams[i].GetTextColor(),
+				scoreX - BigFont->StringWidth(score)*CleanXfac/2, y, score,
+				DTA_CleanNoMove, true, TAG_DONE);
+
+			scoreX += scoreXWidth;
 		}
 
 		y += (BigFont->GetHeight() + 8) * CleanYfac;
 	}
 
-	const char *text_color = GStrings.GetString("SCORE_COLOR"),
+	const char* text_color = GStrings.GetString("SCORE_COLOR"),
 		*text_frags = GStrings.GetString(deathmatch ? "SCORE_FRAGS" : "SCORE_KILLS"),
 		*text_name = GStrings.GetString("SCORE_NAME"),
 		*text_delay = GStrings.GetString("SCORE_DELAY");
 
-	col2 = (displayFont->StringWidth(text_color) + 16) * FontScale;
-	col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;
-	col4 = col3 + maxscorewidth * FontScale;
-	col5 = col4 + (maxnamewidth + 16) * FontScale;
-	x = (twod->GetWidth() >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
+	int col2 = (displayFont->StringWidth(text_color) + 16) * FontScale;
+	int col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;
+	int col4 = col3 + maxScoreWidth * FontScale;
+	int col5 = col4 + (maxNameWidth + 16) * FontScale;
+	int x = (twod->GetWidth() >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
 
 	//HU_DrawFontScaled(x, y, color, text_color);
 	HU_DrawFontScaled(x + col2, y, color, text_frags);
@@ -355,13 +339,13 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	y += height + 6 * CleanYfac;
 	bottom -= height;
 
-	for (i = 0; i < MAXPLAYERS && y <= bottom; i++)
+	for (int i = 0; i < MAXPLAYERS && y <= bottom; ++i)
 	{
-		if (playeringame[sortedplayers[i] - players])
-		{
-			HU_DrawPlayer(sortedplayers[i], player == sortedplayers[i], x, col2, col3, col4, col5, maxnamewidth, y, ypadding, lineheight);
-			y += lineheight + CleanYfac;
-		}
+		if (!playeringame[sortedPlayers[i] - players])
+			continue;
+
+		HU_DrawPlayer(sortedPlayers[i], player == sortedPlayers[i], x, col2, col3, col4, col5, maxNameWidth, y, yPadding, lineHeight);
+		y += lineHeight + CleanYfac;
 	}
 }
 
@@ -437,14 +421,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	HU_DrawFontScaled(col4, y + ypadding, color, player->userinfo.GetName());
 
-	int avgdelay = 0;
-	for (int i = 0; i < BACKUPTICS; i++)
-	{
-		avgdelay += netdelay[nodeforplayer[(int)(player - players)]][i];
-	}
-	avgdelay /= BACKUPTICS;
-
-	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
+	mysnprintf(str, countof(str), "%u", ClientStates[player - players].AverageLatency);
 
 	HU_DrawFontScaled(col5, y + ypadding, color, str);
 

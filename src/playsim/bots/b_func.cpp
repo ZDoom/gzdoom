@@ -164,7 +164,7 @@ bool DBot::Check_LOS (AActor *to, DAngle vangle)
 //-------------------------------------
 //The bot will check if it's time to fire
 //and do so if that is the case.
-void DBot::Dofire (ticcmd_t *cmd)
+void DBot::Dofire (usercmd_t *cmd)
 {
 	bool no_fire; //used to prevent bot from pumping rockets into nearby walls.
 	int aiming_penalty=0; //For shooting at shading target, if screen is red, MAKEME: When screen red.
@@ -276,7 +276,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 	}
 	if (!no_fire) //If going to fire weapon
 	{
-		cmd->ucmd.buttons |= BT_ATTACK;
+		cmd->buttons |= BT_ATTACK;
 	}
 	//Prevents bot from jerking, when firing automatic things with low skill.
 }
@@ -503,7 +503,7 @@ void FCajunMaster::SetBodyAt (FLevelLocals *Level, const DVector3 &pos, int host
 
 
 //Emulates missile travel. Returns distance travelled.
-double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
+double FCajunMaster::FakeFire (AActor *source, AActor *dest, usercmd_t *cmd)
 {
 	AActor *th = Spawn (source->Level, "CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
@@ -525,7 +525,7 @@ double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	return dist;
 }
 
-DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
+DAngle DBot::FireRox (AActor *enemy, usercmd_t *cmd)
 {
 	double dist;
 	AActor *actor;

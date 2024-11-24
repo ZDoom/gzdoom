@@ -536,3 +536,8 @@ void FConsoleWindow::NetClose()
 {
 	// TODO: Implement this
 }
+
+bool FConsoleWindow::ShouldStartNet()
+{
+	return false;
+}

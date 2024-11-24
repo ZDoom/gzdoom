@@ -63,7 +63,7 @@ extern dirtype_t diags[4];
 
 //Called while the bot moves after its dest mobj
 //which can be a weapon/enemy/item whatever.
-void DBot::Roam (ticcmd_t *cmd)
+void DBot::Roam (usercmd_t *cmd)
 {
 
 	if (Reachable(dest))
@@ -89,7 +89,7 @@ void DBot::Roam (ticcmd_t *cmd)
 	}
 }
 
-bool DBot::Move (ticcmd_t *cmd)
+bool DBot::Move (usercmd_t *cmd)
 {
 	double tryx, tryy;
 	bool try_ok;
@@ -136,20 +136,20 @@ bool DBot::Move (ticcmd_t *cmd)
 		}
 		if (good && ((pr_botopendoor() >= 203) ^ (good & 1)))
 		{
-			cmd->ucmd.buttons |= BT_USE;
-			cmd->ucmd.forwardmove = FORWARDRUN;
+			cmd->buttons |= BT_USE;
+			cmd->forwardmove = FORWARDRUN;
 			return true;
 		}
 		else
 			return false;
 	}
 	else //Move forward.
-		cmd->ucmd.forwardmove = FORWARDRUN;
+		cmd->forwardmove = FORWARDRUN;
 
 	return true;
 }
 
-bool DBot::TryWalk (ticcmd_t *cmd)
+bool DBot::TryWalk (usercmd_t *cmd)
 {
     if (!Move (cmd))
         return false;
@@ -158,7 +158,7 @@ bool DBot::TryWalk (ticcmd_t *cmd)
     return true;
 }
 
-void DBot::NewChaseDir (ticcmd_t *cmd)
+void DBot::NewChaseDir (usercmd_t *cmd)
 {
     dirtype_t   d[3];
 
@@ -290,7 +290,7 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
 // This is also a traverse function for
 // bots pre-rocket fire (preventing suicide)
 //
-bool FCajunMaster::CleanAhead (AActor *thing, double x, double y, ticcmd_t *cmd)
+bool FCajunMaster::CleanAhead (AActor *thing, double x, double y, usercmd_t *cmd)
 {
 	FCheckPosition tm;
 
@@ -310,7 +310,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, double x, double y, ticcmd_t *cmd)
 
 			//Jumpable
 			if(tm.floorz > (thing->Sector->floorplane.ZatPoint(x, y)+thing->MaxStepHeight))
-				cmd->ucmd.buttons |= BT_JUMP;
+				cmd->buttons |= BT_JUMP;
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&

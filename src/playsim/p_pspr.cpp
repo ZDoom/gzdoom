@@ -715,7 +715,7 @@ static void P_CheckWeaponButtons (player_t *player)
 	for (size_t i = 0; i < countof(ButtonChecks); ++i)
 	{
 		if ((player->WeaponState & ButtonChecks[i].StateFlag) &&
-			(player->cmd.ucmd.buttons & ButtonChecks[i].ButtonFlag))
+			(player->cmd.buttons & ButtonChecks[i].ButtonFlag))
 		{
 			FState *state = weapon->FindState(ButtonChecks[i].StateName);
 			// [XA] don't change state if still null, so if the modder

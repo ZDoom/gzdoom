@@ -644,7 +644,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					barNum = sc.MustMatchString(StatusBars);
 				}
 				// SBARINFO_APPENDSTATUSBAR shouldn't delete the old HUD if it exists.
-				if (command != SBARINFO_APPENDSTATUSBAR)
+				if(command != SBARINFO_APPENDSTATUSBAR)
 				{
 					if (this->huds[barNum] != NULL)
 					{
@@ -652,7 +652,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					}
 					this->huds[barNum] = new SBarInfoMainBlock(this);
 				}
-				else if (this->huds[barNum] == NULL)
+				else if(this->huds[barNum] == NULL)
 				{
 					sc.ScriptError("Status bar '%s' has not been created and cannot be appended to. Use 'StatusBar' instead.", StatusBars[barNum]);
 				}

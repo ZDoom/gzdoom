@@ -805,6 +805,8 @@ public:
 	void RemoveForceField();
 	int Index() const { return sectornum; }
 
+	bool IsDangerous(const DVector3& pos, double height) const;
+
 	void AdjustFloorClip () const;
 	void SetColor(PalEntry pe, int desat);
 	void SetFade(PalEntry pe);

@@ -435,6 +435,8 @@ public:
 	DAngle ConversationNPCAngle = nullAngle;
 	bool ConversationFaceTalker = false;
 
+	DVector3 LastSafePos = {}; // Mark the last known safe location the player was standing.
+
 	double GetDeltaViewHeight() const
 	{
 		return (mo->FloatVar(NAME_ViewHeight) + crouchviewdelta - viewheight) / 8;

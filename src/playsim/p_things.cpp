@@ -561,13 +561,13 @@ int P_Thing_CheckInputNum(player_t *p, int inputnum)
 		case INPUT_UPMOVE:			renum = p->original_cmd.upmove;			break;
 
 		case MODINPUT_OLDBUTTONS:	renum = p->oldbuttons;					break;
-		case MODINPUT_BUTTONS:		renum = p->cmd.ucmd.buttons;			break;
-		case MODINPUT_PITCH:		renum = p->cmd.ucmd.pitch;				break;
-		case MODINPUT_YAW:			renum = p->cmd.ucmd.yaw;				break;
-		case MODINPUT_ROLL:			renum = p->cmd.ucmd.roll;				break;
-		case MODINPUT_FORWARDMOVE:	renum = p->cmd.ucmd.forwardmove;		break;
-		case MODINPUT_SIDEMOVE:		renum = p->cmd.ucmd.sidemove;			break;
-		case MODINPUT_UPMOVE:		renum = p->cmd.ucmd.upmove;				break;
+		case MODINPUT_BUTTONS:		renum = p->cmd.buttons;					break;
+		case MODINPUT_PITCH:		renum = p->cmd.pitch;					break;
+		case MODINPUT_YAW:			renum = p->cmd.yaw;						break;
+		case MODINPUT_ROLL:			renum = p->cmd.roll;					break;
+		case MODINPUT_FORWARDMOVE:	renum = p->cmd.forwardmove;				break;
+		case MODINPUT_SIDEMOVE:		renum = p->cmd.sidemove;				break;
+		case MODINPUT_UPMOVE:		renum = p->cmd.upmove;					break;
 
 		default:					renum = 0;								break;
 		}

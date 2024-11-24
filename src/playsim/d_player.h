@@ -321,7 +321,7 @@ public:
 
 	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;
-	ticcmd_t	cmd = {};
+	usercmd_t	cmd = {};
 	usercmd_t	original_cmd = {};
 	uint32_t		original_oldbuttons = 0;
 

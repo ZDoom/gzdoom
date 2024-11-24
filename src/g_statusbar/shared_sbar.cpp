@@ -1234,19 +1234,28 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 }
 
 
-void DBaseStatusBar::DrawConsistancy () const
+void DBaseStatusBar::DrawConsistancy() const
 {
 	if (!netgame)
 		return;
 
 	bool desync = false;
 	FString text = "Out of sync with:";
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (auto client : NetworkClients)
 	{
-		if (playeringame[i] && players[i].inconsistant)
+		if (players[client].inconsistant)
 		{
 			desync = true;
-			text.AppendFormat(" %s (%d)", players[i].userinfo.GetName(10u), i + 1);
+			// Fell out of sync with the host in packet server mode. Which specific user it is doesn't really matter.
+			if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
+			{
+				text.AppendFormat(" %s (%d)", players[Net_Arbitrator].userinfo.GetName(10u), Net_Arbitrator + 1);
+				break;
+			}
+			else
+			{
+				text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client + 1);
+			}
 		}
 	}
 
@@ -1265,19 +1274,19 @@ void DBaseStatusBar::DrawConsistancy () const
 	}
 }
 
-void DBaseStatusBar::DrawWaiting () const
+void DBaseStatusBar::DrawWaiting() const
 {
 	if (!netgame)
 		return;
 
 	FString text = "Waiting for:";
 	bool isWaiting = false;
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (auto client : NetworkClients)
 	{
-		if (playeringame[i] && players[i].waiting)
+		if (players[client].waiting)
 		{
 			isWaiting = true;
-			text.AppendFormat(" %s (%d)", players[i].userinfo.GetName(10u), i + 1);
+			text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client + 1);
 		}
 	}
 

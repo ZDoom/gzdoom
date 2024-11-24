@@ -32,25 +32,109 @@
 #include "doomdef.h"
 #include "d_protocol.h"
 #include "i_net.h"
+#include <queue>
+
+uint64_t I_msTime();
 
 class FDynamicBuffer
 {
 public:
-	FDynamicBuffer ();
-	~FDynamicBuffer ();
+	FDynamicBuffer();
+	~FDynamicBuffer();
 
-	void SetData (const uint8_t *data, int len);
-	uint8_t *GetData (int *len = NULL);
+	void SetData(const uint8_t *data, int len);
+	uint8_t* GetData(int *len = nullptr);
 
 private:
-	uint8_t *m_Data;
+	uint8_t* m_Data;
 	int m_Len, m_BufferLen;
 };
 
-extern FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
+enum EClientFlags
+{
+	CF_NONE				= 0,
+	CF_QUIT				= 1,		// If in packet server mode, this client sent an exit command and needs to be disconnected.
+	CF_MISSING_SEQ		= 1 << 1,	// If a sequence was missed/out of order, ask this client to send back over their info.
+	CF_RETRANSMIT_SEQ	= 1 << 2,	// If set, this client needs command data resent to them.
+	CF_MISSING_CON		= 1 << 3,	// If a consistency was missed/out of order, ask this client to send back over their info.
+	CF_RETRANSMIT_CON	= 1 << 4,	// If set, this client needs consistency data resent to them.
+	CF_UPDATED			= 1 << 5,	// Got an updated packet from this client.
+
+	CF_RETRANSMIT = CF_RETRANSMIT_CON | CF_RETRANSMIT_SEQ,
+	CF_MISSING = CF_MISSING_CON | CF_MISSING_SEQ,
+};
+
+struct FClientNetState
+{
+	// Networked client data.
+	struct FNetTic {
+		FDynamicBuffer	Data;
+		usercmd_t		Command;
+	} Tics[BACKUPTICS] = {};
+
+	// Local information about client.
+	uint8_t		CurrentLatency = 0u;		// Current latency id the client is on. If the one the client sends back is > this, update RecvTime and mark a new SentTime.
+	bool		bNewLatency = true;			// If the sequence was bumped, the next latency packet sent out should record the send time.
+	uint16_t	AverageLatency = 0u;		// Calculate the average latency every second or so, that way it doesn't give huge variance in the scoreboard.
+	uint64_t	SentTime[MAXSENDTICS] = {};	// Timestamp for when we sent out the packet to this client.
+	uint64_t	RecvTime[MAXSENDTICS] = {};	// Timestamp for when the client acknowledged our last packet. If in packet server mode, this is the server's delta.
+
+	int				Flags = 0;				// State of this client.
+
+	uint8_t			ResendID = 0u;			// Make sure that if the retransmit happened on a wait barrier, it can be properly resent back over.
+	int				ResendSequenceFrom = -1; // If >= 0, send from this sequence up to the most recent one, capped to MAXSENDTICS.
+	int				SequenceAck = -1;		// The last sequence the client reported from us.
+	int 			CurrentSequence = -1;	// The last sequence we've gotten from this client.
+
+	// Every packet includes consistencies for tics that client ran. When
+	// a world tic is ran, the local client will store all the consistencies
+	// of the clients in their LocalConsistency. Then the consistencies will
+	// be checked against retroactively as they come in.
+	int ResendConsistencyFrom = -1;				// If >= 0, send from this consistency up to the most recent one, capped to MAXSENDTICS.
+	int ConsistencyAck = -1;					// Last consistency the client reported from us.
+	int LastVerifiedConsistency = -1;			// Last consistency we checked from this client. If < CurrentNetConsistency, run through them.
+	int CurrentNetConsistency = -1;				// Last consistency we got from this client.
+	int16_t NetConsistency[BACKUPTICS] = {};	// Consistencies we got from this client.
+	int16_t LocalConsistency[BACKUPTICS] = {};	// Local consistency of the client to check against.
+};
+
+enum ENetMode : uint8_t
+{
+	NET_PeerToPeer,
+	NET_PacketServer
+};
+
+enum EChatType
+{
+	CHAT_DISABLED,
+	CHAT_TEAM_ONLY,
+	CHAT_GLOBAL,
+};
+
+// New packet structure:
+//
+//  One byte for the net command flags.
+//  Four bytes for the last sequence we got from that client.
+//  Four bytes for the last consistency we got from that client.
+//  If NCMD_QUITTERS set, one byte for the number of players followed by one byte for each player's consolenum. Packet server mode only.
+//  One byte for the number of players.
+//  One byte for the number of tics.
+//   If > 0, four bytes for the base sequence being worked from.
+//  One byte for the number of world tics ran.
+//   If > 0, four bytes for the base consistency being worked from.
+//  If in packet server mode and from the host, one byte for how far ahead of the host we are.
+//  For each player:
+//   One byte for the player number.
+//	 If in packet server mode and from the host, two bytes for the latency to the host.
+//   For each consistency:
+//    One byte for the delta from the base consistency.
+//    Two bytes for each consistency.
+//   For each tic:
+//    One byte for the delta from the base sequence.
+//    The remaining command and event data for that player.
 
 // Create any new ticcmds and broadcast to other players.
-void NetUpdate (void);
+void NetUpdate(int tics);
 
 // Broadcasts special packets to other players
 //	to notify of game exit
@@ -59,74 +143,36 @@ void D_QuitNetGame (void);
 //? how many ticks to run?
 void TryRunTics (void);
 
-//Use for checking to see if the netgame has stalled
-void Net_CheckLastReceived(int);
-
 // [RH] Functions for making and using special "ticcmds"
-void Net_NewMakeTic ();
-void Net_WriteInt8 (uint8_t);
-void Net_WriteInt16 (int16_t);
-void Net_WriteInt32 (int32_t);
+void Net_NewClientTic();
+void Net_Initialize();
+void Net_WriteInt8(uint8_t);
+void Net_WriteInt16(int16_t);
+void Net_WriteInt32(int32_t);
 void Net_WriteInt64(int64_t);
-void Net_WriteFloat (float);
+void Net_WriteFloat(float);
 void Net_WriteDouble(double);
-void Net_WriteString (const char *);
-void Net_WriteBytes (const uint8_t *, int len);
+void Net_WriteString(const char *);
+void Net_WriteBytes(const uint8_t *, int len);
 
-void Net_DoCommand (int type, uint8_t **stream, int player);
-void Net_SkipCommand (int type, uint8_t **stream);
+void Net_DoCommand(int cmd, uint8_t **stream, int player);
+void Net_SkipCommand(int cmd, uint8_t **stream);
 
-void Net_ClearBuffers ();
-
+void Net_ResetCommands(bool midTic);
+void Net_SetWaiting();
+void Net_ClearBuffers();
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 
 // This is the interface to the packet driver, a separate program
 // in DOS, but just an abstraction here.
-extern	doomcom_t		doomcom;
-
-extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
-
-extern	int 			maketic;
-extern	int 			nettics[MAXNETNODES];
-extern	int				netdelay[MAXNETNODES][BACKUPTICS];
-extern	int 			nodeforplayer[MAXPLAYERS];
-
-extern	ticcmd_t		netcmds[MAXPLAYERS][BACKUPTICS];
-extern	int 			ticdup;
+extern doomcom_t			doomcom;
+extern usercmd_t			LocalCmds[LOCALCMDTICS];
+extern int					ClientTic;
+extern FClientNetState		ClientStates[MAXPLAYERS];
+extern ENetMode				NetMode;
 
 class player_t;
 class DObject;
-
-
-// [RH]
-// New generic packet structure:
-//
-// Header:
-//  One byte with following flags.
-//  One byte with starttic
-//  One byte with master's maketic (master -> slave only!)
-//  If NCMD_RETRANSMIT set, one byte with retransmitfrom
-//  If NCMD_XTICS set, one byte with number of tics (minus 3, so theoretically up to 258 tics in one packet)
-//  If NCMD_QUITTERS, one byte with number of players followed by one byte with each player's consolenum
-//  If NCMD_MULTI, one byte with number of players followed by one byte with each player's consolenum
-//     - The first player's consolenum is not included in this list, because it always matches the sender
-//
-// For each tic:
-//  Two bytes with consistancy check, followed by tic data
-//
-// Setup packets are different, and are described just before D_ArbitrateNetStart().
-
-#define NCMD_EXIT				0x80
-#define NCMD_RETRANSMIT 		0x40
-#define NCMD_SETUP				0x20
-#define NCMD_MULTI				0x10		// multiple players in this packet
-#define NCMD_QUITTERS			0x08		// one or more players just quit (packet server only)
-#define NCMD_COMPRESSED			0x04		// remainder of packet is compressed
-
-#define NCMD_XTICS				0x03		// packet contains >2 tics
-#define NCMD_2TICS				0x02		// packet contains 2 tics
-#define NCMD_1TICS				0x01		// packet contains 1 tic
-#define NCMD_0TICS				0x00		// packet contains 0 tics
 
 #endif

@@ -57,11 +57,6 @@ const char *GetVersionString();
 #define ENG_MINOR 15
 #define ENG_REVISION 0
 
-// Version identifier for network games.
-// Bump it every time you do a release unless you're certain you
-// didn't change anything that will affect sync.
-#define NETGAMEVERSION 235
-
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().

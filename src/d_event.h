@@ -99,6 +99,7 @@ enum gameaction_t : int
 	ga_intro,
 	ga_intermission,
 	ga_titleloop,
+	ga_mapwarp,
 };
 
 extern	gameaction_t	gameaction;

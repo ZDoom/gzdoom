@@ -58,6 +58,7 @@ class FTTYStartupScreen : public FStartupScreen
 		void NetProgress(int count);
 		void NetDone();
 		void NetClose();
+		bool ShouldStartNet();
 		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 	protected:
 		bool DidNetInit;
@@ -241,6 +242,11 @@ void FTTYStartupScreen::NetProgress(int count)
 void FTTYStartupScreen::NetClose()
 {
 	// TODO: Implement this
+}
+
+bool FTTYStartupScreen::ShouldStartNet()
+{
+	return false;
 }
 
 //===========================================================================

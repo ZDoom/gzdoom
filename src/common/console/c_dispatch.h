@@ -74,6 +74,8 @@ void C_ClearDelayedCommands();
 
 // Process a single console command. Does not handle wait.
 void C_DoCommand (const char *cmd, int keynum=0);
+bool C_IsValidInt(const char* arg, int& value, int base = 10);
+bool C_IsValidFloat(const char* arg, double& value);
 
 FExecList *C_ParseExecFile(const char *file, FExecList *source);
 void C_SearchForPullins(FExecList *exec, const char *file, class FCommandLine &args);

@@ -1562,11 +1562,26 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 
 //==========================================================================
 //
+// Started the game loaded into a map from the console. Run at least one tic
+// so it can properly render out in net games.
+//
+//==========================================================================
+
+void G_DoMapWarp()
+{
+	gameaction = ga_nothing;
+	Net_ResetCommands(true);
+	Net_SetWaiting();
+}
+
+//==========================================================================
+//
 //
 //==========================================================================
 
 void G_DoWorldDone (void) 
-{		 
+{		
+	Net_ResetCommands(true);
 	gamestate = GS_LEVEL;
 	if (nextlevel.IsEmpty())
 	{
@@ -1578,6 +1593,7 @@ void G_DoWorldDone (void)
 	G_DoLoadLevel (nextlevel, startpos, true, false);
 	gameaction = ga_nothing;
 	viewactive = true; 
+	Net_SetWaiting();
 }
 
 //==========================================================================

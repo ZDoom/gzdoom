@@ -190,6 +190,22 @@ static const char *KeyConfCommands[] =
 
 // CODE --------------------------------------------------------------------
 
+bool C_IsValidInt(const char* arg, int& value, int base)
+{
+	char* end_read;
+	value = std::strtol(arg, &end_read, base);
+	ptrdiff_t chars_read = end_read - arg;
+	return chars_read == strlen(arg);
+}
+
+bool C_IsValidFloat(const char* arg, double& value)
+{
+	char* end_read;
+	value = std::strtod(arg, &end_read);
+	ptrdiff_t chars_read = end_read - arg;
+	return chars_read == strlen(arg);
+}
+
 void C_DoCommand (const char *cmd, int keynum)
 {
 	FConsoleCommand *com;

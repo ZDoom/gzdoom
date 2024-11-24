@@ -100,8 +100,8 @@ extern int startpos, laststartpos;
 
 bool WriteZip(const char* filename, const FileSys::FCompressedBuffer* content, size_t contentcount);
 bool	G_CheckDemoStatus (void);
-void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
-void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);
+void	G_ReadDemoTiccmd (usercmd_t *cmd, int player);
+void	G_WriteDemoTiccmd (usercmd_t *cmd, int player, int buf);
 void	G_PlayerReborn (int player);
 
 void	G_DoNewGame (void);
@@ -110,6 +110,7 @@ void	G_DoPlayDemo (void);
 void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
+void	G_DoMapWarp();
 void	G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
 void	G_DoQuickSave ();
@@ -126,6 +127,7 @@ CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
+EXTERN_CVAR(Bool, net_disablepause)
 
 //==========================================================================
 //
@@ -185,8 +187,6 @@ uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
-  
-short			consistancy[MAXPLAYERS][BACKUPTICS];
  
  
 #define MAXPLMOVE				(forwardmove[1]) 
@@ -353,6 +353,12 @@ CCMD (land)
 
 CCMD (pause)
 {
+	if (netgame && !players[consoleplayer].settings_controller && net_disablepause)
+	{
+		Printf("Only settings controllers can currently (un)pause the game\n");
+		return;
+	}
+
 	sendpause = true;
 }
 
@@ -580,9 +586,9 @@ FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname)
 	return cvar;
 }
 
-static ticcmd_t emptycmd;
+static usercmd_t emptycmd;
 
-ticcmd_t* G_BaseTiccmd()
+usercmd_t* G_BaseTiccmd()
 {
 	return &emptycmd;
 }
@@ -594,7 +600,7 @@ ticcmd_t* G_BaseTiccmd()
 // or reads it from the demo buffer.
 // If recording a demo, write it out
 //
-void G_BuildTiccmd (ticcmd_t *cmd)
+void G_BuildTiccmd (usercmd_t *cmd)
 {
 	int 		strafe;
 	int 		speed;
@@ -602,12 +608,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	int 		side;
 	int			fly;
 
-	ticcmd_t	*base;
+	usercmd_t	*base;
 
 	base = G_BaseTiccmd (); 
 	*cmd = *base;
-
-	cmd->consistancy = consistancy[consoleplayer][(maketic/ticdup)%BACKUPTICS];
 
 	strafe = buttonMap.ButtonDown(Button_Strafe);
 	speed = buttonMap.ButtonDown(Button_Speed) ^ (int)cl_run;
@@ -618,7 +622,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (buttonMap.ButtonDown(Button_Left) || buttonMap.ButtonDown(Button_Right))
-		turnheld += ticdup;
+		turnheld += doomcom.ticdup;
 	else
 		turnheld = 0;
 
@@ -682,33 +686,33 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		side -= sidemove[speed];
 
 	// buttons
-	if (buttonMap.ButtonDown(Button_Attack))		cmd->ucmd.buttons |= BT_ATTACK;
-	if (buttonMap.ButtonDown(Button_AltAttack))		cmd->ucmd.buttons |= BT_ALTATTACK;
-	if (buttonMap.ButtonDown(Button_Use))			cmd->ucmd.buttons |= BT_USE;
-	if (buttonMap.ButtonDown(Button_Jump))			cmd->ucmd.buttons |= BT_JUMP;
-	if (buttonMap.ButtonDown(Button_Crouch))		cmd->ucmd.buttons |= BT_CROUCH;
-	if (buttonMap.ButtonDown(Button_Zoom))			cmd->ucmd.buttons |= BT_ZOOM;
-	if (buttonMap.ButtonDown(Button_Reload))		cmd->ucmd.buttons |= BT_RELOAD;
+	if (buttonMap.ButtonDown(Button_Attack))		cmd->buttons |= BT_ATTACK;
+	if (buttonMap.ButtonDown(Button_AltAttack))		cmd->buttons |= BT_ALTATTACK;
+	if (buttonMap.ButtonDown(Button_Use))			cmd->buttons |= BT_USE;
+	if (buttonMap.ButtonDown(Button_Jump))			cmd->buttons |= BT_JUMP;
+	if (buttonMap.ButtonDown(Button_Crouch))		cmd->buttons |= BT_CROUCH;
+	if (buttonMap.ButtonDown(Button_Zoom))			cmd->buttons |= BT_ZOOM;
+	if (buttonMap.ButtonDown(Button_Reload))		cmd->buttons |= BT_RELOAD;
 
-	if (buttonMap.ButtonDown(Button_User1))			cmd->ucmd.buttons |= BT_USER1;
-	if (buttonMap.ButtonDown(Button_User2))			cmd->ucmd.buttons |= BT_USER2;
-	if (buttonMap.ButtonDown(Button_User3))			cmd->ucmd.buttons |= BT_USER3;
-	if (buttonMap.ButtonDown(Button_User4))			cmd->ucmd.buttons |= BT_USER4;
+	if (buttonMap.ButtonDown(Button_User1))			cmd->buttons |= BT_USER1;
+	if (buttonMap.ButtonDown(Button_User2))			cmd->buttons |= BT_USER2;
+	if (buttonMap.ButtonDown(Button_User3))			cmd->buttons |= BT_USER3;
+	if (buttonMap.ButtonDown(Button_User4))			cmd->buttons |= BT_USER4;
 
-	if (buttonMap.ButtonDown(Button_Speed))			cmd->ucmd.buttons |= BT_SPEED;
-	if (buttonMap.ButtonDown(Button_Strafe))		cmd->ucmd.buttons |= BT_STRAFE;
-	if (buttonMap.ButtonDown(Button_MoveRight))		cmd->ucmd.buttons |= BT_MOVERIGHT;
-	if (buttonMap.ButtonDown(Button_MoveLeft))		cmd->ucmd.buttons |= BT_MOVELEFT;
-	if (buttonMap.ButtonDown(Button_LookDown))		cmd->ucmd.buttons |= BT_LOOKDOWN;
-	if (buttonMap.ButtonDown(Button_LookUp))		cmd->ucmd.buttons |= BT_LOOKUP;
-	if (buttonMap.ButtonDown(Button_Back))			cmd->ucmd.buttons |= BT_BACK;
-	if (buttonMap.ButtonDown(Button_Forward))		cmd->ucmd.buttons |= BT_FORWARD;
-	if (buttonMap.ButtonDown(Button_Right))			cmd->ucmd.buttons |= BT_RIGHT;
-	if (buttonMap.ButtonDown(Button_Left))			cmd->ucmd.buttons |= BT_LEFT;
-	if (buttonMap.ButtonDown(Button_MoveDown))		cmd->ucmd.buttons |= BT_MOVEDOWN;
-	if (buttonMap.ButtonDown(Button_MoveUp))		cmd->ucmd.buttons |= BT_MOVEUP;
-	if (buttonMap.ButtonDown(Button_ShowScores))	cmd->ucmd.buttons |= BT_SHOWSCORES;
-	if (speed) cmd->ucmd.buttons |= BT_RUN;
+	if (buttonMap.ButtonDown(Button_Speed))			cmd->buttons |= BT_SPEED;
+	if (buttonMap.ButtonDown(Button_Strafe))		cmd->buttons |= BT_STRAFE;
+	if (buttonMap.ButtonDown(Button_MoveRight))		cmd->buttons |= BT_MOVERIGHT;
+	if (buttonMap.ButtonDown(Button_MoveLeft))		cmd->buttons |= BT_MOVELEFT;
+	if (buttonMap.ButtonDown(Button_LookDown))		cmd->buttons |= BT_LOOKDOWN;
+	if (buttonMap.ButtonDown(Button_LookUp))		cmd->buttons |= BT_LOOKUP;
+	if (buttonMap.ButtonDown(Button_Back))			cmd->buttons |= BT_BACK;
+	if (buttonMap.ButtonDown(Button_Forward))		cmd->buttons |= BT_FORWARD;
+	if (buttonMap.ButtonDown(Button_Right))			cmd->buttons |= BT_RIGHT;
+	if (buttonMap.ButtonDown(Button_Left))			cmd->buttons |= BT_LEFT;
+	if (buttonMap.ButtonDown(Button_MoveDown))		cmd->buttons |= BT_MOVEDOWN;
+	if (buttonMap.ButtonDown(Button_MoveUp))		cmd->buttons |= BT_MOVEUP;
+	if (buttonMap.ButtonDown(Button_ShowScores))	cmd->buttons |= BT_SHOWSCORES;
+	if (speed) cmd->buttons |= BT_RUN;
 
 	// Handle joysticks/game controllers.
 	float joyaxes[NUM_JOYAXIS];
@@ -746,7 +750,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		forward += xs_CRoundToInt(mousey * m_forward);
 	}
 
-	cmd->ucmd.pitch = LocalViewPitch >> 16;
+	cmd->pitch = LocalViewPitch >> 16;
 
 	if (SendLand)
 	{
@@ -769,10 +773,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	else if (side < -MAXPLMOVE)
 		side = -MAXPLMOVE;
 
-	cmd->ucmd.forwardmove += forward;
-	cmd->ucmd.sidemove += side;
-	cmd->ucmd.yaw = LocalViewAngle >> 16;
-	cmd->ucmd.upmove = fly;
+	cmd->forwardmove += forward;
+	cmd->sidemove += side;
+	cmd->yaw = LocalViewAngle >> 16;
+	cmd->upmove = fly;
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 
@@ -780,7 +784,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (sendturn180)
 	{
 		sendturn180 = false;
-		cmd->ucmd.buttons |= BT_TURN180;
+		cmd->buttons |= BT_TURN180;
 	}
 	if (sendpause)
 	{
@@ -814,8 +818,8 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		SendItemDrop = NULL;
 	}
 
-	cmd->ucmd.forwardmove <<= 8;
-	cmd->ucmd.sidemove <<= 8;
+	cmd->forwardmove <<= 8;
+	cmd->sidemove <<= 8;
 }
 
 static int LookAdjust(int look)
@@ -1109,53 +1113,25 @@ static void G_FullConsole()
 
 }
 
-//==========================================================================
-//
-// FRandom :: StaticSumSeeds
-//
-// This function produces a uint32_t that can be used to check the consistancy
-// of network games between different machines. Only a select few RNGs are
-// used for the sum, because not all RNGs are important to network sync.
-//
-//==========================================================================
-
-extern FRandom pr_spawnmobj;
-extern FRandom pr_acs;
-extern FRandom pr_chase;
-extern FRandom pr_damagemobj;
-
-static uint32_t StaticSumSeeds()
-{
-	return
-		pr_spawnmobj.Seed() +
-		pr_acs.Seed() +
-		pr_chase.Seed() +
-		pr_damagemobj.Seed();
-}
-
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
 //
 void G_Ticker ()
 {
-	int i;
 	gamestate_t	oldgamestate;
 
 	// do player reborns if needed
-	for (i = 0; i < MAXPLAYERS; i++)
+	// TODO: These should really be moved to queues.
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (playeringame[i])
-		{
-			if (players[i].playerstate == PST_GONE)
-			{
-				G_DoPlayerPop(i);
-			}
-			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
-			{
-				primaryLevel->DoReborn(i);
-			}
-		}
+		if (!playeringame[i])
+			continue;
+
+		if (players[i].playerstate == PST_GONE)
+			G_DoPlayerPop(i);
+		else if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
+			primaryLevel->DoReborn(i, false);
 	}
 
 	if (ToggleFullscreen)
@@ -1205,6 +1181,9 @@ void G_Ticker ()
 		case  ga_playdemo:
 			G_DoPlayDemo ();
 			break;
+		case ga_mapwarp:
+			G_DoMapWarp();
+			break;
 		case ga_completed:
 			G_DoCompleted ();
 			break;
@@ -1251,68 +1230,34 @@ void G_Ticker ()
 	}
 
 	// get commands, check consistancy, and build new consistancy check
-	int buf = (gametic/ticdup)%BACKUPTICS;
-
-	// [RH] Include some random seeds and player stuff in the consistancy
-	// check, not just the player's x position like BOOM.
-	uint32_t rngsum = StaticSumSeeds ();
+	const int curTic = gametic / doomcom.ticdup;
 
 	//Added by MC: For some of that bot stuff. The main bot function.
 	primaryLevel->BotInfo.Main (primaryLevel);
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (auto client : NetworkClients)
 	{
-		if (playeringame[i])
+		usercmd_t *cmd = &players[client].cmd;
+		usercmd_t* nextCmd = &ClientStates[client].Tics[curTic % BACKUPTICS].Command;
+
+		RunPlayerCommands(client, curTic);
+		if (demorecording)
+			G_WriteDemoTiccmd(nextCmd, client, curTic);
+
+		players[client].oldbuttons = cmd->buttons;
+		// If the user alt-tabbed away, paused gets set to -1. In this case,
+		// we do not want to read more demo commands until paused is no
+		// longer negative.
+		if (demoplayback)
+			G_ReadDemoTiccmd(cmd, client);
+		else
+			memcpy(cmd, nextCmd, sizeof(usercmd_t));
+
+		// check for turbo cheats
+		if (multiplayer && turbo > 100.f && cmd->forwardmove > TURBOTHRESHOLD &&
+			!(gametic & 31) && ((gametic >> 5) & (MAXPLAYERS-1)) == client)
 		{
-			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t *newcmd = &netcmds[i][buf];
-
-			if ((gametic % ticdup) == 0)
-			{
-				RunNetSpecs (i, buf);
-			}
-			if (demorecording)
-			{
-				G_WriteDemoTiccmd (newcmd, i, buf);
-			}
-			players[i].oldbuttons = cmd->ucmd.buttons;
-			// If the user alt-tabbed away, paused gets set to -1. In this case,
-			// we do not want to read more demo commands until paused is no
-			// longer negative.
-			if (demoplayback)
-			{
-				G_ReadDemoTiccmd (cmd, i);
-			}
-			else
-			{
-				memcpy(cmd, newcmd, sizeof(ticcmd_t));
-			}
-
-			// check for turbo cheats
-			if (multiplayer && turbo > 100.f && cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
-				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
-			{
-				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
-			}
-
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%ticdup) == 0)
-			{
-				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
-				{
-					players[i].inconsistant = gametic - BACKUPTICS*ticdup;
-				}
-				if (players[i].mo)
-				{
-					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
-					sum ^= players[i].health;
-					consistancy[i][buf] = sum;
-				}
-				else
-				{
-					consistancy[i][buf] = rngsum;
-				}
-			}
+			Printf("%s is turbo!\n", players[client].userinfo.GetName());
 		}
 	}
 
@@ -2024,6 +1969,7 @@ void FinishLoadingCVars();
 
 void G_DoLoadGame ()
 {
+	Net_ResetCommands(true);
 	SetupLoadingCVars();
 	bool hidecon;
 
@@ -2180,6 +2126,7 @@ void G_DoLoadGame ()
 
 	NextSkill = -1;
 	arc("nextskill", NextSkill);
+	Net_SetWaiting();
 
 	if (level.info != nullptr)
 		level.info->Snapshot.Clean();
@@ -2524,7 +2471,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 // DEMO RECORDING
 //
 
-void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
+void G_ReadDemoTiccmd (usercmd_t *cmd, int player)
 {
 	int id = DEM_BAD;
 
@@ -2547,7 +2494,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 			break;
 
 		case DEM_USERCMD:
-			UnpackUserCmd (&cmd->ucmd, &cmd->ucmd, &demo_p);
+			UnpackUserCmd (*cmd, cmd, demo_p);
 			break;
 
 		case DEM_EMPTYUSERCMD:
@@ -2578,9 +2525,9 @@ CCMD (stop)
 	stoprecording = true;
 }
 
-extern uint8_t *lenspot;
+extern uint8_t *streamPos;
 
-void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
+void G_WriteDemoTiccmd (usercmd_t *cmd, int player, int buf)
 {
 	uint8_t *specdata;
 	int speclen;
@@ -2596,28 +2543,29 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = NetSpecs[player][buf].GetData (&speclen)) && gametic % ticdup == 0)
+	if ((specdata = ClientStates[player].Tics[buf % BACKUPTICS].Data.GetData (&speclen)) && !(gametic % doomcom.ticdup))
 	{
 		memcpy (demo_p, specdata, speclen);
 		demo_p += speclen;
-		NetSpecs[player][buf].SetData (NULL, 0);
+
+		ClientStates[player].Tics[buf % BACKUPTICS].Data.SetData(nullptr, 0);
 	}
 
 	// [RH] Now write out a "normal" ticcmd.
-	WriteUserCmdMessage (&cmd->ucmd, &players[player].cmd.ucmd, &demo_p);
+	WriteUserCmdMessage (*cmd, &players[player].cmd, demo_p);
 
 	// [RH] Bigger safety margin
 	if (demo_p > demobuffer + maxdemosize - 64)
 	{
 		ptrdiff_t pos = demo_p - demobuffer;
-		ptrdiff_t spot = lenspot - demobuffer;
+		ptrdiff_t spot = streamPos - demobuffer;
 		ptrdiff_t comp = democompspot - demobuffer;
 		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
 		demobuffer = (uint8_t *)M_Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
-		lenspot = demobuffer + spot;
+		streamPos = demobuffer + spot;
 		democompspot = demobuffer + comp;
 		demobodyspot = demobuffer + body;
 	}
@@ -2999,7 +2947,6 @@ void G_TimeDemo (const char* name)
 	nodrawers = !!Args->CheckParm ("-nodraw");
 	noblit = !!Args->CheckParm ("-noblit");
 	timingdemo = true;
-	singletics = true;
 
 	defdemoname = name;
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
@@ -3039,7 +2986,6 @@ bool G_CheckDemoStatus (void)
 		demoplayback = false;
 		netgame = false;
 		multiplayer = false;
-		singletics = false;
 		for (int i = 1; i < MAXPLAYERS; i++)
 			playeringame[i] = 0;
 		consoleplayer = 0;

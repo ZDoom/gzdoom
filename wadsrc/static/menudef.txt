@@ -654,6 +654,8 @@ OptionMenu "OtherControlsMenu" protected
 	StaticText ""
 	Control    "$CNTRLMNU_CHASECAM"        , "chase"
 	Control    "$CNTRLMNU_COOPSPY"         , "spynext"
+	Control    "$CNTRLMNU_COOPSPYPREV"     , "spyprev"
+	Control    "$CNTRLMNU_COOPSPYCANCEL"   , "spycancel"
 
 	StaticText ""
 	Control    "$CNTRLMNU_SCREENSHOT"      , "screenshot"
@@ -2378,21 +2380,25 @@ OptionMenu NetworkOptions protected
 {
 	Title "$NETMNU_TITLE"
 	StaticText "$NETMNU_LOCALOPTIONS", 1
+	Option "$NETMNU_CHATTYPE",				"cl_showchat", "ChatTypes"
+	Option "$NETMNU_NOBOLDCHAT",			"cl_noboldchat", "OnOff"
+	Option "$NETMNU_NOCHATSND",				"cl_nochatsound", "OnOff"
 	Option "$NETMNU_LINESPECIALPREDICTION",	"cl_predict_specials", "OnOff"
 	Slider "$NETMNU_PREDICTIONLERPSCALE",	"cl_rubberband_scale", 0.0, 1.0, 0.05, 2
 	Slider "$NETMNU_LERPTHRESHOLD",			"cl_rubberband_threshold", 0.0, 256.0, 8.0
 	StaticText " "
 	StaticText "$NETMNU_HOSTOPTIONS", 1
-	Option "$NETMNU_EXTRATICS",				"net_extratic", "ExtraTicMode"
-	Option "$NETMNU_TICBALANCE",			"net_ticbalance", "OnOff"
+	Option "$NETMNU_EXTRATICS",				"net_extratic", "OnOff"
+	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "OnOff"
+	NumberField "$NETMNU_CHATSLOMO",		"net_chatslowmode", 0, 300, 5
 
 }
 
-OptionValue ExtraTicMode
+OptionValue "ChatTypes"
 {
-	0, "$OPTVAL_NONE"
-	1, "1"
-	2, "$OPTVAL_ALLUNACKNOWLEDGED"
+	0, "$OPTVAL_DISABLECHAT"
+	1, "$OPTVAL_TEAMONLYCHAT"
+	2, "$OPTVAL_GLOBALCHAT"
 }
 
 OptionValue "LookupOrder"

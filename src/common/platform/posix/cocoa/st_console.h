@@ -67,6 +67,7 @@ public:
 	void NetProgress(int count);
 	void NetDone();
 	void NetClose();
+	bool ShouldStartNet();
 
 private:
 	NSWindow*            m_window;

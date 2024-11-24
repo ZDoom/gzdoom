@@ -206,3 +206,8 @@ void FBasicStartupScreen::NetClose()
 {
 	mainwindow.CloseNetStartPane();
 }
+
+bool FBasicStartupScreen::ShouldStartNet()
+{
+	return mainwindow.ShouldStartNetGame();
+}

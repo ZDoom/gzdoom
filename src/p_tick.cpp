@@ -72,6 +72,41 @@ bool P_CheckTickerPaused ()
 	return false;
 }
 
+void P_ClearLevelInterpolation()
+{
+	for (auto Level : AllLevels())
+	{
+		Level->interpolator.UpdateInterpolations();
+
+		auto it = Level->GetThinkerIterator<AActor>();
+		AActor* ac;
+
+		while ((ac = it.Next()))
+		{
+			ac->ClearInterpolation();
+			ac->ClearFOVInterpolation();
+		}
+	}
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+		{
+			DPSprite* pspr = players[i].psprites;
+			while (pspr)
+			{
+				pspr->ResetInterpolation();
+
+				pspr = pspr->Next;
+			}
+		}
+	}
+
+	R_ClearInterpolationPath();
+	if (StatusBar != nullptr)
+		StatusBar->ClearInterpolation();
+}
+
 //
 // P_Ticker
 //

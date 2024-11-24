@@ -64,7 +64,7 @@ constexpr int TICRATE = 35;
 enum
 {
 	// The maximum number of players, multiplayer/networking.
-	MAXPLAYERS = 8,
+	MAXPLAYERS = 16,
 
 	// Amount of damage done by a telefrag.
 	TELEFRAG_DAMAGE = 1000000

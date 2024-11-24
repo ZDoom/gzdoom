@@ -130,12 +130,12 @@ public:
 	void FinishTravel ();
 	bool IsLeader (player_t *player);
 	void SetBodyAt (FLevelLocals *Level, const DVector3 &pos, int hostnum);
-	double FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
+	double FakeFire (AActor *source, AActor *dest, usercmd_t *cmd);
 	bool SafeCheckPosition (AActor *actor, double x, double y, FCheckPosition &tm);
 	void BotTick(AActor *mo);
 
 	//(b_move.cpp)
-	bool CleanAhead (AActor *thing, double x, double y, ticcmd_t *cmd);
+	bool CleanAhead (AActor *thing, double x, double y, usercmd_t *cmd);
 	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
@@ -216,21 +216,21 @@ public:
 private:
 	//(b_think.cpp)
 	void Think ();
-	void ThinkForMove (ticcmd_t *cmd);
+	void ThinkForMove (usercmd_t *cmd);
 	void Set_enemy ();
 
 	//(b_func.cpp)
 	bool Reachable (AActor *target);
-	void Dofire (ticcmd_t *cmd);
+	void Dofire (usercmd_t *cmd);
 	AActor *Choose_Mate ();
 	AActor *Find_enemy ();
-	DAngle FireRox (AActor *enemy, ticcmd_t *cmd);
+	DAngle FireRox (AActor *enemy, usercmd_t *cmd);
 
 	//(b_move.cpp)
-	void Roam (ticcmd_t *cmd);
-	bool Move (ticcmd_t *cmd);
-	bool TryWalk (ticcmd_t *cmd);
-	void NewChaseDir (ticcmd_t *cmd);
+	void Roam (usercmd_t *cmd);
+	bool Move (usercmd_t *cmd);
+	bool TryWalk (usercmd_t *cmd);
+	void NewChaseDir (usercmd_t *cmd);
 	void TurnToAng ();
 	void Pitch (AActor *target);
 };

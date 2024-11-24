@@ -410,7 +410,7 @@ void player_t::SetLogNumber (int num)
 	if (lumpnum != -1)
 	{
 		auto fn = fileSystem.GetFileContainer(lumpnum);
-		auto wadname = fileSystem.GetResourceFileName(fn);
+		auto wadname = fileSystem.GetContainerName(fn);
 		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
 		{
 			// If this is an original IWAD text, try looking up its lower priority string version first.
@@ -895,7 +895,7 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		int wadnorm = fileSystem.GetFileContainer(spritenorm);
 		int wadcrouch = fileSystem.GetFileContainer(spritenorm);
 
-		if (wadnorm > fileSystem.GetMaxIwadNum() && wadcrouch <= fileSystem.GetMaxIwadNum())
+		if (wadnorm > fileSystem.GetMaxBaseNum() && wadcrouch <= fileSystem.GetMaxBaseNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			return false;

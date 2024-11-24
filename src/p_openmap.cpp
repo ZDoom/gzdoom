@@ -140,9 +140,9 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		// Names with more than 8 characters will only be checked as .wad and .map.
 		if (strlen(mapname) <= 8) lump_name = fileSystem.CheckNumForName(mapname);
 		fmt.Format("maps/%s.wad", mapname);
-		lump_wad = fileSystem.CheckNumForFullName(fmt.GetChars());
+		lump_wad = fileSystem.FindFile(fmt.GetChars());
 		fmt.Format("maps/%s.map", mapname);
-		lump_map = fileSystem.CheckNumForFullName(fmt.GetChars());
+		lump_map = fileSystem.FindFile(fmt.GetChars());
 		
 		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
 		{

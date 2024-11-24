@@ -53,14 +53,14 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
-		lumpnum2 = fileSystem.CheckNumForFullName(realfilename.GetChars());
+		lumpnum2 = fileSystem.FindFile(realfilename.GetChars());
 		mDataLump = lumpnum;
 		mAnivLump = lumpnum2;
 	}
 	else
 	{
 		realfilename.Substitute("_a.3d","_d.3d");
-		lumpnum2 = fileSystem.CheckNumForFullName(realfilename.GetChars());
+		lumpnum2 = fileSystem.FindFile(realfilename.GetChars());
 		mAnivLump = lumpnum;
 		mDataLump = lumpnum2;
 	}

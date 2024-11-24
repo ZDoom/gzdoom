@@ -129,7 +129,7 @@ public:
 	const char* GetFileName() const { return FileName; }
 	uint32_t GetFirstEntry() const { return FirstLump; }
 	int GetFlags() const noexcept { return flags; }
-	void SetFirstLump(uint32_t f) { FirstLump = f; }
+	void SetFirstFile(uint32_t f) { FirstLump = f; }
 	const char* GetHash() const { return Hash; }
 
 	int EntryCount() const { return NumLumps; }

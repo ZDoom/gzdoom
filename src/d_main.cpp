@@ -1966,7 +1966,7 @@ static FString CheckGameInfo(std::vector<std::string> & pwads)
 		{
 			// Found one!
 			auto data = check.ReadFile(num);
-			auto wadname = check.GetResourceFileName(check.GetFileContainer(num));
+			auto wadname = check.GetContainerName(check.GetFileContainer(num));
 			return ParseGameInfo(pwads, wadname, data.string(), (int)data.size());
 		}
 	}
@@ -1981,9 +1981,9 @@ static FString CheckGameInfo(std::vector<std::string> & pwads)
 
 static void SetMapxxFlag()
 {
-	int lump_name = fileSystem.CheckNumForName("MAP01", ns_global, fileSystem.GetIwadNum());
-	int lump_wad = fileSystem.CheckNumForFullNameInFile("maps/map01.wad", fileSystem.GetIwadNum());
-	int lump_map = fileSystem.CheckNumForFullNameInFile("maps/map01.map", fileSystem.GetIwadNum());
+	int lump_name = fileSystem.CheckNumForName("MAP01", ns_global, fileSystem.GetBaseNum());
+	int lump_wad = fileSystem.GetFileInContainer("maps/map01.wad", fileSystem.GetBaseNum());
+	int lump_map = fileSystem.GetFileInContainer("maps/map01.map", fileSystem.GetBaseNum());
 
 	if (lump_name >= 0 || lump_wad >= 0 || lump_map >= 0) gameinfo.flags |= GI_MAPxx;
 }
@@ -2317,7 +2317,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 		break;
 	}
 
-	unsigned NumFiles = fileSystem.GetNumEntries();
+	unsigned NumFiles = fileSystem.GetFileCount();
 
 	for (uint32_t i = 0; i < NumFiles; i++)
 	{
@@ -2342,7 +2342,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 		if (fileSystem.GetFileNamespace(i) == ns_sprites)
 		{
 			// Only sprites in the IWAD normally get renamed
-			if (renameAll || fileSystem.GetFileContainer(i) == fileSystem.GetIwadNum())
+			if (renameAll || fileSystem.GetFileContainer(i) == fileSystem.GetBaseNum())
 			{
 				for (int j = 0; j < numrenames; ++j)
 				{
@@ -2388,7 +2388,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 		else if (fileSystem.GetFileNamespace(i) == ns_global)
 		{
 			int fn = fileSystem.GetFileContainer(i);
-			if (fn >= fileSystem.GetIwadNum() && fn <= fileSystem.GetMaxIwadNum() && deletelumps.Find(shortName) < deletelumps.Size())
+			if (fn >= fileSystem.GetBaseNum() && fn <= fileSystem.GetMaxBaseNum() && deletelumps.Find(shortName) < deletelumps.Size())
 			{
 				shortName[0] = 0;	// Lump must be deleted from directory.
 			}
@@ -2431,8 +2431,8 @@ void RenameNerve(FileSystem& fileSystem)
 				0x70, 0xc2, 0xca, 0x36, 0xac, 0x65, 0xaf, 0x45 }
 	};
 	size_t nervesize[numnerveversions] = { 3819855, 3821966, 3821885, 4003409 }; // NERVE.WAD's file size
-	int w = fileSystem.GetIwadNum();
-	while (++w < fileSystem.GetNumWads())
+	int w = fileSystem.GetBaseNum();
+	while (++w < fileSystem.GetContainerCount())
 	{
 		auto fr = fileSystem.GetFileReader(w);
 		int isizecheck = -1;
@@ -2497,7 +2497,7 @@ void FixMacHexen(FileSystem& fileSystem)
 		return;
 	}
 
-	FileReader* reader = fileSystem.GetFileReader(fileSystem.GetIwadNum());
+	FileReader* reader = fileSystem.GetFileReader(fileSystem.GetBaseNum());
 	auto iwadSize = reader->GetLength();
 
 	static const ptrdiff_t DEMO_SIZE = 13596228;
@@ -2551,8 +2551,8 @@ void FixMacHexen(FileSystem& fileSystem)
 	// Hexen Beta is very similar to Demo but it has MAP41: Maze at the end of the WAD
 	// So keep this map if it's present but discard all extra lumps
 
-	const int lastLump = fileSystem.GetLastEntry(fileSystem.GetIwadNum()) - (isBeta ? 12 : 0);
-	assert(fileSystem.GetFirstEntry(fileSystem.GetIwadNum()) + 299 < lastLump);
+	const int lastLump = fileSystem.GetLastEntry(fileSystem.GetBaseNum()) - (isBeta ? 12 : 0);
+	assert(fileSystem.GetFirstEntry(fileSystem.GetBaseNum()) + 299 < lastLump);
 
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{
@@ -2565,14 +2565,14 @@ static void FindStrifeTeaserVoices(FileSystem& fileSystem)
 {
 	if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
 	{
-		unsigned NumFiles = fileSystem.GetNumEntries();
+		unsigned NumFiles = fileSystem.GetFileCount();
 		for (uint32_t i = 0; i < NumFiles; i++)
 		{
 			auto shortName = fileSystem.GetShortName(i);
 			if (fileSystem.GetFileNamespace(i) == ns_global)
 			{
 				// Strife teaser voices are not in the expected namespace.
-				if (fileSystem.GetFileContainer(i) == fileSystem.GetIwadNum())
+				if (fileSystem.GetFileContainer(i) == fileSystem.GetBaseNum())
 				{
 					if (shortName[0] == 'V' &&
 						shortName[1] == 'O' &&
@@ -2842,7 +2842,7 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 		buffer += snprintf(buffer, buffend - buffer, " %s", Args->GetArg(i));
 	}
 
-	for (i = 0; (arg = fileSystem.GetResourceFileName(i)) != NULL; ++i)
+	for (i = 0; (arg = fileSystem.GetContainerName(i)) != NULL; ++i)
 	{
 		buffer += mysnprintf(buffer, buffend - buffer, "%sWad %d: %s", lfstr, i, arg);
 	}
@@ -3989,11 +3989,11 @@ void I_UpdateWindowTitle()
 
 CCMD(fs_dir)
 {
-	int numfiles = fileSystem.GetNumEntries();
+	int numfiles = fileSystem.GetFileCount();
 
 	for (int i = 0; i < numfiles; i++)
 	{
-		auto container = fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(i));
+		auto container = fileSystem.GetContainerFullName(fileSystem.GetFileContainer(i));
 		auto fn1 = fileSystem.GetFileName(i);
 		auto fns = fileSystem.GetFileShortName(i);
 		auto fnid = fileSystem.GetResourceId(i);
@@ -4006,7 +4006,7 @@ CCMD(fs_dir)
 CCMD(type)
 {
 	if (argv.argc() < 2) return;
-	int lump = fileSystem.CheckNumForFullName(argv[1]);
+	int lump = fileSystem.FindFile(argv[1]);
 	if (lump >= 0)
 	{
 		auto data = fileSystem.ReadFile(lump);

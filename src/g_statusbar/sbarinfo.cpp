@@ -496,15 +496,15 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 				{
-					baselump = fileSystem.CheckNumForFullName("sbarinfo/doom.txt");
+					baselump = fileSystem.FindFile("sbarinfo/doom.txt");
 				}
 				else if(sc.Compare("Heretic"))
 				{
-					baselump = fileSystem.CheckNumForFullName("sbarinfo/heretic.txt");
+					baselump = fileSystem.FindFile("sbarinfo/heretic.txt");
 				}
 				else if(sc.Compare("Hexen"))
 				{
-					baselump = fileSystem.CheckNumForFullName("sbarinfo/hexen.txt");
+					baselump = fileSystem.FindFile("sbarinfo/hexen.txt");
 				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
@@ -522,7 +522,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					else if (fileSystem.GetFileContainer(baselump) > 0)
 					{
 						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
-							fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(baselump)), sc.String);
+							fileSystem.GetContainerFullName(fileSystem.GetFileContainer(baselump)), sc.String);
 					}
 					ParseSBarInfo(baselump);
 				}

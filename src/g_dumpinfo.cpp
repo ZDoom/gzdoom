@@ -143,7 +143,7 @@ CCMD (mapchecksum)
 {
 	if (argv.argc() == 1)
 	{  //current map
-		const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(level.lumpnum));
+		const char *wadname = fileSystem.GetContainerName(fileSystem.GetFileContainer(level.lumpnum));
 
 		for (size_t i = 0; i < 16; ++i)
 		{
@@ -165,7 +165,7 @@ CCMD (mapchecksum)
 		{
 			if(!strcmp(argv[i], "*"))
 			{
-				const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(level.lumpnum));
+				const char *wadname = fileSystem.GetContainerName(fileSystem.GetFileContainer(level.lumpnum));
 
 				for (size_t i = 0; i < 16; ++i)
 				{
@@ -184,7 +184,7 @@ CCMD (mapchecksum)
 				else
 				{
 					map->GetChecksum(cksum);
-					const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum));
+					const char *wadname = fileSystem.GetContainerName(fileSystem.GetFileContainer(map->lumpnum));
 					delete map;
 					for (size_t j = 0; j < sizeof(cksum); ++j)
 					{
@@ -389,7 +389,7 @@ CCMD(targetinv)
 
 CCMD(listmaps)
 {
-	int iwadNum = fileSystem.GetIwadNum();
+	int iwadNum = fileSystem.GetBaseNum();
 
 	for (unsigned i = 0; i < wadlevelinfos.Size(); i++)
 	{
@@ -403,7 +403,7 @@ CCMD(listmaps)
 			if (argv.argc() == 1 
 			    || CheckWildcards(argv[1], info->MapName.GetChars()) 
 			    || CheckWildcards(argv[1], info->LookupLevelName().GetChars())
-			    || CheckWildcards(argv[1], fileSystem.GetResourceFileName(mapWadNum)))
+			    || CheckWildcards(argv[1], fileSystem.GetContainerName(mapWadNum)))
 			{
 				bool isFromPwad = mapWadNum != iwadNum;
 
@@ -411,7 +411,7 @@ CCMD(listmaps)
 
 				Printf("%s%s: '%s' (%s)\n", lineColor, info->MapName.GetChars(),
 					info->LookupLevelName().GetChars(),
-					fileSystem.GetResourceFileName(mapWadNum));
+					fileSystem.GetContainerName(mapWadNum));
 			}
 			delete map;
 		}

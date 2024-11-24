@@ -344,7 +344,7 @@ void R_InitSpriteDefs ()
 	}
 
 	// Repeat, for voxels
-	vmax = fileSystem.GetNumEntries();
+	vmax = fileSystem.GetFileCount();
 	TArray<VHasher> vhashes(vmax, true);
 	memset(vhashes.Data(), -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
@@ -588,7 +588,7 @@ void R_InitSkins (void)
 	{
 		// The player sprite has 23 frames. This means that the S_SKIN
 		// marker needs a minimum of 23 lumps after it.
-		if (base >= fileSystem.GetNumEntries() - 23 || base == -1)
+		if (base >= fileSystem.GetFileCount() - 23 || base == -1)
 			continue;
 
 		i++;

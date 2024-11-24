@@ -48,7 +48,7 @@
 void FileSystem::InitHashChains()
 {
 	Super::InitHashChains();
-	unsigned NumEntries = GetNumEntries();
+	unsigned NumEntries = GetFileCount();
 	for (unsigned i = 0; i < (unsigned)NumEntries; i++)
 	{
 		files[i].HashFirst = files[i].HashNext = NULL_INDEX;
@@ -89,7 +89,7 @@ static void UpperCopy(char* to, const char* from)
 void FileSystem::SetupName(int fileindex)
 {
 	const char* name = GetFileName(fileindex);
-	int containerflags = GetResourceFileFlags(GetFileContainer(fileindex));
+	int containerflags = GetContainerFlags(GetFileContainer(fileindex));
 	int lflags = GetFileFlags(fileindex);
 
 	if ((containerflags & wadflags) == wadflags)
@@ -158,7 +158,7 @@ void FileSystem::SetNamespace(int filenum, const char* startmarker, const char* 
 	TArray<Marker> markers;
 	int FirstLump = GetFirstEntry(filenum);
 	int LastLump = GetLastEntry(filenum);
-	auto FileName = GetResourceFileName(filenum);
+	auto FileName = GetContainerName(filenum);
 
 	for (int i = FirstLump; i <= LastLump; i++)
 	{
@@ -291,7 +291,7 @@ void FileSystem::SkinHack(int filenum, FileSys::FileSystemMessageFunc Printf)
 
 	int FirstLump = GetFirstEntry(filenum);
 	int LastLump = GetLastEntry(filenum);
-	auto FileName = GetResourceFileName(filenum);
+	auto FileName = GetContainerName(filenum);
 
 	for (int i = FirstLump; i <= LastLump; i++)
 	{
@@ -344,7 +344,7 @@ void FileSystem::SkinHack(int filenum, FileSys::FileSystemMessageFunc Printf)
 
 void FileSystem::SetupNamespace(int filenum, FileSys::FileSystemMessageFunc Printf)
 {
-	int flags = GetResourceFileFlags(filenum);
+	int flags = GetContainerFlags(filenum);
 
 	// Set namespace for entries from WADs.
 	if ((flags & wadflags) == wadflags)
@@ -363,7 +363,7 @@ void FileSystem::SetupNamespace(int filenum, FileSys::FileSystemMessageFunc Prin
 	{
 		int FirstLump = GetFirstEntry(filenum);
 		int LastLump = GetLastEntry(filenum);
-		auto FileName = GetResourceFileName(filenum);
+		auto FileName = GetContainerName(filenum);
 
 		for (int i = FirstLump; i <= LastLump; i++)
 		{
@@ -421,15 +421,15 @@ void FileSystem::SetupNamespace(int filenum, FileSys::FileSystemMessageFunc Prin
 bool FileSystem::InitFiles(std::vector<std::string>& filenames, FileSys::FileSystemFilterInfo* filter, FileSys::FileSystemMessageFunc Printf, bool allowduplicates)
 {
 	if (!Super::InitFiles(filenames, filter, Printf, allowduplicates)) return false;
-	files.Resize(GetNumEntries());
+	files.Resize(GetFileCount());
 	memset(files.Data(), 0, sizeof(files[0]) * files.size());
-	int numfiles = GetNumEntries();
+	int numfiles = GetFileCount();
 	for (int i = 0; i < numfiles; i++)
 	{
 		SetupName(i);
 	}
 
-	int numresfiles = GetNumWads();
+	int numresfiles = GetContainerCount();
 	for (int i = 0; i < numresfiles; i++)
 	{
 		SetupNamespace(i, Printf);
@@ -640,7 +640,7 @@ int FileSystem::CheckNumForAnyName(const char* name, namespace_t namespc) const
 			return CheckNumForName(name, namespc);
 		}
 
-		int lookup = Super::CheckNumForFullName(name, false);
+		int lookup = Super::FindFile(name, false);
 		if (lookup >= 0) return lookup;
 	}
 	return -1;

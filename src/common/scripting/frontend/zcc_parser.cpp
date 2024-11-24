@@ -491,7 +491,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 			if (fileno == 0 && fileno2 != 0)
 			{
 				I_FatalError("File %s is overriding core lump %s.",
-					fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(lumpnum)), Includes[i].GetChars());
+					fileSystem.GetContainerFullName(fileSystem.GetFileContainer(lumpnum)), Includes[i].GetChars());
 			}
 
 			ParseSingleFile(nullptr, nullptr, lumpnum, parser, state);

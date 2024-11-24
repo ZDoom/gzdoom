@@ -799,7 +799,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetChar, ::GetChar)
 DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(fileSystem.GetNumEntries());
+	ACTION_RETURN_INT(fileSystem.GetFileCount());
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
@@ -816,7 +816,7 @@ DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
-	ACTION_RETURN_INT(fileSystem.CheckNumForFullName(name.GetChars()));
+	ACTION_RETURN_INT(fileSystem.FindFile(name.GetChars()));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, FindLump)
@@ -825,7 +825,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_INT(ns);
-	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetFileCount();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name.GetChars(), &startlump, 0 != ns) : -1);
 }
 
@@ -835,7 +835,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLumpFullName)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_BOOL(noext);
-	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetFileCount();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLumpFullName(name.GetChars(), &startlump, noext) : -1);
 }
 
@@ -864,7 +864,7 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumEntries();
+	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetFileCount();
 	ACTION_RETURN_STRING(isLumpValid ? GetStringFromLump(lump, false) : FString());
 }
 

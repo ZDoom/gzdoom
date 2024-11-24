@@ -946,7 +946,7 @@ void FMapInfoParser::ParseCluster()
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
 			int fileno = fileSystem.GetFileContainer(lump);
-			auto fn = fileSystem.GetResourceFileName(fileno);
+			auto fn = fileSystem.GetContainerName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
@@ -2217,7 +2217,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 				{
 					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
 					int fileno = fileSystem.GetFileContainer(sc.LumpNum);
-					auto fn = fileSystem.GetResourceFileName(fileno);
+					auto fn = fileSystem.GetContainerName(fileno);
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
@@ -2458,7 +2458,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				if (fileSystem.GetFileContainer(sc.LumpNum) == 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(inclump)), sc.String);
+						fileSystem.GetContainerFullName(fileSystem.GetFileContainer(inclump)), sc.String);
 				}
 			}
 			// use a new parser object to parse the include. Otherwise we'd have to save the entire FScanner in a local variable which is a lot more messy.
@@ -2700,11 +2700,11 @@ void G_ParseMapInfo (FString basemapinfo)
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		int baselump = fileSystem.GetNumForFullName(basemapinfo.GetChars());
+		int baselump = fileSystem.GetFile(basemapinfo.GetChars());
 		if (fileSystem.GetFileContainer(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
+				fileSystem.GetContainerName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}

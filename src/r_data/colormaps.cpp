@@ -100,7 +100,7 @@ void R_InitColormaps (bool allowCustomColormap)
 	cm.blend = 0;
 	fakecmaps.Push(cm);
 
-	uint32_t NumLumps = fileSystem.GetNumEntries();
+	uint32_t NumLumps = fileSystem.GetFileCount();
 
 	for (uint32_t i = 0; i < NumLumps; i++)
 	{

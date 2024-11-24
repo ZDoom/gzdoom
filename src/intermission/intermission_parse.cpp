@@ -309,7 +309,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
 			int fileno = fileSystem.GetFileContainer(lump);
-			auto fn = fileSystem.GetResourceFileName(fileno);
+			auto fn = fileSystem.GetContainerName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, sc.String);
@@ -325,7 +325,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (fileSystem.GetFileContainer(sc.LumpNum) > fileSystem.GetMaxIwadNum())
+			if (fileSystem.GetFileContainer(sc.LumpNum) > fileSystem.GetMaxBaseNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}

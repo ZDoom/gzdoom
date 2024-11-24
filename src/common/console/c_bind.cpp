@@ -730,15 +730,15 @@ void ReadBindings(int lump, bool override)
 
 void C_SetDefaultKeys(const char* baseconfig)
 {
-	auto lump = fileSystem.CheckNumForFullName("engine/commonbinds.txt");
+	auto lump = fileSystem.FindFile("engine/commonbinds.txt");
 	if (lump >= 0)
 	{
 		// Bail out if a mod tries to override this. Main game resources are allowed to do this, though.
 		auto fileno2 = fileSystem.GetFileContainer(lump);
-		if (fileno2 > fileSystem.GetMaxIwadNum())
+		if (fileno2 > fileSystem.GetMaxBaseNum())
 		{
 			I_FatalError("File %s is overriding core lump %s.",
-				fileSystem.GetResourceFileFullName(fileno2), "engine/commonbinds.txt");
+				fileSystem.GetContainerFullName(fileno2), "engine/commonbinds.txt");
 		}
 
 		ReadBindings(lump, true);
@@ -748,7 +748,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 	while ((lump = fileSystem.FindLumpFullName(baseconfig, &lastlump)) != -1)
 	{
 		// Read this only from the main game resources.
-		if (fileSystem.GetFileContainer(lump) <= fileSystem.GetMaxIwadNum())
+		if (fileSystem.GetFileContainer(lump) <= fileSystem.GetMaxBaseNum())
 			ReadBindings(lump, true);
 	}
 
@@ -758,7 +758,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 		// [SW] - We need to check to see the origin of the DEFBINDS... if it
 		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
 		// If it comes from a user mod however, don't.
-		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
+		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxBaseNum())
 			ReadBindings(lump, false);
 		else
 			ReadBindings(lump, true);

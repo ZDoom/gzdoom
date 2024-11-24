@@ -2322,7 +2322,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
 		{
 			int fileno = fileSystem.GetFileContainer(reallumpnum);
-			const char * filename = fileSystem.GetResourceFileName(fileno);
+			const char * filename = fileSystem.GetContainerName(fileno);
 			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
 			{
 				ShouldLocalize = true;

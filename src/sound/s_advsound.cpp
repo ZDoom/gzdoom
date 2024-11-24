@@ -594,7 +594,7 @@ void S_ParseSndInfo (bool redefine)
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	for (lump = 0; lump < fileSystem.GetNumEntries(); ++lump)
+	for (lump = 0; lump < fileSystem.GetFileCount(); ++lump)
 	{
 		switch (fileSystem.GetFileNamespace (lump))
 		{
@@ -1058,7 +1058,7 @@ static void S_AddSNDINFO (int lump)
 					int file = fileSystem.GetFileContainer(lump);
 					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
 					if ( (file > sndifile) &&
-						!(sndifile <= fileSystem.GetIwadNum() && file <= fileSystem.GetIwadNum()) )
+						!(sndifile <= fileSystem.GetBaseNum() && file <= fileSystem.GetBaseNum()) )
 					{
 						sc.MustGetString();
 						continue;

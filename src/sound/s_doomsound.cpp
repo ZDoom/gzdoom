@@ -185,7 +185,7 @@ static FString LookupMusic(const char* musicname, int& order)
 
 static int FindMusic(const char* musicname)
 {
-	int lumpnum = fileSystem.CheckNumForFullName(musicname);
+	int lumpnum = fileSystem.FindFile(musicname);
 	if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, ns_music);
 	return lumpnum;
 }

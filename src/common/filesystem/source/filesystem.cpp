@@ -76,7 +76,7 @@ struct FileSystem::LumpRecord
 	int			resourceId;
 	int			flags;
 
-	void SetFromLump(FResourceFile* file, int fileindex, int filenum, StringPool* sp, const char* name = nullptr)
+	void SetFromFile(FResourceFile* file, int fileindex, int filenum, StringPool* sp, const char* name = nullptr)
 	{
 		resfile = file;
 		resindex = fileindex;
@@ -199,10 +199,10 @@ bool FileSystem::InitFiles(std::vector<std::string>& filenames, FileSystemFilter
 	{
 		AddFile(filenames[i].c_str(), nullptr, filter, Printf);
 
-		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
+		if (i == (unsigned)MaxBaseIndex) MoveFilesInFolder("after_iwad/");
 		std::string path = "filter/%s";
 		path += Files.back()->GetHash();
-		MoveLumpsInFolder(path.c_str());
+		MoveFilesInFolder(path.c_str());
 	}
 
 	NumEntries = (uint32_t)FileInfo.size();
@@ -237,7 +237,7 @@ int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, in
 	FileData blob(data, size);
 	fr.OpenMemoryArray(blob);
 
-	// wrap this into a single lump resource file (should be done a little better later.)
+	// wrap this into a single filenum resource file (should be done a little better later.)
 	auto rf = new FResourceFile(name, fr, stringpool, 0);
 	auto Entries = rf->AllocateEntries(1);
 	Entries[0].FileName = rf->NormalizeFileName(ExtractBaseName(name, true).c_str());
@@ -246,8 +246,8 @@ int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, in
 
 	Files.push_back(rf);
 	FileInfo.resize(FileInfo.size() + 1);
-	FileSystem::LumpRecord* lump_p = &FileInfo.back();
-	lump_p->SetFromLump(rf, 0, (int)Files.size() - 1, stringpool);
+	FileSystem::LumpRecord* file_p = &FileInfo.back();
+	file_p->SetFromFile(rf, 0, (int)Files.size() - 1, stringpool);
 	return (int)FileInfo.size() - 1;
 }
 
@@ -256,7 +256,7 @@ int FileSystem::AddFromBuffer(const char* name, char* data, int size, int id, in
 // AddFile
 //
 // Files with a .wad extension are wadlink files with multiple lumps,
-// other files are single lumps with the base filename for the lump name.
+// other files are single lumps with the base filename for the filenum name.
 //
 // [RH] Removed reload hack
 //==========================================================================
@@ -308,17 +308,17 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, FileSystemFil
 	if (resfile != NULL)
 	{
 		if (Printf) 
-			Printf(FSMessageLevel::Message, "adding %s, %d lumps\n", filename, resfile->EntryCount());
+			Printf(FSMessageLevel::Message, "adding %s, %d files\n", filename, resfile->EntryCount());
 
 		uint32_t lumpstart = (uint32_t)FileInfo.size();
 
-		resfile->SetFirstLump(lumpstart);
+		resfile->SetFirstFile(lumpstart);
 		Files.push_back(resfile);
 		for (int i = 0; i < resfile->EntryCount(); i++)
 		{
 			FileInfo.resize(FileInfo.size() + 1);
-			FileSystem::LumpRecord* lump_p = &FileInfo.back();
-			lump_p->SetFromLump(resfile, i, (int)Files.size() - 1, stringpool);
+			FileSystem::LumpRecord* file_p = &FileInfo.back();
+			file_p->SetFromFile(resfile, i, (int)Files.size() - 1, stringpool);
 		}
 
 		for (int i = 0; i < resfile->EntryCount(); i++)
@@ -349,7 +349,7 @@ void FileSystem::AddFile (const char *filename, FileReader *filer, FileSystemFil
 //
 //==========================================================================
 
-int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
+int FileSystem::CheckIfContainerLoaded (const char *name) noexcept
 {
 	unsigned int i;
 
@@ -357,7 +357,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 	{
 		for (i = 0; i < (unsigned)Files.size(); ++i)
 		{
-			if (stricmp (GetResourceFileFullName (i), name) == 0)
+			if (stricmp (GetContainerFullName (i), name) == 0)
 			{
 				return i;
 			}
@@ -367,7 +367,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 	{
 		for (i = 0; i < (unsigned)Files.size(); ++i)
 		{
-			auto pth = ExtractBaseName(GetResourceFileName(i), true);
+			auto pth = ExtractBaseName(GetContainerName(i), true);
 			if (stricmp (pth.c_str(), name) == 0)
 			{
 				return i;
@@ -387,7 +387,7 @@ int FileSystem::CheckIfResourceFileLoaded (const char *name) noexcept
 //
 //==========================================================================
 
-int FileSystem::CheckNumForFullName (const char *name, bool ignoreext) const
+int FileSystem::FindFile (const char *name, bool ignoreext) const
 {
 	uint32_t i;
 
@@ -396,8 +396,8 @@ int FileSystem::CheckNumForFullName (const char *name, bool ignoreext) const
 		return -1;
 	}
 	if (*name == '/') name++;	// ignore leading slashes in file names.
-	uint32_t *fli = ignoreext ? FirstLumpIndex_NoExt : FirstLumpIndex_FullName;
-	uint32_t *nli = ignoreext ? NextLumpIndex_NoExt : NextLumpIndex_FullName;
+	uint32_t *fli = ignoreext ? FirstFileIndex_NoExt : FirstFileIndex_FullName;
+	uint32_t *nli = ignoreext ? NextFileIndex_NoExt : NextFileIndex_FullName;
 	auto len = strlen(name);
 
 	for (i = fli[MakeHash(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
@@ -415,21 +415,21 @@ int FileSystem::CheckNumForFullName (const char *name, bool ignoreext) const
 	return -1;
 }
 
-int FileSystem::CheckNumForFullNameInFile (const char *name, int rfnum) const
+int FileSystem::GetFileInContainer (const char *name, int rfnum) const
 {
 	uint32_t i;
 
 	if (rfnum < 0)
 	{
-		return CheckNumForFullName (name);
+		return FindFile (name);
 	}
 
-	i = FirstLumpIndex_FullName[MakeHash (name) % NumEntries];
+	i = FirstFileIndex_FullName[MakeHash (name) % NumEntries];
 
 	while (i != NULL_INDEX && 
 		(stricmp(name, FileInfo[i].Name) || FileInfo[i].rfnum != rfnum))
 	{
-		i = NextLumpIndex_FullName[i];
+		i = NextFileIndex_FullName[i];
 	}
 
 	return i != NULL_INDEX ? i : -1;
@@ -443,11 +443,11 @@ int FileSystem::CheckNumForFullNameInFile (const char *name, int rfnum) const
 //
 //==========================================================================
 
-int FileSystem::GetNumForFullName (const char *name) const
+int FileSystem::GetFile (const char *name) const
 {
 	int	i;
 
-	i = CheckNumForFullName (name);
+	i = FindFile (name);
 
 	if (i == -1)
 		throw FileSystemException("GetNumForFullName: %s not found!", name);
@@ -472,8 +472,8 @@ int FileSystem::FindFileWithExtensions(const char* name, const char *const *exts
 		return -1;
 	}
 	if (*name == '/') name++;	// ignore leading slashes in file names.
-	uint32_t* fli = FirstLumpIndex_NoExt;
-	uint32_t* nli = NextLumpIndex_NoExt;
+	uint32_t* fli = FirstFileIndex_NoExt;
+	uint32_t* nli = NextFileIndex_NoExt;
 	auto len = strlen(name);
 
 	for (i = fli[MakeHash(name) % NumEntries]; i != NULL_INDEX; i = nli[i])
@@ -510,8 +510,8 @@ int FileSystem::FindResource (int resid, const char *type, int filenum) const no
 		return -1;
 	}
 
-	uint32_t* fli = FirstLumpIndex_ResId;
-	uint32_t* nli = NextLumpIndex_ResId;
+	uint32_t* fli = FirstFileIndex_ResId;
+	uint32_t* nli = NextFileIndex_ResId;
 
 	for (i = fli[resid % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
@@ -549,18 +549,18 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 //
 // FileLength
 //
-// Returns the buffer size needed to load the given lump.
+// Returns the buffer size needed to load the given filenum.
 //
 //==========================================================================
 
-ptrdiff_t FileSystem::FileLength (int lump) const
+ptrdiff_t FileSystem::FileLength (int filenum) const
 {
-	if ((size_t)lump >= NumEntries)
+	if ((size_t)filenum >= NumEntries)
 	{
 		return -1;
 	}
-	const auto &lump_p = FileInfo[lump];
-	return (int)lump_p.resfile->Length(lump_p.resindex);
+	const auto &file_p = FileInfo[filenum];
+	return (int)file_p.resfile->Length(file_p.resindex);
 }
 
 //==========================================================================
@@ -569,15 +569,15 @@ ptrdiff_t FileSystem::FileLength (int lump) const
 //
 //==========================================================================
 
-int FileSystem::GetFileFlags (int lump)
+int FileSystem::GetFileFlags (int filenum)
 {
-	if ((size_t)lump >= NumEntries)
+	if ((size_t)filenum >= NumEntries)
 	{
 		return 0;
 	}
 
-	const auto& lump_p = FileInfo[lump];
-	return lump_p.resfile->GetEntryFlags(lump_p.resindex) ^ lump_p.flags;
+	const auto& file_p = FileInfo[filenum];
+	return file_p.resfile->GetEntryFlags(file_p.resindex) ^ file_p.flags;
 }
 
 //==========================================================================
@@ -597,12 +597,12 @@ void FileSystem::InitHashChains (void)
 	Hashes.resize(6 * NumEntries);
 	// Mark all buckets as empty
 	memset(Hashes.data(), -1, Hashes.size() * sizeof(Hashes[0]));
-	FirstLumpIndex_FullName = &Hashes[NumEntries * 0];
-	NextLumpIndex_FullName = &Hashes[NumEntries * 1];
-	FirstLumpIndex_NoExt = &Hashes[NumEntries * 2];
-	NextLumpIndex_NoExt = &Hashes[NumEntries * 3];
-	FirstLumpIndex_ResId = &Hashes[NumEntries * 4];
-	NextLumpIndex_ResId = &Hashes[NumEntries * 5];
+	FirstFileIndex_FullName = &Hashes[NumEntries * 0];
+	NextFileIndex_FullName = &Hashes[NumEntries * 1];
+	FirstFileIndex_NoExt = &Hashes[NumEntries * 2];
+	NextFileIndex_NoExt = &Hashes[NumEntries * 3];
+	FirstFileIndex_ResId = &Hashes[NumEntries * 4];
+	NextFileIndex_ResId = &Hashes[NumEntries * 5];
 
 
 	// Now set up the chains
@@ -612,8 +612,8 @@ void FileSystem::InitHashChains (void)
 		if (FileInfo[i].Name[0] != 0)
 		{
 			j = MakeHash(FileInfo[i].Name) % NumEntries;
-			NextLumpIndex_FullName[i] = FirstLumpIndex_FullName[j];
-			FirstLumpIndex_FullName[j] = i;
+			NextFileIndex_FullName[i] = FirstFileIndex_FullName[j];
+			FirstFileIndex_FullName[j] = i;
 
 			std::string nameNoExt = FileInfo[i].Name;
 			auto dot = nameNoExt.find_last_of('.');
@@ -621,12 +621,12 @@ void FileSystem::InitHashChains (void)
 			if ((dot > slash || slash == std::string::npos) && dot != std::string::npos) nameNoExt.resize(dot);
 
 			j = MakeHash(nameNoExt.c_str()) % NumEntries;
-			NextLumpIndex_NoExt[i] = FirstLumpIndex_NoExt[j];
-			FirstLumpIndex_NoExt[j] = i;
+			NextFileIndex_NoExt[i] = FirstFileIndex_NoExt[j];
+			FirstFileIndex_NoExt[j] = i;
 
 			j = FileInfo[i].resourceId % NumEntries;
-			NextLumpIndex_ResId[i] = FirstLumpIndex_ResId[j];
-			FirstLumpIndex_ResId[j] = i;
+			NextFileIndex_ResId[i] = FirstFileIndex_ResId[j];
+			FirstFileIndex_ResId[j] = i;
 
 		}
 	}
@@ -653,7 +653,7 @@ void FileSystem::RenameFile(int num, const char* newfn)
 //
 //==========================================================================
 
-void FileSystem::MoveLumpsInFolder(const char *path)
+void FileSystem::MoveFilesInFolder(const char *path)
 {
 	if (FileInfo.size() == 0)
 	{
@@ -667,14 +667,14 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 	for (i = 0; i < FileInfo.size(); i++)
 	{
 		auto& li = FileInfo[i];
-		if (li.rfnum >= GetIwadNum()) break;
+		if (li.rfnum >= GetBaseNum()) break;
 		if (strnicmp(li.Name, path, len) == 0)
 		{
 			auto lic = li;	// make a copy before pushing.
 			FileInfo.push_back(lic);
 			li.Name = "";	//nuke the name of the old record.
 			auto &ln = FileInfo.back();
-			ln.SetFromLump(li.resfile, li.resindex, rfnum, stringpool, ln.Name + len);
+			ln.SetFromFile(li.resfile, li.resindex, rfnum, stringpool, ln.Name + len);
 		}
 	}
 }
@@ -683,7 +683,7 @@ void FileSystem::MoveLumpsInFolder(const char *path)
 //
 // W_FindLump
 //
-// Find a named lump. Specifically allows duplicates for merging of e.g.
+// Find a named filenum. Specifically allows duplicates for merging of e.g.
 // SNDINFO lumps.
 //
 //==========================================================================
@@ -694,38 +694,38 @@ int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
 
 	const LumpRecord * last = FileInfo.data() + FileInfo.size();
 
-	LumpRecord * lump_p = FileInfo.data() + *lastlump;
+	LumpRecord * file_p = FileInfo.data() + *lastlump;
 
 	if (!noext)
 	{
-		while (lump_p < last)
+		while (file_p < last)
 		{
-			if (!stricmp(name, lump_p->Name))
+			if (!stricmp(name, file_p->Name))
 			{
-				int lump = int(lump_p - FileInfo.data());
-				*lastlump = lump + 1;
-				return lump;
+				int filenum = int(file_p - FileInfo.data());
+				*lastlump = filenum + 1;
+				return filenum;
 			}
-			lump_p++;
+			file_p++;
 		}
 	}
 	else
 	{
 		auto len = strlen(name);
-		while (lump_p <= &FileInfo.back())
+		while (file_p <= &FileInfo.back())
 		{
-			auto res = strnicmp(name, lump_p->Name, len);
+			auto res = strnicmp(name, file_p->Name, len);
 			if (res == 0)
 			{
-				auto p = lump_p->Name + len;
+				auto p = file_p->Name + len;
 				if (*p == 0 || (*p == '.' && strpbrk(p + 1, "./") == 0))
 				{
-					int lump = int(lump_p - FileInfo.data());
-					*lastlump = lump + 1;
-					return lump;
+					int filenum = int(file_p - FileInfo.data());
+					*lastlump = filenum + 1;
+					return filenum;
 				}
 			}
-			lump_p++;
+			file_p++;
 		}
 	}
 
@@ -738,34 +738,34 @@ int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
 //
 // FileSystem :: GetFileName
 //
-// Returns the lump's internal name
+// Returns the filenum's internal name
 //
 //==========================================================================
 
-const char* FileSystem::GetFileName(int lump) const
+const char* FileSystem::GetFileName(int filenum) const
 {
-	if ((size_t)lump >= NumEntries)
+	if ((size_t)filenum >= NumEntries)
 		return NULL;
-	else return FileInfo[lump].Name;
+	else return FileInfo[filenum].Name;
 }
 
 //==========================================================================
 //
 // FileSystem :: GetFileFullPath
 //
-// Returns the name of the lump's wad prefixed to the lump's full name.
+// Returns the name of the filenum's wad prefixed to the filenum's full name.
 //
 //==========================================================================
 
-std::string FileSystem::GetFileFullPath(int lump) const
+std::string FileSystem::GetFileFullPath(int filenum) const
 {
 	std::string foo;
 
-	if ((size_t) lump <  NumEntries)
+	if ((size_t) filenum <  NumEntries)
 	{
-		foo = GetResourceFileName(FileInfo[lump].rfnum);
+		foo = GetContainerName(FileInfo[filenum].rfnum);
 		foo += ':';
-		foo += +GetFileName(lump);
+		foo += +GetFileName(filenum);
 	}
 	return foo;
 }
@@ -774,18 +774,18 @@ std::string FileSystem::GetFileFullPath(int lump) const
 //
 // FileSystem :: GetResourceId
 //
-// Returns the index number for this lump. This is *not* the lump's position
-// in the lump directory, but rather a special value that RFF can associate
+// Returns the index number for this filenum. This is *not* the filenum's position
+// in the filenum directory, but rather a special value that RFF can associate
 // with files. Other archive types will return 0, since they don't have it.
 //
 //==========================================================================
 
-int FileSystem::GetResourceId(int lump) const
+int FileSystem::GetResourceId(int filenum) const
 {
-	if ((size_t)lump >= NumEntries)
+	if ((size_t)filenum >= NumEntries)
 		return -1;
 	else
-		return FileInfo[lump].resourceId;
+		return FileInfo[filenum].resourceId;
 }
 
 //==========================================================================
@@ -796,13 +796,13 @@ int FileSystem::GetResourceId(int lump) const
 //
 //==========================================================================
 
-const char *FileSystem::GetResourceType(int lump) const
+const char *FileSystem::GetResourceType(int filenum) const
 {
-	if ((size_t)lump >= NumEntries)
+	if ((size_t)filenum >= NumEntries)
 		return nullptr;
 	else
 	{
-		auto p = strrchr(FileInfo[lump].Name, '.');
+		auto p = strrchr(FileInfo[filenum].Name, '.');
 		if (!p) return "";	// has no extension
 		if (strchr(p, '/')) return "";	// the '.' is part of a directory.
 		return p + 1;
@@ -815,11 +815,11 @@ const char *FileSystem::GetResourceType(int lump) const
 //
 //==========================================================================
 
-int FileSystem::GetFileContainer (int lump) const
+int FileSystem::GetFileContainer (int filenum) const
 {
-	if ((size_t)lump >= FileInfo.size())
+	if ((size_t)filenum >= FileInfo.size())
 		return -1;
-	return FileInfo[lump].rfnum;
+	return FileInfo[filenum].rfnum;
 }
 
 //==========================================================================
@@ -857,7 +857,7 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 		if (strncmp(FileInfo[i].Name, path.c_str(), path.length()) == 0)
 		{
 			// Only if it hasn't been replaced.
-			if ((unsigned)CheckNumForFullName(FileInfo[i].Name) == i)
+			if ((unsigned)FindFile(FileInfo[i].Name) == i)
 			{
 				FolderEntry fe{ FileInfo[i].Name, (uint32_t)i };
 				result.push_back(fe);
@@ -890,20 +890,20 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 //
 // W_ReadFile
 //
-// Loads the lump into the given buffer, which must be >= W_LumpLength().
+// Loads the filenum into the given buffer, which must be >= W_LumpLength().
 //
 //==========================================================================
 
-void FileSystem::ReadFile (int lump, void *dest)
+void FileSystem::ReadFile (int filenum, void *dest)
 {
-	auto lumpr = OpenFileReader (lump);
+	auto lumpr = OpenFileReader (filenum);
 	auto size = lumpr.GetLength ();
 	auto numread = lumpr.Read (dest, size);
 
 	if (numread != size)
 	{
 		throw FileSystemException("W_ReadFile: only read %td of %td on '%s'\n",
-			numread, size, FileInfo[lump].Name);
+			numread, size, FileInfo[filenum].Name);
 	}
 }
 
@@ -912,17 +912,17 @@ void FileSystem::ReadFile (int lump, void *dest)
 //
 // ReadFile - variant 2
 //
-// Loads the lump into a newly created buffer and returns it.
+// Loads the filenum into a newly created buffer and returns it.
 //
 //==========================================================================
 
-FileData FileSystem::ReadFile (int lump)
+FileData FileSystem::ReadFile (int filenum)
 {
-	if ((unsigned)lump >= (unsigned)FileInfo.size())
+	if ((unsigned)filenum >= (unsigned)FileInfo.size())
 	{
-		throw FileSystemException("ReadFile: %u >= NumEntries", lump);
+		throw FileSystemException("ReadFile: %u >= NumEntries", filenum);
 	}
-	return FileInfo[lump].resfile->Read(FileInfo[lump].resindex);
+	return FileInfo[filenum].resfile->Read(FileInfo[filenum].resindex);
 }
 
 //==========================================================================
@@ -934,30 +934,30 @@ FileData FileSystem::ReadFile (int lump)
 //==========================================================================
 
 
-FileReader FileSystem::OpenFileReader(int lump, int readertype, int readerflags)
+FileReader FileSystem::OpenFileReader(int filenum, int readertype, int readerflags)
 {
-	if ((unsigned)lump >= (unsigned)FileInfo.size())
+	if ((unsigned)filenum >= (unsigned)FileInfo.size())
 	{
-		throw FileSystemException("OpenFileReader: %u >= NumEntries", lump);
+		throw FileSystemException("OpenFileReader: %u >= NumEntries", filenum);
 	}
 
-	auto file = FileInfo[lump].resfile;
-	return file->GetEntryReader(FileInfo[lump].resindex, readertype, readerflags);
+	auto file = FileInfo[filenum].resfile;
+	return file->GetEntryReader(FileInfo[filenum].resindex, readertype, readerflags);
 }
 
 FileReader FileSystem::OpenFileReader(const char* name)
 {
 	FileReader fr;
-	auto lump = CheckNumForFullName(name);
-	if (lump >= 0) fr = OpenFileReader(lump);
+	auto filenum = FindFile(name);
+	if (filenum >= 0) fr = OpenFileReader(filenum);
 	return fr;
 }
 
 FileReader FileSystem::ReopenFileReader(const char* name, bool alwayscache)
 {
 	FileReader fr;
-	auto lump = CheckNumForFullName(name);
-	if (lump >= 0) fr = ReopenFileReader(lump, alwayscache);
+	auto filenum = FindFile(name);
+	if (filenum >= 0) fr = ReopenFileReader(filenum, alwayscache);
 	return fr;
 }
 
@@ -982,13 +982,13 @@ FileReader *FileSystem::GetFileReader(int rfnum)
 
 //==========================================================================
 //
-// GetResourceFileName
+// GetContainerName
 //
 // Returns the name of the given wad.
 //
 //==========================================================================
 
-const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
+const char *FileSystem::GetContainerName (int rfnum) const noexcept
 {
 	const char *name, *slash;
 
@@ -1022,7 +1022,7 @@ int FileSystem::GetFirstEntry (int rfnum) const noexcept
 //
 //==========================================================================
 
-int FileSystem::GetResourceFileFlags(int rfnum) const noexcept
+int FileSystem::GetContainerFlags(int rfnum) const noexcept
 {
 	if ((uint32_t)rfnum >= Files.size())
 	{
@@ -1071,7 +1071,7 @@ int FileSystem::GetEntryCount (int rfnum) const noexcept
 //
 //==========================================================================
 
-const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
+const char *FileSystem::GetContainerFullName (int rfnum) const noexcept
 {
 	if ((unsigned int)rfnum >= Files.size())
 	{
@@ -1094,15 +1094,15 @@ bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
 
 	// The old code said 'filename' and ignored the path, this looked like a bug.
 	FixPathSeparator(&name2.front());
-	auto lump = FindFile(name2.c_str());
-	if (lump < 0) return false;		// Does not exist.
+	auto filenum = FindFile(name2.c_str());
+	if (filenum < 0) return false;		// Does not exist.
 
-	auto oldlump = FileInfo[lump];
+	auto oldlump = FileInfo[filenum];
 	auto slash = strrchr(oldlump.Name, '/');
 
 	if (slash == nullptr)
 	{
-		FileInfo[lump].flags = RESFF_FULLPATH;
+		FileInfo[filenum].flags = RESFF_FULLPATH;
 		return true;	// already is pathless.
 	}
 

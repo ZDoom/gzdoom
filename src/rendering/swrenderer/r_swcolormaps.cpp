@@ -351,7 +351,7 @@ void SetDefaultColormap (const char *name)
 			lump = fileSystem.CheckNumForName (name, ns_global);
 
 		// [RH] If using BUILD's palette, generate the colormap
-		if (lump == -1 || fileSystem.CheckNumForFullName("palette.dat") >= 0 || fileSystem.CheckNumForFullName("blood.pal") >= 0)
+		if (lump == -1 || fileSystem.FindFile("palette.dat") >= 0 || fileSystem.FindFile("blood.pal") >= 0)
 		{
 			DPrintf (DMSG_NOTIFY, "Make colormap\n");
 			FDynamicColormap foo;
@@ -403,7 +403,7 @@ static void InitBoomColormaps ()
 	//		This is a really rough hack, but it's better than
 	//		not doing anything with them at all (right?)
 
-	uint32_t NumLumps = fileSystem.GetNumEntries();
+	uint32_t NumLumps = fileSystem.GetFileCount();
 
 	realcolormaps.Maps = new uint8_t[256*NUMCOLORMAPS*fakecmaps.Size()];
 	SetDefaultColormap ("COLORMAP");

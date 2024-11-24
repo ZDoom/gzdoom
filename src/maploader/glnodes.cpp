@@ -853,7 +853,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = fileSystem.GetResourceFileFullName(lumpfile);
+		const char * name = fileSystem.GetContainerFullName(lumpfile);
 
 		if (mapinwad)
 		{

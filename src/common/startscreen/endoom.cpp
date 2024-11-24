@@ -160,7 +160,7 @@ int RunEndoom()
 		return 0;
 	}
 
-	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
+	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxBaseNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		return 0;

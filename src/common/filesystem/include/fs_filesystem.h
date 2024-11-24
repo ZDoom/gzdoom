@@ -30,32 +30,27 @@ public:
 
 	bool Initialize(std::vector<std::string>& filenames, FileSystemFilterInfo* filter = nullptr, FileSystemMessageFunc Printf = nullptr, bool allowduplicates = false);
 
-	// The wadnum for the IWAD
-	int GetIwadNum() { return IwadIndex; }
-	void SetIwadNum(int x) { IwadIndex = x; }
+	// The container for the IWAD
+	int GetBaseNum() { return BaseIndex; }
+	void SetBaseNum(int x) { BaseIndex = x; }
 
-	int GetMaxIwadNum() { return MaxIwadIndex; }
-	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
+	int GetMaxBaseNum() { return MaxBaseIndex; }
+	void SetMaxBaseNum(int x) { MaxBaseIndex = x; }
 
-	int CheckIfResourceFileLoaded (const char *name) noexcept;
+	int CheckIfContainerLoaded (const char *name) noexcept;
 	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}
 
-	const char *GetResourceFileName (int filenum) const noexcept;
-	const char *GetResourceFileFullName (int wadnum) const noexcept;
+	const char *GetContainerName (int container) const noexcept;
+	const char *GetContainerFullName (int container) const noexcept;
 
-	int GetFirstEntry(int wadnum) const noexcept;
-	int GetLastEntry(int wadnum) const noexcept;
-    int GetEntryCount(int wadnum) const noexcept;
-	int GetResourceFileFlags(int wadnum) const noexcept;
+	int GetFirstEntry(int container) const noexcept;
+	int GetLastEntry(int container) const noexcept;
+    int GetEntryCount(int container) const noexcept;
+	int GetContainerFlags(int container) const noexcept;
 
-	int CheckNumForFullName (const char *cname, bool ignoreext = false) const;
-	int CheckNumForFullNameInFile (const char *name, int wadfile) const;
-	int GetNumForFullName (const char *name) const;
-	int FindFile(const char* name) const
-	{
-		return CheckNumForFullName(name);
-	}
-
+	int FindFile (const char *cname, bool ignoreext = false) const;
+	int GetFileInContainer (const char *name, int wadfile) const;
+	int GetFile (const char *name) const;
 
 	bool FileExists(const char* name) const
 	{
@@ -70,22 +65,22 @@ public:
 	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 
-	void ReadFile (int lump, void *dest);
+	void ReadFile (int filenum, void *dest);
 	// These should only be used if the file data really needs padding.
-	FileData ReadFile (int lump);
-	FileData ReadFileFullName(const char* name) { return ReadFile(GetNumForFullName(name)); }
+	FileData ReadFile (int filenum);
+	FileData ReadFileFullName(const char* name) { return ReadFile(GetFile(name)); }
 
-	FileReader OpenFileReader(int lump, int readertype, int readerflags);		// opens a reader that redirects to the containing file's one.
+	FileReader OpenFileReader(int filenum, int readertype, int readerflags);		// opens a reader that redirects to the containing file's one.
 	FileReader OpenFileReader(const char* name);
 	FileReader ReopenFileReader(const char* name, bool alwayscache = false);
-	FileReader OpenFileReader(int lump)
+	FileReader OpenFileReader(int filenum)
 	{
-		return OpenFileReader(lump, READER_SHARED, READERFLAG_SEEKABLE);
+		return OpenFileReader(filenum, READER_SHARED, READERFLAG_SEEKABLE);
 	}
 
-	FileReader ReopenFileReader(int lump, bool alwayscache = false)
+	FileReader ReopenFileReader(int filenum, bool alwayscache = false)
 	{
-		return OpenFileReader(lump, alwayscache ? READER_CACHED : READER_NEW, READERFLAG_SEEKABLE);
+		return OpenFileReader(filenum, alwayscache ? READER_CACHED : READER_NEW, READERFLAG_SEEKABLE);
 	}
 
 
@@ -96,28 +91,28 @@ public:
 	int GetResource(int resid, const char* type, int filenum = -1) const;
 
 
-	ptrdiff_t FileLength(int lump) const;
-	int GetFileFlags (int lump);					// Return the flags for this lump
-	const char* GetFileName(int lump) const;	// Gets uninterpreted name from the FResourceFile
-	std::string GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
-	int GetFileContainer (int lump) const;			
-	// [RH] Returns wadnum for a specified lump
-	int GetResourceId(int lump) const;				// Returns the RFF index number for this lump
-	const char* GetResourceType(int lump) const;
+	ptrdiff_t FileLength(int filenum) const;
+	int GetFileFlags (int filenum);					// Return the flags for this filenum
+	const char* GetFileName(int filenum) const;	// Gets uninterpreted name from the FResourceFile
+	std::string GetFileFullPath (int filenum) const;		// [RH] Returns wad's name + filenum's full name
+	int GetFileContainer (int filenum) const;			
+	// [RH] Returns container for a specified filenum
+	int GetResourceId(int filenum) const;				// Returns the RFF index number for this filenum
+	const char* GetResourceType(int filenum) const;
 	unsigned GetFilesInFolder(const char *path, std::vector<FolderEntry> &result, bool atomic) const;
 
-	int GetNumEntries() const
+	int GetFileCount() const
 	{
 		return NumEntries;
 	}
 
-	int GetNumWads() const
+	int GetContainerCount() const
 	{
 		return (int)Files.size();
 	}
 
 	int AddFromBuffer(const char* name, char* data, int size, int id, int flags);
-	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
+	FileReader* GetFileReader(int container);	// Gets a FileReader object to the entire WAD
 
 protected:
 
@@ -129,26 +124,26 @@ protected:
 
 	std::vector<uint32_t> Hashes;	// one allocation for all hash lists.
 
-	uint32_t *FirstLumpIndex_FullName = nullptr;	// The same information for fully qualified paths from .zips
-	uint32_t *NextLumpIndex_FullName = nullptr;
+	uint32_t *FirstFileIndex_FullName = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t *NextFileIndex_FullName = nullptr;
 
-	uint32_t *FirstLumpIndex_NoExt = nullptr;	// The same information for fully qualified paths from .zips
-	uint32_t *NextLumpIndex_NoExt = nullptr;
+	uint32_t *FirstFileIndex_NoExt = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t *NextFileIndex_NoExt = nullptr;
 
-	uint32_t* FirstLumpIndex_ResId = nullptr;	// The same information for fully qualified paths from .zips
-	uint32_t* NextLumpIndex_ResId = nullptr;
+	uint32_t* FirstFileIndex_ResId = nullptr;	// The same information for fully qualified paths from .zips
+	uint32_t* NextFileIndex_ResId = nullptr;
 
 	uint32_t NumEntries = 0;					// Not necessarily the same as FileInfo.Size()
 	uint32_t NumWads = 0;
 
-	int IwadIndex = -1;
-	int MaxIwadIndex = -1;
+	int BaseIndex = -1;
+	int MaxBaseIndex = -1;
 
 	StringPool* stringpool = nullptr;
 
 private:
 	void DeleteAll();
-	void MoveLumpsInFolder(const char *);
+	void MoveFilesInFolder(const char *);
 	void AddFile(const char* filename, FileReader* wadinfo, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
 protected:
 

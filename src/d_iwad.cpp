@@ -369,10 +369,10 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		}
 	};
 
-	if (check.GetNumEntries() > 0)
+	if (check.GetFileCount() > 0)
 	{
 		memset(&mLumpsFound[0], 0, mLumpsFound.Size() * sizeof(mLumpsFound[0]));
-		for(int ii = 0; ii < check.GetNumEntries(); ii++)
+		for(int ii = 0; ii < check.GetFileCount(); ii++)
 		{
 			auto full = check.GetFileName(ii);
 			if (full && strnicmp(full, "maps/", 5) == 0)
@@ -829,14 +829,14 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		iwadnum++;
 	}
 
-	fileSystem.SetIwadNum(iwadnum);
+	fileSystem.SetBaseNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
 		D_AddFile (wadfiles, picks[pick].mRequiredPath.GetChars(), true, -1, GameConfig);
 		iwadnum++;
 	}
 	D_AddFile (wadfiles, picks[pick].mFullPath.GetChars(), true, -1, GameConfig);
-	fileSystem.SetMaxIwadNum(iwadnum);
+	fileSystem.SetMaxBaseNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
 

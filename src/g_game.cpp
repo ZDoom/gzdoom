@@ -1915,7 +1915,7 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 	{
 		return true;
 	}
-	if (fileSystem.CheckIfResourceFileLoaded (name) < 0)
+	if (fileSystem.CheckIfContainerLoaded (name) < 0)
 	{
 		if (printwarn)
 		{
@@ -2311,11 +2311,11 @@ static void PutSaveWads (FSerializer &arc)
 	const char *name;
 
 	// Name of IWAD
-	name = fileSystem.GetResourceFileName (fileSystem.GetIwadNum());
+	name = fileSystem.GetContainerName (fileSystem.GetBaseNum());
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	name = fileSystem.GetResourceFileName (fileSystem.GetFileContainer (primaryLevel->lumpnum));
+	name = fileSystem.GetContainerName (fileSystem.GetFileContainer (primaryLevel->lumpnum));
 	arc.AddString("Map WAD", name);
 }
 

@@ -20,7 +20,7 @@ void InitDoomFonts()
 			int wadfile = -1;
 			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
 			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
+			if (wadfile > fileSystem.GetBaseNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
@@ -37,7 +37,7 @@ void InitDoomFonts()
 			int wadfile = -1;
 			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
 			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetIwadNum())
+			if (wadfile > fileSystem.GetBaseNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);

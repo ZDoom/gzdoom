@@ -105,7 +105,7 @@ void FSavegameManager::ReadSaveStrings()
 							// old, incompatible savegame. List as not usable.
 							oldVer = true;
 						}
-						else if (iwad.CompareNoCase(fileSystem.GetResourceFileName(fileSystem.GetIwadNum())) == 0)
+						else if (iwad.CompareNoCase(fileSystem.GetContainerName(fileSystem.GetBaseNum())) == 0)
 						{
 							missing = !G_CheckSaveGameWads(arc, false);
 						}

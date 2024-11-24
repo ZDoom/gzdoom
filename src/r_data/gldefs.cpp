@@ -1234,7 +1234,7 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxBaseNum()) useme = true;
 				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;
@@ -1421,7 +1421,7 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxBaseNum()) useme = true;
 				if (thiswad && fileSystem.GetFileContainer(lumpnum) == fileSystem.GetFileContainer(workingLump)) useme = true;
 			}
 			if (!useme) return;

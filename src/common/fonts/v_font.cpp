@@ -120,7 +120,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		}
 
 
-		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
+		lump = fileSystem.CheckNumForAnyName(fontlumpname? fontlumpname : name);
 
 		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
@@ -871,7 +871,7 @@ void V_InitFonts()
 	FFont *CreateHexLumpFont(const char *fontname, int lump);
 	FFont *CreateHexLumpFont2(const char *fontname, int lump);
 
-	auto lump = fileSystem.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	auto lump = fileSystem.CheckNumForFullNameInFile("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
 	if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
 	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);

@@ -114,7 +114,7 @@ static FileReader OpenMusic(const char* musicname)
 	{
 		int lumpnum;
 		lumpnum = mus_cb.FindMusic(musicname);
-		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, FileSys::ns_music);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(musicname, ns_music);
 		if (lumpnum == -1)
 		{
 			Printf("Music \"%s\" not found\n", musicname);
@@ -143,7 +143,7 @@ bool MusicExists(const char* music_name)
 	{
 		int lumpnum;
 		lumpnum = mus_cb.FindMusic(music_name);
-		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(music_name, FileSys::ns_music);
+		if (lumpnum == -1) lumpnum = fileSystem.CheckNumForName(music_name, ns_music);
 		if (lumpnum != -1 && fileSystem.FileLength(lumpnum) != 0)
 			return true;
 	}

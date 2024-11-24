@@ -72,7 +72,7 @@ FGenericStartScreen::FGenericStartScreen(int max_progress)
 	: FStartScreen(max_progress)
 {
 	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
-	int startup_lump = fileSystem.CheckNumForName("BOOTLOGO", FileSys::ns_graphics);
+	int startup_lump = fileSystem.CheckNumForName("BOOTLOGO", ns_graphics);
 
 	StartupBitmap.Create(640 * 2, 480 * 2);
 	ClearBlock(StartupBitmap, { 0, 0, 0, 255 }, 0, 0, 640 * 2, 480 * 2);

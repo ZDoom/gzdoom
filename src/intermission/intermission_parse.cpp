@@ -303,7 +303,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 	{
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
-		int lump = fileSystem.CheckNumForFullName(sc.String, true);
+		int lump = fileSystem.CheckNumForAnyName(sc.String);
 		bool done = false;
 		if (lump > 0)
 		{
@@ -861,7 +861,7 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 		FIntermissionActionTextscreen *textscreen = new FIntermissionActionTextscreen;
 		if (textInLump)
 		{
-			int lump = fileSystem.CheckNumForFullName(text, true);
+			int lump = fileSystem.CheckNumForAnyName(text);
 			if (lump > 0)
 			{
 				textscreen->mText = GetStringFromLump(lump);

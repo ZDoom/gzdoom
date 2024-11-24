@@ -520,7 +520,7 @@ void MapLoader::InitED()
 	FScanner sc;
 
 	if (filename.IsEmpty()) return;
-	int lump = fileSystem.CheckNumForFullName(filename.GetChars(), true, FileSys::ns_global);
+	int lump = fileSystem.CheckNumForAnyName(filename.GetChars(), ns_global);
 	if (lump == -1) return;
 	sc.OpenLumpNum(lump);
 

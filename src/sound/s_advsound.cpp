@@ -51,8 +51,6 @@
 #include "s_music.h"
 #include "i_music.h"
 
-using namespace FileSys;
-
 // MACROS ------------------------------------------------------------------
 
 #define RANDOM		1
@@ -416,7 +414,7 @@ DEFINE_ACTION_FUNCTION(DObject,S_GetLength)
 
 FSoundID S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
 {
-	int lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
+	int lump = fileSystem.CheckNumForAnyName (lumpname, ns_sounds);
 	return S_AddSound (logicalname, lump);
 }
 
@@ -482,7 +480,7 @@ FSoundID S_AddPlayerSound (const char *pclass, int gender, FSoundID refid, const
 	
 	if (lumpname)
 	{
-		lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
+		lump = fileSystem.CheckNumForAnyName (lumpname, ns_sounds);
 	}
 
 	return S_AddPlayerSound (pclass, gender, refid, lump);
@@ -1071,7 +1069,7 @@ static void S_AddSNDINFO (int lump)
 				FName mapped = sc.String;
 
 				// only set the alias if the lump it maps to exists.
-				if (mapped == NAME_None || fileSystem.CheckNumForFullName(sc.String, true, ns_music) >= 0)
+				if (mapped == NAME_None || fileSystem.CheckNumForAnyName(sc.String, ns_music) >= 0)
 				{
 					MusicAliases[alias] = mapped;
 				}

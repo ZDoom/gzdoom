@@ -783,7 +783,7 @@ void R_ParseTrnslate()
 			do
 			{
 				sc.MustGetToken(TK_StringConst);
-				int pallump = fileSystem.CheckNumForFullName(sc.String, true, FileSys::ns_global);
+				int pallump = fileSystem.CheckNumForAnyName(sc.String, ns_global);
 				if (pallump >= 0)	// 
 				{
 					int start = 0;

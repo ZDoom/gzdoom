@@ -874,16 +874,16 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		FString normspritename = sprites[self->SpawnState->sprite].name;
 		FString crouchspritename = sprites[crouchsprite].name;
 
-		int spritenorm = fileSystem.CheckNumForName((normspritename + "A1").GetChars(), FileSys::ns_sprites);
+		int spritenorm = fileSystem.CheckNumForName((normspritename + "A1").GetChars(), ns_sprites);
 		if (spritenorm == -1)
 		{
-			spritenorm = fileSystem.CheckNumForName((normspritename + "A0").GetChars(), FileSys::ns_sprites);
+			spritenorm = fileSystem.CheckNumForName((normspritename + "A0").GetChars(), ns_sprites);
 		}
 
-		int spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A1").GetChars(), FileSys::ns_sprites);
+		int spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A1").GetChars(), ns_sprites);
 		if (spritecrouch == -1)
 		{
-			spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A0").GetChars(), FileSys::ns_sprites);
+			spritecrouch = fileSystem.CheckNumForName((crouchspritename + "A0").GetChars(), ns_sprites);
 		}
 
 		if (spritenorm == -1 || spritecrouch == -1)

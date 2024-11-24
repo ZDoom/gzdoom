@@ -50,8 +50,6 @@
 #include "g_level.h"
 #include "r_data/sprites.h"
 
-using namespace FileSys;
-
 struct VoxelOptions
 {
 	int			DroppedSpin = 0;
@@ -282,7 +280,7 @@ void R_InitVoxels()
 
 			sc.SetCMode(true);
 			sc.MustGetToken(TK_StringConst);
-			voxelfile = fileSystem.CheckNumForFullName(sc.String, true, ns_voxels);
+			voxelfile = fileSystem.CheckNumForAnyName(sc.String, ns_voxels);
 			if (voxelfile < 0)
 			{
 				sc.ScriptMessage("Voxel \"%s\" not found.\n", sc.String);

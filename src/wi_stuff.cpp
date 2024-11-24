@@ -517,7 +517,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	{
 		try
 		{
-			int lumpnum = fileSystem.CheckNumForFullName(lumpname, true);
+			int lumpnum = fileSystem.CheckNumForAnyName(lumpname);
 			if (lumpnum == -1)
 			{
 				I_Error("Intermission animation lump %s not found!", lumpname);
@@ -757,7 +757,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	}
 	else
 	{
-		int lumpnum = fileSystem.CheckNumForFullName(lumpname + 1, true);
+		int lumpnum = fileSystem.CheckNumForAnyName(lumpname + 1);
 		if (lumpnum >= 0)
 		{
 			FScanner sc(lumpnum);

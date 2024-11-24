@@ -304,7 +304,7 @@ static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void 
 	{
 		if (filename != nullptr)
 		{
-			lump = fileSystem.CheckNumForFullName(filename, true);
+			lump = fileSystem.CheckNumForAnyName(filename);
 			if (lump >= 0)
 			{
 				lsc.OpenLumpNum(lump);
@@ -480,7 +480,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 	ParseSingleFile(&sc, nullptr, lumpnum, parser, state);
 	for (unsigned i = 0; i < Includes.Size(); i++)
 	{
-		lumpnum = fileSystem.CheckNumForFullName(Includes[i].GetChars(), true);
+		lumpnum = fileSystem.CheckNumForAnyName(Includes[i].GetChars());
 		if (lumpnum == -1)
 		{
 			IncludeLocs[i].Message(MSG_ERROR, "Include script lump %s not found", Includes[i].GetChars());

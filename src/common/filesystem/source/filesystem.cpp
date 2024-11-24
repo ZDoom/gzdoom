@@ -594,7 +594,7 @@ int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int names
 	return -1;
 }
 
-int FileSystem::CheckNumForFullName (const char *name, int rfnum) const
+int FileSystem::CheckNumForFullNameInFile (const char *name, int rfnum) const
 {
 	uint32_t i;
 

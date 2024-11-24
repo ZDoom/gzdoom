@@ -111,7 +111,7 @@ FStrifeStartScreen::FStrifeStartScreen(int max_progress)
 	// Load the background and animated overlays.
 	for (size_t i = 0; i < countof(StrifeStartupPicNames); ++i)
 	{
-		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i], FileSys::ns_graphics);
+		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i], ns_graphics);
 		if (lumpnum < 0) lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i]);
 
 		if (lumpnum >= 0)

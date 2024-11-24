@@ -81,9 +81,9 @@ FHexenStartScreen::FHexenStartScreen(int max_progress)
 	: FStartScreen(max_progress)
 {
 	// at this point we do not have a working texture manager yet, so we have to do the lookup via the file system
-	int startup_lump = fileSystem.CheckNumForName("STARTUP", FileSys::ns_graphics);
-	int netnotch_lump = fileSystem.CheckNumForName("NETNOTCH", FileSys::ns_graphics);
-	int notch_lump = fileSystem.CheckNumForName("NOTCH", FileSys::ns_graphics);
+	int startup_lump = fileSystem.CheckNumForName("STARTUP", ns_graphics);
+	int netnotch_lump = fileSystem.CheckNumForName("NETNOTCH", ns_graphics);
+	int notch_lump = fileSystem.CheckNumForName("NOTCH", ns_graphics);
 
 	// For backwards compatibility we also need to look in the default namespace, because these were previously not handled as graphics.
 	if (startup_lump == -1) startup_lump = fileSystem.CheckNumForName("STARTUP");

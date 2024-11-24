@@ -45,6 +45,8 @@ using FileSystemMessageFunc = int(*)(FSMessageLevel msglevel, const char* format
 
 class FResourceFile;
 
+}
+
 // [RH] Namespaces from BOOM.
 // These are needed here in the low level part so that WAD files can be properly set up.
 typedef enum {
@@ -75,6 +77,8 @@ typedef enum {
 
 	ns_firstskin,
 } namespace_t;
+
+namespace FileSys {
 
 enum ELumpFlags
 {

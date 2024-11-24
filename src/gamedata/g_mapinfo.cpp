@@ -941,7 +941,7 @@ void FMapInfoParser::ParseCluster()
 	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
 	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
 	{
-		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText.GetChars(), true);
+		int lump = fileSystem.CheckNumForAnyName(clusterinfo->ExitText.GetChars());
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
@@ -2447,7 +2447,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		if (sc.Compare("include"))
 		{
 			sc.MustGetString();
-			int inclump = fileSystem.CheckNumForFullName(sc.String, true);
+			int inclump = fileSystem.CheckNumForAnyName(sc.String);
 			if (inclump < 0)
 			{
 				sc.ScriptError("include file '%s' not found", sc.String);
@@ -2725,7 +2725,7 @@ void G_ParseMapInfo (FString basemapinfo)
 			// If that exists we need to skip this one.
 
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 
 			if (altlump >= 0) continue;
 		}
@@ -2733,9 +2733,9 @@ void G_ParseMapInfo (FString basemapinfo)
 		{
 			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
-			altlump = fileSystem.CheckNumForName("MAPINFO", FileSys::ns_global, wad, true);
+			altlump = fileSystem.CheckNumForName("MAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
 		}
 		if (nindex != 2)

@@ -153,7 +153,7 @@ int RunEndoom()
 		return 0;
 	}
 
-	int endoom_lump = fileSystem.CheckNumForFullName (endoomName.GetChars(), true);
+	int endoom_lump = fileSystem.CheckNumForAnyName (endoomName.GetChars());
 	
 	if (endoom_lump < 0 || fileSystem.FileLength (endoom_lump) != 4000)
 	{

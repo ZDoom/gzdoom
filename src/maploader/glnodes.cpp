@@ -730,14 +730,14 @@ static int FindGLNodesInWAD(int labellump)
 	glheader.Format("GL_%s", fileSystem.GetFileName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = fileSystem.CheckNumForName(glheader.GetChars(), FileSys::ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader.GetChars(), ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", FileSys::ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{

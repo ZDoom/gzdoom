@@ -2909,7 +2909,7 @@ void G_DoPlayDemo (void)
 	gameaction = ga_nothing;
 
 	// [RH] Allow for demos not loaded as lumps
-	demolump = fileSystem.CheckNumForFullName (defdemoname.GetChars(), true);
+	demolump = fileSystem.CheckNumForAnyName (defdemoname.GetChars());
 	if (demolump >= 0)
 	{
 		int demolen = fileSystem.FileLength (demolump);

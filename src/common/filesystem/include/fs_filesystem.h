@@ -66,8 +66,13 @@ public:
 	inline int GetNumForName (const uint8_t *name, int ns) const { return GetNumForName ((const char *)name, ns); }
 
 	int CheckNumForFullName (const char *cname, bool trynormal = false, int namespc = ns_global, bool ignoreext = false) const;
-	int CheckNumForFullName (const char *name, int wadfile) const;
+	int CheckNumForFullNameInFile (const char *name, int wadfile) const;
 	int GetNumForFullName (const char *name) const;
+	int CheckNumForAnyName(const char* cname, namespace_t namespc = ns_global) const
+	{
+		return CheckNumForFullName(cname, true, namespc);
+	}
+
 	int FindFile(const char* name) const
 	{
 		return CheckNumForFullName(name);

@@ -723,8 +723,8 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			FName texname = sc.String;
 
 			sc.MustGetString();
-			int lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_patches);
-			if (lumpnum == -1) lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_graphics);
+			int lumpnum = fileSystem.CheckNumForAnyName(sc.String, ns_patches);
+			if (lumpnum == -1) lumpnum = fileSystem.CheckNumForAnyName(sc.String, ns_graphics);
 
 			if (tlist.Size() == 0)
 			{
@@ -779,8 +779,8 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			{
 				FString src = base.Left(8);
 
-				int lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_patches);
-				if (lumpnum == -1) lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_graphics);
+				int lumpnum = fileSystem.CheckNumForAnyName(sc.String, ns_patches);
+				if (lumpnum == -1) lumpnum = fileSystem.CheckNumForAnyName(sc.String, ns_graphics);
 
 				sc.GetString();
 				bool is32bit = !!sc.Compare("force32bit");
@@ -854,7 +854,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			sc.MustGetString();
 
 			// This is not using sc.Open because it can print a more useful error message when done here
-			int includelump = fileSystem.CheckNumForFullName(sc.String, true);
+			int includelump = fileSystem.CheckNumForAnyName(sc.String);
 			if (includelump == -1)
 			{
 				sc.ScriptError("Lump '%s' not found", sc.String);
@@ -971,7 +971,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (fileSystem.GetFileFlags(i) & RESFF_FULLPATH) continue;
+			if (fileSystem.GetFileFlags(i) & FileSys::RESFF_FULLPATH) continue;
 
 			// Ignore lumps with empty names.
 			if (fileSystem.CheckFileName(i, "")) continue;
@@ -1109,7 +1109,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 
 void FTextureManager::AddLocalizedVariants()
 {
-	std::vector<FolderEntry> content;
+	std::vector<FileSys::FolderEntry> content;
 	fileSystem.GetFilesInFolder("localized/textures/", content, false);
 	for (auto &entry : content)
 	{

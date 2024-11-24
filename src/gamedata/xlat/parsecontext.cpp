@@ -314,7 +314,7 @@ void FParseContext::ParseLump(const char *lumpname)
 	const char *SavedSourceFile = SourceFile;
 	FParseToken token;
 
-	int lumpno = fileSystem.CheckNumForFullName(lumpname, true);
+	int lumpno = fileSystem.CheckNumForAnyName(lumpname);
 
 	if (lumpno == -1) 
 	{

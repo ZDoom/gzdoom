@@ -468,10 +468,27 @@ void FIWadManager::CollectSearchPaths()
 			}
 		}
 	}
-	mSearchPaths.Append(I_GetGogPaths());
-	mSearchPaths.Append(I_GetSteamPath());
-	mSearchPaths.Append(I_GetBethesdaPath());
-
+	int JR_int = 0;
+	if JR_int == 0
+	{
+		cout << "do you want to search for .WAD files? Type y for yes or n for no";
+		if cin >> "y" or "Y"
+			{
+				mSearchPaths.Append(I_GetGogPaths());
+				mSearchPaths.Append(I_GetSteamPath());
+				mSearchPaths.Append(I_GetBethesdaPath());
+				JR_int == 1
+			}
+		elif cin >> "n" or "N"
+			{
+				JR_int == 1
+				cout << "Ok"
+			}
+		else
+		{
+			cout << "That is not a y or an n"
+		}
+	}
 	// Unify and remove trailing slashes
 	for (auto &str : mSearchPaths)
 	{

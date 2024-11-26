@@ -866,7 +866,7 @@ class Actor : Thinker native
 	native void PlayPushSound();
 	native bool BounceActor(Actor blocking, bool onTop);
 	native bool BounceWall(Line l = null);
-	native bool BouncePlane(readonly<SecPlane> plane);
+	native bool BouncePlane(readonly<SecPlane> plane, bool is3DFloor = false);
 	native void PlayBounceSound(bool onFloor);
 	native bool ReflectOffActor(Actor blocking);
 

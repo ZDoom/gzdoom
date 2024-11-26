@@ -2486,7 +2486,9 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 						// If it's a bouncer, let it bounce off its new floor, too.
 						if (thing->BounceFlags & BOUNCE_Floors)
 						{
-							thing->FloorBounceMissile(tm.floorsector->floorplane);
+							F3DFloor* ff = nullptr;
+							NextLowestFloorAt(tm.sector, tm.pos.X, tm.pos.Y, tm.pos.Z, 0, thing->MaxStepHeight, nullptr, &ff);
+							thing->FloorBounceMissile(ff != nullptr ? *ff->top.plane : tm.floorsector->floorplane, ff != nullptr);
 						}
 						else
 						{
@@ -3603,14 +3605,17 @@ bool FSlide::BounceWall(AActor *mo)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
 		double floordist = mo->Z() - mo->floorz;
 		double ceildist = mo->ceilingz - mo->Z();
+		F3DFloor* ff = nullptr;
 		if (floordist <= ceildist)
 		{
-			mo->FloorBounceMissile(mo->Sector->floorplane);
+			NextLowestFloorAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), 0, mo->MaxStepHeight, nullptr, &ff);
+			mo->FloorBounceMissile(ff != nullptr ? *ff->top.plane : mo->floorsector->floorplane, ff != nullptr);
 			return true;
 		}
 		else
 		{
-			mo->FloorBounceMissile(mo->Sector->ceilingplane);
+			NextHighestCeilingAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), mo->Top(), 0, nullptr, &ff);
+			mo->FloorBounceMissile(ff != nullptr ? *ff->bottom.plane : mo->ceilingsector->ceilingplane, ff != nullptr);
 			return true;
 		}
 	}

@@ -3792,7 +3792,8 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			else // Don't run through this for MBF-style bounces
 			{
 				// The reflected velocity keeps only about 70% of its original speed
-				mo->Vel.Z = (mo->Vel.Z - 2. * dot) * mo->bouncefactor;
+				mo->Vel.Z -= 2. * dot;
+				mo->Vel *= mo->bouncefactor;
 			}
 
 			mo->PlayBounceSound(true);
@@ -3803,8 +3804,11 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			}
 			else if (mo->BounceFlags & (BOUNCE_AutoOff | BOUNCE_AutoOffFloorOnly))
 			{
-				if (!(mo->flags & MF_NOGRAVITY) && (mo->Vel.Z < 3.))
-					mo->BounceFlags &= ~BOUNCE_TypeMask;
+				if (mo->Vel.Z >= 0 || (mo->BounceFlags & BOUNCE_AutoOff))
+				{
+					if (!(mo->flags & MF_NOGRAVITY) && (mo->Vel.Z < 3.))
+						mo->BounceFlags &= ~BOUNCE_TypeMask;
+				}
 			}
 		}
 		if (mo->BounceFlags & BOUNCE_UseBounceState)

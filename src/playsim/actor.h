@@ -873,7 +873,7 @@ public:
 	void PlayPushSound();
 
 	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
-	bool FloorBounceMissile (secplane_t &plane);
+	bool FloorBounceMissile (secplane_t &plane, bool is3DFloor);
 
 	// Called by RoughBlockCheck
 	bool IsOkayToAttack (AActor *target);

@@ -1732,7 +1732,7 @@ void AActor::PlayBounceSound(bool onfloor)
 // Returns true if the missile was destroyed
 //----------------------------------------------------------------------------
 
-bool AActor::FloorBounceMissile (secplane_t &plane)
+bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 {
 	if (flags & MF_MISSILE)
 	{
@@ -1808,11 +1808,15 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		return true;
 	}
 
-	double dot = (Vel | plane.Normal()) * 2;
+	DVector3 norm = plane.Normal();
+	if (is3DFloor)
+		norm = -norm;
+
+	double dot = (Vel | norm) * 2;
 
 	if (BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
 	{
-		Vel -= plane.Normal() * dot;
+		Vel -= norm * dot;
 		AngleFromVel();
 		if (!(BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
 		{
@@ -1826,7 +1830,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	else // Don't run through this for MBF-style bounces
 	{
 		// The reflected velocity keeps only about 70% of its original speed
-		Vel = (Vel - plane.Normal() * dot) * bouncefactor;
+		Vel = (Vel - norm * dot) * bouncefactor;
 		AngleFromVel();
 	}
 
@@ -1850,10 +1854,10 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 	else if (BounceFlags & (BOUNCE_AutoOff|BOUNCE_AutoOffFloorOnly))
 	{
-		if (plane.fC() > 0 || (BounceFlags & BOUNCE_AutoOff))
+		if (norm.Z > 0 || (BounceFlags & BOUNCE_AutoOff))
 		{
 			// AutoOff only works when bouncing off a floor, not a ceiling (or in compatibility mode.)
-			if (!(flags & MF_NOGRAVITY) && (Vel.Z < 3))
+			if (!(flags & MF_NOGRAVITY) && ((Vel | norm) < 3))
 				BounceFlags &= ~BOUNCE_TypeMask;
 		}
 	}
@@ -2646,7 +2650,9 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 				mo->SetZ(mo->floorz);
 				if (mo->BounceFlags & BOUNCE_Floors)
 				{
-					mo->FloorBounceMissile (mo->floorsector->floorplane);
+					F3DFloor* ff = nullptr;
+					NextLowestFloorAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), 0, mo->MaxStepHeight, nullptr, &ff);
+					mo->FloorBounceMissile (ff != nullptr ? *ff->top.plane : mo->floorsector->floorplane, ff != nullptr);
 					/* if (!CanJump(mo)) */ return;
 				}
 				else if (mo->flags3 & MF3_NOEXPLODEFLOOR)
@@ -2682,7 +2688,9 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 			}
 			else if (mo->BounceFlags & BOUNCE_MBF && mo->Vel.Z) // check for MBF-like bounce on non-missiles
 			{
-				mo->FloorBounceMissile(mo->floorsector->floorplane);
+				F3DFloor* ff = nullptr;
+				NextLowestFloorAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), 0, mo->MaxStepHeight, nullptr, &ff);
+				mo->FloorBounceMissile(ff != nullptr ? *ff->top.plane : mo->floorsector->floorplane, ff != nullptr);
 			}
 			if (mo->flags3 & MF3_ISMONSTER)		// Blasted mobj falling
 			{
@@ -2753,7 +2761,9 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 			mo->SetZ(mo->ceilingz - mo->Height);
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
-				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
+				F3DFloor* ff = nullptr;
+				NextHighestCeilingAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), mo->Top(), 0, nullptr, &ff);
+				mo->FloorBounceMissile(ff != nullptr ? *ff->bottom.plane : mo->ceilingsector->ceilingplane, ff != nullptr);
 				/* if (!CanJump(mo)) */ return;
 			}
 			if (mo->flags & MF_SKULLFLY)

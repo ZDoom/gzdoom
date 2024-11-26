@@ -1857,7 +1857,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 		if (norm.Z > 0 || (BounceFlags & BOUNCE_AutoOff))
 		{
 			// AutoOff only works when bouncing off a floor, not a ceiling (or in compatibility mode.)
-			if (!(flags & MF_NOGRAVITY) && ((Vel | norm) < 3))
+			if (!(flags & MF_NOGRAVITY) && (norm.Z < 0 || ((Vel | norm) < 3)))
 				BounceFlags &= ~BOUNCE_TypeMask;
 		}
 	}

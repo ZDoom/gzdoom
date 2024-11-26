@@ -496,6 +496,10 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 			entersector = &DummySector[sectorsel];
 			sectorsel ^= 1;
 
+			// We need to make sure that 3D floors clipping underneath the ground/above the ceiling don't
+			// accidentally get ignored.
+			bool setFloor = false, setCeiling = false;
+
 			for (auto rover : entersector->e->XFloor.ffloors)
 			{
 				int entershootthrough = !!(rover->flags&FF_SHOOTTHROUGH);
@@ -508,8 +512,8 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 					// clip to the part of the sector we are in
 					if (hit.Z > ff_top)
 					{
-						// 3D floor height is the same as the floor height. We need to test a second spot to see if it is above or below
-						if (fabs(bf - ff_top) < EQUAL_EPSILON)
+						// 3D floor height is the same as the floor height or underground. We need to test a second spot to see if it is above or below
+						if ((ff_top < bf && !setFloor) || fabs(bf - ff_top) < EQUAL_EPSILON)
 						{
 							double cf = entersector->floorplane.ZatPoint(entersector->centerspot);
 							double ffc = rover->top.plane->ZatPoint(entersector->centerspot);
@@ -522,6 +526,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 						// above
 						if (bf < ff_top)
 						{
+							setFloor = true;
 							entersector->floorplane = *rover->top.plane;
 							entersector->SetTexture(sector_t::floor, *rover->top.texture, false);
 							entersector->ClearPortal(sector_t::floor);
@@ -530,8 +535,8 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 					}
 					else if (hit.Z < ff_bottom)
 					{
-						// 3D floor height is the same as the ceiling height. We need to test a second spot to see if it is above or below
-						if (fabs(bc - ff_bottom) < EQUAL_EPSILON)
+						// 3D floor height is the same as the ceiling height or above it. We need to test a second spot to see if it is above or below
+						if ((ff_bottom > bc && !setCeiling) || fabs(bc - ff_bottom) < EQUAL_EPSILON)
 						{
 							double cc = entersector->ceilingplane.ZatPoint(entersector->centerspot);
 							double fcc = rover->bottom.plane->ZatPoint(entersector->centerspot);
@@ -544,6 +549,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool spec
 						//below
 						if (bc > ff_bottom)
 						{
+							setCeiling = true;
 							entersector->ceilingplane = *rover->bottom.plane;
 							entersector->SetTexture(sector_t::ceiling, *rover->bottom.texture, false);
 							entersector->ClearPortal(sector_t::ceiling);

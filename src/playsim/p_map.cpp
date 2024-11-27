@@ -1343,46 +1343,44 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 //
 //==========================================================================
 
-void P_DoMissileDamage(AActor* inflictor, AActor* target)
+void P_DoMissileDamage(AActor* self, AActor* victim)
 {
+	const bool ripper = (self->flags2 & MF2_RIP);
+
 	// Do poisoning (if using new style poison)
-	if (inflictor->PoisonDamage > 0 && inflictor->PoisonDuration != INT_MIN)
-	{
-		P_PoisonMobj(target, inflictor, inflictor->target, inflictor->PoisonDamage, inflictor->PoisonDuration, inflictor->PoisonPeriod, inflictor->PoisonDamageType);
-	}
+	if (self->PoisonDamage > 0 && self->PoisonDuration != INT_MIN)
+		P_PoisonMobj(victim, self, self->target, self->PoisonDamage, self->PoisonDuration, self->PoisonPeriod, self->PoisonDamageType);
 
 	// Do damage
-	int damage = inflictor->GetMissileDamage((inflictor->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-	if ((damage > 0) || (inflictor->flags6 & MF6_FORCEPAIN) || (inflictor->flags7 & MF7_CAUSEPAIN))
+	int damage = ripper ? self->GetMissileDamage(3, 2) : self->GetMissileDamage((self->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
+	if (damage > 0 || (self->flags6 & MF6_FORCEPAIN) || (self->flags7 & MF7_CAUSEPAIN))
 	{
-		int newdam = P_DamageMobj(target, inflictor, inflictor->target, damage, inflictor->DamageType);
-		if (damage > 0)
+		if (ripper)
+			S_Sound(self, CHAN_BODY, 0, self->SoundVar(NAME_RipSound), 1.0f, ATTN_IDLE);
+
+		int dealt = P_DamageMobj(victim, self, self->target, damage, self->DamageType);
+		if (damage > 0 && !(self->flags3 & MF3_BLOODLESSIMPACT)
+			&& !(victim->flags & MF_NOBLOOD)
+			&& !(victim->flags2 & (MF2_INVULNERABLE | MF2_DORMANT | MF2_REFLECTIVE)))
 		{
-			if ((inflictor->flags5 & MF5_BLOODSPLATTER) &&
-				!(target->flags & MF_NOBLOOD) &&
-				!(target->flags2 & MF2_REFLECTIVE) &&
-				!(target->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)) &&
-				!(inflictor->flags3 & MF3_BLOODLESSIMPACT) &&
-				(pr_checkthing() < 192))
-			{
-				P_BloodSplatter(inflictor->Pos(), target, inflictor->AngleTo(target));
-			}
-			if (!(inflictor->flags3 & MF3_BLOODLESSIMPACT))
-			{
-				P_TraceBleed(newdam > 0 ? newdam : damage, target, inflictor);
-			}
+			if (ripper)
+				P_RipperBlood(self, victim);
+			else if ((self->flags5 & MF5_BLOODSPLATTER) && pr_checkthing() < 192)
+				P_BloodSplatter(self->Pos(), victim, self->AngleTo(victim));
+
+			P_TraceBleed(dealt > 0 ? dealt : damage, victim, self);
 		}
 	}
 	else
 	{
-		P_GiveBody(target, -damage);
+		P_GiveBody(victim, -damage);
 	}
 }
-DEFINE_ACTION_FUNCTION(AActor, DoMissileDamage)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, DoMissileDamage, P_DoMissileDamage)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT_NOT_NULL(target, AActor);
-	P_DoMissileDamage(self, target);
+	PARAM_OBJECT_NOT_NULL(victim, AActor);
+	P_DoMissileDamage(self, victim);
 	return 0;
 }
 //==========================================================================
@@ -1687,27 +1685,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				if (check == NULL || !*check)
 				{
 					tm.LastRipped[thing] = true;
-					if (!(thing->flags & MF_NOBLOOD) &&
-						!(thing->flags2 & MF2_REFLECTIVE) &&
-						!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
-						!(thing->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
-					{ // Ok to spawn blood
-						P_RipperBlood(tm.thing, thing);
-					}
-					S_Sound(tm.thing, CHAN_BODY, 0, tm.thing->SoundVar(NAME_RipSound), 1, ATTN_IDLE);
-
-					// Do poisoning (if using new style poison)
-					if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
-					{
-						P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod, tm.thing->PoisonDamageType);
-					}
-
-					damage = tm.thing->GetMissileDamage(3, 2);
-					int newdam = P_DamageMobj(thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
-					if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
-					{
-						P_TraceBleed(newdam > 0 ? newdam : damage, thing, tm.thing);
-					}
+					P_DoMissileDamage(tm.thing, thing);
 					if (thing->flags2 & MF2_PUSHABLE
 						&& !(tm.thing->flags2 & MF2_CANNOTPUSH))
 					{ // Push thing

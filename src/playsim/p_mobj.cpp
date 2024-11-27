@@ -4379,14 +4379,13 @@ void AActor::Tick ()
 					}
 					if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
 					{
-						bool res = P_BounceActor(this, onmo, true);
+						if (flags & MF_MISSILE)
+							P_DoMissileDamage(this, onmo);
+
 						// If the bouncer is a missile and has hit the other actor it needs to be exploded here
 						// to be in line with the case when an actor's side is hit.
-						if (!res && (flags & MF_MISSILE))
-						{
-							P_DoMissileDamage(this, onmo);
+						if (!P_BounceActor(this, onmo, true) && (flags & MF_MISSILE))
 							P_ExplodeMissile(this, nullptr, onmo);
-						}
 					}
 					else
 					{

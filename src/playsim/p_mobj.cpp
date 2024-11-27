@@ -1775,9 +1775,13 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 		}
 	}
 
+	DVector3 norm = plane.Normal();
+	if (is3DFloor)
+		norm = -norm;
+
 	bool onsky;
 
-	if (plane.fC() < 0)
+	if (norm.Z < 0)
 	{ // on ceiling
 		if (!(BounceFlags & BOUNCE_Ceilings))
 			return true;
@@ -1808,10 +1812,6 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 		return true;
 	}
 
-	DVector3 norm = plane.Normal();
-	if (is3DFloor)
-		norm = -norm;
-
 	double dot = (Vel | norm) * 2;
 
 	if (BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
@@ -1839,7 +1839,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 	// Set bounce state
 	if (BounceFlags & BOUNCE_UseBounceState)
 	{
-		FName names[2] = { NAME_Bounce, plane.fC() < 0 ? NAME_Ceiling : NAME_Floor };
+		FName names[2] = { NAME_Bounce, norm.Z < 0 ? NAME_Ceiling : NAME_Floor };
 		FState *bouncestate = FindState(2, names);
 		if (bouncestate != nullptr)
 		{

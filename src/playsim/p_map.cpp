@@ -3552,7 +3552,9 @@ bool FSlide::BounceWall(AActor *mo)
 	double         movelen;
 	line_t			*line;
 
-	if (!(mo->BounceFlags & BOUNCE_Walls))
+	// The plane bounce flags need to be checked here in case it hit a ramp while
+	// moving along the xy axes.
+	if (!(mo->BounceFlags & (BOUNCE_Walls | BOUNCE_Ceilings | BOUNCE_Floors)))
 	{
 		return false;
 	}
@@ -3587,16 +3589,18 @@ bool FSlide::BounceWall(AActor *mo)
 		if (floordist <= ceildist)
 		{
 			NextLowestFloorAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), 0, mo->MaxStepHeight, nullptr, &ff);
-			mo->FloorBounceMissile(ff != nullptr ? *ff->top.plane : mo->floorsector->floorplane, ff != nullptr);
-			return true;
+			return !mo->FloorBounceMissile(ff != nullptr ? *ff->top.plane : mo->floorsector->floorplane, ff != nullptr);
 		}
 		else
 		{
 			NextHighestCeilingAt(mo->Sector, mo->X(), mo->Y(), mo->Z(), mo->Top(), 0, nullptr, &ff);
-			mo->FloorBounceMissile(ff != nullptr ? *ff->bottom.plane : mo->ceilingsector->ceilingplane, ff != nullptr);
-			return true;
+			return !mo->FloorBounceMissile(ff != nullptr ? *ff->bottom.plane : mo->ceilingsector->ceilingplane, ff != nullptr);
 		}
 	}
+
+	if (!(mo->BounceFlags & BOUNCE_Walls))
+		return false;
+
 	line = bestslideline;
 
 	if (mo->flags & MF_MISSILE)

@@ -1040,7 +1040,7 @@ void D_Display ()
 				if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
 				if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
 				{
-					StatusBar->DrawCrosshair();
+					StatusBar->DrawCrosshair(vp.TicFrac);
 				}
 				StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
 				StatusBar->DrawTopStuff (HUD_AltHud);

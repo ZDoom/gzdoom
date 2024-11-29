@@ -854,7 +854,7 @@ void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 off
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{
-			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], NULL, entry, bloodTrans);
+			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor, entry, bloodTrans);
 		}
 	}
 }

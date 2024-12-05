@@ -427,14 +427,14 @@ private:
 public:
 
 	AActor *ValidateInvFirst (int numVisible) const;
-	void DrawCrosshair ();
+	void DrawCrosshair (double ticFrac);
 
 	// Sizing info for ths status bar.
 	bool Scaled;							// This needs to go away.
 
 	bool Centering;
 	bool FixedOrigin;
-	double CrosshairSize;
+	double PrevCrosshairSize, CrosshairSize;
 	double Displacement;
 	bool ShowLog;
 	int artiflashTick = 0;

@@ -824,7 +824,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
 	int iwadnum = 1;
-	if (D_AddFile(wadfiles, optional_wad, true, -1, GameConfig))
+	if (optional_wad && D_AddFile(wadfiles, optional_wad, true, -1, GameConfig))
 	{
 		iwadnum++;
 	}

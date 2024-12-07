@@ -2378,7 +2378,6 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_SUMMONFRIEND2:
 	case DEM_SUMMONFOE2:
 		{
-			PClassActor *typeinfo;
 			int angle = 0;
 			int16_t tid = 0;
 			uint8_t special = 0;
@@ -2393,11 +2392,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				for(i = 0; i < 5; i++) args[i] = ReadInt32(stream);
 			}
 
-			typeinfo = PClass::FindActor(s);
-			if (typeinfo != NULL)
+			AActor *source = players[player].mo;
+			if(source != NULL)
 			{
-				AActor *source = players[player].mo;
-				if (source != NULL)
+				PClassActor * typeinfo = PClass::FindActor(s);
+				if (typeinfo != NULL)
 				{
 					if (GetDefaultByType (typeinfo)->flags & MF_MISSILE)
 					{
@@ -2440,6 +2439,20 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 								}
 								if(tid) spawned->SetTID(tid);
 							}
+						}
+					}
+				}
+				else
+				{ // not an actor, must be a visualthinker
+					PClass * typeinfo = PClass::FindClass(s);
+					if(typeinfo && typeinfo->IsDescendantOf("VisualThinker"))
+					{
+						DVector3 spawnpos = source->Vec3Angle(source->radius * 4, source->Angles.Yaw, 8.);
+						auto vt = DVisualThinker::NewVisualThinker(source->Level, typeinfo);
+						if(vt)
+						{
+							vt->PT.Pos = spawnpos;
+							vt->UpdateSector();
 						}
 					}
 				}

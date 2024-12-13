@@ -65,6 +65,7 @@ static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
 
 EXTERN_CVAR(Bool, strictdecorate);
+EXTERN_CVAR(Bool, warningstoerrors);
 
 //==========================================================================
 //
@@ -464,8 +465,27 @@ void LoadActors()
 
 	if (FScriptPosition::ErrorCounter > 0)
 	{
-		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
+		if (FScriptPosition::WarnCounter > 0)
+		{
+			I_Error("%d errors, %d warnings while parsing scripts", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter);
+		}
+		else
+		{
+			I_Error("%d errors while parsing scripts", FScriptPosition::ErrorCounter);
+		}
 	}
+	else if (FScriptPosition::WarnCounter > 0)
+	{
+		if(warningstoerrors)
+		{
+			I_Error("%d warnings while parsing scripts\n", FScriptPosition::WarnCounter);
+		}
+		else
+		{
+			Printf(TEXTCOLOR_ORANGE "%d warnings while parsing scripts\n", FScriptPosition::WarnCounter);
+		}
+	}
+
 	FScriptPosition::ResetErrorCounter();
 	// AllActorClasses hasn'T been set up yet.
 	for (int i = PClass::AllClasses.Size() - 1; i >= 0; i--)

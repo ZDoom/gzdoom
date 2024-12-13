@@ -40,6 +40,7 @@
 #include "filesystem.h"
 
 CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+CVAR(Bool, warningstoerrors, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 EXTERN_CVAR(Bool, vm_jit)
 EXTERN_CVAR(Bool, vm_jit_aot)

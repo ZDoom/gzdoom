@@ -1158,7 +1158,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// Special damage types
 			if (inflictor)
 			{
-				if (inflictor->flags4 & MF4_SPECTRAL)
+				if (inflictor->flags4 & MF4_SPECTRAL && !(inflictor->flags9 & MF9_ISPUFF))
 				{
 					if (player != NULL)
 					{

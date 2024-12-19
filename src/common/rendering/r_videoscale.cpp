@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------
 **
 ** Copyright(C) 2017 Magnus Norddahl
-** Copyright(C) 2017-2020 Rachael Alexanderson
+** Copyright(C) 2017-2024 Rachael Alexanderson
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -128,16 +128,17 @@ namespace
 
 	// the odd formatting of this struct definition is meant to resemble a table header. set your tab stops to 4 when editing this file.
 	struct v_ScaleTable
-		{ bool isValid;		uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);								uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);						float pixelAspect;		bool isCustom;	};
+		{ bool isValid;		uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);										uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);								float pixelAspect;		bool isCustom;	};
 	v_ScaleTable vScaleTable[] =
 	{
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,	  				false   },	// 0  - Native
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 640; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 400; },			        	1.2f,   				false   },	// 2  - 640x400 (formerly 320x200)
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 960; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 600; },				        1.2f,  				 	false   },	// 3  - 960x600 (formerly 640x400)
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           		[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        			1.2f,   				false   },	// 4  - 1280x800
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },	1.0f,   				true    },	// 5  - Custom
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        	1.2f,   				false   },	// 7  - 320x200
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        				[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        				1.0f,	  				false   },	// 0  - Native
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },			1.0f,					false   },	// 1  - Minimum Scale to Fill Entire Screen
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 640; },		            				[](uint32_t Width, uint32_t Height)->uint32_t { return 400; },			        			1.2f,   				false   },	// 2  - 640x400 (formerly 320x200)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 960; },		            				[](uint32_t Width, uint32_t Height)->uint32_t { return 600; },				        		1.2f,  				 	false   },	// 3  - 960x600 (formerly 640x400)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           					[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        					1.2f,   				false   },	// 4  - 1280x800
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },			1.0f,   				true    },	// 5  - Custom
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            				[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        			1.2f,   				false   },	// 6  - 320x200
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width * 1.2, Height) * 1.2; },	[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width * 1.2, Height); },	1.2f,					false   },	// 7  - Minimum Scale to Fill Entire Screen (1.2)
 	};
 	bool isOutOfBounds(int x)
 	{

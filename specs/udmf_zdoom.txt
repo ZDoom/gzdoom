@@ -157,10 +157,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       For lines with ACS specials (80-86 and 226), if arg0str is present and non-null, it
       will be used as the name of the script to execute, and arg0 will be ignored.
 
-      lm_sampledist_line = <int>;    // ZDRay customizable sampling distance for this line. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_top = <int>;     // ZDRay customizable sampling distance for this line's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_mid = <int>;     // ZDRay customizable sampling distance for this line's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_bot = <int>;     // ZDRay customizable sampling distance for this line's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
+      lm_sampledist_line = <int>;    // ZDRay customizable sampling distance for this line. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_top = <int>;     // ZDRay customizable sampling distance for this line's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_mid = <int>;     // ZDRay customizable sampling distance for this line's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_bot = <int>;     // ZDRay customizable sampling distance for this line's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
    }
 
    sidedef
@@ -231,10 +231,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       colorization_mid = <int>;     // Sets a colorization record for the middle texture. Colorization records must be defined in TEXTURES.
       colorization_bottom = <int>;  // Sets a colorization record for the lower texture. Colorization records must be defined in TEXTURES.
 
-      lm_sampledist_line = <int>;   // ZDRay customizable sampling distance for this sidedef. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_top = <int>;    // ZDRay customizable sampling distance for this sidedef's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_mid = <int>;    // ZDRay customizable sampling distance for this sidedef's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_bot = <int>;    // ZDRay customizable sampling distance for this sidedef's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0	  
+      lm_sampledist_line = <int>;   // ZDRay customizable sampling distance for this sidedef. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_top = <int>;    // ZDRay customizable sampling distance for this sidedef's top part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_mid = <int>;    // ZDRay customizable sampling distance for this sidedef's middle part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_bot = <int>;    // ZDRay customizable sampling distance for this sidedef's bottom part. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
 	  
 	  skew_top = <int>;             // enables skewing of wall textures, the skewing angle will be aligned to one of the 4 planes touching the floor. 
       skew_middle = <int>;          // Vertical texture alignment defines the position at the leftmost point of the wall.
@@ -390,9 +390,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       for Doom format maps so any map converter converting to the ZDoomTranslated namespace should
       set this flag for each tagged sector.
 
-      lm_sampledist_floor = <int>;      // ZDRay customizable sampling distance for this sector's floor. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_sampledist_ceiling = <int>;    // ZDRay customizable sampling distance for this sector's ceiling. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0
-      lm_dynamic = <bool>;              // ZDRay marks a sector's lightmaps as dynamic so that they may be updated in realtime (used for flickering lights, changing a lightmap light's position, color etc). Default = false
+      lm_sampledist_floor = <int>;      // ZDRay customizable sampling distance for this sector's floor. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_sampledist_ceiling = <int>;    // ZDRay customizable sampling distance for this sector's ceiling. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 0.
+      lm_dynamic = <bool>;              // ZDRay marks a sector's lightmaps as dynamic so that they may be updated in realtime (used for flickering lights, changing a lightmap light's position, color etc). Default = false.
    }
 
    thing
@@ -425,10 +425,11 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
       floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
-      lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8
+      lm_sampledist = <int>;        // ZDRay lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8.
       lm_suncolor = <int>;          // ZDRay lightmap sun color. Default is white (0xFFFFFF).
+      lm_sunintensity = <float>;    // ZDRay lightmap sun intensity multiplier. Default = 1.0.
 
-      light_softshadowradius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0
+      light_softshadowradius = <float>;   // ZDRay lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0.
 
       friendlyseeblocks = <int>;    // How far (in block units) a friendly monster can see other monsters. Default 10
 

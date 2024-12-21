@@ -1842,6 +1842,12 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		goto basereturn;
 	}
+	else if (ctx.Version >= MakeVersion(4, 15, 0) && basex->ValueType == TypeNullPtr && (ValueType == TypeSpriteID || ValueType == TypeTextureID || ValueType == TypeTranslationID))
+	{
+		delete basex;
+		basex = new FxConstant(0, ScriptPosition);
+		goto basereturn;
+	}
 	else if (IsFloat())
 	{
 		FxExpression *x = new FxFloatCast(basex);

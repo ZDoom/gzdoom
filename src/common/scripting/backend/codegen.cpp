@@ -8877,7 +8877,24 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return Self;
 		}
 	}
-	else if (Self->ValueType == TypeTextureID)
+	else if (ctx.Version >= MakeVersion(4, 15, 0) && Self->ValueType == TypeSound && MethodName == NAME_IsValid)
+	{
+		if (ArgList.Size() > 0)
+		{
+			ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
+			delete this;
+			return nullptr;
+		}
+
+		Self->ValueType = TypeSInt32;	// treat as integer
+		FxExpression *x = new FxCompareRel('>', Self, new FxConstant(0, ScriptPosition));
+		Self = nullptr;
+		SAFE_RESOLVE(x, ctx);
+
+		delete this;
+		return x;
+	}
+	else if (Self->ValueType == TypeTextureID || (ctx.Version >= MakeVersion(4, 15, 0) && (Self->ValueType == TypeTranslationID)))
 	{
 		if (MethodName == NAME_IsValid || MethodName == NAME_IsNull || MethodName == NAME_Exists || MethodName == NAME_SetInvalid || MethodName == NAME_SetNull)
 		{
@@ -8915,6 +8932,67 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			Self = nullptr;
 			SAFE_RESOLVE(x, ctx);
 			if (MethodName == NAME_SetInvalid || MethodName == NAME_SetNull) x->ValueType = TypeVoid; // override the default type of the assignment operator.
+			delete this;
+			return x;
+		}
+	}
+
+	else if (ctx.Version >= MakeVersion(4, 15, 0) && Self->ValueType == TypeSpriteID)
+	{
+		if (MethodName == NAME_IsValid || MethodName == NAME_IsEmpty || MethodName == NAME_IsFixed || MethodName == NAME_IsKeep
+			|| MethodName == NAME_Exists
+			|| MethodName == NAME_SetInvalid || MethodName == NAME_SetEmpty || MethodName == NAME_SetFixed || MethodName == NAME_SetKeep)
+		{
+			if (ArgList.Size() > 0)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Too many parameters in call to %s", MethodName.GetChars());
+				delete this;
+				return nullptr;
+			}
+			// No need to create a dedicated node here, all builtins map directly to trivial operations.
+			Self->ValueType = TypeSInt32;	// all builtins treat the texture index as integer.
+			FxExpression *x = nullptr;
+			switch (MethodName.GetIndex())
+			{
+			case NAME_IsValid:
+				x = new FxCompareRel(TK_Geq, Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_IsEmpty: // TNT1
+				x = new FxCompareEq(TK_Eq, Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_IsFixed: // "----"
+				x = new FxCompareEq(TK_Eq, Self, new FxConstant(1, ScriptPosition));
+				break;
+
+			case NAME_IsKeep: // "####"
+				x = new FxCompareEq(TK_Eq, Self, new FxConstant(2, ScriptPosition));
+				break;
+
+			case NAME_Exists:
+				x = new FxCompareRel(TK_Geq, Self, new FxConstant(3, ScriptPosition));
+				break;
+
+			case NAME_SetInvalid:
+				x = new FxAssign(Self, new FxConstant(-1, ScriptPosition));
+				break;
+
+			case NAME_SetEmpty: // TNT1
+				x = new FxAssign(Self, new FxConstant(0, ScriptPosition));
+				break;
+
+			case NAME_SetFixed: // "----"
+				x = new FxAssign(Self, new FxConstant(1, ScriptPosition));
+				break;
+
+			case NAME_SetKeep: // "####"
+				x = new FxAssign(Self, new FxConstant(2, ScriptPosition));
+				break;
+			}
+			Self = nullptr;
+			SAFE_RESOLVE(x, ctx);
+			if (MethodName == NAME_SetInvalid || MethodName == NAME_SetEmpty || MethodName == NAME_SetFixed || MethodName == NAME_SetKeep) x->ValueType = TypeVoid; // override the default type of the assignment operator.
 			delete this;
 			return x;
 		}

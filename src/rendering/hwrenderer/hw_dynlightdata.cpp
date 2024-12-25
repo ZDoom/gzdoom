@@ -92,6 +92,9 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 		cs = 1.0f;
 	}
 
+	if (light->target)
+		cs *= (float)light->target->Alpha;
+
 	float r = light->GetRed() / 255.0f * cs;
 	float g = light->GetGreen() / 255.0f * cs;
 	float b = light->GetBlue() / 255.0f * cs;

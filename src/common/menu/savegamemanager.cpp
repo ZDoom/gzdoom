@@ -51,6 +51,7 @@
 
 CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 FString SavegameFolder;
+CVAR(Int, save_sort_order, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 //=============================================================================
 //
@@ -136,7 +137,19 @@ int FSavegameManagerBase::InsertSaveNode(FSaveGameNode *node)
 		//if (SaveGames[0] == &NewSaveNode) i++; // To not insert above the "new savegame" dummy entry.
 		for (; i < SaveGames.Size(); i++)
 		{
-			if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
+			bool sortcmp = false;
+			switch(save_sort_order)
+			{
+			case 1:
+				sortcmp = node->CreationTime.CompareNoCase(SaveGames[i]->CreationTime) > 0;
+				break;
+			default:
+			case 0:
+				sortcmp = node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0;
+				break;
+			}
+
+			if (SaveGames[i]->bOldVersion || sortcmp)
 			{
 				break;
 			}

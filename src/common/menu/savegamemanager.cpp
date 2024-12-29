@@ -183,12 +183,18 @@ void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &tit
 #endif
 		{
 			node->SaveTitle = title;
+			node->CreationTime = myasctime();
 			node->bOldVersion = false;
 			node->bMissingWads = false;
+
+			// refresh my game's position on the list (needed if time/name changed)
+			SaveGames.Delete(i);
+			int index = InsertSaveNode(node);
+
 			if (okForQuicksave)
 			{
 				if (quickSaveSlot == nullptr || quickSaveSlot == (FSaveGameNode*)1 || forceQuicksave) quickSaveSlot = node;
-				LastAccessed = LastSaved = i;
+				LastAccessed = LastSaved = index;
 			}
 			return;
 		}
@@ -196,6 +202,7 @@ void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &tit
 
 	auto node = new FSaveGameNode;
 	node->SaveTitle = title;
+	node->CreationTime = myasctime();
 	node->Filename = file;
 	node->bOldVersion = false;
 	node->bMissingWads = false;

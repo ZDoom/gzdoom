@@ -700,7 +700,7 @@ class Inventory : Actor
 			toucher.HasReceived(self, cls);
 
 			// If the item can be shared, make sure every player gets a copy.
-			if (multiplayer && !deathmatch && !bDropped && ShouldShareItem(toucher))
+			if (multiplayer && !deathmatch && ShouldShareItem(toucher))
 				ShareItemWithPlayers(toucher);
 		}
 		return res, toucher;

@@ -941,12 +941,12 @@ void FMapInfoParser::ParseCluster()
 	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
 	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
 	{
-		int lump = fileSystem.CheckNumForAnyName(clusterinfo->ExitText.GetChars());
+		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText.GetChars(), true);
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
 			int fileno = fileSystem.GetFileContainer(lump);
-			auto fn = fileSystem.GetContainerName(fileno);
+			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
@@ -2217,7 +2217,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 				{
 					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
 					int fileno = fileSystem.GetFileContainer(sc.LumpNum);
-					auto fn = fileSystem.GetContainerName(fileno);
+					auto fn = fileSystem.GetResourceFileName(fileno);
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
@@ -2447,7 +2447,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		if (sc.Compare("include"))
 		{
 			sc.MustGetString();
-			int inclump = fileSystem.CheckNumForAnyName(sc.String);
+			int inclump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (inclump < 0)
 			{
 				sc.ScriptError("include file '%s' not found", sc.String);
@@ -2458,7 +2458,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				if (fileSystem.GetFileContainer(sc.LumpNum) == 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						fileSystem.GetContainerFullName(fileSystem.GetFileContainer(inclump)), sc.String);
+						fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(inclump)), sc.String);
 				}
 			}
 			// use a new parser object to parse the include. Otherwise we'd have to save the entire FScanner in a local variable which is a lot more messy.
@@ -2700,11 +2700,11 @@ void G_ParseMapInfo (FString basemapinfo)
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		int baselump = fileSystem.GetFile(basemapinfo.GetChars());
+		int baselump = fileSystem.GetNumForFullName(basemapinfo.GetChars());
 		if (fileSystem.GetFileContainer(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				fileSystem.GetContainerName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
+				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
@@ -2725,7 +2725,7 @@ void G_ParseMapInfo (FString basemapinfo)
 			// If that exists we need to skip this one.
 
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
 
 			if (altlump >= 0) continue;
 		}
@@ -2733,9 +2733,9 @@ void G_ParseMapInfo (FString basemapinfo)
 		{
 			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
 			int wad = fileSystem.GetFileContainer(lump);
-			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", FileSys::ns_global, wad, true);
 			if (altlump >= 0) continue;
-			altlump = fileSystem.CheckNumForName("MAPINFO", ns_global, wad, true);
+			altlump = fileSystem.CheckNumForName("MAPINFO", FileSys::ns_global, wad, true);
 			if (altlump >= 0) continue;
 		}
 		if (nindex != 2)

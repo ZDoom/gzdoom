@@ -672,7 +672,7 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc)
 	int c[3], step;
 	size_t namelen;
 
-	if (fileSystem.GetFileCount() == 0) return FString();
+	if (fileSystem.GetNumEntries() == 0) return FString();
 
 	rgblump = fileSystem.CheckNumForName("X11R6RGB");
 	if (rgblump == -1)
@@ -960,13 +960,13 @@ int ReadPalette(int lumpnum, uint8_t* buffer)
 			id = MAKE_ID('I', 'E', 'N', 'D');
 			fr.Read(&id, 4);
 		}
-		I_Error("%s contains no palette", fileSystem.GetFileName(lumpnum));
+		I_Error("%s contains no palette", fileSystem.GetFileFullName(lumpnum));
 	}
 	if (memcmp(lumpmem, "JASC-PAL", 8) == 0)
 	{
 		FScanner sc;
 
-		sc.OpenMem(fileSystem.GetFileName(lumpnum), (char*)lumpmem, int(lump.size()));
+		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.size()));
 		sc.MustGetString();
 		sc.MustGetNumber();	// version - ignore
 		sc.MustGetNumber();

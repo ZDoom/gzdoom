@@ -1050,7 +1050,7 @@ void ParseModelDefLump(int Lump)
 		{
 			sc.MustGetString();
 			// This is not using sc.Open because it can print a more useful error message when done here
-			int includelump = fileSystem.CheckNumForAnyName(sc.String);
+			int includelump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (includelump == -1)
 			{
 				if (strcmp(sc.String, "sentinel.modl") != 0) // Gene Tech mod has a broken #include statement

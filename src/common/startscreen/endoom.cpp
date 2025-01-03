@@ -153,14 +153,14 @@ int RunEndoom()
 		return 0;
 	}
 
-	int endoom_lump = fileSystem.CheckNumForAnyName (endoomName.GetChars());
+	int endoom_lump = fileSystem.CheckNumForFullName (endoomName.GetChars(), true);
 	
 	if (endoom_lump < 0 || fileSystem.FileLength (endoom_lump) != 4000)
 	{
 		return 0;
 	}
 
-	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxBaseNum() && showendoom == 2)
+	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		return 0;

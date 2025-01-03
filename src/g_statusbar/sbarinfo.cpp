@@ -445,7 +445,7 @@ void SBarInfo::Load()
 {
 	if(gameinfo.statusbar.IsNotEmpty())
 	{
-		int lump = fileSystem.CheckNumForAnyName(gameinfo.statusbar.GetChars());
+		int lump = fileSystem.CheckNumForFullName(gameinfo.statusbar.GetChars(), true);
 		if(lump != -1)
 		{
 			if (!batchrun) Printf ("ParseSBarInfo: Loading default status bar definition.\n");
@@ -483,7 +483,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 		if(sc.TokenType == TK_Include)
 		{
 			sc.MustGetToken(TK_StringConst);
-			int lump = fileSystem.CheckNumForAnyName(sc.String);
+			int lump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (lump == -1)
 				sc.ScriptError("Lump '%s' not found", sc.String);
 			ParseSBarInfo(lump);
@@ -500,15 +500,15 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 				{
-					baselump = fileSystem.FindFile("sbarinfo/doom.txt");
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/doom.txt", true);
 				}
 				else if(sc.Compare("Heretic"))
 				{
-					baselump = fileSystem.FindFile("sbarinfo/heretic.txt");
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/heretic.txt", true);
 				}
 				else if(sc.Compare("Hexen"))
 				{
-					baselump = fileSystem.FindFile("sbarinfo/hexen.txt");
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/hexen.txt", true);
 				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
@@ -526,7 +526,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					else if (fileSystem.GetFileContainer(baselump) > 0)
 					{
 						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
-							fileSystem.GetContainerFullName(fileSystem.GetFileContainer(baselump)), sc.String);
+							fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(baselump)), sc.String);
 					}
 					ParseSBarInfo(baselump);
 				}

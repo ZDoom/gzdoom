@@ -727,17 +727,17 @@ static int FindGLNodesInWAD(int labellump)
 	int wadfile = fileSystem.GetFileContainer(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", fileSystem.GetFileName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = fileSystem.CheckNumForName(glheader.GetChars(), ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader.GetChars(), FileSys::ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", FileSys::ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{
@@ -748,7 +748,7 @@ static int FindGLNodesInWAD(int labellump)
 				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
 					auto mem = fileSystem.ReadFile(lump);
-					if (MatchHeader(fileSystem.GetFileName(labellump), GetStringFromLump(lump).GetChars())) return lump;
+					if (MatchHeader(fileSystem.GetFileFullName(labellump), GetStringFromLump(lump).GetChars())) return lump;
 				}
 			}
 		}
@@ -853,7 +853,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = fileSystem.GetContainerFullName(lumpfile);
+		const char * name = fileSystem.GetResourceFileFullName(lumpfile);
 
 		if (mapinwad)
 		{
@@ -881,7 +881,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, fileSystem.GetFileName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);
 				}
 			}
 		}

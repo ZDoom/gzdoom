@@ -426,7 +426,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 			// Textures for full path names do not have their own name, they merely link to the source lump.
 			auto lump = tex->GetSourceLump();
 			if (TexMan.GetLinkedTexture(lump) == tex)
-				retval = fileSystem.GetFileName(lump);
+				retval = fileSystem.GetFileFullName(lump);
 		}
 	}
 	ACTION_RETURN_STRING(retval);
@@ -799,7 +799,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetChar, ::GetChar)
 DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(fileSystem.GetFileCount());
+	ACTION_RETURN_INT(fileSystem.GetNumEntries());
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
@@ -816,7 +816,7 @@ DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
-	ACTION_RETURN_INT(fileSystem.FindFile(name.GetChars()));
+	ACTION_RETURN_INT(fileSystem.CheckNumForFullName(name.GetChars()));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, FindLump)
@@ -825,7 +825,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_INT(ns);
-	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetFileCount();
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name.GetChars(), &startlump, 0 != ns) : -1);
 }
 
@@ -835,7 +835,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLumpFullName)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_BOOL(noext);
-	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetFileCount();
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLumpFullName(name.GetChars(), &startlump, noext) : -1);
 }
 
@@ -850,7 +850,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_STRING(fileSystem.GetFileName(lump));
+	ACTION_RETURN_STRING(fileSystem.GetFileFullName(lump));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
@@ -864,7 +864,7 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetFileCount();
+	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumEntries();
 	ACTION_RETURN_STRING(isLumpValid ? GetStringFromLump(lump, false) : FString());
 }
 

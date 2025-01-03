@@ -88,7 +88,7 @@ void FModel::DestroyVertexBuffer()
 
 static int FindGFXFile(FString & fn)
 {
-	int lump = fileSystem.FindFile(fn.GetChars());	// if we find something that matches the name plus the extension, return it and do not enter the substitution logic below.
+	int lump = fileSystem.CheckNumForFullName(fn.GetChars());	// if we find something that matches the name plus the extension, return it and do not enter the substitution logic below.
 	if (lump != -1) return lump;
 
 	int best = -1;
@@ -100,7 +100,7 @@ static int FindGFXFile(FString & fn)
 
 	for (const char ** extp=extensions; *extp; extp++)
 	{
-		lump = fileSystem.FindFile((fn + *extp).GetChars());
+		lump = fileSystem.CheckNumForFullName((fn + *extp).GetChars());
 		if (lump >= best)  best = lump;
 	}
 	return best;
@@ -120,7 +120,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 	buffer.Format("%s%s", path, fn);
 
 	int texlump = FindGFXFile(buffer);
-	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileName(texlump);
+	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileFullName(texlump);
 	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ForceLookup);
 }
 
@@ -148,7 +148,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 
 	if (path) fullname.Format("%s%s", path, modelfile);
 	else fullname = modelfile;
-	int lump = fileSystem.FindFile(fullname.GetChars());
+	int lump = fileSystem.CheckNumForFullName(fullname.GetChars());
 
 	if (lump<0)
 	{
@@ -175,7 +175,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 	{
 		FString anivfile = fullname.GetChars();
 		anivfile.Substitute("_d.3d","_a.3d");
-		if ( fileSystem.FindFile(anivfile.GetChars()) > 0 )
+		if ( fileSystem.CheckNumForFullName(anivfile.GetChars()) > 0 )
 		{
 			model = new FUE1Model;
 		}
@@ -184,7 +184,7 @@ unsigned FindModel(const char * path, const char * modelfile, bool silent)
 	{
 		FString datafile = fullname.GetChars();
 		datafile.Substitute("_a.3d","_d.3d");
-		if ( fileSystem.FindFile(datafile.GetChars()) > 0 )
+		if ( fileSystem.CheckNumForFullName(datafile.GetChars()) > 0 )
 		{
 			model = new FUE1Model;
 		}

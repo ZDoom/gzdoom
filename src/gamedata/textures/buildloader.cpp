@@ -255,11 +255,11 @@ void InitBuildTiles()
 	// Unfortunately neither the palettes nor the .ART files contain any usable identifying marker
 	// so this can only go by the file names.
 
-	int numlumps = fileSystem.GetFileCount();
+	int numlumps = fileSystem.GetNumEntries();
 	for (int i = 0; i < numlumps; i++)
 	{
-		const char* name = fileSystem.GetFileName(i);
-		if (fileSystem.FindFile(name) != i) continue;	// This palette is hidden by a later one. Do not process
+		const char* name = fileSystem.GetFileFullName(i);
+		if (fileSystem.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
 		FString base = ExtractFileBase(name, true);
 		base.ToLower();
 		if (base.Compare("palette.dat") == 0 && fileSystem.FileLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
@@ -276,7 +276,7 @@ void InitBuildTiles()
 				// only read from the same source as the palette.
 				// The entire format here is just too volatile to allow liberal mixing.
 				// An .ART set must be treated as one unit.
-				lumpnum = fileSystem.GetFileInContainer(artpath.GetChars(), fileSystem.GetFileContainer(i));
+				lumpnum = fileSystem.CheckNumForFullName(artpath.GetChars(), fileSystem.GetFileContainer(i));
 				if (lumpnum < 0)
 				{
 					break;

@@ -71,7 +71,7 @@ struct GrpLump
 //
 //==========================================================================
 
-static bool OpenGrp(FResourceFile* file, FileSystemFilterInfo* filter)
+static bool OpenGrp(FResourceFile* file, LumpFilterInfo* filter)
 {
 	GrpHeader header;
 
@@ -91,6 +91,7 @@ static bool OpenGrp(FResourceFile* file, FileSystemFilterInfo* filter)
 		Entries[i].CompressedSize = Entries[i].Length = LittleLong(fileinfo[i].Size);
 		Position += fileinfo[i].Size;
 		Entries[i].Flags = 0;
+		Entries[i].Namespace = ns_global;
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
@@ -108,7 +109,7 @@ static bool OpenGrp(FResourceFile* file, FileSystemFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[12];
 
@@ -119,7 +120,7 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, FileSystemFilter
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
-			auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS | FResourceFile::SHORTNAMES);
+			auto rf = new FResourceFile(filename, file, sp);
 			if (OpenGrp(rf, filter)) return rf;
 			file = rf->Destroy();
 		}

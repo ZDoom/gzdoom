@@ -233,18 +233,18 @@ CCMD (wdir)
 	if (argv.argc() != 2) wadnum = -1;
 	else 
 	{
-		wadnum = fileSystem.CheckIfContainerLoaded (argv[1]);
+		wadnum = fileSystem.CheckIfResourceFileLoaded (argv[1]);
 		if (wadnum < 0)
 		{
 			Printf ("%s must be loaded to view its directory.\n", argv[1]);
 			return;
 		}
 	}
-	for (int i = 0; i < fileSystem.GetFileCount(); ++i)
+	for (int i = 0; i < fileSystem.GetNumEntries(); ++i)
 	{
 		if (wadnum == -1 || fileSystem.GetFileContainer(i) == wadnum)
 		{
-			Printf ("%10ld %s\n", fileSystem.FileLength(i), fileSystem.GetFileName(i));
+			Printf ("%10ld %s\n", fileSystem.FileLength(i), fileSystem.GetFileFullName(i));
 		}
 	}
 }

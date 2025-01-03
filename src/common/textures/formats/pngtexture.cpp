@@ -119,12 +119,12 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 
 	if (compression != 0 || filter != 0 || interlace > 1)
 	{
-		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the compression, filter, or interlace is not supported!\n", fileSystem.GetFileName(lumpnum));
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the compression, filter, or interlace is not supported!\n", fileSystem.GetFileFullName(lumpnum));
 		return NULL;
 	}
 	if (!((1 << colortype) & 0x5D))
 	{
-		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the colortype (%u) is not supported!\n", fileSystem.GetFileName(lumpnum), colortype);
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the colortype (%u) is not supported!\n", fileSystem.GetFileFullName(lumpnum), colortype);
 		return NULL;
 	}
 	if (!((1 << bitdepth) & 0x116))
@@ -150,12 +150,12 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 					int ihoty = data.ReadInt32BE();
 					if (ihotx < -32768 || ihotx > 32767)
 					{
-						Printf("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileName(lumpnum), ihotx, ihotx);
+						Printf("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName(lumpnum), ihotx, ihotx);
 						ihotx = 0;
 					}
 					if (ihoty < -32768 || ihoty > 32767)
 					{
-						Printf("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileName(lumpnum), ihoty, ihoty);
+						Printf("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName(lumpnum), ihoty, ihoty);
 						ihoty = 0;
 					}
 					tex->SetOffsets(ihotx, ihoty);
@@ -169,7 +169,7 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 			return tex;
 		}
 
-		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the bit-depth (%u) is not supported!\n", fileSystem.GetFileName(lumpnum), bitdepth);
+		Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the bit-depth (%u) is not supported!\n", fileSystem.GetFileFullName(lumpnum), bitdepth);
 		return NULL;
 	}
 
@@ -180,7 +180,7 @@ FImageSource *PNGImage_TryCreate(FileReader & data, int lumpnum)
 	{
 		if (data.Read(first4bytes.b, 4) != 4 || first4bytes.dw == MAKE_ID('I','E','N','D'))
 		{
-			Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the file ends immediately after the IHDR.\n", fileSystem.GetFileName(lumpnum));
+			Printf(TEXTCOLOR_YELLOW"WARNING: failed to load PNG %s: the file ends immediately after the IHDR.\n", fileSystem.GetFileFullName(lumpnum));
 			return NULL;
 		}
 	}
@@ -231,12 +231,12 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 				int ihoty = lump.ReadInt32BE();
 				if (ihotx < -32768 || ihotx > 32767)
 				{
-					Printf ("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileName (lumpnum), ihotx, ihotx);
+					Printf ("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName (lumpnum), ihotx, ihotx);
 					ihotx = 0;
 				}
 				if (ihoty < -32768 || ihoty > 32767)
 				{
-					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileName (lumpnum), ihoty, ihoty);
+					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName (lumpnum), ihoty, ihoty);
 					ihoty = 0;
 				}
 				LeftOffset = ihotx;

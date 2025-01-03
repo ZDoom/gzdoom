@@ -168,7 +168,7 @@ static void ReplaceSoundName(int index, const char* newname)
 	if (snd == NO_SOUND) return;
 	auto sfx = soundEngine->GetWritableSfx(snd);
 	FStringf dsname("ds%s", newname);
-	sfx->lumpnum = fileSystem.CheckNumForName(dsname.GetChars(), ns_sounds);
+	sfx->lumpnum = fileSystem.CheckNumForName(dsname.GetChars(), FileSys::ns_sounds);
 	sfx->bTentative = false;
 	sfx->bRandomHeader = false;
 	sfx->bLoadRAW = false;
@@ -3098,7 +3098,7 @@ CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
 {
-	const char* const fullName  = fileSystem.GetFileName(lumpnum);
+	const char* const fullName  = fileSystem.GetFileFullName(lumpnum);
 	const char* const extension = strrchr(fullName, '.');
 
 	return NULL != extension && strchr(fullName, '/') == NULL
@@ -3113,12 +3113,12 @@ int D_LoadDehLumps(DehLumpSource source, int flags)
 	{
 		const int filenum = fileSystem.GetFileContainer(lumpnum);
 		
-		if (FromIWAD == source && filenum > fileSystem.GetMaxBaseNum())
+		if (FromIWAD == source && filenum > fileSystem.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= fileSystem.GetMaxBaseNum())
+		else if (FromPWADs == source && filenum <= fileSystem.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;
@@ -3128,7 +3128,7 @@ int D_LoadDehLumps(DehLumpSource source, int flags)
 
 		if((flags & DEH_SKIP_BEX_STRINGS_IF_LANGUAGE) && FromIWAD == source)
 		{
-			int iwadnum = fileSystem.GetBaseNum();
+			int iwadnum = fileSystem.GetIwadNum();
 			int lastlump2 = fileSystem.GetFirstEntry(iwadnum);
 			int lumpnum2 = fileSystem.FindLump("LANGUAGE", &lastlump2);
 
@@ -3146,7 +3146,7 @@ int D_LoadDehLumps(DehLumpSource source, int flags)
 
 		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			for (lumpnum = 0, lastlump = fileSystem.GetFileCount(); lumpnum < lastlump; ++lumpnum)
+			for (lumpnum = 0, lastlump = fileSystem.GetNumEntries(); lumpnum < lastlump; ++lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -3156,7 +3156,7 @@ int D_LoadDehLumps(DehLumpSource source, int flags)
 		}
 		else 	// only load the last .DEH lump that is found.
 		{
-			for (lumpnum = fileSystem.GetFileCount()-1; lumpnum >=0; --lumpnum)
+			for (lumpnum = fileSystem.GetNumEntries()-1; lumpnum >=0; --lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -3205,7 +3205,7 @@ bool D_LoadDehFile(const char *patchfile, int flags)
 	else
 	{
 		// Couldn't find it in the filesystem; try from a lump instead.
-		int lumpnum = fileSystem.FindFile(patchfile);
+		int lumpnum = fileSystem.CheckNumForFullName(patchfile, true);
 		if (lumpnum < 0)
 		{
 			// Compatibility fallback. It's just here because

@@ -113,7 +113,7 @@ bool FResourceFile::IsFileInFolder(const char* const resPath)
 	return 0 == stricmp(filePath.c_str(), resPath);
 }
 
-void FResourceFile::CheckEmbedded(uint32_t entry, FileSystemFilterInfo* lfi)
+void FResourceFile::CheckEmbedded(uint32_t entry, LumpFilterInfo* lfi)
 {
 	// Checks for embedded archives
 	auto FullName = Entries[entry].FileName;
@@ -138,30 +138,29 @@ void FResourceFile::CheckEmbedded(uint32_t entry, FileSystemFilterInfo* lfi)
 //
 //==========================================================================
 
-typedef FResourceFile * (*CheckFunc)(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+typedef FResourceFile * (*CheckFunc)(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
-FResourceFile *CheckWad(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckGRP(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckRFF(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckPak(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckZip(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *Check7Z(const char *filename,  FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile* CheckSSI(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile* CheckHog(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile* CheckHog2(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile* CheckMvl(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile* CheckWHRes(const char* filename, FileReader& file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckLump(const char *filename,FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
-FResourceFile *CheckDir(const char *filename, bool nosub, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckWad(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckGRP(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *Check7Z(const char *filename,  FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckSSI(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckHog(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckMvl(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile* CheckWHRes(const char* filename, FileReader& file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckLump(const char *filename,FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
+FResourceFile *CheckDir(const char *filename, bool nosub, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp);
 
-static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckHog, CheckMvl, CheckHog2, CheckSSI, CheckWHRes, CheckLump };
+static CheckFunc funcs[] = { CheckWad, CheckZip, Check7Z, CheckPak, CheckGRP, CheckRFF, CheckSSI, CheckHog, CheckMvl, CheckWHRes, CheckLump };
 
 static int nulPrintf(FSMessageLevel msg, const char* fmt, ...)
 {
 	return 0;
 }
 
-FResourceFile *FResourceFile::DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *FResourceFile::DoOpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	if (!file.isOpen()) return nullptr;
 	if (Printf == nullptr) Printf = nulPrintf;
@@ -174,20 +173,20 @@ FResourceFile *FResourceFile::DoOpenResourceFile(const char *filename, FileReade
 	return NULL;
 }
 
-FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader &file, bool containeronly, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *FResourceFile::OpenResourceFile(const char *filename, FileReader &file, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	return DoOpenResourceFile(filename, file, containeronly, filter, Printf, sp);
 }
 
 
-FResourceFile *FResourceFile::OpenResourceFile(const char *filename, bool containeronly, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *FResourceFile::OpenResourceFile(const char *filename, bool containeronly, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	FileReader file;
 	if (!file.OpenFile(filename)) return nullptr;
 	return DoOpenResourceFile(filename, file, containeronly, filter, Printf, sp);
 }
 
-FResourceFile *FResourceFile::OpenDirectory(const char *filename, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *FResourceFile::OpenDirectory(const char *filename, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	if (Printf == nullptr) Printf = nulPrintf;
 	return CheckDir(filename, false, filter, Printf, sp);
@@ -199,15 +198,14 @@ FResourceFile *FResourceFile::OpenDirectory(const char *filename, FileSystemFilt
 //
 //==========================================================================
 
-FResourceFile::FResourceFile(const char *filename, StringPool* sp, int flags_)
-	:flags(flags_)
+FResourceFile::FResourceFile(const char *filename, StringPool* sp)
 {
 	stringpool = sp ? sp : new StringPool(false);
 	FileName = stringpool->Strdup(filename);
 }
 
-FResourceFile::FResourceFile(const char *filename, FileReader &r, StringPool* sp, int flags)
-	: FResourceFile(filename,sp, flags)
+FResourceFile::FResourceFile(const char *filename, FileReader &r, StringPool* sp)
+	: FResourceFile(filename,sp)
 {
 	Reader = std::move(r);
 }
@@ -252,7 +250,7 @@ FCompressedBuffer FResourceFile::GetRawData(uint32_t entry)
 //
 //==========================================================================
 
-const char* FResourceFile::NormalizeFileName(const char* fn, int fallbackcp, bool allowbackslash)
+const char* FResourceFile::NormalizeFileName(const char* fn, int fallbackcp)
 {
 	if (!fn || !*fn) return "";
 	auto norm = tolower_normalize(fn);
@@ -276,8 +274,7 @@ const char* FResourceFile::NormalizeFileName(const char* fn, int fallbackcp, boo
 			norm = tolower_normalize(&ffn.front());
 		}
 	}
-	// The WAD format can have legal backslashes in its names so this must be optional.
-	if (!allowbackslash) FixPathSeparator(norm);
+	FixPathSeparator(norm);
 	auto pooled = stringpool->Strdup(norm);
 	free(norm);
 	return pooled;
@@ -357,7 +354,7 @@ void FResourceFile::GenerateHash()
 //
 //==========================================================================
 
-void FResourceFile::PostProcessArchive(FileSystemFilterInfo *filter)
+void FResourceFile::PostProcessArchive(LumpFilterInfo *filter)
 {
 	// only do this for archive types which contain full file names. All others are assumed to be pre-sorted.
 	if (NumLumps == 0 || !(Entries[0].Flags & RESFF_FULLPATH)) return;
@@ -419,7 +416,7 @@ void FResourceFile::PostProcessArchive(FileSystemFilterInfo *filter)
 //
 //==========================================================================
 
-void FResourceFile::FindCommonFolder(FileSystemFilterInfo* filter)
+void FResourceFile::FindCommonFolder(LumpFilterInfo* filter)
 {
 	std::string name0, name1;
 	bool foundspeciallump = false;

@@ -124,7 +124,7 @@ FGameTexture::~FGameTexture()
 bool FGameTexture::isUserContent() const
 {
 	int filenum = fileSystem.GetFileContainer(Base->GetSourceLump());
-	return (filenum > fileSystem.GetMaxBaseNum());
+	return (filenum > fileSystem.GetMaxIwadNum());
 }
 
 
@@ -182,10 +182,10 @@ void FGameTexture::AddAutoMaterials()
 		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
 		{
 			FStringf lookup("%s%s%s", layer.path, fullname ? "" : "auto/", searchname.GetChars());
-			auto lump = fileSystem.FindFile(lookup.GetChars(), true);
+			auto lump = fileSystem.CheckNumForFullName(lookup.GetChars(), false, FileSys::ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
 					this->*(layer.pointer) = bmtex->GetTexture();
@@ -199,10 +199,10 @@ void FGameTexture::AddAutoMaterials()
 		if (!this->Layers || this->Layers.get()->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
 		{
 			FStringf lookup("%s%s%s", layer.path, fullname ? "" : "auto/", searchname.GetChars());
-			auto lump = fileSystem.FindFile(lookup.GetChars(), true);
+			auto lump = fileSystem.CheckNumForFullName(lookup.GetChars(), false, FileSys::ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
 					if (this->Layers == nullptr) this->Layers = std::make_unique<FMaterialLayers>();

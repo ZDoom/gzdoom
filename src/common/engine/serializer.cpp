@@ -58,6 +58,8 @@
 #include "vm.h"
 #include "i_interface.h"
 
+using namespace FileSys;
+
 extern DObject *WP_NOCHANGE;
 bool save_full = false;	// for testing. Should be removed afterward.
 
@@ -153,13 +155,13 @@ bool FSerializer::OpenReader(const char *buffer, size_t length)
 //
 //==========================================================================
 
-bool FSerializer::OpenReader(FileSys::FCompressedBuffer *input)
+bool FSerializer::OpenReader(FCompressedBuffer *input)
 {
 	if (input->mSize <= 0 || input->mBuffer == nullptr) return false;
 	if (w != nullptr || r != nullptr) return false;
 
 	mErrors = 0;
-	if (input->mMethod == FileSys::METHOD_STORED)
+	if (input->mMethod == METHOD_STORED)
 	{
 		r = new FReader((char*)input->mBuffer, input->mSize);
 	}
@@ -783,10 +785,10 @@ const char *FSerializer::GetOutput(unsigned *len)
 //
 //==========================================================================
 
-FileSys::FCompressedBuffer FSerializer::GetCompressedOutput()
+FCompressedBuffer FSerializer::GetCompressedOutput()
 {
 	if (isReading()) return{ 0,0,0,0,0,nullptr };
-	FileSys::FCompressedBuffer buff;
+	FCompressedBuffer buff;
 	WriteObjects();
 	EndObject();
 	buff.filename = nullptr;
@@ -825,7 +827,7 @@ FileSys::FCompressedBuffer FSerializer::GetCompressedOutput()
 	if (err == Z_OK)
 	{
 		buff.mBuffer = new char[buff.mCompressedSize];
-		buff.mMethod = FileSys::METHOD_DEFLATE;
+		buff.mMethod = METHOD_DEFLATE;
 		memcpy(buff.mBuffer, compressbuf, buff.mCompressedSize);
 		delete[] compressbuf;
 		return buff;
@@ -834,7 +836,7 @@ FileSys::FCompressedBuffer FSerializer::GetCompressedOutput()
 error:
 	memcpy(compressbuf, w->mOutString.GetString(), buff.mSize + 1);
 	buff.mCompressedSize = buff.mSize;
-	buff.mMethod = FileSys::METHOD_STORED;
+	buff.mMethod = METHOD_STORED;
 	return buff;
 }
 
@@ -1179,7 +1181,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 
 			if (TexMan.GetLinkedTexture(lump) == pic)
 			{
-				name = fileSystem.GetFileName(lump);
+				name = fileSystem.GetFileFullName(lump);
 			}
 			else
 			{

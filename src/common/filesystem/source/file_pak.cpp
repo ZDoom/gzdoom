@@ -63,7 +63,7 @@ struct dpackheader_t
 //
 //==========================================================================
 
-static bool OpenPak(FResourceFile* file, FileSystemFilterInfo* filter)
+static bool OpenPak(FResourceFile* file, LumpFilterInfo* filter)
 {
 	dpackheader_t header;
 
@@ -82,6 +82,7 @@ static bool OpenPak(FResourceFile* file, FileSystemFilterInfo* filter)
 		Entries[i].Position = LittleLong(fileinfo[i].filepos);
 		Entries[i].CompressedSize = Entries[i].Length = LittleLong(fileinfo[i].filelen);
 		Entries[i].Flags = RESFF_FULLPATH;
+		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].FileName = file->NormalizeFileName(fileinfo[i].name);
@@ -98,7 +99,7 @@ static bool OpenPak(FResourceFile* file, FileSystemFilterInfo* filter)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckPak(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -109,7 +110,7 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, FileSystemFilter
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
-			auto rf = new FResourceFile(filename, file, sp, 0);
+			auto rf = new FResourceFile(filename, file, sp);
 			if (OpenPak(rf, filter)) return rf;
 			file = rf->Destroy();
 		}

@@ -124,7 +124,7 @@ FScanner::FScanner(int lumpnum, TMap<FName, Symbol>* extsymbols) : symbols(extsy
 
 void FScanner::Open (const char *name)
 {
-	int lump = fileSystem.CheckNumForAnyName(name);
+	int lump = fileSystem.CheckNumForFullName(name, true);
 	if (lump == -1)
 	{
 		I_Error("Could not find script lump '%s'\n", name);

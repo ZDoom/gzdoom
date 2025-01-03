@@ -298,7 +298,7 @@ FileReader FPatchSetReader::OpenFile(const char *name)
 
 FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 {
-	mLumpIndex = fileSystem.FindFile(filename);
+	mLumpIndex = fileSystem.CheckNumForFullName(filename);
 
 	mBasePath = filename;
 	FixPathSeperator(mBasePath);
@@ -314,9 +314,9 @@ FileReader FLumpPatchSetReader::OpenMainConfigFile()
 FileReader FLumpPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
-	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the virtual file system.
+	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
-	auto index = fileSystem.FindFile(path.GetChars());
+	auto index = fileSystem.CheckNumForFullName(path.GetChars());
 	if (index < 0) return FileReader();
 	return fileSystem.ReopenFileReader(index);
 }
@@ -472,7 +472,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *const name, int a
 	// To avoid clashes this will only be done if the name has the '.cfg' extension.
 	// Sound fonts cannot be loaded this way.
 	const char *p = name + strlen(name) - 4;
-	if (p > name && !stricmp(p, ".cfg") && fileSystem.FindFile(name) >= 0)
+	if (p > name && !stricmp(p, ".cfg") && fileSystem.CheckNumForFullName(name) >= 0)
 	{
 		return new FLumpPatchSetReader(name);
 	}

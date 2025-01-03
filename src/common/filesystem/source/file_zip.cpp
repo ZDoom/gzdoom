@@ -113,7 +113,7 @@ class FZipFile : public FResourceFile
 
 public:
 	FZipFile(const char* filename, FileReader& file, StringPool* sp);
-	bool Open(FileSystemFilterInfo* filter, FileSystemMessageFunc Printf);
+	bool Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf);
 	FCompressedBuffer GetRawData(uint32_t entry) override;
 };
 
@@ -124,11 +124,11 @@ public:
 //==========================================================================
 
 FZipFile::FZipFile(const char * filename, FileReader &file, StringPool* sp)
-: FResourceFile(filename, file, sp, 0)
+: FResourceFile(filename, file, sp)
 {
 }
 
-bool FZipFile::Open(FileSystemFilterInfo* filter, FileSystemMessageFunc Printf)
+bool FZipFile::Open(LumpFilterInfo* filter, FileSystemMessageFunc Printf)
 {
 	bool zip64 = false;
 	uint32_t centraldir = Zip_FindCentralDir(Reader, &zip64);
@@ -376,7 +376,7 @@ void FZipFile::SetEntryAddress(uint32_t entry)
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckZip(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 

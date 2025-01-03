@@ -46,7 +46,7 @@ void D_GrabCVarDefaults()
 	while ((lump = fileSystem.FindLump("DEFCVARS", &lastlump)) != -1)
 	{
 		// don't parse from wads
-		if (lastlump > fileSystem.GetLastEntry(fileSystem.GetMaxBaseNum()))
+		if (lastlump > fileSystem.GetLastEntry(fileSystem.GetMaxIwadNum()))
 		{
 			// would rather put this in a modal of some sort, but this will have to do.
 			Printf(TEXTCOLOR_RED "Cannot load DEFCVARS from a wadfile!\n");

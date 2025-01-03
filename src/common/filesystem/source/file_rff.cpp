@@ -91,7 +91,7 @@ void BloodCrypt (void *data, int key, int len)
 //
 //==========================================================================
 
-static bool OpenRFF(FResourceFile* file, FileSystemFilterInfo*)
+static bool OpenRFF(FResourceFile* file, LumpFilterInfo*)
 {
 	RFFLump *lumps;
 	RFFInfo header;
@@ -123,6 +123,7 @@ static bool OpenRFF(FResourceFile* file, FileSystemFilterInfo*)
 			Entries[i].Flags = 0;
 			Entries[i].Method = METHOD_STORED;
 		}
+		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = LittleLong(lumps[i].IndexNum);
 	
 		// Rearrange the name and extension to construct the fullname.
@@ -149,7 +150,7 @@ static bool OpenRFF(FResourceFile* file, FileSystemFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckRFF(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	char head[4];
 
@@ -160,7 +161,7 @@ FResourceFile *CheckRFF(const char *filename, FileReader &file, FileSystemFilter
 		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
-			auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_FOLDERS | FResourceFile::SHORTNAMES);
+			auto rf = new FResourceFile(filename, file, sp);
 			if (OpenRFF(rf, filter)) return rf;
 			file = rf->Destroy();
 		}

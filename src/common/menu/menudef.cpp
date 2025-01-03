@@ -1524,7 +1524,7 @@ void M_ParseMenuDefs()
 	DefaultOptionMenuSettings->Reset();
 	OptionSettings.mLinespacing = 17;
 
-	int IWADMenu = fileSystem.CheckNumForName("MENUDEF", ns_global, fileSystem.GetBaseNum());
+	int IWADMenu = fileSystem.CheckNumForName("MENUDEF", FileSys::ns_global, fileSystem.GetIwadNum());
 
 	while ((lump = fileSystem.FindLump ("MENUDEF", &lastlump)) != -1)
 	{

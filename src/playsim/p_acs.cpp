@@ -1930,7 +1930,7 @@ void FBehaviorContainer::LoadDefaultModules ()
 		FScanner sc(lump);
 		while (sc.GetString())
 		{
-			int acslump = fileSystem.CheckNumForName (sc.String, ns_acslibrary);
+			int acslump = fileSystem.CheckNumForName (sc.String, FileSys::ns_acslibrary);
 			if (acslump >= 0)
 			{
 				LoadModule (acslump);
@@ -1963,7 +1963,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len,
 	else
 	{
 		delete behavior;
-		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetFileName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetFileFullName(lumpnum));
 		return NULL;
 	}
 }
@@ -2322,7 +2322,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
 		{
 			int fileno = fileSystem.GetFileContainer(reallumpnum);
-			const char * filename = fileSystem.GetContainerName(fileno);
+			const char * filename = fileSystem.GetResourceFileName(fileno);
 			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
 			{
 				ShouldLocalize = true;
@@ -2567,7 +2567,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 				if (parse[i])
 				{
 					FBehavior *module = NULL;
-					int lump = fileSystem.CheckNumForName (&parse[i], ns_acslibrary);
+					int lump = fileSystem.CheckNumForName (&parse[i], FileSys::ns_acslibrary);
 					if (lump < 0)
 					{
 						Printf (TEXTCOLOR_RED "Could not find ACS library %s.\n", &parse[i]);

@@ -18,9 +18,9 @@ void InitDoomFonts()
 		if (fileSystem.CheckNumForName("FONTA_S") >= 0)
 		{
 			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
+			auto a = fileSystem.CheckNumForName("FONTA33", FileSys::ns_graphics);
 			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetBaseNum())
+			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
@@ -32,12 +32,12 @@ void InitDoomFonts()
 				SmallFont->SetCursor('[');
 			}
 		}
-		else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
+		else if (fileSystem.CheckNumForName("STCFN033", FileSys::ns_graphics) >= 0)
 		{
 			int wadfile = -1;
-			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
+			auto a = fileSystem.CheckNumForName("STCFN065", FileSys::ns_graphics);
 			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
-			if (wadfile > fileSystem.GetBaseNum())
+			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
@@ -55,7 +55,7 @@ void InitDoomFonts()
 		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
 		OriginalSmallFont->SetCursor('[');
 	}
-	else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	else if (fileSystem.CheckNumForName("STCFN033", FileSys::ns_graphics) >= 0)
 	{
 		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true, true);
 	}
@@ -63,7 +63,7 @@ void InitDoomFonts()
 
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
-		if (fileSystem.CheckNumForName("STBFN033", ns_graphics) >= 0)
+		if (fileSystem.CheckNumForName("STBFN033", FileSys::ns_graphics) >= 0)
 		{
 			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}

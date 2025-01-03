@@ -159,7 +159,7 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = fileSystem.CheckNumForName (name);
 	const bool found = lumpnum >= 0
-		|| (lumpnum = fileSystem.FindFile (name)) >= 0;
+		|| (lumpnum = fileSystem.CheckNumForFullName (name)) >= 0;
 
 	if (!found)
 	{
@@ -173,7 +173,7 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 	FileReader lump = fileSystem.ReopenFileReader (lumpnum);
 
 	auto fn = fileSystem.GetFileContainer(lumpnum);
-	auto wadname = fileSystem.GetContainerName(fn);
+	auto wadname = fileSystem.GetResourceFileName(fn);
 	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
 
 	bool res = LoadScriptFile(name, lumpnum, lump, fileSystem.FileLength(lumpnum), include, type);
@@ -195,7 +195,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 
 	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
+		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 		return false;
 	}
 
@@ -215,7 +215,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1516;
@@ -225,7 +225,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1488;

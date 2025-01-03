@@ -213,7 +213,7 @@ void ParseCompatibility()
 
 	// The contents of this file are not cumulative, as it should not
 	// be present in user-distributed maps.
-	FScanner sc(fileSystem.GetFile("compatibility.txt"));
+	FScanner sc(fileSystem.GetNumForFullName("compatibility.txt"));
 
 	while (sc.GetString())	// Get MD5 signature
 	{
@@ -297,7 +297,7 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	// When playing Doom IWAD levels force BCOMPATF_NOSECTIONMERGE, COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
-	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetBaseNum())
+	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum())
 	{
 		if ((gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
 		{

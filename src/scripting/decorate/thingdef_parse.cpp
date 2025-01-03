@@ -1282,11 +1282,11 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 			// This check needs to remain overridable for testing purposes.
 			if (fileSystem.GetFileContainer(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
 			{
-				int includefile = fileSystem.GetFileContainer(fileSystem.CheckNumForAnyName(sc.String));
+				int includefile = fileSystem.GetFileContainer(fileSystem.CheckNumForFullName(sc.String, true));
 				if (includefile != 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						fileSystem.GetContainerFullName(includefile), sc.String);
+						fileSystem.GetResourceFileFullName(includefile), sc.String);
 				}
 			}
 			FScanner newscanner;

@@ -381,10 +381,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	i_data += "#define NPOT_EMULATION\nuniform vec2 uNpotEmulation;\n";
 #endif
 
-	int vp_lump = fileSystem.GetFileInContainer(vert_prog_lump.GetChars(), 0);
+	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump.GetChars(), 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump.GetChars());
 
-	int fp_lump = fileSystem.GetFileInContainer(frag_prog_lump.GetChars(), 0);
+	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump.GetChars(), 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump.GetChars());
 
 
@@ -418,7 +418,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 		if (proc_prog_lump[0] != '#')
 		{
-			int pp_lump = fileSystem.FindFile(proc_prog_lump.GetChars());
+			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump.GetChars());
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump.GetChars());
 			FString pp_data = GetStringFromLump(pp_lump);
 
@@ -428,13 +428,13 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 				if (pp_data.IndexOf("GetTexCoord") >= 0)
 				{
-					int pl_lump = fileSystem.GetFileInContainer("shaders_gles/glsl/func_defaultmat2.fp", 0);
+					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat2.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat2.fp");
 					fp_comb << "\n" << GetStringFromLump(pl_lump);
 				}
 				else
 				{
-					int pl_lump = fileSystem.GetFileInContainer("shaders_gles/glsl/func_defaultmat.fp", 0);
+					int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultmat.fp", 0);
 					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultmat.fp");
 					fp_comb << "\n" << GetStringFromLump(pl_lump);
 
@@ -460,7 +460,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 			if (pp_data.IndexOf("ProcessLight") < 0)
 			{
-				int pl_lump = fileSystem.GetFileInContainer("shaders_gles/glsl/func_defaultlight.fp", 0);
+				int pl_lump = fileSystem.CheckNumForFullName("shaders_gles/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders_gles/glsl/func_defaultlight.fp");
 				fp_comb << "\n" << GetStringFromLump(pl_lump);
 			}
@@ -482,7 +482,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 
 	if (light_fragprog.Len())
 	{
-		int pp_lump = fileSystem.GetFileInContainer(light_fragprog.GetChars(), 0);
+		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog.GetChars(), 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog.GetChars());
 		fp_comb << GetStringFromLump(pp_lump) << "\n";
 	}

@@ -47,7 +47,7 @@ namespace FileSys {
 //
 //==========================================================================
 
-bool OpenWHRes(FResourceFile* file, FileSystemFilterInfo*)
+bool OpenWHRes(FResourceFile* file, LumpFilterInfo*)
 {
 	uint32_t directory[1024];
 
@@ -83,6 +83,7 @@ bool OpenWHRes(FResourceFile* file, FileSystemFilterInfo*)
 		Entries[i].Position = offset;
 		Entries[i].CompressedSize = Entries[i].Length = length;
 		Entries[i].Flags = RESFF_FULLPATH;
+		Entries[i].Namespace = ns_global;
 		Entries[i].ResourceID = -1;
 		Entries[i].Method = METHOD_STORED;
 		Entries[i].FileName = file->NormalizeFileName(synthname.c_str());
@@ -98,7 +99,7 @@ bool OpenWHRes(FResourceFile* file, FileSystemFilterInfo*)
 //
 //==========================================================================
 
-FResourceFile *CheckWHRes(const char *filename, FileReader &file, FileSystemFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
+FResourceFile *CheckWHRes(const char *filename, FileReader &file, LumpFilterInfo* filter, FileSystemMessageFunc Printf, StringPool* sp)
 {
 	if (file.GetLength() >= 8192) // needs to be at least 8192 to contain one file and the directory.
 	{
@@ -118,7 +119,7 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, FileSystemFilt
 			if (offset != checkpos || length == 0 || offset + length >= (size_t)size - 4096 ) return nullptr;
 			checkpos += (length+4095) / 4096;
 		}
-		auto rf = new FResourceFile(filename, file, sp, FResourceFile::NO_EXTENSIONS);
+		auto rf = new FResourceFile(filename, file, sp);
 		if (OpenWHRes(rf, filter)) return rf;
 		file = rf->Destroy();
 	}

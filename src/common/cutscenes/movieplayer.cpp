@@ -508,7 +508,7 @@ public:
 			}
 			if (!MusicStream)
 			{
-				Printf(PRINT_BOLD, "Failed to decode %s\n", fileSystem.GetFileName(soundtrack));
+				Printf(PRINT_BOLD, "Failed to decode %s\n", fileSystem.GetFileFullName(soundtrack, false));
 			}
 		}
 		animtex.SetSize(AnimTexture::VPX, width, height);

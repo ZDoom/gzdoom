@@ -304,7 +304,7 @@ static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void 
 	{
 		if (filename != nullptr)
 		{
-			lump = fileSystem.CheckNumForAnyName(filename);
+			lump = fileSystem.CheckNumForFullName(filename, true);
 			if (lump >= 0)
 			{
 				lsc.OpenLumpNum(lump);
@@ -480,7 +480,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 	ParseSingleFile(&sc, nullptr, lumpnum, parser, state);
 	for (unsigned i = 0; i < Includes.Size(); i++)
 	{
-		lumpnum = fileSystem.CheckNumForAnyName(Includes[i].GetChars());
+		lumpnum = fileSystem.CheckNumForFullName(Includes[i].GetChars(), true);
 		if (lumpnum == -1)
 		{
 			IncludeLocs[i].Message(MSG_ERROR, "Include script lump %s not found", Includes[i].GetChars());
@@ -491,7 +491,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 			if (fileno == 0 && fileno2 != 0)
 			{
 				I_FatalError("File %s is overriding core lump %s.",
-					fileSystem.GetContainerFullName(fileSystem.GetFileContainer(lumpnum)), Includes[i].GetChars());
+					fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(lumpnum)), Includes[i].GetChars());
 			}
 
 			ParseSingleFile(nullptr, nullptr, lumpnum, parser, state);

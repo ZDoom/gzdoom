@@ -75,7 +75,9 @@
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
-EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, vid_vsync)
+EXTERN_CVAR (Int, vid_maxfps)
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -1880,7 +1882,7 @@ void TryRunTics (void)
 
 	bool doWait = (cl_capfps || pauseext || (r_NoInterpolate && !M_IsAnimated()));
 
-	if (vid_dontdowait)
+	if (vid_dontdowait && ((vid_maxfps > 0) || (vid_vsync == true)))
 		doWait = false;
 
 	// get real tics

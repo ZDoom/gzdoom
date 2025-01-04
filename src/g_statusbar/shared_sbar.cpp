@@ -388,7 +388,7 @@ DBaseStatusBar::DBaseStatusBar ()
 	CompleteBorder = false;
 	Centering = false;
 	FixedOrigin = false;
-	CrosshairSize = 1.;
+	CrosshairSize = PrevCrosshairSize = 1.;
 	memset(Messages, 0, sizeof(Messages));
 	Displacement = 0;
 	CPlayer = NULL;
@@ -679,6 +679,8 @@ int DBaseStatusBar::GetPlayer ()
 
 void DBaseStatusBar::Tick ()
 {
+	PrevCrosshairSize = CrosshairSize;
+
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
@@ -988,7 +990,7 @@ void DBaseStatusBar::RefreshBackground () const
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::DrawCrosshair ()
+void DBaseStatusBar::DrawCrosshair (double ticFrac)
 {
 	if (!crosshairon)
 	{
@@ -1010,7 +1012,8 @@ void DBaseStatusBar::DrawCrosshair ()
 	}
 	int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
 
-	ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, CrosshairSize);
+	const double size = PrevCrosshairSize * (1.0 - ticFrac) + CrosshairSize * ticFrac;
+	ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, size);
 }
 
 //---------------------------------------------------------------------------
@@ -1082,7 +1085,7 @@ void DBaseStatusBar::Draw (EHudState state, double ticFrac)
 	{
 		if (CPlayer && CPlayer->camera && CPlayer->camera->player)
 		{
-			DrawCrosshair ();
+			DrawCrosshair (ticFrac);
 		}
 	}
 	else if (automapactive)

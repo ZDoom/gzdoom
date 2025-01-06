@@ -59,17 +59,16 @@ void ParseColorization(FScanner& sc);
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 extern int AttenuationIsSet;
 
-bool addedcvars = false;
-
 struct ExtraUniformCVARData
 {
 	FString Shader;
 	FString Uniform;
 	double* vec4 = nullptr;
 	ExtraUniformCVARData* Next = nullptr;
+	void (*OldCallback)(FBaseCVar &);
 };
 
-static void do_uniform_set(float value, ExtraUniformCVARData* data)
+static void do_uniform_set(DVector4 value, ExtraUniformCVARData* data)
 {
 	if (!(data->vec4))
 	{
@@ -85,23 +84,33 @@ static void do_uniform_set(float value, ExtraUniformCVARData* data)
 	double* vec4 = data->vec4;
 	if (vec4)
 	{
-		vec4[0] = value;
-		vec4[1] = 0.0;
-		vec4[2] = 0.0;
-		vec4[3] = 1.0;
+		vec4[0] = value.X;
+		vec4[1] = value.Y;
+		vec4[2] = value.Z;
+		vec4[3] = value.W;
 	}
 	if (data->Next)
 		do_uniform_set(value, data->Next);
 }
 
-void uniform_callback_int(FIntCVar &self)
+template<typename T>
+void uniform_callback1(T &self)
 {
-	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+	auto data = (ExtraUniformCVARData*)self.GetExtraDataPointer2();
+	if(data->OldCallback) data->OldCallback(self);
+
+	do_uniform_set(DVector4(*self, 0.0, 0.0, 1.0), data);
 }
 
-void uniform_callback_float(FFloatCVar &self)
+void uniform_callback_color(FColorCVar &self)
 {
-	do_uniform_set ((float)self, (ExtraUniformCVARData*)self.GetExtraDataPointer());
+	auto data = (ExtraUniformCVARData*)self.GetExtraDataPointer2();
+	if(data->OldCallback) data->OldCallback(self);
+
+	PalEntry col;
+	col.d = *self;
+
+	do_uniform_set(DVector4(col.r / 255.0, col.g / 255.0, col.b / 255.0, col.a / 255.0), data);
 }
 
 //-----------------------------------------------------------------------------
@@ -1539,9 +1548,10 @@ class GLDefsParser
 					sc.MustGetString();
 					shaderdesc.Name = sc.String;
 				}
-				else if (sc.Compare("uniform") || sc.Compare("cvar_uniform"))
+				else if (sc.Compare("uniform"))
 				{
-					bool is_cvar = sc.Compare("cvar_uniform");
+					bool is_cvar = false;
+					bool ok = true;
 
 					sc.MustGetString();
 					FString uniformType = sc.String;
@@ -1553,104 +1563,180 @@ class GLDefsParser
 					PostProcessUniformType parsedType = PostProcessUniformType::Undefined;
 
 					if (uniformType.Compare("int") == 0)
-						parsedType = PostProcessUniformType::Int;
-					else if (uniformType.Compare("float") == 0)
-						parsedType = PostProcessUniformType::Float;
-					else if (uniformType.Compare("vec2") == 0)
-						parsedType = PostProcessUniformType::Vec2;
-					else if (uniformType.Compare("vec3") == 0)
-						parsedType = PostProcessUniformType::Vec3;
-					else
-						sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
-
-					auto strUniformType = sc.String;
-
-					if (parsedType != PostProcessUniformType::Undefined)
-						shaderdesc.Uniforms[uniformName].Type = parsedType;
-
-					if (is_cvar)
 					{
-						addedcvars = true;
+						parsedType = PostProcessUniformType::Int;
+					}
+					else if (uniformType.Compare("float") == 0)
+					{
+						parsedType = PostProcessUniformType::Float;
+					}
+					else if (uniformType.Compare("vec2") == 0)
+					{
+						parsedType = PostProcessUniformType::Vec2;
+					}
+					else if (uniformType.Compare("vec3") == 0)
+					{
+						parsedType = PostProcessUniformType::Vec3;
+					}
+					else if (uniformType.Compare("vec4") == 0)
+					{
+						parsedType = PostProcessUniformType::Vec4;
+					}
+					else
+					{
+						sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
+						ok = false;
+					}
+
+					double Values[4] = {0.0, 0.0, 0.0, 1.0};
+
+					if(ok && sc.CheckToken('='))
+					{
+						if(sc.CheckString("cvar"))
+						{
+							is_cvar = true;
+						}
+						else switch(parsedType)
+						{
+						case PostProcessUniformType::Int:
+							sc.MustGetNumber();
+							Values[0] = sc.BigNumber;
+							break;
+						case PostProcessUniformType::Float:
+							sc.MustGetFloat();
+							Values[0] = sc.Float;
+							break;
+						case PostProcessUniformType::Vec2:
+							sc.MustGetFloat();
+							Values[0] = sc.Float;
+							sc.MustGetFloat();
+							Values[1] = sc.Float;
+							break;
+						case PostProcessUniformType::Vec3:
+							sc.MustGetFloat();
+							Values[0] = sc.Float;
+							sc.MustGetFloat();
+							Values[1] = sc.Float;
+							sc.MustGetFloat();
+							Values[2] = sc.Float;
+							break;
+						case PostProcessUniformType::Vec4:
+							sc.MustGetFloat();
+							Values[0] = sc.Float;
+							sc.MustGetFloat();
+							Values[1] = sc.Float;
+							sc.MustGetFloat();
+							Values[2] = sc.Float;
+							sc.MustGetFloat();
+							Values[3] = sc.Float;
+							break;
+
+						}
+					}
+
+					if (ok && !is_cvar)
+					{
+						shaderdesc.Uniforms[uniformName].Type = parsedType;
+						shaderdesc.Uniforms[uniformName].Values[0] = Values[0];
+						shaderdesc.Uniforms[uniformName].Values[1] = Values[1];
+						shaderdesc.Uniforms[uniformName].Values[2] = Values[2];
+						shaderdesc.Uniforms[uniformName].Values[3] = Values[3];
+					}
+
+					if (ok && is_cvar)
+					{
 						if (shaderdesc.Name.IsEmpty())
 							sc.ScriptError("Shader must have a name to use cvar uniforms");
 
-						ECVarType cvartype = CVAR_Dummy;
 						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
 						FBaseCVar *cvar;
-						void (*callback)(FBaseCVar&) = NULL;
 						FString cvarname;
-						switch (parsedType)
-						{
-						case PostProcessUniformType::Int:
-							cvartype = CVAR_Int;
-							callback = (void (*)(FBaseCVar&))uniform_callback_int;
-							break;
-						case PostProcessUniformType::Float:
-							cvartype = CVAR_Float;
-							callback = (void (*)(FBaseCVar&))uniform_callback_float;
-							break;
-						default:
-							sc.ScriptError("'%s' not supported for CVAR uniforms!", strUniformType);
-							break;
-						}
-						sc.MustGetString();
-						cvarname = sc.String;
-						cvar = FindCVar(cvarname.GetChars(), NULL);
+						void (*callback)(FBaseCVar&) = nullptr;
 
-						UCVarValue oldval;
-						UCVarValue val;
-						ExtraUniformCVARData* oldextra = nullptr;
-						sc.MustGetFloat();
-						
-						val.Float = oldval.Float = (float)sc.Float;
+						if(ok)
+						{
+							sc.MustGetString();
+							cvarname = sc.String;
+							cvar = FindCVar(cvarname.GetChars(), NULL);
 
-						if (!Args->CheckParm ("-shaderuniformtest"))
-						{
-							// these aren't really release-ready, so lock them behind a command-line argument for now.
-							sc.ScriptMessage("Warning - Use -shaderuniformtest to enable shader uniforms!");
-						}
-						else
-						{
 							if (!cvar)
 							{
-								cvar = C_CreateCVar(cvarname.GetChars(), cvartype, cvarflags);
+								sc.ScriptMessage("Unknown cvar passed to cvar_uniform");
+								ok = false;
 							}
-							else if (cvar && (((cvar->GetFlags()) & CVAR_MOD) == CVAR_MOD))
+						}
+
+						if(ok)
+						{
+							switch (cvar->GetRealType())
 							{
-								// this value may have been previously loaded
-								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
-								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
+							case CVAR_Int:
+								if(parsedType != PostProcessUniformType::Int && parsedType != PostProcessUniformType::Float)
+								{
+									sc.ScriptError("CVar '%s' type (int) is not convertible to uniform type (%s), must be int or float", cvarname.GetChars(), uniformType.GetChars());
+									ok = false;
+								}
+								else
+								{
+									callback = (void (*)(FBaseCVar&))(&uniform_callback1<FIntCVar>);
+									Values[0] = cvar->GetGenericRep(CVAR_Int).Int;
+								}
+								break;
+							case CVAR_Float:
+								if(parsedType != PostProcessUniformType::Int && parsedType != PostProcessUniformType::Float)
+								{
+									sc.ScriptError("CVar '%s' type (float) is not convertible to uniform type (%s), must be int or float", cvarname.GetChars(), uniformType.GetChars());
+									ok = false;
+								}
+								else
+								{
+									callback = (void (*)(FBaseCVar&))(&uniform_callback1<FFloatCVar>);
+									Values[0] = cvar->GetGenericRep(CVAR_Float).Float;
+								}
+								break;
+							case CVAR_Color:
+								if(parsedType != PostProcessUniformType::Vec3 && parsedType != PostProcessUniformType::Vec4)
+								{
+									sc.ScriptError("CVar '%s' type (color) is not convertible to uniform type (%s), must be vec3 or vec4", cvarname.GetChars(), uniformType.GetChars());
+									ok = false;
+								}
+								else
+								{
+									callback = (void (*)(FBaseCVar&))uniform_callback_color;
+
+									PalEntry col;
+									col.d = cvar->GetGenericRep(CVAR_Int).Int;
+									Values[0] = col.r / 255.0;
+									Values[1] = col.g / 255.0;
+									Values[2] = col.b / 255.0;
+									Values[3] = col.a / 255.0;
+								}
+								break;
+							default:
+								sc.ScriptError("CVar '%s' type not supported for uniforms!", cvarname.GetChars());
+								ok = false;
+								break;
 							}
+						}
 
-							if (!(cvar->GetFlags() & CVAR_MOD))
-							{
-								if (!((cvar->GetFlags() & (CVAR_AUTO | CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
-									sc.ScriptError("CVAR '%s' already in use!", cvarname.GetChars());
-							}
+						if(ok)
+						{
+							ExtraUniformCVARData* oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer2();
 
-							// must've picked this up from an autoexec.cfg, handle accordingly
-							if (cvar && ((cvar->GetFlags() & (CVAR_MOD|CVAR_AUTO|CVAR_UNSETTABLE)) == (CVAR_AUTO | CVAR_UNSETTABLE)))
-							{
-								oldval.Float = cvar->GetGenericRep(CVAR_Float).Float;
-								delete cvar;
-								cvar = C_CreateCVar(cvarname.GetChars(), cvartype, cvarflags);
-								oldextra = (ExtraUniformCVARData*)cvar->GetExtraDataPointer();
-							}
-
-							shaderdesc.Uniforms[uniformName].Values[0] = oldval.Float;
-
-							cvar->SetGenericRepDefault(val, CVAR_Float);
-
-							if (val.Float != oldval.Float) // it's not default anymore
-								cvar->SetGenericRep(oldval.Float, CVAR_Float);
-						
-							if (callback)
-								cvar->SetCallback(callback);
 							ExtraUniformCVARData* extra = new ExtraUniformCVARData;
 							extra->Shader = shaderdesc.Name.GetChars();
 							extra->Uniform = uniformName.GetChars();
+							extra->OldCallback = oldextra ? oldextra->OldCallback : cvar->m_Callback;
 							extra->Next = oldextra;
-							cvar->SetExtraDataPointer(extra);
+
+							cvar->SetCallback(callback);
+							cvar->SetExtraDataPointer2(extra);
+
+							shaderdesc.Uniforms[uniformName].Type = parsedType;
+							shaderdesc.Uniforms[uniformName].Values[0] = Values[0];
+							shaderdesc.Uniforms[uniformName].Values[1] = Values[1];
+							shaderdesc.Uniforms[uniformName].Values[2] = Values[2];
+							shaderdesc.Uniforms[uniformName].Values[3] = Values[3];
 						}
 					}
 				}
@@ -1917,8 +2003,6 @@ public:
 			sc.SavePos();
 			if (!sc.GetToken ())
 			{
-				if (addedcvars)
-					GameConfig->DoModSetup (gameinfo.ConfigName.GetChars());
 				return;
 			}
 			type = sc.MatchString(CoreKeywords);

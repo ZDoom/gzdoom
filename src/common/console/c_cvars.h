@@ -222,8 +222,10 @@ public:
 	void ClearCallback();
 
 	void SetExtraDataPointer(void *pointer);
+	void SetExtraDataPointer2(void *pointer);
 
 	void* GetExtraDataPointer();
+	void* GetExtraDataPointer2();
 
 	int pnum = -1;
 	FName userinfoName;
@@ -259,7 +261,8 @@ private:
 	static inline bool m_UseCallback = false;
 	static inline bool m_DoNoSet = false;
 
-	void *m_ExtraDataPointer;
+	void *m_ExtraDataPointer = nullptr;
+	void *m_ExtraDataPointer2 = nullptr;
 
 	// These need to go away!
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);
@@ -275,6 +278,8 @@ private:
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter);
 	friend void C_DeinitConsole();
 	friend void C_ListCVarsWithoutDescription();
+
+	friend class GLDefsParser;
 };
 
 // Returns a string with all cvars whose flags match filter. In compact mode,

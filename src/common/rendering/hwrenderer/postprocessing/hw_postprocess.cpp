@@ -947,6 +947,7 @@ PPCustomShaderInstance::PPCustomShaderInstance(PostProcessShader *desc) : Desc(d
 		case PostProcessUniformType::Int: AddUniformField(offset, name, UniformType::Int, sizeof(int)); break;
 		case PostProcessUniformType::Vec2: AddUniformField(offset, name, UniformType::Vec2, sizeof(float) * 2); break;
 		case PostProcessUniformType::Vec3: AddUniformField(offset, name, UniformType::Vec3, sizeof(float) * 3, sizeof(float) * 4); break;
+		case PostProcessUniformType::Vec4: AddUniformField(offset, name, UniformType::Vec4, sizeof(float) * 4); break;
 		default: break;
 		}
 	}
@@ -1084,6 +1085,13 @@ void PPCustomShaderInstance::SetUniforms(PPRenderState *renderstate)
 				fValues[1] = (float)pair->Value.Values[1];
 				fValues[2] = (float)pair->Value.Values[2];
 				memcpy(dst, fValues, sizeof(float) * 3);
+				break;
+			case PostProcessUniformType::Vec4:
+				fValues[0] = (float)pair->Value.Values[0];
+				fValues[1] = (float)pair->Value.Values[1];
+				fValues[2] = (float)pair->Value.Values[2];
+				fValues[3] = (float)pair->Value.Values[3];
+				memcpy(dst, fValues, sizeof(float) * 4);
 				break;
 			default:
 				break;

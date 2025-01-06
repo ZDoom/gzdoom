@@ -116,6 +116,31 @@ DEFINE_ACTION_FUNCTION(_PPShader, SetUniform3f)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_PPShader, SetUniform4f)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(w);
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+		if (shader.Name == shaderName)
+		{
+			double *vec4 = shader.Uniforms[uniformName].Values;
+			vec4[0] = x;
+			vec4[1] = y;
+			vec4[2] = z;
+			vec4[3] = w;
+		}
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(_PPShader, SetUniform1i)
 {
 	PARAM_PROLOGUE;

@@ -240,6 +240,16 @@ void* FBaseCVar::GetExtraDataPointer()
 	return m_ExtraDataPointer;
 }
 
+void FBaseCVar::SetExtraDataPointer2(void *pointer)
+{
+	m_ExtraDataPointer2 = pointer;
+}
+
+void* FBaseCVar::GetExtraDataPointer2()
+{
+	return m_ExtraDataPointer2;
+}
+
 const char *FBaseCVar::GetHumanString(int precision) const
 {
 	return GetGenericRep(CVAR_String).String;

@@ -1072,7 +1072,7 @@ void I_NetError(const char* error)
 {
 	doomcom.numnodes = 0;
 	StartWindow->NetClose();
-	I_FatalError(error);
+	I_FatalError("%s", error);
 }
 
 // todo: later these must be dispatched by the main menu, not the start screen.

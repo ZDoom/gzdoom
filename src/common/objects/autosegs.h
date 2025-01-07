@@ -91,14 +91,7 @@ class FAutoSeg
 	static constexpr bool HasReturnTypeV = HasReturnType<Func, Ret>::Value;
 
 public:
-	union
-	{
-		TArray<T*> fields; // skip constructor for fields, globals are zero-initialized, so this is fine
-		FArray dummy;
-	};
-
-	FAutoSeg(){}
-	~FAutoSeg(){fields.~TArray();}
+	TArray<T*> fields {TArray<T*>::NoInit}; // skip constructor for fields, globals are zero-initialized, so this is fine
 
 	template <typename Func>
 	void ForEach(Func func, std::enable_if_t<HasReturnTypeV<Func, void>> * = nullptr)

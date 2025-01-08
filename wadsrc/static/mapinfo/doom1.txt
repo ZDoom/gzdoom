@@ -6,6 +6,7 @@ gameinfo
 	creditpage = "CREDIT", "HELP2"
 	titlemusic = "$MUSIC_INTRO"
 	titletime = 5
+	chatsound = "misc/chat2"
 	finalemusic = "$MUSIC_VICTOR"
 	finaleflat = "FLOOR4_8"
 	finalepage = "HELP2", "VICTORY2", "ENDPIC"

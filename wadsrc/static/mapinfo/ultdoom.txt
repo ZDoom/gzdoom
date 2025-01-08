@@ -3,7 +3,6 @@ include "mapinfo/doom1.txt"
 gameinfo
 {
 	creditpage = "CREDIT"
-	chatsound = "misc/chat2"
 	finalepage = "CREDIT", "VICTORY2", "ENDPIC"
 	infopage = "HELP1", "CREDIT"
 }

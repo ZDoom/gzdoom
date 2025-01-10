@@ -427,7 +427,7 @@ public:
 	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
 	{
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
-		if (statnum && thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker)))
+		if (thinker->IsKindOf(RUNTIME_CLASS(DVisualThinker)))
 		{
 			statnum = STAT_VISUALTHINKER;
 		}

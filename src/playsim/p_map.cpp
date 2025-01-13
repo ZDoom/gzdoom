@@ -7211,7 +7211,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 //
 //=============================================================================
 
-bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
+int P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 {
 	bool res = false;
 
@@ -7266,4 +7266,12 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 
 	// Returns the result
 	return res;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ActivateSpecial, P_ActivateThingSpecial)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(activator, AActor);
+	PARAM_BOOL(death);
+	ACTION_RETURN_BOOL(P_ActivateThingSpecial(self, activator, death));
 }

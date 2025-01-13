@@ -690,6 +690,7 @@ class Actor : Thinker native
 	native clearscope static int ApplyDamageFactors(class<Inventory> itemcls, Name damagetype, int damage, int defdamage);
 	native void RemoveFromHash();
 	native void ChangeTid(int newtid);
+	native bool ActivateSpecial(Actor activator, bool death = false);
 	deprecated("3.8", "Use Level.FindUniqueTid() instead") static int FindUniqueTid(int start = 0, int limit = 0)
 	{
 		return level.FindUniqueTid(start, limit);

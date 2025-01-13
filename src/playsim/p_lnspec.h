@@ -219,7 +219,7 @@ static inline bool P_IsACSSpecial(int specnum)
 FLineSpecial *P_GetLineSpecialInfo(int num);
 int P_GetMaxLineSpecial();
 int P_FindLineSpecial (const char *string, int *min_args=NULL, int *max_args=NULL);
-bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);
+int P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death=false);
 int P_ExecuteSpecial(
 	FLevelLocals	*lev,
 	int			num,

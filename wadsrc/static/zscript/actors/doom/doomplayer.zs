@@ -23,8 +23,8 @@ class DoomPlayer : PlayerPawn
 		Player.WeaponSlot 3, "Shotgun", "SuperShotgun";
 		Player.WeaponSlot 4, "Chaingun";
 		Player.WeaponSlot 5, "RocketLauncher";
-		Player.WeaponSlot 6, "PlasmaRifle";
-		Player.WeaponSlot 7, "BFG9000";
+		Player.WeaponSlot 6, "ID24Incinerator", "PlasmaRifle";
+		Player.WeaponSlot 7, "ID24CalamityBlade", "BFG9000";
 		
 		Player.ColorRange 112, 127;
 		Player.Colorset 0, "$TXT_COLOR_GREEN",		0x70, 0x7F,  0x72;

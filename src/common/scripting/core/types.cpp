@@ -3231,12 +3231,11 @@ PFunctionPointer * NewFunctionPointer(PPrototype * proto, TArray<uint32_t> && ar
 //==========================================================================
 
 PStruct::PStruct(FName name, PTypeBase *outer, bool isnative, int fileno)
-: PContainerType(name, outer)
+: PContainerType(name, outer, fileno)
 {
 	mDescriptiveName.Format("%sStruct<%s>", isnative? "Native" : "", name.GetChars());
 	Size = 0;
 	isNative = isnative;
-	mDefFileNo = fileno;
 }
 
 //==========================================================================

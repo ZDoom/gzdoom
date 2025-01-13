@@ -18,7 +18,7 @@ extend class Actor
 	//   args[7]: Z velocity (fixed point)
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_SpawnObject(class<Actor> type, double angle, double xofs, double yofs, double zofs, double xvel, double yvel, double zvel)
+	action void MBF21_SpawnObject(class<Actor> type, double angle, double xofs, double yofs, double zofs, double xvel, double yvel, double zvel)
 	{
 		if (type == null)
 			return;
@@ -219,7 +219,7 @@ extend class Actor
 	//   args[1]: Health threshold
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_JumpIfHealthBelow(State tstate, int health)
+	action void MBF21_JumpIfHealthBelow(State tstate, int health)
 	{
 		if (self.health < health) self.SetState(tstate);
 	}
@@ -310,7 +310,7 @@ extend class Weapon
 	//   args[4]: Z spawn offset, relative to player's default projectile fire height
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_WeaponProjectile(class<Actor> type, double angle, double pitch, double Spawnofs_xy, double Spawnofs_z)
+	action void MBF21_WeaponProjectile(class<Actor> type, double angle, double pitch, double Spawnofs_xy, double Spawnofs_z)
 	{
 		if (!player || !type)
 			return;
@@ -342,7 +342,7 @@ extend class Weapon
 	//   args[4]: Attack damage modulus (e.g. for 5d3, customize the 3); if not set, defaults to 3
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_WeaponBulletAttack(double hspread, double vspread, int numbullets, int damagebase, int damagemod)
+	action void MBF21_WeaponBulletAttack(double hspread, double vspread, int numbullets, int damagebase, int damagemod)
 	{
 		let bangle = angle;
 		let slope = BulletSlope();
@@ -367,7 +367,7 @@ extend class Weapon
 	//   args[4]: Range (fixed point); if not set, defaults to player mobj's melee range
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_WeaponMeleeAttack(int damagebase, int damagemod, double zerkfactor, Sound hitsound, double range)
+	action void MBF21_WeaponMeleeAttack(int damagebase, int damagemod, double zerkfactor, Sound hitsound, double range)
 	{
 		if (range == 0)
 			range = meleerange;
@@ -394,7 +394,7 @@ extend class Weapon
 	// A_WeaponAlert
 	// Alerts monsters to the player's presence. Handy when combined with WPF_SILENT.
 	//
-	void A_WeaponAlert()
+	action void A_WeaponAlert()
 	{
 		SoundAlert(self);
 	}
@@ -424,7 +424,7 @@ extend class Weapon
 	//   args[0]: Amount of ammo to consume. If zero, use the weapon's ammo-per-shot amount.
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_ConsumeAmmo(int consume)
+	action void MBF21_ConsumeAmmo(int consume)
 	{
 		let player = self.player;
 		if (!player) return;
@@ -492,7 +492,7 @@ extend class Weapon
 	//   args[1]: If nonzero, don't change the player actor state
 	//
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_GunFlashTo(State tstate, int dontchangeplayer)
+	action void MBF21_GunFlashTo(State tstate, int dontchangeplayer)
 	{
 		let player = self.player;
 		if (player == null) return;
@@ -505,7 +505,7 @@ extend class Weapon
 
 	// needed to call A_SeekerMissile with proper defaults.
 	deprecated("2.3", "for Dehacked use only")
-	void MBF21_SeekTracer(double threshold, double turnmax)
+	action void MBF21_SeekTracer(double threshold, double turnmax)
 	{
 		A_SeekerMissile(int(threshold), int(turnmax), flags: SMF_PRECISE); // args get truncated to ints here, but it's close enough
 	}

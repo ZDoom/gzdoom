@@ -214,15 +214,13 @@ void P_FindParticleSubsectors (FLevelLocals *Level)
 	{
 		Level->subsectors[i].sprites.Clear();
 	}
-	// [MC] Not too happy about using an iterator for this but I can't think of another way to handle it.
-	// At least it's on its own statnum for maximum efficiency.
-	auto it = Level->GetThinkerIterator<DVisualThinker>(NAME_None, STAT_VISUALTHINKER);
-	DVisualThinker* sp;
-	while (sp = it.Next())
+	auto sp = Level->VisualThinkerHead;
+	while (sp != nullptr)
 	{
 		if (!sp->PT.subsector) sp->PT.subsector = Level->PointInRenderSubsector(sp->PT.Pos);
 
 		sp->PT.subsector->sprites.Push(sp);
+		sp = sp->GetNext();
 	}
 	// End VisualThinker hitching. Now onto the particles. 
 	if (Level->ParticlesInSubsec.Size() < Level->subsectors.Size())
@@ -1007,26 +1005,38 @@ void DVisualThinker::Construct()
 	cursector = nullptr;
 	PT.color = 0xffffff;
 	AnimatedTexture.SetNull();
-}
 
-DVisualThinker::DVisualThinker()
-{
-	Construct();
+	_prev = _next = nullptr;
+	if (Level->VisualThinkerHead != nullptr)
+	{
+		Level->VisualThinkerHead->_prev = this;
+		_next = Level->VisualThinkerHead;
+	}
+	Level->VisualThinkerHead = this;
 }
 
 void DVisualThinker::OnDestroy()
 {
+	if (_prev != nullptr)
+		_prev->_next = _next;
+	if (_next != nullptr)
+		_next->_prev = _prev;
+	if (Level->VisualThinkerHead == this)
+		Level->VisualThinkerHead = _next;
+
 	PT.alpha = 0.0; // stops all rendering.
 	Super::OnDestroy();
+}
+
+DVisualThinker* DVisualThinker::GetNext() const
+{
+	return _next;
 }
 
 DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* type)
 {
 	if (type == nullptr)
-		return nullptr;
-	else if (type->bAbstract)
 	{
-		Printf("Attempt to spawn an instance of abstract VisualThinker class %s\n", type->TypeName.GetChars());
 		return nullptr;
 	}
 	else if (!type->IsDescendantOf(RUNTIME_CLASS(DVisualThinker)))
@@ -1034,8 +1044,13 @@ DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* ty
 		Printf("Attempt to spawn class not inherent to VisualThinker: %s\n", type->TypeName.GetChars());
 		return nullptr;
 	}
+	else if (type->bAbstract)
+	{
+		Printf("Attempt to spawn an instance of abstract VisualThinker class %s\n", type->TypeName.GetChars());
+		return nullptr;
+	}
 
-	DVisualThinker *zs = static_cast<DVisualThinker*>(Level->CreateThinker(type, STAT_VISUALTHINKER));
+	auto zs = static_cast<DVisualThinker*>(Level->CreateThinker(type, DVisualThinker::DEFAULT_STAT));
 	zs->Construct();
 	return zs;
 }
@@ -1284,7 +1299,7 @@ void DVisualThinker::Serialize(FSerializer& arc)
 {
 	Super::Serialize(arc);
 
-	arc ("pos", PT.Pos)
+	arc("pos", PT.Pos)
 		("vel", PT.Vel)
 		("prev", Prev)
 		("scale", Scale)
@@ -1300,7 +1315,9 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("lightlevel", LightLevel)
 		("animData", PT.animData)
 		("flags", PT.flags)
-		("visualThinkerFlags", flags);
+		("visualThinkerFlags", flags)
+		("next", _next)
+		("prev", _prev);
     
     if(arc.isReading())
     {

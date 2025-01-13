@@ -38,15 +38,19 @@ class Ammo : Inventory
 	int BackpackAmount;
 	int BackpackMaxAmount;
 	meta int DropAmount;
+	meta double DropAmmoFactorMultiplier;
 	
 	property BackpackAmount: BackpackAmount;
 	property BackpackMaxAmount: BackpackMaxAmount;
 	property DropAmount: DropAmount;
+	property DropAmmoFactorMultiplier: DropAmmoFactorMultiplier;
 
 	Default
 	{
 		+INVENTORY.KEEPDEPLETED
 		Inventory.PickupSound "misc/ammo_pkup";
+		
+		Ammo.DropAmmoFactorMultiplier 1;
 	}
 
 	//===========================================================================
@@ -201,6 +205,8 @@ class Ammo : Inventory
 			dropammofactor = 0.5;
 			ignoreskill = false;
 		}
+        
+        dropammofactor *= DropAmmoFactorMultiplier;
 
 		if (dropamount > 0)
 		{

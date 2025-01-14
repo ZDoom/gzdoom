@@ -1880,52 +1880,55 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	FBoundingBox box(pos.X, pos.Y, thing->radius);
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
-	FMultiBlockThingsIterator::CheckResult tcres;
 
 	if (!(thing->flags2 & MF2_THRUACTORS))
-	while ((it2.Next(&tcres)))
 	{
-		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm))
-		{ // [RH] If a thing can be stepped up on, we need to continue checking
-			// other things in the blocks and see if we hit something that is
-			// definitely blocking. Otherwise, we need to check the lines, or we
-			// could end up stuck inside a wall.
-			AActor *BlockingMobj = thing->BlockingMobj;
+		FMultiBlockThingsIterator it2(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
+		FMultiBlockThingsIterator::CheckResult tcres;
 
-			// If this blocks through a restricted line portal, it will always completely block.
-			if (BlockingMobj == NULL || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
-			{ // Thing slammed into something; don't let it move now.
-				thing->Height = realHeight;
-				return false;
-			}
-			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
-				BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
-			{
-				if (thingblocker == NULL ||
-					BlockingMobj->Z() > thingblocker->Z())
-				{
-					thingblocker = BlockingMobj;
-				}
-				thing->BlockingMobj = NULL;
-			}
-			else if (thing->player &&
-				thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
-			{
-				if (thingblocker)
-				{ // There is something to step up on. Return this thing as
-					// the blocker so that we don't step up.
+		while ((it2.Next(&tcres)))
+		{
+			if (!PIT_CheckThing(it2, tcres, it2.Box(), tm))
+			{ // [RH] If a thing can be stepped up on, we need to continue checking
+				// other things in the blocks and see if we hit something that is
+				// definitely blocking. Otherwise, we need to check the lines, or we
+				// could end up stuck inside a wall.
+				AActor* BlockingMobj = thing->BlockingMobj;
+
+				// If this blocks through a restricted line portal, it will always completely block.
+				if (BlockingMobj == NULL || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
+				{ // Thing slammed into something; don't let it move now.
 					thing->Height = realHeight;
 					return false;
 				}
-				// Nothing is blocking us, but this actor potentially could
-				// if there is something else to step on.
-				thing->BlockingMobj = NULL;
-			}
-			else
-			{ // Definitely blocking
-				thing->Height = realHeight;
-				return false;
+				else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
+					BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
+				{
+					if (thingblocker == NULL ||
+						BlockingMobj->Z() > thingblocker->Z())
+					{
+						thingblocker = BlockingMobj;
+					}
+					thing->BlockingMobj = NULL;
+				}
+				else if (thing->player &&
+					thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
+				{
+					if (thingblocker)
+					{ // There is something to step up on. Return this thing as
+						// the blocker so that we don't step up.
+						thing->Height = realHeight;
+						return false;
+					}
+					// Nothing is blocking us, but this actor potentially could
+					// if there is something else to step on.
+					thing->BlockingMobj = NULL;
+				}
+				else
+				{ // Definitely blocking
+					thing->Height = realHeight;
+					return false;
+				}
 			}
 		}
 	}

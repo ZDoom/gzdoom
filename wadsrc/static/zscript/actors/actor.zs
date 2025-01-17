@@ -698,6 +698,7 @@ class Actor : Thinker native
 	native clearscope int GetRenderStyle() const;
 	native clearscope bool CheckKeys(int locknum, bool remote, bool quiet = false);
 	protected native void CheckPortalTransition(bool linked = true);
+	native clearscope bool HasConversation() const;
 	native clearscope bool CanTalk() const;
 	native bool StartConversation(Actor player, bool faceTalker = true, bool saveAngle = true);
 

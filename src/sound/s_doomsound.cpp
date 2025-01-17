@@ -379,7 +379,7 @@ void S_InitData()
 
 void S_SoundPitch(int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime)
 {
-	soundEngine->StartSound(SOURCE_None, nullptr, nullptr, channel, flags, sound_id, volume, attenuation, 0, pitch);
+	soundEngine->StartSound(SOURCE_None, nullptr, nullptr, channel, flags, sound_id, volume, attenuation, nullptr, pitch, startTime);
 }
 
 void S_Sound(int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation)
@@ -411,6 +411,29 @@ DEFINE_ACTION_FUNCTION(DObject, S_StartSound)
 	PARAM_FLOAT(pitch);
 	PARAM_FLOAT(startTime);
 	S_SoundPitch(channel, EChanFlags::FromInt(flags), id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
+	return 0;
+}
+
+static void S_StartSoundAt(double x, double y, double z, int sound_id, int channel, int flags, double volume, double attenuation, double pitch, double startTime)
+{
+	FVector3 pos = { (float)x, (float)z, (float)y };
+	soundEngine->StartSound(SOURCE_Unattached, nullptr, &pos, channel, EChanFlags::FromInt(flags), FSoundID::fromInt(sound_id), (float)volume, (float)attenuation, nullptr, (float)pitch, (float)startTime);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, S_StartSoundAt, S_StartSoundAt)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(id);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attn);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	S_StartSoundAt(x, y, z, id, channel, flags, volume, attn, pitch, startTime);
 	return 0;
 }
 

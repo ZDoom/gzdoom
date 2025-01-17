@@ -5707,7 +5707,7 @@ void R_OffsetView(FRenderViewpoint& viewPoint, const DVector3& dir, const double
 
 static int CanTalk(AActor *self)
 {
-	return self->Conversation != nullptr;
+	return self->Conversation != nullptr && self->health > 0 && !(self->flags4 & MF4_INCOMBAT);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CanTalk, CanTalk)
@@ -5716,10 +5716,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CanTalk, CanTalk)
 	ACTION_RETURN_BOOL(CanTalk(self));
 }
 
+static int HasConversation(AActor *self)
+{
+	return self->Conversation != nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(HasConversation(self));
+}
+
 static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
 {
-	if (self->health <= 0 || (self->flags4 & MF4_INCOMBAT) || self->Conversation == nullptr)
+	if (!CanTalk(self))
 		return false;
+
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);
 	return true;

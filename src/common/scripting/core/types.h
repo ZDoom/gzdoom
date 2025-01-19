@@ -253,13 +253,14 @@ class PContainerType : public PCompoundType
 public:
 	PTypeBase		*Outer = nullptr;			// object this type is contained within
 	FName			TypeName = NAME_None;		// this type's name
+	int mDefFileNo = 0;
 
 	PContainerType()
 	{
 		mDescriptiveName = "ContainerType";
 		Flags |= TYPE_Container;
 	}
-	PContainerType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) 
+	PContainerType(FName name, PTypeBase *outer, int fileno) : Outer(outer), TypeName(name), mDefFileNo(fileno)
 	{
 		mDescriptiveName = name.GetChars();
 		Flags |= TYPE_Container;
@@ -648,7 +649,6 @@ public:
 	// Some internal structs require explicit construction and destruction of fields the VM cannot handle directly so use these two functions for it.
 	VMFunction *mConstructor = nullptr;
 	VMFunction *mDestructor = nullptr;
-	int mDefFileNo;
 
 	 PField *AddField(FName name, PType *type, uint32_t flags=0) override;
 	 PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags = 0, int bitvalue = 0) override;
@@ -681,7 +681,6 @@ class PClassType : public PContainerType
 public:
 	PClass *Descriptor;
 	PClassType *ParentType;
-	int mDefFileNo;
 
 	PClassType(PClass *cls = nullptr, int fileno = 0);
 	PField *AddField(FName name, PType *type, uint32_t flags = 0) override;

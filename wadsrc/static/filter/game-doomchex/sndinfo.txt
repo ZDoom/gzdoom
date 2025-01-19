@@ -456,3 +456,17 @@ $alias				intermission/nextstage		weapons/rocklx
 $alias				intermission/paststats		weapons/shotgr
 $alias				intermission/pastcoopstats	weapons/shotgr
 $alias				intermission/pastdmstats	*gibbed
+
+
+// id24 sounds
+
+weapons/incinerator/fire1 DSINCFI1
+weapons/incinerator/fire2 DSINCFI2
+weapons/incinerator/burn DSINCBRN
+weapons/incinerator/hot1 DSINCHT1
+weapons/incinerator/hot2 DSINCHT2
+weapons/incinerator/hot3 DSINCHT3
+
+weapons/calamityblade/charge DSHETCHG
+weapons/calamityblade/shoot DSHETSHT
+weapons/calamityblade/explode DSHETXPL

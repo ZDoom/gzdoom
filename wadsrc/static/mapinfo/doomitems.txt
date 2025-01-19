@@ -149,4 +149,8 @@ DoomEdNums
   9109 = MarinePlasma
   9110 = MarineRailgun
   9111 = MarineBFG
+  -28622 = ID24Fuel
+  -28621 = ID24FuelTank
+  -28620 = ID24CalamityBlade
+  -28619 = ID24Incinerator
 }

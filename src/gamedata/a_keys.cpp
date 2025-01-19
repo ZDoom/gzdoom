@@ -62,6 +62,16 @@ struct OneKey
 		// P_GetMapColorForKey() checks the key directly
 		if (owner->IsA(key) || owner->GetSpecies() == key->TypeName) return true;
 
+		if (owner->IsKindOf(NAME_DehackedPickup))
+		{
+			auto cls = owner->GetClass()->ActorInfo()->Replacee;
+			if (cls == key || owner->Species == key->TypeName)
+			{
+				return true;
+			}
+		}
+
+
 		// Other calls check an actor that may have a key in its inventory.
 		for (AActor *item = owner->Inventory; item != NULL; item = item->Inventory)
 		{

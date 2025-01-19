@@ -2910,11 +2910,18 @@ void DAutomap::drawKeys ()
 	mpoint_t p;
 	DAngle	 angle;
 
-	auto it = Level->GetThinkerIterator<AActor>(NAME_Key);
+	auto it = Level->GetThinkerIterator<AActor>(NAME_Inventory);
 	AActor *key;
 
 	while ((key = it.Next()) != nullptr)
 	{
+		auto cls = key->GetClass();
+		if (cls->IsDescendantOf(NAME_DehackedPickup))
+		{
+			cls = cls->ActorInfo()->Replacee;
+		}
+		if (!cls->IsDescendantOf(NAME_Key)) continue;
+
 		DVector3 pos = key->PosRelative(MapPortalGroup);
 		p.x = pos.X;
 		p.y = pos.Y;

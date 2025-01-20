@@ -704,6 +704,9 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	ViewVector.X = v.X;
 	ViewVector.Y = v.Y;
 	HWAngles.Yaw = FAngle::fromDeg(270.0 - Angles.Yaw.Degrees());
+	ViewVector3D.X = v.X * PitchCos;
+	ViewVector3D.Y = v.Y * PitchCos;
+	ViewVector3D.Z = -PitchSin;
 
 	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
 	{

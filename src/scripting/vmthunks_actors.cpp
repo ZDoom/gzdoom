@@ -1860,8 +1860,9 @@ DEFINE_ACTION_FUNCTION(AActor, PlayBounceSound)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(onFloor);
+	PARAM_FLOAT(volume);
 
-	self->PlayBounceSound(onFloor);
+	self->PlayBounceSound(onFloor, volume);
 	return 0;
 }
 

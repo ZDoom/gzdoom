@@ -863,7 +863,7 @@ public:
 	void Howl ();
 
 	// plays bouncing sound
-	void PlayBounceSound(bool onfloor);
+	void PlayBounceSound(bool onfloor, double volume);
 
 	// plays pushing sound
 	void PlayPushSound();

@@ -497,7 +497,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveBehavior, RemoveBehavior)
 	ACTION_RETURN_BOOL(self->RemoveBehavior(*type));
 }
 
-DObject* AActor::AddBehavior(const PClass& type)
+DObject* AActor::AddBehavior(PClass& type)
 {
 	if (type.bAbstract || !type.IsDescendantOf(NAME_Behavior))
 		return nullptr;
@@ -505,7 +505,7 @@ DObject* AActor::AddBehavior(const PClass& type)
 	auto b = FindBehavior(type);
 	if (b == nullptr)
 	{
-		b = Create<DObject>();
+		b = type.CreateNew();
 		if (b == nullptr)
 			return nullptr;
 
@@ -558,6 +558,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, AddBehavior, AddBehavior)
 void AActor::TickBehaviors()
 {
 	TArray<FName> toRemove = {};
+	TArray<DObject*> toTick = {};
 
 	TMap<FName, DObject*>::Iterator it = { Behaviors };
 	TMap<FName, DObject*>::Pair* pair = nullptr;
@@ -570,6 +571,11 @@ void AActor::TickBehaviors()
 			continue;
 		}
 
+		toTick.Push(b);
+	}
+
+	for (auto& b : toTick)
+	{
 		auto& owner = b->PointerVar<AActor>(NAME_Owner);
 		if (owner != this)
 		{

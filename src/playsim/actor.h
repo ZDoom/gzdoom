@@ -1441,7 +1441,7 @@ public:
 		auto b = Behaviors.CheckKey(type.TypeName);
 		return b != nullptr && *b != nullptr && !((*b)->ObjectFlags & OF_EuthanizeMe) ? *b : nullptr;
 	}
-	DObject* AddBehavior(const PClass& type);
+	DObject* AddBehavior(PClass& type);
 	bool RemoveBehavior(const PClass& type);
 	void TickBehaviors();
 	void MoveBehaviors(AActor& from);

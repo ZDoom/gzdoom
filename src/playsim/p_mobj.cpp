@@ -644,7 +644,7 @@ void AActor::MoveBehaviors(AActor& from)
 			continue;
 		}
 
-		auto owner = b->PointerVar<AActor>(NAME_Owner);
+		auto& owner = b->PointerVar<AActor>(NAME_Owner);
 		owner = this;
 	}
 

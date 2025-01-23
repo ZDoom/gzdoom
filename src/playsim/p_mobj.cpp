@@ -200,6 +200,22 @@ void AActor::EnableNetworking(const bool enable)
 
 //==========================================================================
 //
+// AActor :: PropagateMark
+//
+//==========================================================================
+
+size_t AActor::PropagateMark()
+{
+	TMap<FName, DObject*>::Iterator it = { Behaviors };
+	TMap<FName, DObject*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+		GC::Mark(pair->Value);
+
+	return Super::PropagateMark();
+}
+
+//==========================================================================
+//
 // AActor :: Serialize
 //
 //==========================================================================
@@ -403,7 +419,8 @@ void AActor::Serialize(FSerializer &arc)
 		("morphflags", MorphFlags)
 		("premorphproperties", PremorphProperties)
 		("morphexitflash", MorphExitFlash)
-		("damagesource", damagesource);
+		("damagesource", damagesource)
+		("behaviors", Behaviors);
 
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
@@ -445,6 +462,229 @@ void AActor::PostSerialize()
 	UpdateWaterLevel(false);
 }
 
+//==========================================================================
+//
+// Behaviors allow for actions to be defined on Actors not coupled to
+// specific inventory tokens. Only one can be attached at a time.
+//
+//==========================================================================
+
+bool AActor::RemoveBehavior(const PClass& type)
+{
+	if (Behaviors.CheckKey(type.TypeName))
+	{
+		auto b = Behaviors[type.TypeName];
+
+		Behaviors.Remove(type.TypeName);
+		if (b != nullptr && !(b->ObjectFlags & OF_EuthanizeMe))
+		{
+			b->Destroy();
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static int RemoveBehavior(AActor* self, PClass* type)
+{
+	return self->RemoveBehavior(*type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveBehavior, RemoveBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DObject);
+	ACTION_RETURN_BOOL(self->RemoveBehavior(*type));
+}
+
+DObject* AActor::AddBehavior(const PClass& type)
+{
+	if (type.bAbstract || !type.IsDescendantOf(NAME_Behavior))
+		return nullptr;
+
+	auto b = FindBehavior(type);
+	if (b == nullptr)
+	{
+		b = Create<DObject>();
+		if (b == nullptr)
+			return nullptr;
+
+		auto& owner = b->PointerVar<AActor>(NAME_Owner);
+		owner = this;
+
+		Behaviors[type.TypeName] = b;
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Initialize)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (b->ObjectFlags & OF_EuthanizeMe)
+			{
+				RemoveBehavior(type);
+				return nullptr;
+			}
+		}
+	}
+	else
+	{
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Readded)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (b->ObjectFlags & OF_EuthanizeMe)
+			{
+				RemoveBehavior(type);
+				return nullptr;
+			}
+		}
+	}
+
+	return b;
+}
+
+static DObject* AddBehavior(AActor* self, PClass* type)
+{
+	return self->AddBehavior(*type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AddBehavior, AddBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DObject);
+	ACTION_RETURN_OBJECT(self->AddBehavior(*type));
+}
+
+void AActor::TickBehaviors()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, DObject*>::Iterator it = { Behaviors };
+	TMap<FName, DObject*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value;
+		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		{
+			toRemove.Push(pair->Key);
+			continue;
+		}
+
+		auto& owner = b->PointerVar<AActor>(NAME_Owner);
+		if (owner != this)
+		{
+			toRemove.Push(pair->Key);
+			continue;
+		}
+
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Tick)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (b->ObjectFlags & OF_EuthanizeMe)
+				toRemove.Push(pair->Key);
+		}
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(*PClass::FindClass(type));
+}
+
+static void TickBehaviors(AActor* self)
+{
+	self->TickBehaviors();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TickBehaviors, TickBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->TickBehaviors();
+	return 0;
+}
+
+static DObject* FindBehavior(AActor* self, PClass* type)
+{
+	return self->FindBehavior(*type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindBehavior, FindBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DObject);
+	ACTION_RETURN_OBJECT(self->FindBehavior(*type));
+}
+
+void AActor::MoveBehaviors(AActor& from)
+{
+	// Clean these up properly before transferring.
+	ClearBehaviors();
+
+	Behaviors.TransferFrom(from.Behaviors);
+
+	TArray<FName> toRemove = {};
+	
+	// Clean up any empty behaviors that remained as well while
+	// changing the owner.
+	TMap<FName, DObject*>::Iterator it = { Behaviors };
+	TMap<FName, DObject*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value;
+		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		{
+			toRemove.Push(pair->Key);
+			continue;
+		}
+
+		auto owner = b->PointerVar<AActor>(NAME_Owner);
+		owner = this;
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(*PClass::FindClass(type));
+}
+
+static void MoveBehaviors(AActor* self, AActor* from)
+{
+	self->MoveBehaviors(*from);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MoveBehaviors, MoveBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(from, AActor);
+	self->MoveBehaviors(*from);
+	return 0;
+}
+
+void AActor::ClearBehaviors()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, DObject*>::Iterator it = { Behaviors };
+	TMap<FName, DObject*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+		toRemove.Push(pair->Key);
+
+	for (auto& type : toRemove)
+		RemoveBehavior(*PClass::FindClass(type));
+
+	Behaviors.Clear();
+}
+
+static void ClearBehaviors(AActor* self)
+{
+	self->ClearBehaviors();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBehaviors, ClearBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->ClearBehaviors();
+	return 0;
+}
 
 //==========================================================================
 //
@@ -3926,6 +4166,11 @@ void AActor::Tick ()
 		return;
 	}
 
+	// These should always tick regardless of prediction or not (let the behavior itself
+	// handle this).
+	if (!isFrozen())
+		TickBehaviors();
+
 	if (flags5 & MF5_NOINTERACTION)
 	{
 		// only do the minimally necessary things here to save time:
@@ -5246,6 +5491,9 @@ void AActor::OnDestroy ()
 		Level->localEventManager->WorldThingDestroyed(this);
 	}
 
+	
+	ClearBehaviors();
+
 	DeleteAttachedLights();
 	ClearRenderSectorList();
 	ClearRenderLineList();
@@ -5491,6 +5739,8 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 		VMValue params[] = { to, from };
 		VMCall(func, params, 2, nullptr, 0);
 	}
+
+	to->MoveBehaviors(*from);
 
 	// Go through player infos.
 	for (int i = 0; i < MAXPLAYERS; ++i)

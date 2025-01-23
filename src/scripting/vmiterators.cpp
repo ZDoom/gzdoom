@@ -388,6 +388,95 @@ DEFINE_ACTION_FUNCTION_NATIVE(DActorIterator, Reinit, ReinitActI)
 	return 0;
 }
 
+//===========================================================================
+//
+// Behavior iterator. This can be created in two ways;
+// -Across an Actor's behaviors
+// -Across all behaviors of a given type
+//
+//===========================================================================
+
+class DBehaviorIterator : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DBehaviorIterator, DObject)
+	size_t _index;
+	TArray<DObject*> _behaviors;
+
+public:
+	DBehaviorIterator(const AActor& mobj, FName type)
+	{
+		TMap<FName, DObject*>::ConstIterator it = { mobj.Behaviors };
+		TMap<FName, DObject*>::ConstPair* pair = nullptr;
+		while (it.NextPair(pair))
+		{
+			auto b = pair->Value;
+			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+				continue;
+
+			if (type == NAME_None || b->IsKindOf(type))
+				_behaviors.Push(b);
+		}
+
+		Reinit();
+	}
+
+	// TODO: List for all behaviors
+
+	DObject* Next()
+	{
+		if (_index >= _behaviors.Size())
+			return nullptr;
+
+		return _behaviors[_index++];
+	}
+
+	void Reinit() { _index = 0u; }
+
+	void OnDestroy() override
+	{
+		_behaviors.Reset();
+		Super::OnDestroy();
+	}
+};
+
+IMPLEMENT_CLASS(DBehaviorIterator, true, false);
+
+static DBehaviorIterator* CreateBehaviorItFromActor(AActor* mobj, PClass* type)
+{
+	return Create<DBehaviorIterator>(*mobj, type == nullptr ? NAME_None : type->TypeName);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateFrom, CreateBehaviorItFromActor)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(mobj, AActor);
+	PARAM_CLASS(type, DObject);
+	ACTION_RETURN_OBJECT(CreateBehaviorItFromActor(mobj, type));
+}
+
+static DObject* NextBehavior(DBehaviorIterator* self)
+{
+	return self->Next();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Next, NextBehavior)
+{
+	PARAM_SELF_PROLOGUE(DBehaviorIterator);
+	ACTION_RETURN_OBJECT(self->Next());
+}
+
+static void ReinitBehavior(DBehaviorIterator* self)
+{
+	self->Reinit();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Reinit, ReinitBehavior)
+{
+	PARAM_SELF_PROLOGUE(DBehaviorIterator);
+	self->Reinit();
+	return 0;
+}
+
 DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.line, curline);
 DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.Position, position);
 DEFINE_FIELD_NAMED(DBlockLinesIterator, cres.portalflags, portalflags);

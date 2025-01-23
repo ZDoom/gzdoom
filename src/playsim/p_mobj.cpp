@@ -527,7 +527,7 @@ DObject* AActor::AddBehavior(PClass& type)
 	}
 	else
 	{
-		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Readded)
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Reinitialize)
 		{
 			VMValue params[] = { b };
 			VMCall(func, params, 1, nullptr, 0);

@@ -78,8 +78,16 @@ class Behavior play abstract
 	readonly Actor Owner;
 
 	virtual void Initialize() {}
-	virtual void Readded() {}
+	virtual void Reinitialize() {}
 	virtual void Tick() {}
+}
+
+class BehaviorIterator native abstract final
+{
+	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
+
+	native Behavior Next();
+	native void Reinit();
 }
 
 class Actor : Thinker native

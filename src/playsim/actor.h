@@ -793,6 +793,7 @@ public:
 
 	virtual void OnDestroy() override;
 	virtual void Serialize(FSerializer &arc) override;
+	virtual size_t PropagateMark() override;
 	virtual void PostSerialize() override;
 	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick
 	virtual void Tick() override;
@@ -1373,6 +1374,7 @@ public:
 	// landing speed from a jump with normal gravity (squats the player's view)
 	// (note: this is put into AActor instead of the PlayerPawn because non-players also use the value)
 	double LandingSpeed;
+	TMap<FName, DObject*> Behaviors;
 
 
 	// ThingIDs
@@ -1433,6 +1435,17 @@ public:
 	{
 		return GetClass()->FindState(numnames, names, exact);
 	}
+
+	DObject* FindBehavior(const PClass& type) const
+	{
+		auto b = Behaviors.CheckKey(type.TypeName);
+		return b != nullptr && *b != nullptr && !((*b)->ObjectFlags & OF_EuthanizeMe) ? *b : nullptr;
+	}
+	DObject* AddBehavior(const PClass& type);
+	bool RemoveBehavior(const PClass& type);
+	void TickBehaviors();
+	void MoveBehaviors(AActor& from);
+	void ClearBehaviors();
 
 	bool HasSpecialDeathStates () const;
 

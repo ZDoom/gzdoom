@@ -73,6 +73,14 @@ class ViewPosition native
 	native readonly int Flags;
 }
 
+class Behavior play abstract
+{
+	readonly Actor Owner;
+
+	virtual void Initialize() {}
+	virtual void Readded() {}
+	virtual void Tick() {}
+}
 
 class Actor : Thinker native
 {
@@ -499,6 +507,13 @@ class Actor : Thinker native
 	{
 		return sin(fb * (180./32)) * 8;
 	}
+
+	native clearscope Behavior FindBehavior(class<Behavior> type) const;
+	native bool RemoveBehavior(class<Behavior> type);
+	native Behavior AddBehavior(class<Behavior> type);
+	native void TickBehaviors();
+	native void ClearBehaviors();
+	native void MoveBehaviors(Actor from);
 
 	native clearscope bool isFrozen() const;
 	virtual native void BeginPlay();

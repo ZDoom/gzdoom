@@ -3,6 +3,7 @@
 #include "serializer.h"
 
 class player_t;
+class DBehavior;
 struct sector_t;
 struct line_t;
 struct side_t;
@@ -43,7 +44,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_
 FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def);
 FSerializer& Serialize(FSerializer& arc, const char* key, struct FStandaloneAnimation& value, struct FStandaloneAnimation* defval);
-FSerializer& Serialize(FSerializer& arc, const char* key, TMap<FName, DObject*>& value, TMap<FName, DObject*>* def);
+FSerializer& Serialize(FSerializer& arc, const char* key, TMap<FName, DBehavior*>& value, TMap<FName, DBehavior*>* def);
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);

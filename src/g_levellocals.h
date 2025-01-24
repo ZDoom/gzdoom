@@ -706,11 +706,35 @@ public:
 	DVisualThinker* VisualThinkerHead = nullptr;
 
 	// links to global game objects
+	TArray<DBehavior*> ActorBehaviors;
 	TArray<TObjPtr<AActor *>> CorpseQueue;
 	TObjPtr<DFraggleThinker *> FraggleScriptThinker = MakeObjPtr<DFraggleThinker*>(nullptr);
 	TObjPtr<DACSThinker*> ACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
 
 	TObjPtr<DSpotState *> SpotState = MakeObjPtr<DSpotState*>(nullptr);
+
+	//==========================================================================
+	//
+	//
+	//==========================================================================
+
+	void AddActorBehavior(DBehavior& b)
+	{
+		if (b.Level == nullptr)
+		{
+			b.Level = this;
+			ActorBehaviors.Push(&b);
+		}
+	}
+
+	void RemoveActorBehavior(DBehavior& b)
+	{
+		if (b.Level == this)
+		{
+			b.Level = nullptr;
+			ActorBehaviors.Delete(ActorBehaviors.Find(&b));
+		}
+	}
 
 	//==========================================================================
 	//

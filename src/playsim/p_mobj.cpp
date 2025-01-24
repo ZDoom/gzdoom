@@ -1824,7 +1824,8 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 	if (BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
 	{
 		Vel -= norm * dot;
-		AngleFromVel();
+		if (!(BounceFlags & BOUNCE_KeepAngle))
+			AngleFromVel();
 		if (!(BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
 		{
 			flags |= MF_INBOUNCE;
@@ -1838,8 +1839,12 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 	{
 		// The reflected velocity keeps only about 70% of its original speed
 		Vel = (Vel - norm * dot) * bouncefactor;
-		AngleFromVel();
+		if (!(BounceFlags & BOUNCE_KeepAngle))
+			AngleFromVel();
 	}
+
+	if (BounceFlags & BOUNCE_ModifyPitch)
+		Angles.Pitch = -VecToAngle(Vel.XY().Length(), Vel.Z);
 
 	PlayBounceSound(true, 1.0);
 

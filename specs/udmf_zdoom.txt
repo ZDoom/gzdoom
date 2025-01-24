@@ -427,6 +427,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
       lm_sampledist = <int>;        // lightmap sample distance for the entire map. Defines the map units each lightmap texel covers. Must be in powers of two. Default = 8 [VKDOOM]
       lm_suncolor = <int>;          // lightmap sun color. Default is white (0xFFFFFF). [VKDOOM]
+      lm_sunintensity = <float>;    // lightmap sun intensity multiplier. Default = 1.0 [VKDOOM]
 
       light_softshadowradius = <float>;   // lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0 [VKDOOM]
       

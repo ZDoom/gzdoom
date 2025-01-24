@@ -3653,7 +3653,8 @@ bool FSlide::BounceWall(AActor *mo)
 	}
 	moveangle = mo->Vel.Angle();
 	deltaangle = (lineangle * 2) - moveangle;
-	mo->Angles.Yaw = deltaangle;
+	if (!(mo->BounceFlags & BOUNCE_KeepAngle))
+		mo->Angles.Yaw = deltaangle;
 
 	movelen = mo->Vel.XY().Length() * GetWallBounceFactor(mo);
 
@@ -3751,8 +3752,10 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			DAngle angle = BlockingMobj->AngleTo(mo) + DAngle::fromDeg((pr_bounce() % 16) - 8);
 			double speed = mo->VelXYToSpeed() * GetWallBounceFactor(mo); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			if (fabs(speed) < EQUAL_EPSILON) speed = 0;
-			mo->Angles.Yaw = angle;
-			mo->VelFromAngle(speed);
+			if (!(mo->BounceFlags & BOUNCE_KeepAngle))
+				mo->Angles.Yaw = angle;
+			mo->Vel.X = speed * angle.Cos();
+			mo->Vel.Y = speed * angle.Sin();
 			mo->PlayBounceSound(true, 1.0);
 		}
 		else
@@ -3780,6 +3783,9 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				mo->Vel.Z -= 2. * dot;
 				mo->Vel *= mo->bouncefactor;
 			}
+
+			if (mo->BounceFlags & BOUNCE_ModifyPitch)
+				mo->Angles.Pitch = -VecToAngle(mo->Vel.XY().Length(), mo->Vel.Z);
 
 			mo->PlayBounceSound(true, 1.0);
 			if (mo->BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed

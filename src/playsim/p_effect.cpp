@@ -1052,6 +1052,16 @@ DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* ty
 
 	auto zs = static_cast<DVisualThinker*>(Level->CreateThinker(type, DVisualThinker::DEFAULT_STAT));
 	zs->Construct();
+
+	IFOVERRIDENVIRTUALPTRNAME(zs, NAME_VisualThinker, BeginPlay)
+	{
+		VMValue params[] = { zs };
+		VMCall(func, params, 1, nullptr, 0);
+
+		if (zs->ObjectFlags & OF_EuthanizeMe)
+			return nullptr;
+	}
+
 	return zs;
 }
 
@@ -1269,9 +1279,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, SetRenderStyle, SetRenderStyle)
 	return 0;
 }
 
-int DVisualThinker::GetRenderStyle()
+int DVisualThinker::GetRenderStyle() const
 {
 	return PT.style;
+}
+
+static int GetRenderStyle(DVisualThinker* self)
+{
+	return self->GetRenderStyle();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, GetRenderStyle, GetRenderStyle)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	ACTION_RETURN_INT(self->GetRenderStyle());
 }
 
 float DVisualThinker::GetOffset(bool y) const // Needed for the renderer.

@@ -10337,6 +10337,11 @@ scriptwait:
  		}
  	}
 
+	// There are several or more p-codes that can trigger a division or modulus of zero.
+	// Reset the active behavior back to the original if this happens.
+	if (state == SCRIPT_DivideBy0 || state == SCRIPT_ModulusBy0)
+		activeBehavior = savedActiveBehavior;
+
 	if (runaway != 0 && InModuleScriptNumber >= 0)
 	{
 		auto scriptptr = activeBehavior->GetScriptPtr(InModuleScriptNumber);

@@ -86,7 +86,7 @@ class Behavior native play abstract
 class BehaviorIterator native abstract final
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
-	native static BehaviorIterator Create(class<Behavior> type = null);
+	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
 
 	native Behavior Next();
 	native void Reinit();

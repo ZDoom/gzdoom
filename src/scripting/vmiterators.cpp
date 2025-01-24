@@ -420,11 +420,14 @@ public:
 		Reinit();
 	}
 
-	DBehaviorIterator(const FLevelLocals& level, PClass* type)
+	DBehaviorIterator(const FLevelLocals& level, PClass* type, PClass* ownerType)
 	{
 		for (auto& b : level.ActorBehaviors)
 		{
 			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+				continue;
+
+			if (ownerType != nullptr && !b->Owner->IsKindOf(ownerType))
 				continue;
 
 			if (type == nullptr || b->IsKindOf(type))
@@ -466,16 +469,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateFrom, CreateBehaviorItFro
 	ACTION_RETURN_OBJECT(CreateBehaviorItFromActor(mobj, type));
 }
 
-static DBehaviorIterator* CreateBehaviorIt(PClass* type)
+static DBehaviorIterator* CreateBehaviorIt(PClass* type, PClass* ownerType)
 {
-	return Create<DBehaviorIterator>(*primaryLevel, type);
+	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, DBehavior);
-	ACTION_RETURN_OBJECT(CreateBehaviorIt(type));
+	PARAM_CLASS(ownerType, AActor);
+	ACTION_RETURN_OBJECT(CreateBehaviorIt(type, ownerType));
 }
 
 static DBehavior* NextBehavior(DBehaviorIterator* self)

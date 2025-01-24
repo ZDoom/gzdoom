@@ -775,6 +775,18 @@ public:
 	void Serialize(FSerializer& arc) override;
 };
 
+class DBehavior : public DObject
+{
+	DECLARE_CLASS(DBehavior, DObject)
+	HAS_OBJECT_POINTERS
+public:
+	TObjPtr<AActor*> Owner;
+	FLevelLocals* Level;
+
+	void Serialize(FSerializer& arc) override;
+	void OnDestroy() override;
+};
+
 const double MinVel = EQUAL_EPSILON;
 
 // Map Object definition.
@@ -1372,7 +1384,7 @@ public:
 	// landing speed from a jump with normal gravity (squats the player's view)
 	// (note: this is put into AActor instead of the PlayerPawn because non-players also use the value)
 	double LandingSpeed;
-	TMap<FName, DObject*> Behaviors;
+	TMap<FName, DBehavior*> Behaviors;
 
 
 	// ThingIDs
@@ -1434,12 +1446,12 @@ public:
 		return GetClass()->FindState(numnames, names, exact);
 	}
 
-	DObject* FindBehavior(const PClass& type) const
+	DBehavior* FindBehavior(const PClass& type) const
 	{
 		auto b = Behaviors.CheckKey(type.TypeName);
 		return b != nullptr && *b != nullptr && !((*b)->ObjectFlags & OF_EuthanizeMe) ? *b : nullptr;
 	}
-	DObject* AddBehavior(PClass& type);
+	DBehavior* AddBehavior(PClass& type);
 	bool RemoveBehavior(const PClass& type);
 	void TickBehaviors();
 	void MoveBehaviors(AActor& from);

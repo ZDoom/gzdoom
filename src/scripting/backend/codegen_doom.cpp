@@ -936,12 +936,18 @@ static DObject *BuiltinNewDoom(PClass *cls, int outerside, int backwardscompatib
 	// Creating actors here must be outright prohibited,
 	if (cls->IsDescendantOf(NAME_Actor))
 	{
-		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'. Use Actor.Spawn instead.");
 		return nullptr;
 	}
 	if (cls->IsDescendantOf(NAME_VisualThinker)) // Same for VisualThinkers.
 	{
 		ThrowAbortException(X_OTHER, "Cannot create VisualThinker or inheriting classes with 'new'. Use 'VisualThinker.Spawn' instead.");
+		return nullptr;
+	}
+	// These don't make sense without an owning Actor so don't allow creating them.
+	if (cls->IsDescendantOf(NAME_Behavior))
+	{
+		ThrowAbortException(X_OTHER, "Behaviors must be added to existing Actors and cannot be created with 'new'");
 		return nullptr;
 	}
 	if ((vm_warnthinkercreation || !backwardscompatible) && cls->IsDescendantOf(NAME_Thinker))

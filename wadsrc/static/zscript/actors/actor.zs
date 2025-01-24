@@ -73,9 +73,10 @@ class ViewPosition native
 	native readonly int Flags;
 }
 
-class Behavior play abstract
+class Behavior native play abstract
 {
-	readonly Actor Owner;
+	native readonly Actor Owner;
+	native readonly LevelLocals Level;
 
 	virtual void Initialize() {}
 	virtual void Reinitialize() {}
@@ -85,6 +86,7 @@ class Behavior play abstract
 class BehaviorIterator native abstract final
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
+	native static BehaviorIterator Create(class<Behavior> type = null);
 
 	native Behavior Next();
 	native void Reinit();

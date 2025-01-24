@@ -400,29 +400,41 @@ class DBehaviorIterator : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(DBehaviorIterator, DObject)
 	size_t _index;
-	TArray<DObject*> _behaviors;
+	TArray<DBehavior*> _behaviors;
 
 public:
-	DBehaviorIterator(const AActor& mobj, FName type)
+	DBehaviorIterator(const AActor& mobj, PClass* type)
 	{
-		TMap<FName, DObject*>::ConstIterator it = { mobj.Behaviors };
-		TMap<FName, DObject*>::ConstPair* pair = nullptr;
+		TMap<FName, DBehavior*>::ConstIterator it = { mobj.Behaviors };
+		TMap<FName, DBehavior*>::ConstPair* pair = nullptr;
 		while (it.NextPair(pair))
 		{
 			auto b = pair->Value;
 			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
 				continue;
 
-			if (type == NAME_None || b->IsKindOf(type))
+			if (type == nullptr || b->IsKindOf(type))
 				_behaviors.Push(b);
 		}
 
 		Reinit();
 	}
 
-	// TODO: List for all behaviors
+	DBehaviorIterator(const FLevelLocals& level, PClass* type)
+	{
+		for (auto& b : level.ActorBehaviors)
+		{
+			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+				continue;
 
-	DObject* Next()
+			if (type == nullptr || b->IsKindOf(type))
+				_behaviors.Push(b);
+		}
+
+		Reinit();
+	}
+
+	DBehavior* Next()
 	{
 		if (_index >= _behaviors.Size())
 			return nullptr;
@@ -443,18 +455,30 @@ IMPLEMENT_CLASS(DBehaviorIterator, true, false);
 
 static DBehaviorIterator* CreateBehaviorItFromActor(AActor* mobj, PClass* type)
 {
-	return Create<DBehaviorIterator>(*mobj, type == nullptr ? NAME_None : type->TypeName);
+	return Create<DBehaviorIterator>(*mobj, type);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateFrom, CreateBehaviorItFromActor)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT_NOT_NULL(mobj, AActor);
-	PARAM_CLASS(type, DObject);
+	PARAM_CLASS(type, DBehavior);
 	ACTION_RETURN_OBJECT(CreateBehaviorItFromActor(mobj, type));
 }
 
-static DObject* NextBehavior(DBehaviorIterator* self)
+static DBehaviorIterator* CreateBehaviorIt(PClass* type)
+{
+	return Create<DBehaviorIterator>(*primaryLevel, type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, DBehavior);
+	ACTION_RETURN_OBJECT(CreateBehaviorIt(type));
+}
+
+static DBehavior* NextBehavior(DBehaviorIterator* self)
 {
 	return self->Next();
 }

@@ -181,6 +181,14 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(boneComponentData)
 IMPLEMENT_POINTERS_END
 
+IMPLEMENT_CLASS(DBehavior, false, true)
+IMPLEMENT_POINTERS_START(DBehavior)
+	IMPLEMENT_POINTER(Owner)
+IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(DBehavior, Owner)
+DEFINE_FIELD(DBehavior, Level)
+
 //==========================================================================
 //
 // Make sure Actors can never have their networking disabled.
@@ -206,8 +214,8 @@ void AActor::EnableNetworking(const bool enable)
 
 size_t AActor::PropagateMark()
 {
-	TMap<FName, DObject*>::Iterator it = { Behaviors };
-	TMap<FName, DObject*>::Pair* pair = nullptr;
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 		GC::Mark(pair->Value);
 
@@ -469,6 +477,21 @@ void AActor::PostSerialize()
 //
 //==========================================================================
 
+void DBehavior::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+	arc("owner", Owner)
+		("level", Level);
+}
+
+void DBehavior::OnDestroy()
+{
+	if (Level != nullptr)
+		Level->RemoveActorBehavior(*this);
+
+	Super::OnDestroy();
+}
+
 bool AActor::RemoveBehavior(const PClass& type)
 {
 	if (Behaviors.CheckKey(type.TypeName))
@@ -494,11 +517,11 @@ static int RemoveBehavior(AActor* self, PClass* type)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveBehavior, RemoveBehavior)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_NOT_NULL(type, DObject);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
 	ACTION_RETURN_BOOL(self->RemoveBehavior(*type));
 }
 
-DObject* AActor::AddBehavior(PClass& type)
+DBehavior* AActor::AddBehavior(PClass& type)
 {
 	if (type.bAbstract || !type.IsDescendantOf(NAME_Behavior))
 		return nullptr;
@@ -506,14 +529,13 @@ DObject* AActor::AddBehavior(PClass& type)
 	auto b = FindBehavior(type);
 	if (b == nullptr)
 	{
-		b = type.CreateNew();
+		b = dyn_cast<DBehavior>(type.CreateNew());
 		if (b == nullptr)
 			return nullptr;
 
-		auto& owner = b->PointerVar<AActor>(NAME_Owner);
-		owner = this;
-
+		b->Owner = this;
 		Behaviors[type.TypeName] = b;
+		Level->AddActorBehavior(*b);
 		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Initialize)
 		{
 			VMValue params[] = { b };
@@ -544,7 +566,7 @@ DObject* AActor::AddBehavior(PClass& type)
 	return b;
 }
 
-static DObject* AddBehavior(AActor* self, PClass* type)
+static DBehavior* AddBehavior(AActor* self, PClass* type)
 {
 	return self->AddBehavior(*type);
 }
@@ -552,17 +574,17 @@ static DObject* AddBehavior(AActor* self, PClass* type)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, AddBehavior, AddBehavior)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_NOT_NULL(type, DObject);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
 	ACTION_RETURN_OBJECT(self->AddBehavior(*type));
 }
 
 void AActor::TickBehaviors()
 {
 	TArray<FName> toRemove = {};
-	TArray<DObject*> toTick = {};
+	TArray<DBehavior*> toTick = {};
 
-	TMap<FName, DObject*>::Iterator it = { Behaviors };
-	TMap<FName, DObject*>::Pair* pair = nullptr;
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
 		auto b = pair->Value;
@@ -577,8 +599,7 @@ void AActor::TickBehaviors()
 
 	for (auto& b : toTick)
 	{
-		auto& owner = b->PointerVar<AActor>(NAME_Owner);
-		if (owner != this)
+		if (b->Owner != this)
 		{
 			toRemove.Push(pair->Key);
 			continue;
@@ -610,7 +631,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TickBehaviors, TickBehaviors)
 	return 0;
 }
 
-static DObject* FindBehavior(AActor* self, PClass* type)
+static DBehavior* FindBehavior(AActor* self, PClass* type)
 {
 	return self->FindBehavior(*type);
 }
@@ -618,7 +639,7 @@ static DObject* FindBehavior(AActor* self, PClass* type)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindBehavior, FindBehavior)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_CLASS_NOT_NULL(type, DObject);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
 	ACTION_RETURN_OBJECT(self->FindBehavior(*type));
 }
 
@@ -633,8 +654,8 @@ void AActor::MoveBehaviors(AActor& from)
 	
 	// Clean up any empty behaviors that remained as well while
 	// changing the owner.
-	TMap<FName, DObject*>::Iterator it = { Behaviors };
-	TMap<FName, DObject*>::Pair* pair = nullptr;
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
 		auto b = pair->Value;
@@ -644,8 +665,12 @@ void AActor::MoveBehaviors(AActor& from)
 			continue;
 		}
 
-		auto& owner = b->PointerVar<AActor>(NAME_Owner);
-		owner = this;
+		b->Owner = this;
+		if (b->Level != b->Owner->Level)
+		{
+			b->Level->RemoveActorBehavior(*b);
+			b->Owner->Level->AddActorBehavior(*b);
+		}
 	}
 
 	for (auto& type : toRemove)
@@ -669,8 +694,8 @@ void AActor::ClearBehaviors()
 {
 	TArray<FName> toRemove = {};
 
-	TMap<FName, DObject*>::Iterator it = { Behaviors };
-	TMap<FName, DObject*>::Pair* pair = nullptr;
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 		toRemove.Push(pair->Key);
 

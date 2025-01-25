@@ -778,7 +778,7 @@ public:
 	void Serialize(FSerializer& arc) override;
 };
 
-class DBehavior : public DObject
+class DBehavior final : public DObject
 {
 	DECLARE_CLASS(DBehavior, DObject)
 	HAS_OBJECT_POINTERS

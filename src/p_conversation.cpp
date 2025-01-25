@@ -550,7 +550,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			}
 		
 			if (reply->GiveType->IsDescendantOf("SlideshowStarter"))
-				G_StartSlideshow(primaryLevel, NAME_None);
+				G_StartSlideshow(primaryLevel, NAME_None, FSTATE_InLevel);
 		}
 		else
 		{

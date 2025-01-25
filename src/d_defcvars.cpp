@@ -134,6 +134,9 @@ void D_GrabCVarDefaults()
 
 			var = FindCVar(CurrentFindCVar.GetChars(), NULL);
 
+			if (var->GetFlags() & CVAR_SYSTEM_ONLY)
+				blacklisted = true;
+
 			if (blacklisted)
 			{
 				sc.ScriptMessage("Cannot set cvar default for blacklisted cvar '%s'", sc.String);

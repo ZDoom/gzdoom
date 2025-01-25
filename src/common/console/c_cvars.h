@@ -75,6 +75,8 @@ enum
 	CVAR_CONFIG_ONLY		= 1 << 18, // do not save var to savegame and do not send it across network.
 	CVAR_ZS_CUSTOM			= 1 << 19, // Custom CVar backed by a ZScript class
 	CVAR_ZS_CUSTOM_CLONE	= 1 << 20, // Clone of a Custom ZScript CVar
+	
+	CVAR_SYSTEM_ONLY		= 1 << 21, // System-related cvar that should only ever be changed by the user
 };
 
 enum ECVarType

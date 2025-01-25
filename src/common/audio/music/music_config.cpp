@@ -95,7 +95,7 @@ CUSTOM_CVAR(Bool, adl_use_custom_bank, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
 
-CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(adl_custom_bank);
 }
@@ -111,12 +111,12 @@ CUSTOM_CVAR(Int, adl_volume_model, 0 /*ADLMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE 
 //
 //==========================================================================
 
-CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(fluid_lib);
 }
 
-CUSTOM_CVAR(String, fluid_patchset, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, fluid_patchset, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(fluid_patchset);
 }
@@ -278,7 +278,7 @@ CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 //==========================================================================
 
 
-CUSTOM_CVAR(String, midi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, midi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(gus_config);
 }
@@ -288,7 +288,7 @@ CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VI
 	FORWARD_BOOL_CVAR(gus_dmxgus);
 }
 
-CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(gus_patchdir);
 }
@@ -395,7 +395,7 @@ CUSTOM_CVAR(Float, timidity_min_sustain_time, 5000.f, CVAR_ARCHIVE | CVAR_GLOBAL
 }
 #endif
 
-CUSTOM_CVAR(String, timidity_config, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, timidity_config, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(timidity_config);
 }
@@ -406,7 +406,7 @@ CUSTOM_CVAR(String, timidity_config, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOB
 //
 //==========================================================================
 
-CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(wildmidi_config);
 }

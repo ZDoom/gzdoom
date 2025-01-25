@@ -49,7 +49,7 @@
 #include "m_argv.h"
 #include "i_specialpaths.h"
 
-CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_SYSTEM_ONLY);
 FString SavegameFolder;
 CVAR(Int, save_sort_order, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 

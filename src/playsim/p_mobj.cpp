@@ -666,10 +666,10 @@ void AActor::MoveBehaviors(AActor& from)
 		}
 
 		b->Owner = this;
-		if (b->Level != b->Owner->Level)
+		if (b->Level != Level)
 		{
 			b->Level->RemoveActorBehavior(*b);
-			b->Owner->Level->AddActorBehavior(*b);
+			Level->AddActorBehavior(*b);
 		}
 	}
 

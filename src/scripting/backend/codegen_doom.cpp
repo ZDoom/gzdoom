@@ -1034,6 +1034,10 @@ FxExpression *FxCastForEachLoop::Resolve(FCompileContext &ctx)
 	{
 		fieldName = "Thinker";
 	}
+	else if (itType->TypeName == NAME_BehaviorIterator)
+	{
+		fieldName = "Behavior";
+	}
 	else
 	{
 		ScriptPosition.Message(MSG_ERROR, "foreach(Type var : it ) - 'it' must be an actor or thinker iterator, but is a %s",Expr->ValueType->DescriptiveName());
@@ -1218,6 +1222,7 @@ bool IsGameSpecificForEachLoop(FxForEachLoop * loop)
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BlockThingsIterator
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BehaviorIterator
 			));
 }
 
@@ -1232,7 +1237,7 @@ FxExpression * ResolveGameSpecificForEachLoop(FxForEachLoop * loop)
 		delete loop;
 		return blockIt;
 	}
-	else if(cname == NAME_ActorIterator || cname == NAME_ThinkerIterator)
+	else if(cname == NAME_ActorIterator || cname == NAME_ThinkerIterator || cname == NAME_BehaviorIterator)
 	{
 		auto castIt = new FxCastForEachLoop(NAME_None, loop->loopVarName, loop->Array, loop->Code, loop->ScriptPosition);
 		loop->Array = loop->Code = nullptr;
@@ -1324,13 +1329,14 @@ bool IsGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
 	return (vt->isObjectPointer() && (
 		((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
 		|| ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+		|| ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BehaviorIterator
 		));
 }
 
 FxExpression * ResolveGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
 {
 	assert(loop->Expr->ValueType->isObjectPointer());
-	assert(((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator);
+	assert(((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_BehaviorIterator);
 
 	FxExpression * castIt = new FxCastForEachLoop(loop->className, loop->varName, loop->Expr, loop->Code, loop->ScriptPosition);
 	loop->Expr = loop->Code = nullptr;

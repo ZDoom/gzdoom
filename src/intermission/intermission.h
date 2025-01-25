@@ -9,6 +9,7 @@
 #include "v_font.h"
 #include "g_game.h"
 #include "v_text.h"
+#include "screenjob.h"
 
 struct FInputEvent;
 struct FState;
@@ -85,6 +86,14 @@ struct FIntermissionAction
 	FIntermissionAction();
 	virtual ~FIntermissionAction() {}
 	virtual bool ParseKey(FScanner &sc);
+	virtual bool Parse(struct FMapInfoParser &m, FScanner &sc);
+};
+
+struct FIntermissionActionCutscene : public FIntermissionAction
+{
+	CutsceneDef scn;
+	FIntermissionActionCutscene();
+	virtual bool Parse(FMapInfoParser &m, FScanner &sc);
 };
 
 struct FIntermissionActionFader : public FIntermissionAction
@@ -195,6 +204,20 @@ public:
 		mBackground = tex;
 		mFlatfill = fill;
 	}
+};
+
+class DIntermissionScreenCutscene : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenCutscene, DIntermissionScreen)
+	HAS_OBJECT_POINTERS
+public:
+	DObject* mScreenJobRunner;
+	DIntermissionScreenCutscene() {}
+	virtual void Init(FIntermissionAction *desc, bool first);
+	virtual int Responder (FInputEvent *ev);
+	virtual int Ticker ();
+	virtual void Drawer ();
+	virtual void OnDestroy ();
 };
 
 class DIntermissionScreenFader : public DIntermissionScreen

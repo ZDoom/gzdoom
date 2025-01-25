@@ -1066,13 +1066,13 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending)
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, int state, bool deleteme, bool ending)
 {
 	ScaleOverrider s(twod);
 	S_StopAllChannels ();
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
-	//if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
+	if (state == FSTATE_InLevelNoWipe) wipegamestate = GS_FINALE;	// don't wipe when within a level.
 	auto CurrentIntermission = Create<DIntermissionController>(desc, deleteme, ending);
 
 	// If the intermission finishes straight away then cancel the wipe.
@@ -1093,7 +1093,7 @@ DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool
 //
 //==========================================================================
 
-DIntermissionController* F_StartIntermission(FName seq)
+DIntermissionController* F_StartIntermission(FName seq, int state)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
 	if (pdesc == nullptr || (*pdesc)->mActions.Size() == 0)
@@ -1110,7 +1110,7 @@ DIntermissionController* F_StartIntermission(FName seq)
 			return nullptr;
 		}
 
-		return F_StartIntermission(desc, false);
+		return F_StartIntermission(desc, state, false);
 	}
 }
 

@@ -80,8 +80,16 @@ bool G_CheckDemoStatus (void);
 void G_Ticker (void);
 bool G_Responder (event_t*	ev);
 
+enum
+{
+	FSTATE_EndingGame = 0,
+	FSTATE_ChangingLevel = 1,
+	FSTATE_InLevel = 2,
+	FSTATE_InLevelNoWipe = 3
+};
+
 void G_ScreenShot (const char* filename);
-void G_StartSlideshow(FLevelLocals *Level, FName whichone);
+void G_StartSlideshow(FLevelLocals *Level, FName whichone, int state);
 
 class FSerializer;
 bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn);

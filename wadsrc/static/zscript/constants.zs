@@ -1264,7 +1264,8 @@ enum IntermissionSequenceType
 {
 	FSTATE_EndingGame = 0,
 	FSTATE_ChangingLevel = 1,
-	FSTATE_InLevel = 2
+	FSTATE_InLevel = 2,
+	FSTATE_InLevelNoWipe = 3
 };
 
 enum Bobbing

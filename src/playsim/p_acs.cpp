@@ -6747,7 +6747,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_StartSlideshow:
 			MIN_ARG_COUNT(1);
-			G_StartSlideshow(Level, FName(Level->Behaviors.LookupString(args[0])));
+			G_StartSlideshow(Level, FName(Level->Behaviors.LookupString(args[0])), FSTATE_InLevel);
 			break;
 
 		case ACSF_GetSectorHealth:

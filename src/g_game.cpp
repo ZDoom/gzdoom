@@ -3121,10 +3121,10 @@ bool G_CheckDemoStatus (void)
 	return false; 
 }
 
-void G_StartSlideshow(FLevelLocals *Level, FName whichone)
+void G_StartSlideshow(FLevelLocals *Level, FName whichone, int state)
 {
 	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
-	auto slide = F_StartIntermission(SelectedSlideshow);
+	auto slide = F_StartIntermission(SelectedSlideshow, state);
 	RunIntermission(nullptr, nullptr, slide, nullptr, [](bool)
 	{
 		primaryLevel->SetMusic();
@@ -3139,7 +3139,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_NAME(whichone);
-	G_StartSlideshow(self, whichone);
+	G_StartSlideshow(self, whichone, FSTATE_InLevel);
 	return 0;
 }
 

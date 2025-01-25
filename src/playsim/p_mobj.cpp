@@ -717,6 +717,44 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBehaviors, ClearBehaviors)
 	return 0;
 }
 
+void AActor::UnlinkBehaviorsFromLevel()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value;
+		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+			toRemove.Push(pair->Key);
+		else
+			b->Level->RemoveActorBehavior(*b);
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(*PClass::FindClass(type));
+}
+
+void AActor::LinkBehaviorsToLevel()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
+	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value;
+		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+			toRemove.Push(pair->Key);
+		else
+			Level->AddActorBehavior(*b);
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(*PClass::FindClass(type));
+}
+
 //==========================================================================
 //
 // AActor::InStateSequence

@@ -1456,6 +1456,9 @@ public:
 	void TickBehaviors();
 	void MoveBehaviors(AActor& from);
 	void ClearBehaviors();
+	// Internal only, mostly for traveling.
+	void UnlinkBehaviorsFromLevel();
+	void LinkBehaviorsToLevel();
 
 	bool HasSpecialDeathStates () const;
 

@@ -697,7 +697,7 @@ void DImpactDecal::Expired()
 //
 //----------------------------------------------------------------------------
 
-DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, FTranslationID bloodTranslation)
+DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, FTranslationID translation)
 {
 	if (cl_maxdecals > 0)
 	{
@@ -705,7 +705,7 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, c
 
 		if (tpl != NULL && (tpl = tpl->GetDecal()) != NULL)
 		{
-			return StaticCreate (Level, tpl, pos, wall, ffloor, color, bloodTranslation);
+			return StaticCreate (Level, tpl, pos, wall, ffloor, color, translation);
 		}
 	}
 	return nullptr;
@@ -717,7 +717,7 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, c
 //
 //----------------------------------------------------------------------------
 
-DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, FTranslationID bloodTranslation, bool permanent)
+DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, FTranslationID translation, bool permanent)
 {
 	DBaseDecal *decal = NULL;
 	if (tpl != NULL && ((cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS)) || permanent))
@@ -732,7 +732,7 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplat
 			if (tpl->ShadeColor != tpl_low->ShadeColor) lowercolor=0;
 			else lowercolor = color;
 
-			StaticCreate (Level, tpl_low, pos, wall, ffloor, lowercolor, bloodTranslation, permanent);
+			StaticCreate (Level, tpl_low, pos, wall, ffloor, lowercolor, translation, permanent);
 		}
 		if (!permanent) decal = Level->CreateThinker<DImpactDecal>(pos.Z);
 		else decal = Level->CreateThinker<DBaseDecal>(pos.Z);
@@ -755,9 +755,9 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplat
 		}
 
 		// [Nash] opaque blood
-		if (bloodTranslation != NO_TRANSLATION && tpl->ShadeColor == 0 && tpl->opaqueBlood)
+		if (translation != NO_TRANSLATION && tpl->ShadeColor == 0 && tpl->opaqueBlood)
 		{
-			decal->SetTranslation(bloodTranslation);
+			decal->SetTranslation(translation);
 			decal->RenderStyle = STYLE_Normal;
 		}
 
@@ -819,7 +819,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 //
 //----------------------------------------------------------------------------
 
-void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 offset, DVector3 direction, bool useBloodColor, uint32_t decalColor)
+void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 offset, DVector3 direction, bool useBloodColor, uint32_t decalColor, FTranslationID translation)
 {
 	//just in case
 	if (!shooter)
@@ -847,14 +847,14 @@ void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 off
 	else
 		dir = direction;
 
-	auto bloodTrans = useBloodColor ? shooter->BloodTranslation : NO_TRANSLATION;
+	auto trans = useBloodColor ? shooter->BloodTranslation : translation;
 	PalEntry entry = !useBloodColor ? (PalEntry)decalColor : shooter->BloodColor;
 
 	if (Trace(off, shooter->Sector, dir, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{
-			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor, entry, bloodTrans);
+			DImpactDecal::StaticCreate(shooter->Level, name, trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor, entry, trans);
 		}
 	}
 }

@@ -12,7 +12,7 @@ class DBaseDecal;
 struct SpreadInfo;
 
 DBaseDecal *ShootDecal(FLevelLocals *Level, const FDecalTemplate *tpl, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
-void SprayDecal(AActor *shooter, const char *name,double distance = 172., DVector3 offset = DVector3(0., 0., 0.), DVector3 direction = DVector3(0., 0., 0.), bool useBloodColor = false, uint32_t decalColor = 0);
+void SprayDecal(AActor *shooter, const char *name,double distance = 172., DVector3 offset = DVector3(0., 0., 0.), DVector3 direction = DVector3(0., 0., 0.), bool useBloodColor = false, uint32_t decalColor = 0, FTranslationID translation = NO_TRANSLATION);
 
 class DBaseDecal : public DThinker
 {
@@ -73,8 +73,8 @@ public:
 	}
 	void Construct(side_t *wall, const FDecalTemplate *templ);
 
-	static DBaseDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID bloodTranslation = NO_TRANSLATION);
-	static DBaseDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID bloodTranslation = NO_TRANSLATION, bool permanent = false);
+	static DBaseDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION);
+	static DBaseDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION, bool permanent = false);
 
 	void BeginPlay ();
 	void Expired() override;

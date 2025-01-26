@@ -400,9 +400,9 @@ float FVoxelModel::getAspectFactor(float stretch)
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, FTranslationID translation, const FTextureID*, const TArray<VSMatrix>& boneData, int boneStartPosition)
+void FVoxelModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, FTranslationID translation, const FTextureID*, int boneStartPosition)
 {
 	renderer->SetMaterial(skin, true, translation);
-	renderer->SetupFrame(this, 0, 0, 0, {}, -1);
+	renderer->SetupFrame(this, 0, 0, 0, -1);
 	renderer->DrawElements(mNumIndices, 0);
 }

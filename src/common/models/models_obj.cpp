@@ -630,7 +630,7 @@ int FOBJModel::FindFrame(const char* name, bool nodefault)
  * @param inter The amount to interpolate the two frames.
  * @param translation The translation for the skin
  */
-void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, const TArray<VSMatrix>& boneData, int boneStartPosition)
+void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, FTranslationID translation, const FTextureID* surfaceskinids, int boneStartPosition)
 {
 	// Prevent the model from rendering if the frame number is < 0
 	if (frameno < 0 || frameno2 < 0) return;
@@ -659,7 +659,7 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 		}
 
 		renderer->SetMaterial(userSkin, false, translation);
-		renderer->SetupFrame(this, surf->vbStart, surf->vbStart, surf->numTris * 3, {}, -1);
+		renderer->SetupFrame(this, surf->vbStart, surf->vbStart, surf->numTris * 3, -1);
 		renderer->DrawArrays(0, surf->numTris * 3);
 	}
 }

@@ -5209,7 +5209,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 					animationData = animation->AttachAnimationData();
 				}
 
-				self->modelData->prevAnim = animation->PrecalculateFrame(self->modelData->prevAnim, to, inter, animationData, self->boneComponentData, 0);
+				self->modelData->prevAnim = animation->PrecalculateFrame(self->modelData->prevAnim, to, inter, animationData);
 			}
 			else
 			{

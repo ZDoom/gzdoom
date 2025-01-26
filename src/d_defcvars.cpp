@@ -134,7 +134,7 @@ void D_GrabCVarDefaults()
 
 			var = FindCVar(CurrentFindCVar.GetChars(), NULL);
 
-			if (var->GetFlags() & CVAR_SYSTEM_ONLY)
+			if (var && var->GetFlags() & CVAR_SYSTEM_ONLY)
 				blacklisted = true;
 
 			if (blacklisted)

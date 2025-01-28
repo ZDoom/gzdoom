@@ -214,8 +214,8 @@ void AActor::EnableNetworking(const bool enable)
 
 size_t AActor::PropagateMark()
 {
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 		GC::Mark(pair->Value);
 
@@ -492,33 +492,34 @@ void DBehavior::OnDestroy()
 	Super::OnDestroy();
 }
 
-bool AActor::RemoveBehavior(const PClass& type)
+bool AActor::RemoveBehavior(FName type)
 {
-	if (Behaviors.CheckKey(type.TypeName))
+	bool res = false;
+	auto b = Behaviors.CheckKey(type);
+	if (b != nullptr)
 	{
-		auto b = Behaviors[type.TypeName];
-
-		Behaviors.Remove(type.TypeName);
-		if (b != nullptr && !(b->ObjectFlags & OF_EuthanizeMe))
+		if (b->Get() != nullptr)
 		{
-			b->Destroy();
-			return true;
+			b->ForceGet()->Destroy();
+			res = true;
 		}
+
+		Behaviors.Remove(type);
 	}
 
-	return false;
+	return res;
 }
 
 static int RemoveBehavior(AActor* self, PClass* type)
 {
-	return self->RemoveBehavior(*type);
+	return self->RemoveBehavior(type->TypeName);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveBehavior, RemoveBehavior)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_NOT_NULL(type, DBehavior);
-	ACTION_RETURN_BOOL(self->RemoveBehavior(*type));
+	ACTION_RETURN_BOOL(self->RemoveBehavior(type->TypeName));
 }
 
 DBehavior* AActor::AddBehavior(PClass& type)
@@ -526,7 +527,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 	if (type.bAbstract || !type.IsDescendantOf(NAME_Behavior))
 		return nullptr;
 
-	auto b = FindBehavior(type);
+	auto b = FindBehavior(type.TypeName);
 	if (b == nullptr)
 	{
 		b = dyn_cast<DBehavior>(type.CreateNew());
@@ -543,7 +544,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 
 			if (b->ObjectFlags & OF_EuthanizeMe)
 			{
-				RemoveBehavior(type);
+				RemoveBehavior(type.TypeName);
 				return nullptr;
 			}
 		}
@@ -557,7 +558,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 
 			if (b->ObjectFlags & OF_EuthanizeMe)
 			{
-				RemoveBehavior(type);
+				RemoveBehavior(type.TypeName);
 				return nullptr;
 			}
 		}
@@ -583,12 +584,12 @@ void AActor::TickBehaviors()
 	TArray<FName> toRemove = {};
 	TArray<DBehavior*> toTick = {};
 
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
-		auto b = pair->Value;
-		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		auto b = pair->Value.Get();
+		if (b == nullptr)
 		{
 			toRemove.Push(pair->Key);
 			continue;
@@ -599,9 +600,9 @@ void AActor::TickBehaviors()
 
 	for (auto& b : toTick)
 	{
-		if (b->Owner != this)
+		if ((b->ObjectFlags & OF_EuthanizeMe) || b->Owner != this)
 		{
-			toRemove.Push(pair->Key);
+			toRemove.Push(b->GetClass()->TypeName);
 			continue;
 		}
 
@@ -611,12 +612,12 @@ void AActor::TickBehaviors()
 			VMCall(func, params, 1, nullptr, 0);
 
 			if (b->ObjectFlags & OF_EuthanizeMe)
-				toRemove.Push(pair->Key);
+				toRemove.Push(b->GetClass()->TypeName);
 		}
 	}
 
 	for (auto& type : toRemove)
-		RemoveBehavior(*PClass::FindClass(type));
+		RemoveBehavior(type);
 }
 
 static void TickBehaviors(AActor* self)
@@ -633,14 +634,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, TickBehaviors, TickBehaviors)
 
 static DBehavior* FindBehavior(AActor* self, PClass* type)
 {
-	return self->FindBehavior(*type);
+	return self->FindBehavior(type->TypeName);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindBehavior, FindBehavior)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_CLASS_NOT_NULL(type, DBehavior);
-	ACTION_RETURN_OBJECT(self->FindBehavior(*type));
+	ACTION_RETURN_OBJECT(self->FindBehavior(type->TypeName));
 }
 
 void AActor::MoveBehaviors(AActor& from)
@@ -654,12 +655,12 @@ void AActor::MoveBehaviors(AActor& from)
 	
 	// Clean up any empty behaviors that remained as well while
 	// changing the owner.
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
-		auto b = pair->Value;
-		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		auto b = pair->Value.Get();
+		if (b == nullptr)
 		{
 			toRemove.Push(pair->Key);
 			continue;
@@ -674,7 +675,7 @@ void AActor::MoveBehaviors(AActor& from)
 	}
 
 	for (auto& type : toRemove)
-		RemoveBehavior(*PClass::FindClass(type));
+		RemoveBehavior(type);
 }
 
 static void MoveBehaviors(AActor* self, AActor* from)
@@ -690,30 +691,37 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, MoveBehaviors, MoveBehaviors)
 	return 0;
 }
 
-void AActor::ClearBehaviors()
+void AActor::ClearBehaviors(PClass* type)
 {
 	TArray<FName> toRemove = {};
 
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
-		toRemove.Push(pair->Key);
+	{
+		auto b = pair->Value.Get();
+		if (type == nullptr || b == nullptr || b->IsKindOf(type))
+			toRemove.Push(pair->Key);
+	}
 
 	for (auto& type : toRemove)
-		RemoveBehavior(*PClass::FindClass(type));
+		RemoveBehavior(type);
 
-	Behaviors.Clear();
+	// If not removing a specific type, clear whatever remains.
+	if (type == nullptr)
+		Behaviors.Clear();
 }
 
-static void ClearBehaviors(AActor* self)
+static void ClearBehaviors(AActor* self, PClass* type)
 {
-	self->ClearBehaviors();
+	self->ClearBehaviors(type);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBehaviors, ClearBehaviors)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->ClearBehaviors();
+	PARAM_CLASS(type, DBehavior);
+	self->ClearBehaviors(type);
 	return 0;
 }
 
@@ -721,38 +729,38 @@ void AActor::UnlinkBehaviorsFromLevel()
 {
 	TArray<FName> toRemove = {};
 
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
-		auto b = pair->Value;
-		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		auto b = pair->Value.Get();
+		if (b == nullptr)
 			toRemove.Push(pair->Key);
 		else
 			b->Level->RemoveActorBehavior(*b);
 	}
 
 	for (auto& type : toRemove)
-		RemoveBehavior(*PClass::FindClass(type));
+		RemoveBehavior(type);
 }
 
 void AActor::LinkBehaviorsToLevel()
 {
 	TArray<FName> toRemove = {};
 
-	TMap<FName, DBehavior*>::Iterator it = { Behaviors };
-	TMap<FName, DBehavior*>::Pair* pair = nullptr;
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
 	while (it.NextPair(pair))
 	{
-		auto b = pair->Value;
-		if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+		auto b = pair->Value.Get();
+		if (b == nullptr)
 			toRemove.Push(pair->Key);
 		else
 			Level->AddActorBehavior(*b);
 	}
 
 	for (auto& type : toRemove)
-		RemoveBehavior(*PClass::FindClass(type));
+		RemoveBehavior(type);
 }
 
 //==========================================================================

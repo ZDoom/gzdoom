@@ -2105,7 +2105,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 
 	if (move.isZero())
 	{
-		if (mo->flags & MF_SKULLFLY)
+		if ((mo->flags & MF_SKULLFLY) && !(mo->flags9 & MF9_NOAUTOOFFSKULLFLY))
 		{
 			// the skull slammed into something
 			mo->flags &= ~MF_SKULLFLY;

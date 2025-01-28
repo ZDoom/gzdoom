@@ -408,6 +408,9 @@ void AActor::Serialize(FSerializer &arc)
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
 
+		// Recreate this when loading since it doesn't serialize properly anyway.
+		if (arc.isReading() && BloodTranslation != NO_TRANSLATION)
+			BloodTranslation = CreateBloodTranslation(BloodColor);
 }
 
 #undef A

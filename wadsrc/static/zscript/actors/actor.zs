@@ -80,6 +80,7 @@ class Behavior native play abstract
 
 	virtual void Initialize() {}
 	virtual void Reinitialize() {}
+	virtual void TransferredOwner(Actor oldOwner) {}
 	virtual void Tick() {}
 }
 

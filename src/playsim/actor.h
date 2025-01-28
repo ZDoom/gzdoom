@@ -1453,6 +1453,10 @@ public:
 		auto b = Behaviors.CheckKey(type);
 		return b != nullptr ? b->Get() : nullptr;
 	}
+	bool IsValidBehavior(const DBehavior& b) const
+	{
+		return !(b.ObjectFlags & OF_EuthanizeMe) && b.Owner.ForceGet() == this;
+	}
 	DBehavior* AddBehavior(PClass& type);
 	bool RemoveBehavior(FName type);
 	void TickBehaviors();

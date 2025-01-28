@@ -400,21 +400,21 @@ class DBehaviorIterator : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(DBehaviorIterator, DObject)
 	size_t _index;
-	TArray<DBehavior*> _behaviors;
+	TArray<TObjPtr<DBehavior*>> _behaviors;
 
 public:
 	DBehaviorIterator(const AActor& mobj, PClass* type)
 	{
-		TMap<FName, DBehavior*>::ConstIterator it = { mobj.Behaviors };
-		TMap<FName, DBehavior*>::ConstPair* pair = nullptr;
+		TMap<FName, TObjPtr<DBehavior*>>::ConstIterator it = { mobj.Behaviors };
+		TMap<FName, TObjPtr<DBehavior*>>::ConstPair* pair = nullptr;
 		while (it.NextPair(pair))
 		{
-			auto b = pair->Value;
-			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
+			auto b = pair->Value.Get();
+			if (b == nullptr)
 				continue;
 
 			if (type == nullptr || b->IsKindOf(type))
-				_behaviors.Push(b);
+				_behaviors.Push(pair->Value);
 		}
 
 		Reinit();
@@ -424,14 +424,11 @@ public:
 	{
 		for (auto& b : level.ActorBehaviors)
 		{
-			if (b == nullptr || (b->ObjectFlags & OF_EuthanizeMe))
-				continue;
-
 			if (ownerType != nullptr && !b->Owner->IsKindOf(ownerType))
 				continue;
 
 			if (type == nullptr || b->IsKindOf(type))
-				_behaviors.Push(b);
+				_behaviors.Push(MakeObjPtr<DBehavior*>(b));
 		}
 
 		Reinit();
@@ -439,10 +436,14 @@ public:
 
 	DBehavior* Next()
 	{
-		if (_index >= _behaviors.Size())
-			return nullptr;
+		while (_index < _behaviors.Size())
+		{
+			auto b = _behaviors[_index++].Get();
+			if (b != nullptr)
+				return b;
+		}
 
-		return _behaviors[_index++];
+		return nullptr;
 	}
 
 	void Reinit() { _index = 0u; }

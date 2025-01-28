@@ -522,7 +522,7 @@ class Actor : Thinker native
 	native bool RemoveBehavior(class<Behavior> type);
 	native Behavior AddBehavior(class<Behavior> type);
 	native void TickBehaviors();
-	native void ClearBehaviors();
+	native void ClearBehaviors(class<Behavior> type = null);
 	native void MoveBehaviors(Actor from);
 
 	native clearscope bool isFrozen() const;

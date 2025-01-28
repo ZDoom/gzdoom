@@ -1386,7 +1386,7 @@ public:
 	// landing speed from a jump with normal gravity (squats the player's view)
 	// (note: this is put into AActor instead of the PlayerPawn because non-players also use the value)
 	double LandingSpeed;
-	TMap<FName, DBehavior*> Behaviors;
+	TMap<FName, TObjPtr<DBehavior*>> Behaviors;
 
 
 	// ThingIDs
@@ -1448,16 +1448,16 @@ public:
 		return GetClass()->FindState(numnames, names, exact);
 	}
 
-	DBehavior* FindBehavior(const PClass& type) const
+	DBehavior* FindBehavior(FName type) const
 	{
-		auto b = Behaviors.CheckKey(type.TypeName);
-		return b != nullptr && *b != nullptr && !((*b)->ObjectFlags & OF_EuthanizeMe) ? *b : nullptr;
+		auto b = Behaviors.CheckKey(type);
+		return b != nullptr ? b->Get() : nullptr;
 	}
 	DBehavior* AddBehavior(PClass& type);
-	bool RemoveBehavior(const PClass& type);
+	bool RemoveBehavior(FName type);
 	void TickBehaviors();
 	void MoveBehaviors(AActor& from);
-	void ClearBehaviors();
+	void ClearBehaviors(PClass* type = nullptr);
 	// Internal only, mostly for traveling.
 	void UnlinkBehaviorsFromLevel();
 	void LinkBehaviorsToLevel();

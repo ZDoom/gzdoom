@@ -542,7 +542,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 			VMValue params[] = { b };
 			VMCall(func, params, 1, nullptr, 0);
 
-			if (b->ObjectFlags & OF_EuthanizeMe)
+			if (!IsValidBehavior(*b))
 			{
 				RemoveBehavior(type.TypeName);
 				return nullptr;
@@ -556,7 +556,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 			VMValue params[] = { b };
 			VMCall(func, params, 1, nullptr, 0);
 
-			if (b->ObjectFlags & OF_EuthanizeMe)
+			if (!IsValidBehavior(*b))
 			{
 				RemoveBehavior(type.TypeName);
 				return nullptr;
@@ -600,7 +600,7 @@ void AActor::TickBehaviors()
 
 	for (auto& b : toTick)
 	{
-		if ((b->ObjectFlags & OF_EuthanizeMe) || b->Owner != this)
+		if (!IsValidBehavior(*b))
 		{
 			toRemove.Push(b->GetClass()->TypeName);
 			continue;
@@ -611,7 +611,7 @@ void AActor::TickBehaviors()
 			VMValue params[] = { b };
 			VMCall(func, params, 1, nullptr, 0);
 
-			if (b->ObjectFlags & OF_EuthanizeMe)
+			if (!IsValidBehavior(*b))
 				toRemove.Push(b->GetClass()->TypeName);
 		}
 	}
@@ -646,12 +646,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindBehavior, FindBehavior)
 
 void AActor::MoveBehaviors(AActor& from)
 {
+	if (&from == this)
+		return;
+
 	// Clean these up properly before transferring.
 	ClearBehaviors();
 
 	Behaviors.TransferFrom(from.Behaviors);
 
 	TArray<FName> toRemove = {};
+	TArray<DBehavior*> toTransfer = {};
 	
 	// Clean up any empty behaviors that remained as well while
 	// changing the owner.
@@ -671,6 +675,26 @@ void AActor::MoveBehaviors(AActor& from)
 		{
 			b->Level->RemoveActorBehavior(*b);
 			Level->AddActorBehavior(*b);
+		}
+
+		toTransfer.Push(b);
+	}
+
+	for (auto& b : toTransfer)
+	{
+		if (!IsValidBehavior(*b))
+		{
+			toRemove.Push(b->GetClass()->TypeName);
+			continue;
+		}
+
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, TransferredOwner)
+		{
+			VMValue params[] = { b, &from };
+			VMCall(func, params, 2, nullptr, 0);
+
+			if (!IsValidBehavior(*b))
+				toRemove.Push(b->GetClass()->TypeName);
 		}
 	}
 
@@ -5985,6 +6009,8 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	const auto heldWeap = state == PST_REBORN && (dmflags3 & DF3_REMEMBER_LAST_WEAP) ? p->ReadyWeapon : nullptr;
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
+		if (state == PST_REBORN && oldactor != nullptr)
+			p->mo->MoveBehaviors(*oldactor);
 		PlayerReborn (playernum);
 	}
 	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))

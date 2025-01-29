@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include "basics.h"
+#include "tarray.h"
 #include "sfmt/SFMTObj.h"
 
 class FSerializer;

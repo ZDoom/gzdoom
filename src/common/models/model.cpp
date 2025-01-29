@@ -45,7 +45,7 @@
 
 TDeletingArray<FModel*> Models;
 TArray<FSpriteModelFrame> SpriteModelFrames;
-TMap<void*, FSpriteModelFrame> BaseSpriteModelFrames;
+TMap<const PClass*, FSpriteModelFrame> BaseSpriteModelFrames;
 
 
 /////////////////////////////////////////////////////////////////////////////

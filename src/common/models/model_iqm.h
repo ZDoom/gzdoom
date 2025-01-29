@@ -70,7 +70,7 @@ struct IQMJoint
 	FString Name;
 	int32_t Parent; // parent < 0 means this is a root bone
 	FVector3 Translate;
-	FVector4 Quaternion;
+	FQuaternion Quaternion;
 	FVector3 Scale;
 };
 

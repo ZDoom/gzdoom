@@ -188,7 +188,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 				translate.Y = p.ChannelOffset[1]; if (p.ChannelMask & 0x02) translate.Y += reader.ReadUInt16() * p.ChannelScale[1];
 				translate.Z = p.ChannelOffset[2]; if (p.ChannelMask & 0x04) translate.Z += reader.ReadUInt16() * p.ChannelScale[2];
 
-				FVector4 quaternion;
+				FQuaternion quaternion;
 				quaternion.X = p.ChannelOffset[3]; if (p.ChannelMask & 0x08) quaternion.X += reader.ReadUInt16() * p.ChannelScale[3];
 				quaternion.Y = p.ChannelOffset[4]; if (p.ChannelMask & 0x10) quaternion.Y += reader.ReadUInt16() * p.ChannelScale[4];
 				quaternion.Z = p.ChannelOffset[5]; if (p.ChannelMask & 0x20) quaternion.Z += reader.ReadUInt16() * p.ChannelScale[5];
@@ -211,30 +211,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		{
 			num_frames = 1;
 			TRSData.Resize(num_joints);
-
-			for (uint32_t j = 0; j < num_joints; j++)
-			{
-				FVector3 translate;
-				translate.X = Joints[j].Translate.X;
-				translate.Y = Joints[j].Translate.Y;
-				translate.Z = Joints[j].Translate.Z;
-				
-				FVector4 quaternion;
-				quaternion.X = Joints[j].Quaternion.X;
-				quaternion.Y = Joints[j].Quaternion.Y;
-				quaternion.Z = Joints[j].Quaternion.Z;
-				quaternion.W = Joints[j].Quaternion.W;
-				quaternion.MakeUnit();
-
-				FVector3 scale;
-				scale.X = Joints[j].Scale.X;
-				scale.Y = Joints[j].Scale.Y;
-				scale.Z = Joints[j].Scale.Z;
-
-				TRSData[j].translation = translate;
-				TRSData[j].rotation = quaternion;
-				TRSData[j].scaling = scale;
-			}
+			std::copy(Joints.begin(), Joints.end(), TRSData.begin());
 		}
 
 		reader.SeekTo(ofs_bounds);

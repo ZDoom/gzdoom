@@ -16,14 +16,16 @@ class FModelRenderer;
 class FGameTexture;
 class IModelVertexBuffer;
 class FModel;
+class PClass;
 struct FSpriteModelFrame;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
 
+
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
-extern TMap<void*, FSpriteModelFrame> BaseSpriteModelFrames;
+extern TMap<const PClass*, FSpriteModelFrame> BaseSpriteModelFrames;
 
 #define MD3_MAX_SURFACES	32
 #define MIN_MODELS	4

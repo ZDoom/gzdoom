@@ -24,6 +24,22 @@ enum EModelAnimFlags
 	MODELANIM_LOOP			= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
 };
 
+struct BoneOverride
+{
+	int rot_mode; // 0 = no override, 1 = rotate, 2 = replace
+	int rot_switchtic;
+	int rot_interplen;
+	FQuaternion rot_prev;
+	FQuaternion rot;
+};
+
+struct BoneInfo
+{
+	TArray<TRS> bones_anim_only;
+	TArray<TRS> bones_with_override;
+	TArray<VSMatrix> positions;
+};
+
 struct ModelAnim
 {
 	int firstFrame = 0;

@@ -555,12 +555,12 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				{
 					if(info.decoupled_frame.frame1 >= 0)
 					{
-						boneData = animation->CalculateBones(actor->modelData->prevAnim, info.decoupled_frame, info.inter, animationData);
+						boneData = animation->CalculateBones(actor->modelData->prevAnim, info.decoupled_frame, info.inter, animationData, actor->modelData->modelBoneOverrides.Size() > i ? &actor->modelData->modelBoneOverrides[i] : nullptr, nullptr, info.tic);
 					}
 				}
 				else
 				{
-					boneData = animation->CalculateBones(nullptr, {nextFrame ? info.inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData);
+					boneData = animation->CalculateBones(nullptr, {nextFrame ? info.inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData, (actor->modelData && actor->modelData->modelBoneOverrides.Size() > i) ? &actor->modelData->modelBoneOverrides[i] : nullptr, nullptr, info.tic);
 				}
 
 				if(info.smf_flags & MDL_MODELSAREATTACHMENTS || info.is_decoupled)

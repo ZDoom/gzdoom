@@ -5113,6 +5113,7 @@ static void CleanupModelData(AActor * mobj)
 		&& mobj->modelData->modelFrameGenerators.Size() == 0
 		&& mobj->modelData->skinIDs.Size() == 0
 		&& mobj->modelData->animationIDs.Size() == 0
+		&& mobj->modelData->modelBoneOverrides.Size() == 0
 		&& mobj->modelData->modelDef == nullptr
 		&&(mobj->modelData->flags & ~MODELDATA_HADMODEL) == 0 )
 	{

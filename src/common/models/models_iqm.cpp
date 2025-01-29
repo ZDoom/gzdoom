@@ -562,28 +562,46 @@ ModelAnimFrame IQMModel::PrecalculateFrame(const ModelAnimFrame &from, const Mod
 	}
 }
 
-const TArray<VSMatrix>* IQMModel::CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData)
+const TArray<VSMatrix>* IQMModel::CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, TArray<BoneOverride> *in, BoneInfo *out, double time)
 {
 	if(inter <= 0)
 	{
-		return CalculateBonesIQM(to.frame1, to.frame2, to.inter, 0, -1.f, 0, -1.f, nullptr, animationData);
+		return CalculateBonesIQM(to.frame1, to.frame2, to.inter, 0, -1.f, 0, -1.f, nullptr, animationData, in, out, time);
 	}
 	else if(std::holds_alternative<ModelAnimFrameInterp>(from))
 	{
 		auto &from_interp = std::get<ModelAnimFrameInterp>(from);
 
-		return CalculateBonesIQM(from_interp.frame2, to.frame2, inter, from_interp.frame1, from_interp.inter, to.frame1, to.inter, nullptr, animationData);
+		return CalculateBonesIQM(from_interp.frame2, to.frame2, inter, from_interp.frame1, from_interp.inter, to.frame1, to.inter, nullptr, animationData, in, out, time);
 	}
 	else if(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(from))
 	{
-		return CalculateBonesIQM(0, to.frame2, inter, 0, -1.f, to.frame1, to.inter, &std::get<ModelAnimFramePrecalculatedIQM>(from), animationData);
+		return CalculateBonesIQM(0, to.frame2, inter, 0, -1.f, to.frame1, to.inter, &std::get<ModelAnimFramePrecalculatedIQM>(from), animationData, in, out, time);
 	}
 	else
 	{
-		return CalculateBonesIQM(to.frame1, to.frame2, to.inter, 0, -1.f, 0, -1.f, nullptr, animationData);
+		return CalculateBonesIQM(to.frame1, to.frame2, to.inter, 0, -1.f, 0, -1.f, nullptr, animationData, in, out, time);
 	}
 }
 
+inline void ModifyBone(const BoneOverride& mod, TRS &bone, double time)
+{
+	if(mod.rot_mode > 0)
+	{
+		FQuaternion rot = ((mod.rot_switchtic + mod.rot_interplen) < time) ? FQuaternion::SLerp(mod.rot_prev, mod.rot, std::clamp(((time - mod.rot_switchtic) / mod.rot_interplen), 0.0, 1.0)) : mod.rot;
+
+		if(mod.rot_mode == 1)
+		{
+			bone.rotation = (bone.rotation * rot).Unit();
+		}
+		else if(mod.rot_mode == 2)
+		{
+			bone.rotation = rot;
+		}
+	}
+}
+
+// explicitly don't pass modelBoneOverrides when precalculating animation for interpolation, as it's applied _after_ animation
 ModelAnimFramePrecalculatedIQM IQMModel::CalculateFrameIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData)
 {
 	ModelAnimFramePrecalculatedIQM out;
@@ -591,7 +609,7 @@ ModelAnimFramePrecalculatedIQM IQMModel::CalculateFrameIQM(int frame1, int frame
 
 	out.precalcBones.Resize(Joints.Size());
 
-	if (Joints.Size() > 0)
+	if (Joints.Size() > 0 && animationFrames.Size() > 0)
 	{
 		int numbones = Joints.SSize();
 
@@ -638,12 +656,25 @@ ModelAnimFramePrecalculatedIQM IQMModel::CalculateFrameIQM(int frame1, int frame
 	return out;
 }
 
-const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData)
+const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData, TArray<BoneOverride> *in, BoneInfo *out, double time)
 {
 	const TArray<TRS>& animationFrames = animationData ? *animationData : TRSData;
-	if (Joints.Size() > 0)
+
+	TArray<VSMatrix>* outMatrix = out ? &out->positions : &boneData;
+
+	int numbones = Joints.SSize();
+	outMatrix->Resize(numbones);
+
+	if(out)
 	{
-		int numbones = Joints.SSize();
+		out->bones_anim_only.Resize(numbones);
+		out->bones_with_override.Resize(numbones);
+	}
+
+	if(in && in->size() != Joints.Size()) in = nullptr;
+
+	if (numbones > 0 && animationFrames.Size() > 0)
+	{
 
 		frame1 = clamp(frame1, 0, (animationFrames.SSize() - 1) / numbones);
 		frame2 = clamp(frame2, 0, (animationFrames.SSize() - 1) / numbones);
@@ -665,8 +696,6 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 			0.0f, 1.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f
 		};
-
-		boneData.Resize(numbones);
 
 		for (int i = 0; i < numbones; i++)
 		{
@@ -698,16 +727,33 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 				bone = inter < 0 ? animationFrames[offset1 + i] : InterpolateBone(prev, next , inter, invt);
 			}
 
+			if(out)
+			{
+				out->bones_anim_only[i] = bone;
+
+				if(in)
+				{
+					ModifyBone((*in)[i], bone, time);
+				}
+				
+				out->bones_with_override[i] = bone;
+			}
+			else if(in)
+			{
+				ModifyBone((*in)[i], bone, time);
+			}
+
 			VSMatrix m;
 			m.loadIdentity();
 			m.translate(bone.translation.X, bone.translation.Y, bone.translation.Z);
 			m.multQuaternion(bone.rotation);
 			m.scale(bone.scaling.X, bone.scaling.Y, bone.scaling.Z);
 
-			VSMatrix& result = boneData[i];
+			VSMatrix& result = (*outMatrix)[i];
 			if (Joints[i].Parent >= 0)
 			{
-				result = boneData[Joints[i].Parent];
+				assert(Joints[i].Parent < i);
+				result = (*outMatrix)[Joints[i].Parent];
 				result.multMatrix(swapYZ);
 				result.multMatrix(baseframe[Joints[i].Parent]);
 				result.multMatrix(m);

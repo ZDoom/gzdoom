@@ -732,14 +732,15 @@ class DActorModelData : public DObject
 {
 	DECLARE_CLASS(DActorModelData, DObject);
 public:
-	PClass *					modelDef;
-	TArray<ModelOverride>		models;
-	TArray<FTextureID>			skinIDs;
-	TArray<AnimModelOverride>	animationIDs;
-	TArray<int>					modelFrameGenerators;
-	int							flags;
-	int							overrideFlagsSet;
-	int							overrideFlagsClear;
+	PClass *					 modelDef;
+	TArray<ModelOverride>		 models;
+	TArray<FTextureID>			 skinIDs;
+	TArray<AnimModelOverride>	 animationIDs;
+	TArray<int>					 modelFrameGenerators;
+	TArray<TArray<BoneOverride>> modelBoneOverrides;
+	int							 flags;
+	int							 overrideFlagsSet;
+	int							 overrideFlagsClear;
 
 	ModelAnim curAnim;
 	ModelAnimFrame prevAnim; // used for interpolation when switching anims

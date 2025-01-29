@@ -313,7 +313,7 @@ void calcFrames(const ModelAnim &curAnim, double tic, ModelAnimFrameInterp &to, 
 	}
 }
 
-void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
+CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, AActor* actor)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -327,6 +327,12 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 	ModelAnimFrameInterp decoupled_frame;
 
+	double tic = actor->Level->totaltime;
+	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	{
+		tic += I_GetTimeFrac();
+	}
+
 	// if prev_frame == -1: interpolate(main_frame, next_frame, inter), else: interpolate(interpolate(main_prev_frame, main_frame, inter_main), interpolate(next_prev_frame, next_frame, inter_next), inter)
 	// 4-way interpolation is needed to interpolate animation switches between animations that aren't 35hz
 
@@ -335,12 +341,6 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 		smfNext = smf = &BaseSpriteModelFrames[actor->GetClass()];
 		if(actor->modelData && !(actor->modelData->curAnim.flags & MODELANIM_NONE))
 		{
-			double tic = actor->Level->totaltime;
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
-			{
-				tic += I_GetTimeFrac();
-			}
-
 			calcFrames(actor->modelData->curAnim, tic, decoupled_frame, inter);
 		}
 	}
@@ -394,12 +394,28 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			modelsamount = actor->modelData->models.Size();
 	}
 
+	return
+	{
+		smf_flags,
+		smfNext,
+		inter,
+		is_decoupled,
+		decoupled_frame,
+		tic,
+		modelsamount
+	};
+}
+
+void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
+{
+	CalcModelFrameInfo info = CalcModelFrame(Level, smf, curState, curTics, actor);
+
 	TArray<FTextureID> surfaceskinids;
 
 	int boneStartingPosition = -1;
 	bool evaluatedSingle = false;
 
-	for (unsigned i = 0; i < modelsamount; i++)
+	for (unsigned i = 0; i < info.modelsamount; i++)
 	{
 		int modelid = -1;
 		int animationid = -1;
@@ -434,31 +450,31 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			{
 				animationid = smf->animationIDs[i];
 			}
-			if(!is_decoupled)
+			if(!info.is_decoupled)
 			{
 				//modelFrame
 				if (actor->modelData->modelFrameGenerators.Size() > i
-				 && (unsigned)actor->modelData->modelFrameGenerators[i] < modelsamount
+				 && (unsigned)actor->modelData->modelFrameGenerators[i] < info.modelsamount
 				 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
 				   ) {
 					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
 
-					if (smfNext) 
+					if (info.smfNext) 
 					{
-						if(smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
+						if(info.smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
 						{
-							modelframenext = smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
+							modelframenext = info.smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
 						}
 						else
 						{
-							modelframenext = smfNext->modelframes[i];
+							modelframenext = info.smfNext->modelframes[i];
 						}
 					}
 				}
 				else if(smf->modelsAmount > i)
 				{
 					modelframe = smf->modelframes[i];
-					if (smfNext) modelframenext = smfNext->modelframes[i];
+					if (info.smfNext) modelframenext = info.smfNext->modelframes[i];
 				}
 			}
 
@@ -504,7 +520,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 			modelid = smf->modelIDs[i];
 			animationid = smf->animationIDs[i];
 			modelframe = smf->modelframes[i];
-			if (smfNext) modelframenext = smfNext->modelframes[i];
+			if (info.smfNext) modelframenext = info.smfNext->modelframes[i];
 			skinid = smf->skinIDs[i];
 		}
 
@@ -519,7 +535,7 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 					   : (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 
 
-			bool nextFrame = smfNext && modelframe != modelframenext;
+			bool nextFrame = info.smfNext && modelframe != modelframenext;
 
 
 			// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
@@ -535,26 +551,26 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 					animationData = animation->AttachAnimationData();
 				}
 
-				if(is_decoupled)
+				if(info.is_decoupled)
 				{
-					if(decoupled_frame.frame1 >= 0)
+					if(info.decoupled_frame.frame1 >= 0)
 					{
-						boneData = animation->CalculateBones(actor->modelData->prevAnim, decoupled_frame, inter, animationData);
+						boneData = animation->CalculateBones(actor->modelData->prevAnim, info.decoupled_frame, info.inter, animationData);
 					}
 				}
 				else
 				{
-					boneData = animation->CalculateBones(nullptr, {nextFrame ? inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData);
+					boneData = animation->CalculateBones(nullptr, {nextFrame ? info.inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData);
 				}
 
-				if(smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
+				if(info.smf_flags & MDL_MODELSAREATTACHMENTS || info.is_decoupled)
 				{
 					boneStartingPosition = boneData ? screen->mBones->UploadBones(*boneData) : -1;
 					evaluatedSingle = true;
 				}
 			}
 
-			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? inter : -1.f, translation, ssidp, boneStartingPosition);
+			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? info.inter : -1.f, translation, ssidp, boneStartingPosition);
 		}
 	}
 }

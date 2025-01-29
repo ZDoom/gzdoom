@@ -114,6 +114,19 @@ void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, c
 void RenderModel(FModelRenderer* renderer, float x, float y, float z, FSpriteModelFrame* smf, AActor* actor, double ticFrac);
 void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf);
 
+struct CalcModelFrameInfo
+{
+	int smf_flags;
+	const FSpriteModelFrame * smfNext;
+	float inter;
+	bool is_decoupled;
+	ModelAnimFrameInterp decoupled_frame;
+	double tic;
+	unsigned modelsamount;
+};
+
+CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, AActor* actor);
+
 EXTERN_CVAR(Float, cl_scaleweaponfov)
 
 #endif

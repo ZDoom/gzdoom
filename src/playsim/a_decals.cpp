@@ -754,8 +754,8 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplat
 			decal->SetShade (color.r, color.g, color.b);
 		}
 
-		// [Nash] opaque blood
-		if (translation != NO_TRANSLATION && tpl->ShadeColor == 0 && tpl->opaqueBlood)
+		// [Nash] Translatable opaque decal. Note that the decal must be unshaded for this to work.
+		if (translation != NO_TRANSLATION && tpl->ShadeColor == 0 && tpl->translatable)
 		{
 			decal->SetTranslation(translation);
 			decal->RenderStyle = STYLE_Normal;
@@ -794,8 +794,8 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 			tpl->ApplyToDecal (decal, wall);
 			decal->AlphaColor = AlphaColor;
 
-			// [Nash] opaque blood
-			if (tpl->ShadeColor == 0 && tpl->opaqueBlood)
+			// [Nash] Translatable opaque decal
+			if (tpl->ShadeColor == 0 && tpl->translatable)
 			{
 				decal->SetTranslation(Translation);
 				decal->RenderStyle = STYLE_Normal;

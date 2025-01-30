@@ -175,7 +175,8 @@ static const char *DecalKeywords[] =
 	"colors",
 	"animator",
 	"lowerdecal",
-	"opaqueblood",
+	"opaqueblood", // Deprecated - use translatable instead!
+	"translatable",
 	NULL
 };
 
@@ -198,6 +199,7 @@ enum
 	DECAL_ANIMATOR,
 	DECAL_LOWERDECAL,
 	DECAL_OPAQUEBLOOD,
+	DECAL_TRANSLATABLE,
 };
 
 const FDecalTemplate *FDecalBase::GetDecal () const
@@ -483,8 +485,9 @@ void FDecalLib::ParseDecal (FScanner &sc)
 			break;
 
 		case DECAL_OPAQUEBLOOD:
+		case DECAL_TRANSLATABLE:
 			newdecal.RenderStyle = STYLE_Normal;
-			newdecal.opaqueBlood = true;
+			newdecal.translatable = true;
 			break;
 		}
 	}

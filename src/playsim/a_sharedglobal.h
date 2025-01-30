@@ -52,6 +52,7 @@ public:
 	FRenderStyle RenderStyle;
 	side_t *Side = nullptr;
 	sector_t *Sector = nullptr;
+	bool bIsBlood;
 
 protected:
 	virtual DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
@@ -73,8 +74,8 @@ public:
 	}
 	void Construct(side_t *wall, const FDecalTemplate *templ);
 
-	static DBaseDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION);
-	static DBaseDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION, bool permanent = false);
+	static DBaseDecal *StaticCreate(FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION, bool isBlood = false);
+	static DBaseDecal *StaticCreate(FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0, FTranslationID translation = NO_TRANSLATION, bool isBlood = false, bool permanent = false);
 
 	void BeginPlay ();
 	void Expired() override;

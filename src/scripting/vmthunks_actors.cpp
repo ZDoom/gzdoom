@@ -1732,6 +1732,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
 	return 0;
 }
 
+static void SetBloodColor(AActor* self, int color)
+{
+	PalEntry col = color;
+	self->BloodColor = col;
+	self->BloodColor.a = 255;
+	self->BloodTranslation = CreateBloodTranslation(col);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetBloodColor, SetBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(color);
+	SetBloodColor(self, color);
+	return 0;
+}
+
 //=====================================================================================
 //
 // Inventory exports

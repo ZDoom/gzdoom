@@ -698,10 +698,50 @@ static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void*
 		}
 		break;
 	case TRACE_HitFloor:
-		res.Sector->floorplane.dithertransflag = true;
+		if (res.HitPos.Z == res.Sector->floorplane.ZatPoint(res.HitPos))
+		{
+			res.Sector->floorplane.dithertransflag = true;
+		}
+		else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
+		{
+			F3DFloor *rover;
+			int kk;
+			for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
+			{
+				rover = res.Sector->e->XFloor.ffloors[kk];
+				if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
+				{
+					if (res.HitPos.Z == rover->top.plane->ZatPoint(res.HitPos))
+					{
+						rover->top.plane->dithertransflag = true;
+						break; // Out of for loop
+					}
+				}
+			}
+		}
 		break;
 	case TRACE_HitCeiling:
-		res.Sector->ceilingplane.dithertransflag = true;
+		if (res.HitPos.Z == res.Sector->ceilingplane.ZatPoint(res.HitPos))
+		{
+			res.Sector->ceilingplane.dithertransflag = true;
+		}
+		else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
+		{
+			F3DFloor *rover;
+			int kk;
+			for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
+			{
+				rover = res.Sector->e->XFloor.ffloors[kk];
+				if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
+				{
+					if (res.HitPos.Z == rover->bottom.plane->ZatPoint(res.HitPos))
+					{
+						rover->bottom.plane->dithertransflag = true;
+						break; // Out of for loop
+					}
+				}
+			}
+		}
 		break;
 	case TRACE_HitActor:
 	default:

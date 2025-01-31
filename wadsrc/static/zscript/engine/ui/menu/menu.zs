@@ -96,8 +96,15 @@ struct JoystickConfig native version("2.4")
 	native float GetAxisResponseCurvePoint(int axis, int point);
 	native void SetAxisResponseCurvePoint(int axis, int point, float value);
 
-	native int GetAxisMap(int axis);
-	native void SetAxisMap(int axis, int gameaxis);
+	deprecated("4.15.1", "Axis mapping was replaced with binds; remove this menu item") int GetAxisMap(int axis)
+	{
+		return JOYAXIS_None;
+	}
+
+	deprecated("4.15.1", "Axis mapping was replaced with binds; remove this menu item") void SetAxisMap(int axis, int gameaxis)
+	{
+		// NOP
+	}
 
 	native String GetName();
 	native int GetNumAxes();

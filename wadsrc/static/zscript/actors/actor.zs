@@ -1302,7 +1302,7 @@ class Actor : Thinker native
 	native bool A_SetSize(double newradius = -1, double newheight = -1, bool testpos = false);
 	native void A_SprayDecal(String name, double dist = 172, vector3 offset = (0, 0, 0), vector3 direction = (0, 0, 0), bool useBloodColor = false, color decalColor = 0, TranslationID translation = 0);
 	native void A_SetMugshotState(String name);
-	native void CopyBloodColor(Actor other);
+	native void CopyBloodColor(readonly<Actor> other);
 
 	native void A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	native void A_TransferPointer(int ptr_source, int ptr_recipient, int sourcefield, int recipientfield=AAPTR_DEFAULT, int flags=0);

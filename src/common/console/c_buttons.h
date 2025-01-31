@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "tarray.h"
 #include "name.h"
+#include "keydef.h"
 
 // Actions
 struct FButtonStatus
@@ -14,13 +15,18 @@ struct FButtonStatus
 	bool bWentDown;			// Button went down this tic
 	bool bWentUp;			// Button went up this tic
 	bool bReleaseLock;		// Lock ReleaseKey call in ResetButtonStates
+
+	bool bIsAxis;	// Whenever or not this button is being controlled by any axis.
+	float Axis;		// How far the button has been pressed. Updated by I_GetAxes.
+
 	void (*PressHandler)();		// for optional game-side customization
 	void (*ReleaseHandler)();
 
 	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
 	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.
+	void AddAxes (FString &btn_name, float joyaxes[NUM_AXIS_CODES]); // Update joystick axis information.
 	void ResetTriggers () { bWentDown = bWentUp = false; }
-	void Reset () { bDown = bWentDown = bWentUp = false; }
+	void Reset () { bDown = bWentDown = bWentUp = bIsAxis = false; Axis = 0.0f; }
 };
 
 class ButtonMap
@@ -53,6 +59,7 @@ public:
 
 	void ResetButtonTriggers();	// Call ResetTriggers for all buttons
 	void ResetButtonStates();		// Same as above, but also clear bDown
+	void GetAxes();				// Call AddAxes for all buttons
 	int ListActionCommands(const char* pattern);
 	void AddButtonTabCommands();
 
@@ -60,6 +67,28 @@ public:
 	bool ButtonDown(int x) const
 	{
 		return Buttons[x].bDown;
+	}
+
+	bool ButtonDownDigital(int x) const
+	{
+		// Like ButtonDown, but only for digital buttons.
+		// This is necessary, because of how the game runs different
+		// code for both digital and analog, and they can't be rolled
+		// together without introducing some subtle gameplay differences.
+		return (Buttons[x].bIsAxis == false && Buttons[x].bDown == true);
+	}
+
+	float ButtonAnalog(int x) const
+	{
+		// Get the analog value of a button.
+		// This is 0.0 (not 1.0) for digital presses, because again,
+		// of how the game logic is split between the two.
+		if (Buttons[x].bIsAxis == true)
+		{
+			return Buttons[x].Axis;
+		}
+
+		return 0.0f;
 	}
 
 	bool ButtonPressed(int x) const

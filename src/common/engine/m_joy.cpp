@@ -222,18 +222,6 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 		{
 			joy->SetAxisResponseCurvePoint(i, 3, (float)atof(value));
 		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "map");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			EJoyAxis gameaxis = (EJoyAxis)atoi(value);
-			if (gameaxis < JOYAXIS_None || gameaxis >= NUM_JOYAXIS)
-			{
-				gameaxis = JOYAXIS_None;
-			}
-			joy->SetAxisMap(i, gameaxis);
-		}
 	}
 	return true;
 }
@@ -314,12 +302,6 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 3));
 				GameConfig->SetValueForKey(key, value);
 			}
-			if (!joy->IsAxisMapDefault(i))
-			{
-				mysnprintf(key + axislen, countof(key) - axislen, "map");
-				mysnprintf(value, countof(value), "%d", joy->GetAxisMap(i));
-				GameConfig->SetValueForKey(key, value);
-			}
 		}
 		// If the joystick is entirely at its defaults, delete this section
 		// so that we don't write out a lone section header.
@@ -355,7 +337,6 @@ CCMD (gamepad)
 			"\n\tgamepad curve-y1    pad.axis [float]"
 			"\n\tgamepad curve-x2    pad.axis [float]"
 			"\n\tgamepad curve-y2    pad.axis [float]"
-			"\n\tgamepad map         pad.axis [-1|0|1|2|3|4]"
 			"\n"
 		);
 	};
@@ -489,11 +470,6 @@ CCMD (gamepad)
 	{
 		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 3, value);
 		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 3));
-	}
-	if (command == "map")
-	{
-		if (set) sticks[pad]->SetAxisMap(axis, (EJoyAxis)value);
-		return (void) Printf("%d\n", sticks[pad]->GetAxisMap(axis));
 	}
 
 	return usage();

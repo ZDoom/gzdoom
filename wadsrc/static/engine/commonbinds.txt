@@ -64,6 +64,14 @@ dpadup togglemap
 pad_start menu_main
 pad_back pause
 lthumb crouch
+lstickleft +moveleft
+lstickright +moveright
+lstickup +forward
+lstickdown +back
+rstickleft +left
+rstickright +right
+rstickup +lookup
+rstickdown +lookdown
 
 // Generic gamepad bindings
 joy1 +use
@@ -79,6 +87,10 @@ pov1up togglemap
 joy8 menu_main
 joy7 pause
 joy10 crouch
+axis1minus +moveleft
+axis1plus +moveright
+axis2minus +forward
+axis2plus +back
 
 /* Default automap bindings */
 mapbind f am_togglefollow

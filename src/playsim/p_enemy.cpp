@@ -2993,8 +2993,8 @@ void A_DoChaseNative(AActor * self, FState *melee, FState *missile, int flags)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_DoChase, A_DoChaseNative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_STATE(melee);
-	PARAM_STATE(missile);
+	PARAM_POINTER(melee, FState);
+	PARAM_POINTER(missile, FState);
 	PARAM_INT(flags);
 
 	A_DoChaseNative(self, melee, missile, flags);

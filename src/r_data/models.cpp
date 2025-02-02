@@ -1084,33 +1084,24 @@ void ParseModelDefLump(int Lump)
 //
 //===========================================================================
 
-FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped)
+FSpriteModelFrame * FindModelFrameRaw(const AActor * actorDefaults, const PClass * ti, int sprite, int frame, bool dropped)
 {
-	auto def = GetDefaultByType(ti);
-	if (def->hasmodel)
+	if(actorDefaults->hasmodel)
 	{
-		if(def->flags9 & MF9_DECOUPLEDANIMATIONS)
+		FSpriteModelFrame smf;
+
+		memset(&smf, 0, sizeof(smf));
+		smf.type = ti;
+		smf.sprite = sprite;
+		smf.frame = frame;
+
+		int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
+
+		while (hash>=0)
 		{
-			FSpriteModelFrame * smf = BaseSpriteModelFrames.CheckKey((void*)ti);
-			if(smf) return smf;
-		}
-		else
-		{
-			FSpriteModelFrame smf;
-
-			memset(&smf, 0, sizeof(smf));
-			smf.type=ti;
-			smf.sprite=sprite;
-			smf.frame=frame;
-
-			int hash = SpriteModelHash[ModelFrameHash(&smf) % SpriteModelFrames.Size()];
-
-			while (hash>=0)
-			{
-				FSpriteModelFrame * smff = &SpriteModelFrames[hash];
-				if (smff->type==ti && smff->sprite==sprite && smff->frame==frame) return smff;
-				hash=smff->hashnext;
-			}
+			FSpriteModelFrame * smff = &SpriteModelFrames[hash];
+			if (smff->type == ti && smff->sprite == sprite && smff->frame == frame) return smff;
+			hash = smff->hashnext;
 		}
 	}
 
@@ -1124,26 +1115,50 @@ FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, 
 			if (sprframe->Voxel != nullptr)
 			{
 				int index = sprframe->Voxel->VoxeldefIndex;
-				if (dropped && sprframe->Voxel->DroppedSpin !=sprframe->Voxel->PlacedSpin) index++;
+				if (dropped && sprframe->Voxel->DroppedSpin != sprframe->Voxel->PlacedSpin) index++;
 				return &SpriteModelFrames[index];
 			}
 		}
 	}
+
 	return nullptr;
 }
 
-FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped)
+FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
 {
-	if(!thing) return nullptr;
+	auto def = GetDefaultByType(ti);
 
-	if(thing->flags9 & MF9_DECOUPLEDANIMATIONS)
+	if (def->hasmodel)
 	{
-		return BaseSpriteModelFrames.CheckKey((thing->modelData != nullptr && thing->modelData->modelDef != nullptr) ? thing->modelData->modelDef : thing->GetClass());
+		if(def->flags9 & MF9_DECOUPLEDANIMATIONS)
+		{
+			FSpriteModelFrame * smf = BaseSpriteModelFrames.CheckKey(ti);
+			if(smf) return smf;
+		}
+	}
+
+	return FindModelFrameRaw(def, ti, sprite, frame, dropped);
+}
+
+FSpriteModelFrame * FindModelFrame(const PClass * ti, bool is_decoupled, int sprite, int frame, bool dropped)
+{
+	if(!ti) return nullptr;
+
+	if(is_decoupled)
+	{
+		return BaseSpriteModelFrames.CheckKey(ti);
 	}
 	else
 	{
-		return FindModelFrameRaw((thing->modelData != nullptr && thing->modelData->modelDef != nullptr) ? thing->modelData->modelDef : thing->GetClass(), sprite, frame, dropped);
+		return FindModelFrameRaw(GetDefaultByType(ti), ti, sprite, frame, dropped);
 	}
+}
+
+FSpriteModelFrame * FindModelFrame(AActor * thing, int sprite, int frame, bool dropped)
+{
+	if(!thing) return nullptr;
+
+	return FindModelFrame((thing->modelData != nullptr && thing->modelData->modelDef != nullptr) ? thing->modelData->modelDef : thing->GetClass(), (thing->flags9 & MF9_DECOUPLEDANIMATIONS), sprite, frame, dropped);
 }
 
 //===========================================================================

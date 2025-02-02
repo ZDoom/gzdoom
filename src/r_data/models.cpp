@@ -313,25 +313,17 @@ void calcFrames(const ModelAnim &curAnim, double tic, ModelAnimFrameInterp &to, 
 	}
 }
 
-CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, AActor* actor)
+CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, DActorModelData* data, AActor* actor, bool is_decoupled, double tic)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
 
-	int smf_flags = smf->getFlags(actor->modelData);
+	int smf_flags = smf->getFlags(data);
 
 	const FSpriteModelFrame * smfNext = nullptr;
 	float inter = 0.;
 
-	bool is_decoupled = (actor->flags9 & MF9_DECOUPLEDANIMATIONS);
-
 	ModelAnimFrameInterp decoupled_frame;
-
-	double tic = actor->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
-	{
-		tic += I_GetTimeFrac();
-	}
 
 	// if prev_frame == -1: interpolate(main_frame, next_frame, inter), else: interpolate(interpolate(main_prev_frame, main_frame, inter_main), interpolate(next_prev_frame, next_frame, inter_next), inter)
 	// 4-way interpolation is needed to interpolate animation switches between animations that aren't 35hz
@@ -339,9 +331,9 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 	if(is_decoupled)
 	{
 		smfNext = smf = &BaseSpriteModelFrames[actor->GetClass()];
-		if(actor->modelData && !(actor->modelData->curAnim.flags & MODELANIM_NONE))
+		if(data && !(data->curAnim.flags & MODELANIM_NONE))
 		{
-			calcFrames(actor->modelData->curAnim, tic, decoupled_frame, inter);
+			calcFrames(data->curAnim, tic, decoupled_frame, inter);
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))
@@ -388,10 +380,10 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 
 	unsigned modelsamount = smf->modelsAmount;
 	//[SM] - if we added any models for the frame to also render, then we also need to update modelsAmount for this smf
-	if (actor->modelData != nullptr)
+	if (data != nullptr)
 	{
-		if (actor->modelData->models.Size() > modelsamount)
-			modelsamount = actor->modelData->models.Size();
+		if (data->models.Size() > modelsamount)
+			modelsamount = data->models.Size();
 	}
 
 	return
@@ -401,141 +393,152 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 		inter,
 		is_decoupled,
 		decoupled_frame,
-		tic,
 		modelsamount
 	};
 }
 
+bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* data, const CalcModelFrameInfo &info, ModelDrawInfo &out, bool is_decoupled)
+{
+	//reset drawinfo
+	out.modelid = -1;
+	out.animationid = -1;
+	out.modelframe = -1;
+	out.modelframenext = -1;
+	out.skinid.SetNull();
+	out.surfaceskinids.Clear();
+
+	if (data)
+	{
+		//modelID
+		if (data->models.Size() > i && data->models[i].modelID >= 0)
+		{
+			out.modelid = data->models[i].modelID;
+		}
+		else if(data->models.Size() > i && data->models[i].modelID == -2)
+		{
+			return false;
+		}
+		else if(smf->modelsAmount > i)
+		{
+			out.modelid = smf->modelIDs[i];
+		}
+
+		//animationID
+		if (data->animationIDs.Size() > i && data->animationIDs[i] >= 0)
+		{
+			out.animationid = data->animationIDs[i];
+		}
+		else if(smf->modelsAmount > i)
+		{
+			out.animationid = smf->animationIDs[i];
+		}
+		if(!is_decoupled)
+		{
+			//modelFrame
+			if (data->modelFrameGenerators.Size() > i
+				&& (unsigned)data->modelFrameGenerators[i] < info.modelsamount
+				&& smf->modelframes[data->modelFrameGenerators[i]] >= 0
+				) {
+				out.modelframe = smf->modelframes[data->modelFrameGenerators[i]];
+
+				if (info.smfNext) 
+				{
+					if(info.smfNext->modelframes[data->modelFrameGenerators[i]] >= 0)
+					{
+						out.modelframenext = info.smfNext->modelframes[data->modelFrameGenerators[i]];
+					}
+					else
+					{
+						out.modelframenext = info.smfNext->modelframes[i];
+					}
+				}
+			}
+			else if(smf->modelsAmount > i)
+			{
+				out.modelframe = smf->modelframes[i];
+				if (info.smfNext) out.modelframenext = info.smfNext->modelframes[i];
+			}
+		}
+
+		//skinID
+		if (data->skinIDs.Size() > i && data->skinIDs[i].isValid())
+		{
+			out.skinid = data->skinIDs[i];
+		}
+		else if(smf->modelsAmount > i)
+		{
+			out.skinid = smf->skinIDs[i];
+		}
+
+		//surfaceSkinIDs
+		if(data->models.Size() > i && data->models[i].surfaceSkinIDs.Size() > 0)
+		{
+			unsigned sz1 = smf->surfaceskinIDs.Size();
+			unsigned sz2 = data->models[i].surfaceSkinIDs.Size();
+			unsigned start = i * MD3_MAX_SURFACES;
+
+			out.surfaceskinids = data->models[i].surfaceSkinIDs;
+			out.surfaceskinids.Resize(MD3_MAX_SURFACES);
+
+			for (unsigned surface = 0; surface < MD3_MAX_SURFACES; surface++)
+			{
+				if (sz2 > surface && (data->models[i].surfaceSkinIDs[surface].isValid()))
+				{
+					continue;
+				}
+				if((surface + start) < sz1)
+				{
+					out.surfaceskinids[surface] = smf->surfaceskinIDs[surface + start];
+				}
+				else
+				{
+					out.surfaceskinids[surface].SetNull();
+				}
+			}
+		}
+	}
+	else
+	{
+		out.modelid = smf->modelIDs[i];
+		out.animationid = smf->animationIDs[i];
+		out.modelframe = smf->modelframes[i];
+		if (info.smfNext) out.modelframenext = info.smfNext->modelframes[i];
+		out.skinid = smf->skinIDs[i];
+	}
+
+	return (out.modelid >= 0 && out.modelid < Models.size());
+}
+
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
 {
-	CalcModelFrameInfo info = CalcModelFrame(Level, smf, curState, curTics, actor);
+	double tic = actor->Level->totaltime;
+	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	{
+		tic += I_GetTimeFrac();
+	}
 
-	TArray<FTextureID> surfaceskinids;
+	bool is_decoupled = (actor->flags9 & MF9_DECOUPLEDANIMATIONS);
+
+	CalcModelFrameInfo frameinfo = CalcModelFrame(Level, smf, curState, curTics, actor ? actor->modelData : nullptr, actor, is_decoupled, tic);
+	ModelDrawInfo drawinfo;
 
 	int boneStartingPosition = -1;
 	bool evaluatedSingle = false;
 
-	for (unsigned i = 0; i < info.modelsamount; i++)
+	for (unsigned i = 0; i < frameinfo.modelsamount; i++)
 	{
-		int modelid = -1;
-		int animationid = -1;
-		int modelframe = -1;
-		int modelframenext = -1;
-		FTextureID skinid(nullptr);
-
-		surfaceskinids.Clear();
-
-		if (actor->modelData != nullptr)
+		if (CalcModelOverrides(i, smf, actor ? actor->modelData : nullptr, frameinfo, drawinfo, is_decoupled))
 		{
-			//modelID
-			if (actor->modelData->models.Size() > i && actor->modelData->models[i].modelID >= 0)
-			{
-				modelid = actor->modelData->models[i].modelID;
-			}
-			else if(actor->modelData->models.Size() > i && actor->modelData->models[i].modelID == -2)
-			{
-				continue;
-			}
-			else if(smf->modelsAmount > i)
-			{
-				modelid = smf->modelIDs[i];
-			}
-
-			//animationID
-			if (actor->modelData->animationIDs.Size() > i && actor->modelData->animationIDs[i] >= 0)
-			{
-				animationid = actor->modelData->animationIDs[i];
-			}
-			else if(smf->modelsAmount > i)
-			{
-				animationid = smf->animationIDs[i];
-			}
-			if(!info.is_decoupled)
-			{
-				//modelFrame
-				if (actor->modelData->modelFrameGenerators.Size() > i
-				 && (unsigned)actor->modelData->modelFrameGenerators[i] < info.modelsamount
-				 && smf->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0
-				   ) {
-					modelframe = smf->modelframes[actor->modelData->modelFrameGenerators[i]];
-
-					if (info.smfNext) 
-					{
-						if(info.smfNext->modelframes[actor->modelData->modelFrameGenerators[i]] >= 0)
-						{
-							modelframenext = info.smfNext->modelframes[actor->modelData->modelFrameGenerators[i]];
-						}
-						else
-						{
-							modelframenext = info.smfNext->modelframes[i];
-						}
-					}
-				}
-				else if(smf->modelsAmount > i)
-				{
-					modelframe = smf->modelframes[i];
-					if (info.smfNext) modelframenext = info.smfNext->modelframes[i];
-				}
-			}
-
-			//skinID
-			if (actor->modelData->skinIDs.Size() > i && actor->modelData->skinIDs[i].isValid())
-			{
-				skinid = actor->modelData->skinIDs[i];
-			}
-			else if(smf->modelsAmount > i)
-			{
-				skinid = smf->skinIDs[i];
-			}
-
-			//surfaceSkinIDs
-			if(actor->modelData->models.Size() > i && actor->modelData->models[i].surfaceSkinIDs.Size() > 0)
-			{
-				unsigned sz1 = smf->surfaceskinIDs.Size();
-				unsigned sz2 = actor->modelData->models[i].surfaceSkinIDs.Size();
-				unsigned start = i * MD3_MAX_SURFACES;
-
-				surfaceskinids = actor->modelData->models[i].surfaceSkinIDs;
-				surfaceskinids.Resize(MD3_MAX_SURFACES);
-
-				for (unsigned surface = 0; surface < MD3_MAX_SURFACES; surface++)
-				{
-					if (sz2 > surface && (actor->modelData->models[i].surfaceSkinIDs[surface].isValid()))
-					{
-						continue;
-					}
-					if((surface + start) < sz1)
-					{
-						surfaceskinids[surface] = smf->surfaceskinIDs[surface + start];
-					}
-					else
-					{
-						surfaceskinids[surface].SetNull();
-					}
-				}
-			}
-		}
-		else
-		{
-			modelid = smf->modelIDs[i];
-			animationid = smf->animationIDs[i];
-			modelframe = smf->modelframes[i];
-			if (info.smfNext) modelframenext = info.smfNext->modelframes[i];
-			skinid = smf->skinIDs[i];
-		}
-
-		if (modelid >= 0 && modelid < Models.size())
-		{
-			FModel * mdl = Models[modelid];
-			auto tex = skinid.isValid() ? TexMan.GetGameTexture(skinid, true) : nullptr;
+			FModel * mdl = Models[drawinfo.modelid];
+			auto tex = drawinfo.skinid.isValid() ? TexMan.GetGameTexture(drawinfo.skinid, true) : nullptr;
 			mdl->BuildVertexBuffer(renderer);
 
-			auto ssidp = surfaceskinids.Size() > 0
-					   ? surfaceskinids.Data()
+			auto ssidp = drawinfo.surfaceskinids.Size() > 0
+					   ? drawinfo.surfaceskinids.Data()
 					   : (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 
 
-			bool nextFrame = info.smfNext && modelframe != modelframenext;
+			bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
 
 
 			// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
@@ -545,32 +548,56 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 				FModel* animation = mdl;
 				const TArray<TRS>* animationData = nullptr;
 
-				if (animationid >= 0)
+				if (drawinfo.animationid >= 0)
 				{
-					animation = Models[animationid];
+					animation = Models[drawinfo.animationid];
 					animationData = animation->AttachAnimationData();
 				}
 
-				if(info.is_decoupled)
+				const TArray<VSMatrix> *boneData;
+
+				if(is_decoupled)
 				{
-					if(info.decoupled_frame.frame1 >= 0)
+					if(frameinfo.decoupled_frame.frame1 >= 0)
 					{
-						boneData = animation->CalculateBones(actor->modelData->prevAnim, info.decoupled_frame, info.inter, animationData, actor->modelData->modelBoneOverrides.Size() > i ? &actor->modelData->modelBoneOverrides[i] : nullptr, nullptr, info.tic);
+						boneData = animation->CalculateBones(
+												actor->modelData->prevAnim,
+												frameinfo.decoupled_frame,
+												frameinfo.inter,
+												animationData,
+												actor->modelData->modelBoneOverrides.Size() > i
+													? &actor->modelData->modelBoneOverrides[i]
+													: nullptr,
+												nullptr,
+												tic);
 					}
 				}
 				else
 				{
-					boneData = animation->CalculateBones(nullptr, {nextFrame ? info.inter : -1.0f, modelframe, modelframenext}, -1.0f, animationData, (actor->modelData && actor->modelData->modelBoneOverrides.Size() > i) ? &actor->modelData->modelBoneOverrides[i] : nullptr, nullptr, info.tic);
+					boneData = animation->CalculateBones(
+												nullptr,
+												{
+													nextFrame ? frameinfo.inter : -1.0f,
+													drawinfo.modelframe,
+													drawinfo.modelframenext
+												},
+												-1.0f,
+												animationData,
+												(actor->modelData && actor->modelData->modelBoneOverrides.Size() > i)
+													? &actor->modelData->modelBoneOverrides[i]
+													: nullptr,
+												nullptr,
+												tic);
 				}
 
-				if(info.smf_flags & MDL_MODELSAREATTACHMENTS || info.is_decoupled)
+				if(frameinfo.smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
 				{
 					boneStartingPosition = boneData ? screen->mBones->UploadBones(*boneData) : -1;
 					evaluatedSingle = true;
 				}
 			}
 
-			mdl->RenderFrame(renderer, tex, modelframe, nextFrame ? modelframenext : modelframe, nextFrame ? info.inter : -1.f, translation, ssidp, boneStartingPosition);
+			mdl->RenderFrame(renderer, tex, drawinfo.modelframe, nextFrame ? drawinfo.modelframenext : drawinfo.modelframe, nextFrame ? frameinfo.inter : -1.f, translation, ssidp, boneStartingPosition);
 		}
 	}
 }

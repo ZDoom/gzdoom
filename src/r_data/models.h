@@ -124,11 +124,25 @@ struct CalcModelFrameInfo
 	float inter;
 	bool is_decoupled;
 	ModelAnimFrameInterp decoupled_frame;
-	double tic;
 	unsigned modelsamount;
 };
 
-CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, AActor* actor);
+struct ModelDrawInfo
+{
+	TArray<FTextureID> surfaceskinids;
+	int modelid;
+	int animationid;
+	int modelframe;
+	int modelframenext;
+	FTextureID skinid;
+};
+
+class DActorModelData;
+
+CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, DActorModelData* modelData, AActor* actor, bool is_decoupled, double tic);
+
+// returns true if the model isn't removed
+bool CalcModelOverrides(int modelindex, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled);
 
 EXTERN_CVAR(Float, cl_scaleweaponfov)
 

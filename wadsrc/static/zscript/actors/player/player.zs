@@ -1401,15 +1401,17 @@ class PlayerPawn : Actor
 		{
 			if (abs(Pitch) > 2.)
 			{
-				Pitch *= (2. / 3.);
+				A_SetPitch(Pitch * (2. / 3.), SPF_INTERPOLATE);
 			}
 			else
 			{
-				Pitch = 0.;
-				player.centering = false;
-				if (PlayerNumber() == consoleplayer)
+				A_SetPitch(Pitch * 0.75, SPF_INTERPOLATE);
+				if (abs(Pitch) <= 0.25)
 				{
-					LocalViewPitch = 0;
+					A_SetPitch(0., SPF_INTERPOLATE);
+					player.centering = false;
+					if (PlayerNumber() == consoleplayer)
+						LocalViewPitch = 0;
 				}
 			}
 		}

@@ -5160,9 +5160,34 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		tic += ticFrac;
 	}
 
-	FModel * mdl = Models[(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0) ? self->modelData->models[0].modelID : BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];
+	int animID = -1;
 
-	int animStart = mdl->FindFirstFrame(animName);
+	
+	if(self->modelData->animationIDs.Size() > 0 && self->modelData->animationIDs[0] >= 0)
+	{
+		animID = self->modelData->animationIDs[0];
+	}
+	else
+	{
+		animID = BaseSpriteModelFrames[self->GetClass()].animationIDs[0];
+	}
+
+	FModel * animation = nullptr;
+	if (animID >= 0 && animID < Models.Size())
+	{
+		animation = Models[animID];
+	}
+	else if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())
+	{
+		animation = Models[self->modelData->models[0].modelID];
+	}
+	else
+	{
+		animation = Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];
+	}
+
+	int animStart = animation->FindFirstFrame(animName);
+
 	if(animStart == FErr_NotFound)
 	{
 		self->modelData->curAnim.flags = MODELANIM_NONE;
@@ -5187,28 +5212,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 				calcFrames(self->modelData->curAnim, tic, to, inter);
 
-				const TArray<TRS>* animationData = nullptr;
-
-				int animationid = -1;
-
-				const FSpriteModelFrame * smf = &BaseSpriteModelFrames[self->GetClass()];
-
-				if (self->modelData->animationIDs.Size() > 0 && self->modelData->animationIDs[0] >= 0)
-				{
-					animationid = self->modelData->animationIDs[0];
-				}
-				else if(smf->modelsAmount > 0)
-				{
-					animationid = smf->animationIDs[0];
-				}
-
-				FModel* animation = mdl;
-
-				if (animationid >= 0)
-				{
-					animation = Models[animationid];
-					animationData = animation->AttachAnimationData();
-				}
+				const TArray<TRS>* animationData = animation->AttachAnimationData();
 
 				self->modelData->prevAnim = animation->PrecalculateFrame(self->modelData->prevAnim, to, inter, animationData);
 			}
@@ -5225,11 +5229,11 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		self->modelData->prevAnim = nullptr;
 	}
 
-	int animEnd = mdl->FindLastFrame(animName);
+	int animEnd = animation->FindLastFrame(animName);
 
 	if(framerate < 0)
 	{
-		framerate = mdl->FindFramerate(animName);
+		framerate = animation->FindFramerate(animName);
 	}
 	
 	int len = animEnd - animStart;
@@ -5473,6 +5477,12 @@ void ChangeModelNative(
 		}
 		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
 		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
+	}
+
+	if(!(mobj->modelData->curAnim.flags & MODELANIM_NONE) && animationindex == 0 && (mobj->modelData->animationIDs.Size() == 0 || mobj->modelData->animationIDs[0] != queryAnimation))
+	{ // reset current animation if animation file changes
+		mobj->modelData->curAnim.flags |= MODELANIM_NONE;
+		mobj->modelData->prevAnim = nullptr;
 	}
 
 	if(mobj->modelData->animationIDs.Size() == animationindex)

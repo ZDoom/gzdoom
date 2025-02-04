@@ -1842,7 +1842,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	{
 		goto basereturn;
 	}
-	else if (ctx.Version >= MakeVersion(4, 15, 0) && basex->ValueType == TypeNullPtr && (ValueType == TypeSpriteID || ValueType == TypeTextureID || ValueType == TypeTranslationID))
+	else if (ctx.Version >= MakeVersion(4, 14, 1) && basex->ValueType == TypeNullPtr && (ValueType == TypeSpriteID || ValueType == TypeTextureID || ValueType == TypeTranslationID))
 	{
 		delete basex;
 		basex = new FxConstant(0, ScriptPosition);
@@ -8884,7 +8884,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			return Self;
 		}
 	}
-	else if (ctx.Version >= MakeVersion(4, 15, 0) && Self->ValueType == TypeSound && MethodName == NAME_IsValid)
+	else if (ctx.Version >= MakeVersion(4, 14, 1) && Self->ValueType == TypeSound && MethodName == NAME_IsValid)
 	{
 		if (ArgList.Size() > 0)
 		{
@@ -8901,7 +8901,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		delete this;
 		return x;
 	}
-	else if (Self->ValueType == TypeTextureID || (ctx.Version >= MakeVersion(4, 15, 0) && (Self->ValueType == TypeTranslationID)))
+	else if (Self->ValueType == TypeTextureID || (ctx.Version >= MakeVersion(4, 14, 1) && (Self->ValueType == TypeTranslationID)))
 	{
 		if (MethodName == NAME_IsValid || MethodName == NAME_IsNull || MethodName == NAME_Exists || MethodName == NAME_SetInvalid || MethodName == NAME_SetNull)
 		{
@@ -8944,7 +8944,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
-	else if (ctx.Version >= MakeVersion(4, 15, 0) && Self->ValueType == TypeSpriteID)
+	else if (ctx.Version >= MakeVersion(4, 14, 1) && Self->ValueType == TypeSpriteID)
 	{
 		if (MethodName == NAME_IsValid || MethodName == NAME_IsEmpty || MethodName == NAME_IsFixed || MethodName == NAME_IsKeep
 			|| MethodName == NAME_Exists

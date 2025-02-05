@@ -102,7 +102,7 @@ struct FMapInfoParser
 
 	bool ParseLookupName(FString &dest);
 	void ParseMusic(FString &name, int &order);
-	void ParseCutscene(CutsceneDef& cdef);
+	void ParseCutscene(CutsceneDef& cdef, bool allow_function = true);
 
 	//void ParseLumpOrTextureName(char *name);
 	void ParseLumpOrTextureName(FString &name);

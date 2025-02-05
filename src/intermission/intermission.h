@@ -9,6 +9,7 @@
 #include "v_font.h"
 #include "g_game.h"
 #include "v_text.h"
+#include "screenjob.h"
 
 struct FInputEvent;
 struct FState;
@@ -85,6 +86,14 @@ struct FIntermissionAction
 	FIntermissionAction();
 	virtual ~FIntermissionAction() {}
 	virtual bool ParseKey(FScanner &sc);
+	virtual bool Parse(struct FMapInfoParser &m, FScanner &sc);
+};
+
+struct FIntermissionActionCutscene : public FIntermissionAction
+{
+	CutsceneDef scn;
+	FIntermissionActionCutscene();
+	virtual bool Parse(FMapInfoParser &m, FScanner &sc);
 };
 
 struct FIntermissionActionFader : public FIntermissionAction
@@ -197,6 +206,20 @@ public:
 	}
 };
 
+class DIntermissionScreenCutscene : public DIntermissionScreen
+{
+	DECLARE_CLASS (DIntermissionScreenCutscene, DIntermissionScreen)
+	HAS_OBJECT_POINTERS
+public:
+	DObject* mScreenJobRunner;
+	DIntermissionScreenCutscene() {}
+	virtual void Init(FIntermissionAction *desc, bool first);
+	virtual int Responder (FInputEvent *ev);
+	virtual int Ticker ();
+	virtual void Drawer ();
+	virtual void OnDestroy ();
+};
+
 class DIntermissionScreenFader : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenFader, DIntermissionScreen)
@@ -284,13 +307,6 @@ public:
 	virtual void Drawer ();
 };
 
-enum
-{
-	FSTATE_EndingGame = 0,
-	FSTATE_ChangingLevel = 1,
-	FSTATE_InLevel = 2
-};
-
 class DIntermissionController : public DObject
 {
 	DECLARE_CLASS (DIntermissionController, DObject)
@@ -314,13 +330,13 @@ public:
 	void OnDestroy() override;
 	bool NextPage();
 
-	friend DIntermissionController* F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
+	friend DIntermissionController* F_StartIntermission(FIntermissionDescriptor *, int, bool, bool);
 };
 
 
 // Interface for main loop
-DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, bool ending = false);
-DIntermissionController* F_StartIntermission(FName desc);
+DIntermissionController* F_StartIntermission(FIntermissionDescriptor *desc, int state, bool deleteme, bool ending = false);
+DIntermissionController* F_StartIntermission(FName desc, int state);
 
 // Create an intermission from old cluster data
 DIntermissionController* F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int cdid, const char *flat, 

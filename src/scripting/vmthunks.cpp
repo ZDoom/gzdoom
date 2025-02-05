@@ -1743,7 +1743,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	 PARAM_NAME(seq);
 	 PARAM_INT(state);
-	 G_StartSlideshow(self, seq);
+	 G_StartSlideshow(self, seq, state);
 	 return 0;
  }
 

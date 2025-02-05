@@ -18,6 +18,8 @@ void G_DeferedInitNew (const char *mapname, int skill = -1);
 struct FNewGameStartup;
 void G_DeferedInitNew (FNewGameStartup *gs);
 
+bool CreateCutscene(struct CutsceneDef* cs, DObject* runner, level_info_t* map);
+
 enum 
 {
 	CHANGELEVEL_KEEPFACING = 1,

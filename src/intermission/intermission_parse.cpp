@@ -194,6 +194,46 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 	else return false;
 }
 
+bool FIntermissionAction::Parse(FMapInfoParser &m, FScanner &sc)
+{
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		bool success = false;
+		if (!sc.CheckToken(TK_Sound))
+		{
+			sc.MustGetToken(TK_Identifier);
+		}
+
+		success = ParseKey(sc);
+		if (!success)
+		{
+			sc.ScriptMessage("Unknown key name '%s'\n", sc.String);
+			return false;
+		}
+	}
+	return true;
+}
+
+//==========================================================================
+//
+// FIntermissionActionCutscene
+//
+//==========================================================================
+
+FIntermissionActionCutscene::FIntermissionActionCutscene()
+{
+	scn = {};
+	mSize = sizeof(FIntermissionActionCutscene);
+	mClass = RUNTIME_CLASS(DIntermissionScreenCutscene);
+}
+
+bool FIntermissionActionCutscene::Parse(FMapInfoParser &m, FScanner &sc)
+{
+	m.ParseCutscene(scn, false);
+	return true;
+}
+
 //==========================================================================
 //
 // FIntermissionActionFader
@@ -527,6 +567,10 @@ void FMapInfoParser::ParseIntermissionAction(FIntermissionDescriptor *desc)
 	{
 		ac = new FIntermissionActionCast;
 	}
+	else if (sc.Compare("cutscene"))
+	{
+		ac = new FIntermissionActionCutscene;
+	}
 	else if (sc.Compare("Fader"))
 	{
 		ac = new FIntermissionActionFader;
@@ -556,25 +600,17 @@ void FMapInfoParser::ParseIntermissionAction(FIntermissionDescriptor *desc)
 		sc.ScriptMessage("Unknown intermission type '%s'", sc.String);
 	}
 
-	sc.MustGetToken('{');
-	while (!sc.CheckToken('}'))
+	if(ac)
 	{
-		bool success = false;
-		if (!sc.CheckToken(TK_Sound))
+		if(!ac->Parse(*this, sc))
 		{
-			sc.MustGetToken(TK_Identifier);
+			SkipToNext();
 		}
-		if (ac != NULL)
+		else
 		{
-			success = ac->ParseKey(sc);
-			if (!success)
-			{
-				sc.ScriptMessage("Unknown key name '%s'\n", sc.String);
-			}
+			desc->mActions.Push(ac);
 		}
-		if (!success) SkipToNext();
 	}
-	if (ac != NULL) desc->mActions.Push(ac);
 }
 
 //==========================================================================
@@ -911,14 +947,14 @@ DIntermissionController* F_StartFinale (const char *music, int musicorder, int c
 			desc->mActions.Push(wiper);
 		}
 
-		return F_StartIntermission(desc, true, ending && endsequence != NAME_None);
+		return F_StartIntermission(desc, FSTATE_EndingGame, true, ending && endsequence != NAME_None);
 	}
 	else if (ending)
 	{
 		FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(endsequence);
 		if (pdesc != NULL)
 		{
-			return F_StartIntermission(*pdesc, false, ending);
+			return F_StartIntermission(*pdesc, FSTATE_EndingGame, false, ending);
 		}
 	}
 	return nullptr;

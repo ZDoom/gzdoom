@@ -936,12 +936,18 @@ static DObject *BuiltinNewDoom(PClass *cls, int outerside, int backwardscompatib
 	// Creating actors here must be outright prohibited,
 	if (cls->IsDescendantOf(NAME_Actor))
 	{
-		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'. Use Actor.Spawn instead.");
 		return nullptr;
 	}
 	if (cls->IsDescendantOf(NAME_VisualThinker)) // Same for VisualThinkers.
 	{
 		ThrowAbortException(X_OTHER, "Cannot create VisualThinker or inheriting classes with 'new'. Use 'VisualThinker.Spawn' instead.");
+		return nullptr;
+	}
+	// These don't make sense without an owning Actor so don't allow creating them.
+	if (cls->IsDescendantOf(NAME_Behavior))
+	{
+		ThrowAbortException(X_OTHER, "Behaviors must be added to existing Actors and cannot be created with 'new'");
 		return nullptr;
 	}
 	if ((vm_warnthinkercreation || !backwardscompatible) && cls->IsDescendantOf(NAME_Thinker))
@@ -1027,6 +1033,10 @@ FxExpression *FxCastForEachLoop::Resolve(FCompileContext &ctx)
 	else if(itType->TypeName == NAME_ThinkerIterator)
 	{
 		fieldName = "Thinker";
+	}
+	else if (itType->TypeName == NAME_BehaviorIterator)
+	{
+		fieldName = "Behavior";
 	}
 	else
 	{
@@ -1212,6 +1222,7 @@ bool IsGameSpecificForEachLoop(FxForEachLoop * loop)
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BlockThingsIterator
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
 			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+			 || ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BehaviorIterator
 			));
 }
 
@@ -1226,7 +1237,7 @@ FxExpression * ResolveGameSpecificForEachLoop(FxForEachLoop * loop)
 		delete loop;
 		return blockIt;
 	}
-	else if(cname == NAME_ActorIterator || cname == NAME_ThinkerIterator)
+	else if(cname == NAME_ActorIterator || cname == NAME_ThinkerIterator || cname == NAME_BehaviorIterator)
 	{
 		auto castIt = new FxCastForEachLoop(NAME_None, loop->loopVarName, loop->Array, loop->Code, loop->ScriptPosition);
 		loop->Array = loop->Code = nullptr;
@@ -1318,13 +1329,14 @@ bool IsGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
 	return (vt->isObjectPointer() && (
 		((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ActorIterator
 		|| ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_ThinkerIterator
+		|| ((PObjectPointer*)vt)->PointedClass()->TypeName == NAME_BehaviorIterator
 		));
 }
 
 FxExpression * ResolveGameSpecificTypedForEachLoop(FxTypedForEachLoop * loop)
 {
 	assert(loop->Expr->ValueType->isObjectPointer());
-	assert(((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator);
+	assert(((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ActorIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_ThinkerIterator || ((PObjectPointer*)loop->Expr->ValueType)->PointedClass()->TypeName == NAME_BehaviorIterator);
 
 	FxExpression * castIt = new FxCastForEachLoop(loop->className, loop->varName, loop->Expr, loop->Code, loop->ScriptPosition);
 	loop->Expr = loop->Code = nullptr;

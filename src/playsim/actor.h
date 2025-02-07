@@ -1362,6 +1362,11 @@ public:
 	TDeletingArray<FLightDefaults *> UserLights;
 	int PrevPortalGroup;
 
+	// [inkoalawetrust] Last tic's position and orientation.
+	DVector3 OldTicPos;
+	DVector3 OldTicVel;
+	DRotator OldTicAngles;
+
 	// When was this actor spawned?
 	int SpawnTime;
 	uint32_t SpawnOrder;

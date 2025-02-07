@@ -397,6 +397,9 @@ void AActor::Serialize(FSerializer &arc)
 		A("WorldOffset", WorldOffset)
 		("modelData", modelData)
 		A("LandingSpeed", LandingSpeed)
+		A("OldTicPos",OldTicPos)
+		A("OldTicVel", OldTicVel)
+		A("OldTicAngles", OldTicAngles)
 
 		("unmorphtime", UnmorphTime)
 		("morphflags", MorphFlags)
@@ -4042,7 +4045,10 @@ void AActor::Tick ()
 			}
 		}
 
-		double oldz = Z();
+		// [inkoalawetrust] Where we were last tic.
+		OldTicVel = Vel;
+		OldTicAngles = Angles;
+		OldTicPos = Pos();
 
 		// [RH] Give the pain elemental vertical friction
 		// This used to be in APainElemental::Tick but in order to use

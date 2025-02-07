@@ -2135,6 +2135,11 @@ DEFINE_FIELD(AActor, UnmorphTime)
 DEFINE_FIELD(AActor, MorphFlags)
 DEFINE_FIELD(AActor, PremorphProperties)
 DEFINE_FIELD(AActor, MorphExitFlash)
+DEFINE_FIELD(AActor, OldTicPos)
+DEFINE_FIELD(AActor, OldTicVel)
+DEFINE_FIELD_NAMED(AActor, OldTicAngles.Yaw, OldTicAngle)
+DEFINE_FIELD_NAMED(AActor, OldTicAngles.Pitch, OldTicPitch)
+DEFINE_FIELD_NAMED(AActor, OldTicAngles.Roll, OldTicRoll)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);

@@ -266,6 +266,11 @@ class Actor : Thinker native
 	native Vector2 AutomapOffsets;
 	native double LandingSpeed;
 
+	// [inkoalawetrust] Last tics' info.
+	native Vector3 OldTicPos;
+	native Vector3 OldTicVel;
+	native double OldTicAngle, OldTicPitch, OldTicRoll;
+
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
 	meta double DeathHeight;	// Height on normal death

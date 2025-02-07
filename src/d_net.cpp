@@ -2417,6 +2417,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 						AActor *spawned = Spawn (primaryLevel, typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
+							spawned->SpawnFlags |= MTF_CONSOLETHING;
 							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2 || type == DEM_SUMMONMBF)
 							{
 								if (spawned->CountsAsKill()) 

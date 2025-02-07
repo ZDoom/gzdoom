@@ -1508,7 +1508,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
 			if (field->Flags & ZCC_Play)
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Play);
-			if (field->Flags & ZCC_ClearScope)
+			if (field->Flags & (ZCC_ClearScope | ZCC_UnsafeClearScope))
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData);
 		}
 		else
@@ -2315,7 +2315,7 @@ void ZCCCompiler::SetImplicitArgs(TArray<PType*>* args, TArray<uint32_t>* argfla
 	if (funcflags & VARF_Method)
 	{
 		// implied self pointer
-		if (args != nullptr)		args->Push(NewPointer(cls, !!(funcflags & VARF_ReadOnly)));
+		if (args != nullptr)		args->Push(NewPointer(cls, (funcflags & VARF_SafeConst)));
 		if (argflags != nullptr)	argflags->Push(VARF_Implicit | VARF_ReadOnly);
 		if (argnames != nullptr)	argnames->Push(NAME_self);
 	}

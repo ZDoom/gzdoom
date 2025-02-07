@@ -424,6 +424,11 @@ enum EMapThingFlags
 	MTF_NOINFIGHTING	= 0x100000,
 	MTF_NOCOUNT			= 0x200000,	// Removes COUNTKILL/COUNTITEM
 
+	// Thing spawn origins, what created this thing?
+	MTF_MAPTHING		= 0x400000, // Map spawned
+	MTF_CONSOLETHING	= 0x800000, // Console spawned (i.e summon)
+	MTF_NONSPAWNTHING	= (MTF_MAPTHING|MTF_CONSOLETHING), // [inkoalawetrust]: Rachael didn't want a dedicated MTF_SPAWNTHING flag taking up the field, so check if the other 2 flags aren't true instead.
+
 	// BOOM and DOOM compatible versions of some of the above
 
 	BTF_NOTSINGLE		= 0x0010,	// (TF_COOPERATIVE|TF_DEATHMATCH)

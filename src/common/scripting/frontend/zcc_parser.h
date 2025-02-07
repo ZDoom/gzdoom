@@ -65,6 +65,7 @@ enum
 	ZCC_Version			= 1 << 21,
 	ZCC_Internal		= 1 << 22,
 	ZCC_Sealed			= 1 << 23,
+	ZCC_FuncConstUnsafe	= 1 << 24,
 };
 
 // Function parameter modifiers

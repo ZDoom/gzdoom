@@ -192,10 +192,7 @@ class ID24IncineratorProjectile : Actor // Heatwave Ripper
 		Radius 16;
 		Height 8;
 
-		+NOBLOCKMAP;
-		+NOGRAVITY;
-		+DROPOFF;
-		+MISSILE;
+		Projectile;
 		+ZDOOMTRANS;
 		+RIPPER;
 

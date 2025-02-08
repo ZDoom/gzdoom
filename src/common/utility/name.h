@@ -76,6 +76,8 @@ public:
 
 	bool IsValidName() const { return (unsigned)Index < (unsigned)NameData.NumNames; }
 
+	static bool IsValidName(int index) { return index >= 0 && index < NameData.NumNames; }
+
 	// Note that the comparison operators compare the names' indices, not
 	// their text, so they cannot be used to do a lexicographical sort.
 	bool operator == (const FName &other) const { return Index == other.Index; }

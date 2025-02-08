@@ -73,10 +73,7 @@ class ID24IncineratorFlame : Actor // Incinerator Flame
 		Radius 13;
 		Height 8;
 
-		+NOBLOCKMAP;
-		+NOGRAVITY;
-		+DROPOFF;
-		+MISSILE;
+		Projectile;
 		+ZDOOMTRANS;
 		+FORCERADIUSDMG;
 	}

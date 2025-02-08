@@ -1796,3 +1796,16 @@ DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Number, Number);
 DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.End, End);
 DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.Crossed, Crossed);
 DEFINE_FIELD_NAMED_X(ScriptScanner, DScriptScanner, wrapped.ParseError, ParseError);
+
+static int ValidateNameIndex(int index)
+{
+	return FName::IsValidName(index) ? index : 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, ValidateNameIndex, ValidateNameIndex)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+
+	ACTION_RETURN_INT(ValidateNameIndex(index));
+}

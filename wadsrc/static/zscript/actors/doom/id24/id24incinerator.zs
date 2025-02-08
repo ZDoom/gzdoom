@@ -22,7 +22,7 @@ class ID24Incinerator : DoomWeapon // Incinerator
 	{
 		Weapon.SelectionOrder 120;
 		Weapon.AmmoUse 1;
-		Weapon.AmmoGive 40;
+		Weapon.AmmoGive 20;
 		Weapon.AmmoType "ID24Fuel";
 		Inventory.PickupMessage "$ID24_GOTINCINERATOR";
 		Tag "$TAG_ID24INCINERATOR";

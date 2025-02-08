@@ -76,6 +76,7 @@ class ID24IncineratorFlame : Actor // Incinerator Flame
 		Projectile;
 		+ZDOOMTRANS;
 		+FORCERADIUSDMG;
+		RenderStyle "Add";
 	}
 
 	States

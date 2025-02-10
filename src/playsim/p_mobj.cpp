@@ -1743,7 +1743,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane, bool is3DFloor)
 {
 	if (flags & MF_MISSILE)
 	{
-		switch (SpecialBounceHit(nullptr, nullptr, &plane))
+		switch (SpecialBounceHit(nullptr, nullptr, &plane, is3DFloor))
 		{
 			// This one is backwards for some reason...
 			case 1:		return false;
@@ -3420,15 +3420,15 @@ int AActor::SpecialMissileHit (AActor *victim)
 }
 
 // This virtual method only exists on the script side.
-int AActor::SpecialBounceHit(AActor* bounceMobj, line_t* bounceLine, secplane_t* bouncePlane)
+int AActor::SpecialBounceHit(AActor* bounceMobj, line_t* bounceLine, secplane_t* bouncePlane, bool is3DFloor)
 {
 	IFVIRTUAL(AActor, SpecialBounceHit)
 	{
-		VMValue params[4] = { (DObject*)this, bounceMobj, bounceLine, bouncePlane };
+		VMValue params[] = { (DObject*)this, bounceMobj, bounceLine, bouncePlane, is3DFloor };
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		VMCall(func, params, 4, &ret, 1);
+		VMCall(func, params, 5, &ret, 1);
 		return retval;
 	}
 	else return -1;

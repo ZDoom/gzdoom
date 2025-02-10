@@ -3608,7 +3608,7 @@ bool FSlide::BounceWall(AActor *mo)
 
 	if (mo->flags & MF_MISSILE)
 	{
-		switch (mo->SpecialBounceHit(nullptr, line, nullptr))
+		switch (mo->SpecialBounceHit(nullptr, line, nullptr, false))
 		{
 			case 1:		return true;
 			case 0:		return false;
@@ -3708,7 +3708,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 			default:	break;
 		}
 
-		switch (mo->SpecialBounceHit(BlockingMobj, nullptr, nullptr))
+		switch (mo->SpecialBounceHit(BlockingMobj, nullptr, nullptr, false))
 		{
 			case 1:		return true;
 			case 0:		return false;

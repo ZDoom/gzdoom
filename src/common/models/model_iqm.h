@@ -140,6 +140,7 @@ private:
 	int mLumpNum = -1;
 
 	TMap<FName, int> NamedAnimations;
+	TMap<FName, int> NamedJoints;
 
 	TArray<IQMMesh> Meshes;
 	TArray<IQMTriangle> Triangles;
@@ -158,6 +159,14 @@ private:
 	TArray<VSMatrix> baseframe;
 	TArray<VSMatrix> inversebaseframe;
 	TArray<TRS> TRSData;
+public:
+	int NumJoints() override { return Joints.Size(); }
+	int FindJoint(FName name) override
+	{
+		int *j = NamedJoints.CheckKey(name);
+
+		return j ? *j : -1;
+	}
 };
 
 struct IQMReadErrorException { };

@@ -26,9 +26,10 @@ enum EModelAnimFlags
 
 struct BoneOverride
 {
-	int rot_mode; // 0 = no override, 1 = rotate, 2 = replace
-	int rot_switchtic;
-	int rot_interplen;
+	int rot_mode = 0; // 0 = no override, 1 = rotate, 2 = replace
+	int rot_prev_mode = 0;
+	double rot_switchtic;
+	double rot_interplen = 0.0;
 	FQuaternion rot_prev;
 	FQuaternion rot;
 };

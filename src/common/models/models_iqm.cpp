@@ -109,9 +109,17 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		}
 
 		reader.SeekTo(ofs_joints);
-		for (IQMJoint& joint : Joints)
+		for (int i = 0; i < Joints.Size(); i++)
 		{
+			IQMJoint& joint = Joints[i];
+
 			joint.Name = reader.ReadName(text);
+
+			if(!joint.Name.IsEmpty())
+			{
+				NamedJoints.Insert(joint.Name, i);
+			}
+
 			joint.Parent = reader.ReadInt32();
 			joint.Translate.X = reader.ReadFloat();
 			joint.Translate.Y = reader.ReadFloat();
@@ -518,20 +526,29 @@ const TArray<TRS>* IQMModel::AttachAnimationData()
 	return &TRSData;
 }
 
+FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, float t, float invt)
+{
+	FQuaternion rot = from * invt;
+
+	if ((rot | to * t) < 0)
+	{
+		rot.X *= -1;
+		rot.Y *= -1;
+		rot.Z *= -1;
+		rot.W *= -1;
+	}
+
+	rot += to * t;
+	
+	return rot.Unit();
+}
+
 static TRS InterpolateBone(const TRS &from, const TRS &to, float t, float invt)
 {
 	TRS bone;
 
 	bone.translation = from.translation * invt + to.translation * t;
-	bone.rotation = from.rotation * invt;
-
-	if ((bone.rotation | to.rotation * t) < 0)
-	{
-		bone.rotation.X *= -1; bone.rotation.Y *= -1; bone.rotation.Z *= -1; bone.rotation.W *= -1;
-	}
-
-	bone.rotation += to.rotation * t;
-	bone.rotation.MakeUnit();
+	bone.rotation = InterpolateQuat(from.rotation, to.rotation, t, invt);
 	bone.scaling = from.scaling * invt + to.scaling * t;
 
 	return bone;
@@ -584,20 +601,23 @@ const TArray<VSMatrix>* IQMModel::CalculateBones(const ModelAnimFrame &from, con
 	}
 }
 
+inline FQuaternion ModifyBone(FQuaternion orig, FQuaternion rot, int mode)
+{
+	if(mode == 0) return orig;
+	if(mode == 1) return (orig * rot).Unit();
+	return rot;
+}
+
 inline void ModifyBone(const BoneOverride& mod, TRS &bone, double time)
 {
-	if(mod.rot_mode > 0)
-	{
-		FQuaternion rot = ((mod.rot_switchtic + mod.rot_interplen) < time) ? FQuaternion::SLerp(mod.rot_prev, mod.rot, std::clamp(((time - mod.rot_switchtic) / mod.rot_interplen), 0.0, 1.0)) : mod.rot;
+	double lerp_amt = mod.rot_interplen > 0.0 ? std::clamp(((time - mod.rot_switchtic) / mod.rot_interplen), 0.0, 1.0) : 1.0;
 
-		if(mod.rot_mode == 1)
-		{
-			bone.rotation = (bone.rotation * rot).Unit();
-		}
-		else if(mod.rot_mode == 2)
-		{
-			bone.rotation = rot;
-		}
+	if(mod.rot_mode > 0 || (mod.rot_prev_mode > 0 && lerp_amt < 1.0))
+	{
+		FQuaternion from = ModifyBone(bone.rotation, mod.rot_prev, mod.rot_prev_mode);
+		FQuaternion to = ModifyBone(bone.rotation, mod.rot, mod.rot_mode);
+
+		bone.rotation = InterpolateQuat(from, to, lerp_amt, 1.0 - lerp_amt);
 	}
 }
 

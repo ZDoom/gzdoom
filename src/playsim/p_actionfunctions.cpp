@@ -5123,6 +5123,123 @@ static void CleanupModelData(AActor * mobj)
 	}
 }
 
+FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, float t, float invt);
+
+static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_index, int index, FQuaternion rotation, int mode, double interpolation_duration, double switchTic)
+{
+	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
+
+	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
+
+	auto &bone = self->modelData->modelBoneOverrides[model_index][index];
+
+	double prev_interp_amt = bone.rot_interplen > 0.0 ? std::clamp(((switchTic - bone.rot_switchtic) / bone.rot_interplen), 0.0, 1.0) : 1.0;
+	double prev_interp_amt_inv = 1.0 - prev_interp_amt;
+
+	bone.rot_prev = bone.rot_mode > 0 ? InterpolateQuat(bone.rot_prev, bone.rot, prev_interp_amt, prev_interp_amt_inv) : FQuaternion(0,0,0,1);
+
+	// might break slightly if rotation is switched from absolute to additive before interpolation finishes,
+	// but shouldn't matter too much, since people will probably mostly stick to one single mode per bone
+	// so not worth the extra complexity (and adding the requirement of needing bone calculation for setters to work) to properly support it
+	bone.rot_prev_mode = (bone.rot_mode == 0 && bone.rot_prev_mode != 0 && prev_interp_amt_inv > 0.0) ? 1 : bone.rot_mode;
+
+	bone.rot = mode == 0 ? FQuaternion(0,0,0,1) : rotation;
+	bone.rot_switchtic = switchTic;
+	bone.rot_interplen = interpolation_duration;
+	bone.rot_mode = mode;
+}
+
+#define SETGETBONE_SHARED(setorget)\
+	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))\
+	{\
+		ThrowAbortException(X_OTHER, "Cannot " setorget " offset for non-decoupled actors");\
+	}\
+	\
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))\
+	{\
+		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");\
+	}\
+	\
+	EnsureModelData(self);\
+	\
+	FModel * mdl;\
+	\
+	if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())\
+	{\
+		mdl = Models[self->modelData->models[0].modelID];\
+	}\
+	else\
+	{\
+		mdl = Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];\
+	}
+
+#define SETBONE_SHARED()\
+	SETGETBONE_SHARED("set")\
+	if(interpolation_duration < 0) interpolation_duration = 0;\
+	if(mode < 0 || mode > 2)\
+	{\
+		ThrowAbortException(X_OTHER, "Invalid mode for setbone");\
+	}
+
+static void SetBoneRotationNative(AActor * self, int index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	SETBONE_SHARED();
+	if(index < 0 || index >= mdl->NumJoints())
+	{
+		ThrowAbortException(X_OTHER, "bone index out of range");
+	}
+
+	SetModelBoneRotationInternal(self, mdl, 0, index, FQuaternion(rot_x, rot_y, rot_z, rot_w), mode, interpolation_duration, self->Level->totaltime + ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetBoneRotation, SetBoneRotationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_FLOAT(rot_w);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetBoneRotationNative(self, boneindex, rot_x, rot_y, rot_z, rot_w, mode, interplen, 1.0);
+
+	return 0;
+}
+
+static void SetNamedBoneRotationNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	FName boneName{ENamedName(boneName_i)};
+
+	SETBONE_SHARED();
+
+	int index = mdl->FindJoint(boneName);
+	if(index < 0 || index >= mdl->NumJoints())
+	{
+		Printf(PRINT_NONOTIFY, "Could not find joint '%s'", boneName.GetChars());
+		return;
+	}
+
+	SetModelBoneRotationInternal(self, mdl, 0, index, FQuaternion(rot_x, rot_y, rot_z, rot_w), mode, interpolation_duration, self->Level->totaltime + ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneRotation, SetNamedBoneRotationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_FLOAT(rot_w);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetNamedBoneRotationNative(self, bonename.GetIndex(), rot_x, rot_y, rot_z, rot_w, mode, interplen, 1.0);
+
+	return 0;
+}
+
 enum ESetAnimationFlags
 {
 	SAF_INSTANT = 1 << 0,

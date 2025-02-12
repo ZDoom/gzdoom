@@ -86,6 +86,9 @@ public:
 
 	virtual int FindFrame(const char * name, bool nodefault = false) = 0;
 
+	virtual int NumJoints() { return 0; }
+	virtual int FindJoint(FName name) { return -1; }
+
 	// [RL0] these are used for decoupled iqm animations
 	virtual int FindFirstFrame(FName name) { return FErr_NotFound; }
 	virtual int FindLastFrame(FName name) { return FErr_NotFound; }

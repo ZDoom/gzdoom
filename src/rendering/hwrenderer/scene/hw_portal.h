@@ -112,6 +112,8 @@ struct FPortalSceneState
 
 	int skyboxrecursion = 0;
 
+	VSMatrix tempmatrix;
+
 	void BeginScene()
 	{
 		UniqueSkies.Clear();
@@ -145,7 +147,7 @@ public:
 	virtual bool NeedDepthBuffer() { return true; }
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state)
 	{
-		if (Setup(di, state, di->mClipper))
+		if (Setup(di, state, (di->Viewpoint.IsAllowedOoB() ? di->rClipper : di->mClipper)))
 		{
 			di->DrawScene(DM_PORTAL);
 			Shutdown(di, state);

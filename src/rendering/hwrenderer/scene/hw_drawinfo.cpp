@@ -160,6 +160,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		VPUniforms.mProjectionMatrix.loadIdentity();
 		VPUniforms.mViewMatrix.loadIdentity();
 		VPUniforms.mNormalViewMatrix.loadIdentity();
+		ProjectionMatrix2.loadIdentity();
 		VPUniforms.mViewHeight = viewheight;
 		if (lightmode == ELightMode::Build)
 		{
@@ -684,60 +685,70 @@ void HWDrawInfo::DrawCorona(FRenderState& state, ACorona* corona, double dist)
 
 static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void* userdata)
 {
-	int* count = (int*)userdata;
+	BitArray* CurMapSections = (BitArray*)userdata;
 	double bf, bc;
-	(*count)++;
+
 	switch(res.HitType)
 	{
 	case TRACE_HitWall:
 		if (!(res.Line->sidedef[res.Side]->Flags & WALLF_DITHERTRANS))
 		{
-			bf = res.Line->sidedef[res.Side]->sector->floorplane.ZatPoint(res.HitPos.XY());
-			bc = res.Line->sidedef[res.Side]->sector->ceilingplane.ZatPoint(res.HitPos.XY());
-			if ((res.HitPos.Z <= bc) && (res.HitPos.Z >= bf)) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS;
+			sector_t* linesec = res.Line->sidedef[res.Side]->sector;
+			if (linesec->subsectorcount > 0 && (*CurMapSections)[linesec->subsectors[0]->mapsection])
+			{
+				bf = res.Line->sidedef[res.Side]->sector->floorplane.ZatPoint(res.HitPos.XY());
+				bc = res.Line->sidedef[res.Side]->sector->ceilingplane.ZatPoint(res.HitPos.XY());
+				if ((res.HitPos.Z <= bc) && (res.HitPos.Z >= bf)) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS;
+			}
 		}
 		break;
 	case TRACE_HitFloor:
-		if (res.HitPos.Z == res.Sector->floorplane.ZatPoint(res.HitPos))
+		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection])
 		{
-			res.Sector->floorplane.dithertransflag = true;
-		}
-		else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
-		{
-			F3DFloor *rover;
-			int kk;
-			for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
+			if (res.HitPos.Z == res.Sector->floorplane.ZatPoint(res.HitPos))
 			{
-				rover = res.Sector->e->XFloor.ffloors[kk];
-				if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
+				res.Sector->floorplane.dithertransflag = true;
+			}
+			else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
+			{
+				F3DFloor *rover;
+				int kk;
+				for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
 				{
-					if (res.HitPos.Z == rover->top.plane->ZatPoint(res.HitPos))
+					rover = res.Sector->e->XFloor.ffloors[kk];
+					if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 					{
-						rover->top.plane->dithertransflag = true;
-						break; // Out of for loop
+						if (res.HitPos.Z == rover->top.plane->ZatPoint(res.HitPos))
+						{
+							rover->top.plane->dithertransflag = true;
+							break; // Out of for loop
+						}
 					}
 				}
 			}
 		}
 		break;
 	case TRACE_HitCeiling:
-		if (res.HitPos.Z == res.Sector->ceilingplane.ZatPoint(res.HitPos))
+		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection])
 		{
-			res.Sector->ceilingplane.dithertransflag = true;
-		}
-		else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
-		{
-			F3DFloor *rover;
-			int kk;
-			for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
+			if (res.HitPos.Z == res.Sector->ceilingplane.ZatPoint(res.HitPos))
 			{
-				rover = res.Sector->e->XFloor.ffloors[kk];
-				if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
+				res.Sector->ceilingplane.dithertransflag = true;
+			}
+			else if (res.Sector->e->XFloor.ffloors.Size()) // Maybe it was 3D floors
+			{
+				F3DFloor *rover;
+				int kk;
+				for (kk = 0; kk < (int)res.Sector->e->XFloor.ffloors.Size(); kk++)
 				{
-					if (res.HitPos.Z == rover->bottom.plane->ZatPoint(res.HitPos))
+					rover = res.Sector->e->XFloor.ffloors[kk];
+					if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 					{
-						rover->bottom.plane->dithertransflag = true;
-						break; // Out of for loop
+						if (res.HitPos.Z == rover->bottom.plane->ZatPoint(res.HitPos))
+						{
+							rover->bottom.plane->dithertransflag = true;
+							break; // Out of for loop
+						}
 					}
 				}
 			}
@@ -763,13 +774,11 @@ void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 		DVector3 vvec = actorpos - Viewpoint.Pos;
 		if (Viewpoint.IsOrtho())
 		{
-			vvec += Viewpoint.camera->Pos() - actorpos;
-			vvec *= 5.0; // Should be 4.0? (since zNear is behind screen by 3*dist in VREyeInfo::GetProjection())
+			vvec = 5.0 * Viewpoint.camera->ViewPos->Offset.Length() * Viewpoint.ViewVector3D; // Should be 4.0? (since zNear is behind screen by 3*dist in VREyeInfo::GetProjection())
 		}
 		double distance = vvec.Length() - actor->radius;
 		DVector3 campos = actorpos - vvec;
 		sector_t* startsec;
-		int count = 0;
 
 		vvec = vvec.Unit();
 		campos.X -= horix; campos.Y += horiy; campos.Z += actor->Height * 0.25;
@@ -777,10 +786,10 @@ void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 		{
 			startsec = Level->PointInRenderSubsector(campos)->sector;
 			Trace(campos, startsec, vvec, distance,
-				  0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+				  0, 0, actor, results, TRACE_PortalRestrict, TraceCallbackForDitherTransparency, &CurrentMapSections);
 			campos.Z += actor->Height * 0.5;
 			Trace(campos, startsec, vvec, distance,
-				  0, 0, actor, results, 0, TraceCallbackForDitherTransparency, &count);
+				  0, 0, actor, results, TRACE_PortalRestrict, TraceCallbackForDitherTransparency, &CurrentMapSections);
 			campos.Z -= actor->Height * 0.5;
 			campos.X += horix; campos.Y -= horiy;
 		}

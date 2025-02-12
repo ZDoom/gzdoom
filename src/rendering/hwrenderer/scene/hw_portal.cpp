@@ -125,6 +125,7 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 {
 	HWPortal * best = nullptr;
 	unsigned bestindex = 0;
+	bool usestencil = outer_di->Viewpoint.IsAllowedOoB();
 
 	// Find the one with the highest amount of lines.
 	// Normally this is also the one that saves the largest amount
@@ -145,7 +146,7 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 			}
 
 			// If the portal area contains the current camera viewpoint, let's always use it because it's likely to give the largest area.
-			if (p->boundingBox.contains(outer_di->Viewpoint.Pos))
+			if (p->boundingBox.contains(usestencil ? outer_di->Viewpoint.OffPos : outer_di->Viewpoint.Pos))
 			{
 				best = p;
 				bestindex = i;
@@ -157,7 +158,13 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	if (best)
 	{
 		portals.Delete(bestindex);
-		RenderPortal(best, state, false, outer_di);
+		if (usestencil)
+		{
+			tempmatrix = outer_di->VPUniforms.mProjectionMatrix; // ensure perspective projection matrix for skies
+			outer_di->VPUniforms.mProjectionMatrix = outer_di->ProjectionMatrix2;
+		}
+		RenderPortal(best, state, usestencil, outer_di);
+		if (usestencil) outer_di->VPUniforms.mProjectionMatrix = tempmatrix;
 		delete best;
 		return true;
 	}
@@ -410,20 +417,23 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 
 	// Set the clipper to the minimal visible area
 	clipper->SafeAddClipRange(0, 0xffffffff);
+	auto outvp = outer_di->Viewpoint;
+	DVector3 outPos = clipper->amRadar ? outvp.OffPos : outvp.Pos;
+	angle_t padding = clipper->amRadar ? 0x00200000 : 0x00000000; // Make radar clipping more aggressive (reveal less)
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
-		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
-		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
+		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outPos).Angle() + angleOffset;
+		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outPos).Angle() + angleOffset;
 
 		if (deltaangle(endAngle, startAngle) < nullAngle)
 		{
-			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
+			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs() + padding, endAngle.BAMs() - padding);
 		}
 	}
 
 	// and finally clip it to the visible area
 	angle_t a1 = di->FrustumAngle();
-	if (a1 < ANGLE_180) clipper->SafeAddClipRangeRealAngles(di->Viewpoint.Angles.Yaw.BAMs() + a1, di->Viewpoint.Angles.Yaw.BAMs() - a1);
+	if (!clipper->amRadar && a1 < ANGLE_180) clipper->SafeAddClipRangeRealAngles(di->Viewpoint.Angles.Yaw.BAMs() + a1, di->Viewpoint.Angles.Yaw.BAMs() - a1);
 
 	// lock the parts that have just been clipped out.
 	clipper->SetSilhouette();
@@ -608,6 +618,8 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *cl
 	P_TranslatePortalZ(origin, vp.Pos.Z);
 	P_TranslatePortalXY(origin, vp.Path[0].X, vp.Path[0].Y);
 	P_TranslatePortalXY(origin, vp.Path[1].X, vp.Path[1].Y);
+	P_TranslatePortalXY(origin, vp.OffPos.X, vp.OffPos.Y);
+	P_TranslatePortalZ(origin, vp.OffPos.Z);
 	if (!vp.showviewer && vp.camera != nullptr && P_PointOnLineSidePrecise(vp.Path[0], glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(vp.Path[1], glport->lines[0]->mDestination))
 	{
 		double distp = (vp.Path[0] - vp.Path[1]).Length();

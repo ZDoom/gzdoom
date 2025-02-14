@@ -253,7 +253,7 @@ public:
 	// g_Game
 	void PlayerReborn (int player);
 	bool CheckSpot (int playernum, FPlayerStart *mthing);
-	void DoReborn (int playernum, bool freshbot);
+	void DoReborn (int playernum, bool force = false);
 	void QueueBody (AActor *body);
 	double PlayersRangeFromSpot (FPlayerStart *spot);
 	FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections);

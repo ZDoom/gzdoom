@@ -871,6 +871,24 @@ void EventManager::PlayerSpawned(int num)
 		handler->PlayerSpawned(num);
 }
 
+bool EventManager::PlayerRespawning(int num)
+{
+	if (ShouldCallStatic(true))
+	{
+		bool res = staticEventManager.PlayerRespawning(num);
+		if (!res)
+			return false;
+	}
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		if (!handler->PlayerRespawning(num))
+			return false;
+	}
+
+	return true;
+}
+
 void EventManager::PlayerRespawned(int num)
 {
 	if (ShouldCallStatic(true)) staticEventManager.PlayerRespawned(num);
@@ -2129,6 +2147,22 @@ void DStaticEventHandler::PlayerSpawned(int num)
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
+}
+
+bool DStaticEventHandler::PlayerRespawning(int num)
+{
+	int res = true;
+	IFVIRTUAL(DStaticEventHandler, PlayerRespawning)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return res;
+		FPlayerEvent e = { num, false };
+		VMValue params[] = { (DStaticEventHandler*)this, &e };
+		VMReturn returns[] = { &res };
+		VMCall(func, params, 2, returns, 1);
+	}
+
+	return res;
 }
 
 void DStaticEventHandler::PlayerRespawned(int num)

@@ -184,6 +184,7 @@ class StaticEventHandler : Object native play version("2.4")
     //
     virtual void PlayerEntered(PlayerEvent e) {}
     virtual void PlayerSpawned(PlayerEvent e) {}
+    virtual bool PlayerRespawning(PlayerEvent e) { return true; }
     virtual void PlayerRespawned(PlayerEvent e) {}
     virtual void PlayerDied(PlayerEvent e) {}
     virtual void PlayerDisconnected(PlayerEvent e) {}

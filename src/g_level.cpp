@@ -838,7 +838,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 					player->mo->special1 = 0;
 				}
 				// ]]
-				DoReborn(i, false);
+				DoReborn(i, true);
 			}
 		}
 	}

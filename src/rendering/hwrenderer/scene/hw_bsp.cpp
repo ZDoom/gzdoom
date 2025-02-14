@@ -297,6 +297,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 			if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
 			backsector = hw_FakeFlat(seg->backsector, in_area, true);
 			if (hw_CheckClip(seg->sidedef, currentsector, backsector)) clipperr.SafeAddClipRange(startAngleR - paddingR, endAngleR + paddingR);
+			backsector = nullptr;
 		}
 	}
 
@@ -335,7 +336,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 	if (!seg->backsector)
 	{
 		if(!Viewpoint.IsAllowedOoB())
-			if (!(seg->sidedef->Flags & WALLF_DITHERTRANS)) clipper.SafeAddClipRange(startAngle, endAngle);
+			if (!(seg->sidedef->Flags & WALLF_DITHERTRANS_MID)) clipper.SafeAddClipRange(startAngle, endAngle);
 	}
 	else if (!ispoly)	// Two-sided polyobjects never obstruct the view
 	{
@@ -362,7 +363,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 
 			if (hw_CheckClip(seg->sidedef, currentsector, backsector))
 			{
-				if(!Viewpoint.IsAllowedOoB() && !(seg->sidedef->Flags & WALLF_DITHERTRANS))
+				if(!Viewpoint.IsAllowedOoB() && !(seg->sidedef->Flags & WALLF_DITHERTRANS_MID))
 					clipper.SafeAddClipRange(startAngle, endAngle);
 			}
 		}

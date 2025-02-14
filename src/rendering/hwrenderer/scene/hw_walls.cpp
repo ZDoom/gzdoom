@@ -83,15 +83,31 @@ void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t
 
 void HWWall::RenderWall(FRenderState &state, int textured)
 {
-	if (seg->sidedef->Flags & WALLF_DITHERTRANS) state.SetEffect(EFF_DITHERTRANS);
+	bool ditherT = (type == RENDERWALL_BOTTOM) && (seg->sidedef->Flags & WALLF_DITHERTRANS_BOTTOM);
+	ditherT |= (type == RENDERWALL_TOP) && (seg->sidedef->Flags & WALLF_DITHERTRANS_TOP);
+	ditherT |= seg->sidedef->Flags & WALLF_DITHERTRANS_MID;
+	if (ditherT)
+	{
+		state.SetEffect(EFF_DITHERTRANS);
+	}
 	assert(vertcount > 0);
 	state.SetLightIndex(dynlightindex);
 	state.Draw(DT_TriangleFan, vertindex, vertcount);
 	vertexcount += vertcount;
-	if (seg->sidedef->Flags & WALLF_DITHERTRANS)
+	if (ditherT)
 	{
 		state.SetEffect(EFF_NONE);
-		seg->sidedef->Flags &= ~WALLF_DITHERTRANS; // reset this every frame
+		switch(type) // reset this every frame
+		{
+		case RENDERWALL_TOP:
+			seg->sidedef->Flags &= ~WALLF_DITHERTRANS_TOP;
+			break;
+		case RENDERWALL_BOTTOM:
+			seg->sidedef->Flags &= ~WALLF_DITHERTRANS_BOTTOM;
+			break;
+		default:
+			if (seg->sidedef->dithertranscount-- <= 0) seg->sidedef->Flags &= ~WALLF_DITHERTRANS_MID;
+		}
 	}
 }
 

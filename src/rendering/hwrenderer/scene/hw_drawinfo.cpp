@@ -691,14 +691,28 @@ static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void*
 	switch(res.HitType)
 	{
 	case TRACE_HitWall:
-		if (!(res.Line->sidedef[res.Side]->Flags & WALLF_DITHERTRANS))
 		{
 			sector_t* linesec = res.Line->sidedef[res.Side]->sector;
 			if (linesec->subsectorcount > 0 && (*CurMapSections)[linesec->subsectors[0]->mapsection])
 			{
 				bf = res.Line->sidedef[res.Side]->sector->floorplane.ZatPoint(res.HitPos.XY());
 				bc = res.Line->sidedef[res.Side]->sector->ceilingplane.ZatPoint(res.HitPos.XY());
-				if ((res.HitPos.Z <= bc) && (res.HitPos.Z >= bf)) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS;
+				if (res.Line->sidedef[!res.Side])
+				{
+					// Two sided line! So let's find out if mid, top, or bottom texture needs dithered transparency
+					bf = max(bf, res.Line->sidedef[!res.Side]->sector->floorplane.ZatPoint(res.HitPos.XY()));
+					bc = min(bc, res.Line->sidedef[!res.Side]->sector->ceilingplane.ZatPoint(res.HitPos.XY()));
+					if (res.HitPos.Z <= bf) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS_BOTTOM;
+					else if (res.HitPos.Z < bc) res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS_MID;
+					else res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS_TOP;
+
+					res.Line->sidedef[res.Side]->dithertranscount = max<int>(1, res.Line->sidedef[!res.Side]->sector->e->XFloor.ffloors.Size());
+				}
+				else if ((res.HitPos.Z <= bc) && (res.HitPos.Z >= bf))
+				{
+					res.Line->sidedef[res.Side]->Flags |= WALLF_DITHERTRANS_MID;
+					res.Line->sidedef[res.Side]->dithertranscount = 1;
+				}
 			}
 		}
 		break;
@@ -792,6 +806,18 @@ void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 				  0, 0, actor, results, TRACE_PortalRestrict, TraceCallbackForDitherTransparency, &CurrentMapSections);
 			campos.Z -= actor->Height * 0.5;
 			campos.X += horix; campos.Y -= horiy;
+		}
+
+		// Tracers don't work on 3D floors when you are starting in the same sector (standing under them, for example)
+		if (actor->Sector->e->XFloor.ffloors.Size()) // 3D floor
+		{
+			F3DFloor *rover;
+			for (int kk = 0; kk < (int)actor->Sector->e->XFloor.ffloors.Size(); kk++)
+			{
+				rover = actor->Sector->e->XFloor.ffloors[kk];
+				rover->top.plane->dithertransflag = true;
+				rover->bottom.plane->dithertransflag = true;
+			}
 		}
 	}
 }

@@ -1153,7 +1153,7 @@ void G_Ticker ()
 			}
 			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
 			{
-				primaryLevel->DoReborn(i, false);
+				primaryLevel->DoReborn(i);
 			}
 		}
 	}
@@ -1766,7 +1766,7 @@ void FLevelLocals::QueueBody (AActor *body)
 // G_DoReborn
 //
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
-void FLevelLocals::DoReborn (int playernum, bool freshbot)
+void FLevelLocals::DoReborn (int playernum, bool force)
 {
 	if (!multiplayer && !(flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
 		!G_SkillProperty(SKILLP_PlayerRespawn))
@@ -1786,6 +1786,13 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
+		// Check if the player should be allowed to actually respawn first.
+		if (!force && players[playernum].playerstate == PST_REBORN && !localEventManager->PlayerRespawning(playernum))
+		{
+			players[playernum].playerstate = PST_DEAD;
+			return;
+		}
+
 		bool isUnfriendly;
 
 		PlayerSpawnPickClass(playernum);

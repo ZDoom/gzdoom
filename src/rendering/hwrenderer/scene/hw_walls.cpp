@@ -644,7 +644,8 @@ void HWWall::PutPortal(HWWallDispatcher *di, int ptype, int plane)
 			break;
 
 		case PORTALTYPE_PLANEMIRROR:
-			if (portalState.PlaneMirrorMode * planemirror->fC() <= 0)
+			if (ddi->Viewpoint.IsOrtho() ? (ddi->Viewpoint.ViewVector3D.dot(planemirror->Normal()) < 0)
+				: (portalState.PlaneMirrorMode * planemirror->fC() <= 0))
 			{
 				planemirror = portalState.UniquePlaneMirrors.Get(planemirror);
 				portal = ddi->FindPortal(planemirror);

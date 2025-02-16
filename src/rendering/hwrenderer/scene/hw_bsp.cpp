@@ -718,6 +718,9 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		bool anglevisible = false;
 		bool pitchvisible = !(Viewpoint.IsAllowedOoB()); // No vertical clipping if viewpoint is not allowed out of bounds
 		bool radarvisible = !(Viewpoint.IsAllowedOoB()) || !r_radarclipper || (Level->flags3 & LEVEL3_NOFOGOFWAR) || ((sub->flags & SSECMF_DRAWN) && !deathmatch);
+		bool ceilreflect = (mCurrentPortal && strcmp(mCurrentPortal->GetName(), "Planemirror ceiling"));
+		bool floorreflect = (mCurrentPortal && strcmp(mCurrentPortal->GetName(), "Planemirror floor"));
+		double planez = (ceilreflect ? sector->ceilingplane.ZatPoint(Viewpoint.Pos) : sector->floorplane.ZatPoint(Viewpoint.Pos));
 		angle_t pitchtemp;
 		angle_t pitchmin = ANGLE_90;
 		angle_t pitchmax = 0;
@@ -741,16 +744,28 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 				if (!pitchvisible)
 				{
-					pitchmin = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->floorplane.ZatPoint(seg->v1));
-					pitchmax = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(), sector->ceilingplane.ZatPoint(seg->v1));
+					pitchmin = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(),
+														   (ceilreflect || floorreflect) ?
+														   2 * planez - sector->floorplane.ZatPoint(seg->v1) :
+														   sector->floorplane.ZatPoint(seg->v1));
+					pitchmax = clipperv.PointToPseudoPitch(seg->v1->fX(), seg->v1->fY(),
+														   (ceilreflect || floorreflect) ?
+														   2 * planez - sector->ceilingplane.ZatPoint(seg->v1) :
+														   sector->ceilingplane.ZatPoint(seg->v1));
 					pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
 				}
 				if (pitchvisible && anglevisible && radarvisible) break;
 				if (!pitchvisible)
 				{
-					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->floorplane.ZatPoint(seg->v2));
+					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(),
+															(ceilreflect || floorreflect) ?
+															2 * planez - sector->floorplane.ZatPoint(seg->v2) :
+															sector->floorplane.ZatPoint(seg->v2));
 					if (int(pitchmin) > int(pitchtemp)) pitchmin = pitchtemp;
-					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(), sector->ceilingplane.ZatPoint(seg->v2));
+					pitchtemp = clipperv.PointToPseudoPitch(seg->v2->fX(), seg->v2->fY(),
+															(ceilreflect || floorreflect) ?
+															2 * planez - sector->ceilingplane.ZatPoint(seg->v2) :
+															sector->ceilingplane.ZatPoint(seg->v2));
 					if (int(pitchmax) < int(pitchtemp)) pitchmax = pitchtemp;
 					pitchvisible |= clipperv.SafeCheckRange(pitchmin, pitchmax);
 				}
@@ -819,7 +834,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				SetupSprite.Unclock();
 			}
 		}
-		if (r_dithertransparency && Viewpoint.IsAllowedOoB() && (RTnum < MAXDITHERACTORS))
+		if (r_dithertransparency && Viewpoint.IsAllowedOoB() && (RTnum < MAXDITHERACTORS) && mCurrentPortal == nullptr)
 		{
 			// [DVR] Not parallelizable due to variables RTnum and RenderedTargets[]
 			for (auto p = sector->touching_renderthings; p != nullptr; p = p->m_snext)

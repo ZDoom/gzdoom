@@ -5006,6 +5006,7 @@ void AActor::LevelSpawned ()
 	{
 		flags &= ~MF_DROPPED;
 	}
+	SpawnFlags |= MTF_MAPTHING;
 	HandleSpawnFlags ();
 }
 

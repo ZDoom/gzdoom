@@ -154,7 +154,7 @@ void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool al
 		case PORTS_PORTAL:
 		case PORTS_LINKEDPORTAL:
 		{
-			if (di->di && di->di->Viewpoint.IsAllowedOoB()) return;
+			if (di->di && di->di->Viewpoint.IsAllowedOoB()) return; // Almost works (with planemirrorportal stencil), but no quite
 			auto glport = sector->GetPortalGroup(plane);
 			if (glport != NULL)
 			{

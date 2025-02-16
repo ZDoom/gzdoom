@@ -47,6 +47,7 @@
 #include "hw_drawstructs.h"
 #include "hw_renderstate.h"
 #include "texturemanager.h"
+#include "hw_viewpointbuffer.h"
 
 #ifdef _DEBUG
 CVAR(Int, gl_breaksec, -1, 0)
@@ -314,6 +315,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	int rel = getExtraLight();
 
 	state.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
+	double zshift = (plane.plane.Normal().Z > 0.0 ? 0.01f : -0.01f); // The HWPlaneMirrorPortal::DrawPortalStencil() z-fights with flats
 
 	SetColor(state, di->Level, di->lightmode, lightlevel, rel, di->isFullbrightScene(), Colormap, alpha);
 	SetFog(state, di->Level, di->lightmode, lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
@@ -364,7 +366,11 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
 			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, NO_TRANSLATION, -1);
 			SetPlaneTextureRotation(state, &plane, texture);
+			di->VPUniforms.mViewMatrix.translate(0.0, zshift, 0.0);
+			screen->mViewpoints->SetViewpoint(state, &di->VPUniforms);
 			DrawSubsectors(di, state);
+			di->VPUniforms.mViewMatrix.translate(0.0, -zshift, 0.0);
+			screen->mViewpoints->SetViewpoint(state, &di->VPUniforms);
 			state.EnableTextureMatrix(false);
 		}
 		state.SetRenderStyle(DefaultRenderStyle());

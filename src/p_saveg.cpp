@@ -991,7 +991,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("automap", automap)
 		("interpolator", interpolator)
 		("frozenstate", frozenstate)
-		("visualthinkerhead", VisualThinkerHead);
+		("visualthinkerhead", VisualThinkerHead)
+		("actorbehaviors", ActorBehaviors);
 
 
 	// Hub transitions must keep the current total time

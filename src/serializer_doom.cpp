@@ -226,6 +226,37 @@ FSerializer& FDoomSerializer::StatePointer(const char* key, void* ptraddr, bool 
 }
 
 
+FSerializer& Serialize(FSerializer& arc, const char* key, TMap<FName, TObjPtr<DBehavior*>>& value, TMap<FName, TObjPtr<DBehavior*>>* def)
+{
+	if (!arc.BeginObject(key))
+		return arc;
+
+	if (arc.isWriting())
+	{
+		TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { value };
+		TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+		while (it.NextPair(pair))
+		{
+			auto b = pair->Value.Get();
+			if (b != nullptr)
+				arc(pair->Key.GetChars(), b);
+		}
+	}
+	else
+	{
+		const char* k = nullptr;
+		while ((k = arc.GetKey()) != nullptr)
+		{
+			DBehavior* obj = nullptr;
+			arc(k, obj);
+			value[k] = obj;
+		}
+	}
+
+	arc.EndObject();
+	return arc;
+}
+
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, FPolyObj *&value, FPolyObj **defval)
 {

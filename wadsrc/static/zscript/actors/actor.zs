@@ -73,6 +73,25 @@ class ViewPosition native
 	native readonly int Flags;
 }
 
+class Behavior native play abstract
+{
+	native readonly Actor Owner;
+	native readonly LevelLocals Level;
+
+	virtual void Initialize() {}
+	virtual void Reinitialize() {}
+	virtual void TransferredOwner(Actor oldOwner) {}
+	virtual void Tick() {}
+}
+
+class BehaviorIterator native abstract final
+{
+	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
+	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
+
+	native Behavior Next();
+	native void Reinit();
+}
 
 class Actor : Thinker native
 {
@@ -499,6 +518,13 @@ class Actor : Thinker native
 	{
 		return sin(fb * (180./32)) * 8;
 	}
+
+	native clearscope Behavior FindBehavior(class<Behavior> type) const;
+	native bool RemoveBehavior(class<Behavior> type);
+	native Behavior AddBehavior(class<Behavior> type);
+	native void TickBehaviors();
+	native void ClearBehaviors(class<Behavior> type = null);
+	native void MoveBehaviors(Actor from);
 
 	native clearscope bool isFrozen() const;
 	virtual native void BeginPlay();

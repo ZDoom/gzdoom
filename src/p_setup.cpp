@@ -380,6 +380,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	aabbTree = nullptr;
 	levelMesh = nullptr;
 	VisualThinkerHead = nullptr;
+	ActorBehaviors.Clear();
 	if (screen)
 		screen->SetAABBTree(nullptr);
 }

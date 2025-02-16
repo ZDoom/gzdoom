@@ -180,6 +180,14 @@ IMPLEMENT_POINTERS_START(AActor)
 	IMPLEMENT_POINTER(modelData)
 IMPLEMENT_POINTERS_END
 
+IMPLEMENT_CLASS(DBehavior, false, true)
+IMPLEMENT_POINTERS_START(DBehavior)
+	IMPLEMENT_POINTER(Owner)
+IMPLEMENT_POINTERS_END
+
+DEFINE_FIELD(DBehavior, Owner)
+DEFINE_FIELD(DBehavior, Level)
+
 //==========================================================================
 //
 // Make sure Actors can never have their networking disabled.
@@ -195,6 +203,22 @@ void AActor::EnableNetworking(const bool enable)
 	}
 
 	Super::EnableNetworking(true);
+}
+
+//==========================================================================
+//
+// AActor :: PropagateMark
+//
+//==========================================================================
+
+size_t AActor::PropagateMark()
+{
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+		GC::Mark(pair->Value);
+
+	return Super::PropagateMark();
 }
 
 //==========================================================================
@@ -402,7 +426,8 @@ void AActor::Serialize(FSerializer &arc)
 		("morphflags", MorphFlags)
 		("premorphproperties", PremorphProperties)
 		("morphexitflash", MorphExitFlash)
-		("damagesource", damagesource);
+		("damagesource", damagesource)
+		("behaviors", Behaviors);
 
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
@@ -444,6 +469,322 @@ void AActor::PostSerialize()
 	UpdateWaterLevel(false);
 }
 
+//==========================================================================
+//
+// Behaviors allow for actions to be defined on Actors not coupled to
+// specific inventory tokens. Only one can be attached at a time.
+//
+//==========================================================================
+
+void DBehavior::Serialize(FSerializer& arc)
+{
+	Super::Serialize(arc);
+	arc("owner", Owner)
+		("level", Level);
+}
+
+void DBehavior::OnDestroy()
+{
+	if (Level != nullptr)
+		Level->RemoveActorBehavior(*this);
+
+	Super::OnDestroy();
+}
+
+bool AActor::RemoveBehavior(FName type)
+{
+	bool res = false;
+	auto b = Behaviors.CheckKey(type);
+	if (b != nullptr)
+	{
+		if (b->Get() != nullptr)
+		{
+			b->ForceGet()->Destroy();
+			res = true;
+		}
+
+		Behaviors.Remove(type);
+	}
+
+	return res;
+}
+
+static int RemoveBehavior(AActor* self, PClass* type)
+{
+	return self->RemoveBehavior(type->TypeName);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveBehavior, RemoveBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
+	ACTION_RETURN_BOOL(self->RemoveBehavior(type->TypeName));
+}
+
+DBehavior* AActor::AddBehavior(PClass& type)
+{
+	if (type.bAbstract || !type.IsDescendantOf(NAME_Behavior))
+		return nullptr;
+
+	auto b = FindBehavior(type.TypeName);
+	if (b == nullptr)
+	{
+		b = dyn_cast<DBehavior>(type.CreateNew());
+		if (b == nullptr)
+			return nullptr;
+
+		b->Owner = this;
+		Behaviors[type.TypeName] = b;
+		Level->AddActorBehavior(*b);
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Initialize)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (!IsValidBehavior(*b))
+			{
+				RemoveBehavior(type.TypeName);
+				return nullptr;
+			}
+		}
+	}
+	else
+	{
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Reinitialize)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (!IsValidBehavior(*b))
+			{
+				RemoveBehavior(type.TypeName);
+				return nullptr;
+			}
+		}
+	}
+
+	return b;
+}
+
+static DBehavior* AddBehavior(AActor* self, PClass* type)
+{
+	return self->AddBehavior(*type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, AddBehavior, AddBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
+	ACTION_RETURN_OBJECT(self->AddBehavior(*type));
+}
+
+void AActor::TickBehaviors()
+{
+	TArray<FName> toRemove = {};
+	TArray<DBehavior*> toTick = {};
+
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value.Get();
+		if (b == nullptr)
+		{
+			toRemove.Push(pair->Key);
+			continue;
+		}
+
+		toTick.Push(b);
+	}
+
+	for (auto& b : toTick)
+	{
+		if (!IsValidBehavior(*b))
+		{
+			toRemove.Push(b->GetClass()->TypeName);
+			continue;
+		}
+
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, Tick)
+		{
+			VMValue params[] = { b };
+			VMCall(func, params, 1, nullptr, 0);
+
+			if (!IsValidBehavior(*b))
+				toRemove.Push(b->GetClass()->TypeName);
+		}
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(type);
+}
+
+static void TickBehaviors(AActor* self)
+{
+	self->TickBehaviors();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, TickBehaviors, TickBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	self->TickBehaviors();
+	return 0;
+}
+
+static DBehavior* FindBehavior(AActor* self, PClass* type)
+{
+	return self->FindBehavior(type->TypeName);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindBehavior, FindBehavior)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS_NOT_NULL(type, DBehavior);
+	ACTION_RETURN_OBJECT(self->FindBehavior(type->TypeName));
+}
+
+void AActor::MoveBehaviors(AActor& from)
+{
+	if (&from == this)
+		return;
+
+	// Clean these up properly before transferring.
+	ClearBehaviors();
+
+	Behaviors.TransferFrom(from.Behaviors);
+
+	TArray<FName> toRemove = {};
+	TArray<DBehavior*> toTransfer = {};
+	
+	// Clean up any empty behaviors that remained as well while
+	// changing the owner.
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value.Get();
+		if (b == nullptr)
+		{
+			toRemove.Push(pair->Key);
+			continue;
+		}
+
+		b->Owner = this;
+		if (b->Level != Level)
+		{
+			b->Level->RemoveActorBehavior(*b);
+			Level->AddActorBehavior(*b);
+		}
+
+		toTransfer.Push(b);
+	}
+
+	for (auto& b : toTransfer)
+	{
+		if (!IsValidBehavior(*b))
+		{
+			toRemove.Push(b->GetClass()->TypeName);
+			continue;
+		}
+
+		IFOVERRIDENVIRTUALPTRNAME(b, NAME_Behavior, TransferredOwner)
+		{
+			VMValue params[] = { b, &from };
+			VMCall(func, params, 2, nullptr, 0);
+
+			if (!IsValidBehavior(*b))
+				toRemove.Push(b->GetClass()->TypeName);
+		}
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(type);
+}
+
+static void MoveBehaviors(AActor* self, AActor* from)
+{
+	self->MoveBehaviors(*from);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, MoveBehaviors, MoveBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(from, AActor);
+	self->MoveBehaviors(*from);
+	return 0;
+}
+
+void AActor::ClearBehaviors(PClass* type)
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value.Get();
+		if (type == nullptr || b == nullptr || b->IsKindOf(type))
+			toRemove.Push(pair->Key);
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(type);
+
+	// If not removing a specific type, clear whatever remains.
+	if (type == nullptr)
+		Behaviors.Clear();
+}
+
+static void ClearBehaviors(AActor* self, PClass* type)
+{
+	self->ClearBehaviors(type);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBehaviors, ClearBehaviors)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, DBehavior);
+	self->ClearBehaviors(type);
+	return 0;
+}
+
+void AActor::UnlinkBehaviorsFromLevel()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value.Get();
+		if (b == nullptr)
+			toRemove.Push(pair->Key);
+		else
+			b->Level->RemoveActorBehavior(*b);
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(type);
+}
+
+void AActor::LinkBehaviorsToLevel()
+{
+	TArray<FName> toRemove = {};
+
+	TMap<FName, TObjPtr<DBehavior*>>::Iterator it = { Behaviors };
+	TMap<FName, TObjPtr<DBehavior*>>::Pair* pair = nullptr;
+	while (it.NextPair(pair))
+	{
+		auto b = pair->Value.Get();
+		if (b == nullptr)
+			toRemove.Push(pair->Key);
+		else
+			Level->AddActorBehavior(*b);
+	}
+
+	for (auto& type : toRemove)
+		RemoveBehavior(type);
+}
 
 //==========================================================================
 //
@@ -3931,6 +4272,11 @@ void AActor::Tick ()
 		return;
 	}
 
+	// These should always tick regardless of prediction or not (let the behavior itself
+	// handle this).
+	if (!isFrozen())
+		TickBehaviors();
+
 	if (flags5 & MF5_NOINTERACTION)
 	{
 		// only do the minimally necessary things here to save time:
@@ -5251,6 +5597,9 @@ void AActor::OnDestroy ()
 		Level->localEventManager->WorldThingDestroyed(this);
 	}
 
+	
+	ClearBehaviors();
+
 	DeleteAttachedLights();
 	ClearRenderSectorList();
 	ClearRenderLineList();
@@ -5497,6 +5846,8 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 		VMCall(func, params, 2, nullptr, 0);
 	}
 
+	to->MoveBehaviors(*from);
+
 	// Go through player infos.
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -5663,6 +6014,8 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 	const auto heldWeap = state == PST_REBORN && (dmflags3 & DF3_REMEMBER_LAST_WEAP) ? p->ReadyWeapon : nullptr;
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
+		if (state == PST_REBORN && oldactor != nullptr)
+			p->mo->MoveBehaviors(*oldactor);
 		PlayerReborn (playernum);
 	}
 	else if (oldactor != NULL && oldactor->player == p && !(flags & SPF_TEMPPLAYER))

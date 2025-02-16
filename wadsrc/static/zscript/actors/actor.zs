@@ -268,6 +268,7 @@ class Actor : Thinker native
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
+	meta String SelfObituary;	// Player killed himself using this actor
 	meta double DeathHeight;	// Height on normal death
 	meta double BurnHeight;		// Height on burning death
 	meta int GibHealth;			// Negative health below which this monster dies an extreme death
@@ -294,6 +295,7 @@ class Actor : Thinker native
 	Property prefix: none;
 	Property Obituary: Obituary;
 	Property HitObituary: HitObituary;
+	Property SelfObituary: SelfObituary;
 	Property MeleeDamage: MeleeDamage;
 	Property MeleeSound: MeleeSound;
 	Property MissileHeight: MissileHeight;
@@ -666,6 +668,11 @@ class Actor : Thinker native
 			return HitObituary;
 		}
 		return Obituary;
+	}
+
+	virtual String GetSelfObituary(Actor inflictor, Name mod)
+	{
+		return SelfObituary;
 	}
 	
 	virtual int OnDrain(Actor victim, int damage, Name dmgtype)

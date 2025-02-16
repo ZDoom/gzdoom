@@ -317,6 +317,22 @@ class PlayerPawn : Actor
 			return message;
 		}
 	}
+
+	override String GetSelfObituary(Actor inflictor, Name mod)
+	{
+		String message;
+
+		if (inflictor && inflictor != self)
+		{
+			message = inflictor.GetSelfObituary(inflictor, mod);
+		}
+		if (message.Length() == 0)
+		{
+			message = SelfObituary;
+		}
+
+		return message;
+	}
 	
 	//----------------------------------------------------------------------------
 	//

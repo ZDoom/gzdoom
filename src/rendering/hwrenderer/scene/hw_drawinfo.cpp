@@ -717,7 +717,7 @@ static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void*
 		}
 		break;
 	case TRACE_HitFloor:
-		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection])
+		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection] && res.HitVector.dot(res.Sector->floorplane.Normal()) < 0.0)
 		{
 			if (res.HitPos.Z == res.Sector->floorplane.ZatPoint(res.HitPos))
 			{
@@ -743,7 +743,7 @@ static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void*
 		}
 		break;
 	case TRACE_HitCeiling:
-		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection])
+		if (res.Sector->subsectorcount > 0 && (*CurMapSections)[res.Sector->subsectors[0]->mapsection] && res.HitVector.dot(res.Sector->ceilingplane.Normal()) < 0.0)
 		{
 			if (res.HitPos.Z == res.Sector->ceilingplane.ZatPoint(res.HitPos))
 			{
@@ -779,6 +779,7 @@ static ETraceStatus TraceCallbackForDitherTransparency(FTraceResults& res, void*
 
 void HWDrawInfo::SetDitherTransFlags(AActor* actor)
 {
+	// This should really be moved to a shader and have the GPU do some shape-tracing.
 	if (actor && actor->Sector)
 	{
 		FTraceResults results;

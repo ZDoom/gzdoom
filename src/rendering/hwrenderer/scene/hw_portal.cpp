@@ -158,13 +158,14 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 	if (best)
 	{
 		portals.Delete(bestindex);
-		if (usestencil)
+		if (usestencil && ((strcmp(best->GetName(), "Sky") == 0) || (strcmp(best->GetName(), "Skybox") == 0)))
 		{
 			tempmatrix = outer_di->VPUniforms.mProjectionMatrix; // ensure perspective projection matrix for skies
 			outer_di->VPUniforms.mProjectionMatrix = outer_di->ProjectionMatrix2;
 		}
 		RenderPortal(best, state, usestencil, outer_di);
-		if (usestencil) outer_di->VPUniforms.mProjectionMatrix = tempmatrix;
+		if (usestencil && ((strcmp(best->GetName(), "Sky") == 0) || (strcmp(best->GetName(), "Skybox") == 0)))
+			outer_di->VPUniforms.mProjectionMatrix = tempmatrix;
 		delete best;
 		return true;
 	}
@@ -332,6 +333,7 @@ void HWPortal::RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestenci
 	bool needdepth = NeedDepthBuffer();
 
 	// Restore the old view
+
 	auto &vp = di->Viewpoint;
 	if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
@@ -870,11 +872,30 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	state->PlaneMirrorFlag++;
 	di->SetClipHeight(planez, state->PlaneMirrorMode < 0 ? -1.f : 1.f);
 	di->SetupView(rstate, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
+	vp.ViewVector3D.Z = - vp.ViewVector3D.Z;
+	vp.OffPos.Z = 2 * planez - vp.OffPos.Z;
 	ClearClipper(di, clipper);
 
 	di->UpdateCurrentMapSection();
 	return true;
 }
+
+
+void HWPlaneMirrorPortal::DrawPortalStencil(FRenderState &state, int pass)
+{
+	bool isceiling = planesused & (1 << sector_t::ceiling);
+	for (unsigned int i = 0; i < lines.Size(); i++)
+	{
+		flat.section = lines[i].sub->section;
+		flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
+		flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
+		// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
+
+		state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
+		state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+	}
+}
+
 
 void HWPlaneMirrorPortal::Shutdown(HWDrawInfo *di, FRenderState &rstate)
 {

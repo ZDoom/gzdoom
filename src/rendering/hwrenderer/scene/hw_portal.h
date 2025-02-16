@@ -59,13 +59,14 @@ class HWPortal
 	TArray<unsigned int> mPrimIndices;
 	unsigned int mTopCap = ~0u, mBottomCap = ~0u;
 
-	void DrawPortalStencil(FRenderState &state, int pass);
+	virtual void DrawPortalStencil(FRenderState &state, int pass);
 
 public:
 	FPortalSceneState * mState;
 	TArray<HWWall> lines;
 	BoundingRect boundingBox;
 	int planesused = 0;
+	HWFlat flat;
 
     HWPortal(FPortalSceneState *s, bool local = false) : mState(s), boundingBox(false)
     {
@@ -295,6 +296,7 @@ struct HWPlaneMirrorPortal : public HWScenePortalBase
 protected:
 	bool Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper) override;
 	void Shutdown(HWDrawInfo *di, FRenderState &rstate) override;
+	void DrawPortalStencil(FRenderState &state, int pass) override;
 	virtual void * GetSource() const { return origin; }
 	virtual const char *GetName();
 	secplane_t * origin;

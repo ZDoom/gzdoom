@@ -6701,7 +6701,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			}
 			FxExpression *self = new FxSelf(ScriptPosition);
 			self = self->Resolve(ctx);
-			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass);
+			newex = ResolveMember(ctx, ctx.Function->Variants[0].SelfClass, self, ctx.Function->Variants[0].SelfClass, ctx.Function->Variants[0].Flags & VARF_SafeConst);
 			ABORT(newex);
 			goto foundit;
 		}
@@ -6863,7 +6863,7 @@ foundit:
 //
 //==========================================================================
 
-FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *classctx, FxExpression *&object, PContainerType *objtype)
+FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *classctx, FxExpression *&object, PContainerType *objtype, bool isConst)
 {
 	PSymbol *sym;
 	PSymbolTable *symtbl;
@@ -6956,7 +6956,7 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 				}
 			}
 
-			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition) : new FxStructMember(object, vsym, ScriptPosition);
+			auto x = isclass ? new FxClassMember(object, vsym, ScriptPosition, isConst) : new FxStructMember(object, vsym, ScriptPosition, isConst);
 			object = nullptr;
 			return x->Resolve(ctx);
 		}
@@ -7611,8 +7611,8 @@ FxMemberBase::FxMemberBase(EFxType type, PField *f, const FScriptPosition &p)
 }
 
 
-FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-	: FxMemberBase(EFX_StructMember, mem, pos)
+FxStructMember::FxStructMember(FxExpression *x, PField* mem, const FScriptPosition &pos, bool isConst)
+	: FxMemberBase(EFX_StructMember, mem, pos), IsConst(isConst)
 {
 	classx = x;
 }
@@ -7662,7 +7662,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 				bWritable = false;
 		}
 
-		*writable = bWritable;
+		*writable = bWritable && !IsConst;
 	}
 	return true;
 }
@@ -7873,8 +7873,8 @@ ExpEmit FxStructMember::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos)
-: FxStructMember(x, mem, pos)
+FxClassMember::FxClassMember(FxExpression *x, PField* mem, const FScriptPosition &pos, bool isConst)
+: FxStructMember(x, mem, pos, isConst)
 {
 	ExprType = EFX_ClassMember;
 }

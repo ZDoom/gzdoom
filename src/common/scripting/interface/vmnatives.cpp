@@ -902,6 +902,27 @@ DEFINE_ACTION_FUNCTION(_CVar, GetString)
 	ACTION_RETURN_STRING(v.String);
 }
 
+DEFINE_ACTION_FUNCTION(_CVar, GetDefaultInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRepDefault(CVAR_Int);
+	ACTION_RETURN_INT(v.Int);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetDefaultFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRepDefault(CVAR_Float);
+	ACTION_RETURN_FLOAT(v.Float);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetDefaultString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRepDefault(CVAR_String);
+	ACTION_RETURN_STRING(v.String);
+}
+
 DEFINE_ACTION_FUNCTION(_CVar, SetInt)
 {
 	// Only menus are allowed to change CVARs.

@@ -696,6 +696,10 @@ struct CVar native
 	native int GetInt();
 	native double GetFloat();
 	native String GetString();
+	bool GetDefaultBool() { return GetDefaultInt(); }
+	native int GetDefaultInt();
+	native double GetDefaultFloat();
+	native String GetDefaultString();
 	void SetBool(bool b) { SetInt(b); }
 	native void SetInt(int v);
 	native void SetFloat(double v);

@@ -270,6 +270,7 @@ struct HWSectorStackPortal : public HWScenePortalBase
 	TArray<subsector_t *> subsectors;
 protected:
 	bool Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clipper) override;
+	void DrawPortalStencil(FRenderState &state, int pass) override;
 	void Shutdown(HWDrawInfo *di, FRenderState &rstate) override;
 	virtual void * GetSource() const { return origin; }
 	virtual bool IsSky() { return true; }	// although this isn't a real sky it can be handled as one.

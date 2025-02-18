@@ -157,7 +157,9 @@ void HWWall::SkyPlane(HWWallDispatcher *di, sector_t *sector, int plane, bool al
 			if (di->di && di->di->Viewpoint.IsAllowedOoB())
 			{
 				secplane_t myplane = plane ? sector->ceilingplane : sector->floorplane;
-				if (di->di->Viewpoint.ViewVector3D.dot(myplane.Normal()) > 0.0) return;
+				if (di->di->Viewpoint.IsOrtho() && di->di->Viewpoint.ViewVector3D.dot(myplane.Normal()) > 0.0) return;
+				else if (plane==1 && di->di->Viewpoint.Pos.Z >= myplane.ZatPoint(di->di->Viewpoint.Pos)) return;
+				else if (plane==0 && di->di->Viewpoint.Pos.Z <= myplane.ZatPoint(di->di->Viewpoint.Pos)) return;
 			}
 			auto glport = sector->GetPortalGroup(plane);
 			if (glport != NULL)

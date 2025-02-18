@@ -805,10 +805,18 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	vp.Pos += origin->mDisplacement;
 	vp.ActorPos += origin->mDisplacement;
 	vp.ViewActor = nullptr;
+	vp.OffPos += origin->mDisplacement;
 
 	// avoid recursions!
 	if (origin->plane != -1) screen->instack[origin->plane]++;
-
+	if (lines.Size() > 0)
+	{
+		flat.plane.GetFromSector(lines[0].sub->sector,
+								 lines[0].sub->sector->GetPortal(sector_t::ceiling)->mType & (PORTS_STACKEDSECTORTHING | PORTS_PORTAL | PORTS_LINKEDPORTAL) ?
+								 sector_t::ceiling : sector_t::floor);
+		di->SetClipHeight(flat.plane.plane.ZatPoint(vp.Pos),
+						  flat.plane.plane.Normal().Z > 0 ? -1.f : 1.f);
+	}
 	di->SetupView(rstate, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
 	SetupCoverage(di);
 	ClearClipper(di, clipper);
@@ -816,12 +824,29 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
 	subsector_t *sub = di->Level->PointInRenderSubsector(vp.Pos);
+	if (vp.IsAllowedOoB()) sub = di->Level->PointInRenderSubsector(vp.OffPos);
 	if (!(di->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
 		clipper->SafeAddClipRange(0, ANGLE_MAX);
 		clipper->SetBlocked(true);
 	}
 	return true;
+}
+
+
+void HWSectorStackPortal::DrawPortalStencil(FRenderState &state, int pass)
+{
+	bool isceiling = planesused & (1 << sector_t::ceiling);
+	for (unsigned int i = 0; i < lines.Size(); i++)
+	{
+		flat.section = lines[i].sub->section;
+		flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
+		flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
+		// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
+
+		state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
+		state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+	}
 }
 
 

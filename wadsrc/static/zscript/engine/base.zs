@@ -771,6 +771,7 @@ class Object native
 	private native static bool CheckDeprecatedFlags(Object obj, int index);
 	
 	native static Name ValidateNameIndex(int index);
+	static class<Object> FindClass(Name cls, class<Object> baseType = null) { return BuiltinNameToClass(cls, baseType); }
 
 	native static uint MSTime();
 	native static double MSTimeF();

@@ -93,6 +93,7 @@ class MWeapBloodscourge : MageWeapon
 		Weapon.AmmoType1 "Mana1";
 		Weapon.AmmoType2 "Mana2";
 		+WEAPON.PRIMARY_USES_BOTH;
+		+WEAPON.BFG
 		+Inventory.NoAttenPickupSound
 		Inventory.PickupMessage "$TXT_WEAPON_M4";
 		Inventory.PickupSound "WeaponBuild";

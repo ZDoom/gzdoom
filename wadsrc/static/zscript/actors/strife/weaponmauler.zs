@@ -98,6 +98,7 @@ class Mauler2 : Mauler
 		Weapon.AmmoType1 "EnergyPod";
 		Weapon.SisterWeapon "Mauler";
 		Tag "$TAG_MAULER2";
+		+WEAPON.BFG;
 	}
 
 	States

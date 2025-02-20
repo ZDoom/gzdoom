@@ -13,6 +13,7 @@ class Sigil : Weapon
 		Health 1;
 		+FLOORCLIP
 		+WEAPON.CHEATNOTWEAPON
+		+WEAPON.BFG
 		Inventory.PickupSound "weapons/sigilcharge";
 		Tag "$TAG_SIGIL";
 		Inventory.Icon "I_SGL1";

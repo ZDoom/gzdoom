@@ -85,6 +85,7 @@ class CWeapWraithverge : ClericWeapon
 		Health 3;
 		Weapon.SelectionOrder 3000;
 		+WEAPON.PRIMARY_USES_BOTH;
+		+WEAPON.BFG;
 		+Inventory.NoAttenPickupSound
 		Weapon.AmmoUse1 18;
 		Weapon.AmmoUse2 18;

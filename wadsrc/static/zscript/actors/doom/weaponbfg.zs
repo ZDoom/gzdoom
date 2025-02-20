@@ -14,6 +14,7 @@ class BFG9000 : DoomWeapon
 		Weapon.AmmoGive 40;
 		Weapon.AmmoType "Cell";
 		+WEAPON.NOAUTOFIRE;
+		+WEAPON.BFG;
 		Inventory.PickupMessage "$GOTBFG9000";
 		Tag "$TAG_BFG9000";
 	}

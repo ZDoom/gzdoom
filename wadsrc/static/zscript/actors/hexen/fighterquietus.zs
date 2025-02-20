@@ -83,6 +83,7 @@ class FWeapQuietus : FighterWeapon
 		Health 3;
 		Weapon.SelectionOrder 2900;
 		+WEAPON.PRIMARY_USES_BOTH;
+		+WEAPON.EXPLOSIVE
 		+Inventory.NoAttenPickupSound
 		Weapon.AmmoUse1 14;
 		Weapon.AmmoUse2 14;

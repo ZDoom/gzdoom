@@ -93,12 +93,12 @@ class Weapon : StateProvider
 	flagdef NoDeathInput: WeaponFlags, 17;		// The weapon cannot be fired/reloaded/whatever when the player is dead
 	flagdef CheatNotWeapon: WeaponFlags, 18;	// Give cheat considers this not a weapon (used by Sigil)
 	flagdef NoAutoSwitchTo : WeaponFlags, 19;	// do not auto switch to this weapon ever!
+	flagdef BFG: WeaponFlags, 20;				// This weapon is a BFG (i.e BFG9000 and the Wraithverge)
+	flagdef Explosive: WeaponFlags, 21;			// This weapon is explosive (i.e Doom and Strife's Rocket Launchers)
 
 	// no-op flags
 	flagdef NoLMS: none, 0;
 	flagdef Allow_With_Respawn_Invul: none, 0;
-	flagdef BFG: none, 0;
-	flagdef Explosive: none, 0;
 
 	Default
 	{

@@ -69,6 +69,7 @@ class SkullRodPowered : SkullRod
 	Default
 	{
 		+WEAPON.POWERED_UP
+		+WEAPON.EXPLOSIVE //[inkoalawetrust] It DOES have a form of AOE splash damage so I think it counts in spirit.
 		Weapon.AmmoUse1 5;
 		Weapon.AmmoGive1 0;
 		Weapon.SisterWeapon "SkullRod";

@@ -14,6 +14,7 @@ class CWeapFlame : ClericWeapon
 		Weapon.AmmoType1 "Mana2";
 		Inventory.PickupMessage "$TXT_WEAPON_C3";
 		Tag "$TAG_CWEAPFLAME";
+		+WEAPON.EXPLOSIVE
 	}
 
 	States

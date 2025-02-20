@@ -73,7 +73,7 @@ class ViewPosition native
 	native readonly int Flags;
 }
 
-class Behavior native play abstract
+class Behavior native play abstract version("4.15")
 {
 	native readonly Actor Owner;
 	native readonly LevelLocals Level;
@@ -84,7 +84,7 @@ class Behavior native play abstract
 	virtual void Tick() {}
 }
 
-class BehaviorIterator native abstract final
+class BehaviorIterator native abstract final version("4.15")
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
 	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
@@ -519,12 +519,12 @@ class Actor : Thinker native
 		return sin(fb * (180./32)) * 8;
 	}
 
-	native clearscope Behavior FindBehavior(class<Behavior> type) const;
-	native bool RemoveBehavior(class<Behavior> type);
-	native Behavior AddBehavior(class<Behavior> type);
-	native void TickBehaviors();
-	native void ClearBehaviors(class<Behavior> type = null);
-	native void MoveBehaviors(Actor from);
+	native version("4.15") clearscope Behavior FindBehavior(class<Behavior> type) const;
+	native version("4.15") bool RemoveBehavior(class<Behavior> type);
+	native version("4.15") Behavior AddBehavior(class<Behavior> type);
+	native version("4.15") void TickBehaviors();
+	native version("4.15") void ClearBehaviors(class<Behavior> type = null);
+	native version("4.15") void MoveBehaviors(Actor from);
 
 	native clearscope bool isFrozen() const;
 	virtual native void BeginPlay();

@@ -672,15 +672,36 @@ bool ShouldAllowGameSpecificVirtual(FName name, unsigned index, PType* arg, PTyp
 int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType, bool ignorePointerReadOnly)
 {
 	auto proto = variant->Proto;
+	auto &flags = variant->ArgFlags;
 	for (unsigned i = 0; i < Virtuals.Size(); i++)
 	{
 		if (Virtuals[i]->Name == name)
 		{
 			auto vproto = Virtuals[i]->Proto;
-			if (vproto->ReturnTypes.Size() != proto->ReturnTypes.Size() ||
+			auto &vflags = Virtuals[i]->ArgFlags;
+
+			int n = flags.size();
+
+			bool flagsOk = true;
+
+			for(int i = 0; i < n; i++)
+			{
+				int argA = i >= vflags.size() ? 0 : vflags[i];
+				int argB = i >= flags.size() ? 0 : flags[i];
+
+				bool AisRef = argA & (VARF_Out | VARF_Ref);
+				bool BisRef = argB & (VARF_Out | VARF_Ref);
+
+				if(AisRef != BisRef)
+				{
+					flagsOk = false;
+					break;
+				}
+			}
+
+			if (!flagsOk || vproto->ReturnTypes.Size() != proto->ReturnTypes.Size() ||
 				vproto->ArgumentTypes.Size() < proto->ArgumentTypes.Size())
 			{
-
 				continue;	// number of parameters does not match, so it's incompatible
 			}
 			bool fail = false;

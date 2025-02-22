@@ -646,6 +646,47 @@ class Mover : SectorEffect native
 class MovingFloor : Mover native
 {}
 
+class Plat : MovingFloor native
+{
+	enum EPlatState
+	{
+		up,
+		down,
+		waiting,
+		in_stasis
+	};
+
+	enum EPlatType
+	{
+		platPerpetualRaise,
+		platDownWaitUpStay,
+		platDownWaitUpStayStone,
+		platUpWaitDownStay,
+		platUpNearestWaitDownStay,
+		platDownByValue,
+		platUpByValue,
+		platUpByValueStay,
+		platRaiseAndStay,
+		platToggle,
+		platDownToNearestFloor,
+		platDownToLowestCeiling,
+		platRaiseAndStayLockout,
+	};
+
+	bool IsLift() const { return m_Type == platDownWaitUpStay || m_Type == platDownWaitUpStayStone; }
+
+	native double m_Speed;
+	native double m_Low;
+	native double m_High;
+	native int m_Wait;
+	native int m_Count;
+	native EPlatState m_Status;
+	native readonly EPlatState m_OldStatus;
+	native int m_Crush;
+	native int m_Tag;
+	native EPlatType m_Type;
+}
+
 class MovingCeiling : Mover native
 {}
 

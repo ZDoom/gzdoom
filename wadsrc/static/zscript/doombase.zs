@@ -675,16 +675,16 @@ class Plat : MovingFloor native
 
 	bool IsLift() const { return m_Type == platDownWaitUpStay || m_Type == platDownWaitUpStayStone; }
 
-	native double m_Speed;
-	native double m_Low;
-	native double m_High;
-	native int m_Wait;
-	native int m_Count;
-	native EPlatState m_Status;
+	native readonly double m_Speed;
+	native readonly double m_Low;
+	native readonly double m_High;
+	native readonly int m_Wait;
+	native readonly int m_Count;
+	native readonly EPlatState m_Status;
 	native readonly EPlatState m_OldStatus;
-	native int m_Crush;
-	native int m_Tag;
-	native EPlatType m_Type;
+	native readonly int m_Crush;
+	native readonly int m_Tag;
+	native readonly EPlatType m_Type;
 }
 
 class MovingCeiling : Mover native
@@ -711,9 +711,9 @@ class Door : MovingCeiling native
 	// 1 = up, 0 = waiting at top, -1 = down
 	enum EDirection
 	{
-		dirUp,
+		dirDown = -1,
 		dirWait,
-		dirDown
+		dirUp,
 	}
 	native readonly int		m_Direction;
 
@@ -813,7 +813,29 @@ class Ceiling : MovingCeiling native
 		crushHexen = 1,
 		crushSlowdown = 2
 	}
-	
+
+	// 1 = up, 0 = waiting, -1 = down
+	enum EDirection
+	{
+		dirDown = -1,
+		dirWait,
+		dirUp,
+	}
+
+	native readonly ECeiling	m_Type;
+	native readonly double	 	m_BottomHeight;
+	native readonly double	 	m_TopHeight;
+	native readonly double	 	m_Speed;
+	native readonly double		m_Speed1;		// [RH] dnspeed of crushers
+	native readonly double		m_Speed2;		// [RH] upspeed of crushers
+	native readonly ECrushMode	m_CrushMode;
+	native readonly int			m_Silent;
+
+	bool IsCrusher() const { return m_Type == ceilCrushAndRaise || m_Type == ceilLowerAndCrush || m_Type == ceilCrushRaiseAndStay; }
+	native int getCrush() const;
+	native int getDirection() const;
+	native int getOldDirection() const;
+
 	deprecated("3.8", "Use Level.CreateCeiling() instead") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
 	{
 		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);

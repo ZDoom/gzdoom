@@ -649,6 +649,42 @@ class MovingFloor : Mover native
 class MovingCeiling : Mover native
 {}
 
+class Door : MovingCeiling native
+{
+	enum EVlDoor
+	{
+		doorClose,
+		doorOpen,
+		doorRaise,
+		doorWaitRaise,
+		doorCloseWaitOpen,
+		doorWaitClose,
+	};
+
+	native readonly EVlDoor	m_Type;
+	native readonly double	m_TopDist;
+	native readonly double	m_BotDist, m_OldFloorDist;
+	native readonly Vertex	m_BotSpot;
+	native readonly double	m_Speed;
+	
+	// 1 = up, 0 = waiting at top, -1 = down
+	enum EDirection
+	{
+		dirUp,
+		dirWait,
+		dirDown
+	}
+	native readonly int		m_Direction;
+
+	// tics to wait at the top
+	native readonly int		m_TopWait;
+	// (keep in case a door going down is reset)
+	// when it reaches 0, start going down
+	native readonly int		m_TopCountdown;
+
+	native readonly int		m_LightTag;
+}
+
 class Floor : MovingFloor native
 {
 	// only here so that some constants and functions can be added. Not directly usable yet.

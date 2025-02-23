@@ -768,6 +768,37 @@ class Floor : MovingFloor native
 		genFloorChg
 	};
 
+	enum EStair
+	{
+		buildUp,
+		buildDown
+	};
+
+	enum EStairType
+	{
+		stairUseSpecials = 1,
+		stairSync = 2,
+		stairCrush = 4,
+	};
+	
+	native readonly EFloor			m_Type;
+	native readonly int				m_Crush;
+	native readonly bool			m_Hexencrush;
+	native readonly bool			m_Instant;
+	native readonly int				m_Direction;
+	native readonly SecSpecial		m_NewSpecial;
+	native readonly TextureID		m_Texture;
+	native readonly double			m_FloorDestDist;
+	native readonly double			m_Speed;
+
+	// [RH] New parameters used to reset and delay stairs
+	native readonly double			m_OrgDist;
+	native readonly int				m_ResetCount;
+	native readonly int				m_Delay;
+	native readonly int				m_PauseTime;
+	native readonly int				m_StepTime;
+	native readonly int				m_PerStepTime;
+
 	deprecated("3.8", "Use Level.CreateFloor() instead") static bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
 	{
 		return level.CreateFloor(sec, floortype, ln, speed, height, crush, change, crushmode, hereticlower);

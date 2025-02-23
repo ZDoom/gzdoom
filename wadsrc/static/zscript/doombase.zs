@@ -643,6 +643,25 @@ class SectorEffect : Thinker native
 class Mover : SectorEffect native
 {}
 
+class Elevator : Mover native
+{
+	enum EElevator
+	{
+		elevateUp,
+		elevateDown,
+		elevateCurrent,
+		// [RH] For FloorAndCeiling_Raise/Lower
+		elevateRaise,
+		elevateLower
+	};
+
+	native readonly EElevator	m_Type;
+	native readonly int			m_Direction;
+	native readonly double		m_FloorDestDist;
+	native readonly double		m_CeilingDestDist;
+	native readonly double		m_Speed;
+}
+
 class MovingFloor : Mover native
 {}
 

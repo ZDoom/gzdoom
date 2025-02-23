@@ -903,6 +903,12 @@ void DElevator::Serialize(FSerializer &arc)
 		("interp_ceiling", m_Interp_Ceiling);
 }
 
+DEFINE_FIELD(DElevator, m_Type)
+DEFINE_FIELD(DElevator, m_Direction)
+DEFINE_FIELD(DElevator, m_FloorDestDist)
+DEFINE_FIELD(DElevator, m_CeilingDestDist)
+DEFINE_FIELD(DElevator, m_Speed)
+
 //==========================================================================
 //
 //
@@ -973,7 +979,7 @@ void DElevator::Tick ()
 		}
 	}
 
-	if (res == EMoveResult::pastdest)	// if destination height acheived
+	if (res == EMoveResult::pastdest)	// if destination height achieved
 	{
 		// make floor stop sound
 		SN_StopSequence (m_Sector, CHAN_FLOOR);

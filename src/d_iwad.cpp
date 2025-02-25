@@ -59,6 +59,8 @@ EXTERN_CVAR(Bool, autoloadbrightmaps)
 EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
+CVAR(Int, i_loadsupportwad, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // 0=never, 1=singleplayer only, 2=always
+
 bool foundprio = false; // global to prevent iwad box from appearing
 
 //==========================================================================
@@ -842,11 +844,16 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	if(info.SupportWAD.IsNotEmpty())
 	{
-		FString supportWAD = IWADPathFileSearch(info.SupportWAD);
+		bool wantsnetgame = (Args->CheckParm("-join") || Args->CheckParm("-host"));
 
-		if(supportWAD.IsNotEmpty())
+		if ((wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
 		{
-			D_AddFile(wadfiles, supportWAD.GetChars(), true, -1, GameConfig);
+			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
+
+			if(supportWAD.IsNotEmpty())
+			{
+				D_AddFile(wadfiles, supportWAD.GetChars(), true, -1, GameConfig);
+			}
 		}
 	}
 

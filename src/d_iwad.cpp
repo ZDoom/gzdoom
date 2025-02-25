@@ -846,7 +846,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	{
 		bool wantsnetgame = (Args->CheckParm("-join") || Args->CheckParm("-host"));
 
-		if ((wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
+		if ((!wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
 		{
 			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
 

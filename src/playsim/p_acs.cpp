@@ -78,6 +78,7 @@
 #include "s_music.h"
 #include "v_video.h"
 #include "texturemanager.h"
+#include "events.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -4823,6 +4824,77 @@ enum EACSFunctions
 	ACSF_SetTeamScore,			// (int team, int value
 };
 
+// Op code -> minimum arg count
+static TMap<int, int> HandledACSFunctions = {};
+
+void SetHandledACSFunctions()
+{
+	// Zandronum
+	HandledACSFunctions[100] = 0;	// ResetMap
+	HandledACSFunctions[101] = 1;	// PlayerIsSpectator
+	// ConsolePlayerNumber will be intentionally left out until proper client-side
+	// ACS scripts are implemented. Right now it'd just leave the game prone to desyncs.
+	HandledACSFunctions[103] = 2;	// GetTeamProperty
+	HandledACSFunctions[104] = 1;	// GetPlayersLivesLeft
+	HandledACSFunctions[105] = 2;	// SetPlayerLivesLeft
+	HandledACSFunctions[106] = 2;	// KickFromGame
+	HandledACSFunctions[107] = 0;	// GetGamemodeState
+	HandledACSFunctions[108] = 3;	// SetDBEntry
+	HandledACSFunctions[109] = 2;	// GetDBEntry
+	HandledACSFunctions[110] = 3;	// SetDBEntryString
+	HandledACSFunctions[111] = 2;	// GetDBEntryString
+	HandledACSFunctions[112] = 3;	// IncrementDBEntry
+	HandledACSFunctions[113] = 1;	// PlayerIsLoggedIn
+	HandledACSFunctions[114] = 1;	// GetPlayerAccountName
+	HandledACSFunctions[115] = 4;	// SortDBEntries
+	HandledACSFunctions[116] = 1;	// CountDBResults
+	HandledACSFunctions[117] = 1;	// FreeDBResults
+	HandledACSFunctions[118] = 2;	// GetDBResultKeyString
+	HandledACSFunctions[119] = 2;	// GetDBResultValueString
+	HandledACSFunctions[120] = 2;	// GetDBResultValue
+	HandledACSFunctions[121] = 3;	// GetDBEntryRank
+	HandledACSFunctions[122] = 4;	// RequestScriptPuke
+	HandledACSFunctions[123] = 0;	// BeginDBTransaction
+	HandledACSFunctions[124] = 0;	// EndDBTransaction
+	HandledACSFunctions[125] = 1;	// GetDBEntries
+	HandledACSFunctions[126] = 1;	// NamedRequestScriptPuke
+	// System time functions are intentionally left out since they're prone to causing desyncs. Can be added
+	// in if client/server ever becomes a thing.
+	HandledACSFunctions[130] = 2;	// SetDeadSpectator
+	HandledACSFunctions[131] = 1;	// SetActivatorToPlayer
+	HandledACSFunctions[132] = 1;	// SetCurrentGamemode
+	HandledACSFunctions[133] = 0;	// GetCurrentGamemode
+	HandledACSFunctions[134] = 2;	// SetGamemodeLimit
+	// Player class handling isn't implemented yet.
+	HandledACSFunctions[136] = 2;	// SetPlayerChasecam
+	HandledACSFunctions[137] = 1;	// GetPlayerChasecam
+	HandledACSFunctions[138] = 3;	// SetPlayerScore
+	HandledACSFunctions[139] = 2;	// GetPlayerScore
+	HandledACSFunctions[140] = 0;	// InDemoMode
+	// Client-side scripts aren't implemented yet for ClientScript functions.
+	HandledACSFunctions[146] = 2;	// SendNetworkString
+	HandledACSFunctions[147] = 2;	// NamedSendNetworkString
+	HandledACSFunctions[148] = 2;	// GetChatMessage
+	HandledACSFunctions[149] = 0;	// GetMapRotationSize
+	HandledACSFunctions[150] = 2;	// GetMapRotationInfo
+	HandledACSFunctions[151] = 0;	// GetCurrentMapPosition
+	HandledACSFunctions[152] = 0;	// GetEventResult
+	HandledACSFunctions[153] = 2;	// GetActorSectorLocation
+	HandledACSFunctions[154] = 3;	// ChangeTeamScore
+	HandledACSFunctions[155] = 2;	// SetGameplaySettings
+	HandledACSFunctions[156] = 3;	// SetCustomPlayerValue
+	HandledACSFunctions[157] = 2;	// GetCustomPlayerValue
+	HandledACSFunctions[158] = 2;	// ResetCustomDataToDefault
+	HandledACSFunctions[159] = 1;	// LumpOpen
+	HandledACSFunctions[160] = 2;	// LumpRead
+	HandledACSFunctions[161] = 2;	// LumpReadString
+	HandledACSFunctions[166] = 2;	// LumpGetInfo
+	HandledACSFunctions[167] = 1;	// LumpClose
+
+	// Eternity
+	HandledACSFunctions[302] = 1;	// SetAirFriction
+}
+
 int DLevelScript::SideFromID(int id, int side)
 {
 	if (side != 0 && side != 1) return -1;
@@ -7249,8 +7321,28 @@ int DLevelScript::RunScript()
 				int argCount = NEXTBYTE;
 				int funcIndex = NEXTSHORT;
 
-				int retval, minCount = 0;
-				retval = CallFunction(argCount, funcIndex, &STACK(argCount), minCount);
+				int retval = 0, minCount = 0;
+				auto undefined = HandledACSFunctions.CheckKey(funcIndex);
+				if (undefined != nullptr)
+				{
+					if (argCount >= *undefined || (Level->i_compatflags2 & COMPATF2_NOACSARGCHECK))
+					{
+						TArray<int> args = {};
+						auto argStart = &STACK(argCount);
+						for (size_t p = 0u; p < argCount; ++p)
+							args.Push(argStart[p]);
+
+						retval = primaryLevel->localEventManager->ProcessACSFunction(funcIndex, &args);
+					}
+					else
+					{
+						minCount = *undefined;
+					}
+				}
+				else
+				{
+					retval = CallFunction(argCount, funcIndex, &STACK(argCount), minCount);
+				}
 				if (minCount != 0)
 				{
 					Printf("Called ACS function index %d with too few args: %d (need %d)\n", funcIndex, argCount, minCount);

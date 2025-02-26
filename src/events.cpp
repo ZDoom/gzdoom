@@ -975,6 +975,18 @@ void EventManager::NetCommand(FNetworkCommand& cmd)
 		handler->NetCommandProcess(cmd);
 }
 
+int EventManager::ProcessACSFunction(int func, const TArray<int>* args)
+{
+	int res = 0;
+	if (ShouldCallStatic(false))
+		res = staticEventManager.ProcessACSFunction(func, args);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->ACSFunctionProcess(func, args, res);
+
+	return res;
+}
+
 void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual, bool ui)
 {
 	if (ShouldCallStatic(false)) staticEventManager.Console(player, name, arg1, arg2, arg3, manual, ui);
@@ -2271,6 +2283,23 @@ void DStaticEventHandler::NetCommandProcess(FNetworkCommand& cmd)
 		VMCall(func, params, 2, nullptr, 0);
 
 		cmd.Reset();
+	}
+}
+
+void DStaticEventHandler::ACSFunctionProcess(int code, const TArray<int>* args, int& res)
+{
+	IFVIRTUAL(DStaticEventHandler, ACSFunctionProcess)
+	{
+		if (isEmpty(func))
+			return;
+
+		TArray<int> funcArgs = {};
+		if (args != nullptr)
+			funcArgs = *args;
+
+		VMValue params[] = { this, code, &funcArgs };
+		VMReturn returns[] = { &res };
+		VMCall(func, params, 3, returns, 1);
 	}
 }
 

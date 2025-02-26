@@ -144,6 +144,71 @@ struct ReplacedEvent native version("3.7")
 	native bool IsFinal;
 }
 
+enum EACSFunction
+{
+    ACSF_ResetMap = 100,
+    ACSF_PlayerIsSpectator,
+
+    ACSF_GetTeamProperty = 103,
+    ACSF_GetPlayerLivesLeft,
+    ACSF_SetPlayerLivesLeft,
+    ACSF_KickFromGame,
+    ACSF_GetGamemodeState,
+    ACSF_SetDBEntry,
+    ACSF_GetDBEntry,
+    ACSF_SetDBEntryString,
+    ACSF_GetDBEntryString,
+    ACSF_IncrementDBEntry,
+    ACSF_PlayerIsLoggedIn,
+    ACSF_GetPlayerAccountName,
+    ACSF_SortDBEntries,
+    ACSF_CountDBResults,
+    ACSF_FreeDBResults,
+    ACSF_GetDBResultKeyString,
+    ACSF_GetDBResultValueString,
+    ACSF_GetDBResultValue,
+    ACSF_GetDBEntryRank,
+    ACSF_RequestScriptPuke,
+    ACSF_BeginDBTransaction,
+    ACSF_EndDBTransaction,
+    ACSF_GetDBEntries,
+    ACSF_NamedRequestScriptPuke,
+
+    ACSF_SetDeadSpectator = 130,
+    ACSF_SetActivatorToPlayer,
+    ACSF_SetCurrentGamemode,
+    ACSF_GetCurrentGamemode,
+    ACSF_SetGamemodeLimit,
+
+    ACSF_SetPlayerChasecam = 136,
+    ACSF_GetPlayerChasecam,
+    ACSF_SetPlayerScore,
+    ACSF_GetPlayerScore,
+    ACSF_InDemoMode,
+
+    ACSF_SendNetworkString = 146,
+    ACSF_NamedSendNetworkString,
+    ACSF_GetChatMessage,
+    ACSF_GetMapRotationSize,
+    ACSF_GetMapRotationInfo,
+    ACSF_GetCurrentMapPosition,
+    ACSF_GetEventResult,
+    ACSF_GetActorSectorLocation,
+    ACSF_ChangeTeamScore,
+    ACSF_SetGameplaySettings,
+    ACSF_SetCustomPlayerValue,
+    ACSF_GetCustomPlayerValue,
+    ACSF_ResetCustomDataToDefault,
+    ACSF_LumpOpen,
+    ACSF_LumpRead,
+    ACSF_LumpReadString,
+
+    ACSF_LumpGetInfo = 166,
+    ACSF_LumpClose,
+
+    ACSF_SetAirFriction = 302,
+}
+
 class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
@@ -200,6 +265,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual ui void InterfaceProcess(ConsoleEvent e) {}
     virtual void NetworkProcess(ConsoleEvent e) {}
     version("4.12") virtual void NetworkCommandProcess(NetworkCommand cmd) {}
+    version("4.15") virtual int ACSFunctionProcess(EACSFunction func, Array<int> args) { return 0; }
     
     //
     virtual void CheckReplacement(ReplaceEvent e) {}

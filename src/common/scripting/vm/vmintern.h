@@ -436,7 +436,7 @@ extern int (*VMExec)(VMFunction *func, VMValue *params, int numparams, VMReturn 
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);
-void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
+void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func, uint64_t starting_offset = 0);
 
 extern thread_local VMFrameStack GlobalVMStack;
 

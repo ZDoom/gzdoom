@@ -266,7 +266,7 @@ void VMDumpConstants(FILE *out, const VMScriptFunction *func)
 	}
 }
 
-void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func)
+void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func, uint64_t starting_offset)
 {
 	VMFunction *callfunc = nullptr;
 	const char *name;
@@ -322,13 +322,13 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 				name = cmpname;
 			}
 		}
-		printf_wrapper(out, "%08x: %02x%02x%02x%02x %-8s", i << 2, code[i].op, code[i].a, code[i].b, code[i].c, name);
+		printf_wrapper(out, "%08llx: %02x%02x%02x%02x %-8s", starting_offset + (i << 2), code[i].op, code[i].a, code[i].b, code[i].c, name);
 		col = 0;
 		switch (code[i].op)
 		{
 		case OP_JMP:
 		//case OP_TRY:
-			col = printf_wrapper(out, "%08x", (i + 1 + code[i].i24) << 2);
+			col = printf_wrapper(out, "%08llx", starting_offset + ((i + 1 + code[i].i24) << 2));
 			break;
 
 		case OP_PARAMI:
@@ -510,7 +510,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 			}
 			else
 			{ 
-				col += printf_wrapper(out, " => %08x", (i + 2 + code[i+1].i24) << 2);
+				col += printf_wrapper(out, " => %08llx", starting_offset + ((i + 2 + code[i+1].i24) << 2));
 			}
 		}
 		if (col > 30)

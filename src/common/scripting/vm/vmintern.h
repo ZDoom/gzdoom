@@ -360,6 +360,9 @@ public:
 		assert(Blocks != NULL && Blocks->LastFrame != NULL);
 		return Blocks->LastFrame;
 	}
+  bool HasFrames() {
+    return Blocks != NULL && Blocks->LastFrame != NULL;
+  }
 	static int OffsetLastFrame() { return (int)(ptrdiff_t)offsetof(BlockHeader, LastFrame); }
 private:
 	enum { BLOCK_SIZE = 4096 };		// Default block size

@@ -1,7 +1,7 @@
 // The VM uses 7 integral data types, so for dynamic array support we need one specific set of functions for each of these types.
 // Do not use these structs directly, they are incomplete and only needed to create prototypes for the needed functions.
 
-struct DynArray_I8 native
+struct DynArray_I8 native internal
 {
 	native readonly int Size;
 	
@@ -21,7 +21,7 @@ struct DynArray_I8 native
 	native void Clear ();
 }
 
-struct DynArray_I16 native
+struct DynArray_I16 native internal
 {
 	native readonly int Size;
 
@@ -41,7 +41,7 @@ struct DynArray_I16 native
 	native void Clear ();
 }
 
-struct DynArray_I32 native
+struct DynArray_I32 native internal
 {
 	native readonly int Size;
 
@@ -62,7 +62,7 @@ struct DynArray_I32 native
 	native void Clear ();
 }
 
-struct DynArray_F32 native
+struct DynArray_F32 native internal
 {
 	native readonly int Size;
 	
@@ -82,7 +82,7 @@ struct DynArray_F32 native
 	native void Clear ();
 }
 
-struct DynArray_F64 native
+struct DynArray_F64 native internal
 {
 	native readonly int Size;
 	
@@ -102,7 +102,7 @@ struct DynArray_F64 native
 	native void Clear ();
 }
 
-struct DynArray_Ptr native
+struct DynArray_Ptr native internal
 {
 	native readonly int Size;
 	
@@ -122,7 +122,7 @@ struct DynArray_Ptr native
 	native void Clear ();
 }
 
-struct DynArray_Obj native
+struct DynArray_Obj native internal
 {
 	native readonly int Size;
 	
@@ -142,7 +142,7 @@ struct DynArray_Obj native
 	native void Clear ();
 }
 
-struct DynArray_String native
+struct DynArray_String native internal
 {
 	native readonly int Size;
 

@@ -729,6 +729,8 @@ void ZCCCompiler::CreateStructTypes()
 			syms = &OutNamespace->Symbols;
 		}
 
+
+
 		if (s->NodeName() == NAME__ && fileSystem.GetFileContainer(Lump) == 0)
 		{
 			// This is just a container for syntactic purposes.
@@ -743,9 +745,15 @@ void ZCCCompiler::CreateStructTypes()
 		{
 			s->strct->Type = NewStruct(s->NodeName(), outer, false, AST.FileNo);
 		}
+
 		if (s->strct->Flags & ZCC_Version)
 		{
 			s->strct->Type->mVersion = s->strct->Version;
+		}
+
+		if (s->strct->Flags & ZCC_Internal)
+		{
+			s->strct->Type->TypeInternal = true;
 		}
 
 		auto &sf = s->Type()->ScopeFlags;
@@ -809,6 +817,12 @@ void ZCCCompiler::CreateClassTypes()
 			PClass *parent;
 			auto ParentName = c->cls->ParentName;
 
+			if (c->cls->Flags & ZCC_Internal)
+			{
+				Error(c->cls, "'Internal' not allowed for classes");
+			}
+
+			// The parent exists, we may create a type for this class
 			if (ParentName != nullptr && ParentName->SiblingNext == ParentName)
 			{
 				parent = PClass::FindClass(ParentName->Id);
@@ -845,7 +859,6 @@ void ZCCCompiler::CreateClassTypes()
 					Error(c->cls, "Class '%s' cannot extend sealed class '%s'", FName(c->NodeName()).GetChars(), parent->TypeName.GetChars());
 				}
 
-				// The parent exists, we may create a type for this class
 				if (c->cls->Flags & ZCC_Native)
 				{
 					// If this is a native class, its own type must also already exist and not be a runtime class.
@@ -1868,7 +1881,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			{
 				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
 			}
-			retval = ResolveUserType(btype, btype->UserType, outertype? &outertype->Symbols : nullptr, true);
+			retval = ResolveUserType(outertype, btype, btype->UserType, outertype? &outertype->Symbols : nullptr, true);
 			break;
 
 		case ZCC_UserType:
@@ -1898,7 +1911,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 
 
 			default:
-				retval = ResolveUserType(btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
+				retval = ResolveUserType(outertype, btype, btype->UserType, outertype ? &outertype->Symbols : nullptr, false);
 				break;
 			}
 			break;
@@ -2153,7 +2166,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 * @param nativetype Distinguishes between searching for a native type or a user type.
 * @returns the PType found for this user type
 */
-PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *symt, bool nativetype)
+PType *ZCCCompiler::ResolveUserType(PType *outertype, ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *symt, bool nativetype)
 {
 	// Check the symbol table for the identifier.
 	PSymbol *sym = nullptr;
@@ -2170,10 +2183,18 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSy
 			return TypeError;
 		}
 
+		//only allow references to internal types inside internal types
+		if (ptype->TypeInternal && !outertype->TypeInternal)
+		{
+			Error(type, "Type %s not accessible", FName(type->UserType->Id).GetChars());
+			return TypeError;
+		}
+
 		if (id->SiblingNext != type->UserType)
 		{
 			assert(id->SiblingNext->NodeType == AST_Identifier);
 			ptype = ResolveUserType(
+				outertype,
 				type,
 				static_cast<ZCC_Identifier *>(id->SiblingNext),
 				&ptype->Symbols,

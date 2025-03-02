@@ -760,7 +760,14 @@ void ZCCCompiler::CreateStructTypes()
 
 		if (s->strct->Flags & ZCC_Internal)
 		{
-			s->strct->Type->TypeInternal = true;
+			if(fileSystem.GetFileContainer(Lump) == 0)
+			{
+				s->strct->Type->TypeInternal = true;
+			}
+			else
+			{
+				Error(s->strct, "Internal structs are only allowed in the root pk3");
+			}
 		}
 
 		auto &sf = s->Type()->ScopeFlags;

@@ -189,7 +189,7 @@ struct Vector3
 }
 */
 
-struct _ native	// These are the global variables, the struct is only here to avoid extending the parser for this.
+struct _ native internal	// These are the global variables, the struct is only here to avoid extending the parser for this.
 {
 	native readonly Array<class> AllClasses;
     native internal readonly Map<Name , Service> AllServices;
@@ -903,7 +903,7 @@ enum EmptyTokenType
 
 // Although String is a builtin type, this is a convenient way to attach methods to it.
 // All of these methods are available on strings
-struct StringStruct native
+struct StringStruct native internal
 {
 	native static vararg String Format(String fmt, ...);
 	native vararg void AppendFormat(String fmt, ...);
@@ -952,7 +952,7 @@ struct Translation version("2.4")
 }
 
 // Convenient way to attach functions to Quat
-struct QuatStruct native
+struct QuatStruct native internal
 {
 	native static Quat SLerp(Quat from, Quat to, double t);
 	native static Quat NLerp(Quat from, Quat to, double t);

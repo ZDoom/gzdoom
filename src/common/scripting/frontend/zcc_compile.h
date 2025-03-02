@@ -134,7 +134,7 @@ protected:
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls, bool *nosize);
-	PType *ResolveUserType(ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *sym, bool nativetype);
+	PType *ResolveUserType(PType *outertype, ZCC_BasicType *type, ZCC_Identifier *id, PSymbolTable *sym, bool nativetype);
 	static FString UserTypeName(ZCC_BasicType *type);
 	TArray<ZCC_StructWork *> OrderStructs();
 	void AddStruct(TArray<ZCC_StructWork *> &new_order, ZCC_StructWork *struct_def);

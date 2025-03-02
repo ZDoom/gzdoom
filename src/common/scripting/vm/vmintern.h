@@ -239,6 +239,7 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 // VM frame layout:
 //	VMFrame header
 //  parameter stack		- 16 byte boundary, 16 bytes each
+//  program counter
 //	double registers	- 8 bytes each
 //	string registers	- 4 or 8 bytes each
 //	address registers	- 4 or 8 bytes each
@@ -249,6 +250,7 @@ struct VMFrame
 {
 	VMFrame *ParentFrame;
 	VMFunction *Func;
+	const VMOP *PC = nullptr;
 	VM_UBYTE NumRegD;
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;

@@ -54,7 +54,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 	const double *konstf = sfunc->KonstF;
 	const FString *konsts = sfunc->KonstS;
 	const FVoidObj *konsta = sfunc->KonstA;
-	const VMOP *pc = sfunc->Code;
+	f->PC = sfunc->Code;
+	const VMOP *&pc = f->PC;
 
 	assert(!(f->Func->VarFlags & VARF_Native) && "Only script functions should ever reach VMExec");
 
@@ -1958,7 +1959,8 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 
 		while(--try_depth >= 0)
 		{
-			pc = exception_frames[try_depth];
+			f->PC = exception_frames[try_depth];
+			pc = f->PC;
 			assert(pc->op == OP_CATCH);
 			while (pc->a > 1)
 			{

@@ -111,6 +111,8 @@ public:
 	bool            SizeKnown = true;
 
 	bool			TypeInternal = false;
+	bool			TypeDeprecated = false; // mVersion is deprecation version, not minimum version
+	FString			mDeprecationMessage;
 
 	PType * LocalType = nullptr;
 

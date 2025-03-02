@@ -80,6 +80,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 		ZCC_Identifier *Replaces;
 		ZCC_Identifier *Sealed;
 		VersionInfo Version;
+		FString *DeprecationMessage;
 	};
 
 	struct StateOpts {
@@ -232,6 +233,7 @@ class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
 	head->Version = {0, 0};
 	head->Type = nullptr;
 	head->Symbol = nullptr;
+	head->DeprecationMessage = nullptr;
 	X = head;
 }
 
@@ -247,6 +249,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->Version = C.Version;
 	head->Type = nullptr;
 	head->Symbol = nullptr;
+	head->DeprecationMessage = C.DeprecationMessage;
 	X = head;
 }
 
@@ -255,15 +258,24 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
-class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; X.Sealed = NULL; }
-class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; }
-class_flags(X) ::= class_flags(A) FINAL.					{ X.Flags = A.Flags | ZCC_Final; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed;}
-class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
-class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
-class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed =  A.Sealed; }
-class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; X.Version = A.Version; X.Sealed = A.Sealed; }
-class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); X.Sealed =  A.Sealed; }
-class_flags(X) ::= class_flags(A) SEALED LPAREN states_opt(B) RPAREN.		{ X.Flags = A.Flags | ZCC_Sealed; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = B; }
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; X.Sealed = NULL; X.DeprecationMessage = NULL; }
+class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) FINAL.					{ X.Flags = A.Flags | ZCC_Final; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; X.Version = A.Version; X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); X.Sealed = A.Sealed; X.DeprecationMessage = A.DeprecationMessage; }
+class_flags(X) ::= class_flags(A) SEALED LPAREN states_opt(B) RPAREN.		{ X.Flags = A.Flags | ZCC_Sealed; X.Replaces = A.Replaces; X.Version = A.Version; X.Sealed = B; X.DeprecationMessage = A.DeprecationMessage; }
+
+class_flags(X) ::= class_flags(A) DEPRECATED LPAREN STRCONST(C) opt_deprecation_message(D) RPAREN.
+{
+	X.Flags = A.Flags | ZCC_Deprecated;
+	X.Replaces = A.Replaces;
+	X.Version = C.String->GetChars();
+	X.Sealed =  A.Sealed;
+	X.DeprecationMessage = D.String;
+}
 
 /*----- Dottable Identifier -----*/
 // This can be either a single identifier or two identifiers connected by a .
@@ -412,6 +424,7 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body
 	def->Symbol = nullptr;
 	def->Version = S.Version;
 	def->Flags = S.Flags;
+	def->DeprecationMessage = S.DeprecationMessage;
 	X = def;
 }
 
@@ -422,18 +435,27 @@ struct_def(X) ::= EXTEND STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRAC
 	def->Body = B;
 	def->Type = nullptr;
 	def->Symbol = nullptr;
+	def->Version = {0, 0};
 	def->Flags = ZCC_Extension;
+	def->DeprecationMessage = nullptr;
 	X = def;
 }
 
 %type struct_flags{ClassFlagsBlock}
-struct_flags(X) ::= .										{ X.Flags = 0; X.Version = {0, 0}; }
-struct_flags(X) ::= struct_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; }
-struct_flags(X) ::= struct_flags(A) PLAY.					{ X.Flags = A.Flags | ZCC_Play; }
-struct_flags(X) ::= struct_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; }
-struct_flags(X) ::= struct_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; }
-struct_flags(X) ::= struct_flags(A) INTERNAL.				{ X.Flags = A.Flags | ZCC_Internal; }
-struct_flags(X) ::= struct_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Version = C.String->GetChars(); }
+struct_flags(X) ::= .										{ X.Flags = 0; X.Version = {0, 0}; X.DeprecationMessage = NULL; }
+struct_flags(X) ::= struct_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Version = A.Version; X.DeprecationMessage = A.DeprecationMessage; }
+struct_flags(X) ::= struct_flags(A) PLAY.					{ X.Flags = A.Flags | ZCC_Play; X.Version = A.Version; X.DeprecationMessage = A.DeprecationMessage; }
+struct_flags(X) ::= struct_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; X.Version = A.Version; X.DeprecationMessage = A.DeprecationMessage; }
+struct_flags(X) ::= struct_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Version = A.Version; X.DeprecationMessage = A.DeprecationMessage; }
+struct_flags(X) ::= struct_flags(A) INTERNAL.				{ X.Flags = A.Flags | ZCC_Internal; X.Version = A.Version; X.DeprecationMessage = A.DeprecationMessage; }
+struct_flags(X) ::= struct_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Version = C.String->GetChars(); X.DeprecationMessage = A.DeprecationMessage; }
+
+struct_flags(X) ::= struct_flags(A) DEPRECATED LPAREN STRCONST(C) opt_deprecation_message(D) RPAREN.
+{
+	X.Flags = A.Flags | ZCC_Deprecated;
+	X.Version = C.String->GetChars();
+	X.DeprecationMessage = D.String;
+}
 
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).

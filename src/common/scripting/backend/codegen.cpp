@@ -12748,16 +12748,15 @@ ExpEmit FxFunctionPtrCast::Emit(VMFunctionBuilder *build)
 FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p)
 	:FxExpression(EFX_LocalVariableDeclaration, p)
 {
-	// Local FVector isn't different from Vector
-	if (type == TypeFVector2) type = TypeVector2;
-	else if (type == TypeFVector3) type = TypeVector3;
-	else if (type == TypeFVector4) type = TypeVector4;
-	else if (type == TypeFQuaternion) type = TypeQuaternion;
+	if(type != type->GetLocalType())
+	{
+		ScriptPosition.Message(MSG_WARNING, "Type '%s' not allowed in local variables, changing to '%s'", type->DescriptiveName(), type->GetLocalType()->DescriptiveName());
+	}
 
-	ValueType = type;
+	ValueType = type->GetLocalType();
 	VarFlags = varflags;
 	Name = name;
-	RegCount = type->RegCount;
+	RegCount = ValueType->RegCount;
 	Init = initval;
 	clearExpr = nullptr;
 }

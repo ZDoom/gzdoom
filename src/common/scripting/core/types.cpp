@@ -401,6 +401,7 @@ void PType::StaticInit()
 	TypeFVector2->RegType = REGT_FLOAT;
 	TypeFVector2->RegCount = 2;
 	TypeFVector2->isOrdered = true;
+	TypeFVector2->SetLocalType(TypeVector2);
 
 	TypeFVector3 = new PStruct(NAME_FVector3, nullptr);
 	TypeFVector3->AddField(NAME_X, TypeFloat32);
@@ -415,6 +416,7 @@ void PType::StaticInit()
 	TypeFVector3->RegType = REGT_FLOAT;
 	TypeFVector3->RegCount = 3;
 	TypeFVector3->isOrdered = true;
+	TypeFVector3->SetLocalType(TypeVector3);
 
 	TypeFVector4 = new PStruct(NAME_FVector4, nullptr);
 	TypeFVector4->AddField(NAME_X, TypeFloat32);
@@ -431,6 +433,7 @@ void PType::StaticInit()
 	TypeFVector4->RegType = REGT_FLOAT;
 	TypeFVector4->RegCount = 4;
 	TypeFVector4->isOrdered = true;
+	TypeFVector4->SetLocalType(TypeVector4);
 
 
 	TypeQuaternion = new PStruct(NAME_Quat, nullptr);
@@ -464,6 +467,7 @@ void PType::StaticInit()
 	TypeFQuaternion->RegType = REGT_FLOAT;
 	TypeFQuaternion->RegCount = 4;
 	TypeFQuaternion->isOrdered = true;
+	TypeFQuaternion->SetLocalType(TypeQuaternion);
 
 
 	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));

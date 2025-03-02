@@ -71,7 +71,9 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 	{
 #if !COMPGOTO
 	VM_UBYTE op;
-	for(;;) switch(op = pc->op, a = pc->a, op)
+	for(;;) {
+	DebugServer::RuntimeEvents::EmitInstructionExecutionEvent(stack, ret, numret, pc);
+	switch(op = pc->op, a = pc->a, op)
 #else
 	pc--;
 	NEXTOP;
@@ -1951,6 +1953,9 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 		NEXTOP;
 	}
 	}
+#if !COMPGOTO
+	}
+#endif
 #if 0
 	catch(VMException *exception)
 	{

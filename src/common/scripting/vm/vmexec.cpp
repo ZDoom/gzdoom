@@ -43,6 +43,7 @@
 #include "basics.h"
 #include "texturemanager.h"
 #include "palutil.h"
+#include "common/scripting/dap/RuntimeEvents.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
@@ -63,7 +64,7 @@ void ThrowVMException(VMException *x);
 
 #if COMPGOTO
 #define OP(x)	x
-#define NEXTOP	do { pc++; unsigned op = pc->op; a = pc->a; goto *ops[op]; } while(0)
+#define NEXTOP	do { pc++; DebugServer::RuntimeEvents::EmitInstructionExecutionEvent(stack, ret, numret, pc); unsigned op = pc->op; a = pc->a; goto *ops[op]; } while(0)
 #else
 #define OP(x)	case OP_##x
 #define NEXTOP	pc++; break

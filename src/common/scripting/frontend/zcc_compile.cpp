@@ -751,6 +751,13 @@ void ZCCCompiler::CreateStructTypes()
 			s->strct->Type->mVersion = s->strct->Version;
 		}
 
+		if (s->strct->Flags & ZCC_Deprecated)
+		{
+			s->strct->Type->mVersion = s->strct->Version;
+			s->strct->Type->TypeDeprecated = true;
+			s->strct->Type->mDeprecationMessage = s->strct->DeprecationMessage ? *s->strct->DeprecationMessage : "";
+		}
+
 		if (s->strct->Flags & ZCC_Internal)
 		{
 			s->strct->Type->TypeInternal = true;
@@ -918,6 +925,13 @@ void ZCCCompiler::CreateClassTypes()
 				if (c->cls->Flags & ZCC_Version)
 				{
 					c->Type()->mVersion = c->cls->Version;
+				}
+
+				if (c->cls->Flags & ZCC_Deprecated)
+				{
+					c->Type()->mVersion = c->cls->Version;
+					c->Type()->TypeDeprecated = true;
+					c->Type()->mDeprecationMessage = c->cls->DeprecationMessage ? *c->cls->DeprecationMessage : "";
 				}
 				
 
@@ -2177,7 +2191,16 @@ PType *ZCCCompiler::ResolveUserType(PType *outertype, ZCC_BasicType *type, ZCC_I
 	if (sym != nullptr && sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
 	{
 		auto ptype = static_cast<PSymbolType *>(sym)->Type;
-		if (ptype->mVersion > mVersion)
+
+		if (ptype->TypeDeprecated)
+		{
+			if(ptype->mVersion <= mVersion && !outertype->TypeDeprecated && fileSystem.GetFileContainer(Lump) > 0)
+			{
+				Warn(type, "Type %s is deprecated since ZScript version %d.%d.%d%s%s",
+					FName(type->UserType->Id).GetChars(), mVersion.major, mVersion.minor, mVersion.revision, ptype->mDeprecationMessage.IsEmpty() ? "" : ": ", ptype->mDeprecationMessage.GetChars());
+			}
+		}
+		else if (ptype->mVersion > mVersion)
 		{
 			Error(type, "Type %s not accessible to ZScript version %d.%d.%d", FName(type->UserType->Id).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
 			return TypeError;

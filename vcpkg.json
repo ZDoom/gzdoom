@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-    "builtin-baseline": "2c401863dd54a640aeb26ed736c55489c079323b",
+    "builtin-baseline": "0659bf17507c88f2da8cb196303a5b6fd862f817",
     "features":
     {
         "vcpkg-libvpx":
@@ -27,6 +27,12 @@
         }
     },
     "dependencies": [
+        {
+            "name": "cppdap"
+        },
+        {
+            "name": "eventpp"
+        },
         {
             "name": "bzip2",
             "platform": "(!windows & static) | (windows & static & staticcrt)"

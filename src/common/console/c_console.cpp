@@ -65,6 +65,7 @@
 #include "g_input.h"
 #include "c_commandbuffer.h"
 #include "vm.h"
+#include "common/scripting/dap/RuntimeEvents.h"
 
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
@@ -444,6 +445,7 @@ int PrintString (int iprintlevel, const char *outline)
 		{
 			WriteLineToLog(Logfile, outline);
 		}
+		DebugServer::RuntimeEvents::EmitLogEvent(iprintlevel, outline);
 		return count;
 	}
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...

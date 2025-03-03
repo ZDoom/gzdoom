@@ -44,7 +44,7 @@ struct Binary
 	FunctionLineMap functionLineMap;
 	FunctionCodeMap functionCodeMap;
 	void populateFunctionMaps();
-	std::pair<int, int> GetFunctionLineRange(const VMScriptFunction *functionName);
+	std::pair<int, int> GetFunctionLineRange(const VMScriptFunction *functionName) const;
 	std::string GetQualifiedPath() const;
 };
 struct DisassemblyLine

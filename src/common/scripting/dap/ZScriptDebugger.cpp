@@ -143,41 +143,6 @@ template <typename T, typename> void ZScriptDebugger::SendEvent(const T &event) 
 	if (m_session && m_initialized) m_session->send(event);
 }
 
-std::string LogSeverityEnumStr(Severity severity)
-{
-	if (severity == Severity::kInfo)
-	{
-		return std::string("INFO");
-	}
-	else if (severity == Severity::kWarning)
-	{
-		return std::string("WARNING");
-	}
-	else if (severity == Severity::kError)
-	{
-		return std::string("ERROR");
-	}
-	return std::string("UNKNOWN_ENUM_LEVEL");
-}
-
-// EVENTS
-void ZScriptDebugger::LogGameOutput(Severity severity, const std::string &msg) const
-{
-	// constexpr const char* format = "GAME EVENT -- {}";
-	// if (severity == Severity::kInfo) {
-	// 	logger::info(format, msg);
-	// }
-	// else if (severity == Severity::kWarning) {
-	// 	logger::warn(format, msg);
-	// }
-	// else if (severity == Severity::kError) {
-	// 	logger::error(format, msg);
-	// }
-	// else if (severity == Severity::kFatal) {
-	// 	logger::critical(format, msg);
-	// }
-}
-
 void ZScriptDebugger::EventLogged(int severity, const char *msg) const
 {
 	if (severity & PrintLevel_NoEmit)
@@ -535,6 +500,7 @@ dap::ResponseOrError<dap::DisassembleResponse> ZScriptDebugger::Disassemble(cons
 			int i = 0;
 		}
 
+		// TODO: turn this back on, vscode doesn't like it currently
 		// only map the source for the first instruction, or if the source location has changed
 		//		if (!bin || bin->sourceData.sourceReference.value(-1) != line->ref){
 		bin = m_pexCache->GetCachedScript(line->ref);

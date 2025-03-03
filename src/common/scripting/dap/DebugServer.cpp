@@ -11,6 +11,7 @@ DebugServer::DebugServer()
 {
 	terminate = false;
 	stopped = false;
+	quitting = false;
 	debugger = std::unique_ptr<ZScriptDebugger>(new ZScriptDebugger());
 }
 
@@ -21,16 +22,23 @@ void DebugServer::runRestartThread()
 		std::unique_lock<std::mutex> lock(mutex);
 		cv.wait(lock, [&] { return terminate; });
 		terminate = false;
-		debugger->EndSession();
-		if (stopped)
+		quitting = debugger->EndSession();
+		if (stopped || quitting)
 		{
 			break;
 		}
+	}
+	if (quitting)
+	{
+		throw CExitEvent(0);
 	}
 }
 
 bool DebugServer::Listen(int port)
 {
+	terminate = false;
+	stopped = false;
+	quitting = false;
 	if (!port)
 	{
 		return false;

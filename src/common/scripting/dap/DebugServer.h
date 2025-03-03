@@ -19,8 +19,9 @@ class DebugServer
 	std::unique_ptr<dap::net::Server> m_server;
 	std::condition_variable cv;
 	std::mutex mutex; // guards 'terminate'
-	bool stopped;
-	bool terminate;
+	bool stopped = false;
+	bool terminate = false;
+	bool quitting = false; // On receiving a disconnect request with a terminateDebuggee flag
 	std::thread restart_thread;
 };
 }

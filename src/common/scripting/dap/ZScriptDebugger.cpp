@@ -35,8 +35,9 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 	if (m_session)
 	{
 		LogError("Session is already active, ending it first!");
-		EndSession(false);
+		EndSession();
 	}
+	m_disconnecting = false;
 	m_closed = false;
 	m_session = session;
 	m_executionManager->Open(session);
@@ -54,15 +55,17 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 
 	RegisterSessionHandlers();
 }
-void ZScriptDebugger::EndSession(bool sendTerminateEvent)
+
+bool ZScriptDebugger::EndSession()
 {
 	m_executionManager->Close();
-	if (m_session && sendTerminateEvent)
+	m_closed = true;
+	if (m_session && m_disconnecting)
 	{
 		m_session->send(dap::TerminatedEvent());
 	}
 	m_session = nullptr;
-	m_closed = true;
+	m_disconnecting = false;
 
 	RuntimeEvents::UnsubscribeFromLog(m_logEventHandle);
 	// RuntimeEvents::UnsubscribeFromInitScript(m_initScriptEventHandle);
@@ -72,14 +75,11 @@ void ZScriptDebugger::EndSession(bool sendTerminateEvent)
 	RuntimeEvents::UnsubscribeFromBreakpointChanged(m_breakpointChangedEventHandle);
 
 	// clear session data
-	m_projectArchive = "";
-	m_projectPath = "";
+	m_projectArchive.clear();
+	m_projectPath.clear();
 	m_projectSources.clear();
 	m_breakpointManager->ClearBreakpoints();
-	if (m_quitting)
-	{
-		throw CExitEvent(0);
-	}
+	return m_quitting;
 }
 
 void ZScriptDebugger::RegisterSessionHandlers()
@@ -105,6 +105,7 @@ void ZScriptDebugger::RegisterSessionHandlers()
 			{
 				m_quitting = true;
 			}
+			m_disconnecting = true;
 			return dap::DisconnectResponse {};
 		});
 	m_session->registerHandler([this](const dap::PDSLaunchRequest &request) { return Launch(request); });
@@ -218,15 +219,8 @@ void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std
 
 ZScriptDebugger::~ZScriptDebugger()
 {
-	m_closed = true;
-
-	RuntimeEvents::UnsubscribeFromLog(m_logEventHandle);
-	// RuntimeEvents::UnsubscribeFromInitScript(m_initScriptEventHandle);
-	RuntimeEvents::UnsubscribeFromInstructionExecution(m_instructionExecutionEventHandle);
-	RuntimeEvents::UnsubscribeFromCreateStack(m_createStackEventHandle);
-	RuntimeEvents::UnsubscribeFromCleanupStack(m_cleanupStackEventHandle);
-	
-	m_executionManager->Close();
+	m_disconnecting = false;
+	EndSession();
 	m_runtimeState->Reset();
 	m_pexCache->Clear();
 }

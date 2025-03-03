@@ -2497,7 +2497,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_Override) varflags |= VARF_Override;
 		if (f->Flags & ZCC_Abstract) varflags |= VARF_Abstract;
 		if (f->Flags & ZCC_VarArg) varflags |= VARF_VarArg;
-		if (f->Flags & ZCC_FuncConst) varflags |= (mVersion >= MakeVersion(4, 15, 0) ? VARF_ReadOnly | VARF_SafeConst : VARF_ReadOnly); // FuncConst method is internally marked as VARF_ReadOnly
+		if (f->Flags & ZCC_FuncConst) varflags |= (mVersion >= MakeVersion(4, 15, 1) ? VARF_ReadOnly | VARF_SafeConst : VARF_ReadOnly); // FuncConst method is internally marked as VARF_ReadOnly
 		if (f->Flags & ZCC_FuncConstUnsafe) varflags |= VARF_ReadOnly;
 
 		if (mVersion >= MakeVersion(2, 4, 0))

@@ -457,7 +457,7 @@ namespace beneficii {
             //RETURN VALUE = stack of iterators (deepest at top) to starting point
             //    of ranges that intersect val (const_iterator)
             std::stack<const_iterator> find_ranges(const key_type& _val) const {
-                if(*_root == nullptr) return std::stack<iterator>();
+                if(*_root == nullptr) return std::stack<const_iterator>();
                 std::stack<const_iterator> _ret;
                 _nodeptr _n = *_root;
                 while(1) {

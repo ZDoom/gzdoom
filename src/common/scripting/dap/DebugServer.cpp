@@ -67,11 +67,14 @@ bool DebugServer::Listen(int port)
 				terminate = true;
 				cv.notify_all();
 			});
-		Printf("DAP Client connected\n");
+		LogInternal("DAP Client connected\n");
 		debugger->StartSession(sess);
 	};
 
-	auto onError = [&](const char *msg) { Printf("Server error: %s\n", msg); };
+	auto onError = [&](const char *msg)
+	{
+		LogInternalError("Server error: %s\n", msg);
+	};
 
 	m_server->start(port, onClientConnected, onError);
 	return true;

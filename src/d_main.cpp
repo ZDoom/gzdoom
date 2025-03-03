@@ -158,6 +158,7 @@ void I_ShutdownInput();
 void SetConsoleNotifyBuffer();
 void I_UpdateDiscordPresence(bool SendPresence, const char* curstatus, const char* appid, const char* steamappid);
 bool M_SetSpecialMenu(FName& menu, int param);	// game specific checks
+void SetHandledACSFunctions();
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 void InitWidgetResources(const char* basewad);
@@ -3086,6 +3087,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	NetworkEntityManager::InitializeNetworkEntities();
+	SetHandledACSFunctions();
 
 	if (!restart)
 	{

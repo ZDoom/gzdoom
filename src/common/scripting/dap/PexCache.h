@@ -36,8 +36,8 @@ struct Binary
 	std::string scriptPath;
 	std::string compiledPath;
 	std::string sourceCode;
-	dap::Source sourceData;
 	int lump;
+	int scriptReference;
 	NameFunctionMap functions;
 	NameClassMap classes;
 	NameStructMap structs;
@@ -46,6 +46,7 @@ struct Binary
 	void populateFunctionMaps();
 	std::pair<int, int> GetFunctionLineRange(const VMScriptFunction *functionName) const;
 	std::string GetQualifiedPath() const;
+	dap::Source GetDapSource() const;
 };
 struct DisassemblyLine
 {

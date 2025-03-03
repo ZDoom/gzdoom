@@ -210,7 +210,7 @@ void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName) const
 	auto binary = m_pexCache->GetScript(scriptName);
 	if (binary && m_session)
 	{
-		SendEvent(dap::LoadedSourceEvent {.reason = "new", .source = binary->sourceData});
+		SendEvent(dap::LoadedSourceEvent {.reason = "new", .source = binary->GetDapSource()});
 	}
 }
 
@@ -284,7 +284,8 @@ dap::ResponseOrError<dap::AttachResponse> ZScriptDebugger::Attach(const dap::PDS
 		{ // no source ref or name, we'll ignore it
 			continue;
 		}
-		m_projectSources[binary->sourceData.sourceReference.value()] = binary->sourceData;
+		auto source = binary->GetDapSource();
+		m_projectSources[source.sourceReference.value()] = source;
 	}
 
 	return dap::AttachResponse();
@@ -535,7 +536,7 @@ dap::ResponseOrError<dap::DisassembleResponse> ZScriptDebugger::Disassemble(cons
 		bin = m_pexCache->GetCachedScript(line->ref);
 		if (bin)
 		{
-			instruction.location = bin->sourceData;
+			instruction.location = bin->GetDapSource();
 		}
 		//		}
 		instruction.instructionBytes = line->bytes;

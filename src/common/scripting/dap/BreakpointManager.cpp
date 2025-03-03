@@ -252,7 +252,7 @@ void BreakpointManager::InvalidateAllBreakpointsForScript(int ref, bool emitChan
 		}
 		else
 		{
-			source = binary->sourceData;
+			source = binary->GetDapSource();
 		}
 	}
 	for (auto &KV : m_breakpoints)

@@ -38,7 +38,6 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 		EndSession();
 	}
 	m_initialized = false;
-	m_disconnecting = false;
 	m_quitting = false;
 	m_session = session;
 	m_executionManager->Open(session);
@@ -60,13 +59,12 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 bool ZScriptDebugger::EndSession()
 {
 	m_executionManager->Close();
-	if (m_session && m_disconnecting)
+	if (m_session)
 	{
 		SendEvent(dap::TerminatedEvent());
 	}
 	m_initialized = false;
 	m_session = nullptr;
-	m_disconnecting = false;
 
 	RuntimeEvents::UnsubscribeFromLog(m_logEventHandle);
 	// RuntimeEvents::UnsubscribeFromInitScript(m_initScriptEventHandle);
@@ -111,7 +109,6 @@ void ZScriptDebugger::RegisterSessionHandlers()
 			{
 				m_quitting = true;
 			}
-			m_disconnecting = true;
 			return dap::DisconnectResponse {};
 		});
 	m_session->registerHandler([this](const dap::PDSLaunchRequest &request) { return Launch(request); });
@@ -194,7 +191,7 @@ void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std
 
 ZScriptDebugger::~ZScriptDebugger()
 {
-	m_disconnecting = false;
+	m_initialized = false;
 	EndSession();
 	m_runtimeState->Reset();
 	m_pexCache->Clear();

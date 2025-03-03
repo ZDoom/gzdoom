@@ -328,24 +328,38 @@ inline bool GetSourceContent(const std::string &scriptPath, std::string &decompi
 	return true;
 }
 
-bool PexCache::GetDecompiledSource(const dap::Source &source, std::string &decompiledSource)
+bool PexCache::GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource)
 {
-	auto binary = this->GetScript(source);
 	if (!binary)
 	{
 		return false;
 	}
-	return GetSourceContent(binary->scriptPath, decompiledSource);
+	if (!binary->cachedSourceCode.empty())
+	{
+		decompiledSource = binary->cachedSourceCode;
+		return true;
+	}
+	{
+		scripts_lock scriptLock(m_scriptsMutex);
+	
+		if (binary->cachedSourceCode.empty() && !GetSourceContent(binary->GetQualifiedPath(), binary->cachedSourceCode))
+		{
+			return false;
+		}
+	}
+	decompiledSource = binary->cachedSourceCode;
+	return true;
+
+}
+
+bool PexCache::GetDecompiledSource(const dap::Source &source, std::string &decompiledSource)
+{
+	return GetOrCacheSource(this->GetScript(source), decompiledSource);
 }
 
 bool PexCache::GetDecompiledSource(const std::string &fqpn, std::string &decompiledSource)
 {
-	const auto binary = this->GetScript(fqpn);
-	if (!binary)
-	{
-		return false;
-	}
-	return GetSourceContent(binary->scriptPath, decompiledSource);
+	return GetOrCacheSource(this->GetScript(fqpn), decompiledSource);
 }
 
 bool PexCache::GetSourceData(const std::string &scriptName, dap::Source &data)
@@ -423,7 +437,7 @@ inline bool LineIsFunctionDeclaration(const std::string &line, const std::string
 // find the LINE that the function declaration starts on, lines starting at 1
 inline int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1)
 {
-	std::string source_code = source->sourceCode;
+	std::string source_code = source->cachedSourceCode;
 	// convert source_code to lowercase
 	std::transform(source_code.begin(), source_code.end(), source_code.begin(), ::tolower);
 	std::string function_name = func->Name.GetChars();
@@ -652,9 +666,9 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 		lines_vec.push_back(instruction);
 		currCodePointer++;
 	}
-	if (source->sourceCode.empty())
+	if (source->cachedSourceCode.empty())
 	{
-		GetSourceContent(source->scriptPath, source->sourceCode);
+		GetSourceContent(source->GetQualifiedPath(), source->cachedSourceCode);
 	}
 	auto func_decl_line = FindFunctionDeclaration(source, func, min_line);
 	if (func_decl_line > 0)

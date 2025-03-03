@@ -1,0 +1,5 @@
+tests/build/temp*
+tests/build/project*
+tests/coverage
+build
+.vscode

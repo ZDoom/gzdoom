@@ -1,0 +1,24 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        build-type: [Release]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure
+        run: |
+          mkdir -p build
+          cmake -DCMAKE_BUILD_TYPE="${{ matrix.build-type }}" -B build -S tests
+
+      - name: Build Tests
+        run: cmake --build build --config "${{ matrix.build-type }}" -j
+
+      - name: Run unit tests
+        run: cd build && ctest --build-config "${{ matrix.build-type }}" --progress --verbose

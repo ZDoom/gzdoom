@@ -5,7 +5,7 @@
  *
  * @note keys are case-sensitive.
  */
-class Dictionary deprecated("4.15", "Use Map<String, String> instead")
+class Dictionary deprecated("4.15.1", "Use Map<String, String> instead")
 {
 	native static Dictionary Create();
 
@@ -38,7 +38,7 @@ class Dictionary deprecated("4.15", "Use Map<String, String> instead")
  * DictionaryIterator is not serializable. To make DictionaryIterator a class
  * member, use `transient` keyword.
  */
-class DictionaryIterator deprecated("4.15", "Use Map<String, String> instead")
+class DictionaryIterator deprecated("4.15.1", "Use Map<String, String> instead")
 {
 	native static DictionaryIterator Create(Dictionary dict);
 

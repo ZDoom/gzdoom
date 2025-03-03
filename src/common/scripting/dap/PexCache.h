@@ -23,6 +23,7 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 
 namespace DebugServer
 {
+class PexCache;
 struct Binary
 {
 	using NameFunctionMap = std::map<FName, PFunction *>;
@@ -30,10 +31,13 @@ struct Binary
 	using NameStructMap = std::map<FName, PStruct *>;
 	using FunctionLineMap = beneficii::range_map<uint32_t, VMScriptFunction *, std::less<uint32_t>, std::allocator<beneficii::range_map_item<uint32_t, VMScriptFunction *>>, true>;
 	using FunctionCodeMap = beneficii::range_map<void *, VMScriptFunction *>;
+
+private:
+	friend class PexCache;
 	std::string archiveName;
 	std::string archivePath;
 	std::string scriptName;
-	std::string scriptPath;
+	std::string unqualifiedScriptPath;
 	std::string compiledPath;
 	std::string cachedSourceCode;
 	int lump;
@@ -43,10 +47,20 @@ struct Binary
 	NameStructMap structs;
 	FunctionLineMap functionLineMap;
 	FunctionCodeMap functionCodeMap;
-	void populateFunctionMaps();
+
+	void PopulateFunctionMaps();
+
+public:
 	std::pair<int, int> GetFunctionLineRange(const VMScriptFunction *functionName) const;
 	std::string GetQualifiedPath() const;
 	dap::Source GetDapSource() const;
+	std::string GetArchiveName() const;
+	std::string GetArchivePath() const;
+	std::stack<FunctionLineMap::const_iterator> FindFunctionRangesByLine(int line) const;
+	std::stack<FunctionCodeMap::const_iterator> FindFunctionRangesByCode(void *address) const;
+	bool HasFunctions() const;
+	bool HasFunctionLines() const;
+
 };
 struct DisassemblyLine
 {
@@ -65,7 +79,7 @@ struct DisassemblyLine
 
 class PexCache
 {
-	public:
+public:
 	using BinaryPtr = std::shared_ptr<Binary>;
 	using BinaryMap = std::map<int, BinaryPtr>;
 	using DisassemblyLinePtr = std::shared_ptr<DisassemblyLine>;
@@ -92,15 +106,19 @@ class PexCache
 	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
 	bool GetDisassemblyLines(const VMOP *address, int64_t instructionOffset, uint64_t count, std::vector<std::shared_ptr<DisassemblyLine>> &lines);
 	std::shared_ptr<Binary> AddScript(const std::string &scriptPath);
-	private:
+
+private:
+
 	using scripts_lock = std::scoped_lock<std::recursive_mutex>;
-	BinaryPtr _AddScript(const std::string &scriptPath);
+
+	int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1);
 	bool GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource);
-
+	
+	static void PopulateCodeMap(BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap);
 	static void PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber = false);
-
 	static void ScanScriptsInContainer(int baselump, BinaryMap &m_scripts, const std::string &filter = "");
 	static BinaryPtr makeEmptyBinary(const std::string &scriptPath);
+	
 	DisassemblyMap m_disassemblyMap;
 	Binary::FunctionCodeMap m_globalCodeMap;
 	std::recursive_mutex m_scriptsMutex;

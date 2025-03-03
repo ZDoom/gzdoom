@@ -49,7 +49,7 @@ PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath)
 	binary->lump = GetScriptFileID(scriptPath);
 	int wadnum = fileSystem.GetFileContainer(binary->lump);
 	binary->scriptName = truncScriptPath.substr(truncScriptPath.find_last_of("/\\") + 1);
-	binary->scriptPath = truncScriptPath;
+	binary->unqualifiedScriptPath = truncScriptPath;
 	// check for the archive name in the script path
 	binary->archiveName = fileSystem.GetResourceFileName(wadnum);
 	binary->archivePath = fileSystem.GetResourceFileFullName(wadnum);
@@ -57,7 +57,7 @@ PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath)
 	return binary;
 }
 
-void populateCodeMap(PexCache::BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap)
+void PexCache::PopulateCodeMap(PexCache::BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap)
 {
 	if (!binary)
 	{
@@ -76,9 +76,6 @@ void populateCodeMap(PexCache::BinaryPtr binary, Binary::FunctionCodeMap &functi
 				continue;
 			}
 			auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
-			//			if (!CaseInsensitiveEquals(scriptFunc->SourceFileName.GetChars(), qualPath)) {
-			//				continue;
-			//			}
 
 			void *code = scriptFunc->Code;
 			void *end = scriptFunc->Code + scriptFunc->CodeSize;
@@ -96,11 +93,12 @@ void PexCache::ScanAllScripts()
 {
 	scripts_lock scriptLock(m_scriptsMutex);
 	m_scripts.clear();
-	ScanScriptsInContainer(-1, m_scripts);
 	m_globalCodeMap.clear();
+
+	ScanScriptsInContainer(-1, m_scripts);
 	for (auto &bin : m_scripts)
 	{
-		populateCodeMap(bin.second, m_globalCodeMap);
+		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
 	// TODO: do this dynamically
 	for (auto &pair : m_globalCodeMap)
@@ -280,7 +278,7 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 
 	for (auto &bin : p_scripts)
 	{
-		bin.second->populateFunctionMaps();
+		bin.second->PopulateFunctionMaps();
 	}
 }
 
@@ -288,16 +286,11 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 std::shared_ptr<Binary> PexCache::AddScript(const std::string &scriptPath)
 {
 	scripts_lock scriptLock(m_scriptsMutex);
-	return _AddScript(scriptPath);
-}
-
-std::shared_ptr<Binary> PexCache::_AddScript(const std::string &scriptPath)
-{
 	std::shared_ptr<Binary> bin;
 
 	ScanScriptsInContainer(-1, m_scripts, scriptPath);
 	bin = GetCachedScript(GetScriptReference(scriptPath));
-	populateCodeMap(bin, m_globalCodeMap);
+	PopulateCodeMap(bin, m_globalCodeMap);
 
 	return bin;
 }
@@ -435,9 +428,14 @@ inline bool LineIsFunctionDeclaration(const std::string &line, const std::string
 
 // TODO: rely on compiler information somehow instead of this
 // find the LINE that the function declaration starts on, lines starting at 1
-inline int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1)
+int PexCache::FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1)
 {
-	std::string source_code = source->cachedSourceCode;
+	
+	std::string source_code;
+	if (!GetOrCacheSource(source, source_code))
+	{
+		return 0;
+	}
 	// convert source_code to lowercase
 	std::transform(source_code.begin(), source_code.end(), source_code.begin(), ::tolower);
 	std::string function_name = func->Name.GetChars();
@@ -666,10 +664,6 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 		lines_vec.push_back(instruction);
 		currCodePointer++;
 	}
-	if (source->cachedSourceCode.empty())
-	{
-		GetSourceContent(source->GetQualifiedPath(), source->cachedSourceCode);
-	}
 	auto func_decl_line = FindFunctionDeclaration(source, func, min_line);
 	if (func_decl_line > 0)
 	{
@@ -828,9 +822,27 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t instructionOffse
 }
 }
 
-std::string DebugServer::Binary::GetQualifiedPath() const { return archiveName + ":" + scriptPath; }
+std::string DebugServer::Binary::GetQualifiedPath() const { return archiveName + ":" + unqualifiedScriptPath; }
+std::string DebugServer::Binary::GetArchiveName() const { return archiveName; }
+std::string DebugServer::Binary::GetArchivePath() const { return archivePath; }
 
-void DebugServer::Binary::populateFunctionMaps()
+std::stack<DebugServer::Binary::FunctionLineMap::const_iterator> DebugServer::Binary::FindFunctionRangesByLine(int line) const { return functionLineMap.find_ranges(line); }
+
+std::stack<beneficii::range_map<void *, VMScriptFunction *>::const_iterator> DebugServer::Binary::FindFunctionRangesByCode(void *address) const
+{
+	return functionCodeMap.find_ranges(address);
+}
+
+bool DebugServer::Binary::HasFunctions() const
+{
+	return !functions.empty();
+}
+bool DebugServer::Binary::HasFunctionLines() const
+{
+	return !functionLineMap.empty();
+}
+
+void DebugServer::Binary::PopulateFunctionMaps()
 {
 	functionLineMap.clear();
 	functionCodeMap.clear();
@@ -887,7 +899,7 @@ dap::Source DebugServer::Binary::GetDapSource() const
 	return {
 		.name = scriptName,
 		.origin = archiveName,
-		.path = scriptPath,
+		.path = unqualifiedScriptPath,
 		.sourceReference = scriptReference,
 	};
 }

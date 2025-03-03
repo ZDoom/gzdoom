@@ -3877,6 +3877,11 @@ int GameMain()
 
 void D_Cleanup()
 {
+	if (debugServer)
+	{
+		debugServer->Stop();
+		debugServer = nullptr;
+	}
 	if (demorecording)
 	{
 		G_CheckDemoStatus();

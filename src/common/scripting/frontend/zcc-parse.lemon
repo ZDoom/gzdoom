@@ -958,6 +958,7 @@ type_name(X) ::= DOT dottable_id(A).
 
 /* Aggregate types */
 %type aggregate_type {ZCC_Type *}
+%type aggregate_type_pre {ZCC_Type *}
 %type type {ZCC_Type *}
 %type type_list {ZCC_Type *}
 %type type_list_or_void {ZCC_Type *}
@@ -966,30 +967,92 @@ type_name(X) ::= DOT dottable_id(A).
 %type array_size{ZCC_Expression *}
 %type array_size_expr{ZCC_Expression *}
 
-aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMap<K, V> */
+aggregate_type_pre(X) ::= MAP(T) LT type_or_array(A) COMMA type_or_array(B).	/* ZSMap<K, V> */
 {
 	NEW_AST_NODE(MapType,map,T);
 	map->KeyType = A;
 	map->ValueType = B;
 	X = map;
+	X->ArraySize = NULL;
 }
 
-aggregate_type(X) ::= MAPITERATOR(T) LT type_or_array(A) COMMA type_or_array(B) GT.	/* ZSMapIterator<K, V> */
+aggregate_type_pre(X) ::= MAPITERATOR(T) LT type_or_array(A) COMMA type_or_array(B).	/* ZSMapIterator<K, V> */
 {
 	NEW_AST_NODE(MapIteratorType,map_it,T);
 	map_it->KeyType = A;
 	map_it->ValueType = B;
 	X = map_it;
+	X->ArraySize = NULL;
 }
 
-aggregate_type(X) ::= ARRAY(T) LT type_or_array(A) GT.							/* TArray<type> */
+aggregate_type_pre(X) ::= ARRAY(T) LT type_or_array(A).							/* TArray<type> */
 {
 	NEW_AST_NODE(DynArrayType,arr,T);
 	arr->ElementType = A;
 	X = arr;
+	X->ArraySize = NULL;
 }
 
-aggregate_type(X) ::= func_ptr_type(A). { X = A; /*X-overwrites-A*/ }
+aggregate_type_pre(X) ::= func_ptr_type(A). { X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
+
+aggregate_type_pre(X) ::= CLASS(T) LT dottable_id(A). /* class<type> */
+{
+	NEW_AST_NODE(ClassType,cls,T);
+	cls->Restriction = A;
+	X = cls;
+	X->ArraySize = NULL;
+}
+
+aggregate_type(X) ::= aggregate_type_pre(A) GT. { X = A; X->ArraySize = NULL; }
+
+aggregate_type(X) ::= MAP(T) LT type_or_array(A) COMMA aggregate_type_pre(B) RSH.	/* ZSMap<K, V<...>> */
+{
+	if(!stat->sc->CheckParseVersion(MakeVersion(4, 15, 1)))
+	{
+		stat->sc->ScriptMessage(">> without space in parametrized types only supported for zscript >= 4.15.1");
+		FScriptPosition::ErrorCounter++;
+	}
+	NEW_AST_NODE(MapType,map,T);
+	map->KeyType = A;
+	map->ValueType = B;
+	X = map;
+	X->ArraySize = NULL;
+}
+
+aggregate_type(X) ::= MAPITERATOR(T) LT type_or_array(A) COMMA aggregate_type_pre(B) RSH.	/* ZSMapIterator<K, V<...>> */
+{
+	if(!stat->sc->CheckParseVersion(MakeVersion(4, 15, 1)))
+	{
+		stat->sc->ScriptMessage(">> without space in parametrized types only supported for zscript >= 4.15.1");
+		FScriptPosition::ErrorCounter++;
+	}
+	NEW_AST_NODE(MapIteratorType,map_it,T);
+	map_it->KeyType = A;
+	map_it->ValueType = B;
+	X = map_it;
+	X->ArraySize = NULL;
+}
+
+aggregate_type(X) ::= ARRAY(T) LT aggregate_type_pre(A) RSH. /* TArray<T<...>> */
+{
+	if(!stat->sc->CheckParseVersion(MakeVersion(4, 15, 1)))
+	{
+		stat->sc->ScriptMessage(">> without space in parametrized types only supported for zscript >= 4.15.1");
+		FScriptPosition::ErrorCounter++;
+	}
+	NEW_AST_NODE(DynArrayType,arr,T);
+	arr->ElementType = A;
+	X = arr;
+	X->ArraySize = NULL;
+}
+
+aggregate_type(X) ::= CLASS(T).							/* class<type> */
+{
+	NEW_AST_NODE(ClassType,cls,T);
+	cls->Restriction = NULL;
+	X = cls;
+	X->ArraySize = NULL;
+}
 
 %type func_ptr_type {ZCC_FuncPtrType *}
 %type func_ptr_params {ZCC_FuncPtrParamDecl *}
@@ -1003,7 +1066,7 @@ fn_ptr_flag(X) ::= CLEARSCOPE.		{ X.Int = ZCC_ClearScope; }
 //fn_ptr_flag(X) ::= VIRTUALSCOPE.	{ X.Int = ZCC_VirtualScope; }	//virtual scope not allowed
 
 
-func_ptr_type(X) ::= FNTYPE(T) LT fn_ptr_flag(F) type_list_or_void(A) LPAREN func_ptr_params(B) RPAREN GT. /* Function<...(...)> */
+func_ptr_type(X) ::= FNTYPE(T) LT fn_ptr_flag(F) type_list_or_void(A) LPAREN func_ptr_params(B) RPAREN. /* Function<...(...)> */
 {
 	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
 	fn_ptr->RetType = A;
@@ -1012,7 +1075,7 @@ func_ptr_type(X) ::= FNTYPE(T) LT fn_ptr_flag(F) type_list_or_void(A) LPAREN fun
 	X = fn_ptr;
 }
 
-func_ptr_type(X) ::= FNTYPE(T) LT VOID GT. /* Function<void> */
+func_ptr_type(X) ::= FNTYPE(T) LT VOID. /* Function<void> */
 {
 	NEW_AST_NODE(FuncPtrType,fn_ptr,T);
 	fn_ptr->RetType = nullptr;
@@ -1053,15 +1116,6 @@ func_ptr_param(X) ::= func_param_flags(A) type(B) AND.
 	parm->Flags = A.Int | ZCC_Out;
 	X = parm;
 }
-
-aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
-{
-	NEW_AST_NODE(ClassType,cls,T);
-	cls->Restriction = A;
-	X = cls;
-}
-class_restrictor(X) ::= .						{ X = NULL; }
-class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; /*X-overwrites-A*/ }
 
 type(X) ::= type_name(A).					{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
 type(X) ::= aggregate_type(A).				{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }

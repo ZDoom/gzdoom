@@ -637,32 +637,6 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			LogError("GetStructState: %s (%s) Error getting field %s", struct_name.c_str(), structType->mDescriptiveName.GetChars(), field_name.c_str());
 		}
 	}
-	bool data_before = min_offset > 0;
-	// ignore struct padding
-	bool data_after = max_offset + size_of_last_field < struct_size && struct_size - (max_offset + size_of_last_field) >= sizeof(size_t);
-	if (struct_ptr && (data_before || data_after) && structType->isStruct())
-	{
-		if (std::string(structType->DescriptiveName()).find("Vertex") != std::string::npos)
-		{
-			bool thing = false;
-		}
-		auto sType = dynamic_cast<PStruct *>(structType);
-		if (sType && sType->isNative)
-		{
-			if (data_before)
-			{
-				// add native data before
-				auto new_type = NewArray(TypeUInt8, min_offset);
-				m_structInfo.StructFields.insert(m_structInfo.StructFields.begin(), LocalState {"<PRECEDING_NATIVE_DATA>", new_type, 0, -1, -1, VMValue((void *)struct_ptr), {}, false});
-			}
-			if (data_after)
-			{
-				// add native data after
-				auto new_type = NewArray(TypeUInt8, struct_size - (max_offset + size_of_last_field));
-				m_structInfo.StructFields.push_back(LocalState {"<PROCEEDING_NATIVE_DATA>", new_type, 0, -1, -1, VMValue((void *)(struct_ptr + max_offset + size_of_last_field)), {}, false});
-			}
-		}
-	}
 	return m_structInfo;
 }
 
@@ -804,11 +778,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 						state.RegCount = fields.size();
 						// NOTE: this only works because the only optimized structs are float or double-only structs (Vec2, Vec3, Vec4, etc.)
 						// if this changes in the future, this will have to be modified; the offset would not map to the register index
-						// if (fields.empty())
-						// {
-						// 	state.invalid_value = true;
-						// 	return state;
-						// }
 						assert(fields.empty() || fields[0].second->Type->RegType == REGT_FLOAT);
 						state.RegNum = NumRegFloat;
 						// return an address to the start of the struct on the registers

@@ -10,6 +10,7 @@ namespace DebugServer
 class LocalScopeStateNode : public StateNodeBase, public IProtocolScopeSerializable, public IStructuredState
 {
 	VMFrame *m_stackFrame;
+	FrameLocalsState m_state;
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;
 	public:
 	LocalScopeStateNode(VMFrame *stackFrame);

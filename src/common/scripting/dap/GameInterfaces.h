@@ -152,6 +152,9 @@ static inline bool isValidDobject(DObject *obj)
 #endif
 }
 
+static bool TypeIsStructOrStructPtr(PType *p_type) { return p_type->isStruct() || p_type->isContainer() || (p_type->isPointer() && static_cast<PPointer *>(p_type)->PointedType->isStruct()); }
+
+
 static inline bool IsVMValValidDObject(const VMValue *val) { return IsVMValueValid(val) && isValidDobject(static_cast<DObject *>(val->a)); }
 
 static inline VMValue GetVMValueVar(DObject *obj, FName field, PType *type)
@@ -387,5 +390,412 @@ static std::vector<std::string> FindAllScripts(int baselump = -1)
 	}
 	return scriptNames;
 }
+
+
+// register to local mapping with names and values
+struct LocalState
+{
+	std::string Name;
+	PType *Type;
+	int VarFlags = -1;
+	int RegNum = -1;
+	int RegCount = -1;
+	VMValue Value;
+	std::vector<LocalState> StructFields;
+	bool invalid_value = false;
+	bool IsStruct() { return TypeIsStructOrStructPtr(Type); }
+	bool IsValid() { return Type && !invalid_value; }
+};
+
+struct FrameLocalsState
+{
+	std::map<std::string, LocalState> m_locals;
+};
+
+using StructInfo = LocalState;
+
+static std::vector<std::pair<std::string, PField *>> GetStructFieldInfo(PType *m_type)
+{
+	std::vector<std::pair<std::string, PField *>> fields;
+	auto structType = dynamic_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
+	if (!structType)
+	{
+		return fields;
+	}
+	auto it = structType->Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto field_type = dynamic_cast<PField *>(pair->Value);
+		if (field_type)
+		{
+			fields.push_back({pair->Key.GetChars(), field_type});
+		}
+	}
+	// sort by field offset
+	std::sort(
+		fields.begin(), fields.end(),
+		[](const auto &a, const auto &b)
+		{
+			if (!a.second && !b.second) return false;
+			if (!a.second) return false;
+			if (!b.second) return true;
+			return a.second->Offset < b.second->Offset;
+		});
+	return fields;
+}
+
+static void GetLocalsNames(VMFrame *m_stackFrame, std::vector<std::string> &names)
+{
+	VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+	auto locals = func->GetLocalVariableBlocksAt(m_stackFrame->PC);
+	Printf("Locals: \n");
+	for (auto &local : locals)
+	{
+		names.push_back(local.Name.GetChars());
+		Printf("Name: %s, Type: %s", local.Name.GetChars(), local.type->DescriptiveName());
+	}
+}
+
+static void GetExplicitParameterNames(const VMFrame *m_stackFrame, std::vector<std::string> &names)
+{
+	// TODO: Get parameter names
+}
+
+static size_t GetImplicitParmeterCount(const VMFrame *m_stackFrame)
+{
+	if (m_stackFrame->Func->VarFlags & VARF_Action)
+	{
+		return 3;
+	}
+	else if (m_stackFrame->Func->VarFlags & VARF_Method)
+	{
+		return 1;
+		// TODO: Figure out if there is a state_pointer in non-action methods?
+	}
+	return 0;
+}
+
+static void GetImplicitParameterNames(const VMFrame *m_stackFrame, std::vector<std::string> &names)
+{
+	static const char *const LOCAL = "Local";
+	static const char *const SELF = "self";
+	static const char *const INVOKER = "invoker";
+	static const char *const STATE_POINTER = "state_pointer";
+
+
+	if (m_stackFrame->Func->VarFlags & VARF_Action)
+	{
+		names.push_back(SELF);
+		names.push_back(INVOKER);
+		names.push_back(STATE_POINTER);
+	}
+	else if (m_stackFrame->Func->VarFlags & VARF_Method)
+	{
+		names.push_back(SELF);
+		// TODO: Figure out if there is a state_pointer in non-action methods?
+	}
+
+	// TODO: verify that a method is static (and has no members) as indicated by absence of VARF_Method on VMFunction::VarFlags
+}
+static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame);
+
+static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType *m_type, const VMFrame *m_currentFrame)
+{
+	
+	StructInfo m_structInfo;
+	m_structInfo.Name = struct_name;
+	m_structInfo.Value = m_value;
+	m_structInfo.Type = m_type;
+	if (!m_type)
+	{
+		m_structInfo.invalid_value = true;
+		return m_structInfo;
+	}
+
+	auto structType = static_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
+	auto it = structType->Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	char *struct_ptr = static_cast<char *>(m_value.a);
+	char *curr_ptr = struct_ptr;
+	size_t struct_size = structType->Size;
+	size_t currsize = 0;
+	auto fields = GetStructFieldInfo(m_type);
+	// some structs have their fields allocated in the registers; if so, we need to get the locals state	
+	if (m_currentFrame)
+	{
+		auto localsState = GetLocalsState(m_currentFrame);
+		for (auto &local : localsState.m_locals)
+		{
+			// If all the fields are allocated in the registers, we can just return the locals state
+			if (local.first == struct_name && local.second.StructFields.size() == fields.size())
+			{
+				return local.second;
+			}
+		}
+	}
+
+	for (auto &field_pair : fields)
+	{
+		std::string field_name = field_pair.first;
+		auto field = field_pair.second;
+		try
+		{
+			if (!field || !struct_ptr)
+			{
+				m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, VMValue(), {}, true});
+				continue;
+			}
+			auto offset = field->Offset;
+			uint32_t flags = field->Flags;
+			uint32_t fieldSize = field->Type->Size;
+			auto type = field->Type;
+
+			VMValue val;
+			void *pointed_field;
+			pointed_field = struct_ptr + offset;
+			bool invalid = false;
+			if (type == TypeString){
+				auto str = static_cast<FString *>(pointed_field);
+				if (!isFStringValid(*str))
+					val = VMValue();
+				else
+					val = VMValue(str);
+			}
+			else if (type == TypeFloat32)
+			{
+				val = VMValue(*(float *)pointed_field);
+			}
+			else if (type == TypeFloat64)
+			{
+				val = VMValue(*(double *)pointed_field);
+			}
+			else if (type->isScalar())
+			{
+				switch (fieldSize)
+				{
+				case 1:
+					val = VMValue(*(uint8_t *)pointed_field);
+					break;
+				case 2:
+					val = VMValue(*(uint16_t *)pointed_field);
+					break;
+				case 4:
+					val = VMValue(*(uint32_t *)pointed_field);
+					break;
+				case 8:
+					val = VMValue((void *)(*(uint64_t *)pointed_field));
+					break;
+				default:
+					invalid = true;
+					LogError("StructStateNode::GetChildNames: field %s scalar field size %d not supported", field_name.c_str(), fieldSize);
+					break;
+				}
+			}
+			else
+			{
+				val = VMValue((void *)pointed_field);
+			}
+			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, val, {}, invalid});
+			// increment struct_ptr by fieldSize
+			// don't increment if it's a transient field
+			if (curr_ptr && !(flags & VARF_Transient))
+			{
+				currsize += fieldSize;
+				curr_ptr = curr_ptr + fieldSize;
+			}
+		}
+		catch (...)
+		{
+		}
+		if (currsize > struct_size)
+		{
+			LogError("StructStateNode::GetChildNames: struct size %d exceeded on field %s, breaking", struct_size, field_name.c_str());
+			break;
+		}
+	}
+	return m_structInfo;
+}
+
+static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame)
+{
+	FrameLocalsState localState;
+	std::map<std::string, LocalState> m_children;
+	int numImplicitParams = GetImplicitParmeterCount(m_stackFrame);
+	static const char *const LOCAL = "Local";
+	static const char *const SELF = "self";
+	static const char *const INVOKER = "invoker";
+	static const char *const STATE_POINTER = "state_pointer";
+
+	if (numImplicitParams > 0)
+	{
+		for (int paramidx = 0; paramidx < numImplicitParams; paramidx++)
+		{
+			std::string name;
+			switch (paramidx)
+			{
+			case 0:
+				name = SELF;
+				break;
+			case 1:
+				name = INVOKER;
+				break;
+			case 2:
+				name = STATE_POINTER;
+				break;
+			}
+			if (m_stackFrame->NumRegA == 0)
+			{
+				LogError("Function %s has '%s' but no parameters", m_stackFrame->Func->QualifiedName, name.c_str());
+				continue;
+			}
+			else if (m_stackFrame->NumRegA <= paramidx)
+			{
+				LogError("Function %s has '%s' but <= %d parameters", m_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
+				continue;
+			}
+			if (m_stackFrame->Func->Proto->ArgumentTypes.size() == 0)
+			{
+				LogError("Function %s has '%s' but no argument types", m_stackFrame->Func->QualifiedName, name.c_str());
+				continue;
+			}
+			else if (m_stackFrame->Func->Proto->ArgumentTypes.size() <= paramidx)
+			{
+				LogError("Function %s has '%s' but <= %d argument types", m_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
+				continue;
+			}
+			auto type = m_stackFrame->Func->Proto->ArgumentTypes[paramidx];
+			auto val = m_stackFrame->GetRegA()[paramidx];
+
+			localState.m_locals[name] = LocalState {name, type, 0, paramidx, 1, val, {}, false};
+		}
+	}
+	if (!IsFunctionNative(m_stackFrame->Func))
+	{
+		uint8_t NumRegInt = 0;
+		uint8_t NumRegFloat = 0;
+		uint8_t NumRegString = 0;
+		uint8_t NumRegAddress = numImplicitParams;
+
+		VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+		auto _locals = func->GetLocalVariableBlocksAt(m_stackFrame->PC);
+		std::vector<VMLocalVariable> locals;
+		std::vector<std::string> local_names;
+		for (auto &local : _locals)
+		{
+			locals.push_back(local);
+			local_names.push_back(local.Name.GetChars());
+		}
+		std::vector<std::string> localNames;
+		for (auto &local : locals)
+		{
+
+			int flags = 0; // TODO
+
+
+			// auto -- need to declare the actual type becuase it's recursive
+			std::function<LocalState(const std::string &, PType *, const std::string &)> IncCounts = [&](const std::string &name, PType *type, const std::string &struct_name = "")
+			{
+				LocalState state;
+				state.Name = name;
+				state.Type = type;
+				state.VarFlags = flags;
+				state.RegCount = local.RegCount;
+				bool invalid_reg_num = local.RegNum < 0;
+				if (!IsBasicNonPointerType(type))
+				{
+					VMValue value;
+					state.RegNum = invalid_reg_num ? NumRegAddress : local.RegNum;
+					// TODO: verify that structs embedded in local structs are on the heap vs. the registers
+					if (TypeIsStructOrStructPtr(local.type) && struct_name.empty() && !invalid_reg_num)
+					{
+						auto fields = GetStructFieldInfo(local.type);
+						state.RegCount = fields.size();
+						std::string new_struct_name = struct_name;
+						if (!struct_name.empty())
+						{
+							new_struct_name += ".";
+						}
+						new_struct_name += name;
+					
+						for (auto &field : fields)
+						{
+							uint32_t regNum = 0;
+							PType *field_type = field.second->Type;
+							LocalState field_state;
+							state.StructFields.push_back(IncCounts(field.first, field_type, new_struct_name));
+						}
+					}
+					else
+					{
+						if (state.RegNum >= m_stackFrame->NumRegA)
+						{
+							LogError("Function %s, local '%s' address reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegAddress, m_stackFrame->NumRegA);
+							state.invalid_value = true;
+							return state;
+						}
+						state.Value = VMValue(m_stackFrame->GetRegA()[state.RegNum]);
+						NumRegAddress++;
+					}
+					
+				}
+				else
+				{
+					state.RegCount = 1;
+					bool isStructMember = !struct_name.empty();
+					auto basic_type = GetBasicType(type);
+					VMValue value;
+					switch (basic_type)
+					{
+					case BASIC_double:
+					case BASIC_float:
+						state.RegNum = isStructMember ? NumRegFloat : local.RegNum;
+						if (state.RegNum >= m_stackFrame->NumRegF)
+						{
+							LogError("Function %s, local '%s' float reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegFloat, m_stackFrame->NumRegF);
+							state.invalid_value = true;
+							break;
+						}
+						value = VMValue(m_stackFrame->GetRegF()[state.RegNum]);
+						NumRegFloat++;
+
+						break;
+					case BASIC_string:
+						state.RegNum = isStructMember ? NumRegString : local.RegNum;
+						if (state.RegNum >= m_stackFrame->NumRegS)
+						{
+							LogError("Function %s, local '%s' string reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegString, m_stackFrame->NumRegS);
+							state.invalid_value = true;
+							break;
+						}
+						value = VMValue(&m_stackFrame->GetRegS()[state.RegNum]);
+						NumRegString++;
+
+						break;
+					default:
+						state.RegNum = isStructMember ? NumRegInt : local.RegNum;
+						if (state.RegNum >= m_stackFrame->NumRegD)
+						{
+							LogError("Function %s, local '%s' int reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegInt, m_stackFrame->NumRegD);
+							state.invalid_value = true;
+							break;
+						}
+						value = VMValue(m_stackFrame->GetRegD()[state.RegNum]);
+						NumRegInt++;
+						break;
+					}
+					state = LocalState {name, type, flags, NumRegAddress, 1, value, {}, false};
+				}
+				return state;
+			};
+			auto local_name = local.Name.GetChars();
+
+			localState.m_locals[local_name] = IncCounts(local_name, local.type, "");
+		}
+	}
+	// TODO: rest of the params
+	return localState;
+}
+
 
 }

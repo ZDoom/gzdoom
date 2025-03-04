@@ -274,6 +274,25 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 	return -1;
 }
 
+TArray<VMLocalVariable> VMScriptFunction::GetLocalVariableBlocksAt(const VMOP *pc)
+{
+	TArray<VMLocalVariable> ret;
+	// LocalVariableBlocks should already be sorted by start address.
+	std::vector<std::pair<const VMOP*, const VMOP*>> ranges;
+	for (auto &block : LocalVariableBlocks)
+	{
+		if (pc >= block.first.first && pc < block.first.second)
+		{
+			ranges.push_back(block.first);
+			for (auto &var : block.second)
+			{
+				ret.Push(var);
+			}
+		}
+	}
+	return ret;
+}
+
 static bool CanJit(VMScriptFunction *func)
 {
 	// Asmjit has a 256 register limit. Stay safely away from it as the jit compiler uses a few for temporaries as well.

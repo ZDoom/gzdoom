@@ -7,63 +7,80 @@
 
 namespace DebugServer
 {
-constexpr size_t GetElementCount(const VMValue &value, PType *p_type)
+static PType * GetElementType(const PType * p_type)
 {
-	if (p_type->isArray())
+	auto type = p_type;
+	if (p_type->isPointer())
 	{
-		return static_cast<PArray *>(p_type)->ElementCount;
+		type = dynamic_cast<const PPointer *>(type)->PointedType;
 	}
-	else if (p_type->isDynArray())
+	if (type->isArray())
+	{
+		auto *arraytype = dynamic_cast<const PArray *>(type);
+		return arraytype->ElementType;
+	}
+	else if (type->isDynArray())
+	{
+		auto arrayType = dynamic_cast<const PDynArray *>(type);
+		return arrayType->ElementType;
+	}
+	return nullptr;
+}
+
+static void* GetArrayHead(const VMValue &value, PType *p_type)
+{
+	if (p_type->isPointer())
+	{
+		auto *pointerType = dynamic_cast<PPointer *>(p_type);
+		return *static_cast<void **>(value.a);
+	}
+	return value.a;
+}
+static size_t GetElementCount(const VMValue &value, PType *p_type)
+{
+	auto type = p_type;
+	auto array_head = value.a;
+	if (type->isPointer())
+	{
+		type = static_cast<PPointer *>(p_type)->PointedType;
+		// array_head = *static_cast<void **>(value.a);
+	}
+	
+	if (type->isDynArray() || type->isStaticArray())
 	{
 		if (!IsVMValueValid(&value))
 		{
 			return 0;
 		}
-
-		auto arrayType = static_cast<PDynArray *>(p_type);
-		auto elementType = arrayType->ElementType;
-		if (elementType->isFloat())
-		{
-			switch (elementType->Size)
-			{
-			case 8:
-				return static_cast<TArray<double> *>(value.a)->size();
-			case 4:
-				return static_cast<TArray<float> *>(value.a)->size();
-			}
-		}
-		else if (elementType->isPointer())
-		{
-			return static_cast<TArray<void *> *>(value.a)->size();
-		}
-		else
-		{
-			switch (elementType->Size)
-			{
-			case 8:
-				return static_cast<TArray<uint64_t> *>(value.a)->size();
-			case 4:
-				return static_cast<TArray<uint32_t> *>(value.a)->size();
-			case 2:
-				return static_cast<TArray<uint16_t> *>(value.a)->size();
-			case 1:
-				return static_cast<TArray<uint8_t> *>(value.a)->size();
-			}
-		}
+		
+		PType* elementType = GetElementType(p_type);
+		// FArray has the same layout as TArray, just return count
+		auto *arr = static_cast<FArray *>(array_head);
+		return arr->Count;
 	}
+	if (type->isArray())
+	{
+		return static_cast<PArray *>(type)->ElementCount;
+	}
+	else 
 	return 0;
 }
 
-ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *type) : m_name(name), m_value(value), m_type(type)
+ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *p_type) : m_name(name), m_value(value), m_type(p_type)
 {
-	if (m_type->isArray())
+	auto type = m_type;
+	if (m_type->isPointer())
 	{
-		PArray *arraytype = static_cast<PArray *>(m_type);
+		type = dynamic_cast<PPointer *>(type)->PointedType;
+	}
+	if (type->isArray())
+	{
+		auto *arraytype = dynamic_cast<PArray *>(type);
 		m_elementType = arraytype->ElementType;
 	}
-	else if (m_type->isDynArray())
+	else if (type->isDynArray())
 	{
-		auto arrayType = static_cast<PDynArray *>(m_type);
+		auto arrayType = dynamic_cast<PDynArray *>(type);
 		m_elementType = arrayType->ElementType;
 	}
 }
@@ -76,9 +93,7 @@ bool ArrayStateNode::SerializeToProtocol(dap::Variable &variable)
 	variable.name = m_name;
 
 	std::string elementTypeName = m_elementType->DescriptiveName();
-
-	variable.type = StringFormat("%s[]", elementTypeName.c_str());
-
+	variable.type = m_type->mDescriptiveName.GetChars();
 	if (!IsVMValueValid(&m_value))
 	{
 		variable.value = StringFormat("%s[<NONE>]", elementTypeName.c_str());
@@ -130,16 +145,27 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 		node = m_children[elidx_str];
 		return true;
 	}
-	if (m_type->isArray())
+	if (m_value.a == nullptr)
 	{
-		auto element_size = m_elementType->Size;
-		VMValue element_ptr = VMValue((void *)((char *)m_value.a + (element_size * elementIndex)));
-		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(std::to_string(elementIndex), DerefValue(&element_ptr, GetBasicType(m_elementType)), m_elementType);
+		return false;
 	}
-	else if (m_type->isDynArray())
+	auto array_head = m_value.a;
+	auto type = m_type;
+	if (m_type->isPointer())
 	{
-		auto arrayType = static_cast<PDynArray *>(m_type);
-		auto elementType = arrayType->ElementType;
+		type = static_cast<PPointer *>(m_type)->PointedType;
+		// array_head = *static_cast<void **>(m_value.a);
+	}
+	
+	if (type->isDynArray() || type->isStaticArray())
+	{
+		auto elementType = GetElementType(m_type);
+		auto returnType = elementType;
+		// too large, return a pointer to the array element
+		if (elementType->Size > 8)
+		{
+			returnType = NewPointer(elementType);
+		}
 		VMValue element_val = [&]
 		{
 			if (elementType->isFloat())
@@ -147,38 +173,50 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 				switch (elementType->Size)
 				{
 				case 8:
-					return VMValue(static_cast<TArray<double> *>(m_value.a)->operator[](elementIndex));
+					return VMValue(static_cast<TArray<double> *>(array_head)->operator[](elementIndex));
 				case 4:
-					return VMValue(static_cast<TArray<float> *>(m_value.a)->operator[](elementIndex));
+					return VMValue(static_cast<TArray<float> *>(array_head)->operator[](elementIndex));
 				}
 			}
 			else if (elementType->isObjectPointer())
 			{
-				return VMValue(static_cast<TArray<DObject *> *>(m_value.a)->operator[](elementIndex));
+				return VMValue(static_cast<TArray<DObject *> *>(array_head)->operator[](elementIndex));
 			}
 			else if (elementType == TypeString)
 			{
-				return VMValue(&static_cast<TArray<FString> *>(m_value.a)->operator[](elementIndex));
+				return VMValue(&static_cast<TArray<FString> *>(array_head)->operator[](elementIndex));
 			}
 			else if (elementType->isPointer())
 			{
-				return VMValue(static_cast<TArray<void *> *>(m_value.a)->operator[](elementIndex));
+				return VMValue(static_cast<TArray<void *> *>(array_head)->operator[](elementIndex));
 			}
 			else
 			{
 				switch (elementType->Size)
 				{
+				case 8:
+					return VMValue((void*)static_cast<TArray<uint64_t> *>(array_head)->operator[](elementIndex));
 				case 4:
-					return VMValue(static_cast<TArray<uint32_t> *>(m_value.a)->operator[](elementIndex));
+					return VMValue(static_cast<TArray<uint32_t> *>(array_head)->operator[](elementIndex));
 				case 2:
-					return VMValue(static_cast<TArray<uint16_t> *>(m_value.a)->operator[](elementIndex));
+					return VMValue(static_cast<TArray<uint16_t> *>(array_head)->operator[](elementIndex));
 				case 1:
-					return VMValue(static_cast<TArray<uint8_t> *>(m_value.a)->operator[](elementIndex));
+					return VMValue(static_cast<TArray<uint8_t> *>(array_head)->operator[](elementIndex));
+				default:
+					// too large, return a ptr to the array element
+					assert(elementIndex <= static_cast<FArray *>(array_head)->Count);
+					return VMValue((void*)(((char *)static_cast<FArray *>(array_head)->Array) + (elementIndex * elementType->Size)));
 				}
 			}
 			return VMValue();
 		}();
-		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(elidx_str, element_val, elementType);
+		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(elidx_str, element_val, returnType);
+	}
+	else if (type->isArray())
+	{
+		auto element_size = m_elementType->Size;
+		VMValue element_ptr = VMValue((void *)((char *)array_head + (element_size * elementIndex)));
+		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(std::to_string(elementIndex), DerefValue(&element_ptr, GetBasicType(m_elementType)), m_elementType);
 	}
 	node = m_children[elidx_str];
 

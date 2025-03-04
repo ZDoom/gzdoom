@@ -164,6 +164,14 @@ bool RuntimeState::ResolveChildrenByParentId(const uint32_t id, std::vector<std:
 std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame * current_frame)
 {
 	(void)current_frame;
+	if (p_type->isPointer() && !p_type->isObjectPointer() && !static_cast<PPointer *>(p_type)->PointedType->isStruct())
+	{
+		auto pointed = static_cast<PPointer *>(p_type)->PointedType;
+	}
+	if (TypeIsArrayOrArrayPtr(p_type))
+	{
+		return std::make_shared<ArrayStateNode>(name, variable, p_type);
+	}
 	if (IsBasicNonPointerType(p_type) || (p_type->isPointer() && !p_type->isObjectPointer() && !static_cast<PPointer *>(p_type)->PointedType->isStruct()))
 	{
 		return std::make_shared<ValueStateNode>(name, variable, p_type);
@@ -176,14 +184,11 @@ std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string n
 	{
 		return std::make_shared<ObjectStateNode>(name, variable, p_type);
 	}
-	else if (TypeIsStructOrStructPtr(p_type))
+	if (TypeIsStructOrStructPtr(p_type))
 	{
 		return std::make_shared<StructStateNode>(name, variable, p_type, current_frame);
 	}
-	else if (p_type->isArray() || p_type->isDynArray() || p_type->isStaticArray())
-	{
-		return std::make_shared<ArrayStateNode>(name, variable, p_type);
-	}
+
 	return nullptr;
 }
 

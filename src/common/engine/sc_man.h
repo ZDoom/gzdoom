@@ -85,6 +85,11 @@ public:
 		ParseVersion = ver;
 	}
 
+	bool CheckParseVersion(VersionInfo ver)
+	{
+		return ParseVersion >= ver;
+	}
+
 	void SetCMode(bool cmode);
 	void SetNoOctals(bool cmode) { NoOctals = cmode; }
 	void SetNoFatalErrors(bool cmode) { NoFatalErrors = cmode; }

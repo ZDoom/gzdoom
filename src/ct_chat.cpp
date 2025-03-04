@@ -251,14 +251,18 @@ void CT_Drawer (void)
 	{
 		// [MK] allow the status bar to take over chat prompt drawing
 		bool skip = false;
-		IFVIRTUALPTR(StatusBar, DBaseStatusBar, DrawChat)
+
+		if(StatusBar)
 		{
-			FString txt = ChatQueue;
-			VMValue params[] = { (DObject*)StatusBar, &txt };
-			int rv;
-			VMReturn ret(&rv);
-			VMCall(func, params, countof(params), &ret, 1);
-			if (!!rv) return;
+			IFVIRTUALPTR(StatusBar, DBaseStatusBar, DrawChat)
+			{
+				FString txt = ChatQueue;
+				VMValue params[] = { (DObject*)StatusBar, &txt };
+				int rv;
+				VMReturn ret(&rv);
+				VMCall(func, params, countof(params), &ret, 1);
+				if (!!rv) return;
+			}
 		}
 
 		FStringf prompt("%s ", GStrings.GetString("TXT_SAY"));
@@ -269,8 +273,8 @@ void CT_Drawer (void)
 		scalex = 1;
 		int scale = active_con_scale(drawer);
 		int screen_width = twod->GetWidth() / scale;
-		int screen_height= twod->GetHeight() / scale;
-		int st_y = StatusBar->GetTopOfStatusbar() / scale;
+		int screen_height = twod->GetHeight() / scale;
+		int st_y = StatusBar ? (StatusBar->GetTopOfStatusbar() / scale) : screen_height;
 
 		y += ((twod->GetHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 

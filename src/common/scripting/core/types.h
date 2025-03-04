@@ -109,7 +109,7 @@ public:
 	EScopeFlags ScopeFlags = (EScopeFlags)0;
 	bool            SizeKnown = true;
 
-	bool			TypeInternal = false;
+	bool			VMInternalStruct = false;
 
 	PType * LocalType = nullptr;
 

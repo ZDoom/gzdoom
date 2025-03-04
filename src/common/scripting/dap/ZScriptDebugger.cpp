@@ -416,10 +416,11 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 		RETURN_DAP_ERROR(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
 	}
 
-	// TODO DAP: support `filter`, parameter
 	int64_t count = 0;
 	int64_t maxCount = std::min<int64_t>(request.count.value(variableNodes.size()), variableNodes.size());
 	int64_t start = request.start.value(0);
+	bool only_indexed = request.filter.value("") == "indexed";
+	bool only_named = request.filter.value("") == "named";
 	for (int64_t i = start; i < start + maxCount; i++)
 	{
 		auto asVariableSerializable = dynamic_cast<IProtocolVariableSerializable *>(variableNodes.at(i).get());
@@ -432,6 +433,20 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 		if (!asVariableSerializable->SerializeToProtocol(variable))
 		{
 			continue;
+		}
+		// if it's a number (i.e. the index of an array), we only want to show indexed variables
+		if (only_indexed || only_named)
+		{
+			bool is_indexed = false;
+			if (variable.name.size() > 0)
+			{
+				size_t offset = variable.name[0] == '[' && variable.name[variable.name.size() - 1] == ']' ? 1 : 0;
+				is_indexed = std::all_of(variable.name.begin() + offset, variable.name.begin() + variable.name.size() - 1 - offset, ::isdigit);
+			}
+			if ((is_indexed && only_named) || (!is_indexed && only_indexed))
+			{
+				continue;
+			}
 		}
 
 		response.variables.push_back(variable);

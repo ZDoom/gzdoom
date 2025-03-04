@@ -155,11 +155,21 @@ static inline bool isValidDobject(DObject *obj)
 static bool TypeIsStructOrStructPtr(PType *p_type)
 {
 	auto type = p_type;
-	if (type->isPointer())
+	if (type && type->isPointer())
 	{
-		type = static_cast<PPointer *>(type)->PointedType;
+		type = dynamic_cast<PPointer *>(type)->PointedType;
 	}
-	return type->isStruct() || type->isContainer();
+	return type && type->isStruct();
+}
+
+static bool TypeIsNonStructContainer(PType *p_type)
+{
+	auto type = p_type;
+	if (type && type->isPointer())
+	{
+		type = dynamic_cast<PPointer *>(type)->PointedType;
+	}
+	return type && type->isContainer() && !type->isStruct();
 }
 
 static bool TypeIsArrayOrArrayPtr(PType *p_type)
@@ -420,13 +430,12 @@ struct LocalState
 	VMValue Value;
 	std::vector<LocalState> StructFields;
 	bool invalid_value = false;
-	bool IsStruct() { return TypeIsStructOrStructPtr(Type); }
 	bool IsValid() { return Type && !invalid_value; }
 };
 
 struct FrameLocalsState
 {
-	std::map<std::string, LocalState> m_locals;
+	std::vector<LocalState> m_locals;
 };
 
 using StructInfo = LocalState;
@@ -435,6 +444,7 @@ static std::vector<std::pair<std::string, PField *>> GetStructFieldInfo(PType *m
 {
 	std::vector<std::pair<std::string, PField *>> fields;
 	auto structType = dynamic_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
+
 	if (!structType)
 	{
 		return fields;
@@ -466,60 +476,45 @@ static void GetLocalsNames(VMFrame *m_stackFrame, std::vector<std::string> &name
 {
 	VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
 	auto locals = func->GetLocalVariableBlocksAt(m_stackFrame->PC);
-	Printf("Locals: \n");
 	for (auto &local : locals)
 	{
 		names.push_back(local.Name.GetChars());
-		Printf("Name: %s, Type: %s", local.Name.GetChars(), local.type->DescriptiveName());
 	}
 }
 
-static void GetExplicitParameterNames(const VMFrame *m_stackFrame, std::vector<std::string> &names)
-{
-	// TODO: Get parameter names
-}
 
 static size_t GetImplicitParmeterCount(const VMFrame *m_stackFrame)
-{
-	if (m_stackFrame->Func->VarFlags & VARF_Action)
-	{
-		return 3;
-	}
-	else if (m_stackFrame->Func->VarFlags & VARF_Method)
-	{
-		return 1;
-		// TODO: Figure out if there is a state_pointer in non-action methods?
-	}
-	return 0;
-}
+{ return m_stackFrame->Func->ImplicitArgs; }
 
-static void GetImplicitParameterNames(const VMFrame *m_stackFrame, std::vector<std::string> &names)
+static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 {
-	static const char *const LOCAL = "Local";
+	static const char *const ARG = "ARG";
 	static const char *const SELF = "self";
 	static const char *const INVOKER = "invoker";
 	static const char *const STATE_POINTER = "state_pointer";
 
-
-	if (m_stackFrame->Func->VarFlags & VARF_Action)
+	auto implicitCount = GetImplicitParmeterCount(m_stackFrame);
+	if (paramidx < implicitCount)
 	{
-		names.push_back(SELF);
-		names.push_back(INVOKER);
-		names.push_back(STATE_POINTER);
+		switch (paramidx)
+		{
+		case 0:
+			return SELF;
+		case 1:
+			return INVOKER;
+		case 2:
+			return STATE_POINTER;
+		}
 	}
-	else if (m_stackFrame->Func->VarFlags & VARF_Method)
-	{
-		names.push_back(SELF);
-		// TODO: Figure out if there is a state_pointer in non-action methods?
-	}
-
-	// TODO: verify that a method is static (and has no members) as indicated by absence of VARF_Method on VMFunction::VarFlags
+	// TODO: Get explicit parameter names
+	return StringFormat("%s%d", ARG, paramidx - GetImplicitParmeterCount(m_stackFrame));
 }
-static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame);
+
+static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame);
 
 static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType *m_type, const VMFrame *m_currentFrame)
 {
-	
+
 	StructInfo m_structInfo;
 	m_structInfo.Name = struct_name;
 	m_structInfo.Value = m_value;
@@ -531,6 +526,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 	}
 
 	auto structType = static_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
+
 	auto it = structType->Symbols.GetIterator();
 	PSymbolTable::MapType::Pair *pair;
 	char *struct_ptr = static_cast<char *>(m_value.a);
@@ -538,19 +534,22 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 	size_t struct_size = structType->Size;
 	size_t currsize = 0;
 	auto fields = GetStructFieldInfo(m_type);
-	// some structs have their fields allocated in the registers; if so, we need to get the locals state	
+	// some structs have their fields allocated in the registers; if so, we need to get the locals state
 	if (m_currentFrame)
 	{
 		auto localsState = GetLocalsState(m_currentFrame);
 		for (auto &local : localsState.m_locals)
 		{
 			// If all the fields are allocated in the registers, we can just return the locals state
-			if (local.first == struct_name && local.second.StructFields.size() == fields.size())
+			if (local.Name == struct_name && local.StructFields.size() == fields.size())
 			{
-				return local.second;
+				return local;
 			}
 		}
 	}
+	size_t min_offset = INT_MAX;
+	size_t max_offset = 0;
+	size_t size_of_last_field = 0;
 
 	for (auto &field_pair : fields)
 	{
@@ -568,14 +567,20 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			uint32_t fieldSize = field->Type->Size;
 			auto type = field->Type;
 
+			min_offset = std::min(min_offset, offset);
+			if (offset >= max_offset)
+			{
+				size_of_last_field = fieldSize;
+				max_offset = offset;
+			}
 			VMValue val;
 			void *pointed_field;
 			pointed_field = struct_ptr + offset;
 			bool invalid = false;
-			if (type == TypeString){
+			if (type == TypeString)
+			{
 				auto str = static_cast<FString *>(pointed_field);
-				if (!isFStringValid(*str))
-					val = VMValue();
+				if (!isFStringValid(*str)) val = VMValue();
 				else
 					val = VMValue(str);
 			}
@@ -586,6 +591,10 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			else if (type == TypeFloat64)
 			{
 				val = VMValue(*(double *)pointed_field);
+			}
+			else if (type->isPointer() && fieldSize == -1)
+			{
+				val = VMValue((void *)pointed_field);
 			}
 			else if (type->isScalar())
 			{
@@ -615,95 +624,160 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			}
 			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, val, {}, invalid});
 			// increment struct_ptr by fieldSize
-			// don't increment if it's a transient field
-			if (curr_ptr && !(flags & VARF_Transient))
+			if (curr_ptr)
 			{
 				currsize += fieldSize;
 				curr_ptr = curr_ptr + fieldSize;
 			}
 		}
+		// generic exception
 		catch (...)
 		{
+			// struct name + type name
+			LogError("GetStructState: %s (%s) Error getting field %s", struct_name.c_str(), structType->mDescriptiveName.GetChars(), field_name.c_str());
 		}
-		if (currsize > struct_size)
+	}
+	bool data_before = min_offset > 0;
+	// ignore struct padding
+	bool data_after = max_offset + size_of_last_field < struct_size && struct_size - (max_offset + size_of_last_field) >= sizeof(size_t);
+	if (struct_ptr && (data_before || data_after) && structType->isStruct())
+	{
+		if (std::string(structType->DescriptiveName()).find("Vertex") != std::string::npos)
 		{
-			LogError("StructStateNode::GetChildNames: struct size %d exceeded on field %s, breaking", struct_size, field_name.c_str());
-			break;
+			bool thing = false;
+		}
+		auto sType = dynamic_cast<PStruct *>(structType);
+		if (sType && sType->isNative)
+		{
+			if (data_before)
+			{
+				// add native data before
+				auto new_type = NewArray(TypeUInt8, min_offset);
+				m_structInfo.StructFields.insert(m_structInfo.StructFields.begin(), LocalState {"<PRECEDING_NATIVE_DATA>", new_type, 0, -1, -1, VMValue((void *)struct_ptr), {}, false});
+			}
+			if (data_after)
+			{
+				// add native data after
+				auto new_type = NewArray(TypeUInt8, struct_size - (max_offset + size_of_last_field));
+				m_structInfo.StructFields.push_back(LocalState {"<PROCEEDING_NATIVE_DATA>", new_type, 0, -1, -1, VMValue((void *)(struct_ptr + max_offset + size_of_last_field)), {}, false});
+			}
 		}
 	}
 	return m_structInfo;
 }
 
-static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame)
+static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMValue &value, int idx)
+{
+	switch (regType)
+	{
+	case REGT_INT:
+		if (idx >= m_stackFrame->NumRegD)
+		{
+			LogError("GetRegisterValue: Function %s, int reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegD);
+			value = VMValue();
+			return false;
+		}
+		value = VMValue(m_stackFrame->GetRegD()[idx]);
+		break;
+
+	case REGT_FLOAT:
+		if (idx >= m_stackFrame->NumRegF)
+		{
+			LogError("GetRegisterValue: Function %s, float reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegF);
+			value = VMValue();
+			return false;
+		}
+		value = VMValue(m_stackFrame->GetRegF()[idx]);
+		break;
+	case REGT_STRING:
+		if (idx >= m_stackFrame->NumRegS)
+		{
+			LogError("GetRegisterValue: Function %s, string reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegS);
+			value = VMValue();
+			return false;
+		}
+		value = VMValue(&m_stackFrame->GetRegS()[idx]);
+		break;
+
+	case REGT_POINTER:
+		if (idx >= m_stackFrame->NumRegA)
+		{
+			LogError("GetRegisterValue: Function %s, pointer reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegA);
+			value = VMValue();
+			return false;
+		}
+		value = VMValue(m_stackFrame->GetRegA()[idx]);
+		break;
+	}
+	return true;
+}
+
+static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 {
 	FrameLocalsState localState;
 	std::map<std::string, LocalState> m_children;
-	int numImplicitParams = GetImplicitParmeterCount(m_stackFrame);
-	static const char *const LOCAL = "Local";
-	static const char *const SELF = "self";
-	static const char *const INVOKER = "invoker";
-	static const char *const STATE_POINTER = "state_pointer";
-
-	if (numImplicitParams > 0)
+	int numImplicitParams = GetImplicitParmeterCount(p_stackFrame);
+	uint8_t NumRegInt = 0;
+	uint8_t NumRegFloat = 0;
+	uint8_t NumRegString = 0;
+	uint8_t NumRegAddress = 0;
+	auto getAndIncRegCount = [&](uint8_t type, VMValue &value, int idx = -1) -> bool
 	{
-		for (int paramidx = 0; paramidx < numImplicitParams; paramidx++)
+		switch (type)
 		{
-			std::string name;
-			switch (paramidx)
-			{
-			case 0:
-				name = SELF;
-				break;
-			case 1:
-				name = INVOKER;
-				break;
-			case 2:
-				name = STATE_POINTER;
-				break;
-			}
-			if (m_stackFrame->NumRegA == 0)
-			{
-				LogError("Function %s has '%s' but no parameters", m_stackFrame->Func->QualifiedName, name.c_str());
-				continue;
-			}
-			else if (m_stackFrame->NumRegA <= paramidx)
-			{
-				LogError("Function %s has '%s' but <= %d parameters", m_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
-				continue;
-			}
-			if (m_stackFrame->Func->Proto->ArgumentTypes.size() == 0)
-			{
-				LogError("Function %s has '%s' but no argument types", m_stackFrame->Func->QualifiedName, name.c_str());
-				continue;
-			}
-			else if (m_stackFrame->Func->Proto->ArgumentTypes.size() <= paramidx)
-			{
-				LogError("Function %s has '%s' but <= %d argument types", m_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
-				continue;
-			}
-			auto type = m_stackFrame->Func->Proto->ArgumentTypes[paramidx];
-			auto val = m_stackFrame->GetRegA()[paramidx];
-
-			localState.m_locals[name] = LocalState {name, type, 0, paramidx, 1, val, {}, false};
+		case REGT_INT:
+			idx = idx < 0 ? NumRegInt : idx;
+			NumRegInt++;
+			break;
+		case REGT_FLOAT:
+			idx = idx < 0 ? NumRegFloat : idx;
+			NumRegFloat++;
+			break;
+		case REGT_STRING:
+			idx = idx < 0 ? NumRegString : idx;
+			NumRegString++;
+			break;
+		case REGT_POINTER:
+			idx = idx < 0 ? NumRegAddress : idx;
+			NumRegAddress++;
+			break;
 		}
+		return GetRegisterValue(p_stackFrame, type, value, idx);
+	};
+	for (int paramidx = 0; paramidx < p_stackFrame->Func->Proto->ArgumentTypes.size(); paramidx++)
+	{
+		std::string name = GetParameterName(p_stackFrame, paramidx);
+		bool non_builtin = paramidx >= numImplicitParams;
+		auto proto = p_stackFrame->Func->Proto;
+		VMValue val;
+		if (proto->ArgumentTypes.size() == 0)
+		{
+			LogError("Function %s has '%s' but no argument types", p_stackFrame->Func->QualifiedName, name.c_str());
+			continue;
+		}
+		else if (proto->ArgumentTypes.size() <= paramidx)
+		{
+			LogError("Function %s has '%s' but <= %d argument types", p_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
+			continue;
+		}
+		if (!non_builtin)
+		{
+			if (p_stackFrame->NumRegA == 0)
+			{
+				LogError("Function %s has '%s' but no parameters", p_stackFrame->Func->QualifiedName, name.c_str());
+				continue;
+			}
+		}
+		auto type = proto->ArgumentTypes[paramidx];
+		bool invalid = getAndIncRegCount(type->RegType, val);
+
+		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, 1, val, {}, invalid});
 	}
-	if (!IsFunctionNative(m_stackFrame->Func))
+	if (!IsFunctionNative(p_stackFrame->Func))
 	{
-		uint8_t NumRegInt = 0;
-		uint8_t NumRegFloat = 0;
-		uint8_t NumRegString = 0;
-		uint8_t NumRegAddress = numImplicitParams;
-
-		VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
-		auto _locals = func->GetLocalVariableBlocksAt(m_stackFrame->PC);
-		std::vector<VMLocalVariable> locals;
-		std::vector<std::string> local_names;
-		for (auto &local : _locals)
-		{
-			locals.push_back(local);
-			local_names.push_back(local.Name.GetChars());
-		}
-		std::vector<std::string> localNames;
+		VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(p_stackFrame->Func);
+		auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
+		std::sort(locals.begin(), locals.end(), [](const auto &a, const auto &b) { return a.RegNum < b.RegNum; });
 		for (auto &local : locals)
 		{
 
@@ -711,7 +785,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame)
 
 
 			// auto -- need to declare the actual type becuase it's recursive
-			std::function<LocalState(const std::string &, PType *, const std::string &)> IncCounts = [&](const std::string &name, PType *type, const std::string &struct_name = "")
+			std::function<LocalState(const std::string &, PType *)> GetReg = [&](const std::string &name, PType *type)
 			{
 				LocalState state;
 				state.Name = name;
@@ -723,91 +797,66 @@ static FrameLocalsState GetLocalsState(const VMFrame *m_stackFrame)
 				{
 					VMValue value;
 					state.RegNum = invalid_reg_num ? NumRegAddress : local.RegNum;
-					// TODO: verify that structs embedded in local structs are on the heap vs. the registers
-					if (TypeIsStructOrStructPtr(local.type) && struct_name.empty() && !invalid_reg_num)
+					// This is a struct optimized by the compiler to be stored in the registers; we need to get their register values and increment the register count
+					if (TypeIsStructOrStructPtr(local.type) && !invalid_reg_num)
 					{
 						auto fields = GetStructFieldInfo(local.type);
 						state.RegCount = fields.size();
-						std::string new_struct_name = struct_name;
-						if (!struct_name.empty())
-						{
-							new_struct_name += ".";
-						}
-						new_struct_name += name;
-					
-						for (auto &field : fields)
-						{
-							uint32_t regNum = 0;
-							PType *field_type = field.second->Type;
-							LocalState field_state;
-							state.StructFields.push_back(IncCounts(field.first, field_type, new_struct_name));
-						}
+						// NOTE: this only works because the only optimized structs are float or double-only structs (Vec2, Vec3, Vec4, etc.)
+						// if this changes in the future, this will have to be modified; the offset would not map to the register index
+						// if (fields.empty())
+						// {
+						// 	state.invalid_value = true;
+						// 	return state;
+						// }
+						assert(fields.empty() || fields[0].second->Type->RegType == REGT_FLOAT);
+						state.RegNum = NumRegFloat;
+						// return an address to the start of the struct on the registers
+						state.Value = VMValue(&p_stackFrame->GetRegF()[state.RegNum]);
+						NumRegFloat += state.RegCount;
 					}
 					else
 					{
-						if (state.RegNum >= m_stackFrame->NumRegA)
+						if (state.RegNum >= p_stackFrame->NumRegA)
 						{
-							LogError("Function %s, local '%s' address reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegAddress, m_stackFrame->NumRegA);
+							LogError("Function %s, local '%s' address reg idx %d > %d", p_stackFrame->Func->QualifiedName, name.c_str(), NumRegAddress, p_stackFrame->NumRegA);
 							state.invalid_value = true;
 							return state;
 						}
-						state.Value = VMValue(m_stackFrame->GetRegA()[state.RegNum]);
+						state.Value = VMValue(p_stackFrame->GetRegA()[state.RegNum]);
 						NumRegAddress++;
 					}
-					
 				}
 				else
 				{
 					state.RegCount = 1;
-					bool isStructMember = !struct_name.empty();
-					auto basic_type = GetBasicType(type);
+					auto reg_type = type->RegType;
 					VMValue value;
-					switch (basic_type)
+					state.RegNum = local.RegNum;
+					switch (reg_type)
 					{
-					case BASIC_double:
-					case BASIC_float:
-						state.RegNum = isStructMember ? NumRegFloat : local.RegNum;
-						if (state.RegNum >= m_stackFrame->NumRegF)
-						{
-							LogError("Function %s, local '%s' float reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegFloat, m_stackFrame->NumRegF);
-							state.invalid_value = true;
-							break;
-						}
-						value = VMValue(m_stackFrame->GetRegF()[state.RegNum]);
-						NumRegFloat++;
-
-						break;
-					case BASIC_string:
-						state.RegNum = isStructMember ? NumRegString : local.RegNum;
-						if (state.RegNum >= m_stackFrame->NumRegS)
-						{
-							LogError("Function %s, local '%s' string reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegString, m_stackFrame->NumRegS);
-							state.invalid_value = true;
-							break;
-						}
-						value = VMValue(&m_stackFrame->GetRegS()[state.RegNum]);
-						NumRegString++;
-
-						break;
-					default:
-						state.RegNum = isStructMember ? NumRegInt : local.RegNum;
-						if (state.RegNum >= m_stackFrame->NumRegD)
-						{
-							LogError("Function %s, local '%s' int reg idx %d > %d", m_stackFrame->Func->QualifiedName, name.c_str(), NumRegInt, m_stackFrame->NumRegD);
-							state.invalid_value = true;
-							break;
-						}
-						value = VMValue(m_stackFrame->GetRegD()[state.RegNum]);
+					case REGT_INT:
 						NumRegInt++;
 						break;
+					case REGT_FLOAT:
+						NumRegFloat++;
+						break;
+					case REGT_STRING:
+						NumRegString++;
+						break;
+					case REGT_POINTER:
+						NumRegAddress++;
+						break;
 					}
-					state = LocalState {name, type, flags, NumRegAddress, 1, value, {}, false};
+
+					bool valid = GetRegisterValue(p_stackFrame, reg_type, value, state.RegNum);
+					state = LocalState {name, type, flags, NumRegAddress, 1, value, {}, valid};
 				}
 				return state;
 			};
 			auto local_name = local.Name.GetChars();
 
-			localState.m_locals[local_name] = IncCounts(local_name, local.type, "");
+			localState.m_locals.push_back(GetReg(local_name, local.type));
 		}
 	}
 	// TODO: rest of the params

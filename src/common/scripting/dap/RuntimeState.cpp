@@ -184,7 +184,7 @@ std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string n
 	{
 		return std::make_shared<ObjectStateNode>(name, variable, p_type);
 	}
-	if (TypeIsStructOrStructPtr(p_type))
+	if (TypeIsStructOrStructPtr(p_type) || TypeIsNonStructContainer(p_type))
 	{
 		return std::make_shared<StructStateNode>(name, variable, p_type, current_frame);
 	}

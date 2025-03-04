@@ -1000,6 +1000,8 @@ bool G_Responder (event_t *ev)
 	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
+		if (chatmodeon) chatmodeon = 0;
+
 		const char *cmd = Bindings.GetBind (ev->data1);
 
 		if (ev->type == EV_KeyDown)

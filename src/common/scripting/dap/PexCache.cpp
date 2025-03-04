@@ -100,11 +100,10 @@ void PexCache::ScanAllScripts()
 	{
 		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
-	// TODO: do this dynamically
-	for (auto &pair : m_globalCodeMap)
-	{
-		AddDisassemblyLines(pair.mapped(), m_disassemblyMap);
-	}
+	// for (auto &pair : m_globalCodeMap)
+	// {
+	// 	AddDisassemblyLines(pair.mapped(), m_disassemblyMap);
+	// }
 }
 
 void PexCache::PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber)

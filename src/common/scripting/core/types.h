@@ -110,7 +110,7 @@ public:
 	EScopeFlags ScopeFlags = (EScopeFlags)0;
 	bool            SizeKnown = true;
 
-	bool			TypeInternal = false;
+	bool			VMInternalStruct = false;
 	bool			TypeDeprecated = false; // mVersion is deprecation version, not minimum version
 	FString			mDeprecationMessage;
 

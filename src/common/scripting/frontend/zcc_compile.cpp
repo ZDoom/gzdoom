@@ -758,11 +758,11 @@ void ZCCCompiler::CreateStructTypes()
 			s->strct->Type->mDeprecationMessage = s->strct->DeprecationMessage ? *s->strct->DeprecationMessage : "";
 		}
 
-		if (s->strct->Flags & ZCC_Internal)
+		if (s->strct->Flags & ZCC_VMInternalStruct)
 		{
 			if(fileSystem.GetFileContainer(Lump) == 0)
 			{
-				s->strct->Type->TypeInternal = true;
+				s->strct->Type->VMInternalStruct = true;
 			}
 			else
 			{
@@ -2214,7 +2214,7 @@ PType *ZCCCompiler::ResolveUserType(PType *outertype, ZCC_BasicType *type, ZCC_I
 		}
 
 		//only allow references to internal types inside internal types
-		if (ptype->TypeInternal && !outertype->TypeInternal)
+		if (ptype->VMInternalStruct && !outertype->VMInternalStruct)
 		{
 			Error(type, "Type %s not accessible", FName(type->UserType->Id).GetChars());
 			return TypeError;

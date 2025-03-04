@@ -1,5 +1,5 @@
 
-struct Map_I32_I8 native internal
+struct Map_I32_I8 native unsafe(internal)
 {
     native void Copy(Map_I32_I8 other);
     native void Move(Map_I32_I8 other);
@@ -18,7 +18,7 @@ struct Map_I32_I8 native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_I8 native internal
+struct MapIterator_I32_I8 native unsafe(internal)
 {
     native bool Init(Map_I32_I8 other);
     native bool ReInit();
@@ -31,7 +31,7 @@ struct MapIterator_I32_I8 native internal
     native void SetValue(int value);
 }
 
-struct Map_I32_I16 native internal
+struct Map_I32_I16 native unsafe(internal)
 {
     native void Copy(Map_I32_I16 other);
     native void Move(Map_I32_I16 other);
@@ -50,7 +50,7 @@ struct Map_I32_I16 native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_I16 native internal
+struct MapIterator_I32_I16 native unsafe(internal)
 {
     native bool Init(Map_I32_I16 other);
     native bool ReInit();
@@ -63,7 +63,7 @@ struct MapIterator_I32_I16 native internal
     native void SetValue(int value);
 }
 
-struct Map_I32_I32 native internal
+struct Map_I32_I32 native unsafe(internal)
 {
     native void Copy(Map_I32_I32 other);
     native void Move(Map_I32_I32 other);
@@ -82,7 +82,7 @@ struct Map_I32_I32 native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_I32 native internal
+struct MapIterator_I32_I32 native unsafe(internal)
 {
     native bool Init(Map_I32_I32 other);
     native bool ReInit();
@@ -95,7 +95,7 @@ struct MapIterator_I32_I32 native internal
     native void SetValue(int value);
 }
 
-struct Map_I32_F32 native internal
+struct Map_I32_F32 native unsafe(internal)
 {
     native void Copy(Map_I32_F32 other);
     native void Move(Map_I32_F32 other);
@@ -114,7 +114,7 @@ struct Map_I32_F32 native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_F32 native internal
+struct MapIterator_I32_F32 native unsafe(internal)
 {
     native bool Init(Map_I32_F32 other);
     native bool ReInit();
@@ -127,7 +127,7 @@ struct MapIterator_I32_F32 native internal
     native void SetValue(double value);
 }
 
-struct Map_I32_F64 native internal
+struct Map_I32_F64 native unsafe(internal)
 {
     native void Copy(Map_I32_F64 other);
     native void Move(Map_I32_F64 other);
@@ -146,7 +146,7 @@ struct Map_I32_F64 native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_F64 native internal
+struct MapIterator_I32_F64 native unsafe(internal)
 {
     native bool Init(Map_I32_F64 other);
     native bool ReInit();
@@ -159,7 +159,7 @@ struct MapIterator_I32_F64 native internal
     native void SetValue(double value);
 }
 
-struct Map_I32_Obj native internal
+struct Map_I32_Obj native unsafe(internal)
 {
     native void Copy(Map_I32_Obj other);
     native void Move(Map_I32_Obj other);
@@ -178,7 +178,7 @@ struct Map_I32_Obj native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_Obj native internal
+struct MapIterator_I32_Obj native unsafe(internal)
 {
     native bool Init(Map_I32_Obj other);
     native bool ReInit();
@@ -191,7 +191,7 @@ struct MapIterator_I32_Obj native internal
     native void SetValue(Object value);
 }
 
-struct Map_I32_Ptr native internal
+struct Map_I32_Ptr native unsafe(internal)
 {
     native void Copy(Map_I32_Ptr other);
     native void Move(Map_I32_Ptr other);
@@ -210,7 +210,7 @@ struct Map_I32_Ptr native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_Ptr native internal
+struct MapIterator_I32_Ptr native unsafe(internal)
 {
     native bool Init(Map_I32_Ptr other);
     native bool Next();
@@ -220,7 +220,7 @@ struct MapIterator_I32_Ptr native internal
     native void SetValue(voidptr value);
 }
 
-struct Map_I32_Str native internal
+struct Map_I32_Str native unsafe(internal)
 {
     native void Copy(Map_I32_Str other);
     native void Move(Map_I32_Str other);
@@ -239,7 +239,7 @@ struct Map_I32_Str native internal
     native void Remove(int key);
 }
 
-struct MapIterator_I32_Str native internal
+struct MapIterator_I32_Str native unsafe(internal)
 {
     native bool Init(Map_I32_Str other);
     native bool ReInit();
@@ -254,7 +254,7 @@ struct MapIterator_I32_Str native internal
 
 // ---------------
 
-struct Map_Str_I8 native internal
+struct Map_Str_I8 native unsafe(internal)
 {
     native void Copy(Map_Str_I8 other);
     native void Move(Map_Str_I8 other);
@@ -273,7 +273,7 @@ struct Map_Str_I8 native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_I8 native internal
+struct MapIterator_Str_I8 native unsafe(internal)
 {
     native bool Init(Map_Str_I8 other);
     native bool ReInit();
@@ -286,7 +286,7 @@ struct MapIterator_Str_I8 native internal
     native void SetValue(int value);
 }
 
-struct Map_Str_I16 native internal
+struct Map_Str_I16 native unsafe(internal)
 {
     native void Copy(Map_Str_I16 other);
     native void Move(Map_Str_I16 other);
@@ -305,7 +305,7 @@ struct Map_Str_I16 native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_I16 native internal
+struct MapIterator_Str_I16 native unsafe(internal)
 {
     native bool Init(Map_Str_I16 other);
     native bool ReInit();
@@ -318,7 +318,7 @@ struct MapIterator_Str_I16 native internal
     native void SetValue(int value);
 }
 
-struct Map_Str_I32 native internal
+struct Map_Str_I32 native unsafe(internal)
 {
     native void Copy(Map_Str_I32 other);
     native void Move(Map_Str_I32 other);
@@ -337,7 +337,7 @@ struct Map_Str_I32 native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_I32 native internal
+struct MapIterator_Str_I32 native unsafe(internal)
 {
     native bool Init(Map_Str_I32 other);
     native bool ReInit();
@@ -350,7 +350,7 @@ struct MapIterator_Str_I32 native internal
     native void SetValue(int value);
 }
 
-struct Map_Str_F32 native internal
+struct Map_Str_F32 native unsafe(internal)
 {
     native void Copy(Map_Str_F32 other);
     native void Move(Map_Str_F32 other);
@@ -369,7 +369,7 @@ struct Map_Str_F32 native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_F32 native internal
+struct MapIterator_Str_F32 native unsafe(internal)
 {
     native bool Init(Map_Str_F32 other);
     native bool ReInit();
@@ -382,7 +382,7 @@ struct MapIterator_Str_F32 native internal
     native void SetValue(double value);
 }
 
-struct Map_Str_F64 native internal
+struct Map_Str_F64 native unsafe(internal)
 {
     native void Copy(Map_Str_F64 other);
     native void Move(Map_Str_F64 other);
@@ -401,7 +401,7 @@ struct Map_Str_F64 native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_F64 native internal
+struct MapIterator_Str_F64 native unsafe(internal)
 {
     native bool Init(Map_Str_F64 other);
     native bool ReInit();
@@ -414,7 +414,7 @@ struct MapIterator_Str_F64 native internal
     native void SetValue(double value);
 }
 
-struct Map_Str_Obj native internal
+struct Map_Str_Obj native unsafe(internal)
 {
     native void Copy(Map_Str_Obj other);
     native void Move(Map_Str_Obj other);
@@ -433,7 +433,7 @@ struct Map_Str_Obj native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_Obj native internal
+struct MapIterator_Str_Obj native unsafe(internal)
 {
     native bool Init(Map_Str_Obj other);
     native bool ReInit();
@@ -446,7 +446,7 @@ struct MapIterator_Str_Obj native internal
     native void SetValue(Object value);
 }
 
-struct Map_Str_Ptr native internal
+struct Map_Str_Ptr native unsafe(internal)
 {
     native void Copy(Map_Str_Ptr other);
     native void Move(Map_Str_Ptr other);
@@ -465,7 +465,7 @@ struct Map_Str_Ptr native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_Ptr native internal
+struct MapIterator_Str_Ptr native unsafe(internal)
 {
     native bool Init(Map_Str_Ptr other);
     native bool ReInit();
@@ -478,7 +478,7 @@ struct MapIterator_Str_Ptr native internal
     native void SetValue(voidptr value);
 }
 
-struct Map_Str_Str native internal
+struct Map_Str_Str native unsafe(internal)
 {
     native void Copy(Map_Str_Str other);
     native void Move(Map_Str_Str other);
@@ -497,7 +497,7 @@ struct Map_Str_Str native internal
     native void Remove(String key);
 }
 
-struct MapIterator_Str_Str native internal
+struct MapIterator_Str_Str native unsafe(internal)
 {
     native bool Init(Map_Str_Str other);
     native bool ReInit();

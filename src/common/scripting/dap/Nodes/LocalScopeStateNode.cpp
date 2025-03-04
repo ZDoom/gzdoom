@@ -34,9 +34,13 @@ bool LocalScopeStateNode::SerializeToProtocol(dap::Scope &scope)
 
 bool LocalScopeStateNode::GetChildNames(std::vector<std::string> &names)
 {
-	GetImplicitParameterNames(m_stackFrame, names);
-	GetExplicitParameterNames(m_stackFrame, names);
-	GetLocalsNames(m_stackFrame, names);
+	if (m_state.m_locals.empty())
+		m_state = GetLocalsState(m_stackFrame);
+
+	for (auto &local : m_state.m_locals)
+	{
+		names.push_back(local.Name);
+	}
 	return true;
 }
 
@@ -44,13 +48,15 @@ bool LocalScopeStateNode::GetChildNames(std::vector<std::string> &names)
 
 bool LocalScopeStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
+	if (m_state.m_locals.empty())
+		m_state = GetLocalsState(m_stackFrame);
+
 	if (m_children.empty())
 	{
-		m_state = GetLocalsState(m_stackFrame);
 		for (auto &local : m_state.m_locals)
 		{
-			const VMFrame * current_frame  = m_stackFrame;
-			m_children[local.first] = RuntimeState::CreateNodeForVariable(local.first, local.second.Value, local.second.Type, current_frame);
+			const VMFrame * current_frame = m_stackFrame;
+			m_children[local.Name] = RuntimeState::CreateNodeForVariable(local.Name, local.Value, local.Type, current_frame);
 		}
 	}
 	if (m_children.find(name) != m_children.end())

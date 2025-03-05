@@ -84,6 +84,10 @@ bool ZScriptDebugger::EndSession()
 	m_breakpointManager->ClearBreakpoints();
 	return m_quitting;
 }
+dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> ZScriptDebugger::SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request)
+{
+	return m_breakpointManager->SetInstructionBreakpoints(request);
+}
 
 void ZScriptDebugger::RegisterSessionHandlers()
 {
@@ -121,7 +125,9 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::ContinueRequest &request) { return Continue(request); });
 	m_session->registerHandler([this](const dap::ThreadsRequest &request) { return GetThreads(request); });
 	m_session->registerHandler([this](const dap::SetBreakpointsRequest &request) { return SetBreakpoints(request); });
+	m_session->registerHandler([this](const dap::SetExceptionBreakpointsRequest &request) { return SetExceptionBreakpoints(request); });
 	m_session->registerHandler([this](const dap::SetFunctionBreakpointsRequest &request) { return SetFunctionBreakpoints(request); });
+	m_session->registerHandler([this](const dap::SetInstructionBreakpointsRequest &request) { return SetInstructionBreakpoints(request); });
 	m_session->registerHandler([this](const dap::StackTraceRequest &request) { return GetStackTrace(request); });
 	m_session->registerHandler([this](const dap::StepInRequest &request) { return StepIn(request); });
 	m_session->registerHandler([this](const dap::StepOutRequest &request) { return StepOut(request); });
@@ -131,7 +137,6 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::SourceRequest &request) { return GetSource(request); });
 	m_session->registerHandler([this](const dap::LoadedSourcesRequest &request) { return GetLoadedSources(request); });
 	m_session->registerHandler([this](const dap::DisassembleRequest &request) { return Disassemble(request); });
-	m_session->registerHandler([this](const dap::SetExceptionBreakpointsRequest &request) { return SetExceptionBreakpoints(request); });
 }
 
 dap::Error ZScriptDebugger::Error(const std::string &msg)
@@ -224,6 +229,7 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 	response.supportsSteppingGranularity = true;
 #endif
 	response.supportTerminateDebuggee = true;
+	response.supportsInstructionBreakpoints = true;
 	response.exceptionBreakpointFilters = DebugExecutionManager::GetAllExceptionFilters();
 	return response;
 }

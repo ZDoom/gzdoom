@@ -91,6 +91,6 @@ class ZScriptDebugger
 	void InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc) const;
 	void CheckSourceLoaded(const std::string &scriptName) const;
 	void BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const;
-	void ExceptionThrown(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace) const;
+	void ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace) const;
 };
 }

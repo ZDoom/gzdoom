@@ -31,8 +31,7 @@ namespace RuntimeEvents
 	EVENT_WRAPPER_IMPL(CleanupStack, void(uint32_t))
 	EVENT_WRAPPER_IMPL(Log, void(int level, const char *msg))
 	EVENT_WRAPPER_IMPL(BreakpointChanged, void(const dap::Breakpoint &bpoint, const std::string &))
-	EVENT_WRAPPER_IMPL(
-		ExceptionThrown, void(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace))
+	EVENT_WRAPPER_IMPL(ExceptionThrown, void(EVMAbortException reason, const std::string &message, const std::string &stackTrace))
 
 #undef EVENT_WRAPPER_IMPL
 
@@ -58,11 +57,11 @@ namespace RuntimeEvents
 			g_LogEvent(level, msg);
 		}
 	}
-	void EmitExceptionEvent(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace)
+	void EmitExceptionEvent(EVMAbortException reason, const std::string &message, const std::string &stackTrace)
 	{
 		if (!g_ExceptionThrownEvent.empty())
 		{
-			g_ExceptionThrownEvent(sfunc, line, reason, message, stackTrace);
+			g_ExceptionThrownEvent(reason, message, stackTrace);
 		}
 	}
 

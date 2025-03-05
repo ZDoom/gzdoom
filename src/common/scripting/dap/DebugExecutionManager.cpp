@@ -5,23 +5,16 @@
 namespace DebugServer
 {
 // using namespace RE::BSScript::Internal;
-static const char *pauseReasonStrings[] = {"none", "step", "breakpoint", "paused", "exception"};
+static constexpr const char *pauseReasonStrings[] = {"none", "step", "breakpoint", "paused", "exception"};
 static constexpr size_t pauseReasonStringsSize = sizeof(pauseReasonStrings) / sizeof(pauseReasonStrings[0]);
 static_assert(pauseReasonStringsSize == static_cast<int>(DebugExecutionManager::pauseReason::exception) + 1, "pauseReasonStrings size mismatch");
-static const char *exceptionStrings[] = {
-	"OtherException",
-	"ReadNilException",
-	"WriteNilException",
-	"TooManyTriesException",
-	"ArrayOutOfBoundsException",
-	"DivisionByZeroException",
-	"BadSelfException",
-	"StringFormatException"};
+static constexpr const char *exceptionStrings[]
+	= {"Other", "ReadNil", "WriteNil", "TooManyTries", "ArrayOutOfBounds", "DivisionByZero", "BadSelf", "StringFormat"};
 static constexpr size_t exceptionStringsSize = sizeof(exceptionStrings) / sizeof(exceptionStrings[0]);
 static_assert(exceptionStringsSize == X_FORMAT_ERROR + 1, "exceptionStrings size mismatch");
 
-static const char *exceptionFilters[] = {"Script", "Native"};
-static const char *exceptionFilterDescriptions[] = {"Script exceptions", "Native exceptions"};
+static constexpr const char *exceptionFilters[] = {"VM"};
+static constexpr const char *exceptionFilterDescriptions[] = {"VM exceptions"};
 static_assert(sizeof(exceptionFilters) / sizeof(exceptionFilters[0]) == (size_t)DebugExecutionManager::ExceptionFilter::kMAX, "exceptionFilters size mismatch");
 static_assert(
 	sizeof(exceptionFilterDescriptions) / sizeof(exceptionFilterDescriptions[0]) == (size_t)DebugExecutionManager::ExceptionFilter::kMAX,
@@ -218,17 +211,9 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 	}
 }
 
-void DebugExecutionManager::HandleException(
-	VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace)
+void DebugExecutionManager::HandleException(EVMAbortException reason, const std::string &message, const std::string &stackTrace)
 {
-
-	// check if m_exceptionFilters has native
-	bool isNative = (sfunc == nullptr || IsFunctionNative(sfunc));
-	if (isNative && m_exceptionFilters.find(ExceptionFilter::kNative) == m_exceptionFilters.end())
-	{
-		return;
-	}
-	else if (!isNative && m_exceptionFilters.find(ExceptionFilter::kScript) == m_exceptionFilters.end())
+	if (m_exceptionFilters.empty())
 	{
 		return;
 	}
@@ -240,19 +225,14 @@ void DebugExecutionManager::HandleException(
 		event.allThreadsStopped = true;
 		if (!stackTrace.empty())
 		{
-			event.description = message + "\n" + stackTrace;
+			event.text = message + "\n" + stackTrace;
 		}
 		else
 		{
-			event.description = message;
+			event.text = message;
 		}
 		event.reason = "exception";
-		event.text = exceptionStrings[(int)reason];
-		// If there is no line, this is an exception on a native function, so we can't get the line number
-		if (line == nullptr)
-		{
-			event.text = event.text.value("") + " (Native)";
-		}
+		event.description = "Paused on exception: " + (reason < exceptionStringsSize ? std::string(exceptionStrings[(int)reason]) : "Unknown");
 		event.threadId = 1;
 		m_session->send(event);
 	};

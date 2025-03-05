@@ -57,6 +57,7 @@ class ZScriptDebugger
 	dap::ResponseOrError<dap::SourceResponse> GetSource(const dap::SourceRequest &request);
 	dap::ResponseOrError<dap::LoadedSourcesResponse> GetLoadedSources(const dap::LoadedSourcesRequest &request);
 	dap::ResponseOrError<dap::DisassembleResponse> Disassemble(const dap::DisassembleRequest &request);
+	dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> SetExceptionBreakpoints(const dap::SetExceptionBreakpointsRequest &request);
 	private:
 
 	std::shared_ptr<IdProvider> m_idProvider;
@@ -80,6 +81,7 @@ class ZScriptDebugger
 
 	bool m_quitting = false; // Received a disconnect request with a terminateDebuggee flag; if this is true, we exit the program
 	bool m_initialized = false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)
+	RuntimeEvents::ExceptionThrownEventHandle m_exceptionThrownEventHandle;
 
 	void RegisterSessionHandlers();
 	dap::Error Error(const std::string &msg);
@@ -89,5 +91,6 @@ class ZScriptDebugger
 	void InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc) const;
 	void CheckSourceLoaded(const std::string &scriptName) const;
 	void BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const;
+	void ExceptionThrown(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace) const;
 };
 }

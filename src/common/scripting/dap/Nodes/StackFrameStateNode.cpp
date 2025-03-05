@@ -8,7 +8,21 @@
 
 namespace DebugServer
 {
-StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame)
+StackFrameStateNode::StackFrameStateNode(VMFunction *nativeFunction, VMFrame *parentStackFrame)
+{
+	m_fakeStackFrame.Func = nativeFunction;
+	m_fakeStackFrame.ParentFrame = parentStackFrame;
+	m_fakeStackFrame.PC = nullptr;
+	m_fakeStackFrame.NumRegD = 0;
+	m_fakeStackFrame.NumRegF = 0;
+	m_fakeStackFrame.NumRegS = 0;
+	m_fakeStackFrame.NumRegA = 0;
+	m_fakeStackFrame.MaxParam = 0;
+	m_fakeStackFrame.NumParam = 0;
+	m_stackFrame = &m_fakeStackFrame;
+}
+
+StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame), m_fakeStackFrame()
 {
 	if (!IsFunctionNative(m_stackFrame->Func))
 	{
@@ -17,23 +31,25 @@ StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(sta
 		{
 			m_localScope = std::make_shared<LocalScopeStateNode>(m_stackFrame);
 		}
+		m_registersScope = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
 	}
-	m_registersScope = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
 }
 
 bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const
 {
 	stackFrame.id = GetId();
 	dap::Source source;
-	std::string ScriptName = " <Native>";
 	if (IsFunctionNative(m_stackFrame->Func))
 	{
 		stackFrame.name = m_stackFrame->Func->PrintableName;
-		stackFrame.name += " " + ScriptName;
+		stackFrame.source = {};
+		source.name = "<NATIVE>";
+		source.origin = "<NATIVE>";
+		source.presentationHint = "deemphasize";
 		return true;
 	}
 	auto scriptFunction = static_cast<VMScriptFunction *>(m_stackFrame->Func);
-	ScriptName = scriptFunction->SourceFileName.GetChars();
+	std::string ScriptName = scriptFunction->SourceFileName.GetChars();
 	if (pexCache->GetSourceData(ScriptName.c_str(), source))
 	{
 		stackFrame.source = source;
@@ -75,14 +91,17 @@ bool StackFrameStateNode::GetChildNames(std::vector<std::string> &names)
 	if (scriptFunction)
 	{
 		names.push_back("Local");
+		names.push_back("Registers");
 	}
-	names.push_back("Registers");
-
 	return true;
 }
 
 bool StackFrameStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
+	if (IsFunctionNative(m_stackFrame->Func))
+	{
+		return false;
+	}
 	if (CaseInsensitiveEquals(name, "Registers"))
 	{
 		node = m_registersScope;

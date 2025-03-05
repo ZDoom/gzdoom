@@ -832,5 +832,66 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 	return localState;
 }
 
+static bool PCIsAtNativeCall(VMFrame *frame)
+{
+	if (!frame->PC)
+	{
+		return false;
+	}
+	// get the current op from the PC; if it's a call, we need to check to see what it's calling
+	auto op = frame->PC->op;
+	if (op == OP_CALL || op == OP_CALL_K)
+	{
+		void *ptr = nullptr;
+		if (op == OP_CALL_K)
+		{
+			VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(frame->Func);
+			if (func)
+			{
+				ptr = func->KonstA[frame->PC->a].o;
+			}
+		}
+		else if (op == OP_CALL)
+		{
+			ptr = frame->GetRegA()[frame->PC->a];
+		}
+		VMFunction *call = (VMFunction *)ptr;
+		if (IsFunctionNative(call))
+		{
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
+
+static VMFunction *GetCalledFunction(VMFrame *frame)
+{
+	if (!frame->PC)
+	{
+		return nullptr;
+	}
+	auto op = frame->PC->op;
+	if (!(op == OP_CALL || op == OP_CALL_K))
+	{
+		return nullptr;
+	}
+	void *ptr = nullptr;
+	if (op == OP_CALL_K)
+	{
+		VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(frame->Func);
+		if (func)
+		{
+			ptr = func->KonstA[frame->PC->a].o;
+		}
+	}
+	else if (op == OP_CALL)
+	{
+		ptr = frame->GetRegA()[frame->PC->a];
+	}
+	VMFunction *call = (VMFunction *)ptr;
+	return call;
+}
+
 
 }

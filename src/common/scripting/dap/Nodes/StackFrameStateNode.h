@@ -12,9 +12,11 @@ namespace DebugServer
 class StackFrameStateNode : public StateNodeBase, public IStructuredState
 {
 	VMFrame *m_stackFrame;
+	VMFrame m_fakeStackFrame;
 	std::shared_ptr<StateNodeBase> m_localScope = nullptr;
 	std::shared_ptr<StateNodeBase> m_registersScope = nullptr;
 	public:
+	StackFrameStateNode(VMFunction *nativeFunction, VMFrame *parentStackFrame);
 	explicit StackFrameStateNode(VMFrame *stackFrame);
 
 	bool SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const;

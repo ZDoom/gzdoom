@@ -2,17 +2,13 @@
 #include <functional>
 #include <eventpp/callbacklist.h>
 #include "vm.h"
+#include "GameEventEmit.h"
 
 #define EVENT_DECLARATION(NAME, HANDLER_SIGNATURE)                                 \
     typedef eventpp::CallbackList<HANDLER_SIGNATURE>::Handle NAME##EventHandle;    \
     NAME##EventHandle SubscribeTo##NAME(std::function<HANDLER_SIGNATURE> handler); \
     bool UnsubscribeFrom##NAME(NAME##EventHandle handle);
 
-
-class VMScriptFunction;
-class VMFrameStack;
-union VMOP;
-class VMReturn;
 
 namespace dap
 {
@@ -32,14 +28,6 @@ namespace RuntimeEvents
 		ExceptionThrown, void(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace))
 
 	void EmitBreakpointChangedEvent(const dap::Breakpoint &bpoint, const std::string &what);
-	void EmitInstructionExecutionEvent(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
-	void EmitLogEvent(int level, const char *message);
-	void EmitExceptionEvent(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace);
-	namespace Internal
-	{
-		void CommitHooks();
-	}
-
 }
 }
 

@@ -63,11 +63,18 @@ public:
 
 	// FStartupScreen functionality
 	void Progress(int current, int maximum);
-	void NetInit(const char* message, int playerCount);
-	void NetProgress(int count);
+
+	void NetInit(const char* const message, const bool host);
+	void NetMessage(const char* const message);
+	void NetConnect(const int client, const char* const name, const unsigned flags, const int status);
+	void NetUpdate(const int client, const int status);
+	void NetDisconnect(const int client);
+	void NetProgress(const int cur, const int limit);
 	void NetDone();
 	void NetClose();
 	bool ShouldStartNet();
+	int GetNetKickClient();
+	int GetNetBanClient();
 
 private:
 	NSWindow*            m_window;

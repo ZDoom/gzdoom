@@ -53,13 +53,21 @@ class FTTYStartupScreen : public FStartupScreen
 		FTTYStartupScreen(int max_progress);
 		~FTTYStartupScreen();
 
-		void Progress();
-		void NetInit(const char *message, int num_players);
-		void NetProgress(int count);
-		void NetDone();
-		void NetClose();
-		bool ShouldStartNet();
-		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+		void Progress() override;
+
+		void NetInit(const char* message, bool host) override;
+		void NetMessage(const char* message) override;
+		void NetConnect(int client, const char* name, unsigned flags, int status) override;
+		void NetUpdate(int client, int status) override;
+		void NetDisconnect(int client) override;
+		void NetProgress(int cur, int limit) override;
+		void NetDone() override;
+		void NetClose() override;
+		bool ShouldStartNet() override;
+		int GetNetKickClient() override;
+		int GetNetBanClient() override;
+		bool NetLoop(bool (*loopCallback)(void*), void* data) override;
+
 	protected:
 		bool DidNetInit;
 		int NetMaxPos, NetCurPos;
@@ -147,7 +155,7 @@ void FTTYStartupScreen::Progress()
 //
 //===========================================================================
 
-void FTTYStartupScreen::NetInit(const char *message, int numplayers)
+void FTTYStartupScreen::NetInit(const char* message, bool host)
 {
 	if (!DidNetInit)
 	{
@@ -163,20 +171,63 @@ void FTTYStartupScreen::NetInit(const char *message, int numplayers)
 		tcsetattr (STDIN_FILENO, TCSANOW, &rawtermios);
 		DidNetInit = true;
 	}
-	if (numplayers == 1)
-	{
-		// Status message without any real progress info.
-		fprintf (stderr, "\n%s.", message);
-	}
-	else
-	{
-		fprintf (stderr, "\n%s: ", message);
-	}
+	fprintf(stderr, "\n%s.", message);
 	fflush (stderr);
 	TheNetMessage = message;
-	NetMaxPos = numplayers;
 	NetCurPos = 0;
-	NetProgress(1);		// You always know about yourself
+}
+
+void FTTYStartupScreen::NetMessage(const char* message)
+{
+	TheNetMessage = message;
+}
+
+void FTTYStartupScreen::NetConnect(int client, const char* name, unsigned flags, int status)
+{
+
+}
+
+void FTTYStartupScreen::NetUpdate(int client, int status)
+{
+
+}
+
+void FTTYStartupScreen::NetDisconnect(int client)
+{
+
+}
+
+//===========================================================================
+//
+// FTTYStartupScreen :: NetProgress
+//
+// Sets the network progress meter.
+//
+//===========================================================================
+
+void FTTYStartupScreen::NetProgress(int cur, int limit)
+{
+	int i;
+
+	NetMaxPos = limit;
+	NetCurPos = cur;
+	if (NetMaxPos == 0)
+	{
+		// Spinny-type progress meter, because we're a guest waiting for the host.
+		fprintf(stderr, "\r%s: %c", TheNetMessage, SpinnyProgressChars[NetCurPos & 3]);
+		fflush(stderr);
+	}
+	else if (NetMaxPos > 1)
+	{
+		// Dotty-type progress meter.
+		fprintf(stderr, "\r%s: ", TheNetMessage);
+		for (i = 0; i < NetCurPos; ++i)
+		{
+			fputc('.', stderr);
+		}
+		fprintf(stderr, "%*c[%2d/%2d]", NetMaxPos + 1 - NetCurPos, ' ', NetCurPos, NetMaxPos);
+		fflush(stderr);
+	}
 }
 
 //===========================================================================
@@ -199,46 +250,6 @@ void FTTYStartupScreen::NetDone()
 	}	
 }
 
-//===========================================================================
-//
-// FTTYStartupScreen :: NetProgress
-//
-// Sets the network progress meter. If count is 0, it gets bumped by 1.
-// Otherwise, it is set to count.
-//
-//===========================================================================
-
-void FTTYStartupScreen::NetProgress(int count)
-{
-	int i;
-
-	if (count == 0)
-	{
-		NetCurPos++;
-	}
-	else if (count > 0)
-	{
-		NetCurPos = count;
-	}
-	if (NetMaxPos == 0)
-	{
-		// Spinny-type progress meter, because we're a guest waiting for the host.
-		fprintf (stderr, "\r%s: %c", TheNetMessage, SpinnyProgressChars[NetCurPos & 3]);
-		fflush (stderr);
-	}
-	else if (NetMaxPos > 1)
-	{
-		// Dotty-type progress meter.
-		fprintf (stderr, "\r%s: ", TheNetMessage);
-		for (i = 0; i < NetCurPos; ++i)
-		{
-			fputc ('.', stderr);
-		}
-		fprintf (stderr, "%*c[%2d/%2d]", NetMaxPos + 1 - NetCurPos, ' ', NetCurPos, NetMaxPos);
-		fflush (stderr);
-	}
-}
-
 void FTTYStartupScreen::NetClose()
 {
 	// TODO: Implement this
@@ -247,6 +258,16 @@ void FTTYStartupScreen::NetClose()
 bool FTTYStartupScreen::ShouldStartNet()
 {
 	return false;
+}
+
+int FTTYStartupScreen::GetNetKickClient()
+{
+	return -1;
+}
+
+int FTTYStartupScreen::GetNetBanClient()
+{
+	return -1;
 }
 
 //===========================================================================
@@ -263,7 +284,7 @@ bool FTTYStartupScreen::ShouldStartNet()
 //
 //===========================================================================
 
-bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 {
 	fd_set rfds;
 	struct timeval tv;
@@ -291,7 +312,7 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 		}
 		else if (retval == 0)
 		{
-			if (timer_callback (userdata))
+			if (loopCallback (data))
 			{
 				fputc ('\n', stderr);
 				return true;

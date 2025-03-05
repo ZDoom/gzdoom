@@ -95,14 +95,34 @@ void FBasicStartupScreen::Progress()
 }
 
 
-void FBasicStartupScreen::NetInit(const char* const message, const int playerCount)
+void FBasicStartupScreen::NetInit(const char* const message, const bool host)
 {
-	FConsoleWindow::GetInstance().NetInit(message, playerCount);
+	FConsoleWindow::GetInstance().NetInit(message, host);
 }
 
-void FBasicStartupScreen::NetProgress(const int count)
+void FBasicStartupScreen::NetMessage(const char* const message)
 {
-	FConsoleWindow::GetInstance().NetProgress(count);
+	FConsoleWindow::GetInstance().NetMessage(message);
+}
+
+void FBasicStartupScreen::NetConnect(const int client, const char* const name, const unsigned flags, const int status)
+{
+	FConsoleWindow::GetInstance().NetConnect(client, name, flags, status);
+}
+
+void FBasicStartupScreen::NetUpdate(const int client, const int status)
+{
+	FConsoleWindow::GetInstance().NetUpdate(client, status);
+}
+
+void FBasicStartupScreen::NetDisconnect(const int client)
+{
+	FConsoleWindow::GetInstance().NetDisconnect(client);
+}
+
+void FBasicStartupScreen::NetProgress(const int cur, const int limit)
+{
+	FConsoleWindow::GetInstance().NetProgress(cur, limit);
 }
 
 void FBasicStartupScreen::NetDone()
@@ -120,11 +140,21 @@ bool FBasicStartupScreen::ShouldStartNet()
 	return FConsoleWindow::GetInstance().ShouldStartNet();
 }
 
-bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const userData)
+int FBasicStartupScreen::GetNetKickClient()
+{
+	return FConsoleWindow::GetInstance().GetNetKickClient();
+}
+
+int FBasicStartupScreen::GetNetBanClient()
+{
+	return FConsoleWindow::GetInstance().GetNetBanClient();
+}
+
+bool FBasicStartupScreen::NetLoop(bool (*loopCallback)(void*), void* const data)
 {
 	while (true)
 	{
-		if (timerCallback(userData))
+		if (loopCallback(data))
 		{
 			break;
 		}

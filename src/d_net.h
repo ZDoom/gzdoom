@@ -36,34 +36,62 @@
 
 uint64_t I_msTime();
 
+enum EChatType
+{
+	CHAT_DISABLED,
+	CHAT_TEAM_ONLY,
+	CHAT_GLOBAL,
+};
+
+enum EClientFlags
+{
+	CF_NONE = 0,
+	CF_QUIT = 1,		// If in packet server mode, this client sent an exit command and needs to be disconnected.
+	CF_MISSING_SEQ = 1 << 1,	// If a sequence was missed/out of order, ask this client to send back over their info.
+	CF_RETRANSMIT_SEQ = 1 << 2,	// If set, this client needs command data resent to them.
+	CF_MISSING_CON = 1 << 3,	// If a consistency was missed/out of order, ask this client to send back over their info.
+	CF_RETRANSMIT_CON = 1 << 4,	// If set, this client needs consistency data resent to them.
+	CF_UPDATED = 1 << 5,	// Got an updated packet from this client.
+
+	CF_RETRANSMIT = CF_RETRANSMIT_CON | CF_RETRANSMIT_SEQ,
+	CF_MISSING = CF_MISSING_CON | CF_MISSING_SEQ,
+};
+
 class FDynamicBuffer
 {
 public:
 	FDynamicBuffer();
 	~FDynamicBuffer();
 
-	void SetData(const uint8_t *data, int len);
-	uint8_t* GetData(int *len = nullptr);
+	void SetData(const uint8_t* data, int len);
+	uint8_t* GetData(int* len = nullptr);
 
 private:
 	uint8_t* m_Data;
 	int m_Len, m_BufferLen;
 };
 
-enum EClientFlags
-{
-	CF_NONE				= 0,
-	CF_QUIT				= 1,		// If in packet server mode, this client sent an exit command and needs to be disconnected.
-	CF_MISSING_SEQ		= 1 << 1,	// If a sequence was missed/out of order, ask this client to send back over their info.
-	CF_RETRANSMIT_SEQ	= 1 << 2,	// If set, this client needs command data resent to them.
-	CF_MISSING_CON		= 1 << 3,	// If a consistency was missed/out of order, ask this client to send back over their info.
-	CF_RETRANSMIT_CON	= 1 << 4,	// If set, this client needs consistency data resent to them.
-	CF_UPDATED			= 1 << 5,	// Got an updated packet from this client.
-
-	CF_RETRANSMIT = CF_RETRANSMIT_CON | CF_RETRANSMIT_SEQ,
-	CF_MISSING = CF_MISSING_CON | CF_MISSING_SEQ,
-};
-
+// New packet structure:
+//
+//  One byte for the net command flags.
+//  Four bytes for the last sequence we got from that client.
+//  Four bytes for the last consistency we got from that client.
+//  If NCMD_QUITTERS set, one byte for the number of players followed by one byte for each player's consolenum. Packet server mode only.
+//  One byte for the number of players.
+//  One byte for the number of tics.
+//   If > 0, four bytes for the base sequence being worked from.
+//  One byte for the number of world tics ran.
+//   If > 0, four bytes for the base consistency being worked from.
+//  If in packet server mode and from the host, one byte for how far ahead of the host we are.
+//  For each player:
+//   One byte for the player number.
+//	 If in packet server mode and from the host, two bytes for the latency to the host.
+//   For each consistency:
+//    One byte for the delta from the base consistency.
+//    Two bytes for each consistency.
+//   For each tic:
+//    One byte for the delta from the base sequence.
+//    The remaining command and event data for that player.
 struct FClientNetState
 {
 	// Networked client data.
@@ -98,41 +126,6 @@ struct FClientNetState
 	int16_t LocalConsistency[BACKUPTICS] = {};	// Local consistency of the client to check against.
 };
 
-enum ENetMode : uint8_t
-{
-	NET_PeerToPeer,
-	NET_PacketServer
-};
-
-enum EChatType
-{
-	CHAT_DISABLED,
-	CHAT_TEAM_ONLY,
-	CHAT_GLOBAL,
-};
-
-// New packet structure:
-//
-//  One byte for the net command flags.
-//  Four bytes for the last sequence we got from that client.
-//  Four bytes for the last consistency we got from that client.
-//  If NCMD_QUITTERS set, one byte for the number of players followed by one byte for each player's consolenum. Packet server mode only.
-//  One byte for the number of players.
-//  One byte for the number of tics.
-//   If > 0, four bytes for the base sequence being worked from.
-//  One byte for the number of world tics ran.
-//   If > 0, four bytes for the base consistency being worked from.
-//  If in packet server mode and from the host, one byte for how far ahead of the host we are.
-//  For each player:
-//   One byte for the player number.
-//	 If in packet server mode and from the host, two bytes for the latency to the host.
-//   For each consistency:
-//    One byte for the delta from the base consistency.
-//    Two bytes for each consistency.
-//   For each tic:
-//    One byte for the delta from the base sequence.
-//    The remaining command and event data for that player.
-
 // Create any new ticcmds and broadcast to other players.
 void NetUpdate(int tics);
 
@@ -164,13 +157,9 @@ void Net_ClearBuffers();
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 
-// This is the interface to the packet driver, a separate program
-// in DOS, but just an abstraction here.
-extern doomcom_t			doomcom;
 extern usercmd_t			LocalCmds[LOCALCMDTICS];
 extern int					ClientTic;
 extern FClientNetState		ClientStates[MAXPLAYERS];
-extern ENetMode				NetMode;
 
 class player_t;
 class DObject;

@@ -1,6 +1,6 @@
 // for flag changer functions.
 const FLAG_NO_CHANGE = -1;
-const MAXPLAYERS = 16;
+const MAXPLAYERS = 64;
 
 enum EStateUseFlags
 {

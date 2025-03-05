@@ -87,12 +87,6 @@ extern bool AppActive;
 
 void P_ClearLevelInterpolation();
 
-struct FNetGameInfo
-{
-	uint32_t DetectedPlayers[MAXPLAYERS];
-	uint8_t GotSetup[MAXPLAYERS];
-};
-
 enum ELevelStartStatus
 {
 	LST_READY,
@@ -107,8 +101,6 @@ enum ELevelStartStatus
 //
 // A world tick cannot be ran until CurrentSequence >= gametic for all clients.
 
-#define NetBuffer (doomcom.data)
-ENetMode			NetMode = NET_PeerToPeer;
 int 				ClientTic = 0;
 usercmd_t			LocalCmds[LOCALCMDTICS] = {};
 int					LastSentConsistency = 0;		// Last consistency we sent out. If < CurrentConsistency, send them out.
@@ -124,12 +116,12 @@ static uint8_t	LocalNetBuffer[MAX_MSGLEN] = {};
 
 static uint8_t	CurrentLobbyID = 0u;	// Ignore commands not from this lobby (useful when transitioning levels).
 static int		LastGameUpdate = 0;		// Track the last time the game actually ran the world.
-static int		MutedClients = 0;		// Ignore messages from these clients.
+static uint64_t	MutedClients = 0u;		// Ignore messages from these clients.
 
 static int  LevelStartDebug = 0;
 static int	LevelStartDelay = 0; // While this is > 0, don't start generating packets yet.
 static ELevelStartStatus LevelStartStatus = LST_READY; // Listen for when to actually start making tics.
-static int	LevelStartAck = 0; // Used by the host to determine if everyone has loaded in.
+static uint64_t	LevelStartAck = 0u; // Used by the host to determine if everyone has loaded in.
 
 static int FullLatencyCycle = MAXSENDTICS * 3;	// Give ~3 seconds to gather latency info about clients on boot up.
 static int LastLatencyUpdate = 0;				// Update average latency every ~1 second.
@@ -146,7 +138,6 @@ void D_ProcessEvents(void);
 void G_BuildTiccmd(usercmd_t *cmd);
 void D_DoAdvanceDemo(void);
 
-static void SendSetup(const FNetGameInfo& info, int len);
 static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always);
 
 extern	bool	 advancedemo;
@@ -231,14 +222,14 @@ public:
 
 	void ResetStream()
 	{
-		CurrentClientTic = ClientTic / doomcom.ticdup;
+		CurrentClientTic = ClientTic / TicDup;
 		CurrentStream = Streams[CurrentClientTic % BACKUPTICS].Stream;
 		CurrentSize = 0;
 	}
 
 	void NewClientTic()
 	{
-		const int tic = ClientTic / doomcom.ticdup;
+		const int tic = ClientTic / TicDup;
 		if (CurrentClientTic == tic)
 			return;
 
@@ -342,14 +333,14 @@ void Net_ClearBuffers()
 			state.Tics[j].Data.SetData(nullptr, 0);
 	}
 
-	doomcom.command = doomcom.datalength = 0;
-	doomcom.remoteplayer = -1;
-	doomcom.numplayers = doomcom.ticdup = 1;
-	consoleplayer = doomcom.consoleplayer = 0;
-	LocalNetBufferSize = 0;
+	NetBufferLength = 0u;
+	RemoteClient = -1;
+	MaxClients = TicDup = 1u;
+	consoleplayer = 0;
+	LocalNetBufferSize = 0u;
 	Net_Arbitrator = 0;
 
-	MutedClients = 0;
+	MutedClients = 0u;
 	CurrentLobbyID = 0u;
 	NetworkClients.Clear();
 	NetMode = NET_PeerToPeer;
@@ -360,7 +351,7 @@ void Net_ClearBuffers()
 	SkipCommandTimer = SkipCommandAmount = CommandsAhead = 0;
 	NetEvents.ResetStream();
 
-	LevelStartAck = 0;
+	LevelStartAck = 0u;
 	LevelStartDelay = LevelStartDebug = 0;
 	LevelStartStatus = LST_READY;
 
@@ -377,17 +368,17 @@ void Net_ResetCommands(bool midTic)
 	++CurrentLobbyID;
 	SkipCommandTimer = SkipCommandAmount = CommandsAhead = 0;
 
-	int tic = gametic / doomcom.ticdup;
+	int tic = gametic / TicDup;
 	if (midTic)
 	{
 		// If we're mid ticdup cycle, make sure we immediately enter the next one after
 		// the current tic we're in finishes.
-		ClientTic = (tic + 1) * doomcom.ticdup;
-		gametic = (tic * doomcom.ticdup) + (doomcom.ticdup - 1);
+		ClientTic = (tic + 1) * TicDup;
+		gametic = (tic * TicDup) + (TicDup - 1);
 	}
 	else
 	{
-		ClientTic = gametic = tic * doomcom.ticdup;
+		ClientTic = gametic = tic * TicDup;
 		--tic;
 	}
 	
@@ -420,17 +411,17 @@ void Net_SetWaiting()
 static int GetNetBufferSize()
 {
 	if (NetBuffer[0] & NCMD_EXIT)
-		return 1 + (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator);
+		return 1 + (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator);
 	// TODO: Need a skipper for this.
 	if (NetBuffer[0] & NCMD_SETUP)
-		return doomcom.datalength;
+		return NetBufferLength;
 	if (NetBuffer[0] & (NCMD_LATENCY | NCMD_LATENCYACK))
 		return 2;
 
 	if (NetBuffer[0] & NCMD_LEVELREADY)
 	{
 		int bytes = 2;
-		if (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator)
+		if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
 			bytes += 2;
 
 		return bytes;
@@ -448,23 +439,23 @@ static int GetNetBufferSize()
 	const int ranTics = NetBuffer[totalBytes++];
 	if (ranTics > 0)
 		totalBytes += 4;
-	if (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator)
+	if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
 		++totalBytes;
 
 	// Minimum additional packet size per player:
 	// 1 byte for player number
 	// If in packet server mode and from the host, 2 bytes for the latency to the host
 	int padding = 1;
-	if (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator)
+	if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
 		padding += 2;
-	if (doomcom.datalength < totalBytes + playerCount * padding)
+	if (NetBufferLength < totalBytes + playerCount * padding)
 		return totalBytes + playerCount * padding;
 
 	uint8_t* skipper = &NetBuffer[totalBytes];
 	for (int p = 0; p < playerCount; ++p)
 	{
 		++skipper;
-		if (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator)
+		if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
 			skipper += 2;
 
 		for (int i = 0; i < ranTics; ++i)
@@ -489,8 +480,8 @@ static void HSendPacket(int client, size_t size)
 	if (demoplayback)
 		return;
 
-	doomcom.remoteplayer = client;
-	doomcom.datalength = size;
+	RemoteClient = client;
+	NetBufferLength = size;
 	if (client == consoleplayer)
 	{
 		memcpy(LocalNetBuffer, NetBuffer, size);
@@ -501,8 +492,7 @@ static void HSendPacket(int client, size_t size)
 	if (!netgame)
 		I_Error("Tried to send a packet to a client while offline");
 
-	doomcom.command = CMD_SEND;
-	I_NetCmd();
+	I_NetCmd(CMD_SEND);
 }
 
 // HGetPacket
@@ -515,34 +505,23 @@ static bool HGetPacket()
 	if (LocalNetBufferSize)
 	{
 		memcpy(NetBuffer, LocalNetBuffer, LocalNetBufferSize);
-		doomcom.datalength = LocalNetBufferSize;
-		doomcom.remoteplayer = consoleplayer;
-		LocalNetBufferSize = 0;
+		NetBufferLength = LocalNetBufferSize;
+		RemoteClient = consoleplayer;
+		LocalNetBufferSize = 0u;
 		return true;
 	}
 
 	if (!netgame)
 		return false;
 
-	doomcom.command = CMD_GET;
-	I_NetCmd();
-
-	if (doomcom.remoteplayer == -1)
+	I_NetCmd(CMD_GET);
+	if (RemoteClient == -1)
 		return false;
 
-	// When the host randomly drops this can cause issues in packet server mode, so at
-	// least attempt to recover gracefully.
-	if (NetMode == NET_PacketServer && doomcom.remoteplayer == Net_Arbitrator
-		&& (NetBuffer[0] & NCMD_EXIT) && doomcom.datalength == 1)
-	{
-		NetBuffer[1] = NetworkClients[1];
-		doomcom.datalength = 2;
-	}
-
 	int sizeCheck = GetNetBufferSize();
-	if (doomcom.datalength != sizeCheck)
+	if (NetBufferLength != sizeCheck)
 	{
-		Printf("Incorrect packet size %d (expected %d)\n", doomcom.datalength, sizeCheck);
+		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
 		return false;
 	}
 
@@ -560,8 +539,8 @@ static void ClientConnecting(int client)
 static void DisconnectClient(int clientNum)
 {
 	NetworkClients -= clientNum;
-	MutedClients &= ~(1 << clientNum);
-	I_ClearNode(clientNum);
+	MutedClients &= ~((uint64_t)1u << clientNum);
+	I_ClearClient(clientNum);
 	// Capture the pawn leaving in the next world tick.
 	players[clientNum].playerstate = PST_GONE;
 }
@@ -634,21 +613,21 @@ static void CheckLevelStart(int client, int delayTics)
 
 	if (client == Net_Arbitrator)
 	{
-		LevelStartAck = 0;
+		LevelStartAck = 0u;
 		LevelStartStatus = NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator ? LST_HOST : LST_READY;
 		LevelStartDelay = LevelStartDebug = delayTics;
 		LastGameUpdate = EnterTic;
 		return;
 	}
 
-	int mask = 0;
+	uint64_t mask = 0u;
 	for (auto pNum : NetworkClients)
 	{
 		if (pNum != Net_Arbitrator)
-			mask |= 1 << pNum;
+			mask |= (uint64_t)1u << pNum;
 	}
 
-	LevelStartAck |= 1 << client;
+	LevelStartAck |= (uint64_t)1u << client;
 	if ((LevelStartAck & mask) == mask && IsMapLoaded())
 	{
 		// Beyond this point a player is likely lagging out anyway.
@@ -707,10 +686,9 @@ struct FLatencyAck
 static void GetPackets()
 {
 	TArray<FLatencyAck> latencyAcks = {};
-	TArray<int> stuckInLobby = {};
 	while (HGetPacket())
 	{
-		const int clientNum = doomcom.remoteplayer;
+		const int clientNum =  RemoteClient;
 		auto& clientState = ClientStates[clientNum];
 
 		if (NetBuffer[0] & NCMD_EXIT)
@@ -721,16 +699,7 @@ static void GetPackets()
 
 		if (NetBuffer[0] & NCMD_SETUP)
 		{
-			if (NetworkClients.InGame(clientNum))
-			{
-				if (consoleplayer == Net_Arbitrator && stuckInLobby.Find(clientNum) >= stuckInLobby.Size())
-					stuckInLobby.Push(clientNum);
-			}
-			else
-			{
-				ClientConnecting(clientNum);
-			}
-
+			HandleIncomingConnection();
 			continue;
 		}
 
@@ -912,12 +881,6 @@ static void GetPackets()
 		NetBuffer[1] = ack.Seq;
 		HSendPacket(ack.Client, 2);
 	}
-
-	for (auto client : stuckInLobby)
-	{
-		NetBuffer[0] = NCMD_GAMEREADY;
-		HSendPacket(client, 1);
-	}
 }
 
 static void SendHeartbeat()
@@ -1033,7 +996,7 @@ static int16_t CalculateConsistency(int client, uint32_t seed)
 // check, not just the player's x position like BOOM.
 static void MakeConsistencies()
 {
-	if (!netgame || demoplayback || (gametic % doomcom.ticdup) || !IsMapLoaded())
+	if (!netgame || demoplayback || (gametic % TicDup) || !IsMapLoaded())
 		return;
 
 	const uint32_t rngSum = StaticSumSeeds();
@@ -1057,7 +1020,7 @@ static bool Net_UpdateStatus()
 	// Check against the previous tick in case we're recovering from a huge
 	// system hiccup. If the game has taken too long to update, it's likely
 	// another client is hanging up the game.
-	if (LastEnterTic - LastGameUpdate >= MAXSENDTICS * doomcom.ticdup)
+	if (LastEnterTic - LastGameUpdate >= MAXSENDTICS * TicDup)
 	{
 		// Try again in the next MaxDelay tics.
 		LastGameUpdate = EnterTic;
@@ -1066,7 +1029,7 @@ static bool Net_UpdateStatus()
 		{
 			// Use a missing packet here to tell the other players to retransmit instead of simply retransmitting our
 			// own data over instantly. This avoids flooding the network at a time where it's not opportune to do so.
-			const int curTic = gametic / doomcom.ticdup;
+			const int curTic = gametic / TicDup;
 			for (auto client : NetworkClients)
 			{
 				if (client == consoleplayer)
@@ -1125,7 +1088,7 @@ static bool Net_UpdateStatus()
 		else if (consoleplayer == Net_Arbitrator)
 		{
 			// If we're consistenty ahead of the highest sequence player, slow down.
-			const int curTic = ClientTic / doomcom.ticdup;
+			const int curTic = ClientTic / TicDup;
 			for (auto client : NetworkClients)
 			{
 				if (client != Net_Arbitrator && (ClientStates[client].Flags & CF_UPDATED))
@@ -1156,7 +1119,7 @@ static bool Net_UpdateStatus()
 			{
 				SkipCommandTimer = 0;
 				if (SkipCommandAmount <= 0)
-					SkipCommandAmount = lowestDiff * doomcom.ticdup;
+					SkipCommandAmount = lowestDiff * TicDup;
 			}
 		}
 		else
@@ -1219,7 +1182,7 @@ void NetUpdate(int tics)
 		{
 			// If we're the host, idly wait until all packets have arrived. There's no point in predicting since we
 			// know for a fact the game won't be started until everyone is accounted for. (Packet server only)
-			const int curTic = gametic / doomcom.ticdup;
+			const int curTic = gametic / TicDup;
 			int lowestSeq = curTic;
 			for (auto client : NetworkClients)
 			{
@@ -1241,7 +1204,7 @@ void NetUpdate(int tics)
 		
 	const bool netGood = Net_UpdateStatus();
 	const int startTic = ClientTic;
-	tics = min<int>(tics, MAXSENDTICS * doomcom.ticdup);
+	tics = min<int>(tics, MAXSENDTICS * TicDup);
 	for (int i = 0; i < tics; ++i)
 	{
 		I_StartTic();
@@ -1256,18 +1219,18 @@ void NetUpdate(int tics)
 		}
 		
 		G_BuildTiccmd(&LocalCmds[ClientTic++ % LOCALCMDTICS]);
-		if (doomcom.ticdup == 1)
+		if (TicDup == 1)
 		{
 			Net_NewClientTic();
 		}
 		else
 		{
-			const int ticDiff = ClientTic % doomcom.ticdup;
+			const int ticDiff = ClientTic % TicDup;
 			if (ticDiff)
 			{
 				const int startTic = ClientTic - ticDiff;
 
-				// Even if we're not sending out inputs, update the local commands so that the doomcom.ticdup
+				// Even if we're not sending out inputs, update the local commands so that the TicDup
 				// is correctly played back while predicting as best as possible. This will help prevent
 				// minor hitches when playing online.
 				for (int j = ClientTic - 1; j > startTic; --j)
@@ -1275,10 +1238,10 @@ void NetUpdate(int tics)
 			}
 			else
 			{
-				// Gather up the Command across the last doomcom.ticdup number of tics
+				// Gather up the Command across the last TicDup number of tics
 				// and average them out. These are propagated back to the local
 				// command so that they'll be predicted correctly.
-				const int lastTic = ClientTic - doomcom.ticdup;
+				const int lastTic = ClientTic - TicDup;
 				for (int j = ClientTic - 1; j > lastTic; --j)
 					LocalCmds[(j - 1) % LOCALCMDTICS].buttons |= LocalCmds[j % LOCALCMDTICS].buttons;
 
@@ -1289,7 +1252,7 @@ void NetUpdate(int tics)
 				int sidemove = 0;
 				int upmove = 0;
 
-				for (int j = 0; j < doomcom.ticdup; ++j)
+				for (int j = 0; j < TicDup; ++j)
 				{
 					const int mod = (lastTic + j) % LOCALCMDTICS;
 					pitch += LocalCmds[mod].pitch;
@@ -1300,14 +1263,14 @@ void NetUpdate(int tics)
 					upmove += LocalCmds[mod].upmove;
 				}
 
-				pitch /= doomcom.ticdup;
-				yaw /= doomcom.ticdup;
-				roll /= doomcom.ticdup;
-				forwardmove /= doomcom.ticdup;
-				sidemove /= doomcom.ticdup;
-				upmove /= doomcom.ticdup;
+				pitch /= TicDup;
+				yaw /= TicDup;
+				roll /= TicDup;
+				forwardmove /= TicDup;
+				sidemove /= TicDup;
+				upmove /= TicDup;
 
-				for (int j = 0; j < doomcom.ticdup; ++j)
+				for (int j = 0; j < TicDup; ++j)
 				{
 					const int mod = (lastTic + j) % LOCALCMDTICS;
 					LocalCmds[mod].pitch = pitch;
@@ -1323,7 +1286,7 @@ void NetUpdate(int tics)
 		}
 	}
 
-	const int newestTic = ClientTic / doomcom.ticdup;
+	const int newestTic = ClientTic / TicDup;
 	if (demoplayback)
 	{
 		// Don't touch net command data while playing a demo, as it'll already exist.
@@ -1333,7 +1296,7 @@ void NetUpdate(int tics)
 		return;
 	}
 
-	int startSequence = startTic / doomcom.ticdup;
+	int startSequence = startTic / TicDup;
 	int endSequence = newestTic;
 	int quitters = 0;
 	int quitNums[MAXPLAYERS];
@@ -1342,7 +1305,7 @@ void NetUpdate(int tics)
 		// In packet server mode special handling is used to ensure the host only
 		// sends out available tics when ready instead of constantly shotgunning
 		// them out as they're made locally.
-		startSequence = gametic / doomcom.ticdup;
+		startSequence = gametic / TicDup;
 		int lowestSeq = endSequence - 1;
 		for (auto client : NetworkClients)
 		{
@@ -1359,7 +1322,7 @@ void NetUpdate(int tics)
 		endSequence = lowestSeq + 1;
 	}
 
-	const bool resendOnly = startSequence == endSequence && (ClientTic % doomcom.ticdup);
+	const bool resendOnly = startSequence == endSequence && (ClientTic % TicDup);
 	for (auto client : NetworkClients)
 	{
 		// If in packet server mode, we don't want to send information to anyone but the host. On the other
@@ -1509,8 +1472,8 @@ void NetUpdate(int tics)
 				int curTic = sequenceNum + t, lastTic = curTic - 1;
 				if (playerNums[i] == consoleplayer)
 				{
-					int realTic = (curTic * doomcom.ticdup) % LOCALCMDTICS;
-					int realLastTic = (lastTic * doomcom.ticdup) % LOCALCMDTICS;
+					int realTic = (curTic * TicDup) % LOCALCMDTICS;
+					int realLastTic = (lastTic * TicDup) % LOCALCMDTICS;
 					// Write out the net events before the user commands so inputs can
 					// be used as a marker for when the given command ends.
 					auto& stream = NetEvents.Streams[curTic % BACKUPTICS];
@@ -1556,291 +1519,78 @@ void NetUpdate(int tics)
 	GetPackets();
 }
 
-// User info packets look like this:
-//
-//  One byte set to NCMD_SETUP or NCMD_USERINFO
-//  One byte for the relevant player number.
-//	Three bytes for the sender's game version (major, minor, revision).
-//	Four bytes for the bit mask indicating which players the sender knows about.
-//  If NCMD_SETUP, one byte indicating the guest got the game setup info.
-//  Player's user information.
-//
-//    The guests always send NCMD_SETUP packets, and the host always
-//    sends NCMD_USERINFO packets.
-//
-// Game info packets look like this:
-//
-//  One byte set to NCMD_GAMEINFO.
-//  One byte for doomcom.ticdup setting.
-//  One byte for NetMode setting.
-//  String with starting map's name.
-//  The game's RNG seed.
-//  Remaining game information.
-//
-// Ready packets look like this:
-//
-//  One byte set to NCMD_GAMEREADY.
-//
-// Each machine sends user info packets to the host. The host sends user
-// info packets back to the other machines as well as game info packets.
-// Negotiation is done when all the guests have reported to the host that
-// they know about the other nodes.
+// These have to be here since they have game-specific data. Only the data
+// from the frontend should be put in these, all backend handling should be
+// done in the core files.
 
-bool ExchangeNetGameInfo(void *userdata)
+void Net_SetupUserInfo()
 {
-	FNetGameInfo *data = reinterpret_cast<FNetGameInfo*>(userdata);
-	uint8_t *stream = nullptr;
-	while (HGetPacket())
-	{
-		// For now throw an error until something more complex can be done to handle this case.
-		if (NetBuffer[0] == NCMD_EXIT)
-			I_Error("Game unexpectedly ended.");
-
-		if (NetBuffer[0] == NCMD_SETUP || NetBuffer[0] == NCMD_USERINFO)
-		{
-			int clientNum = NetBuffer[1];
-			data->DetectedPlayers[clientNum] =
-				(NetBuffer[5] << 24) | (NetBuffer[6] << 16) | (NetBuffer[7] << 8) | NetBuffer[8];
-
-			if (NetBuffer[0] == NCMD_SETUP)
-			{
-				// Sent from guest.
-				data->GotSetup[clientNum] = NetBuffer[9];
-				stream = &NetBuffer[10];
-			}
-			else
-			{
-				// Sent from host.
-				stream = &NetBuffer[9];
-			}
-
-			D_ReadUserInfoStrings(clientNum, &stream, false);
-			if (!NetworkClients.InGame(clientNum))
-			{
-				if (NetBuffer[2] != VER_MAJOR % 255 || NetBuffer[3] != VER_MINOR % 255 || NetBuffer[4] != VER_REVISION % 255)
-					I_Error("Different " GAMENAME " versions cannot play a net game");
-
-				NetworkClients += clientNum;
-				data->DetectedPlayers[consoleplayer] |= 1 << clientNum;
-
-				I_NetMessage("Found %s (%d)", players[clientNum].userinfo.GetName(), clientNum);
-			}
-		}
-		else if (NetBuffer[0] == NCMD_GAMEINFO)
-		{
-			data->GotSetup[consoleplayer] = true;
-
-			doomcom.ticdup = clamp<int>(NetBuffer[1], 1, MAXTICDUP);
-			NetMode = static_cast<ENetMode>(NetBuffer[2]);
-
-			stream = &NetBuffer[3];
-			startmap = ReadStringConst(&stream);
-			rngseed = ReadInt32(&stream);
-			C_ReadCVars(&stream);
-		}
-		else if (NetBuffer[0] == NCMD_GAMEREADY)
-		{
-			return true;
-		}
-	}
-
-	// If everybody already knows everything, it's time to start.
-	if (consoleplayer == Net_Arbitrator)
-	{
-		bool stillWaiting = false;
-
-		// Update this dynamically.
-		uint32_t allPlayers = 0u;
-		for (int i = 0; i < doomcom.numplayers; ++i)
-			allPlayers |= 1 << i;
-
-		for (int i = 0; i < doomcom.numplayers; ++i)
-		{
-			if (!data->GotSetup[i] || (data->DetectedPlayers[i] & allPlayers) != allPlayers)
-			{
-				stillWaiting = true;
-				break;
-			}
-		}
-
-		if (!stillWaiting)
-			return true;
-	}
-
-	NetBuffer[2] = VER_MAJOR % 255;
-	NetBuffer[3] = VER_MINOR % 255;
-	NetBuffer[4] = VER_REVISION % 255;
-	NetBuffer[5] = data->DetectedPlayers[consoleplayer] >> 24;
-	NetBuffer[6] = data->DetectedPlayers[consoleplayer] >> 16;
-	NetBuffer[7] = data->DetectedPlayers[consoleplayer] >> 8;
-	NetBuffer[8] = data->DetectedPlayers[consoleplayer];
-
-	if (consoleplayer != Net_Arbitrator)
-	{
-		// If we're a guest, send our info over to the host.
-		NetBuffer[0] = NCMD_SETUP;
-		NetBuffer[1] = consoleplayer;
-		NetBuffer[9] = data->GotSetup[consoleplayer];
-		stream = &NetBuffer[10];
-		// If the host already knows we're here, just send over a heartbeat.
-		if (!(data->DetectedPlayers[Net_Arbitrator] & (1 << consoleplayer)))
-		{
-			auto str = D_GetUserInfoStrings(consoleplayer, true);
-			const size_t userSize = str.Len() + 1;
-			memcpy(stream, str.GetChars(), userSize);
-			stream += userSize;
-		}
-		else
-		{
-			*stream = 0;
-			++stream;
-		}
-	}
-	else
-	{
-		// If we're the host, send over known player data to guests. This is done instantly
-		// since the game info will also get sent out after this.
-		NetBuffer[0] = NCMD_USERINFO;
-		for (auto client : NetworkClients)
-		{
-			if (client == Net_Arbitrator)
-				continue;
-
-			for (auto cl : NetworkClients)
-			{
-				if (cl == client)
-					continue;
-
-				// If the host knows about a client that the guest doesn't, send that client's info over to them.
-				const int clBit = 1 << cl;
-				if ((data->DetectedPlayers[Net_Arbitrator] & clBit) && !(data->DetectedPlayers[client] & clBit))
-				{
-					NetBuffer[1] = cl;
-					stream = &NetBuffer[9];
-					auto str = D_GetUserInfoStrings(cl, true);
-					const size_t userSize = str.Len() + 1;
-					memcpy(stream, str.GetChars(), userSize);
-					stream += userSize;
-					HSendPacket(client, int(stream - NetBuffer));
-				}
-			}
-		}
-
-		// If we're the host, send the game info too.
-		NetBuffer[0] = NCMD_GAMEINFO;
-		NetBuffer[1] = (uint8_t)doomcom.ticdup;
-		NetBuffer[2] = NetMode;
-		stream = &NetBuffer[3];
-		WriteString(startmap.GetChars(), &stream);
-		WriteInt32(rngseed, &stream);
-		C_WriteCVars(&stream, CVAR_SERVERINFO, true);
-	}
-
-	SendSetup(*data, int(stream - NetBuffer));
-	return false;
+	D_SetupUserInfo();
 }
 
-static bool D_ExchangeNetInfo()
+const char* Net_GetClientName(int client, unsigned int charLimit = 0u)
 {
-	// Return right away if it's just a solo net game.
-	if (doomcom.numplayers == 1)
-		return true;
-
-	autostart = true;
-
-	FNetGameInfo info = {};
-	info.DetectedPlayers[consoleplayer] = 1 << consoleplayer;
-	info.GotSetup[consoleplayer] = consoleplayer == Net_Arbitrator;
-	NetworkClients += consoleplayer;
-	
-	if (consoleplayer == Net_Arbitrator)
-		I_NetInit("Sending game information", 1);
-	else
-		I_NetInit("Waiting for host information", 1);
-
-	if (!I_NetLoop(ExchangeNetGameInfo, &info))
-		return false;
-
-	// Let everyone else know the game is ready to start.
-	if (consoleplayer == Net_Arbitrator)
-	{
-		NetBuffer[0] = NCMD_GAMEREADY;
-		for (auto client : NetworkClients)
-		{
-			if (client != Net_Arbitrator)
-				HSendPacket(client, 1);
-		}
-	}
-
-	I_NetDone();
-	return true;
+	return players[client].userinfo.GetName(charLimit);
 }
 
-static void SendSetup(const FNetGameInfo& info, int len)
+int Net_SetUserInfo(int client, uint8_t*& stream)
 {
-	if (consoleplayer != Net_Arbitrator)
-	{
-		HSendPacket(Net_Arbitrator, len);
-	}
-	else
-	{
-		for (auto client : NetworkClients)
-		{
-			// Only send game info over to clients still needing it.
-			if (client != Net_Arbitrator && !info.GotSetup[client])
-				HSendPacket(client, len);
-		}
-	}
+	auto str = D_GetUserInfoStrings(client, true);
+	const size_t userSize = str.Len() + 1;
+	memcpy(stream, str.GetChars(), userSize);
+	return userSize;
+}
+
+int Net_ReadUserInfo(int client, uint8_t*& stream)
+{
+	const uint8_t* start = stream;
+	D_ReadUserInfoStrings(client, &stream, false);
+	return int(stream - start);
+}
+
+int Net_SetGameInfo(uint8_t*& stream)
+{
+	const uint8_t* start = stream;
+	WriteString(startmap.GetChars(), &stream);
+	WriteInt32(rngseed, &stream);
+	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
+	return int(stream - start);
+}
+
+int Net_ReadGameInfo(uint8_t*& stream)
+{
+	const uint8_t* start = stream;
+	startmap = ReadStringConst(&stream);
+	rngseed = ReadInt32(&stream);
+	C_ReadCVars(&stream);
+	return int(stream - start);
 }
 
 // Connects players to each other if needed.
 bool D_CheckNetGame()
 {
-	const char* v = Args->CheckValue("-netmode");
-	int result = I_InitNetwork(); // I_InitNetwork sets doomcom and netgame
-	if (result == -1)
+	if (!I_InitNetwork())
 		return false;
-	else if (result > 0 && v == nullptr) // Don't override manual netmode setting.
-		NetMode = NET_PacketServer;
 
-	if (doomcom.id != DOOMCOM_ID)
-		I_FatalError("Invalid doomcom id set for network buffer");
+	if (GameID != DEFAULT_GAME_ID)
+		I_FatalError("Invalid id set for network buffer");
+
+	if (Args->CheckParm("-extratic"))
+		net_extratic = true;
 
 	players[Net_Arbitrator].settings_controller = true;
-	consoleplayer = doomcom.consoleplayer;
-
-	if (consoleplayer == Net_Arbitrator)
-	{
-		if (v != nullptr)
-			NetMode = atoi(v) ? NET_PacketServer : NET_PeerToPeer;
-
-		if (doomcom.numplayers > 1)
-		{
-			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode. (%s)\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server",
-				v != nullptr ? "forced" : "auto");
-		}
-
-		if (Args->CheckParm("-extratic"))
-			net_extratic = true;
-	}
-
-	// [RH] Setup user info
-	D_SetupUserInfo();
-
-	if (netgame)
-	{
-		GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
-		if (!D_ExchangeNetInfo())
-			return false;
-	}
-
 	for (auto client : NetworkClients)
 		playeringame[client] = true;
 
-	if (consoleplayer != Net_Arbitrator && doomcom.numplayers > 1)
-		Printf("Host selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode.\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
+	if (MaxClients > 1u)
+	{
+		if (consoleplayer == Net_Arbitrator)
+			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
+		else
+			Printf("Host selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
 
-	Printf("player %d of %d\n", consoleplayer + 1, doomcom.numplayers);
+		Printf("Player %d of %d\n", consoleplayer + 1, MaxClients);
+	}
 	
 	return true;
 }
@@ -1918,19 +1668,19 @@ ADD_STAT(network)
 	}
 
 	out.AppendFormat("Max players: %d\tNet mode: %s\tTic dup: %d",
-		doomcom.numplayers,
+		MaxClients,
 		NetMode == NET_PacketServer ? "Packet server" : "Peer to peer",
-		doomcom.ticdup);
+		TicDup);
 
 	if (net_extratic)
 		out.AppendFormat("\tExtra tic enabled");
 
-	out.AppendFormat("\nWorld tic: %06d (sequence %06d)", gametic, gametic / doomcom.ticdup);
+	out.AppendFormat("\nWorld tic: %06d (sequence %06d)", gametic, gametic / TicDup);
 	if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
 		out.AppendFormat("\tStart tics delay: %d", LevelStartDebug);
 
-	const int delay = max<int>((ClientTic - gametic) / doomcom.ticdup, 0);
-	const int msDelay = min<int>(delay * doomcom.ticdup * 1000.0 / TICRATE, 999);
+	const int delay = max<int>((ClientTic - gametic) / TicDup, 0);
+	const int msDelay = min<int>(delay * TicDup * 1000.0 / TICRATE, 999);
 	out.AppendFormat("\nLocal\n\tIs arbitrator: %d\tDelay: %02d (%03dms)",
 		consoleplayer == Net_Arbitrator,
 		delay, msDelay);
@@ -1948,7 +1698,7 @@ ADD_STAT(network)
 			out.AppendFormat("\tWaiting for arbitrator");
 	}
 
-	int lowestSeq = ClientTic / doomcom.ticdup;
+	int lowestSeq = ClientTic / TicDup;
 	for (auto client : NetworkClients)
 	{
 		if (client == consoleplayer)
@@ -1980,8 +1730,8 @@ ADD_STAT(network)
 
 		if (NetMode != NET_PacketServer)
 		{
-			const int cDelay = max<int>(state.CurrentSequence - (gametic / doomcom.ticdup), 0);
-			const int mscDelay = min<int>(cDelay * doomcom.ticdup * 1000.0 / TICRATE, 999);
+			const int cDelay = max<int>(state.CurrentSequence - (gametic / TicDup), 0);
+			const int mscDelay = min<int>(cDelay * TicDup * 1000.0 / TICRATE, 999);
 			out.AppendFormat("\tDelay: %02d (%03dms)", cDelay, mscDelay);
 		}
 		
@@ -1991,7 +1741,7 @@ ADD_STAT(network)
 	}
 
 	if (NetMode != NET_PacketServer || consoleplayer == Net_Arbitrator)
-		out.AppendFormat("\nAvailable tics: %03d", max<int>(lowestSeq - (gametic / doomcom.ticdup), 0));
+		out.AppendFormat("\nAvailable tics: %03d", max<int>(lowestSeq - (gametic / TicDup), 0));
 	return out;
 }
 
@@ -2091,7 +1841,7 @@ void TryRunTics()
 
 	// If the lowest confirmed tic matches the server gametic or greater, allow the client
 	// to run some of them.
-	const int availableTics = (lowestSequence - gametic / doomcom.ticdup) + 1;
+	const int availableTics = (lowestSequence - gametic / TicDup) + 1;
 
 	// If the amount of tics to run is falling behind the amount of available tics,
 	// speed the playsim up a bit to help catch up.
@@ -2314,7 +2064,7 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 
 			s = ReadStringConst(stream);
 			// If chat is disabled, there's nothing else to do here since the stream has been advanced.
-			if (cl_showchat == CHAT_DISABLED || (MutedClients & (1 << player)))
+			if (cl_showchat == CHAT_DISABLED || (MutedClients & ((uint64_t)1u << player)))
 				break;
 
 			constexpr int MSG_TEAM = 1;
@@ -3195,7 +2945,7 @@ CCMD(mute)
 		return;
 	}
 
-	MutedClients |= 1 << pNum;
+	MutedClients |= (uint64_t)1u << pNum;
 }
 
 CCMD(muteall)
@@ -3209,7 +2959,7 @@ CCMD(muteall)
 	for (auto client : NetworkClients)
 	{
 		if (client != consoleplayer)
-			MutedClients |= 1 << client;
+			MutedClients |= (uint64_t)1u << client;
 	}
 }
 
@@ -3224,7 +2974,7 @@ CCMD(listmuted)
 	bool found = false;
 	for (auto client : NetworkClients)
 	{
-		if (MutedClients & (1 << client))
+		if (MutedClients & ((uint64_t)1u << client))
 		{
 			found = true;
 			Printf("%s - %d\n", players[client].userinfo.GetName(), client);
@@ -3262,7 +3012,7 @@ CCMD(unmute)
 		return;
 	}
 
-	MutedClients &= ~(1 << pNum);
+	MutedClients &= ~((uint64_t)1u << pNum);
 }
 
 CCMD(unmuteall)
@@ -3273,7 +3023,7 @@ CCMD(unmuteall)
 		return;
 	}
 
-	MutedClients = 0;
+	MutedClients = 0u;
 }
 
 //==========================================================================

@@ -622,7 +622,7 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (buttonMap.ButtonDown(Button_Left) || buttonMap.ButtonDown(Button_Right))
-		turnheld += doomcom.ticdup;
+		turnheld += TicDup;
 	else
 		turnheld = 0;
 
@@ -1232,7 +1232,7 @@ void G_Ticker ()
 	}
 
 	// get commands, check consistancy, and build new consistancy check
-	const int curTic = gametic / doomcom.ticdup;
+	const int curTic = gametic / TicDup;
 
 	//Added by MC: For some of that bot stuff. The main bot function.
 	primaryLevel->BotInfo.Main (primaryLevel);
@@ -2545,7 +2545,7 @@ void G_WriteDemoTiccmd (usercmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = ClientStates[player].Tics[buf % BACKUPTICS].Data.GetData (&speclen)) && !(gametic % doomcom.ticdup))
+	if ((specdata = ClientStates[player].Tics[buf % BACKUPTICS].Data.GetData (&speclen)) && !(gametic % TicDup))
 	{
 		memcpy (demo_p, specdata, speclen);
 		demo_p += speclen;

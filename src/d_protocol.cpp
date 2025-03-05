@@ -446,7 +446,7 @@ int ReadUserCmdMessage(uint8_t*& stream, int player, int tic)
 void RunPlayerCommands(int player, int tic)
 {
 	// We don't have the full command yet, so don't run it.
-	if (gametic % doomcom.ticdup)
+	if (gametic % TicDup)
 		return;
 
 	int len;

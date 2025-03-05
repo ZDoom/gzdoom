@@ -417,7 +417,7 @@ void FConsoleWindow::Progress(const int current, const int maximum)
 }
 
 
-void FConsoleWindow::NetInit(const char* const message, const int playerCount)
+void FConsoleWindow::NetInit(const char* const message, const bool host)
 {
 	if (nil == m_netView)
 	{
@@ -442,19 +442,9 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		// Connection progress
 		m_netProgressBar = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(12.0f, 40.0f, 488.0f, 16.0f)];
 		[m_netProgressBar setAutoresizingMask:NSViewWidthSizable];
-		[m_netProgressBar setMaxValue:playerCount];
-
-		if (0 == playerCount)
-		{
-			// Joining game
-			[m_netProgressBar setIndeterminate:YES];
-			[m_netProgressBar startAnimation:nil];
-		}
-		else
-		{
-			// Hosting game
-			[m_netProgressBar setIndeterminate:NO];
-		}
+		[m_netProgressBar setMaxValue:0];
+		[m_netProgressBar setIndeterminate:YES];
+		[m_netProgressBar startAnimation:nil];
 
 		// Cancel network game button
 		m_netAbortButton = [[NSButton alloc] initWithFrame:NSMakeRect(432.0f, 8.0f, 72.0f, 28.0f)];
@@ -486,22 +476,32 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 	[m_netMessageText setStringValue:[NSString stringWithUTF8String:message]];
 
 	m_netCurPos = 0;
-	m_netMaxPos = playerCount;
-
-	NetProgress(1); // You always know about yourself
 }
 
-void FConsoleWindow::NetProgress(const int count)
+void FConsoleWindow::NetMessage(const char* const message)
 {
-	if (0 == count)
-	{
-		++m_netCurPos;
-	}
-	else
-	{
-		m_netCurPos = count;
-	}
+	[m_netMessageText setStringValue:[NSString stringWithUTF8String:message]];
+}
 
+void FConsoleWindow::NetConnect(const int client, const char* const name, const unsigned flags, const int status)
+{
+
+}
+
+void FConsoleWindow::NetUpdate(const int client, const int status)
+{
+
+}
+
+void FConsoleWindow::NetDisconnect(const int client)
+{
+
+}
+
+void FConsoleWindow::NetProgress(const int cur, const int limit)
+{
+	m_netCurPos = cur;
+	m_netMaxPos = limit;
 	if (nil == m_netView)
 	{
 		return;
@@ -540,4 +540,14 @@ void FConsoleWindow::NetClose()
 bool FConsoleWindow::ShouldStartNet()
 {
 	return false;
+}
+
+int FConsoleWindow::GetNetKickClient()
+{
+	return -1;
+}
+
+int FConsoleWindow::GetNetBanClient()
+{
+	return -1;
 }

@@ -540,6 +540,8 @@
 
 
 
+extern int Net_Arbitrator;
+
 FRandom pr_acs ("ACS");
 
 // I imagine this much stack space is probably overkill, but it could

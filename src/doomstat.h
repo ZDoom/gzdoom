@@ -198,8 +198,6 @@ EXTERN_CVAR (Int, developer)
 
 extern bool ToggleFullscreen;
 
-extern int Net_Arbitrator;
-
 EXTERN_CVAR (Bool, var_friction)
 
 

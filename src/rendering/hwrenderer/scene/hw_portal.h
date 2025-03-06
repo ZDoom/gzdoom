@@ -59,8 +59,6 @@ class HWPortal
 	TArray<unsigned int> mPrimIndices;
 	unsigned int mTopCap = ~0u, mBottomCap = ~0u;
 
-	virtual void DrawPortalStencil(FRenderState &state, int pass);
-
 public:
 	FPortalSceneState * mState;
 	TArray<HWWall> lines;
@@ -84,6 +82,7 @@ public:
 	virtual bool NeedDepthBuffer() { return true; }
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state) = 0;
 	virtual void RenderAttached(HWDrawInfo *di) {}
+	virtual void DrawPortalStencil(FRenderState &state, int pass);
 	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 
@@ -106,6 +105,7 @@ struct FPortalSceneState
 
 	int PlaneMirrorMode = 0;
 	bool inskybox = 0;
+	bool vpIsAllowedOoB = 0;
 
 	UniqueList<HWSkyInfo> UniqueSkies;
 	UniqueList<HWHorizonInfo> UniqueHorizons;

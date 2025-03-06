@@ -427,6 +427,7 @@ struct LocalState
 	int VarFlags = -1;
 	int RegNum = -1;
 	int RegCount = -1;
+	int Line = -1;
 	VMValue Value;
 	std::vector<LocalState> StructFields;
 	bool invalid_value = false;
@@ -559,7 +560,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 		{
 			if (!field || !struct_ptr)
 			{
-				m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, VMValue(), {}, true});
+				m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, VMValue(), {}, true});
 				continue;
 			}
 			auto offset = field->Offset;
@@ -622,7 +623,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			{
 				val = VMValue((void *)pointed_field);
 			}
-			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, val, {}, invalid});
+			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, val, {}, invalid});
 			// increment struct_ptr by fieldSize
 			if (curr_ptr)
 			{
@@ -745,7 +746,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 		auto type = proto->ArgumentTypes[paramidx];
 		bool invalid = getAndIncRegCount(type->RegType, val);
 
-		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, 1, val, {}, invalid});
+		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, 1, -1, val, {}, invalid});
 	}
 	if (!IsFunctionNative(p_stackFrame->Func))
 	{
@@ -793,6 +794,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 							return state;
 						}
 						state.Value = VMValue(p_stackFrame->GetRegA()[state.RegNum]);
+						state.Line = local.LineNumber;
 						NumRegAddress++;
 					}
 				}
@@ -819,7 +821,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 					}
 
 					bool valid = GetRegisterValue(p_stackFrame, reg_type, value, state.RegNum);
-					state = LocalState {name, type, flags, NumRegAddress, 1, value, {}, valid};
+					state = LocalState {name, type, flags, NumRegAddress, 1, local.LineNumber, value, {}, valid};
 				}
 				return state;
 			};

@@ -193,13 +193,19 @@ void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName) const
 	auto binary = m_pexCache->GetScript(scriptName);
 	if (binary && m_session)
 	{
-		SendEvent(dap::LoadedSourceEvent {.reason = "new", .source = binary->GetDapSource()});
+		dap::LoadedSourceEvent event;
+		event.reason = "new";
+		event.source = binary->GetDapSource();
+		SendEvent(event);
 	}
 }
 
 void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const
 {
-	SendEvent(dap::BreakpointEvent {.breakpoint = bpoint, .reason = reason});
+	dap::BreakpointEvent event;
+	event.breakpoint = bpoint;
+	event.reason = reason;
+	SendEvent(event);
 }
 
 void ZScriptDebugger::ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace) const
@@ -236,8 +242,15 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 
 dap::ResponseOrError<dap::LaunchResponse> ZScriptDebugger::Launch(const dap::PDSLaunchRequest &request)
 {
-	auto resp = Attach(
-		dap::PDSAttachRequest {.name = request.name, .type = request.type, .request = request.request, .projectPath = request.projectPath, .projectArchive = request.projectArchive, .projectSources = request.projectSources});
+	dap::PDSAttachRequest attach_request;
+	attach_request.name = request.name;
+	attach_request.type = request.type;
+	attach_request.request = request.request;
+	attach_request.projectPath = request.projectPath;
+	attach_request.projectArchive = request.projectArchive;
+	attach_request.projectSources = request.projectSources;
+
+	auto resp = Attach(attach_request);
 	if (resp.error)
 	{
 		RETURN_DAP_ERROR(resp.error.message.c_str());

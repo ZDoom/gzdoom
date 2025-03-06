@@ -507,6 +507,7 @@ bool HWMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clippe
 	}
 
 	auto &vp = di->Viewpoint;
+	state->vpIsAllowedOoB = vp.IsAllowedOoB();
 	di->UpdateCurrentMapSection();
 
 	di->mClipPortal = this;
@@ -611,6 +612,7 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *cl
 		return false;
 	}
 	auto &vp = di->Viewpoint;
+	state->vpIsAllowedOoB = vp.IsAllowedOoB();
 	di->mClipPortal = this;
 
 	line_t *origin = glport->lines[0]->mOrigin;
@@ -690,6 +692,7 @@ bool HWSkyboxPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *clippe
 		return false;
 	}
 	auto &vp = di->Viewpoint;
+	state->vpIsAllowedOoB = vp.IsAllowedOoB();
 
 	state->skyboxrecursion++;
 	state->PlaneMirrorMode = 0;
@@ -801,6 +804,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 	FSectorPortalGroup *portal = origin;
 	auto &vp = di->Viewpoint;
+	state->vpIsAllowedOoB = vp.IsAllowedOoB();
 
 	vp.Pos += origin->mDisplacement;
 	vp.ActorPos += origin->mDisplacement;
@@ -836,16 +840,23 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 void HWSectorStackPortal::DrawPortalStencil(FRenderState &state, int pass)
 {
-	bool isceiling = planesused & (1 << sector_t::ceiling);
-	for (unsigned int i = 0; i < lines.Size(); i++)
+	if (mState->vpIsAllowedOoB)
 	{
-		flat.section = lines[i].sub->section;
-		flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
-		flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
-		// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
+		bool isceiling = planesused & (1 << sector_t::ceiling);
+		for (unsigned int i = 0; i < lines.Size(); i++)
+		{
+			flat.section = lines[i].sub->section;
+			flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
+			flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
+			// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
 
-		state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
-		state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+			state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
+			state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+		}
+	}
+	else
+	{
+		HWPortal::DrawPortalStencil(state, pass);
 	}
 }
 
@@ -884,6 +895,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 
 	auto &vp = di->Viewpoint;
+	state->vpIsAllowedOoB = vp.IsAllowedOoB();
 	old_pm = state->PlaneMirrorMode;
 
 	// the player is always visible in a mirror.
@@ -908,16 +920,23 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 void HWPlaneMirrorPortal::DrawPortalStencil(FRenderState &state, int pass)
 {
-	bool isceiling = planesused & (1 << sector_t::ceiling);
-	for (unsigned int i = 0; i < lines.Size(); i++)
+	if (mState->vpIsAllowedOoB)
 	{
-		flat.section = lines[i].sub->section;
-		flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
-		flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
-		// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
+		bool isceiling = planesused & (1 << sector_t::ceiling);
+		for (unsigned int i = 0; i < lines.Size(); i++)
+		{
+			flat.section = lines[i].sub->section;
+			flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
+			flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
+			// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
 
-		state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
-		state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+			state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);
+			state.DrawIndexed(DT_Triangles, flat.iboindex + flat.section->vertexindex, flat.section->vertexcount, i == 0);
+		}
+	}
+	else
+	{
+		HWPortal::DrawPortalStencil(state, pass);
 	}
 }
 

@@ -497,6 +497,7 @@ std::shared_ptr<DisassemblyLine>
 PexCache::MakeInstruction(VMScriptFunction *func, int ref, const std::string &instruction_text, const std::string &opcode, const std::string &comment, unsigned long long ipnum, const std::string &pointed_symbol)
 {
 	std::shared_ptr<DisassemblyLine> instruction = std::make_shared<DisassemblyLine>();
+	instruction->funcPtr = func;
 	instruction->function = func->QualifiedName;
 	instruction->instruction = instruction_text;
 	instruction->address = (void *)ipnum;
@@ -559,7 +560,7 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 	auto lines = Split(disassembly, "\n");
 
 
-	auto ret = m_disassemblyMap.insert(true, {startPointer, endPointer, std::vector<std::shared_ptr<DisassemblyLine>>()});
+	auto ret = m_disassemblyMap.insert(true, {startPointer, endPointer, {}});
 	if (!ret.second)
 	{
 		if (!(ret.first->start_pt() == startPointer && ret.first->end_pt() == endPointer))
@@ -570,7 +571,7 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 		// else, just use the already existing one but clear it
 		ret.first->mapped().clear();
 	}
-	auto &lines_vec = ret.first->mapped();
+	auto &lines_map = ret.first->mapped();
 	// check if the last line in lines is empty; if so, remove it
 	std::vector<size_t> lines_to_remove;
 	auto script_name = func->SourceFileName.GetChars();
@@ -667,7 +668,7 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 				// currCodePointer++;
 				// instruction->bytes += StringFormat("%02X%02X%02X%02X", currCodePointer->op, currCodePointer->a, currCodePointer->b, currCodePointer->c);
 
-				lines_vec.push_back(instruction);
+				lines_map.insert({(void *)currCodePointer, instruction});
 				currCodePointer++;
 
 				instruction = MakeInstruction(
@@ -683,14 +684,15 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 				}
 			}
 		}
-		lines_vec.push_back(instruction);
+		lines_map.insert({(void *)currCodePointer, instruction});
 		currCodePointer++;
 	}
 	auto func_decl_line = FindFunctionDeclaration(source, func, min_line);
 	if (func_decl_line > 0)
 	{
-		for (auto &instruction : lines_vec)
+		for (auto &pr : lines_map)
 		{
+			auto &instruction = pr.second;
 			if (instruction->line == 588 && instruction->function.find("BeginPlay") != -1)
 			{
 				int i = 0;
@@ -708,7 +710,8 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 #endif
 }
 
-bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t instructionOffset, uint64_t count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec)
+
+bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOffset, int64_t p_count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec)
 {
 	// if the offset is negative, we get the previous instructions
 	if (!address)
@@ -722,124 +725,107 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t instructionOffse
 		return false;
 	}
 	auto &it = ret.top();
-
-	if (instructionOffset < 0)
+	Binary::FunctionCodeMap::iterator reverse_it = ret.top();
+	auto endofmap = m_globalCodeMap.rend();
+	auto beginningofmap = m_globalCodeMap.rbegin();
+	std::map<void *, std::shared_ptr<DisassemblyLine>> instruction_map;
+	std::map<void *, std::shared_ptr<DisassemblyLine>> forward_instruction_map;
+	auto firstFunc = it->mapped();
+	auto firstFuncAddress = firstFunc->Code;
+	auto firstFuncInstcount = firstFunc->CodeSize;
+	// count of instructions beginning from the beginning of the function to the requested address (without the requested offset)
+	size_t firstFuncInstCountToAddr = (VMOP *)address - firstFuncAddress;
+	// count of instructions beginning from the requested address (without the requested offset) to the end of the function
+	size_t firstFuncInstCountFromAddr = firstFuncInstcount - firstFuncInstCountToAddr;
+	auto addToInstMap = [&](const std::map<void *, std::shared_ptr<DisassemblyLine>> &lines)
 	{
-		// Keep going back until we find enough instructions to fill the request
-		int64_t instructions_until_start = -instructionOffset;
-		bool first = true;
-		Binary::FunctionCodeMap::iterator prev_it = it;
-
-		while (instructions_until_start > 0 && count > 0)
+		size_t added = 0;
+		for (auto &pr : lines)
 		{
-			// get the previous range
-			if (prev_it == m_globalCodeMap.end())
+			auto &line = pr.second;
+			instruction_map[line->address] = line;
+			added++;
+		}
+		return added;
+	};
+	{
+		int64_t instructionOffset = p_instructionOffset;
+		int64_t count = p_count + std::abs(p_instructionOffset) + firstFuncInstcount;
+		if (instructionOffset < 0)
+		{
+			// get the difference between instructionOffset and 0 (+ the first func count to the requested address)
+			int64_t instructionsToGet = count;
+			// keep going backwards until we find enough instructions to fill the request
+			auto &prev_it = reverse_it;
+			while (reverse_it != m_globalCodeMap.end())
 			{
-				break;
-			}
-			auto start_pt = prev_it->start_pt();
-			auto end_pt = prev_it->end_pt();
-			auto found = m_disassemblyMap.find_ranges(prev_it->start_pt());
-			if (found.empty())
-			{
-				AddDisassemblyLines(prev_it->mapped(), m_disassemblyMap);
-				found = m_disassemblyMap.find_ranges(prev_it->start_pt());
-			}
-			auto &found_lines = found.top()->mapped();
-			if (first)
-			{
-				for (auto &line : found_lines)
+				auto found = m_disassemblyMap.find_ranges(reverse_it->start_pt());
+				if (found.empty())
 				{
-					if (line->address == address || (line->bytesize == 8 && line->address == (void *)(address - 1)))
-					{
-						break;
-					}
-					lines_vec.push_back(line);
-					instructions_until_start--;
-					count--;
-					if (instructions_until_start <= 0 || count <= 0)
-					{
-						break;
-					}
+					AddDisassemblyLines(reverse_it->mapped(), m_disassemblyMap);
+					found = m_disassemblyMap.find_ranges(reverse_it->start_pt());
 				}
-				first = false;
-			}
-			else
-			{
-				// get the reverse iterator to the end of the found lines
-				auto rit = found_lines.rbegin();
-				for (; rit != found_lines.rend(); rit++)
+				auto &found_lines = found.top()->mapped();
+				auto mapped = reverse_it->mapped();
+				instructionsToGet -= addToInstMap(found_lines);
+
+				if (instructionsToGet <= 0)
 				{
-					lines_vec.insert(lines_vec.begin(), *rit);
-					instructions_until_start--;
-					count--;
-					if (instructions_until_start <= 0 || count <= 0)
-					{
-						break;
-					}
+					break;
 				}
+				--reverse_it;
+				bool isNotAtEnd = reverse_it != m_globalCodeMap.end();
+				bool thingy = false;
 			}
-			// get the reverse iterator to the end of the found lines
-			// concatenate the found lines with the already existing lines such that the found lines appear on top of the existing ones
-			if (instructions_until_start <= 0 || count <= 0)
+			if (std::abs(std::abs(instructionOffset) - count) > 0)
 			{
-				instructionOffset = -instructions_until_start;
-				break;
+				instructionOffset = 0;
 			}
-			// No more code behind this
-			if (prev_it == m_globalCodeMap.begin())
+		}
+		// forward...
+		if (instructionOffset >= 0)
+		{
+			int64_t instructionsToGet = count;
+
+			while (it != m_globalCodeMap.end())
 			{
-				return false;
+				auto found = m_disassemblyMap.find_ranges(it->start_pt());
+				if (found.empty())
+				{
+					AddDisassemblyLines(it->mapped(), m_disassemblyMap);
+					found = m_disassemblyMap.find_ranges(it->start_pt());
+				}
+				auto &found_lines = found.top()->mapped();
+				auto mapped = it->mapped();
+				instructionsToGet -= addToInstMap(found_lines);
+
+				if (instructionsToGet <= 0)
+				{
+					break;
+				}
+				++it;
 			}
-			prev_it--;
 		}
 	}
-	if (instructionOffset >= 0 && count > 0)
+	auto actualaddress = (void *)((VMOP *)address + p_instructionOffset);
+	for (int64_t i = 0; i < p_count; i++)
 	{
-		int64_t instructions_to_skip = instructionOffset;
-		bool first = true;
-
-		while (count > 0)
+		auto curaddr = (VMOP *)actualaddress + i;
+		auto found = instruction_map.find(curaddr);
+		if (found != instruction_map.end())
 		{
-			if (it == m_globalCodeMap.end())
-			{
-				break;
-			}
-			auto found = m_disassemblyMap.find_ranges(it->start_pt());
-			if (found.empty())
-			{
-				AddDisassemblyLines(it->mapped(), m_disassemblyMap);
-				found = m_disassemblyMap.find_ranges(it->start_pt());
-			}
-			auto &found_lines = found.top()->mapped();
-			if (first)
-			{
-				for (auto &line : found_lines)
-				{
-					if (line->address == address || (line->bytesize == 8 && line->address == (void *)(address - 1)))
-					{
-						break;
-					}
-					instructions_to_skip++;
-				}
-				first = false;
-			}
-			for (auto &line : found_lines)
-			{
-				if (instructions_to_skip <= 0)
-				{
-					lines_vec.push_back(line);
-					count--;
-					if (count == 0)
-					{
-						break;
-					}
-				}
-				instructions_to_skip--;
-			}
-			it++;
+			lines_vec.push_back(found->second);
+		}
+		else
+		{
+			auto invalid_inst = lines_vec.emplace_back(std::make_shared<DisassemblyLine>());
+			invalid_inst->is_valid_bp = false;
+			invalid_inst->address = curaddr;
+			invalid_inst->instruction = "<INVALID>";
+			invalid_inst->bytes = "<INVALID>";
 		}
 	}
+
 	return true;
 }
 }

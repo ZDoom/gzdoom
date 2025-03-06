@@ -76,7 +76,9 @@ struct DisassemblyLine
 	std::string comment;
 	std::string pointed_symbol;
 	std::string function;
+	VMFunction *funcPtr;
 };
+
 
 class PexCache
 {
@@ -84,7 +86,7 @@ public:
 	using BinaryPtr = std::shared_ptr<Binary>;
 	using BinaryMap = std::map<int, BinaryPtr>;
 	using DisassemblyLinePtr = std::shared_ptr<DisassemblyLine>;
-	using DisassemblyMap = beneficii::range_map<void *, std::vector<DisassemblyLinePtr>>;
+	using DisassemblyMap = beneficii::range_map<void *, std::map<void *, DisassemblyLinePtr>>;
 	PexCache() = default;
 	bool HasScript(int scriptReference);
 	bool HasScript(const std::string &scriptName);
@@ -105,7 +107,8 @@ public:
 	MakeInstruction(VMScriptFunction *func, int ref, const std::string &instruction_text, const std::string &opcode, const std::string &comment, unsigned long long ipnum, const std::string &pointed_symbol);
 
 	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
-	bool GetDisassemblyLines(const VMOP *address, int64_t instructionOffset, uint64_t count, std::vector<std::shared_ptr<DisassemblyLine>> &lines);
+	bool GetDisassemblyLines(const VMOP *address, int64_t p_instructionOffset, int64_t p_count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec);
+
 	std::shared_ptr<Binary> AddScript(const std::string &scriptPath);
 	std::vector<VMFunction *> GetFunctionsAtAddress(void *address);
 	private:

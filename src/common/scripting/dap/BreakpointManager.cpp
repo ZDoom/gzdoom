@@ -21,10 +21,6 @@ int64_t BreakpointManager::GetBreakpointID()
 	return id;
 }
 
-std::string BreakpointManager::AddrToString(void *addr)
-{
-	return StringFormat("%p", addr);
-}
 
 int BreakpointManager::AddInvalidBreakpoint(
 	std::vector<dap::Breakpoint> &breakpoints, int line, void *address, const std::string &reason, const dap::optional<dap::Source> &source = {})
@@ -41,7 +37,7 @@ int BreakpointManager::AddInvalidBreakpoint(
 	}
 	if (address)
 	{
-		breakpoint.instructionReference = AddrToString(address);
+		breakpoint.instructionReference = AddrToString(nullptr, address);
 	}
 	return breakpointId;
 }
@@ -87,7 +83,7 @@ bool BreakpointManager::AddBreakpointInfo(
 	binfo.ref = sourceRef;
 	binfo.bpoint.id = breakpointId;
 	binfo.bpoint.line = line;
-	binfo.bpoint.instructionReference = AddrToString(p_instrRef);
+	binfo.bpoint.instructionReference = AddrToString(function, p_instrRef);
 	if (offset)
 	{
 		binfo.bpoint.offset = offset;
@@ -339,12 +335,16 @@ void BreakpointManager::ClearBreakpointsType(BreakpointInfo::Type type)
 	for (auto &KV : m_breakpoints)
 	{
 		auto bpinfos = KV.second;
-		for (int i = bpinfos.size(); i >= 0; i--)
+		for (int64_t i = bpinfos.size() - 1; i >= 0; i--)
 		{
 			if (bpinfos[i].type == type)
 			{
 				bpinfos.erase(bpinfos.begin() + i);
 			}
+		}
+		if (bpinfos.empty())
+		{
+			toRemove.push_back(KV.first);
 		}
 	}
 	for (auto &key : toRemove)

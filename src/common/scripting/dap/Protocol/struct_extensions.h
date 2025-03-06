@@ -15,8 +15,6 @@ struct PDSAttachRequest : public AttachRequest
 	string name;
 	string type;
 	string request;
-	optional<string> projectPath;
-	optional<string> projectArchive;
 	optional<array<Source>> projectSources;
 };
 
@@ -26,8 +24,6 @@ struct PDSLaunchRequest : public LaunchRequest
 	string name;
 	string type;
 	string request;
-	optional<string> projectPath;
-	optional<string> projectArchive;
 	optional<array<Source>> projectSources;
 };
 

@@ -246,8 +246,6 @@ dap::ResponseOrError<dap::LaunchResponse> ZScriptDebugger::Launch(const dap::PDS
 	attach_request.name = request.name;
 	attach_request.type = request.type;
 	attach_request.request = request.request;
-	attach_request.projectPath = request.projectPath;
-	attach_request.projectArchive = request.projectArchive;
 	attach_request.projectSources = request.projectSources;
 
 	auto resp = Attach(attach_request);
@@ -260,16 +258,6 @@ dap::ResponseOrError<dap::LaunchResponse> ZScriptDebugger::Launch(const dap::PDS
 
 dap::ResponseOrError<dap::AttachResponse> ZScriptDebugger::Attach(const dap::PDSAttachRequest &request)
 {
-	// get basename of projectArchive
-	auto basename = request.projectArchive.value("");
-	auto pos = basename.find_last_of("/\\");
-	if (pos != std::string::npos)
-	{
-		basename = basename.substr(pos + 1);
-	}
-
-	m_projectPath = request.projectPath.value("");
-	m_projectArchive = basename;
 	m_projectSources.clear();
 	if (!request.restart.has_value())
 	{

@@ -170,7 +170,7 @@ VersionInfo PField::GetVersion()
 {
 	VersionInfo Highest = { 0,0,0 };
 	if (!(Flags & VARF_Deprecated)) Highest = mVersion;
-	if (Type->mVersion > Highest) Highest = Type->mVersion;
+	if (Type->mVersion > Highest && !Type->TypeDeprecated) Highest = Type->mVersion;
 	return Highest;
 }
 

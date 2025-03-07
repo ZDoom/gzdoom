@@ -6,8 +6,11 @@
 #include <common/objects/dobject.h>
 #include <common/utility/zstring.h>
 #include "Utilities.h"
+#include "actor.h"
 #include "filesystem.h"
 
+
+struct FState;
 namespace DebugServer
 {
 struct TT : PType
@@ -47,6 +50,11 @@ static inline bool IsFunctionStatic(VMFunction *func) { return func && (func->Va
 static inline bool IsFunctionNative(VMFunction *func) { return func && func->VarFlags & VARF_Native; }
 
 static inline bool IsFunctionAbstract(VMFunction *func) { return func && func->VarFlags & VARF_Abstract; }
+
+static inline bool IsNonAbstractScriptFunction(VMFunction *func)
+{
+	return func && !IsFunctionAbstract(func) && !IsFunctionNative(func) && dynamic_cast<VMScriptFunction *>(func) != nullptr;
+}
 
 static inline std::string GetIPRef(const char *qualifiedName, uint32_t PCdiff, const VMOP *PC) { return StringFormat("%s+%04x:%p", qualifiedName, PCdiff, PC); }
 
@@ -910,5 +918,44 @@ static std::string AddrToString(VMFunction *func, void *addr)
 	return StringFormat("%p", addr);
 }
 
+static bool ClassIsActor(PClass *actorClass)
+{
+	if (!actorClass)
+	{
+		return false;
+	}
+	return actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? true : false;
+}
+
+static FState *GetStateFromLabel(int i, PClass *actorClass)
+{
+	if (!actorClass)
+	{
+		if (i > 0 && i < 0x10000000) return StateLabels.GetState(i, nullptr);
+		return nullptr;
+	}
+	PClassActor *pclassActor = actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor *>(actorClass) : nullptr;
+
+	auto state = pclassActor ? StateLabels.GetState(i, pclassActor) : nullptr;
+	if (!state)
+	{
+		pclassActor = PClass::FindActor(actorClass->TypeName);
+		state = StateLabels.GetState(i, pclassActor);
+	}
+	return state;
+}
+
+static PClass *GetClassDescriptor(PType *localtype)
+{
+	if (localtype->isPointer())
+	{
+		localtype = static_cast<PPointer *>(localtype)->PointedType;
+	}
+	if (localtype->isClass())
+	{
+		return static_cast<PClassType *>(localtype)->Descriptor;
+	}
+	return nullptr;
+}
 
 }

@@ -34,8 +34,7 @@ bool LocalScopeStateNode::SerializeToProtocol(dap::Scope &scope)
 
 bool LocalScopeStateNode::GetChildNames(std::vector<std::string> &names)
 {
-	if (m_state.m_locals.empty())
-		m_state = GetLocalsState(m_stackFrame);
+	if (m_state.m_locals.empty()) m_state = GetLocalsState(m_stackFrame);
 
 	auto scriptFunc = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
 	for (auto &local : m_state.m_locals)
@@ -58,10 +57,23 @@ bool LocalScopeStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 
 	if (m_children.empty())
 	{
+		PClass *invoker = nullptr;
+		if (m_stackFrame->Func && m_stackFrame->Func->ImplicitArgs >= 2 && m_state.m_locals.size() >= 2)
+		{
+			// find the invoer in the locals
+			if (m_state.m_locals[1].Name == INVOKER)
+			{
+				invoker = GetClassDescriptor(m_state.m_locals[1].Type);
+			}
+			else if (m_state.m_locals[0].Name == SELF) // Try 'self' ?
+			{
+				invoker = GetClassDescriptor(m_state.m_locals[0].Type);
+			}
+		}
 		for (auto &local : m_state.m_locals)
 		{
 			const VMFrame * current_frame = m_stackFrame;
-			m_children[local.Name] = RuntimeState::CreateNodeForVariable(local.Name, local.Value, local.Type, current_frame);
+			m_children[local.Name] = RuntimeState::CreateNodeForVariable(local.Name, local.Value, local.Type, current_frame, invoker);
 		}
 	}
 	if (m_children.find(name) != m_children.end())

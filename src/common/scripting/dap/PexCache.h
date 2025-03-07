@@ -26,6 +26,7 @@ namespace DebugServer
 class PexCache;
 struct Binary
 {
+	using NameStateFunctionMap = std::map<std::string, VMFunction *>;
 	using NameFunctionMap = std::map<FName, PFunction *>;
 	using NameClassMap = std::map<FName, PClassType *>;
 	using NameStructMap = std::map<FName, PStruct *>;
@@ -47,7 +48,7 @@ private:
 	NameStructMap structs;
 	FunctionLineMap functionLineMap;
 	FunctionCodeMap functionCodeMap;
-
+	NameStateFunctionMap stateFunctions;
 	void PopulateFunctionMaps();
 
 public:
@@ -61,7 +62,7 @@ public:
 	int GetScriptRef() const { return scriptReference; }
 	bool HasFunctions() const;
 	bool HasFunctionLines() const;
-
+	void ProcessScriptFunction(const std::string &qualPath, VMFunction *vmfunc);
 };
 struct DisassemblyLine
 {

@@ -1,4 +1,7 @@
 #include "ValueStateNode.h"
+
+#include "actor.h"
+
 #include <common/scripting/dap/Utilities.h>
 #include "common/scripting/dap/GameInterfaces.h"
 #include "types.h"
@@ -13,7 +16,10 @@ namespace DebugServer
 static const char *basicTypeNames[] = {"NONE", "uint32",	 "int32",			"uint16",				 "int16", "uint8", "int8", "float",			 "double",	"bool",				 "string",
 																			 "name", "SpriteID", "TextureID", "TranslationID", "Sound", "Color", "Enum", "StateLabel", "pointer", "VoidPointer", nullptr};
 
-ValueStateNode::ValueStateNode(std::string name, VMValue variable, PType *type) : m_name(name), m_variable(variable), m_type(type) { }
+ValueStateNode::ValueStateNode(std::string name, VMValue variable, PType *type, PClass *stateOwningClass)
+	: m_name(name), m_variable(variable), m_type(type), m_StateOwningClass(stateOwningClass)
+{
+}
 
 dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_type)
 {
@@ -140,8 +146,14 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 		else if (m_type == TypeStateLabel)
 		{
 			variable.type = "StateLabel";
-			auto name = FName((ENamedName)(m_variable.i));
-			variable.value = StringFormat("StateLabel# %d: \'%s\'", m_variable.i, name.GetChars());
+			std::string name = "<unknown>";
+			auto state = GetStateFromLabel(m_variable.i, m_StateOwningClass);
+			if (state)
+			{
+				auto fstring = FState::StaticGetStateName(state, static_cast<PClassActor *>(m_StateOwningClass));
+				name = fstring.GetChars();
+			}
+			variable.value = StringFormat("StateLabel# %d: \'%s\'", m_variable.i, name.c_str());
 		}
 		else
 		{

@@ -224,6 +224,47 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 			auto cls_member_it = cls_fields.GetIterator();
 			TMap<FName, PSymbol *>::Pair *cls_member_pair = nullptr;
 			bool cls_member_found = cls_member_it.NextPair(cls_member_pair);
+			if (cls_type->isClass())
+			{
+				auto cls = static_cast<PClassType *>(cls_type)->Descriptor;
+				if (cls && ClassIsActor(cls))
+				{
+					auto actor = static_cast<PClassActor *>(cls);
+					// get the states
+					auto states = actor->GetStates();
+					auto stateCount = actor->GetStateCount();
+					for (int i = 0; i < stateCount; i++)
+					{
+						auto state = states + i;
+						if (state->ActionFunc)
+						{
+							auto *action = state->ActionFunc;
+							if (!IsNonAbstractScriptFunction(action))
+							{
+								continue;
+							}
+							auto *vmscriptfunc = dynamic_cast<VMScriptFunction *>(state->ActionFunc);
+							if (vmscriptfunc && vmscriptfunc->Name == NAME_None)
+							{
+								std::string source_name = vmscriptfunc->SourceFileName.GetChars();
+								if (source_name.empty()) // no source (likely DeHacked), skip it
+								{
+									continue;
+								}
+								auto ref = GetScriptReference(vmscriptfunc->SourceFileName.GetChars());
+								if (!filterRefs.empty() && std::find(filterRefs.begin(), filterRefs.end(), ref) == filterRefs.end())
+								{
+									continue;
+								}
+
+								addEmptyBinIfNotExists(ref, vmscriptfunc->SourceFileName.GetChars());
+								p_scripts[ref]->stateFunctions[vmscriptfunc->PrintableName] = vmscriptfunc;
+							}
+						}
+					}
+				}
+			}
+
 			for (; cls_member_found; cls_member_found = cls_member_it.NextPair(cls_member_pair))
 			{
 				auto &cls_member_sym = cls_member_pair->Value;
@@ -843,11 +884,52 @@ std::stack<beneficii::range_map<void *, VMScriptFunction *>::const_iterator> Deb
 
 bool DebugServer::Binary::HasFunctions() const
 {
-	return !functions.empty();
+	return !functions.empty() && !functionCodeMap.empty();
 }
 bool DebugServer::Binary::HasFunctionLines() const
 {
 	return !functionLineMap.empty();
+}
+
+void DebugServer::Binary::ProcessScriptFunction(const std::string &qualPath, VMFunction *vmfunc)
+{
+	if (IsFunctionNative(vmfunc) || IsFunctionAbstract(vmfunc))
+	{
+		return;
+	}
+	auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
+	if (!CaseInsensitiveEquals(scriptFunc->SourceFileName.GetChars(), qualPath))
+	{
+		return;
+	}
+
+	uint32_t firstLine = INT_MAX;
+	uint32_t lastLine = 0;
+
+	for (uint32_t i = 0; i < scriptFunc->LineInfoCount; ++i)
+	{
+		if (scriptFunc->LineInfo[i].LineNumber < firstLine)
+		{
+			firstLine = scriptFunc->LineInfo[i].LineNumber;
+		}
+		if (scriptFunc->LineInfo[i].LineNumber > lastLine)
+		{
+			lastLine = scriptFunc->LineInfo[i].LineNumber;
+		}
+	}
+
+	FunctionLineMap::range_type range(firstLine, lastLine + 1, scriptFunc);
+	auto ret = functionLineMap.insert(true, range);
+	if (ret.second == false)
+	{
+		// Probably a mixin, just continue
+		return;
+	}
+	void *code = scriptFunc->Code;
+	void *end = scriptFunc->Code + scriptFunc->CodeSize;
+	FunctionCodeMap::range_type codeRange(code, end, scriptFunc);
+	functionCodeMap.insert(true, codeRange);
+	return;
 }
 
 void DebugServer::Binary::PopulateFunctionMaps()
@@ -863,45 +945,16 @@ void DebugServer::Binary::PopulateFunctionMaps()
 		{
 
 			auto vmfunc = variant.Implementation;
-			if (IsFunctionNative(vmfunc) || IsFunctionAbstract(vmfunc))
-			{
-				continue;
-			}
-			auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
-			if (!CaseInsensitiveEquals(scriptFunc->SourceFileName.GetChars(), qualPath))
-			{
-				continue;
-			}
-
-			uint32_t firstLine = INT_MAX;
-			uint32_t lastLine = 0;
-
-			for (uint32_t i = 0; i < scriptFunc->LineInfoCount; ++i)
-			{
-				if (scriptFunc->LineInfo[i].LineNumber < firstLine)
-				{
-					firstLine = scriptFunc->LineInfo[i].LineNumber;
-				}
-				if (scriptFunc->LineInfo[i].LineNumber > lastLine)
-				{
-					lastLine = scriptFunc->LineInfo[i].LineNumber;
-				}
-			}
-
-			FunctionLineMap::range_type range(firstLine, lastLine + 1, scriptFunc);
-			auto ret = functionLineMap.insert(true, range);
-			if (ret.second == false)
-			{
-				// Probably a mixin, just continue
-				continue;
-			}
-			void *code = scriptFunc->Code;
-			void *end = scriptFunc->Code + scriptFunc->CodeSize;
-			FunctionCodeMap::range_type codeRange(code, end, scriptFunc);
-			functionCodeMap.insert(true, codeRange);
+			ProcessScriptFunction(qualPath, vmfunc);
 		}
 	}
+	for (auto &pair : stateFunctions)
+	{
+		auto vmfunc = pair.second;
+		ProcessScriptFunction(qualPath, vmfunc);
+	}
 }
+
 dap::Source DebugServer::Binary::GetDapSource() const
 {
 	dap::Source source;

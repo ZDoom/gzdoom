@@ -22,7 +22,8 @@ class RuntimeState
 	bool ResolveChildrenByParentPath(std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes);
 	bool ResolveChildrenByParentId(uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes);
 
-	static std::shared_ptr<StateNodeBase> CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame *current_frame = nullptr);
+	static std::shared_ptr<StateNodeBase>
+	CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame *current_frame = nullptr, PClass *stateOwningClass = nullptr);
 
 	static VMFrameStack *GetStack(uint32_t stackId);
 	static VMFrame *GetFrame(uint32_t stackId, uint32_t level);

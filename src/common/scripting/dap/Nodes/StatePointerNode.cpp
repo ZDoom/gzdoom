@@ -37,6 +37,7 @@ bool StatePointerNode::SerializeToProtocol(dap::Variable &variable)
 bool StatePointerNode::GetChildNames(std::vector<std::string> &names)
 {
 
+	names.push_back("NextState");
 	names.push_back("sprite");
 	names.push_back("Tics");
 	names.push_back("TicRange");
@@ -64,27 +65,32 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 	{
 		return false;
 	}
-	if (name == "sprite")
+	if (CaseInsensitiveEquals(name, "NextState"))
+	{
+		node = std::make_shared<StatePointerNode>("NextState", state->NextState, TypeState);
+		return true;
+	}
+	if (CaseInsensitiveEquals(name, "sprite"))
 	{
 		node = std::make_shared<ValueStateNode>("sprite", state->sprite, TypeSpriteID);
 		return true;
 	}
-	else if (name == "Tics")
+	else if (CaseInsensitiveEquals(name, "Tics"))
 	{
 		node = std::make_shared<ValueStateNode>("Tics", state->Tics, TypeSInt16);
 		return true;
 	}
-	else if (name == "TicRange")
+	else if (CaseInsensitiveEquals(name, "TicRange"))
 	{
 		node = std::make_shared<ValueStateNode>("TicRange", state->TicRange, TypeUInt16);
 		return true;
 	}
-	else if (name == "Light")
+	else if (CaseInsensitiveEquals(name, "Light"))
 	{
 		node = std::make_shared<ValueStateNode>("Light", state->Light, TypeSInt16);
 		return true;
 	}
-	else if (name == "StateFlags")
+	else if (CaseInsensitiveEquals(name, "StateFlags"))
 	{
 		std::vector<std::string> strings;
 		if (state->StateFlags & STF_SLOW)
@@ -123,12 +129,12 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 		node = std::make_shared<DummyNode>("StateFlags", value, "StateFlags");
 		return true;
 	}
-	else if (name == "Frame")
+	else if (CaseInsensitiveEquals(name, "Frame"))
 	{
 		node = std::make_shared<ValueStateNode>("Frame", state->Frame, TypeUInt8);
 		return true;
 	}
-	else if (name == "UseFlags")
+	else if (CaseInsensitiveEquals(name, "UseFlags"))
 	{
 		std::vector<std::string> strings;
 		if (state->UseFlags & SUF_ACTOR)
@@ -155,7 +161,7 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 		node = std::make_shared<ValueStateNode>("UseFlags", state->DefineFlags, TypeUInt8);
 		return true;
 	}
-	else if (name == "DefineFlags")
+	else if (CaseInsensitiveEquals(name, "DefineFlags"))
 	{
 		std::string value = std::to_string(state->DefineFlags) + " ";
 		switch (state->DefineFlags)
@@ -188,17 +194,17 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 		node = std::make_shared<DummyNode>("DefineFlags", value, "DefineFlags");
 		return true;
 	}
-	else if (name == "Misc1")
+	else if (CaseInsensitiveEquals(name, "Misc1"))
 	{
 		node = std::make_shared<ValueStateNode>("Misc1", state->Misc1, TypeSInt32);
 		return true;
 	}
-	else if (name == "Misc2")
+	else if (CaseInsensitiveEquals(name, "Misc2"))
 	{
 		node = std::make_shared<ValueStateNode>("Misc2", state->Misc2, TypeSInt32);
 		return true;
 	}
-	else if (name == "DehIndex")
+	else if (CaseInsensitiveEquals(name, "DehIndex"))
 	{
 		node = std::make_shared<ValueStateNode>("DehIndex", state->DehIndex, TypeSInt32);
 		return true;

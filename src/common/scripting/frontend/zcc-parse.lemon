@@ -1553,7 +1553,7 @@ primary(X) ::= LPAREN CLASS LT IDENTIFIER(A) GT RPAREN LPAREN func_expr_list(B) 
 	X = expr;
 }
 
-primary(X) ::= LPAREN func_ptr_type(A) RPAREN LPAREN expr(B) RPAREN. [DOT]		// function pointer type cast
+primary(X) ::= LPAREN func_ptr_type(A) GT RPAREN LPAREN expr(B) RPAREN. [DOT]		// function pointer type cast
 {
 	NEW_AST_NODE(FunctionPtrCast, expr, A);
 	expr->Operation = PEX_FunctionPtrCast;

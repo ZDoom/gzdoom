@@ -494,6 +494,62 @@ static void GetLocalsNames(VMFrame *m_stackFrame, std::vector<std::string> &name
 	}
 }
 
+static bool ClassIsActor(PClass *actorClass)
+{
+	if (!actorClass)
+	{
+		return false;
+	}
+	return actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? true : false;
+}
+
+static PClass *GetClassDescriptor(PType *localtype)
+{
+	if (!localtype) return nullptr;
+	if (localtype->isPointer())
+	{
+		localtype = localtype->toPointer()->PointedType;
+	}
+	if (localtype->isClass())
+	{
+		return PType::toClass(localtype)->Descriptor;
+	}
+	return nullptr;
+}
+
+static VMScriptFunction *GetVMScriptFunction(VMFunction *func)
+{
+	if (!func)
+	{
+		return nullptr;
+	}
+	if (IsFunctionNative(func))
+	{
+		return nullptr;
+	}
+	return dynamic_cast<VMScriptFunction *>(func);
+}
+
+static bool FunctionIsAnonymousStateFunction(VMFunction *func)
+{
+	if (!func || func->Name != 0)
+	{
+		return false;
+	}
+	auto vmfunc = GetVMScriptFunction(func);
+	if (!vmfunc)
+	{
+		return false;
+	}
+	// TODO: Better way to do this?
+	// find ".VMScriptFunction." in the PrintableName
+	std::string name = vmfunc->PrintableName;
+	if (name.find(".VMScriptFunction.") != std::string::npos)
+	{
+		return true;
+	}
+	return false;
+}
 
 static size_t GetImplicitParmeterCount(const VMFrame *m_stackFrame)
 { return m_stackFrame->Func->ImplicitArgs; }
@@ -503,7 +559,7 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 	static const char *const ARG = "ARG";
 	static const char *const SELF = "self";
 	static const char *const INVOKER = "invoker";
-	static const char *const STATE_POINTER = "state_pointer";
+	static const char *const STATE_POINTER = "stateinfo";
 
 	auto implicitCount = GetImplicitParmeterCount(m_stackFrame);
 	if (paramidx < implicitCount)
@@ -516,9 +572,51 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 			return INVOKER;
 		case 2:
 			return STATE_POINTER;
+		default:
+			return "<unknown>";
 		}
 	}
-	// TODO: Get explicit parameter names
+	// get the function
+	auto func = GetVMScriptFunction(m_stackFrame->Func);
+
+	if (func)
+	{
+		// get the FName of the function
+		auto funcName = func->Name;
+		std::string className;
+		// split it into two parts `.` and get the first part
+		std::string_view st = func->QualifiedName;
+		auto dotpos = st.find(".");
+		if (dotpos != std::string_view::npos)
+		{
+			className = st.substr(0, dotpos);
+		}
+		auto parts = Split(func->QualifiedName, ".");
+		if (parts.size() > 1)
+		{
+			className = parts[0];
+		}
+		auto cls = PClass::FindClass(className.c_str());
+		if (cls)
+		{
+			auto pfunc = dyn_cast<PFunction>(cls->FindSymbol(funcName, true));
+			if (pfunc)
+			{
+				// pfunc has the parameter names
+				for (auto &variant : pfunc->Variants)
+				{
+					if (variant.Implementation == func)
+					{
+						auto &params = variant.ArgNames;
+						if (paramidx < params.Size())
+						{
+							return params[paramidx].GetChars();
+						}
+					}
+				}
+			}
+		}
+	}
 	return StringFormat("%s%d", ARG, paramidx - GetImplicitParmeterCount(m_stackFrame));
 }
 
@@ -921,15 +1019,6 @@ static std::string AddrToString(VMFunction *func, void *addr)
 	return StringFormat("%p", addr);
 }
 
-static bool ClassIsActor(PClass *actorClass)
-{
-	if (!actorClass)
-	{
-		return false;
-	}
-	return actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? true : false;
-}
-
 static FState *GetStateFromIdx(int i, PClass *actorClass, PClassActor *&rActualOwner)
 {
 	FState *state;
@@ -961,51 +1050,4 @@ static FState *GetStateFromIdx(int i, PClass *actorClass, PClassActor *&rActualO
 	return state;
 }
 
-static PClass *GetClassDescriptor(PType *localtype)
-{
-	if (!localtype) return nullptr;
-	if (localtype->isPointer())
-	{
-		localtype = localtype->toPointer()->PointedType;
-	}
-	if (localtype->isClass())
-	{
-		return PType::toClass(localtype)->Descriptor;
-	}
-	return nullptr;
-}
-
-static VMScriptFunction *GetVMScriptFunction(VMFunction *func)
-{
-	if (!func)
-	{
-		return nullptr;
-	}
-	if (IsFunctionNative(func))
-	{
-		return nullptr;
-	}
-	return dynamic_cast<VMScriptFunction *>(func);
-}
-
-static bool FunctionIsAnonymousStateFunction(VMFunction *func)
-{
-	if (!func || func->Name != 0)
-	{
-		return false;
-	}
-	auto vmfunc = GetVMScriptFunction(func);
-	if (!vmfunc)
-	{
-		return false;
-	}
-	// TODO: Better way to do this?
-	// find ".VMScriptFunction." in the PrintableName
-	std::string name = vmfunc->PrintableName;
-	if (name.find(".VMScriptFunction.") != std::string::npos)
-	{
-		return true;
-	}
-	return false;
-}
 }

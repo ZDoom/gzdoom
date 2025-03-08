@@ -11,7 +11,6 @@ namespace DebugServer
 static const char *const LOCAL = "Local";
 static const char *const SELF = "self";
 static const char *const INVOKER = "invoker";
-static const char *const STATE_POINTER = "state_pointer";
 
 LocalScopeStateNode::LocalScopeStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame) { }
 

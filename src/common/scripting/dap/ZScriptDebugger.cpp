@@ -404,7 +404,8 @@ dap::ResponseOrError<dap::ScopesResponse> ZScriptDebugger::GetScopes(const dap::
 	auto frameId = static_cast<uint32_t>(request.frameId);
 	if (!m_runtimeState->ResolveChildrenByParentId(frameId, frameScopes))
 	{
-		RETURN_DAP_ERROR(StringFormat("No such frameId %d", frameId).c_str());
+		// Don't log, this happens as a result of a scopes request being sent after a step request that invalidates the state
+		return dap::Error(StringFormat("No such frameId %d", frameId).c_str());
 	}
 
 	for (const auto &frameScope : frameScopes)
@@ -434,7 +435,8 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 	std::vector<std::shared_ptr<StateNodeBase>> variableNodes;
 	if (!m_runtimeState->ResolveChildrenByParentId(static_cast<uint32_t>(request.variablesReference), variableNodes))
 	{
-		RETURN_DAP_ERROR(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
+		// Don't log, this happens as a result of a variables request being sent after a step request that invalidates the state
+		return dap::Error(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
 	}
 
 	int64_t count = 0;

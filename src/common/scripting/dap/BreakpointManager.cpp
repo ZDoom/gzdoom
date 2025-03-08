@@ -156,9 +156,14 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 	auto binary = m_pexCache->GetScript(source);
 	if (!binary)
 	{
+		// check if the archive name is loaded
+		auto archive_name = source.origin.value("");
+		int containerNum = fileSystem.CheckIfResourceFileLoaded(archive_name.c_str());
+		std::string error_message = containerNum == -1 ? StringFormat("%s: Archive %s not loaded", scriptPath.c_str(), archive_name.c_str())
+																									 : StringFormat("%s: Could not find script in loaded sources!", scriptPath.c_str());
 		for (const auto &srcBreakpoint : srcBreakpoints)
 		{
-			addInvalidBreakpoint(srcBreakpoint.line, StringFormat("Could not find script %s in loaded sources!", scriptPath.c_str()));
+			addInvalidBreakpoint(srcBreakpoint.line, error_message);
 		}
 		return response;
 	}

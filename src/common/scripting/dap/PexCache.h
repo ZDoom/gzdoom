@@ -57,6 +57,7 @@ public:
 	dap::Source GetDapSource() const;
 	std::string GetArchiveName() const;
 	std::string GetArchivePath() const;
+	size_t GetFunctionCount() const;
 	std::stack<FunctionLineMap::const_iterator> FindFunctionRangesByLine(int line) const;
 	std::stack<FunctionCodeMap::const_iterator> FindFunctionRangesByCode(void *address) const;
 	int GetScriptRef() const { return scriptReference; }
@@ -93,6 +94,7 @@ public:
 	bool HasScript(const std::string &scriptName);
 
 	std::shared_ptr<Binary> GetCachedScript(const int ref);
+	void PrintOutAllLoadedScripts();
 	std::shared_ptr<Binary> GetScript(const dap::Source &source);
 
 	std::shared_ptr<Binary> GetScript(std::string fqsn);

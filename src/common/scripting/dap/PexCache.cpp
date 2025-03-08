@@ -26,6 +26,16 @@ PexCache::BinaryPtr PexCache::GetCachedScript(const int ref)
 	const auto entry = m_scripts.find(ref);
 	return entry != m_scripts.end() ? entry->second : nullptr;
 }
+
+void PexCache::PrintOutAllLoadedScripts()
+{
+	scripts_lock scriptLock(m_scriptsMutex);
+	for (auto &script : m_scripts)
+	{
+		Printf("Loaded %d functions from script: %s", script.second->GetFunctionCount(), script.second->GetQualifiedPath().c_str());
+	}
+}
+
 PexCache::BinaryPtr PexCache::GetScript(const dap::Source &source)
 {
 	auto binary = GetCachedScript(GetSourceReference(source));
@@ -100,6 +110,9 @@ void PexCache::ScanAllScripts()
 	{
 		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
+#ifndef NDEBUG
+	PrintOutAllLoadedScripts();
+#endif
 	// for (auto &pair : m_globalCodeMap)
 	// {
 	// 	AddDisassemblyLines(pair.mapped(), m_disassemblyMap);
@@ -127,6 +140,16 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 	std::vector<int> filterRefs;
 	if (!filter.empty())
 	{
+		// get the archive name
+		std::string namespaceName = GetArchiveNameFromPath(filter);
+		if (!namespaceName.empty())
+		{
+			int containerLump = fileSystem.CheckIfResourceFileLoaded(namespaceName.c_str());
+			if (containerLump == -1)
+			{
+				return;
+			}
+		}
 		auto found = FindScripts(filter, baselump);
 		if (found.empty())
 		{
@@ -873,7 +896,15 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 
 std::string DebugServer::Binary::GetQualifiedPath() const { return archiveName + ":" + unqualifiedScriptPath; }
 std::string DebugServer::Binary::GetArchiveName() const { return archiveName; }
-std::string DebugServer::Binary::GetArchivePath() const { return archivePath; }
+std::string DebugServer::Binary::GetArchivePath() const
+{
+	return archivePath;
+}
+
+size_t DebugServer::Binary::GetFunctionCount() const
+{
+	return functions.size() + stateFunctions.size();
+}
 
 std::stack<DebugServer::Binary::FunctionLineMap::const_iterator> DebugServer::Binary::FindFunctionRangesByLine(int line) const { return functionLineMap.find_ranges(line); }
 

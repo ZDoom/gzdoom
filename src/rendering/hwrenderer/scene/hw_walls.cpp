@@ -85,7 +85,7 @@ void HWWall::RenderWall(FRenderState &state, int textured)
 {
 	bool ditherT = (type == RENDERWALL_BOTTOM) && (seg->sidedef->Flags & WALLF_DITHERTRANS_BOTTOM);
 	ditherT |= (type == RENDERWALL_TOP) && (seg->sidedef->Flags & WALLF_DITHERTRANS_TOP);
-	ditherT |= seg->sidedef->Flags & WALLF_DITHERTRANS_MID;
+	ditherT = ditherT || (seg->sidedef->Flags & WALLF_DITHERTRANS_MID);
 	if (ditherT)
 	{
 		state.SetEffect(EFF_DITHERTRANS);

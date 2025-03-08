@@ -158,7 +158,7 @@ struct FConnection
 bool netgame = false;
 bool multiplayer = false;
 ENetMode NetMode = NET_PeerToPeer;
-int consoleplayer = -1;
+int consoleplayer = 0;
 int Net_Arbitrator = 0;
 FClientStack NetworkClients = {};
 
@@ -930,7 +930,6 @@ static bool HostGame(int arg, bool forcedNetMode)
 	if (MaxClients > MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
 
-	consoleplayer = 0;
 	NetworkClients += 0;
 	Connected[consoleplayer].Status = CSTAT_READY;
 	Net_SetupUserInfo();
@@ -1183,6 +1182,7 @@ static bool JoinGame(int arg)
 		I_FatalError("You need to specify the host machine's address");
 	}
 
+	consoleplayer = -1;
 	StartNetwork(true);
 
 	// Host is always client 0.
@@ -1254,7 +1254,6 @@ bool I_InitNetwork()
 	{
 		// single player game
 		TicDup = 1;
-		consoleplayer = 0;
 		NetworkClients += 0;
 		Connected[0].Status = CSTAT_READY;
 		Net_SetupUserInfo();

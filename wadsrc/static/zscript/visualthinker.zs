@@ -60,4 +60,30 @@ Class VisualThinker : Thinker native
 		}
 		return p;
 	}
+
+	native int GetParticleType() const;
+
+	void SetParticleType(EParticleStyle type = PT_DEFAULT)
+	{
+		switch(type)
+		{
+		Default:
+			VisualThinkerFlags = (VisualThinkerFlags & ~VTF_IsParticle) | VTF_ParticleDefault;
+			break;
+		case PT_SQUARE:
+			VisualThinkerFlags = (VisualThinkerFlags & ~VTF_IsParticle) | VTF_ParticleSquare;
+			break;
+		case PT_ROUND:
+			VisualThinkerFlags = (VisualThinkerFlags & ~VTF_IsParticle) | VTF_ParticleRound;
+			break;
+		case PT_SMOOTH:
+			VisualThinkerFlags = (VisualThinkerFlags & ~VTF_IsParticle) | VTF_ParticleSmooth;
+			break;
+		}
+	}
+
+	void DisableParticle()
+	{
+		VisualThinkerFlags &= ~VTF_IsParticle;
+	}
 }

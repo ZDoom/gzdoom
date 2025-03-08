@@ -166,50 +166,53 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 		{
 			returnType = NewPointer(elementType);
 		}
-		VMValue element_val = [&]
+		VMValue element_val;
+		if (elementType->isFloat())
 		{
-			if (elementType->isFloat())
+			switch (elementType->Size)
 			{
-				switch (elementType->Size)
-				{
-				case 8:
-					return VMValue(static_cast<TArray<double> *>(array_head)->operator[](elementIndex));
-				case 4:
-					return VMValue(static_cast<TArray<float> *>(array_head)->operator[](elementIndex));
-				}
+			case 8:
+				element_val = VMValue(static_cast<TArray<double> *>(array_head)->operator[](elementIndex));
+				break;
+			case 4:
+				element_val = VMValue(static_cast<TArray<float> *>(array_head)->operator[](elementIndex));
+				break;
 			}
-			else if (elementType->isObjectPointer())
+		}
+		else if (elementType->isObjectPointer())
+		{
+			element_val = VMValue(static_cast<TArray<DObject *> *>(array_head)->operator[](elementIndex));
+		}
+		else if (elementType == TypeString)
+		{
+			element_val = VMValue(&static_cast<TArray<FString> *>(array_head)->operator[](elementIndex));
+		}
+		else if (elementType->isPointer())
+		{
+			element_val = VMValue(static_cast<TArray<void *> *>(array_head)->operator[](elementIndex));
+		}
+		else
+		{
+			switch (elementType->Size)
 			{
-				return VMValue(static_cast<TArray<DObject *> *>(array_head)->operator[](elementIndex));
+			case 8:
+				element_val = VMValue((void *)static_cast<TArray<uint64_t> *>(array_head)->operator[](elementIndex));
+				break;
+			case 4:
+				element_val = VMValue(static_cast<TArray<uint32_t> *>(array_head)->operator[](elementIndex));
+				break;
+			case 2:
+				element_val = VMValue(static_cast<TArray<uint16_t> *>(array_head)->operator[](elementIndex));
+				break;
+			case 1:
+				element_val = VMValue(static_cast<TArray<uint8_t> *>(array_head)->operator[](elementIndex));
+				break;
+			default:
+				// too large, return a ptr to the array element
+				assert(elementIndex <= static_cast<FArray *>(array_head)->Count);
+				element_val = VMValue((void *)(((char *)static_cast<FArray *>(array_head)->Array) + (elementIndex * elementType->Size)));
 			}
-			else if (elementType == TypeString)
-			{
-				return VMValue(&static_cast<TArray<FString> *>(array_head)->operator[](elementIndex));
-			}
-			else if (elementType->isPointer())
-			{
-				return VMValue(static_cast<TArray<void *> *>(array_head)->operator[](elementIndex));
-			}
-			else
-			{
-				switch (elementType->Size)
-				{
-				case 8:
-					return VMValue((void*)static_cast<TArray<uint64_t> *>(array_head)->operator[](elementIndex));
-				case 4:
-					return VMValue(static_cast<TArray<uint32_t> *>(array_head)->operator[](elementIndex));
-				case 2:
-					return VMValue(static_cast<TArray<uint16_t> *>(array_head)->operator[](elementIndex));
-				case 1:
-					return VMValue(static_cast<TArray<uint8_t> *>(array_head)->operator[](elementIndex));
-				default:
-					// too large, return a ptr to the array element
-					assert(elementIndex <= static_cast<FArray *>(array_head)->Count);
-					return VMValue((void*)(((char *)static_cast<FArray *>(array_head)->Array) + (elementIndex * elementType->Size)));
-				}
-			}
-			return VMValue();
-		}();
+		}
 		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(elidx_str, element_val, returnType);
 	}
 	else if (type->isArray())

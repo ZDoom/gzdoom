@@ -120,7 +120,7 @@ bool RuntimeState::ResolveStateById(const uint32_t id, std::shared_ptr<StateNode
 	return false;
 }
 
-bool RuntimeState::ResolveChildrenByParentPath(const std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes)
+bool RuntimeState::ResolveChildrenByParentPath(const std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start, size_t count)
 {
 	std::shared_ptr<StateNodeBase> resolvedParent;
 	if (!ResolveStateByPath(requestedPath, resolvedParent))
@@ -136,26 +136,32 @@ bool RuntimeState::ResolveChildrenByParentPath(const std::string requestedPath, 
 
 	std::vector<std::string> childNames;
 	structured->GetChildNames(childNames);
+	count = count == 0 ? childNames.size() : count;
+	size_t maxCount = std::min(count + start, childNames.size());
 
-	for (const auto &childName : childNames)
+	for (size_t i = start; i < maxCount; i++)
 	{
 		std::shared_ptr<StateNodeBase> childNode;
-		if (ResolveStateByPath(StringFormat("%s.%s", requestedPath.c_str(), childName.c_str()), childNode))
+		if (ResolveStateByPath(StringFormat("%s.%s", requestedPath.c_str(), childNames[i].c_str()), childNode))
 		{
 			nodes.push_back(childNode);
+		}
+		else
+		{
+			maxCount = std::min(childNames.size(), maxCount + 1);
 		}
 	}
 
 	return true;
 }
 
-bool RuntimeState::ResolveChildrenByParentId(const uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes)
+bool RuntimeState::ResolveChildrenByParentId(const uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start, size_t count)
 {
 	std::string path;
 
 	if (m_paths->Get(id, path))
 	{
-		return ResolveChildrenByParentPath(path, nodes);
+		return ResolveChildrenByParentPath(path, nodes, start, count);
 	}
 
 	return false;

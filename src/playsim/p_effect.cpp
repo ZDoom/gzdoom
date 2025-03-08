@@ -1005,6 +1005,7 @@ void DVisualThinker::Construct()
 	cursector = nullptr;
 	PT.color = 0xffffff;
 	AnimatedTexture.SetNull();
+	ParticleStyle = PT_DEFAULT;
 
 	_prev = _next = nullptr;
 	if (Level->VisualThinkerHead != nullptr)
@@ -1108,7 +1109,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThink
 void DVisualThinker::UpdateSpriteInfo()
 {
 	PT.style = ERenderStyle(GetRenderStyle());
-	if((PT.flags & SPF_LOCAL_ANIM) && PT.texture != AnimatedTexture)
+	if ((PT.flags & SPF_LOCAL_ANIM) && PT.texture != AnimatedTexture)
 	{
 		AnimatedTexture = PT.texture;
 		TexAnim.InitStandaloneAnimation(PT.animData, PT.texture, Level->maptime);
@@ -1134,10 +1135,8 @@ void DVisualThinker::Tick()
 	if (ObjectFlags & OF_EuthanizeMe)
 		return;
 
-	// There won't be a standard particle for this, it's only for graphics.
-	if (!PT.texture.isValid())
+	if (!ValidTexture())
 	{
-		Printf("No valid texture, destroyed");
 		Destroy();
 		return;
 	}
@@ -1256,6 +1255,11 @@ bool DVisualThinker::isFrozen()
 	return IsFrozen(this);
 }
 
+bool DVisualThinker::ValidTexture()
+{
+	return ((flags & VTF_Particle) || PT.texture.isValid());
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, IsFrozen, IsFrozen)
 {
 	PARAM_SELF_PROLOGUE(DVisualThinker);
@@ -1355,6 +1359,8 @@ DEFINE_FIELD_NAMED(DVisualThinker, PT.alpha, Alpha);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.texture, Texture);
 DEFINE_FIELD_NAMED(DVisualThinker, PT.flags, Flags);
 DEFINE_FIELD_NAMED(DVisualThinker, flags, VisualThinkerFlags);
+DEFINE_FIELD_NAMED(DVisualThinker, PT.size, PSize);
+DEFINE_FIELD_NAMED(DVisualThinker, ParticleStyle, PStyle);
 
 DEFINE_FIELD(DVisualThinker, Prev);
 DEFINE_FIELD(DVisualThinker, Scale);

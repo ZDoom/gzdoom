@@ -1409,7 +1409,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	if (!particle || particle->alpha <= 0)
 		return;
 
-	if (spr && spr->PT.texture.isNull())
+	if (spr && !spr->ValidTexture())
 		return;
 
 	lightlevel = hw_ClampLight(spr ? spr->GetLightLevel(sector) : sector->GetSpriteLight());
@@ -1477,17 +1477,26 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
 
-	if (spr)
+
+	if (spr && !(spr->flags & VTF_Particle))
 	{
 		AdjustVisualThinker(di, spr, sector);
 	}
 	else
 	{
-		bool has_texture = particle->texture.isValid();
-		bool custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
-		
-		int particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
+		bool has_texture = false;
+		bool custom_animated_texture = false;
+		int particle_style = 0;
 
+		if (!spr)
+		{
+			has_texture = particle->texture.isValid();
+			custom_animated_texture = (particle->flags & SPF_LOCAL_ANIM) && particle->animData.ok;
+			particle_style = has_texture ? 2 : gl_particles_style; // Treat custom texture the same as smooth particles
+		}
+		else
+			particle_style = (spr->ParticleStyle > PT_DEFAULT && spr->ParticleStyle <= PT_SMOOTH) ? spr->ParticleStyle : gl_particles_style;
+		
 		// [BB] Load the texture for round or smooth particles
 		if (particle_style)
 		{

@@ -14,6 +14,8 @@ Class VisualThinker : Thinker native
 	
 	native uint16			Flags;
 	native int				VisualThinkerFlags;
+	native int8				PStyle;
+	native float			PSize;
     
     FlagDef                 FlipOffsetX :       VisualThinkerFlags, 0;
     FlagDef                 FlipOffsetY :       VisualThinkerFlags, 1;

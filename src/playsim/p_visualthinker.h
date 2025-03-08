@@ -20,6 +20,7 @@ enum EVisualThinkerFlags
 	VTF_FlipY			= 1 << 3, // flip the sprite on the x/y axis.
 	VTF_DontInterpolate	= 1 << 4, // disable all interpolation
 	VTF_AddLightLevel	= 1 << 5, // adds sector light level to 'LightLevel'
+	VTF_Particle		= 1 << 6, // Renders as a particle instead. 
 };
 
 class DVisualThinker : public DThinker
@@ -39,6 +40,7 @@ public:
 	FTranslationID	Translation;
 	FTextureID		AnimatedTexture;
 	sector_t		*cursector;
+	int8_t			ParticleStyle;
 
 	int flags;
 
@@ -53,6 +55,7 @@ public:
 	void SetTranslation(FName trname);
 	int GetRenderStyle() const;
 	bool isFrozen();
+	bool ValidTexture();
 	int GetLightLevel(sector_t *rendersector) const;
 	FVector3 InterpolatedPosition(double ticFrac) const;
 	float InterpolatedRoll(double ticFrac) const;

@@ -109,7 +109,6 @@ public:
 	static std::shared_ptr<DisassemblyLine>
 	MakeInstruction(VMScriptFunction *func, int ref, const std::string &instruction_text, const std::string &opcode, const std::string &comment, unsigned long long ipnum, const std::string &pointed_symbol);
 
-	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
 	bool GetDisassemblyLines(const VMOP *address, int64_t p_instructionOffset, int64_t p_count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec);
 
 	std::shared_ptr<Binary> AddScript(const std::string &scriptPath);
@@ -119,7 +118,8 @@ public:
 
 	int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1);
 	bool GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource);
-	
+	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
+
 	static void PopulateCodeMap(BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap);
 	static void PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber = false);
 	static void ScanScriptsInContainer(int baselump, BinaryMap &m_scripts, const std::string &filter = "");
@@ -130,6 +130,5 @@ public:
 	std::recursive_mutex m_scriptsMutex;
 	BinaryMap m_scripts;
 
-	uint64_t AddDisassemblyLines(VMScriptFunction *func, std::vector<std::shared_ptr<DisassemblyLine>> &lines);
 };
 }

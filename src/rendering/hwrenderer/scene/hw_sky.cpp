@@ -319,7 +319,10 @@ void HWWall::SkyTop(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t * b
 			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
-				return;
+				if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
+				{
+					return;
+				}
 			}
 		}
 		else
@@ -398,7 +401,10 @@ void HWWall::SkyBottom(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t 
 			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
-				return;
+				if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
+				{
+					return;
+				}
 			}
 		}
 		else

@@ -1108,7 +1108,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThink
 void DVisualThinker::UpdateSpriteInfo()
 {
 	PT.style = ERenderStyle(GetRenderStyle());
-	if((PT.flags & SPF_LOCAL_ANIM) && PT.texture != AnimatedTexture)
+
+	if ((PT.flags & SPF_LOCAL_ANIM) && PT.texture != AnimatedTexture)
 	{
 		AnimatedTexture = PT.texture;
 		TexAnim.InitStandaloneAnimation(PT.animData, PT.texture, Level->maptime);
@@ -1127,6 +1128,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, UpdateSpriteInfo, UpdateSpriteInfo
 	return 0;
 }
 
+bool DVisualThinker::ValidTexture()
+{
+	return ((flags & VTF_IsParticle) || PT.texture.isValid());
+}
 
 // This runs just like Actor's, make sure to call Super.Tick() in ZScript.
 void DVisualThinker::Tick()
@@ -1134,10 +1139,8 @@ void DVisualThinker::Tick()
 	if (ObjectFlags & OF_EuthanizeMe)
 		return;
 
-	// There won't be a standard particle for this, it's only for graphics.
-	if (!PT.texture.isValid())
+	if (!ValidTexture())
 	{
-		Printf("No valid texture, destroyed");
 		Destroy();
 		return;
 	}
@@ -1156,7 +1159,6 @@ void DVisualThinker::Tick()
 	PT.Pos.X = newxy.X;
 	PT.Pos.Y = newxy.Y;
 	PT.Pos.Z += PT.Vel.Z;
-
 	subsector_t * ss = Level->PointInRenderSubsector(PT.Pos);
 
 	// Handle crossing a sector portal.
@@ -1246,7 +1248,33 @@ DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, SetTranslation, SetTranslation)
 	return 0;
 }
 
-static int IsFrozen(DVisualThinker * self)
+int DVisualThinker::GetParticleType() const
+{
+	int flag = (flags & VTF_IsParticle);
+	switch (flag)
+	{
+	case VTF_ParticleSquare:
+		return PT_SQUARE;
+	case VTF_ParticleRound:
+		return PT_ROUND;
+	case VTF_ParticleSmooth:
+		return PT_SMOOTH;
+	}
+	return PT_DEFAULT;
+}
+
+static int GetParticleType(DVisualThinker* self)
+{
+	return self->GetParticleType();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DVisualThinker, GetParticleType, GetParticleType)
+{
+	PARAM_SELF_PROLOGUE(DVisualThinker);
+	ACTION_RETURN_INT(self->GetParticleType());
+}
+
+static int IsFrozen(DVisualThinker* self)
 {
 	return !!(self->Level->isFrozen() && !(self->PT.flags & SPF_NOTIMEFREEZE));
 }

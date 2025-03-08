@@ -58,17 +58,15 @@ bool LocalScopeStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 	if (m_children.empty())
 	{
 		PClass *invoker = nullptr;
-		if (m_stackFrame->Func && m_stackFrame->Func->ImplicitArgs >= 2 && m_state.m_locals.size() >= 2)
+		if (m_stackFrame->Func->ImplicitArgs >= 2 && m_state.m_locals.size() >= 2 && m_state.m_locals[1].Name == INVOKER)
 		{
-			// find the invoer in the locals
-			if (m_state.m_locals[1].Name == INVOKER)
-			{
-				invoker = GetClassDescriptor(m_state.m_locals[1].Type);
-			}
-			else if (m_state.m_locals[0].Name == SELF) // Try 'self' ?
-			{
-				invoker = GetClassDescriptor(m_state.m_locals[0].Type);
-			}
+			invoker = GetClassDescriptor(m_state.m_locals[1].Type);
+		}
+		else if (
+			IsFunctionAction(m_stackFrame->Func) && m_stackFrame->Func->ImplicitArgs >= 1 && m_state.m_locals.size() >= 1
+			&& m_state.m_locals[0].Name == SELF) // Try 'self' ?
+		{
+			invoker = GetClassDescriptor(m_state.m_locals[0].Type);
 		}
 		for (auto &local : m_state.m_locals)
 		{

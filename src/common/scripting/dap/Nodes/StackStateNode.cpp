@@ -24,7 +24,7 @@ bool StackStateNode::SerializeToProtocol(dap::Thread &thread) const
 	else
 	{
 		const auto frame = frames.back();
-		const auto name = frame->Func ? frame->Func->QualifiedName : "<unknown>";
+		const auto name = frame->Func ? frame->Func->PrintableName : "<unknown>";
 		thread.name = StringFormat("%s (%d)", name, thread.id);
 	}
 

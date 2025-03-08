@@ -12,7 +12,32 @@ static const FString invalidString = FString("<INVALID>");
 
 namespace DebugServer
 {
-StatePointerNode::StatePointerNode(std::string name, VMValue value, PStatePointer *knownType) : m_name(name), m_value(value), m_type(knownType) { }
+StatePointerNode::StatePointerNode(std::string name, VMValue value, PClass *owningType) : m_name(name), m_value(value), m_OwningType(owningType) { }
+void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
+{
+	for (int i = 0; i < StateList->NumLabels; i++)
+	{
+		auto state = StateList->Labels[i].State;
+		if (state != NULL)
+		{
+			const PClassActor *owner = FState::StaticFindStateOwner(state);
+			if (owner == NULL)
+			{
+				if (state->DehIndex >= 0) Printf(PRINT_NONOTIFY, "%s%s: DehExtra %d\n", prefix.GetChars(), state->DehIndex);
+				else
+					Printf(PRINT_NONOTIFY, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
+			}
+			else
+			{
+				Printf(PRINT_NONOTIFY, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(state).GetChars());
+			}
+		}
+		if (StateList->Labels[i].Children != NULL)
+		{
+			DumpStateHelper(StateList->Labels[i].Children, prefix + '.' + StateList->Labels[i].Label.GetChars());
+		}
+	}
+}
 
 bool StatePointerNode::SerializeToProtocol(dap::Variable &variable)
 {
@@ -29,7 +54,29 @@ bool StatePointerNode::SerializeToProtocol(dap::Variable &variable)
 	}
 	else
 	{
-		variable.value = FState::StaticGetStateName(static_cast<FState *>(m_value.a)).GetChars();
+		auto *state = static_cast<FState *>(m_value.a);
+		auto *owner = FState::StaticFindStateOwner(state);
+		FName label = NAME_None;
+		if (owner)
+		{
+			DumpStateHelper(owner->GetStateLabels(), "");
+			for (int i = 0; i < owner->GetStateLabels()->NumLabels; i++)
+			{
+				if (owner->GetStateLabels()->Labels[i].State == state)
+				{
+					label = owner->GetStateLabels()->Labels[i].Label;
+					break;
+				}
+			}
+		}
+		if (!owner || label == NAME_None)
+		{
+			variable.value = FState::StaticGetStateName(state).GetChars();
+		}
+		else
+		{
+			variable.value = StringFormat("%s.%s", owner->TypeName.GetChars(), label.GetChars());
+		}
 	}
 	return true;
 }
@@ -67,7 +114,7 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 	}
 	if (CaseInsensitiveEquals(name, "NextState"))
 	{
-		node = std::make_shared<StatePointerNode>("NextState", state->NextState, TypeState);
+		node = std::make_shared<StatePointerNode>("NextState", state->NextState, m_OwningType);
 		return true;
 	}
 	if (CaseInsensitiveEquals(name, "sprite"))

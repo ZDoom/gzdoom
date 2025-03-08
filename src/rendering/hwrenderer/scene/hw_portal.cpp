@@ -813,7 +813,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 	// avoid recursions!
 	if (origin->plane != -1) screen->instack[origin->plane]++;
-	if (lines.Size() > 0)
+	if (vp.IsAllowedOoB() && lines.Size() > 0)
 	{
 
 		flat.plane.GetFromSector(lines[0].sub->sector, origin->plane);

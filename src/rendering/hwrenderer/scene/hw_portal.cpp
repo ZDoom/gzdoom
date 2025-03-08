@@ -815,6 +815,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	if (origin->plane != -1) screen->instack[origin->plane]++;
 	if (lines.Size() > 0)
 	{
+
 		flat.plane.GetFromSector(lines[0].sub->sector, origin->plane);
 		di->SetClipHeight(flat.plane.plane.ZatPoint(vp.Pos),
 						  flat.plane.plane.Normal().Z > 0 ? -1.f : 1.f);
@@ -841,11 +842,12 @@ void HWSectorStackPortal::DrawPortalStencil(FRenderState &state, int pass)
 	if (mState->vpIsAllowedOoB)
 	{
 		bool isceiling = planesused & (1 << sector_t::ceiling);
-		for (unsigned int i = 0; i < lines.Size(); i++)
+		for (unsigned i = 0; i<subsectors.Size(); i++)
 		{
-			flat.section = lines[i].sub->section;
-			flat.iboindex = lines[i].sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
-			flat.plane.GetFromSector(lines[i].sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
+			subsector_t *sub = subsectors[i];
+			flat.section = sub->section;
+			flat.iboindex = sub->sector->iboindex[isceiling ? sector_t::ceiling : sector_t::floor];
+			flat.plane.GetFromSector(sub->sector, isceiling ? sector_t::ceiling : sector_t::floor);
 			// if (isceiling) flat.plane.plane.FlipVert(); // Doesn't do anything. Stencil is a screen-space projection
 
 			state.SetNormal(flat.plane.plane.Normal().X, flat.plane.plane.Normal().Z, flat.plane.plane.Normal().Y);

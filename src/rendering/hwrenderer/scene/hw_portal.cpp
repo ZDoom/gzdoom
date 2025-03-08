@@ -815,9 +815,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 	if (origin->plane != -1) screen->instack[origin->plane]++;
 	if (lines.Size() > 0)
 	{
-		flat.plane.GetFromSector(lines[0].sub->sector,
-								 lines[0].sub->sector->GetPortal(sector_t::ceiling)->mType & (PORTS_STACKEDSECTORTHING | PORTS_PORTAL | PORTS_LINKEDPORTAL) ?
-								 sector_t::ceiling : sector_t::floor);
+		flat.plane.GetFromSector(lines[0].sub->sector, origin->plane);
 		di->SetClipHeight(flat.plane.plane.ZatPoint(vp.Pos),
 						  flat.plane.plane.Normal().Z > 0 ? -1.f : 1.f);
 	}

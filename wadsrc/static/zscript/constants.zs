@@ -1532,4 +1532,18 @@ enum EVisualThinkerFlags
 	VTF_FlipY			= 1 << 3, // flip the sprite on the x/y axis.
 	VTF_DontInterpolate	= 1 << 4, // disable all interpolation
 	VTF_AddLightLevel	= 1 << 5, // adds sector light level to 'LightLevel'
+
+	VTF_ParticleDefault = 0x40, 
+	VTF_ParticleSquare	= 0x80, 
+	VTF_ParticleRound	= 0xC0, 
+	VTF_ParticleSmooth	= 0x100,
+	VTF_IsParticle		= 0x1C0
+};
+
+enum EParticleStyle
+{
+	PT_DEFAULT	= -1, // Use gl_particles_style
+	PT_SQUARE	= 0,
+	PT_ROUND	= 1,
+	PT_SMOOTH	= 2,
 };

@@ -53,6 +53,14 @@ struct FLevelLocals;
 
 // [RH] Particle details
 
+enum EParticleStyle
+{
+	PT_DEFAULT	= -1, // Use gl_particles_style
+	PT_SQUARE	= 0,
+	PT_ROUND	= 1,
+	PT_SMOOTH	= 2,
+};
+
 enum EParticleFlags
 {
 	SPF_FULLBRIGHT				= 1 << 0,

@@ -145,14 +145,26 @@ dap::Error ZScriptDebugger::Error(const std::string &msg)
 	return dap::Error(msg);
 }
 
-template <typename T, typename> void ZScriptDebugger::SendEvent(const T &event) const
+template <typename T, typename> void ZScriptDebugger::SendEvent(const T &event)
 {
-	if (m_session && m_initialized) m_session->send(event);
+	if (m_session && m_initialized)
+	{
+		try
+		{
+			m_session->send(event);
+			// catch signal 13
+		}
+		catch (...)
+		{
+			LogInternalError("Error sending event");
+			EndSession(true);
+		}
+	}
 }
 
-void ZScriptDebugger::EventLogged(int severity, const char *msg) const
+void ZScriptDebugger::EventLogged(int severity, const char *msg)
 {
-	if (severity & PrintLevel_NoEmit)
+	if (severity & PRINT_NODAPEVENT)
 	{
 		return;
 	}
@@ -185,10 +197,13 @@ void ZScriptDebugger::StackCleanedUp(uint32_t stackId)
 #endif
 }
 
-void ZScriptDebugger::InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc) const { m_executionManager->HandleInstruction(stack, ret, numret, pc); }
+void ZScriptDebugger::InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc)
+{
+	m_executionManager->HandleInstruction(stack, ret, numret, pc);
+}
 
 // For source loaded events
-void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName) const
+void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName)
 {
 	auto binary = m_pexCache->GetScript(scriptName);
 	if (binary && m_session)
@@ -200,7 +215,7 @@ void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName) const
 	}
 }
 
-void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const
+void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason)
 {
 	dap::BreakpointEvent event;
 	event.breakpoint = bpoint;
@@ -208,7 +223,7 @@ void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std
 	SendEvent(event);
 }
 
-void ZScriptDebugger::ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace) const
+void ZScriptDebugger::ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace)
 {
 	m_executionManager->HandleException(reason, message, stackTrace);
 }
@@ -287,7 +302,7 @@ dap::ResponseOrError<dap::ContinueResponse> ZScriptDebugger::Continue(const dap:
 dap::ResponseOrError<dap::PauseResponse> ZScriptDebugger::Pause(const dap::PauseRequest &request)
 {
 	if (m_executionManager->Pause()) return dap::PauseResponse();
-	RETURN_DAP_ERROR("Could not Pause");
+	RETURN_DAP_ERROR("Already paused!");
 }
 
 dap::ResponseOrError<dap::ThreadsResponse> ZScriptDebugger::GetThreads(const dap::ThreadsRequest &request)

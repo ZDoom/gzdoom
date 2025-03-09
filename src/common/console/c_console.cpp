@@ -422,7 +422,7 @@ int PrintString (int iprintlevel, const char *outline)
 	{
 		return 0;
 	}
-	if (printlevel != PRINT_LOG || Logfile != nullptr)
+	if (printlevel != PRINT_LOG || !(iprintlevel & PRINT_NODAPEVENT) || Logfile != nullptr)
 	{
 		// Convert everything coming through here to UTF-8 so that all console text is in a consistent format
 		int count;
@@ -445,7 +445,10 @@ int PrintString (int iprintlevel, const char *outline)
 		{
 			WriteLineToLog(Logfile, outline);
 		}
-		DebugServer::RuntimeEvents::EmitLogEvent(iprintlevel, outline);
+		if (!(iprintlevel & PRINT_NODAPEVENT))
+		{
+			DebugServer::RuntimeEvents::EmitLogEvent(iprintlevel, outline);
+		}
 		return count;
 	}
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...

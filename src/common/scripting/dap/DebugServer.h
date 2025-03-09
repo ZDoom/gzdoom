@@ -1,10 +1,17 @@
 #pragma once
 
-#include "ZScriptDebugger.h"
-#include <dap/network.h>
 #include <thread>
+
+namespace dap
+{
+namespace net
+{
+	class Server;
+}
+}
 namespace DebugServer
 {
+class ZScriptDebugger;
 class DebugServer
 {
 	public:

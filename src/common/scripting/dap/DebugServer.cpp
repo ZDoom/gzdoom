@@ -1,7 +1,8 @@
 #include "DebugServer.h"
 #include <thread>
 #include <functional>
-#include <common/engine/printf.h>
+#include <dap/network.h>
+#include "ZScriptDebugger.h"
 
 // Main entry point for the debug server
 

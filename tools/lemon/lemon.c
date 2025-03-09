@@ -53,7 +53,7 @@ extern int access(char *path, int mode);
 #endif
 
 static int showPrecedenceConflict = 0;
-static void *msort(void *list, void *next, int (*cmp)());
+static char *msort(char*,char**,int(*)(const char*,const char*));
 
 /*
 ** Compilers are getting increasingly pedantic about type conversions
@@ -72,12 +72,12 @@ static struct action *Action_new(void);
 static struct action *Action_sort(struct action *);
 
 /********** From the file "build.h" ************************************/
-void FindRulePrecedences();
-void FindFirstSets();
-void FindStates();
-void FindLinks();
-void FindFollowSets();
-void FindActions();
+void FindRulePrecedences(struct lemon*);
+void FindFirstSets(struct lemon*);
+void FindStates(struct lemon*);
+void FindLinks(struct lemon*);
+void FindFollowSets(struct lemon*);
+void FindActions(struct lemon*);
 
 /********* From the file "configlist.h" *********************************/
 void Configlist_init(void);
@@ -403,10 +403,10 @@ static struct action *Action_new(void){
 ** positive if the first action is less than, equal to, or greater than
 ** the first
 */
-static int actioncmp(ap1,ap2)
-struct action *ap1;
-struct action *ap2;
-{
+static int actioncmp(
+  struct action *ap1,
+  struct action *ap2
+){
   int rc;
   rc = ap1->sp->index - ap2->sp->index;
   if( rc==0 ){
@@ -416,15 +416,17 @@ struct action *ap2;
     rc = ap1->x.rp->index - ap2->x.rp->index;
   }
   if( rc==0 ){
-    rc = ap2 - ap1;
+    rc = (int) (ap2 - ap1);
   }
   return rc;
 }
 
 /* Sort parser actions */
-static struct action *Action_sort(struct action *ap)
-{
-  ap = (struct action *)msort(ap,&ap->next,actioncmp);
+static struct action *Action_sort(
+  struct action *ap
+){
+  ap = (struct action *)msort((char *)ap,(char **)&ap->next,
+                              (int(*)(const char*,const char*))actioncmp);
   return ap;
 }
 
@@ -1757,8 +1759,12 @@ int main(int argc, char **argv)
 **   The "next" pointers for elements in the lists a and b are
 **   changed.
 */
-static void *merge(void *a,void *b,int (*cmp)(),size_t offset)
-{
+static char *merge(
+  char *a,
+  char *b,
+  int (*cmp)(const char*,const char*),
+  int offset
+){
   char *ptr, *head;
 
   if( a==0 ){
@@ -1805,13 +1811,16 @@ static void *merge(void *a,void *b,int (*cmp)(),size_t offset)
 **   The "next" pointers for elements in list are changed.
 */
 #define LISTSIZE 30
-static void *msort(void *list,void *next,int (*cmp)())
-{
-  size_t offset;
+static char *msort(
+  char *list,
+  char **next,
+  int (*cmp)(const char*,const char*)
+){
+  unsigned long offset;
   char *ep;
   char *set[LISTSIZE];
   int i;
-  offset = (size_t)next - (size_t)list;
+  offset = (unsigned long)((char*)next - (char*)list);
   for(i=0; i<LISTSIZE; i++) set[i] = 0;
   while( list ){
     ep = list;
@@ -2714,9 +2723,7 @@ static void preprocess_input(char *z){
   }
 }
 
-int strip_crlf(filebuf, filesize)
-char *filebuf;
-int filesize;
+int strip_crlf(char *filebuf, int filesize)
 {
 	int i, j;
 

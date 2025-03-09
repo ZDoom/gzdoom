@@ -51,7 +51,6 @@ public:
 	private:
 	std::mutex m_instructionMutex;
 	bool m_closed;
-	bool m_first = true;
 
 	std::shared_ptr<dap::Session> m_session;
 	RuntimeState *m_runtimeState;

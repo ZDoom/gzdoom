@@ -142,15 +142,18 @@ void DebugExecutionManager::ResetStepState(DebuggerState state, VMFrameStack *st
 
 void DebugExecutionManager::WaitWhilePaused(pauseReason pauseReason, VMFrameStack *stack)
 {
-	while (m_state == DebuggerState::kPaused)
-	{
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(100ms);
-	}
-	// If we were the thread that paused, regain focus
 	if (pauseReason != pauseReason::NONE)
 	{
+		if (pauseReason > pauseReason::NONE)
+		{
+			while (m_state == DebuggerState::kPaused)
+			{
+				using namespace std::chrono_literals;
+				std::this_thread::sleep_for(100ms);
+			}
+		}
 		std::lock_guard<std::mutex> lock(m_instructionMutex);
+		// If we were the thread that paused, regain focus
 		// TODO: How to do this in GZDoom?
 		// Window::RegainFocus();
 		// also reset the state
@@ -204,14 +207,7 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 	}
 	break;
 	}
-
 	WaitWhilePaused(pauseReason, stack);
-	// GZDoom's VM is single-threaded and only has one stack, and we're not paused, so this is safe to do here.
-	if (m_first && RuntimeState::m_GlobalVMStack == nullptr)
-	{
-		m_first = false;
-		RuntimeState::m_GlobalVMStack = stack;
-	}
 }
 
 void DebugExecutionManager::HandleException(EVMAbortException reason, const std::string &message, const std::string &stackTrace)
@@ -220,8 +216,8 @@ void DebugExecutionManager::HandleException(EVMAbortException reason, const std:
 	{
 		return;
 	}
-	// Exceptions don't pass in the stack frame; should have been handled by HandleInstruction
-	ResetStepState(DebuggerState::kPaused, nullptr);
+	// If we're in a VM exception being thrown, we're on the main thread
+	ResetStepState(DebuggerState::kPaused, &GlobalVMStack);
 	if (m_session)
 	{
 		auto event = dap::StoppedEvent();
@@ -247,7 +243,6 @@ void DebugExecutionManager::Open(std::shared_ptr<dap::Session> ses)
 {
 	std::lock_guard<std::mutex> lock(m_instructionMutex);
 	m_closed = false;
-	m_first = true;
 	m_session = ses;
 }
 

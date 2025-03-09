@@ -91,7 +91,12 @@ bool ZScriptDebugger::EndSession(bool closed)
 	RuntimeEvents::UnsubscribeFromCleanupStack(m_cleanupStackEventHandle);
 	RuntimeEvents::UnsubscribeFromBreakpointChanged(m_breakpointChangedEventHandle);
 	RuntimeEvents::UnsubscribeFromExceptionThrown(m_exceptionThrownEventHandle);
-
+	m_logEventHandle = nullptr;
+	m_instructionExecutionEventHandle = nullptr;
+	m_createStackEventHandle = nullptr;
+	m_cleanupStackEventHandle = nullptr;
+	m_breakpointChangedEventHandle = nullptr;
+	m_exceptionThrownEventHandle = nullptr;
 	// clear session data
 	m_projectArchive.clear();
 	m_projectPath.clear();

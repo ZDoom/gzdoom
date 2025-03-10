@@ -398,13 +398,6 @@ else()
 	message( SEND_ERROR "Could not find cppdap" )
 endif()
 
-if ( EVENTPP_FOUND )
-	include_directories( SYSTEM "${EVENTPP_INCLUDE_DIR}" )
-	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${EVENTPP_LIBRARIES}")
-else()
-	message( SEND_ERROR "Could not find eventpp" )
-endif()
-
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	win32/i_steam.cpp

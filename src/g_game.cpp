@@ -315,7 +315,7 @@ CCMD (slot)
 		if (slot < NUM_WEAPON_SLOTS && mo)
 		{
 			// Needs to be redone
-			IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickWeapon)
+			IFVM(PlayerPawn, FindWeapon)
 			{
 				VMValue param[] = { mo, slot, !(dmflags2 & DF2_DONTCHECKAMMO) };
 				VMReturn ret((void**)&SendItemUse);
@@ -373,7 +373,7 @@ CCMD (weapnext)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickNextWeapon)
+		IFVM(PlayerPawn, FindNextWeapon)
 		{
 			VMValue param[] = { mo };
 			VMReturn ret((void**)&SendItemUse);
@@ -400,7 +400,7 @@ CCMD (weapprev)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickPrevWeapon)
+		IFVM(PlayerPawn, FindPrevWeapon)
 		{
 			VMValue param[] = { mo };
 			VMReturn ret((void**)&SendItemUse);

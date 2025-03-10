@@ -394,7 +394,6 @@ void Net_ResetCommands(bool midTic)
 		// Make sure not to run its current command either.
 		auto& curTic = state.Tics[tic % BACKUPTICS];
 		memset(&curTic.Command, 0, sizeof(curTic.Command));
-		curTic.Data.SetData(nullptr, 0);
 	}
 
 	NetEvents.ResetStream();

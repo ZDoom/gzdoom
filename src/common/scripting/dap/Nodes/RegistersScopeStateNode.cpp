@@ -248,18 +248,7 @@ VMValue SpecialSetupRegistersNode::GetRegisterValue(int index) const
 	auto &tao = fun->SpecialInits[index];
 	auto *type = tao.first;
 	void *var = caddr + tao.second;
-	if (type == TypeString)
-	{
-		auto str = static_cast<FString *>(var);
-		if (!isFStringValid(*str)) return VMValue();
-		return VMValue(str);
-	}
-	else if (!type->isScalar())
-	{
-		return VMValue(var);
-	}
-	auto vmvar = static_cast<VMValue *>(var);
-	return *vmvar;
+	return GetVMValue(var, type);
 }
 
 PType *SpecialSetupRegistersNode::GetRegisterType(int index) const

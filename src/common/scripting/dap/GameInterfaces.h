@@ -43,18 +43,27 @@ enum BasicType
 	BASIC_VoidPointer,
 };
 
-static inline bool IsFunctionAction(VMFunction *func)
+inline bool IsFunctionAction(VMFunction *func)
 {
 	return func && func->VarFlags & VARF_Action;
 }
 
-static inline bool IsFunctionStatic(VMFunction *func) { return func && (func->VarFlags & VARF_Static || !(func->VarFlags & VARF_Method)); }
+inline bool IsFunctionStatic(VMFunction *func)
+{
+	return func && (func->VarFlags & VARF_Static || !(func->VarFlags & VARF_Method));
+}
 
-static inline bool IsFunctionNative(VMFunction *func) { return func && func->VarFlags & VARF_Native; }
+inline bool IsFunctionNative(VMFunction *func)
+{
+	return func && func->VarFlags & VARF_Native;
+}
 
-static inline bool IsFunctionAbstract(VMFunction *func) { return func && func->VarFlags & VARF_Abstract; }
+inline bool IsFunctionAbstract(VMFunction *func)
+{
+	return func && func->VarFlags & VARF_Abstract;
+}
 
-static inline bool IsNonAbstractScriptFunction(VMFunction *func)
+inline bool IsNonAbstractScriptFunction(VMFunction *func)
 {
 	return func && !IsFunctionAbstract(func) && !IsFunctionNative(func) && dynamic_cast<VMScriptFunction *>(func) != nullptr;
 }
@@ -195,22 +204,34 @@ static bool TypeIsArrayOrArrayPtr(PType *p_type)
 
 static inline bool IsVMValValidDObject(const VMValue *val) { return IsVMValueValid(val) && isValidDobject(static_cast<DObject *>(val->a)); }
 
+
+static VMValue GetVMValue(void *addr, const PType *type)
+{
+	VMValue value = VMValue();
+	if (type == TypeString)
+	{
+		auto str = static_cast<FString *>(addr);
+		if (!isFStringValid(*str)) value = VMValue();
+		else
+			value = VMValue(str);
+	}
+	else if (!type->isScalar())
+	{
+		value = VMValue(addr);
+	}
+	else
+	{
+		value = *static_cast<VMValue *>(addr);
+	}
+	return value;
+}
+
 static inline VMValue GetVMValueVar(DObject *obj, FName field, PType *type)
 {
 	if (!isValidDobject(obj)) return VMValue();
 	auto var = obj->ScriptVar(field, type);
-	if (type == TypeString)
-	{
-		auto str = static_cast<FString *>(var);
-		if (!isFStringValid(*str)) return VMValue();
-		return VMValue(str);
-	}
-	else if (!type->isScalar())
-	{
-		return VMValue(var);
-	}
-	auto vmvar = static_cast<VMValue *>(var);
-	return *vmvar;
+
+	return GetVMValue(var, type);
 }
 
 static inline VMValue TruncateVMValue(const VMValue *val, BasicType pointed_type)
@@ -494,7 +515,7 @@ static void GetLocalsNames(VMFrame *m_stackFrame, std::vector<std::string> &name
 	}
 }
 
-static bool ClassIsActor(PClass *actorClass)
+inline bool ClassIsActor(PClass *actorClass)
 {
 	if (!actorClass)
 	{
@@ -503,7 +524,7 @@ static bool ClassIsActor(PClass *actorClass)
 	return actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? true : false;
 }
 
-static PClass *GetClassDescriptor(PType *localtype)
+inline PClass *GetClassDescriptor(PType *localtype)
 {
 	if (!localtype) return nullptr;
 	if (localtype->isPointer())
@@ -547,8 +568,55 @@ static bool FunctionIsAnonymousStateFunction(VMFunction *func)
 	return false;
 }
 
+
 static size_t GetImplicitParmeterCount(const VMFrame *m_stackFrame)
 { return m_stackFrame->Func->ImplicitArgs; }
+
+static PFunction *GetFunctionSymbol(const VMFunction *func)
+{
+	if (func)
+	{
+		// get the FName of the function
+		auto funcName = func->Name;
+		std::string className;
+		// split it into two parts `.` and get the first part
+		std::string_view st = func->QualifiedName;
+		auto dotpos = st.find(".");
+		if (dotpos == std::string_view::npos) return nullptr;
+		className = st.substr(0, dotpos);
+
+		auto cls = PClass::FindClass(className.c_str());
+		if (!cls) return nullptr;
+		auto pfunc = dyn_cast<PFunction>(cls->FindSymbol(funcName, true));
+		if (pfunc)
+		{
+			// pfunc has the parameter names
+			for (auto &variant : pfunc->Variants)
+			{
+				if (variant.Implementation == func)
+				{
+					return pfunc;
+				}
+			}
+		}
+	}
+	return nullptr;
+}
+static PFunction::Variant *GetFunctionVariant(const VMFunction *func)
+{
+	auto pfunc = GetFunctionSymbol(func);
+	if (pfunc)
+	{
+		for (auto &variant : pfunc->Variants)
+		{
+			if (variant.Implementation == func)
+			{
+				return &variant;
+			}
+		}
+	}
+	return nullptr;
+}
 
 static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 {
@@ -574,43 +642,13 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 	}
 	// get the function
 	auto func = GetVMScriptFunction(m_stackFrame->Func);
-
-	if (func)
+	auto variant = GetFunctionVariant(func);
+	if (variant)
 	{
-		// get the FName of the function
-		auto funcName = func->Name;
-		std::string className;
-		// split it into two parts `.` and get the first part
-		std::string_view st = func->QualifiedName;
-		auto dotpos = st.find(".");
-		if (dotpos != std::string_view::npos)
+		auto &params = variant->ArgNames;
+		if (paramidx < params.Size())
 		{
-			className = st.substr(0, dotpos);
-		}
-		auto parts = Split(func->QualifiedName, ".");
-		if (parts.size() > 1)
-		{
-			className = parts[0];
-		}
-		auto cls = PClass::FindClass(className.c_str());
-		if (cls)
-		{
-			auto pfunc = dyn_cast<PFunction>(cls->FindSymbol(funcName, true));
-			if (pfunc)
-			{
-				// pfunc has the parameter names
-				for (auto &variant : pfunc->Variants)
-				{
-					if (variant.Implementation == func)
-					{
-						auto &params = variant.ArgNames;
-						if (paramidx < params.Size())
-						{
-							return params[paramidx].GetChars();
-						}
-					}
-				}
-			}
+			return params[paramidx].GetChars();
 		}
 	}
 	return StringFormat("%s%d", ARG, paramidx - GetImplicitParmeterCount(m_stackFrame));
@@ -633,29 +671,12 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 
 	auto structType = static_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
 
-	auto it = structType->Symbols.GetIterator();
-	PSymbolTable::MapType::Pair *pair;
 	char *struct_ptr = static_cast<char *>(m_value.a);
 	char *curr_ptr = struct_ptr;
-	size_t struct_size = structType->Size;
 	size_t currsize = 0;
 	auto fields = GetStructFieldInfo(m_type);
-	// some structs have their fields allocated in the registers; if so, we need to get the locals state
-	if (m_currentFrame)
-	{
-		auto localsState = GetLocalsState(m_currentFrame);
-		for (auto &local : localsState.m_locals)
-		{
-			// If all the fields are allocated in the registers, we can just return the locals state
-			if (local.Name == struct_name && local.StructFields.size() == fields.size())
-			{
-				return local;
-			}
-		}
-	}
 	size_t min_offset = INT_MAX;
 	size_t max_offset = 0;
-	size_t size_of_last_field = 0;
 
 	for (auto &field_pair : fields)
 	{
@@ -669,19 +690,10 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 				continue;
 			}
 			auto offset = field->Offset;
-			uint32_t flags = field->Flags;
 			uint32_t fieldSize = field->Type->Size;
 			auto type = field->Type;
-
-			min_offset = std::min(min_offset, offset);
-			if (offset >= max_offset)
-			{
-				size_of_last_field = fieldSize;
-				max_offset = offset;
-			}
 			VMValue val;
-			void *pointed_field;
-			pointed_field = struct_ptr + offset;
+			void *pointed_field = struct_ptr + offset;
 			bool invalid = false;
 			if (type == TypeString)
 			{
@@ -720,7 +732,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 					break;
 				default:
 					invalid = true;
-					LogError("StructStateNode::GetChildNames: field %s scalar field size %d not supported", field_name.c_str(), fieldSize);
+					LogError("GetStructState: field %s scalar field size %d not supported", field_name.c_str(), fieldSize);
 					break;
 				}
 			}
@@ -824,6 +836,9 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 		}
 		return GetRegisterValue(p_stackFrame, type, value, idx);
 	};
+	VMScriptFunction *func = GetVMScriptFunction(p_stackFrame->Func);
+	auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
+
 	for (int paramidx = 0; paramidx < p_stackFrame->Func->Proto->ArgumentTypes.size(); paramidx++)
 	{
 		std::string name = GetParameterName(p_stackFrame, paramidx);
@@ -853,11 +868,34 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 
 		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, 1, -1, val, {}, invalid});
 	}
-	if (!IsFunctionNative(p_stackFrame->Func))
+	int specials = 0;
+	std::sort(
+		locals.begin(),
+		locals.end(),
+		[](const auto &a, const auto &b)
+		{
+			if (a.RegNum == b.RegNum)
+			{
+				return a.LineNumber < b.LineNumber;
+			}
+			return a.RegNum < b.RegNum;
+		});
+	// TODO: REMOVE JUST FOR DEBUGGING
+	std::vector<VMLocalVariable> _locals;
+	for (auto &local : locals)
 	{
-		VMScriptFunction *func = dynamic_cast<VMScriptFunction *>(p_stackFrame->Func);
-		auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
-		std::sort(locals.begin(), locals.end(), [](const auto &a, const auto &b) { return a.RegNum < b.RegNum; });
+		_locals.push_back(local);
+	}
+	std::vector<std::string> _localsnames;
+	for (auto &local : _locals)
+	{
+		_localsnames.push_back(local.Name.GetChars());
+	}
+	auto pfunc = GetFunctionSymbol(p_stackFrame->Func);
+	PFunction::Variant *var = GetFunctionVariant(p_stackFrame->Func);
+
+	if (GetVMScriptFunction(p_stackFrame->Func))
+	{
 		for (auto &local : locals)
 		{
 
@@ -868,16 +906,24 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 			std::function<LocalState(const std::string &, PType *)> GetReg = [&](const std::string &name, PType *type)
 			{
 				LocalState state;
+				state.RegCount = local.RegCount;
+				bool invalid_reg_num = local.RegNum < 0;
 				state.Name = name;
 				state.Type = type;
 				state.VarFlags = flags;
-				state.RegCount = local.RegCount;
-				bool invalid_reg_num = local.RegNum < 0;
-				if (!IsBasicNonPointerType(type))
+				state.RegNum = local.RegNum;
+				state.Line = local.LineNumber;
+				auto reg_type = type->RegType;
+				if (invalid_reg_num && reg_type == REGT_NIL && local.StackOffset > -1 && local.StackOffset + type->Size <= func->StackSize)
+				{
+					void *base = p_stackFrame->GetExtra();
+					void *var = (char *)base + local.StackOffset;
+					state.Value = GetVMValue(var, type);
+				}
+				else if (!IsBasicNonPointerType(type))
 				{
 					VMValue value;
 					state.RegNum = invalid_reg_num ? NumRegAddress : local.RegNum;
-					state.Line = local.LineNumber;
 
 					// This is a struct optimized by the compiler to be stored in the registers; we need to get their register values and increment the register count
 					if (TypeIsStructOrStructPtr(local.type) && local.RegCount > 1)
@@ -907,7 +953,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 				else
 				{
 					state.RegCount = 1;
-					auto reg_type = type->RegType;
 					VMValue value;
 					state.RegNum = local.RegNum;
 					switch (reg_type)

@@ -8,7 +8,7 @@ static const char *const INTS = "Ints";
 static const char *const FLOATS = "Floats";
 static const char *const STRINGS = "Strings";
 static const char *const POINTERS = "Pointers";
-
+static const char *const SPECIAL_SETUP = "SpecialInits";
 namespace DebugServer
 {
 RegistersScopeStateNode::RegistersScopeStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame) { }
@@ -36,6 +36,10 @@ bool RegistersScopeStateNode::GetChildNames(std::vector<std::string> &names)
 	names.emplace_back(FLOATS);
 	names.emplace_back(STRINGS);
 	names.emplace_back(POINTERS);
+	if (GetVMScriptFunction(m_stackFrame->Func))
+	{
+		names.emplace_back(SPECIAL_SETUP);
+	}
 	return true;
 }
 
@@ -64,6 +68,11 @@ bool RegistersScopeStateNode::GetChildNode(std::string name, std::shared_ptr<Sta
 	else if (CaseInsensitiveEquals(name, POINTERS))
 	{
 		node = std::make_shared<PointerRegistersNode>(name, m_stackFrame);
+		return true;
+	}
+	else if (CaseInsensitiveEquals(name, SPECIAL_SETUP))
+	{
+		node = std::make_shared<SpecialSetupRegistersNode>(name, m_stackFrame);
 		return true;
 	}
 
@@ -210,4 +219,55 @@ bool ParamsRegistersNode::SerializeToProtocol(dap::Variable &variable)
 }
 
 RegistersNode::RegistersNode(std::string name, VMFrame *stackFrame) : m_stackFrame(stackFrame), m_name(name) { }
+
+//SpecialSetupRegistersNode
+
+bool SpecialSetupRegistersNode::SerializeToProtocol(dap::Variable &variable)
+{
+
+	variable.name = SPECIAL_SETUP;
+	variable.type = "Special Setup Registers";
+	// value will be the max number of registers
+	auto max_num_reg = GetNumberOfRegisters();
+	variable.value = "Special Setup - Max: " + std::to_string(max_num_reg);
+	variable.indexedVariables = max_num_reg;
+	variable.variablesReference = GetId();
+	return true;
 }
+
+int SpecialSetupRegistersNode::GetNumberOfRegisters() const
+{
+	return GetVMScriptFunction(m_stackFrame->Func)->SpecialInits.size();
+}
+
+VMValue SpecialSetupRegistersNode::GetRegisterValue(int index) const
+{
+	auto *fun = GetVMScriptFunction(m_stackFrame->Func);
+	auto *addr = m_stackFrame->GetExtra();
+	auto *caddr = static_cast<char *>(addr);
+	auto &tao = fun->SpecialInits[index];
+	auto *type = tao.first;
+	void *var = caddr + tao.second;
+	if (type == TypeString)
+	{
+		auto str = static_cast<FString *>(var);
+		if (!isFStringValid(*str)) return VMValue();
+		return VMValue(str);
+	}
+	else if (!type->isScalar())
+	{
+		return VMValue(var);
+	}
+	auto vmvar = static_cast<VMValue *>(var);
+	return *vmvar;
+}
+
+PType *SpecialSetupRegistersNode::GetRegisterType(int index) const
+{
+	auto *fun = GetVMScriptFunction(m_stackFrame->Func);
+	auto &tao = fun->SpecialInits[index];
+	return const_cast<PType *>(tao.first);
+}
+
+
+} // namespace DebugServer

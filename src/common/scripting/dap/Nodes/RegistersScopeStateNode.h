@@ -103,6 +103,22 @@ public:
 	bool SerializeToProtocol(dap::Variable &variable) override;
 };
 
+class SpecialSetupRegistersNode : public RegistersNode
+{
+	public:
+	std::string GetPrefix() const override { return ""; }
+
+	int GetNumberOfRegisters() const override;
+
+	VMValue GetRegisterValue(int index) const override;
+
+	PType *GetRegisterType([[maybe_unused]] int index) const override;
+
+	SpecialSetupRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
+
+	bool SerializeToProtocol(dap::Variable &variable) override;
+};
+
 class RegistersScopeStateNode : public StateNodeBase, public IProtocolScopeSerializable, public IStructuredState
 {
 	VMFrame *m_stackFrame;

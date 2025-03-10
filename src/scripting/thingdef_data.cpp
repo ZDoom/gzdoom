@@ -465,6 +465,7 @@ static FFlagDef MoreFlagDefs[] =
 	// [BB] New DECORATE network related flag defines here.
 	DEFINE_DUMMY_FLAG(NONETID, false),
 	DEFINE_DUMMY_FLAG(ALLOWCLIENTSPAWN, false),
+	DEFINE_DUMMY_FLAG(CLIENTSIDEONLY, false),
 	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),
 };
 

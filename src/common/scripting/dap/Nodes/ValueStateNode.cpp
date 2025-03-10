@@ -52,17 +52,33 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 		}
 		else if (m_type->isFunctionPointer())
 		{
-			variable.type = "FunctionPointer";
-			auto fake_function = PType::toFunctionPointer(m_type)->FakeFunction;
-			variable.value = fake_function->SymbolName.GetChars();
+			variable.type = PType::toFunctionPointer(m_type)->mDescriptiveName.GetChars();
+			if (IsVMValueValid(&m_variable))
+			{
+
+				PFunction *func = (PFunction *)m_variable.a;
+				auto *clsName = "<unknown>";
+				if (func->OwningClass)
+				{
+					variable.value += StringFormat("%s.%s (%p)", func->OwningClass->TypeName.GetChars(), func->SymbolName.GetChars(), m_variable.a);
+				}
+				else if (func->Variants.size() > 0 && func->Variants[0].Implementation)
+				{
+					variable.value += StringFormat("%s (%p)", func->Variants[0].Implementation->PrintableName, m_variable.a);
+				}
+			}
+			else
+			{
+				variable.value = "<NULL>";
+			}
 		}
 		else
 		{
 			auto pointedType = m_type->toPointer()->PointedType;
-			variable.type = std::string("Pointer(") + pointedType->DescriptiveName() + ")";
+			variable.type = std::string("Pointer<") + pointedType->DescriptiveName() + ">";
 			if (!IsVMValueValid(&m_variable))
 			{
-				variable.value = "NULL";
+				variable.value = "<NULL>";
 			}
 			else if (pointedType->isScalar() && !pointedType->isPointer())
 			{

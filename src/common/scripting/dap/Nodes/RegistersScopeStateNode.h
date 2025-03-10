@@ -17,41 +17,44 @@ class RegistersNode : public StateNodeBase, public IProtocolVariableSerializable
 	public:
 	RegistersNode(std::string name, VMFrame *stackFrame);
 
-	virtual int GetNumberOfRegisters() = 0;
+			virtual std::string GetPrefix() const = 0;
+			virtual int GetNumberOfRegisters() const = 0;
 
-	virtual VMValue GetRegisterValue(int index) = 0;
+			virtual VMValue GetRegisterValue(int index) const = 0;
 
-	virtual PType *GetRegisterType([[maybe_unused]] int index) = 0;
+			virtual PType *GetRegisterType([[maybe_unused]] int index) const = 0;
 
-	bool SerializeToProtocol(dap::Variable &variable) override;
+			bool SerializeToProtocol(dap::Variable &variable) override;
 
-	bool GetChildNames(std::vector<std::string> &names) override;
+			bool GetChildNames(std::vector<std::string> &names) override;
 
-	bool GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node) override;
+			bool GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node) override;
 };
 
 class PointerRegistersNode : public RegistersNode
 {
 	public:
-	int GetNumberOfRegisters() override;
+	int GetNumberOfRegisters() const override;
 
-	VMValue GetRegisterValue(int index) override;
+			std::string GetPrefix() const override { return "a"; }
+			VMValue GetRegisterValue(int index) const override;
 
-	PType *GetRegisterType([[maybe_unused]] int index) override;
+			PType *GetRegisterType([[maybe_unused]] int index) const override;
 
-	PointerRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
+			PointerRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
 
-	bool GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node);
+			bool GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node);
 };
 
 class StringRegistersNode : public RegistersNode
 {
 	public:
-	int GetNumberOfRegisters() override;
+	std::string GetPrefix() const override { return "s"; }
+	int GetNumberOfRegisters() const override;
 
-	VMValue GetRegisterValue(int index) override;
+	VMValue GetRegisterValue(int index) const override;
 
-	PType *GetRegisterType([[maybe_unused]] int index) override;
+	PType *GetRegisterType([[maybe_unused]] int index) const override;
 
 	StringRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
 };
@@ -59,11 +62,13 @@ class StringRegistersNode : public RegistersNode
 class FloatRegistersNode : public RegistersNode
 {
 	public:
-	int GetNumberOfRegisters() override;
+	std::string GetPrefix() const override { return "f"; }
 
-	VMValue GetRegisterValue(int index) override;
+			int GetNumberOfRegisters() const override;
 
-	PType *GetRegisterType([[maybe_unused]] int index) override;
+	VMValue GetRegisterValue(int index) const override;
+
+	PType *GetRegisterType([[maybe_unused]] int index) const override;
 
 	FloatRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
 };
@@ -71,23 +76,27 @@ class FloatRegistersNode : public RegistersNode
 class IntRegistersNode : public RegistersNode
 {
 	public:
-	int GetNumberOfRegisters() override;
+	std::string GetPrefix() const override { return "d"; }
 
-	VMValue GetRegisterValue(int index) override;
+			int GetNumberOfRegisters() const override;
 
-	PType *GetRegisterType([[maybe_unused]] int index) override;
+	VMValue GetRegisterValue(int index) const override;
+
+	PType *GetRegisterType([[maybe_unused]] int index) const override;
 
 	IntRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
 };
 
 class ParamsRegistersNode : public RegistersNode
 {
-	public:
-	int GetNumberOfRegisters() override;
+public:
+	std::string GetPrefix() const override { return ""; }
 
-	VMValue GetRegisterValue(int index) override;
+		int GetNumberOfRegisters() const override;
 
-	PType *GetRegisterType([[maybe_unused]] int index) override;
+	VMValue GetRegisterValue(int index) const override;
+
+	PType *GetRegisterType([[maybe_unused]] int index) const override;
 
 	ParamsRegistersNode(std::string name, VMFrame *stackFrame) : RegistersNode(name, stackFrame) { };
 

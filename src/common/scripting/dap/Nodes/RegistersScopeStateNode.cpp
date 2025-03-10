@@ -78,7 +78,7 @@ bool RegistersNode::SerializeToProtocol(dap::Variable &variable)
 	// value will be the max number of registers
 	auto max_num_reg = GetNumberOfRegisters();
 	variable.value = m_name + "[" + std::to_string(max_num_reg) + "]";
-	variable.indexedVariables = max_num_reg;
+	variable.namedVariables = max_num_reg;
 	variable.variablesReference = GetId();
 	return true;
 }
@@ -87,14 +87,17 @@ bool RegistersNode::GetChildNames(std::vector<std::string> &names)
 {
 	for (int i = 0; i < GetNumberOfRegisters(); i++)
 	{
-		names.push_back(std::to_string(i));
+		names.push_back(GetPrefix() + std::to_string(i));
 	}
 	return true;
 }
 
 bool RegistersNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
-	int index = std::stoi(name);
+
+	// name is "a2" or "s3" etc
+	std::string prefix = GetPrefix();
+	int index = std::stoi(name.substr(prefix.size()));
 	if (index < 0 || index >= GetNumberOfRegisters())
 	{
 		return false;
@@ -104,35 +107,77 @@ bool RegistersNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase
 	return true;
 }
 
-int PointerRegistersNode::GetNumberOfRegisters() { return m_stackFrame->NumRegA; }
+int PointerRegistersNode::GetNumberOfRegisters() const
+{
+	return m_stackFrame->NumRegA;
+}
 
-VMValue PointerRegistersNode::GetRegisterValue(int index) { return m_stackFrame->GetRegA()[index]; }
+VMValue PointerRegistersNode::GetRegisterValue(int index) const
+{
+	return m_stackFrame->GetRegA()[index];
+}
 
-PType *PointerRegistersNode::GetRegisterType(int index) { return TypeVoidPtr; }
+PType *PointerRegistersNode::GetRegisterType(int index) const
+{
+	return TypeVoidPtr;
+}
 
-int StringRegistersNode::GetNumberOfRegisters() { return m_stackFrame->NumRegS; }
+int StringRegistersNode::GetNumberOfRegisters() const
+{
+	return m_stackFrame->NumRegS;
+}
 
-VMValue StringRegistersNode::GetRegisterValue(int index) { return {&m_stackFrame->GetRegS()[index]}; }
+VMValue StringRegistersNode::GetRegisterValue(int index) const
+{
+	return {&m_stackFrame->GetRegS()[index]};
+}
 
-PType *StringRegistersNode::GetRegisterType(int index) { return TypeString; }
+PType *StringRegistersNode::GetRegisterType(int index) const
+{
+	return TypeString;
+}
 
-int FloatRegistersNode::GetNumberOfRegisters() { return m_stackFrame->NumRegF; }
+int FloatRegistersNode::GetNumberOfRegisters() const
+{
+	return m_stackFrame->NumRegF;
+}
 
-VMValue FloatRegistersNode::GetRegisterValue(int index) { return m_stackFrame->GetRegF()[index]; }
+VMValue FloatRegistersNode::GetRegisterValue(int index) const
+{
+	return m_stackFrame->GetRegF()[index];
+}
 
-PType *FloatRegistersNode::GetRegisterType(int index) { return TypeFloat64; }
+PType *FloatRegistersNode::GetRegisterType(int index) const
+{
+	return TypeFloat64;
+}
 
-int IntRegistersNode::GetNumberOfRegisters() { return m_stackFrame->NumRegD; }
+int IntRegistersNode::GetNumberOfRegisters() const
+{
+	return m_stackFrame->NumRegD;
+}
 
-VMValue IntRegistersNode::GetRegisterValue(int index) { return m_stackFrame->GetRegD()[index]; }
+VMValue IntRegistersNode::GetRegisterValue(int index) const
+{
+	return m_stackFrame->GetRegD()[index];
+}
 
-PType *IntRegistersNode::GetRegisterType(int index) { return TypeSInt32; }
+PType *IntRegistersNode::GetRegisterType(int index) const
+{
+	return TypeSInt32;
+}
 
-int ParamsRegistersNode::GetNumberOfRegisters() { return m_stackFrame->MaxParam; }
+int ParamsRegistersNode::GetNumberOfRegisters() const
+{
+	return m_stackFrame->MaxParam;
+}
 
-VMValue ParamsRegistersNode::GetRegisterValue(int index) { return m_stackFrame->GetParam()[index]; }
+VMValue ParamsRegistersNode::GetRegisterValue(int index) const
+{
+	return m_stackFrame->GetParam()[index];
+}
 
-PType *ParamsRegistersNode::GetRegisterType(int index)
+PType *ParamsRegistersNode::GetRegisterType(int index) const
 {
 	// TODO: Is it possible to get the type of parameters?
 	return TypeVoidPtr;
@@ -140,7 +185,8 @@ PType *ParamsRegistersNode::GetRegisterType(int index)
 
 bool PointerRegistersNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
-	int index = std::stoi(name);
+	std::string prefix = GetPrefix();
+	int index = std::stoi(name.substr(prefix.size()));
 	if (index < 0 || index >= GetNumberOfRegisters())
 	{
 		return false;

@@ -786,6 +786,7 @@ class Actor : Thinker native
 	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null);
 	native bool TestMobjLocation();
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
+	native static clearscope Actor SpawnClientside(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnMissileXYZ(Vector3 pos, Actor dest, Class<Actor> type, bool checkspawn = true, Actor owner = null);
 	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);

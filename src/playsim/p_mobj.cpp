@@ -143,6 +143,7 @@ static FRandom pr_uniquetid("UniqueTID");
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 FRandom pr_spawnmobj ("SpawnActor");
+FCRandom pr_spawncsmobj("SpawnClientsideActor");
 FRandom pr_bounce("Bounce");
 FRandom pr_spawnmissile("SpawnMissile");
 
@@ -196,9 +197,9 @@ DEFINE_FIELD(DBehavior, Level)
 
 void AActor::EnableNetworking(const bool enable)
 {
-	if (!enable)
+	if (!enable && !IsClientside())
 	{
-		ThrowAbortException(X_OTHER, "Cannot disable networking on Actors. Consider a Thinker instead.");
+		ThrowAbortException(X_OTHER, "Cannot disable networking on Actors. Consider a Thinker or clientside Actor instead.");
 		return;
 	}
 
@@ -844,7 +845,7 @@ bool AActor::IsMapActor()
 
 inline int GetTics(AActor* actor, FState * newstate)
 {
-	int tics = newstate->GetTics();
+	int tics = actor->IsClientside() ? newstate->GetClientsideTics() : newstate->GetTics();
 	if (actor->isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
@@ -3484,7 +3485,7 @@ void AActor::AddToHash ()
 	else
 	{
 		int hash = TIDHASH (tid);
-		auto &slot = Level->TIDHash[hash];
+		auto &slot = IsClientside() ? Level->ClientSideTIDHash[hash] : Level->TIDHash[hash];
 
 		inext = slot;
 		iprev = &slot;
@@ -3542,9 +3543,9 @@ void AActor::SetTID (int newTID)
 //
 //==========================================================================
 
-bool FLevelLocals::IsTIDUsed(int tid)
+bool FLevelLocals::IsTIDUsed(int tid, bool clientside)
 {
-	AActor *probe = TIDHash[tid & 127];
+	AActor *probe = clientside ? ClientSideTIDHash[tid & 127] : TIDHash[tid & 127];
 	while (probe != NULL)
 	{
 		if (probe->tid == tid)
@@ -3567,7 +3568,7 @@ bool FLevelLocals::IsTIDUsed(int tid)
 //
 //==========================================================================
 
-int FLevelLocals::FindUniqueTID(int start_tid, int limit)
+int FLevelLocals::FindUniqueTID(int start_tid, int limit, bool clientside)
 {
 	int tid;
 
@@ -3583,7 +3584,7 @@ int FLevelLocals::FindUniqueTID(int start_tid, int limit)
 		}
 		for (tid = start_tid; tid <= limit; ++tid)
 		{
-			if (tid != 0 && !IsTIDUsed(tid))
+			if (tid != 0 && !IsTIDUsed(tid, clientside))
 			{
 				return tid;
 			}
@@ -3605,7 +3606,7 @@ int FLevelLocals::FindUniqueTID(int start_tid, int limit)
 	{
 		// Use a positive starting TID.
 		tid = pr_uniquetid.GenRand32() & INT_MAX;
-		tid = FindUniqueTID(tid == 0 ? 1 : tid, 5);
+		tid = FindUniqueTID(tid == 0 ? 1 : tid, 5, clientside);
 		if (tid != 0)
 		{
 			return tid;
@@ -3621,7 +3622,7 @@ CCMD(utid)
 	for (auto Level : AllLevels())
 	{
 		Printf("%s, %d\n", Level->MapName.GetChars(), Level->FindUniqueTID(argv.argc() > 1 ? atoi(argv[1]) : 0,
-			(argv.argc() > 2 && atoi(argv[2]) >= 0) ? atoi(argv[2]) : 0));
+			(argv.argc() > 2 && atoi(argv[2]) >= 0) ? atoi(argv[2]) : 0, false));
 	}
 }
 
@@ -5113,6 +5114,7 @@ DEFINE_ACTION_FUNCTION(AActor, UpdateWaterLevel)
 
 void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 {
+	const bool clientside = actor->IsClientside();
 	auto Level = actor->Level;
 	actor->SpawnTime = Level->totaltime;
 	actor->SpawnOrder = Level->spawnindex++;
@@ -5136,7 +5138,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	// Actors with zero gravity need the NOGRAVITY flag set.
 	if (actor->Gravity == 0) actor->flags |= MF_NOGRAVITY;
 
-	FRandom &rng = Level->BotInfo.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
+	FRandom &rng = clientside ? pr_spawncsmobj : (Level->BotInfo.m_Thinking ? pr_botspawnmobj : pr_spawnmobj);
 
 	if ((!!G_SkillProperty(SKILLP_InstantReaction) || actor->flags5 & MF5_ALWAYSFAST || !!(dmflags & DF_INSTANT_REACTION))
 		&& actor->flags3 & MF3_ISMONSTER)
@@ -5153,7 +5155,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	// routine, it will not be called.
 	FState *st = actor->SpawnState;
 	actor->state = st;
-	actor->tics = st->GetTics();
+	actor->tics = clientside ? st->GetClientsideTics() : st->GetTics();
 	
 	actor->sprite = st->sprite;
 	actor->frame = st->GetFrame();
@@ -5308,8 +5310,15 @@ AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVecto
 
 	AActor *actor;
 
-	actor = static_cast<AActor *>(Level->CreateThinker(type));
-	actor->EnableNetworking(true);
+	if (GetDefaultByType(type)->ObjectFlags & OF_ClientSide)
+	{
+		actor = static_cast<AActor*>(Level->CreateClientsideThinker(type));
+	}
+	else
+	{
+		actor = static_cast<AActor*>(Level->CreateThinker(type));
+		actor->EnableNetworking(true);
+	}
 
 	ConstructActor(actor, pos, SpawningMapThing);
 	return actor;
@@ -5324,6 +5333,28 @@ DEFINE_ACTION_FUNCTION(AActor, Spawn)
 	PARAM_FLOAT(z);
 	PARAM_INT(flags);
 	ACTION_RETURN_OBJECT(AActor::StaticSpawn(currentVMLevel, type, DVector3(x, y, z), replace_t(flags)));
+}
+
+static AActor* SpawnClientside(PClassActor* type, double x, double y, double z, int flags)
+{
+	if (!(GetDefaultByType(type)->ObjectFlags & OF_ClientSide))
+	{
+		ThrowAbortException(X_OTHER, "Tried to spawn a non-clientside Actor from a clientside spawn function.");
+		return nullptr;
+	}
+
+	return AActor::StaticSpawn(currentVMLevel, type, { x, y, z }, (replace_t)flags);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnClientside, SpawnClientside)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS_NOT_NULL(type, AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(flags);
+	ACTION_RETURN_OBJECT(SpawnClientside(type, x, y, z, flags));
 }
 
 PClassActor *ClassForSpawn(FName classname)

@@ -1136,12 +1136,6 @@ void G_Ticker ()
 			primaryLevel->DoReborn(i, false);
 	}
 
-	if (ToggleFullscreen)
-	{
-		ToggleFullscreen = false;
-		AddCommandString ("toggle vid_fullscreen");
-	}
-
 	// do things to change the game state
 	oldgamestate = gamestate;
 	while (gameaction != ga_nothing)
@@ -1192,17 +1186,8 @@ void G_Ticker ()
 		case ga_worlddone:
 			G_DoWorldDone ();
 			break;
-		case ga_screenshot:
-			M_ScreenShot (shotfile.GetChars());
-			shotfile = "";
-			gameaction = ga_nothing;
-			break;
 		case ga_fullconsole:
 			G_FullConsole ();
-			gameaction = ga_nothing;
-			break;
-		case ga_togglemap:
-			AM_ToggleMap ();
 			gameaction = ga_nothing;
 			break;
 		case ga_resumeconversation:
@@ -1263,18 +1248,12 @@ void G_Ticker ()
 		}
 	}
 
-	// [ZZ] also tick the UI part of the events
-	primaryLevel->localEventManager->UiTick();
 	C_RunDelayedCommands();
 
 	// do main actions
 	switch (gamestate)
 	{
 	case GS_LEVEL:
-		P_Ticker ();
-		primaryLevel->automap->Ticker ();
-		break;
-
 	case GS_TITLELEVEL:
 		P_Ticker ();
 		break;
@@ -1303,9 +1282,6 @@ void G_Ticker ()
 	default:
 		break;
 	}
-
-	// [MK] Additional ticker for UI events right after all others
-	primaryLevel->localEventManager->PostUiTick();
 }
 
 
@@ -1844,7 +1820,8 @@ void G_ScreenShot (const char *filename)
 	if (gameaction == ga_nothing)
 	{
 		shotfile = filename;
-		gameaction = ga_screenshot;
+		M_ScreenShot(shotfile.GetChars());
+		shotfile = "";
 	}
 }
 

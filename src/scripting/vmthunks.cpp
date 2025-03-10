@@ -2615,6 +2615,26 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
 	return 0;
 }
 
+static DThinker* CreateClientsideThinker(FLevelLocals* self, PClass* type, int statnum)
+{
+	if (type->IsDescendantOf(NAME_Actor))
+	{
+		ThrowAbortException(X_OTHER, "Clientside Actors cannot be created from this function");
+		return nullptr;
+	}
+
+	return self->CreateClientsideThinker(type, statnum);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateClientsideThinker, CreateClientsideThinker)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_POINTER_NOT_NULL(type, PClass);
+	PARAM_INT(statnum);
+
+	ACTION_RETURN_OBJECT(CreateClientsideThinker(self, type, statnum));
+}
+
 //=====================================================================================
 //
 //

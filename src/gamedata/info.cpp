@@ -63,6 +63,7 @@ extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
 FRandom FState::pr_statetics("StateTics");
+FCRandom FState::pr_csstatetics("ClientsideStateTics");
 
 cycle_t ActionCycles;
 
@@ -489,7 +490,7 @@ void PClassActor::InitializeDefaults()
 				memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
 			}
 
-			optr->ObjectFlags = ((DObject*)ParentClass->Defaults)->ObjectFlags & OF_Transient;
+			optr->ObjectFlags = ((DObject*)ParentClass->Defaults)->ObjectFlags & (OF_Transient | OF_ClientSide);
 		}
 		else
 		{

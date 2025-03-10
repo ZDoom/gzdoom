@@ -294,38 +294,36 @@ void AActor::UnlinkFromWorld (FLinkContext *ctx)
 		// killough 8/11/98: simpler scheme using pointers-to-pointers for prev
 		// pointers, allows head node pointers to be treated like everything else
 		AActor **prev = sprev;
-		AActor  *next = snext;
-
-		if (prev != NULL)	// prev will be NULL if this actor gets deleted due to cleaning up from a broken savegame
+		if (prev != NULL)
 		{
+			AActor* next = snext;
 			if ((*prev = next))  // unlink from sector list
 				next->sprev = prev;
 			snext = NULL;
 			sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
-
-			// phares 3/14/98
-			//
-			// Save the sector list pointed to by touching_sectorlist.
-			// In P_SetThingPosition, we'll keep any nodes that represent
-			// sectors the Thing still touches. We'll add new ones then, and
-			// delete any nodes for sectors the Thing has vacated. Then we'll
-			// put it back into touching_sectorlist. It's done this way to
-			// avoid a lot of deleting/creating for nodes, when most of the
-			// time you just get back what you deleted anyway.
-
-			if (ctx != nullptr)
-			{
-				ctx->sector_list = touching_sectorlist;
-				ctx->render_list = touching_rendersectors;
-			}
-			else
-			{
-				P_DelSeclist(touching_sectorlist, &sector_t::touching_thinglist);
-				P_DelSeclist(touching_rendersectors, &sector_t::touching_renderthings);
-			}
-			touching_sectorlist = nullptr; //to be restored by P_SetThingPosition
-			touching_rendersectors = nullptr;
 		}
+
+		// phares 3/14/98
+		//
+		// Save the sector list pointed to by touching_sectorlist.
+		// In P_SetThingPosition, we'll keep any nodes that represent
+		// sectors the Thing still touches. We'll add new ones then, and
+		// delete any nodes for sectors the Thing has vacated. Then we'll
+		// put it back into touching_sectorlist. It's done this way to
+		// avoid a lot of deleting/creating for nodes, when most of the
+		// time you just get back what you deleted anyway.
+		if (ctx != nullptr)
+		{
+			ctx->sector_list = touching_sectorlist;
+			ctx->render_list = touching_rendersectors;
+		}
+		else
+		{
+			P_DelSeclist(touching_sectorlist, &sector_t::touching_thinglist);
+			P_DelSeclist(touching_rendersectors, &sector_t::touching_renderthings);
+		}
+		touching_sectorlist = nullptr; //to be restored by P_SetThingPosition
+		touching_rendersectors = nullptr;
 	}
 		
 	if (!(flags & MF_NOBLOCKMAP))
@@ -469,32 +467,37 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	subsector = Level->PointInRenderSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
 	section = subsector->section;
 
+	const bool clientside = IsClientside();
 	if (!(flags & MF_NOSECTOR))
 	{
-		// invisible things don't go into the sector links
-		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
-		// pointers, allows head nodes to be treated like everything else
+		if (!clientside)
+		{
+			// invisible things don't go into the sector links
+			// killough 8/11/98: simpler scheme using pointer-to-pointer prev
+			// pointers, allows head nodes to be treated like everything else
 
-		AActor **link = &sector->thinglist;
-		AActor *next = *link;
-		if ((snext = next))
-			next->sprev = &snext;
-		sprev = link;
-		*link = this;
+			AActor** link = &sector->thinglist;
+			AActor* next = *link;
+			if ((snext = next))
+				next->sprev = &snext;
+			sprev = link;
+			*link = this;
 
-		// phares 3/16/98
-		//
-		// If sector_list isn't NULL, it has a collection of sector
-		// nodes that were just removed from this Thing.
+			// phares 3/16/98
+			//
+			// If sector_list isn't NULL, it has a collection of sector
+			// nodes that were just removed from this Thing.
 
-		// Collect the sectors the object will live in by looking at
-		// the existing sector_list and adding new nodes and deleting
-		// obsolete ones.
+			// Collect the sectors the object will live in by looking at
+			// the existing sector_list and adding new nodes and deleting
+			// obsolete ones.
 
-		// When a node is deleted, its sector links (the links starting
-		// at sector_t->touching_thinglist) are broken. When a node is
-		// added, new sector links are created.
-		touching_sectorlist = P_CreateSecNodeList(this, radius, ctx != nullptr? ctx->sector_list : nullptr, &sector_t::touching_thinglist);	// Attach to thing
+			// When a node is deleted, its sector links (the links starting
+			// at sector_t->touching_thinglist) are broken. When a node is
+			// added, new sector links are created.
+			touching_sectorlist = P_CreateSecNodeList(this, radius, ctx != nullptr ? ctx->sector_list : nullptr, &sector_t::touching_thinglist);	// Attach to thing
+		}
+
 		if (renderradius >= 0) touching_rendersectors = P_CreateSecNodeList(this, RenderRadius(), ctx != nullptr ? ctx->render_list : nullptr, &sector_t::touching_renderthings);
 		else
 		{
@@ -505,7 +508,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 
 
 	// link into blockmap (inert things don't need to be in the blockmap)
-	if (!(flags & MF_NOBLOCKMAP))
+	if (!(flags & MF_NOBLOCKMAP) && !clientside)
 	{
 		FPortalGroupArray check;
 

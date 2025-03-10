@@ -150,6 +150,14 @@ public:
 		}
 		return Tics + pr_statetics.GenRand32() % (TicRange + 1);
 	}
+	inline int GetClientsideTics() const
+	{
+		if (TicRange == 0)
+		{
+			return Tics;
+		}
+		return Tics + pr_csstatetics.GenRand32() % (TicRange + 1);
+	}
 	inline int GetMisc1() const
 	{
 		return Misc1;
@@ -176,6 +184,7 @@ public:
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 	static FString StaticGetStateName(const FState *state, PClassActor *info = nullptr);
 	static FRandom pr_statetics;
+	static FCRandom pr_csstatetics;
 
 };
 

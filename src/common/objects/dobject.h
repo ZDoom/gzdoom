@@ -359,6 +359,7 @@ private:
 public:
 	inline bool IsNetworked() const { return (ObjectFlags & OF_Networked); }
 	inline uint32_t GetNetworkID() const { return _networkID; }
+	inline bool IsClientside() const { return (ObjectFlags & OF_ClientSide); }
 	void SetNetworkID(const uint32_t id);
 	void ClearNetworkID();
 	void RemoveFromNetwork();

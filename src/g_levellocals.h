@@ -138,8 +138,8 @@ struct FLevelLocals
 	void ClearAllSubsectorLinks();
 	void TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1);
 	int TranslateSectorSpecial(int special);
-	bool IsTIDUsed(int tid);
-	int FindUniqueTID(int start_tid, int limit);
+	bool IsTIDUsed(int tid, bool clientside);
+	int FindUniqueTID(int start_tid, int limit, bool clientside);
 	int GetConversation(int conv_id);
 	int GetConversation(FName classname);
 	void SetConversation(int convid, PClassActor *Class, int dlgindex);
@@ -249,6 +249,7 @@ public:
 	void SpawnExtraPlayers();
 	void Serialize(FSerializer &arc, bool hubload);
 	DThinker *FirstThinker (int statnum);
+	DThinker* FirstClientsideThinker(int statnum);
 
 	// g_Game
 	void PlayerReborn (int player);
@@ -295,12 +296,21 @@ public:
 	}
 	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM+1)
 	{
-		if (subtype == NAME_None) return TThinkerIterator<T>(this, statnum);
-		else return TThinkerIterator<T>(this, subtype, statnum);
+		if (subtype == NAME_None) return TThinkerIterator<T>(this, statnum, false);
+		else return TThinkerIterator<T>(this, subtype, statnum, false);
 	}
 	template<class T> TThinkerIterator<T> GetThinkerIterator(FName subtype, int statnum, AActor *prev)
 	{
-		return TThinkerIterator<T>(this, subtype, statnum, prev);
+		return TThinkerIterator<T>(this, subtype, statnum, prev, false);
+	}
+	template<class T> TThinkerIterator<T> GetClientsideThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM + 1)
+	{
+		if (subtype == NAME_None) return TThinkerIterator<T>(this, statnum, true);
+		else return TThinkerIterator<T>(this, subtype, statnum, true);
+	}
+	template<class T> TThinkerIterator<T> GetClientsideThinkerIterator(FName subtype, int statnum, AActor* prev)
+	{
+		return TThinkerIterator<T>(this, subtype, statnum, prev, true);
 	}
 	FActorIterator GetActorIterator(int tid)
 	{
@@ -313,6 +323,18 @@ public:
 	NActorIterator GetActorIterator(FName type, int tid)
 	{
 		return NActorIterator(TIDHash, type, tid);
+	}
+	FActorIterator GetClientSideActorIterator(int tid)
+	{
+		return FActorIterator(ClientSideTIDHash, tid);
+	}
+	FActorIterator GetClientSideActorIterator(int tid, AActor* start)
+	{
+		return FActorIterator(ClientSideTIDHash, tid, start);
+	}
+	NActorIterator GetClientSideActorIterator(FName type, int tid)
+	{
+		return NActorIterator(ClientSideTIDHash, type, tid);
 	}
 	AActor *SingleActorFromTID(int tid, AActor *defactor)
 	{
@@ -411,6 +433,7 @@ public:
 	void ClearTIDHashes ()
 	{
 		memset(TIDHash, 0, sizeof(TIDHash));
+		memset(ClientSideTIDHash, 0, sizeof(ClientSideTIDHash));
 	}
 
 
@@ -438,6 +461,24 @@ public:
 	T* CreateThinker(Args&&... args)
 	{
 		auto thinker = static_cast<T*>(CreateThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
+		thinker->Construct(std::forward<Args>(args)...);
+		return thinker;
+	}
+
+	DThinker* CreateClientsideThinker(PClass* cls, int statnum = STAT_DEFAULT)
+	{
+		DThinker* thinker = static_cast<DThinker*>(cls->CreateNew());
+		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
+		thinker->ObjectFlags |= OF_JustSpawned | OF_ClientSide | OF_Transient;
+		ClientsideThinkers.Link(thinker, statnum);
+		thinker->Level = this;
+		return thinker;
+	}
+
+	template<typename T, typename... Args>
+	T* CreateClientsideThinker(Args&&... args)
+	{
+		auto thinker = static_cast<T*>(CreateClientsideThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
 		thinker->Construct(std::forward<Args>(args)...);
 		return thinker;
 	}
@@ -511,6 +552,7 @@ public:
 
 	FBehaviorContainer Behaviors;
 	AActor *TIDHash[128];
+	AActor* ClientSideTIDHash[128];
 
 	TArray<FStrifeDialogueNode *> StrifeDialogues;
 	FDialogueIDMap DialogueRoots;
@@ -674,6 +716,7 @@ public:
 	TArray<particle_t>	Particles;
 	TArray<uint16_t>	ParticlesInSubsec;
 	FThinkerCollection Thinkers;
+	FThinkerCollection ClientsideThinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
@@ -710,6 +753,7 @@ public:
 	TArray<TObjPtr<AActor *>> CorpseQueue;
 	TObjPtr<DFraggleThinker *> FraggleScriptThinker = MakeObjPtr<DFraggleThinker*>(nullptr);
 	TObjPtr<DACSThinker*> ACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
+	TObjPtr<DACSThinker*> ClientSideACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
 
 	TObjPtr<DSpotState *> SpotState = MakeObjPtr<DSpotState*>(nullptr);
 

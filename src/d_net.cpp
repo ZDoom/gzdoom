@@ -1073,34 +1073,72 @@ static bool Net_UpdateStatus()
 		if (NetMode != NET_PacketServer)
 		{
 			// Check if everyone has a buffer for us. If they do, we're too far ahead.
+			bool allUpdated = true;
+			int highestLatency = 0;
 			for (auto client : NetworkClients)
 			{
-				if (client != consoleplayer && (ClientStates[client].Flags & CF_UPDATED))
+				if (client != consoleplayer)
 				{
-					updated = true;
-					int diff = ClientStates[client].SequenceAck - ClientStates[client].CurrentSequence;
-					if (diff < lowestDiff)
-						lowestDiff = diff;
+					if (ClientStates[client].Flags & CF_UPDATED)
+					{
+						updated = true;
+						int diff = ClientStates[client].SequenceAck - ClientStates[client].CurrentSequence;
+						if (diff < lowestDiff)
+							lowestDiff = diff;
+						if (ClientStates[client].AverageLatency > highestLatency)
+							highestLatency = ClientStates[client].AverageLatency;
+					}
+					else
+					{
+						allUpdated = false;
+					}
 				}
 
 				ClientStates[client].Flags &= ~CF_UPDATED;
+			}
+
+			if (allUpdated)
+			{
+				// If we're consistently ahead of the highest latency player we're connected to, slow down
+				// as well since we should generally be in that ballpark.
+				const int diff = (ClientTic - gametic) / TicDup;
+				const int goal = static_cast<int>(ceil((double)highestLatency / TICRATE)) / TicDup + 1;
+				if (diff > goal)
+					lowestDiff = diff - goal;
 			}
 		}
 		else if (consoleplayer == Net_Arbitrator)
 		{
 			// If we're consistenty ahead of the highest sequence player, slow down.
+			bool allUpdated = true;
 			const int curTic = ClientTic / TicDup;
 			for (auto client : NetworkClients)
 			{
-				if (client != Net_Arbitrator && (ClientStates[client].Flags & CF_UPDATED))
+				if (client != Net_Arbitrator)
 				{
-					updated = true;
-					int diff = curTic - ClientStates[client].CurrentSequence;
-					if (diff < lowestDiff)
-						lowestDiff = diff;
+					if (ClientStates[client].Flags & CF_UPDATED)
+					{
+						updated = true;
+						int diff = curTic - ClientStates[client].CurrentSequence;
+						if (diff < lowestDiff)
+							lowestDiff = diff;
+					}
+					else
+					{
+						allUpdated = false;
+					}
 				}
 
 				ClientStates[client].Flags &= ~CF_UPDATED;
+			}
+
+			if (allUpdated)
+			{
+				// If we're consistently ahead of the world, force a stop here as well. Likely some client
+				// has fallen super far behind and needs to be reset.
+				const int diff = curTic - gametic / TicDup;
+				if (diff > 1)
+					lowestDiff = diff;
 			}
 		}
 		else if (ClientStates[Net_Arbitrator].Flags & CF_UPDATED)

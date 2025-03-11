@@ -1,7 +1,9 @@
 #pragma once
 
+#include <condition_variable>
 #include <thread>
 #include <mutex>
+
 namespace dap
 {
 namespace net

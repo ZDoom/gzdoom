@@ -5,8 +5,8 @@
 #include "BreakpointManager.h"
 #include "RuntimeState.h"
 #include <dap/session.h>
-
 #include <mutex>
+#include <atomic>
 
 namespace DebugServer
 {

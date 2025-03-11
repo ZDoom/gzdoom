@@ -1410,19 +1410,20 @@ void NetUpdate(int tics)
 			ticLoops = 1;
 
 		const int maxPlayerLoops = isSelf ? 1 : playerLoops;
+		int totalQuits = quitters;
 		for (int tLoops = 0, curTicOfs = 0; tLoops < ticLoops; ++tLoops, curTicOfs += maxCommands)
 		{
 			for (int pLoops = 0, curPlayerOfs = 0; pLoops < maxPlayerLoops; ++pLoops, curPlayerOfs += MaxPlayersPerPacket)
 			{
 				size_t size = 10;
-				if (quitters > 0)
+				if (totalQuits > 0)
 				{
 					NetBuffer[0] |= NCMD_QUITTERS;
-					NetBuffer[size++] = quitters;
-					for (int i = 0; i < quitters; ++i)
+					NetBuffer[size++] = totalQuits;
+					for (int i = 0; i < totalQuits; ++i)
 						NetBuffer[size++] = quitNums[i];
 
-					quitters = 0;
+					totalQuits = 0;
 				}
 				else
 				{

@@ -27,15 +27,6 @@ static PType * GetElementType(const PType * p_type)
 	return nullptr;
 }
 
-static void* GetArrayHead(const VMValue &value, PType *p_type)
-{
-	if (p_type->isPointer())
-	{
-		auto *pointerType = dynamic_cast<PPointer *>(p_type);
-		return *static_cast<void **>(value.a);
-	}
-	return value.a;
-}
 static int64_t GetElementCount(const VMValue &value, PType *p_type)
 {
 	auto type = p_type;
@@ -43,7 +34,6 @@ static int64_t GetElementCount(const VMValue &value, PType *p_type)
 	if (type->toPointer())
 	{
 		type = type->toPointer()->PointedType;
-		// array_head = *static_cast<void **>(value.a);
 	}
 	
 	if (type->isDynArray() || type->isStaticArray())
@@ -53,7 +43,6 @@ static int64_t GetElementCount(const VMValue &value, PType *p_type)
 			return 0;
 		}
 		
-		PType* elementType = GetElementType(p_type);
 		// FArray has the same layout as TArray, just return count
 		auto *arr = static_cast<FArray *>(array_head);
 		if (arr->Count == UINT_MAX)

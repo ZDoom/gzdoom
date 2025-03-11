@@ -8,7 +8,6 @@
 #include <common/scripting/core/symbols.h>
 #include <info.h>
 #include "DummyNode.h"
-static const FString invalidString = FString("<INVALID>");
 
 namespace DebugServer
 {

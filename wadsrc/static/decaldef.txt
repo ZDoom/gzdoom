@@ -593,6 +593,41 @@ decalgroup RedPlasmaScorch
 	RedPlasmaScorch2	1
 }
 
+//ID24 Weapons
+object ID24IncineratorProjectile
+{
+    frame HETBA { light ROCKET }
+	frame HETBB { light ROCKET }
+	frame HETBC { light ROCKET }
+	
+    frame HETBD { light ROCKET_X1 }
+    frame HETBE { light ROCKET_X1 }
+    frame HETBF { light ROCKET_X2 }
+    frame HETBG { light ROCKET_X2 }
+    frame HETBH { light ROCKET_X3 }
+    frame HETBI { light ROCKET_X3 }
+}
+
+object ID24IncineratorFlame
+{
+    frame IFLMA { light ARCHFIRE1 }
+    frame IFLMB { light ARCHFIRE2 }
+    frame IFLMC { light ARCHFIRE3 }
+    frame IFLMD { light ARCHFIRE4 }
+    frame IFLME { light ARCHFIRE5 }
+    frame IFLMF { light ARCHFIRE6 }
+    frame IFLMG { light ARCHFIRE7 }
+    frame IFLMH { light ARCHFIRE8 }
+	
+    frame IFLMI { light ARCHFIRE1 }
+    frame IFLMJ { light ARCHFIRE2 }
+    frame IFLMK { light ARCHFIRE3 }
+    frame IFLML { light ARCHFIRE4 }
+    frame IFLMM { light ARCHFIRE5 }
+    frame IFLMN { light ARCHFIRE6 }
+    frame IFLMO { light ARCHFIRE7 }
+    frame IFLMP { light ARCHFIRE8 }
+}
 
 // Graf Zahl provided definitions for the other games.
 

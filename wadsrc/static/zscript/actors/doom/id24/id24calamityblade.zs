@@ -196,6 +196,7 @@ class ID24IncineratorProjectile : Actor // Heatwave Ripper
 		+ZDOOMTRANS;
 		+RIPPER;
 		RenderStyle "Add";
+		Decal "BladeScorch";
 
 		DeathSound "weapons/calamityblade/explode";
 	}

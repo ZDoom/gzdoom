@@ -77,8 +77,6 @@ void P_RunClientsideLogic()
 				ac->ClearFOVInterpolation();
 			}
 
-			P_ThinkParticles(level);	// [RH] make the particles think
-
 			level->ClientsideThinkers.RunClientsideThinkers(level);
 		}
 
@@ -245,6 +243,8 @@ void P_Ticker (void)
 			ac->ClearInterpolation();
 			ac->ClearFOVInterpolation();
 		}
+
+		P_ThinkParticles(Level);	// [RH] make the particles think
 
 		for (i = 0; i < MAXPLAYERS; i++)
 			if (Level->PlayerInGame(i))

@@ -150,6 +150,7 @@ CVAR(Bool, vid_lowerinbackground, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE) // Currently deprecated, but may be brought back later.
 CVAR(Bool, net_extratic, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 CVAR(Bool, net_disablepause, false, CVAR_SERVERINFO | CVAR_NOSAVE)
+CVAR(Bool, net_repeatableactioncooldown, true, CVAR_SERVERINFO | CVAR_NOSAVE)
 
 CVAR(Bool, cl_noboldchat, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, cl_nochatsound, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

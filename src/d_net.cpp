@@ -942,6 +942,7 @@ static void CheckConsistencies()
 			const int limit = min<int>(CurrentConsistency - 1, clientState.CurrentNetConsistency);
 			while (clientState.LastVerifiedConsistency < limit)
 			{
+				++clientState.LastVerifiedConsistency;
 				const int tic = clientState.LastVerifiedConsistency % BACKUPTICS;
 				if (clientState.LocalConsistency[tic] != clientState.NetConsistency[tic])
 				{
@@ -949,8 +950,6 @@ static void CheckConsistencies()
 					clientState.LastVerifiedConsistency = clientState.CurrentNetConsistency;
 					break;
 				}
-
-				++clientState.LastVerifiedConsistency;
 			}
 		}
 	}

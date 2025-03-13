@@ -237,6 +237,7 @@ Class BagOfHolding : BackpackItem
 	Default
 	{
 		Inventory.PickupMessage "$TXT_ITEMBAGOFHOLDING";
+		Tag "$TAG_ITEMBAGOFHOLDING";
 		+COUNTITEM
 		+FLOATBOB
 	}

@@ -23,6 +23,60 @@ extend struct _
 	native readonly bool playeringame[MAXPLAYERS];
 	native play LevelLocals Level;
 
+	native readonly Array<@EpisodeInfo> AllEpisodes;
+	native readonly Array<@SkillInfo> AllSkills;
+}
+
+struct EpisodeInfo native
+{
+	native readonly string mEpisodeName;
+	native readonly string mEpisodeMap;
+	native readonly string mPicName;
+	native readonly int8 mShortcut;
+	native readonly bool mNoSkill;
+}
+
+struct SkillInfo native
+{
+	native readonly Name SkillName;
+	native readonly double AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
+	native readonly double DamageFactor;
+	native readonly double ArmorFactor;
+	native readonly double HealthFactor;
+	native readonly double KickbackFactor;
+
+	native readonly bool FastMonsters;
+	native readonly bool SlowMonsters;
+	native readonly bool DisableCheats;
+	native readonly bool AutoUseHealth;
+
+	native readonly bool EasyBossBrain;
+	native readonly bool EasyKey;
+	native readonly bool NoMenu;
+	native readonly int RespawnCounter;
+	native readonly int RespawnLimit;
+	native readonly double Aggressiveness;
+	native readonly int SpawnFilter;
+	native readonly bool SpawnMulti;
+	native readonly bool InstantReaction;
+	native readonly bool SpawnMultiCoopOnly;
+	native readonly int ACSReturn;
+	native readonly string MenuName;
+	native readonly string PicName;
+	native readonly Map<Name, string> MenuNamesForPlayerClass;
+	native readonly bool MustConfirm;
+	native readonly string MustConfirmText;
+	native readonly int8 Shortcut;
+	native readonly string TextColor;
+	native readonly Map<Name, Name> Replace;
+	native readonly Map<Name, Name> Replaced;
+	native readonly double MonsterHealth;
+	native readonly double FriendlyHealth;
+	native readonly bool NoPain;
+	native readonly int Infighting;
+	native readonly bool PlayerRespawn;
+
+	native int GetTextColor() const;
 }
 
 extend struct TexMan

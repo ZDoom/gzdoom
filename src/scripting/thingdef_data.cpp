@@ -767,6 +767,14 @@ void InitThingdef()
 	terraindefstruct->Size = sizeof(FTerrainDef);
 	terraindefstruct->Align = alignof(FTerrainDef);
 
+	auto episodestruct = NewStruct("EpisodeInfo", nullptr, true);
+	episodestruct->Size = sizeof(FEpisode);
+	episodestruct->Align = alignof(FEpisode);
+
+	auto skillstruct = NewStruct("SkillInfo", nullptr, true);
+	skillstruct->Size = sizeof(FSkillInfo);
+	skillstruct->Align = alignof(FSkillInfo);
+
 	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);

@@ -2776,3 +2776,10 @@ void G_ParseMapInfo (FString basemapinfo)
 	}
 }
 
+DEFINE_GLOBAL(AllEpisodes)
+
+DEFINE_FIELD_X(EpisodeInfo, FEpisode, mEpisodeName)
+DEFINE_FIELD_X(EpisodeInfo, FEpisode, mEpisodeMap)
+DEFINE_FIELD_X(EpisodeInfo, FEpisode, mPicName)
+DEFINE_FIELD_X(EpisodeInfo, FEpisode, mShortcut)
+DEFINE_FIELD_X(EpisodeInfo, FEpisode, mNoSkill)

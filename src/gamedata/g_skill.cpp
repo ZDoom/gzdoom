@@ -647,3 +647,55 @@ FName FSkillInfo::GetReplacedBy(FName b)
 	if (Replaced.CheckKey(b)) return Replaced[b];
 	else return NAME_None;
 }
+
+DEFINE_GLOBAL(AllSkills)
+
+// Avoid Name type clashing
+DEFINE_FIELD_NAMED(FSkillInfo, Name, SkillName)
+DEFINE_FIELD(FSkillInfo, AmmoFactor)
+DEFINE_FIELD(FSkillInfo, DoubleAmmoFactor)
+DEFINE_FIELD(FSkillInfo, DropAmmoFactor)
+DEFINE_FIELD(FSkillInfo, DamageFactor)
+DEFINE_FIELD(FSkillInfo, ArmorFactor)
+DEFINE_FIELD(FSkillInfo, HealthFactor)
+DEFINE_FIELD(FSkillInfo, KickbackFactor)
+DEFINE_FIELD(FSkillInfo, FastMonsters)
+DEFINE_FIELD(FSkillInfo, SlowMonsters)
+DEFINE_FIELD(FSkillInfo, DisableCheats)
+DEFINE_FIELD(FSkillInfo, AutoUseHealth)
+DEFINE_FIELD(FSkillInfo, EasyBossBrain)
+DEFINE_FIELD(FSkillInfo, EasyKey)
+DEFINE_FIELD(FSkillInfo, NoMenu)
+DEFINE_FIELD(FSkillInfo, RespawnCounter)
+DEFINE_FIELD(FSkillInfo, RespawnLimit)
+DEFINE_FIELD(FSkillInfo, Aggressiveness)
+DEFINE_FIELD(FSkillInfo, SpawnFilter)
+DEFINE_FIELD(FSkillInfo, SpawnMulti)
+DEFINE_FIELD(FSkillInfo, InstantReaction)
+DEFINE_FIELD(FSkillInfo, SpawnMultiCoopOnly)
+DEFINE_FIELD(FSkillInfo, ACSReturn)
+DEFINE_FIELD(FSkillInfo, MenuName)
+DEFINE_FIELD(FSkillInfo, PicName)
+DEFINE_FIELD(FSkillInfo, MenuNamesForPlayerClass)
+DEFINE_FIELD(FSkillInfo, MustConfirm)
+DEFINE_FIELD(FSkillInfo, MustConfirmText)
+DEFINE_FIELD(FSkillInfo, Shortcut)
+DEFINE_FIELD(FSkillInfo, TextColor)
+DEFINE_FIELD(FSkillInfo, Replace)
+DEFINE_FIELD(FSkillInfo, Replaced)
+DEFINE_FIELD(FSkillInfo, MonsterHealth)
+DEFINE_FIELD(FSkillInfo, FriendlyHealth)
+DEFINE_FIELD(FSkillInfo, NoPain)
+DEFINE_FIELD(FSkillInfo, Infighting)
+DEFINE_FIELD(FSkillInfo, PlayerRespawn)
+
+static int GetTextColor(FSkillInfo* self)
+{
+	return self->GetTextColor();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FSkillInfo, GetTextColor, GetTextColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSkillInfo);
+	ACTION_RETURN_INT(self->GetTextColor());
+}

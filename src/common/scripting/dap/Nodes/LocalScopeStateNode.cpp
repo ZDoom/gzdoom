@@ -70,6 +70,11 @@ bool LocalScopeStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 		for (auto &local : m_state.m_locals)
 		{
 			const VMFrame * current_frame = m_stackFrame;
+			auto scriptFunc = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+			if (scriptFunc && scriptFunc->PCToLine(m_stackFrame->PC) <= local.Line)
+			{
+				continue;
+			}
 			m_children[local.Name] = RuntimeState::CreateNodeForVariable(local.Name, local.Value, local.Type, current_frame, invoker);
 		}
 	}

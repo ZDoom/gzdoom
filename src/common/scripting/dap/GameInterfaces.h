@@ -48,6 +48,11 @@ inline bool IsFunctionAction(VMFunction *func)
 	return func && func->VarFlags & VARF_Action;
 }
 
+inline bool IsFunctionMethod(VMFunction *func)
+{
+	return func && (func->VarFlags & VARF_Method);
+}
+
 inline bool IsFunctionStatic(VMFunction *func)
 {
 	return func && (func->VarFlags & VARF_Static || !(func->VarFlags & VARF_Method));
@@ -62,6 +67,12 @@ inline bool IsFunctionAbstract(VMFunction *func)
 {
 	return func && func->VarFlags & VARF_Abstract;
 }
+
+inline bool IsFunctionHasSelf(VMFunction *func)
+{
+	return func && func->ImplicitArgs > 0;
+}
+
 
 inline bool IsNonAbstractScriptFunction(VMFunction *func)
 {

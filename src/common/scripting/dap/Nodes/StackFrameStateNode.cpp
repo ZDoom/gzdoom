@@ -95,7 +95,7 @@ bool StackFrameStateNode::GetChildNames(std::vector<std::string> &names)
 	{
 		names.push_back("Local");
 	}
-	names.push_back("Globals");
+	names.push_back("Global");
 	if (scriptFunction)
 	{
 		names.push_back("Registers");
@@ -109,7 +109,7 @@ bool StackFrameStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 	{
 		return false;
 	}
-	if (CaseInsensitiveEquals(name, "Globals"))
+	if (CaseInsensitiveEquals(name, "Global"))
 	{
 		node = m_globalsScope;
 		return true;

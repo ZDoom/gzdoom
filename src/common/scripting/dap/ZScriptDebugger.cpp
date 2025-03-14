@@ -7,12 +7,10 @@
 
 #include "Utilities.h"
 #include "GameInterfaces.h"
-#include "Nodes/StackStateNode.h"
 #include "Nodes/StackFrameStateNode.h"
-
 #include "Nodes/StateNodeBase.h"
+#include "Nodes/CVarScopeStateNode.h"
 
-#include <common/engine/filesystem.h>
 
 // This is the main class that handles the debug session and the debug requests/responses and events
 
@@ -626,11 +624,11 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 		if( m_runtimeState->ResolveStateById(frameId, _frameNode)){
 			auto frameNode = std::dynamic_pointer_cast<StackFrameStateNode>(_frameNode);
 			if (!frameNode){
-				RETURN_DAP_ERROR("Could not find frameId");
+				RETURN_DAP_ERROR(StringFormat("Could not find frameId %d", frameId).c_str());
 			}
 			auto frameNodePath = m_runtimeState->GetPathById(frameNode->GetId());
 			if(frameNodePath.empty()){
-				RETURN_DAP_ERROR("Could not find frameId");
+				RETURN_DAP_ERROR(StringFormat("Could not find frameId %d", frameId).c_str());
 			}
 			// try locals first
 			std::string localsPath = StringFormat("%s.%s", frameNodePath.c_str(), StackFrameStateNode::LOCAL_SCOPE_NAME);
@@ -674,7 +672,54 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 	if (context == "repl" && !m_executionManager->IsPaused())
 	{
 		// we don't support repl commands when not paused
-		return dap::Error("Repl not supported when not paused!");
+		auto args = Split(request.expression, " ");
+		if (args.size() == 0){
+			return dap::Error(StringFormat("No command provided").c_str());
+		}
+		auto cmdstr = args.front();
+		FConsoleCommand *cmd = FConsoleCommand::FindByName(args.front().c_str());
+		if (cmd){
+
+			FCommandLine cmdline(request.expression.c_str());
+			cmd->Run(cmdline, 0);
+			// there's no response for this; the output will be in the debug console buffer
+			return response;
+
+		}
+
+		// try a c_var?
+		auto cvar = FindConsoleVariable(cmdstr);
+		if (cvar){
+			
+			if (args.size() > 1){
+				if (cmdstr == "vm_debug" || cmdstr == "vm_debug_port"){
+					return dap::Error(StringFormat("Refusing change %s while debugging!", cmdstr.c_str()).c_str());
+				}
+				if (cvar->GetFlags() & CVAR_UNSAFECONTEXT) {
+					return dap::Error(StringFormat("Cannot change cvar %s from debugger!", cmdstr.c_str()).c_str());
+				}
+				auto val = request.expression.substr(request.expression.find_first_of(" ") + 1);
+				// trim whitespace
+				while (val[0] == ' '){
+					val = val.substr(1);
+				}
+				while (val[val.size() - 1] == ' '){
+					val = val.substr(0, val.size() - 1);
+				}
+				cvar->SetGenericRep(val.c_str(), CVAR_String);
+			} else {
+				auto var = CVarStateNode::ToVariable(cvar);
+				response.result = var.value;
+				response.type = var.type;
+				response.namedVariables = var.namedVariables;
+				response.indexedVariables = var.indexedVariables;
+				response.presentationHint = var.presentationHint;
+			}
+			
+			return response;
+		}
+		return dap::Error(StringFormat("Command %s not found!", request.expression.c_str()).c_str());
+
 	}
 	return dap::Error(StringFormat("Could not evaluate expression %s", request.expression.c_str()).c_str());
 

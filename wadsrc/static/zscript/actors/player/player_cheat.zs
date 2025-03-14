@@ -403,7 +403,7 @@ extend class PlayerPawn
 	
 	virtual void CheatSetInv(String strng, int amount, bool beyond)
 	{
-		if (!(strng ~== "health"))
+		if (strng ~== "health")
 		{
 			if (amount <= 0)
 			{

@@ -81,6 +81,7 @@ public:
 	bool Step(uint32_t stackId, StepType stepType, StepGranularity stepGranularity);
 	dap::array<dap::Breakpoint> SetExceptionBreakpointFilters(const std::vector<std::string> &filterIds);
 	static ExceptionFilter GetFilterID(const std::string &filter_string);
+	bool IsPaused() const { return m_state == DebuggerState::kPaused; }
 	private:
 	inline pauseReason CheckState(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
 			void ResetStepState(DebuggerState state, VMFrameStack *stack);

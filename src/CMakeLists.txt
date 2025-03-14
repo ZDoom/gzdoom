@@ -1189,6 +1189,7 @@ set (PCH_SOURCES
 	common/scripting/dap/IdMap.cpp
 	common/scripting/dap/IdProvider.cpp
 	common/scripting/dap/Nodes/ArrayStateNode.cpp
+	common/scripting/dap/Nodes/CVarScopeStateNode.cpp
 	common/scripting/dap/Nodes/LocalScopeStateNode.cpp
 	common/scripting/dap/Nodes/GlobalScopeStateNode.cpp
 	common/scripting/dap/Nodes/ObjectStateNode.cpp

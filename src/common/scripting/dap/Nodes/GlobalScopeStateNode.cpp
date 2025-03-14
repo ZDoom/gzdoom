@@ -123,7 +123,7 @@ bool GlobalScopeStateNode::GetChildNode(std::string name, std::shared_ptr<StateN
 						field->Type;
 						// the offset is the address of the field
 						void *addr = (void *)(field->Offset);
-						VMValue val = GetVMValue(addr, field->Type);
+						VMValue val = GetVMValue(addr, field->Type, field->BitValue);
 						m_children[symname] = RuntimeState::CreateNodeForVariable(symname, val, field->Type);
 					}
 				}

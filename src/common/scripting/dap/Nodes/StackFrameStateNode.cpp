@@ -7,6 +7,7 @@
 #include "LocalScopeStateNode.h"
 #include "RegistersScopeStateNode.h"
 #include "GlobalScopeStateNode.h"
+#include "CVarScopeStateNode.h"
 
 namespace DebugServer
 {
@@ -37,6 +38,7 @@ StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(sta
 		m_registersScope = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
 	}
 	m_globalsScope = std::make_shared<GlobalScopeStateNode>();
+	m_cvarScope = std::make_shared<CVarScopeStateNode>();
 }
 
 bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const
@@ -46,10 +48,11 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 	if (IsFunctionNative(m_stackFrame->Func))
 	{
 		stackFrame.name = m_stackFrame->Func->PrintableName;
-		stackFrame.source = {};
+		
 		source.name = "<NATIVE>";
 		source.origin = "<NATIVE>";
 		source.presentationHint = "deemphasize";
+		stackFrame.source = source;
 		return true;
 	}
 	auto scriptFunction = static_cast<VMScriptFunction *>(m_stackFrame->Func);
@@ -93,33 +96,41 @@ bool StackFrameStateNode::GetChildNames(std::vector<std::string> &names)
 	auto scriptFunction = GetVMScriptFunction(m_stackFrame->Func);
 	if (scriptFunction)
 	{
-		names.push_back("Local");
+		names.push_back(LOCAL_SCOPE_NAME);
 	}
-	names.push_back("Global");
+	names.push_back(GLOBALS_SCOPE_NAME);
+	names.push_back(CVAR_SCOPE_NAME);
 	if (scriptFunction)
 	{
-		names.push_back("Registers");
+		names.push_back(REGISTERS_SCOPE_NAME);
 	}
 	return true;
 }
 
 bool StackFrameStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
-	if (IsFunctionNative(m_stackFrame->Func))
-	{
-		return false;
-	}
-	if (CaseInsensitiveEquals(name, "Global"))
+	if (CaseInsensitiveEquals(name, GLOBALS_SCOPE_NAME))
 	{
 		node = m_globalsScope;
 		return true;
 	}
-	if (CaseInsensitiveEquals(name, "Registers"))
+	if (CaseInsensitiveEquals(name, CVAR_SCOPE_NAME))
+	{
+		node = m_cvarScope;
+		return true;
+	}
+	// Native functions don't have the Local or Registers scopes
+	if (IsFunctionNative(m_stackFrame->Func))
+	{
+		return false;
+	}
+	if (CaseInsensitiveEquals(name, REGISTERS_SCOPE_NAME))
 	{
 		node = m_registersScope;
 		return true;
 	}
-	if (CaseInsensitiveEquals(name, "local") && !IsFunctionNative(m_stackFrame->Func))
+
+	if (CaseInsensitiveEquals(name, LOCAL_SCOPE_NAME) && !IsFunctionNative(m_stackFrame->Func))
 	{
 		auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
 		if (scriptFunction)

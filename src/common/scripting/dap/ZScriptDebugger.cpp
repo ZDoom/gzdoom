@@ -600,9 +600,11 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 	auto response = dap::EvaluateResponse();
 	dap::Variable variable;
 	bool found = false;
+	auto isNonVariableContext = context != "variables";
+
 	auto TryPath = [&](const std::string &path){
 		std::shared_ptr<StateNodeBase> node;
-		if(m_runtimeState->ResolveStateByPath(path, node, true)){
+		if(m_runtimeState->ResolveStateByPath(path, node, isNonVariableContext)){
 			auto asVariableSerializable = std::dynamic_pointer_cast<IProtocolVariableSerializable>(node);
 			if(asVariableSerializable && asVariableSerializable->SerializeToProtocol(variable)){
 				found = true;
@@ -612,7 +614,12 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 		}
 		return true;
 	};
-	if (context == "hover" || context == "watch")
+	if (context == "variables"){
+		isNonVariableContext = false;
+	} else {
+		isNonVariableContext = true;
+	}
+	if (context == "variables" || context == "hover" || context == "watch" || (context == "repl" && m_executionManager->IsPaused()))
 	{
 		auto frameId = request.frameId.value(0);
 		std::shared_ptr<StateNodeBase> _frameNode;
@@ -626,7 +633,7 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 				RETURN_DAP_ERROR("Could not find frameId");
 			}
 			// try locals first
-			std::string localsPath = StringFormat("%s.Local", frameNodePath.c_str());
+			std::string localsPath = StringFormat("%s.%s", frameNodePath.c_str(), StackFrameStateNode::LOCAL_SCOPE_NAME);
 			std::string path;
 
 			auto stackFrame = frameNode->GetStackFrame();
@@ -645,27 +652,32 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 				}
 			}
 			// try globals next
-			if (!found && !TryPath(StringFormat("%s.Global.%s", frameNodePath.c_str(), request.expression.c_str()))){
+			if (!found && !TryPath(StringFormat("%s.%s.%s", frameNodePath.c_str(), StackFrameStateNode::GLOBALS_SCOPE_NAME, request.expression.c_str()))){
+				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+			}
+			// cvars?
+			if (!found && context != "hover" && context != "variables" && !TryPath(StringFormat("%s.%s.%s", frameNodePath.c_str(), StackFrameStateNode::CVAR_SCOPE_NAME, request.expression.c_str()))){
 				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
 			}
 		}
-		if (!found){
-			RETURN_DAP_ERROR(StringFormat("Could not evaluate expression %s", request.expression.c_str()).c_str());
+		if (found){
+			response.result = variable.value;
+			response.variablesReference = variable.variablesReference;
+			response.type = variable.type;
+			response.namedVariables = variable.namedVariables;
+			response.indexedVariables = variable.indexedVariables;
+			response.memoryReference = variable.memoryReference;
+			return response;
 		}
-		response.result = variable.value;
-		response.variablesReference = variable.variablesReference;
-		response.type = variable.type;
-		response.namedVariables = variable.namedVariables;
-		response.indexedVariables = variable.indexedVariables;
-		response.memoryReference = variable.memoryReference;
-		return response;
 	}
-	else if (context == "repl")
+
+	if (context == "repl" && !m_executionManager->IsPaused())
 	{
-		// we don't support repl yet
-		RETURN_DAP_ERROR("Repl not supported");
+		// we don't support repl commands when not paused
+		return dap::Error("Repl not supported when not paused!");
 	}
-	RETURN_DAP_ERROR(StringFormat("Unsupported context %s", context.c_str()).c_str());
+	return dap::Error(StringFormat("Could not evaluate expression %s", request.expression.c_str()).c_str());
+
 }
 
 } // namespace DebugServer

@@ -421,6 +421,10 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 	const bool doRoll = (drawRollSpriteActor || drawRollParticle);
 
+	// [DVR] +ANGLEDROLL, +ANGLEDROLLYSCALE
+	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
+	const bool AngledRollYScale = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLLYSCALE);
+
 	// [fgsfds] check sprite type mask
 	uint32_t spritetype = (uint32_t)-1;
 	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
@@ -516,11 +520,35 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				// Compute center of sprite
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				float rollDegrees = Angles.Roll.Degrees();
+				float AngledRollScaleFactor = 1.0;
+
+				if (AngledRoll)
+				{
+					rollDegrees = fmodf(rollDegrees, 360.0f);
+					DAngle ang = (actor->Pos() - di->Viewpoint.Pos).Angle();
+					if (di->Viewpoint.IsOrtho()) ang = di->Viewpoint.Angles.Yaw;
+					ang += actor->AngledRollOffset;
+					DAngle sprang = actor->GetSpriteAngle(ang, di->Viewpoint.TicFrac);
+
+					// [DVR] Jerky angle-shift at cardinal roll angles when viewed from 45-degrees, etc.
+					if (rollDegrees < 90.0) rollDegrees *= sprang.Cos();
+					else if (rollDegrees > 270.0) rollDegrees = (rollDegrees - 360.0) * sprang.Cos();
+					else rollDegrees += (180.0 - rollDegrees) * (1.0 - sprang.Cos());
+
+					if (AngledRollYScale)
+					{
+						float cos2sprang = cos( M_PI * (sprang.Degrees()) / 90.0);
+						float cosroll = fabs(Angles.Roll.Cos());
+						AngledRollScaleFactor = 0.5 * (1.0 + cosroll);
+						AngledRollScaleFactor += 0.5 * (1.0 - cosroll) * cos2sprang;
+					}
+				}
 
 				mat.Translate(center.X, center.Z, center.Y);
 				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 				if (useOffsets) mat.Translate(xx, zz, yy);
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
+				if (AngledRollYScale) mat.Scale(1.0, AngledRollScaleFactor, 1.0);
 				if (useOffsets) mat.Translate(-xx, -zz, -yy);
 				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 				mat.Translate(-center.X, -center.Z, -center.Y);

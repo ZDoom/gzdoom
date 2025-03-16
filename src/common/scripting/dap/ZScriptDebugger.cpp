@@ -160,7 +160,6 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::SourceRequest &request) { return GetSource(request); });
 	m_session->registerHandler([this](const dap::LoadedSourcesRequest &request) { return GetLoadedSources(request); });
 	m_session->registerHandler([this](const dap::DisassembleRequest &request) { return Disassemble(request); });
-	// evaluate request
 	m_session->registerHandler([this](const dap::EvaluateRequest &request) { return Evaluate(request); });
 }
 
@@ -671,6 +670,8 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 
 	if (context == "repl" && !m_executionManager->IsPaused())
 	{
+		// TODO: This isn't safe to do from the debugger thread, figure out a way to safely dispatch to the main thread later
+#if 0
 		// we don't support repl commands when not paused
 		auto args = Split(request.expression, " ");
 		if (args.size() == 0){
@@ -678,13 +679,28 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 		}
 		auto cmdstr = args.front();
 		FConsoleCommand *cmd = FConsoleCommand::FindByName(args.front().c_str());
-		if (cmd){
+		if (cmd)
+		{
+			bool unsafe = false;
+			if (cmd->IsAlias())
+			{
+				FUnsafeConsoleAlias *alias = dynamic_cast<FUnsafeConsoleAlias *>(cmd);
+				unsafe = alias != nullptr;
+			}
+			else
+			{
+				FUnsafeConsoleCommand *unsafeCmd = dynamic_cast<FUnsafeConsoleCommand *>(cmd);
+				unsafe = unsafeCmd != nullptr;
+			}
+			if (unsafe)
+			{
+				return dap::Error(StringFormat("Cannot run command %s from debugger (unsafe context)!", cmdstr.c_str()).c_str());
+			}
 
 			FCommandLine cmdline(request.expression.c_str());
 			cmd->Run(cmdline, 0);
 			// there's no response for this; the output will be in the debug console buffer
 			return response;
-
 		}
 
 		// try a c_var?
@@ -719,7 +735,8 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 			return response;
 		}
 		return dap::Error(StringFormat("Command %s not found!", request.expression.c_str()).c_str());
-
+#endif
+		return dap::Error("Cannot run evaluate while running!");
 	}
 	return dap::Error(StringFormat("Could not evaluate expression %s", request.expression.c_str()).c_str());
 

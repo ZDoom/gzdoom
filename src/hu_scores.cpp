@@ -425,7 +425,8 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	HU_DrawFontScaled(col5, y + ypadding, color, str);
 
-	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
+	const int team = player->userinfo.GetTeam();
+	if (team != TEAM_NONE && teamplay && Teams[team].GetLogo().IsNotEmpty ())
 	{
 		auto pic = TexMan.GetGameTextureByName(Teams[player->userinfo.GetTeam()].GetLogo().GetChars ());
 		DrawTexture(twod, pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,

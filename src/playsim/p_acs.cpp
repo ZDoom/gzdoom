@@ -3519,7 +3519,8 @@ void DLevelScript::Serialize(FSerializer &arc)
 		("cliprectheight", ClipRectHeight)
 		("wrapwidth", WrapWidth)
 		("inmodulescriptnum", InModuleScriptNumber)
-		("level", Level);
+		("level", Level)
+		("controller", controller);
 
 	if (arc.isReading())
 	{

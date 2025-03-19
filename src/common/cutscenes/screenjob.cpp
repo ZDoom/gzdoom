@@ -270,8 +270,10 @@ void ScreenJobDraw()
 		ScaleOverrider ovr(twod);
 		IFVIRTUALPTRNAME(cutscene.runner, NAME_ScreenJobRunner, RunFrame)
 		{
+			int ret = 0;
 			VMValue parm[] = { cutscene.runner, smoothratio };
-			VMCall(func, parm, 2, nullptr, 0);
+			VMReturn rets[] = { &ret };
+			VMCall(func, parm, 2, rets, 1);
 		}
 	}
 }

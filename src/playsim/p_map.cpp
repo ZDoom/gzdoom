@@ -215,7 +215,7 @@ bool P_CanCrossLine(AActor *mo, line_t *line, DVector3 next)
 		assert(VIndex != ~0u);
 	}
 
-	VMValue params[] = { mo, line, next.X, next.Y, next.Z, false };
+	VMValue params[] = { mo, line, next.X, next.Y, next.Z };
 	VMReturn ret;
 	int retval;
 	ret.IntAt(&retval);

@@ -6115,8 +6115,10 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, ResetAirSupply)
 	{
+		int drowning = 0;
 		VMValue params[] = { p->mo, false };
-		VMCall(func, params, 2, nullptr, 0);
+		VMReturn rets[] = { &drowning };
+		VMCall(func, params, 2, rets, 1);
 	}
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
@@ -6151,7 +6153,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		IFVM(PlayerPawn, FilterCoopRespawnInventory)
 		{
 			VMValue params[] = { p->mo, oldactor, ((heldWeap == nullptr || (heldWeap->ObjectFlags & OF_EuthanizeMe)) ? nullptr : heldWeap) };
-			VMCall(func, params, 2, nullptr, 0);
+			VMCall(func, params, 3, nullptr, 0);
 		}
 	}
 	if (oldactor != NULL)

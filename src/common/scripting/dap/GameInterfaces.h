@@ -11,6 +11,7 @@
 #include "Utilities.h"
 #include "actor.h"
 #include "filesystem.h"
+#include "resourcefile.h"
 
 
 struct FState;
@@ -130,8 +131,9 @@ static inline bool isScriptPath(const std::string &path)
 	{
 		return false;
 	}
-	std::string scriptName = ToLowerCopy(path.substr(normalizePath(path).find_last_of('/') + 1));
+	std::string scriptName = ToLowerCopy(FileSys::ExtractBaseName(GetScriptPathNoQual(path).c_str(), true));
 	auto ext = scriptName.substr(scriptName.find_last_of('.') + 1);
+	scriptName = scriptName.substr(0, scriptName.find_last_of('.'));
 	if (!(ext == "zs" || ext == "zsc" || ext == "zc" || ext == "acs" || ext == "dec" || (scriptName == "decorate") || (scriptName == "acs")
 				|| (scriptName == "sbarinfo")))
 	{
@@ -456,12 +458,23 @@ static int GetScriptFileID(const std::string &script_path)
 		containerLump = fileSystem.CheckIfResourceFileLoaded(namespaceName.c_str());
 	}
 	std::string truncScriptPath = GetScriptPathNoQual(script_path);
-	return fileSystem.CheckNumForFullName(truncScriptPath.c_str(), true, containerLump != -1 ? containerLump : FileSys::ns_global);
+	auto ret =  fileSystem.CheckNumForFullName(truncScriptPath.c_str(), true, containerLump != -1 ? containerLump : FileSys::ns_global);
+	if (ret == -1 && truncScriptPath.length() <= 8 && truncScriptPath.find_last_of('.') == std::string::npos){
+		int lastlump = 0;
+		ret = 0;
+		while (ret != -1) {
+			ret = fileSystem.FindLump(truncScriptPath.c_str(), &lastlump, true);
+			if (ret != -1 && (containerLump == -1 || fileSystem.GetFileContainer(ret) == containerLump)){
+				break;
+			}
+		}
+	}
+	return ret;
 }
 
-static std::vector<std::string> FindScripts(const std::string &filter, int baselump = -1)
+static std::map<std::string, int> FindScripts(const std::string &filter, int baselump = -1)
 {
-	std::set<std::string> scriptNames;
+	std::map<std::string, int> scriptNames;
 	int filelump = -1;
 	int containerLump = baselump;
 	std::string path = filter;
@@ -496,14 +509,14 @@ static std::vector<std::string> FindScripts(const std::string &filter, int basel
 		{
 			path = GetScriptWithQual(filter, fileSystem.GetResourceFileName(containerLump));
 		}
-		scriptNames.insert(path);
+		scriptNames.insert({path, filelump});
 	}
-	return {scriptNames.begin(), scriptNames.end()};
+	return scriptNames;
 }
 
-static std::vector<std::string> FindAllScripts(int baselump = -1)
+static std::map<std::string, int> FindAllScripts(int baselump = -1)
 {
-	std::vector<std::string> scriptNames;
+	std::map<std::string, int>  scriptNames;
 	for (int i = 0; i < fileSystem.GetNumEntries(); ++i)
 	{
 		auto fc = fileSystem.GetFileContainer(i);
@@ -515,7 +528,7 @@ static std::vector<std::string> FindAllScripts(int baselump = -1)
 			std::string fqn = GetScriptWithQual(scriptPath, containerName);
 			if (isScriptPath(fqn))
 			{
-				scriptNames.push_back(fqn);
+				scriptNames.insert({fqn, i});
 			}
 		}
 	}
@@ -644,22 +657,45 @@ static bool FunctionIsAnonymousStateFunction(VMFunction *func)
 static size_t GetImplicitParmeterCount(const VMFrame *m_stackFrame)
 { return m_stackFrame->Func->ImplicitArgs; }
 
+static std::string GetFunctionClassName(const VMFunction *func)
+{
+	std::string_view st = func->QualifiedName;
+	auto dotpos = st.find(".");
+	if (dotpos == std::string_view::npos) return "";
+	return std::string(st.substr(0, dotpos));
+}
+
 static PFunction *GetFunctionSymbol(const VMFunction *func)
 {
 	if (func)
 	{
 		// get the FName of the function
 		auto funcName = func->Name;
-		std::string className;
-		// split it into two parts `.` and get the first part
-		std::string_view st = func->QualifiedName;
-		auto dotpos = st.find(".");
-		if (dotpos == std::string_view::npos) return nullptr;
-		className = st.substr(0, dotpos);
-
+		std::string className = GetFunctionClassName(func);
 		auto cls = PClass::FindClass(className.c_str());
-		if (!cls) return nullptr;
-		auto pfunc = dyn_cast<PFunction>(cls->FindSymbol(funcName, true));
+		PFunction * pfunc = nullptr;
+		if (!cls){
+			std::string structName = "Struct<" + className + ">";
+			// maybe it's a struct?
+			// TODO: this is very slow, cache this somehow?
+			for (size_t i = 0; i < countof(TypeTable.TypeHash); ++i)
+			{
+				for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr; ty = ty->HashNext)
+				{
+					if (ty->isContainer() && std::string_view(ty->mDescriptiveName.GetChars()).find(structName.c_str()) != std::string_view::npos){
+						PContainerType *struct_type = dynamic_cast<PContainerType *>(ty);
+						if (struct_type){
+							pfunc = dyn_cast<PFunction>(struct_type->Symbols.FindSymbol(funcName, true));
+							if (pfunc){
+								break;
+							}
+						}
+					}
+				}
+			}
+		} else {
+		 	pfunc = dyn_cast<PFunction>(cls->FindSymbol(funcName, true));
+		}
 		if (pfunc)
 		{
 			// pfunc has the parameter names

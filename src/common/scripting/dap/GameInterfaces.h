@@ -96,7 +96,7 @@ static inline std::string GetIPRef(const char *qualifiedName, uint32_t PCdiff, c
 
 static inline std::string GetScriptPathNoQual(const std::string &scriptPath)
 {
-	auto colonPos = scriptPath.find(':');
+	auto colonPos = scriptPath.find_last_of(':');
 	if (colonPos == std::string::npos)
 	{
 		return scriptPath;
@@ -110,7 +110,7 @@ static inline std::string GetScriptWithQual(const std::string &scriptPath, const
 
 static inline std::string GetArchiveNameFromPath(const std::string &scriptPath)
 {
-	auto colonPos = scriptPath.find(':');
+	auto colonPos = scriptPath.find_last_of(':');
 	if (colonPos != std::string::npos)
 	{
 		return scriptPath.substr(0, colonPos);
@@ -456,6 +456,11 @@ static int GetScriptFileID(const std::string &script_path)
 	if (!namespaceName.empty())
 	{
 		containerLump = fileSystem.CheckIfResourceFileLoaded(namespaceName.c_str());
+		if (containerLump == -1 && std::count(namespaceName.begin(), namespaceName.end(), ':') > 1)
+		{
+			namespaceName = namespaceName.substr(namespaceName.find_last_of(':') + 1);
+			containerLump = fileSystem.CheckIfResourceFileLoaded(namespaceName.c_str());
+		}
 	}
 	std::string truncScriptPath = GetScriptPathNoQual(script_path);
 	auto ret =  fileSystem.CheckNumForFullName(truncScriptPath.c_str(), true, containerLump != -1 ? containerLump : FileSys::ns_global);

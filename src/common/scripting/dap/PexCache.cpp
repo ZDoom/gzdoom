@@ -194,9 +194,6 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 		{
 			continue;
 		}
-		if (source_name.find("DECORATE") != std::string::npos){
-			int foo = 0;
-		}
 		PFunction * pfunc = GetFunctionSymbol(func);
 		addEmptyBinIfNotExists(ref, vmscriptfunc->SourceFileName.GetChars());
 		if (!pfunc && IsNonAbstractScriptFunction(func)){

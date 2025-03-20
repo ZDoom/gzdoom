@@ -106,6 +106,7 @@ bool ZScriptDebugger::EndSession(bool closed)
 	m_endingSession = false;
 	return m_quitting;
 }
+
 dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> ZScriptDebugger::SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request)
 {
 	return m_breakpointManager->SetInstructionBreakpoints(request);

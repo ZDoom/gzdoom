@@ -607,9 +607,9 @@ DEFINE_PROPERTY(tag, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(leanroll, 0, Actor)
 {
-	// sets the standard flags for a monster
-	defaults->renderflags|=RF_ROLLSPRITE|RF_ROLLCENTER;
-	defaults->renderflags2|=RF2_STRETCHPIXELS|RF2_ANGLEDROLL|RF2_ANGLEDROLLYSCALE;
+	// sets the standard flags for angle-dependent roll
+	defaults->renderflags|=RF_ROLLSPRITE;
+	defaults->renderflags2|=RF2_STRETCHPIXELS|RF2_ANGLEDROLL;
 }
 
 //==========================================================================

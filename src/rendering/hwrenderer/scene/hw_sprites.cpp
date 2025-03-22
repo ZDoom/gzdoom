@@ -421,9 +421,8 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 	const bool doRoll = (drawRollSpriteActor || drawRollParticle);
 
-	// [DVR] +ANGLEDROLL, +ANGLEDROLLYSCALE
+	// [DVR] +ANGLEDROLL
 	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
-	const bool AngledRollYScale = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLLYSCALE);
 
 	// [fgsfds] check sprite type mask
 	uint32_t spritetype = (uint32_t)-1;
@@ -520,38 +519,35 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				// Compute center of sprite
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				float rollDegrees = Angles.Roll.Degrees();
-				float AngledRollScaleFactor = 1.0;
+				float pitchDegrees = 0.0;
 
 				if (AngledRoll)
 				{
 					rollDegrees = fmodf(rollDegrees, 360.0f);
-					DAngle ang = (actor->Pos() - di->Viewpoint.Pos).Angle();
-					if (di->Viewpoint.IsOrtho()) ang = di->Viewpoint.Angles.Yaw;
-					ang += actor->AngledRollOffset;
-					DAngle sprang = actor->GetSpriteAngle(ang, di->Viewpoint.TicFrac);
+					DAngle ang = di->Viewpoint.Angles.Yaw + actor->Angles.Yaw + actor->AngledRollOffset - DAngle::fromDeg(90.0);
+					angleRad = ang.Radians();
+					FVector3 relPos = center - FVector3(di->Viewpoint.Pos);
+					if (useOffsets) relPos += FVector3(xx, yy, zz);
+					pitchDegrees = 270.0 - DVector3(relPos).Angle().Degrees();
 
-					// [DVR] Jerky angle-shift at cardinal roll angles when viewed from 45-degrees, etc.
-					if (rollDegrees < 90.0) rollDegrees *= sprang.Cos();
-					else if (rollDegrees > 270.0) rollDegrees = (rollDegrees - 360.0) * sprang.Cos();
-					else rollDegrees += (180.0 - rollDegrees) * (1.0 - sprang.Cos());
-
-					if (AngledRollYScale)
-					{
-						float cos2sprang = cos( M_PI * (sprang.Degrees()) / 90.0);
-						float cosroll = fabs(Angles.Roll.Cos());
-						AngledRollScaleFactor = 0.5 * (1.0 + cosroll);
-						AngledRollScaleFactor += 0.5 * (1.0 - cosroll) * cos2sprang;
-					}
+					Matrix3x4 rolltilt;
+					rolltilt.MakeIdentity();
+					ang = actor->Angles.Yaw + actor->AngledRollOffset;
+					rolltilt.Rotate(ang.Cos(), ang.Sin(), 0.0, -rollDegrees);
+					float between = (DVector3(rolltilt * relPos).Angle() - (actor->Pos() - di->Viewpoint.Pos).Angle()).Degrees();
+					if (fabs(between) > 90.0) pitchDegrees *= -1.0;
+					if (Angles.Roll.Cos() < 0.0) pitchDegrees *= -1.0;
 				}
 
-				mat.Translate(center.X, center.Z, center.Y);
 				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
+				mat.Translate(center.X, center.Z, center.Y);
 				if (useOffsets) mat.Translate(xx, zz, yy);
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, -HWAngles.Yaw.Degrees()); // Cancel regular Y-billboarding
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
-				if (AngledRollYScale) mat.Scale(1.0, AngledRollScaleFactor, 1.0);
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, pitchDegrees); // New Y-billboarding about rolled z-axis
 				if (useOffsets) mat.Translate(-xx, -zz, -yy);
-				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 				mat.Translate(-center.X, -center.Z, -center.Y);
+				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 			}
 
 			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
@@ -956,8 +952,22 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (!modelframe)
 	{
 		bool mirror = false;
+		bool backfaced = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
 		if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
+		else if (actor && thing->renderflags2 & RF2_ANGLEDROLL)
+		{
+			Matrix3x4 rolltilt;
+			rolltilt.MakeIdentity();
+			DAngle tempang = thing->Angles.Yaw + thing->AngledRollOffset;
+			rolltilt.Rotate(tempang.Cos(), tempang.Sin(), 0.0, -thing->Angles.Roll.Degrees());
+			tempang = DVector3(rolltilt * FVector3(thingpos - vp.Pos)).Angle();
+			backfaced = fabs((ang - tempang).Degrees()) > 90.0;
+			if (backfaced) // (ang - tempang).Cos() < 0.0)
+			{
+				ang = DAngle::fromDeg(180.0) - ang;
+			}
+		}
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -1029,7 +1039,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		auto r = spi.GetSpriteRect();
 
 		// [SP] SpriteFlip
-		if (thing->renderflags & RF_SPRITEFLIP)
+		if ((thing->renderflags & RF_SPRITEFLIP) || backfaced)
 			thing->renderflags ^= RF_XFLIP;
 
 		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
@@ -1048,7 +1058,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (!texture || !texture->isValid())
 			return;
 
-		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
+		if ((thing->renderflags & RF_SPRITEFLIP) || backfaced) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
 		// If sprite is isometric, do both vertical scaling and partial rotation to face the camera to compensate for Y-billboarding.
@@ -1199,7 +1209,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		z1 = z1 * spbias + vpz * vpbias;
 		x2 = x2 * spbias + vpx * vpbias;
 		y2 = y2 * spbias + vpy * vpbias;
-		z2 = z2 * spbias + vpz * vpbias;		
+		z2 = z2 * spbias + vpz * vpbias;
 	}
 
 	// light calculation

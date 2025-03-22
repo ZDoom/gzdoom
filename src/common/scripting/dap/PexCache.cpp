@@ -13,6 +13,14 @@
 namespace DebugServer
 {
 
+static void NormalizeArchivePath(std::string &path)
+{
+	if (path.find(":") != std::string::npos)
+	{
+		path.erase(std::remove(path.begin(), path.end(), ':'), path.end());
+	}
+}
+
 bool PexCache::HasScript(const int scriptReference)
 {
 	scripts_lock scriptLock(m_scriptsMutex);
@@ -58,6 +66,7 @@ PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath, int
 	// check for the archive name in the script path
 	binary->archivePath = wadnum >= 0 ? fileSystem.GetResourceFileFullName(wadnum) : GetArchiveNameFromPath(scriptPath);
 	binary->archiveName = wadnum >= 0 ? fileSystem.GetResourceFileName(wadnum) : binary->archivePath;
+	NormalizeArchivePath(binary->archivePath);
 	binary->scriptReference = GetScriptReference(binary->GetQualifiedPath());
 	return binary;
 }
@@ -473,6 +482,24 @@ PexCache::MakeInstruction(VMScriptFunction *func, int ref, const std::string &in
 	return instruction;
 }
 
+std::vector<dap::Module> PexCache::GetModules()
+{
+	std::vector<dap::Module> modules;
+	int count = fileSystem.GetNumWads();
+	for (int i = 0; i < count; i++)
+	{
+		dap::Module module;
+		module.id = dap::integer(i);
+		std::string name = fileSystem.GetResourceFileName(i);
+		std::string path = fileSystem.GetResourceFileFullName(i);
+		NormalizeArchivePath(name);
+		module.name = name;
+		module.path = path;
+		modules.push_back(module);
+	}		
+	return modules;
+}
+
 uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions)
 {
 #if defined(_WIN32) || defined(_WIN64)
@@ -830,6 +857,7 @@ bool DebugServer::Binary::HasFunctions() const
 {
 	return !functions.empty() || !functionCodeMap.empty();
 }
+
 bool DebugServer::Binary::HasFunctionLines() const
 {
 	return !functionLineMap.empty();

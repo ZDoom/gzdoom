@@ -63,6 +63,7 @@ class ZScriptDebugger
 	dap::ResponseOrError<dap::DisassembleResponse> Disassemble(const dap::DisassembleRequest &request);
 	dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> SetExceptionBreakpoints(const dap::SetExceptionBreakpointsRequest &request);
 	dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request);
+	dap::ResponseOrError<dap::ModulesResponse> Modules(const dap::ModulesRequest &request);
 	private:
 	std::shared_ptr<IdProvider> m_idProvider;
 

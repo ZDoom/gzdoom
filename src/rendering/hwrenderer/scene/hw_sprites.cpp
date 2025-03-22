@@ -1039,7 +1039,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		auto r = spi.GetSpriteRect();
 
 		// [SP] SpriteFlip
-		if ((thing->renderflags & RF_SPRITEFLIP) || backfaced)
+		if (thing->renderflags & RF_SPRITEFLIP)
 			thing->renderflags ^= RF_XFLIP;
 
 		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
@@ -1058,7 +1058,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (!texture || !texture->isValid())
 			return;
 
-		if ((thing->renderflags & RF_SPRITEFLIP) || backfaced) // [SP] Flip back
+		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
 
 		// If sprite is isometric, do both vertical scaling and partial rotation to face the camera to compensate for Y-billboarding.

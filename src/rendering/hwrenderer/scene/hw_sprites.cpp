@@ -528,26 +528,23 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 					angleRad = ang.Radians();
 					FVector3 relPos = center - FVector3(di->Viewpoint.Pos);
 					if (useOffsets) relPos += FVector3(xx, yy, zz);
-					pitchDegrees = 270.0 - DVector3(relPos).Angle().Degrees();
 
 					Matrix3x4 rolltilt;
 					rolltilt.MakeIdentity();
 					ang = actor->Angles.Yaw + actor->AngledRollOffset;
 					rolltilt.Rotate(ang.Cos(), ang.Sin(), 0.0, -rollDegrees);
-					float between = (DVector3(rolltilt * relPos).Angle() - (actor->Pos() - di->Viewpoint.Pos).Angle()).Degrees();
-					if (fabs(between) > 90.0) pitchDegrees *= -1.0;
-					if (Angles.Roll.Cos() < 0.0) pitchDegrees *= -1.0;
+					pitchDegrees = 270.0 - DVector3(rolltilt * relPos).Angle().Degrees();
 				}
 
-				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 				mat.Translate(center.X, center.Z, center.Y);
 				if (useOffsets) mat.Translate(xx, zz, yy);
+				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, -HWAngles.Yaw.Degrees()); // Cancel regular Y-billboarding
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
 				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, pitchDegrees); // New Y-billboarding about rolled z-axis
+				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 				if (useOffsets) mat.Translate(-xx, -zz, -yy);
 				mat.Translate(-center.X, -center.Z, -center.Y);
-				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
 			}
 
 			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
@@ -1160,6 +1157,15 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 	if(thing->renderflags2 & RF2_ISOMETRICSPRITES) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
+	if(actor && (thing->renderflags2 & RF2_ANGLEDROLL) && !(thing->renderflags & RF_ROLLCENTER))
+	{
+		double rollsin = thing->Angles.Roll.Sin();
+		DAngle tempang2 = thing->Angles.Yaw + thing->AngledRollOffset + DAngle::fromDeg(rollsin < 0.0
+																						? 90.0 : -90.0);
+		double r2 = 0.5 * fabs((z2 - z1) * rollsin);
+		depth = (float)((x + r2 * tempang2.Cos() - vp.Pos.X) * vp.TanCos
+						+ (y + r2 * tempang2.Sin() - vp.Pos.Y) * vp.TanSin);
+	}
 	if (isSpriteShadow) depth += 1.f/65536.f; // always sort shadows behind the sprite.
 
 	if (gl_spriteclip == -1 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE) // perform anamorphosis

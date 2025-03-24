@@ -873,6 +873,9 @@ static void GetPackets()
 				{
 					pState.CurrentSequence = seq;
 				}
+				// Update this so host switching doesn't have any hiccups in packet-server mode.
+				if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator && pNum != Net_Arbitrator)
+					pState.SequenceAck = seq;
 			}
 		}
 	}

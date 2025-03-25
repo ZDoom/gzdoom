@@ -162,6 +162,14 @@ CUSTOM_CVAR(Int, cl_showchat, CHAT_GLOBAL, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = CHAT_GLOBAL;
 }
 
+CUSTOM_CVAR(Int, cl_debugprediction, 0, CVAR_CHEAT)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > BACKUPTICS - 1)
+		self = BACKUPTICS - 1;
+}
+
 // Used to write out all network events that occured leading up to the next tick.
 static struct NetEventData
 {
@@ -1969,7 +1977,19 @@ void TryRunTics()
 	int runTics = min<int>(totalTics, availableTics);
 	if (totalTics > 0 && totalTics < availableTics - 1 && !singletics)
 		++runTics;
-	
+
+	// Test player prediction code in singleplayer
+	// by running the gametic behind the ClientTic
+	if (!netgame && !demoplayback && cl_debugprediction > 0)
+	{
+		int debugTarget = ClientTic - cl_debugprediction;
+		int debugOffset = gametic - debugTarget;
+		if (debugOffset > 0)
+		{
+			runTics = max<int>(runTics - debugOffset, 0);
+		}
+	}
+
 	// If there are no tics to run, check for possible stall conditions and new
 	// commands to predict.
 	if (runTics <= 0)

@@ -67,6 +67,12 @@ void P_RunClientsideLogic()
 
 	if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
 	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].inventorytics > 0)
+				--players[i].inventorytics;
+		}
+
 		for (auto level : AllLevels())
 		{
 			auto it = level->GetClientsideThinkerIterator<AActor>();

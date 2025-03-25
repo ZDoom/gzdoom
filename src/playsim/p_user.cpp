@@ -133,6 +133,8 @@ CUSTOM_CVAR(Float, cl_rubberband_limit, 756.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 		self = 0.0f;
 }
 
+EXTERN_CVAR (Int, cl_debugprediction)
+
 ColorSetList ColorSets;
 PainFlashList PainFlashes;
 
@@ -1440,7 +1442,7 @@ void P_PredictPlayer (player_t *player)
 		player->mo == NULL ||
 		player != player->mo->Level->GetConsolePlayer() ||
 		player->playerstate != PST_LIVE ||
-		!netgame ||
+		(!netgame && cl_debugprediction == 0) ||
 		/*player->morphTics ||*/
 		(player->cheats & CF_PREDICTING))
 	{

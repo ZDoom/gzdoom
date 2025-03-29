@@ -268,8 +268,8 @@ void HWDrawInfo::ClearBuffers()
 void HWDrawInfo::UpdateCurrentMapSection()
 {
 	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
-	if (Viewpoint.IsAllowedOoB())
-		mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
+	if (Viewpoint.IsAllowedOoB() || Viewpoint.IsOrtho())
+		mapsection = Level->PointInRenderSubsector(Viewpoint.OffPos)->mapsection;
 	CurrentMapSections.Set(mapsection);
 }
 
@@ -363,25 +363,46 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 //
 //-----------------------------------------------------------------------------
 
-angle_t HWDrawInfo::FrustumAngle()
+angle_t OoBFrustumAngle(FRenderViewpoint* Viewpoint)
 {
 	// If pitch is larger than this you can look all around at an FOV of 90 degrees
-	if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 89.0)  return 0xffffffff;
-	else if (fabs(Viewpoint.HWAngles.Pitch.Degrees()) > 46.0 && !Viewpoint.IsAllowedOoB())  return 0xffffffff; // Just like 4.12.2 and older did
+	if (fabs(Viewpoint->HWAngles.Pitch.Degrees()) > 89.0)  return 0xffffffff;
 	int aspMult = AspectMultiplier(r_viewwindow.WidescreenRatio); // 48 == square window
-	double absPitch = fabs(Viewpoint.HWAngles.Pitch.Degrees());
+	double absPitch = fabs(Viewpoint->HWAngles.Pitch.Degrees());
 	 // Smaller aspect ratios still clip too much. Need a better solution
 	if (aspMult > 36 && absPitch > 30.0)  return 0xffffffff;
 	else if (aspMult > 40 && absPitch > 25.0)  return 0xffffffff;
 	else if (aspMult > 45 && absPitch > 20.0)  return 0xffffffff;
 	else if (aspMult > 47 && absPitch > 10.0) return 0xffffffff;
 
-	double xratio = r_viewwindow.FocalTangent / Viewpoint.PitchCos;
+	double xratio = r_viewwindow.FocalTangent / Viewpoint->PitchCos;
 	double floatangle = 0.05 + atan ( xratio ) * 48.0 / aspMult; // this is radians
 	angle_t a1 = DAngle::fromRad(floatangle).BAMs();
 
 	if (a1 >= ANGLE_90) return 0xffffffff;
 	return a1;
+}
+
+angle_t HWDrawInfo::FrustumAngle()
+{
+	if (Viewpoint.IsAllowedOoB())
+	{
+		return OoBFrustumAngle(&Viewpoint);
+	}
+	else
+	{
+		float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees());
+
+		// If the pitch is larger than this you can look all around at a FOV of 90°
+		if (tilt > 46.0f) return 0xffffffff;
+
+		// ok, this is a gross hack that barely works...
+		// but at least it doesn't overestimate too much...
+		double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees() * 48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
+		angle_t a1 = DAngle::fromDeg(floatangle).BAMs();
+		if (a1 >= ANGLE_180) return 0xffffffff;
+		return a1;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1043,8 +1064,8 @@ void HWDrawInfo::ProcessScene(bool toscreen)
 	portalState.BeginScene();
 
 	int mapsection = Level->PointInRenderSubsector(Viewpoint.Pos)->mapsection;
-	if (Viewpoint.IsAllowedOoB())
-		mapsection = Level->PointInRenderSubsector(Viewpoint.camera->Pos())->mapsection;
+	if (Viewpoint.IsAllowedOoB() || Viewpoint.IsOrtho())
+		mapsection = Level->PointInRenderSubsector(Viewpoint.OffPos)->mapsection;
 	CurrentMapSections.Set(mapsection);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 

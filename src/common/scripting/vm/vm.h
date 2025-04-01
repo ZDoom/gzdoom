@@ -571,7 +571,7 @@ struct vm_decay_pointer_object
 
 template<typename T>
 struct vm_decay_pointer_void
-{ // convert any pointer to a type derived from DObject into a pointer to DObject, and any other to a pointer to void
+{ // convert any pointer to a pointer to void
 	using decayed = typename std::pointer_traits<T>::template rebind<void>;
 };
 

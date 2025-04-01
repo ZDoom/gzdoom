@@ -238,6 +238,7 @@ class Thinker : Object native play
 	
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
+	virtual void OnLoad() {}
 	native void ChangeStatNum(int stat);
 	
 	static clearscope int Tics2Seconds(int tics)

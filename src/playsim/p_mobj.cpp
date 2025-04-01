@@ -242,7 +242,6 @@ void AActor::Serialize(FSerializer &arc)
 		A("angles", Angles)
 		A("frame", frame)
 		A("scale", Scale)
-		A("nolocalrender", NoLocalRender) // Note: This will probably be removed later since a better solution is needed
 		A("renderstyle", RenderStyle)
 		A("renderflags", renderflags)
 		A("renderflags2", renderflags2)

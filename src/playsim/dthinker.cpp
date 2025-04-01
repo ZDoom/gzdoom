@@ -415,12 +415,12 @@ void FThinkerCollection::SerializeThinkers(FSerializer &arc, bool hubLoad)
 								else if (thinker->ObjectFlags & OF_JustSpawned)
 								{
 									FreshThinkers[i].AddTail(thinker);
-									thinker->PostSerialize();
+									thinker->CallPostSerialize();
 								}
 								else
 								{
 									Thinkers[i].AddTail(thinker);
-									thinker->PostSerialize();
+									thinker->CallPostSerialize();
 								}
 							}
 						}
@@ -831,6 +831,16 @@ void DThinker::CallPostBeginPlay()
 
 void DThinker::PostSerialize()
 {
+}
+
+void DThinker::CallPostSerialize()
+{
+	PostSerialize();
+	IFOVERRIDENVIRTUALPTRNAME(this, NAME_Thinker, OnLoad)
+	{
+		VMValue params[] = { this };
+		VMCall(func, params, 1, nullptr, 0);
+	}
 }
 
 //==========================================================================

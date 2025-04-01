@@ -559,13 +559,40 @@ template<> void VMCheckReturn<int>(VMFunction* func);
 template<> void VMCheckReturn<double>(VMFunction* func);
 template<> void VMCheckReturn<FString>(VMFunction* func);
 template<> void VMCheckReturn<DObject*>(VMFunction* func);
+template<> void VMCheckReturn<void*>(VMFunction* func);
+
+template<typename T>
+struct vm_decay_pointer_object
+{ // convert any pointer to a type derived from DObject into a pointer to DObject, and any other to a pointer to void
+	using decayed = typename std::conditional<std::is_base_of_v<DObject, typename std::pointer_traits<T>::element_type>,
+		typename std::pointer_traits<T>::template rebind<DObject>,
+		typename std::pointer_traits<T>::template rebind<void>>::type;
+};
+
+template<typename T>
+struct vm_decay_pointer_void
+{ // convert any pointer to a type derived from DObject into a pointer to DObject, and any other to a pointer to void
+	using decayed = typename std::pointer_traits<T>::template rebind<void>;
+};
+
+template<typename T>
+struct vm_decay_none
+{
+	using decayed = T;
+};
+
+template<typename T>
+using vm_pointer_decay = typename std::conditional<std::is_pointer_v<T>, vm_decay_pointer_object<T>, vm_decay_none<T>>::type::decayed;
+
+template<typename T>
+using vm_pointer_decay_void = typename std::conditional<std::is_pointer_v<T>, vm_decay_pointer_void<T>, vm_decay_none<T>>::type::decayed;
 
 template<typename RetVal, typename... Args, size_t... I>
 void VMValidateSignatureSingle(VMFunction* func, std::index_sequence<I...>)
 {
 	VMCheckParamCount<RetVal>(func, sizeof...(Args));
-	VMCheckReturn<RetVal>(func);
-	(VMCheckParam<Args>(func, I)...);
+	VMCheckReturn<vm_pointer_decay<RetVal>>(func);
+	(VMCheckParam<vm_pointer_decay<Args>>(func, I), ...);
 }
 
 void VMCallCheckResult(VMFunction* func, VMValue* params, int numparams, VMReturn* results, int numresults);
@@ -573,17 +600,19 @@ void VMCallCheckResult(VMFunction* func, VMValue* params, int numparams, VMRetur
 template<typename RetVal, typename... Args>
 typename VMReturnTypeTrait<RetVal>::type VMCallSingle(VMFunction* func, Args... args)
 {
-	VMValidateSignature<RetVal, Args...>(func);
+	VMValidateSignatureSingle<RetVal, Args...>(func, std::make_index_sequence<sizeof...(Args)>{});
 	VMValue params[] = { args... };
-	RetVal resultval; VMReturn results(&resultval);
+
+	vm_pointer_decay_void<RetVal> resultval; // convert any pointer to void
+	VMReturn results(&resultval);
 	VMCallCheckResult(func, params, sizeof...(Args), &results, 1);
-	return resultval;
+	return (RetVal)resultval;
 }
 
 template<typename... Args>
-typename VMReturnTypeTrait<void>::type VMCallSingle(VMFunction* func, Args... args)
+typename VMReturnTypeTrait<void>::type VMCallVoid(VMFunction* func, Args... args)
 {
-	VMValidateSignature<void, P1>(func);
+	VMValidateSignatureSingle<void, Args...>(func, std::make_index_sequence<sizeof...(Args)>{});
 	VMValue params[] = { args... };
 	VMCallCheckResult(func, params, sizeof...(Args), nullptr, 0);
 }

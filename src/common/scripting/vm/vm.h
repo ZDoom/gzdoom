@@ -545,7 +545,7 @@ void VMCheckParamCount(VMFunction* func, int argcount) { return VMCheckParamCoun
 // The type can't be mapped to ZScript automatically:
 
 template<typename NativeType> void VMCheckParam(VMFunction* func, int index) = delete;
-template<typename NativeType> void VMCheckReturn(VMFunction* func) = delete;
+template<typename NativeType> void VMCheckReturn(VMFunction* func, int index) = delete;
 
 // Native types we support converting to/from:
 
@@ -554,12 +554,12 @@ template<> void VMCheckParam<double>(VMFunction* func, int index);
 template<> void VMCheckParam<FString>(VMFunction* func, int index);
 template<> void VMCheckParam<DObject*>(VMFunction* func, int index);
 
-template<> void VMCheckReturn<void>(VMFunction* func);
-template<> void VMCheckReturn<int>(VMFunction* func);
-template<> void VMCheckReturn<double>(VMFunction* func);
-template<> void VMCheckReturn<FString>(VMFunction* func);
-template<> void VMCheckReturn<DObject*>(VMFunction* func);
-template<> void VMCheckReturn<void*>(VMFunction* func);
+template<> void VMCheckReturn<void>(VMFunction* func, int index);
+template<> void VMCheckReturn<int>(VMFunction* func, int index);
+template<> void VMCheckReturn<double>(VMFunction* func, int index);
+template<> void VMCheckReturn<FString>(VMFunction* func, int index);
+template<> void VMCheckReturn<DObject*>(VMFunction* func, int index);
+template<> void VMCheckReturn<void*>(VMFunction* func, int index);
 
 template<typename T>
 struct vm_decay_pointer_object
@@ -591,7 +591,7 @@ template<typename RetVal, typename... Args, size_t... I>
 void VMValidateSignatureSingle(VMFunction* func, std::index_sequence<I...>)
 {
 	VMCheckParamCount<RetVal>(func, sizeof...(Args));
-	VMCheckReturn<vm_pointer_decay<RetVal>>(func);
+	VMCheckReturn<vm_pointer_decay<RetVal>>(func, 0);
 	(VMCheckParam<vm_pointer_decay<Args>>(func, I), ...);
 }
 

@@ -566,53 +566,53 @@ void VMCheckParamCount(VMFunction* func, int retcount, int argcount)
 template<> void VMCheckParam<int>(VMFunction* func, int index)
 {
 	if (!func->Proto->ArgumentTypes[index]->isIntCompatible())
-		I_FatalError("%s argument %d is not an integer", func->PrintableName);
+		I_FatalError("%s argument %d is not an integer", func->PrintableName, index);
 }
 
 template<> void VMCheckParam<double>(VMFunction* func, int index)
 {
 	if (func->Proto->ArgumentTypes[index] != TypeFloat64)
-		I_FatalError("%s argument %d is not a double", func->PrintableName);
+		I_FatalError("%s argument %d is not a double", func->PrintableName, index);
 }
 
 template<> void VMCheckParam<FString>(VMFunction* func, int index)
 {
 	if (func->Proto->ArgumentTypes[index] != TypeString)
-		I_FatalError("%s argument %d is not a string", func->PrintableName);
+		I_FatalError("%s argument %d is not a string", func->PrintableName, index);
 }
 
 template<> void VMCheckParam<DObject*>(VMFunction* func, int index)
 {
-	if (func->Proto->ArgumentTypes[index]->isObjectPointer())
-		I_FatalError("%s argument %d is not an object", func->PrintableName);
+	if (!func->Proto->ArgumentTypes[index]->isObjectPointer())
+		I_FatalError("%s argument %d is not an object", func->PrintableName, index);
 }
 
-template<> void VMCheckReturn<void>(VMFunction* func)
+template<> void VMCheckReturn<void>(VMFunction* func, int index)
 {
 }
 
-template<> void VMCheckReturn<int>(VMFunction* func)
+template<> void VMCheckReturn<int>(VMFunction* func, int index)
 {
-	if (!func->Proto->ReturnTypes[0]->isIntCompatible())
-		I_FatalError("%s return value %d is not an integer", func->PrintableName);
+	if (!func->Proto->ReturnTypes[index]->isIntCompatible())
+		I_FatalError("%s return value %d is not an integer", func->PrintableName, index);
 }
 
-template<> void VMCheckReturn<double>(VMFunction* func)
+template<> void VMCheckReturn<double>(VMFunction* func, int index)
 {
-	if (func->Proto->ReturnTypes[0] != TypeFloat64)
-		I_FatalError("%s return value %d is not a double", func->PrintableName);
+	if (func->Proto->ReturnTypes[index] != TypeFloat64)
+		I_FatalError("%s return value %d is not a double", func->PrintableName, index);
 }
 
-template<> void VMCheckReturn<FString>(VMFunction* func)
+template<> void VMCheckReturn<FString>(VMFunction* func, int index)
 {
-	if (func->Proto->ReturnTypes[0] != TypeString)
-		I_FatalError("%s return value %d is not a string", func->PrintableName);
+	if (func->Proto->ReturnTypes[index] != TypeString)
+		I_FatalError("%s return value %d is not a string", func->PrintableName, index);
 }
 
-template<> void VMCheckReturn<DObject*>(VMFunction* func)
+template<> void VMCheckReturn<DObject*>(VMFunction* func, int index)
 {
-	if (func->Proto->ReturnTypes[0]->isObjectPointer())
-		I_FatalError("%s return value %d is not an object", func->PrintableName);
+	if (!func->Proto->ReturnTypes[index]->isObjectPointer())
+		I_FatalError("%s return value %d is not an object", func->PrintableName, index);
 }
 
 void VMCallCheckResult(VMFunction* func, VMValue* params, int numparams, VMReturn* results, int numresults)

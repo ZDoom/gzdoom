@@ -539,15 +539,9 @@ struct TVector3
 		return *this;
 	}
 
-	// returns the XY fields as a 2D-vector.
-	constexpr const Vector2& XY() const
+	constexpr Vector2 XY() const
 	{
-		return *reinterpret_cast<const Vector2*>(this);
-	}
-
-	constexpr Vector2& XY()
-	{
-		return *reinterpret_cast<Vector2*>(this);
+		return Vector2(X, Y);
 	}
 
 	// Add a 3D vector and a 2D vector.
@@ -785,27 +779,15 @@ struct TVector4
 	}
 
 	// returns the XY fields as a 2D-vector.
-	constexpr const Vector2& XY() const
+	constexpr Vector2 XY() const
 	{
-		return *reinterpret_cast<const Vector2*>(this);
+		return Vector2(X, Y);
 	}
 
-	constexpr Vector2& XY()
+	constexpr Vector3 XYZ() const
 	{
-		return *reinterpret_cast<Vector2*>(this);
+		return Vector3(X, Y, Z);
 	}
-
-	// returns the XY fields as a 2D-vector.
-	constexpr const Vector3& XYZ() const
-	{
-		return *reinterpret_cast<const Vector3*>(this);
-	}
-
-	constexpr Vector3& XYZ()
-	{
-		return *reinterpret_cast<Vector3*>(this);
-	}
-
 
 	// Test for approximate equality
 	bool ApproximatelyEquals(const TVector4 &other) const
@@ -1789,7 +1771,9 @@ struct TRotator
 template<class T>
 inline TVector3<T>::TVector3 (const TRotator<T> &rot)
 {
-	XY() = rot.Pitch.Cos() * rot.Yaw.ToVector();
+	auto XY = rot.Pitch.Cos() * rot.Yaw.ToVector();
+	X = XY.X;
+	Y = XY.Y;
 	Z = rot.Pitch.Sin();
 }
 

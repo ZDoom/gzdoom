@@ -368,7 +368,7 @@ void BreakpointManager::ClearBreakpointsForScript(int ref, BreakpointInfo::Type 
 	for (auto &KV : m_breakpoints)
 	{
 		auto bpinfos = KV.second;
-		for (int64_t i = bpinfos.size(); i >= 0; i--)
+		for (int64_t i = bpinfos.size() - 1; i >= 0; i--)
 		{
 			auto &bpinfo = bpinfos[i];
 			if (bpinfo.ref == ref && (type == BreakpointInfo::Type::NONE || type == bpinfo.type))

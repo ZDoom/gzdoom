@@ -63,10 +63,6 @@ class ID24OfficeLamp : Actor
 	}
 }
 
-// this actor has an editor number in the decohack,
-// but it doesn't actually exist in it
-class ID24LiveWire : Actor { }
-
 class ID24CeilingLamp : Actor
 {
 	Default

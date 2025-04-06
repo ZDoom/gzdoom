@@ -195,6 +195,12 @@ struct FLightNode
 	};
 };
 
+struct FDynamicLightTouchLists
+{
+	std::unordered_map<FSection*, FSection*> flat_tlist;
+	std::unordered_map<side_t*, side_t*> wall_tlist;
+};
+
 struct FDynamicLight
 {
 	friend class FLightDefaults;
@@ -286,6 +292,7 @@ public:
 	bool swapped;
 	bool explicitpitch;
 
+	FDynamicLightTouchLists *touchlists;
 };
 
 

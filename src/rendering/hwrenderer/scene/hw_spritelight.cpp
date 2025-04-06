@@ -107,7 +107,7 @@ LightProbe* FindLightProbe(FLevelLocals* level, float x, float y, float z)
 //
 //==========================================================================
 
-void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out)
+void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FSection *sec, int portalgroup, float *out)
 {
 	FDynamicLight *light;
 	float frac, lr, lg, lb;
@@ -124,83 +124,90 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 	}
 
 	// Go through both light lists
-	while (node)
+	auto flatLightList = Level->lightlists.flat_dlist.find(sec);
+
+	if (flatLightList != Level->lightlists.flat_dlist.end())
 	{
-		light=node->lightsource;
-		if (light->ShouldLightActor(self))
+		for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
 		{
-			float dist;
-			FVector3 L;
+			auto node = nodeIterator->second;
+			if (!node) continue;
 
-			// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
-			// This will do the calculations explicitly rather than calling one of AActor's utility functions.
-			if (Level->Displacements.size > 0)
+			light=node->lightsource;
+			if (light->ShouldLightActor(self))
 			{
-				int fromgroup = light->Sector->PortalGroup;
-				int togroup = portalgroup;
-				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
+				float dist;
+				FVector3 L;
 
-				DVector2 offset = Level->Displacements.getOffset(fromgroup, togroup);
-				L = FVector3(x - (float)(light->X() + offset.X), y - (float)(light->Y() + offset.Y), z - (float)light->Z());
-			}
-			else
-			{
-			direct:
-				L = FVector3(x - (float)light->X(), y - (float)light->Y(), z - (float)light->Z());
-			}
-
-			dist = (float)L.LengthSquared();
-			radius = light->GetRadius();
-
-			if (dist < radius * radius)
-			{
-				dist = sqrtf(dist);	// only calculate the square root if we really need it.
-
-				frac = 1.0f - (dist / radius);
-
-				if (light->IsSpot())
+				// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
+				// This will do the calculations explicitly rather than calling one of AActor's utility functions.
+				if (Level->Displacements.size > 0)
 				{
-					L *= -1.0f / dist;
-					DAngle negPitch = -*light->pPitch;
-					DAngle Angle = light->target->Angles.Yaw;
-					double xyLen = negPitch.Cos();
-					double spotDirX = -Angle.Cos() * xyLen;
-					double spotDirY = -Angle.Sin() * xyLen;
-					double spotDirZ = -negPitch.Sin();
-					double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
-					frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
+					int fromgroup = light->Sector->PortalGroup;
+					int togroup = portalgroup;
+					if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
+
+					DVector2 offset = Level->Displacements.getOffset(fromgroup, togroup);
+					L = FVector3(x - (float)(light->X() + offset.X), y - (float)(light->Y() + offset.Y), z - (float)light->Z());
+				}
+				else
+				{
+				direct:
+					L = FVector3(x - (float)light->X(), y - (float)light->Y(), z - (float)light->Z());
 				}
 
-				if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
+				dist = (float)L.LengthSquared();
+				radius = light->GetRadius();
+
+				if (dist < radius * radius)
 				{
-					lr = light->GetRed() / 255.0f;
-					lg = light->GetGreen() / 255.0f;
-					lb = light->GetBlue() / 255.0f;
+					dist = sqrtf(dist);	// only calculate the square root if we really need it.
 
-					if (light->target)
+					frac = 1.0f - (dist / radius);
+
+					if (light->IsSpot())
 					{
-						float alpha = (float)light->target->Alpha;
-						lr *= alpha;
-						lg *= alpha;
-						lb *= alpha;
+						L *= -1.0f / dist;
+						DAngle negPitch = -*light->pPitch;
+						DAngle Angle = light->target->Angles.Yaw;
+						double xyLen = negPitch.Cos();
+						double spotDirX = -Angle.Cos() * xyLen;
+						double spotDirY = -Angle.Sin() * xyLen;
+						double spotDirZ = -negPitch.Sin();
+						double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
+						frac *= (float)smoothstep(light->pSpotOuterAngle->Cos(), light->pSpotInnerAngle->Cos(), cosDir);
 					}
 
-					if (light->IsSubtractive())
+					if (frac > 0 && (!light->shadowmapped || (light->GetRadius() > 0 && screen->mShadowMap.ShadowTest(light->Pos, { x, y, z }))))
 					{
-						float bright = (float)FVector3(lr, lg, lb).Length();
-						FVector3 lightColor(lr, lg, lb);
-						lr = (bright - lr) * -1;
-						lg = (bright - lg) * -1;
-						lb = (bright - lb) * -1;
-					}
+						lr = light->GetRed() / 255.0f;
+						lg = light->GetGreen() / 255.0f;
+						lb = light->GetBlue() / 255.0f;
 
-					out[0] += lr * frac;
-					out[1] += lg * frac;
-					out[2] += lb * frac;
+						if (light->target)
+						{
+							float alpha = (float)light->target->Alpha;
+							lr *= alpha;
+							lg *= alpha;
+							lb *= alpha;
+						}
+
+						if (light->IsSubtractive())
+						{
+							float bright = (float)FVector3(lr, lg, lb).Length();
+							FVector3 lightColor(lr, lg, lb);
+							lr = (bright - lr) * -1;
+							lg = (bright - lg) * -1;
+							lb = (bright - lb) * -1;
+						}
+
+						out[0] += lr * frac;
+						out[1] += lg * frac;
+						out[2] += lb * frac;
+					}
 				}
 			}
 		}
-		node = node->nextLight;
 	}
 }
 
@@ -208,11 +215,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 {
 	if (thing != NULL)
 	{
-		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->section->lighthead, thing->Sector->PortalGroup, out);
+		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->section, thing->Sector->PortalGroup, out);
 	}
 	else if (particle != NULL)
 	{
-		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->section->lighthead, particle->subsector->sector->PortalGroup, out);
+		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->section, particle->subsector->sector->PortalGroup, out);
 	}
 }
 
@@ -241,29 +248,33 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		{
 			auto section = subsector->section;
 			if (section->validcount == dl_validcount) return;	// already done from a previous subsector.
-			FLightNode * node = section->lighthead;
-			while (node) // check all lights touching a subsector
+			auto flatLightList = self->Level->lightlists.flat_dlist.find(subsector->section);
+			if (flatLightList != self->Level->lightlists.flat_dlist.end())
 			{
-				FDynamicLight *light = node->lightsource;
-				if (light->ShouldLightActor(self))
-				{
-					int group = subsector->sector->PortalGroup;
-					DVector3 pos = light->PosRelative(group);
-					float radius = (float)(light->GetRadius() + actorradius);
-					double dx = pos.X - x;
-					double dy = pos.Y - y;
-					double dz = pos.Z - z;
-					double distSquared = dx * dx + dy * dy + dz * dz;
-					if (distSquared < radius * radius) // Light and actor touches
+				for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+				{ // check all lights touching a subsector
+					auto node = nodeIterator->second;
+					if (!node) continue;
+					FDynamicLight *light = node->lightsource;
+					if (light->ShouldLightActor(self))
 					{
-						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
+						int group = subsector->sector->PortalGroup;
+						DVector3 pos = light->PosRelative(group);
+						float radius = (float)(light->GetRadius() + actorradius);
+						double dx = pos.X - x;
+						double dy = pos.Y - y;
+						double dz = pos.Z - z;
+						double distSquared = dx * dx + dy * dy + dz * dz;
+						if (distSquared < radius * radius) // Light and actor touches
 						{
-							AddLightToList(modellightdata, group, light, true);
-							addedLights.Push(light);
+							if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
+							{
+								AddLightToList(modellightdata, group, light, true);
+								addedLights.Push(light);
+							}
 						}
 					}
 				}
-				node = node->nextLight;
 			}
 		});
 	}

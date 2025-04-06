@@ -95,6 +95,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 	ret->mShadowmapIndex = 1024;
 	ret->Level = Level;
 	ret->Pos.X = -10000000;	// not a valid coordinate.
+	if (!ret->touchlists) ret->touchlists = new FDynamicLightTouchLists;
 	return ret;
 }
 
@@ -249,6 +250,7 @@ void FDynamicLight::Tick()
 	if (!target)
 	{
 		// How did we get here? :?
+		UnlinkLight();
 		ReleaseLight();
 		return;
 	}
@@ -416,83 +418,6 @@ void FDynamicLight::UpdateLocation()
 	}
 }
 
-//=============================================================================
-//
-// These have been copied from the secnode code and modified for the light links
-//
-// P_AddSecnode() searches the current list to see if this sector is
-// already there. If not, it adds a sector node at the head of the list of
-// sectors this object appears in. This is called when creating a list of
-// nodes that will get linked in later. Returns a pointer to the new node.
-//
-//=============================================================================
-
-FLightNode * AddLightNode(FLightNode ** thread, void * linkto, FDynamicLight * light, FLightNode *& nextnode)
-{
-	FLightNode * node;
-
-	node = nextnode;
-	while (node)
-    {
-		if (node->targ==linkto)   // Already have a node for this sector?
-		{
-			node->lightsource = light; // Yes. Setting m_thing says 'keep it'.
-			return(nextnode);
-		}
-		node = node->nextTarget;
-    }
-
-	// Couldn't find an existing node for this sector. Add one at the head
-	// of the list.
-	
-	node = new FLightNode;
-	
-	node->targ = linkto;
-	node->lightsource = light; 
-
-	node->prevTarget = &nextnode; 
-	node->nextTarget = nextnode;
-
-	if (nextnode) nextnode->prevTarget = &node->nextTarget;
-	
-	// Add new node at head of sector thread starting at s->touching_thinglist
-	
-	node->prevLight = thread;  	
-	node->nextLight = *thread; 
-	if (node->nextLight) node->nextLight->prevLight=&node->nextLight;
-	*thread = node;
-	return(node);
-}
-
-
-//=============================================================================
-//
-// P_DelSecnode() deletes a sector node from the list of
-// sectors this object appears in. Returns a pointer to the next node
-// on the linked list, or nullptr.
-//
-//=============================================================================
-
-static FLightNode * DeleteLightNode(FLightNode * node)
-{
-	FLightNode * tn;  // next node on thing thread
-	
-	if (node)
-    {
-		
-		*node->prevTarget = node->nextTarget;
-		if (node->nextTarget) node->nextTarget->prevTarget=node->prevTarget;
-
-		*node->prevLight = node->nextLight;
-		if (node->nextLight) node->nextLight->prevLight=node->prevLight;
-		
-		// Return this node to the freelist
-		tn=node->nextTarget;
-		delete node;
-		return(tn);
-	}
-	return(nullptr);
-}
 
 
 
@@ -550,7 +475,38 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 		auto pos = collected_ss[i].pos;
 		section = collected_ss[i].sect;
 
-		touching_sector = AddLightNode(&section->lighthead, section, this, touching_sector);
+		auto updateFlatTList = [&](FSection *sec)
+		{
+			touchlists->flat_tlist.try_emplace(sec, sec);
+		};
+		auto updateWallTList = [&](side_t *sidedef)
+		{
+			touchlists->wall_tlist.try_emplace(sidedef, sidedef);
+		};
+
+		FLightNode * node = new FLightNode;
+		node->targ = section;
+		node->lightsource = this;
+
+		auto flatLightList = Level->lightlists.flat_dlist.find(section);
+		if (flatLightList != Level->lightlists.flat_dlist.end())
+		{
+			auto ret = flatLightList->second.try_emplace(this, node);
+			if (ret.second)
+			{
+				updateFlatTList(section);
+			}
+			else
+			{
+				delete node;
+			}
+		}
+		else
+		{
+			std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
+			Level->lightlists.flat_dlist.try_emplace(section, u);
+			updateFlatTList(section);
+		}
 
 
 		auto processSide = [&](side_t *sidedef, const vertex_t *v1, const vertex_t *v2)
@@ -562,7 +518,30 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 				if ((pos.Y - v1->fY()) * (v2->fX() - v1->fX()) + (v1->fX() - pos.X) * (v2->fY() - v1->fY()) <= 0)
 				{
 					linedef->validcount = ::validcount;
-					touching_sides = AddLightNode(&sidedef->lighthead, sidedef, this, touching_sides);
+
+					FLightNode * node = new FLightNode;
+					node->targ = sidedef;
+					node->lightsource = this;
+
+					auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
+					if (wallLightList != Level->lightlists.wall_dlist.end())
+					{
+						auto ret = wallLightList->second.try_emplace(this, node);
+						if (ret.second)
+						{
+							updateWallTList(sidedef);
+						}
+						else
+						{
+							delete node;
+						}
+					}
+					else
+					{
+						std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
+						Level->lightlists.wall_dlist.try_emplace(sidedef, u);
+						updateWallTList(sidedef);
+					}
 				}
 				else if (linedef->sidedef[0] == sidedef && linedef->sidedef[1] == nullptr)
 				{
@@ -664,22 +643,6 @@ void FDynamicLight::CollectWithinRadius(const DVector3 &opos, FSection *section,
 
 void FDynamicLight::LinkLight()
 {
-	// mark the old light nodes
-	FLightNode * node;
-	
-	node = touching_sides;
-	while (node)
-    {
-		node->lightsource = nullptr;
-		node = node->nextTarget;
-    }
-	node = touching_sector;
-	while (node)
-	{
-		node->lightsource = nullptr;
-		node = node->nextTarget;
-	}
-
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrt
@@ -689,31 +652,6 @@ void FDynamicLight::LinkLight()
 		::validcount++;
 		CollectWithinRadius(Pos, sect, float(radius*radius));
 
-	}
-		
-	// Now delete any nodes that won't be used. These are the ones where
-	// m_thing is still nullptr.
-	
-	node = touching_sides;
-	while (node)
-	{
-		if (node->lightsource == nullptr)
-		{
-			node = DeleteLightNode(node);
-		}
-		else
-			node = node->nextTarget;
-	}
-
-	node = touching_sector;
-	while (node)
-	{
-		if (node->lightsource == nullptr)
-		{
-			node = DeleteLightNode(node);
-		}
-		else
-			node = node->nextTarget;
 	}
 }
 
@@ -725,8 +663,39 @@ void FDynamicLight::LinkLight()
 //==========================================================================
 void FDynamicLight::UnlinkLight ()
 {
-	while (touching_sides) touching_sides = DeleteLightNode(touching_sides);
-	while (touching_sector) touching_sector = DeleteLightNode(touching_sector);
+	for (auto iter = touchlists->wall_tlist.begin(); iter != touchlists->wall_tlist.end(); iter++)
+	{
+		auto sidedef = iter->second;
+		if (!sidedef) continue;
+		
+		auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
+		if (wallLightList != Level->lightlists.wall_dlist.end())
+		{
+			auto light = wallLightList->second.find(this);
+			if (light != wallLightList->second.end())
+			{
+				delete light->second;
+				wallLightList->second.erase(light);
+			}
+		}
+	}
+	for (auto iter = touchlists->flat_tlist.begin(); iter != touchlists->flat_tlist.end(); iter++)
+	{
+		auto sec = iter->second;
+		if (!sec) continue;
+		
+		auto flatLightList = Level->lightlists.flat_dlist.find(sec);
+		if (flatLightList != Level->lightlists.flat_dlist.end())
+		{
+			auto light = flatLightList->second.find(this);
+			if (light != flatLightList->second.end())
+			{
+				delete light->second;
+				flatLightList->second.erase(light);
+			}
+		}
+	}
+	delete touchlists;
 	shadowmapped = false;
 }
 

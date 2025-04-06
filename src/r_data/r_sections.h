@@ -113,7 +113,6 @@ struct FSection
 	TArrayView<side_t *>	 sides;				// contains all sidedefs, including the internal ones that do not make up the outer shape.
 	TArrayView<subsector_t *>	 subsectors;	// contains all subsectors making up this section
 	sector_t				*sector;
-	FLightNode				*lighthead;			// Light nodes (blended and additive)
 	BoundingRect			 bounds;
 	int						 vertexindex;		// This is relative to the start of the entire sector's vertex plane data because it needs to be used with different sources.
 	int						 vertexcount;

@@ -460,6 +460,53 @@ $alias				intermission/pastdmstats	*gibbed
 
 // id24 sounds
 
+world/officelamp = DSBREAK
+
+ambient/klaxon = DSKLAXON
+ambient/portalopen = DSGATOPN
+ambient/portalloop = DSGATLOP
+ambient/portalclose = DSGATCLS
+
+monsters/ghoul/sight = DSGHLSIT
+monsters/ghoul/pain = DSGHLPAI
+monsters/ghoul/death = DSGHLDTH
+monsters/ghoul/active = DSGHLACT
+monsters/ghoul/attack = DSFIRSHT
+monsters/ghoul/shotx = DSFIRXPL
+
+monsters/banshee/sight = DSBANACT
+monsters/banshee/pain = DSBANPAI
+monsters/banshee/death = DSBANDTH
+monsters/banshee/active = DSBANACT
+
+monsters/mindweaver/sight = DSCSPSIT
+monsters/mindweaver/pain = DSDMPAIN
+monsters/mindweaver/death = DSCSPDTH
+monsters/mindweaver/active = DSCSPACT
+monsters/mindweaver/walk = DSCSPWLK
+
+monsters/plasmaguy/pain = DSPPOPAI
+monsters/plasmaguy/death = DSPPODTH
+monsters/plasmaguy/active = DSPPOACT
+monsters/plasmaguy/head = DSPPOHED
+
+monsters/vassago/sight = DSVASSIT
+monsters/vassago/pain = DSVASPAI
+monsters/vassago/death = DSVASDTH
+monsters/vassago/active = DSVASACT
+monsters/vassago/attack = DSVASATK
+monsters/vassago/burn = DSINCBRN
+monsters/vassago/shotx = DSFLAME
+monsters/vassago/hot1 = DSINCHT1
+monsters/vassago/hot2 = DSINCHT2
+monsters/vassago/hot3 = DSINCHT3
+
+monsters/tyrant/sight = DSTYRSIT
+monsters/tyrant/pain = DSTYRPAI
+monsters/tyrant/death = DSTYRDTH
+monsters/tyrant/active = DSTYRACT
+monsters/tyrant/walk = DSTYRWLK
+
 weapons/incinerator/fire1 DSINCFI1
 weapons/incinerator/fire2 DSINCFI2
 weapons/incinerator/burn DSINCBRN

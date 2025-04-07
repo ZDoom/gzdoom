@@ -251,6 +251,7 @@ struct FDynamicLight
 
 	void Tick();
 	void UpdateLocation();
+	void AddLightNode(FSection *section, side_t *sidedef);
 	void LinkLight();
 	void UnlinkLight();
 	void ReleaseLight();

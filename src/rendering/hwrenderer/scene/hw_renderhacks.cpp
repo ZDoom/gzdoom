@@ -117,13 +117,15 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 
 		lightdata.Clear();
 
-		auto flatLightList = Level->lightlists.flat_dlist.find(sub->section);
+		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sub->section);
 
-		if (flatLightList != Level->lightlists.flat_dlist.end())
+		if (flatLightList)
 		{
-			for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+			TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			while (it.NextPair(pair))
 			{
-				auto node = nodeIterator->second;
+				auto node = pair->Value;
 				if (!node) continue;
 
 				FDynamicLight * light = node->lightsource;

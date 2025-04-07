@@ -427,13 +427,15 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 	if ((seg->sidedef->Flags & WALLF_POLYOBJ) && sub)
 	{
 		// Polobject segs cannot be checked per sidedef so use the subsector instead.
-		auto flatLightList = di->Level->lightlists.flat_dlist.find(sub->section);
+		auto flatLightList = di->Level->lightlists.flat_dlist.CheckKey(sub->section);
 
-		if (flatLightList != di->Level->lightlists.flat_dlist.end())
+		if (flatLightList)
 		{
-			for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+			TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			while (it.NextPair(pair))
 			{
-				auto node = nodeIterator->second;
+				auto node = pair->Value;
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())
@@ -490,13 +492,15 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 	}
 	else
 	{
-		auto wallLightList = di->Level->lightlists.wall_dlist.find(seg->sidedef);
+		auto wallLightList = di->Level->lightlists.wall_dlist.CheckKey(seg->sidedef);
 
-		if (wallLightList != di->Level->lightlists.wall_dlist.end())
+		if (wallLightList)
 		{
-			for (auto nodeIterator = wallLightList->second.begin(); nodeIterator != wallLightList->second.end(); nodeIterator++)
+			TMap<FDynamicLight *, FLightNode *>::Iterator it(*wallLightList);
+			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			while (it.NextPair(pair))
 			{
-				auto node = nodeIterator->second;
+				auto node = pair->Value;
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())

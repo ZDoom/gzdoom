@@ -224,12 +224,14 @@ namespace swrenderer
 		else if (curline && curline->sidedef)
 		{
 			auto Level = curline->Subsector->sector->Level;
-			auto wallLightList = Level->lightlists.wall_dlist.find(curline->sidedef);
-			if (wallLightList != Level->lightlists.wall_dlist.end())
+			auto wallLightList = Level->lightlists.wall_dlist.CheckKey(curline->sidedef);
+			if (wallLightList)
 			{
-				for (auto nodeIterator = wallLightList->second.begin(); nodeIterator != wallLightList->second.end(); nodeIterator++)
+				TMap<FDynamicLight *, FLightNode *>::Iterator it(*wallLightList);
+				TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+				while (it.NextPair(pair))
 				{
-					auto node = nodeIterator->second;
+					auto node = pair->Value;
 					if (!node) continue;
 
 					if (node->lightsource->IsActive())

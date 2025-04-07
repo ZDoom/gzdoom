@@ -35,8 +35,6 @@
 
 #pragma once
 
-#include <unordered_map>
-
 #include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
@@ -62,8 +60,8 @@
 
 struct FGlobalDLightLists
 {
-	std::unordered_map<FSection*, std::unordered_map<FDynamicLight*, FLightNode*>> flat_dlist;
-	std::unordered_map<side_t*, std::unordered_map<FDynamicLight*, FLightNode*>> wall_dlist;
+	TMap<FSection*, TMap<FDynamicLight*, FLightNode*>> flat_dlist;
+	TMap<side_t*, TMap<FDynamicLight*, FLightNode*>> wall_dlist;
 };
 
 //============================================================================

@@ -124,13 +124,15 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FSec
 	}
 
 	// Go through both light lists
-	auto flatLightList = Level->lightlists.flat_dlist.find(sec);
+	auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
 
-	if (flatLightList != Level->lightlists.flat_dlist.end())
+	if (flatLightList)
 	{
-		for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+		TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+		TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+		while (it.NextPair(pair))
 		{
-			auto node = nodeIterator->second;
+			auto node = pair->Value;
 			if (!node) continue;
 
 			light=node->lightsource;
@@ -248,12 +250,14 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 		{
 			auto section = subsector->section;
 			if (section->validcount == dl_validcount) return;	// already done from a previous subsector.
-			auto flatLightList = self->Level->lightlists.flat_dlist.find(subsector->section);
-			if (flatLightList != self->Level->lightlists.flat_dlist.end())
+			auto flatLightList = self->Level->lightlists.flat_dlist.CheckKey(subsector->section);
+			if (flatLightList)
 			{
-				for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+				TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+				TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+				while (it.NextPair(pair))
 				{ // check all lights touching a subsector
-					auto node = nodeIterator->second;
+					auto node = pair->Value;
 					if (!node) continue;
 					FDynamicLight *light = node->lightsource;
 					if (light->ShouldLightActor(self))

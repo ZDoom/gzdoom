@@ -420,7 +420,7 @@ void FDynamicLight::UpdateLocation()
 
 //=============================================================================
 //
-// Attempts to emplace the light node in the unordered_map
+// Attempts to emplace the light node in the TMap
 //
 //=============================================================================
 
@@ -428,11 +428,11 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 {
 	auto updateFlatTList = [&](FSection *sec)
 	{
-		touchlists->flat_tlist.try_emplace(sec, sec);
+		touchlists->flat_tlist.Insert(sec, sec);
 	};
 	auto updateWallTList = [&](side_t *sidedef)
 	{
-		touchlists->wall_tlist.try_emplace(sidedef, sidedef);
+		touchlists->wall_tlist.Insert(sidedef, sidedef);
 	};
 
 	FLightNode * node = new FLightNode;
@@ -442,12 +442,12 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 	{
 		node->targ = section;
 	
-		auto flatLightList = Level->lightlists.flat_dlist.find(section);
-		if (flatLightList != Level->lightlists.flat_dlist.end())
+		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(section);
+		if (flatLightList)
 		{
-			auto ret = flatLightList->second.try_emplace(this, node);
-			if (ret.second)
+			if (!flatLightList->CheckKey(this))
 			{
+				flatLightList->Insert(this, node);
 				updateFlatTList(section);
 			}
 			else
@@ -457,8 +457,9 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 		}
 		else
 		{
-			std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
-			Level->lightlists.flat_dlist.try_emplace(section, u);
+			TMap<FDynamicLight *, FLightNode *> u;
+			u.Insert(this, node);
+			Level->lightlists.flat_dlist.Insert(section, u);
 			updateFlatTList(section);
 		}
 	}
@@ -466,12 +467,12 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 	{
 		node->targ = sidedef;
 
-		auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
-		if (wallLightList != Level->lightlists.wall_dlist.end())
+		auto wallLightList = Level->lightlists.wall_dlist.CheckKey(sidedef);
+		if (wallLightList)
 		{
-			auto ret = wallLightList->second.try_emplace(this, node);
-			if (ret.second)
+			if (!wallLightList->CheckKey(this))
 			{
+				wallLightList->Insert(this, node);
 				updateWallTList(sidedef);
 			}
 			else
@@ -481,8 +482,9 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 		}
 		else
 		{
-			std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
-			Level->lightlists.wall_dlist.try_emplace(sidedef, u);
+			TMap<FDynamicLight *, FLightNode *> u;
+			u.Insert(this, node);
+			Level->lightlists.wall_dlist.Insert(sidedef, u);
 			updateWallTList(sidedef);
 		}
 	}
@@ -680,40 +682,48 @@ void FDynamicLight::LinkLight()
 //==========================================================================
 void FDynamicLight::UnlinkLight ()
 {
-	for (auto iter = touchlists->wall_tlist.begin(); iter != touchlists->wall_tlist.end(); iter++)
+	
+	TMap<side_t *, side_t *>::Iterator wit(touchlists->wall_tlist);
+	TMap<side_t *, side_t *>::Pair *wpair;
+	while (wit.NextPair(wpair))
 	{
-		auto sidedef = iter->second;
+		auto sidedef = wpair->Value;
 		if (!sidedef) continue;
 		
-		auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
-		if (wallLightList != Level->lightlists.wall_dlist.end())
+		auto wallLightList = Level->lightlists.wall_dlist.CheckKey(sidedef);
+		if (wallLightList)
 		{
-			auto light = wallLightList->second.find(this);
-			if (light != wallLightList->second.end())
+			auto light = *wallLightList->CheckKey(this);
+			if (light)
 			{
-				delete light->second;
-				wallLightList->second.erase(light);
+				delete light;
+				wallLightList->Remove(this);
 			}
 		}
 	}
-	for (auto iter = touchlists->flat_tlist.begin(); iter != touchlists->flat_tlist.end(); iter++)
+
+	TMap<FSection *, FSection *>::Iterator fit(touchlists->flat_tlist);
+	TMap<FSection *, FSection *>::Pair *fpair;
+	while (fit.NextPair(fpair))
 	{
-		auto sec = iter->second;
+		auto sec = fpair->Value;
 		if (!sec) continue;
 		
-		auto flatLightList = Level->lightlists.flat_dlist.find(sec);
-		if (flatLightList != Level->lightlists.flat_dlist.end())
+		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
+		if (flatLightList)
 		{
-			auto light = flatLightList->second.find(this);
-			if (light != flatLightList->second.end())
+			auto light = *flatLightList->CheckKey(this);
+			if (light)
 			{
-				delete light->second;
-				flatLightList->second.erase(light);
+				delete light;
+				flatLightList->Remove(this);
 			}
 		}
 	}
+
 	delete touchlists;
 	touchlists = nullptr;
+
 	shadowmapped = false;
 }
 

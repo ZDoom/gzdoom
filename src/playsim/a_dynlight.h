@@ -197,8 +197,8 @@ struct FLightNode
 
 struct FDynamicLightTouchLists
 {
-	std::unordered_map<FSection*, FSection*> flat_tlist;
-	std::unordered_map<side_t*, side_t*> wall_tlist;
+	TMap<FSection*, FSection*> flat_tlist;
+	TMap<side_t*, side_t*> wall_tlist;
 };
 
 struct FDynamicLight

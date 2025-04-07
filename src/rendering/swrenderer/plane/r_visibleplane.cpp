@@ -76,12 +76,14 @@ namespace swrenderer
 			return; // [SP] no dynlights if invul or lightamp
 
 		auto Level = sec->sector->Level;
-		auto flatLightList = Level->lightlists.flat_dlist.find(sec);
-		if (flatLightList != Level->lightlists.flat_dlist.end())
+		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
+		if (flatLightList)
 		{
-			for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+			TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			while (it.NextPair(pair))
 			{
-				auto node = nodeIterator->second;
+				auto node = pair->Value;
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && (height.PointOnSide(node->lightsource->Pos) > 0))

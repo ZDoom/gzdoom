@@ -209,12 +209,14 @@ namespace swrenderer
 			float lit_green = 0;
 			float lit_blue = 0;
 			auto Level = vis->sector->Level;
-			auto flatLightList = Level->lightlists.flat_dlist.find(vis->section);
-			if (flatLightList != Level->lightlists.flat_dlist.end())
+			auto flatLightList = Level->lightlists.flat_dlist.CheckKey(vis->section);
+			if (flatLightList)
 			{
-				for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+				TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
+				TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+				while (it.NextPair(pair))
 				{
-					auto node = nodeIterator->second;
+					auto node = pair->Value;
 					if (!node) continue;
 
 					FDynamicLight *light = node->lightsource;

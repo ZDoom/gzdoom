@@ -35,6 +35,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include "doomdata.h"
 #include "g_level.h"
 #include "r_defs.h"
@@ -57,6 +59,12 @@
 #include "doom_aabbtree.h"
 #include "doom_levelmesh.h"
 #include "p_visualthinker.h"
+
+struct FGlobalDLightLists
+{
+	std::unordered_map<FSection*, std::unordered_map<FDynamicLight*, FLightNode*>> flat_dlist;
+	std::unordered_map<side_t*, std::unordered_map<FDynamicLight*, FLightNode*>> wall_dlist;
+};
 
 //============================================================================
 //
@@ -744,6 +752,8 @@ public:
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
 	int			ImpactDecalCount;
+
+	FGlobalDLightLists lightlists;
 
 	FDynamicLight *lights;
 	DVisualThinker* VisualThinkerHead = nullptr;

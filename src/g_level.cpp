@@ -623,6 +623,9 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		primaryLevel->totaltime = 0;
 		primaryLevel->spawnindex = 0;
 
+		primaryLevel->lightlists.wall_dlist.clear();
+		primaryLevel->lightlists.flat_dlist.clear();
+
 		if (!multiplayer || !deathmatch)
 		{
 			InitPlayerClasses ();

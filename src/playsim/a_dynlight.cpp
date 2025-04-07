@@ -680,9 +680,9 @@ void FDynamicLight::LinkLight()
 //==========================================================================
 void FDynamicLight::UnlinkLight ()
 {
-	for (auto iter = touchlists->wall_tlist.begin(); iter != touchlists->wall_tlist.end(); iter++)
+	for (const auto& [key, value] : touchlists->wall_tlist)
 	{
-		auto sidedef = iter->second;
+		auto sidedef = value;
 		if (!sidedef) continue;
 		
 		auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
@@ -696,9 +696,9 @@ void FDynamicLight::UnlinkLight ()
 			}
 		}
 	}
-	for (auto iter = touchlists->flat_tlist.begin(); iter != touchlists->flat_tlist.end(); iter++)
+	for (const auto& [key, value] : touchlists->flat_tlist)
 	{
-		auto sec = iter->second;
+		auto sec = value;
 		if (!sec) continue;
 		
 		auto flatLightList = Level->lightlists.flat_dlist.find(sec);

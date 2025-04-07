@@ -227,9 +227,9 @@ namespace swrenderer
 			auto wallLightList = Level->lightlists.wall_dlist.find(curline->sidedef);
 			if (wallLightList != Level->lightlists.wall_dlist.end())
 			{
-				for (auto nodeIterator = wallLightList->second.begin(); nodeIterator != wallLightList->second.end(); nodeIterator++)
+				for (const auto& [key, value] : wallLightList->second)
 				{
-					auto node = nodeIterator->second;
+					auto node = value;
 					if (!node) continue;
 
 					if (node->lightsource->IsActive())

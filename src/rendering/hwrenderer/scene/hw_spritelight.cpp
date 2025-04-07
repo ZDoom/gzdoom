@@ -128,9 +128,9 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FSec
 
 	if (flatLightList != Level->lightlists.flat_dlist.end())
 	{
-		for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+		for (const auto& [key, value] : flatLightList->second)
 		{
-			auto node = nodeIterator->second;
+			auto node = value;
 			if (!node) continue;
 
 			light=node->lightsource;
@@ -251,9 +251,9 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 			auto flatLightList = self->Level->lightlists.flat_dlist.find(subsector->section);
 			if (flatLightList != self->Level->lightlists.flat_dlist.end())
 			{
-				for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+				for (const auto& [key, value] : flatLightList->second)
 				{ // check all lights touching a subsector
-					auto node = nodeIterator->second;
+					auto node = value;
 					if (!node) continue;
 					FDynamicLight *light = node->lightsource;
 					if (light->ShouldLightActor(self))

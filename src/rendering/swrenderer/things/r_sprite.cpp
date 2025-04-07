@@ -212,9 +212,9 @@ namespace swrenderer
 			auto flatLightList = Level->lightlists.flat_dlist.find(vis->section);
 			if (flatLightList != Level->lightlists.flat_dlist.end())
 			{
-				for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+				for (const auto& [key, value] : flatLightList->second)
 				{
-					auto node = nodeIterator->second;
+					auto node = value;
 					if (!node) continue;
 
 					FDynamicLight *light = node->lightsource;

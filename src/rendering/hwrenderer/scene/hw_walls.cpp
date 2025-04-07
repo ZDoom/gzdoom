@@ -431,9 +431,9 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 
 		if (flatLightList != di->Level->lightlists.flat_dlist.end())
 		{
-			for (auto nodeIterator = flatLightList->second.begin(); nodeIterator != flatLightList->second.end(); nodeIterator++)
+			for (const auto& [key, value] : flatLightList->second)
 			{
-				auto node = nodeIterator->second;
+				auto node = value;
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())
@@ -494,9 +494,9 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 
 		if (wallLightList != di->Level->lightlists.wall_dlist.end())
 		{
-			for (auto nodeIterator = wallLightList->second.begin(); nodeIterator != wallLightList->second.end(); nodeIterator++)
+			for (const auto& [key, value] : wallLightList->second)
 			{
-				auto node = nodeIterator->second;
+				auto node = value;
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())

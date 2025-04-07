@@ -435,28 +435,27 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 		touchlists->wall_tlist.try_emplace(sidedef, sidedef);
 	};
 
-	FLightNode * node = new FLightNode;
-	node->lightsource = this;
-
 	if (section)
 	{
-		node->targ = section;
-	
 		auto flatLightList = Level->lightlists.flat_dlist.find(section);
 		if (flatLightList != Level->lightlists.flat_dlist.end())
 		{
-			auto ret = flatLightList->second.try_emplace(this, node);
-			if (ret.second)
+			if (flatLightList->second.find(this) == flatLightList->second.end())
 			{
+				FLightNode * node = new FLightNode;
+				node->lightsource = this;
+				node->targ = section;
+
+				flatLightList->second.try_emplace(this, node);
 				updateFlatTList(section);
-			}
-			else
-			{
-				delete node;
 			}
 		}
 		else
 		{
+			FLightNode * node = new FLightNode;
+			node->lightsource = this;
+			node->targ = section;
+
 			std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
 			Level->lightlists.flat_dlist.try_emplace(section, u);
 			updateFlatTList(section);
@@ -464,23 +463,25 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 	}
 	else if (sidedef)
 	{
-		node->targ = sidedef;
-
 		auto wallLightList = Level->lightlists.wall_dlist.find(sidedef);
 		if (wallLightList != Level->lightlists.wall_dlist.end())
 		{
-			auto ret = wallLightList->second.try_emplace(this, node);
-			if (ret.second)
+			if (wallLightList->second.find(this) == wallLightList->second.end())
 			{
+				FLightNode * node = new FLightNode;
+				node->lightsource = this;
+				node->targ = sidedef;
+
+				wallLightList->second.try_emplace(this, node);
 				updateWallTList(sidedef);
-			}
-			else
-			{
-				delete node;
 			}
 		}
 		else
 		{
+			FLightNode * node = new FLightNode;
+			node->lightsource = this;
+			node->targ = sidedef;
+
 			std::unordered_map<FDynamicLight *, FLightNode *> u = { {this, node} };
 			Level->lightlists.wall_dlist.try_emplace(sidedef, u);
 			updateWallTList(sidedef);

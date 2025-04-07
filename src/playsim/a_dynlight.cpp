@@ -435,28 +435,27 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 		touchlists->wall_tlist.Insert(sidedef, sidedef);
 	};
 
-	FLightNode * node = new FLightNode;
-	node->lightsource = this;
-
 	if (section)
 	{
-		node->targ = section;
-	
 		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(section);
 		if (flatLightList)
 		{
 			if (!flatLightList->CheckKey(this))
 			{
+				FLightNode * node = new FLightNode;
+				node->lightsource = this;
+				node->targ = section;
+
 				flatLightList->Insert(this, node);
 				updateFlatTList(section);
-			}
-			else
-			{
-				delete node;
 			}
 		}
 		else
 		{
+			FLightNode * node = new FLightNode;
+			node->lightsource = this;
+			node->targ = section;
+
 			TMap<FDynamicLight *, FLightNode *> u;
 			u.Insert(this, node);
 			Level->lightlists.flat_dlist.Insert(section, u);
@@ -465,23 +464,25 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 	}
 	else if (sidedef)
 	{
-		node->targ = sidedef;
-
 		auto wallLightList = Level->lightlists.wall_dlist.CheckKey(sidedef);
 		if (wallLightList)
 		{
 			if (!wallLightList->CheckKey(this))
 			{
+				FLightNode * node = new FLightNode;
+				node->lightsource = this;
+				node->targ = sidedef;
+
 				wallLightList->Insert(this, node);
 				updateWallTList(sidedef);
-			}
-			else
-			{
-				delete node;
 			}
 		}
 		else
 		{
+			FLightNode * node = new FLightNode;
+			node->lightsource = this;
+			node->targ = sidedef;
+
 			TMap<FDynamicLight *, FLightNode *> u;
 			u.Insert(this, node);
 			Level->lightlists.wall_dlist.Insert(sidedef, u);

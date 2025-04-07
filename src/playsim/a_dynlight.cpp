@@ -713,6 +713,7 @@ void FDynamicLight::UnlinkLight ()
 		}
 	}
 	delete touchlists;
+	touchlists = nullptr;
 	shadowmapped = false;
 }
 

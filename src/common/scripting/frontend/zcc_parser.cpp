@@ -251,6 +251,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Do,			ZCC_DO);
 	TOKENDEF (TK_For,			ZCC_FOR);
 	TOKENDEF (TK_ForEach,		ZCC_FOREACH);
+	TOKENDEF (TK_Unsafe,		ZCC_UNSAFE);
 	TOKENDEF (TK_While,			ZCC_WHILE);
 	TOKENDEF (TK_Until,			ZCC_UNTIL);
 	TOKENDEF (TK_If,			ZCC_IF);

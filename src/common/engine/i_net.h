@@ -66,12 +66,12 @@ extern size_t NetBufferLength;
 extern uint8_t TicDup;
 extern int RemoteClient;
 extern int MaxClients;
-extern uint64_t GameID;
 
 bool I_InitNetwork();
 void I_ClearClient(size_t client);
 void I_NetCmd(ENetCommand cmd);
 void I_NetDone();
 void HandleIncomingConnection();
+void CloseNetwork();
 
 #endif

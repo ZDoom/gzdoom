@@ -163,7 +163,6 @@ int consoleplayer = 0;
 int Net_Arbitrator = 0;
 FClientStack NetworkClients = {};
 
-uint64_t GameID = 0u;
 uint8_t	TicDup = 1u;
 int	MaxClients = 1;
 int RemoteClient = -1;
@@ -171,6 +170,7 @@ size_t NetBufferLength = 0u;
 uint8_t NetBuffer[MAX_MSGLEN] = {};
 
 static FRandom		GameIDGen = {};
+static uint8_t		GameID[8] = {};
 static u_short		GamePort = (IPPORT_USERRESERVED + 29);
 static SOCKET		MySocket = INVALID_SOCKET;
 static FConnection	Connected[MAXPLAYERS] = {};
@@ -348,6 +348,12 @@ static bool ClientsOnSameNetwork()
 	return true;
 }
 
+static void GenerateGameID()
+{
+	const uint64_t val = GameIDGen.GenRand64();
+	memcpy(GameID, &val, sizeof(val));
+}
+
 // Print a network-related message to the console. This doesn't print to the window so should
 // not be used for that and is mainly for logging.
 static void I_NetLog(const char* text, ...)
@@ -506,7 +512,7 @@ static void SendPacket(const sockaddr_in& to)
 		I_Error("Failed to compress data down to acceptable transmission size");
 
 	// If a connection packet, don't check the game id since they might not have it yet.
-	const uint32_t crc = (NetBuffer[0] & NCMD_SETUP) ? CalcCRC32(dataStart, size) : AddCRC32(CalcCRC32(dataStart, size), (uint8_t*)&GameID, sizeof(GameID));
+	const uint32_t crc = (NetBuffer[0] & NCMD_SETUP) ? CalcCRC32(dataStart, size) : AddCRC32(CalcCRC32(dataStart, size), GameID, std::extent_v<decltype(GameID)>);
 	TransmitBuffer[0] = crc >> 24;
 	TransmitBuffer[1] = crc >> 16;
 	TransmitBuffer[2] = crc >> 8;
@@ -573,7 +579,7 @@ static void GetPacket(sockaddr_in* const from = nullptr)
 		}
 		else
 		{
-			const uint32_t check = (*dataStart & NCMD_SETUP) ? CalcCRC32(dataStart, msgSize - 4) : AddCRC32(CalcCRC32(dataStart, msgSize - 4), (uint8_t*)GameID, sizeof(GameID));
+			const uint32_t check = (*dataStart & NCMD_SETUP) ? CalcCRC32(dataStart, msgSize - 4) : AddCRC32(CalcCRC32(dataStart, msgSize - 4), GameID, std::extent_v<decltype(GameID)>);
 			const uint32_t crc = (TransmitBuffer[0] << 24) | (TransmitBuffer[1] << 16) | (TransmitBuffer[2] << 8) | TransmitBuffer[3];
 			if (check != crc)
 			{
@@ -874,14 +880,7 @@ static bool Host_CheckForConnections(void* connected)
 			{
 				NetBuffer[1] = PRE_GAME_INFO;
 				NetBuffer[2] = TicDup;
-				NetBuffer[3] = GameID >> 56;
-				NetBuffer[4] = GameID >> 48;
-				NetBuffer[5] = GameID >> 40;
-				NetBuffer[6] = GameID >> 32;
-				NetBuffer[7] = GameID >> 24;
-				NetBuffer[8] = GameID >> 16;
-				NetBuffer[9] = GameID >> 8;
-				NetBuffer[10] = GameID;
+				memcpy(&NetBuffer[3], GameID, 8);
 				NetBufferLength = 11u;
 
 				uint8_t* stream = &NetBuffer[NetBufferLength];
@@ -966,7 +965,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	if (MaxClients > MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
 
-	GameID = GameIDGen.GenRand64();
+	GenerateGameID();
 	NetworkClients += 0;
 	Connected[consoleplayer].Status = CSTAT_READY;
 	Net_SetupUserInfo();
@@ -1128,8 +1127,7 @@ static bool Guest_ContactHost(void* unused)
 			if (!Connected[consoleplayer].bHasGameInfo)
 			{
 				TicDup = clamp<int>(NetBuffer[2], 1, MAXTICDUP);
-				GameID = ((uint64_t)NetBuffer[3] << 56) | ((uint64_t)NetBuffer[4] << 48) | ((uint64_t)NetBuffer[5] << 40) | ((uint64_t)NetBuffer[6] << 32)
-						| ((uint64_t)NetBuffer[7] << 24) | ((uint64_t)NetBuffer[8] << 16) | ((uint64_t)NetBuffer[9] << 8) | (uint64_t)NetBuffer[10];
+				memcpy(GameID, &NetBuffer[3], 8);
 				uint8_t* stream = &NetBuffer[11];
 				Net_ReadGameInfo(stream);
 				Connected[consoleplayer].bHasGameInfo = true;
@@ -1293,7 +1291,7 @@ bool I_InitNetwork()
 	else
 	{
 		// single player game
-		GameID = GameIDGen.GenRand64();
+		GenerateGameID();
 		TicDup = 1;
 		NetworkClients += 0;
 		Connected[0].Status = CSTAT_READY;

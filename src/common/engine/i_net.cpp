@@ -78,6 +78,7 @@
 #include "c_cvars.h"
 #include "version.h"
 #include "i_net.h"
+#include "m_random.h"
 
 /* [Petteri] Get more portable: */
 #ifndef __WIN32__
@@ -162,13 +163,14 @@ int consoleplayer = 0;
 int Net_Arbitrator = 0;
 FClientStack NetworkClients = {};
 
-uint32_t GameID = DEFAULT_GAME_ID;
+uint64_t GameID = 0u;
 uint8_t	TicDup = 1u;
 int	MaxClients = 1;
 int RemoteClient = -1;
 size_t NetBufferLength = 0u;
 uint8_t NetBuffer[MAX_MSGLEN] = {};
 
+static FRandom		GameIDGen = {};
 static u_short		GamePort = (IPPORT_USERRESERVED + 29);
 static SOCKET		MySocket = INVALID_SOCKET;
 static FConnection	Connected[MAXPLAYERS] = {};
@@ -483,22 +485,34 @@ static void SendPacket(const sockaddr_in& to)
 
 	assert(!(NetBuffer[0] & NCMD_COMPRESSED));
 
-	uLong size = MaxTransmitSize - 1u;
-	int res = -1;
+	uint8_t* dataStart = &TransmitBuffer[4];
+	uLong size = MaxTransmitSize - 5u;
 	if (NetBufferLength >= MinCompressionSize)
 	{
-		TransmitBuffer[0] = NetBuffer[0] | NCMD_COMPRESSED;
+		*dataStart = NetBuffer[0] | NCMD_COMPRESSED;
+		const int res = compress2(dataStart + 1, &size, NetBuffer + 1, NetBufferLength - 1u, 9);
+		if (res != Z_OK)
+			I_Error("Net compression failed (zlib error %d)", res);
 
-		res = compress2(TransmitBuffer + 1, &size, NetBuffer + 1, uint32_t(NetBufferLength - 1u), 9);
 		++size;
 	}
-
-	if (res == Z_OK && size < static_cast<uLong>(NetBufferLength))
-		res = sendto(MySocket, (const char*)TransmitBuffer, (int)size, 0, (const sockaddr*)&to, sizeof(to));
-	else if (NetBufferLength > MaxTransmitSize)
-		I_Error("Net compression failed (zlib error %d)", res);
 	else
-		res = sendto(MySocket, (const char*)NetBuffer, (int)NetBufferLength, 0, (const sockaddr*)&to, sizeof(to));
+	{
+		memcpy(dataStart, NetBuffer, NetBufferLength);
+		size = NetBufferLength;
+	}
+
+	if (size + 4 > MaxTransmitSize)
+		I_Error("Failed to compress data down to acceptable transmission size");
+
+	// If a connection packet, don't check the game id since they might not have it yet.
+	const uint32_t crc = (NetBuffer[0] & NCMD_SETUP) ? CalcCRC32(dataStart, size) : AddCRC32(CalcCRC32(dataStart, size), (uint8_t*)&GameID, sizeof(GameID));
+	TransmitBuffer[0] = crc >> 24;
+	TransmitBuffer[1] = crc >> 16;
+	TransmitBuffer[2] = crc >> 8;
+	TransmitBuffer[3] = crc;
+
+	sendto(MySocket, (const char*)TransmitBuffer, size + 4, 0, (const sockaddr*)&to, sizeof(to));
 }
 
 static void GetPacket(sockaddr_in* const from = nullptr)
@@ -544,7 +558,8 @@ static void GetPacket(sockaddr_in* const from = nullptr)
 	}
 	else if (msgSize > 0)
 	{
-		if (client == -1 && !(TransmitBuffer[0] & NCMD_SETUP))
+		const uint8_t* dataStart = &TransmitBuffer[4];
+		if (client == -1 && !(*dataStart & NCMD_SETUP))
 		{
 			msgSize = 0;
 		}
@@ -558,25 +573,37 @@ static void GetPacket(sockaddr_in* const from = nullptr)
 		}
 		else
 		{
-			NetBuffer[0] = (TransmitBuffer[0] & ~NCMD_COMPRESSED);
-			if (TransmitBuffer[0] & NCMD_COMPRESSED)
+			const uint32_t check = (*dataStart & NCMD_SETUP) ? CalcCRC32(dataStart, msgSize - 4) : AddCRC32(CalcCRC32(dataStart, msgSize - 4), (uint8_t*)GameID, sizeof(GameID));
+			const uint32_t crc = (TransmitBuffer[0] << 24) | (TransmitBuffer[1] << 16) | (TransmitBuffer[2] << 8) | TransmitBuffer[3];
+			if (check != crc)
 			{
-				uLongf size = MAX_MSGLEN - 1;
-				int err = uncompress(NetBuffer + 1, &size, TransmitBuffer + 1, msgSize - 1);
-				if (err != Z_OK)
-				{
-					Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
-					client = -1;
-					msgSize = 0;
-				}
-				else
-				{
-					msgSize = size + 1;
-				}
+				DPrintf(DMSG_NOTIFY, "Checksum on packet failed: expected %u, got %u", check, crc);
+				client = -1;
+				msgSize = 0;
 			}
 			else
 			{
-				memcpy(NetBuffer + 1, TransmitBuffer + 1, msgSize - 1);
+				NetBuffer[0] = (*dataStart & ~NCMD_COMPRESSED);
+				if (*dataStart & NCMD_COMPRESSED)
+				{
+					uLongf size = MAX_MSGLEN - 1;
+					int err = uncompress(NetBuffer + 1, &size, dataStart + 1, msgSize - 5);
+					if (err != Z_OK)
+					{
+						Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
+						client = -1;
+						msgSize = 0;
+					}
+					else
+					{
+						msgSize = size + 1;
+					}
+				}
+				else
+				{
+					msgSize -= 4;
+					memcpy(NetBuffer + 1, dataStart + 1, msgSize - 1);
+				}
 			}
 		}
 	}
@@ -847,7 +874,15 @@ static bool Host_CheckForConnections(void* connected)
 			{
 				NetBuffer[1] = PRE_GAME_INFO;
 				NetBuffer[2] = TicDup;
-				NetBufferLength = 3u;
+				NetBuffer[3] = GameID >> 56;
+				NetBuffer[4] = GameID >> 48;
+				NetBuffer[5] = GameID >> 40;
+				NetBuffer[6] = GameID >> 32;
+				NetBuffer[7] = GameID >> 24;
+				NetBuffer[8] = GameID >> 16;
+				NetBuffer[9] = GameID >> 8;
+				NetBuffer[10] = GameID;
+				NetBufferLength = 11u;
 
 				uint8_t* stream = &NetBuffer[NetBufferLength];
 				NetBufferLength += Net_SetGameInfo(stream);
@@ -931,6 +966,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	if (MaxClients > MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
 
+	GameID = GameIDGen.GenRand64();
 	NetworkClients += 0;
 	Connected[consoleplayer].Status = CSTAT_READY;
 	Net_SetupUserInfo();
@@ -1092,7 +1128,9 @@ static bool Guest_ContactHost(void* unused)
 			if (!Connected[consoleplayer].bHasGameInfo)
 			{
 				TicDup = clamp<int>(NetBuffer[2], 1, MAXTICDUP);
-				uint8_t* stream = &NetBuffer[3];
+				GameID = ((uint64_t)NetBuffer[3] << 56) | ((uint64_t)NetBuffer[4] << 48) | ((uint64_t)NetBuffer[5] << 40) | ((uint64_t)NetBuffer[6] << 32)
+						| ((uint64_t)NetBuffer[7] << 24) | ((uint64_t)NetBuffer[8] << 16) | ((uint64_t)NetBuffer[9] << 8) | (uint64_t)NetBuffer[10];
+				uint8_t* stream = &NetBuffer[11];
 				Net_ReadGameInfo(stream);
 				Connected[consoleplayer].bHasGameInfo = true;
 			}
@@ -1255,6 +1293,7 @@ bool I_InitNetwork()
 	else
 	{
 		// single player game
+		GameID = GameIDGen.GenRand64();
 		TicDup = 1;
 		NetworkClients += 0;
 		Connected[0].Status = CSTAT_READY;

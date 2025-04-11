@@ -150,7 +150,6 @@ extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 void DeinitMenus();
-void CloseNetwork();
 void P_Shutdown();
 void M_SaveDefaultsFinal();
 void R_Shutdown();

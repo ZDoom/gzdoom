@@ -324,6 +324,8 @@ public:
 
 void Net_ClearBuffers()
 {
+	CloseNetwork();
+
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		playeringame[i] = false;
@@ -361,6 +363,7 @@ void Net_ClearBuffers()
 	gametic = ClientTic = 0;
 	SkipCommandTimer = SkipCommandAmount = CommandsAhead = 0;
 	NetEvents.ResetStream();
+	bCommandsReset = false;
 
 	LevelStartAck = 0u;
 	LevelStartDelay = LevelStartDebug = 0;

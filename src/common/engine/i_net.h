@@ -8,7 +8,6 @@ inline constexpr size_t MAXPLAYERS = 64u;
 
 enum ENetConstants
 {
-	DEFAULT_GAME_ID = 0x12345678,
 	BACKUPTICS = 35 * 5,	// Remember up to 5 seconds of data.
 	MAXTICDUP = 3,
 	MAXSENDTICS = 35 * 1,	// Only send up to 1 second of data at a time.
@@ -67,7 +66,7 @@ extern size_t NetBufferLength;
 extern uint8_t TicDup;
 extern int RemoteClient;
 extern int MaxClients;
-extern uint32_t GameID;
+extern uint64_t GameID;
 
 bool I_InitNetwork();
 void I_ClearClient(size_t client);

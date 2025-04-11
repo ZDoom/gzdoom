@@ -1695,9 +1695,6 @@ bool D_CheckNetGame()
 	if (!I_InitNetwork())
 		return false;
 
-	if (GameID != DEFAULT_GAME_ID)
-		I_FatalError("Invalid id set for network buffer");
-
 	if (Args->CheckParm("-extratic"))
 		net_extratic = true;
 

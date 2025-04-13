@@ -51,68 +51,86 @@ static bool stb_include_load_file(FString filename, FString &out)
     return true;
 }
 
-typedef struct
+struct include_info
 {
     int64_t offset;
     int64_t end;
     FString filename;
     int64_t next_line_after;
-} include_info;
+};
 
 static bool stb_include_isspace(int ch)
 {
-   return (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n');
+    return (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n');
 }
 
 // find location of all #include and #inject
 static int64_t stb_include_find_includes(const char *text, TArray<include_info> &plist)
 {
-   int64_t line_count = 1;
-   int64_t inc_count = 0;
-   const char *s = text, *start;
+    int64_t line_count = 1;
+    int64_t inc_count = 0;
+    const char *s = text, *start;
 
-   TArray<include_info> list;
-   while (*s) {
-      // parse is always at start of line when we reach here
-      start = s;
-      while (*s == ' ' || *s == '\t')
-         ++s;
-      if (*s == '#') {
-         ++s;
-         while (*s == ' ' || *s == '\t')
+    TArray<include_info> list;
+    while (*s)
+    {
+        // parse is always at start of line when we reach here
+        start = s;
+        while (*s == ' ' || *s == '\t')
+        {
             ++s;
-         if (0==strncmp(s, "include", 7) && stb_include_isspace(s[7])) {
-            s += 7;
+        }
+
+        if (*s == '#')
+        {
+            ++s;
             while (*s == ' ' || *s == '\t')
-               ++s;
-            if (*s == '"') {
-               const char *t = ++s;
-               while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
-                  ++t;
-               if (*t == '"') {
-                  FString filename;
-                  filename.AppendCStrPart(s, t-s);
-                  s=t;
-                  while (*s != '\r' && *s != '\n' && *s != 0)
-                     ++s;
-                  // s points to the newline, so s-start is everything except the newline
-                  list.Push({start-text, s-text, filename, line_count+1});
-                  inc_count++;
-               }
+            {
+                ++s;
             }
-         }
-      }
-      while (*s != '\r' && *s != '\n' && *s != 0)
-         ++s;
-      if (*s == '\r' || *s == '\n') {
-         s = s + (s[0] + s[1] == '\r' + '\n' ? 2 : 1);
-      }
-      ++line_count;
-   }
+
+            if (0==strncmp(s, "include", 7) && stb_include_isspace(s[7]))
+            {
+                s += 7;
+                while (*s == ' ' || *s == '\t')
+                {
+                    ++s;
+                }
+                if (*s == '"')
+                {
+                    const char *t = ++s;
+                    while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
+                    ++t;
+                    if (*t == '"')
+                    {
+                        FString filename;
+                        filename.AppendCStrPart(s, t-s);
+                        s = t;
+                        while (*s != '\r' && *s != '\n' && *s != 0) ++s;
+
+                        // s points to the newline, so s-start is everything except the newline
+                        list.Push({start - text, s - text, filename, line_count + 1});
+                        inc_count++;
+                    }
+                }
+            }
+        }
+
+        while (*s != '\r' && *s != '\n' && *s != 0)
+        {
+            ++s;
+        }
+
+        if (*s == '\r' || *s == '\n')
+        {
+            s = s + (s[0] + s[1] == '\r' + '\n' ? 2 : 1);
+        }
+        ++line_count;
+    }
    
-   plist = std::move(list);
+    plist = std::move(list);
    
-   return inc_count;
+    return inc_count;
 }
 
 FString stb_include_string(FString str, FString &error)

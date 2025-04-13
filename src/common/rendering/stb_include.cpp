@@ -41,6 +41,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cstdint>
 
 static bool stb_include_load_file(FString filename, FString &out)
 {
@@ -52,27 +53,22 @@ static bool stb_include_load_file(FString filename, FString &out)
 
 typedef struct
 {
-   int offset;
-   int end;
-   FString filename;
-   int next_line_after;
+    int64_t offset;
+    int64_t end;
+    FString filename;
+    int64_t next_line_after;
 } include_info;
 
-static void stb_include_append_include(TArray<include_info> &array, int offset, int end, FString filename, int next_line)
-{
-    array.Push({offset, end, filename, next_line});
-}
-
-static int stb_include_isspace(int ch)
+static bool stb_include_isspace(int ch)
 {
    return (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n');
 }
 
 // find location of all #include and #inject
-static int stb_include_find_includes(const char *text, TArray<include_info> &plist)
+static int64_t stb_include_find_includes(const char *text, TArray<include_info> &plist)
 {
-   int line_count = 1;
-   int inc_count = 0;
+   int64_t line_count = 1;
+   int64_t inc_count = 0;
    const char *s = text, *start;
 
    TArray<include_info> list;
@@ -100,7 +96,7 @@ static int stb_include_find_includes(const char *text, TArray<include_info> &pli
                   while (*s != '\r' && *s != '\n' && *s != 0)
                      ++s;
                   // s points to the newline, so s-start is everything except the newline
-                  stb_include_append_include(list, start-text, s-text, filename, line_count+1);
+                  list.Push({start-text, s-text, filename, line_count+1});
                   inc_count++;
                }
             }
@@ -119,68 +115,31 @@ static int stb_include_find_includes(const char *text, TArray<include_info> &pli
    return inc_count;
 }
 
-// avoid dependency on sprintf()
-static void stb_include_itoa(char str[9], int n)
-{
-   int i;
-   for (i=0; i < 8; ++i)
-      str[i] = ' ';
-   str[i] = 0;
-
-   for (i=1; i < 8; ++i) {
-      str[7-i] = '0' + (n % 10);
-      n /= 10;
-      if (n == 0)
-         break;
-   }
-}
-
-static void stb_include_append(FString &str, FString &addstr)
-{
-    str += addstr;
-}
-
-static void stb_include_append(FString &str, const char * addstr, size_t addlen)
-{
-    str.AppendCStrPart(addstr, addlen);
-}
-
 FString stb_include_string(FString str, FString &error)
 {
     error = "";
-    char temp[4096];
     TArray<include_info> inc_list;
-    int i, num = stb_include_find_includes(str.GetChars(), inc_list);
-    size_t source_len = str.Len();
-    FString text;
+    int64_t num = stb_include_find_includes(str.GetChars(), inc_list);
+    FString text = "";
     size_t last = 0;
-    for (i=0; i < num; ++i)
+    for (int64_t i = 0; i < num; ++i)
     {
-        stb_include_append(text, str.GetChars() + last, inc_list[i].offset - last);
-        // write out line directive for the include
-        strcpy(temp, "#line ");
-        stb_include_itoa(temp+6, 1);
-        strcat(temp, " ");
-        stb_include_itoa(temp+15, i+1);
-        strcat(temp, "\n");
-        stb_include_append(text, temp, strlen(temp));
+        text.AppendCStrPart(str.GetChars() + last, inc_list[i].offset - last);
+
+        text.AppendFormat("#line 1 %d\n", i + 1);
 
         FString inc = stb_include_file(inc_list[i].filename.GetChars(), error);
         if (!error.IsEmpty())
         {
             return "";
         }
-        stb_include_append(text, inc);
+        text += inc;
 
-        // write out line directive
-        strcpy(temp, "\n#line ");
-        stb_include_itoa(temp+6, inc_list[i].next_line_after);
-        strcat(temp, " ");
-        stb_include_itoa(temp+15, 0);
-        stb_include_append(text, temp, strlen(temp));
+        text.AppendFormat("#line %d 0\n", inc_list[i].next_line_after);
         // no newlines, because we kept the #include newlines, which will get appended next
         last = inc_list[i].end;
     }
+    text.AppendCStrPart(str.GetChars() + last, str.Len() - last);
     return text;
 }
 

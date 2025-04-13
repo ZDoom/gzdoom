@@ -64,49 +64,57 @@ static bool stb_include_isspace(int ch)
     return (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n');
 }
 
+static void skip_whitespace(const char * &s)
+{
+    while (*s == ' ' || *s == '\t')
+    {
+        ++s;
+    }
+}
+
 // find location of all #include and #inject
 static int64_t stb_include_find_includes(const char *text, TArray<include_info> &plist)
 {
     int64_t line_count = 1;
     int64_t inc_count = 0;
-    const char *s = text, *start;
+    const char *s = text;
+    const char *start;
 
     TArray<include_info> list;
     while (*s)
     {
         // parse is always at start of line when we reach here
         start = s;
-        while (*s == ' ' || *s == '\t')
-        {
-            ++s;
-        }
+        skip_whitespace(s);
 
         if (*s == '#')
         {
             ++s;
-            while (*s == ' ' || *s == '\t')
-            {
-                ++s;
-            }
+            skip_whitespace(s);
 
             if (0==strncmp(s, "include", 7) && stb_include_isspace(s[7]))
             {
                 s += 7;
-                while (*s == ' ' || *s == '\t')
-                {
-                    ++s;
-                }
+                skip_whitespace(s);
+
                 if (*s == '"')
                 {
                     const char *t = ++s;
                     while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
-                    ++t;
+                    {
+                        ++t;
+                    }
+
                     if (*t == '"')
                     {
                         FString filename;
-                        filename.AppendCStrPart(s, t-s);
+                        filename.AppendCStrPart(s, t - s);
                         s = t;
-                        while (*s != '\r' && *s != '\n' && *s != 0) ++s;
+
+                        while (*s != '\r' && *s != '\n' && *s != 0)
+                        {
+                            ++s;
+                        }
 
                         // s points to the newline, so s-start is everything except the newline
                         list.Push({start - text, s - text, filename, line_count + 1});

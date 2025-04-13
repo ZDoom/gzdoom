@@ -35,53 +35,32 @@
 //  Michal Klos
 
 #include "stb_include.h"
+#include "filesystem.h"
+#include "cmdlib.h"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-static char *stb_include_load_file(char *filename, size_t *plen)
+static bool stb_include_load_file(FString filename, FString &out)
 {
-   char *text;
-   size_t len;
-   FILE *f = fopen(filename, "rb");
-   if (f == 0) return 0;
-   fseek(f, 0, SEEK_END);
-   len = (size_t) ftell(f);
-   if (plen) *plen = len;
-   text = (char *) malloc(len+1);
-   if (text == 0) return 0;
-   fseek(f, 0, SEEK_SET);
-   fread(text, 1, len, f);
-   fclose(f);
-   text[len] = 0;
-   return text;
+    int f = fileSystem.FindFile(filename.GetChars());
+    if(f < 0) return false;
+    out = GetStringFromLump(f, false);
+    return true;
 }
 
 typedef struct
 {
    int offset;
    int end;
-   char *filename;
+   FString filename;
    int next_line_after;
 } include_info;
 
-static include_info *stb_include_append_include(include_info *array, int len, int offset, int end, char *filename, int next_line)
+static void stb_include_append_include(TArray<include_info> &array, int offset, int end, FString filename, int next_line)
 {
-   include_info *z = (include_info *) realloc(array, sizeof(*z) * (len+1));
-   z[len].offset   = offset;
-   z[len].end      = end;
-   z[len].filename = filename;
-   z[len].next_line_after = next_line;
-   return z;
-}
-
-static void stb_include_free_includes(include_info *array, int len)
-{
-   int i;
-   for (i=0; i < len; ++i)
-      free(array[i].filename);
-   free(array);
+    array.Push({offset, end, filename, next_line});
 }
 
 static int stb_include_isspace(int ch)
@@ -90,12 +69,13 @@ static int stb_include_isspace(int ch)
 }
 
 // find location of all #include and #inject
-static int stb_include_find_includes(char *text, include_info **plist)
+static int stb_include_find_includes(const char *text, TArray<include_info> &plist)
 {
    int line_count = 1;
    int inc_count = 0;
-   char *s = text, *start;
-   include_info *list = NULL;
+   const char *s = text, *start;
+
+   TArray<include_info> list;
    while (*s) {
       // parse is always at start of line when we reach here
       start = s;
@@ -110,24 +90,20 @@ static int stb_include_find_includes(char *text, include_info **plist)
             while (*s == ' ' || *s == '\t')
                ++s;
             if (*s == '"') {
-               char *t = ++s;
+               const char *t = ++s;
                while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
                   ++t;
                if (*t == '"') {
-                  char *filename = (char *) malloc(t-s+1);
-                  memcpy(filename, s, t-s);
-                  filename[t-s] = 0;
+                  FString filename;
+                  filename.AppendCStrPart(s, t-s);
                   s=t;
                   while (*s != '\r' && *s != '\n' && *s != 0)
                      ++s;
                   // s points to the newline, so s-start is everything except the newline
-                  list = stb_include_append_include(list, inc_count++, start-text, s-text, filename, line_count+1);
+                  stb_include_append_include(list, start-text, s-text, filename, line_count+1);
+                  inc_count++;
                }
             }
-         } else if (0==strncmp(s, "inject", 6) && (stb_include_isspace(s[6]) || s[6]==0)) {
-            while (*s != '\r' && *s != '\n' && *s != 0)
-               ++s;
-            list = stb_include_append_include(list, inc_count++, start-text, s-text, NULL, line_count+1);
          }
       }
       while (*s != '\r' && *s != '\n' && *s != 0)
@@ -137,7 +113,9 @@ static int stb_include_find_includes(char *text, include_info **plist)
       }
       ++line_count;
    }
-   *plist = list;
+   
+   plist = std::move(list);
+   
    return inc_count;
 }
 
@@ -157,114 +135,64 @@ static void stb_include_itoa(char str[9], int n)
    }
 }
 
-static char *stb_include_append(char *str, size_t *curlen, char *addstr, size_t addlen)
+static void stb_include_append(FString &str, FString &addstr)
 {
-   str = (char *) realloc(str, *curlen + addlen);
-   memcpy(str + *curlen, addstr, addlen);
-   *curlen += addlen;
-   return str;
+    str += addstr;
 }
 
-char *stb_include_string(char *str, char *inject, char *path_to_includes, char *filename, char error[256])
+static void stb_include_append(FString &str, const char * addstr, size_t addlen)
 {
-   char temp[4096];
-   include_info *inc_list;
-   int i, num = stb_include_find_includes(str, &inc_list);
-   size_t source_len = strlen(str);
-   char *text=0;
-   size_t textlen=0, last=0;
-   for (i=0; i < num; ++i) {
-      text = stb_include_append(text, &textlen, str+last, inc_list[i].offset - last);
-      // write out line directive for the include
-      #ifndef STB_INCLUDE_LINE_NONE
-      #ifdef STB_INCLUDE_LINE_GLSL
-      if (textlen != 0)  // GLSL #version must appear first, so don't put a #line at the top
-      #endif
-      {
-         strcpy(temp, "#line ");
-         stb_include_itoa(temp+6, 1);
-         strcat(temp, " ");
-         #ifdef STB_INCLUDE_LINE_GLSL
-         stb_include_itoa(temp+15, i+1);
-         #else
-         strcat(temp, "\"");
-         if (inc_list[i].filename == 0)
-            strcmp(temp, "INJECT");
-         else
-            strcat(temp, inc_list[i].filename);
-         strcat(temp, "\"");
-         #endif
-         strcat(temp, "\n");
-         text = stb_include_append(text, &textlen, temp, strlen(temp));
-      }
-      #endif
-      if (inc_list[i].filename == 0) {
-         if (inject != 0)
-            text = stb_include_append(text, &textlen, inject, strlen(inject));
-      } else {
-         char *inc;
-         strcpy(temp, path_to_includes);
-         strcat(temp, "/");
-         strcat(temp, inc_list[i].filename);
-         inc = stb_include_file(temp, inject, path_to_includes, error);
-         if (inc == NULL) {
-            stb_include_free_includes(inc_list, num);
-            return NULL;
-         }
-         text = stb_include_append(text, &textlen, inc, strlen(inc));
-         free(inc);
-      }
-      // write out line directive
-      #ifndef STB_INCLUDE_LINE_NONE
-      strcpy(temp, "\n#line ");
-      stb_include_itoa(temp+6, inc_list[i].next_line_after);
-      strcat(temp, " ");
-      #ifdef STB_INCLUDE_LINE_GLSL
-      stb_include_itoa(temp+15, 0);
-      #else
-      strcat(temp, filename != 0 ? filename : "source-file");
-      #endif
-      text = stb_include_append(text, &textlen, temp, strlen(temp));
-      // no newlines, because we kept the #include newlines, which will get appended next
-      #endif
-      last = inc_list[i].end;
-   }
-   text = stb_include_append(text, &textlen, str+last, source_len - last + 1); // append '\0'
-   stb_include_free_includes(inc_list, num);
-   return text;
+    str.AppendCStrPart(addstr, addlen);
 }
 
-char *stb_include_strings(char **strs, int count, char *inject, char *path_to_includes, char *filename, char error[256])
+FString stb_include_string(FString str, FString &error)
 {
-   char *text;
-   char *result;
-   int i;
-   size_t length=0;
-   for (i=0; i < count; ++i)
-      length += strlen(strs[i]);
-   text = (char *) malloc(length+1);
-   length = 0;
-   for (i=0; i < count; ++i) {
-      strcpy(text + length, strs[i]);
-      length += strlen(strs[i]);
-   }
-   result = stb_include_string(text, inject, path_to_includes, filename, error);
-   free(text);
-   return result;
+    error = "";
+    char temp[4096];
+    TArray<include_info> inc_list;
+    int i, num = stb_include_find_includes(str.GetChars(), inc_list);
+    size_t source_len = str.Len();
+    FString text;
+    size_t last = 0;
+    for (i=0; i < num; ++i)
+    {
+        stb_include_append(text, str.GetChars() + last, inc_list[i].offset - last);
+        // write out line directive for the include
+        strcpy(temp, "#line ");
+        stb_include_itoa(temp+6, 1);
+        strcat(temp, " ");
+        stb_include_itoa(temp+15, i+1);
+        strcat(temp, "\n");
+        stb_include_append(text, temp, strlen(temp));
+
+        FString inc = stb_include_file(inc_list[i].filename.GetChars(), error);
+        if (!error.IsEmpty())
+        {
+            return "";
+        }
+        stb_include_append(text, inc);
+
+        // write out line directive
+        strcpy(temp, "\n#line ");
+        stb_include_itoa(temp+6, inc_list[i].next_line_after);
+        strcat(temp, " ");
+        stb_include_itoa(temp+15, 0);
+        stb_include_append(text, temp, strlen(temp));
+        // no newlines, because we kept the #include newlines, which will get appended next
+        last = inc_list[i].end;
+    }
+    return text;
 }
 
-char *stb_include_file(char *filename, char *inject, char *path_to_includes, char error[256])
+FString stb_include_file(FString filename, FString &error)
 {
-   size_t len;
-   char *result;
-   char *text = stb_include_load_file(filename, &len);
-   if (text == NULL) {
-      strcpy(error, "Error: couldn't load '");
-      strcat(error, filename);
-      strcat(error, "'");
-      return 0;
+   FString text;
+   if (!stb_include_load_file(filename, text))
+   {
+        error += "Error: couldn't load '";
+        error += filename;
+        error += "'";
+        return "";
    }
-   result = stb_include_string(text, inject, path_to_includes, filename, error);
-   free(text);
-   return result;
+   return stb_include_string(text, error);
 }

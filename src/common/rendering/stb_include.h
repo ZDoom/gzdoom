@@ -37,14 +37,13 @@
 #ifndef STB_INCLUDE_STB_INCLUDE_H
 #define STB_INCLUDE_STB_INCLUDE_H
 
-// Do include-processing on the string 'str'. To free the return value, pass it to free()
-char *stb_include_string(char *str, char *inject, char *path_to_includes, char *filename_for_line_directive, char error[256]);
+#include "zstring.h"
 
-// Concatenate the strings 'strs' and do include-processing on the result. To free the return value, pass it to free()
-char *stb_include_strings(char **strs, int count, char *inject, char *path_to_includes, char *filename_for_line_directive, char error[256]);
+// Do include-processing on the string 'str'. To free the return value, pass it to free()
+FString stb_include_string(FString str, FString &error);
 
 // Load the file 'filename' and do include-processing on the string therein. note that
 // 'filename' is opened directly; 'path_to_includes' is not used. To free the return value, pass it to free()
-char *stb_include_file(char *filename, char *inject, char *path_to_includes, char error[256]);
+FString stb_include_file(FString filename, FString &error);
 
 #endif

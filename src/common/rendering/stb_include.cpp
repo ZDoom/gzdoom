@@ -72,6 +72,40 @@ static void skip_whitespace(const char * &s)
     }
 }
 
+static void skip_newline(const char * &s)
+{
+
+    while (*s != '\r' && *s != '\n' && *s != 0)
+    {
+        ++s;
+    }
+
+    if(s[0] == '\r' && s[1] == '\n')
+    {
+        s += 2;
+    }
+    else if (*s == '\r' || *s == '\n')
+    {
+        s++;
+    }
+}
+
+static void find_end_quote(const char * &t)
+{
+    while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
+    {
+        ++t;
+    }
+}
+
+static void find_newline(const char * &s)
+{
+    while (*s != '\r' && *s != '\n' && *s != 0)
+    {
+        ++s;
+    }
+}
+
 // find location of all #include and #inject
 static int64_t stb_include_find_includes(const char *text, TArray<include_info> &plist)
 {
@@ -99,22 +133,17 @@ static int64_t stb_include_find_includes(const char *text, TArray<include_info> 
 
                 if (*s == '"')
                 {
-                    const char *t = ++s;
-                    while (*t != '"' && *t != '\n' && *t != '\r' && *t != 0)
-                    {
-                        ++t;
-                    }
+                    const char * include_filename = ++s;
 
-                    if (*t == '"')
+                    find_end_quote(include_filename);
+
+                    if (*include_filename == '"')
                     {
                         FString filename;
-                        filename.AppendCStrPart(s, t - s);
-                        s = t;
+                        filename.AppendCStrPart(s, include_filename - s);
+                        s = include_filename;
 
-                        while (*s != '\r' && *s != '\n' && *s != 0)
-                        {
-                            ++s;
-                        }
+                        find_newline(s);
 
                         // s points to the newline, so s-start is everything except the newline
                         list.Push({start - text, s - text, filename, line_count + 1});
@@ -124,15 +153,8 @@ static int64_t stb_include_find_includes(const char *text, TArray<include_info> 
             }
         }
 
-        while (*s != '\r' && *s != '\n' && *s != 0)
-        {
-            ++s;
-        }
+        skip_newline(s);
 
-        if (*s == '\r' || *s == '\n')
-        {
-            s = s + (s[0] + s[1] == '\r' + '\n' ? 2 : 1);
-        }
         ++line_count;
     }
    

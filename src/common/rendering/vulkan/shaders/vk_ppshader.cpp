@@ -39,12 +39,16 @@ VkPPShader::VkPPShader(VulkanRenderDevice* fb, PPShader *shader) : fb(fb)
 		.Type(ShaderType::Vertex)
 		.AddSource(shader->VertexShader.GetChars(), LoadShaderCode(shader->VertexShader, "", shader->Version).GetChars())
 		.DebugName(shader->VertexShader.GetChars())
+		.OnIncludeLocal(VkShaderManager::OnInclude)
+		.OnIncludeSystem(VkShaderManager::OnInclude)
 		.Create(shader->VertexShader.GetChars(), fb->device.get());
 
 	FragmentShader = ShaderBuilder()
 		.Type(ShaderType::Fragment)
 		.AddSource(shader->FragmentShader.GetChars(), LoadShaderCode(shader->FragmentShader, prolog, shader->Version).GetChars())
 		.DebugName(shader->FragmentShader.GetChars())
+		.OnIncludeLocal(VkShaderManager::OnInclude)
+		.OnIncludeSystem(VkShaderManager::OnInclude)
 		.Create(shader->FragmentShader.GetChars(), fb->device.get());
 
 	fb->GetShaderManager()->AddVkPPShader(this);
@@ -72,7 +76,7 @@ FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defin
 	FString code = GetStringFromLump(lump);
 
 	FString patchedCode;
-	patchedCode.AppendFormat("#version %d\n", 450);
+	patchedCode.AppendFormat("#version %d\n#extension GL_GOOGLE_include_directive : enable\n", 450);
 	patchedCode << defines;
 	patchedCode << "#line 1\n";
 	patchedCode << code;

@@ -1,4 +1,4 @@
-// stb_include.h - v0.02 - parse and process #include directives - public domain
+// stb_include.h - v0.02gz - parse and process #include directives - public domain
 //
 // To build this, in one source file that includes this file do
 //      #define STB_INCLUDE_IMPLEMENTATION
@@ -7,25 +7,7 @@
 //         #include "foo"
 // with the contents of a file named "foo". It also embeds the
 // appropriate #line directives. Note that all include files must
-// reside in the location specified in the path passed to the API;
-// it does not check multiple directories.
-//
-// If the string contains a line of the form
-//         #inject
-// then it will be replaced with the contents of the string 'inject' passed to the API.
-//
-// Options:
-//
-//      Define STB_INCLUDE_LINE_GLSL to get GLSL-style #line directives
-//      which use numbers instead of filenames.
-//
-//      Define STB_INCLUDE_LINE_NONE to disable output of #line directives.
-//
-// Standard libraries:
-//
-//      stdio.h     FILE, fopen, fclose, fseek, ftell
-//      stdlib.h    malloc, realloc, free
-//      string.h    strcpy, strncmp, memcpy
+// reside in the location specified in the gzdoom filesystem.
 //
 // Credits:
 //
@@ -33,6 +15,9 @@
 //
 // Fixes:
 //  Michal Klos
+//
+// GZDoom Conversion:
+//  Jay
 
 #include "stb_include.h"
 #include "filesystem.h"

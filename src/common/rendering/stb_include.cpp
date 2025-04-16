@@ -138,7 +138,7 @@ static int64_t stb_include_find_includes(const char *text, TArray<include_info> 
                     find_end_quote(include_filename);
 
                     if (*include_filename == '"')
-                    {
+                    { // ignore unterminated quotes
                         FString filename;
                         filename.AppendCStrPart(s, include_filename - s);
                         s = include_filename;
@@ -163,27 +163,31 @@ static int64_t stb_include_find_includes(const char *text, TArray<include_info> 
     return inc_count;
 }
 
-FString stb_include_string(FString str, FString &error)
+FString stb_include_string(FString str, FString filename, TArray<FString> &filenames, FString &error)
 {
     error = "";
     TArray<include_info> inc_list;
     int64_t num = stb_include_find_includes(str.GetChars(), inc_list);
     FString text = "";
     size_t last = 0;
+
+    filenames.Push(filename);
+    size_t curIndex = filenames.Size();
+
+    text.AppendFormat("#line 1 %d // %s\n", curIndex, filename.GetChars());
+
     for (int64_t i = 0; i < num; ++i)
     {
         text.AppendCStrPart(str.GetChars() + last, inc_list[i].offset - last);
 
-        text.AppendFormat("#line 1 %d\n", i + 1);
-
-        FString inc = stb_include_file(inc_list[i].filename.GetChars(), error);
+        FString inc = stb_include_file(inc_list[i].filename.GetChars(), filenames, error);
         if (!error.IsEmpty())
         {
             return "";
         }
         text += inc;
 
-        text.AppendFormat("#line %d 0\n", inc_list[i].next_line_after);
+        text.AppendFormat("#line %d %d // %s\n", inc_list[i].next_line_after, curIndex, filename.GetChars());
         // no newlines, because we kept the #include newlines, which will get appended next
         last = inc_list[i].end;
     }
@@ -191,7 +195,7 @@ FString stb_include_string(FString str, FString &error)
     return text;
 }
 
-FString stb_include_file(FString filename, FString &error)
+FString stb_include_file(FString filename, TArray<FString> &filenames, FString &error)
 {
    FString text;
    if (!stb_include_load_file(filename, text))
@@ -201,5 +205,5 @@ FString stb_include_file(FString filename, FString &error)
         error += "'";
         return "";
    }
-   return stb_include_string(text, error);
+   return stb_include_string(text, filename, filenames, error);
 }

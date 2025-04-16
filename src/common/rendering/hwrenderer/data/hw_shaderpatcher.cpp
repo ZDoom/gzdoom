@@ -134,6 +134,8 @@ FString RemoveLegacyUserUniforms(FString code)
 		DPrintf(DMSG_WARNING, TEXTCOLOR_ORANGE "timer and tex uniforms should not be explicitly declared.\n");
 	}
 
+	bool foundtexture2d = false;
+
 	// Also remove all occurences of the token 'texture2d'. Some shaders may still use this deprecated function to access a sampler.
 	// Modern GLSL only allows use of 'texture'.
 	while (true)
@@ -141,6 +143,8 @@ FString RemoveLegacyUserUniforms(FString code)
 		ptrdiff_t matchIndex = code.IndexOf("texture2d", startIndex);
 		if (matchIndex == -1)
 			break;
+
+		foundtexture2d = true;
 
 		// Check if this is a real token.
 		bool isKeywordStart = matchIndex == 0 || !isalnum(chars[matchIndex - 1] & 255);
@@ -150,6 +154,11 @@ FString RemoveLegacyUserUniforms(FString code)
 			chars[matchIndex + 7] = chars[matchIndex + 8] = ' ';
 		}
 		startIndex = matchIndex + 9;
+	}
+
+	if(foundtexture2d)
+	{
+		DPrintf(DMSG_WARNING, TEXTCOLOR_ORANGE "texture2d is deprecated, use texture instead.\n");
 	}
 
 	code.UnlockBuffer();

@@ -39,11 +39,10 @@
 
 #include "zstring.h"
 
-// Do include-processing on the string 'str'. To free the return value, pass it to free()
-FString stb_include_string(FString str, FString &error);
+// Do include-processing on the string 'str'.
+FString stb_include_string(FString str, FString filename, TArray<FString> &filenames, FString &error);
 
-// Load the file 'filename' and do include-processing on the string therein. note that
-// 'filename' is opened directly; 'path_to_includes' is not used. To free the return value, pass it to free()
-FString stb_include_file(FString filename, FString &error);
+// Load the file 'filename' and do include-processing on the string therein.
+FString stb_include_file(FString filename, TArray<FString> &filenames, FString &error);
 
 #endif

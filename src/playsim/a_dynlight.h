@@ -293,7 +293,7 @@ public:
 	bool swapped;
 	bool explicitpitch;
 
-	FDynamicLightTouchLists *touchlists;
+	FDynamicLightTouchLists touchlists;
 };
 
 

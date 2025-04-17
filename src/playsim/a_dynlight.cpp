@@ -87,6 +87,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 	}
 	else ret = (FDynamicLight*)DynLightArena.Alloc(sizeof(FDynamicLight));
 	memset(ret, 0, sizeof(*ret));
+	ret = new(ret)FDynamicLight();
 	ret->m_cycler.m_increment = true;
 	ret->next = Level->lights;
 	Level->lights = ret;
@@ -95,7 +96,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 	ret->mShadowmapIndex = 1024;
 	ret->Level = Level;
 	ret->Pos.X = -10000000;	// not a valid coordinate.
-	ret->touchlists = new FDynamicLightTouchLists;
+	//ret->touchlists = new FDynamicLightTouchLists;
 	return ret;
 }
 
@@ -210,8 +211,7 @@ void FDynamicLight::ReleaseLight()
 	else Level->lights = next;
 	if (next != nullptr) next->prev = prev;
 	next = prev = nullptr;
-	delete touchlists;
-	touchlists = nullptr;
+	this->~FDynamicLight();
 	FreeList.Push(this);
 }
 
@@ -430,11 +430,11 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 {
 	auto updateFlatTList = [&](FSection *sec)
 	{
-		touchlists->flat_tlist.TryEmplace(sec, sec);
+		touchlists.flat_tlist.TryEmplace(sec, sec);
 	};
 	auto updateWallTList = [&](side_t *sidedef)
 	{
-		touchlists->wall_tlist.TryEmplace(sidedef, sidedef);
+		touchlists.wall_tlist.TryEmplace(sidedef, sidedef);
 	};
 
 	if (section)
@@ -686,7 +686,7 @@ void FDynamicLight::LinkLight()
 void FDynamicLight::UnlinkLight ()
 {
 	
-	TMap<side_t *, side_t *>::Iterator wit(touchlists->wall_tlist);
+	TMap<side_t *, side_t *>::Iterator wit(touchlists.wall_tlist);
 	TMap<side_t *, side_t *>::Pair *wpair;
 	while (wit.NextPair(wpair))
 	{
@@ -705,7 +705,7 @@ void FDynamicLight::UnlinkLight ()
 		}
 	}
 
-	TMap<FSection *, FSection *>::Iterator fit(touchlists->flat_tlist);
+	TMap<FSection *, FSection *>::Iterator fit(touchlists.flat_tlist);
 	TMap<FSection *, FSection *>::Pair *fpair;
 	while (fit.NextPair(fpair))
 	{
@@ -724,8 +724,8 @@ void FDynamicLight::UnlinkLight ()
 		}
 	}
 
-	touchlists->flat_tlist.Clear();
-	touchlists->wall_tlist.Clear();
+	touchlists.flat_tlist.Clear();
+	touchlists.wall_tlist.Clear();
 
 	shadowmapped = false;
 }

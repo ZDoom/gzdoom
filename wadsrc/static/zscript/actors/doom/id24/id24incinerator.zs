@@ -77,6 +77,7 @@ class ID24IncineratorFlame : Actor // Incinerator Flame
 		+ZDOOMTRANS;
 		+FORCERADIUSDMG;
 		RenderStyle "Add";
+		Decal "Scorch";
 	}
 
 	States

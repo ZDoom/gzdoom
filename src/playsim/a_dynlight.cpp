@@ -430,11 +430,11 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 {
 	auto updateFlatTList = [&](FSection *sec)
 	{
-		touchlists->flat_tlist.Insert(sec, sec);
+		touchlists->flat_tlist.TryEmplace(sec, sec);
 	};
 	auto updateWallTList = [&](side_t *sidedef)
 	{
-		touchlists->wall_tlist.Insert(sidedef, sidedef);
+		touchlists->wall_tlist.TryEmplace(sidedef, sidedef);
 	};
 
 	if (section)
@@ -448,7 +448,7 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 				node->lightsource = this;
 				node->targ = section;
 
-				flatLightList->Insert(this, node);
+				flatLightList->TryEmplace(this, node);
 				updateFlatTList(section);
 			}
 		}
@@ -459,8 +459,8 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 			node->targ = section;
 
 			TMap<FDynamicLight *, FLightNode *> u;
-			u.Insert(this, node);
-			Level->lightlists.flat_dlist.Insert(section, u);
+			u.TryEmplace(this, node);
+			Level->lightlists.flat_dlist.TryEmplace(section, u);
 			updateFlatTList(section);
 		}
 	}
@@ -475,7 +475,7 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 				node->lightsource = this;
 				node->targ = sidedef;
 
-				wallLightList->Insert(this, node);
+				wallLightList->TryEmplace(this, node);
 				updateWallTList(sidedef);
 			}
 		}
@@ -486,8 +486,8 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 			node->targ = sidedef;
 
 			TMap<FDynamicLight *, FLightNode *> u;
-			u.Insert(this, node);
-			Level->lightlists.wall_dlist.Insert(sidedef, u);
+			u.TryEmplace(this, node);
+			Level->lightlists.wall_dlist.TryEmplace(sidedef, u);
 			updateWallTList(sidedef);
 		}
 	}

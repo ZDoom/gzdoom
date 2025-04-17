@@ -300,7 +300,7 @@ CCMD (turnspeeds)
 		}
 		if (i <= 4)
 		{
-			*angleturn[3] = *angleturn[2];
+			*angleturn[3] = **angleturn[2];
 		}
 	}
 }

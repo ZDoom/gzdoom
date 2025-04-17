@@ -95,7 +95,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 	ret->mShadowmapIndex = 1024;
 	ret->Level = Level;
 	ret->Pos.X = -10000000;	// not a valid coordinate.
-	if (!ret->touchlists) ret->touchlists = new FDynamicLightTouchLists;
+	ret->touchlists = new FDynamicLightTouchLists;
 	return ret;
 }
 
@@ -210,6 +210,8 @@ void FDynamicLight::ReleaseLight()
 	else Level->lights = next;
 	if (next != nullptr) next->prev = prev;
 	next = prev = nullptr;
+	delete touchlists;
+	touchlists = nullptr;
 	FreeList.Push(this);
 }
 
@@ -722,8 +724,8 @@ void FDynamicLight::UnlinkLight ()
 		}
 	}
 
-	delete touchlists;
-	touchlists = nullptr;
+	touchlists->flat_tlist.Clear();
+	touchlists->wall_tlist.Clear();
 
 	shadowmapped = false;
 }

@@ -431,11 +431,11 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 
 		if (flatLightList)
 		{
-			TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
-			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 			while (it.NextPair(pair))
 			{
-				auto node = pair->Value;
+				auto node = pair->Value.get();
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())
@@ -496,11 +496,11 @@ void HWWall::SetupLights(HWDrawInfo*di, FDynLightData &lightdata)
 
 		if (wallLightList)
 		{
-			TMap<FDynamicLight *, FLightNode *>::Iterator it(*wallLightList);
-			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*wallLightList);
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 			while (it.NextPair(pair))
 			{
-				auto node = pair->Value;
+				auto node = pair->Value.get();
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && !node->lightsource->DontLightMap())

@@ -227,11 +227,11 @@ namespace swrenderer
 			auto wallLightList = Level->lightlists.wall_dlist.CheckKey(curline->sidedef);
 			if (wallLightList)
 			{
-				TMap<FDynamicLight *, FLightNode *>::Iterator it(*wallLightList);
-				TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*wallLightList);
+				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 				while (it.NextPair(pair))
 				{
-					auto node = pair->Value;
+					auto node = pair->Value.get();
 					if (!node) continue;
 
 					if (node->lightsource->IsActive())

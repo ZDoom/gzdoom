@@ -79,11 +79,11 @@ namespace swrenderer
 		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
 		if (flatLightList)
 		{
-			TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
-			TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 			while (it.NextPair(pair))
 			{
-				auto node = pair->Value;
+				auto node = pair->Value.get();
 				if (!node) continue;
 
 				if (node->lightsource->IsActive() && (height.PointOnSide(node->lightsource->Pos) > 0))

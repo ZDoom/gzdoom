@@ -163,11 +163,11 @@ void HWFlat::SetupLights(HWDrawInfo *di, FDynLightData &lightdata, int portalgro
 
 	if (flatLightList)
 	{
-		TMap<FDynamicLight *, FLightNode *>::Iterator it(*flatLightList);
-		TMap<FDynamicLight *, FLightNode *>::Pair *pair;
+		TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+		TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 		while (it.NextPair(pair))
 		{
-			auto node = pair->Value;
+			auto node = pair->Value.get();
 			if (!node) continue;
 			
 			FDynamicLight * light = node->lightsource;

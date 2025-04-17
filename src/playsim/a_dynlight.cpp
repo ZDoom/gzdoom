@@ -458,9 +458,9 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 			node->lightsource = this;
 			node->targ = section;
 
-			TMap<FDynamicLight *, FLightNode *> u;
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>> u;
 			u.TryEmplace(this, node);
-			Level->lightlists.flat_dlist.TryEmplace(section, u);
+			Level->lightlists.flat_dlist.TryEmplace(section, std::move(u));
 			updateFlatTList(section);
 		}
 	}
@@ -485,9 +485,9 @@ void FDynamicLight::AddLightNode(FSection *section, side_t *sidedef)
 			node->lightsource = this;
 			node->targ = sidedef;
 
-			TMap<FDynamicLight *, FLightNode *> u;
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>> u;
 			u.TryEmplace(this, node);
-			Level->lightlists.wall_dlist.TryEmplace(sidedef, u);
+			Level->lightlists.wall_dlist.TryEmplace(sidedef, std::move(u));
 			updateWallTList(sidedef);
 		}
 	}
@@ -696,12 +696,7 @@ void FDynamicLight::UnlinkLight ()
 		auto wallLightList = Level->lightlists.wall_dlist.CheckKey(sidedef);
 		if (wallLightList)
 		{
-			auto light = *wallLightList->CheckKey(this);
-			if (light)
-			{
-				delete light;
-				wallLightList->Remove(this);
-			}
+			wallLightList->Remove(this);
 		}
 	}
 
@@ -715,12 +710,7 @@ void FDynamicLight::UnlinkLight ()
 		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
 		if (flatLightList)
 		{
-			auto light = *flatLightList->CheckKey(this);
-			if (light)
-			{
-				delete light;
-				flatLightList->Remove(this);
-			}
+			flatLightList->Remove(this);
 		}
 	}
 

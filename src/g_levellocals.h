@@ -57,11 +57,12 @@
 #include "doom_aabbtree.h"
 #include "doom_levelmesh.h"
 #include "p_visualthinker.h"
+#include <memory>
 
 struct FGlobalDLightLists
 {
-	TMap<FSection*, TMap<FDynamicLight*, FLightNode*>> flat_dlist;
-	TMap<side_t*, TMap<FDynamicLight*, FLightNode*>> wall_dlist;
+	TMap<FSection*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
+	TMap<side_t*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
 };
 
 //============================================================================

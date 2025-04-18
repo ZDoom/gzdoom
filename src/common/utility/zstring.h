@@ -297,11 +297,11 @@ public:
 	void MergeChars (char merger, char newchar);
 	void MergeChars (const char *charset, char newchar);
 
-	void Substitute (const FString &oldstr, const FString &newstr);
-	void Substitute (const char *oldstr, const FString &newstr);
-	void Substitute (const FString &oldstr, const char *newstr);
-	void Substitute (const char *oldstr, const char *newstr);
-	void Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen);
+	bool Substitute (const FString &oldstr, const FString &newstr);
+	bool Substitute (const char *oldstr, const FString &newstr);
+	bool Substitute (const FString &oldstr, const char *newstr);
+	bool Substitute (const char *oldstr, const char *newstr);
+	bool Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen);
 
 	void Format (const char *fmt, ...) PRINTFISH(3);
 	void AppendFormat (const char *fmt, ...) PRINTFISH(3);

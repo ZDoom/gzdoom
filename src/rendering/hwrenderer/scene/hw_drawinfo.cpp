@@ -486,7 +486,7 @@ void HWDrawInfo::CreateScene(bool drawpsprites)
 	{
 		double a2 = 20.0 + 0.5*Viewpoint.FieldOfView.Degrees(); // FrustumPitch for vertical clipping
 		if (a2 > 179.0) a2 = 179.0;
-		double pitchmult = (portalState.PlaneMirrorFlag & 1) ? -1.0 : 1.0;
+		double pitchmult = !!(portalState.PlaneMirrorFlag & 1) ? -1.0 : 1.0;
 		vClipper->SafeAddClipRangeDegPitches(pitchmult * vp.HWAngles.Pitch.Degrees() - a2, pitchmult * vp.HWAngles.Pitch.Degrees() + a2); // clip the suplex range
 		Viewpoint.PitchSin *= pitchmult;
 	}

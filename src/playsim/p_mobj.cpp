@@ -6382,9 +6382,9 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPuff)
 // 
 //---------------------------------------------------------------------------
 
-void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *originator)
+AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *originator)
 {
-	AActor *th;
+	AActor *th = nullptr;
 	PClassActor *bloodcls = originator->GetBloodType();
 	DVector3 pos = pos1;
 	pos.Z += pr_spawnblood.Random2() / 64.;
@@ -6469,6 +6469,8 @@ void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *origina
 
 	if (bloodtype >= 1)
 		P_DrawSplash2 (originator->Level, 40, pos, dir, 2, originator->BloodColor);
+
+	return th;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
@@ -6479,8 +6481,7 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
 	PARAM_FLOAT(z);
 	PARAM_ANGLE(dir);
 	PARAM_INT(damage);
-	P_SpawnBlood(DVector3(x, y, z), dir, damage, self);
-	return 0;
+	ACTION_RETURN_OBJECT(P_SpawnBlood(DVector3(x, y, z), dir, damage, self));
 }
 
 

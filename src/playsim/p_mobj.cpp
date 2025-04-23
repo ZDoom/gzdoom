@@ -6780,10 +6780,10 @@ AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *orig
 
 	int bloodtype = cl_bloodtype;
 	
-	if (bloodcls != NULL && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
+	if (bloodcls != nullptr && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
 		bloodtype = 0;
 
-	if (bloodcls != NULL)
+	if (bloodcls != nullptr)
 	{
 		th = Spawn(originator->Level, bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		th->Vel.Z = 2;
@@ -6804,6 +6804,7 @@ AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *orig
 		}
 		
 		// Moved out of the blood actor so that replacing blood is easier
+		bool foundState = false;
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
 			if (gameinfo.gametype == GAME_Strife)
@@ -6811,48 +6812,53 @@ AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *orig
 				if (damage > 13)
 				{
 					FState *state = th->FindState(NAME_Spray);
-					if (state != NULL)
+					if (state != nullptr)
 					{
 						th->SetState (state);
-						goto statedone;
+						foundState = true;
 					}
 				}
 				else damage += 2;
 			}
-			int advance = 0;
-			if (damage <= 12 && damage >= 9)
+			if (!foundState)
 			{
-				advance = 1;
-			}
-			else if (damage < 9)
-			{
-				advance = 2;
-			}
-
-			PClassActor *cls = th->GetClass();
-
-			while (cls != RUNTIME_CLASS(AActor))
-			{
-				int checked_advance = advance;
-				if (cls->OwnsState(th->SpawnState))
+				int advance = 0;
+				if (damage <= 12 && damage >= 9)
 				{
-					for (; checked_advance > 0; --checked_advance)
-					{
-						// [RH] Do not set to a state we do not own.
-						if (cls->OwnsState(th->SpawnState + checked_advance))
-						{
-							th->SetState(th->SpawnState + checked_advance);
-							goto statedone;
-						}
-					}
+					advance = 1;
 				}
-				// We can safely assume the ParentClass is of type PClassActor
-				// since we stop when we see the Actor base class.
-				cls = static_cast<PClassActor *>(cls->ParentClass);
+				else if (damage < 9)
+				{
+					advance = 2;
+				}
+
+				PClassActor* cls = th->GetClass();
+				bool good = false;
+				while (cls != RUNTIME_CLASS(AActor))
+				{
+					int checked_advance = advance;
+					if (cls->OwnsState(th->SpawnState))
+					{
+						for (; checked_advance > 0; --checked_advance)
+						{
+							// [RH] Do not set to a state we do not own.
+							if (cls->OwnsState(th->SpawnState + checked_advance))
+							{
+								th->SetState(th->SpawnState + checked_advance);
+								good = true;
+								break;
+							}
+						}
+						if (good)
+							break;
+					}
+					// We can safely assume the ParentClass is of type PClassActor
+					// since we stop when we see the Actor base class.
+					cls = static_cast<PClassActor*>(cls->ParentClass);
+				}
 			}
 		}
 
-	statedone:
 		if (!(bloodtype <= 1)) th->renderflags |= RF_INVISIBLE;
 	}
 

@@ -324,6 +324,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 	float inter = 0.;
 
 	ModelAnimFrameInterp decoupled_frame;
+	ModelAnimFrame * decoupled_frame_prev = nullptr;
 
 	// if prev_frame == -1: interpolate(main_frame, next_frame, inter), else: interpolate(interpolate(main_prev_frame, main_frame, inter_main), interpolate(next_prev_frame, next_frame, inter_next), inter)
 	// 4-way interpolation is needed to interpolate animation switches between animations that aren't 35hz
@@ -334,6 +335,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 		if(data && !(data->curAnim.flags & MODELANIM_NONE))
 		{
 			calcFrames(data->curAnim, tic, decoupled_frame, inter);
+			decoupled_frame_prev = &data->prevAnim;
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))
@@ -393,6 +395,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 		inter,
 		is_decoupled,
 		decoupled_frame,
+		decoupled_frame_prev,
 		modelsamount
 	};
 }
@@ -509,6 +512,56 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 	return (out.modelid >= 0 && out.modelid < Models.size());
 }
 
+
+const TArray<VSMatrix> * ProcessModelFrame(FModel * animation, bool nextFrame, int i, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled, double tic, BoneInfo *out)
+{
+	const TArray<TRS>* animationData = nullptr;
+	
+	if (drawinfo.animationid >= 0)
+	{
+		animation = Models[drawinfo.animationid];
+		animationData = animation->AttachAnimationData();
+	}
+
+	const TArray<VSMatrix> *boneData = nullptr;
+
+	if(is_decoupled)
+	{
+		if(frameinfo.decoupled_frame.frame1 >= 0)
+		{
+			boneData = animation->CalculateBones(
+				frameinfo.decoupled_frame_prev ? *frameinfo.decoupled_frame_prev : nullptr,
+				frameinfo.decoupled_frame,
+				frameinfo.inter,
+				animationData,
+				modelData->modelBoneOverrides.Size() > i
+				? &modelData->modelBoneOverrides[i]
+				: nullptr,
+				out,
+				tic);
+		}
+	}
+	else
+	{
+		boneData = animation->CalculateBones(
+			nullptr,
+			{
+				nextFrame ? frameinfo.inter : -1.0f,
+				drawinfo.modelframe,
+				drawinfo.modelframenext
+			},
+			-1.0f,
+			animationData,
+			(modelData && modelData->modelBoneOverrides.Size() > i)
+			? &modelData->modelBoneOverrides[i]
+			: nullptr,
+			out,
+			tic);
+	}
+
+	return boneData;
+}
+
 static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled, double tic, FTranslationID translation, int &boneStartingPosition, bool &evaluatedSingle)
 {
 	FModel * mdl = Models[drawinfo.modelid];
@@ -519,56 +572,12 @@ static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpri
 		? drawinfo.surfaceskinids.Data()
 		: (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 
-
 	bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
 
-	// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
+	// [Jay] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
 	if(!evaluatedSingle)
-	{
-		FModel* animation = mdl;
-		const TArray<TRS>* animationData = nullptr;
-
-		if (drawinfo.animationid >= 0)
-		{
-			animation = Models[drawinfo.animationid];
-			animationData = animation->AttachAnimationData();
-		}
-
-		const TArray<VSMatrix> *boneData;
-
-		if(is_decoupled)
-		{
-			if(frameinfo.decoupled_frame.frame1 >= 0)
-			{
-				boneData = animation->CalculateBones(
-					modelData->prevAnim,
-					frameinfo.decoupled_frame,
-					frameinfo.inter,
-					animationData,
-					modelData->modelBoneOverrides.Size() > i
-					? &modelData->modelBoneOverrides[i]
-					: nullptr,
-					nullptr,
-					tic);
-			}
-		}
-		else
-		{
-			boneData = animation->CalculateBones(
-				nullptr,
-				{
-					nextFrame ? frameinfo.inter : -1.0f,
-					drawinfo.modelframe,
-					drawinfo.modelframenext
-				},
-				-1.0f,
-				animationData,
-				(modelData && modelData->modelBoneOverrides.Size() > i)
-				? &modelData->modelBoneOverrides[i]
-				: nullptr,
-				nullptr,
-				tic);
-		}
+	{  // [Jay] TODO per-model decoupled animations
+		const TArray<VSMatrix> *boneData = ProcessModelFrame(mdl, nextFrame, i, smf, modelData, frameinfo, drawinfo, is_decoupled, tic, nullptr);
 
 		if(frameinfo.smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
 		{

@@ -124,6 +124,7 @@ struct CalcModelFrameInfo
 	float inter;
 	bool is_decoupled;
 	ModelAnimFrameInterp decoupled_frame;
+	ModelAnimFrame * decoupled_frame_prev;
 	unsigned modelsamount;
 };
 
@@ -143,6 +144,8 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 
 // returns true if the model isn't removed
 bool CalcModelOverrides(int modelindex, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled);
+
+const TArray<VSMatrix> * ProcessModelFrame(FModel * animation, bool nextFrame, int i, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled, double tic, BoneInfo *out);
 
 EXTERN_CVAR(Float, cl_scaleweaponfov)
 

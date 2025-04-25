@@ -509,6 +509,77 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 	return (out.modelid >= 0 && out.modelid < Models.size());
 }
 
+static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled, double tic, FTranslationID translation, int &boneStartingPosition, bool &evaluatedSingle)
+{
+	FModel * mdl = Models[drawinfo.modelid];
+	auto tex = drawinfo.skinid.isValid() ? TexMan.GetGameTexture(drawinfo.skinid, true) : nullptr;
+	mdl->BuildVertexBuffer(renderer);
+
+	auto ssidp = drawinfo.surfaceskinids.Size() > 0
+		? drawinfo.surfaceskinids.Data()
+		: (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
+
+
+	bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
+
+	// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
+	if(!evaluatedSingle)
+	{
+		FModel* animation = mdl;
+		const TArray<TRS>* animationData = nullptr;
+
+		if (drawinfo.animationid >= 0)
+		{
+			animation = Models[drawinfo.animationid];
+			animationData = animation->AttachAnimationData();
+		}
+
+		const TArray<VSMatrix> *boneData;
+
+		if(is_decoupled)
+		{
+			if(frameinfo.decoupled_frame.frame1 >= 0)
+			{
+				boneData = animation->CalculateBones(
+					modelData->prevAnim,
+					frameinfo.decoupled_frame,
+					frameinfo.inter,
+					animationData,
+					modelData->modelBoneOverrides.Size() > i
+					? &modelData->modelBoneOverrides[i]
+					: nullptr,
+					nullptr,
+					tic);
+			}
+		}
+		else
+		{
+			boneData = animation->CalculateBones(
+				nullptr,
+				{
+					nextFrame ? frameinfo.inter : -1.0f,
+					drawinfo.modelframe,
+					drawinfo.modelframenext
+				},
+				-1.0f,
+				animationData,
+				(modelData && modelData->modelBoneOverrides.Size() > i)
+				? &modelData->modelBoneOverrides[i]
+				: nullptr,
+				nullptr,
+				tic);
+		}
+
+		if(frameinfo.smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
+		{
+			boneStartingPosition = boneData ? screen->mBones->UploadBones(*boneData) : -1;
+			evaluatedSingle = true;
+		}
+	}
+
+	mdl->RenderFrame(renderer, tex, drawinfo.modelframe, nextFrame ? drawinfo.modelframenext : drawinfo.modelframe, nextFrame ? frameinfo.inter : -1.f, translation, ssidp, boneStartingPosition);
+}
+
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, FTranslationID translation, AActor* actor)
 {
 	double tic = actor->Level->totaltime;
@@ -519,7 +590,9 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 	bool is_decoupled = (actor->flags9 & MF9_DECOUPLEDANIMATIONS);
 
-	CalcModelFrameInfo frameinfo = CalcModelFrame(Level, smf, curState, curTics, actor ? actor->modelData : nullptr, actor, is_decoupled, tic);
+	DActorModelData* modelData = actor ? actor->modelData.ForceGet() : nullptr;
+
+	CalcModelFrameInfo frameinfo = CalcModelFrame(Level, smf, curState, curTics, modelData, actor, is_decoupled, tic);
 	ModelDrawInfo drawinfo;
 
 	int boneStartingPosition = -1;
@@ -527,77 +600,9 @@ void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpr
 
 	for (unsigned i = 0; i < frameinfo.modelsamount; i++)
 	{
-		if (CalcModelOverrides(i, smf, actor ? actor->modelData : nullptr, frameinfo, drawinfo, is_decoupled))
+		if (CalcModelOverrides(i, smf, modelData, frameinfo, drawinfo, is_decoupled))
 		{
-			FModel * mdl = Models[drawinfo.modelid];
-			auto tex = drawinfo.skinid.isValid() ? TexMan.GetGameTexture(drawinfo.skinid, true) : nullptr;
-			mdl->BuildVertexBuffer(renderer);
-
-			auto ssidp = drawinfo.surfaceskinids.Size() > 0
-					   ? drawinfo.surfaceskinids.Data()
-					   : (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
-
-
-			bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
-
-
-			// [RL0] while per-model animations aren't done, DECOUPLEDANIMATIONS does the same as MODELSAREATTACHMENTS
-			if(!evaluatedSingle)
-			{
-				const TArray<VSMatrix> *boneData = nullptr;
-				FModel* animation = mdl;
-				const TArray<TRS>* animationData = nullptr;
-
-				if (drawinfo.animationid >= 0)
-				{
-					animation = Models[drawinfo.animationid];
-					animationData = animation->AttachAnimationData();
-				}
-
-				const TArray<VSMatrix> *boneData;
-
-				if(is_decoupled)
-				{
-					if(frameinfo.decoupled_frame.frame1 >= 0)
-					{
-						boneData = animation->CalculateBones(
-												actor->modelData->prevAnim,
-												frameinfo.decoupled_frame,
-												frameinfo.inter,
-												animationData,
-												actor->modelData->modelBoneOverrides.Size() > i
-													? &actor->modelData->modelBoneOverrides[i]
-													: nullptr,
-												nullptr,
-												tic);
-					}
-				}
-				else
-				{
-					boneData = animation->CalculateBones(
-												nullptr,
-												{
-													nextFrame ? frameinfo.inter : -1.0f,
-													drawinfo.modelframe,
-													drawinfo.modelframenext
-												},
-												-1.0f,
-												animationData,
-												(actor->modelData && actor->modelData->modelBoneOverrides.Size() > i)
-													? &actor->modelData->modelBoneOverrides[i]
-													: nullptr,
-												nullptr,
-												tic);
-				}
-
-				if(frameinfo.smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
-				{
-					boneStartingPosition = boneData ? screen->mBones->UploadBones(*boneData) : -1;
-					evaluatedSingle = true;
-				}
-			}
-
-			mdl->RenderFrame(renderer, tex, drawinfo.modelframe, nextFrame ? drawinfo.modelframenext : drawinfo.modelframe, nextFrame ? frameinfo.inter : -1.f, translation, ssidp, boneStartingPosition);
+			RenderModelFrame(renderer, i, smf, modelData, frameinfo, drawinfo, is_decoupled, tic, translation, boneStartingPosition, evaluatedSingle);
 		}
 	}
 }

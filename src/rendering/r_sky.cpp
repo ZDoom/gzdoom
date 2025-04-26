@@ -79,6 +79,10 @@ void InitSkyMap(FLevelLocals *Level)
 	{
 		Level->skytexture1 = TexMan.GetFrontSkyLayer(Level->skytexture1);
 	}
+	if (Level->skymisttexture.isNull())
+	{
+		Level->skymisttexture = TexMan.CheckForTexture("skymist1", ETextureType::Any);
+	}
 
 	skytex1 = TexMan.GetGameTexture(Level->skytexture1, false);
 	skytex2 = TexMan.GetGameTexture(Level->skytexture2, false);
@@ -143,6 +147,7 @@ void R_UpdateSky (uint64_t mstime)
 		// The hardware renderer uses a different value range and clamps it to a single rotation
 		Level->hw_sky1pos = (float)(fmod((double(mstime) * Level->skyspeed1), 1024.) * (90. / 256.));
 		Level->hw_sky2pos = (float)(fmod((double(mstime) * Level->skyspeed2), 1024.) * (90. / 256.));
+		Level->hw_skymistpos = (float)(fmod((double(mstime) * Level->skymistspeed), 1024.) * (90. / 256.));
 	}
 }
 

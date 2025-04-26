@@ -488,7 +488,7 @@ void FSkyVertexBuffer::DoRenderDome(FRenderState& state, FGameTexture* tex, int 
 		RenderRow(state, DT_TriangleFan, rc, primStart);
 		state.EnableTexture(true);
 	}
-	state.SetObjectColor(0xffffffff);
+	state.SetObjectColor(color);
 	for (int i = 1; i <= mRows; i++)
 	{
 		RenderRow(state, DT_TriangleStrip, i, primStart, i == 1);

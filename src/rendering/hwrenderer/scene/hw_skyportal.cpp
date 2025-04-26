@@ -74,19 +74,26 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 			vertexBuffer->RenderDome(state, origin->texture[0], origin->x_offset[0], origin->y_offset, origin->mirrored, FSkyVertexBuffer::SKYMODE_MAINLAYER, !!(di->Level->flags & LEVEL_FORCETILEDSKY));
 			state.SetTextureMode(TM_NORMAL);
 		}
-		
+
 		state.AlphaFunc(Alpha_Greater, 0.f);
 		
 		if (origin->doublesky && origin->texture[1])
 		{
 			vertexBuffer->RenderDome(state, origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER, !!(di->Level->flags & LEVEL_FORCETILEDSKY));
 		}
+	}
 
-		if (di->Level->skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
+	if (di->Level->skyfog>0 && (origin->fadecolor & 0xffffff) != 0)
+	{
+		PalEntry FadeColor = origin->fadecolor;
+		FadeColor.a = clamp<int>(di->Level->skyfog, 0, 255);
+
+		if (di->Level->flags3 & LEVEL3_SKYMIST && origin->texture[2])
 		{
-			PalEntry FadeColor = origin->fadecolor;
-			FadeColor.a = clamp<int>(di->Level->skyfog, 0, 255);
-
+			vertexBuffer->RenderDome(state, origin->texture[2], origin->x_offset[2], 0.f, false, FSkyVertexBuffer::SKYMODE_FOGLAYER, !!(di->Level->flags & LEVEL_FORCETILEDSKY), 0, 0, FadeColor);
+		}
+		else if (!di->isFullbrightScene())
+		{
 			state.EnableTexture(false);
 			state.SetObjectColor(FadeColor);
 			state.Draw(DT_Triangles, 0, 12);

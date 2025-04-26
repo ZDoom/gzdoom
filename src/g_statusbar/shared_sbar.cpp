@@ -85,6 +85,7 @@ EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
+EXTERN_CVAR (Bool, am_showlevelname)
 EXTERN_CVAR(Bool, inter_subtitles)
 EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
@@ -598,6 +599,8 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	}
 
 	FormatMapName(primaryLevel, crdefault, &textbuffer);
+	if (textbuffer.IsEmpty())
+		return;
 
 	if (!generic_ui)
 	{

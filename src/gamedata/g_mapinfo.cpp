@@ -97,6 +97,7 @@ level_info_t *FindLevelInfo (const char *mapname, bool allowdefault)
 		if (TheDefaultLevelInfo.LevelName.IsEmpty())
 		{
 			TheDefaultLevelInfo.SkyPic2 = TheDefaultLevelInfo.SkyPic1 = "SKY1";
+			TheDefaultLevelInfo.SkyMistPic = "SKYMIST1";
 			TheDefaultLevelInfo.LevelName = "Unnamed";
 		}
 		return &TheDefaultLevelInfo;
@@ -255,6 +256,7 @@ void level_info_t::Reset()
 	NextMap = "";
 	NextSecretMap = "";
 	SkyPic1 = SkyPic2 = "-NOFLAT-";
+	SkyMistPic = "SKYMIST1";
 	cluster = 0;
 	partime = 0;
 	sucktime = 0;
@@ -277,7 +279,7 @@ void level_info_t::Reset()
 	musicorder = 0;
 	Snapshot = { 0,0,0,0,0,nullptr };
 	deferred.Clear();
-	skyspeed1 = skyspeed2 = 0.f;
+	skyspeed1 = skyspeed2 = skymistspeed = 0.f;
 	fadeto = 0;
 	outsidefog = 0xff000000;
 	cdtrack = 0;
@@ -1099,6 +1101,20 @@ DEFINE_MAP_OPTION(sky2, true)
 	}
 }
 
+DEFINE_MAP_OPTION(skymist, true)
+{
+	parse.ParseAssign();
+	parse.ParseLumpOrTextureName(info->SkyMistPic);
+	if (parse.CheckFloat())
+	{
+		if (parse.HexenHack)
+		{
+			parse.sc.Float /= 256;
+		}
+		info->skymistspeed = float(parse.sc.Float * (TICRATE / 1000.));
+	}
+}
+
 // Vavoom compatibility
 DEFINE_MAP_OPTION(skybox, true)
 {
@@ -1857,7 +1873,8 @@ MapFlagHandlers[] =
 	{ "disableskyboxao",				MITYPE_CLRFLAG3,	LEVEL3_SKYBOXAO, 0 },
 	{ "avoidmelee",						MITYPE_SETFLAG3,	LEVEL3_AVOIDMELEE, 0 },
 	{ "attenuatelights",				MITYPE_SETFLAG3,	LEVEL3_ATTENUATE, 0 },
-	{ "nofogofwar",					MITYPE_SETFLAG3,	LEVEL3_NOFOGOFWAR, 0 },
+	{ "nofogofwar",						MITYPE_SETFLAG3,	LEVEL3_NOFOGOFWAR, 0 },
+	{ "useskymist",						MITYPE_SETFLAG3,	LEVEL3_SKYMIST, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "nopassover",						MITYPE_COMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },
 	{ "passover",						MITYPE_CLRCOMPATFLAG, COMPATF_NO_PASSMOBJ, 0 },

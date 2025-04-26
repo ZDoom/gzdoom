@@ -1016,6 +1016,19 @@ void DBaseStatusBar::DrawCrosshair (double ticFrac)
 	ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, size);
 }
 
+static void DrawCrosshair(DBaseStatusBar* self, double ticFrac)
+{
+	self->DrawCrosshair(ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawCrosshair, DrawCrosshair)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(ticFrac);
+	self->DrawCrosshair(ticFrac);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // FlashCrosshair

@@ -2282,6 +2282,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
 //---------------------------------------------------------------------------
 
 EXTERN_CVAR(Int, am_showmaplabel)
+EXTERN_CVAR(Bool, am_showlevelname)
 
 void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
@@ -2295,13 +2296,19 @@ void FormatMapName(FLevelLocals *self, int cr, FString *result)
 	if (self->info->MapLabel.IsNotEmpty())
 	{
 		if (self->info->MapLabel.Compare("*"))
-			*result << self->info->MapLabel << ": ";
+			*result << self->info->MapLabel;
 	}
 	else if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
 	{
-		*result << self->MapName << ": ";
+		*result << self->MapName;
 	}
-	*result << mapnamecolor << self->LevelName;
+
+	if (am_showlevelname)
+	{
+		if (!result->IsEmpty())
+			*result << ": ";
+		*result << mapnamecolor << self->LevelName;
+	}
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FormatMapName, FormatMapName)

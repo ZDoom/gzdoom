@@ -5420,7 +5420,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneScaling, SetNamedBoneScalingNa
 // 
 //================================================
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneOffset)
+DEFINE_ACTION_FUNCTION(AActor, GetBoneOffset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(bone_index);
@@ -5459,7 +5459,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneOffset)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneOffset)
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneOffset)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(bone_name);

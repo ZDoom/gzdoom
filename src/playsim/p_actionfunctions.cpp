@@ -5131,44 +5131,55 @@ static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_
 
 	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
 
-	self->modelData->modelBoneOverrides[model_index][index].rot.Set(rotation, switchTic, interpolation_duration, mode);
+	self->modelData->modelBoneOverrides[model_index][index].rotation.Set(rotation, switchTic, interpolation_duration, mode);
 }
 
-#define SETGETBONE_SHARED(setorget)\
-	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))\
-	{\
-		ThrowAbortException(X_OTHER, "Cannot " setorget " offset for non-decoupled actors");\
-	}\
-	\
-	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))\
-	{\
-		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");\
-	}\
-	\
-	EnsureModelData(self);\
-	\
-	FModel * mdl;\
-	\
-	if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())\
-	{\
-		mdl = Models[self->modelData->models[0].modelID];\
-	}\
-	else\
-	{\
-		mdl = Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];\
+template<bool isSet, bool isOffset>
+FModel * SetGetBoneShared(AActor * self, int model_index)
+{
+
+	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
+	{
+		ThrowAbortException(X_OTHER, isSet ? "Cannot set bone offset for non-decoupled actors" : (isOffset ? "Cannot get bone for non-decoupled actors" : "Cannot get bone offset for non-decoupled actors"));
+	}
+	
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))
+	{
+		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");
 	}
 
-#define SETBONE_SHARED()\
-	SETGETBONE_SHARED("set")\
-	if(interpolation_duration < 0) interpolation_duration = 0;\
-	if(mode < 0 || mode > 2)\
-	{\
-		ThrowAbortException(X_OTHER, "Invalid mode for setbone");\
+	EnsureModelData(self);
+	
+	if(self->modelData->models.Size() > model_index && self->modelData->models[model_index].modelID >= 0 && self->modelData->models[model_index].modelID < Models.Size())
+	{
+		return Models[self->modelData->models[model_index].modelID];
 	}
+	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.Size() > model_index)
+	{
+		return Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[model_index]];
+	}
+	else
+	{
+		ThrowAbortException(X_OTHER, "Model Index out of range");
+	}
+}
+
+FModel * SetBoneShared(AActor * self, int model_index, int mode, double &interpolation_duration)
+{
+	if(interpolation_duration < 0) interpolation_duration = 0;
+
+	if(mode < 0 || mode > 2)
+	{
+		ThrowAbortException(X_OTHER, "Invalid mode for setbone");
+	}
+
+	return SetGetBoneShared<true, false>(self, model_index);
+}
 
 static void SetBoneRotationNative(AActor * self, int index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
 {
-	SETBONE_SHARED();
+	FModel * mdl = SetBoneShared(self, 0, mode, interpolation_duration);
+
 	if(index < 0 || index >= mdl->NumJoints())
 	{
 		ThrowAbortException(X_OTHER, "bone index out of range");
@@ -5197,7 +5208,7 @@ static void SetNamedBoneRotationNative(AActor * self, int boneName_i, double rot
 {
 	FName boneName{ENamedName(boneName_i)};
 
-	SETBONE_SHARED();
+	FModel * mdl = SetBoneShared(self, 0, mode, interpolation_duration);
 
 	int index = mdl->FindJoint(boneName);
 	if(index < 0 || index >= mdl->NumJoints())

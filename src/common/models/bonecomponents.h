@@ -39,13 +39,12 @@ inline constexpr T DefVal()
 template<typename T, T(*Lerp)(const T &from, const T &to, float t, float invt), T(*Add)(const T &from, const T &to)>
 struct BoneOverrideComponent
 {
-	
 	int mode = 0; // 0 = no override, 1 = rotate, 2 = replace
 	int prev_mode = 0;
 	double switchtic = 0.0;
 	double interplen = 0.0;
-	FQuaternion prev = DefVal<T>();
-	FQuaternion cur = DefVal<T>();
+	T prev = DefVal<T>();
+	T cur = DefVal<T>();
 	
 	void Set(const T &newValue, double tic, double newInterplen, int newMode)
 	{
@@ -72,8 +71,8 @@ struct BoneOverrideComponent
 		
 		if(mode > 0 || (prev_mode > 0 && lerp_amt < 1.0))
 		{
-			FQuaternion from = ModifyValue(value, prev, prev_mode);
-			FQuaternion to = ModifyValue(value, cur, mode);
+			T from = ModifyValue(value, prev, prev_mode);
+			T to = ModifyValue(value, cur, mode);
 			value = Lerp(from, to, lerp_amt, 1.0 - lerp_amt);
 		}
 	}

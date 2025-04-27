@@ -610,15 +610,7 @@ inline FQuaternion ModifyBone(FQuaternion orig, FQuaternion rot, int mode)
 
 inline void ModifyBone(const BoneOverride& mod, TRS &bone, double time)
 {
-	double lerp_amt = mod.rot_interplen > 0.0 ? std::clamp(((time - mod.rot_switchtic) / mod.rot_interplen), 0.0, 1.0) : 1.0;
-
-	if(mod.rot_mode > 0 || (mod.rot_prev_mode > 0 && lerp_amt < 1.0))
-	{
-		FQuaternion from = ModifyBone(bone.rotation, mod.rot_prev, mod.rot_prev_mode);
-		FQuaternion to = ModifyBone(bone.rotation, mod.rot, mod.rot_mode);
-
-		bone.rotation = InterpolateQuat(from, to, lerp_amt, 1.0 - lerp_amt);
-	}
+	mod.rot.Modify(bone.rotation, time);
 }
 
 // explicitly don't pass modelBoneOverrides when precalculating animation for interpolation, as it's applied _after_ animation

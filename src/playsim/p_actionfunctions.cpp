@@ -5131,22 +5131,7 @@ static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_
 
 	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
 
-	auto &bone = self->modelData->modelBoneOverrides[model_index][index];
-
-	double prev_interp_amt = bone.rot_interplen > 0.0 ? std::clamp(((switchTic - bone.rot_switchtic) / bone.rot_interplen), 0.0, 1.0) : 1.0;
-	double prev_interp_amt_inv = 1.0 - prev_interp_amt;
-
-	bone.rot_prev = bone.rot_mode > 0 ? InterpolateQuat(bone.rot_prev, bone.rot, prev_interp_amt, prev_interp_amt_inv) : FQuaternion(0,0,0,1);
-
-	// might break slightly if rotation is switched from absolute to additive before interpolation finishes,
-	// but shouldn't matter too much, since people will probably mostly stick to one single mode per bone
-	// so not worth the extra complexity (and adding the requirement of needing bone calculation for setters to work) to properly support it
-	bone.rot_prev_mode = (bone.rot_mode == 0 && bone.rot_prev_mode != 0 && prev_interp_amt_inv > 0.0) ? 1 : bone.rot_mode;
-
-	bone.rot = mode == 0 ? FQuaternion(0,0,0,1) : rotation;
-	bone.rot_switchtic = switchTic;
-	bone.rot_interplen = interpolation_duration;
-	bone.rot_mode = mode;
+	self->modelData->modelBoneOverrides[model_index][index].rot.Set(rotation, switchTic, interpolation_duration, mode);
 }
 
 #define SETGETBONE_SHARED(setorget)\

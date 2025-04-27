@@ -1362,6 +1362,12 @@ class Actor : Thinker native
 	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 
+	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
+
+	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
+
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 

@@ -601,16 +601,9 @@ const TArray<VSMatrix>* IQMModel::CalculateBones(const ModelAnimFrame &from, con
 	}
 }
 
-inline FQuaternion ModifyBone(FQuaternion orig, FQuaternion rot, int mode)
-{
-	if(mode == 0) return orig;
-	if(mode == 1) return (orig * rot).Unit();
-	return rot;
-}
-
 inline void ModifyBone(const BoneOverride& mod, TRS &bone, double time)
 {
-	mod.rot.Modify(bone.rotation, time);
+	mod.Modify(bone, time);
 }
 
 // explicitly don't pass modelBoneOverrides when precalculating animation for interpolation, as it's applied _after_ animation
@@ -745,14 +738,14 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 
 				if(in)
 				{
-					ModifyBone((*in)[i], bone, time);
+					(*in)[i].Modify(bone, time);
 				}
 				
 				out->bones_with_override[i] = bone;
 			}
 			else if(in)
 			{
-				ModifyBone((*in)[i], bone, time);
+				(*in)[i].Modify(bone, time);
 			}
 
 			VSMatrix m;

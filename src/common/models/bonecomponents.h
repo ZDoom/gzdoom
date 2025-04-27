@@ -102,12 +102,26 @@ struct BoneOverride
 		return (from * to).Unit();
 	}
 	
+	static inline FVector3 LerpVec3(const FVector3 &from, const FVector3 &to, float t, float invt)
+	{
+		return from * invt + to * t;
+	}
+	
 	static inline FVector3 AddVec3(const FVector3 &from, const FVector3 &to)
 	{
 		return from + to;
 	}
 
-	BoneOverrideComponent<FQuaternion, &InterpolateQuat, &AddQuat> rot;
+	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> translation;
+	BoneOverrideComponent<FQuaternion, &InterpolateQuat, &AddQuat> rotation;
+	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> scaling;
+
+	void Modify(TRS &trs, double tic) const
+	{
+		translation.Modify(trs.translation, tic);
+		rotation.Modify(trs.rotation, tic);
+		scaling.Modify(trs.scaling, tic);
+	}
 };
 
 struct BoneInfo

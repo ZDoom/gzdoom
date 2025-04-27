@@ -5164,16 +5164,10 @@ FModel * SetGetBoneShared(AActor * self, int model_index)
 	}
 }
 
-FModel * SetBoneShared(AActor * self, int model_index, int &bone_index, FName * bone_name, int mode, double &interpolation_duration)
+template<bool isSet>
+FModel * SetGetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
 {
-	FModel * mdl = SetGetBoneShared<true, false>(self, model_index);
-
-	if(interpolation_duration < 0) interpolation_duration = 0;
-
-	if(mode < 0 || mode > 2)
-	{
-		ThrowAbortException(X_OTHER, "Invalid mode for setbone");
-	}
+	FModel * mdl = SetGetBoneShared<isSet, true>(self, model_index);
 
 	if(bone_name)
 	{
@@ -5196,6 +5190,23 @@ FModel * SetBoneShared(AActor * self, int model_index, int &bone_index, FName * 
 	return mdl;
 }
 
+FModel * SetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name, int mode, double &interpolation_duration)
+{
+	if(interpolation_duration < 0) interpolation_duration = 0;
+
+	if(mode < 0 || mode > 2)
+	{
+		ThrowAbortException(X_OTHER, "Invalid mode for setbone");
+	}
+	
+	return SetGetBoneOffsetShared<true>(self, model_index, bone_index, bone_name);
+}
+
+FModel * GetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
+{
+	return SetGetBoneOffsetShared<false>(self, model_index, bone_index, bone_name);
+}
+
 //================================================
 // 
 // SetBoneRotation
@@ -5204,7 +5215,7 @@ FModel * SetBoneShared(AActor * self, int model_index, int &bone_index, FName * 
 
 static void SetModelBoneRotationNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
 {
-	FModel * mdl = SetBoneShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5222,7 +5233,7 @@ static void SetModelNamedBoneRotationNative(AActor * self, int model_index, int 
 
 	int bone_index;
 
-	FModel * mdl = SetBoneShared(self, 0, bone_index, &bone_name, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5274,7 +5285,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneRotation, SetNamedBoneRotation
 
 static void SetModelBoneTranslationNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
 {
-	FModel * mdl = SetBoneShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5292,7 +5303,7 @@ static void SetModelNamedBoneTranslationNative(AActor * self, int model_index, i
 
 	int bone_index;
 
-	FModel * mdl = SetBoneShared(self, 0, bone_index, &bone_name, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5342,7 +5353,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneTranslation, SetNamedBoneTrans
 
 static void SetModelBoneScalingNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
 {
-	FModel * mdl = SetBoneShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5360,7 +5371,7 @@ static void SetModelNamedBoneScalingNative(AActor * self, int model_index, int b
 
 	int bone_index;
 
-	FModel * mdl = SetBoneShared(self, 0, bone_index, &bone_name, mode, interpolation_duration);
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
 
 	if(!mdl) return;
 
@@ -5400,6 +5411,93 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneScaling, SetNamedBoneScalingNa
 	SetNamedBoneScalingNative(self, bonename.GetIndex(), rot_x, rot_y, rot_z, mode, interplen, 1.0);
 
 	return 0;
+}
+
+
+//================================================
+// 
+// GetBoneOffset
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		auto &mod = self->modelData->modelBoneOverrides[0][bone_index];
+
+		translation = DVector3(mod.translation.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+		rotation = DVector4(mod.rotation.Get(FQuaternion(0,0,0,1), self->Level->totaltime + 1.0));
+		scaling = DVector3(mod.scaling.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+	}
+	
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+	
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+	
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		auto &mod = self->modelData->modelBoneOverrides[0][bone_index];
+
+		translation = DVector3(mod.translation.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+		rotation = DVector4(mod.rotation.Get(FQuaternion(0,0,0,1), self->Level->totaltime + 1.0));
+		scaling = DVector3(mod.scaling.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
 }
 
 

@@ -357,6 +357,12 @@ public:
 			return (from * scale0 + to * scale1).Unit();
 		}
 	}
+
+	template<typename U>
+	explicit operator TVector4<U>()
+	{
+		return TVector4<U>(U(X),U(Y),U(Z),U(W));
+	}
 };
 
 typedef TQuaternion<float>	FQuaternion;

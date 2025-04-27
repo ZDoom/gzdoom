@@ -1369,8 +1369,8 @@ class Actor : Thinker native
 	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
 
 	/* rotation, translation, scaling */
-	native version("4.15.1") FQuaternion, Vector3, Vector3 GetBoneOffset(int boneIndex);
-	native version("4.15.1") FQuaternion, Vector3, Vector3 GetNamedBoneOffset(Name boneName);
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneOffset(int boneIndex);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneOffset(Name boneName);
 
 
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);

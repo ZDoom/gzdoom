@@ -238,6 +238,7 @@ class BaseStatusBar : StatusBarCore native
 	// [MK] let the HUD handle drawing the pause graphics
 	virtual bool DrawPaused(int player) { return false; }
 
+	protected native void RefreshBackground();
 	protected native void DrawCrosshair(double TicFrac);
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	native int GetTopOfStatusBar();

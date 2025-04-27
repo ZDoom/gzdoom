@@ -984,6 +984,18 @@ void DBaseStatusBar::RefreshBackground () const
 	}
 }
 
+static void RefreshBackground(DBaseStatusBar* self)
+{
+	self->RefreshBackground();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, RefreshBackground, RefreshBackground)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->RefreshBackground();
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // DrawCrosshair

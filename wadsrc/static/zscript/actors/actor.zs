@@ -1372,6 +1372,7 @@ class Actor : Thinker native
 	native version("4.15.1") Quat, Vector3, Vector3 GetBoneOffset(int boneIndex);
 	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneOffset(Name boneName);
 
+	native version("4.15.1") void ClearBoneOffsets();
 
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);

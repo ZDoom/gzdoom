@@ -5416,6 +5416,26 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneScaling, SetNamedBoneScalingNa
 
 //================================================
 // 
+// ClearBoneOffsets
+// 
+//================================================
+
+static void ClearBoneOffsetsNative(AActor * self)
+{
+	if(self->modelData) self->modelData->modelBoneOverrides[0].Clear();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBoneOffsets, ClearBoneOffsetsNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ClearBoneOffsetsNative(self);
+
+	return 0;
+}
+
+//================================================
+// 
 // GetBoneOffset
 // 
 //================================================
@@ -5832,12 +5852,18 @@ void ChangeModelNative(
 			}
 			surfaceSkins.Push(skindata);
 			mobj->modelData->models.Push({queryModel, std::move(surfaceSkins)});
+			
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
 		}
 		else
 		{
 			mobj->modelData->models.Push({queryModel, {}});
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
+		}
+		
+		if(queryModel != -1 && mobj->modelData->modelBoneOverrides.Size() > modelindex)
+		{
+			mobj->modelData->modelBoneOverrides[modelindex].Clear();
 		}
 	}
 	else
@@ -5858,7 +5884,15 @@ void ChangeModelNative(
 				mobj->modelData->models[modelindex].surfaceSkinIDs[skinindex] = skindata;
 			}
 		}
-		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
+		if(queryModel != -1)
+		{
+			mobj->modelData->models[modelindex].modelID = queryModel;
+			
+			if(mobj->modelData->modelBoneOverrides.Size() > modelindex)
+			{
+				mobj->modelData->modelBoneOverrides[modelindex].Clear();
+			}
+		}
 		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
 	}
 

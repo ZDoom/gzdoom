@@ -113,9 +113,11 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		{
 			IQMJoint& joint = Joints[i];
 
-			joint.Name = reader.ReadName(text);
+			FString name = reader.ReadName(text);
 
-			if(!joint.Name.IsEmpty())
+			joint.Name = name;
+
+			if(!name.IsEmpty())
 			{
 				NamedJoints.Insert(joint.Name, i);
 			}
@@ -132,6 +134,19 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			joint.Scale.X = reader.ReadFloat();
 			joint.Scale.Y = reader.ReadFloat();
 			joint.Scale.Z = reader.ReadFloat();
+
+			if(joint.Parent < 0)
+			{
+				RootJoints.Push(i);
+			}
+			else if(joint.Parent >= Joints.Size())
+			{
+				I_FatalError("Joint parent index out of bounds in IQM Model");
+			}
+			else
+			{
+				Joints[joint.Parent].Children.Push(i);
+			}
 		}
 
 		reader.SeekTo(ofs_poses);

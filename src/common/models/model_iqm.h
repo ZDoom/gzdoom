@@ -67,8 +67,9 @@ struct IQMAdjacency
 
 struct IQMJoint
 {
-	FString Name;
+	FName Name;
 	int32_t Parent; // parent < 0 means this is a root bone
+	TArray<int> Children; // indices of children
 	FVector3 Translate;
 	FQuaternion Quaternion;
 	FVector3 Scale;
@@ -146,6 +147,9 @@ private:
 	TArray<IQMTriangle> Triangles;
 	TArray<IQMAdjacency> Adjacency;
 	TArray<IQMJoint> Joints;
+	
+	TArray<int> RootJoints;
+
 	TArray<IQMPose> Poses;
 	TArray<IQMAnim> Anims;
 	TArray<IQMBounds> Bounds;
@@ -166,6 +170,34 @@ public:
 		int *j = NamedJoints.CheckKey(name);
 
 		return j ? *j : -1;
+	}
+
+	int GetJointParent(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Parent : -1;
+	}
+
+	FName GetJointName(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Name : FName(NAME_None);
+	}
+
+	void GetRootJoints(TArray<int> &out) override
+	{
+		out = RootJoints;
+	}
+
+	void GetJointChildren(int joint, TArray<int> &out) override
+	{
+		if(joint >= 0 && joint < Joints.Size())
+		{
+			out = Joints[joint].Children;
+		}
+	}
+
+	double GetJointLength(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size() && Joints[joint].Parent >= 0) ? (Joints[joint].Translate - Joints[Joints[joint].Parent].Translate).Length() : 0.0;
 	}
 };
 

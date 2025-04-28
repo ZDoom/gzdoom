@@ -91,6 +91,14 @@ public:
 	virtual int NumJoints() { return 0; }
 	virtual int FindJoint(FName name) { return -1; }
 
+	virtual int GetJointParent(int joint) { return -1; }
+	virtual double GetJointLength(int joint) { return 0.0; }
+	virtual FName GetJointName(int joint) { return NAME_None; }
+
+	virtual void GetJointChildren(int joint, TArray<int> &out) {}
+
+	virtual void GetRootJoints(TArray<int> &out) {}
+
 	// [RL0] these are used for decoupled iqm animations
 	virtual int FindFirstFrame(FName name) { return FErr_NotFound; }
 	virtual int FindLastFrame(FName name) { return FErr_NotFound; }

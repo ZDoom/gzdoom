@@ -1359,6 +1359,12 @@ class Actor : Thinker native
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
 	native bool A_RemoveLight(Name lightid);
 
+	//================================================
+	// 
+	// Bone Offset Setters
+	// 
+	//================================================
+
 	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 
@@ -1368,11 +1374,45 @@ class Actor : Thinker native
 	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
 
+	native version("4.15.1") void ClearBoneOffsets();
+
+	//================================================
+	// 
+	// Bone Offset Getters
+	// 
+	//================================================
+
 	/* rotation, translation, scaling */
 	native version("4.15.1") Quat, Vector3, Vector3 GetBoneOffset(int boneIndex);
 	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneOffset(Name boneName);
 
-	native version("4.15.1") void ClearBoneOffsets();
+	//================================================
+	// 
+	// Bone Info Getters
+	// 
+	//================================================
+	
+	native version("4.15.1") void GetRootBones(out Array<int> rootBones);
+	
+	native version("4.15.1") Name GetBoneName(int boneIndex);
+	
+	native version("4.15.1") int GetBoneParent(int boneIndex);
+	native version("4.15.1") int GetNamedBoneParent(Name boneName); // return value lower than 0 means it's a root bone, and as such has no parent
+	
+	native version("4.15.1") void GetBoneChildren(int boneIndex, out Array<int> children);
+	native version("4.15.1") void GetNamedBoneChildren(Name boneName, out Array<int> children);
+
+
+	// this is the length in model units, not in world units, and does not take model scale in MODELDEF, world, etc, or current animation or offset into account at all
+	native version("4.15.1") double GetBoneLength(int boneIndex);
+	native version("4.15.1") double GetNamedBoneLength(Name boneName);
+
+	//================================================
+	// 
+	// 
+	// 
+	//================================================
+
 
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);

@@ -5137,7 +5137,6 @@ static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_
 template<bool isSet, bool isOffset>
 FModel * SetGetBoneShared(AActor * self, int model_index)
 {
-
 	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
 	{
 		ThrowAbortException(X_OTHER, isSet ? "Cannot set bone offset for non-decoupled actors" : (isOffset ? "Cannot get bone for non-decoupled actors" : "Cannot get bone offset for non-decoupled actors"));
@@ -5164,17 +5163,17 @@ FModel * SetGetBoneShared(AActor * self, int model_index)
 	}
 }
 
-template<bool isSet>
-FModel * SetGetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
+template<bool isSet, bool isOffset>
+FModel * SetGetBoneSharedIndex(AActor * self, int model_index, int &bone_index, FName * bone_name)
 {
-	FModel * mdl = SetGetBoneShared<isSet, true>(self, model_index);
+	FModel * mdl = SetGetBoneShared<isSet, isOffset>(self, model_index);
 
 	if(bone_name)
 	{
 		bone_index = mdl->FindJoint(*bone_name);
 		if(bone_index < 0 || bone_index >= mdl->NumJoints())
 		{
-			Printf(PRINT_NONOTIFY, "Could not find joint '%s'", bone_name->GetChars());
+			Printf(PRINT_NONOTIFY, "Could not find bone '%s'", bone_name->GetChars());
 			return nullptr;
 		}
 	}
@@ -5199,12 +5198,17 @@ FModel * SetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FN
 		ThrowAbortException(X_OTHER, "Invalid mode for setbone");
 	}
 	
-	return SetGetBoneOffsetShared<true>(self, model_index, bone_index, bone_name);
+	return SetGetBoneSharedIndex<true, true>(self, model_index, bone_index, bone_name);
 }
 
 FModel * GetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
 {
-	return SetGetBoneOffsetShared<false>(self, model_index, bone_index, bone_name);
+	return SetGetBoneSharedIndex<false, true>(self, model_index, bone_index, bone_name);
+}
+
+FModel * GetBoneShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
+{
+	return SetGetBoneSharedIndex<false, false>(self, model_index, bone_index, bone_name);
 }
 
 //================================================
@@ -5519,6 +5523,166 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneOffset)
 
 	return numret;
 }
+
+
+//================================================
+// 
+// Bone Info Getters
+// 
+//================================================
+
+static void GetRootBonesNative(AActor * self, TArray<int> *out)
+{
+	if(out)
+	{
+		FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+		mdl->GetRootJoints(*out);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetRootBones, GetRootBonesNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetRootBonesNative(self, out);
+
+	return 0;
+}
+
+static int GetBoneNameNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointName(bone_index).GetIndex();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneName, GetBoneNameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_INT(GetBoneNameNative(self, boneindex));
+}
+
+static int GetBoneParentNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointParent(bone_index);
+}
+
+static int GetNamedBoneParentNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+	
+	return mdl->GetJointParent(bone_index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneParent, GetBoneParentNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_INT(GetBoneParentNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneParent, GetNamedBoneParentNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_INT(GetNamedBoneParentNative(self, bonename.GetIndex()));
+}
+
+static void GetBoneChildrenNative(AActor * self, int bone_index, TArray<int> *out)
+{
+	if(out)
+	{
+		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+		mdl->GetJointChildren(bone_index, *out);
+	}
+}
+
+static void GetNamedBoneChildrenNative(AActor * self, int boneName_i, TArray<int> *out)
+{
+	if(out)
+	{
+		FName bone_name {ENamedName(boneName_i)};
+
+		int bone_index;
+
+		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+		mdl->GetJointChildren(bone_index, *out);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneChildren, GetBoneChildrenNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetBoneChildrenNative(self, boneindex, out);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneChildren, GetNamedBoneChildrenNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetNamedBoneChildrenNative(self, bonename.GetIndex(), out);
+
+	return 0;
+}
+
+static double GetBoneLengthNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointLength(bone_index);
+}
+
+static double GetNamedBoneLengthNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	return mdl->GetJointLength(bone_index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneLength, GetBoneLengthNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_FLOAT(GetBoneLengthNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneLength, GetNamedBoneLengthNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_FLOAT(GetNamedBoneLengthNative(self, bonename.GetIndex()));
+}
+
+
+
+
 
 
 //================================================

@@ -197,7 +197,12 @@ public:
 
 	double GetJointLength(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size() && Joints[joint].Parent >= 0) ? (Joints[joint].Translate - Joints[Joints[joint].Parent].Translate).Length() : 0.0;
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Length() : 0.0;
+	}
+
+	FVector3 GetJointDir(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
 	}
 };
 

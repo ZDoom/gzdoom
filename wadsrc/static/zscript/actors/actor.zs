@@ -1402,10 +1402,13 @@ class Actor : Thinker native
 	native version("4.15.1") void GetBoneChildren(int boneIndex, out Array<int> children);
 	native version("4.15.1") void GetNamedBoneChildren(Name boneName, out Array<int> children);
 
-
 	// this is the length in model units, not in world units, and does not take model scale in MODELDEF, world, etc, or current animation or offset into account at all
 	native version("4.15.1") double GetBoneLength(int boneIndex);
 	native version("4.15.1") double GetNamedBoneLength(Name boneName);
+
+	// this is the direction of the bone in the armature, does not take the current animation or offset into account at all
+	native version("4.15.1") double GetBoneDir(int boneIndex);
+	native version("4.15.1") double GetNamedBoneDir(Name boneName);
 
 	//================================================
 	// 

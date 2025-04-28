@@ -5680,6 +5680,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneLength, GetNamedBoneLengthNati
 	ACTION_RETURN_FLOAT(GetNamedBoneLengthNative(self, bonename.GetIndex()));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetBoneDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+}
+
 
 
 

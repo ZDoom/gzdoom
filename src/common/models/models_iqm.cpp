@@ -126,6 +126,9 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			joint.Translate.X = reader.ReadFloat();
 			joint.Translate.Y = reader.ReadFloat();
 			joint.Translate.Z = reader.ReadFloat();
+
+			int len = joint.Translate.Length();
+
 			joint.Quaternion.X = reader.ReadFloat();
 			joint.Quaternion.Y = reader.ReadFloat();
 			joint.Quaternion.Z = reader.ReadFloat();

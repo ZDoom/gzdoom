@@ -139,6 +139,7 @@ static PClassActor* FindInfoName(int index, bool mustexist = false)
 			cls = static_cast<PClassActor*>(RUNTIME_CLASS(AActor)->CreateDerivedClass(name.GetChars(), (unsigned)sizeof(AActor)));
 			NewClassType(cls, -1);	// This needs a VM type to work as intended.
 			cls->InitializeDefaults();
+			PClassActor::AllActorClasses.Push(cls);
 		}
 		if (cls)
 		{
@@ -3714,7 +3715,11 @@ void FinishDehPatch ()
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
 			bool newlycreated;
 			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated, 0));
-			if (newlycreated) subclass->InitializeDefaults();
+			if (newlycreated)
+			{
+				subclass->InitializeDefaults();
+				PClassActor::AllActorClasses.Push(subclass);
+			}
 		} 
 		while (subclass == nullptr);
 		NewClassType(subclass, 0);	// This needs a VM type to work as intended.

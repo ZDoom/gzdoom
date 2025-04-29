@@ -92,7 +92,7 @@ void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool f
 		cs = 1.0f;
 	}
 
-	if (light->target)
+	if (light->target && (light->target->renderflags2 & RF2_LIGHTMULTALPHA))
 		cs *= (float)light->target->Alpha;
 
 	float r = light->GetRed() / 255.0f * cs;

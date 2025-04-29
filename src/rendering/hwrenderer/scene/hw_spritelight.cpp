@@ -186,7 +186,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FSec
 						lg = light->GetGreen() / 255.0f;
 						lb = light->GetBlue() / 255.0f;
 
-						if (light->target)
+						if (light->target && (light->target->renderflags2 & RF2_LIGHTMULTALPHA))
 						{
 							float alpha = (float)light->target->Alpha;
 							lr *= alpha;

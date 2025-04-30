@@ -1390,7 +1390,6 @@ class Actor : Thinker native
 
 	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
-	
 
 	version("4.15.1") void ClearBoneTranslation(int boneIndex, double interpolation_duration = 1.0)
 	{
@@ -1404,7 +1403,6 @@ class Actor : Thinker native
 
 	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
-	
 
 	version("4.15.1") void ClearBoneScaling(int boneIndex, double interpolation_duration = 1.0)
 	{

@@ -5558,12 +5558,31 @@ static int GetBoneNameNative(AActor * self, int bone_index)
 	return mdl->GetJointName(bone_index).GetIndex();
 }
 
+static int GetBoneIndexNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	return bone_index;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneName, GetBoneNameNative)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(boneindex);
 
 	ACTION_RETURN_INT(GetBoneNameNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneIndex, GetBoneIndexNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_INT(GetBoneIndexNative(self, bonename.GetIndex()));
 }
 
 static int GetBoneParentNative(AActor * self, int bone_index)
@@ -5702,6 +5721,19 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
 	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
 }
 
+static int GetBoneCountNative(AActor * self)
+{
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+	return mdl->NumJoints();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneCount, GetBoneCountNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(GetBoneCountNative(self));
+}
 
 
 

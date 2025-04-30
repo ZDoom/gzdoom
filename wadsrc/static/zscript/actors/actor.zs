@@ -1365,24 +1365,56 @@ class Actor : Thinker native
 	// 
 	//================================================
 
-	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
-	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = SB_ADD, double interpolation_duration = 1.0);
 
-	version("4.15.1") void SetBoneRotationAngles(int boneIndex, double yaw, double pitch, double roll, int mode = 1, double interpolation_duration = 1.0)
+	version("4.15.1") void SetBoneRotationAngles(int boneIndex, double yaw, double pitch, double roll, int mode = SB_ADD, double interpolation_duration = 1.0)
 	{
 		SetBoneRotation(boneIndex, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
 	}
 
-	version("4.15.1") void SetNamedBoneRotationAngles(Name boneName, double yaw, double pitch, double roll, int mode = 1, double interpolation_duration = 1.0)
+	version("4.15.1") void SetNamedBoneRotationAngles(Name boneName, double yaw, double pitch, double roll, int mode = SB_ADD, double interpolation_duration = 1.0)
 	{
 		SetNamedBoneRotation(boneName, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
 	}
 
-	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
-	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
+	version("4.15.1") void ClearBoneRotation(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneRotation(boneIndex, Quat(0, 0, 0, 1), 0, interpolation_duration);
+	}
 
-	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
-	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = 1, double interpolation_duration = 1.0);
+	version("4.15.1") void ClearNamedBoneRotation(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneRotation(boneName, Quat(0, 0, 0, 1), 0, interpolation_duration);
+	}
+
+	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
+	
+
+	version("4.15.1") void ClearBoneTranslation(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneTranslation(boneIndex, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearNamedBoneTranslation(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneTranslation(boneName, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
+	
+
+	version("4.15.1") void ClearBoneScaling(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneScaling(boneIndex, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearNamedBoneScaling(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneScaling(boneName, (0, 0, 0), 0, interpolation_duration);
+	}
 
 	native version("4.15.1") void ClearBoneOffsets();
 

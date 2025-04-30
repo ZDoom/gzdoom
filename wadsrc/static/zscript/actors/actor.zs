@@ -1407,8 +1407,8 @@ class Actor : Thinker native
 	native version("4.15.1") double GetNamedBoneLength(Name boneName);
 
 	// this is the direction of the bone in the armature, does not take the current animation or offset into account at all
-	native version("4.15.1") double GetBoneDir(int boneIndex);
-	native version("4.15.1") double GetNamedBoneDir(Name boneName);
+	native version("4.15.1") Vector3 GetBoneDir(int boneIndex);
+	native version("4.15.1") Vector3 GetNamedBoneDir(Name boneName);
 
 	//================================================
 	// 

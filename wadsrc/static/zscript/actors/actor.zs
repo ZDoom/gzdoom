@@ -1368,6 +1368,16 @@ class Actor : Thinker native
 	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = 1, double interpolation_duration = 1.0);
 
+	version("4.15.1") void SetBoneRotationAngles(int boneIndex, double yaw, double pitch, double roll, int mode = 1, double interpolation_duration = 1.0)
+	{
+		SetBoneRotation(boneIndex, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
+	}
+
+	version("4.15.1") void SetNamedBoneRotationAngles(Name boneName, double yaw, double pitch, double roll, int mode = 1, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneRotation(boneName, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
+	}
+
 	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
 	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = 1, double interpolation_duration = 1.0);
 

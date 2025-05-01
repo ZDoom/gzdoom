@@ -1359,6 +1359,108 @@ class Actor : Thinker native
 	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
 	native bool A_RemoveLight(Name lightid);
 
+	//================================================
+	// 
+	// Bone Offset Setters
+	// 
+	//================================================
+
+	native version("4.15.1") void SetBoneRotation(int boneIndex, Quat rotation, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneRotation(Name boneName, Quat rotation, int mode = SB_ADD, double interpolation_duration = 1.0);
+
+	version("4.15.1") void SetBoneRotationAngles(int boneIndex, double yaw, double pitch, double roll, int mode = SB_ADD, double interpolation_duration = 1.0)
+	{
+		SetBoneRotation(boneIndex, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
+	}
+
+	version("4.15.1") void SetNamedBoneRotationAngles(Name boneName, double yaw, double pitch, double roll, int mode = SB_ADD, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneRotation(boneName, Quat.FromAngles(yaw, pitch, roll), mode, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearBoneRotation(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneRotation(boneIndex, Quat(0, 0, 0, 1), 0, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearNamedBoneRotation(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneRotation(boneName, Quat(0, 0, 0, 1), 0, interpolation_duration);
+	}
+
+	native version("4.15.1") void SetBoneTranslation(int boneIndex, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneTranslation(Name boneName, Vector3 translation, int mode = SB_ADD, double interpolation_duration = 1.0);
+
+	version("4.15.1") void ClearBoneTranslation(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneTranslation(boneIndex, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearNamedBoneTranslation(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneTranslation(boneName, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	native version("4.15.1") void SetBoneScaling(int boneIndex, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") void SetNamedBoneScaling(Name boneName, Vector3 scaling, int mode = SB_ADD, double interpolation_duration = 1.0);
+
+	version("4.15.1") void ClearBoneScaling(int boneIndex, double interpolation_duration = 1.0)
+	{
+		SetBoneScaling(boneIndex, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	version("4.15.1") void ClearNamedBoneScaling(Name boneName, double interpolation_duration = 1.0)
+	{
+		SetNamedBoneScaling(boneName, (0, 0, 0), 0, interpolation_duration);
+	}
+
+	native version("4.15.1") void ClearBoneOffsets();
+
+	//================================================
+	// 
+	// Bone Offset Getters
+	// 
+	//================================================
+
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneOffset(int boneIndex);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneOffset(Name boneName);
+
+	//================================================
+	// 
+	// Bone Info Getters
+	// 
+	//================================================
+	
+	native version("4.15.1") void GetRootBones(out Array<int> rootBones);
+	
+	native version("4.15.1") Name GetBoneName(int boneIndex);
+	native version("4.15.1") int GetBoneIndex(Name boneName);
+	
+	native version("4.15.1") int GetBoneParent(int boneIndex);
+	native version("4.15.1") int GetNamedBoneParent(Name boneName); // return value lower than 0 means it's a root bone, and as such has no parent
+	
+	native version("4.15.1") void GetBoneChildren(int boneIndex, out Array<int> children);
+	native version("4.15.1") void GetNamedBoneChildren(Name boneName, out Array<int> children);
+
+	// this is the length in model units, not in world units, and does not take model scale in MODELDEF, world, etc, or current animation or offset into account at all
+	native version("4.15.1") double GetBoneLength(int boneIndex);
+	native version("4.15.1") double GetNamedBoneLength(Name boneName);
+
+	// this is the direction of the bone in the armature, does not take the current animation or offset into account at all
+	native version("4.15.1") Vector3 GetBoneDir(int boneIndex);
+	native version("4.15.1") Vector3 GetNamedBoneDir(Name boneName);
+	
+	native version("4.15.1") int GetBoneCount();
+
+
+	//================================================
+	// 
+	// 
+	// 
+	//================================================
+
+
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 

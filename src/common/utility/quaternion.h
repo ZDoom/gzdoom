@@ -13,7 +13,7 @@ public:
 
 	TQuaternion() = default;
 
-	TQuaternion(vec_t x, vec_t y, vec_t z, vec_t w)
+	constexpr TQuaternion(vec_t x, vec_t y, vec_t z, vec_t w)
 		: X(x), Y(y), Z(z), W(w)
 	{
 	}
@@ -38,6 +38,17 @@ public:
 	void Zero()
 	{
 		Z = Y = X = W = 0;
+	}
+
+	void MakeIdentity()
+	{
+		Z = Y = X = 0;
+		W = 1;
+	}
+
+	static constexpr TQuaternion Identity()
+	{
+		return {0,0,0,1};
 	}
 
 	bool isZero() const
@@ -345,6 +356,12 @@ public:
 			auto scale1 = (theta * t).Sin();
 			return (from * scale0 + to * scale1).Unit();
 		}
+	}
+
+	template<typename U>
+	explicit operator TVector4<U>()
+	{
+		return TVector4<U>(U(X),U(Y),U(Z),U(W));
 	}
 };
 

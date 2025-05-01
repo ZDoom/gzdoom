@@ -67,10 +67,11 @@ struct IQMAdjacency
 
 struct IQMJoint
 {
-	FString Name;
+	FName Name;
 	int32_t Parent; // parent < 0 means this is a root bone
+	TArray<int> Children; // indices of children
 	FVector3 Translate;
-	FVector4 Quaternion;
+	FQuaternion Quaternion;
 	FVector3 Scale;
 };
 
@@ -122,10 +123,10 @@ public:
 	const TArray<TRS>* AttachAnimationData() override;
 
 	ModelAnimFrame PrecalculateFrame(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData) override;
-	const TArray<VSMatrix>* CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData) override;
+	const TArray<VSMatrix>* CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, TArray<BoneOverride> *in, BoneInfo *out, double time) override;
 
 	ModelAnimFramePrecalculatedIQM CalculateFrameIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData);
-	const TArray<VSMatrix>* CalculateBonesIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData);
+	const TArray<VSMatrix>* CalculateBonesIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData, TArray<BoneOverride> *in, BoneInfo *out, double time);
 
 private:
 	void LoadGeometry();
@@ -140,11 +141,15 @@ private:
 	int mLumpNum = -1;
 
 	TMap<FName, int> NamedAnimations;
+	TMap<FName, int> NamedJoints;
 
 	TArray<IQMMesh> Meshes;
 	TArray<IQMTriangle> Triangles;
 	TArray<IQMAdjacency> Adjacency;
 	TArray<IQMJoint> Joints;
+	
+	TArray<int> RootJoints;
+
 	TArray<IQMPose> Poses;
 	TArray<IQMAnim> Anims;
 	TArray<IQMBounds> Bounds;
@@ -158,6 +163,47 @@ private:
 	TArray<VSMatrix> baseframe;
 	TArray<VSMatrix> inversebaseframe;
 	TArray<TRS> TRSData;
+public:
+	int NumJoints() override { return Joints.Size(); }
+	int FindJoint(FName name) override
+	{
+		int *j = NamedJoints.CheckKey(name);
+
+		return j ? *j : -1;
+	}
+
+	int GetJointParent(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Parent : -1;
+	}
+
+	FName GetJointName(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Name : FName(NAME_None);
+	}
+
+	void GetRootJoints(TArray<int> &out) override
+	{
+		out = RootJoints;
+	}
+
+	void GetJointChildren(int joint, TArray<int> &out) override
+	{
+		if(joint >= 0 && joint < Joints.Size())
+		{
+			out = Joints[joint].Children;
+		}
+	}
+
+	double GetJointLength(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Length() : 0.0;
+	}
+
+	FVector3 GetJointDir(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
+	}
 };
 
 struct IQMReadErrorException { };

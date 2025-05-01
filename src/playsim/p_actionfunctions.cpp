@@ -5113,6 +5113,7 @@ static void CleanupModelData(AActor * mobj)
 		&& mobj->modelData->modelFrameGenerators.Size() == 0
 		&& mobj->modelData->skinIDs.Size() == 0
 		&& mobj->modelData->animationIDs.Size() == 0
+		&& mobj->modelData->modelBoneOverrides.Size() == 0
 		&& mobj->modelData->modelDef == nullptr
 		&&(mobj->modelData->flags & ~MODELDATA_HADMODEL) == 0 )
 	{
@@ -5121,6 +5122,626 @@ static void CleanupModelData(AActor * mobj)
 		mobj->modelData = nullptr;
 	}
 }
+
+FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, float t, float invt);
+
+static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_index, int index, FQuaternion rotation, int mode, double interpolation_duration, double switchTic)
+{
+	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
+
+	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
+
+	self->modelData->modelBoneOverrides[model_index][index].rotation.Set(rotation, switchTic, interpolation_duration, mode);
+}
+
+template<bool isSet, bool isOffset>
+FModel * SetGetBoneShared(AActor * self, int model_index)
+{
+	if(!(self->flags9 & MF9_DECOUPLEDANIMATIONS))
+	{
+		ThrowAbortException(X_OTHER, isSet ? "Cannot set bone offset for non-decoupled actors" : (isOffset ? "Cannot get bone for non-decoupled actors" : "Cannot get bone offset for non-decoupled actors"));
+	}
+	
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))
+	{
+		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");
+	}
+
+	EnsureModelData(self);
+	
+	if(self->modelData->models.Size() > model_index && self->modelData->models[model_index].modelID >= 0 && self->modelData->models[model_index].modelID < Models.Size())
+	{
+		return Models[self->modelData->models[model_index].modelID];
+	}
+	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.Size() > model_index)
+	{
+		return Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[model_index]];
+	}
+	else
+	{
+		ThrowAbortException(X_OTHER, "Model Index out of range");
+	}
+}
+
+template<bool isSet, bool isOffset>
+FModel * SetGetBoneSharedIndex(AActor * self, int model_index, int &bone_index, FName * bone_name)
+{
+	FModel * mdl = SetGetBoneShared<isSet, isOffset>(self, model_index);
+
+	if(bone_name)
+	{
+		bone_index = mdl->FindJoint(*bone_name);
+		if(bone_index < 0 || bone_index >= mdl->NumJoints())
+		{
+			Printf(PRINT_NONOTIFY, "Could not find bone '%s'", bone_name->GetChars());
+			return nullptr;
+		}
+	}
+	else if(bone_index < 0 || bone_index >= mdl->NumJoints())
+	{
+		ThrowAbortException(X_OTHER, "bone index out of range");
+	}
+
+	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
+
+	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
+
+	return mdl;
+}
+
+FModel * SetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name, int mode, double &interpolation_duration)
+{
+	if(interpolation_duration < 0) interpolation_duration = 0;
+
+	if(mode < 0 || mode > 2)
+	{
+		ThrowAbortException(X_OTHER, "Invalid mode for setbone");
+	}
+	
+	return SetGetBoneSharedIndex<true, true>(self, model_index, bone_index, bone_name);
+}
+
+FModel * GetBoneOffsetShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
+{
+	return SetGetBoneSharedIndex<false, true>(self, model_index, bone_index, bone_name);
+}
+
+FModel * GetBoneShared(AActor * self, int model_index, int &bone_index, FName * bone_name)
+{
+	return SetGetBoneSharedIndex<false, false>(self, model_index, bone_index, bone_name);
+}
+
+//================================================
+// 
+// SetBoneRotation
+// 
+//================================================
+
+static void SetModelBoneRotationNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].rotation.Set(FQuaternion(rot_x, rot_y, rot_z, rot_w), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetBoneRotationNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelBoneRotationNative(self, 0, bone_index, rot_x, rot_y, rot_z, rot_w, mode, interpolation_duration, ticFrac);
+}
+
+static void SetModelNamedBoneRotationNative(AActor * self, int model_index, int boneName_i, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].rotation.Set(FQuaternion(rot_x, rot_y, rot_z, rot_w), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetNamedBoneRotationNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelNamedBoneRotationNative(self, 0, boneName_i, rot_x, rot_y, rot_z, rot_w, mode, interpolation_duration, ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetBoneRotation, SetBoneRotationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_FLOAT(rot_w);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetBoneRotationNative(self, boneindex, rot_x, rot_y, rot_z, rot_w, mode, interplen, 1.0);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneRotation, SetNamedBoneRotationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_FLOAT(rot_w);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetNamedBoneRotationNative(self, bonename.GetIndex(), rot_x, rot_y, rot_z, rot_w, mode, interplen, 1.0);
+
+	return 0;
+}
+
+//================================================
+// 
+// SetBoneTranslation
+// 
+//================================================
+
+static void SetModelBoneTranslationNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].translation.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetBoneTranslationNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelBoneTranslationNative(self, 0, bone_index, rot_x, rot_y, rot_z, mode, interpolation_duration, ticFrac);
+}
+
+static void SetModelNamedBoneTranslationNative(AActor * self, int model_index, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].translation.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetNamedBoneTranslationNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelNamedBoneTranslationNative(self, 0, boneName_i, rot_x, rot_y, rot_z, mode, interpolation_duration, ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetBoneTranslation, SetBoneTranslationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetBoneTranslationNative(self, boneindex, rot_x, rot_y, rot_z, mode, interplen, 1.0);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneTranslation, SetNamedBoneTranslationNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetNamedBoneTranslationNative(self, bonename.GetIndex(), rot_x, rot_y, rot_z, mode, interplen, 1.0);
+
+	return 0;
+}
+
+//================================================
+// 
+// SetBoneScaling
+// 
+//================================================
+
+static void SetModelBoneScalingNative(AActor * self, int model_index, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, nullptr, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].scaling.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetBoneScalingNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelBoneScalingNative(self, 0, bone_index, rot_x, rot_y, rot_z, mode, interpolation_duration, ticFrac);
+}
+
+static void SetModelNamedBoneScalingNative(AActor * self, int model_index, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = SetBoneOffsetShared(self, model_index, bone_index, &bone_name, mode, interpolation_duration);
+
+	if(!mdl) return;
+
+	self->modelData->modelBoneOverrides[model_index][bone_index].scaling.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+}
+
+static void SetNamedBoneScalingNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
+{
+	SetModelNamedBoneScalingNative(self, 0, boneName_i, rot_x, rot_y, rot_z, mode, interpolation_duration, ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetBoneScaling, SetBoneScalingNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetBoneScalingNative(self, boneindex, rot_x, rot_y, rot_z, mode, interplen, 1.0);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetNamedBoneScaling, SetNamedBoneScalingNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_FLOAT(rot_x);
+	PARAM_FLOAT(rot_y);
+	PARAM_FLOAT(rot_z);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+	SetNamedBoneScalingNative(self, bonename.GetIndex(), rot_x, rot_y, rot_z, mode, interplen, 1.0);
+
+	return 0;
+}
+
+
+//================================================
+// 
+// ClearBoneOffsets
+// 
+//================================================
+
+static void ClearBoneOffsetsNative(AActor * self)
+{
+	if(self->modelData) self->modelData->modelBoneOverrides[0].Clear();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearBoneOffsets, ClearBoneOffsetsNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ClearBoneOffsetsNative(self);
+
+	return 0;
+}
+
+//================================================
+// 
+// GetBoneOffset
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		auto &mod = self->modelData->modelBoneOverrides[0][bone_index];
+
+		translation = DVector3(mod.translation.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+		rotation = DVector4(mod.rotation.Get(FQuaternion(0,0,0,1), self->Level->totaltime + 1.0));
+		scaling = DVector3(mod.scaling.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+	}
+	
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+	
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+	
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneOffset)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		auto &mod = self->modelData->modelBoneOverrides[0][bone_index];
+
+		translation = DVector3(mod.translation.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+		rotation = DVector4(mod.rotation.Get(FQuaternion(0,0,0,1), self->Level->totaltime + 1.0));
+		scaling = DVector3(mod.scaling.Get(FVector3(0,0,0), self->Level->totaltime + 1.0));
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+
+//================================================
+// 
+// Bone Info Getters
+// 
+//================================================
+
+static void GetRootBonesNative(AActor * self, TArray<int> *out)
+{
+	if(out)
+	{
+		FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+		mdl->GetRootJoints(*out);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetRootBones, GetRootBonesNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetRootBonesNative(self, out);
+
+	return 0;
+}
+
+static int GetBoneNameNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointName(bone_index).GetIndex();
+}
+
+static int GetBoneIndexNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	return bone_index;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneName, GetBoneNameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_INT(GetBoneNameNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneIndex, GetBoneIndexNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_INT(GetBoneIndexNative(self, bonename.GetIndex()));
+}
+
+static int GetBoneParentNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointParent(bone_index);
+}
+
+static int GetNamedBoneParentNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+	
+	return mdl->GetJointParent(bone_index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneParent, GetBoneParentNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_INT(GetBoneParentNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneParent, GetNamedBoneParentNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_INT(GetNamedBoneParentNative(self, bonename.GetIndex()));
+}
+
+static void GetBoneChildrenNative(AActor * self, int bone_index, TArray<int> *out)
+{
+	if(out)
+	{
+		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+		mdl->GetJointChildren(bone_index, *out);
+	}
+}
+
+static void GetNamedBoneChildrenNative(AActor * self, int boneName_i, TArray<int> *out)
+{
+	if(out)
+	{
+		FName bone_name {ENamedName(boneName_i)};
+
+		int bone_index;
+
+		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+		mdl->GetJointChildren(bone_index, *out);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneChildren, GetBoneChildrenNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetBoneChildrenNative(self, boneindex, out);
+
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneChildren, GetNamedBoneChildrenNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+	PARAM_POINTER(out, TArray<int>);
+
+	GetNamedBoneChildrenNative(self, bonename.GetIndex(), out);
+
+	return 0;
+}
+
+static double GetBoneLengthNative(AActor * self, int bone_index)
+{
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	return mdl->GetJointLength(bone_index);
+}
+
+static double GetNamedBoneLengthNative(AActor * self, int boneName_i)
+{
+	FName bone_name {ENamedName(boneName_i)};
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	return mdl->GetJointLength(bone_index);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneLength, GetBoneLengthNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(boneindex);
+
+	ACTION_RETURN_FLOAT(GetBoneLengthNative(self, boneindex));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneLength, GetNamedBoneLengthNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bonename);
+
+	ACTION_RETURN_FLOAT(GetNamedBoneLengthNative(self, bonename.GetIndex()));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+}
+
+static int GetBoneCountNative(AActor * self)
+{
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+	return mdl->NumJoints();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneCount, GetBoneCountNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(GetBoneCountNative(self));
+}
+
+
+
+
+
+//================================================
+// SetAnimation
+//================================================
 
 enum ESetAnimationFlags
 {
@@ -5449,12 +6070,18 @@ void ChangeModelNative(
 			}
 			surfaceSkins.Push(skindata);
 			mobj->modelData->models.Push({queryModel, std::move(surfaceSkins)});
+			
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
 		}
 		else
 		{
 			mobj->modelData->models.Push({queryModel, {}});
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
+		}
+		
+		if(queryModel != -1 && mobj->modelData->modelBoneOverrides.Size() > modelindex)
+		{
+			mobj->modelData->modelBoneOverrides[modelindex].Clear();
 		}
 	}
 	else
@@ -5475,7 +6102,15 @@ void ChangeModelNative(
 				mobj->modelData->models[modelindex].surfaceSkinIDs[skinindex] = skindata;
 			}
 		}
-		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
+		if(queryModel != -1)
+		{
+			mobj->modelData->models[modelindex].modelID = queryModel;
+			
+			if(mobj->modelData->modelBoneOverrides.Size() > modelindex)
+			{
+				mobj->modelData->modelBoneOverrides[modelindex].Clear();
+			}
+		}
 		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
 	}
 

@@ -1547,3 +1547,10 @@ enum EParticleStyle
 	PT_ROUND	= 1,
 	PT_SMOOTH	= 2,
 };
+
+enum ESetBoneMode
+{
+	SB_CLEAR = 0,
+	SB_ADD = 1,
+	SB_REPLACE = 2,
+};

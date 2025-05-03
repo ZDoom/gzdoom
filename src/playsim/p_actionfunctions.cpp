@@ -5125,15 +5125,6 @@ static void CleanupModelData(AActor * mobj)
 
 FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, float t, float invt);
 
-static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_index, int index, FQuaternion rotation, int mode, double interpolation_duration, double switchTic)
-{
-	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
-
-	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
-
-	self->modelData->modelBoneOverrides[model_index][index].rotation.Set(rotation, switchTic, interpolation_duration, mode);
-}
-
 template<bool isSet, bool isOffset>
 FModel * SetGetBoneShared(AActor * self, int model_index)
 {

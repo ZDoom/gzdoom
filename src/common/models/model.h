@@ -18,6 +18,7 @@ class IModelVertexBuffer;
 class FModel;
 class PClass;
 struct FSpriteModelFrame;
+struct FLevelLocals;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
@@ -59,6 +60,8 @@ public:
 	unsigned int getFlags(class DActorModelData * defs) const;
 	friend void InitModels();
 	friend void ParseModelDefLump(int Lump);
+
+	VSMatrix ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double ticFrac);
 };
 
 

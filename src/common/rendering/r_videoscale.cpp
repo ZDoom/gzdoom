@@ -102,14 +102,14 @@ namespace
 	float v_MinimumToFill2(uint32_t inwidth, uint32_t inheight)
 	{
 		// sx = screen x dimension, sy = same for y
-		float sx = (float)inwidth * 1.2, sy = (float)inheight;
+		float sx = (float)inwidth * 1.2f, sy = (float)inheight;
 		static float lastsx = 0., lastsy = 0., result = 0.;
 		if (lastsx != sx || lastsy != sy)
 		{
 			if (sx <= 0. || sy <= 0.)
 				return 1.; // prevent x/0 error
 			// set absolute minimum scale to fill the entire screen but get as close to 640x400 as possible
-			float ssx = (float)(VID_MIN_UI_WIDTH) / 1.2 / sx, ssy = (float)(VID_MIN_UI_HEIGHT) / sy;
+			float ssx = (float)(VID_MIN_UI_WIDTH) / 1.2f / sx, ssy = (float)(VID_MIN_UI_HEIGHT) / sy;
 			result = (ssx < ssy) ? ssy : ssx;
 			lastsx = sx;
 			lastsy = sy;
@@ -165,7 +165,7 @@ namespace
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           					[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        					1.2f,   				false   },	// 4  - 1280x800
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },			1.0f,   				true    },	// 5  - Custom
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            				[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        			1.2f,   				false   },	// 6  - 320x200
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX2(Width, Height) * 1.2; },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY2(Width, Height); },			1.2f,					false   },	// 7  - Minimum Scale to Fill Entire Screen (1.2)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return uint32_t(v_mfillX2(Width, Height) * 1.2); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY2(Width, Height); },			1.2f,					false   },	// 7  - Minimum Scale to Fill Entire Screen (1.2)
 	};
 	bool isOutOfBounds(int x)
 	{

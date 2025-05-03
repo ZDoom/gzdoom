@@ -1013,7 +1013,13 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 		}
 		while (stream.avail_out == 0)
 		{
-			if (!WriteIDAT (file, buffer.data(), buffer.size()))
+
+			if(buffer.size() > INT_MAX)
+			{
+				I_Error("save png buffer too large");
+			}
+			int sz = (int) buffer.size();
+			if (!WriteIDAT (file, buffer.data(), sz))
 			{
 				return false;
 			}
@@ -1045,7 +1051,12 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 		}
 		if (stream.avail_out == 0)
 		{
-			if (!WriteIDAT (file, buffer.data(), buffer.size()))
+			if(buffer.size() > INT_MAX)
+			{
+				I_Error("save png buffer too large");
+			}
+			int sz = (int) buffer.size();
+			if (!WriteIDAT (file, buffer.data(), sz))
 			{
 				return false;
 			}
@@ -1066,7 +1077,15 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 	{
 		return false;
 	}
-	return WriteIDAT (file, buffer.data(), buffer.size() - stream.avail_out);
+
+
+	if((buffer.size() - stream.avail_out) > INT_MAX)
+	{
+		I_Error("save png buffer too large");
+	}
+	int sz = (int) (buffer.size() - stream.avail_out);
+
+	return WriteIDAT (file, buffer.data(), sz);
 }
 
 //==========================================================================

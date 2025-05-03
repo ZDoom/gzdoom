@@ -109,7 +109,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 		}
 
 		reader.SeekTo(ofs_joints);
-		for (int i = 0; i < Joints.Size(); i++)
+		for (int i = 0; i < Joints.SSize(); i++)
 		{
 			IQMJoint& joint = Joints[i];
 
@@ -127,8 +127,6 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			joint.Translate.Y = reader.ReadFloat();
 			joint.Translate.Z = reader.ReadFloat();
 
-			int len = joint.Translate.Length();
-
 			joint.Quaternion.X = reader.ReadFloat();
 			joint.Quaternion.Y = reader.ReadFloat();
 			joint.Quaternion.Z = reader.ReadFloat();
@@ -142,7 +140,7 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			{
 				RootJoints.Push(i);
 			}
-			else if(joint.Parent >= Joints.Size())
+			else if(joint.Parent >= Joints.SSize())
 			{
 				I_FatalError("Joint parent index out of bounds in IQM Model");
 			}
@@ -678,7 +676,7 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 {
 	const TArray<TRS>& animationFrames = animationData ? *animationData : TRSData;
 
-	TArray<VSMatrix>* outMatrix = out ? &out->positions : &boneData;
+	TArray<VSMatrix>* outMatrix = out ? &out->positions_with_override : &boneData;
 
 	int numbones = Joints.SSize();
 	outMatrix->Resize(numbones);
@@ -697,11 +695,11 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 		frame1 = clamp(frame1, 0, (animationFrames.SSize() - 1) / numbones);
 		frame2 = clamp(frame2, 0, (animationFrames.SSize() - 1) / numbones);
 
-		int offset1 = frame1 * numbones;
-		int offset2 = frame2 * numbones;
+		unsigned int offset1 = frame1 * numbones;
+		unsigned int offset2 = frame2 * numbones;
 
-		int offset1_1 = frame1_prev * numbones;
-		int offset2_1 = frame2_prev * numbones;
+		unsigned int offset1_1 = frame1_prev * numbones;
+		unsigned int offset2_1 = frame2_prev * numbones;
 
 		float invt = 1.0f - inter;
 		float invt1 = 1.0f - inter1_prev;
@@ -770,7 +768,6 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 			VSMatrix& result = (*outMatrix)[i];
 			if (Joints[i].Parent >= 0)
 			{
-				assert(Joints[i].Parent < i);
 				result = (*outMatrix)[Joints[i].Parent];
 				result.multMatrix(swapYZ);
 				result.multMatrix(baseframe[Joints[i].Parent]);

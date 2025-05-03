@@ -164,7 +164,7 @@ private:
 	TArray<VSMatrix> inversebaseframe;
 	TArray<TRS> TRSData;
 public:
-	int NumJoints() override { return Joints.Size(); }
+	int NumJoints() override { return Joints.SSize(); }
 	int FindJoint(FName name) override
 	{
 		int *j = NamedJoints.CheckKey(name);
@@ -174,12 +174,12 @@ public:
 
 	int GetJointParent(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Parent : -1;
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Parent : -1;
 	}
 
 	FName GetJointName(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Name : FName(NAME_None);
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Name : FName(NAME_None);
 	}
 
 	void GetRootJoints(TArray<int> &out) override
@@ -189,7 +189,7 @@ public:
 
 	void GetJointChildren(int joint, TArray<int> &out) override
 	{
-		if(joint >= 0 && joint < Joints.Size())
+		if(joint >= 0 && joint < Joints.SSize())
 		{
 			out = Joints[joint].Children;
 		}
@@ -197,21 +197,21 @@ public:
 
 	double GetJointLength(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Length() : 0.0;
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Translate.Length() : 0.0;
 	}
 
 	FVector3 GetJointDir(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
 	}
 	
 	TRS GetJointPose(int joint, int frame) override
 	{
-		return (joint >= 0 && joint < Joints.Size() && frame >= 0 && ((frame * Joints.Size()) + joint) < TRSData.Size()) ? TRSData[(frame * Joints.Size()) + joint] : TRS{} ;
+		return (joint >= 0 && joint < Joints.SSize() && frame >= 0 && ((frame * Joints.SSize()) + joint) < TRSData.SSize()) ? TRSData[(frame * Joints.SSize()) + joint] : TRS{} ;
 	}
 	virtual int NumFrames()
 	{
-		return Joints.Size() > 0 ? (TRSData.Size() / Joints.Size()) : 0;
+		return Joints.SSize() > 0 ? (TRSData.SSize() / Joints.SSize()) : 0;
 	}
 };
 

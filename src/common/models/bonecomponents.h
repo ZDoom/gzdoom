@@ -67,13 +67,13 @@ struct BoneOverrideComponent
 	void Modify(T &value, double tic) const
 	{
 		
-		double lerp_amt = interplen > 0.0 ? std::clamp(((tic - switchtic) / interplen), 0.0, 1.0) : 1.0;
+		float lerp_amt = interplen > 0.0f ? std::clamp(float((tic - switchtic) / interplen), 0.0f, 1.0f) : 1.0f;
 		
 		if(mode > 0 || (prev_mode > 0 && lerp_amt < 1.0))
 		{
 			T from = ModifyValue(value, prev, prev_mode);
 			T to = ModifyValue(value, cur, mode);
-			value = Lerp(from, to, lerp_amt, 1.0 - lerp_amt);
+			value = Lerp(from, to, lerp_amt, 1.0f - lerp_amt);
 		}
 	}
 	
@@ -126,9 +126,10 @@ struct BoneOverride
 
 struct BoneInfo
 {
-	TArray<TRS> bones_anim_only;
+	TArray<TRS> bones;
 	TArray<TRS> bones_with_override;
 	TArray<VSMatrix> positions;
+	TArray<VSMatrix> positions_with_override;
 };
 
 struct ModelAnim

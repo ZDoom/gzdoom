@@ -1033,7 +1033,7 @@ public:
 
 	void SetPlaneReflectivity(int pos, double val)
 	{
-		reflect[pos] = val;
+		reflect[pos] = float(val);
 	}
 
 	double GetPlaneReflectivity(int pos)

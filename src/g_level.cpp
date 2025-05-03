@@ -2032,7 +2032,7 @@ void G_ReadSnapshots(FResourceFile *resf)
 
 	G_ClearSnapshots();
 
-	for (unsigned j = 0; j < resf->EntryCount(); j++)
+	for (unsigned j = 0; j < resf->EntryCountU(); j++)
 	{
 		auto name = resf->getName(j);
 		auto ptr = strstr(name, ".map.json");

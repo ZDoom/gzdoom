@@ -1701,8 +1701,6 @@ int P_LookForTID (AActor *actor, INTBOOL allaround, FLookExParams *params)
 AActor *LookForEnemiesInBlock (AActor *lookee, int index, void *extparam)
 {
 	FBlockNode *block;
-	AActor *link;
-	AActor *other;
 	FLookExParams *params = (FLookExParams *)extparam;
 	
 	for (block = lookee->Level->blockmap.blocklinks[index]; block != NULL; block = block->NextActor)

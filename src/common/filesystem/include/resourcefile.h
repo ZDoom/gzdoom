@@ -156,6 +156,7 @@ public:
 	const char* GetHash() const { return Hash; }
 
 	int EntryCount() const { return NumLumps; }
+	uint32_t EntryCountU() const { return NumLumps; }
 	int FindEntry(const char* name);
 
 	size_t Length(uint32_t entry)

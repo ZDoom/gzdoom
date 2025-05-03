@@ -418,7 +418,7 @@ void Net_SetWaiting()
 
 // [RH] Rewritten to properly calculate the packet size
 //		with our variable length Command.
-static int GetNetBufferSize()
+static size_t GetNetBufferSize()
 {
 	if (NetBuffer[0] & NCMD_EXIT)
 		return 1 + (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator);
@@ -528,7 +528,7 @@ static bool HGetPacket()
 	if (RemoteClient == -1)
 		return false;
 
-	int sizeCheck = GetNetBufferSize();
+	size_t sizeCheck = GetNetBufferSize();
 	if (NetBufferLength != sizeCheck)
 	{
 		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
@@ -826,7 +826,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < consistencies.Size(); ++i)
 			{
-				const int cTic = baseConsistency + i;
+				const int cTic = baseConsistency + int(i);
 				if (cTic <= pState.CurrentNetConsistency)
 					continue;
 
@@ -859,7 +859,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < data.Size(); ++i)
 			{
-				const int seq = baseSequence + i;
+				const int seq = baseSequence + int(i);
 				// Duplicate command, ignore it.
 				if (seq <= pState.CurrentSequence)
 					continue;
@@ -1346,13 +1346,13 @@ void NetUpdate(int tics)
 		return;
 	}
 
-	constexpr size_t MaxPlayersPerPacket = 16u;
+	constexpr int MaxPlayersPerPacket = 16;
 
 	int startSequence = startTic / TicDup;
 	int endSequence = newestTic;
 	int quitters = 0;
 	int quitNums[MAXPLAYERS];
-	size_t players = 1u;
+	int players = 1u;
 	int maxCommands = MAXSENDTICS;
 	if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
 	{
@@ -1656,7 +1656,7 @@ const char* Net_GetClientName(int client, unsigned int charLimit = 0u)
 	return players[client].userinfo.GetName(charLimit);
 }
 
-int Net_SetUserInfo(int client, uint8_t*& stream)
+size_t Net_SetUserInfo(int client, uint8_t*& stream)
 {
 	auto str = D_GetUserInfoStrings(client, true);
 	const size_t userSize = str.Len() + 1;
@@ -1664,29 +1664,29 @@ int Net_SetUserInfo(int client, uint8_t*& stream)
 	return userSize;
 }
 
-int Net_ReadUserInfo(int client, uint8_t*& stream)
+size_t Net_ReadUserInfo(int client, uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	D_ReadUserInfoStrings(client, &stream, false);
-	return int(stream - start);
+	return stream - start;
 }
 
-int Net_SetGameInfo(uint8_t*& stream)
+size_t Net_SetGameInfo(uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	WriteString(startmap.GetChars(), &stream);
 	WriteInt32(rngseed, &stream);
 	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
-	return int(stream - start);
+	return stream - start;
 }
 
-int Net_ReadGameInfo(uint8_t*& stream)
+size_t Net_ReadGameInfo(uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	startmap = ReadStringConst(&stream);
 	rngseed = ReadInt32(&stream);
 	C_ReadCVars(&stream);
-	return int(stream - start);
+	return stream - start;
 }
 
 // Connects players to each other if needed.

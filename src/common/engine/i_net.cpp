@@ -187,10 +187,10 @@ CUSTOM_CVAR(String, net_password, "", CVAR_IGNORE)
 
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
-int Net_SetUserInfo(int client, uint8_t*& stream);
-int Net_ReadUserInfo(int client, uint8_t*& stream);
-int Net_ReadGameInfo(uint8_t*& stream);
-int Net_SetGameInfo(uint8_t*& stream);
+size_t Net_SetUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadGameInfo(uint8_t*& stream);
+size_t Net_SetGameInfo(uint8_t*& stream);
 
 static SOCKET CreateUDPSocket()
 {
@@ -651,7 +651,7 @@ static void AddClientConnection(const sockaddr_in& from, size_t client)
 	}
 }
 
-static void RemoveClientConnection(size_t client)
+static void RemoveClientConnection(uint8_t client)
 {
 	I_NetClientDisconnected(client);
 	I_ClearClient(client);
@@ -664,7 +664,7 @@ static void RemoveClientConnection(size_t client)
 	NetBuffer[2] = client;
 	NetBufferLength = 3u;
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (uint8_t i = 1u; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status == CSTAT_NONE)
 			continue;

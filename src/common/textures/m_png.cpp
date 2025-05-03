@@ -49,6 +49,7 @@
 #endif
 #include "m_png.h"
 #include "basics.h"
+#include "printf.h"
 
 
 // MACROS ------------------------------------------------------------------
@@ -944,7 +945,13 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 
 	y = height;
 	stream.next_out = buffer.data();
-	stream.avail_out = buffer.size();
+
+	if(buffer.size() > UINT_MAX)
+	{
+		I_Error("save png buffer too large");
+	}
+
+	stream.avail_out = (unsigned int) buffer.size();
 
 	temprow[0][0] = 0;
 #if USE_FILTER_HEURISTIC
@@ -1011,7 +1018,13 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 				return false;
 			}
 			stream.next_out = buffer.data();
-			stream.avail_out = buffer.size();
+
+			if(buffer.size() > UINT_MAX)
+			{
+				I_Error("save png buffer too large");
+			}
+
+			stream.avail_out = (unsigned int) buffer.size();
 			if (stream.avail_in != 0)
 			{
 				err = deflate (&stream, (y == 0) ? Z_FINISH : 0);
@@ -1037,7 +1050,13 @@ bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height
 				return false;
 			}
 			stream.next_out = buffer.data();
-			stream.avail_out = buffer.size();
+
+			if(buffer.size() > UINT_MAX)
+			{
+				I_Error("save png buffer too large");
+			}
+			
+			stream.avail_out = (unsigned int) buffer.size();
 		}
 	}
 

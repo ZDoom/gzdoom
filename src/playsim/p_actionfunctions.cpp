@@ -5140,11 +5140,10 @@ FModel * SetGetBoneShared(AActor * self, int model_index)
 
 	EnsureModelData(self);
 	
-	if(self->modelData->models.Size() > model_index && self->modelData->models[model_index].modelID >= 0 && self->modelData->models[model_index].modelID < Models.Size())
 	{
 		return Models[self->modelData->models[model_index].modelID];
 	}
-	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.Size() > model_index)
+	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.SSize() > model_index)
 	{
 		return Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[model_index]];
 	}
@@ -5173,7 +5172,7 @@ FModel * SetGetBoneSharedIndex(AActor * self, int model_index, int &bone_index, 
 		ThrowAbortException(X_OTHER, "bone index out of range");
 	}
 
-	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
+	if(self->modelData->modelBoneOverrides.SSize() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
 
 	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
 
@@ -5914,11 +5913,11 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 
 	FModel * animation = nullptr;
-	if (animID >= 0 && animID < Models.Size())
+	if (animID >= 0 && animID < Models.SSize())
 	{
 		animation = Models[animID];
 	}
-	else if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())
+	else if(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.SSize())
 	{
 		animation = Models[self->modelData->models[0].modelID];
 	}

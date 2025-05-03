@@ -289,7 +289,7 @@ bool Wiper_Crossfade::Run(int ticks)
 
 bool Wiper_Crossfade::RunInterpolated(double ticks)
 {
-	Clock += ticks;
+	Clock += float(ticks);
 	DrawTexture(twod, startScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, TAG_DONE);
 	DrawTexture(twod, endScreen, 0, 0, DTA_FlipY, screen->RenderTextureIsFlipped(), DTA_Masked, false, DTA_Alpha, clamp(Clock / 32.f, 0.f, 1.f), TAG_DONE);
 	return Clock >= 32.;

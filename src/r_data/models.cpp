@@ -445,11 +445,11 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 	if (data)
 	{
 		//modelID
-		if (data->models.Size() > i && data->models[i].modelID >= 0)
+		if (data->models.SSize() > i && data->models[i].modelID >= 0)
 		{
 			out.modelid = data->models[i].modelID;
 		}
-		else if(data->models.Size() > i && data->models[i].modelID == -2)
+		else if(data->models.SSize() > i && data->models[i].modelID == -2)
 		{
 			return false;
 		}
@@ -459,7 +459,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		}
 
 		//animationID
-		if (data->animationIDs.Size() > i && data->animationIDs[i] >= 0)
+		if (data->animationIDs.SSize() > i && data->animationIDs[i] >= 0)
 		{
 			out.animationid = data->animationIDs[i];
 		}
@@ -470,7 +470,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		if(!is_decoupled)
 		{
 			//modelFrame
-			if (data->modelFrameGenerators.Size() > i
+			if (data->modelFrameGenerators.SSize() > i
 				&& (unsigned)data->modelFrameGenerators[i] < info.modelsamount
 				&& smf->modelframes[data->modelFrameGenerators[i]] >= 0
 				) {
@@ -496,7 +496,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		}
 
 		//skinID
-		if (data->skinIDs.Size() > i && data->skinIDs[i].isValid())
+		if (data->skinIDs.SSize() > i && data->skinIDs[i].isValid())
 		{
 			out.skinid = data->skinIDs[i];
 		}
@@ -506,7 +506,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		}
 
 		//surfaceSkinIDs
-		if(data->models.Size() > i && data->models[i].surfaceSkinIDs.Size() > 0)
+		if(data->models.SSize() > i && data->models[i].surfaceSkinIDs.SSize() > 0)
 		{
 			unsigned sz1 = smf->surfaceskinIDs.Size();
 			unsigned sz2 = data->models[i].surfaceSkinIDs.Size();
@@ -566,7 +566,7 @@ const TArray<VSMatrix> * ProcessModelFrame(FModel * animation, bool nextFrame, i
 				frameinfo.decoupled_frame,
 				frameinfo.inter,
 				animationData,
-				modelData->modelBoneOverrides.Size() > i
+				modelData->modelBoneOverrides.SSize() > i
 				? &modelData->modelBoneOverrides[i]
 				: nullptr,
 				out,
@@ -584,7 +584,7 @@ const TArray<VSMatrix> * ProcessModelFrame(FModel * animation, bool nextFrame, i
 			},
 			-1.0f,
 			animationData,
-			(modelData && modelData->modelBoneOverrides.Size() > i)
+			(modelData && modelData->modelBoneOverrides.SSize() > i)
 			? &modelData->modelBoneOverrides[i]
 			: nullptr,
 			out,
@@ -602,7 +602,7 @@ static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpri
 
 	auto ssidp = drawinfo.surfaceskinids.Size() > 0
 		? drawinfo.surfaceskinids.Data()
-		: (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.Size()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
+		: (((i * MD3_MAX_SURFACES) < smf->surfaceskinIDs.SSize()) ? &smf->surfaceskinIDs[i * MD3_MAX_SURFACES] : nullptr);
 
 	bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
 

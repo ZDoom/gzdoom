@@ -619,11 +619,6 @@ const TArray<VSMatrix>* IQMModel::CalculateBones(const ModelAnimFrame &from, con
 	}
 }
 
-inline void ModifyBone(const BoneOverride& mod, TRS &bone, double time)
-{
-	mod.Modify(bone, time);
-}
-
 // explicitly don't pass modelBoneOverrides when precalculating animation for interpolation, as it's applied _after_ animation
 ModelAnimFramePrecalculatedIQM IQMModel::CalculateFrameIQM(int frame1, int frame2, float inter, int frame1_prev, float inter1_prev, int frame2_prev, float inter2_prev, const ModelAnimFramePrecalculatedIQM* precalculated, const TArray<TRS>* animationData)
 {

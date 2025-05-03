@@ -17,6 +17,7 @@ class FGameTexture;
 class IModelVertexBuffer;
 class FModel;
 class PClass;
+class AActor;
 struct FSpriteModelFrame;
 struct FLevelLocals;
 
@@ -61,7 +62,8 @@ public:
 	friend void InitModels();
 	friend void ParseModelDefLump(int Lump);
 
-	VSMatrix ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double ticFrac);
+	VSMatrix ObjectToWorldMatrix(AActor * actor, float x, float y, float z, double ticFrac);
+	VSMatrix ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double tic);
 };
 
 

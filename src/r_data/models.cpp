@@ -63,27 +63,39 @@ void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpr
 
 void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
-	// Setup transformation.
-
-	unsigned int smf_flags = smf->getFlags(actor->modelData);
-
+	int smf_flags = smf->getFlags(actor->modelData);
 	FTranslationID translation = NO_TRANSLATION;
 	if (!(smf_flags & MDL_IGNORETRANSLATION))
 		translation = actor->Translation;
 
-	// y scale for a sprite means height, i.e. z in the world!
+	VSMatrix objectToWorldMatrix = smf->ObjectToWorldMatrix(actor, x, y, z, ticFrac);
+
+
 	float scaleFactorX = actor->Scale.X * smf->xscale;
 	float scaleFactorY = actor->Scale.X * smf->yscale;
 	float scaleFactorZ = actor->Scale.Y * smf->zscale;
-	float pitch = 0;
-	float roll = 0;
+	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
+
+	renderer->BeginDrawModel(actor->RenderStyle, smf_flags, objectToWorldMatrix, orientation < 0);
+	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, ticFrac, translation, actor);
+	renderer->EndDrawModel(actor->RenderStyle, smf_flags);
+}
+
+VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(AActor * actor, float x, float y, float z, double ticFrac)
+{
+	int smf_flags = getFlags(actor->modelData);
+
+	// Setup transformation.
 	DRotator angles;
+
 	if (actor->renderflags & RF_INTERPOLATEANGLES) // [Nash] use interpolated angles
 		angles = actor->InterpolatedAngles(ticFrac);
 	else
 		angles = actor->Angles;
 
 	float angle = angles.Yaw.Degrees();
+	float pitch = 0;
+	float roll = 0;
 
 	// [BB] Workaround for the missing pitch information.
 	if ((smf_flags & MDL_PITCHFROMMOMENTUM))
@@ -126,13 +138,7 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 		tic += ticFrac;
 	}
 
-	VSMatrix objectToWorldMatrix = smf->ObjectToWorldMatrix(actor->Level, DVector3(x, y, z), DRotator(DAngle::fromDeg(angle), DAngle::fromDeg(pitch), DAngle::fromDeg(roll)), actor->Scale, smf_flags, tic);
-
-	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
-
-	renderer->BeginDrawModel(actor->RenderStyle, smf_flags, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, ticFrac, translation, actor);
-	renderer->EndDrawModel(actor->RenderStyle, smf_flags);
+	return ObjectToWorldMatrix(actor->Level, DVector3(x, y, z), DRotator(DAngle::fromDeg(angle), DAngle::fromDeg(pitch), DAngle::fromDeg(roll)), actor->Scale, smf_flags, tic);
 }
 
 VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double tic)
@@ -153,6 +159,7 @@ VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(FLevelLocals *Level, DVector3 tr
 		}
 	}
 
+	// y scale for a sprite means height, i.e. z in the world!
 	float scaleFactorX = scaling.X * xscale;
 	float scaleFactorY = scaling.X * yscale;
 	float scaleFactorZ = scaling.Y * zscale;

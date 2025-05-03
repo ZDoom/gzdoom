@@ -4352,18 +4352,16 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 
 		outMatrix.multMatrix(boneMatrix);
 
-		DVector4 newPos(pos.X, pos.Z, pos.Y, 1.0);
+		FVector4 oldPos(FVector3(pos), 1.0);
+		FVector4 newPos;
+		FVector4 oldNormal(FVector3(normal), 0.0);
+		FVector4 newNormal;
 
-		newPos.X = newPos.X * outMatrix.mMatrix[0] + newPos.X * outMatrix.mMatrix[4] + newPos.X *  outMatrix.mMatrix[8] + newPos.X * outMatrix.mMatrix[12];
-		newPos.Y = newPos.Y * outMatrix.mMatrix[1] + newPos.Y * outMatrix.mMatrix[5] + newPos.Y *  outMatrix.mMatrix[9] + newPos.Y * outMatrix.mMatrix[13];
-		newPos.Z = newPos.Z * outMatrix.mMatrix[2] + newPos.Z * outMatrix.mMatrix[6] + newPos.Z * outMatrix.mMatrix[10] + newPos.Z * outMatrix.mMatrix[14];
-		newPos.W = newPos.W * outMatrix.mMatrix[3] + newPos.W * outMatrix.mMatrix[7] + newPos.W * outMatrix.mMatrix[11] + newPos.W * outMatrix.mMatrix[15];
+		outMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
+		outMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
 
-		pos = DVector3(newPos.X, newPos.Z, newPos.Y) / newPos.W;
-
-		normal.X = normal.X * outMatrix.mMatrix[0] + normal.X * outMatrix.mMatrix[4] + normal.X *  outMatrix.mMatrix[8];
-		normal.Y = normal.Y * outMatrix.mMatrix[1] + normal.Y * outMatrix.mMatrix[5] + normal.Y *  outMatrix.mMatrix[9];
-		normal.Z = normal.Z * outMatrix.mMatrix[2] + normal.Z * outMatrix.mMatrix[6] + normal.Z * outMatrix.mMatrix[10];
+		pos = DVector3(newPos.XYZ());
+		normal = DVector3(newNormal.XYZ());
 	}
 }
 

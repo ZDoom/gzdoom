@@ -207,7 +207,7 @@ public:
 	
 	TRS GetJointPose(int joint, int frame) override
 	{
-		return (joint >= 0 && joint < Joints.Size() && frame >= 0 && (frame * Joints.Size()) < TRSData.Size()) ? TRSData[frame * Joints.Size()] : TRS{} ;
+		return (joint >= 0 && joint < Joints.Size() && frame >= 0 && ((frame * Joints.Size()) + joint) < TRSData.Size()) ? TRSData[(frame * Joints.Size()) + joint] : TRS{} ;
 	}
 	virtual int NumFrames()
 	{

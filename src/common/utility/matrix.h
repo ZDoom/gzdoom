@@ -107,7 +107,7 @@ class VSMatrix {
 		static void multMatrix(FLOATTYPE *resMatrix, const FLOATTYPE *aMatrix);
 
 		static void setIdentityMatrix(FLOATTYPE *mat, int size = 4);
-
+	public:
 		/// The storage for matrices
 		FLOATTYPE mMatrix[16];
 

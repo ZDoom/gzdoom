@@ -683,7 +683,7 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 
 	if(out)
 	{
-		out->bones_anim_only.Resize(numbones);
+		out->bones.Resize(numbones);
 		out->bones_with_override.Resize(numbones);
 	}
 
@@ -745,7 +745,7 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 
 			if(out)
 			{
-				out->bones_anim_only[i] = bone;
+				out->bones[i] = bone;
 
 				if(in)
 				{
@@ -781,6 +781,32 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 				result.multMatrix(inversebaseframe[i]);
 			}
 			result.multMatrix(swapYZ);
+
+			if(out)
+			{
+				VSMatrix m;
+				m.loadIdentity();
+				m.translate(out->bones[i].translation.X, out->bones[i].translation.Y, out->bones[i].translation.Z);
+				m.multQuaternion(out->bones[i].rotation);
+				m.scale(out->bones[i].scaling.X, out->bones[i].scaling.Y, out->bones[i].scaling.Z);
+
+				VSMatrix& result = out->positions[i];
+				if (Joints[i].Parent >= 0)
+				{
+					result = out->positions[Joints[i].Parent];
+					result.multMatrix(swapYZ);
+					result.multMatrix(baseframe[Joints[i].Parent]);
+					result.multMatrix(m);
+					result.multMatrix(inversebaseframe[i]);
+				}
+				else
+				{
+					result.loadMatrix(swapYZ);
+					result.multMatrix(m);
+					result.multMatrix(inversebaseframe[i]);
+				}
+				result.multMatrix(swapYZ);
+			}
 		}
 
 		return &boneData;

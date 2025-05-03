@@ -1480,9 +1480,9 @@ class Actor : Thinker native
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
 
-	native version("4.12") void SetModelFlag(int flag);
-	native version("4.12") void ClearModelFlag(int flag);
-	native version("4.12") void ResetModelFlags();
+	native version("4.12") void SetModelFlag(int flag, int iqmFlags = 0);
+	native version("4.12") void ClearModelFlag(int flag, int iqmFlags = 0);
+	native version("4.12") void ResetModelFlags(bool resetModel = true, bool resetIqm = false);
     
     
 	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0)

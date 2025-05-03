@@ -1453,6 +1453,19 @@ class Actor : Thinker native
 	
 	native version("4.15.1") int GetBoneCount();
 
+	//================================================
+	// 
+	// Bone Pose Getters
+	// 
+	//================================================
+
+	native version("4.15.1") int GetAnimStartFrame(Name animName);
+	native version("4.15.1") int GetAnimEndFrame(Name animName);
+	native version("4.15.1") double GetAnimFramerate(Name animName);
+	
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneFramePose(int boneIndex, int frame);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneFramePose(Name boneName, int frame);
 
 	//================================================
 	// 

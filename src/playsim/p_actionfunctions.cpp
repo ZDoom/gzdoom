@@ -5735,9 +5735,138 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneCount, GetBoneCountNative)
 	ACTION_RETURN_INT(GetBoneCountNative(self));
 }
 
+//================================================
+// 
+// Bone Pose Getters
+// 
+//================================================
 
+static int GetAnimStartFrameNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindFirstFrame(anim_name);
+}
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimStartFrame, GetAnimStartFrameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
 
+	ACTION_RETURN_INT(GetAnimStartFrameNative(self, animName.GetIndex()));
+}
+
+static int GetAnimEndFrameNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindLastFrame(anim_name);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimEndFrame, GetAnimEndFrameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+
+	ACTION_RETURN_INT(GetAnimEndFrameNative(self, animName.GetIndex()));
+}
+
+static double GetAnimFramerateNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindFramerate(anim_name);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimFramerate, GetAnimFramerateNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+
+	ACTION_RETURN_FLOAT(GetAnimFramerateNative(self, animName.GetIndex()));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneFramePose)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_INT(frame_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl && frame_index > mdl->NumFrames())
+	{
+		TRS pose = mdl->GetJointPose(bone_index, frame_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_INT(frame_index);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl && frame_index > mdl->NumFrames())
+	{
+		TRS pose = mdl->GetJointPose(bone_index, frame_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
 
 //================================================
 // SetAnimation

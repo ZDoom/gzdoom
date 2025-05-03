@@ -204,6 +204,15 @@ public:
 	{
 		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
 	}
+	
+	TRS GetJointPose(int joint, int frame) override
+	{
+		return (joint >= 0 && joint < Joints.Size() && frame >= 0 && (frame * Joints.Size()) < TRSData.Size()) ? TRSData[frame * Joints.Size()] : TRS{} ;
+	}
+	virtual int NumFrames()
+	{
+		return Joints.Size() > 0 ? (TRSData.Size() / Joints.Size()) : 0;
+	}
 };
 
 struct IQMReadErrorException { };

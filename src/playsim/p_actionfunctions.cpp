@@ -5872,6 +5872,168 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
 }
 
 //================================================
+// 
+// Bone TRS Getters
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_BOOL(with_override);
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS trs = self->GetBoneTRS(0, bone_index, with_override);
+
+		translation = DVector3(trs.translation);
+		rotation = DVector4(trs.rotation);
+		scaling = DVector3(trs.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_BOOL(with_override);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS trs = self->GetBoneTRS(0, bone_index, with_override);
+
+		translation = DVector3(trs.translation);
+		rotation = DVector4(trs.rotation);
+		scaling = DVector3(trs.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, TransformByBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_FLOAT(pos_x);
+	PARAM_FLOAT(pos_y);
+	PARAM_FLOAT(pos_z);
+	PARAM_FLOAT(dir_x);
+	PARAM_FLOAT(dir_y);
+	PARAM_FLOAT(dir_z);
+	PARAM_BOOL(with_override);
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+
+	DVector3 position(pos_x, pos_y, pos_z);
+	DVector3 direction(dir_x, dir_y, dir_z);
+
+	if(mdl)
+	{
+		self->GetBonePosition(0, bone_index, with_override, position, direction);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(direction);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector(position);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_FLOAT(pos_x);
+	PARAM_FLOAT(pos_y);
+	PARAM_FLOAT(pos_z);
+	PARAM_FLOAT(dir_x);
+	PARAM_FLOAT(dir_y);
+	PARAM_FLOAT(dir_z);
+	PARAM_BOOL(with_override);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+
+	DVector3 position(pos_x, pos_y, pos_z);
+	DVector3 direction(dir_x, dir_y, dir_z);
+
+	if(mdl)
+	{
+		self->GetBonePosition(0, bone_index, with_override, position, direction);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(direction);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector(position);
+	}
+
+	return numret;
+}
+
+
+//================================================
 // SetAnimation
 //================================================
 

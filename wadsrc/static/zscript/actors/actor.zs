@@ -1469,10 +1469,25 @@ class Actor : Thinker native
 
 	//================================================
 	// 
+	// Bone TRS Getters
 	// 
+	//================================================
+	
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBone(int boneIndex, bool include_offsets = true);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBone(Name boneName, bool include_offsets = true);
+	
+	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction, bool include_offsets = true);
+	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction, bool include_offsets = true);
 	// 
 	//================================================
 
+
+	//================================================
+	// 
+	// 
+	// 
+	//================================================
 
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);

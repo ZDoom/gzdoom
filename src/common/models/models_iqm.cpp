@@ -685,6 +685,7 @@ const TArray<VSMatrix>* IQMModel::CalculateBonesIQM(int frame1, int frame2, floa
 	{
 		out->bones.Resize(numbones);
 		out->bones_with_override.Resize(numbones);
+		out->positions.Resize(numbones);
 	}
 
 	if(in && in->size() != Joints.Size()) in = nullptr;

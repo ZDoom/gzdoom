@@ -5801,7 +5801,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBoneFramePose)
 	DVector4 rotation(0,0,0,1);
 	DVector3 scaling(0,0,0);
 
-	if(mdl && frame_index > mdl->NumFrames())
+	if(mdl && frame_index < mdl->NumFrames())
 	{
 		TRS pose = mdl->GetJointPose(bone_index, frame_index);
 
@@ -5843,7 +5843,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
 	DVector4 rotation(0,0,0,1);
 	DVector3 scaling(0,0,0);
 
-	if(mdl && frame_index > mdl->NumFrames())
+	if(mdl && frame_index < mdl->NumFrames())
 	{
 		TRS pose = mdl->GetJointPose(bone_index, frame_index);
 

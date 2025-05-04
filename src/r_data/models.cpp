@@ -70,7 +70,6 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 
 	VSMatrix objectToWorldMatrix = smf->ObjectToWorldMatrix(actor, x, y, z, ticFrac);
 
-
 	float scaleFactorX = actor->Scale.X * smf->xscale;
 	float scaleFactorY = actor->Scale.X * smf->yscale;
 	float scaleFactorZ = actor->Scale.Y * smf->zscale;
@@ -138,7 +137,7 @@ VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(AActor * actor, float x, float y
 		tic += ticFrac;
 	}
 
-	return ObjectToWorldMatrix(actor->Level, DVector3(x, y, z), DRotator(DAngle::fromDeg(angle), DAngle::fromDeg(pitch), DAngle::fromDeg(roll)), actor->Scale, smf_flags, tic);
+	return ObjectToWorldMatrix(actor->Level, DVector3(x, y, z), DRotator(DAngle::fromDeg(pitch), DAngle::fromDeg(angle), DAngle::fromDeg(roll)), actor->Scale, smf_flags, tic);
 }
 
 VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double tic)

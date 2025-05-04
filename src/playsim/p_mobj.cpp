@@ -4299,11 +4299,9 @@ TRS AActor::GetBoneTRS(int model_index, int bone_index, bool with_override)
 	return {};
 }
 
-void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, TArray<double> &outMat)
+void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat)
 {
 	VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
-
-	outMat.Resize(16);
 
 	for(int i = 0; i < 16; i++)
 	{
@@ -4311,7 +4309,7 @@ void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, 
 	}
 }
 
-void AActor::GetBoneWorldMatrix(int model_index, int bone_index, bool with_override, TArray<double> &outMat)
+void AActor::GetBoneWorldMatrix(int model_index, int bone_index, bool with_override, double *outMat)
 {
 	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
 	{
@@ -4326,8 +4324,6 @@ void AActor::GetBoneWorldMatrix(int model_index, int bone_index, bool with_overr
 		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
 	
 		outMatrix.multMatrix(boneMatrix);
-
-		outMat.Resize(16);
 
 		for(int i = 0; i < 16; i++)
 		{
@@ -4365,7 +4361,7 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 	}
 }
 
-void AActor::GetObjectToWorldMatrix(TArray<double> &outMat)
+void AActor::GetObjectToWorldMatrix(double *outMat)
 {
 	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
 	{
@@ -4376,8 +4372,6 @@ void AActor::GetObjectToWorldMatrix(TArray<double> &outMat)
 		FVector3 pos = FVector3(Pos() + WorldOffset);
 
 		VSMatrix outMatrix = smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0);
-
-		outMat.Resize(16);
 
 		for(int i = 0; i < 16; i++)
 		{

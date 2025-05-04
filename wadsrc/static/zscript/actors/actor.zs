@@ -1479,9 +1479,21 @@ class Actor : Thinker native
 	
 	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction, bool include_offsets = true);
 	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction, bool include_offsets = true);
+
+	//================================================
+	// 
+	// Bone Matrix Getters
 	// 
 	//================================================
+	
+	//outMatrix will be a 16-length array containing the raw matrix data
+	native version("4.15.1") void GetBoneMatrixRaw(int boneIndex, out Array<double> outMatrix, bool include_offsets = true);
+	native version("4.15.1") void GetNamedBoneMatrixRaw(Name boneName, out Array<double> outMatrix, bool include_offsets = true);
 
+	native version("4.15.1") void GetBoneWorldMatrixRaw(int boneIndex, out Array<double> outMatrix, bool include_offsets = true);
+	native version("4.15.1") void GetNamedBoneWorldMatrixRaw(Name boneName, out Array<double> outMatrix, bool include_offsets = true);
+
+	native version("4.15.1") void GetObjectToWorldMatrixRaw(out Array<double> outMatrix);
 
 	//================================================
 	// 

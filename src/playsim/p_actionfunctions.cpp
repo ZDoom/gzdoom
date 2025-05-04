@@ -5883,7 +5883,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBone)
 	PARAM_INT(bone_index);
 	PARAM_BOOL(with_override);
 
-	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
 
 	DVector3 translation(0,0,0);
 	DVector4 rotation(0,0,0,1);
@@ -5925,7 +5925,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBone)
 
 	int bone_index;
 
-	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
 
 	DVector3 translation(0,0,0);
 	DVector4 rotation(0,0,0,1);
@@ -5972,7 +5972,7 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByBone)
 	PARAM_FLOAT(dir_z);
 	PARAM_BOOL(with_override);
 
-	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, nullptr);
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
 
 	DVector3 position(pos_x, pos_y, pos_z);
 	DVector3 direction(dir_x, dir_y, dir_z);
@@ -6009,7 +6009,7 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
 
 	int bone_index;
 
-	FModel * mdl = GetBoneOffsetShared(self, 0, bone_index, &bone_name);
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
 
 	DVector3 position(pos_x, pos_y, pos_z);
 	DVector3 direction(dir_x, dir_y, dir_z);
@@ -6032,6 +6032,123 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
 	return numret;
 }
 
+//================================================
+// 
+// Bone Matrix Getters
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		int bone_index;
+
+		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneWorldMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneWorldMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneWorldMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		int bone_index;
+
+		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneWorldMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetObjectToWorldMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(outMatrix, TArray<double>);
+
+	if(outMatrix)
+	{
+		FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetObjectToWorldMatrix(outMatrix->Data());
+		}
+	}
+	return 0;
+}
 
 //================================================
 // SetAnimation

@@ -828,11 +828,12 @@ public:
 	void CalcBones(bool recalc);
 	TRS GetBoneTRS(int model_index, int bone_index, bool with_override);
 
-	void GetBoneMatrix(int model_index, int bone_index, bool with_override, TArray<double> &outMat);
-	void GetBoneWorldMatrix(int model_index, int bone_index, bool with_override, TArray<double> &outMat); // bone matrix + object to world matrix
+	//outmat must be double[16]
+	void GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat);
+	void GetBoneWorldMatrix(int model_index, int bone_index, bool with_override, double *outMat); // bone matrix + object to world matrix
 
 	void GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &normal);
-	void GetObjectToWorldMatrix(TArray<double> &outMat);
+	void GetObjectToWorldMatrix(double *outMat);
 
 	static AActor *StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 

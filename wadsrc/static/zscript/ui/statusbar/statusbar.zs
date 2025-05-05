@@ -216,8 +216,37 @@ class BaseStatusBar : StatusBarCore native
 	{
 	}
 
+	virtual void Draw (int state, double TicFrac)
+	{
+		// HUD_AltHud state is for popups only
+		if (state == HUD_AltHud)
+			return;
+
+		if (state == HUD_StatusBar)
+		{
+			RefreshBackground();
+		}
+
+		if (idmypos)
+		{ 
+			// Draw current coordinates
+			DrawMyPos();
+		}
+
+		if (viewactive)
+		{
+			if (CPlayer && CPlayer.camera && CPlayer.camera.player)
+			{
+				DrawCrosshair(TicFrac);
+			}
+		}
+		else if (automapactive)
+		{
+			DrawAutomapHUD(TicFrac);
+		}
+	}
+
 	native virtual void Tick ();
-	native virtual void Draw (int state, double TicFrac);
 	native virtual void ScreenSizeChanged ();
 	native virtual clearscope void ReceivedWeapon (Weapon weapn);
 	native virtual clearscope void SetMugShotState (String state_name, bool wait_till_done=false, bool reset=false);

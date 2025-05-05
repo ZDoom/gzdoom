@@ -1481,6 +1481,16 @@ class Actor : Thinker native
 	
 	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
 	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
+	
+	version("4.15.1") Vector3 GetBonePosition(int boneIndex)
+	{
+		return TransformByBone(boneIndex, GetBoneBasePosition(boneIndex));
+	}
+	
+	version("4.15.1") Vector3 GetNamedBonePosition(name boneName)
+	{
+		return GetBonePosition(GetBoneIndex(boneName));
+	}
 
 	//================================================
 	// 

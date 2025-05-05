@@ -5895,7 +5895,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetBonePosition)
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBasePosition)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(bone_index);
@@ -5905,7 +5905,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBonePosition)
 	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetNamedBonePosition)
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBasePosition)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(bone_name);

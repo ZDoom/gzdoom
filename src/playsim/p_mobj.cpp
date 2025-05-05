@@ -4309,27 +4309,6 @@ void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, 
 	}
 }
 
-void AActor::GetBoneWorldMatrix(int model_index, int bone_index, bool with_override, double *outMat)
-{
-	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
-	{
-		if(picnum.isValid()) return; // picnum overrides don't render models
-
-		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
-
-		FVector3 pos = FVector3(Pos() + WorldOffset);
-	
-		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
-	
-		boneMatrix.multMatrix(smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0));
-
-		for(int i = 0; i < 16; i++)
-		{
-			outMat[i] = boneMatrix.mMatrix[i];
-		}
-	}
-}
-
 void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &normal)
 {
 	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
@@ -4341,19 +4320,24 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 		FVector3 objPos = FVector3(Pos() + WorldOffset);
 
 		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
+		VSMatrix worldMatrix = smf->ObjectToWorldMatrix(this, objPos.X, objPos.Y, objPos.Z, 1.0);
 
-		boneMatrix.multMatrix(smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0));
-
-		FVector4 oldPos(FVector3(pos), 1.0);
+		FVector4 oldPos(pos.X, pos.Z, pos.Y, 1.0);
 		FVector4 newPos;
-		FVector4 oldNormal(FVector3(normal), 0.0);
+		FVector4 oldNormal(normal.X, normal.Z, normal.Y, 0.0);
 		FVector4 newNormal;
 
 		boneMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
 		boneMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
 
-		pos = DVector3(newPos.XYZ());
-		normal = DVector3(newNormal.XYZ());
+		oldPos = FVector4(FVector3(newPos.X, newPos.Y, newPos.Z) / newPos.W, 1.0);
+		oldNormal = FVector4(FVector3(newNormal.X, newNormal.Y, newNormal.Z) / newNormal.W, 0.0);
+
+		worldMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
+		worldMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+
+		pos = DVector3(newPos.X, newPos.Z, newPos.Y);
+		normal = DVector3(newNormal.X, newNormal.Z, newNormal.Y);
 	}
 }
 

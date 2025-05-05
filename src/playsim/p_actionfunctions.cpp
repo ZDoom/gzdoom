@@ -6108,52 +6108,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneMatrixRaw)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetBoneWorldMatrixRaw)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(bone_index);
-	PARAM_POINTER(outMatrix, TArray<double>);
-	PARAM_BOOL(with_override);
-
-	if(outMatrix)
-	{
-		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
-
-		outMatrix->Clear();
-		outMatrix->Resize(16);
-
-		if(mdl)
-		{
-			self->GetBoneWorldMatrix(0, bone_index, with_override, outMatrix->Data());
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneWorldMatrixRaw)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME(bone_name);
-	PARAM_POINTER(outMatrix, TArray<double>);
-	PARAM_BOOL(with_override);
-
-	if(outMatrix)
-	{
-		int bone_index;
-
-		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
-
-		outMatrix->Clear();
-		outMatrix->Resize(16);
-
-		if(mdl)
-		{
-			self->GetBoneWorldMatrix(0, bone_index, with_override, outMatrix->Data());
-		}
-	}
-	return 0;
-}
-
 DEFINE_ACTION_FUNCTION(AActor, GetObjectToWorldMatrixRaw)
 {
 	PARAM_SELF_PROLOGUE(AActor);

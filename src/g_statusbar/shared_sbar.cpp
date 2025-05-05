@@ -1088,44 +1088,6 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::Draw (EHudState state, double ticFrac)
-{
-	// HUD_AltHud state is for popups only
-	if (state == HUD_AltHud)
-		return;
-
-	if (state == HUD_StatusBar)
-	{
-		RefreshBackground ();
-	}
-
-	if (idmypos)
-	{ 
-		// Draw current coordinates
-		IFVIRTUAL(DBaseStatusBar, DrawMyPos)
-		{
-			VMValue params[] = { (DObject*)this };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
-
-	if (viewactive)
-	{
-		if (CPlayer && CPlayer->camera && CPlayer->camera->player)
-		{
-			DrawCrosshair (ticFrac);
-		}
-	}
-	else if (automapactive)
-	{
-		IFVIRTUAL(DBaseStatusBar, DrawAutomapHUD)
-		{
-			VMValue params[] = { (DObject*)this, r_viewpoint.TicFrac };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
-}
-
 void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 {
 	IFVIRTUAL(DBaseStatusBar, Draw)
@@ -1133,7 +1095,6 @@ void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 		VMValue params[] = { (DObject*)this, state, ticFrac };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
-	else Draw(state, ticFrac);
 	twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	BeginStatusBar(BaseSBarHorizontalResolution, BaseSBarVerticalResolution, BaseRelTop, false);
 }

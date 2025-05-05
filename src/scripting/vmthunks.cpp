@@ -2108,21 +2108,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DetachAllMessages, SBar_DetachAllM
 	return 0;
 }
 
-static void SBar_Draw(DBaseStatusBar *self, int state, double ticFrac)
-{
-	self->Draw((EHudState)state, ticFrac);
-}
-
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, Draw, SBar_Draw)
-{
-	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_INT(state);
-	PARAM_FLOAT(ticFrac);
-	self->Draw((EHudState)state, ticFrac);
-	return 0;
-}
-
 static void SetMugshotState(DBaseStatusBar *self, const FString &statename, bool wait, bool reset)
 {
 	self->mugshot.SetState(statename.GetChars(), wait, reset);

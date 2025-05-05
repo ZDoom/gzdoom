@@ -73,6 +73,9 @@ struct IQMJoint
 	FVector3 Translate;
 	FQuaternion Quaternion;
 	FVector3 Scale;
+	FVector3 Position;
+	FQuaternion Rotation;
+	FVector3 Scaling;
 };
 
 struct IQMPose
@@ -195,11 +198,16 @@ public:
 		}
 	}
 
-	TRS GetBoneBaseTRS(int joint) override
+	FVector3 GetJointPosition(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Position : FVector3(0.0f,0.0f,0.0f);
+	}
+
+	TRS GetJointBaseTRS(int joint) override
 	{
 		return (joint >= 0 && joint < Joints.SSize()) ? TRS{Joints[joint].Translate, Joints[joint].Quaternion, Joints[joint].Scale} : TRS{};
 	}
-	
+
 	TRS GetJointPose(int joint, int frame) override
 	{
 		return (joint >= 0 && joint < Joints.SSize() && frame >= 0 && ((frame * Joints.SSize()) + joint) < TRSData.SSize()) ? TRSData[(frame * Joints.SSize()) + joint] : TRS{} ;

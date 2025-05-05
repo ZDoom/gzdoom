@@ -98,7 +98,8 @@ public:
 
 	virtual int GetJointParent(int joint) { return -1; }
 	virtual FName GetJointName(int joint) { return NAME_None; }
-	virtual TRS GetBoneBaseTRS(int joint) { return {}; }
+	virtual FVector3 GetJointPosition(int joint) { return FVector3(0.0f,0.0f,0.0f); }
+	virtual TRS GetJointBaseTRS(int joint) { return {}; }
 	virtual TRS GetJointPose(int joint, int frame) { return {}; }
 	virtual int NumFrames() { return -1; }
 

@@ -1443,8 +1443,12 @@ class Actor : Thinker native
 	native version("4.15.1") void GetBoneChildren(int boneIndex, out Array<int> children);
 	native version("4.15.1") void GetNamedBoneChildren(Name boneName, out Array<int> children);
 	
+	/* rotation, translation, scaling */
 	native version("4.15.1") Quat, Vector3, Vector3 GetBoneBaseTRS(int boneIndex);
 	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneBaseTRS(Name boneName);
+	
+	native version("4.15.1") Vector3 GetBonePosition(int boneIndex);
+	native version("4.15.1") Vector3 GetNamedBonePosition(Name boneName);
 
 	native version("4.15.1") int GetBoneCount();
 

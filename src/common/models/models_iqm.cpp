@@ -138,7 +138,14 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 
 			if(joint.Parent < 0)
 			{
+				joint.Rotation = joint.Quaternion;
+				joint.Scaling = joint.Scale;
+				joint.Position = FVector3(joint.Scaling.X * joint.Translate.X, joint.Scaling.Y * joint.Translate.Y, joint.Scaling.Z * joint.Translate.Z);
 				RootJoints.Push(i);
+			}
+			else if(joint.Parent >= i)
+			{
+				I_FatalError("Joint child comes before parent in IQM Model");
 			}
 			else if(joint.Parent >= Joints.SSize())
 			{
@@ -146,6 +153,10 @@ bool IQMModel::Load(const char* path, int lumpnum, const char* buffer, int lengt
 			}
 			else
 			{
+				joint.Rotation = (Joints[joint.Parent].Rotation * joint.Quaternion).Unit();
+				joint.Scaling = FVector3(joint.Scale.X * Joints[joint.Parent].Scaling.X, joint.Scale.Y * Joints[joint.Parent].Scaling.Y, joint.Scale.Z * Joints[joint.Parent].Scaling.Z);
+
+				joint.Position = (Joints[joint.Parent].Rotation * FVector3(joint.Scaling.X * joint.Translate.X, joint.Scaling.Y * joint.Translate.Y, joint.Scaling.Z * joint.Translate.Z)) + Joints[joint.Parent].Position;
 				Joints[joint.Parent].Children.Push(i);
 			}
 		}

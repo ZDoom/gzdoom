@@ -5681,7 +5681,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBoneBaseTRS)
 
 	if(mdl)
 	{
-		TRS pose = mdl->GetBoneBaseTRS(bone_index);
+		TRS pose = mdl->GetJointBaseTRS(bone_index);
 
 		translation = DVector3(pose.translation);
 		rotation = DVector4(pose.rotation);
@@ -5722,7 +5722,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseTRS)
 
 	if(mdl)
 	{
-		TRS pose = mdl->GetBoneBaseTRS(bone_index);
+		TRS pose = mdl->GetJointBaseTRS(bone_index);
 
 		translation = DVector3(pose.translation);
 		rotation = DVector4(pose.rotation);
@@ -5893,6 +5893,28 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
 	}
 
 	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBonePosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBonePosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
 }
 
 //================================================

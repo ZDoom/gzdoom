@@ -4318,16 +4318,14 @@ void AActor::GetBoneWorldMatrix(int model_index, int bone_index, bool with_overr
 		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
 
 		FVector3 pos = FVector3(Pos() + WorldOffset);
-
-		VSMatrix outMatrix = smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0);
 	
 		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
 	
-		outMatrix.multMatrix(boneMatrix);
+		boneMatrix.multMatrix(smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0));
 
 		for(int i = 0; i < 16; i++)
 		{
-			outMat[i] = outMatrix.mMatrix[i];
+			outMat[i] = boneMatrix.mMatrix[i];
 		}
 	}
 }
@@ -4342,19 +4340,17 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 
 		FVector3 objPos = FVector3(Pos() + WorldOffset);
 
-		VSMatrix outMatrix = smf->ObjectToWorldMatrix(this, objPos.X, objPos.Y, objPos.Z, 1.0);
-
 		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
 
-		outMatrix.multMatrix(boneMatrix);
+		boneMatrix.multMatrix(smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0));
 
 		FVector4 oldPos(FVector3(pos), 1.0);
 		FVector4 newPos;
 		FVector4 oldNormal(FVector3(normal), 0.0);
 		FVector4 newNormal;
 
-		outMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
-		outMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+		boneMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
+		boneMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
 
 		pos = DVector3(newPos.XYZ());
 		normal = DVector3(newNormal.XYZ());

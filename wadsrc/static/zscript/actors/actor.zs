@@ -1449,6 +1449,9 @@ class Actor : Thinker native
 	
 	native version("4.15.1") Vector3 GetBoneBasePosition(int boneIndex);
 	native version("4.15.1") Vector3 GetNamedBoneBasePosition(Name boneName);
+	
+	native version("4.15.1") Quat GetBoneBaseRotation(int boneIndex);
+	native version("4.15.1") Quat GetNamedBoneBaseRotation(Name boneName);
 
 	native version("4.15.1") int GetBoneCount();
 

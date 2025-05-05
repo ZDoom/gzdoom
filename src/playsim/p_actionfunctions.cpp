@@ -5917,6 +5917,28 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBasePosition)
 	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
 }
 
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBaseRotation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC4(DVector4(mdl->GetJointRotation(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseRotation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC4(DVector4(mdl->GetJointRotation(bone_index)));
+}
+
 //================================================
 // 
 // Bone TRS Getters

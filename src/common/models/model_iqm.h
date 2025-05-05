@@ -198,6 +198,11 @@ public:
 		}
 	}
 
+	FQuaternion GetJointRotation(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Rotation : FQuaternion(0.0f,0.0f,0.0f,1.0f);
+	}
+
 	FVector3 GetJointPosition(int joint) override
 	{
 		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Position : FVector3(0.0f,0.0f,0.0f);

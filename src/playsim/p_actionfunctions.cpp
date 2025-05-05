@@ -5668,51 +5668,46 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneChildren, GetNamedBoneChildren
 	return 0;
 }
 
-static double GetBoneLengthNative(AActor * self, int bone_index)
-{
-	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
-
-	return mdl->GetJointLength(bone_index);
-}
-
-static double GetNamedBoneLengthNative(AActor * self, int boneName_i)
-{
-	FName bone_name {ENamedName(boneName_i)};
-
-	int bone_index;
-
-	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
-
-	return mdl->GetJointLength(bone_index);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneLength, GetBoneLengthNative)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(boneindex);
-
-	ACTION_RETURN_FLOAT(GetBoneLengthNative(self, boneindex));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneLength, GetNamedBoneLengthNative)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME(bonename);
-
-	ACTION_RETURN_FLOAT(GetNamedBoneLengthNative(self, bonename.GetIndex()));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetBoneDir)
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBaseTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(bone_index);
 
 	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
 
-	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS pose = mdl->GetBoneBaseTRS(bone_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(bone_name);
@@ -5721,7 +5716,36 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
 
 	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
 
-	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS pose = mdl->GetBoneBaseTRS(bone_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
 }
 
 static int GetBoneCountNative(AActor * self)

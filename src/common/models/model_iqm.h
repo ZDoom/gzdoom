@@ -195,14 +195,9 @@ public:
 		}
 	}
 
-	double GetJointLength(int joint) override
+	TRS GetBoneBaseTRS(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Translate.Length() : 0.0;
-	}
-
-	FVector3 GetJointDir(int joint) override
-	{
-		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
+		return (joint >= 0 && joint < Joints.SSize()) ? TRS{Joints[joint].Translate, Joints[joint].Quaternion, Joints[joint].Scale} : TRS{};
 	}
 	
 	TRS GetJointPose(int joint, int frame) override

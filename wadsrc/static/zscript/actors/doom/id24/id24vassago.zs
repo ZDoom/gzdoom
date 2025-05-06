@@ -35,7 +35,8 @@ class ID24Vassago : Actor
 		PainSound "monsters/vassago/pain";
 		DeathSound "monsters/vassago/death";
 		ActiveSound "monsters/vassago/active";
-		Tag "$FN_ID24VASSAGO";
+		Obituary "$ID24_OB_VASSAGO";
+		Tag "$ID24_CC_VASSAGO";
 	}
 	States
 	{

@@ -33,7 +33,8 @@ class ID24PlasmaGuy : Actor
 		PainSound "monsters/plasmaguy/pain";
 		DeathSound "monsters/plasmaguy/death";
 		ActiveSound "monsters/plasmaguy/active";
-		Tag "$FN_ID24PLASMAGUY";
+		Obituary "$ID24_OB_SHOCKTROOPER";
+		Tag "$ID24_CC_SHOCKTROOPER";
 	}
 	States
 	{

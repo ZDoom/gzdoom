@@ -36,7 +36,8 @@ class ID24Ghoul : Actor
 		PainSound "monsters/ghoul/pain";
 		DeathSound "monsters/ghoul/death";
 		ActiveSound "monsters/ghoul/active";
-		Tag "$FN_ID24GHOUL";
+		Obituary "$ID24_OB_GHOUL";
+		Tag "$ID24_CC_GHOUL";
 	}
 	States
 	{

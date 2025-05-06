@@ -34,7 +34,8 @@ class ID24Mindweaver : Actor
 		PainSound "monsters/mindweaver/pain";
 		DeathSound "monsters/mindweaver/death";
 		ActiveSound "monsters/mindweaver/active";
-		Tag "$FN_ID24MINDWEAVER";
+		Obituary "$ID24_OB_MINDWEAVER";
+		Tag "$ID24_CC_MINDWEAVER";
 	}
 	States
 	{

@@ -416,7 +416,7 @@ static int actioncmp(void *_ap1,void *_ap2)
     rc = ap1->x.rp->index - ap2->x.rp->index;
   }
   if( rc==0 ){
-    rc = ap2 - ap1;
+    rc = (int)(ap2 - ap1);
   }
   return rc;
 }
@@ -1957,7 +1957,7 @@ static int handleswitch(int i, FILE *err)
           if( err ){
             fprintf(err,
                "%sillegal character in floating-point argument.\n",emsg);
-            errline(i,((size_t)end)-(size_t)argv[i],err);
+            errline(i,(int)(((size_t)end)-(size_t)argv[i]),err);
           }
           errcnt++;
         }
@@ -1968,7 +1968,7 @@ static int handleswitch(int i, FILE *err)
         if( *end ){
           if( err ){
             fprintf(err,"%sillegal character in integer argument.\n",emsg);
-            errline(i,((size_t)end)-(size_t)argv[i],err);
+            errline(i,(int)(((size_t)end)-(size_t)argv[i]),err);
           }
           errcnt++;
         }

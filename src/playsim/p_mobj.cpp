@@ -101,6 +101,7 @@
 #include "fragglescript/t_fs.h"
 #include "shadowinlines.h"
 #include "model.h"
+#include "models.h"
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
@@ -4244,6 +4245,122 @@ DEFINE_ACTION_FUNCTION(AActor, CheckPortalTransition)
 	return 0;
 }
 
+void AActor::CalcBones(bool recalc)
+{
+	if(modelData && (!recalc || (modelData->flags & MODELDATA_GET_BONE_INFO_RECALC)) && modelData->flags & MODELDATA_GET_BONE_INFO)
+	{
+		if(picnum.isValid()) return; // picnum overrides don't render models
+
+		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
+
+		if(!smf) return;
+
+		bool is_decoupled = flags9 & MF9_DECOUPLEDANIMATIONS;
+		double tic = Level->totaltime + 1;
+
+		CalcModelFrameInfo frameinfo = CalcModelFrame(Level, smf, state, tics, modelData, this, is_decoupled, tic, 1.0);
+		
+		ModelDrawInfo drawinfo;
+
+		int boneStartingPosition = -1;
+		bool evaluatedSingle = false;
+
+		modelData->modelBoneInfo.Resize(frameinfo.modelsamount);
+
+		for (unsigned i = 0; i < frameinfo.modelsamount; i++)
+		{
+			if (CalcModelOverrides(i, smf, modelData, frameinfo, drawinfo, is_decoupled))
+			{
+				if(!evaluatedSingle)
+				{ // [Jay] TODO per-model decoupled animations
+					FModel * mdl = Models[drawinfo.modelid];
+					bool nextFrame = frameinfo.smfNext && drawinfo.modelframe != drawinfo.modelframenext;
+					ProcessModelFrame(mdl, nextFrame, i, smf, modelData, frameinfo, drawinfo, is_decoupled, tic, &modelData->modelBoneInfo[i]);
+
+					if(frameinfo.smf_flags & MDL_MODELSAREATTACHMENTS || is_decoupled)
+					{
+						evaluatedSingle = true;
+						//if(!is_decoupled) break;
+
+						break; // TODO remove this break when per-model decoupled animations are in
+					}
+				}
+			}
+		}
+	}
+}
+
+TRS AActor::GetBoneTRS(int model_index, int bone_index, bool with_override)
+{
+	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index > 0 && bone_index > 0 && modelData->modelBoneInfo.SSize() < model_index && modelData->modelBoneInfo[model_index].bones.SSize() < bone_index)
+	{
+		return with_override ? modelData->modelBoneInfo[model_index].bones_with_override[bone_index] : modelData->modelBoneInfo[model_index].bones[bone_index];
+	}
+	return {};
+}
+
+void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat)
+{
+	VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
+
+	for(int i = 0; i < 16; i++)
+	{
+		outMat[i] = boneMatrix.mMatrix[i];
+	}
+}
+
+void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &normal)
+{
+	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
+	{
+		if(picnum.isValid()) return; // picnum overrides don't render models
+
+		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
+
+		FVector3 objPos = FVector3(Pos() + WorldOffset);
+
+		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
+		VSMatrix worldMatrix = smf->ObjectToWorldMatrix(this, objPos.X, objPos.Y, objPos.Z, 1.0);
+
+		FVector4 oldPos(pos.X, pos.Z, pos.Y, 1.0);
+		FVector4 newPos;
+		FVector4 oldNormal(normal.X, normal.Z, normal.Y, 0.0);
+		FVector4 newNormal;
+
+		boneMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
+		boneMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+
+		oldPos = FVector4(FVector3(newPos.X, newPos.Y, newPos.Z) / newPos.W, 1.0);
+		oldNormal = FVector4(FVector3(newNormal.X, newNormal.Y, newNormal.Z) / newNormal.W, 0.0);
+
+		worldMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
+		worldMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+
+		pos = DVector3(newPos.X, newPos.Z, newPos.Y);
+		normal = DVector3(newNormal.X, newNormal.Z, newNormal.Y);
+	}
+}
+
+void AActor::GetObjectToWorldMatrix(double *outMat)
+{
+	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
+	{
+		if(picnum.isValid()) return; // picnum overrides don't render models
+
+		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
+
+		FVector3 pos = FVector3(Pos() + WorldOffset);
+
+		VSMatrix outMatrix = smf->ObjectToWorldMatrix(this, pos.X, pos.Y, pos.Z, 1.0);
+
+		for(int i = 0; i < 16; i++)
+		{
+			outMat[i] = outMatrix.mMatrix[i];
+		}
+	}
+}
+
+
 //
 // P_MobjThinker
 //
@@ -4289,6 +4406,11 @@ void AActor::Tick ()
 	{
 		freezetics--;
 		return;
+	}
+
+	if(flags9 & MF9_DECOUPLEDANIMATIONS)
+	{
+		CalcBones(false);
 	}
 
 	AActor *onmo;
@@ -4850,6 +4972,11 @@ void AActor::Tick ()
 			if (!SetState(state->GetNextState()))
 				return; 		// freed itself
 		}
+	}
+
+	if(!(flags9 & MF9_DECOUPLEDANIMATIONS) && modelData && !(modelData->flags & MODELDATA_GET_BONE_INFO_RECALC))
+	{
+		CalcBones(false);
 	}
 
 	if (tics == -1 || state->GetCanRaise())

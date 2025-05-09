@@ -283,7 +283,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		map->MapLumps[0].Reader = map->resource->GetEntryReader(0, FileSys::READER_SHARED);
 		uppercopy(map->MapLumps[0].Name, map->resource->getName(0));
 
-		for(uint32_t i = 1; i < map->resource->EntryCount(); i++)
+		for(uint32_t i = 1; i < map->resource->EntryCountU(); i++)
 		{
 			const char* lumpname = map->resource->getName(i);
 

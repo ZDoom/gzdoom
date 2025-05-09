@@ -5125,15 +5125,6 @@ static void CleanupModelData(AActor * mobj)
 
 FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, float t, float invt);
 
-static void SetModelBoneRotationInternal(AActor * self, FModel * mdl, int model_index, int index, FQuaternion rotation, int mode, double interpolation_duration, double switchTic)
-{
-	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
-
-	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
-
-	self->modelData->modelBoneOverrides[model_index][index].rotation.Set(rotation, switchTic, interpolation_duration, mode);
-}
-
 template<bool isSet, bool isOffset>
 FModel * SetGetBoneShared(AActor * self, int model_index)
 {
@@ -5149,11 +5140,11 @@ FModel * SetGetBoneShared(AActor * self, int model_index)
 
 	EnsureModelData(self);
 	
-	if(self->modelData->models.Size() > model_index && self->modelData->models[model_index].modelID >= 0 && self->modelData->models[model_index].modelID < Models.Size())
+	if(self->modelData->models.SSize() > model_index && self->modelData->models[model_index].modelID >= 0 && self->modelData->models[model_index].modelID < Models.SSize())
 	{
 		return Models[self->modelData->models[model_index].modelID];
 	}
-	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.Size() > model_index)
+	else if(BaseSpriteModelFrames[self->GetClass()].modelIDs.SSize() > model_index)
 	{
 		return Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[model_index]];
 	}
@@ -5182,7 +5173,7 @@ FModel * SetGetBoneSharedIndex(AActor * self, int model_index, int &bone_index, 
 		ThrowAbortException(X_OTHER, "bone index out of range");
 	}
 
-	if(self->modelData->modelBoneOverrides.Size() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
+	if(self->modelData->modelBoneOverrides.SSize() <= model_index) self->modelData->modelBoneOverrides.Resize(model_index + 1);
 
 	self->modelData->modelBoneOverrides[model_index].Resize(mdl->NumJoints());
 
@@ -5224,6 +5215,8 @@ static void SetModelBoneRotationNative(AActor * self, int model_index, int bone_
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].rotation.Set(FQuaternion(rot_x, rot_y, rot_z, rot_w), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetBoneRotationNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
@@ -5242,6 +5235,8 @@ static void SetModelNamedBoneRotationNative(AActor * self, int model_index, int 
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].rotation.Set(FQuaternion(rot_x, rot_y, rot_z, rot_w), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetNamedBoneRotationNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, double rot_w, int mode, double interpolation_duration, double ticFrac)
@@ -5294,6 +5289,8 @@ static void SetModelBoneTranslationNative(AActor * self, int model_index, int bo
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].translation.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetBoneTranslationNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
@@ -5312,6 +5309,8 @@ static void SetModelNamedBoneTranslationNative(AActor * self, int model_index, i
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].translation.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetNamedBoneTranslationNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
@@ -5362,6 +5361,8 @@ static void SetModelBoneScalingNative(AActor * self, int model_index, int bone_i
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].scaling.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetBoneScalingNative(AActor * self, int bone_index, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
@@ -5380,6 +5381,8 @@ static void SetModelNamedBoneScalingNative(AActor * self, int model_index, int b
 	if(!mdl) return;
 
 	self->modelData->modelBoneOverrides[model_index][bone_index].scaling.Set(FVector3(rot_x, rot_y, rot_z), self->Level->totaltime + ticFrac, interpolation_duration, mode);
+
+	self->CalcBones(true);
 }
 
 static void SetNamedBoneScalingNative(AActor * self, int boneName_i, double rot_x, double rot_y, double rot_z, int mode, double interpolation_duration, double ticFrac)
@@ -5665,51 +5668,46 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneChildren, GetNamedBoneChildren
 	return 0;
 }
 
-static double GetBoneLengthNative(AActor * self, int bone_index)
-{
-	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
-
-	return mdl->GetJointLength(bone_index);
-}
-
-static double GetNamedBoneLengthNative(AActor * self, int boneName_i)
-{
-	FName bone_name {ENamedName(boneName_i)};
-
-	int bone_index;
-
-	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
-
-	return mdl->GetJointLength(bone_index);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneLength, GetBoneLengthNative)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(boneindex);
-
-	ACTION_RETURN_FLOAT(GetBoneLengthNative(self, boneindex));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetNamedBoneLength, GetNamedBoneLengthNative)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_NAME(bonename);
-
-	ACTION_RETURN_FLOAT(GetNamedBoneLengthNative(self, bonename.GetIndex()));
-}
-
-DEFINE_ACTION_FUNCTION(AActor, GetBoneDir)
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBaseTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(bone_index);
 
 	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
 
-	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS pose = mdl->GetJointBaseTRS(bone_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(bone_name);
@@ -5718,7 +5716,36 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneDir)
 
 	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
 
-	ACTION_RETURN_VEC3(DVector3(mdl->GetJointDir(bone_index)));
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS pose = mdl->GetJointBaseTRS(bone_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
 }
 
 static int GetBoneCountNative(AActor * self)
@@ -5735,9 +5762,415 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetBoneCount, GetBoneCountNative)
 	ACTION_RETURN_INT(GetBoneCountNative(self));
 }
 
+//================================================
+// 
+// Bone Pose Getters
+// 
+//================================================
+
+static int GetAnimStartFrameNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindFirstFrame(anim_name);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimStartFrame, GetAnimStartFrameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+
+	ACTION_RETURN_INT(GetAnimStartFrameNative(self, animName.GetIndex()));
+}
+
+static int GetAnimEndFrameNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindLastFrame(anim_name);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimEndFrame, GetAnimEndFrameNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+
+	ACTION_RETURN_INT(GetAnimEndFrameNative(self, animName.GetIndex()));
+}
+
+static double GetAnimFramerateNative(AActor * self, int  animName_i)
+{
+	FName anim_name {ENamedName(animName_i)};
+	FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+	return mdl->FindFramerate(anim_name);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetAnimFramerate, GetAnimFramerateNative)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(animName);
+
+	ACTION_RETURN_FLOAT(GetAnimFramerateNative(self, animName.GetIndex()));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneFramePose)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_INT(frame_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl && frame_index < mdl->NumFrames())
+	{
+		TRS pose = mdl->GetJointPose(bone_index, frame_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneFramePose)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_INT(frame_index);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl && frame_index < mdl->NumFrames())
+	{
+		TRS pose = mdl->GetJointPose(bone_index, frame_index);
+
+		translation = DVector3(pose.translation);
+		rotation = DVector4(pose.rotation);
+		scaling = DVector3(pose.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBasePosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBasePosition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC3(DVector3(mdl->GetJointPosition(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneBaseRotation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	ACTION_RETURN_VEC4(DVector4(mdl->GetJointRotation(bone_index)));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseRotation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	ACTION_RETURN_VEC4(DVector4(mdl->GetJointRotation(bone_index)));
+}
+
+//================================================
+// 
+// Bone TRS Getters
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_BOOL(with_override);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS trs = self->GetBoneTRS(0, bone_index, with_override);
+
+		translation = DVector3(trs.translation);
+		rotation = DVector4(trs.rotation);
+		scaling = DVector3(trs.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_BOOL(with_override);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	DVector3 translation(0,0,0);
+	DVector4 rotation(0,0,0,1);
+	DVector3 scaling(0,0,0);
+
+	if(mdl)
+	{
+		TRS trs = self->GetBoneTRS(0, bone_index, with_override);
+
+		translation = DVector3(trs.translation);
+		rotation = DVector4(trs.rotation);
+		scaling = DVector3(trs.scaling);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(scaling);
+		numret = 3;
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(translation);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector4(rotation);
+	}
+
+	return numret;
+}
 
 
+DEFINE_ACTION_FUNCTION(AActor, TransformByBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_FLOAT(pos_x);
+	PARAM_FLOAT(pos_y);
+	PARAM_FLOAT(pos_z);
+	PARAM_FLOAT(dir_x);
+	PARAM_FLOAT(dir_y);
+	PARAM_FLOAT(dir_z);
+	PARAM_BOOL(with_override);
 
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	DVector3 position(pos_x, pos_y, pos_z);
+	DVector3 direction(dir_x, dir_y, dir_z);
+
+	if(mdl)
+	{
+		self->GetBonePosition(0, bone_index, with_override, position, direction);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(direction);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector(position);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_FLOAT(pos_x);
+	PARAM_FLOAT(pos_y);
+	PARAM_FLOAT(pos_z);
+	PARAM_FLOAT(dir_x);
+	PARAM_FLOAT(dir_y);
+	PARAM_FLOAT(dir_z);
+	PARAM_BOOL(with_override);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	DVector3 position(pos_x, pos_y, pos_z);
+	DVector3 direction(dir_x, dir_y, dir_z);
+
+	if(mdl)
+	{
+		self->GetBonePosition(0, bone_index, with_override, position, direction);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetVector(direction);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetVector(position);
+	}
+
+	return numret;
+}
+
+//================================================
+// 
+// Bone Matrix Getters
+// 
+//================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_POINTER(outMatrix, TArray<double>);
+	PARAM_BOOL(with_override);
+
+	if(outMatrix)
+	{
+		int bone_index;
+
+		FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetBoneMatrix(0, bone_index, with_override, outMatrix->Data());
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetObjectToWorldMatrixRaw)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_POINTER(outMatrix, TArray<double>);
+
+	if(outMatrix)
+	{
+		FModel * mdl = SetGetBoneShared<false, false>(self, 0);
+
+		outMatrix->Clear();
+		outMatrix->Resize(16);
+
+		if(mdl)
+		{
+			self->GetObjectToWorldMatrix(outMatrix->Data());
+		}
+	}
+	return 0;
+}
 
 //================================================
 // SetAnimation
@@ -5771,7 +6204,11 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(animName == NAME_None)
 	{
+		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
+
 		self->modelData->curAnim.flags = MODELANIM_NONE;
+		self->CalcBones(true);
+
 		return;
 	}
 
@@ -5794,11 +6231,11 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 
 	FModel * animation = nullptr;
-	if (animID >= 0 && animID < Models.Size())
+	if (animID >= 0 && animID < Models.SSize())
 	{
 		animation = Models[animID];
 	}
-	else if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())
+	else if(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.SSize())
 	{
 		animation = Models[self->modelData->models[0].modelID];
 	}
@@ -5811,8 +6248,12 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(animStart == FErr_NotFound)
 	{
-		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("Could not find animation %s\n", animName.GetChars());
+		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
+
+		self->modelData->curAnim.flags = MODELANIM_NONE;
+		self->CalcBones(true);
+
 		return;
 	}
 
@@ -5861,20 +6302,32 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(startFrame >= len)
 	{
-		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
+
+		self->modelData->curAnim.flags = MODELANIM_NONE;
+		self->CalcBones(true);
+
 		return;
 	}
 	else if(loopFrame >= len)
 	{
-		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
+
+		self->modelData->curAnim.flags = MODELANIM_NONE;
+		self->CalcBones(true);
+
 		return;
 	}
 	else if(endFrame >= len)
 	{
-		self->modelData->curAnim.flags = MODELANIM_NONE;
 		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
+		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
+
+		self->modelData->curAnim.flags = MODELANIM_NONE;
+		self->CalcBones(true);
+
 		return;
 	}
 	
@@ -5896,6 +6349,8 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		self->modelData->curAnim.startTic = tic;
 		self->modelData->curAnim.switchOffset = 0;
 	}
+
+	self->CalcBones(true);
 }
 
 void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
@@ -5957,29 +6412,60 @@ void SetAnimationFrameRateUINative(AActor * self, double framerate)
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
 }
 
-void SetModelFlag(AActor * self, int flag)
+void SetModelFlag(AActor * self, int flag, int iqmFlag)
 {
 	EnsureModelData(self);
-	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
-	self->modelData->overrideFlagsSet |= flag;
-	self->modelData->overrideFlagsClear &= ~flag;
+
+	iqmFlag &= MODELDATA_IQMFLAGS;
+
+	if(flag)
+	{
+		self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+		self->modelData->overrideFlagsSet |= flag;
+		self->modelData->overrideFlagsClear &= ~flag;
+	}
+
+	if(iqmFlag)
+	{
+		self->modelData->flags |= iqmFlag;
+	}
 }
 
-void ClearModelFlag(AActor * self, int flag)
+void ClearModelFlag(AActor * self, int flag, int iqmFlag)
 {
 	EnsureModelData(self);
-	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
-	self->modelData->overrideFlagsClear |= flag;
-	self->modelData->overrideFlagsSet &= ~flag;
+
+	iqmFlag &= MODELDATA_IQMFLAGS;
+
+	if(flag)
+	{
+		self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+		self->modelData->overrideFlagsClear |= flag;
+		self->modelData->overrideFlagsSet &= ~flag;
+	}
+
+	if(iqmFlag)
+	{
+		self->modelData->flags &= ~iqmFlag;
+	}
+	
 }
 
-void ResetModelFlags(AActor * self)
+void ResetModelFlags(AActor * self, int resetModel, int resetIqm)
 {
 	if(self->modelData)
 	{
-		self->modelData->overrideFlagsClear = 0;
-		self->modelData->overrideFlagsSet = 0;
-		self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
+		if(resetModel)
+		{
+			self->modelData->overrideFlagsClear = 0;
+			self->modelData->overrideFlagsSet = 0;
+			self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
+		}
+
+		if(resetIqm)
+		{
+			self->modelData->flags &= ~MODELDATA_IQMFLAGS;
+		}
 	}
 }
 
@@ -6148,6 +6634,11 @@ void ChangeModelNative(
 
 	CleanupModelData(mobj);
 
+	if(animation != NAME_None || modeldef != nullptr)
+	{
+		mobj->CalcBones(true);
+	}
+
 	return;
 }
 
@@ -6228,8 +6719,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flag);
+	PARAM_INT(flagIqm);
 
-	SetModelFlag(self, flag);
+	SetModelFlag(self, flag, flagIqm);
 
 	return 0;
 }
@@ -6238,8 +6730,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flag);
+	PARAM_INT(flagIqm);
 
-	ClearModelFlag(self, flag);
+	ClearModelFlag(self, flag, flagIqm);
 
 	return 0;
 }
@@ -6247,8 +6740,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ResetModelFlags, ResetModelFlags)
 {
 	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL(resetModel);
+	PARAM_BOOL(resetIqm);
 	
-	ResetModelFlags(self);
+	ResetModelFlags(self, resetModel, resetIqm);
 
 	return 0;
 }

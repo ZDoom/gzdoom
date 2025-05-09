@@ -66,7 +66,7 @@ extern uint8_t NetBuffer[MAX_MSGLEN];
 extern size_t NetBufferLength;
 extern uint8_t TicDup;
 extern int RemoteClient;
-extern uint8_t MaxClients;
+extern int MaxClients;
 extern uint32_t GameID;
 
 bool I_InitNetwork();

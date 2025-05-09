@@ -164,7 +164,7 @@ FClientStack NetworkClients = {};
 
 uint32_t GameID = DEFAULT_GAME_ID;
 uint8_t	TicDup = 1u;
-uint8_t	MaxClients = 1u;
+int	MaxClients = 1;
 int RemoteClient = -1;
 size_t NetBufferLength = 0u;
 uint8_t NetBuffer[MAX_MSGLEN] = {};
@@ -187,10 +187,10 @@ CUSTOM_CVAR(String, net_password, "", CVAR_IGNORE)
 
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
-int Net_SetUserInfo(int client, uint8_t*& stream);
-int Net_ReadUserInfo(int client, uint8_t*& stream);
-int Net_ReadGameInfo(uint8_t*& stream);
-int Net_SetGameInfo(uint8_t*& stream);
+size_t Net_SetUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadGameInfo(uint8_t*& stream);
+size_t Net_SetGameInfo(uint8_t*& stream);
 
 static SOCKET CreateUDPSocket()
 {
@@ -320,7 +320,7 @@ static int PrivateNetOf(const in_addr& in)
 // private network, since that means we (probably) are too.
 static bool ClientsOnSameNetwork()
 {
-	size_t start = 1u;
+	int start = 1;
 	for (; start < MaxClients; ++start)
 	{
 		if (Connected[start].Status != CSTAT_NONE)
@@ -334,7 +334,7 @@ static bool ClientsOnSameNetwork()
 	if (!firstClient)
 		return false;
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (i == start)
 			continue;
@@ -395,7 +395,7 @@ static bool I_NetLoop(bool (*loopCallback)(void*), void* data)
 }
 
 // A new client has just entered the game, so add them to the player list.
-static void I_NetClientConnected(size_t client, unsigned int charLimit = 0u)
+static void I_NetClientConnected(int client, unsigned int charLimit = 0u)
 {
 	const char* name = Net_GetClientName(client, charLimit);
 	unsigned int flags = CFL_NONE;
@@ -408,17 +408,17 @@ static void I_NetClientConnected(size_t client, unsigned int charLimit = 0u)
 }
 
 // A client changed ready state.
-static void I_NetClientUpdated(size_t client)
+static void I_NetClientUpdated(int client)
 {
 	StartWindow->NetUpdate(client, Connected[client].Status);
 }
 
-static void I_NetClientDisconnected(size_t client)
+static void I_NetClientDisconnected(int client)
 {
 	StartWindow->NetDisconnect(client);
 }
 
-static void I_NetUpdatePlayers(size_t current, size_t limit)
+static void I_NetUpdatePlayers(int current, int limit)
 {
 	StartWindow->NetProgress(current, limit);
 }
@@ -488,16 +488,17 @@ static void SendPacket(const sockaddr_in& to)
 	if (NetBufferLength >= MinCompressionSize)
 	{
 		TransmitBuffer[0] = NetBuffer[0] | NCMD_COMPRESSED;
-		res = compress2(TransmitBuffer + 1, &size, NetBuffer + 1, NetBufferLength - 1u, 9);
+
+		res = compress2(TransmitBuffer + 1, &size, NetBuffer + 1, uint32_t(NetBufferLength - 1u), 9);
 		++size;
 	}
 
 	if (res == Z_OK && size < static_cast<uLong>(NetBufferLength))
-		res = sendto(MySocket, (const char*)TransmitBuffer, size, 0, (const sockaddr*)&to, sizeof(to));
+		res = sendto(MySocket, (const char*)TransmitBuffer, (int)size, 0, (const sockaddr*)&to, sizeof(to));
 	else if (NetBufferLength > MaxTransmitSize)
 		I_Error("Net compression failed (zlib error %d)", res);
 	else
-		res = sendto(MySocket, (const char*)NetBuffer, NetBufferLength, 0, (const sockaddr*)&to, sizeof(to));
+		res = sendto(MySocket, (const char*)NetBuffer, (int)NetBufferLength, 0, (const sockaddr*)&to, sizeof(to));
 }
 
 static void GetPacket(sockaddr_in* const from = nullptr)
@@ -632,7 +633,7 @@ static void RejectConnection(const sockaddr_in& to, ENetConnectType reason)
 	SendPacket(to);
 }
 
-static void AddClientConnection(const sockaddr_in& from, size_t client)
+static void AddClientConnection(const sockaddr_in& from, int client)
 {
 	Connected[client].Status = CSTAT_CONNECTING;
 	Connected[client].Address = from;
@@ -641,7 +642,7 @@ static void AddClientConnection(const sockaddr_in& from, size_t client)
 	I_NetClientUpdated(client);
 
 	// Make sure any ready clients are marked as needing the new client's info.
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status == CSTAT_READY)
 		{
@@ -651,7 +652,7 @@ static void AddClientConnection(const sockaddr_in& from, size_t client)
 	}
 }
 
-static void RemoveClientConnection(size_t client)
+static void RemoveClientConnection(int client)
 {
 	I_NetClientDisconnected(client);
 	I_ClearClient(client);
@@ -664,7 +665,7 @@ static void RemoveClientConnection(size_t client)
 	NetBuffer[2] = client;
 	NetBufferLength = 3u;
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status == CSTAT_NONE)
 			continue;
@@ -694,7 +695,7 @@ static bool Host_CheckForConnections(void* connected)
 {
 	const bool forceStarting = I_ShouldStartNetGame();
 	const bool hasPassword = strlen(net_password) > 0;
-	size_t* connectedPlayers = (size_t*)connected;
+	int* connectedPlayers = (int*)connected;
 
 	TArray<int> toBoot = {};
 	I_GetKickClients(toBoot);
@@ -780,7 +781,7 @@ static bool Host_CheckForConnections(void* connected)
 			}
 			else
 			{
-				size_t free = 1u;
+				int free = 1;
 				for (; free < MaxClients; ++free)
 				{
 					if (Connected[free].Status == CSTAT_NONE)
@@ -815,7 +816,7 @@ static bool Host_CheckForConnections(void* connected)
 	const size_t addrSize = sizeof(sockaddr_in);
 	bool ready = true;
 	NetBuffer[0] = NCMD_SETUP;
-	for (size_t client = 1u; client < MaxClients; ++client)
+	for (int client = 1; client < MaxClients; ++client)
 	{
 		auto& con = Connected[client];
 		// If we're starting before the lobby is full, only check against connected clients.
@@ -855,7 +856,7 @@ static bool Host_CheckForConnections(void* connected)
 			}
 
 			NetBuffer[1] = PRE_USER_INFO;
-			for (size_t i = 0u; i < MaxClients; ++i)
+			for (int i = 0; i < MaxClients; ++i)
 			{
 				if (i == client || Connected[i].Status == CSTAT_NONE)
 					continue;
@@ -864,7 +865,7 @@ static bool Host_CheckForConnections(void* connected)
 				{
 					if (Connected[i].Status >= CSTAT_WAITING)
 					{
-						NetBuffer[2] = i;
+						NetBuffer[2] = uint8_t(i);
 						NetBufferLength = 3u;
 						// Client will already have the host connection information.
 						if (i > 0)
@@ -908,7 +909,7 @@ static void SendAbort()
 
 	if (consoleplayer == 0)
 	{
-		for (size_t client = 1u; client < MaxClients; ++client)
+		for (int client = 1; client < MaxClients; ++client)
 		{
 			if (Connected[client].Status != CSTAT_NONE)
 				SendPacket(Connected[client].Address);
@@ -935,7 +936,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	Net_SetupUserInfo();
 
 	// If only 1 player, don't bother starting the network
-	if (MaxClients == 1u)
+	if (MaxClients == 1)
 	{
 		TicDup = 1u;
 		multiplayer = true;
@@ -944,11 +945,11 @@ static bool HostGame(int arg, bool forcedNetMode)
 
 	StartNetwork(false);
 	I_NetInit("Waiting for other players...", true);
-	I_NetUpdatePlayers(1u, MaxClients);
+	I_NetUpdatePlayers(1, MaxClients);
 	I_NetClientConnected(0u, 16u);
 
 	// Wait for the lobby to be full.
-	size_t connectedPlayers = 1u;
+	int connectedPlayers = 1;
 	if (!I_NetLoop(Host_CheckForConnections, (void*)&connectedPlayers))
 	{
 		SendAbort();
@@ -961,10 +962,11 @@ static bool HostGame(int arg, bool forcedNetMode)
 
 	// If the player force started with only themselves in the lobby, start the game
 	// immediately.
-	if (connectedPlayers == 1u)
+	if (connectedPlayers == 1)
 	{
 		CloseNetwork();
-		MaxClients = TicDup = 1u;
+		MaxClients = 1;
+		TicDup = 1u;
 		return true;
 	}
 
@@ -1102,7 +1104,7 @@ static bool Guest_ContactHost(void* unused)
 		}
 		else if (NetBuffer[1] == PRE_USER_INFO)
 		{
-			const size_t c = NetBuffer[2];
+			const int c = NetBuffer[2];
 			if (!ClientGotAck(consoleplayer, c))
 			{
 				NetworkClients += c;

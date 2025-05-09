@@ -17,7 +17,9 @@ class FGameTexture;
 class IModelVertexBuffer;
 class FModel;
 class PClass;
+class AActor;
 struct FSpriteModelFrame;
+struct FLevelLocals;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
@@ -59,6 +61,9 @@ public:
 	unsigned int getFlags(class DActorModelData * defs) const;
 	friend void InitModels();
 	friend void ParseModelDefLump(int Lump);
+
+	VSMatrix ObjectToWorldMatrix(AActor * actor, float x, float y, float z, double ticFrac);
+	VSMatrix ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double tic);
 };
 
 
@@ -92,9 +97,12 @@ public:
 	virtual int FindJoint(FName name) { return -1; }
 
 	virtual int GetJointParent(int joint) { return -1; }
-	virtual double GetJointLength(int joint) { return 0.0; }
 	virtual FName GetJointName(int joint) { return NAME_None; }
-	virtual FVector3 GetJointDir(int joint) { return FVector3(0.0f,0.0f,0.0f); }
+	virtual FQuaternion GetJointRotation(int joint) { return FQuaternion(0.0f,0.0f,0.0f,1.0f); }
+	virtual FVector3 GetJointPosition(int joint) { return FVector3(0.0f,0.0f,0.0f); }
+	virtual TRS GetJointBaseTRS(int joint) { return {}; }
+	virtual TRS GetJointPose(int joint, int frame) { return {}; }
+	virtual int NumFrames() { return -1; }
 
 	virtual void GetJointChildren(int joint, TArray<int> &out) {}
 

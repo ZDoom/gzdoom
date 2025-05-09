@@ -725,8 +725,19 @@ struct AnimModelOverride
 
 enum EModelDataFlags
 {
-	MODELDATA_HADMODEL =		1 << 0,
-	MODELDATA_OVERRIDE_FLAGS =	1 << 1,
+	MODELDATA_HADMODEL =				1 << 0,
+	MODELDATA_OVERRIDE_FLAGS =			1 << 1,
+	MODELDATA_GET_BONE_INFO  =			1 << 2,
+	MODELDATA_GET_BONE_INFO_RECALC  =	1 << 3, // RECALCULATE BONE INFO INSTANTLY WHEN STATE/ANIMATION CHANGES, MIGHT GET EXPENSIVE
+
+
+
+
+
+
+
+
+	MODELDATA_IQMFLAGS = MODELDATA_GET_BONE_INFO | MODELDATA_GET_BONE_INFO_RECALC,
 };
 
 class DActorModelData : public DObject
@@ -739,6 +750,7 @@ public:
 	TArray<AnimModelOverride>	 animationIDs;
 	TArray<int>					 modelFrameGenerators;
 	TArray<TArray<BoneOverride>> modelBoneOverrides;
+	TArray<BoneInfo>			 modelBoneInfo;
 	int							 flags;
 	int							 overrideFlagsSet;
 	int							 overrideFlagsClear;
@@ -812,6 +824,15 @@ public:
 	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick
 	virtual void Tick() override;
 	void EnableNetworking(const bool enable) override;
+
+	void CalcBones(bool recalc);
+	TRS GetBoneTRS(int model_index, int bone_index, bool with_override);
+
+	//outmat must be double[16]
+	void GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat);
+
+	void GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &normal);
+	void GetObjectToWorldMatrix(double *outMat);
 
 	static AActor *StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 

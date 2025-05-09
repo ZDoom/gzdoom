@@ -123,7 +123,12 @@ void DNetworkBuffer::AddDouble(double msg)
 
 void DNetworkBuffer::AddString(const FString& msg)
 {
-	_size += msg.Len() + 1u;
+	if(msg.Len() >= UINT_MAX)
+	{
+		I_Error("network buffer string too large");
+	}
+
+	_size += ((unsigned int)msg.Len()) + 1u;
 	_buffer.Push({ NET_STRING, msg });
 }
 
@@ -427,8 +432,14 @@ bool EventManager::SendNetworkCommand(const FName& cmd, VMVa_List& args)
 			{
 				++bytes; // Strings will always consume at least one byte.
 				const FString* str = ListGetString(args);
+
+				if(str->Len() >= UINT_MAX || (bytes + (unsigned int)str->Len()) >= UINT_MAX)
+				{
+					I_Error("network buffer string too large");
+				}
+
 				if (str != nullptr)
-					bytes += str->Len();
+					bytes += (unsigned int)str->Len();
 				break;
 			}
 		}

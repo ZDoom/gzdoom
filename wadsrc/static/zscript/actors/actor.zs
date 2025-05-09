@@ -1442,24 +1442,73 @@ class Actor : Thinker native
 	
 	native version("4.15.1") void GetBoneChildren(int boneIndex, out Array<int> children);
 	native version("4.15.1") void GetNamedBoneChildren(Name boneName, out Array<int> children);
-
-	// this is the length in model units, not in world units, and does not take model scale in MODELDEF, world, etc, or current animation or offset into account at all
-	native version("4.15.1") double GetBoneLength(int boneIndex);
-	native version("4.15.1") double GetNamedBoneLength(Name boneName);
-
-	// this is the direction of the bone in the armature, does not take the current animation or offset into account at all
-	native version("4.15.1") Vector3 GetBoneDir(int boneIndex);
-	native version("4.15.1") Vector3 GetNamedBoneDir(Name boneName);
 	
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneBaseTRS(int boneIndex);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneBaseTRS(Name boneName);
+	
+	native version("4.15.1") Vector3 GetBoneBasePosition(int boneIndex);
+	native version("4.15.1") Vector3 GetNamedBoneBasePosition(Name boneName);
+	
+	native version("4.15.1") Quat GetBoneBaseRotation(int boneIndex);
+	native version("4.15.1") Quat GetNamedBoneBaseRotation(Name boneName);
+
 	native version("4.15.1") int GetBoneCount();
 
+	//================================================
+	// 
+	// Bone Pose Getters
+	// 
+	//================================================
+
+	native version("4.15.1") int GetAnimStartFrame(Name animName);
+	native version("4.15.1") int GetAnimEndFrame(Name animName);
+	native version("4.15.1") double GetAnimFramerate(Name animName);
+	
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneFramePose(int boneIndex, int frame);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneFramePose(Name boneName, int frame);
+
+	//================================================
+	// 
+	// Bone TRS Getters
+	// 
+	//================================================
+	
+	/* rotation, translation, scaling */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBone(int boneIndex, bool include_offsets = true);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBone(Name boneName, bool include_offsets = true);
+	
+	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
+	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
+	
+	version("4.15.1") Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
+	{
+		return TransformByBone(boneIndex, GetBoneBasePosition(boneIndex), include_offsets:include_offsets);
+	}
+	
+	version("4.15.1") Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
+	{
+		return GetBonePosition(GetBoneIndex(boneName), include_offsets);
+	}
+
+	//================================================
+	// 
+	// Bone Matrix Getters
+	// 
+	//================================================
+	
+	//outMatrix will be a 16-length array containing the raw matrix data
+	native version("4.15.1") void GetBoneMatrixRaw(int boneIndex, out Array<double> outMatrix, bool include_offsets = true);
+	native version("4.15.1") void GetNamedBoneMatrixRaw(Name boneName, out Array<double> outMatrix, bool include_offsets = true);
+
+	native version("4.15.1") void GetObjectToWorldMatrixRaw(out Array<double> outMatrix);
 
 	//================================================
 	// 
 	// 
 	// 
 	//================================================
-
 
 	native version("4.12") void SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
 	native version("4.12") ui void SetAnimationUI(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
@@ -1467,9 +1516,9 @@ class Actor : Thinker native
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
 
-	native version("4.12") void SetModelFlag(int flag);
-	native version("4.12") void ClearModelFlag(int flag);
-	native version("4.12") void ResetModelFlags();
+	native version("4.12") void SetModelFlag(int flag, int iqmFlags = 0);
+	native version("4.12") void ClearModelFlag(int flag, int iqmFlags = 0);
+	native version("4.12") void ResetModelFlags(bool resetModel = true, bool resetIqm = false);
     
     
 	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0)

@@ -1785,12 +1785,15 @@ FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
 {
 	FString *args;
-	int i, argc;
+	int i;
+	int argc;
 
 	argc = Args->CheckParmList("-file", &args);
 
+	assert(wadfiles.size() < INT_MAX);
+
 	// [RL0] Check for array size to only add new wads
-	for (i = wadfiles.size(); i < argc; ++i)
+	for (i = int(wadfiles.size()); i < argc; ++i)
 	{
 		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig);
 	}

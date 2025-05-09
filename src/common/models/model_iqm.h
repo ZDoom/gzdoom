@@ -73,6 +73,9 @@ struct IQMJoint
 	FVector3 Translate;
 	FQuaternion Quaternion;
 	FVector3 Scale;
+	FVector3 Position;
+	FQuaternion Rotation;
+	FVector3 Scaling;
 };
 
 struct IQMPose
@@ -164,7 +167,7 @@ private:
 	TArray<VSMatrix> inversebaseframe;
 	TArray<TRS> TRSData;
 public:
-	int NumJoints() override { return Joints.Size(); }
+	int NumJoints() override { return Joints.SSize(); }
 	int FindJoint(FName name) override
 	{
 		int *j = NamedJoints.CheckKey(name);
@@ -174,12 +177,12 @@ public:
 
 	int GetJointParent(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Parent : -1;
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Parent : -1;
 	}
 
 	FName GetJointName(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Name : FName(NAME_None);
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Name : FName(NAME_None);
 	}
 
 	void GetRootJoints(TArray<int> &out) override
@@ -189,20 +192,34 @@ public:
 
 	void GetJointChildren(int joint, TArray<int> &out) override
 	{
-		if(joint >= 0 && joint < Joints.Size())
+		if(joint >= 0 && joint < Joints.SSize())
 		{
 			out = Joints[joint].Children;
 		}
 	}
 
-	double GetJointLength(int joint) override
+	FQuaternion GetJointRotation(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Length() : 0.0;
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Rotation : FQuaternion(0.0f,0.0f,0.0f,1.0f);
 	}
 
-	FVector3 GetJointDir(int joint) override
+	FVector3 GetJointPosition(int joint) override
 	{
-		return (joint >= 0 && joint < Joints.Size()) ? Joints[joint].Translate.Unit() : FVector3(0.0f,0.0f,0.0f);
+		return (joint >= 0 && joint < Joints.SSize()) ? Joints[joint].Position : FVector3(0.0f,0.0f,0.0f);
+	}
+
+	TRS GetJointBaseTRS(int joint) override
+	{
+		return (joint >= 0 && joint < Joints.SSize()) ? TRS{Joints[joint].Translate, Joints[joint].Quaternion, Joints[joint].Scale} : TRS{};
+	}
+
+	TRS GetJointPose(int joint, int frame) override
+	{
+		return (joint >= 0 && joint < Joints.SSize() && frame >= 0 && ((frame * Joints.SSize()) + joint) < TRSData.SSize()) ? TRSData[(frame * Joints.SSize()) + joint] : TRS{} ;
+	}
+	virtual int NumFrames()
+	{
+		return Joints.SSize() > 0 ? (TRSData.SSize() / Joints.SSize()) : 0;
 	}
 };
 

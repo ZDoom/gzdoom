@@ -32,3 +32,4 @@
 /build_vc2019-32
 /build__
 gzdoom-crash.log
+.cache/

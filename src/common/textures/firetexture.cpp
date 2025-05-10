@@ -69,9 +69,9 @@ void FireTexture::SetPalette(TArray<PalEntry>& colors)
 
 void FireTexture::Update()
 {
-	for (unsigned int y = 1; y < Height; y++)
+	for (unsigned int x = 0; x < Width; x++)
 	{
-		for (unsigned int x = 0; x < Width; x++)
+		for (unsigned int y = 1; y < Height; y++)
 		{
 			uint8_t srcPixel = Image[y * Width + x];
 

@@ -368,7 +368,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 
 	if(is_decoupled)
 	{
-		smfNext = smf = &BaseSpriteModelFrames[actor->GetClass()];
+		smfNext = smf = &BaseSpriteModelFrames[(data != nullptr && data->modelDef != nullptr) ? data->modelDef : actor->GetClass()];
 		if(data && !(data->curAnim.flags & MODELANIM_NONE))
 		{
 			calcFrames(data->curAnim, tic, decoupled_frame, inter);

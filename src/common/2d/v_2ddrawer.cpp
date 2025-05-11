@@ -1251,9 +1251,9 @@ public:
 	}
 };
 
-FCanvas* GetTextureCanvas(const FString& texturename)
+FCanvas* GetTextureCanvas(const FString& texturename, const ETextureType usetype = ETextureType::Wall)
 {
-	FTextureID textureid = TexMan.CheckForTexture(texturename.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
+	FTextureID textureid = TexMan.CheckForTexture(texturename.GetChars(), usetype, FTextureManager::TEXMAN_Overridable);
 	if (textureid.isValid())
 	{
 		// Only proceed if the texture is a canvas texture.
@@ -1274,4 +1274,40 @@ FCanvas* GetTextureCanvas(const FString& texturename)
 		}
 	}
 	return nullptr;
+}
+
+FCanvas* CreateTextureCanvas(const FString& canvasname, const int width, const int height, const int offsetx = 0, const int offsety = 0, const ETextureType usetype = ETextureType::Any)
+{
+	FTextureID textureid = TexMan.CheckForTexture(canvasname.GetChars(), usetype, FTextureManager::TEXMAN_Overridable);
+	if (textureid.Exists()) { return nullptr; } // Don't allow overwrite of existing textures
+
+	static InitTextureCanvasGC initCanvasGC;
+
+	FCanvasTexture* canvas = new FCanvasTexture(width, height);
+	canvas->Canvas = Create<FCanvas>();
+	canvas->Canvas->Tex = canvas;
+	canvas->aspectRatio = (float)width / (float)height;
+	canvas->Canvas->Drawer.SetSize(width, height);
+	AllCanvases.Push(canvas->Canvas);
+
+	FGameTexture* viewer = MakeGameTexture(canvas, canvasname.GetChars(), usetype);
+	viewer->SetDisplaySize((float)width, (float)height);
+	viewer->SetOffsets(offsetx, offsety);
+
+	TexMan.AddGameTexture(viewer);
+
+	return canvas->Canvas;
+}
+
+DEFINE_ACTION_FUNCTION(FCanvas, Create)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(canvasname);
+	PARAM_INT(width);
+	PARAM_INT(height);
+	PARAM_INT(offsetx);
+	PARAM_INT(offsety);
+	PARAM_INT(usetype);
+
+	ACTION_RETURN_POINTER(CreateTextureCanvas(canvasname, width, height, offsetx, offsety, static_cast<ETextureType>(usetype)));
 }

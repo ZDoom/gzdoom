@@ -319,7 +319,7 @@ struct TexMan
 	native static int CheckRealHeight(TextureID tex);
 	native static bool OkForLocalization(TextureID patch, String textSubstitute);
 	native static bool UseGamePalette(TextureID tex);
-	native static Canvas GetCanvas(String texture);
+	native static Canvas GetCanvas(String texture, int usetype = Type_Any);
 }
 
 /*
@@ -518,6 +518,8 @@ class Shape2D : Object native
 
 class Canvas : Object native abstract
 {
+	native static Canvas Create(String canvasname, int width, int height, int offsetx = 0, int offsety = 0, int usetype = TexMan.Type_Wall);
+
 	native void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
 	native void Dim(Color col, double amount, int x, int y, int w, int h, ERenderStyle style = STYLE_Translucent);
 

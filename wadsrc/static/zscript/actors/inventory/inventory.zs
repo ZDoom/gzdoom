@@ -932,7 +932,7 @@ class Inventory : Actor
 	//===========================================================================
 	virtual void DepleteBy(int by)
 	{
-		if (amount < 1 || by >= amount)
+		if (by < 1 || amount < 1 || by >= amount)
 		{
 			DepleteOrDestroy();
 		}

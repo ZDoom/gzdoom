@@ -45,6 +45,11 @@ std::string PlayGamePage::GetExtraArgs()
 	return ParametersEdit->GetText();
 }
 
+void PlayGamePage::SetExtraArgs(const std::string& args)
+{
+	ParametersEdit->SetText(args);
+}
+
 int PlayGamePage::GetSelectedGame()
 {
 	return GamesList->GetSelectedItem();

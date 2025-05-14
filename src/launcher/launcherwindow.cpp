@@ -19,6 +19,7 @@ int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int*
 
 	auto launcher = std::make_unique<LauncherWindow>(wads, numwads, defaultiwad, autoloadflags);
 	launcher->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
+	if(extraArgs) launcher->PlayGame->SetExtraArgs(extraArgs->GetChars());
 	launcher->Show();
 
 	DisplayWindow::RunLoop();

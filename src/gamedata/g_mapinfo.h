@@ -382,6 +382,8 @@ struct level_info_t
 	int			fogdensity;
 	int			outsidefogdensity;
 	int			skyfog;
+	float		thickfogdistance;
+	float		thickfogmultiplier;
 	float		pixelstretch;
 
 	// Redirection: If any player is carrying the specified item, then

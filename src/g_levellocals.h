@@ -753,6 +753,8 @@ public:
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
 	int			ImpactDecalCount;
+	float		thickfogdistance;
+	float		thickfogmultiplier;
 
 	FGlobalDLightLists lightlists;
 

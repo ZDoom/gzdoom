@@ -430,6 +430,7 @@ CCMD(skyfog)
 		// Do this only on the primary level.
 		primaryLevel->skyfog = max(0, (int)strtoull(argv[1], NULL, 0));
 	}
+	Printf("%d\n", primaryLevel->skyfog);
 }
 
 

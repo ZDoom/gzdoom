@@ -414,6 +414,8 @@ struct LevelInfo native
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
+	native readonly float thickfogdistance;
+	native readonly float thickfogmultiplier;
 	native readonly float pixelstretch;
 	native readonly name RedirectType;
 	native readonly String RedirectMapName;
@@ -527,6 +529,8 @@ struct LevelLocals native
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
+	native readonly float thickfogdistance;
+	native readonly float thickfogmultiplier;
 	native readonly float pixelstretch;
 	native readonly float MusicVolume;
 	native name deathsequence;

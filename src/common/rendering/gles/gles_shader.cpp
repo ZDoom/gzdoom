@@ -284,6 +284,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 		uniform	float uClipHeightDirection;
 		uniform	int uShadowmapFilter;
 
+		uniform float uThickFogDistance;
+		uniform float uThickFogMultiplier;
+
 		uniform int uTextureMode;
 		uniform vec2 uClipSplit;
 		uniform float uAlphaThreshold;
@@ -582,6 +585,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump_, const char *
 	shaderData->muClipHeightDirection.Init(shaderData->hShader, "uClipHeightDirection");
 	shaderData->muShadowmapFilter.Init(shaderData->hShader, "uShadowmapFilter");
 
+	shaderData->muThickFogDistance.Init(shaderData->hShader, "uThickFogDistance");
+	shaderData->muThickFogMultiplier.Init(shaderData->hShader, "uThickFogMultiplier");
 	////
 
 	shaderData->muDesaturation.Init(shaderData->hShader, "uDesaturationFactor");

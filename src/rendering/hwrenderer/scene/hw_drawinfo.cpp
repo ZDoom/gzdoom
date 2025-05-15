@@ -175,6 +175,8 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		VPUniforms.mClipLine.X = -10000000.0f;
 		VPUniforms.mShadowmapFilter = gl_shadowmap_filter;
 		VPUniforms.mLightBlendMode = (level.info ? (int)level.info->lightblendmode : 0);
+		VPUniforms.mThickFogDistance = Level->thickfogdistance;
+		VPUniforms.mThickFogMultiplier = Level->thickfogmultiplier;
 	}
 	mClipper->SetViewpoint(Viewpoint);
 	vClipper->SetViewpoint(Viewpoint);

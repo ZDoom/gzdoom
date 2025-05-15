@@ -204,6 +204,9 @@ static const char *shaderBindings = R"(
 		int uShadowmapFilter;
 		
 		int uLightBlendMode;
+
+		float uThickFogDistance;
+		float uThickFogMultiplier;
 	};
 
 	layout(set = 1, binding = 1, std140) uniform MatricesUBO {

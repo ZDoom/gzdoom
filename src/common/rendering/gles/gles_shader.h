@@ -319,6 +319,9 @@ public: class ShaderVariantData
 		FBufferedUniform1f muClipHeight;
 		FBufferedUniform1f muClipHeightDirection;
 		FBufferedUniform1i muShadowmapFilter;
+
+		FBufferedUniform1f muThickFogDistance;
+		FBufferedUniform1f muThickFogMultiplier;
 		/////
 
 		FBufferedUniform1f muDesaturation;

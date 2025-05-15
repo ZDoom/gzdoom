@@ -957,6 +957,36 @@ CCMD(skymisttoggle)
 //
 //
 //-----------------------------------------------------------------------------
+CCMD(thickfogdistance)
+{
+	if (argv.argc() > 1)
+	{
+		// Do this only on the primary level.
+		primaryLevel->thickfogdistance = (float)strtod(argv[1], NULL);
+	}
+	Printf("%f (positive means enabled)\n", primaryLevel->thickfogdistance);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(thickfogmultiplier)
+{
+	if (argv.argc() > 1)
+	{
+		// Do this only on the primary level.
+		primaryLevel->thickfogmultiplier = max(0.f, (float)strtod(argv[1], NULL));
+	}
+	Printf("%f\n", primaryLevel->thickfogmultiplier);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 CCMD(thaw)
 {
 	if (CheckCheatmode())

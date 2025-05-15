@@ -313,6 +313,8 @@ void level_info_t::Reset()
 	fogdensity = 0;
 	outsidefogdensity = 0;
 	skyfog = 0;
+	thickfogdistance = -1.0f;
+	thickfogmultiplier = 30.0f;
 	pixelstretch = 1.2f;
 
 	specialactions.Clear();
@@ -1573,6 +1575,20 @@ DEFINE_MAP_OPTION(skyfog, false)
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
 	info->skyfog = parse.sc.Number;
+}
+
+DEFINE_MAP_OPTION(thickfogdistance, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->thickfogdistance = (float)parse.sc.Float;
+}
+
+DEFINE_MAP_OPTION(thickfogmultiplier, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->thickfogmultiplier = (float)parse.sc.Float;
 }
 
 DEFINE_MAP_OPTION(pixelratio, false)

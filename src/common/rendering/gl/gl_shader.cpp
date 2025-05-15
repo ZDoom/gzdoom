@@ -330,6 +330,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			int uShadowmapFilter;
 			
 			int uLightBlendMode;
+
+			float uThickFogDistance;
+			float uThickFogMultiplier;
 		};
 
 		uniform int uTextureMode;

@@ -1,11 +1,10 @@
 #pragma once
 #include <functional>
-#include <eventpp/callbacklist.h>
 #include "vm.h"
 #include "GameEventEmit.h"
 
-#define EVENT_DECLARATION(NAME, HANDLER_SIGNATURE)                                 \
-    typedef eventpp::CallbackList<HANDLER_SIGNATURE>::Handle NAME##EventHandle;    \
+#define EVENT_DECLARATION(NAME, HANDLER_SIGNATURE)                 \
+    typedef std::function<HANDLER_SIGNATURE> NAME## EventHandle;    \
     NAME##EventHandle SubscribeTo##NAME(std::function<HANDLER_SIGNATURE> handler); \
     bool UnsubscribeFrom##NAME(NAME##EventHandle handle);
 

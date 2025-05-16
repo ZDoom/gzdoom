@@ -12,18 +12,23 @@ namespace DebugServer
 namespace RuntimeEvents
 {
 #define EVENT_WRAPPER_IMPL(NAME, HANDLER_SIGNATURE)                               \
-	eventpp::CallbackList<HANDLER_SIGNATURE> g_##NAME##Event;                     \
+	bool g_## NAME## EventActive = false;																    \
+	std::function<HANDLER_SIGNATURE> g_## NAME## Event;                     \
                                                                                   \
 	NAME##EventHandle SubscribeTo##NAME(std::function<HANDLER_SIGNATURE> handler) \
 	{                                                                             \
-		return g_##NAME##Event.append(handler);                                   \
-	}                                                                             \
-                                                                                  \
-	bool UnsubscribeFrom##NAME(NAME##EventHandle handle)                          \
-	{                                                                             \
-		if (!handle)                                                              \
+		g_## NAME## Event = handler;\
+		g_## NAME## EventActive = true;                                               \
+		return handler;\
+	}\
+	\
+	bool UnsubscribeFrom## NAME(NAME## EventHandle handle)\
+	{\
+		if (!handle)																															\
 			return false;                                                         \
-		return g_##NAME##Event.remove(handle);                                    \
+		g_## NAME## EventActive = false;                                               \
+		g_## NAME## Event  = nullptr;\
+		return true;\
 	}
 
 	EVENT_WRAPPER_IMPL(InstructionExecution, void(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc))
@@ -38,28 +43,28 @@ namespace RuntimeEvents
 
 	void EmitBreakpointChangedEvent(const dap::Breakpoint &bpoint, const std::string &what)
 	{
-		if (!g_BreakpointChangedEvent.empty())
+		if (g_BreakpointChangedEventActive)
 		{
 			g_BreakpointChangedEvent(bpoint, what);
 		}
 	}
 	void EmitInstructionExecutionEvent(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc)
 	{
-		if (!g_InstructionExecutionEvent.empty())
+		if (g_InstructionExecutionEventActive)
 		{
 			g_InstructionExecutionEvent(stack, ret, numret, pc);
 		}
 	}
 	void EmitLogEvent(int level, const char *msg)
 	{
-		if (!g_LogEvent.empty())
+		if (g_LogEventActive)
 		{
 			g_LogEvent(level, msg);
 		}
 	}
 	void EmitExceptionEvent(EVMAbortException reason, const std::string &message, const std::string &stackTrace)
 	{
-		if (!g_ExceptionThrownEvent.empty())
+		if (g_ExceptionThrownEventActive)
 		{
 			g_ExceptionThrownEvent(reason, message, stackTrace);
 		}

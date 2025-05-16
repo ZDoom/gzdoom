@@ -36,13 +36,13 @@ static void* GetArrayHead(const VMValue &value, PType *p_type)
 	}
 	return value.a;
 }
-static size_t GetElementCount(const VMValue &value, PType *p_type)
+static int64_t GetElementCount(const VMValue &value, PType *p_type)
 {
 	auto type = p_type;
 	auto array_head = value.a;
-	if (type->isPointer())
+	if (type->toPointer())
 	{
-		type = static_cast<PPointer *>(p_type)->PointedType;
+		type = type->toPointer()->PointedType;
 		// array_head = *static_cast<void **>(value.a);
 	}
 	
@@ -56,10 +56,18 @@ static size_t GetElementCount(const VMValue &value, PType *p_type)
 		PType* elementType = GetElementType(p_type);
 		// FArray has the same layout as TArray, just return count
 		auto *arr = static_cast<FArray *>(array_head);
+		if (arr->Count == UINT_MAX)
+		{
+			return -1;
+		}
 		return arr->Count;
 	}
 	if (type->isArray())
 	{
+		if (static_cast<PArray *>(type)->ElementCount == UINT_MAX)
+		{
+			return -1;
+		}
 		return static_cast<PArray *>(type)->ElementCount;
 	}
 	else 
@@ -69,9 +77,9 @@ static size_t GetElementCount(const VMValue &value, PType *p_type)
 ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *p_type) : m_name(name), m_value(value), m_type(p_type)
 {
 	auto type = m_type;
-	if (m_type->isPointer())
+	if (type->toPointer())
 	{
-		type = dynamic_cast<PPointer *>(type)->PointedType;
+		type = type->toPointer()->PointedType;
 	}
 	if (type->isArray())
 	{
@@ -88,20 +96,25 @@ ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *p_type) :
 bool ArrayStateNode::SerializeToProtocol(dap::Variable &variable)
 {
 	variable.variablesReference = GetId();
-	variable.indexedVariables = GetElementCount(m_value, m_type);
-
+	auto count = GetElementCount(m_value, m_type);
+	variable.indexedVariables = count < 0 ? 0 : count;
 	variable.name = m_name;
 
 	std::string elementTypeName = m_elementType->DescriptiveName();
 	variable.type = m_type->mDescriptiveName.GetChars();
-	if (!IsVMValueValid(&m_value))
+	if (!IsVMValueValid(&m_value) || count < 0)
 	{
 		variable.value = StringFormat("%s[<NONE>]", elementTypeName.c_str());
 	}
 	else
 	{
 		variable.value = StringFormat("%s[%d]", elementTypeName.c_str(), variable.indexedVariables.value(0));
+		if (m_type->toPointer())
+		{
+			variable.value += StringFormat(" (%p)", m_value.a);
+		}
 	}
+
 
 	return true;
 }
@@ -128,6 +141,10 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 		return false;
 	}
 	auto count = GetElementCount(m_value, m_type);
+	if (count <= 0)
+	{
+		return false;
+	}
 
 	int elementIndex;
 	if (!ParseInt(name, &elementIndex))
@@ -218,8 +235,11 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 	else if (type->isArray())
 	{
 		auto element_size = m_elementType->Size;
-		VMValue element_ptr = VMValue((void *)((char *)array_head + (element_size * elementIndex)));
-		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(std::to_string(elementIndex), DerefValue(&element_ptr, GetBasicType(m_elementType)), m_elementType);
+		void *var = (void *)((char *)array_head + (element_size * elementIndex));
+		VMValue value = GetVMValue(var, m_elementType);
+		// m_children[elidx_str] = RuntimeState::CreateNodeForVariable(std::to_string(elementIndex), DerefValue(&element_ptr, GetBasicType(m_elementType)), m_elementType);
+
+		m_children[elidx_str] = RuntimeState::CreateNodeForVariable(std::to_string(elementIndex), value, m_elementType);
 	}
 	node = m_children[elidx_str];
 

@@ -3087,6 +3087,14 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	NetworkEntityManager::InitializeNetworkEntities();
+	bool dap_debugging = vm_debug.get();
+	if (Args->CheckValue("-debug") || dap_debugging)
+	{
+		dap_debugging = true;
+		// disable vm_jit and vm_jit_aot when debugging
+		vm_jit = false;
+		vm_jit_aot = false;
+	}
 
 	if (!restart)
 	{
@@ -3401,14 +3409,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	M_Init();
 	M_CreateGameMenus();
 
-	bool should_debug = vm_debug.get();
-	if (Args->CheckValue("-debug")) {
-		should_debug = true;
-	}
 
 	// clean up the compiler symbols which are not needed any longer.
-  if (!should_debug)
-	  RemoveUnusedSymbols();
+	if (!dap_debugging) RemoveUnusedSymbols();
 
 	InitActorNumsFromMapinfo();
 	InitSpawnablesFromMapinfo();
@@ -3782,9 +3785,6 @@ static int D_DoomMain_Internal (void)
 				I_FatalError("Invalid debug port %d (must be between 0 and 65535)", debug_port);
 			}
 			debugServer->Listen(debug_port);
-			// disable vm_jit and vm_jit_aot when debugging
-			vm_jit = false;
-			vm_jit_aot = false;
 		}
 
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.

@@ -20,14 +20,6 @@ enum DisconnectAction
 	DisconnectDetach
 };
 
-enum Severity
-{
-	kDebug = DMSG_SPAMMY,
-	kInfo = DMSG_NOTIFY,
-	kWarning = DMSG_WARNING,
-	kError = DMSG_ERROR
-};
-
 enum VariablesFilter
 {
 	VariablesNamed,
@@ -45,7 +37,6 @@ class ZScriptDebugger
 	bool IsJustMyCode() const { return false; };
 	void SetJustMyCode(bool enable) { };
 	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event) const;
-	void LogGameOutput(Severity severity, const std::string &msg) const;
 	void Initialize();
 
 	int GetLastStoppedThreadId() { return 0; }
@@ -68,7 +59,6 @@ class ZScriptDebugger
 	dap::ResponseOrError<dap::DisassembleResponse> Disassemble(const dap::DisassembleRequest &request);
 	private:
 
-	std::atomic<uint64_t> msg_counter = 0;
 	std::shared_ptr<IdProvider> m_idProvider;
 
 	std::shared_ptr<dap::Session> m_session = nullptr;
@@ -87,6 +77,7 @@ class ZScriptDebugger
 	RuntimeEvents::InstructionExecutionEventHandle m_instructionExecutionEventHandle;
 	RuntimeEvents::LogEventHandle m_logEventHandle;
 	RuntimeEvents::BreakpointChangedEventHandle m_breakpointChangedEventHandle;
+
 	bool m_quitting = false; // Received a disconnect request with a terminateDebuggee flag; if this is true, we exit the program
 	bool m_disconnecting = false; // Received a disconnect request; if this is true, we send a terminate event after the disconnect response
 	bool m_initialized = false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)

@@ -416,16 +416,13 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 		RETURN_DAP_ERROR(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
 	}
 
-	// TODO DAP: support `start`, `filter`, parameter
+	// TODO DAP: support `filter`, parameter
 	int64_t count = 0;
-	int64_t maxCount = request.count.value(variableNodes.size());
-	for (const auto &variableNode : variableNodes)
+	int64_t maxCount = std::min<int64_t>(request.count.value(variableNodes.size()), variableNodes.size());
+	int64_t start = request.start.value(0);
+	for (int64_t i = start; i < start + maxCount; i++)
 	{
-		if (count > maxCount)
-		{
-			break;
-		}
-		auto asVariableSerializable = dynamic_cast<IProtocolVariableSerializable *>(variableNode.get());
+		auto asVariableSerializable = dynamic_cast<IProtocolVariableSerializable *>(variableNodes.at(i).get());
 		if (!asVariableSerializable)
 		{
 			continue;

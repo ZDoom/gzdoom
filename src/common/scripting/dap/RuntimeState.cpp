@@ -21,7 +21,7 @@ RuntimeState::RuntimeState(const std::shared_ptr<IdProvider> &idProvider)
 	Reset();
 }
 
-bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shared_ptr<StateNodeBase> &node)
+bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shared_ptr<StateNodeBase> &node, bool isEvaluate)
 {
 	const auto path = ToLowerCopy(requestedPath);
 
@@ -53,10 +53,15 @@ bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shar
 	{
 		currentNode = std::make_shared<StackStateNode>(stackId);
 	}
-	while (!elements.empty() && currentNode)
-	{
-		auto structured = dynamic_cast<IStructuredState *>(currentNode.get());
 
+
+	std::function<std::shared_ptr<StateNodeBase>(const std::string &, std::shared_ptr<StateNodeBase>&)> traversePathPart = [&](
+		const std::string &currentName,
+		std::shared_ptr<StateNodeBase> &part)
+	{
+		auto structured = dynamic_cast<IStructuredState *>(part.get());
+		auto currentPath = Join(currentPathElements, ".");
+		ToLower(currentPath);
 		if (structured)
 		{
 			std::vector<std::string> childNames;
@@ -65,22 +70,50 @@ bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shar
 			for (auto childName : childNames)
 			{
 				ToLower(childName);
-				auto discoveredElements(currentPathElements);
-				discoveredElements.push_back(childName);
-
-				const auto discoveredPath = Join(discoveredElements, ".");
-
 				uint32_t addedId;
-				m_paths->AddOrGetExisting(discoveredPath, addedId);
+				m_paths->AddOrGetExisting(currentPath + "." + childName, addedId);
 			}
 		}
 
-		const auto currentName = elements.at(0);
-		currentPathElements.push_back(currentName);
-
-		if (structured && !structured->GetChildNode(currentName, currentNode))
+		bool foundChild = false;
+		std::shared_ptr<StateNodeBase> foundNode = nullptr;
+		if (structured)
 		{
-			currentNode = nullptr;
+			// First try normal child nodes
+			if (structured->GetChildNode(currentName, foundNode))
+			{
+				currentPathElements.push_back(currentName);
+				return foundNode;
+			} else if (isEvaluate) {
+				auto virtualContainers = structured->GetVirtualContainerChildren();
+				// If not found and we have virtual containers, check them
+				if (!virtualContainers.empty())
+				{
+					for (auto &virtualContainer : virtualContainers)
+					{
+						if (virtualContainer.second)
+						{
+							currentPathElements.push_back(virtualContainer.first);
+							foundNode = traversePathPart(currentName, virtualContainer.second);
+							if (foundNode) {
+								return foundNode;
+							}
+							// pop the last element
+							currentPathElements.pop_back();
+						}
+					}
+				}
+			}
+		}
+		foundNode = nullptr;
+		return foundNode;
+	};
+
+	while (!elements.empty() && currentNode)
+	{
+		currentNode = traversePathPart(elements.at(0), currentNode);
+		if (!currentNode)
+		{
 			break;
 		}
 
@@ -97,7 +130,9 @@ bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shar
 	if (currentPathElements.size() > 1)
 	{
 		uint32_t id;
-		m_paths->AddOrGetExisting(path, id);
+		auto actualPath = Join(currentPathElements, ".");
+		ToLower(actualPath);
+		m_paths->AddOrGetExisting(actualPath, id);
 		node->SetId(id);
 	}
 	else
@@ -108,13 +143,26 @@ bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shar
 	return true;
 }
 
-bool RuntimeState::ResolveStateById(const uint32_t id, std::shared_ptr<StateNodeBase> &node)
+std::string RuntimeState::GetPathById(const uint32_t id) const
+{
+	if (id == 1){
+		return "1";
+	}
+	std::string path;
+	if (m_paths->Get(id, path))
+	{
+		return path;
+	}
+	return "";
+}
+
+bool RuntimeState::ResolveStateById(const uint32_t id, std::shared_ptr<StateNodeBase> &node, bool isEvaluate)
 {
 	std::string path;
 
 	if (m_paths->Get(id, path))
 	{
-		return ResolveStateByPath(path, node);
+		return ResolveStateByPath(path, node, isEvaluate);
 	}
 
 	return false;

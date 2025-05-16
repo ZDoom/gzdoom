@@ -37,7 +37,9 @@ class ZScriptDebugger
 	void StartSession(std::shared_ptr<dap::Session> session);
 	bool EndSession(bool closed = false);
 	bool IsJustMyCode() const { return false; }
-	void SetJustMyCode(bool enable) { };
+	void SetJustMyCode(bool enable) { }
+	dap::ResponseOrError<dap::EvaluateResponse> Evaluate(const dap::EvaluateRequest &request);
+	;
 	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event);
 	bool IsEndingSession();
 	int GetLastStoppedThreadId() { return 0; }

@@ -17,10 +17,11 @@ class RuntimeState
 	static VMFrameStack *m_GlobalVMStack;
 	explicit RuntimeState(const std::shared_ptr<IdProvider> &idProvider);
 	void Reset();
-	bool ResolveStateByPath(std::string requestedPath, std::shared_ptr<StateNodeBase> &node);
-	bool ResolveStateById(uint32_t id, std::shared_ptr<StateNodeBase> &node);
+	bool ResolveStateByPath(std::string requestedPath, std::shared_ptr<StateNodeBase> &node, bool isEvaluate = false);
+	bool ResolveStateById(uint32_t id, std::shared_ptr<StateNodeBase> &node, bool isEvaluate = false);
 	bool ResolveChildrenByParentPath(std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start = 0, size_t count = INT_MAX);
 	bool ResolveChildrenByParentId(uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start = 0, size_t count = INT_MAX);
+	std::string GetPathById(const uint32_t id) const;
 
 	static std::shared_ptr<StateNodeBase>
 	CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame *current_frame = nullptr, PClass *stateOwningClass = nullptr);

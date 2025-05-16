@@ -48,13 +48,14 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 
 	m_cleanupStackEventHandle = RuntimeEvents::SubscribeToCleanupStack(std::bind(&ZScriptDebugger::StackCleanedUp, this, std::placeholders::_1));
 
-	m_instructionExecutionEventHandle
-		= RuntimeEvents::SubscribeToInstructionExecution(std::bind(&ZScriptDebugger::InstructionExecution, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+	m_instructionExecutionEventHandle = RuntimeEvents::SubscribeToInstructionExecution(
+		std::bind(&ZScriptDebugger::InstructionExecution, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
 
 	// m_initScriptEventHandle = RuntimeEvents::SubscribeToInitScript(std::bind(&ZScriptDebugger::InitScriptEvent, this, std::placeholders::_1));
 	m_logEventHandle = RuntimeEvents::SubscribeToLog(std::bind(&ZScriptDebugger::EventLogged, this, std::placeholders::_1, std::placeholders::_2));
 
-	m_breakpointChangedEventHandle = RuntimeEvents::SubscribeToBreakpointChanged(std::bind(&ZScriptDebugger::BreakpointChanged, this, std::placeholders::_1, std::placeholders::_2));
+	m_breakpointChangedEventHandle
+		= RuntimeEvents::SubscribeToBreakpointChanged(std::bind(&ZScriptDebugger::BreakpointChanged, this, std::placeholders::_1, std::placeholders::_2));
 
 	m_exceptionThrownEventHandle = RuntimeEvents::SubscribeToExceptionThrown(
 		std::bind(&ZScriptDebugger::ExceptionThrown, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -161,6 +162,8 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::SourceRequest &request) { return GetSource(request); });
 	m_session->registerHandler([this](const dap::LoadedSourcesRequest &request) { return GetLoadedSources(request); });
 	m_session->registerHandler([this](const dap::DisassembleRequest &request) { return Disassemble(request); });
+	// evaluate request
+	m_session->registerHandler([this](const dap::EvaluateRequest &request) { return Evaluate(request); });
 }
 
 dap::Error ZScriptDebugger::Error(const std::string &msg)
@@ -276,6 +279,7 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 #endif
 	response.supportTerminateDebuggee = true;
 	response.supportsInstructionBreakpoints = true;
+	response.supportsEvaluateForHovers = true;
 	response.exceptionBreakpointFilters = DebugExecutionManager::GetAllExceptionFilters();
 	return response;
 }
@@ -588,4 +592,80 @@ dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> ZScriptDebugger::SetE
 	response.breakpoints = m_executionManager->SetExceptionBreakpointFilters(request.filters);
 	return response;
 }
+
+dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap::EvaluateRequest &request)
+{
+	// get the type of evaluate
+	auto context = request.context.value("repl");
+	auto response = dap::EvaluateResponse();
+	dap::Variable variable;
+	bool found = false;
+	auto TryPath = [&](const std::string &path){
+		std::shared_ptr<StateNodeBase> node;
+		if(m_runtimeState->ResolveStateByPath(path, node, true)){
+			auto asVariableSerializable = std::dynamic_pointer_cast<IProtocolVariableSerializable>(node);
+			if(asVariableSerializable && asVariableSerializable->SerializeToProtocol(variable)){
+				found = true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	};
+	if (context == "hover" || context == "watch")
+	{
+		auto frameId = request.frameId.value(0);
+		std::shared_ptr<StateNodeBase> _frameNode;
+		if( m_runtimeState->ResolveStateById(frameId, _frameNode)){
+			auto frameNode = std::dynamic_pointer_cast<StackFrameStateNode>(_frameNode);
+			if (!frameNode){
+				RETURN_DAP_ERROR("Could not find frameId");
+			}
+			auto frameNodePath = m_runtimeState->GetPathById(frameNode->GetId());
+			if(frameNodePath.empty()){
+				RETURN_DAP_ERROR("Could not find frameId");
+			}
+			// try locals first
+			std::string localsPath = StringFormat("%s.Local", frameNodePath.c_str());
+			std::string path;
+
+			auto stackFrame = frameNode->GetStackFrame();
+			// try the locals first
+			path = StringFormat("%s.%s", localsPath.c_str(), request.expression.c_str());
+			if(!TryPath(path)){
+				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+			}
+			if (!found && request.expression.find("self.") != 0){
+				// if the first part isn't self, and the current function on the stack is an action or method, try "locals.self"
+				if (stackFrame && (IsFunctionHasSelf(stackFrame->Func))){
+					path = StringFormat("%s.self.%s", localsPath.c_str(), request.expression.c_str());
+					if(!TryPath(path)){
+						RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+					}
+				}
+			}
+			// try globals next
+			if (!found && !TryPath(StringFormat("%s.Global.%s", frameNodePath.c_str(), request.expression.c_str()))){
+				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+			}
+		}
+		if (!found){
+			RETURN_DAP_ERROR(StringFormat("Could not evaluate expression %s", request.expression.c_str()).c_str());
+		}
+		response.result = variable.value;
+		response.variablesReference = variable.variablesReference;
+		response.type = variable.type;
+		response.namedVariables = variable.namedVariables;
+		response.indexedVariables = variable.indexedVariables;
+		response.memoryReference = variable.memoryReference;
+		return response;
+	}
+	else if (context == "repl")
+	{
+		// we don't support repl yet
+		RETURN_DAP_ERROR("Repl not supported");
+	}
+	RETURN_DAP_ERROR(StringFormat("Unsupported context %s", context.c_str()).c_str());
+}
+
 } // namespace DebugServer

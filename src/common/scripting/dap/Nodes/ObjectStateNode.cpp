@@ -86,6 +86,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 			auto parent = classType->ParentType;
 			auto parentName = parent->mDescriptiveName.GetChars();
 			m_children[parentName] = std::make_shared<ObjectStateNode>(parentName, m_value, parent, true);
+			m_virtualChildren[parentName] = m_children[parentName];
 			names.push_back(parentName);
 		}
 		try
@@ -156,9 +157,18 @@ bool ObjectStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBa
 		node = m_children[name];
 		return true;
 	}
-	LogError("Failed to get child node '%s' for object '%s'", name.c_str(), m_name.c_str());
 	return false;
 }
 
 void ObjectStateNode::Reset() { m_children.clear(); }
+
+caseless_path_map<std::shared_ptr<StateNodeBase>> ObjectStateNode::GetVirtualContainerChildren()
+{
+	caseless_path_map<std::shared_ptr<StateNodeBase>> children;
+	for (auto &child : m_virtualChildren)
+	{
+		children[child.first] = child.second;
+	}
+	return children;
+}
 }

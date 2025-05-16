@@ -19,6 +19,7 @@ class StackFrameStateNode : public StateNodeBase, public IStructuredState
 	public:
 	StackFrameStateNode(VMFunction *nativeFunction, VMFrame *parentStackFrame);
 	explicit StackFrameStateNode(VMFrame *stackFrame);
+	VMFrame *GetStackFrame() const { return m_stackFrame; }
 
 	bool SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const;
 

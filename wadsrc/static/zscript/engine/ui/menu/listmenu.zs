@@ -86,7 +86,7 @@ class ListMenu : Menu
 	ListMenuDescriptor mDesc;
 	MenuItemBase mFocusControl;
 
-	virtual void Init(Menu parent = NULL, ListMenuDescriptor desc = NULL)`
+	virtual void Init(Menu parent = NULL, ListMenuDescriptor desc = NULL)
 	{
 		Super.Init(parent);
 		mDesc = desc;

@@ -51,9 +51,9 @@ bool StructStateNode::GetChildNames(std::vector<std::string> &names)
 	{
 		CacheState();
 	}
-	for (auto &pair : m_children)
+	for (auto &field : m_structInfo.StructFields)
 	{
-		names.push_back(pair.first);
+		names.push_back(field.Name);
 	}
 	return true;
 }
@@ -63,11 +63,6 @@ void StructStateNode::CacheState()
 	m_structInfo = GetStructState(m_name, m_value, m_type, m_currentFrame);
 	for (auto &field : m_structInfo.StructFields)
 	{
-		// TODO: verify that structs embedded in local structs are on the heap vs. the registers
-		if (field.Name == "foo")
-		{
-			int i = 0;
-		}
 		m_children[field.Name] = RuntimeState::CreateNodeForVariable(field.Name, field.Value, field.Type, nullptr);
 	}
 }

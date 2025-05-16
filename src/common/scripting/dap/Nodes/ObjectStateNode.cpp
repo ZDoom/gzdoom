@@ -49,12 +49,9 @@ bool ObjectStateNode::SerializeToProtocol(dap::Variable &variable)
 
 bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 {
-	if (m_children.size() > 0)
+	if (!m_cachedNames.empty())
 	{
-		for (auto &pair : m_children)
-		{
-			names.push_back(pair.first);
-		}
+		names = m_cachedNames;
 		return true;
 	}
 	auto p_type = m_class;
@@ -67,14 +64,15 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 		// do the parent class first
 		DObject *dobject = IsVMValValidDObject(&m_value) ? static_cast<DObject *>(m_value.a) : nullptr;
 		auto classType = PType::toClass(p_type);
-		if (classType->ParentType)
+		auto descriptor = classType->Descriptor;
+
+		if (classType->ParentType && descriptor && descriptor->ParentClass)
 		{
 			auto parent = classType->ParentType;
 			auto parentName = parent->mDescriptiveName.GetChars();
 			m_children[parentName] = RuntimeState::CreateNodeForVariable(parentName, m_value, parent);
 			names.push_back(parentName);
 		}
-		auto descriptor = classType->Descriptor;
 		try
 		{
 			for (auto field : descriptor->Fields)
@@ -99,6 +97,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 			LogError("Error: %s", e.what());
 			return false;
 		}
+		m_cachedNames = names;
 		return true;
 	}
 	LogError("Failed to get child names for object '%s' of type %s", m_name.c_str(), p_type->mDescriptiveName.GetChars());

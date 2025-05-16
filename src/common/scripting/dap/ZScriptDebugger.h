@@ -10,6 +10,8 @@
 #include "IdMap.h"
 #include "Protocol/struct_extensions.h"
 
+#include <thread>
+
 namespace DebugServer
 {
 enum DisconnectAction
@@ -36,8 +38,9 @@ class ZScriptDebugger
 	bool IsJustMyCode() const { return false; }
 	dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request);
 	;
+
 	void SetJustMyCode(bool enable) { };
-	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event) const;
+	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event);
 	void Initialize();
 
 	int GetLastStoppedThreadId() { return 0; }
@@ -71,8 +74,8 @@ class ZScriptDebugger
 	std::map<int, dap::Source> m_projectSources;
 	std::string m_projectPath;
 	std::string m_projectArchive;
-	std::mutex m_instructionMutex;
 	dap::InitializeRequest m_clientCaps;
+	bool m_printLog = false;
 
 	RuntimeEvents::CreateStackEventHandle m_createStackEventHandle;
 	RuntimeEvents::CleanupStackEventHandle m_cleanupStackEventHandle;
@@ -86,12 +89,12 @@ class ZScriptDebugger
 
 	void RegisterSessionHandlers();
 	dap::Error Error(const std::string &msg);
-	void EventLogged(int severity, const char *msg) const;
+	void EventLogged(int severity, const char *msg);
 	void StackCreated(VMFrameStack *stack);
 	void StackCleanedUp(uint32_t stackId);
-	void InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc) const;
-	void CheckSourceLoaded(const std::string &scriptName) const;
-	void BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const;
-	void ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace) const;
+	void InstructionExecution(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
+	void CheckSourceLoaded(const std::string &scriptName);
+	void BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason);
+	void ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace);
 };
 }

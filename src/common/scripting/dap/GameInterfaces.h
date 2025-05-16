@@ -896,4 +896,18 @@ static VMFunction *GetCalledFunction(VMFrame *frame)
 }
 
 
+static std::string AddrToString(VMFunction *func, void *addr)
+{
+	// TODO: VSCode doesn't currently support non-number addresses (although the spec clearly implies it's allowed)
+	// VMScriptFunction *scriptFunc = func ? dynamic_cast<VMScriptFunction *>(func) : nullptr;
+	// if (!scriptFunc)
+	// {
+	// 	return StringFormat("%p", addr);
+	// }
+	// auto diff = (uint32_t)((VMOP *)addr - scriptFunc->Code);
+	// return GetIPRef(scriptFunc->QualifiedName, diff, (VMOP *)addr);
+	return StringFormat("%p", addr);
+}
+
+
 }

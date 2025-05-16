@@ -39,7 +39,6 @@ class BreakpointManager
 
 	explicit BreakpointManager(PexCache *pexCache) : m_pexCache(pexCache) { }
 	int64_t GetBreakpointID();
-	static std::string AddrToString(void *addr);
 	int AddInvalidBreakpoint(
 		std::vector<dap::Breakpoint> &breakpoints, int line, void *address, const std::string &reason, const dap::optional<dap::Source> &source);
 	bool AddBreakpointInfo(

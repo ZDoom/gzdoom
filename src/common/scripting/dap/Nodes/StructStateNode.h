@@ -16,7 +16,7 @@ class StructStateNode : public StateNodeBase, public IProtocolVariableSerializab
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;
 	void CacheState();
 	public:
-	StructStateNode(std::string name, const VMValue value, PType *knownType,const VMFrame * currentFrame = nullptr);
+	StructStateNode(std::string name, VMValue value, PType *knownType, const VMFrame *currentFrame = nullptr);
 
 	bool SerializeToProtocol(dap::Variable &variable) override;
 

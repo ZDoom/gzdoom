@@ -57,7 +57,6 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 			{
 
 				PFunction *func = (PFunction *)m_variable.a;
-				auto *clsName = "<unknown>";
 				if (func->OwningClass)
 				{
 					variable.value += StringFormat("%s.%s (%p)", func->OwningClass->TypeName.GetChars(), func->SymbolName.GetChars(), m_variable.a);

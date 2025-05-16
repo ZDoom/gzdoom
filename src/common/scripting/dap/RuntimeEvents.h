@@ -3,6 +3,11 @@
 #include "vm.h"
 #include "GameEventEmit.h"
 
+namespace dap
+{
+struct Breakpoint;
+}
+
 #define EVENT_DECLARATION(NAME, HANDLER_SIGNATURE)                 \
     typedef std::function<HANDLER_SIGNATURE> NAME## EventHandle;    \
     NAME##EventHandle SubscribeTo##NAME(std::function<HANDLER_SIGNATURE> handler); \

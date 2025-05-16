@@ -233,7 +233,6 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 					continue;
 				}
 			}
-			dap::Breakpoint bpoint;
 			if (AddBreakpointInfo(actualBin, func, line, instrRef, 0, BreakpointInfo::Type::Line, response.breakpoints))
 			{
 				breakpointId = response.breakpoints.back().id.value(-1);

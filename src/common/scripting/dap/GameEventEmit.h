@@ -3,11 +3,6 @@
 
 class VMFrameStack;
 
-namespace dap
-{
-struct Breakpoint;
-}
-
 namespace DebugServer
 {
 namespace RuntimeEvents

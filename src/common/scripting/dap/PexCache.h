@@ -111,6 +111,8 @@ public:
 
 	std::shared_ptr<Binary> AddScript(const std::string &scriptPath);
 	std::vector<VMFunction *> GetFunctionsAtAddress(void *address);
+
+	std::vector<dap::Module> GetModules();
 	private:
 	using scripts_lock = std::scoped_lock<std::recursive_mutex>;
 

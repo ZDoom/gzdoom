@@ -162,6 +162,7 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::LoadedSourcesRequest &request) { return GetLoadedSources(request); });
 	m_session->registerHandler([this](const dap::DisassembleRequest &request) { return Disassemble(request); });
 	m_session->registerHandler([this](const dap::EvaluateRequest &request) { return Evaluate(request); });
+	m_session->registerHandler([this](const dap::ModulesRequest &request) { return Modules(request); });
 }
 
 dap::Error ZScriptDebugger::Error(const std::string &msg)
@@ -278,6 +279,7 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 	response.supportTerminateDebuggee = true;
 	response.supportsInstructionBreakpoints = true;
 	response.supportsEvaluateForHovers = true;
+	response.supportsModulesRequest = true;
 	response.exceptionBreakpointFilters = DebugExecutionManager::GetAllExceptionFilters();
 	return response;
 }
@@ -588,6 +590,19 @@ dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> ZScriptDebugger::SetE
 {
 	auto response = dap::SetExceptionBreakpointsResponse();
 	response.breakpoints = m_executionManager->SetExceptionBreakpointFilters(request.filters);
+	return response;
+}
+
+dap::ResponseOrError<dap::ModulesResponse> ZScriptDebugger::Modules(const dap::ModulesRequest &request)
+{
+	auto response = dap::ModulesResponse();
+	response.modules = m_pexCache->GetModules();
+	if (request.startModule.has_value()){
+		response.modules = {response.modules.begin() + request.startModule.value(), response.modules.end()};
+	}
+	if (request.moduleCount.has_value()){
+		response.modules = {response.modules.begin(), response.modules.begin() + request.moduleCount.value()};
+	}
 	return response;
 }
 

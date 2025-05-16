@@ -391,6 +391,20 @@ if( ${HAVE_VM_JIT} )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
 endif()
 
+if ( CPPDAP_FOUND )
+	include_directories( SYSTEM "${CPPDAP_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${CPPDAP_LIBRARIES}")
+else()
+	message( SEND_ERROR "Could not find cppdap" )
+endif()
+
+if ( EVENTPP_FOUND )
+	include_directories( SYSTEM "${EVENTPP_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${EVENTPP_LIBRARIES}")
+else()
+	message( SEND_ERROR "Could not find eventpp" )
+endif()
+
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	win32/i_steam.cpp
@@ -1292,9 +1306,8 @@ if( UNIX )
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${Backtrace_LIBRARIES} )
 	endif()
 endif()
-find_package(cppdap CONFIG REQUIRED)
-find_package(eventpp CONFIG REQUIRED)
-target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} cppdap::cppdap eventpp::eventpp )
+
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
 include_directories(
 	BEFORE
 	.

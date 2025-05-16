@@ -2,6 +2,7 @@
 
 #include "vm.h"
 #include <csetjmp>
+#include <range_map/range_map.h>
 
 class VMScriptFunction;
 
@@ -449,6 +450,15 @@ typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
 typedef int(*JitFuncPtr)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
 
+struct VMLocalVariable
+{
+	FName Name;
+	PType * type;
+	int VarFlags;
+	int RegCount;
+	int RegNum;
+};
+
 class VMScriptFunction : public VMFunction
 {
 public:
@@ -478,13 +488,14 @@ public:
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
-
+	TArray<std::pair<std::pair<const VMOP *, const VMOP *>, TArray<VMLocalVariable>>> LocalVariableBlocks; // map of local variable blocks to their [start, end) instruction
 	bool blockJit = false; // function triggers Jit bugs, block compilation until bugs are fixed
 
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);
 	int PCToLine(const VMOP *pc);
+	TArray<VMLocalVariable> GetLocalVariableBlocksAt(const VMOP *pc);
 
 private:
 	static int FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);

@@ -8,15 +8,19 @@
 
 namespace DebugServer
 { // std::string name, VMValue* value, PType* knownType
-StructStateNode::StructStateNode(std::string name, VMValue value, PType *knownType) : m_name(name), m_value(value), m_type(knownType) { }
+StructStateNode::StructStateNode(std::string name, VMValue value, PType *knownType, const VMFrame * currentFrame) : m_name(name), m_value(value), m_type(knownType), m_currentFrame(currentFrame) {}
 
 bool StructStateNode::SerializeToProtocol(dap::Variable &variable)
 {
-	variable.variablesReference = IsVMValueValid(&m_value) ? GetId() : 0;
-	variable.namedVariables = 0;
-	std::vector<std::string> names;
-	GetChildNames(names);
-	variable.namedVariables = names.size();
+	if (m_children.empty())
+	{
+		CacheState();
+	}
+	// If this is a valid heap/stack allocated struct or one that is optimized to be stored in the stackframe registers
+	bool inRegisters = !m_value.a && m_currentFrame && m_structInfo.StructFields.size();
+	bool valid = m_structInfo.IsValid() && (inRegisters || IsVMValueValid(&m_value));
+	variable.variablesReference = valid ? GetId() : 0;
+	variable.namedVariables = m_structInfo.StructFields.size();
 	variable.name = m_name;
 	variable.type = m_type->DescriptiveName();
 	auto typeval = variable.type.value("");
@@ -25,7 +29,11 @@ bool StructStateNode::SerializeToProtocol(dap::Variable &variable)
 	{
 		typeval = typeval.substr(8, typeval.size() - 9);
 	}
-	if (!m_value.a)
+	if (inRegisters)
+	{
+		variable.value = StringFormat("%s <REGISTERS>", typeval.c_str());
+	} 
+	else if (!valid)
 	{
 		variable.value = StringFormat("%s <NULL>", typeval.c_str());
 	}
@@ -36,107 +44,45 @@ bool StructStateNode::SerializeToProtocol(dap::Variable &variable)
 	return true;
 }
 
+
 bool StructStateNode::GetChildNames(std::vector<std::string> &names)
 {
-	if (m_children.size() > 0)
+	if (m_children.empty())
 	{
-		for (auto &pair : m_children)
-		{
-			names.push_back(pair.first);
-		}
-		return true;
+		CacheState();
 	}
-	auto structType = static_cast<PContainerType *>(m_type->isPointer() ? static_cast<PPointer *>(m_type)->PointedType : m_type);
-	auto it = structType->Symbols.GetIterator();
-	PSymbolTable::MapType::Pair *pair;
-	bool not_done;
-	char *struct_ptr = static_cast<char *>(m_value.a);
-	size_t struct_size = structType->Size;
-	size_t currsize = 0;
-	while (it.NextPair(pair))
+	for (auto &pair : m_children)
 	{
-		auto name = pair->Key.GetChars();
-		if (!isValidDobject(pair->Value))
-		{
-			// invalid field, we won't show it
-			continue;
-		}
-		try
-		{
-			auto field = dynamic_cast<PField *>(pair->Value);
-			if (field)
-			{
-				auto flags = field->Flags;
-				auto fieldSize = field->Type->Size;
-				names.push_back(name);
-				auto type = field->Type;
-				if (!struct_ptr)
-				{
-					m_children[name] = RuntimeState::CreateNodeForVariable(name, VMValue(), field->Type);
-				}
-				else
-				{
-					VMValue val;
-					if (type->isScalar())
-					{
-						switch (fieldSize)
-						{
-						case 1:
-							val = VMValue(*(uint8_t *)struct_ptr);
-							break;
-						case 2:
-							val = VMValue(*(uint16_t *)struct_ptr);
-							break;
-						case 4:
-							val = VMValue(*(uint32_t *)struct_ptr);
-							break;
-						case 8:
-							val = VMValue((void *)(*(uint64_t *)struct_ptr));
-							break;
-						default:
-							LogError("StructStateNode::GetChildNames: scalar field size not supported");
-							break;
-						}
-					}
-					else
-					{
-						val = VMValue((void *)struct_ptr);
-					}
-					m_children[name] = RuntimeState::CreateNodeForVariable(name, val, field->Type);
-				}
-				// increment struct_ptr by fieldSize
-				// don't increment if it's a transient field
-				if (struct_ptr && !(flags & VARF_Transient))
-				{
-					currsize += fieldSize;
-					struct_ptr = struct_ptr + fieldSize;
-				}
-			}
-		}
-		catch (...)
-		{
-		}
-		if (currsize > struct_size)
-		{
-			LogError("StructStateNode::GetChildNames: struct size exceeded, breaking");
-			break;
-		}
+		names.push_back(pair.first);
 	}
 	return true;
+}
+
+void StructStateNode::CacheState()
+{
+	m_structInfo = GetStructState(m_name, m_value, m_type, m_currentFrame);
+	for (auto &field : m_structInfo.StructFields)
+	{
+		// TODO: verify that structs embedded in local structs are on the heap vs. the registers
+		if (field.Name == "foo")
+		{
+			int i = 0;
+		}
+		m_children[field.Name] = RuntimeState::CreateNodeForVariable(field.Name, field.Value, field.Type, nullptr);
+	}
 }
 
 bool StructStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node)
 {
 	if (m_children.empty())
 	{
-		std::vector<std::string> names;
-		GetChildNames(names);
+		CacheState();
 	}
 	if (m_children.find(name) != m_children.end())
 	{
 		node = m_children[name];
 		return true;
 	}
-	return true;
+	return false;
 }
 }

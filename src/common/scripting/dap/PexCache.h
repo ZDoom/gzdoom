@@ -35,7 +35,7 @@ struct Binary
 	std::string scriptName;
 	std::string scriptPath;
 	std::string compiledPath;
-	std::string sourceCode;
+	std::string cachedSourceCode;
 	int lump;
 	int scriptReference;
 	NameFunctionMap functions;
@@ -95,6 +95,7 @@ class PexCache
 	private:
 	using scripts_lock = std::scoped_lock<std::recursive_mutex>;
 	BinaryPtr _AddScript(const std::string &scriptPath);
+	bool GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource);
 
 	static void PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber = false);
 

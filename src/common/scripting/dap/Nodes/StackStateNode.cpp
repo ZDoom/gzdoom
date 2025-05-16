@@ -33,12 +33,29 @@ bool StackStateNode::SerializeToProtocol(dap::Thread &thread) const
 
 bool StackStateNode::GetChildNames(std::vector<std::string> &names)
 {
+	if (!m_children.empty())
+	{
+		for (const auto &child : m_children)
+		{
+			names.push_back(std::to_string(child.first));
+		}
+		return true;
+	}
 	std::vector<VMFrame *> frames;
 	RuntimeState::GetStackFrames(m_stackId, frames);
 
+	size_t frameNum = 0;
 	for (size_t i = 0; i < frames.size(); i++)
 	{
-		names.push_back(std::to_string(i));
+		if (i != 0 && PCIsAtNativeCall(frames.at(i)))
+		{
+			names.push_back(std::to_string(frameNum));
+			m_children[frameNum] = std::make_shared<StackFrameStateNode>(GetCalledFunction(frames.at(i)), frames.at(i));
+			frameNum++;
+		}
+		names.push_back(std::to_string(frameNum));
+		m_children[frameNum] = std::make_shared<StackFrameStateNode>(frames.at(i));
+		frameNum++;
 	}
 
 	return true;
@@ -51,25 +68,16 @@ bool StackStateNode::GetChildNode(const std::string name, std::shared_ptr<StateN
 	{
 		return false;
 	}
+	if (m_children.empty())
+	{
+		std::vector<std::string> names;
+		GetChildNames(names);
+	}
 	if (m_children.find(level) != m_children.end())
 	{
 		node = m_children[level];
 		return true;
 	}
-
-	std::vector<VMFrame *> frames;
-	if (!RuntimeState::GetStackFrames(m_stackId, frames))
-	{
-		return false;
-	}
-
-	if ((size_t)level >= frames.size())
-	{
-		return false;
-	}
-
-	m_children[level] = std::make_shared<StackFrameStateNode>(frames.at(level));
-	node = m_children[level];
-	return true;
+	return false;
 }
 }

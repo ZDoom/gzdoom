@@ -1356,7 +1356,7 @@ class Actor : Thinker native
 	action native void A_OverlayTranslation(int layer, name trname);
 	
 	native bool A_AttachLightDef(Name lightid, Name lightdef);
-	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0, double intensity = 1.0);
 	native bool A_RemoveLight(Name lightid);
 
 	//================================================

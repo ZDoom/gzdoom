@@ -1,8 +1,6 @@
 #include "LocalScopeStateNode.h"
 
-#include "StructStateNode.h"
 #include "common/scripting/dap/GameInterfaces.h"
-#include "types.h"
 #include <common/scripting/dap/Utilities.h>
 #include <common/scripting/dap/RuntimeState.h>
 

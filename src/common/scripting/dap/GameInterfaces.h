@@ -772,6 +772,8 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 				{
 					VMValue value;
 					state.RegNum = invalid_reg_num ? NumRegAddress : local.RegNum;
+					state.Line = local.LineNumber;
+
 					// This is a struct optimized by the compiler to be stored in the registers; we need to get their register values and increment the register count
 					if (TypeIsStructOrStructPtr(local.type) && !invalid_reg_num)
 					{
@@ -794,7 +796,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 							return state;
 						}
 						state.Value = VMValue(p_stackFrame->GetRegA()[state.RegNum]);
-						state.Line = local.LineNumber;
 						NumRegAddress++;
 					}
 				}

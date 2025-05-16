@@ -3,9 +3,20 @@
 namespace dap
 {
 DAP_IMPLEMENT_STRUCT_TYPEINFO_EXT(
-	PDSAttachRequest, AttachRequest, "attach", DAP_FIELD(name, "name"), DAP_FIELD(type, "type"), DAP_FIELD(request, "request"), DAP_FIELD(projectPath, "projectPath"), DAP_FIELD(projectArchive, "projectArchive"),
+	PDSAttachRequest,
+	AttachRequest,
+	"attach",
+	DAP_FIELD(name, "name"),
+	DAP_FIELD(type, "type"),
+	DAP_FIELD(request, "request"),
 	DAP_FIELD(projectSources, "projectSources"));
+
 DAP_IMPLEMENT_STRUCT_TYPEINFO_EXT(
-	PDSLaunchRequest, LaunchRequest, "launch", DAP_FIELD(name, "name"), DAP_FIELD(type, "type"), DAP_FIELD(request, "request"), DAP_FIELD(projectPath, "projectPath"), DAP_FIELD(projectArchive, "projectArchive"),
+	PDSLaunchRequest,
+	LaunchRequest,
+	"launch",
+	DAP_FIELD(name, "name"),
+	DAP_FIELD(type, "type"),
+	DAP_FIELD(request, "request"),
 	DAP_FIELD(projectSources, "projectSources"));
 }

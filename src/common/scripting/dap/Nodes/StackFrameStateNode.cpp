@@ -8,7 +8,18 @@
 
 namespace DebugServer
 {
-StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame) { }
+StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame)
+{
+	if (!IsFunctionNative(m_stackFrame->Func))
+	{
+		auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+		if (scriptFunction)
+		{
+			m_localScope = std::make_shared<LocalScopeStateNode>(m_stackFrame);
+		}
+	}
+	m_registersScope = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
+}
 
 bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const
 {
@@ -74,16 +85,18 @@ bool StackFrameStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 {
 	if (CaseInsensitiveEquals(name, "Registers"))
 	{
-		node = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
+		node = m_registersScope;
 		return true;
 	}
-	auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
-	if (scriptFunction && CaseInsensitiveEquals(name, "local"))
+	if (CaseInsensitiveEquals(name, "local") && !IsFunctionNative(m_stackFrame->Func))
 	{
-		node = std::make_shared<LocalScopeStateNode>(m_stackFrame);
-		return true;
+		auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+		if (scriptFunction)
+		{
+			node = m_localScope;
+			return true;
+		}
 	}
-
 	return false;
 }
 }

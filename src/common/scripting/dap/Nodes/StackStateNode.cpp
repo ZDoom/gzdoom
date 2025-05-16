@@ -68,8 +68,8 @@ bool StackStateNode::GetChildNode(const std::string name, std::shared_ptr<StateN
 		return false;
 	}
 
-	node = std::make_shared<StackFrameStateNode>(frames.at(level));
-
+	m_children[level] = std::make_shared<StackFrameStateNode>(frames.at(level));
+	node = m_children[level];
 	return true;
 }
 }

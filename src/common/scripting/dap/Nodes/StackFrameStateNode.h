@@ -13,6 +13,7 @@ class StackFrameStateNode : public StateNodeBase, public IStructuredState
 {
 	VMFrame *m_stackFrame;
 	std::shared_ptr<StateNodeBase> m_localScope = nullptr;
+	std::shared_ptr<StateNodeBase> m_registersScope = nullptr;
 	public:
 	explicit StackFrameStateNode(VMFrame *stackFrame);
 

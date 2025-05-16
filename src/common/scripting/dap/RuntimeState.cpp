@@ -9,14 +9,17 @@
 #include "Nodes/ValueStateNode.h"
 #include "common/scripting/dap/GameInterfaces.h"
 #include "vm.h"
-#include <memory>
 #include <common/scripting/dap/Nodes/StatePointerNode.h>
 
 namespace DebugServer
 {
 VMFrameStack *RuntimeState::m_GlobalVMStack = nullptr;
 
-RuntimeState::RuntimeState(const std::shared_ptr<IdProvider> &idProvider) { m_paths = std::make_unique<IdMap<std::string>>(idProvider); }
+RuntimeState::RuntimeState(const std::shared_ptr<IdProvider> &idProvider)
+{
+	m_paths = std::make_unique<IdMap<std::string>>(idProvider);
+	Reset();
+}
 
 bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shared_ptr<StateNodeBase> &node)
 {
@@ -41,7 +44,15 @@ bool RuntimeState::ResolveStateByPath(const std::string requestedPath, std::shar
 
 	elements.erase(elements.begin());
 
-	std::shared_ptr<StateNodeBase> currentNode = std::make_shared<StackStateNode>(stackId);
+	std::shared_ptr<StateNodeBase> currentNode;
+	if (stackId == 1)
+	{
+		currentNode = m_root;
+	}
+	else
+	{
+		currentNode = std::make_shared<StackStateNode>(stackId);
+	}
 	while (!elements.empty() && currentNode)
 	{
 		auto structured = dynamic_cast<IStructuredState *>(currentNode.get());
@@ -150,9 +161,9 @@ bool RuntimeState::ResolveChildrenByParentId(const uint32_t id, std::vector<std:
 	return false;
 }
 
-std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p_type)
+std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame * current_frame)
 {
-
+	(void)current_frame;
 	if (IsBasicNonPointerType(p_type) || (p_type->isPointer() && !p_type->isObjectPointer() && !static_cast<PPointer *>(p_type)->PointedType->isStruct()))
 	{
 		return std::make_shared<ValueStateNode>(name, variable, p_type);
@@ -165,9 +176,9 @@ std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string n
 	{
 		return std::make_shared<ObjectStateNode>(name, variable, p_type);
 	}
-	else if (p_type->isStruct() || p_type->isContainer() || (p_type->isPointer() && static_cast<PPointer *>(p_type)->PointedType->isStruct()))
+	else if (TypeIsStructOrStructPtr(p_type))
 	{
-		return std::make_shared<StructStateNode>(name, variable, p_type);
+		return std::make_shared<StructStateNode>(name, variable, p_type, current_frame);
 	}
 	else if (p_type->isArray() || p_type->isDynArray() || p_type->isStaticArray())
 	{
@@ -226,5 +237,6 @@ void RuntimeState::Reset()
 {
 	m_paths->Clear();
 	RuntimeState::m_GlobalVMStack = nullptr;
+	m_root = std::make_shared<StackStateNode>(1);
 }
 }

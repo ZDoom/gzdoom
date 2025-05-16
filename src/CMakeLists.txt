@@ -605,6 +605,9 @@ file( GLOB HEADER_FILES
 	common/rendering/vulkan/textures/*.h
 	common/scripting/core/*h
 	common/scripting/vm/*h
+	common/scripting/dap/*.h
+	common/scripting/dap/Nodes/*.h
+	common/scripting/dap/Protocol/*.h
 	common/scripting/jit/*h
 	common/scripting/interface/*.h
 	common/scripting/backend/*.h
@@ -1173,7 +1176,28 @@ set (PCH_SOURCES
 	common/scripting/frontend/zcc_parser.cpp
 	common/scripting/backend/vmbuilder.cpp
 	common/scripting/backend/codegen.cpp
-	
+	common/scripting/dap/BreakpointManager.cpp
+	common/scripting/dap/DebugExecutionManager.cpp
+	common/scripting/dap/DebugServer.cpp
+	common/scripting/dap/IdHandleBase.cpp
+	common/scripting/dap/IdMap.cpp
+	common/scripting/dap/IdProvider.cpp
+	common/scripting/dap/Nodes/ArrayStateNode.cpp
+	common/scripting/dap/Nodes/LocalScopeStateNode.cpp
+	common/scripting/dap/Nodes/ObjectStateNode.cpp
+	common/scripting/dap/Nodes/StackFrameStateNode.cpp
+	common/scripting/dap/Nodes/StackStateNode.cpp
+	common/scripting/dap/Nodes/StateNodeBase.cpp
+	common/scripting/dap/Nodes/StructStateNode.cpp
+	common/scripting/dap/Nodes/ValueStateNode.cpp
+	common/scripting/dap/PexCache.cpp
+	common/scripting/dap/Protocol/struct_extensions.cpp
+	common/scripting/dap/RuntimeEvents.cpp
+	common/scripting/dap/RuntimeState.cpp
+	common/scripting/dap/ZScriptDebugger.cpp
+	common/scripting/dap/Nodes/RegistersScopeStateNode.cpp
+	common/scripting/dap/Nodes/StatePointerNode.cpp
+	common/scripting/dap/Nodes/DummyNode.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp

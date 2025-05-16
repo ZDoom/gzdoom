@@ -152,8 +152,25 @@ static inline bool isValidDobject(DObject *obj)
 #endif
 }
 
-static bool TypeIsStructOrStructPtr(PType *p_type) { return p_type->isStruct() || p_type->isContainer() || (p_type->isPointer() && static_cast<PPointer *>(p_type)->PointedType->isStruct()); }
+static bool TypeIsStructOrStructPtr(PType *p_type)
+{
+	auto type = p_type;
+	if (type->isPointer())
+	{
+		type = static_cast<PPointer *>(type)->PointedType;
+	}
+	return type->isStruct() || type->isContainer();
+}
 
+static bool TypeIsArrayOrArrayPtr(PType *p_type)
+{
+	auto type = p_type;
+	if (type->isPointer())
+	{
+		type = static_cast<PPointer *>(type)->PointedType;
+	}
+	return type->isArray() || type->isDynArray() || type->isStaticArray();
+}
 
 static inline bool IsVMValValidDObject(const VMValue *val) { return IsVMValueValid(val) && isValidDobject(static_cast<DObject *>(val->a)); }
 

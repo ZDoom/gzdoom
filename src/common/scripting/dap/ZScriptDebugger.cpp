@@ -55,16 +55,31 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 
 	m_exceptionThrownEventHandle = RuntimeEvents::SubscribeToExceptionThrown(
 		std::bind(&ZScriptDebugger::ExceptionThrown, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
 	RegisterSessionHandlers();
 }
 
-bool ZScriptDebugger::EndSession()
+bool ZScriptDebugger::IsEndingSession()
 {
+	return m_endingSession;
+}
+
+bool ZScriptDebugger::EndSession(bool closed)
+{
+	// This is just to prevent the closedHandler from ending the session again
+	if (m_endingSession)
+	{
+		return m_quitting;
+	}
+	m_endingSession = true;
 	m_executionManager->Close();
 	if (m_session)
 	{
-		SendEvent(dap::TerminatedEvent());
+		LogInternal("Ending DAP debugging session.");
+		if (!closed && m_initialized)
+		{
+			SendEvent(dap::TerminatedEvent());
+			// LogInternal("Sent terminate event.");
+		}
 	}
 	m_initialized = false;
 	m_session = nullptr;
@@ -82,6 +97,7 @@ bool ZScriptDebugger::EndSession()
 	m_projectPath.clear();
 	m_projectSources.clear();
 	m_breakpointManager->ClearBreakpoints();
+	m_endingSession = false;
 	return m_quitting;
 }
 dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> ZScriptDebugger::SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request)
@@ -94,11 +110,12 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	// The Initialize request is the first message sent from the client and the response reports debugger capabilities.
 	// https://microsoft.github.io/debug-adapter-protocol/specification#Requests_Initialize
 	m_session->registerHandler([this](const dap::InitializeRequest &request) { return Initialize(request); });
-	m_session->onError([this](const char *msg) { Printf("%s", msg); });
+	m_session->onError([this](const char *msg) { LogInternalError("%s", msg); });
 	m_session->registerSentHandler(
 		// After an intialize response is sent, we send an initialized event to indicate that the client can now send requests.
 		[this](const dap::ResponseOrError<dap::InitializeResponse> &)
 		{
+			LogInternal("DAP debugging session started.");
 			// enable event sending
 			m_initialized = true;
 			SendEvent(dap::InitializedEvent());

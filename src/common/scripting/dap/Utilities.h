@@ -88,15 +88,15 @@ template <typename... Args> void LogInternal(const char *fmt, Args... args)
 }
 template <typename... Args> void LogInternalError(const char *fmt, Args... args)
 {
-	Printf(PRINT_HIGH | PRINT_NODAPEVENT | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
+	Printf(PRINT_HIGH | PRINT_NODAPEVENT | PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
 }
 template <typename... Args> void Log(const char *fmt, Args... args)
 {
-	Printf(PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
+	Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
 }
 template <typename... Args> void LogError(const char *fmt, Args... args)
 {
-	Printf(PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
+	Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
 }
 
 #define RETURN_DAP_ERROR(message) \

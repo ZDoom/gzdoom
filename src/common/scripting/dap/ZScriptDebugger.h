@@ -33,17 +33,15 @@ class ZScriptDebugger
 	public:
 	ZScriptDebugger();
 	~ZScriptDebugger();
-	void StartSession(std::shared_ptr<dap::Session> session);
-	bool EndSession();
-	bool IsJustMyCode() const { return false; }
-	dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request);
-	;
 
+	void StartSession(std::shared_ptr<dap::Session> session);
+	bool EndSession(bool closed = false);
+	bool IsJustMyCode() const { return false; }
 	void SetJustMyCode(bool enable) { };
 	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event);
-	void Initialize();
-
+	bool IsEndingSession();
 	int GetLastStoppedThreadId() { return 0; }
+
 	dap::ResponseOrError<dap::InitializeResponse> Initialize(const dap::InitializeRequest &request);
 	dap::ResponseOrError<dap::LaunchResponse> Launch(const dap::PDSLaunchRequest &request);
 	dap::ResponseOrError<dap::AttachResponse> Attach(const dap::PDSAttachRequest &request);
@@ -62,8 +60,8 @@ class ZScriptDebugger
 	dap::ResponseOrError<dap::LoadedSourcesResponse> GetLoadedSources(const dap::LoadedSourcesRequest &request);
 	dap::ResponseOrError<dap::DisassembleResponse> Disassemble(const dap::DisassembleRequest &request);
 	dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> SetExceptionBreakpoints(const dap::SetExceptionBreakpointsRequest &request);
+	dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request);
 	private:
-
 	std::shared_ptr<IdProvider> m_idProvider;
 
 	std::shared_ptr<dap::Session> m_session = nullptr;
@@ -83,8 +81,11 @@ class ZScriptDebugger
 	RuntimeEvents::LogEventHandle m_logEventHandle;
 	RuntimeEvents::BreakpointChangedEventHandle m_breakpointChangedEventHandle;
 
+
+	std::atomic<bool> m_endingSession = false;
 	bool m_quitting = false; // Received a disconnect request with a terminateDebuggee flag; if this is true, we exit the program
-	bool m_initialized = false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)
+	bool m_initialized
+		= false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)
 	RuntimeEvents::ExceptionThrownEventHandle m_exceptionThrownEventHandle;
 
 	void RegisterSessionHandlers();

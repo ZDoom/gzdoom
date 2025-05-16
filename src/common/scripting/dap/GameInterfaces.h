@@ -775,7 +775,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 					state.Line = local.LineNumber;
 
 					// This is a struct optimized by the compiler to be stored in the registers; we need to get their register values and increment the register count
-					if (TypeIsStructOrStructPtr(local.type) && !invalid_reg_num)
+					if (TypeIsStructOrStructPtr(local.type) && local.RegCount > 1)
 					{
 						auto fields = GetStructFieldInfo(local.type);
 						state.RegCount = fields.size();

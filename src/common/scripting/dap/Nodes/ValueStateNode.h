@@ -16,6 +16,6 @@ class ValueStateNode : public StateNodeBase, public IProtocolVariableSerializabl
 	public:
 	ValueStateNode(std::string name, VMValue variable, PType *type, PClass *stateOwningClass = nullptr);
 	bool SerializeToProtocol(dap::Variable &variable) override;
-	dap::Variable ToVariable(const VMValue &m_variable, PType *m_type);
+	static dap::Variable ToVariable(const VMValue &m_variable, PType *m_type, PClass *stateOwningClass = nullptr);
 };
 }

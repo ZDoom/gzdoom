@@ -21,7 +21,7 @@ ValueStateNode::ValueStateNode(std::string name, VMValue variable, PType *type, 
 {
 }
 
-dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_type)
+dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_type, PClass *stateOwningClass)
 {
 	dap::Variable variable;
 
@@ -34,8 +34,8 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 		if (IsVMValueValid(&m_variable))
 		{
 			const FString &str = m_variable.s();
-			auto chars = isFStringValid(str) ? str.GetChars() : "";
-			variable.value = StringFormat("\"%s\"", chars);
+			auto chars = isFStringValid(str) ? str.GetChars() : nullptr;
+			variable.value = !chars? "\"\"" : StringFormat("\"%s\"", chars);
 		}
 		else
 		{
@@ -83,7 +83,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 			{
 				// TODO: TypeState?
 				auto val = DerefValue(&m_variable, GetBasicType(pointedType));
-				auto deref_var = ToVariable(&val, pointedType);
+				auto deref_var = ToVariable(&val, pointedType, stateOwningClass);
 				variable.value = StringFormat("%p {%s}", (m_variable.a), deref_var.value.c_str());
 			}
 			else
@@ -96,7 +96,11 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 	else if (m_type->isInt())
 	{ // explicitly not TYPE_IntNotInt
 		int64_t val = TruncateVMValue(&m_variable, basic_type).i;
-		variable.value = StringFormat("%d", basic_type == BASIC_uint32 ? static_cast<uint32_t>(val) : val);
+		if (basic_type == BASIC_uint32 || basic_type == BASIC_uint16 || basic_type == BASIC_uint8){
+			variable.value = StringFormat("%u", val);
+		} else {
+			variable.value = StringFormat("%d", val);
+		}
 	}
 	else if (m_type->isFloat())
 	{
@@ -181,7 +185,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 				auto name = ENamedName(NameVal);
 				StateName = FName(name);
 			}
-			auto state = GetStateFromIdx(m_variable.i, m_StateOwningClass, actualOwner);
+			auto state = GetStateFromIdx(m_variable.i, stateOwningClass, actualOwner);
 			if (state)
 			{
 				if (actualOwner && NameVal < 0 && actualOwner->OwnsState(state))
@@ -232,10 +236,8 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 
 bool ValueStateNode::SerializeToProtocol(dap::Variable &variable)
 {
+	variable = ToVariable(m_variable, m_type, m_StateOwningClass);
 	variable.name = m_name;
-	auto var = ToVariable(m_variable, m_type);
-	variable.type = var.type;
-	variable.value = var.value;
 	return true;
 }
 }

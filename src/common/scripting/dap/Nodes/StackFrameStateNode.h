@@ -16,7 +16,13 @@ class StackFrameStateNode : public StateNodeBase, public IStructuredState
 	std::shared_ptr<StateNodeBase> m_localScope = nullptr;
 	std::shared_ptr<StateNodeBase> m_registersScope = nullptr;
 	std::shared_ptr<StateNodeBase> m_globalsScope = nullptr;
+	std::shared_ptr<StateNodeBase> m_cvarScope = nullptr;
 	public:
+	constexpr static const char *LOCAL_SCOPE_NAME = "Local";
+	constexpr static const char *REGISTERS_SCOPE_NAME = "Registers";
+	constexpr static const char *GLOBALS_SCOPE_NAME = "Global";
+	constexpr static const char *CVAR_SCOPE_NAME = "CVars";
+
 	StackFrameStateNode(VMFunction *nativeFunction, VMFrame *parentStackFrame);
 	explicit StackFrameStateNode(VMFrame *stackFrame);
 	VMFrame *GetStackFrame() const { return m_stackFrame; }

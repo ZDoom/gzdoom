@@ -81,13 +81,14 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 			descriptor = dobject->GetClass();
 		}
 		std::string error_msg;
+		m_cachedNames.reserve(descriptor->Fields.Size() + 1);
 		if (classType->ParentType && descriptor && descriptor->ParentClass)
 		{
 			auto parent = classType->ParentType;
 			auto parentName = parent->mDescriptiveName.GetChars();
 			m_children[parentName] = std::make_shared<ObjectStateNode>(parentName, m_value, parent, true);
 			m_virtualChildren[parentName] = m_children[parentName];
-			names.push_back(parentName);
+			m_cachedNames.push_back(parentName);
 		}
 		try
 		{
@@ -111,19 +112,19 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 						// class is not actually its descriptor (this is the case where things are intentionally set to destroyed objects, like `PendingWeapon = WP_NOCHANGE`)
 						// try again with the actual class
 						m_children.clear();
-						names.clear();
+						m_cachedNames.clear();
 						descriptor = dobject->GetClass();
 						for (auto field : descriptor->Fields)
 						{
 							name = field->SymbolName.GetChars();
 							auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type, field->BitValue);
 							m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type, nullptr, descriptor);
-							names.push_back(name);
+							m_cachedNames.emplace_back(name);
 						}
 						break;
 					}
 				}
-				names.push_back(name);
+				m_cachedNames.emplace_back(name);
 			}
 		}
 		catch (CRecoverableError &e)
@@ -138,7 +139,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 
 			return false;
 		}
-		m_cachedNames = names;
+		names = m_cachedNames;
 		return true;
 	}
 	LogError("Failed to get child names for object '%s' of type %s", m_name.c_str(), p_type->mDescriptiveName.GetChars());

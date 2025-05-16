@@ -118,7 +118,8 @@ static inline bool isScriptPath(const std::string &path)
 	}
 	std::string scriptName = ToLowerCopy(path.substr(normalizePath(path).find_last_of('/') + 1));
 	auto ext = scriptName.substr(scriptName.find_last_of('.') + 1);
-	if (!(ext == "zs" || ext == "zsc" || ext == "zc" || ext == "acs" || ext == "dec" || (scriptName == "DECORATE") || (scriptName == "ACS")))
+	if (!(ext == "zs" || ext == "zsc" || ext == "zc" || ext == "acs" || ext == "dec" || (scriptName == "decorate") || (scriptName == "acs")
+				|| (scriptName == "sbarinfo")))
 	{
 		return false;
 	}

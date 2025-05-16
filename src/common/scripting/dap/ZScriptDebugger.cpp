@@ -53,6 +53,16 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 
 	m_breakpointChangedEventHandle = RuntimeEvents::SubscribeToBreakpointChanged(std::bind(&ZScriptDebugger::BreakpointChanged, this, std::placeholders::_1, std::placeholders::_2));
 
+	m_exceptionThrownEventHandle = RuntimeEvents::SubscribeToExceptionThrown(
+		std::bind(
+			&ZScriptDebugger::ExceptionThrown,
+			this,
+			std::placeholders::_1,
+			std::placeholders::_2,
+			std::placeholders::_3,
+			std::placeholders::_4,
+			std::placeholders::_5));
+
 	RegisterSessionHandlers();
 }
 
@@ -72,6 +82,7 @@ bool ZScriptDebugger::EndSession()
 	RuntimeEvents::UnsubscribeFromCreateStack(m_createStackEventHandle);
 	RuntimeEvents::UnsubscribeFromCleanupStack(m_cleanupStackEventHandle);
 	RuntimeEvents::UnsubscribeFromBreakpointChanged(m_breakpointChangedEventHandle);
+	RuntimeEvents::UnsubscribeFromExceptionThrown(m_exceptionThrownEventHandle);
 
 	// clear session data
 	m_projectArchive.clear();
@@ -127,6 +138,7 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->registerHandler([this](const dap::SourceRequest &request) { return GetSource(request); });
 	m_session->registerHandler([this](const dap::LoadedSourcesRequest &request) { return GetLoadedSources(request); });
 	m_session->registerHandler([this](const dap::DisassembleRequest &request) { return Disassemble(request); });
+	m_session->registerHandler([this](const dap::SetExceptionBreakpointsRequest &request) { return SetExceptionBreakpoints(request); });
 }
 
 dap::Error ZScriptDebugger::Error(const std::string &msg)
@@ -187,7 +199,16 @@ void ZScriptDebugger::CheckSourceLoaded(const std::string &scriptName) const
 	}
 }
 
-void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const { SendEvent(dap::BreakpointEvent {.breakpoint = bpoint, .reason = reason}); }
+void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std::string &reason) const
+{
+	SendEvent(dap::BreakpointEvent {.breakpoint = bpoint, .reason = reason});
+}
+
+void ZScriptDebugger::ExceptionThrown(
+	VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace) const
+{
+	m_executionManager->HandleException(sfunc, line, reason, message, stackTrace);
+}
 
 ZScriptDebugger::~ZScriptDebugger()
 {
@@ -211,6 +232,7 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 	response.supportsSteppingGranularity = true;
 #endif
 	response.supportTerminateDebuggee = true;
+	response.exceptionBreakpointFilters = DebugExecutionManager::GetAllExceptionFilters();
 	return response;
 }
 
@@ -504,10 +526,6 @@ dap::ResponseOrError<dap::DisassembleResponse> ZScriptDebugger::Disassemble(cons
 		{
 			instruction.endLine = line->endLine;
 		}
-		if (line->line == 29 && line->function.find("doSomeStupidShit") != -1)
-		{
-			int i = 0;
-		}
 
 		// TODO: turn this back on, vscode doesn't like it currently
 		// only map the source for the first instruction, or if the source location has changed
@@ -523,5 +541,12 @@ dap::ResponseOrError<dap::DisassembleResponse> ZScriptDebugger::Disassemble(cons
 	}
 	return response;
 #endif
+}
+
+dap::ResponseOrError<dap::SetExceptionBreakpointsResponse> ZScriptDebugger::SetExceptionBreakpoints(const dap::SetExceptionBreakpointsRequest &request)
+{
+	auto response = dap::SetExceptionBreakpointsResponse();
+	response.breakpoints = m_executionManager->SetExceptionBreakpointFilters(request.filters);
+	return response;
 }
 } // namespace DebugServer

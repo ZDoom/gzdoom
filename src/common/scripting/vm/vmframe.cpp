@@ -43,6 +43,7 @@
 #include "jit.h"
 #include "c_cvars.h"
 #include "version.h"
+#include "common/scripting/dap/RuntimeEvents.h"
 
 #ifdef HAVE_VM_JIT
 #ifdef __DragonFly__
@@ -798,7 +799,9 @@ void CVMAbortException::MaybePrintMessage()
 {
 	va_list ap;
 	va_start(ap, moreinfo);
-	throw CVMAbortException(reason, moreinfo, ap);
+	CVMAbortException err(reason, moreinfo, ap);
+	DebugServer::RuntimeEvents::EmitExceptionEvent(nullptr, nullptr, reason, err.GetMessage(), err.stacktrace.GetChars());
+	throw err;
 }
 
 [[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
@@ -809,6 +812,7 @@ void CVMAbortException::MaybePrintMessage()
 	CVMAbortException err(reason, moreinfo, ap);
 
 	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName, sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
+	DebugServer::RuntimeEvents::EmitExceptionEvent(sfunc, line, reason, err.GetMessage(), err.stacktrace.GetChars());
 	throw err;
 }
 

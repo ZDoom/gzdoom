@@ -241,7 +241,7 @@ bool RuntimeState::GetStackFrames(const uint32_t stackId, std::vector<VMFrame *>
 void RuntimeState::Reset()
 {
 	m_paths->Clear();
-	RuntimeState::m_GlobalVMStack = nullptr;
+	// RuntimeState::m_GlobalVMStack = nullptr;
 	m_root = std::make_shared<StackStateNode>(1);
 }
 }

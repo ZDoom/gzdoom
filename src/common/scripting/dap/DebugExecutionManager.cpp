@@ -6,6 +6,27 @@ namespace DebugServer
 {
 // using namespace RE::BSScript::Internal;
 static const char *pauseReasonStrings[] = {"none", "step", "breakpoint", "paused", "exception"};
+static constexpr size_t pauseReasonStringsSize = sizeof(pauseReasonStrings) / sizeof(pauseReasonStrings[0]);
+static_assert(pauseReasonStringsSize == static_cast<int>(DebugExecutionManager::pauseReason::exception) + 1, "pauseReasonStrings size mismatch");
+static const char *exceptionStrings[] = {
+	"OtherException",
+	"ReadNilException",
+	"WriteNilException",
+	"TooManyTriesException",
+	"ArrayOutOfBoundsException",
+	"DivisionByZeroException",
+	"BadSelfException",
+	"StringFormatException"};
+static constexpr size_t exceptionStringsSize = sizeof(exceptionStrings) / sizeof(exceptionStrings[0]);
+static_assert(exceptionStringsSize == X_FORMAT_ERROR + 1, "exceptionStrings size mismatch");
+
+static const char *exceptionFilters[] = {"Script", "Native"};
+static const char *exceptionFilterDescriptions[] = {"Script exceptions", "Native exceptions"};
+static_assert(sizeof(exceptionFilters) / sizeof(exceptionFilters[0]) == (size_t)DebugExecutionManager::ExceptionFilter::kMAX, "exceptionFilters size mismatch");
+static_assert(
+	sizeof(exceptionFilterDescriptions) / sizeof(exceptionFilterDescriptions[0]) == (size_t)DebugExecutionManager::ExceptionFilter::kMAX,
+	"exceptionFilterDescriptions size mismatch");
+
 
 DebugExecutionManager::pauseReason DebugExecutionManager::CheckState(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc)
 {
@@ -105,6 +126,49 @@ DebugExecutionManager::pauseReason DebugExecutionManager::CheckState(VMFrameStac
 	return pauseReason::NONE;
 }
 
+void DebugExecutionManager::ResetStepState(DebuggerState state, VMFrameStack *stack)
+{
+	std::lock_guard<std::mutex> lock(m_instructionMutex);
+	// `stack` is thread_local, we're currently on that thread,
+	// and the debugger will be running in a separate thread, so we need to set it here.
+	m_state = state;
+
+	m_currentStepStackId = 0;
+	m_currentStepStackFrame = nullptr;
+	m_currentVMFunction = nullptr;
+	if (state == DebuggerState::kPaused && stack)
+	{
+		RuntimeState::m_GlobalVMStack = stack;
+	}
+	else if (state == DebuggerState::kRunning)
+	{
+		m_lastLine = -1;
+		m_lastInstruction = nullptr;
+	}
+}
+
+void DebugExecutionManager::WaitWhilePaused(pauseReason pauseReason, VMFrameStack *stack)
+{
+	while (m_state == DebuggerState::kPaused)
+	{
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(100ms);
+	}
+	// If we were the thread that paused, regain focus
+	if (pauseReason != pauseReason::NONE)
+	{
+		std::lock_guard<std::mutex> lock(m_instructionMutex);
+		// TODO: How to do this in GZDoom?
+		// Window::RegainFocus();
+		// also reset the state
+		m_runtimeState->Reset();
+		if (m_state != DebuggerState::kRunning && stack)
+		{
+			RuntimeState::m_GlobalVMStack = stack;
+		}
+	}
+}
+
 void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc)
 {
 	if (m_closed)
@@ -120,13 +184,7 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 		break;
 	case pauseReason::CONTINUING:
 	{
-		std::lock_guard<std::mutex> lock(m_instructionMutex);
-		m_state = DebuggerState::kRunning;
-		m_currentStepStackId = 0;
-		m_currentStepStackFrame = nullptr;
-		m_currentVMFunction = nullptr;
-		m_lastLine = -1;
-		m_lastInstruction = nullptr;
+		ResetStepState(DebuggerState::kRunning, stack);
 		if (m_session)
 		{
 			m_session->send(dap::ContinuedEvent {.allThreadsContinued = true, .threadId = 1});
@@ -135,19 +193,15 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 	break;
 	default: // not NONE
 	{
-		std::lock_guard<std::mutex> lock(m_instructionMutex);
-		// `stack` is thread_local, we're currently on that thread,
-		// and the debugger will be running in a separate thread, so we need to set it here.
-		RuntimeState::m_GlobalVMStack = stack;
-		m_state = DebuggerState::kPaused;
-		m_currentStepStackId = 0;
-		m_currentStepStackFrame = nullptr;
-		m_currentVMFunction = nullptr;
 		// don't reset the last line or last instruction here
-
+		ResetStepState(DebuggerState::kPaused, stack);
 		if (m_session)
 		{
-			m_session->send(dap::StoppedEvent {.reason = pauseReasonStrings[(int)pauseReason], .threadId = 1});
+			dap::StoppedEvent event;
+			event.allThreadsStopped = true;
+			event.reason = pauseReasonStrings[(int)pauseReason];
+			event.threadId = 1;
+			m_session->send(event);
 		}
 		// TODO: How to do this in GZDoom?
 		// Window::ReleaseFocus();
@@ -155,30 +209,62 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 	break;
 	}
 
-	while (m_state == DebuggerState::kPaused)
+	WaitWhilePaused(pauseReason, stack);
+	// GZDoom's VM is single-threaded and only has one stack, and we're not paused, so this is safe to do here.
+	if (m_first && RuntimeState::m_GlobalVMStack == nullptr)
 	{
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for(100ms);
-	}
-	// If we were the thread that paused, regain focus
-	if (pauseReason != pauseReason::NONE)
-	{
-		std::lock_guard<std::mutex> lock(m_instructionMutex);
-		// TODO: How to do this in GZDoom?
-		// Window::RegainFocus();
-		// also reset the state
-		m_runtimeState->Reset();
-		if (m_state != DebuggerState::kRunning)
-		{
-			RuntimeState::m_GlobalVMStack = stack;
-		}
+		m_first = false;
+		RuntimeState::m_GlobalVMStack = stack;
 	}
 }
+
+void DebugExecutionManager::HandleException(
+	VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace)
+{
+
+	// check if m_exceptionFilters has native
+	bool isNative = (sfunc == nullptr || IsFunctionNative(sfunc));
+	if (isNative && m_exceptionFilters.find(ExceptionFilter::kNative) == m_exceptionFilters.end())
+	{
+		return;
+	}
+	else if (!isNative && m_exceptionFilters.find(ExceptionFilter::kScript) == m_exceptionFilters.end())
+	{
+		return;
+	}
+	// Exceptions don't pass in the stack frame; should have been handled by HandleInstruction
+	ResetStepState(DebuggerState::kPaused, nullptr);
+	if (m_session)
+	{
+		auto event = dap::StoppedEvent();
+		event.allThreadsStopped = true;
+		if (!stackTrace.empty())
+		{
+			event.description = message + "\n" + stackTrace;
+		}
+		else
+		{
+			event.description = message;
+		}
+		event.reason = "exception";
+		event.text = exceptionStrings[(int)reason];
+		// If there is no line, this is an exception on a native function, so we can't get the line number
+		if (line == nullptr)
+		{
+			event.text = event.text.value("") + " (Native)";
+		}
+		event.threadId = 1;
+		m_session->send(event);
+	};
+	WaitWhilePaused(pauseReason::exception, nullptr);
+}
+
 
 void DebugExecutionManager::Open(std::shared_ptr<dap::Session> ses)
 {
 	std::lock_guard<std::mutex> lock(m_instructionMutex);
 	m_closed = false;
+	m_first = true;
 	m_session = ses;
 }
 
@@ -251,5 +337,58 @@ bool DebugExecutionManager::Step(uint32_t stackId, const StepType stepType, Step
 	}
 
 	return true;
+}
+
+dap::array<dap::Breakpoint> DebugExecutionManager::SetExceptionBreakpointFilters(const std::vector<std::string> &filterIds)
+{
+	m_exceptionFilters.clear();
+	dap::array<dap::Breakpoint> breakpoints;
+	for (int i = 0; i < filterIds.size(); i++)
+	{
+		auto breakpoint = dap::Breakpoint();
+		int64_t id = (int64_t)DebugExecutionManager::GetFilterID(filterIds[i]);
+		breakpoint.id = id;
+		breakpoint.verified = false;
+		if (id != -1)
+		{
+			m_exceptionFilters.insert((ExceptionFilter)id);
+			breakpoint.verified = true;
+		}
+		else
+		{
+			breakpoint.reason = "failed";
+			breakpoint.message = "No such exception filter";
+		}
+		breakpoints.push_back(breakpoint);
+	}
+	return breakpoints;
+}
+
+DebugExecutionManager::ExceptionFilter DebugExecutionManager::GetFilterID(const std::string &filter_string)
+{
+	for (int i = 0; i < (int)ExceptionFilter::kMAX; i++)
+	{
+		if (filter_string == exceptionFilters[i])
+		{
+			return (ExceptionFilter)i;
+		}
+	}
+	return (ExceptionFilter)-1;
+}
+
+dap::array<dap::ExceptionBreakpointsFilter> DebugExecutionManager::GetAllExceptionFilters()
+{
+	dap::array<dap::ExceptionBreakpointsFilter> filters;
+	for (int i = 0; i < (int)ExceptionFilter::kMAX; i++)
+	{
+		dap::ExceptionBreakpointsFilter filter;
+		filter.filter = exceptionFilters[i];
+		filter.label = exceptionFilterDescriptions[i];
+		filter.description = exceptionFilterDescriptions[i];
+		filter.conditionDescription = exceptionFilterDescriptions[i];
+		filter.def = true;
+		filters.push_back(filter);
+	}
+	return filters;
 }
 }

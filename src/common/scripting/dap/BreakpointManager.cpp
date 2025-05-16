@@ -4,11 +4,20 @@
 #include "Utilities.h"
 #include "RuntimeEvents.h"
 #include "GameInterfaces.h"
+#include "DebugExecutionManager.h"
 
 namespace DebugServer
 {
 
-int64_t GetBreakpointID(int scriptReference, int lineNumber, uint16_t instruction_number) { return (((int64_t)scriptReference) << 32) + (instruction_number << 16) + lineNumber; }
+int64_t GetBreakpointID(int scriptReference, int lineNumber, uint16_t instruction_number)
+{
+	int64_t id = (((int64_t)scriptReference) << 32) + (instruction_number << 16) + lineNumber;
+	if (id >= 0 && id < (int64_t)DebugExecutionManager::ExceptionFilter::kMAX)
+	{
+		id += (int64_t)DebugExecutionManager::ExceptionFilter::kMAX;
+	}
+	return id;
+}
 
 int AddInvalidBreakpoint(std::vector<dap::Breakpoint> &breakpoints, int line, int sourceRef, int &bpointCount, const std::string &reason, const dap::optional<dap::Source> &source = {})
 {

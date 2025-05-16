@@ -27,6 +27,7 @@ enum StepGranularity
 class DebugExecutionManager
 {
 
+public:
 	enum class DebuggerState
 	{
 		kRunning = 0,
@@ -42,9 +43,16 @@ class DebugExecutionManager
 		paused,
 		exception
 	};
-
+	enum class ExceptionFilter
+	{
+		kScript,
+		kNative,
+		kMAX
+	};
+	private:
 	std::mutex m_instructionMutex;
 	bool m_closed;
+	bool m_first = true;
 
 	std::shared_ptr<dap::Session> m_session;
 	RuntimeState *m_runtimeState;
@@ -58,18 +66,26 @@ class DebugExecutionManager
 	const VMOP *m_lastInstruction = nullptr;
 	VMFrame *m_currentStepStackFrame;
 	VMFunction *m_currentVMFunction;
+	std::set<ExceptionFilter> m_exceptionFilters = {ExceptionFilter::kScript, ExceptionFilter::kNative};
 	public:
 	explicit DebugExecutionManager(RuntimeState *runtimeState, BreakpointManager *breakpointManager) : m_closed(true), m_runtimeState(runtimeState), m_breakpointManager(breakpointManager), m_currentStepStackFrame(nullptr)
 	{
 	}
+	static dap::array<dap::ExceptionBreakpointsFilter> GetAllExceptionFilters();
+
 
 	void Close();
 	void HandleInstruction(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
+	void HandleException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace);
 	void Open(std::shared_ptr<dap::Session> ses);
 	bool Continue();
 	bool Pause();
 	bool Step(uint32_t stackId, StepType stepType, StepGranularity stepGranularity);
+	dap::array<dap::Breakpoint> SetExceptionBreakpointFilters(const std::vector<std::string> &filterIds);
+	static ExceptionFilter GetFilterID(const std::string &filter_string);
 	private:
 	inline pauseReason CheckState(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
+			void ResetStepState(DebuggerState state, VMFrameStack *stack);
+			void WaitWhilePaused(pauseReason pauseReason, VMFrameStack *stack);
 };
 }

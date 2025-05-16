@@ -9,43 +9,47 @@
 namespace DebugServer
 {
 
-ObjectStateNode::ObjectStateNode(const std::string &name, VMValue value, PType *asClass, const bool subView) : m_name(name), m_subView(subView), m_value(value), m_class(asClass) { }
+ObjectStateNode::ObjectStateNode(const std::string &name, VMValue value, PType *asClass, const bool subView)
+	: m_name(name), m_subView(subView), m_value(value), m_ClassType(asClass)
+{
+}
 
 bool ObjectStateNode::SerializeToProtocol(dap::Variable &variable)
 {
-	variable.variablesReference = IsVMValueValid(&m_value) ? GetId() : 0;
-
+	variable.variablesReference = IsVMValValidDObject(&m_value) ? GetId() : 0;
+	auto pointedType = m_ClassType->isObjectPointer() ? m_ClassType->toPointer()->PointedType : m_ClassType;
 	variable.name = m_name;
-	variable.type = m_class->mDescriptiveName.GetChars();
-
+	const char *typeName = pointedType->mDescriptiveName.GetChars();
+	variable.type = typeName;
 	std::vector<std::string> childNames;
 	GetChildNames(childNames);
-
 	variable.namedVariables = childNames.size();
-	auto typeval = variable.type.value("");
-	// check if name begins with 'Pointer<'; if so, remove it, and the trailing '>'
-	if (typeval.size() > 9 && typeval.find("Pointer<") == 0 && typeval[typeval.size() - 1] == '>')
-	{
-		typeval = typeval.substr(8, typeval.size() - 9);
-	}
-	if (!m_subView)
+	if (m_ClassType->isObjectPointer())
 	{
 		if (!m_value.a)
 		{
-			variable.value = StringFormat("%s <NULL>", typeval.c_str());
+			variable.value = StringFormat("%s <NULL>", typeName);
 		}
-		else if (m_ActualType != nullptr)
+		else if (m_VMType != nullptr && !m_subView && pointedType != m_VMType)
 		{
-			variable.value = StringFormat("%s (%p) as %s", m_ActualType->mDescriptiveName.GetChars(), m_value.a, typeval.c_str());
+			// If this is something that isn't actually descended from the class...
+			if (!PType::toClass(m_VMType)->Descriptor->IsDescendantOf(PType::toClass(pointedType)->Descriptor))
+			{
+				variable.value = StringFormat("%s (%p) as %s", m_VMType->mDescriptiveName.GetChars(), m_value.a, typeName);
+			}
+			else
+			{
+				variable.value = StringFormat("%s (%p)", m_VMType->mDescriptiveName.GetChars(), m_value.a);
+			}
 		}
 		else
 		{
-			variable.value = StringFormat("%s (%p)", typeval.c_str(), m_value.a);
+			variable.value = StringFormat("%s (%p)", typeName, m_value.a);
 		}
 	}
-	else
+	else if (!m_subView)
 	{
-		variable.value = typeval;
+		variable.value = typeName;
 	}
 
 	return true;
@@ -58,11 +62,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 		names = m_cachedNames;
 		return true;
 	}
-	auto p_type = m_class;
-	if (p_type->isObjectPointer())
-	{
-		p_type = p_type->toPointer()->PointedType;
-	}
+	auto p_type = m_ClassType->isObjectPointer() ? m_ClassType->toPointer()->PointedType : m_ClassType;
 	if (p_type->isClass())
 	{
 		// do the parent class first
@@ -71,14 +71,21 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 		{
 			return false;
 		}
+		m_VMType = dobject->GetClass()->VMType;
 		auto classType = PType::toClass(p_type);
 		auto descriptor = classType->Descriptor;
+		// If the VMType is something else (and this isn't a view into the parent class properties)...
+		if (!m_subView && m_VMType && m_VMType != classType && m_VMType->isClass())
+		{
+			classType = PType::toClass(m_VMType);
+			descriptor = dobject->GetClass();
+		}
 		std::string error_msg;
 		if (classType->ParentType && descriptor && descriptor->ParentClass)
 		{
 			auto parent = classType->ParentType;
 			auto parentName = parent->mDescriptiveName.GetChars();
-			m_children[parentName] = RuntimeState::CreateNodeForVariable(parentName, m_value, parent);
+			m_children[parentName] = std::make_shared<ObjectStateNode>(parentName, m_value, parent, true);
 			names.push_back(parentName);
 		}
 		try
@@ -103,7 +110,6 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 						// class is not actually its descriptor (this is the case where things are intentionally set to destroyed objects, like `PendingWeapon = WP_NOCHANGE`)
 						// try again with the actual class
 						m_children.clear();
-						m_ActualType = dobject->GetClass()->VMType;
 						names.clear();
 						descriptor = dobject->GetClass();
 						for (auto field : descriptor->Fields)

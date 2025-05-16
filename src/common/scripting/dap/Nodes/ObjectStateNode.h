@@ -13,10 +13,10 @@ class ObjectStateNode : public StateNodeBase, public IProtocolVariableSerializab
 	bool m_subView;
 
 	const VMValue m_value;
-	PType *m_class;
+	PType *m_ClassType;
 	std::vector<std::string> m_cachedNames; // to ensure proper order of children
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;
-	PType *m_ActualType = nullptr;
+	PType *m_VMType = nullptr;
 	public:
 	ObjectStateNode(const std::string &name, VMValue value, PType *asClass, bool subView = false);
 

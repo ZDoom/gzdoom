@@ -18,11 +18,18 @@ struct ci_less
 	{
 		bool operator()(const unsigned char &c1, const unsigned char &c2) const { return tolower(c1) < tolower(c2); }
 	};
-	bool operator()(const std::string &s1, const std::string &s2) const
+	template <
+		typename T,
+		typename U,
+		typename = std::enable_if_t<
+			(std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) && (std::is_same_v<U, std::string> || std::is_same_v<U, std::string_view>)>>
+	bool operator()(T const &s1, U const &s2) const
 	{
 		return std::lexicographical_compare(
-			s1.begin(), s1.end(), // source range
-			s2.begin(), s2.end(), // dest range
+			s1.begin(),
+			s1.end(), // source range
+			s2.begin(),
+			s2.end(), // dest range
 			nocase_compare()); // comparison
 	}
 };

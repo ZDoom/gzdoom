@@ -199,6 +199,10 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 			dap::StoppedEvent event;
 			event.allThreadsStopped = true;
 			event.reason = pauseReasonStrings[(int)pauseReason];
+			if (pauseReason == pauseReason::breakpoint)
+			{
+				m_breakpointManager->SetBPStoppedEventInfo(stack, event);
+			}
 			event.threadId = 1;
 			m_session->send(event);
 		}

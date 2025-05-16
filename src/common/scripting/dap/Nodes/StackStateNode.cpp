@@ -47,7 +47,7 @@ bool StackStateNode::GetChildNames(std::vector<std::string> &names)
 	size_t frameNum = 0;
 	for (size_t i = 0; i < frames.size(); i++)
 	{
-		if (i != 0 && PCIsAtNativeCall(frames.at(i)))
+		if (PCIsAtNativeCall(frames.at(i)))
 		{
 			names.push_back(std::to_string(frameNum));
 			m_children[frameNum] = std::make_shared<StackFrameStateNode>(GetCalledFunction(frames.at(i)), frames.at(i));

@@ -31,6 +31,7 @@ int BreakpointManager::AddInvalidBreakpoint(
 	breakpoint.message = reason;
 	breakpoint.source = source;
 	breakpoint.verified = false;
+	breakpoint.reason = "failed";
 	if (line)
 	{
 		breakpoint.line = line;
@@ -49,7 +50,8 @@ bool BreakpointManager::AddBreakpointInfo(
 	void *p_instrRef,
 	int offset,
 	BreakpointInfo::Type type,
-	std::vector<dap::Breakpoint> &r_bpoint)
+	std::vector<dap::Breakpoint> &r_bpoint,
+	const std::string &funcText)
 {
 	// Only call this with positional breakpoints (line, script function, instruction)
 	assert(p_instrRef != nullptr);
@@ -81,6 +83,7 @@ bool BreakpointManager::AddBreakpointInfo(
 	auto &binfo = m_breakpoints[instrRef].emplace_back();
 	binfo.type = type;
 	binfo.ref = sourceRef;
+	binfo.funcBreakpointText = funcText;
 	binfo.bpoint.id = breakpointId;
 	binfo.bpoint.line = line;
 	binfo.bpoint.instructionReference = AddrToString(function, p_instrRef);
@@ -284,8 +287,10 @@ dap::ResponseOrError<dap::SetFunctionBreakpointsResponse> BreakpointManager::Set
 			BreakpointInfo bpoint_info;
 			bpoint_info.type = BreakpointInfo::Type::Function;
 			bpoint_info.ref = -1;
+			bpoint_info.funcBreakpointText = fullFuncName;
 			bpoint_info.bpoint.id = GetBreakpointID();
 			bpoint_info.bpoint.line = 1;
+			bpoint_info.bpoint.verified = true;
 			m_nativeFunctionBreakpoints[func->QualifiedName] = bpoint_info;
 			response.breakpoints.push_back(bpoint_info.bpoint);
 			continue;
@@ -308,7 +313,7 @@ dap::ResponseOrError<dap::SetFunctionBreakpointsResponse> BreakpointManager::Set
 		auto lineNum = scriptFunction->LineInfo[0].LineNumber;
 		auto instructionNum = scriptFunction->LineInfo[0].InstructionIndex;
 		void *instrRef = scriptFunction->Code + instructionNum;
-		AddBreakpointInfo(binary, scriptFunction, lineNum, instrRef, 0, BreakpointInfo::Type::Function, response.breakpoints);
+		AddBreakpointInfo(binary, scriptFunction, lineNum, instrRef, 0, BreakpointInfo::Type::Function, response.breakpoints, fullFuncName);
 	}
 	return response;
 }
@@ -390,27 +395,56 @@ void BreakpointManager::ClearBreakpointsForScript(int ref, BreakpointInfo::Type 
 
 bool BreakpointManager::GetExecutionIsAtValidBreakpoint(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc)
 {
-#define CLEAR_AND_RETURN   m_last_seen = nullptr; return false
-	if (!IsFunctionNative(stack->TopFrame()->Func) && m_breakpoints.find((void *)pc) != m_breakpoints.end())
-	{
-		return true;
-	}
-	else if (IsFunctionNative(stack->TopFrame()->Func) && m_nativeFunctionBreakpoints.find(stack->TopFrame()->Func->QualifiedName) != m_nativeFunctionBreakpoints.end())
-	{
-		return true;
-	}
-	return CLEAR_AND_RETURN;
-#undef CLEAR_AND_RETURN
+	return m_breakpoints.find((void *)pc) != m_breakpoints.end() || (!m_nativeFunctionBreakpoints.empty() && IsAtNativeBreakpoint(stack));
 }
 
-
-bool BreakpointManager::HasSeenBreakpoint(BreakpointManager::BreakpointInfo *info)
+inline bool BreakpointManager::IsAtNativeBreakpoint(VMFrameStack *stack)
 {
-	if (!m_last_seen || m_last_seen != info)
+	return PCIsAtNativeCall(stack->TopFrame())
+		&& m_nativeFunctionBreakpoints.find(GetCalledFunction(stack->TopFrame())->QualifiedName) != m_nativeFunctionBreakpoints.end();
+}
+
+void BreakpointManager::SetBPStoppedEventInfo(VMFrameStack *stack, dap::StoppedEvent &event)
+{
+	std::vector<dap::integer> breakpoints;
+	if (!stack->HasFrames())
 	{
-		return false;
+		return;
 	}
-	return true;
+	auto frame = stack->TopFrame();
+	std::string description = "Paused on breakpoint";
+	if (m_breakpoints.find((void *)frame->PC) != m_breakpoints.end())
+	{
+		for (auto &bpoint : m_breakpoints[(void *)frame->PC])
+		{
+			breakpoints.push_back(bpoint.bpoint.id.value(-1));
+		}
+	}
+	if (IsAtNativeBreakpoint(stack))
+	{
+		auto func = GetCalledFunction(frame);
+		auto &bpoint_info = m_nativeFunctionBreakpoints[func->QualifiedName];
+		description = std::string("Paused on breakpoint at '") + bpoint_info.funcBreakpointText + "'";
+		if (!CaseInsensitiveEquals(bpoint_info.funcBreakpointText, func->QualifiedName))
+		{
+			event.text = description + " (" + func->QualifiedName + ")";
+		}
+		else
+		{
+			event.text = description;
+		}
+		breakpoints.push_back(m_nativeFunctionBreakpoints[func->QualifiedName].bpoint.id.value(-1));
+	}
+	if (breakpoints.empty())
+	{
+		LogInternalError("No breakpoints found for stopped event");
+	}
+	if (!description.empty())
+	{
+		event.description = description;
+	}
+	event.reason = "breakpoint";
+	event.hitBreakpointIds = breakpoints;
 }
 
 dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> BreakpointManager::SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request)

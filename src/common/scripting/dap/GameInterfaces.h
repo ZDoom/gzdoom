@@ -1019,8 +1019,7 @@ static bool PCIsAtNativeCall(VMFrame *frame)
 		{
 			ptr = frame->GetRegA()[frame->PC->a];
 		}
-		VMFunction *call = (VMFunction *)ptr;
-		if (IsFunctionNative(call))
+		if (IsFunctionNative((VMFunction *)ptr))
 		{
 			return true;
 		}

@@ -113,6 +113,7 @@ void AttachLight(AActor *self)
 
 	light->pSpotInnerAngle = &self->AngleVar(NAME_SpotInnerAngle);
 	light->pSpotOuterAngle = &self->AngleVar(NAME_SpotOuterAngle);
+	light->lightDefIntensity = 1.0;
 	light->pPitch = &self->Angles.Pitch;
 	light->pLightFlags = (LightFlags*)&self->IntVar(NAME_lightflags);
 	light->pArgs = self->args;
@@ -863,7 +864,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_AttachLightDef, AttachLightDef)
 //
 //==========================================================================
 
-int AttachLightDirect(AActor *self, int _lightid, int type, int color, int radius1, int radius2, int flags, double ofs_x, double ofs_y, double ofs_z, double param, double spoti, double spoto, double spotp)
+int AttachLightDirect(AActor *self, int _lightid, int type, int color, int radius1, int radius2, int flags, double ofs_x, double ofs_y, double ofs_z, double param, double spoti, double spoto, double spotp, double intensity)
 {
 	FName lightid = FName(ENamedName(_lightid));
 	auto userlight = self->UserLights[FindUserLight(self, lightid, true)];
@@ -879,6 +880,7 @@ int AttachLightDirect(AActor *self, int _lightid, int type, int color, int radiu
 	userlight->SetParameter(type == PulseLight? param*TICRATE : param*360.);
 	userlight->SetSpotInnerAngle(spoti);
 	userlight->SetSpotOuterAngle(spoto);
+	userlight->SetLightDefIntensity(intensity);
 	if (spotp >= -90. && spotp <= 90.)
 	{
 		userlight->SetSpotPitch(spotp);
@@ -908,7 +910,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_AttachLight, AttachLightDirect)
 	PARAM_FLOAT(spoti);
 	PARAM_FLOAT(spoto);
 	PARAM_FLOAT(spotp);
-	ACTION_RETURN_BOOL(AttachLightDirect(self, lightid.GetIndex(), type, color, radius1, radius2, flags, ofs_x, ofs_y, ofs_z, parami, spoti, spoto, spotp));
+	PARAM_FLOAT(intensity);
+	ACTION_RETURN_BOOL(AttachLightDirect(self, lightid.GetIndex(), type, color, radius1, radius2, flags, ofs_x, ofs_y, ofs_z, parami, spoti, spoto, spotp, intensity));
 }
 
 //==========================================================================

@@ -11,10 +11,10 @@ class StatePointerNode : public StateNodeBase, public IProtocolVariableSerializa
 {
 	std::string m_name;
 	const VMValue m_value;
-	PStatePointer *m_type;
+	PClass *m_OwningType;
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;
 	public:
-	StatePointerNode(std::string name, VMValue variable, PStatePointer *type);
+	StatePointerNode(std::string name, VMValue variable, PClass *owningType);
 	bool SerializeToProtocol(dap::Variable &variable) override;
 	bool GetChildNames(std::vector<std::string> &names) override;
 	bool GetChildNode(std::string name, std::shared_ptr<StateNodeBase> &node) override;

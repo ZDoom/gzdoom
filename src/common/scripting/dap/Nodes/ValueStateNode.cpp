@@ -146,14 +146,42 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 		else if (m_type == TypeStateLabel)
 		{
 			variable.type = "StateLabel";
-			std::string name = "<unknown>";
-			auto state = GetStateFromLabel(m_variable.i, m_StateOwningClass);
+			std::string label_name = "<unknown>";
+			const char *label = nullptr;
+			auto NameVal = m_variable.i;
+			FName StateName = NAME_None;
+			PClassActor *actualOwner = nullptr;
+			if (NameVal > 0)
+			{
+				if (NameVal > 0x10000000)
+				{
+					NameVal -= 0x10000000;
+				}
+				auto name = ENamedName(NameVal);
+				StateName = FName(name);
+			}
+			auto state = GetStateFromIdx(m_variable.i, m_StateOwningClass, actualOwner);
 			if (state)
 			{
-				auto fstring = FState::StaticGetStateName(state, static_cast<PClassActor *>(m_StateOwningClass));
-				name = fstring.GetChars();
+				if (actualOwner && NameVal < 0 && actualOwner->OwnsState(state))
+				{
+					int stateidx = state - actualOwner->GetStates();
+					if (stateidx < actualOwner->GetStateLabels()->NumLabels)
+					{
+						StateName = actualOwner->GetStateLabels()->Labels[stateidx].Label;
+					}
+				}
 			}
-			variable.value = StringFormat("StateLabel# %d: \'%s\'", m_variable.i, name.c_str());
+			if (StateName != NAME_None)
+			{
+				const char *ownerName = actualOwner ? actualOwner->TypeName.GetChars() : "<unknownOwner>";
+				label_name = StringFormat("%s.%s", ownerName, StateName.GetChars());
+			}
+			else
+			{
+				label_name = "<unknown_state>";
+			}
+			variable.value = StringFormat("StateLabel# %d: \'%s\'", m_variable.i, label_name.c_str());
 		}
 		else
 		{

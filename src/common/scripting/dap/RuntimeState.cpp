@@ -179,7 +179,7 @@ RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p
 	}
 	if (p_type == TypeState)
 	{
-		return std::make_shared<StatePointerNode>(name, variable, dynamic_cast<PStatePointer *>(p_type));
+		return std::make_shared<StatePointerNode>(name, variable, stateOwningClass);
 	}
 	if (p_type->isClass() || p_type->isObjectPointer())
 	{

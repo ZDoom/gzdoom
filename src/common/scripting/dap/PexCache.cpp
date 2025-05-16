@@ -258,7 +258,7 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 								}
 
 								addEmptyBinIfNotExists(ref, vmscriptfunc->SourceFileName.GetChars());
-								p_scripts[ref]->stateFunctions[vmscriptfunc->PrintableName] = vmscriptfunc;
+								p_scripts[ref]->stateFunctions[vmscriptfunc->QualifiedName] = vmscriptfunc;
 							}
 						}
 					}

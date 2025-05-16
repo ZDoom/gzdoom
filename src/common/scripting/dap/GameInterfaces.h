@@ -43,7 +43,10 @@ enum BasicType
 	BASIC_VoidPointer,
 };
 
-static inline bool IsFunctionInvoked(VMFunction *func) { return func && func->VarFlags & VARF_Action; }
+static inline bool IsFunctionAction(VMFunction *func)
+{
+	return func && func->VarFlags & VARF_Action;
+}
 
 static inline bool IsFunctionStatic(VMFunction *func) { return func && (func->VarFlags & VARF_Static || !(func->VarFlags & VARF_Method)); }
 
@@ -656,7 +659,7 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 	case REGT_INT:
 		if (idx >= m_stackFrame->NumRegD)
 		{
-			LogError("GetRegisterValue: Function %s, int reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegD);
+			LogError("GetRegisterValue: Function %s, int reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegD);
 			value = VMValue();
 			return false;
 		}
@@ -666,7 +669,7 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 	case REGT_FLOAT:
 		if (idx >= m_stackFrame->NumRegF)
 		{
-			LogError("GetRegisterValue: Function %s, float reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegF);
+			LogError("GetRegisterValue: Function %s, float reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegF);
 			value = VMValue();
 			return false;
 		}
@@ -675,7 +678,7 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 	case REGT_STRING:
 		if (idx >= m_stackFrame->NumRegS)
 		{
-			LogError("GetRegisterValue: Function %s, string reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegS);
+			LogError("GetRegisterValue: Function %s, string reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegS);
 			value = VMValue();
 			return false;
 		}
@@ -685,7 +688,7 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 	case REGT_POINTER:
 		if (idx >= m_stackFrame->NumRegA)
 		{
-			LogError("GetRegisterValue: Function %s, pointer reg idx %d > %d", m_stackFrame->Func->QualifiedName, idx, m_stackFrame->NumRegA);
+			LogError("GetRegisterValue: Function %s, pointer reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegA);
 			value = VMValue();
 			return false;
 		}
@@ -735,19 +738,19 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 		VMValue val;
 		if (proto->ArgumentTypes.size() == 0)
 		{
-			LogError("Function %s has '%s' but no argument types", p_stackFrame->Func->QualifiedName, name.c_str());
+			LogError("Function %s has '%s' but no argument types", p_stackFrame->Func->PrintableName, name.c_str());
 			continue;
 		}
 		else if (proto->ArgumentTypes.size() <= paramidx)
 		{
-			LogError("Function %s has '%s' but <= %d argument types", p_stackFrame->Func->QualifiedName, name.c_str(), paramidx);
+			LogError("Function %s has '%s' but <= %d argument types", p_stackFrame->Func->PrintableName, name.c_str(), paramidx);
 			continue;
 		}
 		if (!non_builtin)
 		{
 			if (p_stackFrame->NumRegA == 0)
 			{
-				LogError("Function %s has '%s' but no parameters", p_stackFrame->Func->QualifiedName, name.c_str());
+				LogError("Function %s has '%s' but no parameters", p_stackFrame->Func->PrintableName, name.c_str());
 				continue;
 			}
 		}
@@ -927,35 +930,82 @@ static bool ClassIsActor(PClass *actorClass)
 	return actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? true : false;
 }
 
-static FState *GetStateFromLabel(int i, PClass *actorClass)
+static FState *GetStateFromIdx(int i, PClass *actorClass, PClassActor *&rActualOwner)
 {
+	FState *state;
 	if (!actorClass)
 	{
-		if (i > 0 && i < 0x10000000) return StateLabels.GetState(i, nullptr);
-		return nullptr;
+		rActualOwner = nullptr;
+		if (!(i > 0 && i < 0x10000000)) return nullptr;
+		state = StateLabels.GetState(i, nullptr);
+		if (!state) return nullptr;
 	}
-	PClassActor *pclassActor = actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor *>(actorClass) : nullptr;
-
-	auto state = pclassActor ? StateLabels.GetState(i, pclassActor) : nullptr;
-	if (!state)
+	else
 	{
-		pclassActor = PClass::FindActor(actorClass->TypeName);
-		state = StateLabels.GetState(i, pclassActor);
+		rActualOwner = actorClass->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor *>(actorClass) : nullptr;
+
+		state = rActualOwner ? StateLabels.GetState(i, rActualOwner) : nullptr;
+		if (!state)
+		{
+			rActualOwner = PClass::FindActor(actorClass->TypeName);
+			if (rActualOwner)
+			{
+				state = StateLabels.GetState(i, rActualOwner);
+			}
+		}
+	}
+	if (state && !rActualOwner)
+	{
+		rActualOwner = FState::StaticFindStateOwner(state);
 	}
 	return state;
 }
 
 static PClass *GetClassDescriptor(PType *localtype)
 {
+	if (!localtype) return nullptr;
 	if (localtype->isPointer())
 	{
-		localtype = static_cast<PPointer *>(localtype)->PointedType;
+		localtype = localtype->toPointer()->PointedType;
 	}
 	if (localtype->isClass())
 	{
-		return static_cast<PClassType *>(localtype)->Descriptor;
+		return PType::toClass(localtype)->Descriptor;
 	}
 	return nullptr;
 }
 
+static VMScriptFunction *GetVMScriptFunction(VMFunction *func)
+{
+	if (!func)
+	{
+		return nullptr;
+	}
+	if (IsFunctionNative(func))
+	{
+		return nullptr;
+	}
+	return dynamic_cast<VMScriptFunction *>(func);
+}
+
+static bool FunctionIsAnonymousStateFunction(VMFunction *func)
+{
+	if (!func || func->Name != 0)
+	{
+		return false;
+	}
+	auto vmfunc = GetVMScriptFunction(func);
+	if (!vmfunc)
+	{
+		return false;
+	}
+	// TODO: Better way to do this?
+	// find ".VMScriptFunction." in the PrintableName
+	std::string name = vmfunc->PrintableName;
+	if (name.find(".VMScriptFunction.") != std::string::npos)
+	{
+		return true;
+	}
+	return false;
+}
 }

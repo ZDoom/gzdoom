@@ -78,7 +78,6 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 			stackFrame.instructionPointerReference = StringFormat("%p", m_stackFrame->PC);
 		}
 	}
-	// TODO: Something with state pointer if we can get it?
 
 	stackFrame.name = m_stackFrame->Func->PrintableName;
 

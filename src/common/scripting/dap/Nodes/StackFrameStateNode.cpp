@@ -1,10 +1,12 @@
 #include "StackFrameStateNode.h"
 
+
 #include <common/scripting/dap/Utilities.h>
 #include <string>
 
 #include "LocalScopeStateNode.h"
 #include "RegistersScopeStateNode.h"
+#include "GlobalScopeStateNode.h"
 
 namespace DebugServer
 {
@@ -20,6 +22,7 @@ StackFrameStateNode::StackFrameStateNode(VMFunction *nativeFunction, VMFrame *pa
 	m_fakeStackFrame.MaxParam = 0;
 	m_fakeStackFrame.NumParam = 0;
 	m_stackFrame = &m_fakeStackFrame;
+	m_globalsScope = std::make_shared<GlobalScopeStateNode>();
 }
 
 StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame), m_fakeStackFrame()
@@ -33,6 +36,7 @@ StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(sta
 		}
 		m_registersScope = std::make_shared<RegistersScopeStateNode>(m_stackFrame);
 	}
+	m_globalsScope = std::make_shared<GlobalScopeStateNode>();
 }
 
 bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCache *pexCache) const
@@ -86,10 +90,14 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 
 bool StackFrameStateNode::GetChildNames(std::vector<std::string> &names)
 {
-	auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+	auto scriptFunction = GetVMScriptFunction(m_stackFrame->Func);
 	if (scriptFunction)
 	{
 		names.push_back("Local");
+	}
+	names.push_back("Globals");
+	if (scriptFunction)
+	{
 		names.push_back("Registers");
 	}
 	return true;
@@ -100,6 +108,11 @@ bool StackFrameStateNode::GetChildNode(std::string name, std::shared_ptr<StateNo
 	if (IsFunctionNative(m_stackFrame->Func))
 	{
 		return false;
+	}
+	if (CaseInsensitiveEquals(name, "Globals"))
+	{
+		node = m_globalsScope;
+		return true;
 	}
 	if (CaseInsensitiveEquals(name, "Registers"))
 	{

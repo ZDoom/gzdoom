@@ -31,9 +31,6 @@
             "name": "cppdap"
         },
         {
-            "name": "eventpp"
-        },
-        {
             "name": "bzip2",
             "platform": "(!windows & static) | (windows & static & staticcrt)"
         },

@@ -634,8 +634,7 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 			int j = 0;
 		}
 		// The reason for this is that the disassembler decodes a cmp and then {jne,je,etc} as a single {bne,be,etc} instruction
-		// We want the instructions to always be 4 bytes long, so we add a dummy instruction if the current instruction is 8 bytes long
-		// if instruction starts with "b"
+		// We want the instructions to always be 4 bytes long, so we add a dummy instruction if the instruction starts with "b"
 		if (instruction->instruction.front() == 'b')
 		{
 			if (instruction->instruction[1] == 'n' || instruction->instruction[1] == 'e' || instruction->instruction[1] == 'l' || instruction->instruction[1] == 'g')
@@ -693,7 +692,6 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOffset, int64_t p_count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec)
 {
 	scripts_lock scriptLock(m_scriptsMutex);
-	// if the offset is negative, we get the previous instructions
 	if (!address)
 	{
 		return false;
@@ -733,14 +731,9 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 	auto &it = ret.top();
 	Binary::FunctionCodeMap::iterator reverse_it = ret.top();
 	std::map<void *, std::shared_ptr<DisassemblyLine>> instruction_map;
-	std::map<void *, std::shared_ptr<DisassemblyLine>> forward_instruction_map;
 	auto firstFunc = it->mapped();
-	auto firstFuncAddress = firstFunc->Code;
 	auto firstFuncInstcount = firstFunc->CodeSize;
-	// count of instructions beginning from the beginning of the function to the requested address (without the requested offset)
-	size_t firstFuncInstCountToAddr = (VMOP *)address - firstFuncAddress;
-	// count of instructions beginning from the requested address (without the requested offset) to the end of the function
-	size_t firstFuncInstCountFromAddr = firstFuncInstcount - firstFuncInstCountToAddr;
+
 	auto addToInstMap = [&](const std::map<void *, std::shared_ptr<DisassemblyLine>> &lines)
 	{
 		size_t added = 0;
@@ -758,6 +751,7 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 	{
 		int64_t instructionOffset = p_instructionOffset;
 		int64_t count = p_count + std::abs(p_instructionOffset) + firstFuncInstcount + extra;
+		// if the offset is negative, we get the previous instructions
 		if (instructionOffset < 0)
 		{
 			// get the difference between instructionOffset and 0 (+ the first func count to the requested address)

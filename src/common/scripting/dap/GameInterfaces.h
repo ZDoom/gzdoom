@@ -953,17 +953,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 			}
 			return a.RegNum < b.RegNum;
 		});
-	// TODO: REMOVE JUST FOR DEBUGGING
-	std::vector<VMLocalVariable> _locals;
-	for (auto &local : locals)
-	{
-		_locals.push_back(local);
-	}
-	std::vector<std::string> _localsnames;
-	for (auto &local : _locals)
-	{
-		_localsnames.push_back(local.Name.GetChars());
-	}
 	auto pfunc = GetFunctionSymbol(p_stackFrame->Func);
 	PFunction::Variant *var = GetFunctionVariant(p_stackFrame->Func);
 
@@ -1054,7 +1043,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 			localState.m_locals.push_back(GetReg(local_name, local.type));
 		}
 	}
-	// TODO: rest of the params
 	return localState;
 }
 

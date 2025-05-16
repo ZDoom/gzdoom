@@ -110,9 +110,6 @@ void PexCache::ScanAllScripts()
 	{
 		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
-#ifndef NDEBUG
-	PrintOutAllLoadedScripts();
-#endif
 	// for (auto &pair : m_globalCodeMap)
 	// {
 	// 	AddDisassemblyLines(pair.mapped(), m_disassemblyMap);

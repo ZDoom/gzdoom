@@ -59,7 +59,6 @@ bool StatePointerNode::SerializeToProtocol(dap::Variable &variable)
 		FName label = NAME_None;
 		if (owner)
 		{
-			DumpStateHelper(owner->GetStateLabels(), "");
 			for (int i = 0; i < owner->GetStateLabels()->NumLabels; i++)
 			{
 				if (owner->GetStateLabels()->Labels[i].State == state)

@@ -194,8 +194,9 @@ bool DebugExecutionManager::Continue()
 {
 	std::lock_guard<std::mutex> lock(m_instructionMutex);
 	m_state = DebuggerState::kRunning;
-	m_session->send(dap::ContinuedEvent());
-
+	if (m_session){
+		m_session->send(dap::ContinuedEvent());
+	}
 	return true;
 }
 

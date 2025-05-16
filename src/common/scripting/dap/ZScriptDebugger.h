@@ -41,7 +41,7 @@ class ZScriptDebugger
 	ZScriptDebugger();
 	~ZScriptDebugger();
 	void StartSession(std::shared_ptr<dap::Session> session);
-	void EndSession(bool sendTerminateEvent = true);
+	bool EndSession();
 	bool IsJustMyCode() const { return false; };
 	void SetJustMyCode(bool enable) { };
 	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event) const;
@@ -89,6 +89,7 @@ class ZScriptDebugger
 	RuntimeEvents::LogEventHandle m_logEventHandle;
 	RuntimeEvents::BreakpointChangedEventHandle m_breakpointChangedEventHandle;
 	bool m_quitting = false;
+	bool m_disconnecting = false;
 
 	void RegisterSessionHandlers();
 	dap::Error Error(const std::string &msg);

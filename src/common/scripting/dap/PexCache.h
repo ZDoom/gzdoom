@@ -119,6 +119,7 @@ public:
 	int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1);
 	bool GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource);
 	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
+	static bool GetSourceContent(const std::string &scriptPath, std::string &decompiledSource);
 
 	static void PopulateCodeMap(BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap);
 	static void PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber = false);

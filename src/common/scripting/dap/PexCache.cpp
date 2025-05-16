@@ -106,6 +106,9 @@ void PexCache::ScanAllScripts()
 	{
 		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
+#ifndef NDEBUG
+	PrintOutAllLoadedScripts();
+#endif
 }
 
 void PexCache::PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber)
@@ -380,7 +383,7 @@ std::shared_ptr<Binary> PexCache::GetScript(std::string fqsn)
 	return AddScript(fqsn);
 }
 
-inline bool GetSourceContent(const std::string &scriptPath, std::string &decompiledSource)
+bool PexCache::GetSourceContent(const std::string &scriptPath, std::string &decompiledSource)
 {
 	auto lump = GetScriptFileID(scriptPath);
 	if (lump == -1)
@@ -388,10 +391,22 @@ inline bool GetSourceContent(const std::string &scriptPath, std::string &decompi
 		return false;
 	}
 	auto size = fileSystem.FileLength(lump);
+	if (size == 0)
+	{
+		return false;
+	}
 
 	std::vector<uint8_t> buffer(size);
 	// Godspeed, you magnificent bastard
 	fileSystem.ReadFile(lump, buffer.data());
+	// Check if the file is binary; just check the first 8000 bytes for 0s
+	for (size_t i = 0; i < std::min((size_t)8000, (size_t)size); i++)
+	{
+		if (buffer[i] == 0)
+		{
+			return false;
+		}
+	}
 	decompiledSource = std::string(buffer.begin(), buffer.end());
 	return true;
 }
@@ -409,7 +424,7 @@ bool PexCache::GetOrCacheSource(BinaryPtr binary, std::string &decompiledSource)
 	}
 	{
 		scripts_lock scriptLock(m_scriptsMutex);
-	
+
 		if (binary->cachedSourceCode.empty() && !GetSourceContent(binary->GetQualifiedPath(), binary->cachedSourceCode))
 		{
 			return false;

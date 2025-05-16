@@ -161,7 +161,8 @@ bool RuntimeState::ResolveChildrenByParentId(const uint32_t id, std::vector<std:
 	return false;
 }
 
-std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame * current_frame)
+std::shared_ptr<StateNodeBase>
+RuntimeState::CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame *current_frame, PClass *stateOwningClass)
 {
 	(void)current_frame;
 	if (p_type->isPointer() && !p_type->isObjectPointer() && !static_cast<PPointer *>(p_type)->PointedType->isStruct())
@@ -174,7 +175,7 @@ std::shared_ptr<StateNodeBase> RuntimeState::CreateNodeForVariable(std::string n
 	}
 	if (IsBasicNonPointerType(p_type) || (p_type->isPointer() && !p_type->isObjectPointer() && !static_cast<PPointer *>(p_type)->PointedType->isStruct()))
 	{
-		return std::make_shared<ValueStateNode>(name, variable, p_type);
+		return std::make_shared<ValueStateNode>(name, variable, p_type, stateOwningClass);
 	}
 	if (p_type == TypeState)
 	{

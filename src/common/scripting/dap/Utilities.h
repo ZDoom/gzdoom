@@ -85,13 +85,28 @@ enum
 {
 	PrintLevel_NoEmit = PRINT_NOTIFY << 1,
 };
-template <typename... Args> void LogInternal(const char *fmt, Args... args) { Printf(PRINT_HIGH | PrintLevel_NoEmit, "%s\n", StringFormat(fmt, args...).c_str()); }
-template <typename... Args> void LogInternalError(const char *fmt, Args... args) { Printf(PRINT_HIGH | PrintLevel_NoEmit, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str()); }
-
-template <typename... Args> void LogError(const char *fmt, Args... args) { Printf(TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str()); }
+template <typename... Args> void LogInternal(const char *fmt, Args... args)
+{
+	Printf(PRINT_HIGH | PrintLevel_NoEmit | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
+}
+template <typename... Args> void LogInternalError(const char *fmt, Args... args)
+{
+	Printf(PRINT_HIGH | PrintLevel_NoEmit | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
+}
+template <typename... Args> void Log(const char *fmt, Args... args)
+{
+	Printf(PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
+}
+template <typename... Args> void LogError(const char *fmt, Args... args)
+{
+	Printf(PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
+}
 
 #define RETURN_DAP_ERROR(message) \
 	LogError("%s", message);      \
+	return dap::Error(message);
+
+#define RETURN_DAP_ERROR_NO_NOTIFY(message) \
 	return dap::Error(message);
 
 #define RETURN_COND_DAP_ERROR(cond, message) \

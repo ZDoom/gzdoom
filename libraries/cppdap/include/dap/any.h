@@ -67,7 +67,7 @@ class any {
 
   static inline void* alignUp(void* val, size_t alignment);
   inline void alloc(size_t size, size_t align);
-  inline void free();
+  inline void freeValue();
   inline bool isInBuffer(void* ptr) const;
 
   void* value = nullptr;
@@ -106,7 +106,7 @@ any::any(any&& other) noexcept : type(other.type) {
 void any::reset() {
   if (value != nullptr) {
     type->destruct(value);
-    free();
+    freeValue();
   }
   value = nullptr;
   type = nullptr;
@@ -191,7 +191,7 @@ void any::alloc(size_t size, size_t align) {
   value = alignUp(heap, align);
 }
 
-void any::free() {
+void any::freeValue() {
   assert(value != nullptr);
   if (heap != nullptr) {
     delete[] reinterpret_cast<uint8_t*>(heap);

@@ -1,10 +1,13 @@
 #pragma once
 
+#include <common/console/c_dispatch.h>
 #include <common/scripting/vm/vmintern.h>
 #include <common/scripting/vm/vm.h>
 #include <common/scripting/core/types.h>
 #include <common/objects/dobject.h>
 #include <common/utility/zstring.h>
+#include "common/console/c_cvars.h"
+
 #include "Utilities.h"
 #include "actor.h"
 #include "filesystem.h"
@@ -1117,6 +1120,16 @@ static FState *GetStateFromIdx(int i, PClass *actorClass, PClassActor *&rActualO
 		rActualOwner = FState::StaticFindStateOwner(state);
 	}
 	return state;
+}
+
+static FConsoleCommand *FindConsoleCommand(const std::string &name)
+{
+	return FConsoleCommand::FindByName(name.c_str());
+}
+
+static FBaseCVar *FindConsoleVariable(const std::string &name)
+{
+	return FindCVar(name.c_str(), nullptr);
 }
 
 }

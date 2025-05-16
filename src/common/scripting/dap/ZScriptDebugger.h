@@ -79,7 +79,6 @@ class ZScriptDebugger
 	RuntimeEvents::BreakpointChangedEventHandle m_breakpointChangedEventHandle;
 
 	bool m_quitting = false; // Received a disconnect request with a terminateDebuggee flag; if this is true, we exit the program
-	bool m_disconnecting = false; // Received a disconnect request; if this is true, we send a terminate event after the disconnect response
 	bool m_initialized = false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)
 
 	void RegisterSessionHandlers();

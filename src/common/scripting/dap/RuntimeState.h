@@ -19,8 +19,8 @@ class RuntimeState
 	void Reset();
 	bool ResolveStateByPath(std::string requestedPath, std::shared_ptr<StateNodeBase> &node);
 	bool ResolveStateById(uint32_t id, std::shared_ptr<StateNodeBase> &node);
-	bool ResolveChildrenByParentPath(std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes);
-	bool ResolveChildrenByParentId(uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes);
+	bool ResolveChildrenByParentPath(std::string requestedPath, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start = 0, size_t count = INT_MAX);
+	bool ResolveChildrenByParentId(uint32_t id, std::vector<std::shared_ptr<StateNodeBase>> &nodes, size_t start = 0, size_t count = INT_MAX);
 
 	static std::shared_ptr<StateNodeBase>
 	CreateNodeForVariable(std::string name, VMValue variable, PType *p_type, const VMFrame *current_frame = nullptr, PClass *stateOwningClass = nullptr);

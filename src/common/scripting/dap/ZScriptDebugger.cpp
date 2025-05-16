@@ -433,18 +433,18 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 	dap::VariablesResponse response;
 
 	std::vector<std::shared_ptr<StateNodeBase>> variableNodes;
-	if (!m_runtimeState->ResolveChildrenByParentId(static_cast<uint32_t>(request.variablesReference), variableNodes))
+	int64_t maxCount = request.count.value(INT_MAX);
+	int64_t start = request.start.value(0);
+
+	if (!m_runtimeState->ResolveChildrenByParentId(static_cast<uint32_t>(request.variablesReference), variableNodes, start, maxCount))
 	{
 		// Don't log, this happens as a result of a variables request being sent after a step request that invalidates the state
 		return dap::Error(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
 	}
-
-	int64_t count = 0;
-	int64_t maxCount = std::min<int64_t>(request.count.value(variableNodes.size()), variableNodes.size());
-	int64_t start = request.start.value(0);
 	bool only_indexed = request.filter.value("") == "indexed";
 	bool only_named = request.filter.value("") == "named";
-	for (int64_t i = start; i < start + maxCount; i++)
+
+	for (int64_t i = 0; i < variableNodes.size(); i++)
 	{
 		auto asVariableSerializable = dynamic_cast<IProtocolVariableSerializable *>(variableNodes.at(i).get());
 		if (!asVariableSerializable)
@@ -471,9 +471,7 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 				continue;
 			}
 		}
-
 		response.variables.push_back(variable);
-		count++;
 	}
 
 	return response;

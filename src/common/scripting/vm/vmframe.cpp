@@ -43,7 +43,7 @@
 #include "jit.h"
 #include "c_cvars.h"
 #include "version.h"
-#include "common/scripting/dap/RuntimeEvents.h"
+#include "common/scripting/dap/GameEventEmit.h"
 
 #ifdef HAVE_VM_JIT
 #ifdef __DragonFly__

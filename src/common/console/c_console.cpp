@@ -65,7 +65,7 @@
 #include "g_input.h"
 #include "c_commandbuffer.h"
 #include "vm.h"
-#include "common/scripting/dap/RuntimeEvents.h"
+#include "common/scripting/dap/GameEventEmit.h"
 
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8

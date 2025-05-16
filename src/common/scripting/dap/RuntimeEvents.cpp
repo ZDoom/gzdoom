@@ -3,7 +3,6 @@
 #include "RuntimeEvents.h"
 
 #include <cassert>
-#include <mutex>
 #include <dap/protocol.h>
 #include "GameInterfaces.h"
 #include "common/scripting/vm/vmintern.h"

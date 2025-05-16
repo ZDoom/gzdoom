@@ -67,6 +67,15 @@ inline bool IsNonAbstractScriptFunction(VMFunction *func)
 {
 	return func && !IsFunctionAbstract(func) && !IsFunctionNative(func) && dynamic_cast<VMScriptFunction *>(func) != nullptr;
 }
+static inline bool IsBasicType(const PType *type)
+{
+	return type->Flags & TT::TypeFlags::TYPE_Scalar;
+}
+
+static inline bool IsBasicNonPointerType(const PType *type)
+{
+	return IsBasicType(type) && !(type->Flags & TT::TypeFlags::TYPE_Pointer);
+}
 
 static inline std::string GetIPRef(const char *qualifiedName, uint32_t PCdiff, const VMOP *PC) { return StringFormat("%s+%04x:%p", qualifiedName, PCdiff, PC); }
 
@@ -148,7 +157,6 @@ static inline std::string GetFuncNameFromIPRef(const std::string &ref)
 	return ref.substr(0, pos);
 }
 
-static inline bool IsBasicType(PType *type) { return type->Flags & TT::TypeFlags::TYPE_Scalar; }
 
 // TODO: for some reason, unitialized fields will have their lower 32-bit set to 0x00000000, but their upper 32-bit will be random.
 // This may be a bug; for now, just check if the lower 32-bit is 0
@@ -204,7 +212,6 @@ static bool TypeIsArrayOrArrayPtr(PType *p_type)
 
 static inline bool IsVMValValidDObject(const VMValue *val) { return IsVMValueValid(val) && isValidDobject(static_cast<DObject *>(val->a)); }
 
-
 static VMValue GetVMValue(void *addr, const PType *type)
 {
 	VMValue value = VMValue();
@@ -215,9 +222,38 @@ static VMValue GetVMValue(void *addr, const PType *type)
 		else
 			value = VMValue(str);
 	}
+	else if (type == TypeFloat32)
+	{
+		value = VMValue(*(float *)addr);
+	}
+	else if (type == TypeFloat64)
+	{
+		value = VMValue(*(double *)addr);
+	}
 	else if (!type->isScalar())
 	{
 		value = VMValue(addr);
+	}
+	else if (IsBasicNonPointerType(type))
+	{
+		switch (type->Size)
+		{
+		case 1:
+			value = VMValue(*(uint8_t *)addr);
+			break;
+		case 2:
+			value = VMValue(*(uint16_t *)addr);
+			break;
+		case 4:
+			value = VMValue(*(uint32_t *)addr);
+			break;
+		case 8:
+			value = VMValue((void *)(*(uint64_t *)addr));
+			break;
+		default:
+			LogError("GetVMValue: scalar field size %d not supported", type->Size);
+			break;
+		}
 	}
 	else
 	{
@@ -373,7 +409,6 @@ static inline BasicType GetBasicType(PType *type)
 	return BASIC_NONE;
 }
 
-static inline bool IsBasicNonPointerType(PType *type) { return IsBasicType(type) && !(type->Flags & TT::TypeFlags::TYPE_Pointer); }
 
 static int GetScriptFileID(const std::string &script_path)
 {

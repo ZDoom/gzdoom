@@ -1268,9 +1268,9 @@ if( UNIX )
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} ${Backtrace_LIBRARIES} )
 	endif()
 endif()
-
-target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
-
+find_package(cppdap CONFIG REQUIRED)
+find_package(eventpp CONFIG REQUIRED)
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} cppdap::cppdap eventpp::eventpp )
 include_directories(
 	BEFORE
 	.

@@ -102,7 +102,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 				{
 					try
 					{
-						auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type);
+						auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type, field->BitValue);
 						m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type, nullptr, descriptor);
 					}
 					catch (CRecoverableError &e)
@@ -116,7 +116,7 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 						for (auto field : descriptor->Fields)
 						{
 							name = field->SymbolName.GetChars();
-							auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type);
+							auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type, field->BitValue);
 							m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type, nullptr, descriptor);
 							names.push_back(name);
 						}

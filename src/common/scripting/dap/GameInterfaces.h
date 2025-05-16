@@ -224,7 +224,7 @@ static bool TypeIsArrayOrArrayPtr(PType *p_type)
 
 static inline bool IsVMValValidDObject(const VMValue *val) { return IsVMValueValid(val) && isValidDobject(static_cast<DObject *>(val->a)); }
 
-static VMValue GetVMValue(void *addr, const PType *type)
+static VMValue GetVMValue(void *addr, const PType *type, int bitvalue = -1)
 {
 	VMValue value = VMValue();
 	if (type == TypeString)
@@ -271,6 +271,12 @@ static VMValue GetVMValue(void *addr, const PType *type)
 	{
 		value = VMValue((void *)addr);
 	}
+	if (bitvalue != -1)
+	{
+		// deprecated bitfield
+		if (bitvalue > 64) bitvalue -= 64;
+		value.i = (value.i & (1 << bitvalue)) != 0;
+	}
 	return value;
 }
 
@@ -290,12 +296,12 @@ static VMValue GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, in
 	return VMValue();
 }
 
-static inline VMValue GetVMValueVar(DObject *obj, FName field, PType *type)
+static inline VMValue GetVMValueVar(DObject *obj, FName field, PType *type, int bitvalue = -1)
 {
 	if (!isValidDobject(obj)) return VMValue();
 	auto var = obj->ScriptVar(field, type);
-
-	return GetVMValue(var, type);
+	auto val = GetVMValue(var, type, bitvalue);
+	return val;
 }
 
 static inline VMValue TruncateVMValue(const VMValue *val, BasicType pointed_type)
@@ -758,7 +764,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			VMValue val;
 			void *pointed_field = struct_ptr + offset;
 			bool invalid = false;
-			val = GetVMValue(pointed_field, type);
+			val = GetVMValue(pointed_field, type, field->BitValue);
 			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, val, {}, invalid});
 			// increment struct_ptr by fieldSize
 			if (curr_ptr)

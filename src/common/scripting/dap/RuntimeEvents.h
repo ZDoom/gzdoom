@@ -24,8 +24,7 @@ namespace RuntimeEvents
 	EVENT_DECLARATION(CleanupStack, void(uint32_t))
 	EVENT_DECLARATION(Log, void(int level, const char *message))
 	EVENT_DECLARATION(BreakpointChanged, void(const dap::Breakpoint &bpoint, const std::string &))
-	EVENT_DECLARATION(
-		ExceptionThrown, void(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace))
+	EVENT_DECLARATION(ExceptionThrown, void(EVMAbortException reason, const std::string &message, const std::string &stackTrace))
 
 	void EmitBreakpointChangedEvent(const dap::Breakpoint &bpoint, const std::string &what);
 }

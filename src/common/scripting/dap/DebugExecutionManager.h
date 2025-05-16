@@ -46,7 +46,6 @@ public:
 	enum class ExceptionFilter
 	{
 		kScript,
-		kNative,
 		kMAX
 	};
 	private:
@@ -66,7 +65,7 @@ public:
 	const VMOP *m_lastInstruction = nullptr;
 	VMFrame *m_currentStepStackFrame;
 	VMFunction *m_currentVMFunction;
-	std::set<ExceptionFilter> m_exceptionFilters = {ExceptionFilter::kScript, ExceptionFilter::kNative};
+	std::set<ExceptionFilter> m_exceptionFilters = {ExceptionFilter::kScript};
 	public:
 	explicit DebugExecutionManager(RuntimeState *runtimeState, BreakpointManager *breakpointManager) : m_closed(true), m_runtimeState(runtimeState), m_breakpointManager(breakpointManager), m_currentStepStackFrame(nullptr)
 	{
@@ -76,7 +75,7 @@ public:
 
 	void Close();
 	void HandleInstruction(VMFrameStack *stack, VMReturn *ret, int numret, const VMOP *pc);
-	void HandleException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace);
+	void HandleException(EVMAbortException reason, const std::string &message, const std::string &stackTrace);
 	void Open(std::shared_ptr<dap::Session> ses);
 	bool Continue();
 	bool Pause();

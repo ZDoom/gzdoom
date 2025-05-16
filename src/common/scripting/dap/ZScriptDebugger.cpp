@@ -54,14 +54,7 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 	m_breakpointChangedEventHandle = RuntimeEvents::SubscribeToBreakpointChanged(std::bind(&ZScriptDebugger::BreakpointChanged, this, std::placeholders::_1, std::placeholders::_2));
 
 	m_exceptionThrownEventHandle = RuntimeEvents::SubscribeToExceptionThrown(
-		std::bind(
-			&ZScriptDebugger::ExceptionThrown,
-			this,
-			std::placeholders::_1,
-			std::placeholders::_2,
-			std::placeholders::_3,
-			std::placeholders::_4,
-			std::placeholders::_5));
+		std::bind(&ZScriptDebugger::ExceptionThrown, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 	RegisterSessionHandlers();
 }
@@ -204,10 +197,9 @@ void ZScriptDebugger::BreakpointChanged(const dap::Breakpoint &bpoint, const std
 	SendEvent(dap::BreakpointEvent {.breakpoint = bpoint, .reason = reason});
 }
 
-void ZScriptDebugger::ExceptionThrown(
-	VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const std::string &message, const std::string &stackTrace) const
+void ZScriptDebugger::ExceptionThrown(EVMAbortException reason, const std::string &message, const std::string &stackTrace) const
 {
-	m_executionManager->HandleException(sfunc, line, reason, message, stackTrace);
+	m_executionManager->HandleException(reason, message, stackTrace);
 }
 
 ZScriptDebugger::~ZScriptDebugger()

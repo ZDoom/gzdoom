@@ -904,12 +904,12 @@ void DebugServer::Binary::PopulateFunctionMaps()
 }
 dap::Source DebugServer::Binary::GetDapSource() const
 {
-	return {
-		.name = scriptName,
-		.origin = archiveName,
-		.path = unqualifiedScriptPath,
-		.sourceReference = scriptReference,
-	};
+	dap::Source source;
+	source.name = scriptName;
+	source.origin = archiveName;
+	source.path = unqualifiedScriptPath;
+	source.sourceReference = scriptReference;
+	return source;
 }
 
 std::pair<int, int> DebugServer::Binary::GetFunctionLineRange(const VMScriptFunction *func) const

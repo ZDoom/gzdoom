@@ -180,7 +180,10 @@ void DebugExecutionManager::HandleInstruction(VMFrameStack *stack, VMReturn *ret
 		ResetStepState(DebuggerState::kRunning, stack);
 		if (m_session)
 		{
-			m_session->send(dap::ContinuedEvent {.allThreadsContinued = true, .threadId = 1});
+			dap::ContinuedEvent event;
+			event.allThreadsContinued = true;
+			event.threadId = 1;
+			m_session->send(event);
 		}
 	}
 	break;

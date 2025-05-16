@@ -874,8 +874,12 @@ void DebugServer::Binary::populateFunctionMaps()
 	}
 }
 
-std::pair<int, int> DebugServer::Binary::GetFunctionLineRange(const VMScriptFunction *func)
+std::pair<int, int> DebugServer::Binary::GetFunctionLineRange(const VMScriptFunction *func) const
 {
+	if (!func)
+	{
+		return {0, 0};
+	}
 	for (auto &pair : functionLineMap)
 	{
 		if (pair.mapped() == func)

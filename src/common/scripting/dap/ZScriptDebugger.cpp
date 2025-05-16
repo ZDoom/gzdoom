@@ -669,7 +669,7 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
 			}
 			// cvars?
-			if (!found && context != "hover" && context != "variables" && !TryPath(StringFormat("%s.%s.%s", frameNodePath.c_str(), StackFrameStateNode::CVAR_SCOPE_NAME, request.expression.c_str()))){
+			if (!found && context != "variables" && !TryPath(StringFormat("%s.%s.%s", frameNodePath.c_str(), StackFrameStateNode::CVAR_SCOPE_NAME, request.expression.c_str()))){
 				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
 			}
 		}

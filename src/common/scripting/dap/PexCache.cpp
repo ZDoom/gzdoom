@@ -53,12 +53,7 @@ PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath)
 	// check for the archive name in the script path
 	binary->archiveName = fileSystem.GetResourceFileName(wadnum);
 	binary->archivePath = fileSystem.GetResourceFileFullName(wadnum);
-	binary->sourceData = {
-		.name = binary->scriptName,
-		.path = binary->scriptPath,
-		.origin = binary->archiveName,
-		.sourceReference = GetScriptReference(binary->GetQualifiedPath()),
-	};
+	binary->scriptReference = GetScriptReference(binary->GetQualifiedPath());
 	return binary;
 }
 
@@ -360,7 +355,7 @@ bool PexCache::GetSourceData(const std::string &scriptName, dap::Source &data)
 	{
 		return false;
 	}
-	data = binary->sourceData;
+	data = binary->GetDapSource();
 	return true;
 }
 
@@ -379,7 +374,7 @@ dap::ResponseOrError<dap::LoadedSourcesResponse> PexCache::GetLoadedSources(cons
 	scripts_lock scriptLock(m_scriptsMutex);
 	for (auto &bin : m_scripts)
 	{
-		response.sources.push_back(bin.second->sourceData);
+		response.sources.push_back(bin.second->GetDapSource());
 	}
 	return response;
 }
@@ -872,6 +867,15 @@ void DebugServer::Binary::populateFunctionMaps()
 			functionCodeMap.insert(true, codeRange);
 		}
 	}
+}
+dap::Source DebugServer::Binary::GetDapSource() const
+{
+	return {
+		.name = scriptName,
+		.origin = archiveName,
+		.path = scriptPath,
+		.sourceReference = scriptReference,
+	};
 }
 
 std::pair<int, int> DebugServer::Binary::GetFunctionLineRange(const VMScriptFunction *func) const

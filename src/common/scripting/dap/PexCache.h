@@ -44,8 +44,6 @@ private:
 	int lump;
 	int scriptReference;
 	NameFunctionMap functions;
-	NameClassMap classes;
-	NameStructMap structs;
 	FunctionLineMap functionLineMap;
 	FunctionCodeMap functionCodeMap;
 	NameStateFunctionMap stateFunctions;
@@ -122,9 +120,9 @@ public:
 	static bool GetSourceContent(const std::string &scriptPath, std::string &decompiledSource);
 
 	static void PopulateCodeMap(BinaryPtr binary, Binary::FunctionCodeMap &functionCodeMap);
-	static void PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber = false);
+	static void PopulateFromPaths(const std::map<std::string, int> &scripts, BinaryMap &p_scripts, bool clobber = false);
 	static void ScanScriptsInContainer(int baselump, BinaryMap &m_scripts, const std::string &filter = "");
-	static BinaryPtr makeEmptyBinary(const std::string &scriptPath);
+	static BinaryPtr makeEmptyBinary(const std::string &scriptPath, int lump);
 	
 	DisassemblyMap m_disassemblyMap;
 	Binary::FunctionCodeMap m_globalCodeMap;

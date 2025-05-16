@@ -47,7 +47,7 @@ PexCache::BinaryPtr PexCache::GetScript(const dap::Source &source)
 }
 
 
-PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath)
+PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath, int lump)
 {
 	auto binary = std::make_shared<Binary>();
 	auto colonPos = scriptPath.find(':');
@@ -56,7 +56,7 @@ PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath)
 	{
 		truncScriptPath = scriptPath.substr(colonPos + 1);
 	}
-	binary->lump = GetScriptFileID(scriptPath);
+	binary->lump = lump;
 	int wadnum = fileSystem.GetFileContainer(binary->lump);
 	binary->scriptName = truncScriptPath.substr(truncScriptPath.find_last_of("/\\") + 1);
 	binary->unqualifiedScriptPath = truncScriptPath;
@@ -111,14 +111,14 @@ void PexCache::ScanAllScripts()
 #endif
 }
 
-void PexCache::PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber)
+void PexCache::PopulateFromPaths(const std::map<std::string, int> &scripts, BinaryMap &p_scripts, bool clobber)
 {
-	for (auto &scriptPath : scripts)
+	for (auto &script : scripts)
 	{
-		auto ref = GetScriptReference(scriptPath);
+		auto ref = GetScriptReference(script.first);
 		if (clobber || p_scripts.find(ref) == p_scripts.end())
 		{
-			p_scripts[ref] = makeEmptyBinary(scriptPath);
+			p_scripts[ref] = makeEmptyBinary(script.first, script.second);
 		}
 	}
 }
@@ -149,7 +149,7 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 		}
 		for (auto &script : found)
 		{
-			filterRefs.push_back(GetScriptReference(script));
+			filterRefs.push_back(GetScriptReference(script.first));
 		}
 		PopulateFromPaths(found, p_scripts, true);
 	}
@@ -162,170 +162,59 @@ void PexCache::ScanScriptsInContainer(int baselump, BinaryMap &p_scripts, const 
 		}
 		PopulateFromPaths(found, p_scripts, true);
 	}
-	if (baselump == -1)
-	{
-		namespaces = Namespaces.AllNamespaces;
-	}
-	else
-	{
-		for (auto ns : Namespaces.AllNamespaces)
-		{
-			if (ns->FileNum == baselump)
-			{
-				namespaces.Push(ns);
-				break;
-			}
-		}
-	}
-	if (namespaces.Size() == 0)
-	{
-		return;
-	}
 	auto addEmptyBinIfNotExists = [&](int ref, const char *scriptPath)
 	{
 		if (p_scripts.find(ref) == p_scripts.end())
 		{
-			p_scripts[ref] = makeEmptyBinary(scriptPath);
+			p_scripts[ref] = makeEmptyBinary(scriptPath, GetScriptFileID(scriptPath));
 		}
 	};
-	for (auto ns : namespaces)
-	{
-		if (!ns)
+	for (auto &func : VMFunction::AllFunctions){
+		auto vmscriptfunc = GetVMScriptFunction(func);
+		if (!vmscriptfunc){
+			continue;
+		}
+		std::string source_name = vmscriptfunc->SourceFileName.GetChars();
+		if (source_name.empty() && !IsFunctionAbstract(vmscriptfunc)){
+			auto class_name = GetFunctionClassName(func);
+			if (class_name.empty()){
+				continue;
+			}
+			auto *cls = PClass::FindClass(class_name.c_str());
+			if (!cls){
+				continue;
+			}
+			source_name = cls->SourceLumpName.GetChars();
+		}
+		if (source_name.empty()){
+			continue;
+		}
+		auto ref = GetScriptReference(source_name);
+		if (!filterRefs.empty() && std::find(filterRefs.begin(), filterRefs.end(), ref) == filterRefs.end())
 		{
 			continue;
 		}
-
-		auto it = ns->Symbols.GetIterator();
-		TMap<FName, PSymbol *>::Pair *cls_pair = nullptr;
-		bool cls_found = it.NextPair(cls_pair);
-		for (; cls_found; cls_found = it.NextPair(cls_pair))
-		{
-			auto &cls_name = cls_pair->Key;
-			auto &cls_sym = cls_pair->Value;
-			if (!cls_sym->IsKindOf(RUNTIME_CLASS(PSymbolType)))
+		if (source_name.find("DECORATE") != std::string::npos){
+			int foo = 0;
+		}
+		PFunction * pfunc = GetFunctionSymbol(func);
+		addEmptyBinIfNotExists(ref, vmscriptfunc->SourceFileName.GetChars());
+		if (!pfunc && IsNonAbstractScriptFunction(func)){
+			p_scripts[ref]->stateFunctions[vmscriptfunc->QualifiedName] = vmscriptfunc;
+		} else if (pfunc) {
+			std::string symbolName = pfunc->SymbolName.GetChars();
+			for (auto &variant : pfunc->Variants)
 			{
-				continue;
-			}
-			auto cls_type = static_cast<PSymbolType *>(cls_sym)->Type;
-			if (!cls_type || (!cls_type->isClass() && !cls_type->isStruct()))
-			{
-				continue;
-			}
-			int cls_ref = -1;
-			FName srclmpname = NAME_None;
-			if (cls_type->isClass())
-			{
-				auto class_type = static_cast<PClassType *>(cls_type);
-				srclmpname = class_type->Descriptor->SourceLumpName;
-				if (srclmpname == NAME_None)
+				if (variant.Implementation)
 				{
-					// skip
-					continue;
-				}
-				cls_ref = GetScriptReference(srclmpname.GetChars());
-				// TODO: Fix for mixins added after the initial scan, this will currently not hit if the script that contains the mixin gets added after the initial scan
-				if (!filterRefs.empty() && std::find(filterRefs.begin(), filterRefs.end(), cls_ref) == filterRefs.end())
-				{
-					continue;
-				}
-				addEmptyBinIfNotExists(cls_ref, srclmpname.GetChars());
-				p_scripts[cls_ref]->classes[cls_name] = static_cast<PClassType *>(cls_type);
-			}
-			else
-			{
-			}
-
-			auto &cls_fields = cls_type->isClass() ? static_cast<PClassType *>(cls_type)->Symbols : static_cast<PStruct *>(cls_type)->Symbols;
-			auto cls_member_it = cls_fields.GetIterator();
-			TMap<FName, PSymbol *>::Pair *cls_member_pair = nullptr;
-			bool cls_member_found = cls_member_it.NextPair(cls_member_pair);
-			if (cls_type->isClass())
-			{
-				auto cls = static_cast<PClassType *>(cls_type)->Descriptor;
-				if (cls && ClassIsActor(cls))
-				{
-					auto actor = static_cast<PClassActor *>(cls);
-					// get the states
-					auto states = actor->GetStates();
-					auto stateCount = actor->GetStateCount();
-					for (int i = 0; i < stateCount; i++)
+					auto vmfunc = variant.Implementation;
+					if (!IsNonAbstractScriptFunction(vmfunc))
 					{
-						auto state = states + i;
-						if (state->ActionFunc)
-						{
-							auto *action = state->ActionFunc;
-							if (!IsNonAbstractScriptFunction(action))
-							{
-								continue;
-							}
-							auto *vmscriptfunc = dynamic_cast<VMScriptFunction *>(state->ActionFunc);
-							if (vmscriptfunc && vmscriptfunc->Name == NAME_None)
-							{
-								std::string source_name = vmscriptfunc->SourceFileName.GetChars();
-								if (source_name.empty()) // no source (likely DeHacked), skip it
-								{
-									continue;
-								}
-								auto ref = GetScriptReference(vmscriptfunc->SourceFileName.GetChars());
-								if (!filterRefs.empty() && std::find(filterRefs.begin(), filterRefs.end(), ref) == filterRefs.end())
-								{
-									continue;
-								}
-
-								addEmptyBinIfNotExists(ref, vmscriptfunc->SourceFileName.GetChars());
-								p_scripts[ref]->stateFunctions[vmscriptfunc->QualifiedName] = vmscriptfunc;
-							}
-						}
+						continue;
 					}
-				}
-			}
-
-			for (; cls_member_found; cls_member_found = cls_member_it.NextPair(cls_member_pair))
-			{
-				auto &cls_member_sym = cls_member_pair->Value;
-				std::vector<std::string> scriptNames;
-				if (cls_member_sym->IsKindOf(RUNTIME_CLASS(PFunction)))
-				{
-					auto pfunc = static_cast<PFunction *>(cls_member_sym);
-					for (auto &variant : pfunc->Variants)
-					{
-						if (variant.Implementation)
-						{
-							auto vmfunc = variant.Implementation;
-							if (IsFunctionNative(vmfunc))
-							{
-								continue;
-							}
-							auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
-							if (scriptFunc)
-							{
-								if (scriptFunc->SourceFileName.IsEmpty())
-								{
-									// abstract function
-									if (cls_ref == -1 || !IsFunctionAbstract(vmfunc))
-									{
-										continue;
-									}
-									addEmptyBinIfNotExists(cls_ref, srclmpname.GetChars());
-									p_scripts[cls_ref]->functions[scriptFunc->QualifiedName] = pfunc;
-									continue;
-								}
-								auto script_ref = GetScriptReference(scriptFunc->SourceFileName.GetChars());
-								if (!filterRefs.empty() && std::find(filterRefs.begin(), filterRefs.end(), script_ref) == filterRefs.end())
-								{
-									continue;
-								}
-								addEmptyBinIfNotExists(script_ref, scriptFunc->SourceFileName.GetChars());
-								auto this_bin = p_scripts[script_ref];
-								this_bin->functions[scriptFunc->QualifiedName] = pfunc;
-								if (cls_type->isStruct() && this_bin->structs.find(cls_name) == this_bin->structs.end())
-								{
-									this_bin->structs[cls_name] = static_cast<PStruct *>(cls_type);
-								}
-								break;
-							}
-						}
-					}
+					auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
+					// add to the function map
+					p_scripts[ref]->functions[vmscriptfunc->QualifiedName] = pfunc;
 				}
 			}
 		}
@@ -947,7 +836,7 @@ std::stack<beneficii::range_map<void *, VMScriptFunction *>::const_iterator> Deb
 
 bool DebugServer::Binary::HasFunctions() const
 {
-	return !functions.empty() && !functionCodeMap.empty();
+	return !functions.empty() || !functionCodeMap.empty();
 }
 bool DebugServer::Binary::HasFunctionLines() const
 {

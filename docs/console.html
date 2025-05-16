@@ -1814,6 +1814,14 @@ default: 1.0
 				<div class="b">Sends you to the specified coordinates immediately. This can be used 
 					with <a href="#idmypos">idmypos</a> to debug problems in a specific area of a 
 					map.</div>
+				<div class="v" id="vm_debug">vm_debug</div>
+				<div class="t">boolean: false</div>
+				<div class="d">When set to true, the game will enable the ZScript debug
+					server on the port specified in <i>vm_debug_port</i>. Note that enabling this
+					will disable JIT and requires restarting the game.</div>
+				<div class="v" id="vm_debug_port">vm_debug_port</div>
+				<div class="t">integer: 19021</div>
+				<div class="d">This is the port that the ZScript debug server will listen on.</div>
 			</div>
 			<div id="effects">
 				<h2>Effects</h2>

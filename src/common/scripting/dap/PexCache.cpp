@@ -50,19 +50,14 @@ PexCache::BinaryPtr PexCache::GetScript(const dap::Source &source)
 PexCache::BinaryPtr PexCache::makeEmptyBinary(const std::string &scriptPath, int lump)
 {
 	auto binary = std::make_shared<Binary>();
-	auto colonPos = scriptPath.find(':');
-	auto truncScriptPath = scriptPath;
-	if (colonPos != std::string::npos)
-	{
-		truncScriptPath = scriptPath.substr(colonPos + 1);
-	}
+	auto truncScriptPath = GetScriptPathNoQual(scriptPath);
 	binary->lump = lump;
 	int wadnum = fileSystem.GetFileContainer(binary->lump);
-	binary->scriptName = truncScriptPath.substr(truncScriptPath.find_last_of("/\\") + 1);
+	binary->scriptName = FileSys::ExtractBaseName(truncScriptPath.c_str(), true);
 	binary->unqualifiedScriptPath = truncScriptPath;
 	// check for the archive name in the script path
-	binary->archiveName = fileSystem.GetResourceFileName(wadnum);
-	binary->archivePath = fileSystem.GetResourceFileFullName(wadnum);
+	binary->archivePath = wadnum >= 0 ? fileSystem.GetResourceFileFullName(wadnum) : GetArchiveNameFromPath(scriptPath);
+	binary->archiveName = wadnum >= 0 ? fileSystem.GetResourceFileName(wadnum) : binary->archivePath;
 	binary->scriptReference = GetScriptReference(binary->GetQualifiedPath());
 	return binary;
 }
@@ -911,6 +906,7 @@ dap::Source DebugServer::Binary::GetDapSource() const
 	source.origin = archiveName;
 	source.path = unqualifiedScriptPath;
 	source.sourceReference = scriptReference;
+	source.adapterData = archivePath;
 	return source;
 }
 

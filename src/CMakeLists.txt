@@ -1335,6 +1335,7 @@ include_directories(
 	../libraries/ZVulkan/include
 	../libraries/ZWidget/include
 	../libraries/webp/include
+	../libraries/range_map/include
 	${SYSTEM_SOURCES_DIR}
 )
 

@@ -230,11 +230,11 @@ static VMValue GetVMValue(void *addr, const PType *type)
 	{
 		value = VMValue(*(double *)addr);
 	}
-	else if (!type->isScalar())
+	else if (type->isPointer() && type->Size == static_cast<uint32_t>(-1))
 	{
-		value = VMValue(addr);
+		value = VMValue((void *)addr);
 	}
-	else if (IsBasicNonPointerType(type))
+	else if (type->isScalar())
 	{
 		switch (type->Size)
 		{
@@ -257,9 +257,25 @@ static VMValue GetVMValue(void *addr, const PType *type)
 	}
 	else
 	{
-		value = *static_cast<VMValue *>(addr);
+		value = VMValue((void *)addr);
 	}
 	return value;
+}
+
+static VMValue GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, int idx)
+{
+	switch (regType)
+	{
+	case REGT_INT:
+		return VMValue(m_stackFrame->GetRegD()[idx]);
+	case REGT_FLOAT:
+		return VMValue(m_stackFrame->GetRegF()[idx]);
+	case REGT_STRING:
+		return VMValue(&m_stackFrame->GetRegS()[idx]);
+	case REGT_POINTER:
+		return VMValue(m_stackFrame->GetRegA()[idx]);
+	}
+	return VMValue();
 }
 
 static inline VMValue GetVMValueVar(DObject *obj, FName field, PType *type)
@@ -730,51 +746,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			VMValue val;
 			void *pointed_field = struct_ptr + offset;
 			bool invalid = false;
-			if (type == TypeString)
-			{
-				auto str = static_cast<FString *>(pointed_field);
-				if (!isFStringValid(*str)) val = VMValue();
-				else
-					val = VMValue(str);
-			}
-			else if (type == TypeFloat32)
-			{
-				val = VMValue(*(float *)pointed_field);
-			}
-			else if (type == TypeFloat64)
-			{
-				val = VMValue(*(double *)pointed_field);
-			}
-			else if (type->isPointer() && fieldSize == -1)
-			{
-				val = VMValue((void *)pointed_field);
-			}
-			else if (type->isScalar())
-			{
-				switch (fieldSize)
-				{
-				case 1:
-					val = VMValue(*(uint8_t *)pointed_field);
-					break;
-				case 2:
-					val = VMValue(*(uint16_t *)pointed_field);
-					break;
-				case 4:
-					val = VMValue(*(uint32_t *)pointed_field);
-					break;
-				case 8:
-					val = VMValue((void *)(*(uint64_t *)pointed_field));
-					break;
-				default:
-					invalid = true;
-					LogError("GetStructState: field %s scalar field size %d not supported", field_name.c_str(), fieldSize);
-					break;
-				}
-			}
-			else
-			{
-				val = VMValue((void *)pointed_field);
-			}
+			val = GetVMValue(pointed_field, type);
 			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, val, {}, invalid});
 			// increment struct_ptr by fieldSize
 			if (curr_ptr)
@@ -793,7 +765,8 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 	return m_structInfo;
 }
 
-static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMValue &value, int idx)
+
+static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType, VMValue &value, int idx)
 {
 	switch (regType)
 	{
@@ -804,7 +777,6 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 			value = VMValue();
 			return false;
 		}
-		value = VMValue(m_stackFrame->GetRegD()[idx]);
 		break;
 
 	case REGT_FLOAT:
@@ -814,7 +786,6 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 			value = VMValue();
 			return false;
 		}
-		value = VMValue(m_stackFrame->GetRegF()[idx]);
 		break;
 	case REGT_STRING:
 		if (idx >= m_stackFrame->NumRegS)
@@ -823,7 +794,6 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 			value = VMValue();
 			return false;
 		}
-		value = VMValue(&m_stackFrame->GetRegS()[idx]);
 		break;
 
 	case REGT_POINTER:
@@ -833,9 +803,15 @@ static bool GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, VMVal
 			value = VMValue();
 			return false;
 		}
-		value = VMValue(m_stackFrame->GetRegA()[idx]);
 		break;
+	default:
+	{
+		LogError("GetRegisterValue: Function %s, invalid reg type %d", m_stackFrame->Func->PrintableName, regType);
+		value = VMValue();
+		return false;
 	}
+	}
+	value = GetRegisterValue(m_stackFrame, regType, idx);
 	return true;
 }
 
@@ -869,7 +845,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 			NumRegAddress++;
 			break;
 		}
-		return GetRegisterValue(p_stackFrame, type, value, idx);
+		return GetRegisterValueChecked(p_stackFrame, type, value, idx);
 	};
 	VMScriptFunction *func = GetVMScriptFunction(p_stackFrame->Func);
 	auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
@@ -1006,7 +982,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 						break;
 					}
 
-					bool valid = GetRegisterValue(p_stackFrame, reg_type, value, state.RegNum);
+					bool valid = GetRegisterValueChecked(p_stackFrame, reg_type, value, state.RegNum);
 					state = LocalState {name, type, flags, NumRegAddress, 1, local.LineNumber, value, {}, valid};
 				}
 				return state;

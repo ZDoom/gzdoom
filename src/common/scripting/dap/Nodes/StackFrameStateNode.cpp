@@ -48,16 +48,10 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 	if (IsFunctionNative(m_stackFrame->Func))
 	{
 		stackFrame.name = m_stackFrame->Func->PrintableName;
-		
-		source.name = "<NATIVE>";
-		source.origin = "<NATIVE>";
-		source.presentationHint = "deemphasize";
-		stackFrame.source = source;
 		return true;
 	}
-	auto scriptFunction = static_cast<VMScriptFunction *>(m_stackFrame->Func);
-	std::string ScriptName = scriptFunction->SourceFileName.GetChars();
-	if (pexCache->GetSourceData(ScriptName.c_str(), source))
+	auto scriptFunction = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
+	if (scriptFunction && scriptFunction->SourceFileName.GetChars() && pexCache->GetSourceData(scriptFunction->SourceFileName.GetChars(), source))
 	{
 		stackFrame.source = source;
 		if (m_stackFrame->PC)

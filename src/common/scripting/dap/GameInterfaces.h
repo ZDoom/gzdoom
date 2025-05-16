@@ -519,11 +519,7 @@ static PClass *GetClassDescriptor(PType *localtype)
 
 static VMScriptFunction *GetVMScriptFunction(VMFunction *func)
 {
-	if (!func)
-	{
-		return nullptr;
-	}
-	if (IsFunctionNative(func))
+	if (!func || IsFunctionNative(func))
 	{
 		return nullptr;
 	}

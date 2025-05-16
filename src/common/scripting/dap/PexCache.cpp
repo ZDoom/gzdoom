@@ -80,22 +80,18 @@ void PexCache::PopulateCodeMap(PexCache::BinaryPtr binary, Binary::FunctionCodeM
 		i++;
 		for (auto &variant : func.second->Variants)
 		{
-			auto vmfunc = variant.Implementation;
-			if (IsFunctionNative(vmfunc) || IsFunctionAbstract(vmfunc))
-			{
-				continue;
-			}
-			auto scriptFunc = static_cast<VMScriptFunction *>(vmfunc);
-
-			void *code = scriptFunc->Code;
-			void *end = scriptFunc->Code + scriptFunc->CodeSize;
-			Binary::FunctionCodeMap::range_type codeRange(code, end, scriptFunc);
-			auto ret = functionCodeMap.insert(true, codeRange);
-			if (!ret.second)
-			{
-				continue;
-			}
+			auto scriptFunc = GetVMScriptFunction(variant.Implementation);
+			if (!scriptFunc || IsFunctionAbstract(scriptFunc)) continue;
+			Binary::FunctionCodeMap::range_type codeRange(scriptFunc->Code, scriptFunc->Code + scriptFunc->CodeSize, scriptFunc);
+			functionCodeMap.insert(true, codeRange);
 		}
+	}
+	for (auto &pair : binary->stateFunctions)
+	{
+		auto scriptFunc = GetVMScriptFunction(pair.second);
+		if (!scriptFunc || IsFunctionAbstract(scriptFunc)) continue;
+		Binary::FunctionCodeMap::range_type codeRange(scriptFunc->Code, scriptFunc->Code + scriptFunc->CodeSize, scriptFunc);
+		functionCodeMap.insert(true, codeRange);
 	}
 }
 
@@ -110,10 +106,6 @@ void PexCache::ScanAllScripts()
 	{
 		PopulateCodeMap(bin.second, m_globalCodeMap);
 	}
-	// for (auto &pair : m_globalCodeMap)
-	// {
-	// 	AddDisassemblyLines(pair.mapped(), m_disassemblyMap);
-	// }
 }
 
 void PexCache::PopulateFromPaths(const std::vector<std::string> &scripts, BinaryMap &p_scripts, bool clobber)
@@ -748,20 +740,23 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 		lines_map.insert({(void *)currCodePointer, instruction});
 		currCodePointer++;
 	}
+	bool hit_min_line = false;
+	bool after_min_line = false;
 	auto func_decl_line = FindFunctionDeclaration(source, func, min_line);
 	if (func_decl_line > 0)
 	{
 		for (auto &pr : lines_map)
 		{
 			auto &instruction = pr.second;
-			if (instruction->line == 588 && instruction->function.find("BeginPlay") != -1)
+			// the objective is to show the function declaration line in the assembly; but we only want to show it for the first set of instructions that map to the min line
+			if (!after_min_line && instruction->line == min_line)
 			{
-				int i = 0;
-			}
-
-			if (instruction->line == min_line)
-			{
+				hit_min_line = true;
 				instruction->line = func_decl_line;
+			}
+			else if (hit_min_line == true)
+			{
+				after_min_line = true;
 			}
 		}
 	}
@@ -774,21 +769,46 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 
 bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOffset, int64_t p_count, std::vector<std::shared_ptr<DisassemblyLine>> &lines_vec)
 {
+	scripts_lock scriptLock(m_scriptsMutex);
 	// if the offset is negative, we get the previous instructions
 	if (!address)
 	{
 		return false;
 	}
 	auto ret = m_globalCodeMap.find_ranges((void *)address);
-
+	int64_t extra = 0;
 	if (ret.empty())
 	{
-		return false;
+		// back up until we find a valid address
+		if (p_instructionOffset < 0)
+		{
+			int64_t i = 1;
+			ret = m_globalCodeMap.find_ranges((void *)(address - i));
+			while (ret.empty())
+			{
+				i++;
+				ret = m_globalCodeMap.find_ranges((void *)(address - i));
+				if (i > std::abs(p_instructionOffset) + p_count)
+				{
+					return false;
+				}
+			}
+			extra = i;
+		}
+		else
+		{
+			auto it = m_globalCodeMap.lower_bound((void *)address);
+			if (it == m_globalCodeMap.end())
+			{
+				return false;
+			}
+			ret.push(it);
+			// get the difference between the start point and the address
+			extra = address - (VMOP *)it->start_pt();
+		}
 	}
 	auto &it = ret.top();
 	Binary::FunctionCodeMap::iterator reverse_it = ret.top();
-	auto endofmap = m_globalCodeMap.rend();
-	auto beginningofmap = m_globalCodeMap.rbegin();
 	std::map<void *, std::shared_ptr<DisassemblyLine>> instruction_map;
 	std::map<void *, std::shared_ptr<DisassemblyLine>> forward_instruction_map;
 	auto firstFunc = it->mapped();
@@ -804,14 +824,17 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 		for (auto &pr : lines)
 		{
 			auto &line = pr.second;
-			instruction_map[line->address] = line;
-			added++;
+			auto result = instruction_map.insert({line->address, line});
+			if (result.second)
+			{
+				added++;
+			}
 		}
 		return added;
 	};
 	{
 		int64_t instructionOffset = p_instructionOffset;
-		int64_t count = p_count + std::abs(p_instructionOffset) + firstFuncInstcount;
+		int64_t count = p_count + std::abs(p_instructionOffset) + firstFuncInstcount + extra;
 		if (instructionOffset < 0)
 		{
 			// get the difference between instructionOffset and 0 (+ the first func count to the requested address)
@@ -827,7 +850,6 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 					found = m_disassemblyMap.find_ranges(reverse_it->start_pt());
 				}
 				auto &found_lines = found.top()->mapped();
-				auto mapped = reverse_it->mapped();
 				instructionsToGet -= addToInstMap(found_lines);
 
 				if (instructionsToGet <= 0)
@@ -835,8 +857,6 @@ bool PexCache::GetDisassemblyLines(const VMOP *address, int64_t p_instructionOff
 					break;
 				}
 				--reverse_it;
-				bool isNotAtEnd = reverse_it != m_globalCodeMap.end();
-				bool thingy = false;
 			}
 			if (std::abs(std::abs(instructionOffset) - count) > 0)
 			{

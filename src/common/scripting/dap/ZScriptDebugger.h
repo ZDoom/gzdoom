@@ -67,7 +67,6 @@ class ZScriptDebugger
 	dap::ResponseOrError<dap::LoadedSourcesResponse> GetLoadedSources(const dap::LoadedSourcesRequest &request);
 	dap::ResponseOrError<dap::DisassembleResponse> Disassemble(const dap::DisassembleRequest &request);
 	private:
-	bool m_closed = false;
 
 	std::atomic<uint64_t> msg_counter = 0;
 	std::shared_ptr<IdProvider> m_idProvider;
@@ -88,8 +87,9 @@ class ZScriptDebugger
 	RuntimeEvents::InstructionExecutionEventHandle m_instructionExecutionEventHandle;
 	RuntimeEvents::LogEventHandle m_logEventHandle;
 	RuntimeEvents::BreakpointChangedEventHandle m_breakpointChangedEventHandle;
-	bool m_quitting = false;
-	bool m_disconnecting = false;
+	bool m_quitting = false; // Received a disconnect request with a terminateDebuggee flag; if this is true, we exit the program
+	bool m_disconnecting = false; // Received a disconnect request; if this is true, we send a terminate event after the disconnect response
+	bool m_initialized = false; // Received initialize request; If this isn't true, we don't send events, prevents sending events before the client is ready (or if socket has been closed before initialization)
 
 	void RegisterSessionHandlers();
 	dap::Error Error(const std::string &msg);

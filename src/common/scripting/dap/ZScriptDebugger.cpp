@@ -34,11 +34,12 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 {
 	if (m_session)
 	{
-		LogError("Session is already active, ending it first!");
+		LogInternalError("Session is already active, ending it first!");
 		EndSession();
 	}
+	m_initialized = false;
 	m_disconnecting = false;
-	m_closed = false;
+	m_quitting = false;
 	m_session = session;
 	m_executionManager->Open(session);
 	m_createStackEventHandle = RuntimeEvents::SubscribeToCreateStack(std::bind(&ZScriptDebugger::StackCreated, this, std::placeholders::_1));
@@ -59,11 +60,11 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 bool ZScriptDebugger::EndSession()
 {
 	m_executionManager->Close();
-	m_closed = true;
 	if (m_session && m_disconnecting)
 	{
-		m_session->send(dap::TerminatedEvent());
+		SendEvent(dap::TerminatedEvent());
 	}
+	m_initialized = false;
 	m_session = nullptr;
 	m_disconnecting = false;
 
@@ -90,7 +91,12 @@ void ZScriptDebugger::RegisterSessionHandlers()
 	m_session->onError([this](const char *msg) { Printf("%s", msg); });
 	m_session->registerSentHandler(
 		// After an intialize response is sent, we send an initialized event to indicate that the client can now send requests.
-		[this](const dap::ResponseOrError<dap::InitializeResponse> &) { SendEvent(dap::InitializedEvent()); });
+		[this](const dap::ResponseOrError<dap::InitializeResponse> &)
+		{
+			// enable event sending
+			m_initialized = true;
+			SendEvent(dap::InitializedEvent());
+		});
 
 	// Client is done configuring.
 	m_session->registerHandler([this](const dap::ConfigurationDoneRequest &) { return dap::ConfigurationDoneResponse {}; });
@@ -134,7 +140,7 @@ dap::Error ZScriptDebugger::Error(const std::string &msg)
 
 template <typename T, typename> void ZScriptDebugger::SendEvent(const T &event) const
 {
-	if (m_session) m_session->send(event);
+	if (m_session && m_initialized) m_session->send(event);
 }
 
 std::string LogSeverityEnumStr(Severity severity)
@@ -174,6 +180,10 @@ void ZScriptDebugger::LogGameOutput(Severity severity, const std::string &msg) c
 
 void ZScriptDebugger::EventLogged(int severity, const char *msg) const
 {
+	if (severity & PrintLevel_NoEmit)
+	{
+		return;
+	}
 	dap::OutputEvent output;
 	output.category = "console";
 	output.output = std::string(msg) + "\r\n";

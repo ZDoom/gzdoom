@@ -81,6 +81,12 @@ static inline std::string StripColorCodes(const std::string &str)
 
 	return copy.Data();
 }
+enum
+{
+	PrintLevel_NoEmit = PRINT_NOTIFY << 1,
+};
+template <typename... Args> void LogInternal(const char *fmt, Args... args) { Printf(PRINT_HIGH | PrintLevel_NoEmit, "%s\n", StringFormat(fmt, args...).c_str()); }
+template <typename... Args> void LogInternalError(const char *fmt, Args... args) { Printf(PRINT_HIGH | PrintLevel_NoEmit, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str()); }
 
 template <typename... Args> void LogError(const char *fmt, Args... args) { Printf(TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str()); }
 

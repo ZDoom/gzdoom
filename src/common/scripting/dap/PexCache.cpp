@@ -293,6 +293,29 @@ std::shared_ptr<Binary> PexCache::AddScript(const std::string &scriptPath)
 
 	return bin;
 }
+
+std::vector<VMFunction *> PexCache::GetFunctionsAtAddress(void *address)
+{
+	std::lock_guard<std::recursive_mutex> lock(m_scriptsMutex);
+	if (!address)
+	{
+		return {};
+	}
+	std::stack<Binary::FunctionCodeMap::iterator> found;
+	found = m_globalCodeMap.find_ranges(address);
+	std::vector<VMFunction *> funcs;
+	while (!found.empty())
+	{
+		auto func = found.top()->mapped();
+		if (func)
+		{
+			funcs.push_back(func);
+		}
+		found.pop();
+	}
+
+	return funcs;
+}
 std::shared_ptr<Binary> PexCache::GetScript(std::string fqsn)
 {
 	uint32_t reference = GetScriptReference(fqsn);

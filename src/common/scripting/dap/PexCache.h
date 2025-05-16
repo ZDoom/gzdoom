@@ -58,6 +58,7 @@ public:
 	std::string GetArchivePath() const;
 	std::stack<FunctionLineMap::const_iterator> FindFunctionRangesByLine(int line) const;
 	std::stack<FunctionCodeMap::const_iterator> FindFunctionRangesByCode(void *address) const;
+	int GetScriptRef() const { return scriptReference; }
 	bool HasFunctions() const;
 	bool HasFunctionLines() const;
 
@@ -106,9 +107,8 @@ public:
 	uint64_t AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &instructions);
 	bool GetDisassemblyLines(const VMOP *address, int64_t instructionOffset, uint64_t count, std::vector<std::shared_ptr<DisassemblyLine>> &lines);
 	std::shared_ptr<Binary> AddScript(const std::string &scriptPath);
-
-private:
-
+	std::vector<VMFunction *> GetFunctionsAtAddress(void *address);
+	private:
 	using scripts_lock = std::scoped_lock<std::recursive_mutex>;
 
 	int FindFunctionDeclaration(const std::shared_ptr<Binary> &source, const VMScriptFunction *func, int start_line_from_1);

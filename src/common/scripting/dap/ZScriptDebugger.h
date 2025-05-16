@@ -8,9 +8,8 @@
 #include "BreakpointManager.h"
 #include "DebugExecutionManager.h"
 #include "IdMap.h"
-#include <forward_list>
 #include "Protocol/struct_extensions.h"
-#include <common/engine/printf.h>
+
 namespace DebugServer
 {
 enum DisconnectAction
@@ -34,7 +33,9 @@ class ZScriptDebugger
 	~ZScriptDebugger();
 	void StartSession(std::shared_ptr<dap::Session> session);
 	bool EndSession();
-	bool IsJustMyCode() const { return false; };
+	bool IsJustMyCode() const { return false; }
+	dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> SetInstructionBreakpoints(const dap::SetInstructionBreakpointsRequest &request);
+	;
 	void SetJustMyCode(bool enable) { };
 	template <typename T, typename = IsEvent<T>> void SendEvent(const T &event) const;
 	void Initialize();

@@ -46,7 +46,7 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 		}
 		return response;
 	}
-	if (binary->functions.empty())
+	if (!binary->HasFunctions())
 	{
 		for (const auto &srcBreakpoint : srcBreakpoints)
 		{
@@ -54,7 +54,7 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 		}
 		return response;
 	}
-	else if (binary->functionLineMap.empty())
+	else if (!binary->HasFunctionLines())
 	{
 		for (const auto &srcBreakpoint : srcBreakpoints)
 		{
@@ -70,7 +70,7 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 		int instructionNum = -1;
 		int foundFunctionInfoIndex;
 		int64_t breakpointId = -1;
-		auto found = binary->functionLineMap.find_ranges(line);
+		auto found = binary->FindFunctionRangesByLine(line);
 		if (found.size() == 0)
 		{
 			addInvalidBreakpoint(line, "Invalid instruction", false);

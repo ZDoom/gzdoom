@@ -34,6 +34,10 @@ bool ObjectStateNode::SerializeToProtocol(dap::Variable &variable)
 		{
 			variable.value = StringFormat("%s <NULL>", typeval.c_str());
 		}
+		else if (m_ActualType != nullptr)
+		{
+			variable.value = StringFormat("%s (%p) as %s", m_ActualType->mDescriptiveName.GetChars(), m_value.a, typeval.c_str());
+		}
 		else
 		{
 			variable.value = StringFormat("%s (%p)", typeval.c_str(), m_value.a);
@@ -63,9 +67,13 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 	{
 		// do the parent class first
 		DObject *dobject = IsVMValValidDObject(&m_value) ? static_cast<DObject *>(m_value.a) : nullptr;
+		if (!dobject)
+		{
+			return false;
+		}
 		auto classType = PType::toClass(p_type);
 		auto descriptor = classType->Descriptor;
-
+		std::string error_msg;
 		if (classType->ParentType && descriptor && descriptor->ParentClass)
 		{
 			auto parent = classType->ParentType;
@@ -80,12 +88,33 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 				auto name = field->SymbolName.GetChars();
 				if (!dobject)
 				{
-					m_children[name] = RuntimeState::CreateNodeForVariable(name, VMValue(), field->Type);
+					m_children[name] = RuntimeState::CreateNodeForVariable(name, VMValue(), field->Type, nullptr, descriptor);
 				}
 				else
 				{
-					auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type);
-					m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type);
+					try
+					{
+						auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type);
+						m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type, nullptr, descriptor);
+					}
+					catch (CRecoverableError &e)
+					{
+						error_msg = e.what();
+						// class is not actually its descriptor (this is the case where things are intentionally set to destroyed objects, like `PendingWeapon = WP_NOCHANGE`)
+						// try again with the actual class
+						m_children.clear();
+						m_ActualType = dobject->GetClass()->VMType;
+						names.clear();
+						descriptor = dobject->GetClass();
+						for (auto field : descriptor->Fields)
+						{
+							name = field->SymbolName.GetChars();
+							auto child_val_ptr = GetVMValueVar(dobject, field->SymbolName, field->Type);
+							m_children[name] = RuntimeState::CreateNodeForVariable(name, child_val_ptr, field->Type, nullptr, descriptor);
+							names.push_back(name);
+						}
+						break;
+					}
 				}
 				names.push_back(name);
 			}
@@ -94,7 +123,12 @@ bool ObjectStateNode::GetChildNames(std::vector<std::string> &names)
 		{
 
 			LogError("Failed to get child names for object '%s' of type %s", m_name.c_str(), p_type->mDescriptiveName.GetChars());
+			if (!error_msg.empty())
+			{
+				LogError("Error: %s", error_msg.c_str());
+			}
 			LogError("Error: %s", e.what());
+
 			return false;
 		}
 		m_cachedNames = names;

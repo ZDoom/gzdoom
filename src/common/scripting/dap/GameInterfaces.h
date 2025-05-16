@@ -134,8 +134,8 @@ static inline bool isScriptPath(const std::string &path)
 	std::string scriptName = ToLowerCopy(FileSys::ExtractBaseName(GetScriptPathNoQual(path).c_str(), true));
 	auto ext = scriptName.substr(scriptName.find_last_of('.') + 1);
 	scriptName = scriptName.substr(0, scriptName.find_last_of('.'));
-	if (!(ext == "zs" || ext == "zsc" || ext == "zc" || ext == "acs" || ext == "dec" || (scriptName == "decorate") || (scriptName == "acs")
-				|| (scriptName == "sbarinfo")))
+	if (!(ext == "zs" || ext == "zsc" || ext == "zc" || ext == "acs" || ext == "dec" || ext == "deh" || (scriptName == "decorate") || (scriptName == "acs")
+				|| (scriptName == "sbarinfo") || (scriptName == "dehacked")))
 	{
 		return false;
 	}

@@ -37,8 +37,13 @@ bool LocalScopeStateNode::GetChildNames(std::vector<std::string> &names)
 	if (m_state.m_locals.empty())
 		m_state = GetLocalsState(m_stackFrame);
 
+	auto scriptFunc = dynamic_cast<VMScriptFunction *>(m_stackFrame->Func);
 	for (auto &local : m_state.m_locals)
 	{
+		if (scriptFunc && scriptFunc->PCToLine(m_stackFrame->PC) <= local.Line)
+		{
+			continue;
+		}
 		names.push_back(local.Name);
 	}
 	return true;

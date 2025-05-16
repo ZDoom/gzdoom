@@ -457,6 +457,7 @@ struct VMLocalVariable
 	int VarFlags;
 	int RegCount;
 	int RegNum;
+	int LineNumber;
 };
 
 class VMScriptFunction : public VMFunction

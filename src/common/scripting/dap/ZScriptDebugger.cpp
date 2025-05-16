@@ -34,7 +34,10 @@ void ZScriptDebugger::StartSession(std::shared_ptr<dap::Session> session)
 {
 	if (m_session)
 	{
-		LogInternalError("Session is already active, ending it first!");
+		if (m_initialized)
+		{
+			LogInternalError("Session is already active, ending it first!");
+		}
 		EndSession();
 	}
 	m_initialized = false;
@@ -74,11 +77,10 @@ bool ZScriptDebugger::EndSession(bool closed)
 	m_executionManager->Close();
 	if (m_session)
 	{
-		LogInternal("Ending DAP debugging session.");
 		if (!closed && m_initialized)
 		{
+			LogInternal("Ending DAP debugging session.");
 			SendEvent(dap::TerminatedEvent());
-			// LogInternal("Sent terminate event.");
 		}
 	}
 	m_initialized = false;
@@ -262,6 +264,7 @@ dap::ResponseOrError<dap::InitializeResponse> ZScriptDebugger::Initialize(const 
 {
 	m_clientCaps = request;
 	dap::InitializeResponse response;
+	LogInternal("Initializing DAP session...");
 	response.supportsConfigurationDoneRequest = true;
 	response.supportsLoadedSourcesRequest = true;
 	response.supportedChecksumAlgorithms = {"CRC32"};

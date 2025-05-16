@@ -135,7 +135,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 		{
 			variable.type = "Color";
 			// hex format
-			variable.value = StringFormat("Color# %d", m_variable.i);
+			variable.value = StringFormat("Color #%08x", m_variable.i);
 		}
 		else if (m_type == TypeStateLabel)
 		{

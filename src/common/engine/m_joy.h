@@ -1,7 +1,6 @@
 #ifndef M_JOY_H
 #define M_JOY_H
 
-#include "basics.h"
 #include "keydef.h"
 #include "tarray.h"
 #include "c_cvars.h"
@@ -109,6 +108,7 @@ double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input);
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
+void I_Rumble(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig);
 IJoystickConfig *I_UpdateDeviceList();
 extern void UpdateJoystickMenu(IJoystickConfig *);
 

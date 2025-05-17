@@ -37,6 +37,7 @@ namespace RuntimeEvents
 	EVENT_WRAPPER_IMPL(Log, void(int level, const char *msg))
 	EVENT_WRAPPER_IMPL(BreakpointChanged, void(const dap::Breakpoint &bpoint, const std::string &))
 	EVENT_WRAPPER_IMPL(ExceptionThrown, void(EVMAbortException reason, const std::string &message, const std::string &stackTrace))
+	EVENT_WRAPPER_IMPL(DebuggerEnabled, bool(void))
 
 #undef EVENT_WRAPPER_IMPL
 
@@ -68,6 +69,14 @@ namespace RuntimeEvents
 		{
 			g_ExceptionThrownEvent(reason, message, stackTrace);
 		}
+	}
+
+	bool IsDebugServerRunning()
+	{
+		if (g_DebuggerEnabledEventActive){
+			return g_DebuggerEnabledEvent();
+		}
+		return false;
 	}
 
 	// TODO: Are CreateStack and CleanupStack events needed? VM execution is single-threaded and there's only one stack.

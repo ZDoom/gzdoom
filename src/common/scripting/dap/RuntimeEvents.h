@@ -29,6 +29,7 @@ namespace RuntimeEvents
 	EVENT_DECLARATION(Log, void(int level, const char *message))
 	EVENT_DECLARATION(BreakpointChanged, void(const dap::Breakpoint &bpoint, const std::string &))
 	EVENT_DECLARATION(ExceptionThrown, void(EVMAbortException reason, const std::string &message, const std::string &stackTrace))
+	EVENT_DECLARATION(DebuggerEnabled, bool(void))
 
 	void EmitBreakpointChangedEvent(const dap::Breakpoint &bpoint, const std::string &what);
 }

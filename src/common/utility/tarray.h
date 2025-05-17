@@ -1171,6 +1171,12 @@ public:
 	typedef struct { const KT Key; VT Value; } Pair;
 	typedef const Pair ConstPair;
 
+  // STL-standard type traits for iteration
+  using iterator = Iterator;
+  using const_iterator = ConstIterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
 	typedef KT KeyType;
 	typedef VT ValueType;
 
@@ -1211,6 +1217,69 @@ public:
 		TransferFrom(o);
 		return *this;
 	}
+
+  iterator begin()
+  {
+    return iterator(*this);
+  }
+  const_iterator begin() const
+  {
+    return const_iterator(*this);
+  }
+  const_iterator cbegin() const
+  {
+    return const_iterator(*this);
+  }
+
+  iterator end()
+  {
+    auto it = iterator(*this, Size);
+    return it;
+  }
+
+  const_iterator end() const
+  {
+    auto it = const_iterator(
+            *this,
+            Size
+    );
+    return it;
+  }
+
+  const_iterator cend() const
+  {
+    auto it = const_iterator(
+            *this,
+            Size
+    );
+    return it;
+  }
+
+  reverse_iterator rbegin()
+  {
+    return reverse_iterator(end());
+  }
+  const_reverse_iterator rbegin() const
+  {
+    return const_reverse_iterator(end());
+  }
+  const_reverse_iterator crbegin() const
+  {
+    return const_reverse_iterator(cend());
+  }
+
+  reverse_iterator rend()
+  {
+    return reverse_iterator(begin());
+  }
+  const_reverse_iterator rend() const
+  {
+    return const_reverse_iterator(begin());
+  }
+  const_reverse_iterator crend() const
+  {
+    return const_reverse_iterator(cbegin());
+  }
 
 	//=======================================================================
 	//
@@ -1669,11 +1738,51 @@ protected:
 template<class KT, class VT, class MapType=TMap<KT,VT> >
 class TMapIterator
 {
+  friend class TMap<KT,VT>;
 public:
-	TMapIterator(MapType &map)
+  // STL standard type traits for iteration
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = typename MapType::Pair;
+  using difference_type = ptrdiff_t;
+  using pointer = value_type*;
+  using reference = value_type&;
+
+  TMapIterator(MapType &map)
 		: Map(map), Position(0)
 	{
 	}
+protected:
+  explicit TMapIterator(MapType &map, hash_t position)
+        : Map(map), Position(position)
+  {
+  }
+public:
+
+  // Comparison operators
+  bool operator==(const TMapIterator& other) const { return Position == other.Position; }
+  bool operator!=(const TMapIterator& other) const { return Position != other.Position; }
+  bool operator< (const TMapIterator& other) const { return Position < other.Position; }
+  bool operator> (const TMapIterator& other) const { return Position > other.Position; }
+  bool operator<=(const TMapIterator& other) const { return Position <= other.Position; }
+  bool operator>=(const TMapIterator& other) const { return Position >= other.Position; }
+
+  // Arithmetic operators
+  TMapIterator& operator++() { Position++; return *this; }
+  TMapIterator operator++(int) { TMapIterator tmp(*this); tmp++; return tmp;}
+  TMapIterator& operator--() { Position--; return *this; }
+  TMapIterator operator--(int) { TMapIterator tmp(*this); tmp--; return tmp;}
+  TMapIterator& operator+=(difference_type n) { Position += n; return *this; }
+  TMapIterator operator+(difference_type n) const { TMapIterator tmp(*this); tmp += n; return tmp; }
+  TMapIterator& operator-=(difference_type n) { Position -= n; return *this; }
+  TMapIterator operator-(difference_type n) const { TMapIterator tmp(*this); tmp -= n; return tmp; }
+  difference_type operator-(const TMapIterator& other) const { return Position - other.Position; }
+
+  // Random access operators
+  value_type& operator[](difference_type n) { return *Map.Nodes[Position + n]; }
+  const value_type& operator[](difference_type n) const { return *Map.Nodes[Position + n]; }
+
+  value_type& operator*() const { return *reinterpret_cast<value_type *>(&Map.Nodes[Position].Pair); }
+  value_type* operator->() { return reinterpret_cast<value_type *>(&Map.Nodes[Position].Pair); }
 
 	//=======================================================================
 	//

@@ -2,6 +2,8 @@
 #include <thread>
 // #include "Window.h"
 #include "GameInterfaces.h"
+#include "common/engine/g_input.h"
+
 namespace DebugServer
 {
 // using namespace RE::BSScript::Internal;
@@ -148,15 +150,15 @@ void DebugExecutionManager::WaitWhilePaused(pauseReason pauseReason, VMFrameStac
 		{
 			while (m_state == DebuggerState::kPaused)
 			{
+				// TODO: we have to process window events so that we prevent deadlocks when the debug extension sets this window to foreground,
+				// but this also processes input events; ideally, we'd only process the window events.
+				I_GetEvent();
 				using namespace std::chrono_literals;
 				std::this_thread::sleep_for(100ms);
 			}
 		}
 		std::lock_guard<std::mutex> lock(m_instructionMutex);
-		// If we were the thread that paused, regain focus
-		// TODO: How to do this in GZDoom?
-		// Window::RegainFocus();
-		// also reset the state
+		// reset the state
 		m_runtimeState->Reset();
 		if (m_state != DebuggerState::kRunning && stack)
 		{

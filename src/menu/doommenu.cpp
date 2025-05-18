@@ -318,7 +318,7 @@ void OnMenuOpen(bool makeSound)
 
 	if (makeSound)
 	{
-		std::cout << "bang 4" << std::endl;
+		MenuRumble(200, 1, 1, 0, 0);
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 }
@@ -412,7 +412,7 @@ CCMD (menu_quit)
 		{
 			if (gameinfo.quitSound.IsNotEmpty())
 			{
-				std::cout << "bang 5" << std::endl;
+				MenuRumble(200, 1, 1, 0, 0);
 				S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
 				I_WaitVBL(105);
 			}
@@ -453,13 +453,13 @@ CCMD (menu_endgame)
 {	// F7
 	if (!usergame)
 	{
-		std::cout << "bang 6" << std::endl;
+		MenuRumble(100, 1, 1, 0, 0);
 		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 		
-		//M_StartControlPanel (true);
-		std::cout << "bang 7" << std::endl;
+	//M_StartControlPanel (true);
+	MenuRumble(200, 1, 1, 0, 0);
 	S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	ActivateEndGameMenu();
@@ -475,7 +475,7 @@ CCMD (quicksave)
 {	// F6
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		std::cout << "bang 8" << std::endl;
+		MenuRumble(100, 1, 1, 0, 0);
 		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
@@ -492,7 +492,7 @@ CCMD (quicksave)
 		
 	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
-		std::cout << "bang 9" << std::endl;
+		MenuRumble(200, 1, 1, 0, 0);
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
 		M_SetMenu(NAME_Savegamemenu);
@@ -506,7 +506,7 @@ CCMD (quicksave)
 		return;
 	}
 
-	std::cout << "bang 10" << std::endl;
+	MenuRumble(200, 1, 1, 0, 0);
 	S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	FString tempstring = GStrings.GetString("QSPROMPT");
@@ -516,7 +516,7 @@ CCMD (quicksave)
 	{
 		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
-		std::cout << "bang 11" << std::endl;
+		MenuRumble(100, 1, 1, 0, 0);
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
@@ -562,7 +562,7 @@ CCMD (quickload)
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
 	{
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
-		std::cout << "bang 1" << std::endl;
+		MenuRumble(100, 1, 1, 0, 0);
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
@@ -602,7 +602,7 @@ CCMD (sizedown)
 		screenblocks = screenblocks - 1;
 	}
 
-	std::cout << "bang 2" << std::endl;
+	MenuRumble(100, 0.5, 0.5, 0, 0);
 	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
@@ -616,7 +616,8 @@ CCMD (sizeup)
 	{
 		screenblocks = screenblocks + 1;
 	}
-	std::cout << "bang 3" << std::endl;
+
+	MenuRumble(100, 0.5, 0.5, 0, 0);
 	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 

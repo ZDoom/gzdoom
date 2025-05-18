@@ -178,7 +178,7 @@ class Menu : Object native ui version("2.4")
 		{
 			Close();
 			let m = GetCurrentMenu();
-			MenuRumble();
+			MenuRumble(100, 1, 1, 0, 0);
 			MenuSound(m != null ? "menu/backup" : "menu/clear");
 			if (!m) menuDelegate.MenuDismissed();
 			return true;
@@ -337,10 +337,9 @@ class Menu : Object native ui version("2.4")
 	static void MenuSound(Name snd)
 	{
 		menuDelegate.PlaySound(snd);
-
 	}
 
-	native static void MenuRumble();
+	native static void MenuRumble(uint duration_ms, float high_frequency, float low_frequency, float left_trigger, float right_trigger);
 
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)
 	{

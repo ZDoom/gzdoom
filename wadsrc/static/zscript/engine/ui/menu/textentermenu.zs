@@ -188,6 +188,7 @@ class TextEnterMenu : Menu
 			{
 				if (MenuEvent(MKEY_Enter, true))
 				{
+					MenuRumble();
 					MenuSound("menu/choose");
 					if (m_use_mouse == 2) InputGridX = InputGridY = -1;
 				}

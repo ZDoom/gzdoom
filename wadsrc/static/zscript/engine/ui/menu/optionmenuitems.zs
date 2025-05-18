@@ -130,6 +130,7 @@ class OptionMenuItemSubmenu : OptionMenuItem
 
 	override bool Activate()
 	{
+		Menu.MenuRumble();
 		Menu.MenuSound("menu/advance");
 		Menu.SetMenu(mAction, mParam);
 		return true;
@@ -198,6 +199,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 			if (m.GetItem(mAction) != self) return false;
 		}
 		else mUnsafe = false;
+		Menu.MenuRumble();
 		Menu.MenuSound("menu/choose");
 		DoCommand(ccmd, mUnsafe);
 		if (mCloseOnSelect)
@@ -336,6 +338,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 				return Super.MenuEvent(mkey, fromcontroller);
 			}
 			SetSelection(Selection);
+			Menu.MenuRumble();
 			Menu.MenuSound("menu/change");
 		}
 		else
@@ -551,6 +554,7 @@ class OptionMenuItemControlBase : OptionMenuItem
 
 	override bool Activate()
 	{
+		Menu.MenuRumble();
 		Menu.MenuSound("menu/choose");
 		mWaiting = true;
 		let input = new("EnterKey");
@@ -853,6 +857,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		}
 		if (value ~== 0) value = 0;	// This is to prevent formatting anomalies with very small values
 		SetSliderValue(clamp(value, mMin, mMax));
+		Menu.MenuRumble();
 		Menu.MenuSound("menu/change");
 		return true;
 	}
@@ -882,6 +887,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		if (v != GetSliderValue())
 		{
 			SetSliderValue(v);
+			//Menu.MenuRumble();
 			//Menu.MenuSound("menu/change");
 		}
 		if (type == Menu.MOUSE_Click)
@@ -980,6 +986,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 	{
 		if (mCVar != null)
 		{
+			Menu.MenuRumble();
 			Menu.MenuSound("menu/choose");
 
 			// This code is a bit complicated because it should allow subclassing the
@@ -1124,6 +1131,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 			bool b;
 			String s;
 			[b, s] = GetString(0);
+			Menu.MenuRumble();
 			Menu.MenuSound("menu/choose");
 			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), s, -1, fromcontroller);
 			mEnter.ActivateMenu();
@@ -1192,6 +1200,7 @@ class OptionMenuItemNumberField : OptionMenuFieldBase
 				return Super.MenuEvent(mkey, fromcontroller);
 
 			mCVar.SetFloat(value);
+			Menu.MenuRumble();
 			Menu.MenuSound("menu/change");
 		}
 		else return Super.MenuEvent(mkey, fromcontroller);

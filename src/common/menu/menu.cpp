@@ -42,6 +42,7 @@
 #include "configfile.h"
 #include "gstrings.h"
 #include "menu.h"
+#include "m_joy.h"
 #include "vm.h"
 #include "v_video.h"
 #include "i_system.h"
@@ -495,6 +496,42 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 	M_ActivateMenu(self);
 	return 0;
 }
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+static void MenuRumble()
+{
+	I_Rumble_Cast(0, 0, 0, 0, 0);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumble, MenuRumble)
+{
+	PARAM_PROLOGUE;
+	MenuRumble();
+	return 0;
+}
+
+// DEFINE_ACTION_FUNCTION_NATIVE(AActor, I_Rumble, I_Rumble_Cast)
+// {
+// 	PARAM_SELF_PROLOGUE(AActor);
+// 	PARAM_UINT(duration_ms);
+// 	PARAM_FLOAT(high_freq);
+// 	PARAM_FLOAT(low_frequency);
+// 	PARAM_FLOAT(left_trigger);
+// 	PARAM_FLOAT(right_trigger);
+// 	I_Rumble_Cast(
+// 		duration_ms,
+// 		high_freq,
+// 		low_frequency,
+// 		left_trigger,
+// 		right_trigger
+// 	);
+// 	return 0;
+// }
 
 //=============================================================================
 //

@@ -233,6 +233,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 	{
 		if (mkey == Menu.MKEY_Enter)
 		{
+			Menu.MenuRumble();
 			Menu.MenuSound("menu/choose");
 			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), String.Format("%.3f", GetSliderValue()), -1, fromcontroller);
 			mEnter.ActivateMenu();

@@ -589,6 +589,8 @@ class FBoolCVarRef
 {
 	FBoolCVar* ref;
 public:
+	int operator= (const FBoolCVarRef&) = delete;
+	int operator= (FBoolCVarRef&&) = delete;
 	
 	inline bool operator= (bool val) { *ref = val; return val; }
 	inline operator bool () const { return **ref; }
@@ -602,7 +604,11 @@ class FIntCVarRef
 	FIntCVar* ref;
 public:
 	
+	int operator= (const FIntCVarRef&) = delete;
+	int operator= (FIntCVarRef&&) = delete;
+
 	int operator= (int val) { *ref = val; return val; }
+
 	inline operator int () const { return **ref; }
 	inline int operator *() const { return **ref; }
 	inline FIntCVar* operator->() { return ref; }
@@ -613,6 +619,8 @@ class FFloatCVarRef
 {
 	FFloatCVar* ref;
 public:
+	int operator= (const FFloatCVarRef&) = delete;
+	int operator= (FFloatCVarRef&&) = delete;
 	
 	float operator= (float val) { *ref = val; return val; }
 	inline operator float () const { return **ref; }
@@ -625,6 +633,8 @@ class FStringCVarRef
 {
 	FStringCVar* ref;
 public:
+	int operator= (const FStringCVarRef&) = delete;
+	int operator= (FStringCVarRef&&) = delete;
 	
 	const char* operator= (const char* val) { *ref = val; return val; }
 	inline operator const char* () const { return **ref; }
@@ -637,6 +647,8 @@ class FColorCVarRef
 {
 	FColorCVar* ref;
 public:
+	int operator= (const FColorCVarRef&) = delete;
+	int operator= (FColorCVarRef&&) = delete;
 	
 	//uint32_t operator= (uint32_t val) { *ref = val; return val; }
 	inline operator uint32_t () const { return **ref; }
@@ -649,6 +661,9 @@ class FFlagCVarRef
 {
 	FFlagCVar* ref;
 public:
+	int operator= (const FFlagCVarRef&) = delete;
+	int operator= (FFlagCVarRef&&) = delete;
+
 	inline bool operator= (bool val) { *ref = val; return val; }
 	inline bool operator= (const FFlagCVar& val) { *ref = val; return val; }
 	inline operator int () const { return **ref; }
@@ -660,6 +675,9 @@ class FMaskCVarRef
 {
 	FMaskCVar* ref;
 public:
+	int operator= (const FMaskCVarRef&) = delete;
+	int operator= (FMaskCVarRef&&) = delete;
+
 	//int operator= (int val) { *ref = val; return val; }
 	inline operator int () const { return **ref; }
 	inline int operator *() const { return **ref; }

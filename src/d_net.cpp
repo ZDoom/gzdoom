@@ -162,6 +162,14 @@ CUSTOM_CVAR(Int, cl_showchat, CHAT_GLOBAL, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = CHAT_GLOBAL;
 }
 
+CUSTOM_CVAR(Int, cl_debugprediction, 0, CVAR_CHEAT)
+{
+	if (self < 0)
+		self = 0;
+	else if (self > BACKUPTICS - 1)
+		self = BACKUPTICS - 1;
+}
+
 // Used to write out all network events that occured leading up to the next tick.
 static struct NetEventData
 {
@@ -316,6 +324,8 @@ public:
 
 void Net_ClearBuffers()
 {
+	CloseNetwork();
+
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		playeringame[i] = false;
@@ -353,6 +363,7 @@ void Net_ClearBuffers()
 	gametic = ClientTic = 0;
 	SkipCommandTimer = SkipCommandAmount = CommandsAhead = 0;
 	NetEvents.ResetStream();
+	bCommandsReset = false;
 
 	LevelStartAck = 0u;
 	LevelStartDelay = LevelStartDebug = 0;
@@ -410,7 +421,7 @@ void Net_SetWaiting()
 
 // [RH] Rewritten to properly calculate the packet size
 //		with our variable length Command.
-static int GetNetBufferSize()
+static size_t GetNetBufferSize()
 {
 	if (NetBuffer[0] & NCMD_EXIT)
 		return 1 + (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator);
@@ -520,7 +531,7 @@ static bool HGetPacket()
 	if (RemoteClient == -1)
 		return false;
 
-	int sizeCheck = GetNetBufferSize();
+	size_t sizeCheck = GetNetBufferSize();
 	if (NetBufferLength != sizeCheck)
 	{
 		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
@@ -818,7 +829,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < consistencies.Size(); ++i)
 			{
-				const int cTic = baseConsistency + i;
+				const int cTic = baseConsistency + int(i);
 				if (cTic <= pState.CurrentNetConsistency)
 					continue;
 
@@ -851,7 +862,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < data.Size(); ++i)
 			{
-				const int seq = baseSequence + i;
+				const int seq = baseSequence + int(i);
 				// Duplicate command, ignore it.
 				if (seq <= pState.CurrentSequence)
 					continue;
@@ -873,6 +884,9 @@ static void GetPackets()
 				{
 					pState.CurrentSequence = seq;
 				}
+				// Update this so host switching doesn't have any hiccups in packet-server mode.
+				if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator && pNum != Net_Arbitrator)
+					pState.SequenceAck = seq;
 			}
 		}
 	}
@@ -1335,13 +1349,13 @@ void NetUpdate(int tics)
 		return;
 	}
 
-	constexpr size_t MaxPlayersPerPacket = 16u;
+	constexpr int MaxPlayersPerPacket = 16;
 
 	int startSequence = startTic / TicDup;
 	int endSequence = newestTic;
 	int quitters = 0;
 	int quitNums[MAXPLAYERS];
-	size_t players = 1u;
+	int players = 1u;
 	int maxCommands = MAXSENDTICS;
 	if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
 	{
@@ -1409,16 +1423,31 @@ void NetUpdate(int tics)
 		curState.Flags &= ~CF_MISSING;
 
 		NetBuffer[1] = (curState.Flags & CF_RETRANSMIT_SEQ) ? curState.ResendID : CurrentLobbyID;
+		int lastSeq = curState.CurrentSequence;
+		int lastCon = curState.CurrentNetConsistency;
+		if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
+		{
+			// If in packet-server mode, make sure to get the lowest sequence of all players
+			// since the host themselves might have gotten updated but someone else in the packet
+			// did not. That way the host knows to send over the correct tic.
+			for (auto cl : NetworkClients)
+			{
+				if (ClientStates[cl].CurrentSequence < lastSeq)
+					lastSeq = ClientStates[cl].CurrentSequence;
+				if (ClientStates[cl].CurrentNetConsistency < lastCon)
+					lastCon = ClientStates[cl].CurrentNetConsistency;
+			}
+		}
 		// Last sequence we got from this client.
-		NetBuffer[2] = (curState.CurrentSequence >> 24);
-		NetBuffer[3] = (curState.CurrentSequence >> 16);
-		NetBuffer[4] = (curState.CurrentSequence >> 8);
-		NetBuffer[5] = curState.CurrentSequence;
+		NetBuffer[2] = (lastSeq >> 24);
+		NetBuffer[3] = (lastSeq >> 16);
+		NetBuffer[4] = (lastSeq >> 8);
+		NetBuffer[5] = lastSeq;
 		// Last consistency we got from this client.
-		NetBuffer[6] = (curState.CurrentNetConsistency >> 24);
-		NetBuffer[7] = (curState.CurrentNetConsistency >> 16);
-		NetBuffer[8] = (curState.CurrentNetConsistency >> 8);
-		NetBuffer[9] = curState.CurrentNetConsistency;
+		NetBuffer[6] = (lastCon >> 24);
+		NetBuffer[7] = (lastCon >> 16);
+		NetBuffer[8] = (lastCon >> 8);
+		NetBuffer[9] = lastCon;
 
 		if (curState.Flags & CF_RETRANSMIT_SEQ)
 		{
@@ -1630,7 +1659,7 @@ const char* Net_GetClientName(int client, unsigned int charLimit = 0u)
 	return players[client].userinfo.GetName(charLimit);
 }
 
-int Net_SetUserInfo(int client, uint8_t*& stream)
+size_t Net_SetUserInfo(int client, uint8_t*& stream)
 {
 	auto str = D_GetUserInfoStrings(client, true);
 	const size_t userSize = str.Len() + 1;
@@ -1638,29 +1667,29 @@ int Net_SetUserInfo(int client, uint8_t*& stream)
 	return userSize;
 }
 
-int Net_ReadUserInfo(int client, uint8_t*& stream)
+size_t Net_ReadUserInfo(int client, uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	D_ReadUserInfoStrings(client, &stream, false);
-	return int(stream - start);
+	return stream - start;
 }
 
-int Net_SetGameInfo(uint8_t*& stream)
+size_t Net_SetGameInfo(uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	WriteString(startmap.GetChars(), &stream);
 	WriteInt32(rngseed, &stream);
 	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
-	return int(stream - start);
+	return stream - start;
 }
 
-int Net_ReadGameInfo(uint8_t*& stream)
+size_t Net_ReadGameInfo(uint8_t*& stream)
 {
 	const uint8_t* start = stream;
 	startmap = ReadStringConst(&stream);
 	rngseed = ReadInt32(&stream);
 	C_ReadCVars(&stream);
-	return int(stream - start);
+	return stream - start;
 }
 
 // Connects players to each other if needed.
@@ -1668,9 +1697,6 @@ bool D_CheckNetGame()
 {
 	if (!I_InitNetwork())
 		return false;
-
-	if (GameID != DEFAULT_GAME_ID)
-		I_FatalError("Invalid id set for network buffer");
 
 	if (Args->CheckParm("-extratic"))
 		net_extratic = true;
@@ -1951,7 +1977,19 @@ void TryRunTics()
 	int runTics = min<int>(totalTics, availableTics);
 	if (totalTics > 0 && totalTics < availableTics - 1 && !singletics)
 		++runTics;
-	
+
+	// Test player prediction code in singleplayer
+	// by running the gametic behind the ClientTic
+	if (!netgame && !demoplayback && cl_debugprediction > 0)
+	{
+		int debugTarget = ClientTic - cl_debugprediction;
+		int debugOffset = gametic - debugTarget;
+		if (debugOffset > 0)
+		{
+			runTics = max<int>(runTics - debugOffset, 0);
+		}
+	}
+
 	// If there are no tics to run, check for possible stall conditions and new
 	// commands to predict.
 	if (runTics <= 0)

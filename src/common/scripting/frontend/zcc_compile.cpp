@@ -597,8 +597,13 @@ ZCCCompiler::~ZCCCompiler()
 	{
 		delete c;
 	}
+	for (auto m : Mixins)
+	{
+		delete m;
+	}
 	Structs.Clear();
 	Classes.Clear();
+	Mixins.Clear();
 }
 
 //==========================================================================

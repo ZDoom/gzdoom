@@ -85,6 +85,7 @@ EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, am_showtotaltime)
+EXTERN_CVAR (Bool, am_showlevelname)
 EXTERN_CVAR(Bool, inter_subtitles)
 EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
@@ -598,6 +599,8 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	}
 
 	FormatMapName(primaryLevel, crdefault, &textbuffer);
+	if (textbuffer.IsEmpty())
+		return;
 
 	if (!generic_ui)
 	{
@@ -984,6 +987,18 @@ void DBaseStatusBar::RefreshBackground () const
 	}
 }
 
+static void RefreshBackground(DBaseStatusBar* self)
+{
+	self->RefreshBackground();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, RefreshBackground, RefreshBackground)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->RefreshBackground();
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // DrawCrosshair
@@ -1014,6 +1029,19 @@ void DBaseStatusBar::DrawCrosshair (double ticFrac)
 
 	const double size = PrevCrosshairSize * (1.0 - ticFrac) + CrosshairSize * ticFrac;
 	ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, size);
+}
+
+static void DrawCrosshair(DBaseStatusBar* self, double ticFrac)
+{
+	self->DrawCrosshair(ticFrac);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawCrosshair, DrawCrosshair)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_FLOAT(ticFrac);
+	self->DrawCrosshair(ticFrac);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -1060,44 +1088,6 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::Draw (EHudState state, double ticFrac)
-{
-	// HUD_AltHud state is for popups only
-	if (state == HUD_AltHud)
-		return;
-
-	if (state == HUD_StatusBar)
-	{
-		RefreshBackground ();
-	}
-
-	if (idmypos)
-	{ 
-		// Draw current coordinates
-		IFVIRTUAL(DBaseStatusBar, DrawMyPos)
-		{
-			VMValue params[] = { (DObject*)this };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
-
-	if (viewactive)
-	{
-		if (CPlayer && CPlayer->camera && CPlayer->camera->player)
-		{
-			DrawCrosshair (ticFrac);
-		}
-	}
-	else if (automapactive)
-	{
-		IFVIRTUAL(DBaseStatusBar, DrawAutomapHUD)
-		{
-			VMValue params[] = { (DObject*)this, r_viewpoint.TicFrac };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
-}
-
 void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 {
 	IFVIRTUAL(DBaseStatusBar, Draw)
@@ -1105,7 +1095,6 @@ void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 		VMValue params[] = { (DObject*)this, state, ticFrac };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
-	else Draw(state, ticFrac);
 	twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	BeginStatusBar(BaseSBarHorizontalResolution, BaseSBarVerticalResolution, BaseRelTop, false);
 }

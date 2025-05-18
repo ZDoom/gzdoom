@@ -148,7 +148,7 @@ void HWFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void HWFlat::SetupLights(HWDrawInfo *di, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
@@ -158,29 +158,37 @@ void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 		dynlightindex = -1;
 		return;	// no lights on additively blended surfaces.
 	}
-	while (node)
+
+	auto flatLightList = di->Level->lightlists.flat_dlist.CheckKey(section);
+
+	if (flatLightList)
 	{
-		FDynamicLight * light = node->lightsource;
-
-		if (!light->IsActive() || light->DontLightMap())
+		TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+		TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
+		while (it.NextPair(pair))
 		{
-			node = node->nextLight;
-			continue;
-		}
-		iter_dlightf++;
+			auto node = pair->Value.get();
+			if (!node) continue;
+			
+			FDynamicLight * light = node->lightsource;
 
-		// we must do the side check here because gl_GetLight needs the correct plane orientation
-		// which we don't have for Legacy-style 3D-floors
-		double planeh = plane.plane.ZatPoint(light->Pos);
-		if ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling))
-		{
-			node = node->nextLight;
-			continue;
-		}
+			if (!light->IsActive() || light->DontLightMap())
+			{
+				continue;
+			}
+			iter_dlightf++;
 
-		p.Set(plane.plane.Normal(), plane.plane.fD());
-		draw_dlightf += GetLight(lightdata, portalgroup, p, light, false);
-		node = node->nextLight;
+			// we must do the side check here because gl_GetLight needs the correct plane orientation
+			// which we don't have for Legacy-style 3D-floors
+			double planeh = plane.plane.ZatPoint(light->Pos);
+			if ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling))
+			{
+				continue;
+			}
+
+			p.Set(plane.plane.Normal(), plane.plane.fD());
+			draw_dlightf += GetLight(lightdata, portalgroup, p, light, false);
+		}
 	}
 
 	dynlightindex = screen->mLights->UploadLights(lightdata);
@@ -196,7 +204,7 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	if (di->Level->HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
-		SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
+		SetupLights(di, lightdata, sector->PortalGroup);
 	}
 	state.SetLightIndex(dynlightindex);
 
@@ -399,7 +407,7 @@ inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 	{
 		if (di->Level->HasDynamicLights && texture != nullptr && !di->isFullbrightScene() && !(hacktype & (SSRF_PLANEHACK|SSRF_FLOODHACK)) )
 		{
-			SetupLights(di, section->lighthead, lightdata, sector->PortalGroup);
+			SetupLights(di, lightdata, sector->PortalGroup);
 		}
 	}
 	di->AddFlat(this, fog);

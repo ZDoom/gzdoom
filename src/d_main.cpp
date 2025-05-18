@@ -150,7 +150,6 @@ extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 void DeinitMenus();
-void CloseNetwork();
 void P_Shutdown();
 void M_SaveDefaultsFinal();
 void R_Shutdown();
@@ -310,8 +309,6 @@ CUSTOM_CVAR(Int, I_FriendlyWindowTitle, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_N
 }
 CVAR(Bool, cl_nointros, false, CVAR_ARCHIVE)
 
-
-bool hud_toggled = false;
 bool wantToRestart;
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 bool devparm;				// started game with -devparm
@@ -356,16 +353,18 @@ static int pagetic;
 //
 //==========================================================================
 
+CVAR(Int, saved_screenblocks, 10, CVAR_ARCHIVE)
+CVAR(Bool, saved_drawplayersprite, true, CVAR_ARCHIVE)
+CVAR(Bool, saved_showmessages, true, CVAR_ARCHIVE)
+CVAR(Bool, hud_toggled, false, CVAR_ARCHIVE)
+
 void D_ToggleHud()
 {
-	static int saved_screenblocks;
-	static bool saved_drawplayersprite, saved_showmessages;
-
 	if ((hud_toggled = !hud_toggled))
 	{
-		saved_screenblocks = screenblocks;
-		saved_drawplayersprite = r_drawplayersprites;
-		saved_showmessages = show_messages;
+		saved_screenblocks = *screenblocks;
+		saved_drawplayersprite = *r_drawplayersprites;
+		saved_showmessages = *show_messages;
 		screenblocks = 12;
 		r_drawplayersprites = false;
 		show_messages = false;
@@ -374,9 +373,9 @@ void D_ToggleHud()
 	}
 	else
 	{
-		screenblocks = saved_screenblocks;
-		r_drawplayersprites = saved_drawplayersprite;
-		show_messages = saved_showmessages;
+		screenblocks =*saved_screenblocks;
+		r_drawplayersprites = *saved_drawplayersprite;
+		show_messages = *saved_showmessages;
 	}
 }
 CCMD(togglehud)
@@ -1785,12 +1784,15 @@ FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
 {
 	FString *args;
-	int i, argc;
+	int i;
+	int argc;
 
 	argc = Args->CheckParmList("-file", &args);
 
+	assert(wadfiles.size() < INT_MAX);
+
 	// [RL0] Check for array size to only add new wads
-	for (i = wadfiles.size(); i < argc; ++i)
+	for (i = int(wadfiles.size()); i < argc; ++i)
 	{
 		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig);
 	}

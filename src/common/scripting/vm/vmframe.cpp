@@ -553,6 +553,76 @@ VMFrame *VMFrameStack::PopFrame()
 }
 
 //===========================================================================
+// Templates for calling ZScript from C++ with type checks
+
+void VMCheckParamCount(VMFunction* func, int retcount, int argcount)
+{
+	if (func->Proto->ReturnTypes.Size() != retcount)
+		I_FatalError("Incorrect return value passed to %s", func->PrintableName);
+	if (func->Proto->ArgumentTypes.Size() != argcount)
+		I_FatalError("Incorrect parameter count passed to %s", func->PrintableName);
+}
+
+template<> void VMCheckParam<int>(VMFunction* func, int index)
+{
+	if (!func->Proto->ArgumentTypes[index]->isIntCompatible())
+		I_FatalError("%s argument %d is not an integer", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<double>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeFloat64)
+		I_FatalError("%s argument %d is not a double", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<FString>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeString)
+		I_FatalError("%s argument %d is not a string", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<DObject*>(VMFunction* func, int index)
+{
+	if (!func->Proto->ArgumentTypes[index]->isObjectPointer())
+		I_FatalError("%s argument %d is not an object", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<void>(VMFunction* func, int index)
+{
+}
+
+template<> void VMCheckReturn<int>(VMFunction* func, int index)
+{
+	if (!func->Proto->ReturnTypes[index]->isIntCompatible())
+		I_FatalError("%s return value %d is not an integer", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<double>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeFloat64)
+		I_FatalError("%s return value %d is not a double", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<FString>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeString)
+		I_FatalError("%s return value %d is not a string", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<DObject*>(VMFunction* func, int index)
+{
+	if (!func->Proto->ReturnTypes[index]->isObjectPointer())
+		I_FatalError("%s return value %d is not an object", func->PrintableName, index);
+}
+
+void VMCallCheckResult(VMFunction* func, VMValue* params, int numparams, VMReturn* results, int numresults)
+{
+	int retval = VMCall(func, params, numparams, results, numresults);
+	if (retval != numresults)
+		I_FatalError("%s did not return the expected number of results", func->PrintableName);
+}
+
+//===========================================================================
 //
 // VMFrameStack :: Call
 //

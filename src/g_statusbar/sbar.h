@@ -388,7 +388,6 @@ public:
 	void SetScale();
 	virtual void Tick ();
 	void CallTick();
-	virtual void Draw (EHudState state, double ticFrac);
 	void CallDraw(EHudState state, double ticFrac);
     void DrawBottomStuff (EHudState state);
     void DrawTopStuff (EHudState state);

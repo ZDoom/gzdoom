@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include "vectors.h"
+#include "quaternion.h"
 
 #ifdef USE_DOUBLE
 typedef double FLOATTYPE;
@@ -54,6 +55,7 @@ class VSMatrix {
 			multMatrix(aMatrix.mMatrix);
 		}
 		void multQuaternion(const TVector4<FLOATTYPE>& q);
+		void multQuaternion(const TQuaternion<FLOATTYPE>& q);
 		void loadMatrix(const FLOATTYPE *aMatrix);
 #ifdef USE_DOUBLE
 		void loadMatrix(const float *aMatrix);
@@ -105,7 +107,7 @@ class VSMatrix {
 		static void multMatrix(FLOATTYPE *resMatrix, const FLOATTYPE *aMatrix);
 
 		static void setIdentityMatrix(FLOATTYPE *mat, int size = 4);
-
+	public:
 		/// The storage for matrices
 		FLOATTYPE mMatrix[16];
 

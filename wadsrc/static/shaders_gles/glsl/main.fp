@@ -514,6 +514,13 @@ void main()
 				fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
 			#endif
 
+			if (uThickFogDistance > 0.0)
+			{
+				if (fogdist > uThickFogDistance)
+				{
+					fogdist = fogdist + uThickFogMultiplier * (fogdist - uThickFogDistance);
+				}
+			}
 			fogfactor = exp2 (uFogDensity * fogdist);
 		}
 		#endif

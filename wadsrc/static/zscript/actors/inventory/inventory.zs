@@ -85,6 +85,11 @@ class Inventory : Actor
 		Inventory.PickupSound "misc/i_pkup";
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
+
+	override void OnLoad()
+	{
+		UpdateLocalPickupStatus();
+	}
 	
 	//native override void Tick();
 	
@@ -920,6 +925,25 @@ class Inventory : Actor
 
 	//===========================================================================
 	//
+	// Inventory :: DepleteBy
+	//
+	// Handles item depletion when using or taking items
+	//
+	//===========================================================================
+	virtual void DepleteBy(int by)
+	{
+		if (by < 1 || amount < 1 || by >= amount)
+		{
+			DepleteOrDestroy();
+		}
+		else
+		{
+			amount -= by;
+		}
+	}
+
+	//===========================================================================
+	//
 	// Inventory :: DepleteOrDestroy
 	//
 	// If the item is depleted, just change its amount to 0, otherwise it's destroyed.
@@ -1111,6 +1135,11 @@ class Inventory : Actor
 	clearscope bool HasPickedUpLocally(Actor client) const
 	{
 		return pickedUp[client.PlayerNumber()];
+	}
+
+	void UpdateLocalPickupStatus()
+	{
+		DisableLocalRendering(consoleplayer, pickedUp[consoleplayer]);
 	}
 
 	// When items are dropped, clear their local pick ups.

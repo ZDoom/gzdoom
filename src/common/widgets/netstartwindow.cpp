@@ -78,7 +78,7 @@ void NetStartWindow::NetDisconnect(int client)
 	if (Instance)
 	{
 		for (size_t i = 1u; i < Instance->LobbyWindow->GetColumnAmount(); ++i)
-			Instance->LobbyWindow->UpdateItem("", client, i);
+			Instance->LobbyWindow->UpdateItem("", client, int(i));
 	}
 }
 

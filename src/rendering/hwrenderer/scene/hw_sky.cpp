@@ -118,6 +118,9 @@ void HWSkyInfo::init(HWDrawInfo *di, sector_t* sec, int skypos, int sky1, PalEnt
 	}
 	else fadecolor = 0;
 
+	texture[2] = TexMan.GetGameTexture(di->Level->skymisttexture, true);
+	x_offset[2] = di->Level->hw_skymistpos;
+
 }
 
 

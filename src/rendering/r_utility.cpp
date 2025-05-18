@@ -68,7 +68,7 @@
 #include "i_interface.h"
 #include "d_main.h"
 
-const float MY_SQRT2    = 1.41421356237309504880; // sqrt(2)
+const float MY_SQRT2    = float(1.41421356237309504880); // sqrt(2)
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp

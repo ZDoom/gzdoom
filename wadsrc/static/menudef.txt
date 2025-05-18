@@ -1363,6 +1363,7 @@ OptionMenu AutomapOptions protected
 	Option "$AUTOMAPMNU_SHOWTIME",				"am_showtime", "OnOff"
 	Option "$AUTOMAPMNU_SHOWTOTALTIME",			"am_showtotaltime", "OnOff"
 	Option "$AUTOMAPMNU_SHOWMAPLABEL",			"am_showmaplabel", "MaplabelTypes"
+	Option "$AUTOMAPMNU_SHOWLEVELNAME",			"am_showlevelname", "OnOff"
 
 	StaticText ""
 	Option "$AUTOMAPMNU_SHOWKEYS",				"am_showkeys", "OnOff"

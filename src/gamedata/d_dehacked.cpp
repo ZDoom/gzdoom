@@ -139,6 +139,7 @@ static PClassActor* FindInfoName(int index, bool mustexist = false)
 			cls = static_cast<PClassActor*>(RUNTIME_CLASS(AActor)->CreateDerivedClass(name.GetChars(), (unsigned)sizeof(AActor)));
 			NewClassType(cls, -1);	// This needs a VM type to work as intended.
 			cls->InitializeDefaults();
+			PClassActor::AllActorClasses.Push(cls);
 		}
 		if (cls)
 		{
@@ -1203,6 +1204,8 @@ static int PatchThing (int thingy, int flags)
 	AActor *info;
 	uint8_t dummy[sizeof(AActor)];
 	bool hadHeight = false;
+	bool hadProjHeight = false;
+	bool hadPhysHeight = false;
 	bool hadTranslucency = false;
 	bool hadStyle = false;
 	FStateDefinitions statedef;
@@ -1262,8 +1265,17 @@ static int PatchThing (int thingy, int flags)
 		}
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
-			info->Height = DEHToDouble(val);
-			info->projectilepassheight = 0;	// needs to be disabled
+			// [XA] This is a bit more complex now, since projectilepassheight
+			// and "physical height" now both exist. if either of these are
+			// defined, then override the Height field accordingly.
+			if(!hadPhysHeight)
+			{
+				info->Height = DEHToDouble(val);
+			}
+			if(!hadProjHeight)
+			{
+				info->projectilepassheight = 0;	// needs to be disabled
+			}
 			hadHeight = true;
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
@@ -1457,6 +1469,47 @@ static int PatchThing (int thingy, int flags)
 		{
 			// [crispy] Multiplies the chance of firing a missile (65536 = normal chance)
 			info->missilechancemult = DEHToDouble(val);
+		}
+
+		// [XA] Fields for common GZDoom-specific values that
+		// are desirable to set in a cross-port DEHACKED mod.
+		// adding these prevents users from having to reimplement
+		// actors in zscript just to define these few fields.
+		else if (!stricmp(Line1, "Projectile pass height"))
+		{
+			info->projectilepassheight = DEHToDouble(val);
+			hadProjHeight = true;
+		}
+		else if (!stricmp(Line1, "Physical height"))
+		{
+			// [XA] This is a synonym for Height that is intended
+			// to be ignored in any ports that don't support
+			// projectilepassheight -- this is needed because
+			// other ports' "Height x" is actually equivalent
+			// to Zdoom's "ProjectilePassHeight x; Height y",
+			// i.e. the definition of the Height var is different.
+			info->Height = DEHToDouble(val);
+			hadPhysHeight = true;
+		}
+		else if (!stricmp(Line1, "Tag"))
+		{
+			stripwhite(Line2);
+			info->SetTag(Line2);
+		}
+		else if (!stricmp(Line1, "Obituary"))
+		{
+			stripwhite(Line2);
+			info->StringVar(NAME_Obituary) = Line2;
+		}
+		else if (!stricmp(Line1, "Melee obituary"))
+		{
+			stripwhite(Line2);
+			info->StringVar(NAME_HitObituary) = Line2;
+		}
+		else if (!stricmp(Line1, "Self obituary"))
+		{
+			stripwhite(Line2);
+			info->StringVar(NAME_SelfObituary) = Line2;
 		}
 
 		else if (linelen > 6)
@@ -1727,12 +1780,23 @@ static int PatchThing (int thingy, int flags)
 		else Printf (unknown_str, Line1, "Thing", thingy);
 	}
 
+	// [XA] sanity check: to avoid ambiguity, an actor that defines
+	// ProjectilePassHeight must also define PhysicalHeight, and vice-versa.
+	if(hadPhysHeight && !hadProjHeight)
+	{
+		I_Error("Thing %d: DEHACKED actors that set 'Physical height' must also set 'Projectile pass height'\n", thingy);
+	}
+	else if(!hadPhysHeight && hadProjHeight)
+	{
+		I_Error("Thing %d: DEHACKED actors that set 'Projectile pass height' must also set 'Physical height'\n", thingy);
+	}
+
 	if (info != (AActor *)&dummy)
 	{
 		// Reset heights for things hanging from the ceiling that
 		// don't specify a new height.
 		if (info->flags & MF_SPAWNCEILING &&
-			!hadHeight &&
+			!hadHeight && !hadPhysHeight &&
 			thingy <= (int)OrgHeights.Size() && thingy > 0)
 		{
 			info->Height = OrgHeights[thingy - 1];
@@ -3714,7 +3778,11 @@ void FinishDehPatch ()
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
 			bool newlycreated;
 			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated, 0));
-			if (newlycreated) subclass->InitializeDefaults();
+			if (newlycreated)
+			{
+				subclass->InitializeDefaults();
+				PClassActor::AllActorClasses.Push(subclass);
+			}
 		} 
 		while (subclass == nullptr);
 		NewClassType(subclass, 0);	// This needs a VM type to work as intended.

@@ -460,13 +460,60 @@ $alias				intermission/pastdmstats	*gibbed
 
 // id24 sounds
 
-weapons/incinerator/fire1 DSINCFI1
-weapons/incinerator/fire2 DSINCFI2
-weapons/incinerator/burn DSINCBRN
-weapons/incinerator/hot1 DSINCHT1
-weapons/incinerator/hot2 DSINCHT2
-weapons/incinerator/hot3 DSINCHT3
+world/officelamp		dsbreak
 
-weapons/calamityblade/charge DSHETCHG
-weapons/calamityblade/shoot DSHETSHT
-weapons/calamityblade/explode DSHETXPL
+ambient/klaxon			dsklaxon
+ambient/portalopen		dsgatopn
+ambient/portalloop		dsgatlop
+ambient/portalclose		dsgatcls
+
+monsters/ghoul/sight		dsghlsit
+monsters/ghoul/pain		dsghlpai
+monsters/ghoul/death		dsghldth
+monsters/ghoul/active		dsghlact
+monsters/ghoul/attack		dsfirsht
+monsters/ghoul/shotx		dsfirxpl
+
+monsters/banshee/sight		dsbanact
+monsters/banshee/pain		dsbanpai
+monsters/banshee/death		dsbandth
+monsters/banshee/active		dsbanact
+
+monsters/mindweaver/sight	dscspsit
+monsters/mindweaver/pain	dsdmpain
+monsters/mindweaver/death	dscspdth
+monsters/mindweaver/active	dscspact
+monsters/mindweaver/walk	dscspwlk
+
+monsters/plasmaguy/pain		dsppopai
+monsters/plasmaguy/death	dsppodth
+monsters/plasmaguy/active	dsppoact
+monsters/plasmaguy/head		dsppohed
+
+monsters/vassago/sight		dsvassit
+monsters/vassago/pain		dsvaspai
+monsters/vassago/death		dsvasdth
+monsters/vassago/active		dsvasact
+monsters/vassago/attack		dsvasatk
+monsters/vassago/burn		dsincbrn
+monsters/vassago/shotx		dsflame
+monsters/vassago/hot1		dsincht1
+monsters/vassago/hot2		dsincht2
+monsters/vassago/hot3		dsincht3
+
+monsters/tyrant/sight		dstyrsit
+monsters/tyrant/pain		dstyrpai
+monsters/tyrant/death		dstyrdth
+monsters/tyrant/active		dstyract
+monsters/tyrant/walk		dstyrwlk
+
+weapons/incinerator/fire1	dsincfi1
+weapons/incinerator/fire2	dsincfi2
+weapons/incinerator/burn	dsincbrn
+weapons/incinerator/hot1	dsincht1
+weapons/incinerator/hot2	dsincht2
+weapons/incinerator/hot3	dsincht3
+
+weapons/calamityblade/charge	dshetchg
+weapons/calamityblade/shoot	dshetsht
+weapons/calamityblade/explode	dshetxpl

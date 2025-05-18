@@ -584,6 +584,8 @@ FString FIWadManager::IWADPathFileSearch(const FString &file)
 	return "";
 }
 
+CVAR(String, extra_args, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
 {
 	const char *iwadparm = Args->CheckValue ("-iwad");
@@ -791,13 +793,15 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				if (autoloadbrightmaps) flags |= 4;
 				if (autoloadwidescreen) flags |= 8;
 
-				FString extraArgs;
+				FString extraArgs = *extra_args;
 
 				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags, extraArgs);
 				if (pick >= 0)
 				{
 					extraArgs.StripLeftRight();
 
+					extra_args = extraArgs.GetChars();
+					
 					if(extraArgs.Len() > 0)
 					{
 						Args->AppendArgsString(extraArgs);

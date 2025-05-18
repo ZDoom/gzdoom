@@ -285,19 +285,25 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 	angle_t startAngle = clipper.GetClipAngle(seg->v2);
 	angle_t endAngle = clipper.GetClipAngle(seg->v1);
 	auto &clipperr = *rClipper;
-	angle_t startAngleR = clipperr.PointToPseudoAngle(seg->v2->fX(), seg->v2->fY());
-	angle_t endAngleR = clipperr.PointToPseudoAngle(seg->v1->fX(), seg->v1->fY());
+	angle_t startAngleR = 0;
+	angle_t endAngleR = 0;
 	angle_t paddingR = 0x00200000; // Make radar clipping more aggressive (reveal less)
 
-	if(Viewpoint.IsAllowedOoB() && r_radarclipper && !(Level->flags3 & LEVEL3_NOFOGOFWAR) && (startAngleR - endAngleR >= ANGLE_180))
+	if(Viewpoint.IsAllowedOoB() && r_radarclipper && !(Level->flags3 & LEVEL3_NOFOGOFWAR))
 	{
-		if (!seg->backsector) clipperr.SafeAddClipRange(startAngleR - paddingR, endAngleR + paddingR);
-		else if((seg->sidedef != nullptr) && !uint8_t(seg->sidedef->Flags & WALLF_POLYOBJ) && (currentsector->sectornum != seg->backsector->sectornum))
+		startAngleR = clipperr.PointToPseudoAngle(seg->v2->fX(), seg->v2->fY());
+		endAngleR = clipperr.PointToPseudoAngle(seg->v1->fX(), seg->v1->fY());
+
+		if (startAngleR - endAngleR >= ANGLE_180)
 		{
-			if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
-			backsector = hw_FakeFlat(seg->backsector, in_area, true);
-			if (hw_CheckClip(seg->sidedef, currentsector, backsector)) clipperr.SafeAddClipRange(startAngleR - paddingR, endAngleR + paddingR);
-			backsector = nullptr;
+			if (!seg->backsector) clipperr.SafeAddClipRange(startAngleR - paddingR, endAngleR + paddingR);
+			else if((seg->sidedef != nullptr) && !uint8_t(seg->sidedef->Flags & WALLF_POLYOBJ) && (currentsector->sectornum != seg->backsector->sectornum))
+			{
+				if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
+				backsector = hw_FakeFlat(seg->backsector, in_area, true);
+				if (hw_CheckClip(seg->sidedef, currentsector, backsector)) clipperr.SafeAddClipRange(startAngleR - paddingR, endAngleR + paddingR);
+				backsector = nullptr;
+			}
 		}
 	}
 
@@ -311,7 +317,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 	{
 		if (!(currentsubsector->flags & SSECMF_DRAWN))
 		{
-			if (clipper.SafeCheckRange(startAngle, endAngle) && (!r_radarclipper || (Level->flags3 & LEVEL3_NOFOGOFWAR)))
+			if (clipper.SafeCheckRange(startAngle, endAngle) && !Viewpoint.IsAllowedOoB())
 			{
 			  currentsubsector->flags |= SSECMF_DRAWN;
 			}
@@ -328,7 +334,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		return;
 	}
 
-	if (Viewpoint.IsAllowedOoB() && (!r_radarclipper || (Level->flags3 & LEVEL3_NOFOGOFWAR) || clipperr.SafeCheckRange(startAngleR, endAngleR)))
+	if (!Viewpoint.IsAllowedOoB() || (!r_radarclipper || (Level->flags3 & LEVEL3_NOFOGOFWAR) || clipperr.SafeCheckRange(startAngleR, endAngleR)))
 		currentsubsector->flags |= SSECMF_DRAWN;
 
 	uint8_t ispoly = uint8_t(seg->sidedef->Flags & WALLF_POLYOBJ);
@@ -708,7 +714,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 	if(Viewpoint.IsAllowedOoB() && sector->isSecret() && sector->wasSecret() && !r_radarclipper) return;
 
 	// cull everything if subsector outside all relevant clippers
-	if ((sub->polys == nullptr))
+	if (Viewpoint.IsAllowedOoB() && (sub->polys == nullptr))
 	{
 		auto &clipper = *mClipper;
 		auto &clipperv = *vClipper;

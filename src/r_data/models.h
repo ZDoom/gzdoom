@@ -62,8 +62,11 @@ enum
 	MDL_FORCECULLBACKFACES			= 1<<14,
 };
 
-FSpriteModelFrame * FindModelFrame(const AActor * thing, int sprite, int frame, bool dropped);
-FSpriteModelFrame * FindModelFrameRaw(const PClass * ti, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrame(AActor * thing, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrame(const PClass * ti, bool is_decoupled, int sprite, int frame, bool dropped);
+FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
+//FSpriteModelFrame * FindModelFrameRaw(const AActor * actorDefaults, const PClass * ti, int sprite, int frame, bool dropped);
+
 bool IsHUDModelForPlayerAvailable(player_t * player);
 
 // Check if circle potentially intersects with node AABB
@@ -112,7 +115,37 @@ void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, c
 }
 
 void RenderModel(FModelRenderer* renderer, float x, float y, float z, FSpriteModelFrame* smf, AActor* actor, double ticFrac);
-void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf);
+void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, FVector3 translation, FVector3 rotation, FVector3 rotation_pivot, FSpriteModelFrame *smf, double ticFrac);
+
+struct CalcModelFrameInfo
+{
+	int smf_flags;
+	const FSpriteModelFrame * smfNext;
+	float inter;
+	bool is_decoupled;
+	ModelAnimFrameInterp decoupled_frame;
+	ModelAnimFrame * decoupled_frame_prev;
+	unsigned modelsamount;
+};
+
+struct ModelDrawInfo
+{
+	TArray<FTextureID> surfaceskinids;
+	int modelid;
+	int animationid;
+	int modelframe;
+	int modelframenext;
+	FTextureID skinid;
+};
+
+class DActorModelData;
+
+CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, int curTics, DActorModelData* modelData, AActor* actor, bool is_decoupled, double tic, double ticFrac);
+
+// returns true if the model isn't removed
+bool CalcModelOverrides(int modelindex, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled);
+
+const TArray<VSMatrix> * ProcessModelFrame(FModel * animation, bool nextFrame, int i, const FSpriteModelFrame *smf, DActorModelData* modelData, const CalcModelFrameInfo &frameinfo, ModelDrawInfo &drawinfo, bool is_decoupled, double tic, BoneInfo *out);
 
 EXTERN_CVAR(Float, cl_scaleweaponfov)
 

@@ -534,6 +534,90 @@ inline int VMCallAction(VMFunction *func, VMValue *params, int numparams, VMRetu
 	return VMCall(func, params, numparams, results, numresults);
 }
 
+template<typename T> struct VMReturnTypeTrait { typedef T type; static const int ReturnCount = 1; };
+template<> struct VMReturnTypeTrait<void> { typedef void type; static const int ReturnCount = 0; };
+
+void VMCheckParamCount(VMFunction* func, int retcount, int argcount);
+
+template<typename RetVal>
+void VMCheckParamCount(VMFunction* func, int argcount) { return VMCheckParamCount(func, VMReturnTypeTrait<RetVal>::ReturnCount, argcount); }
+
+// The type can't be mapped to ZScript automatically:
+
+template<typename NativeType> void VMCheckParam(VMFunction* func, int index) = delete;
+template<typename NativeType> void VMCheckReturn(VMFunction* func, int index) = delete;
+
+// Native types we support converting to/from:
+
+template<> void VMCheckParam<int>(VMFunction* func, int index);
+template<> void VMCheckParam<double>(VMFunction* func, int index);
+template<> void VMCheckParam<FString>(VMFunction* func, int index);
+template<> void VMCheckParam<DObject*>(VMFunction* func, int index);
+
+template<> void VMCheckReturn<void>(VMFunction* func, int index);
+template<> void VMCheckReturn<int>(VMFunction* func, int index);
+template<> void VMCheckReturn<double>(VMFunction* func, int index);
+template<> void VMCheckReturn<FString>(VMFunction* func, int index);
+template<> void VMCheckReturn<DObject*>(VMFunction* func, int index);
+template<> void VMCheckReturn<void*>(VMFunction* func, int index);
+
+template<typename T>
+struct vm_decay_pointer_object
+{ // convert any pointer to a type derived from DObject into a pointer to DObject, and any other to a pointer to void
+	using decayed = typename std::conditional<std::is_base_of_v<DObject, typename std::pointer_traits<T>::element_type>,
+		typename std::pointer_traits<T>::template rebind<DObject>,
+		typename std::pointer_traits<T>::template rebind<void>>::type;
+};
+
+template<typename T>
+struct vm_decay_pointer_void
+{ // convert any pointer to a pointer to void
+	using decayed = typename std::pointer_traits<T>::template rebind<void>;
+};
+
+template<typename T>
+struct vm_decay_none
+{
+	using decayed = T;
+};
+
+template<typename T>
+using vm_pointer_decay = typename std::conditional<std::is_pointer_v<T>, vm_decay_pointer_object<T>, vm_decay_none<T>>::type::decayed;
+
+template<typename T>
+using vm_pointer_decay_void = typename std::conditional<std::is_pointer_v<T>, vm_decay_pointer_void<T>, vm_decay_none<T>>::type::decayed;
+
+template<typename RetVal, typename... Args, size_t... I>
+void VMValidateSignatureSingle(VMFunction* func, std::index_sequence<I...>)
+{
+	VMCheckParamCount<RetVal>(func, sizeof...(Args));
+	VMCheckReturn<vm_pointer_decay<RetVal>>(func, 0);
+	(VMCheckParam<vm_pointer_decay<Args>>(func, I), ...);
+}
+
+void VMCallCheckResult(VMFunction* func, VMValue* params, int numparams, VMReturn* results, int numresults);
+
+template<typename RetVal, typename... Args>
+typename VMReturnTypeTrait<RetVal>::type VMCallSingle(VMFunction* func, Args... args)
+{
+	VMValidateSignatureSingle<RetVal, Args...>(func, std::make_index_sequence<sizeof...(Args)>{});
+	VMValue params[] = { args... };
+
+	vm_pointer_decay_void<RetVal> resultval; // convert any pointer to void
+	VMReturn results(&resultval);
+	VMCallCheckResult(func, params, sizeof...(Args), &results, 1);
+	return (RetVal)resultval;
+}
+
+template<typename... Args>
+typename VMReturnTypeTrait<void>::type VMCallVoid(VMFunction* func, Args... args)
+{
+	VMValidateSignatureSingle<void, Args...>(func, std::make_index_sequence<sizeof...(Args)>{});
+	VMValue params[] = { args... };
+	VMCallCheckResult(func, params, sizeof...(Args), nullptr, 0);
+}
+
+
 // Use these to collect the parameters in a native function.
 // variable name <x> at position <p>
 [[noreturn]]

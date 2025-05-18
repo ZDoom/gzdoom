@@ -1035,6 +1035,52 @@ decalgroup SwordLightning
 	SwordLightning2	1
 }
 
+/***** ID24 ****************************************************************/
+
+//Calamity Blade
+decal BladeScorchLower
+{
+	pic SCORCH1
+	shade "00 00 00"
+	x-scale 0.85
+	y-scale 0.20
+	randomflipx
+	randomflipy
+}
+
+decal BladeScorch1
+{
+	pic HETBA0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal BladeScorchLower
+}
+
+decal BladeScorch2
+{
+	pic HETBB0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal BladeScorchLower
+}
+
+decal BladeScorch3
+{
+	pic HETBC0
+	add 1.0
+	fullbright
+	animator GoAway
+	lowerdecal BladeScorchLower
+}
+
+decalgroup BladeScorch
+{
+	BladeScorch1	1
+	BladeScorch2	1
+	BladeScorch3	1
+}
 
 /***** Generators **********************************************************/
 

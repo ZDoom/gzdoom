@@ -14,6 +14,7 @@ public:
 	PlayGamePage(LauncherWindow* launcher, WadStuff* wads, int numwads, int defaultiwad);
 	void UpdateLanguage();
 
+	void SetExtraArgs(const std::string& args);
 	std::string GetExtraArgs();
 	int GetSelectedGame();
 

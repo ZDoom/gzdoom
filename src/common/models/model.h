@@ -16,14 +16,18 @@ class FModelRenderer;
 class FGameTexture;
 class IModelVertexBuffer;
 class FModel;
+class PClass;
+class AActor;
 struct FSpriteModelFrame;
+struct FLevelLocals;
 
 FTextureID LoadSkin(const char* path, const char* fn);
 void FlushModels();
 
+
 extern TDeletingArray<FModel*> Models;
 extern TArray<FSpriteModelFrame> SpriteModelFrames;
-extern TMap<void*, FSpriteModelFrame> BaseSpriteModelFrames;
+extern TMap<const PClass*, FSpriteModelFrame> BaseSpriteModelFrames;
 
 #define MD3_MAX_SURFACES	32
 #define MIN_MODELS	4
@@ -57,6 +61,9 @@ public:
 	unsigned int getFlags(class DActorModelData * defs) const;
 	friend void InitModels();
 	friend void ParseModelDefLump(int Lump);
+
+	VSMatrix ObjectToWorldMatrix(AActor * actor, float x, float y, float z, double ticFrac);
+	VSMatrix ObjectToWorldMatrix(FLevelLocals *Level, DVector3 translation, DRotator rotation, DVector2 scaling, unsigned int flags, double tic);
 };
 
 
@@ -86,6 +93,21 @@ public:
 
 	virtual int FindFrame(const char * name, bool nodefault = false) = 0;
 
+	virtual int NumJoints() { return 0; }
+	virtual int FindJoint(FName name) { return -1; }
+
+	virtual int GetJointParent(int joint) { return -1; }
+	virtual FName GetJointName(int joint) { return NAME_None; }
+	virtual FQuaternion GetJointRotation(int joint) { return FQuaternion(0.0f,0.0f,0.0f,1.0f); }
+	virtual FVector3 GetJointPosition(int joint) { return FVector3(0.0f,0.0f,0.0f); }
+	virtual TRS GetJointBaseTRS(int joint) { return {}; }
+	virtual TRS GetJointPose(int joint, int frame) { return {}; }
+	virtual int NumFrames() { return -1; }
+
+	virtual void GetJointChildren(int joint, TArray<int> &out) {}
+
+	virtual void GetRootJoints(TArray<int> &out) {}
+
 	// [RL0] these are used for decoupled iqm animations
 	virtual int FindFirstFrame(FName name) { return FErr_NotFound; }
 	virtual int FindLastFrame(FName name) { return FErr_NotFound; }
@@ -99,7 +121,7 @@ public:
 
 	virtual ModelAnimFrame PrecalculateFrame(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData) { return nullptr; };
 
-	virtual const TArray<VSMatrix>* CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData) { return nullptr; };
+	virtual const TArray<VSMatrix>* CalculateBones(const ModelAnimFrame &from, const ModelAnimFrameInterp &to, float inter, const TArray<TRS>* animationData, TArray<BoneOverride> *in, BoneInfo *out, double time) { return nullptr; };
 
 	void SetVertexBuffer(int type, IModelVertexBuffer *buffer) { mVBuf[type] = buffer; }
 	IModelVertexBuffer *GetVertexBuffer(int type) const { return mVBuf[type]; }

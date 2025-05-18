@@ -66,7 +66,7 @@ namespace swrenderer
 		fillshort(top, viewwidth, 0x7fff);
 	}
 
-	void VisiblePlane::AddLights(RenderThread *thread, FLightNode *node)
+	void VisiblePlane::AddLights(RenderThread *thread, FSection *sec)
 	{
 		if (!r_dynlights)
 			return;
@@ -75,30 +75,39 @@ namespace swrenderer
 		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0)
 			return; // [SP] no dynlights if invul or lightamp
 
-		while (node)
+		auto Level = sec->sector->Level;
+		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
+		if (flatLightList)
 		{
-			if (node->lightsource->IsActive() && (height.PointOnSide(node->lightsource->Pos) > 0))
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
+			while (it.NextPair(pair))
 			{
-				bool found = false;
-				VisiblePlaneLight *light_node = lights;
-				while (light_node)
+				auto node = pair->Value.get();
+				if (!node) continue;
+
+				if (node->lightsource->IsActive() && (height.PointOnSide(node->lightsource->Pos) > 0))
 				{
-					if (light_node->lightsource == node->lightsource)
+					bool found = false;
+					VisiblePlaneLight *light_node = lights;
+					while (light_node)
 					{
-						found = true;
-						break;
+						if (light_node->lightsource == node->lightsource)
+						{
+							found = true;
+							break;
+						}
+						light_node = light_node->next;
 					}
-					light_node = light_node->next;
-				}
-				if (!found)
-				{
-					VisiblePlaneLight *newlight = thread->FrameMemory->NewObject<VisiblePlaneLight>();
-					newlight->next = lights;
-					newlight->lightsource = node->lightsource;
-					lights = newlight;
+					if (!found)
+					{
+						VisiblePlaneLight *newlight = thread->FrameMemory->NewObject<VisiblePlaneLight>();
+						newlight->next = lights;
+						newlight->lightsource = node->lightsource;
+						lights = newlight;
+					}
 				}
 			}
-			node = node->nextLight;
 		}
 	}
 

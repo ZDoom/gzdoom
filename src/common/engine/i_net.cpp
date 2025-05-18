@@ -78,6 +78,7 @@
 #include "c_cvars.h"
 #include "version.h"
 #include "i_net.h"
+#include "m_random.h"
 
 /* [Petteri] Get more portable: */
 #ifndef __WIN32__
@@ -162,13 +163,14 @@ int consoleplayer = 0;
 int Net_Arbitrator = 0;
 FClientStack NetworkClients = {};
 
-uint32_t GameID = DEFAULT_GAME_ID;
 uint8_t	TicDup = 1u;
-uint8_t	MaxClients = 1u;
+int	MaxClients = 1;
 int RemoteClient = -1;
 size_t NetBufferLength = 0u;
 uint8_t NetBuffer[MAX_MSGLEN] = {};
 
+static FRandom		GameIDGen = {};
+static uint8_t		GameID[8] = {};
 static u_short		GamePort = (IPPORT_USERRESERVED + 29);
 static SOCKET		MySocket = INVALID_SOCKET;
 static FConnection	Connected[MAXPLAYERS] = {};
@@ -187,10 +189,10 @@ CUSTOM_CVAR(String, net_password, "", CVAR_IGNORE)
 
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
-int Net_SetUserInfo(int client, uint8_t*& stream);
-int Net_ReadUserInfo(int client, uint8_t*& stream);
-int Net_ReadGameInfo(uint8_t*& stream);
-int Net_SetGameInfo(uint8_t*& stream);
+size_t Net_SetUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadUserInfo(int client, uint8_t*& stream);
+size_t Net_ReadGameInfo(uint8_t*& stream);
+size_t Net_SetGameInfo(uint8_t*& stream);
 
 static SOCKET CreateUDPSocket()
 {
@@ -320,7 +322,7 @@ static int PrivateNetOf(const in_addr& in)
 // private network, since that means we (probably) are too.
 static bool ClientsOnSameNetwork()
 {
-	size_t start = 1u;
+	int start = 1;
 	for (; start < MaxClients; ++start)
 	{
 		if (Connected[start].Status != CSTAT_NONE)
@@ -334,7 +336,7 @@ static bool ClientsOnSameNetwork()
 	if (!firstClient)
 		return false;
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (i == start)
 			continue;
@@ -344,6 +346,12 @@ static bool ClientsOnSameNetwork()
 	}
 
 	return true;
+}
+
+static void GenerateGameID()
+{
+	const uint64_t val = GameIDGen.GenRand64();
+	memcpy(GameID, &val, sizeof(val));
 }
 
 // Print a network-related message to the console. This doesn't print to the window so should
@@ -395,7 +403,7 @@ static bool I_NetLoop(bool (*loopCallback)(void*), void* data)
 }
 
 // A new client has just entered the game, so add them to the player list.
-static void I_NetClientConnected(size_t client, unsigned int charLimit = 0u)
+static void I_NetClientConnected(int client, unsigned int charLimit = 0u)
 {
 	const char* name = Net_GetClientName(client, charLimit);
 	unsigned int flags = CFL_NONE;
@@ -408,17 +416,17 @@ static void I_NetClientConnected(size_t client, unsigned int charLimit = 0u)
 }
 
 // A client changed ready state.
-static void I_NetClientUpdated(size_t client)
+static void I_NetClientUpdated(int client)
 {
 	StartWindow->NetUpdate(client, Connected[client].Status);
 }
 
-static void I_NetClientDisconnected(size_t client)
+static void I_NetClientDisconnected(int client)
 {
 	StartWindow->NetDisconnect(client);
 }
 
-static void I_NetUpdatePlayers(size_t current, size_t limit)
+static void I_NetUpdatePlayers(int current, int limit)
 {
 	StartWindow->NetProgress(current, limit);
 }
@@ -483,21 +491,34 @@ static void SendPacket(const sockaddr_in& to)
 
 	assert(!(NetBuffer[0] & NCMD_COMPRESSED));
 
-	uLong size = MaxTransmitSize - 1u;
-	int res = -1;
+	uint8_t* dataStart = &TransmitBuffer[4];
+	uLong size = MaxTransmitSize - 5u;
 	if (NetBufferLength >= MinCompressionSize)
 	{
-		TransmitBuffer[0] = NetBuffer[0] | NCMD_COMPRESSED;
-		res = compress2(TransmitBuffer + 1, &size, NetBuffer + 1, NetBufferLength - 1u, 9);
+		*dataStart = NetBuffer[0] | NCMD_COMPRESSED;
+		const int res = compress2(dataStart + 1, &size, NetBuffer + 1, NetBufferLength - 1u, 9);
+		if (res != Z_OK)
+			I_Error("Net compression failed (zlib error %d)", res);
+
 		++size;
 	}
-
-	if (res == Z_OK && size < static_cast<uLong>(NetBufferLength))
-		res = sendto(MySocket, (const char*)TransmitBuffer, size, 0, (const sockaddr*)&to, sizeof(to));
-	else if (NetBufferLength > MaxTransmitSize)
-		I_Error("Net compression failed (zlib error %d)", res);
 	else
-		res = sendto(MySocket, (const char*)NetBuffer, NetBufferLength, 0, (const sockaddr*)&to, sizeof(to));
+	{
+		memcpy(dataStart, NetBuffer, NetBufferLength);
+		size = NetBufferLength;
+	}
+
+	if (size + 4 > MaxTransmitSize)
+		I_Error("Failed to compress data down to acceptable transmission size");
+
+	// If a connection packet, don't check the game id since they might not have it yet.
+	const uint32_t crc = (NetBuffer[0] & NCMD_SETUP) ? CalcCRC32(dataStart, size) : AddCRC32(CalcCRC32(dataStart, size), GameID, std::extent_v<decltype(GameID)>);
+	TransmitBuffer[0] = crc >> 24;
+	TransmitBuffer[1] = crc >> 16;
+	TransmitBuffer[2] = crc >> 8;
+	TransmitBuffer[3] = crc;
+
+	sendto(MySocket, (const char*)TransmitBuffer, size + 4, 0, (const sockaddr*)&to, sizeof(to));
 }
 
 static void GetPacket(sockaddr_in* const from = nullptr)
@@ -543,7 +564,8 @@ static void GetPacket(sockaddr_in* const from = nullptr)
 	}
 	else if (msgSize > 0)
 	{
-		if (client == -1 && !(TransmitBuffer[0] & NCMD_SETUP))
+		const uint8_t* dataStart = &TransmitBuffer[4];
+		if (client == -1 && !(*dataStart & NCMD_SETUP))
 		{
 			msgSize = 0;
 		}
@@ -557,25 +579,37 @@ static void GetPacket(sockaddr_in* const from = nullptr)
 		}
 		else
 		{
-			NetBuffer[0] = (TransmitBuffer[0] & ~NCMD_COMPRESSED);
-			if (TransmitBuffer[0] & NCMD_COMPRESSED)
+			const uint32_t check = (*dataStart & NCMD_SETUP) ? CalcCRC32(dataStart, msgSize - 4) : AddCRC32(CalcCRC32(dataStart, msgSize - 4), GameID, std::extent_v<decltype(GameID)>);
+			const uint32_t crc = (TransmitBuffer[0] << 24) | (TransmitBuffer[1] << 16) | (TransmitBuffer[2] << 8) | TransmitBuffer[3];
+			if (check != crc)
 			{
-				uLongf size = MAX_MSGLEN - 1;
-				int err = uncompress(NetBuffer + 1, &size, TransmitBuffer + 1, msgSize - 1);
-				if (err != Z_OK)
-				{
-					Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
-					client = -1;
-					msgSize = 0;
-				}
-				else
-				{
-					msgSize = size + 1;
-				}
+				DPrintf(DMSG_NOTIFY, "Checksum on packet failed: expected %u, got %u", check, crc);
+				client = -1;
+				msgSize = 0;
 			}
 			else
 			{
-				memcpy(NetBuffer + 1, TransmitBuffer + 1, msgSize - 1);
+				NetBuffer[0] = (*dataStart & ~NCMD_COMPRESSED);
+				if (*dataStart & NCMD_COMPRESSED)
+				{
+					uLongf size = MAX_MSGLEN - 1;
+					int err = uncompress(NetBuffer + 1, &size, dataStart + 1, msgSize - 5);
+					if (err != Z_OK)
+					{
+						Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
+						client = -1;
+						msgSize = 0;
+					}
+					else
+					{
+						msgSize = size + 1;
+					}
+				}
+				else
+				{
+					msgSize -= 4;
+					memcpy(NetBuffer + 1, dataStart + 1, msgSize - 1);
+				}
 			}
 		}
 	}
@@ -632,7 +666,7 @@ static void RejectConnection(const sockaddr_in& to, ENetConnectType reason)
 	SendPacket(to);
 }
 
-static void AddClientConnection(const sockaddr_in& from, size_t client)
+static void AddClientConnection(const sockaddr_in& from, int client)
 {
 	Connected[client].Status = CSTAT_CONNECTING;
 	Connected[client].Address = from;
@@ -641,7 +675,7 @@ static void AddClientConnection(const sockaddr_in& from, size_t client)
 	I_NetClientUpdated(client);
 
 	// Make sure any ready clients are marked as needing the new client's info.
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status == CSTAT_READY)
 		{
@@ -651,7 +685,7 @@ static void AddClientConnection(const sockaddr_in& from, size_t client)
 	}
 }
 
-static void RemoveClientConnection(size_t client)
+static void RemoveClientConnection(int client)
 {
 	I_NetClientDisconnected(client);
 	I_ClearClient(client);
@@ -664,7 +698,7 @@ static void RemoveClientConnection(size_t client)
 	NetBuffer[2] = client;
 	NetBufferLength = 3u;
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status == CSTAT_NONE)
 			continue;
@@ -694,7 +728,7 @@ static bool Host_CheckForConnections(void* connected)
 {
 	const bool forceStarting = I_ShouldStartNetGame();
 	const bool hasPassword = strlen(net_password) > 0;
-	size_t* connectedPlayers = (size_t*)connected;
+	int* connectedPlayers = (int*)connected;
 
 	TArray<int> toBoot = {};
 	I_GetKickClients(toBoot);
@@ -780,7 +814,7 @@ static bool Host_CheckForConnections(void* connected)
 			}
 			else
 			{
-				size_t free = 1u;
+				int free = 1;
 				for (; free < MaxClients; ++free)
 				{
 					if (Connected[free].Status == CSTAT_NONE)
@@ -815,7 +849,7 @@ static bool Host_CheckForConnections(void* connected)
 	const size_t addrSize = sizeof(sockaddr_in);
 	bool ready = true;
 	NetBuffer[0] = NCMD_SETUP;
-	for (size_t client = 1u; client < MaxClients; ++client)
+	for (int client = 1; client < MaxClients; ++client)
 	{
 		auto& con = Connected[client];
 		// If we're starting before the lobby is full, only check against connected clients.
@@ -846,7 +880,8 @@ static bool Host_CheckForConnections(void* connected)
 			{
 				NetBuffer[1] = PRE_GAME_INFO;
 				NetBuffer[2] = TicDup;
-				NetBufferLength = 3u;
+				memcpy(&NetBuffer[3], GameID, 8);
+				NetBufferLength = 11u;
 
 				uint8_t* stream = &NetBuffer[NetBufferLength];
 				NetBufferLength += Net_SetGameInfo(stream);
@@ -855,7 +890,7 @@ static bool Host_CheckForConnections(void* connected)
 			}
 
 			NetBuffer[1] = PRE_USER_INFO;
-			for (size_t i = 0u; i < MaxClients; ++i)
+			for (int i = 0; i < MaxClients; ++i)
 			{
 				if (i == client || Connected[i].Status == CSTAT_NONE)
 					continue;
@@ -864,7 +899,7 @@ static bool Host_CheckForConnections(void* connected)
 				{
 					if (Connected[i].Status >= CSTAT_WAITING)
 					{
-						NetBuffer[2] = i;
+						NetBuffer[2] = uint8_t(i);
 						NetBufferLength = 3u;
 						// Client will already have the host connection information.
 						if (i > 0)
@@ -908,7 +943,7 @@ static void SendAbort()
 
 	if (consoleplayer == 0)
 	{
-		for (size_t client = 1u; client < MaxClients; ++client)
+		for (int client = 1; client < MaxClients; ++client)
 		{
 			if (Connected[client].Status != CSTAT_NONE)
 				SendPacket(Connected[client].Address);
@@ -930,12 +965,13 @@ static bool HostGame(int arg, bool forcedNetMode)
 	if (MaxClients > MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
 
+	GenerateGameID();
 	NetworkClients += 0;
 	Connected[consoleplayer].Status = CSTAT_READY;
 	Net_SetupUserInfo();
 
 	// If only 1 player, don't bother starting the network
-	if (MaxClients == 1u)
+	if (MaxClients == 1)
 	{
 		TicDup = 1u;
 		multiplayer = true;
@@ -944,11 +980,11 @@ static bool HostGame(int arg, bool forcedNetMode)
 
 	StartNetwork(false);
 	I_NetInit("Waiting for other players...", true);
-	I_NetUpdatePlayers(1u, MaxClients);
+	I_NetUpdatePlayers(1, MaxClients);
 	I_NetClientConnected(0u, 16u);
 
 	// Wait for the lobby to be full.
-	size_t connectedPlayers = 1u;
+	int connectedPlayers = 1;
 	if (!I_NetLoop(Host_CheckForConnections, (void*)&connectedPlayers))
 	{
 		SendAbort();
@@ -961,10 +997,11 @@ static bool HostGame(int arg, bool forcedNetMode)
 
 	// If the player force started with only themselves in the lobby, start the game
 	// immediately.
-	if (connectedPlayers == 1u)
+	if (connectedPlayers == 1)
 	{
 		CloseNetwork();
-		MaxClients = TicDup = 1u;
+		MaxClients = 1;
+		TicDup = 1u;
 		return true;
 	}
 
@@ -1090,7 +1127,8 @@ static bool Guest_ContactHost(void* unused)
 			if (!Connected[consoleplayer].bHasGameInfo)
 			{
 				TicDup = clamp<int>(NetBuffer[2], 1, MAXTICDUP);
-				uint8_t* stream = &NetBuffer[3];
+				memcpy(GameID, &NetBuffer[3], 8);
+				uint8_t* stream = &NetBuffer[11];
 				Net_ReadGameInfo(stream);
 				Connected[consoleplayer].bHasGameInfo = true;
 			}
@@ -1102,7 +1140,7 @@ static bool Guest_ContactHost(void* unused)
 		}
 		else if (NetBuffer[1] == PRE_USER_INFO)
 		{
-			const size_t c = NetBuffer[2];
+			const int c = NetBuffer[2];
 			if (!ClientGotAck(consoleplayer, c))
 			{
 				NetworkClients += c;
@@ -1253,6 +1291,7 @@ bool I_InitNetwork()
 	else
 	{
 		// single player game
+		GenerateGameID();
 		TicDup = 1;
 		NetworkClients += 0;
 		Connected[0].Status = CSTAT_READY;

@@ -212,6 +212,10 @@ static void PrecacheLevel(FLevelLocals *Level)
 	{
 		AddToList(hitlist.Data(), Level->skytexture2, FTextureManager::HIT_Sky);
 	}
+	if (Level->skymisttexture.isValid())
+	{
+		AddToList(hitlist.Data(), Level->skymisttexture, FTextureManager::HIT_Sky);
+	}
 
 	static const BITFIELD checkForTextureFlags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst | FTextureManager::TEXMAN_DontCreate;
 

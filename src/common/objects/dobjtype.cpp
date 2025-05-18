@@ -680,14 +680,14 @@ int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction 
 			auto vproto = Virtuals[i]->Proto;
 			auto &vflags = Virtuals[i]->ArgFlags;
 
-			int n = flags.size();
+			int n = flags.SSize();
 
 			bool flagsOk = true;
 
 			for(int i = 0; i < n; i++)
 			{
-				int argA = i >= vflags.size() ? 0 : vflags[i];
-				int argB = i >= flags.size() ? 0 : flags[i];
+				int argA = i >= vflags.SSize() ? 0 : vflags[i];
+				int argB = i >= flags.SSize() ? 0 : flags[i];
 
 				bool AisRef = argA & (VARF_Out | VARF_Ref);
 				bool BisRef = argB & (VARF_Out | VARF_Ref);

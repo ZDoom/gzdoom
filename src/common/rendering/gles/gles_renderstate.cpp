@@ -231,6 +231,8 @@ bool FGLRenderState::ApplyShader()
 		activeShader->cur->muClipHeight.Set(mHwUniforms->mClipHeight);
 		activeShader->cur->muClipHeightDirection.Set(mHwUniforms->mClipHeightDirection);
 		//activeShader->cur->muShadowmapFilter.Set(mHwUniforms->mShadowmapFilter);
+		activeShader->cur->muThickFogDistance.Set(mHwUniforms->mThickFogDistance);
+		activeShader->cur->muThickFogMultiplier.Set(mHwUniforms->mThickFogMultiplier);
 	}
 
 	glVertexAttrib4fv(VATTR_COLOR, &mStreamData.uVertexColor.X);

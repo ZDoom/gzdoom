@@ -391,23 +391,28 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	}
 }
 
+#include <iostream>
+
 void I_Rumble(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig)
 {
+	std::cout
+		<< duration_ms << " "
+		<< high_freq << " "
+		<< low_freq << " "
+		<< left_trig << " "
+		<< right_trig << " "
+		<< std::endl;
 	JoystickManager->Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
 }
 
-#include <iostream>
-
 void I_Rumble_Cast(uint duration_ms, double high_freq, double low_freq, double left_trig, double right_trig)
 {
-
-	std::cout << duration_ms << " " << high_freq << std::endl;
 	I_Rumble(
-		0,
-		0,
-		0,
-		0,
-		0
+		static_cast<uint32_t> (std::min(duration_ms, 0xffffffff)),
+		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, high_freq), 1.0)),
+		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, low_freq), 1.0)),
+		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, left_trig), 1.0)),
+		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, right_trig), 1.0))
 	);
 }
 

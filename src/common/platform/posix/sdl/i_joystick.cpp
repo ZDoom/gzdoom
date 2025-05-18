@@ -393,7 +393,7 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 
 #include <iostream>
 
-void I_Rumble(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig)
+void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig)
 {
 	std::cout
 		<< duration_ms << " "
@@ -405,15 +405,58 @@ void I_Rumble(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint1
 	JoystickManager->Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
 }
 
-void I_Rumble_Cast(uint duration_ms, double high_freq, double low_freq, double left_trig, double right_trig)
+void I_Rumble(uint duration_ms, double high_freq, double low_freq, double left_trig, double right_trig)
 {
-	I_Rumble(
+	I_RumbleRaw(
 		static_cast<uint32_t> (std::min(duration_ms, 0xffffffff)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, high_freq), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, low_freq), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, left_trig), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, right_trig), 1.0))
 	);
+}
+
+#include "c_dispatch.h"
+#include "printf.h"
+#include <string>
+
+CCMD (rumble)
+{
+	int count = argv.argc()-1;
+	uint duration_ms;
+	float high_freq, low_freq, left_trig, right_trig;
+
+	switch (count) {
+	case 0:
+		Printf("testing rumble for 5s\n");
+		I_Rumble(5000, 1.0, 1.0, 1.0, 1.0);
+		break;
+	case 1:
+		Printf("testing rumble for action '%s'\n", argv[1]);
+		break;
+	case 5:
+		try {
+			duration_ms = static_cast <uint> (std::stoul(argv[1], nullptr, 10));
+			high_freq = static_cast <float> (std::stof(argv[2], nullptr));
+			low_freq = static_cast <float> (std::stof(argv[3], nullptr));
+			left_trig = static_cast <float> (std::stof(argv[4], nullptr));
+			right_trig = static_cast <float> (std::stof(argv[5], nullptr));
+		} catch (...) {
+			Printf("Failed to parse args\n");
+			return;
+		}
+		Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", duration_ms, high_freq, low_freq, left_trig, right_trig);
+		I_Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
+		break;
+	default:
+		Printf(
+			"usage:\n  %s\n  %s\n  %s\n",
+			"rumble",
+			"rumble string_id",
+			"rumble int_duration float_high_freq float_low_freq float_left_trig float_right_trigger"
+		);
+		break;
+	}
 }
 
 void I_ProcessJoysticks()

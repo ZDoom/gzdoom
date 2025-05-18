@@ -162,6 +162,7 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
+					MenuRumble();
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -171,6 +172,7 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
+					MenuRumble();
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -200,6 +202,7 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
+			MenuRumble();
 			MenuSound("menu/cursor");
 			return true;
 
@@ -211,12 +214,14 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
+			MenuRumble();
 			MenuSound("menu/cursor");
 			return true;
 
 		case MKEY_Enter:
 			if (mDesc.mSelectedItem >= 0 && mDesc.mItems[mDesc.mSelectedItem].Activate())
 			{
+				MenuRumble();
 				MenuSound("menu/advance");
 			}
 			return true;
@@ -271,6 +276,7 @@ class ListMenu : Menu
 					{
 						if (i != mDesc.mSelectedItem)
 						{
+							//MenuRumble();
 							//MenuSound("menu/cursor");
 						}
 						mDesc.mSelectedItem = i;

@@ -46,6 +46,7 @@ class ReadThisMenu : GenericMenu
 	
 	override void Init(Menu parent)
 	{
+
 		Super.Init(parent);
 		mScreen = 1;
 		mInfoTic = gametic;
@@ -53,6 +54,7 @@ class ReadThisMenu : GenericMenu
 
 	override void Drawer()
 	{
+
 		double alpha;
 		TextureID tex, prevpic;
 		
@@ -95,6 +97,7 @@ class ReadThisMenu : GenericMenu
 	{
 		if (mkey == MKEY_Enter)
 		{
+			MenuRumble();
 			MenuSound("menu/choose");
 			mScreen++;
 			mInfoTic = gametic;

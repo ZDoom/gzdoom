@@ -93,6 +93,7 @@ class MessageBoxMenu : Menu
 		mMessageMode = messagemode;
 		if (playsound)
 		{
+			MenuRumble();
 			MenuSound ("menu/prompt");
 		}
 		Handler = native_handler;
@@ -149,6 +150,7 @@ class MessageBoxMenu : Menu
 
 	protected void CloseSound()
 	{
+		MenuRumble();
 		MenuSound (GetCurrentMenu() != NULL? "menu/backup" : "menu/dismiss");
 	}
 
@@ -250,6 +252,7 @@ class MessageBoxMenu : Menu
 		{
 			if (mkey == MKEY_Up || mkey == MKEY_Down)
 			{
+				MenuRumble();
 				MenuSound("menu/cursor");
 				messageSelection = !messageSelection;
 				return true;

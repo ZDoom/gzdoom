@@ -614,7 +614,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 
 	if (player)
 	{
-		I_Rumble(1000, 0xffff, 0xffff, 0, 0);
+		I_Rumble(1000, 1, 1, 1, 1);
 
 		// [RH] Death messages
 		ClientObituary (this, inflictor, source, dmgflags, MeansOfDeath);
@@ -884,7 +884,7 @@ static int ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int 
 			((player->cheats & CF_GODMODE) && damage < TELEFRAG_DAMAGE))
 			return false;
 
-		I_Rumble(250, 0xffff, 0xffff, 0, 0);
+		I_Rumble(250, 1.0, 1.0, 1.0, 1.0);
 	}
 	
 	woundstate = target->FindState(NAME_Wound, modName);

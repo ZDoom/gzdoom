@@ -506,15 +506,18 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 void MenuRumble(uint duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
 {
 	// 	cursor change
+	// 	(75, 0.25, 1, 0.5, 0.5);
 	// 	(100, 0.5, 0.5, 0, 0);
 	//
 	// 	choose advance activate
+	// 	(200, 1, 1, 1, 1);
 	// 	(200, 1, 1, 0, 0);
 	//
 	// 	dismiss prompt backup clear invalid
+	// 	(100, 1, 1, 1, 1);
 	// 	(100, 1, 1, 0, 0);
 
-	I_Rumble_Cast(duration_ms, high_frequency, low_frequency, left_trigger, right_trigger);
+	I_Rumble(duration_ms, high_frequency, low_frequency, left_trigger, right_trigger);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumble, MenuRumble)

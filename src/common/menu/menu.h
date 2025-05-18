@@ -322,6 +322,7 @@ void DeinitMenus();
 bool M_Active();
 bool M_IsAnimated();
 
+void MenuRumble(uint duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
 
 struct IJoystickConfig;
 DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v = -1);

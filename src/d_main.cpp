@@ -118,7 +118,6 @@
 #include "screenjob.h"
 #include "startscreen.h"
 #include "shiftstate.h"
-#include <iostream>
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -2725,7 +2724,7 @@ static bool System_CaptureModeInGame()
 
 static void System_PlayStartupSound(const char* sndname)
 {
-	std::cout << "bang System_PlayStartupSound" << std::endl;
+	I_Rumble_Cast(200, 1.0, 1.0, 0, 0);
 	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
 }
 
@@ -3467,7 +3466,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			autostart = true;
 		}
 
-		std::cout << "bang startupdone" << std::endl;
+		I_Rumble_Cast(200, 1.0, 1.0, 0, 0);
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
 
 		if (Args->CheckParm("-norun") || batchrun)

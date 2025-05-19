@@ -42,16 +42,8 @@ void CT_Drawer (void);
 
 // [RH] Draw deathmatch scores
 
-void HU_DrawScores(player_t* me);
-void HU_GetPlayerWidths(int& maxNameWidth, int& maxScoreWidth, int& maxIconHeight);
-void HU_DrawColorBar(int x, int y, int height, int playernum);
-int HU_GetRowColor(player_t *player, bool hightlight);
+void HU_DrawScores(int me, double ticFrac);
 
 extern bool SB_ForceActive;
-
-// Sorting routines
-
-int comparepoints(const void *arg1, const void *arg2);
-int compareteams(const void *arg1, const void *arg2);
 
 #endif

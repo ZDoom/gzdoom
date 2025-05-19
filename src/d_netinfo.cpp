@@ -232,6 +232,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetDisplayColor)
 	ACTION_RETURN_INT(c);
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetAverageLatency)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_INT(ClientStates[self - players].AverageLatency);
+}
+
 // Find out which teams are present. If there is only one,
 // then another team should be chosen at random.
 //

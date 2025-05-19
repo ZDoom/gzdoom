@@ -1840,6 +1840,51 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLineFrame)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, GetTextureWidth)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(textureId);
+	PARAM_BOOL(animated);
+	
+	FGameTexture *tex = textureId >= 1 ? TexMan.GetGameTexture(FSetTextureID(textureId), animated) : nullptr;
+	
+	ACTION_RETURN_FLOAT(tex ? tex->GetDisplayWidth() : -1);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, GetTextureHeight)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(textureId);
+	PARAM_BOOL(animated);
+
+	FGameTexture *tex = textureId >= 1 ? TexMan.GetGameTexture(FSetTextureID(textureId), animated) : nullptr;
+
+	ACTION_RETURN_FLOAT(tex ? tex->GetDisplayHeight() : -1);
+}
+
+
+DEFINE_ACTION_FUNCTION(_Screen, GetTextureLeftOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(textureId);
+	PARAM_BOOL(animated);
+
+	FGameTexture *tex = textureId >= 1 ? TexMan.GetGameTexture(FSetTextureID(textureId), animated) : nullptr;
+
+	ACTION_RETURN_FLOAT(tex ? tex->GetDisplayLeftOffset() : -1);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, GetTextureTopOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(textureId);
+	PARAM_BOOL(animated);
+
+	FGameTexture *tex = textureId >= 1 ? TexMan.GetGameTexture(FSetTextureID(textureId), animated) : nullptr;
+
+	ACTION_RETURN_FLOAT(tex ? tex->GetDisplayTopOffset() : -1);
+}
+
 DEFINE_ACTION_FUNCTION(FCanvas, DrawLineFrame)
 {
 	PARAM_SELF_PROLOGUE(FCanvas);

@@ -1,6 +1,8 @@
 // for flag changer functions.
 const FLAG_NO_CHANGE = -1;
 const MAXPLAYERS = 64;
+const TEAM_NONE = 255;
+const TEAM_MAXIMUM = 16;
 
 enum EStateUseFlags
 {

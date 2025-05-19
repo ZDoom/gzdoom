@@ -70,6 +70,7 @@ void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
 void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig);
 void I_Rumble(uint duration_ms, double high_freq, double low_freq, double left_trig, double right_trig);
+void I_Rumble(const FString& identifier);
 IJoystickConfig *I_UpdateDeviceList();
 extern void UpdateJoystickMenu(IJoystickConfig *);
 

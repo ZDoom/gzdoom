@@ -62,7 +62,7 @@ int active_con_scaletext();
 // Public data
 
 void CT_Init ();
-void CT_Drawer ();
+void CT_Drawer (double ticFrac);
 bool CT_Responder (event_t *ev);
 void CT_PasteChat(const char *clip);
 
@@ -239,7 +239,7 @@ void CT_PasteChat(const char *clip)
 //
 //===========================================================================
 
-void CT_Drawer (void)
+void CT_Drawer (double ticFrac)
 {
 	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
@@ -254,7 +254,15 @@ void CT_Drawer (void)
 		{
 			// todo: check for summary screen
 		}
-		if (!skipit) HU_DrawScores (&players[consoleplayer]);
+		if (StatusBar != nullptr)
+		{
+			IFOVERRIDENVIRTUALPTRNAME(StatusBar, NAME_BaseStatusBar, DrawScoreboard)
+			{
+				skipit = VMCallSingle<int>(func, StatusBar, ticFrac);
+			}
+		}
+		if (!skipit)
+			HU_DrawScores(&players[consoleplayer]);
 	}
 	if (chatmodeon)
 	{

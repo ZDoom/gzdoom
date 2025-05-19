@@ -262,6 +262,7 @@ class BaseStatusBar : StatusBarCore native
 	virtual bool ProcessNotify(EPrintLevel printlevel, String outline) { return false; }
 	virtual void FlushNotify() {}
 	virtual bool ProcessMidPrint(Font fnt, String msg, bool bold) { return false; }
+	virtual bool DrawScoreboard(double ticFrac) { return false; }
 	// [MK] let the HUD handle drawing the chat prompt
 	virtual bool DrawChat(String txt) { return false; }
 	// [MK] let the HUD handle drawing the pause graphics

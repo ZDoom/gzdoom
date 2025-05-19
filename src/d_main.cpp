@@ -1090,7 +1090,7 @@ void D_Display ()
 	}
 	if (!hud_toggled)
 	{
-		CT_Drawer ();
+		CT_Drawer (vp.TicFrac);
 
 		// draw pause pic
 		if ((paused || pauseext) && menuactive == MENU_Off && StatusBar != nullptr)

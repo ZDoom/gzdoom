@@ -38,7 +38,7 @@ class player_t;
 
 void CT_Init (void);
 bool CT_Responder (event_t* ev);
-void CT_Drawer (void);
+void CT_Drawer (double ticFrac);
 
 // [RH] Draw deathmatch scores
 

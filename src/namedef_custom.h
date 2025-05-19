@@ -155,6 +155,8 @@ xx(PowerBuddha)
 xx(TeleportDest)
 xx(TeleportDest2)
 
+xx(BaseStatusBar)
+
 
 xx(Fist)
 //xx(Berserk)

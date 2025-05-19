@@ -967,7 +967,40 @@ class StatusScreen : ScreenJob abstract version("2.5")
 	protected virtual void updateStats() {}
 	protected virtual void drawStats() {}
 
-	native static int, int, int GetPlayerWidths();
-	native static Color GetRowColor(PlayerInfo player, bool highlight);
-	native static void GetSortedPlayers(in out Array<int> sorted, bool teamplay);
+	static int, int, int GetPlayerWidths()
+	{
+		int maxNameWidth;
+		int maxScoreWidth;
+		int maxIconHeight;
+
+		StatusBar.Scoreboard_GetPlayerWidths(maxNameWidth, maxScoreWidth, maxIconHeight);
+
+		return maxNameWidth, maxScoreWidth, maxIconHeight;
+	}
+
+	static Color GetRowColor(PlayerInfo player, bool highlight)
+	{
+		return StatusBar.Scoreboard_GetRowColor(player, highlight);
+	}
+
+	static void GetSortedPlayers(in out Array<int> sorted, bool teamplay)
+	{
+		sorted.clear();
+		for(int i = 0; i < MAXPLAYERS; i++)
+		{
+			if(playeringame[i])
+			{
+				sorted.Push(i);
+			}
+		}
+
+		if(teamplay)
+		{
+			StatusBar.Scoreboard_SortPlayers(sorted, BaseStatusBar.Scoreboard_CompareByTeams);
+		}
+		else
+		{
+			StatusBar.Scoreboard_SortPlayers(sorted, BaseStatusBar.Scoreboard_CompareByPoints);
+		}
+	}
 }

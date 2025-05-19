@@ -2369,6 +2369,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetUDMFString, ZGetUDMFString)
 	ACTION_RETURN_STRING(GetUDMFString(self, type, index, key));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, PlayerNum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_POINTER(player, player_t);
+	ACTION_RETURN_INT(self->PlayerNum(player));
+}
+
 DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);

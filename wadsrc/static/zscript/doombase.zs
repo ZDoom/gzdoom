@@ -587,6 +587,8 @@ struct LevelLocals native
 	native clearscope int ActorOnLineSide(Actor mo, Line l) const;
 	native clearscope int BoxOnLineSide(Vector2 pos, double radius, Line l) const;
 
+	native clearscope int PlayerNum(PlayerInfo player) const;
+
 	native String GetChecksum() const;
 
 	native void ChangeSky(TextureID sky1, TextureID sky2 );

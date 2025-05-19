@@ -578,6 +578,11 @@ struct Screen native
 	native static void ClearStencil();
 	native static void SetTransform(Shape2DTransform transform);
 	native static void ClearTransform();
+
+	native static double GetTextureWidth(TextureID texture, bool animated = false);
+	native static double GetTextureHeight(TextureID texture, bool animated = false);
+	native static double GetTextureLeftOffset(TextureID texture, bool animated = false);
+	native static double GetTextureTopOffset(TextureID texture, bool animated = false);
 }
 
 struct Font native
@@ -948,6 +953,12 @@ struct StringStruct native unsafe(internal)
 	native void StripLeft(String junk = "");
 	native void StripRight(String junk = "");
 	native void StripLeftRight(String junk = "");
+
+	native int Compare(String other) const; // strcmp
+	native int CompareNoCase(String other) const; // stricmp
+
+	native bool IsEmpty() const; // strcmp
+	native bool IsNotEmpty() const; // stricmp
 }
 
 struct Translation version("2.4")

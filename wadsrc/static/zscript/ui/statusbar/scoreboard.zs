@@ -110,17 +110,6 @@ extend class BaseStatusBar
             }
         }
 
-		/*
-		console.printf("SortedPlayers was [");
-
-		foreach(p : sortedPlayers)
-		{
-			console.printf("%d", p);
-		}
-
-		console.printf("]");
-		*/
-
 		if(teamplay && deathmatch)
 		{
 			Scoreboard_SortPlayers(sortedPlayers, Scoreboard_CompareByTeams);
@@ -129,17 +118,6 @@ extend class BaseStatusBar
 		{
 			Scoreboard_SortPlayers(sortedPlayers, Scoreboard_CompareByPoints);
         }
-
-		/*
-		console.printf("SortedPlayers is now [");
-
-		foreach(p : sortedPlayers)
-		{
-			console.printf("%d", p);
-		}
-
-		console.printf("]");
-		*/
 
         int numPlayers = sortedPlayers.size();
         

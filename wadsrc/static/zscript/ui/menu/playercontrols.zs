@@ -186,7 +186,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 	{
 		if (mkey == Menu.MKEY_Enter)
 		{
-			Menu.MenuRumble(200, 1, 1, 0, 0);
+			Menu.MenuRumble("menu/choose");
 			Menu.MenuSound ("menu/choose");
 			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), mPlayerName, 128, fromcontroller);
 			mEnter.ActivateMenu();
@@ -316,14 +316,14 @@ class ListMenuItemValueText : ListMenuItemSelectable
 		{
 			if (mkey == Menu.MKEY_Left)
 			{
-				Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+				Menu.MenuRumble("menu/change");
 				Menu.MenuSound("menu/change");
 				if (--mSelection < 0) mSelection = mSelections.Size() - 1;
 				return true;
 			}
 			else if (mkey == Menu.MKEY_Right || mkey == Menu.MKEY_Enter)
 			{
-				Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+				Menu.MenuRumble("menu/change");
 				Menu.MenuSound("menu/change");
 				if (++mSelection >= mSelections.Size()) mSelection = 0;
 				return true;
@@ -441,14 +441,14 @@ class ListMenuItemSlider : ListMenuItemSelectable
 	{
 		if (mkey == Menu.MKEY_Left)
 		{
-			Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+			Menu.MenuRumble("menu/change");
 			Menu.MenuSound("menu/change");
 			if ((mSelection -= mStep) < mMinrange) mSelection = mMinrange;
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Right || mkey == Menu.MKEY_Enter)
 		{
-			Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+			Menu.MenuRumble("menu/change");
 			Menu.MenuSound("menu/change");
 			if ((mSelection += mStep) > mMaxrange) mSelection = mMaxrange;
 			return true;
@@ -487,7 +487,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 		if (v != mSelection)
 		{
 			mSelection = v;
-			Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+			Menu.MenuRumble("menu/change");
 			Menu.MenuSound("menu/change");
 		}
 		if (type == Menu.MOUSE_Click)

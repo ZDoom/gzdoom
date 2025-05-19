@@ -93,7 +93,7 @@ class MessageBoxMenu : Menu
 		mMessageMode = messagemode;
 		if (playsound)
 		{
-			MenuRumble(100, 1, 1, 0, 0);
+			MenuRumble("menu/prompt");
 			MenuSound ("menu/prompt");
 		}
 		Handler = native_handler;
@@ -150,8 +150,9 @@ class MessageBoxMenu : Menu
 
 	protected void CloseSound()
 	{
-		MenuRumble(100, 1, 1, 0, 0);
-		MenuSound (GetCurrentMenu() != NULL? "menu/backup" : "menu/dismiss");
+		let m = GetCurrentMenu();
+		MenuRumble(m != NULL? "menu/backup" : "menu/dismiss");
+		MenuSound (m != NULL? "menu/backup" : "menu/dismiss");
 	}
 
 	//=============================================================================
@@ -252,7 +253,7 @@ class MessageBoxMenu : Menu
 		{
 			if (mkey == MKEY_Up || mkey == MKEY_Down)
 			{
-				MenuRumble(100, 0.5, 0.5, 0, 0);
+				MenuRumble("menu/cursor");
 				MenuSound("menu/cursor");
 				messageSelection = !messageSelection;
 				return true;

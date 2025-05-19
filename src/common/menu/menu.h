@@ -8,6 +8,7 @@
 #include "c_cvars.h"
 #include "v_font.h"
 #include "textures.h"
+#include "zstring.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
 EXTERN_CVAR(Int, m_use_mouse);
@@ -322,7 +323,8 @@ void DeinitMenus();
 bool M_Active();
 bool M_IsAnimated();
 
-void MenuRumble(uint duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
+void MenuRumbleDirect(uint duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
+void MenuRumble(const FString& identifier);
 
 struct IJoystickConfig;
 DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v = -1);

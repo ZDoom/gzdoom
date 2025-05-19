@@ -381,7 +381,7 @@ class OptionMenu : Menu
 
 		if (mDesc.mSelectedItem != startedAt)
 		{
-			MenuRumble(100, 0.5, 0.5, 0, 0);
+			MenuRumble("menu/cursor");
 			MenuSound ("menu/cursor");
 		}
 		return true;

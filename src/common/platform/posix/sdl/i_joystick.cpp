@@ -34,9 +34,13 @@
 #include <SDL_gamecontroller.h>
 #include <algorithm>
 #include <cstdint>
+#include <string>
+#include <unordered_map>
 
 #include "basics.h"
 #include "cmdlib.h"
+#include "c_dispatch.h"
+#include "printf.h"
 
 #include "m_joy.h"
 #include "keydef.h"
@@ -391,17 +395,8 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	}
 }
 
-#include <iostream>
-
 void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig)
 {
-	std::cout
-		<< duration_ms << " "
-		<< high_freq << " "
-		<< low_freq << " "
-		<< left_trig << " "
-		<< right_trig << " "
-		<< std::endl;
 	JoystickManager->Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
 }
 
@@ -416,9 +411,53 @@ void I_Rumble(uint duration_ms, double high_freq, double low_freq, double left_t
 	);
 }
 
-#include "c_dispatch.h"
-#include "printf.h"
-#include <string>
+#include <unordered_map>
+
+struct Rumble {
+	uint duration_ms;
+	double high_freq;
+	double low_freq;
+	double left_trig;
+	double right_trig;
+};
+
+std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {
+	{"HEAVY", []() { I_Rumble(200, 1, 1, 1, 1); }},
+	{"MEDIUM", []() { I_Rumble(100, 1, 1, 1, 1); }},
+	{"LIGHT", []() { I_Rumble(75, 0.25, 1, 0.5, 0.5); }},
+};
+
+std::unordered_map<std::string, std::string> RumbleMapping = {
+	{"menu/cursor", "LIGHT"},
+	{"menu/change", "LIGHT"},
+	{"menu/choose", "HEAVY"},
+	{"menu/advance", "HEAVY"},
+	{"menu/activate", "HEAVY"},
+	{"menu/dismiss", "MEDIUM"},
+	{"menu/prompt", "MEDIUM"},
+	{"menu/backup", "MEDIUM"},
+	{"menu/clear", "MEDIUM"},
+	{"menu/invalid", "MEDIUM"},
+};
+
+void I_Rumble(const FString& identifier) {
+	auto identifierChars = identifier.GetChars();
+	auto mappingIterator = RumbleMapping.find(identifierChars);
+
+	if (mappingIterator == RumbleMapping.end()) {
+		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", identifierChars);
+		return;
+	}
+
+	auto rumbleIterator = BasicRumbleType.find(mappingIterator->second);
+
+	if (mappingIterator == RumbleMapping.end()) {
+		Printf(DMSG_WARNING, "rumble mapping not found! '%s'\n", mappingIterator->second.c_str());
+		return;
+	}
+
+	rumbleIterator->second();
+}
 
 CCMD (rumble)
 {
@@ -433,6 +472,7 @@ CCMD (rumble)
 		break;
 	case 1:
 		Printf("testing rumble for action '%s'\n", argv[1]);
+		I_Rumble(argv[1]);
 		break;
 	case 5:
 		try {

@@ -23,7 +23,7 @@ class os_SearchField : OptionMenuItemTextField
 	{
 		if (mkey == Menu.MKEY_Enter)
 		{
-			Menu.MenuRumble(200, 1, 1, 0, 0);
+			Menu.MenuRumble("menu/choose");
 			Menu.MenuSound("menu/choose");
 			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), mText, -1, fromcontroller);
 			mEnter.ActivateMenu();

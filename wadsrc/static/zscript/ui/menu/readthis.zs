@@ -97,7 +97,7 @@ class ReadThisMenu : GenericMenu
 	{
 		if (mkey == MKEY_Enter)
 		{
-			MenuRumble(200, 1, 1, 0, 0);
+			MenuRumble("menu/choose");
 			MenuSound("menu/choose");
 			mScreen++;
 			mInfoTic = gametic;

@@ -133,7 +133,7 @@ class ColorpickerMenu : OptionMenu
 		case MKEY_Down:
 			if (mDesc.mSelectedItem == mStartItem+6)	// last valid item
 			{
-				Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+				Menu.MenuRumble("menu/cursor");
 				MenuSound ("menu/cursor");
 				mGridPosY = 0;
 				// let it point to the last static item so that the super class code still has a valid item
@@ -144,7 +144,7 @@ class ColorpickerMenu : OptionMenu
 			{
 				if (mGridPosY < 15)
 				{
-					Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+					Menu.MenuRumble("menu/cursor");
 					MenuSound ("menu/cursor");
 					mGridPosY++;
 				}
@@ -157,13 +157,13 @@ class ColorpickerMenu : OptionMenu
 			{
 				if (mGridPosY > 0)
 				{
-					Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+					Menu.MenuRumble("menu/cursor");
 					MenuSound ("menu/cursor");
 					mGridPosY--;
 				}
 				else
 				{
-					Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+					Menu.MenuRumble("menu/cursor");
 					MenuSound ("menu/cursor");
 					mDesc.mSelectedItem = mStartItem+6;
 				}
@@ -174,7 +174,7 @@ class ColorpickerMenu : OptionMenu
 		case MKEY_Left:
 			if (mDesc.mSelectedItem == mStartItem+7)
 			{
-				Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+				Menu.MenuRumble("menu/cursor");
 				MenuSound ("menu/cursor");
 				if (--mGridPosX < 0) mGridPosX = 15;
 				return true;
@@ -184,7 +184,7 @@ class ColorpickerMenu : OptionMenu
 		case MKEY_Right:
 			if (mDesc.mSelectedItem == mStartItem+7)
 			{
-				Menu.MenuRumble(100, 0.5, 0.5, 0, 0);
+				Menu.MenuRumble("menu/cursor");
 				MenuSound ("menu/cursor");
 				if (++mGridPosX > 15) mGridPosX = 0;
 				return true;
@@ -200,7 +200,7 @@ class ColorpickerMenu : OptionMenu
 				mRed = col.r;
 				mGreen = col.g;
 				mBlue = col.b;
-				Menu.MenuRumble(200, 1, 1, 0, 0);
+				Menu.MenuRumble("menu/choose");
 				MenuSound ("menu/choose");
 				return true;
 			}

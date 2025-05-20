@@ -563,8 +563,8 @@ struct LocalState
 	int RegCount = -1;
 	int Line = -1;
 	VMValue Value;
-	std::vector<LocalState> StructFields;
 	bool invalid_value = false;
+	std::vector<LocalState> StructFields;
 	bool IsValid() { return Type && !invalid_value; }
 };
 
@@ -811,7 +811,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 		{
 			if (!field || !struct_ptr)
 			{
-				m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, VMValue(), {}, true});
+				m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, VMValue(), true, {}});
 				continue;
 			}
 			auto offset = field->Offset;
@@ -821,7 +821,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 			void *pointed_field = struct_ptr + offset;
 			bool invalid = false;
 			val = GetVMValue(pointed_field, type, field->BitValue);
-			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, val, {}, invalid});
+			m_structInfo.StructFields.push_back(LocalState {field_name, field->Type, static_cast<int>(field->Flags), -1, -1, -1, val, true, {}});
 			// increment struct_ptr by fieldSize
 			if (curr_ptr)
 			{
@@ -944,7 +944,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 		auto type = p_stackFrame->Func->Proto->ArgumentTypes[paramidx];
 		bool invalid = !getAndIncRegCount(type, val);
 
-		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, type->RegCount, -1, val, {}, invalid});
+		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, type->RegCount, -1, val, invalid, {}});
 	}
 	int specials = 0;
 	std::sort(

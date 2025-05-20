@@ -285,17 +285,29 @@ static VMValue GetVMValue(void *addr, const PType *type, int bitvalue = -1)
 	return value;
 }
 
-static VMValue GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, int idx)
+static VMValue GetRegisterValue(const VMFrame *m_stackFrame, uint8_t regType, int idx, bool get_non_string_reg_addr = false)
 {
 	switch (regType)
 	{
 	case REGT_INT:
+		if (get_non_string_reg_addr)
+		{
+			return VMValue((void *)&m_stackFrame->GetRegD()[idx]);
+		}
 		return VMValue(m_stackFrame->GetRegD()[idx]);
 	case REGT_FLOAT:
+		if (get_non_string_reg_addr)
+		{
+			return VMValue((void *)&m_stackFrame->GetRegF()[idx]);
+		}
 		return VMValue(m_stackFrame->GetRegF()[idx]);
 	case REGT_STRING:
 		return VMValue(&m_stackFrame->GetRegS()[idx]);
 	case REGT_POINTER:
+		if (get_non_string_reg_addr)
+		{
+			return VMValue((void *)&m_stackFrame->GetRegA()[idx]);
+		}
 		return VMValue(m_stackFrame->GetRegA()[idx]);
 	}
 	return VMValue();
@@ -828,7 +840,7 @@ static StructInfo GetStructState(std::string struct_name, VMValue m_value, PType
 }
 
 
-static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType, VMValue &value, int idx)
+static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType, VMValue &value, int idx, bool get_non_string_reg_addr = false)
 {
 	switch (regType)
 	{
@@ -873,7 +885,7 @@ static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType
 		return false;
 	}
 	}
-	value = GetRegisterValue(m_stackFrame, regType, idx);
+	value = GetRegisterValue(m_stackFrame, regType, idx, get_non_string_reg_addr);
 	return true;
 }
 
@@ -886,60 +898,53 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 	uint8_t NumRegFloat = 0;
 	uint8_t NumRegString = 0;
 	uint8_t NumRegAddress = 0;
-	auto getAndIncRegCount = [&](uint8_t type, VMValue &value, int idx = -1) -> bool
+	auto getAndIncRegCount = [&](PType *type, VMValue &value, int idx = -1, int refregCount = -1) -> bool
 	{
-		switch (type)
+		auto regType = type->RegType;
+		bool get_non_string_reg_addr = false;
+		int reg_idx = -1;
+		int inc = 1;
+		if (regType != REGT_POINTER && TypeIsStructOrStructPtr(type))
+		{
+			get_non_string_reg_addr = true;
+			if (refregCount > 0) {
+				inc = refregCount;
+			} else {
+				inc = type->RegCount;
+			}
+		}
+		switch (regType)
 		{
 		case REGT_INT:
-			idx = idx < 0 ? NumRegInt : idx;
-			NumRegInt++;
+			reg_idx = idx < 0 ? NumRegInt : idx;
+			NumRegInt += inc;
 			break;
 		case REGT_FLOAT:
-			idx = idx < 0 ? NumRegFloat : idx;
-			NumRegFloat++;
+			reg_idx = idx < 0 ? NumRegFloat : idx;
+			NumRegFloat += inc;
 			break;
 		case REGT_STRING:
-			idx = idx < 0 ? NumRegString : idx;
-			NumRegString++;
+			reg_idx = idx < 0 ? NumRegString : idx;
+			NumRegString += inc;
 			break;
 		case REGT_POINTER:
-			idx = idx < 0 ? NumRegAddress : idx;
-			NumRegAddress++;
+			reg_idx = idx < 0 ? NumRegAddress : idx;
+			NumRegAddress += inc;
 			break;
 		}
-		return GetRegisterValueChecked(p_stackFrame, type, value, idx);
+		return GetRegisterValueChecked(p_stackFrame, regType, value, reg_idx, get_non_string_reg_addr);
 	};
 	VMScriptFunction *func = GetVMScriptFunction(p_stackFrame->Func);
 	auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
 
-	for (int paramidx = 0; paramidx < p_stackFrame->Func->Proto->ArgumentTypes.size(); paramidx++)
+	for (int paramidx = 0; paramidx < (int64_t)p_stackFrame->Func->Proto->ArgumentTypes.size(); paramidx++)
 	{
 		std::string name = GetParameterName(p_stackFrame, paramidx);
-		bool non_builtin = paramidx >= numImplicitParams;
-		auto proto = p_stackFrame->Func->Proto;
 		VMValue val;
-		if (proto->ArgumentTypes.size() == 0)
-		{
-			LogError("Function %s has '%s' but no argument types", p_stackFrame->Func->PrintableName, name.c_str());
-			continue;
-		}
-		else if (proto->ArgumentTypes.size() <= paramidx)
-		{
-			LogError("Function %s has '%s' but <= %d argument types", p_stackFrame->Func->PrintableName, name.c_str(), paramidx);
-			continue;
-		}
-		if (!non_builtin)
-		{
-			if (p_stackFrame->NumRegA == 0)
-			{
-				LogError("Function %s has '%s' but no parameters", p_stackFrame->Func->PrintableName, name.c_str());
-				continue;
-			}
-		}
-		auto type = proto->ArgumentTypes[paramidx];
-		bool invalid = getAndIncRegCount(type->RegType, val);
+		auto type = p_stackFrame->Func->Proto->ArgumentTypes[paramidx];
+		bool invalid = !getAndIncRegCount(type, val);
 
-		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, 1, -1, val, {}, invalid});
+		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, type->RegCount, -1, val, {}, invalid});
 	}
 	int specials = 0;
 	std::sort(
@@ -963,26 +968,26 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 
 			int flags = 0; // TODO
 
-
-			// auto -- need to declare the actual type becuase it's recursive
-			std::function<LocalState(const std::string &, PType *)> GetReg = [&](const std::string &name, PType *type)
+			auto local_name = local.Name.GetChars();
+			LocalState state;
 			{
-				LocalState state;
 				state.RegCount = local.RegCount;
 				bool invalid_reg_num = local.RegNum < 0;
-				state.Name = name;
-				state.Type = type;
+				state.Name = local_name;
+				state.Type = local.type;
 				state.VarFlags = flags;
 				state.RegNum = local.RegNum;
 				state.Line = local.LineNumber;
-				auto reg_type = type->RegType;
-				if (invalid_reg_num && reg_type == REGT_NIL && local.StackOffset > -1 && local.StackOffset + type->Size <= func->StackSize)
+				state.invalid_value = true;
+				// stack-allocated variable
+				if (invalid_reg_num && local.type->RegType == REGT_NIL && local.StackOffset > -1 && local.StackOffset + local.type->Size <= func->StackSize)
 				{
 					void *base = p_stackFrame->GetExtra();
 					void *var = (char *)base + local.StackOffset;
-					state.Value = GetVMValue(var, type);
+					state.Value = GetVMValue(var, local.type);
+					state.invalid_value = false;
 				}
-				else if (!IsBasicNonPointerType(type))
+				else if (!IsBasicNonPointerType(local.type))
 				{
 					VMValue value;
 					state.RegNum = invalid_reg_num ? NumRegAddress : local.RegNum;
@@ -991,56 +996,34 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 					if (TypeIsStructOrStructPtr(local.type) && local.RegCount > 1)
 					{
 						auto fields = GetStructFieldInfo(local.type);
-						state.RegCount = fields.size();
-						// NOTE: this only works because the only optimized structs are float or double-only structs (Vec2, Vec3, Vec4, etc.)
-						// if this changes in the future, this will have to be modified; the offset would not map to the register index
+						state.RegCount = local.RegCount;
+						if (local.type->RegCount != local.RegCount)
+						{
+							LogError("GetReg: RegCount mismatch for %s: %d != %d", local_name, local.type->RegCount, local.RegCount);
+						}
 						assert(fields.empty() || fields[0].second->Type->RegType == REGT_FLOAT);
 						state.RegNum = NumRegFloat;
-						// return an address to the start of the struct on the registers
-						state.Value = VMValue(&p_stackFrame->GetRegF()[state.RegNum]);
-						NumRegFloat += state.RegCount;
+						state.invalid_value = !getAndIncRegCount(state.Type, state.Value, state.RegNum, local.RegCount);
 					}
 					else
 					{
-						if (state.RegNum >= p_stackFrame->NumRegA)
-						{
-							LogError("Function %s, local '%s' address reg idx %d > %d", p_stackFrame->Func->QualifiedName, name.c_str(), NumRegAddress, p_stackFrame->NumRegA);
-							state.invalid_value = true;
-							return state;
-						}
-						state.Value = VMValue(p_stackFrame->GetRegA()[state.RegNum]);
-						NumRegAddress++;
+						state.invalid_value = !getAndIncRegCount(state.Type, state.Value, state.RegNum);
 					}
 				}
 				else
 				{
 					state.RegCount = 1;
-					VMValue value;
-					state.RegNum = local.RegNum;
-					switch (reg_type)
+					if (local.RegCount != 1)
 					{
-					case REGT_INT:
-						NumRegInt++;
-						break;
-					case REGT_FLOAT:
-						NumRegFloat++;
-						break;
-					case REGT_STRING:
-						NumRegString++;
-						break;
-					case REGT_POINTER:
-						NumRegAddress++;
-						break;
+						auto reg_type = local.type->RegType;
+						LogError("GetReg: RegCount mismatch for %s: %d != 1", local_name, local.RegCount);
 					}
-
-					bool valid = GetRegisterValueChecked(p_stackFrame, reg_type, value, state.RegNum);
-					state = LocalState {name, type, flags, NumRegAddress, 1, local.LineNumber, value, {}, valid};
+					state.RegNum = local.RegNum;
+					state.invalid_value = !getAndIncRegCount(local.type, state.Value, state.RegNum);
 				}
-				return state;
-			};
-			auto local_name = local.Name.GetChars();
+			}
 
-			localState.m_locals.push_back(GetReg(local_name, local.type));
+			localState.m_locals.push_back(state);
 		}
 	}
 	return localState;

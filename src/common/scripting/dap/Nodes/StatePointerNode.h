@@ -7,9 +7,8 @@
 
 namespace DebugServer
 {
-class StatePointerNode : public StateNodeBase, public IProtocolVariableSerializable, public IStructuredState
+class StatePointerNode : public StateNodeNamedVariable, public IStructuredState
 {
-	std::string m_name;
 	const VMValue m_value;
 	PClass *m_OwningType;
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;

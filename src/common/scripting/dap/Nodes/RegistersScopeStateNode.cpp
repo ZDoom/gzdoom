@@ -1,7 +1,6 @@
 #include "RegistersScopeStateNode.h"
 #include <common/scripting/dap/Utilities.h>
 #include <common/scripting/dap/RuntimeState.h>
-#include "ValueStateNode.h"
 
 static const char *const PARAMS = "Params";
 static const char *const INTS = "Ints";

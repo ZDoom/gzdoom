@@ -63,7 +63,7 @@ static int64_t GetElementCount(const VMValue &value, PType *p_type)
 	return 0;
 }
 
-ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *p_type) : m_name(name), m_value(value), m_type(p_type)
+ArrayStateNode::ArrayStateNode(std::string name, VMValue value, PType *p_type) : StateNodeNamedVariable(name), m_value(value), m_type(p_type)
 {
 	auto type = m_type;
 	if (type->toPointer())
@@ -87,8 +87,7 @@ bool ArrayStateNode::SerializeToProtocol(dap::Variable &variable)
 	variable.variablesReference = GetId();
 	auto count = GetElementCount(m_value, m_type);
 	variable.indexedVariables = count < 0 ? 0 : count;
-	variable.name = m_name;
-
+	SetVariableName(variable);
 	std::string elementTypeName = m_elementType->DescriptiveName();
 	variable.type = m_type->mDescriptiveName.GetChars();
 	if (!IsVMValueValid(&m_value) || count < 0)

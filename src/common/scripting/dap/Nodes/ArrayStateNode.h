@@ -7,9 +7,8 @@
 
 namespace DebugServer
 {
-class ArrayStateNode : public StateNodeBase, public IProtocolVariableSerializable, public IStructuredState
+class ArrayStateNode : public StateNodeNamedVariable, public IStructuredState
 {
-	std::string m_name;
 
 	const VMValue m_value;
 	PType *m_type;

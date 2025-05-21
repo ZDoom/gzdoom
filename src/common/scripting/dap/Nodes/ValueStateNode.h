@@ -7,9 +7,8 @@
 
 namespace DebugServer
 {
-class ValueStateNode : public StateNodeBase, public IProtocolVariableSerializable
+class ValueStateNode : public StateNodeNamedVariable
 {
-	std::string m_name;
 	const VMValue m_variable;
 	PType *m_type;
 	PClass *m_StateOwningClass = nullptr;

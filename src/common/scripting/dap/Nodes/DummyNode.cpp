@@ -3,18 +3,18 @@
 #include <utility>
 namespace DebugServer
 {
-DummyNode::DummyNode(std::string name, std::string value, std::string type) : m_name(std::move(name)), m_value(std::move(value)), m_type(std::move(type)) { }
+DummyNode::DummyNode(std::string name, std::string value, std::string type) : StateNodeNamedVariable(std::move(name)), m_value(std::move(value)), m_type(std::move(type)) { }
 
 bool DummyNode::SerializeToProtocol(dap::Variable &variable)
 {
-	variable.name = m_name;
+	SetVariableName(variable);
 	variable.value = m_value;
 	variable.type = m_type;
 	return true;
 }
 
 DummyWithChildrenNode::DummyWithChildrenNode(std::string name, std::string value, std::string type, caseless_path_map<std::shared_ptr<StateNodeBase>> children)
-		: m_name(std::move(name)), m_value(std::move(value)), m_type(std::move(type)), m_children(std::move(children))
+		: StateNodeNamedVariable(std::move(name)), m_value(std::move(value)), m_type(std::move(type)), m_children(std::move(children))
 {
 }
 
@@ -39,7 +39,7 @@ bool DummyWithChildrenNode::GetChildNode(std::string name, std::shared_ptr<State
 
 bool DummyWithChildrenNode::SerializeToProtocol(dap::Variable &variable)
 {
-	variable.name = m_name;
+	SetVariableName(variable);
 	variable.value = m_value;
 	variable.type = m_type;
 	variable.variablesReference = GetId();

@@ -8,7 +8,7 @@
 
 namespace DebugServer
 { // std::string name, VMValue* value, PType* knownType
-StructStateNode::StructStateNode(std::string name, VMValue value, PType *knownType, const VMFrame * currentFrame) : m_name(name), m_value(value), m_type(knownType), m_currentFrame(currentFrame) {}
+StructStateNode::StructStateNode(std::string name, VMValue value, PType *knownType, const VMFrame * currentFrame) : StateNodeNamedVariable(name), m_value(value), m_type(knownType), m_currentFrame(currentFrame) {}
 
 bool StructStateNode::SerializeToProtocol(dap::Variable &variable)
 {
@@ -21,7 +21,7 @@ bool StructStateNode::SerializeToProtocol(dap::Variable &variable)
 	bool valid = m_structInfo.IsValid() && (inRegisters || IsVMValueValid(&m_value));
 	variable.variablesReference = valid ? GetId() : 0;
 	variable.namedVariables = m_structInfo.StructFields.size();
-	variable.name = m_name;
+	SetVariableName(variable);
 	variable.type = m_type->DescriptiveName();
 	auto typeval = variable.type.value("");
 	// check if name begins with 'Pointer<'; if so, remove it, and the trailing '>'

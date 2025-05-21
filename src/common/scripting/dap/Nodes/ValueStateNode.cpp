@@ -17,7 +17,7 @@ static const char *basicTypeNames[] = {"NONE", "uint32",	 "int32",			"uint16",		
 																			 "name", "SpriteID", "TextureID", "TranslationID", "Sound", "Color", "Enum", "StateLabel", "pointer", "VoidPointer", nullptr};
 
 ValueStateNode::ValueStateNode(std::string name, VMValue variable, PType *type, PClass *stateOwningClass)
-	: m_name(name), m_variable(variable), m_type(type), m_StateOwningClass(stateOwningClass)
+	: StateNodeNamedVariable(name), m_variable(variable), m_type(type), m_StateOwningClass(stateOwningClass)
 {
 }
 
@@ -237,7 +237,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 bool ValueStateNode::SerializeToProtocol(dap::Variable &variable)
 {
 	variable = ToVariable(m_variable, m_type, m_StateOwningClass);
-	variable.name = m_name;
+	SetVariableName(variable);
 	return true;
 }
 }

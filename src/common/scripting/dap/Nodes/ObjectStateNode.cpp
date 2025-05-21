@@ -10,7 +10,7 @@ namespace DebugServer
 {
 
 ObjectStateNode::ObjectStateNode(const std::string &name, VMValue value, PType *asClass, const bool subView)
-	: m_name(name), m_subView(subView), m_value(value), m_ClassType(asClass)
+	: StateNodeNamedVariable(name), m_subView(subView), m_value(value), m_ClassType(asClass)
 {
 }
 
@@ -18,7 +18,7 @@ bool ObjectStateNode::SerializeToProtocol(dap::Variable &variable)
 {
 	variable.variablesReference = IsVMValValidDObject(&m_value) ? GetId() : 0;
 	auto pointedType = m_ClassType->isObjectPointer() ? m_ClassType->toPointer()->PointedType : m_ClassType;
-	variable.name = m_name;
+	SetVariableName(variable);
 	const char *typeName = pointedType->mDescriptiveName.GetChars();
 	variable.type = typeName;
 	std::vector<std::string> childNames;

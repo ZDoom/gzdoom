@@ -11,7 +11,7 @@
 
 namespace DebugServer
 {
-StatePointerNode::StatePointerNode(std::string name, VMValue value, PClass *owningType) : m_name(name), m_value(value), m_OwningType(owningType) { }
+StatePointerNode::StatePointerNode(std::string name, VMValue value, PClass *owningType) : StateNodeNamedVariable(name), m_value(value), m_OwningType(owningType) { }
 void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 {
 	for (int i = 0; i < StateList->NumLabels; i++)
@@ -45,7 +45,7 @@ bool StatePointerNode::SerializeToProtocol(dap::Variable &variable)
 	std::vector<std::string> names;
 	GetChildNames(names);
 	variable.namedVariables = names.size();
-	variable.name = m_name;
+	SetVariableName(variable);
 	variable.type = "StatePointer";
 	if (!IsVMValueValid(&m_value))
 	{

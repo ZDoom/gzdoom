@@ -7,9 +7,8 @@
 
 namespace DebugServer
 {
-class DummyNode : public StateNodeBase, public IProtocolVariableSerializable
+class DummyNode : public StateNodeNamedVariable
 {
-	const std::string m_name;
 	const std::string m_value;
 	const std::string m_type;
 	public:
@@ -17,9 +16,8 @@ class DummyNode : public StateNodeBase, public IProtocolVariableSerializable
 	bool SerializeToProtocol(dap::Variable &variable) override;
 };
 
-class DummyWithChildrenNode : public StateNodeBase, public IProtocolVariableSerializable, public IStructuredState
+class DummyWithChildrenNode : public StateNodeNamedVariable, public IStructuredState
 {
-	const std::string m_name;
 	const std::string m_value;
 	const std::string m_type;
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;

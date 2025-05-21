@@ -898,18 +898,19 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 	uint8_t NumRegFloat = 0;
 	uint8_t NumRegString = 0;
 	uint8_t NumRegAddress = 0;
-	auto getAndIncRegCount = [&](PType *type, VMValue &value, int idx = -1, int refregCount = -1) -> bool
+	auto getAndIncRegCount = [&](PType *type, VMValue &value, int idx = -1, int refregCount = -1, uint8_t reg_type = 255) -> bool
 	{
-		auto regType = type->RegType;
+		auto regType = reg_type == 255 ? type->RegType : reg_type;
 		bool get_non_string_reg_addr = false;
 		int reg_idx = -1;
 		int inc = 1;
+		if (refregCount > 0) {
+				inc = refregCount;
+		}
 		if (regType != REGT_POINTER && TypeIsStructOrStructPtr(type))
 		{
 			get_non_string_reg_addr = true;
-			if (refregCount > 0) {
-				inc = refregCount;
-			} else {
+			if (refregCount == -1) {
 				inc = type->RegCount;
 			}
 		}
@@ -936,13 +937,26 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 	};
 	VMScriptFunction *func = GetVMScriptFunction(p_stackFrame->Func);
 	auto locals = func->GetLocalVariableBlocksAt(p_stackFrame->PC);
+	auto pfunc = GetFunctionSymbol(p_stackFrame->Func);
+	PFunction::Variant *var = GetFunctionVariant(p_stackFrame->Func);
 
 	for (int paramidx = 0; paramidx < (int64_t)p_stackFrame->Func->Proto->ArgumentTypes.size(); paramidx++)
 	{
 		std::string name = GetParameterName(p_stackFrame, paramidx);
 		VMValue val;
 		auto type = p_stackFrame->Func->Proto->ArgumentTypes[paramidx];
-		bool invalid = !getAndIncRegCount(type, val);
+		uint8_t reg_type = p_stackFrame->Func->RegTypes[paramidx];
+		if (type == nullptr) { // varargs, continue
+			continue;
+		}
+		bool invalid = !getAndIncRegCount(type, val, -1, -1, reg_type);
+		if (type->RegType != reg_type && reg_type == REGT_POINTER){ // 'out' parameter
+			if (IsBasicNonPointerType(type)){
+				// val = DerefValue(&val, GetBasicType(type));
+				type = NewPointer(type, false);
+
+			}
+		}
 
 		localState.m_locals.push_back(LocalState {name, type, 0, paramidx, type->RegCount, -1, val, invalid, {}});
 	}
@@ -958,8 +972,6 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 			}
 			return a.RegNum < b.RegNum;
 		});
-	auto pfunc = GetFunctionSymbol(p_stackFrame->Func);
-	PFunction::Variant *var = GetFunctionVariant(p_stackFrame->Func);
 
 	if (GetVMScriptFunction(p_stackFrame->Func))
 	{

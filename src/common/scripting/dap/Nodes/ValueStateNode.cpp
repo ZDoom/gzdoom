@@ -83,7 +83,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 			{
 				// TODO: TypeState?
 				auto val = DerefValue(&m_variable, GetBasicType(pointedType));
-				auto deref_var = ToVariable(&val, pointedType, stateOwningClass);
+				auto deref_var = ToVariable(val, pointedType, stateOwningClass);
 				variable.value = StringFormat("%p {%s}", (m_variable.a), deref_var.value.c_str());
 			}
 			else

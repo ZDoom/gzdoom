@@ -2,7 +2,10 @@
 #include <thread>
 // #include "Window.h"
 #include "GameInterfaces.h"
-#include "common/engine/g_input.h"
+#ifdef _WIN32
+extern void I_GetWindowEvent();
+extern bool win32EnableInput;
+#endif
 
 namespace DebugServer
 {
@@ -148,14 +151,21 @@ void DebugExecutionManager::WaitWhilePaused(pauseReason pauseReason, VMFrameStac
 	{
 		if (pauseReason > pauseReason::NONE)
 		{
+#ifdef _WIN32
+			win32EnableInput = false;
+#endif
+
 			while (m_state == DebuggerState::kPaused)
 			{
-				// TODO: we have to process window events so that we prevent deadlocks when the debug extension sets this window to foreground,
-				// but this also processes input events; ideally, we'd only process the window events.
-				I_GetEvent();
+#ifdef _WIN32
+				I_GetWindowEvent();
+#endif
 				using namespace std::chrono_literals;
 				std::this_thread::sleep_for(100ms);
 			}
+#ifdef _WIN32
+			win32EnableInput = true;
+#endif
 		}
 		std::lock_guard<std::mutex> lock(m_instructionMutex);
 		// reset the state

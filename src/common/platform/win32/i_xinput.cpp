@@ -46,6 +46,8 @@
 #include "cmdlib.h"
 #include "keydef.h"
 
+#pragma comment(lib, "Xinput.lib")
+
 // MACROS ------------------------------------------------------------------
 
 // This macro is defined by newer versions of xinput.h. In case we are
@@ -115,6 +117,8 @@ public:
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
 
+	void Rumble();
+
 	bool AllowsEnabledInBackground() { return true; }
 	bool GetEnabledInBackground() { return EnabledInBackground; }
 	void SetEnabledInBackground(bool enabled) { EnabledInBackground = enabled; }
@@ -142,6 +146,7 @@ protected:
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
 	};
+	XINPUT_VIBRATION Vibration;
 	enum
 	{
 		AXIS_ThumbLX,
@@ -182,6 +187,8 @@ public:
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
+
+	void Rumble();
 
 protected:
 	HMODULE XInputDLL;
@@ -400,6 +407,15 @@ void FXInputController::Attached()
 		Axes[i].ButtonValue = 0;
 	}
 	UpdateJoystickMenu(this);
+}
+
+#include <iostream>
+
+void FXInputController::Rumble() {
+	std::cout << "rumble" << std::endl;
+	Vibration.wLeftMotorSpeed = -1;
+	Vibration.wRightMotorSpeed = -1;
+	XInputSetState(Index, &Vibration);
 }
 
 //==========================================================================
@@ -968,6 +984,17 @@ bool FXInputManager::WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPA
 	return false;
 }
 
+void FXInputManager::Rumble() {
+
+	for (int i = 0; i < XUSER_MAX_COUNT; ++i)
+	{
+		if (Devices[i] && Devices[i]->IsConnected())
+		{
+			Devices[i]->Rumble();
+		}
+	}
+}
+
 //===========================================================================
 //
 // FXInputManager :: Rescan
@@ -1014,7 +1041,8 @@ void I_StartupXInput()
 }
 
 void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig) {
-	Printf("stub\n");
+	FXInputManager* XInputManager = & static_cast<FXInputManager&> (*JoyDevices[INPUT_XInput]);
+	if (XInputManager != NULL) XInputManager->Rumble();
 }
 void I_Rumble(unsigned int duration_ms, double high_freq, double low_freq, double left_trig, double right_trig) {
 	I_RumbleRaw(0, 0, 0, 0, 0);

@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-project(cppdap VERSION 1.65.0 LANGUAGES CXX C)
+project(cppdap VERSION 1.68.0 LANGUAGES CXX C)
 
 set (CMAKE_CXX_STANDARD 11)
 

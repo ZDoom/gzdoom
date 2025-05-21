@@ -24,6 +24,7 @@ StackFrameStateNode::StackFrameStateNode(VMFunction *nativeFunction, VMFrame *pa
 	m_fakeStackFrame.NumParam = 0;
 	m_stackFrame = &m_fakeStackFrame;
 	m_globalsScope = std::make_shared<GlobalScopeStateNode>();
+	m_cvarScope = std::make_shared<CVarScopeStateNode>();
 }
 
 StackFrameStateNode::StackFrameStateNode(VMFrame *stackFrame) : m_stackFrame(stackFrame), m_fakeStackFrame()

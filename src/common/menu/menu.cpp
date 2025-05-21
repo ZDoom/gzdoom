@@ -505,7 +505,7 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-void MenuRumbleDirect(uint duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
+void MenuRumbleDirect(unsigned int duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
 {
 	I_Rumble(duration_ms, high_frequency, low_frequency, left_trigger, right_trigger);
 }

@@ -28,9 +28,6 @@
     },
     "dependencies": [
         {
-            "name": "cppdap"
-        },
-        {
             "name": "bzip2",
             "platform": "(!windows & static) | (windows & static & staticcrt)"
         },

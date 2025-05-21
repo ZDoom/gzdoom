@@ -47,6 +47,15 @@ inline bool CaseInsensitiveEquals(const std::string &s1, const std::string &s2)
 					 [](const unsigned char &c1, const unsigned char &c2) { return tolower(c1) == tolower(c2); }); // comparison
 }
 
+inline size_t CaseInsensitiveFind(const std::string &s1, const std::string &s2)
+{
+	auto pos =  std::search(s1.begin(), s1.end(), s2.begin(), s2.end(), [](char c1, char c2) { return tolower(c1) == tolower(c2); });
+	if (pos == s1.end()){
+		return std::string::npos;
+	}
+	return std::distance(s1.begin(), pos);
+}
+
 template <typename... Args> std::string StringFormat(const char *fmt, Args... args)
 {
 	const size_t size = snprintf(nullptr, 0, fmt, args...);

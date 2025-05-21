@@ -10,6 +10,7 @@
 #include "Nodes/StackFrameStateNode.h"
 #include "Nodes/StateNodeBase.h"
 #include "Nodes/CVarScopeStateNode.h"
+#include "common/scripting/dap/Nodes/LocalScopeStateNode.h"
 
 
 // This is the main class that handles the debug session and the debug requests/responses and events
@@ -634,7 +635,8 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 	}
 	if (context == "variables" || context == "hover" || context == "watch" || (context == "repl" && m_executionManager->IsPaused()))
 	{
-		auto frameId = request.frameId.value(0);
+		int64_t frameId = request.frameId.value(0);
+		int64_t evalLineNumber = request.line.value(-1);
 		std::shared_ptr<StateNodeBase> _frameNode;
 		if( m_runtimeState->ResolveStateById(frameId, _frameNode)){
 			auto frameNode = std::dynamic_pointer_cast<StackFrameStateNode>(_frameNode);
@@ -648,19 +650,65 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 			// try locals first
 			std::string localsPath = StringFormat("%s.%s", frameNodePath.c_str(), StackFrameStateNode::LOCAL_SCOPE_NAME);
 			std::string path;
+			int64_t funcStartingLineNumber = -1;
 
 			auto stackFrame = frameNode->GetStackFrame();
-			// try the locals first
-			path = StringFormat("%s.%s", localsPath.c_str(), request.expression.c_str());
-			if(!TryPath(path)){
-				RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+			if (stackFrame && !IsFunctionNative(stackFrame->Func)){
+				auto vmscriptfunc = GetVMScriptFunction(stackFrame->Func);
+				if (vmscriptfunc){
+					funcStartingLineNumber = vmscriptfunc->PCToLine(vmscriptfunc->Code);
+					if (evalLineNumber == -1){
+						evalLineNumber = vmscriptfunc->PCToLine(stackFrame->PC);
+					}
+				}
 			}
-			if (!found && request.expression.find("self.") != 0){
-				// if the first part isn't self, and the current function on the stack is an action or method, try "locals.self"
-				if (stackFrame && (IsFunctionHasSelf(stackFrame->Func))){
-					path = StringFormat("%s.self.%s", localsPath.c_str(), request.expression.c_str());
+
+			std::shared_ptr<LocalScopeStateNode> localScope;
+			{
+				std::shared_ptr<StateNodeBase> _localScopeNodeBase;
+				if (m_runtimeState->ResolveStateByPath(localsPath, _localScopeNodeBase, true)){
+					localScope = std::dynamic_pointer_cast<LocalScopeStateNode>(_localScopeNodeBase);
+				}
+			}
+			std::vector<std::string> localChildrenNames;
+			if (localScope){
+				localScope->GetChildNames(localChildrenNames);
+				caseless_path_set localChildrenNamesSet(localChildrenNames.begin(), localChildrenNames.end());
+				
+				if (localChildrenNamesSet.find(request.expression) != localChildrenNamesSet.end()){
+					path = StringFormat("%s.%s", localsPath.c_str(), request.expression.c_str());
 					if(!TryPath(path)){
 						RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+					}
+				}
+
+				if (!found && evalLineNumber > -1 && funcStartingLineNumber <= evalLineNumber && request.expression.find(" @") == std::string::npos){
+					// try @ line number`
+					std::string qualName;
+					for (auto &childName : localChildrenNames) {
+						// check if the child name contains an @ and starts with the expression
+						if (childName.find(" @") != std::string::npos && CaseInsensitiveFind(childName, request.expression) == 0){
+							// get the line number from the child name
+							auto lineNum = LocalScopeStateNode::GetLineFromLineQualifiedName(childName);
+							if (lineNum <= evalLineNumber){
+								qualName = childName;
+							}
+						}
+					}
+					if (!qualName.empty()){
+						path = StringFormat("%s.%s", localsPath.c_str(), qualName.c_str());
+						if(!TryPath(path)){
+							RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+						}
+					}
+				}
+				if (!found && request.expression.find("self.") != 0){
+					// if the first part isn't self, and the current function on the stack is an action or method, try "locals.self"
+					if (stackFrame && (IsFunctionHasSelf(stackFrame->Func))){
+						path = StringFormat("%s.self.%s", localsPath.c_str(), request.expression.c_str());
+						if(!TryPath(path)){
+							RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
+						}
 					}
 				}
 			}

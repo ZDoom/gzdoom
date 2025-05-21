@@ -12,8 +12,13 @@ class LocalScopeStateNode : public StateNodeBase, public IProtocolScopeSerializa
 	VMFrame *m_stackFrame;
 	FrameLocalsState m_state;
 	caseless_path_map<std::shared_ptr<StateNodeBase>> m_children;
+
+	void CacheChildren();
 	public:
 	LocalScopeStateNode(VMFrame *stackFrame);
+
+	static std::string GetLineQualifiedName(const std::string &name, int line);
+	static int GetLineFromLineQualifiedName(const std::string &name);
 
 	bool SerializeToProtocol(dap::Scope &scope) override;
 	bool GetChildNames(std::vector<std::string> &names) override;

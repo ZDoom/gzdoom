@@ -675,11 +675,9 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 				localScope->GetChildNames(localChildrenNames);
 				caseless_path_set localChildrenNamesSet(localChildrenNames.begin(), localChildrenNames.end());
 				
-				if (localChildrenNamesSet.find(request.expression) != localChildrenNamesSet.end()){
-					path = StringFormat("%s.%s", localsPath.c_str(), request.expression.c_str());
-					if(!TryPath(path)){
-						RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
-					}
+				path = StringFormat("%s.%s", localsPath.c_str(), request.expression.c_str());
+				if(!TryPath(path)){
+					RETURN_DAP_ERROR(StringFormat("Could not serialize variable %s", request.expression.c_str()).c_str());
 				}
 
 				if (!found && evalLineNumber > -1 && funcStartingLineNumber <= evalLineNumber && request.expression.find(" @") == std::string::npos){

@@ -396,13 +396,19 @@ void MapLoader::PO_Init (void)
 	}
 
 	// check for a startspot without an anchor point
-	for (auto &poly : Level->Polyobjects)
+	for (int i = 0, size = Level->Polyobjects.Size(); i < size; ++i)
 	{
+		const auto& poly = Level->Polyobjects[i];
+
 		if (poly.OriginalPts.Size() == 0)
 		{
 			Printf (TEXTCOLOR_RED "PO_Init: StartSpot located without an Anchor point: %d\n", poly.tag);
+			Level->Polyobjects.Delete(i--);
+			--size;
 		}
 	}
+	Level->Polyobjects.ShrinkToFit();
+
 	InitPolyBlockMap();
 
 	// [RH] Don't need the side lists anymore

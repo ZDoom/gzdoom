@@ -350,6 +350,8 @@ struct Polyobj native play
 	native clearscope int GetMirror() const;
 	native clearscope vector2 GetStartSpot() const;
 	native clearscope vector2 GetCenterSpot() const;
+	native clearscope vector2, Side ClosestPoint(Vector2 pos) const;
+	native clearscope vector4 GetBounds() const;
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.

@@ -2066,6 +2066,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(FPolyObj, GetMirror, GetMirror)
 	ACTION_RETURN_INT(self->GetMirror());
 }
 
+static void ClosestPoint(FPolyObj* self, double x, double y, DVector2& out, side_t** side)
+{
+	self->ClosestPoint(DVector2(x, y), out, side);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FPolyObj, ClosestPoint, ClosestPoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	DVector2 out;
+	side_t* side = nullptr;
+	ClosestPoint(self, x, y, out, &side);
+	if (numret > 1) ret[1].SetPointer(side);
+	if (numret > 0) ret[0].SetVector2(out);
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(FPolyObj, GetBounds)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
+	double x = self->Bounds.Top();
+	double y = self->Bounds.Bottom();
+	double z = self->Bounds.Left();
+	double w = self->Bounds.Right();
+	ACTION_RETURN_VEC4(DVector4(x, y, z, w));
+}
+
 static FPolyObj* GetPolyobj(FLevelLocals* self, int polyNum)
 {
 	return self->GetPolyobj(polyNum);

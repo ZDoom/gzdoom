@@ -1674,7 +1674,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  //=====================================================================================
 //
-// TexMan exports
+//
 //
 //=====================================================================================
 
@@ -2034,6 +2034,48 @@ DEFINE_ACTION_FUNCTION_NATIVE(DSpotState, GetRandomSpot, GetRandomSpot)
 	PARAM_CLASS(type, AActor);
 	PARAM_BOOL(onlyonce);
 	ACTION_RETURN_POINTER(self->GetRandomSpot(type, onlyonce));
+}
+
+//=====================================================================================
+//
+// PolyObj functions
+//
+//=====================================================================================
+
+// [inkoalawetrust] So we don't need to expose FPolyVertex just for the pos.
+DEFINE_ACTION_FUNCTION(FPolyObj, GetStartSpot)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
+	ACTION_RETURN_VEC2(self->StartSpot.pos);
+}
+
+DEFINE_ACTION_FUNCTION(FPolyObj, GetCenterSpot)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
+	ACTION_RETURN_VEC2(self->CenterSpot.pos);
+}
+
+static int GetMirror(FPolyObj *self)
+{
+	return self->GetMirror();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FPolyObj, GetMirror, GetMirror)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
+	ACTION_RETURN_INT(self->GetMirror());
+}
+
+static FPolyObj* GetPolyobj(FLevelLocals* self, int polyNum)
+{
+	return self->GetPolyobj(polyNum);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE (FLevelLocals, GetPolyobj, GetPolyobj)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(polyNum);
+	ACTION_RETURN_POINTER(self->GetPolyobj(polyNum));
 }
 
 //=====================================================================================
@@ -2859,6 +2901,7 @@ DEFINE_FIELD(FLevelLocals, sides)
 DEFINE_FIELD(FLevelLocals, vertexes)
 DEFINE_FIELD(FLevelLocals, linePortals)
 DEFINE_FIELD(FLevelLocals, sectorPortals)
+DEFINE_FIELD(FLevelLocals, Polyobjects)
 DEFINE_FIELD(FLevelLocals, time)
 DEFINE_FIELD(FLevelLocals, maptime)
 DEFINE_FIELD(FLevelLocals, totaltime)
@@ -3011,6 +3054,18 @@ DEFINE_FIELD_X(F3DFloor, F3DFloor, master);
 DEFINE_FIELD_X(F3DFloor, F3DFloor, model);
 DEFINE_FIELD_X(F3DFloor, F3DFloor, target);
 DEFINE_FIELD_X(F3DFloor, F3DFloor, alpha);
+
+DEFINE_FIELD_X(Polyobj, FPolyObj, Sidedefs)
+DEFINE_FIELD_X(Polyobj, FPolyObj, Linedefs)
+DEFINE_FIELD_X(Polyobj, FPolyObj, Vertices)
+DEFINE_FIELD_X(Polyobj, FPolyObj, Angle)
+DEFINE_FIELD_X(Polyobj, FPolyObj, tag)
+DEFINE_FIELD_X(Polyobj, FPolyObj, crush)
+DEFINE_FIELD_X(Polyobj, FPolyObj, bHurtOnTouch)
+DEFINE_FIELD_X(Polyobj, FPolyObj, bBlocked)
+DEFINE_FIELD_X(Polyobj, FPolyObj, bHasPortals)
+DEFINE_FIELD_X(Polyobj, FPolyObj, seqType)
+DEFINE_FIELD_X(Polyobj, FPolyObj, specialdata)
 
 DEFINE_FIELD_X(Vertex, vertex_t, p)
 

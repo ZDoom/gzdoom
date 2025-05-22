@@ -327,6 +327,31 @@ struct F3DFloor native play
 	native clearscope TextureID GetTexture(int pos) const;
 }
 
+struct Polyobj native play
+{
+	enum PolyObjPortalType
+	{
+		POLYPORT_NONE = 0,
+		POLYPORT_PORTAL = 1,
+		POLYPORT_LINKED = 2, //Also prevents polyobject from rotating.
+	};
+	native readonly Array<Side> Sidedefs;
+	native readonly Array<Line> Linedefs;
+	native readonly Array<Vertex> Vertices;
+	native readonly double Angle;
+	native readonly int tag;
+	native readonly int crush;
+	native readonly bool bHurtOnTouch;
+	native readonly bool bBlocked;
+	native readonly uint8 bHasPortals;
+	native readonly int seqType;
+	native readonly voidptr specialdata;
+
+	native clearscope int GetMirror() const;
+	native clearscope vector2 GetStartSpot() const;
+	native clearscope vector2 GetCenterSpot() const;
+}
+
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
 struct SecSpecial play
 {

@@ -6030,6 +6030,45 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneTRS)
 }
 
 
+
+
+DEFINE_ACTION_FUNCTION(AActor, GetBoneEulerAngles)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(bone_index);
+	PARAM_BOOL(with_override);
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
+
+	if(mdl)
+	{
+		ACTION_RETURN_VEC3(self->GetBoneEulerAngles(0, bone_index, with_override));
+	}
+
+
+	ACTION_RETURN_VEC3(DVector3(0,0,0));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneEulerAngles)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_NAME(bone_name);
+	PARAM_BOOL(with_override);
+
+	int bone_index;
+
+	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
+
+	if(mdl)
+	{
+		ACTION_RETURN_VEC3(self->GetBoneEulerAngles(0, bone_index, with_override));
+	}
+
+	ACTION_RETURN_VEC3(DVector3(0,0,0));
+}
+
+
+
 DEFINE_ACTION_FUNCTION(AActor, TransformByBone)
 {
 	PARAM_SELF_PROLOGUE(AActor);

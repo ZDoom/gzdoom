@@ -831,6 +831,7 @@ public:
 	//outmat must be double[16]
 	void GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat);
 
+	DVector3 GetBoneEulerAngles(int model_index, int bone_index, bool with_override);
 	void GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &fwd, DVector3 &up);
 	void GetObjectToWorldMatrix(double *outMat);
 

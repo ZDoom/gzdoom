@@ -32,15 +32,11 @@
 */
 #include <SDL.h>
 #include <SDL_gamecontroller.h>
-#include <algorithm>
 #include <cstdint>
-#include <string>
-#include <unordered_map>
+#include <algorithm>
 
 #include "basics.h"
 #include "cmdlib.h"
-#include "c_dispatch.h"
-#include "printf.h"
 
 #include "m_joy.h"
 #include "keydef.h"
@@ -395,108 +391,15 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 	}
 }
 
-void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig)
+void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig)
 {
-	JoystickManager->Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
-}
-
-void I_Rumble(uint duration_ms, double high_freq, double low_freq, double left_trig, double right_trig)
-{
-	I_RumbleRaw(
-		static_cast<uint32_t> (std::min(duration_ms, 0xffffffff)),
+	JoystickManager->Rumble(
+		-1, // just turn on for max time. we will handle turning off
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, high_freq), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, low_freq), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, left_trig), 1.0)),
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, right_trig), 1.0))
 	);
-}
-
-#include <unordered_map>
-
-struct Rumble {
-	uint duration_ms;
-	double high_freq;
-	double low_freq;
-	double left_trig;
-	double right_trig;
-};
-
-std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {
-	{"HEAVY", []() { I_Rumble(200, 1, 1, 1, 1); }},
-	{"MEDIUM", []() { I_Rumble(100, 1, 1, 1, 1); }},
-	{"LIGHT", []() { I_Rumble(75, 0.25, 1, 0.5, 0.5); }},
-};
-
-std::unordered_map<std::string, std::string> RumbleMapping = {
-	{"menu/cursor", "LIGHT"},
-	{"menu/change", "LIGHT"},
-	{"menu/choose", "HEAVY"},
-	{"menu/advance", "HEAVY"},
-	{"menu/activate", "HEAVY"},
-	{"menu/dismiss", "MEDIUM"},
-	{"menu/prompt", "MEDIUM"},
-	{"menu/backup", "MEDIUM"},
-	{"menu/clear", "MEDIUM"},
-	{"menu/invalid", "MEDIUM"},
-};
-
-void I_Rumble(const FString& identifier) {
-	auto identifierChars = identifier.GetChars();
-	auto mappingIterator = RumbleMapping.find(identifierChars);
-
-	if (mappingIterator == RumbleMapping.end()) {
-		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", identifierChars);
-		return;
-	}
-
-	auto rumbleIterator = BasicRumbleType.find(mappingIterator->second);
-
-	if (mappingIterator == RumbleMapping.end()) {
-		Printf(DMSG_WARNING, "rumble mapping not found! '%s'\n", mappingIterator->second.c_str());
-		return;
-	}
-
-	rumbleIterator->second();
-}
-
-CCMD (rumble)
-{
-	int count = argv.argc()-1;
-	uint duration_ms;
-	float high_freq, low_freq, left_trig, right_trig;
-
-	switch (count) {
-	case 0:
-		Printf("testing rumble for 5s\n");
-		I_Rumble(5000, 1.0, 1.0, 1.0, 1.0);
-		break;
-	case 1:
-		Printf("testing rumble for action '%s'\n", argv[1]);
-		I_Rumble(argv[1]);
-		break;
-	case 5:
-		try {
-			duration_ms = static_cast <uint> (std::stoul(argv[1], nullptr, 10));
-			high_freq = static_cast <float> (std::stof(argv[2], nullptr));
-			low_freq = static_cast <float> (std::stof(argv[3], nullptr));
-			left_trig = static_cast <float> (std::stof(argv[4], nullptr));
-			right_trig = static_cast <float> (std::stof(argv[5], nullptr));
-		} catch (...) {
-			Printf("Failed to parse args\n");
-			return;
-		}
-		Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", duration_ms, high_freq, low_freq, left_trig, right_trig);
-		I_Rumble(duration_ms, high_freq, low_freq, left_trig, right_trig);
-		break;
-	default:
-		Printf(
-			"usage:\n  %s\n  %s\n  %s\n",
-			"rumble",
-			"rumble string_id",
-			"rumble int_duration float_high_freq float_low_freq float_left_trig float_right_trigger"
-		);
-		break;
-	}
 }
 
 void I_ProcessJoysticks()

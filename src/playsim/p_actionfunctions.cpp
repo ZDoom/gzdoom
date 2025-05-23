@@ -6037,24 +6037,33 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByBone)
 	PARAM_FLOAT(pos_x);
 	PARAM_FLOAT(pos_y);
 	PARAM_FLOAT(pos_z);
-	PARAM_FLOAT(dir_x);
-	PARAM_FLOAT(dir_y);
-	PARAM_FLOAT(dir_z);
+	PARAM_FLOAT(fwd_x);
+	PARAM_FLOAT(fwd_y);
+	PARAM_FLOAT(fwd_z);
+	PARAM_FLOAT(up_x);
+	PARAM_FLOAT(up_y);
+	PARAM_FLOAT(up_z);
 	PARAM_BOOL(with_override);
 
 	FModel * mdl = GetBoneShared(self, 0, bone_index, nullptr);
 
 	DVector3 position(pos_x, pos_y, pos_z);
-	DVector3 direction(dir_x, dir_y, dir_z);
+	DVector3 fwd(fwd_x, fwd_y, fwd_z);
+	DVector3 up(up_x, up_y, up_z);
 
 	if(mdl)
 	{
-		self->GetBonePosition(0, bone_index, with_override, position, direction);
+		self->GetBonePosition(0, bone_index, with_override, position, fwd, up);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(up);
 	}
 
 	if(numret > 1)
 	{
-		ret[1].SetVector(direction);
+		ret[1].SetVector(fwd);
 	}
 
 	if(numret > 0)
@@ -6072,9 +6081,12 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
 	PARAM_FLOAT(pos_x);
 	PARAM_FLOAT(pos_y);
 	PARAM_FLOAT(pos_z);
-	PARAM_FLOAT(dir_x);
-	PARAM_FLOAT(dir_y);
-	PARAM_FLOAT(dir_z);
+	PARAM_FLOAT(fwd_x);
+	PARAM_FLOAT(fwd_y);
+	PARAM_FLOAT(fwd_z);
+	PARAM_FLOAT(up_x);
+	PARAM_FLOAT(up_y);
+	PARAM_FLOAT(up_z);
 	PARAM_BOOL(with_override);
 
 	int bone_index;
@@ -6082,16 +6094,22 @@ DEFINE_ACTION_FUNCTION(AActor, TransformByNamedBone)
 	FModel * mdl = GetBoneShared(self, 0, bone_index, &bone_name);
 
 	DVector3 position(pos_x, pos_y, pos_z);
-	DVector3 direction(dir_x, dir_y, dir_z);
+	DVector3 fwd(fwd_x, fwd_y, fwd_z);
+	DVector3 up(up_x, up_y, up_z);
 
 	if(mdl)
 	{
-		self->GetBonePosition(0, bone_index, with_override, position, direction);
+		self->GetBonePosition(0, bone_index, with_override, position, fwd, up);
+	}
+
+	if(numret > 2)
+	{
+		ret[2].SetVector(up);
 	}
 
 	if(numret > 1)
 	{
-		ret[1].SetVector(direction);
+		ret[1].SetVector(fwd);
 	}
 
 	if(numret > 0)

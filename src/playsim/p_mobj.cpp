@@ -4309,7 +4309,7 @@ void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, 
 	}
 }
 
-void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &normal)
+void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &fwd, DVector3 &up)
 {
 	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
 	{
@@ -4324,20 +4324,26 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 
 		FVector4 oldPos(pos.X, pos.Z, pos.Y, 1.0);
 		FVector4 newPos;
-		FVector4 oldNormal(normal.X, normal.Z, normal.Y, 0.0);
-		FVector4 newNormal;
+		FVector4 oldFwd(fwd.X, fwd.Z, fwd.Y, 0.0);
+		FVector4 newFwd;
+		FVector4 oldUp(up.X, up.Z, up.Y, 0.0);
+		FVector4 newUp;
 
 		boneMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
-		boneMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+		boneMatrix.multMatrixPoint(&oldFwd.X, &newFwd.X);
+		boneMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
 
 		oldPos = FVector4(FVector3(newPos.X, newPos.Y, newPos.Z) / newPos.W, 1.0);
-		oldNormal = FVector4(FVector3(newNormal.X, newNormal.Y, newNormal.Z) / newNormal.W, 0.0);
+		oldFwd = FVector4(FVector3(newFwd.X, newFwd.Y, newFwd.Z) / newFwd.W, 0.0);
+		oldUp = FVector4(FVector3(newUp.X, newUp.Y, newUp.Z) / newUp.W, 0.0);
 
 		worldMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
-		worldMatrix.multMatrixPoint(&oldNormal.X, &newNormal.X);
+		worldMatrix.multMatrixPoint(&oldFwd.X, &newFwd.X);
+		worldMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
 
 		pos = DVector3(newPos.X, newPos.Z, newPos.Y);
-		normal = DVector3(newNormal.X, newNormal.Z, newNormal.Y);
+		fwd = DVector3(newFwd.X, newFwd.Z, newFwd.Y);
+		up = DVector3(newUp.X, newUp.Z, newUp.Y);
 	}
 }
 

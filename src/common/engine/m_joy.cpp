@@ -33,12 +33,16 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string>
+#include <unordered_map>
+#include "doomstat.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
 #include "i_interface.h"
 #include "d_eventbase.h"
 #include "cmdlib.h"
+#include "c_dispatch.h"
 #include "printf.h"
 
 // MACROS ------------------------------------------------------------------
@@ -360,5 +364,148 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 				D_PostEvent(&ev);
 			}
 		}
+	}
+}
+
+struct Haptics {
+	int tic_end;
+	double high_frequency;
+	double low_frequency;
+	double left_trigger;
+	double right_trigger;
+};
+
+struct {
+	int tic = gametic;
+	bool dirty = false;
+	struct Haptics current = {0,0,0,0,0};
+	struct Haptics channel[1] {{0,0,0,0,0}};
+	// todo: add multiple channels
+} Haptics;
+
+void Joy_RumbleTick() {
+	if (Haptics.tic >= gametic) return;
+	Haptics.tic = gametic;
+
+	if (Haptics.current.tic_end != 0 && Haptics.current.tic_end < Haptics.tic)
+	{
+		Haptics.current.tic_end = 0;
+		Haptics.current.high_frequency = 0;
+		Haptics.current.low_frequency = 0;
+		Haptics.current.left_trigger = 0;
+		Haptics.current.right_trigger = 0;
+		Haptics.dirty = true;
+	}
+
+	if (!Haptics.dirty) return;
+
+	if (Haptics.channel[0].tic_end >= Haptics.tic)
+	{
+		Haptics.current.tic_end = Haptics.channel[0].tic_end;
+		Haptics.current.high_frequency = Haptics.channel[0].high_frequency;
+		Haptics.current.low_frequency = Haptics.channel[0].low_frequency;
+		Haptics.current.left_trigger = Haptics.channel[0].left_trigger;
+		Haptics.current.right_trigger = Haptics.channel[0].right_trigger;
+	}
+
+	I_Rumble(
+		Haptics.current.high_frequency,
+		Haptics.current.low_frequency,
+		Haptics.current.left_trigger,
+		Haptics.current.right_trigger
+	);
+
+	Haptics.dirty = false;
+}
+
+void Joy_Rumble(int ticks, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
+{
+	if (ticks <= 0) return;
+
+	Haptics.channel[0].tic_end = Haptics.tic + ticks + 1;
+	Haptics.channel[0].high_frequency = high_frequency;
+	Haptics.channel[0].low_frequency = low_frequency;
+	Haptics.channel[0].left_trigger = left_trigger;
+	Haptics.channel[0].right_trigger = right_trigger;
+
+	Haptics.dirty = true;
+}
+
+std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {
+	{"HEAVY", []() { Joy_Rumble(4, 1, 1, 1, 1); }},
+	{"MEDIUM", []() { Joy_Rumble(4, 0.5, 1, 1, 1); }},
+	{"LIGHT", []() { Joy_Rumble(2, 0.1, 1, 0.5, 0.5); }},
+};
+
+std::unordered_map<std::string, std::string> RumbleMapping = {
+	{"menu/cursor", "LIGHT"},
+	{"menu/change", "LIGHT"},
+	{"menu/choose", "HEAVY"},
+	{"menu/advance", "HEAVY"},
+	{"menu/activate", "HEAVY"},
+	{"menu/dismiss", "MEDIUM"},
+	{"menu/prompt", "MEDIUM"},
+	{"menu/backup", "MEDIUM"},
+	{"menu/clear", "MEDIUM"},
+	{"menu/invalid", "MEDIUM"},
+};
+
+void Joy_Rumble(const FString& identifier)
+{
+	auto identifierChars = identifier.GetChars();
+	auto mappingIterator = RumbleMapping.find(identifierChars);
+
+	if (mappingIterator == RumbleMapping.end()) {
+		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", identifierChars);
+		return;
+	}
+
+	auto rumbleIterator = BasicRumbleType.find(mappingIterator->second);
+
+	if (mappingIterator == RumbleMapping.end()) {
+		Printf(DMSG_WARNING, "rumble mapping not found! '%s'\n", mappingIterator->second.c_str());
+		return;
+	}
+
+	rumbleIterator->second();
+}
+
+CCMD (rumble)
+{
+	int count = argv.argc()-1;
+	int ticks;
+	double high_freq, low_freq, left_trig, right_trig;
+
+	switch (count) {
+		case 0:
+			Printf("testing rumble for 5s\n");
+			Joy_Rumble(5000, 1.0, 1.0, 1.0, 1.0);
+			break;
+		case 1:
+			Printf("testing rumble for action '%s'\n", argv[1]);
+			Joy_Rumble(argv[1]);
+			break;
+		case 5:
+			try {
+				ticks = std::stoi(argv[1], nullptr, 10);
+				high_freq = static_cast <double> (std::stof(argv[2], nullptr));
+				low_freq = static_cast <double> (std::stof(argv[3], nullptr));
+				left_trig = static_cast <double> (std::stof(argv[4], nullptr));
+				right_trig = static_cast <double> (std::stof(argv[5], nullptr));
+			} catch (...) {
+				Printf("Failed to parse args\n");
+				return;
+			}
+			Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", ticks, high_freq, low_freq, left_trig, right_trig);
+			Joy_Rumble(ticks, high_freq, low_freq, left_trig, right_trig);
+			break;
+		default:
+			Printf(
+				"usage:\n  %s\n  %s\n  %s\n",
+				"rumble",
+				"rumble string_id",
+				"rumble int_duration float_high_freq float_low_freq float_left_trig float_right_trigger"
+			);
+			break;
 	}
 }

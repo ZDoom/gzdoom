@@ -299,29 +299,29 @@ class Whirlwind : Actor
 		Stop;
 	}
 	
-	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	override int DoSpecialDamage (Actor victim, int damage, Name damagetype)
 	{
 		int randVal;
 
 		if (!target.bDontThrust)
 		{
-			target.angle += Random2[WhirlwindDamage]() * (360 / 4096.);
-			target.Vel.X += Random2[WhirlwindDamage]() / 64.;
-			target.Vel.Y += Random2[WhirlwindDamage]() / 64.;
+			victim.angle += Random2[WhirlwindDamage]() * (360 / 4096.);
+			victim.Vel.X += Random2[WhirlwindDamage]() / 64.;
+			victim.Vel.Y += Random2[WhirlwindDamage]() / 64.;
 		}
 
-		if ((Level.maptime & 16) && !target.bBoss && !target.bDontThrust)
+		if ((Level.maptime & 16) && !victim.bBoss && !victim.bDontThrust)
 		{
 			randVal = min(160, random[WhirlwindSeek]());
-			target.Vel.Z += randVal / 32.;
-			if (target.Vel.Z > 12)
+			victim.Vel.Z += randVal / 32.;
+			if (victim.Vel.Z > 12)
 			{
-				target.Vel.Z = 12;
+				victim.Vel.Z = 12;
 			}
 		}
 		if (!(Level.maptime & 7))
 		{
-			target.DamageMobj (null, target, 3, 'Melee');
+			target.DamageMobj (null, victim, 3, 'Melee');
 		}
 		return -1;
 	}

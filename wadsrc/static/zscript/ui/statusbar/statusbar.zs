@@ -214,6 +214,7 @@ class BaseStatusBar : StatusBarCore native
 
 	virtual void Init() 
 	{
+		InitScoreboard();
 	}
 
 	virtual void Draw (int state, double TicFrac)

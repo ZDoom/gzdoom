@@ -45,6 +45,7 @@
 #include "c_buttons.h"
 #include "d_buttons.h"
 #include "v_draw.h"
+#include "r_utility.h"
 
 enum
 {
@@ -241,6 +242,7 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	auto &vp = r_viewpoint;
 	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
 
@@ -254,7 +256,7 @@ void CT_Drawer (void)
 		{
 			// todo: check for summary screen
 		}
-		if (!skipit) HU_DrawScores (&players[consoleplayer]);
+		if (!skipit) HU_DrawScores (consoleplayer, vp.TicFrac);
 	}
 	if (chatmodeon)
 	{

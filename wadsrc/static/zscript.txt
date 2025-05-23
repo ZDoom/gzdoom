@@ -308,6 +308,7 @@ version "4.15.1"
 #include "zscript/ui/statusbar/sbarinfowrapper.zs"
 #include "zscript/ui/statusbar/statusbar.zs"
 #include "zscript/ui/statusbar/strife_sbar.zs"
+#include "zscript/ui/statusbar/scoreboard.zs"
 
 #include "zscript/ui/intermission.zs"
 

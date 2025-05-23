@@ -56,7 +56,6 @@
 #include "i_time.h"
 #include "printf.h"
 #include "zstring.h"
-#include <ostream>
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;

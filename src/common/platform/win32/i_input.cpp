@@ -612,6 +612,7 @@ void I_StartTic ()
 	EventHandlerResultForNativeMouse = sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 //

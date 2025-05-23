@@ -18,6 +18,8 @@ public:
 	void OnDestroy() override;
 	void Stop();
 	double GetSpeed() const { return m_Speed; }
+	double GetDistance() const { return m_Dist; }
+	FPolyObj* GetPolyObj() const { return m_PolyObj; }
 
 	void StopInterpolation();
 protected:

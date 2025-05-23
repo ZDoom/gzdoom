@@ -345,7 +345,7 @@ struct Polyobj native play
 	native readonly bool bBlocked;
 	native readonly uint8 bHasPortals;
 	native readonly int seqType;
-	native readonly voidptr specialdata;
+	native readonly PolyAction specialdata;
 
 	native clearscope int GetMirror() const;
 	native clearscope vector2 GetStartSpot() const;

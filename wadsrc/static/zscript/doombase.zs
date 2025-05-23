@@ -956,6 +956,44 @@ class Ceiling : MovingCeiling native
 	
 }
 
+class PolyAction : Thinker native
+{
+	native double GetSpeed() const;
+	native double GetDistance() const;
+	native PolyObj GetPolyobj() const;
+}
+
+class RotatePoly : PolyAction native{}
+
+class MovePoly : PolyAction native
+{
+	native Vector2 GetSpeedV() const;
+	native double GetAngle() const;
+}
+
+class MovePolyTo : PolyAction native
+{
+	native Vector2 GetSpeed() const;
+	native Vector2 GetTarget() const;
+}
+
+class PolyDoor : MovePoly native
+{
+	enum PODoorType
+	{
+		PODOOR_NONE,
+		PODOOR_SLIDE,
+		PODOOR_SWING,
+	};
+
+	native double GetDirection() const;
+	native double GetTotalDist() const;
+	native int GetTics() const;
+	native int GetWaitTics() const;
+	native PODoorType GetType() const;
+	native bool IsClose() const;
+}
+
 struct LookExParams
 {
 	double Fov;

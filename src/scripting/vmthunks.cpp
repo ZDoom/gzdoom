@@ -2084,14 +2084,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(FPolyObj, ClosestPoint, ClosestPoint)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(FPolyObj, GetBounds)
+static void GetBounds(FPolyObj* self, DVector4* out)
+{
+	*out = DVector4(self->Bounds.Top(), self->Bounds.Bottom(), self->Bounds.Left(), self->Bounds.Right());
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FPolyObj, GetBounds, GetBounds)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FPolyObj);
-	double x = self->Bounds.Top();
-	double y = self->Bounds.Bottom();
-	double z = self->Bounds.Left();
-	double w = self->Bounds.Right();
-	ACTION_RETURN_VEC4(DVector4(x, y, z, w));
+	DVector4 res = { 0.0, 0.0, 0.0, 0.0 };
+	GetBounds(self, &res);
+	ACTION_RETURN_VEC4(res);
 }
 
 static FPolyObj* GetPolyobj(FLevelLocals* self, int polyNum)

@@ -149,8 +149,8 @@ class CustomMessageBoxMenuBase : Menu abstract
 	protected void CloseSound()
 	{
 		let m = GetCurrentMenu();
-		MenuRumble(m != null ? "menu/backup" : "menu/dismiss");
-		MenuSound(m != null ? "menu/backup" : "menu/dismiss");
+		MenuRumble(m != NULL ? "menu/backup" : "menu/dismiss");
+		MenuSound(m != NULL ? "menu/backup" : "menu/dismiss");
 	}
 
 	//=============================================================================

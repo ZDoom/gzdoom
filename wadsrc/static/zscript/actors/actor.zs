@@ -1475,21 +1475,23 @@ class Actor : Thinker native
 	// 
 	//================================================
 	
-	/* rotation, translation, scaling */
+	/* rotation, translation, scaling, doesn't include parent bones */
 	native version("4.15.1") Quat, Vector3, Vector3 GetBone(int boneIndex, bool include_offsets = true);
 	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBone(Name boneName, bool include_offsets = true);
 	
 	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
 	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
 	
-	version("4.15.1") Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
+	version("4.15.1") Vector3, Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
 	{
-		return TransformByBone(boneIndex, GetBoneBasePosition(boneIndex), include_offsets:include_offsets);
+		let [a, b] = TransformByBone(boneIndex, GetBoneBasePosition(boneIndex), include_offsets:include_offsets);
+		return a, b;
 	}
 	
-	version("4.15.1") Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
+	version("4.15.1") Vector3, Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
 	{
-		return GetBonePosition(GetBoneIndex(boneName), include_offsets);
+		let [a, b] = GetBonePosition(GetBoneIndex(boneName), include_offsets);
+		return a, b;
 	}
 
 	//================================================

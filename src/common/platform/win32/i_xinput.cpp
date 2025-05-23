@@ -109,7 +109,7 @@ public:
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
 
-	void Rumble();
+	void Rumble(unsigned short low_freq, unsigned short high_freq);
 
 	bool AllowsEnabledInBackground() { return true; }
 	bool GetEnabledInBackground() { return EnabledInBackground; }
@@ -175,7 +175,7 @@ public:
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
 
-	void Rumble();
+	void Rumble(unsigned short low_freq, unsigned short high_freq);
 
 protected:
 	HMODULE XInputDLL;
@@ -386,12 +386,9 @@ void FXInputController::Attached()
 	UpdateJoystickMenu(this);
 }
 
-#include <iostream>
-
-void FXInputController::Rumble() {
-	std::cout << "rumble" << std::endl;
-	Vibration.wLeftMotorSpeed = -1;
-	Vibration.wRightMotorSpeed = -1;
+void FXInputController::Rumble(unsigned short low_freq, unsigned short high_freq) {
+	Vibration.wLeftMotorSpeed = low_freq;
+	Vibration.wRightMotorSpeed = high_freq;
 	XInputSetState(Index, &Vibration);
 }
 
@@ -837,13 +834,12 @@ bool FXInputManager::WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPA
 	return false;
 }
 
-void FXInputManager::Rumble() {
-
+void FXInputManager::Rumble(unsigned short low_freq, unsigned short high_freq) {
 	for (int i = 0; i < XUSER_MAX_COUNT; ++i)
 	{
 		if (Devices[i] && Devices[i]->IsConnected())
 		{
-			Devices[i]->Rumble();
+			Devices[i]->Rumble(low_freq, high_freq);
 		}
 	}
 }
@@ -893,13 +889,13 @@ void I_StartupXInput()
 	}
 }
 
-void I_RumbleRaw(uint32_t duration_ms, uint16_t high_freq, uint16_t low_freq, uint16_t left_trig, uint16_t right_trig) {
+void I_Rumble(double high_freq, double low_freq, double _left_trig, double _right_trig) {
 	FXInputManager* XInputManager = & static_cast<FXInputManager&> (*JoyDevices[INPUT_XInput]);
-	if (XInputManager != NULL) XInputManager->Rumble();
-}
-void I_Rumble(unsigned int duration_ms, double high_freq, double low_freq, double left_trig, double right_trig) {
-	I_RumbleRaw(0, 0, 0, 0, 0);
-}
-void I_Rumble(const FString& identifier) {
-	I_Rumble(0, 0, 0, 0, 0);
+	if (XInputManager != NULL)
+	{
+		XInputManager->Rumble(
+			static_cast<unsigned short> (USHRT_MAX * std::min(std::max(0.0, high_freq), 1.0)),
+			static_cast<unsigned short> (USHRT_MAX * std::min(std::max(0.0, low_freq), 1.0))
+		);
+	}
 }

@@ -5947,7 +5947,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneBaseRotation)
 // 
 //================================================
 
-DEFINE_ACTION_FUNCTION(AActor, GetBone)
+DEFINE_ACTION_FUNCTION(AActor, GetBoneTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(bone_index);
@@ -5987,7 +5987,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetBone)
 	return numret;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, GetNamedBone)
+DEFINE_ACTION_FUNCTION(AActor, GetNamedBoneTRS)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_NAME(bone_name);

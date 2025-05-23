@@ -323,7 +323,7 @@ void DeinitMenus();
 bool M_Active();
 bool M_IsAnimated();
 
-void MenuRumbleDirect(unsigned int duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
+void MenuRumbleDirect(int duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
 void MenuRumble(const FString& identifier);
 
 struct IJoystickConfig;

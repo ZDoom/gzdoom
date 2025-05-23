@@ -34,16 +34,12 @@
 #include <SDL_events.h>
 #include "i_input.h"
 #include "c_cvars.h"
-#include "dobject.h"
-#include "doomstat.h"
-#include "m_argv.h"
 #include "m_joy.h"
 #include "v_video.h"
 
 #include "d_gui.h"
 #include "c_buttons.h"
 #include "c_console.h"
-#include "c_dispatch.h"
 #include "dikeys.h"
 #include "utf8.h"
 #include "keydef.h"

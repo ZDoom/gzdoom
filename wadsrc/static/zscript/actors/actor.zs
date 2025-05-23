@@ -1479,9 +1479,13 @@ class Actor : Thinker native
 	native version("4.15.1") Quat, Vector3, Vector3 GetBoneTRS(int boneIndex, bool include_offsets = true);
 	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneTRS(Name boneName, bool include_offsets = true);
 	
+	/* angle, pitch, roll, includes parent bones */
+	native version("4.15.1") Vector3 GetBoneEulerAngles(int boneIndex, bool include_offsets = true);
+	native version("4.15.1") Vector3 GetNamedBoneEulerAngles(Name boneName, bool include_offsets = true);
+
 	//input position/direction vectors are in xzy, model space
-	native version("4.15.1") Vector3, Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 forward = (1,0,0), Vector3 up = (0,1,0), bool include_offsets = true);
-	native version("4.15.1") Vector3, Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 forward = (1,0,0) Vector3 up = (0,1,0), bool include_offsets = true);
+	native version("4.15.1") Vector3, Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 forward = (1,0,0), Vector3 up = (0,0,1), bool include_offsets = true);
+	native version("4.15.1") Vector3, Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 forward = (1,0,0), Vector3 up = (0,0,1), bool include_offsets = true);
 	
 	version("4.15.1") Vector3, Vector3, Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
 	{
@@ -1489,7 +1493,7 @@ class Actor : Thinker native
 		return a, b, c;
 	}
 	
-	version("4.15.1") Vector3, Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
+	version("4.15.1") Vector3, Vector3, Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
 	{
 		let [a, b, c] = GetBonePosition(GetBoneIndex(boneName), include_offsets);
 		return a, b, c;

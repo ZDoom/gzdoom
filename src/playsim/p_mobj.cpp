@@ -4309,6 +4309,86 @@ void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, 
 	}
 }
 
+DVector3 AActor::GetBoneEulerAngles(int model_index, int bone_index, bool with_override)
+{
+	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
+	{
+		if(picnum.isValid()) return DVector3(0,0,0); // picnum overrides don't render models
+
+		FSpriteModelFrame *smf = FindModelFrame(this, sprite, frame, false); // dropped flag is for voxels
+
+		FVector3 objPos = FVector3(Pos() + WorldOffset);
+
+		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
+		VSMatrix worldMatrix = smf->ObjectToWorldMatrix(this, objPos.X, objPos.Y, objPos.Z, 1.0);
+
+		FVector4 oldFwd(1.0, 0.0, 0.0, 0.0);
+		FVector4 newFwd;
+		FVector4 oldUp(0.0, 1.0, 0.0, 0.0);
+		FVector4 newUp;
+
+		boneMatrix.multMatrixPoint(&oldFwd.X, &newFwd.X);
+		boneMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
+
+		oldFwd = FVector4(FVector3(newFwd.X, newFwd.Y, newFwd.Z).Unit(), 0.0);
+		oldUp = FVector4(FVector3(newUp.X, newUp.Y, newUp.Z).Unit(), 0.0);
+
+		worldMatrix.multMatrixPoint(&oldFwd.X, &newFwd.X);
+		worldMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
+
+		//billion thanks to https://www.jldoty.com/code/DirectX/YPRfromUF/YPRfromUF.html for helping figure out all this math
+
+		DVector3 fwd = DVector3(newFwd.X, newFwd.Y, newFwd.Z).Unit();
+		DVector3 up = DVector3(newUp.X, newUp.Y, newUp.Z).Unit();
+
+		DVector3 y(0,1,0);
+		
+		DAngle yaw = DAngle::fromRad(atan2(fwd.Z, fwd.X));
+		DAngle pitch = DAngle::fromSin(-fwd.Y);
+		DAngle roll;
+
+		if(fwd == y)
+		{ // gimbal lock
+			yaw = DAngle::fromDeg(0);
+			roll = DAngle::fromSin(-up.X);
+		}
+		else
+		{
+			DVector3 right = (up ^ fwd).Unit(); // fwd and up must be perpendicular, thus right must be a unit vector
+
+			DVector3 x0 = (y ^ fwd).Unit(); // right vector with no roll, y and fwd aren't perpendicular, so it must be normalized into a unit vector
+			DVector3 y0 = (fwd ^ x0).Unit(); // up vector with no roll
+			
+			double cos = y0 | up; // cos of roll-less up vector and "rolled" up vector
+
+			double sin;
+
+			double max = std::max(std::abs(x0.Z), std::max(std::abs(x0.X), std::abs(x0.Y)));
+			if(std::abs(x0.X) == max)
+			{
+				assert(x0.X != 0); // at least one of x0.X, x0.Y, x0.Z must be nonzero
+				sin = ((y0.X * cos) - up.X) / x0.X;
+			}
+			else if(std::abs(x0.Y) == max)
+			{
+				assert(x0.Y != 0); // at least one of x0.X, x0.Y, x0.Z must be nonzero
+				sin = ((y0.Y * cos) - up.Y) / x0.Y;
+			}
+			else //if(std::abs(x0.Z) == max)
+			{
+				assert(x0.Z != 0); // at least one of x0.X, x0.Y, x0.Z must be nonzero
+				sin = ((y0.Z * cos) - up.Z) / x0.Z;
+			}
+
+			roll = DAngle::fromSin(sin);
+		}
+
+		return DVector3(yaw.Degrees(), pitch.Degrees(), roll.Degrees());
+	}
+
+	return DVector3(0,0,0);
+}
+
 void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &fwd, DVector3 &up)
 {
 	if(modelData && modelData->flags & MODELDATA_GET_BONE_INFO)
@@ -4334,16 +4414,16 @@ void AActor::GetBonePosition(int model_index, int bone_index, bool with_override
 		boneMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
 
 		oldPos = FVector4(FVector3(newPos.X, newPos.Y, newPos.Z) / newPos.W, 1.0);
-		oldFwd = FVector4(FVector3(newFwd.X, newFwd.Y, newFwd.Z) / newFwd.W, 0.0);
-		oldUp = FVector4(FVector3(newUp.X, newUp.Y, newUp.Z) / newUp.W, 0.0);
+		oldFwd = FVector4(FVector3(newFwd.X, newFwd.Y, newFwd.Z).Unit(), 0.0);
+		oldUp = FVector4(FVector3(newUp.X, newUp.Y, newUp.Z).Unit(), 0.0);
 
 		worldMatrix.multMatrixPoint(&oldPos.X, &newPos.X);
 		worldMatrix.multMatrixPoint(&oldFwd.X, &newFwd.X);
 		worldMatrix.multMatrixPoint(&oldUp.X, &newUp.X);
 
 		pos = DVector3(newPos.X, newPos.Z, newPos.Y);
-		fwd = DVector3(newFwd.X, newFwd.Z, newFwd.Y);
-		up = DVector3(newUp.X, newUp.Z, newUp.Y);
+		fwd = DVector3(newFwd.X, newFwd.Z, newFwd.Y).Unit();
+		up = DVector3(newUp.X, newUp.Z, newUp.Y).Unit();
 	}
 }
 

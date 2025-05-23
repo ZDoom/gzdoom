@@ -2724,7 +2724,7 @@ static bool System_CaptureModeInGame()
 
 static void System_PlayStartupSound(const char* sndname)
 {
-	Joy_Rumble(6, 1.0, 1.0, 0.0, 0.0);
+	Joy_Rumble("misc/startupdone");
 	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
 }
 
@@ -3466,7 +3466,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			autostart = true;
 		}
 
-		Joy_Rumble(6, 1.0, 1.0, 0.0, 0.0);
+		Joy_Rumble("misc/startupdone");
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
 
 		if (Args->CheckParm("-norun") || batchrun)

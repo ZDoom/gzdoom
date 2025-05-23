@@ -35,6 +35,7 @@
 #include "i_input.h"
 #include "c_cvars.h"
 #include "dobject.h"
+#include "doomstat.h"
 #include "m_argv.h"
 #include "m_joy.h"
 #include "v_video.h"
@@ -605,6 +606,7 @@ void I_StartTic ()
 	I_CheckGUICapture ();
 	I_CheckNativeMouse ();
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 void I_ProcessJoysticks ();

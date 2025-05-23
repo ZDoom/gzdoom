@@ -435,6 +435,7 @@ std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {
 	{"HEAVY", []() { Joy_Rumble(4, 1, 1, 1, 1); }},
 	{"MEDIUM", []() { Joy_Rumble(4, 0.5, 1, 1, 1); }},
 	{"LIGHT", []() { Joy_Rumble(2, 0.1, 1, 0.5, 0.5); }},
+	{"BUMP", []() { Joy_Rumble(2, 0.5, 1, 0.5, 0.5); }},
 };
 
 std::unordered_map<std::string, std::string> RumbleMapping = {
@@ -448,6 +449,8 @@ std::unordered_map<std::string, std::string> RumbleMapping = {
 	{"menu/backup", "MEDIUM"},
 	{"menu/clear", "MEDIUM"},
 	{"menu/invalid", "MEDIUM"},
+
+	{"player/landing", "BUMP"},
 };
 
 void Joy_Rumble(const FString& identifier)

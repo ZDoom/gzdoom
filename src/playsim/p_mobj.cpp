@@ -59,7 +59,7 @@
 // HEADER FILES ------------------------------------------------------------
 #include <float.h>
 
-
+#include "m_joy.h"
 #include "m_random.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -3260,6 +3260,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
 
 static void PlayerLandedMakeGruntSound(AActor* self, AActor *onmobj)
 {
+	Joy_Rumble("player/landing");
 	IFVIRTUALPTR(self, AActor, PlayerLandedMakeGruntSound)
 	{
 		VMValue params[2] = { self, onmobj };

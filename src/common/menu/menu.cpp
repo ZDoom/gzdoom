@@ -505,25 +505,25 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-void MenuRumbleDirect(unsigned int duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
+void MenuRumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
 {
-	I_Rumble(duration_ms, high_frequency, low_frequency, left_trigger, right_trigger);
+	Joy_Rumble(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
 }
 
 void MenuRumble(const FString& identifier)
 {
-	I_Rumble(identifier);
+	Joy_Rumble(identifier);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleDirect, MenuRumbleDirect)
 {
 	PARAM_PROLOGUE;
-	PARAM_UINT(duration_ms);
+	PARAM_INT(tic_count);
 	PARAM_FLOAT(high_frequency);
 	PARAM_FLOAT(low_frequency);
 	PARAM_FLOAT(left_trigger);
 	PARAM_FLOAT(right_trigger);
-	MenuRumbleDirect(duration_ms, high_frequency, low_frequency, left_trigger, right_trigger);
+	MenuRumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
 	return 0;
 }
 

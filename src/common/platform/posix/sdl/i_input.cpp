@@ -31,7 +31,6 @@
 **
 */
 #include <SDL.h>
-#include "doomstat.h"
 #include "m_argv.h"
 #include "m_joy.h"
 #include "v_video.h"

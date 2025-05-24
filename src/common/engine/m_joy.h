@@ -68,13 +68,25 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons);
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
-void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig);
-
-void Joy_RumbleTick();
-void Joy_Rumble(int tic_count, double high_freq, double low_freq, double left_trigger, double right_trigger);
-void Joy_Rumble(const FString& identifier);
 
 IJoystickConfig *I_UpdateDeviceList();
 extern void UpdateJoystickMenu(IJoystickConfig *);
+
+struct Haptics {
+	int ticks;
+	double high_frequency;
+	double low_frequency;
+	double left_trigger;
+	double right_trigger;
+};
+
+void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig);
+
+void Joy_AddRumbleType(std::string idenifier, struct Haptics data);
+void Joy_MapRumbleType(std::string sound, std::string idenifier);
+void Joy_RumbleTick();
+void Joy_Rumble(int tic_count, double high_freq, double low_freq, double left_trigger, double right_trigger);
+void Joy_Rumble(struct Haptics data);
+void Joy_Rumble(const FString& identifier);
 
 #endif

@@ -327,19 +327,23 @@ class Menu : Object native ui version("2.4")
 	virtual void Ticker() {}
 	virtual void OnReturn() {}
 
-	//=============================================================================
-	//
-	//
-	//
-	//=============================================================================
-
-	static void MenuSound(Name snd)
-	{
-		menuDelegate.PlaySound(snd);
-	}
-
 	native static void MenuRumbleDirect(int tic_count, float high_frequency, float low_frequency, float left_trigger, float right_trigger);
 	native static void MenuRumbleString(String identifier);
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	static void MenuSound(Name snd, bool haptics = true)
+	{
+		if (haptics)
+		{
+			MenuRumbleString(snd);
+		}
+		menuDelegate.PlaySound(snd);
+	}
 
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)
 	{

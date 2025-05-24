@@ -206,7 +206,6 @@ class ImageScrollerMenu : Menu
 				if (--index < 0) index = mDesc.mItems.Size() - 1;
 				let next = mDesc.mItems[index];
 				StartTransition(next, -1);
-				MenuRumble("menu/choose");
 				MenuSound("menu/choose");
 			}
 			return true;
@@ -219,7 +218,6 @@ class ImageScrollerMenu : Menu
 				if (++index >= mDesc.mItems.Size()) index = 0;
 				let next = mDesc.mItems[index];
 				StartTransition(next, 1);
-				MenuRumble("menu/choose");
 				MenuSound("menu/choose");
 			}
 			return true;

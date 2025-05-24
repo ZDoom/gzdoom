@@ -1293,6 +1293,21 @@ public:
 		return TAngle(double(rad * (180.0 / pi::pi())));
 	}
 
+	static constexpr TAngle fromCos(double cos)
+	{
+		return fromRad(g_acos(cos));
+	}
+
+	static constexpr TAngle fromSin(double sin)
+	{
+		return fromRad(g_asin(sin));
+	}
+
+	static constexpr TAngle fromTan(double tan)
+	{
+		return fromRad(g_atan(tan));
+	}
+
 	static constexpr TAngle fromBam(int f)
 	{
 		return TAngle(f * (90. / 0x40000000));

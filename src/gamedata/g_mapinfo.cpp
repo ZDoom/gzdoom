@@ -1588,7 +1588,9 @@ DEFINE_MAP_OPTION(thickfogmultiplier, false)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->thickfogmultiplier = (float)parse.sc.Float;
+	// [DVR] Negative multiplier does have a crazy saturated-white effect, like a nuke blastfront
+	// Could be useful for something some day
+	if ((float)parse.sc.Float > 0.0) info->thickfogmultiplier = (float)parse.sc.Float;
 }
 
 DEFINE_MAP_OPTION(pixelratio, false)

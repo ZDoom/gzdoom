@@ -42,6 +42,7 @@
 #include "configfile.h"
 #include "gstrings.h"
 #include "menu.h"
+#include "m_joy.h"
 #include "vm.h"
 #include "v_video.h"
 #include "i_system.h"
@@ -54,6 +55,7 @@
 #include "menustate.h"
 #include "i_time.h"
 #include "printf.h"
+#include "zstring.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
@@ -493,6 +495,42 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 {
 	PARAM_SELF_PROLOGUE(DMenu);
 	M_ActivateMenu(self);
+	return 0;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void MenuRumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
+{
+	Joy_Rumble(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+}
+
+void MenuRumble(const FString& identifier)
+{
+	Joy_Rumble(identifier);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleDirect, MenuRumbleDirect)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(tic_count);
+	PARAM_FLOAT(high_frequency);
+	PARAM_FLOAT(low_frequency);
+	PARAM_FLOAT(left_trigger);
+	PARAM_FLOAT(right_trigger);
+	MenuRumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumble, MenuRumble)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(identifier);
+	MenuRumble(identifier);
 	return 0;
 }
 

@@ -1263,3 +1263,9 @@ CUSTOM_CVAR(Bool, joy_axespolling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 		s_joystickManager->UseAxesPolling(self);
 	}
 }
+
+void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig)
+{
+	// stub
+}
+

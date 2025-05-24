@@ -5,6 +5,8 @@
 #include "tarray.h"
 #include "c_cvars.h"
 
+#include <cstdint>
+
 enum EJoyAxis
 {
 	JOYAXIS_None = -1,
@@ -66,6 +68,12 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons);
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
+void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig);
+
+void Joy_RumbleTick();
+void Joy_Rumble(int tic_count, double high_freq, double low_freq, double left_trigger, double right_trigger);
+void Joy_Rumble(const FString& identifier);
+
 IJoystickConfig *I_UpdateDeviceList();
 extern void UpdateJoystickMenu(IJoystickConfig *);
 

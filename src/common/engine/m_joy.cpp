@@ -367,13 +367,12 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 	}
 }
 
-struct Haptics {
-	int tic_end;
-	double high_frequency;
-	double low_frequency;
-	double left_trigger;
-	double right_trigger;
-};
+
+//===========================================================================
+//
+// Haptic feedback begins here
+//
+//===========================================================================
 
 struct {
 	int tic = gametic;
@@ -383,13 +382,55 @@ struct {
 	// todo: add multiple channels
 } Haptics;
 
+std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {};
+std::unordered_map<std::string, std::string> RumbleMapping = {};
+
+const char * Joy_GetMapping(std::string idenifier)
+{
+	auto mappingIterator = RumbleMapping.find(idenifier);
+
+	if (mappingIterator == nullptr || mappingIterator == RumbleMapping.end()) {
+		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.c_str());
+		return nullptr;
+	}
+
+	return mappingIterator->second.c_str();
+}
+
+std::function<void(void)> Joy_GetRumble(std::string idenifier)
+{
+	auto rumbleIterator = BasicRumbleType.find(idenifier);
+
+	if (rumbleIterator == nullptr || rumbleIterator  == BasicRumbleType.end()) {
+		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.c_str());
+		return nullptr;
+	}
+
+	return rumbleIterator->second;
+}
+
+void Joy_AddRumbleType(std::string idenifier, struct Haptics data)
+{
+	BasicRumbleType.insert({
+		idenifier,
+		[data]() { Joy_Rumble(data); },
+	});
+}
+
+void Joy_MapRumbleType(std::string sound, std::string idenifier)
+{
+	if (Joy_GetRumble(idenifier) == nullptr) return;
+
+	RumbleMapping.insert({sound, idenifier});
+}
+
 void Joy_RumbleTick() {
 	if (Haptics.tic >= gametic) return;
 	Haptics.tic = gametic;
 
-	if (Haptics.current.tic_end != 0 && Haptics.current.tic_end < Haptics.tic)
+	if (Haptics.current.ticks != 0 && Haptics.current.ticks < Haptics.tic)
 	{
-		Haptics.current.tic_end = 0;
+		Haptics.current.ticks = 0;
 		Haptics.current.high_frequency = 0;
 		Haptics.current.low_frequency = 0;
 		Haptics.current.left_trigger = 0;
@@ -399,9 +440,9 @@ void Joy_RumbleTick() {
 
 	if (!Haptics.dirty) return;
 
-	if (Haptics.channel[0].tic_end >= Haptics.tic)
+	if (Haptics.channel[0].ticks >= Haptics.tic)
 	{
-		Haptics.current.tic_end = Haptics.channel[0].tic_end;
+		Haptics.current.ticks = Haptics.channel[0].ticks;
 		Haptics.current.high_frequency = Haptics.channel[0].high_frequency;
 		Haptics.current.low_frequency = Haptics.channel[0].low_frequency;
 		Haptics.current.left_trigger = Haptics.channel[0].left_trigger;
@@ -422,7 +463,7 @@ void Joy_Rumble(int ticks, double high_frequency, double low_frequency, double l
 {
 	if (ticks <= 0) return;
 
-	Haptics.channel[0].tic_end = Haptics.tic + ticks + 1;
+	Haptics.channel[0].ticks = Haptics.tic + ticks + 1;
 	Haptics.channel[0].high_frequency = high_frequency;
 	Haptics.channel[0].low_frequency = low_frequency;
 	Haptics.channel[0].left_trigger = left_trigger;
@@ -431,51 +472,22 @@ void Joy_Rumble(int ticks, double high_frequency, double low_frequency, double l
 	Haptics.dirty = true;
 }
 
-std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {
-	{"HEAVY", []() { Joy_Rumble(4, 1, 1, 1, 1); }},
-	{"MEDIUM", []() { Joy_Rumble(4, 0.5, 1, 1, 1); }},
-	{"LIGHT", []() { Joy_Rumble(2, 0.1, 1, 0.5, 0.5); }},
-	{"DEATH", []() { Joy_Rumble(35, 1, 1, 1, 1); }},
-	{"BUMP", []() { Joy_Rumble(2, 0.5, 1, 0.5, 0.5); }},
-};
-
-std::unordered_map<std::string, std::string> RumbleMapping = {
-	{"menu/cursor", "LIGHT"},
-	{"menu/change", "LIGHT"},
-	{"menu/choose", "HEAVY"},
-	{"menu/advance", "HEAVY"},
-	{"menu/activate", "HEAVY"},
-	{"menu/dismiss", "MEDIUM"},
-	{"menu/prompt", "MEDIUM"},
-	{"menu/backup", "MEDIUM"},
-	{"menu/clear", "MEDIUM"},
-	{"menu/invalid", "MEDIUM"},
-
-	{"misc/startupdone", "MEDIUM"},
-
-	{"player/landing", "BUMP"},
-	{"player/death", "DEATH"},
-	{"player/damage", "HEAVY"},
-};
+void Joy_Rumble(struct Haptics data)
+{
+	Joy_Rumble(data.ticks, data.left_trigger, data.right_trigger, data.left_trigger, data.right_trigger);
+}
 
 void Joy_Rumble(const FString& identifier)
 {
-	auto identifierChars = identifier.GetChars();
-	auto mappingIterator = RumbleMapping.find(identifierChars);
+	auto mapping = Joy_GetMapping(identifier.GetChars());
 
-	if (mappingIterator == RumbleMapping.end()) {
-		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", identifierChars);
-		return;
-	}
+	if (mapping == nullptr) return;
 
-	auto rumbleIterator = BasicRumbleType.find(mappingIterator->second);
+	auto rumble = Joy_GetRumble(mapping);
 
-	if (mappingIterator == RumbleMapping.end()) {
-		Printf(DMSG_WARNING, "rumble mapping not found! '%s'\n", mappingIterator->second.c_str());
-		return;
-	}
+	if (rumble == nullptr) return;
 
-	rumbleIterator->second();
+	rumble();
 }
 
 CCMD (rumble)
@@ -517,3 +529,9 @@ CCMD (rumble)
 			break;
 	}
 }
+
+//===========================================================================
+//
+// Haptic feedback ends here
+//
+//===========================================================================

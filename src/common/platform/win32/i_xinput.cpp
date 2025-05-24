@@ -46,7 +46,7 @@
 #include "cmdlib.h"
 #include "keydef.h"
 
-#pragma comment(lib, "Xinput.lib")
+//#pragma comment(lib, "Xinput.lib")
 
 // MACROS ------------------------------------------------------------------
 

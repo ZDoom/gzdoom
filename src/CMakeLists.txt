@@ -60,6 +60,7 @@ if( WIN32 )
 		wsock32
 		winmm
 		dinput8
+		Xinput
 		ole32
 		user32
 		gdi32

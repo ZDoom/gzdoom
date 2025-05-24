@@ -258,3 +258,26 @@ dehextra/sound196	dsfre196
 dehextra/sound197	dsfre197
 dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
+
+// define set of rumble routines to be mapped later
+$rumbletype	HEAVY	4	1	1	1	1
+$rumbletype	MEDIUM	4	0.5	1	1	1
+$rumbletype	LIGHT	2	0.1	1	0.5	0.5
+$rumbletype	DEATH	35	1	1	1	1
+$rumbletype	BUMP	2	0.5	1	0.5	0.5
+
+// map predefined rumble routines to sound names
+$rumblemapping	menu/cursor			LIGHT
+$rumblemapping	menu/change			LIGHT
+$rumblemapping	menu/choose			HEAVY
+$rumblemapping	menu/advance		HEAVY
+$rumblemapping	menu/activate		HEAVY
+$rumblemapping	menu/dismiss		MEDIUM
+$rumblemapping	menu/prompt			MEDIUM
+$rumblemapping	menu/backup			MEDIUM
+$rumblemapping	menu/clear			MEDIUM
+$rumblemapping	menu/invalid		MEDIUM
+$rumblemapping	misc/startupdone	MEDIUM
+$rumblemapping	player/landing		BUMP
+$rumblemapping	player/death		DEATH
+$rumblemapping	player/damage		HEAVY

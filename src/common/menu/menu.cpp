@@ -509,7 +509,7 @@ void MenuRumbleDirect(int tic_count, double high_frequency, double low_frequency
 	Joy_Rumble(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
 }
 
-void MenuRumble(const FString& identifier)
+void MenuRumbleString(const FString& identifier)
 {
 	Joy_Rumble(identifier);
 }
@@ -526,11 +526,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleDirect, MenuRumbleDirect)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumble, MenuRumble)
+DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleString, MenuRumbleString)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(identifier);
-	MenuRumble(identifier);
+	MenuRumbleString(identifier);
 	return 0;
 }
 

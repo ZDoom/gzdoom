@@ -91,7 +91,6 @@ class CustomMessageBoxMenuBase : Menu abstract
 		mMessage = textFont.BreakLines(Stringtable.Localize(message), int(300/NotifyFontScale));
 		if (playsound)
 		{
-			MenuRumble("menu/prompt");
 			MenuSound ("menu/prompt");
 		}
 	}
@@ -148,9 +147,7 @@ class CustomMessageBoxMenuBase : Menu abstract
 
 	protected void CloseSound()
 	{
-		let m = GetCurrentMenu();
-		MenuRumble(m != NULL ? "menu/backup" : "menu/dismiss");
-		MenuSound(m != NULL ? "menu/backup" : "menu/dismiss");
+		MenuSound(GetCurrentMenu() != NULL ? "menu/backup" : "menu/dismiss");
 	}
 
 	//=============================================================================
@@ -211,7 +208,6 @@ class CustomMessageBoxMenuBase : Menu abstract
 	{
 		if (mkey == MKEY_Up)
 		{
-			MenuRumble("menu/cursor");
 			MenuSound("menu/cursor");
 			if (messageSelection == 0) messageSelection = optionCount();
 			messageSelection--;
@@ -219,7 +215,6 @@ class CustomMessageBoxMenuBase : Menu abstract
 		}
 		else if (mkey == MKEY_Down)
 		{
-			MenuRumble("menu/cursor");
 			MenuSound("menu/cursor");
 			messageSelection++;
 			if (messageSelection == optionCount()) messageSelection = 0;

@@ -327,20 +327,17 @@ class Menu : Object native ui version("2.4")
 	virtual void Ticker() {}
 	virtual void OnReturn() {}
 
-	native static void MenuRumbleDirect(int tic_count, float high_frequency, float low_frequency, float left_trigger, float right_trigger);
-	native static void MenuRumbleString(String identifier);
-
 	//=============================================================================
 	//
 	//
 	//
 	//=============================================================================
 
-	static void MenuSound(Name snd, bool haptics = true)
+	static void MenuSound(Name snd, bool rumble = true)
 	{
-		if (haptics)
+		if (rumble)
 		{
-			MenuRumbleString(snd);
+			Haptics.Rumble(snd);
 		}
 		menuDelegate.PlaySound(snd);
 	}

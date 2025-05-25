@@ -5,8 +5,6 @@
 #include "tarray.h"
 #include "c_cvars.h"
 
-#include <cstdint>
-
 enum EJoyAxis
 {
 	JOYAXIS_None = -1,

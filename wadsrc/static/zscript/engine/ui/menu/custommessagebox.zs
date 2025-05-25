@@ -147,7 +147,7 @@ class CustomMessageBoxMenuBase : Menu abstract
 
 	protected void CloseSound()
 	{
-		MenuSound(GetCurrentMenu() != NULL ? "menu/backup" : "menu/dismiss");
+		MenuSound (GetCurrentMenu() != NULL? "menu/backup" : "menu/dismiss");
 	}
 
 	//=============================================================================

@@ -4,8 +4,6 @@
 #include "basics.h"
 #include "tarray.h"
 #include "c_cvars.h"
-#include "dobject.h"
-#include "vm.h"
 
 enum EJoyAxis
 {

@@ -506,7 +506,7 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 
 void MenuRumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
 {
-	Joy_Rumble(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
 }
 
 void MenuRumbleString(const FString& identifier)

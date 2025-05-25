@@ -1160,7 +1160,7 @@ static void S_AddSNDINFO (int lump)
 				double right_trig = sc.Float;
 
 				Joy_AddRumbleType(
-					identifier.GetChars(),
+					identifier,
 					{ duration, low_freq, high_freq, left_trig, right_trig, }
 				);
 			}
@@ -1174,7 +1174,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				FString mapping (sc.String);
 
-				Joy_MapRumbleType(sound.GetChars(), mapping.GetChars());
+				Joy_MapRumbleType(sound, mapping);
 			}
 			break;
 			}

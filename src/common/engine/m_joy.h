@@ -82,11 +82,10 @@ struct Haptics {
 
 void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig);
 
-void Joy_AddRumbleType(std::string idenifier, struct Haptics data);
-void Joy_MapRumbleType(std::string sound, std::string idenifier);
+void Joy_AddRumbleType(const FString &idenifier, const struct Haptics data);
+void Joy_MapRumbleType(const FString &sound, const FString &idenifier);
 void Joy_RumbleTick();
-void Joy_Rumble(int tic_count, double high_freq, double low_freq, double left_trigger, double right_trigger);
-void Joy_Rumble(struct Haptics data);
-void Joy_Rumble(const FString& identifier);
+void Joy_Rumble(const struct Haptics data);
+void Joy_Rumble(const FString &identifier);
 
 #endif

@@ -43,7 +43,6 @@
 #include "d_netinf.h"
 #include "d_player.h"
 #include "m_joy.h"
-#include "printf.h"
 #include "serializer.h"
 #include "v_text.h"
 #include "g_levellocals.h"

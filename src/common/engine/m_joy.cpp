@@ -33,8 +33,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
-#include <string>
-#include <unordered_map>
+#include "doomdef.h"
 #include "doomstat.h"
 #include "vectors.h"
 #include "m_joy.h"
@@ -44,6 +43,7 @@
 #include "cmdlib.h"
 #include "c_dispatch.h"
 #include "printf.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -382,46 +382,47 @@ struct {
 	// todo: add multiple channels
 } Haptics;
 
-std::unordered_map<std::string, std::function<void(void)>> BasicRumbleType = {};
-std::unordered_map<std::string, std::string> RumbleMapping = {};
+typedef std::function<void(void)> Lambda;
 
-const char * Joy_GetMapping(std::string idenifier)
+TMap<FString, Lambda> RumbleDefinition = {};
+TMap<FString, FString> RumbleMapping = {};
+
+const FString * Joy_GetMapping(const FString & idenifier)
 {
-	auto mappingIterator = RumbleMapping.find(idenifier);
+	auto mapping = RumbleMapping.CheckKey(idenifier);
 
-	if (mappingIterator == nullptr || mappingIterator == RumbleMapping.end()) {
-		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.c_str());
+	if (!mapping)
+	{
+		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
 		return nullptr;
 	}
 
-	return mappingIterator->second.c_str();
+	return mapping;
 }
 
-std::function<void(void)> Joy_GetRumble(std::string idenifier)
+Lambda * Joy_GetRumble(const FString & idenifier)
 {
-	auto rumbleIterator = BasicRumbleType.find(idenifier);
+	auto rumble = RumbleDefinition.CheckKey(idenifier);
 
-	if (rumbleIterator == nullptr || rumbleIterator  == BasicRumbleType.end()) {
-		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.c_str());
+	if (!rumble) {
+		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
 		return nullptr;
 	}
 
-	return rumbleIterator->second;
+	return rumble;
 }
 
-void Joy_AddRumbleType(std::string idenifier, struct Haptics data)
+
+void Joy_AddRumbleType(const FString & idenifier, const struct Haptics data)
 {
-	BasicRumbleType.insert({
-		idenifier,
-		[data]() { Joy_Rumble(data); },
-	});
+	RumbleDefinition.Insert(idenifier, [data]() { Joy_Rumble(data); });
 }
 
-void Joy_MapRumbleType(std::string sound, std::string idenifier)
+void Joy_MapRumbleType(const FString & sound, const FString & idenifier)
 {
-	if (Joy_GetRumble(idenifier) == nullptr) return;
+	if (!Joy_GetRumble(idenifier)) return;
 
-	RumbleMapping.insert({sound, idenifier});
+	RumbleMapping.Insert(sound, idenifier);
 }
 
 void Joy_RumbleTick() {
@@ -459,35 +460,30 @@ void Joy_RumbleTick() {
 	Haptics.dirty = false;
 }
 
-void Joy_Rumble(int ticks, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
+void Joy_Rumble(const struct Haptics data)
 {
-	if (ticks <= 0) return;
+	if (data.ticks <= 0) return;
 
-	Haptics.channel[0].ticks = Haptics.tic + ticks + 1;
-	Haptics.channel[0].high_frequency = high_frequency;
-	Haptics.channel[0].low_frequency = low_frequency;
-	Haptics.channel[0].left_trigger = left_trigger;
-	Haptics.channel[0].right_trigger = right_trigger;
+	Haptics.channel[0].ticks = Haptics.tic + data.ticks + 1;
+	Haptics.channel[0].high_frequency = data.high_frequency;
+	Haptics.channel[0].low_frequency = data.low_frequency;
+	Haptics.channel[0].left_trigger = data.left_trigger;
+	Haptics.channel[0].right_trigger = data.right_trigger;
 
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(struct Haptics data)
+void Joy_Rumble(const FString & identifier)
 {
-	Joy_Rumble(data.ticks, data.left_trigger, data.right_trigger, data.left_trigger, data.right_trigger);
-}
-
-void Joy_Rumble(const FString& identifier)
-{
-	auto mapping = Joy_GetMapping(identifier.GetChars());
+	auto mapping = Joy_GetMapping(identifier);
 
 	if (mapping == nullptr) return;
 
-	auto rumble = Joy_GetRumble(mapping);
+	auto rumble = Joy_GetRumble(*mapping);
 
 	if (rumble == nullptr) return;
 
-	rumble();
+	(*rumble)();
 }
 
 CCMD (rumble)
@@ -499,7 +495,7 @@ CCMD (rumble)
 	switch (count) {
 		case 0:
 			Printf("testing rumble for 5s\n");
-			Joy_Rumble(5000, 1.0, 1.0, 1.0, 1.0);
+			Joy_Rumble({5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
 			break;
 		case 1:
 			Printf("testing rumble for action '%s'\n", argv[1]);
@@ -517,7 +513,7 @@ CCMD (rumble)
 				return;
 			}
 			Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", ticks, high_freq, low_freq, left_trig, right_trig);
-			Joy_Rumble(ticks, high_freq, low_freq, left_trig, right_trig);
+			Joy_Rumble({ticks, high_freq, low_freq, left_trig, right_trig});
 			break;
 		default:
 			Printf(

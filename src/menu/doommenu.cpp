@@ -411,7 +411,7 @@ CCMD (menu_quit)
 		{
 			if (gameinfo.quitSound.IsNotEmpty())
 			{
-				Joy_Rumble(6, 1, 1, 0, 0);
+				Joy_Rumble(gameinfo.quitSound);
 				S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
 				I_WaitVBL(105);
 			}

@@ -43,6 +43,7 @@
 #include "cmdlib.h"
 #include "c_dispatch.h"
 #include "printf.h"
+#include "vm.h"
 #include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
@@ -526,23 +527,23 @@ CCMD (rumble)
 	}
 }
 
-void DHaptics::Rumble(const FString& identifier) {
+void _Rumble(const FString& identifier) {
 	Joy_Rumble(identifier);
 }
 
-DEFINE_ACTION_FUNCTION(DHaptics, Rumble)
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(identifier);
-	DHaptics::Rumble(identifier);
+	_Rumble(identifier);
 	return 0;
 }
 
-void DHaptics::RumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
+void _RumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
 	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
 }
 
-DEFINE_ACTION_FUNCTION(DHaptics, RumbleDirect)
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleDirect, _RumbleDirect)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(tic_count);
@@ -550,7 +551,7 @@ DEFINE_ACTION_FUNCTION(DHaptics, RumbleDirect)
 	PARAM_FLOAT(low_frequency);
 	PARAM_FLOAT(left_trigger);
 	PARAM_FLOAT(right_trigger);
-	DHaptics::RumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	_RumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
 	return 0;
 }
 

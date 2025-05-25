@@ -504,42 +504,6 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-void MenuRumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger)
-{
-	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
-}
-
-void MenuRumbleString(const FString& identifier)
-{
-	Joy_Rumble(identifier);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleDirect, MenuRumbleDirect)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(tic_count);
-	PARAM_FLOAT(high_frequency);
-	PARAM_FLOAT(low_frequency);
-	PARAM_FLOAT(left_trigger);
-	PARAM_FLOAT(right_trigger);
-	MenuRumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DMenu, MenuRumbleString, MenuRumbleString)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(identifier);
-	MenuRumbleString(identifier);
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 void M_SetMenu(FName menu, int param)
 {
 	if (sysCallbacks.SetSpecialMenu && !sysCallbacks.SetSpecialMenu(menu, param)) return;

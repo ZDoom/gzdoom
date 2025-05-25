@@ -526,6 +526,34 @@ CCMD (rumble)
 	}
 }
 
+void DHaptics::Rumble(const FString& identifier) {
+	Joy_Rumble(identifier);
+}
+
+DEFINE_ACTION_FUNCTION(DHaptics, Rumble)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(identifier);
+	DHaptics::Rumble(identifier);
+	return 0;
+}
+
+void DHaptics::RumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
+	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
+}
+
+DEFINE_ACTION_FUNCTION(DHaptics, RumbleDirect)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(tic_count);
+	PARAM_FLOAT(high_frequency);
+	PARAM_FLOAT(low_frequency);
+	PARAM_FLOAT(left_trigger);
+	PARAM_FLOAT(right_trigger);
+	DHaptics::RumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	return 0;
+}
+
 //===========================================================================
 //
 // Haptic feedback ends here

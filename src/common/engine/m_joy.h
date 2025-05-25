@@ -108,7 +108,6 @@ double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input);
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);
 void I_GetJoysticks(TArray<IJoystickConfig *> &sticks);
-
 IJoystickConfig *I_UpdateDeviceList();
 extern void UpdateJoystickMenu(IJoystickConfig *);
 

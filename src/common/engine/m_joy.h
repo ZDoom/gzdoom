@@ -87,13 +87,4 @@ void Joy_RumbleTick();
 void Joy_Rumble(const struct Haptics data);
 void Joy_Rumble(const FString &identifier);
 
-class DHaptics: public DObject
-{
-	DECLARE_CLASS(DHaptics, DObject)
-
-	public:
-		static void Rumble(const FString& identifier);
-		static void RumbleDirect(int duration_ms, double high_frequency, double low_frequency, double left_trigger, double right_trigger);
-};
-
 #endif

@@ -1620,7 +1620,7 @@ class Actor : Thinker native
 			A_StartSound(ActiveSound, CHAN_VOICE);
 		}
 	}
-	
+
 	virtual void PlayerLandedMakeGruntSound(actor onmobj)
 	{
 		bool grunted;
@@ -1649,6 +1649,24 @@ class Actor : Thinker native
 			}
 		}
 	}
+
+	virtual void PlayerLandedMakeRumble(actor onmobj)
+	{
+		// mirror structure of PlayerLandedMakeGruntSound
+		if (self.health > 0 && !Alternative)
+		{
+			if (self.Vel.Z < -self.player.mo.GruntSpeed)
+			{
+				Haptics.Rumble("player/grunt");
+			}
+			bool isliquid = (pos.Z <= floorz) && HitFloor ();
+			if (onmobj != NULL || !isliquid)
+			{
+				Haptics.Rumble("player/grunt");
+			}
+		}
+	}
+
 
 	virtual void PlayerSquatView(Actor onmobj)
 	{

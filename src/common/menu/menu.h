@@ -8,7 +8,6 @@
 #include "c_cvars.h"
 #include "v_font.h"
 #include "textures.h"
-#include "zstring.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
 EXTERN_CVAR(Int, m_use_mouse);
@@ -322,6 +321,7 @@ FTextureID GetMenuTexture(const char* const name);
 void DeinitMenus();
 bool M_Active();
 bool M_IsAnimated();
+
 
 struct IJoystickConfig;
 DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v = -1);

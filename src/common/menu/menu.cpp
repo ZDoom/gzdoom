@@ -42,7 +42,6 @@
 #include "configfile.h"
 #include "gstrings.h"
 #include "menu.h"
-#include "m_joy.h"
 #include "vm.h"
 #include "v_video.h"
 #include "i_system.h"
@@ -55,7 +54,6 @@
 #include "menustate.h"
 #include "i_time.h"
 #include "printf.h"
-#include "zstring.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;

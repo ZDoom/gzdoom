@@ -46,8 +46,6 @@
 #include "cmdlib.h"
 #include "keydef.h"
 
-//#pragma comment(lib, "Xinput.lib")
-
 // MACROS ------------------------------------------------------------------
 
 // This macro is defined by newer versions of xinput.h. In case we are

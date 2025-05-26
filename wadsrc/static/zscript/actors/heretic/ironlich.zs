@@ -303,7 +303,7 @@ class Whirlwind : Actor
 	{
 		int randVal;
 
-		if (!target.bDontThrust)
+		if (!victim.bDontThrust)
 		{
 			victim.angle += Random2[WhirlwindDamage]() * (360 / 4096.);
 			victim.Vel.X += Random2[WhirlwindDamage]() / 64.;

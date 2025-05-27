@@ -409,6 +409,8 @@ class PlayerPawn : Actor
 		{
 			SoundAlert (self, false);
 		}
+
+		Haptics.Rumble("fire/"..weapn.GetClassName());
 	}
 
 	//---------------------------------------------------------------------------

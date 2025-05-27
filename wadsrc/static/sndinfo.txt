@@ -284,6 +284,7 @@ $rumblemapping	player/grunt		GRUNT
 $rumblemapping	player/death		DEATH
 $rumblemapping	player/damage		HEAVY
 
+$rumblemapping	fire/misc				HEAVY
 $rumblemapping	fire/Chainsaw			HEAVY
 $rumblemapping	fire/Pistol				HEAVY
 $rumblemapping	fire/Shotgun			HEAVY

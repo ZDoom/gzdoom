@@ -34,7 +34,6 @@
 
 #include "doomstat.h"
 
-#include "m_joy.h"
 #include "m_random.h"
 #include "i_system.h"
 #include "announcer.h"
@@ -614,8 +613,6 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 
 	if (player)
 	{
-		Joy_Rumble("player/death");
-
 		// [RH] Death messages
 		ClientObituary (this, inflictor, source, dmgflags, MeansOfDeath);
 
@@ -883,7 +880,11 @@ static void ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int
 			((player->cheats & CF_GODMODE) && damage < TELEFRAG_DAMAGE))
 			return;
 
-		Joy_Rumble("player/damage");
+		IFVIRTUALPTR(target, AActor, PlayerHurtMakeRumble)
+		{
+			VMValue params[2] = { target, inflictor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
 	}
 	
 	woundstate = target->FindState(NAME_Wound, mod);

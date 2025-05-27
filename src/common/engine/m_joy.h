@@ -83,6 +83,6 @@ void Joy_AddRumbleType(const FString &idenifier, const struct Haptics data);
 void Joy_MapRumbleType(const FString &sound, const FString &idenifier);
 void Joy_RumbleTick();
 void Joy_Rumble(const struct Haptics data);
-void Joy_Rumble(const FString &identifier);
+void Joy_Rumble(const FString &identifier, const FString &fallback = "");
 
 #endif

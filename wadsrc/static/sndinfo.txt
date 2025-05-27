@@ -277,7 +277,30 @@ $rumblemapping	menu/prompt			MEDIUM
 $rumblemapping	menu/backup			MEDIUM
 $rumblemapping	menu/clear			MEDIUM
 $rumblemapping	menu/invalid		MEDIUM
+
 $rumblemapping	misc/startupdone	MEDIUM
+
 $rumblemapping	player/grunt		GRUNT
 $rumblemapping	player/death		DEATH
 $rumblemapping	player/damage		HEAVY
+
+$rumblemapping	fire/Chainsaw			HEAVY
+$rumblemapping	fire/Pistol				HEAVY
+$rumblemapping	fire/Shotgun			HEAVY
+$rumblemapping	fire/Chaingun			HEAVY
+$rumblemapping	fire/RocketLauncher		HEAVY
+$rumblemapping	fire/PlasmaRifle		HEAVY
+$rumblemapping	fire/BFG9000			HEAVY
+$rumblemapping	fire/Fist				HEAVY
+$rumblemapping	fire/SuperShotgun		HEAVY
+$rumblemapping	fire/D64Pistol			HEAVY
+$rumblemapping	fire/D64Shotgun			HEAVY
+$rumblemapping	fire/D64SuperShotgun	HEAVY
+$rumblemapping	fire/D64Chaingun		HEAVY
+$rumblemapping	fire/D64RocketLauncher	HEAVY
+$rumblemapping	fire/D64PlasmaRifle		HEAVY
+$rumblemapping	fire/D64BFG9000			HEAVY
+$rumblemapping	fire/D64LaserRifle		HEAVY
+$rumblemapping	fire/D64Fist			HEAVY
+$rumblemapping	fire/D64Chainsaw		HEAVY
+

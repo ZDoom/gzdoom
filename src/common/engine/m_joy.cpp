@@ -694,14 +694,21 @@ typedef std::function<void(void)> Lambda;
 TMap<FString, Lambda> RumbleDefinition = {};
 TMap<FString, FString> RumbleMapping = {};
 
-const FString * Joy_GetMapping(const FString & idenifier)
+const FString * Joy_GetMapping(const FString & idenifier, const FString & fallback)
 {
 	auto mapping = RumbleMapping.CheckKey(idenifier);
 
 	if (!mapping)
 	{
-		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
-		return nullptr;
+		if (!fallback.IsEmpty())
+		{
+			mapping = RumbleMapping.CheckKey(fallback);
+		}
+
+		if (!mapping)
+		{
+			Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
+		}
 	}
 
 	return mapping;
@@ -718,7 +725,6 @@ Lambda * Joy_GetRumble(const FString & idenifier)
 
 	return rumble;
 }
-
 
 void Joy_AddRumbleType(const FString & idenifier, const struct Haptics data)
 {
@@ -780,9 +786,9 @@ void Joy_Rumble(const struct Haptics data)
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(const FString & identifier)
+void Joy_Rumble(const FString & identifier, const FString & fallback)
 {
-	auto mapping = Joy_GetMapping(identifier);
+	auto mapping = Joy_GetMapping(identifier, fallback);
 
 	if (mapping == nullptr) return;
 
@@ -842,6 +848,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
 	PARAM_PROLOGUE;
 	PARAM_STRING(identifier);
 	_Rumble(identifier);
+	return 0;
+}
+
+void _RumbleOr(const FString& identifier, const FString& fallback) {
+	Joy_Rumble(identifier, fallback);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleOr, _RumbleOr)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(identifier);
+	PARAM_STRING(fallback);
+	_RumbleOr(identifier, fallback);
 	return 0;
 }
 

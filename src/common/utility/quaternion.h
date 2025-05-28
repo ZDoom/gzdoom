@@ -292,11 +292,11 @@ public:
 		return TVector3(r.X, r.Y, r.Z);
 	}
 
-	TQuaternion<vec_t> Conjugate()
+	TQuaternion<vec_t> Conjugate() const
 	{
 		return TQuaternion(-X, -Y, -Z, +W);
 	}
-	TQuaternion<vec_t> Inverse()
+	TQuaternion<vec_t> Inverse() const
 	{
 		return Conjugate() / LengthSquared();
 	}

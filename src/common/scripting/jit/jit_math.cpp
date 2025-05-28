@@ -1617,6 +1617,11 @@ void FuncMULQV3(void *result, double ax, double ay, double az, double aw, double
 	*reinterpret_cast<DVector3*>(result) = DQuaternion(ax, ay, az, aw) * DVector3(bx, by, bz);
 }
 
+void FuncCONJQ(void* result, double x, double y, double z, double w)
+{
+	*reinterpret_cast<DQuaternion*>(result) = DQuaternion(-x, -y, -z, w);
+}
+
 void JitCompiler::EmitMULQQ_RR()
 {
 	auto stack = GetTemporaryVectorStackStorage();
@@ -1659,6 +1664,25 @@ void JitCompiler::EmitMULQV3_RR()
 	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+}
+
+void JitCompiler::EmitCONJQ()
+{
+	auto stack = GetTemporaryVectorStackStorage();
+	auto tmp = newTempIntPtr();
+	cc.lea(tmp, stack);
+
+	auto call = CreateCall<void, void*, double, double, double, double>(FuncCONJQ);
+	call->setArg(0, tmp);
+	call->setArg(1, regF[B + 0]);
+	call->setArg(2, regF[B + 1]);
+	call->setArg(3, regF[B + 2]);
+	call->setArg(4, regF[B + 3]);
+
+	cc.movsd(regF[A + 0], asmjit::x86::qword_ptr(tmp, 0));
+	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	cc.movsd(regF[A + 3], asmjit::x86::qword_ptr(tmp, 24));
 }
 
 

@@ -281,6 +281,7 @@ xx(EQV4_K,		beqv4,		CVRK,	NOP,	0, 0)			// this will never be used.
 // Quaternion math
 xx(MULQQ_RR,	mulqq,		RVRVRV, NOP,	0, 0)		// qA = qB * qC
 xx(MULQV3_RR,	mulqv3,		RVRVRV, NOP,	0, 0)		// qA = qB * vC
+xx(CONJQ,		conjq,		RVRVRV, NOP,	0, 0)		// qA = qB.Conjugate
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI,		NOP,	0, 0)		// pA = pB + dkC

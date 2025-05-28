@@ -179,7 +179,7 @@ extend class BaseStatusBar
 			y -= (BigFont.GetHeight() + 8) * CleanYfac;
 
 			int numTeams = 0;
-			for(int i = 0; i < MAXPLAYERS; i++)
+			for(int i = 0; i < sortedPlayers.Size(); i++)
 			{
 				PlayerInfo p = players[sortedPlayers[i]];
 				if (playeringame[sortedPlayers[i]] && Team.IsValid(p.GetTeam()))

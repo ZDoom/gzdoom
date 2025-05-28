@@ -9063,7 +9063,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	else if (Self->IsQuaternion())
 	{
 		// Reuse vector built-ins for quaternion
-		if (MethodName == NAME_Length || MethodName == NAME_LengthSquared || MethodName == NAME_Unit)
+		if (MethodName == NAME_Length || MethodName == NAME_LengthSquared || MethodName == NAME_Unit || MethodName == NAME_Conjugate || MethodName == NAME_Inverse)
 		{
 			if (ArgList.Size() > 0)
 			{
@@ -10361,6 +10361,9 @@ FxExpression *FxVectorBuiltin::Resolve(FCompileContext &ctx)
 		ValueType = TypeFloat64;
 		break;
 
+	case NAME_Conjugate:
+	case NAME_Inverse:
+		assert(Self->IsQuaternion());
 	case NAME_Unit:
 		ValueType = Self->ValueType;
 		break;
@@ -10411,6 +10414,18 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 		ExpEmit len(build, REGT_FLOAT);
 		build->Emit(vecSize == 2 ? OP_LENV2 : vecSize == 3 ? OP_LENV3 : OP_LENV4, len.RegNum, op.RegNum);
 		build->Emit(vecSize == 2 ? OP_DIVVF2_RR : vecSize == 3 ? OP_DIVVF3_RR : OP_DIVVF4_RR, to.RegNum, op.RegNum, len.RegNum);
+		len.Free(build);
+	}
+	else if (Function == NAME_Conjugate)
+	{
+		build->Emit(OP_CONJQ, to.RegNum, op.RegNum);
+	}
+	else if (Function == NAME_Inverse)
+	{
+		ExpEmit len(build, REGT_FLOAT);
+		build->Emit(OP_DOTV4_RR, len.RegNum, op.RegNum, op.RegNum);
+		build->Emit(OP_CONJQ, to.RegNum, op.RegNum);
+		build->Emit(OP_DIVVF4_RR, to.RegNum, to.RegNum, len.RegNum);
 		len.Free(build);
 	}
 	else if (Function == NAME_Angle)

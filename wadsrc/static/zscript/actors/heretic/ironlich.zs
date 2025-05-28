@@ -321,7 +321,7 @@ class Whirlwind : Actor
 		}
 		if (!(Level.maptime & 7))
 		{
-			target.DamageMobj (null, victim, 3, 'Melee');
+			victim.DamageMobj (null, target, 3, 'Melee');
 		}
 		return -1;
 	}

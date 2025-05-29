@@ -410,6 +410,7 @@ class PlayerPawn : Actor
 			SoundAlert (self, false);
 		}
 
+		// QUESTION: is there a better way to a weapon identifier than this?
 		Haptics.RumbleOr("fire/"..weapn.GetClassName(), "fire/misc");
 	}
 

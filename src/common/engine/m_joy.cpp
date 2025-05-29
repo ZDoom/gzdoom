@@ -383,9 +383,7 @@ struct {
 	// todo: add multiple channels
 } Haptics;
 
-typedef std::function<void(void)> Lambda;
-
-TMap<FName, Lambda> RumbleDefinition = {};
+TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
 
 const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
@@ -408,9 +406,9 @@ const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
 	return mapping;
 }
 
-Lambda * Joy_GetRumble(const FName & idenifier)
+const struct Haptics * Joy_GetRumble(const FName & idenifier)
 {
-	Lambda * rumble = RumbleDefinition.CheckKey(idenifier);
+	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
 
 	if (!rumble) {
 		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
@@ -422,7 +420,7 @@ Lambda * Joy_GetRumble(const FName & idenifier)
 
 void Joy_AddRumbleType(const FName & idenifier, const struct Haptics data)
 {
-	RumbleDefinition.Insert(idenifier, [data]() { Joy_Rumble(data); });
+	RumbleDefinition.Insert(idenifier, data);
 }
 
 void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
@@ -482,15 +480,15 @@ void Joy_Rumble(const struct Haptics data)
 
 void Joy_Rumble(const FName & identifier, const FName & fallback)
 {
-	auto mapping = Joy_GetMapping(identifier, fallback);
+	const FName * mapping = Joy_GetMapping(identifier, fallback);
 
 	if (mapping == nullptr) return;
 
-	auto rumble = Joy_GetRumble(*mapping);
+	const struct Haptics * rumble = Joy_GetRumble(*mapping);
 
 	if (rumble == nullptr) return;
 
-	(*rumble)();
+	Joy_Rumble(* rumble);
 }
 
 CCMD (rumble)

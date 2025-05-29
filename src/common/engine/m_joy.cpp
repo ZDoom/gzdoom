@@ -378,10 +378,26 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 struct {
 	int tic = gametic;
 	bool dirty = false;
+	bool enabled = true;
+	double strength = 1.0;
 	struct Haptics current = {0,0,0,0,0};
 	struct Haptics channel[1] {{0,0,0,0,0}};
 	// todo: add multiple channels
 } Haptics;
+
+CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Translate linear haptics to audio taper") {
+	double l1 = self / 10.0;
+	double l2 = l1 * l1;
+	double l3 = l2 * l1;
+	double m3 = 2; // cubed portion
+	double m2 = -2; // squared portion
+	double m1 = 1 - m2 - m3; // linear portion
+
+	Haptics.strength = l1*m1 + l2*m2 + l3*m3;
+	Haptics.enabled = self > 0;
+
+	if (!Haptics.enabled) I_Rumble(0, 0, 0, 0);
+}
 
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
@@ -431,6 +447,7 @@ void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
 }
 
 void Joy_RumbleTick() {
+	if (!Haptics.enabled) return;
 	if (Haptics.tic >= gametic) return;
 	Haptics.tic = gametic;
 
@@ -467,13 +484,14 @@ void Joy_RumbleTick() {
 
 void Joy_Rumble(const struct Haptics data)
 {
+	if (!Haptics.enabled) return;
 	if (data.ticks <= 0) return;
 
 	Haptics.channel[0].ticks = Haptics.tic + data.ticks + 1;
-	Haptics.channel[0].high_frequency = data.high_frequency;
-	Haptics.channel[0].low_frequency = data.low_frequency;
-	Haptics.channel[0].left_trigger = data.left_trigger;
-	Haptics.channel[0].right_trigger = data.right_trigger;
+	Haptics.channel[0].high_frequency = data.high_frequency * Haptics.strength;
+	Haptics.channel[0].low_frequency = data.low_frequency * Haptics.strength;
+	Haptics.channel[0].left_trigger = data.left_trigger * Haptics.strength;
+	Haptics.channel[0].right_trigger = data.right_trigger * Haptics.strength;
 
 	Haptics.dirty = true;
 }

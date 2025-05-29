@@ -45,6 +45,7 @@
 #include "printf.h"
 #include "vm.h"
 #include "zstring.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -61,6 +62,8 @@
 EXTERN_CVAR(Bool, joy_ps2raw)
 EXTERN_CVAR(Bool, joy_dinput)
 EXTERN_CVAR(Bool, joy_xinput)
+
+extern bool AppActive;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -379,6 +382,7 @@ struct {
 	int tic = gametic;
 	bool dirty = false;
 	bool enabled = true;
+	bool active = true;
 	double strength = 1.0;
 	struct Haptics current = {0,0,0,0,0};
 	struct Haptics channel[1] {{0,0,0,0,0}};
@@ -446,8 +450,31 @@ void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
 	RumbleMapping.Insert(sound, idenifier);
 }
 
+
 void Joy_RumbleTick() {
+
 	if (!Haptics.enabled) return;
+
+	// pause detection
+	if (AppActive != Haptics.active)
+	{
+		Haptics.active = AppActive;
+
+		if (Haptics.active && Haptics.current.ticks != 0)
+		{
+			I_Rumble(
+				Haptics.current.high_frequency,
+				Haptics.current.low_frequency,
+				Haptics.current.left_trigger,
+				Haptics.current.right_trigger
+			);
+		}
+		else
+		{
+			I_Rumble(0, 0, 0, 0);
+		}
+	}
+
 	if (Haptics.tic >= gametic) return;
 	Haptics.tic = gametic;
 

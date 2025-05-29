@@ -818,6 +818,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
 	Option "$JOYMNU_NOMENU", "m_blockcontrollers", "YesNo"
+	ScaleSlider "$JOYMNU_HAPTICS", "haptics_strength", 0, 10, 1, "$OPTVAL_OFF"
 	IfOption(Windows)
 	{
 		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"

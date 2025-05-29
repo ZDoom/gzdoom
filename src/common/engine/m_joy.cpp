@@ -385,16 +385,16 @@ struct {
 
 typedef std::function<void(void)> Lambda;
 
-TMap<FString, Lambda> RumbleDefinition = {};
-TMap<FString, FString> RumbleMapping = {};
+TMap<FName, Lambda> RumbleDefinition = {};
+TMap<FName, FName> RumbleMapping = {};
 
-const FString * Joy_GetMapping(const FString & idenifier, const FString & fallback)
+const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
 {
-	auto mapping = RumbleMapping.CheckKey(idenifier);
+	FName * mapping = RumbleMapping.CheckKey(idenifier);
 
 	if (!mapping)
 	{
-		if (!fallback.IsEmpty())
+		if (fallback.IsValidName())
 		{
 			mapping = RumbleMapping.CheckKey(fallback);
 		}
@@ -408,9 +408,9 @@ const FString * Joy_GetMapping(const FString & idenifier, const FString & fallba
 	return mapping;
 }
 
-Lambda * Joy_GetRumble(const FString & idenifier)
+Lambda * Joy_GetRumble(const FName & idenifier)
 {
-	auto rumble = RumbleDefinition.CheckKey(idenifier);
+	Lambda * rumble = RumbleDefinition.CheckKey(idenifier);
 
 	if (!rumble) {
 		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
@@ -420,12 +420,12 @@ Lambda * Joy_GetRumble(const FString & idenifier)
 	return rumble;
 }
 
-void Joy_AddRumbleType(const FString & idenifier, const struct Haptics data)
+void Joy_AddRumbleType(const FName & idenifier, const struct Haptics data)
 {
 	RumbleDefinition.Insert(idenifier, [data]() { Joy_Rumble(data); });
 }
 
-void Joy_MapRumbleType(const FString & sound, const FString & idenifier)
+void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
 {
 	if (!Joy_GetRumble(idenifier)) return;
 
@@ -480,7 +480,7 @@ void Joy_Rumble(const struct Haptics data)
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(const FString & identifier, const FString & fallback)
+void Joy_Rumble(const FName & identifier, const FName & fallback)
 {
 	auto mapping = Joy_GetMapping(identifier, fallback);
 
@@ -533,27 +533,27 @@ CCMD (rumble)
 	}
 }
 
-void _Rumble(const FString& identifier) {
-	Joy_Rumble(identifier);
+void _Rumble(const int identifier) {
+	Joy_Rumble(ENamedName(identifier));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(identifier);
-	_Rumble(identifier);
+	PARAM_INT(identifier);
+	_Rumble(ENamedName(identifier));
 	return 0;
 }
 
-void _RumbleOr(const FString& identifier, const FString& fallback) {
-	Joy_Rumble(identifier, fallback);
+void _RumbleOr(const int identifier, const int fallback) {
+	Joy_Rumble(ENamedName(identifier), ENamedName(fallback));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleOr, _RumbleOr)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(identifier);
-	PARAM_STRING(fallback);
+	PARAM_INT(identifier);
+	PARAM_INT(fallback);
 	_RumbleOr(identifier, fallback);
 	return 0;
 }

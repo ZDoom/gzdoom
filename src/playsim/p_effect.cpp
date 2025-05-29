@@ -1023,7 +1023,7 @@ void DVisualThinker::OnDestroy()
 		_next->_prev = _prev;
 	if (Level->VisualThinkerHead == this)
 		Level->VisualThinkerHead = _next;
-
+	_next = _prev = nullptr;
 	PT.alpha = 0.0; // stops all rendering.
 	Super::OnDestroy();
 }

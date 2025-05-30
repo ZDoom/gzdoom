@@ -33,13 +33,19 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include "doomdef.h"
+#include "doomstat.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
 #include "i_interface.h"
 #include "d_eventbase.h"
 #include "cmdlib.h"
+#include "c_dispatch.h"
 #include "printf.h"
+#include "vm.h"
+#include "zstring.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -56,6 +62,8 @@
 EXTERN_CVAR(Bool, joy_ps2raw)
 EXTERN_CVAR(Bool, joy_dinput)
 EXTERN_CVAR(Bool, joy_xinput)
+
+extern bool AppActive;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -362,3 +370,255 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 		}
 	}
 }
+
+
+//===========================================================================
+//
+// Haptic feedback begins here
+//
+//===========================================================================
+
+struct {
+	int tic = gametic;
+	bool dirty = false;
+	bool enabled = true;
+	bool active = true;
+	double strength = 1.0;
+	struct Haptics current = {0,0,0,0,0};
+	struct Haptics channel[1] {{0,0,0,0,0}};
+	// todo: add multiple channels
+} Haptics;
+
+CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Translate linear haptics to audio taper") {
+	double l1 = self / 10.0;
+	double l2 = l1 * l1;
+	double l3 = l2 * l1;
+	double m3 = 2; // cubed portion
+	double m2 = -2; // squared portion
+	double m1 = 1 - m2 - m3; // linear portion
+
+	Haptics.strength = l1*m1 + l2*m2 + l3*m3;
+	Haptics.enabled = self > 0;
+
+	if (!Haptics.enabled) I_Rumble(0, 0, 0, 0);
+}
+
+TMap<FName, struct Haptics> RumbleDefinition = {};
+TMap<FName, FName> RumbleMapping = {};
+
+const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
+{
+	FName * mapping = RumbleMapping.CheckKey(idenifier);
+
+	if (!mapping)
+	{
+		if (fallback.IsValidName())
+		{
+			mapping = RumbleMapping.CheckKey(fallback);
+		}
+
+		if (!mapping)
+		{
+			Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
+		}
+	}
+
+	return mapping;
+}
+
+const struct Haptics * Joy_GetRumble(const FName & idenifier)
+{
+	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
+
+	if (!rumble) {
+		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
+		return nullptr;
+	}
+
+	return rumble;
+}
+
+void Joy_AddRumbleType(const FName & idenifier, const struct Haptics data)
+{
+	RumbleDefinition.Insert(idenifier, data);
+}
+
+void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
+{
+	if (!Joy_GetRumble(idenifier)) return;
+
+	RumbleMapping.Insert(sound, idenifier);
+}
+
+
+void Joy_RumbleTick() {
+
+	if (!Haptics.enabled) return;
+
+	// pause detection
+	if (AppActive != Haptics.active)
+	{
+		Haptics.active = AppActive;
+
+		if (Haptics.active && Haptics.current.ticks != 0)
+		{
+			I_Rumble(
+				Haptics.current.high_frequency,
+				Haptics.current.low_frequency,
+				Haptics.current.left_trigger,
+				Haptics.current.right_trigger
+			);
+		}
+		else
+		{
+			I_Rumble(0, 0, 0, 0);
+		}
+	}
+
+	if (Haptics.tic >= gametic) return;
+	Haptics.tic = gametic;
+
+	if (Haptics.current.ticks != 0 && Haptics.current.ticks < Haptics.tic)
+	{
+		Haptics.current.ticks = 0;
+		Haptics.current.high_frequency = 0;
+		Haptics.current.low_frequency = 0;
+		Haptics.current.left_trigger = 0;
+		Haptics.current.right_trigger = 0;
+		Haptics.dirty = true;
+	}
+
+	if (!Haptics.dirty) return;
+
+	if (Haptics.channel[0].ticks >= Haptics.tic)
+	{
+		Haptics.current.ticks = Haptics.channel[0].ticks;
+		Haptics.current.high_frequency = Haptics.channel[0].high_frequency;
+		Haptics.current.low_frequency = Haptics.channel[0].low_frequency;
+		Haptics.current.left_trigger = Haptics.channel[0].left_trigger;
+		Haptics.current.right_trigger = Haptics.channel[0].right_trigger;
+	}
+
+	I_Rumble(
+		Haptics.current.high_frequency,
+		Haptics.current.low_frequency,
+		Haptics.current.left_trigger,
+		Haptics.current.right_trigger
+	);
+
+	Haptics.dirty = false;
+}
+
+void Joy_Rumble(const struct Haptics data)
+{
+	if (!Haptics.enabled) return;
+	if (data.ticks <= 0) return;
+
+	Haptics.channel[0].ticks = Haptics.tic + data.ticks + 1;
+	Haptics.channel[0].high_frequency = data.high_frequency * Haptics.strength;
+	Haptics.channel[0].low_frequency = data.low_frequency * Haptics.strength;
+	Haptics.channel[0].left_trigger = data.left_trigger * Haptics.strength;
+	Haptics.channel[0].right_trigger = data.right_trigger * Haptics.strength;
+
+	Haptics.dirty = true;
+}
+
+void Joy_Rumble(const FName & identifier, const FName & fallback)
+{
+	const FName * mapping = Joy_GetMapping(identifier, fallback);
+
+	if (mapping == nullptr) return;
+
+	const struct Haptics * rumble = Joy_GetRumble(*mapping);
+
+	if (rumble == nullptr) return;
+
+	Joy_Rumble(* rumble);
+}
+
+CCMD (rumble)
+{
+	int count = argv.argc()-1;
+	int ticks;
+	double high_freq, low_freq, left_trig, right_trig;
+
+	switch (count) {
+		case 0:
+			Printf("testing rumble for 5s\n");
+			Joy_Rumble({5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
+			break;
+		case 1:
+			Printf("testing rumble for action '%s'\n", argv[1]);
+			Joy_Rumble(argv[1]);
+			break;
+		case 5:
+			try {
+				ticks = std::stoi(argv[1], nullptr, 10);
+				high_freq = static_cast <double> (std::stof(argv[2], nullptr));
+				low_freq = static_cast <double> (std::stof(argv[3], nullptr));
+				left_trig = static_cast <double> (std::stof(argv[4], nullptr));
+				right_trig = static_cast <double> (std::stof(argv[5], nullptr));
+			} catch (...) {
+				Printf("Failed to parse args\n");
+				return;
+			}
+			Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", ticks, high_freq, low_freq, left_trig, right_trig);
+			Joy_Rumble({ticks, high_freq, low_freq, left_trig, right_trig});
+			break;
+		default:
+			Printf(
+				"usage:\n  %s\n  %s\n  %s\n",
+				"rumble",
+				"rumble string_id",
+				"rumble int_duration float_high_freq float_low_freq float_left_trig float_right_trigger"
+			);
+			break;
+	}
+}
+
+void _Rumble(const int identifier) {
+	Joy_Rumble(ENamedName(identifier));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(identifier);
+	_Rumble(ENamedName(identifier));
+	return 0;
+}
+
+void _RumbleOr(const int identifier, const int fallback) {
+	Joy_Rumble(ENamedName(identifier), ENamedName(fallback));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleOr, _RumbleOr)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(identifier);
+	PARAM_INT(fallback);
+	_RumbleOr(identifier, fallback);
+	return 0;
+}
+
+void _RumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
+	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleDirect, _RumbleDirect)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(tic_count);
+	PARAM_FLOAT(high_frequency);
+	PARAM_FLOAT(low_frequency);
+	PARAM_FLOAT(left_trigger);
+	PARAM_FLOAT(right_trigger);
+	_RumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	return 0;
+}
+
+//===========================================================================
+//
+// Haptic feedback ends here
+//
+//===========================================================================

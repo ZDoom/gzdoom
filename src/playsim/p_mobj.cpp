@@ -3252,6 +3252,31 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
 	P_CheckFakeFloorTriggers(self, oldz, oldz_has_viewh);
 	return 0;
 }
+
+//==========================================================================
+//
+// Rumble functions
+//
+//==========================================================================
+
+static void PlayerLandedMakeRumble(AActor* self, AActor *onmobj)
+{
+	IFVIRTUALPTR(self, AActor, PlayerLandedMakeRumble)
+	{
+		VMValue params[2] = { self, onmobj };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+static void PlayerDiedMakeRumble(AActor* self, AActor *source)
+{
+	IFVIRTUALPTR(self, AActor, PlayerDiedMakeRumble)
+	{
+		VMValue params[2] = { self, source };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 //===========================================================================
 //
 // PlayerLandedOnThing
@@ -3285,6 +3310,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	P_FallingDamage (mo);
 
+	PlayerLandedMakeRumble(mo, onmobj);
 	PlayerLandedMakeGruntSound(mo, onmobj);
 
 //	mo->player->centering = true;

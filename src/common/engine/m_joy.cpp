@@ -379,13 +379,13 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 //===========================================================================
 
 struct {
-	int tic = gametic;
-	bool dirty = false;
-	bool enabled = true;
-	bool active = true;
-	double strength = 1.0;
-	struct Haptics current = {0,0,0,0,0};
-	struct Haptics channel[1] {{0,0,0,0,0}};
+	int tic = gametic; // last tic processed
+	bool dirty = false; // do we need to do something next tick ?
+	bool enabled = true; // do we need to do anything ever ?
+	bool active = true; // is the game currently not paused ?
+	double strength = 1.0; // number <1 turns down rumble strength
+	struct Haptics current = {0,0,0,0,0}; // current state of the controller
+	struct Haptics channel[1] {{0,0,0,0,0}}; // active rumbles (that will be mixed)
 	// todo: add multiple channels
 } Haptics;
 
@@ -406,7 +406,7 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
 
-const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
+const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
 	FName * mapping = RumbleMapping.CheckKey(idenifier);
 
@@ -426,7 +426,7 @@ const FName * Joy_GetMapping(const FName & idenifier, const FName & fallback)
 	return mapping;
 }
 
-const struct Haptics * Joy_GetRumble(const FName & idenifier)
+const struct Haptics * Joy_GetRumble(const FName idenifier)
 {
 	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
 
@@ -438,12 +438,12 @@ const struct Haptics * Joy_GetRumble(const FName & idenifier)
 	return rumble;
 }
 
-void Joy_AddRumbleType(const FName & idenifier, const struct Haptics data)
+void Joy_AddRumbleType(const FName idenifier, const struct Haptics data)
 {
 	RumbleDefinition.Insert(idenifier, data);
 }
 
-void Joy_MapRumbleType(const FName & sound, const FName & idenifier)
+void Joy_MapRumbleType(const FName sound, const FName idenifier)
 {
 	if (!Joy_GetRumble(idenifier)) return;
 
@@ -523,7 +523,7 @@ void Joy_Rumble(const struct Haptics data)
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(const FName & identifier, const FName & fallback)
+void Joy_Rumble(const FName identifier, const FName fallback)
 {
 	const FName * mapping = Joy_GetMapping(identifier, fallback);
 

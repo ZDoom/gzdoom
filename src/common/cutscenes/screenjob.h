@@ -19,6 +19,13 @@ enum
 	SJ_BLOCKUI = 1,
 };
 
+enum
+{
+	ST_VOTE,
+	ST_MUST_BE_SKIPPABLE,
+	ST_UNSKIPPABLE,
+};
+
 struct CutsceneDef
 {
 	FString video;
@@ -47,7 +54,7 @@ bool CanWipe();
 
 VMFunction* LookupFunction(const char* qname, bool validate = true);
 void CallCreateFunction(const char* qname, DObject* runner);
-DObject* CreateRunner(bool clearbefore = true);
+DObject* CreateRunner(bool clearbefore = true, int skipType = ST_VOTE);
 void AddGenericVideo(DObject* runner, const FString& fn, int soundid, int fps);
 
 struct CutsceneState

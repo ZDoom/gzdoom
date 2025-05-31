@@ -1104,6 +1104,37 @@ static void G_FullConsole()
 
 }
 
+void D_RunCutscene()
+{
+	// Only single player games can cancel out of the screen job via client-side logic.
+	if (ScreenJobTick() && !demoplayback)
+	{
+		if (netgame)
+		{
+			// Only the host can determine this.
+			if (consoleplayer != Net_Arbitrator)
+				return;
+
+			int type = ST_VOTE;
+			IFVM(ScreenJobRunner, GetSkipType)
+				type = VMCallSingle<int>(func, cutscene.runner);
+
+			if (type != ST_UNSKIPPABLE)
+				return;
+		}
+
+		Net_WriteInt8(DEM_ENDSCREENJOB);
+	}
+}
+
+// This is used to allow the server to check for when players are ready to advance. For singleplayer we can just
+// use the net message from the cutscene finishing to know when to go.
+static void D_CheckCutsceneAdvance()
+{
+	if (netgame && !demoplayback && Net_CheckCutsceneReady())
+		Net_AdvanceCutscene();
+}
+
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
@@ -1205,7 +1236,7 @@ void G_Ticker ()
 		C_AdjustBottom ();
 	}
 
-	// get commands, check consistancy, and build new consistancy check
+	// get commands
 	const int curTic = gametic / TicDup;
 
 	//Added by MC: For some of that bot stuff. The main bot function.
@@ -1221,9 +1252,6 @@ void G_Ticker ()
 			G_WriteDemoTiccmd(nextCmd, client, curTic);
 
 		players[client].oldbuttons = cmd->buttons;
-		// If the user alt-tabbed away, paused gets set to -1. In this case,
-		// we do not want to read more demo commands until paused is no
-		// longer negative.
 		if (demoplayback)
 			G_ReadDemoTiccmd(cmd, client);
 		else
@@ -1261,11 +1289,7 @@ void G_Ticker ()
 
 	case GS_CUTSCENE:
 	case GS_INTRO:
-		if (ScreenJobTick())
-		{
-			// synchronize termination with the playsim.
-			Net_WriteInt8(DEM_ENDSCREENJOB);
-		}
+		D_CheckCutsceneAdvance();
 		break;
 
 	default:
@@ -3044,7 +3068,7 @@ void G_StartSlideshow(FLevelLocals *Level, FName whichone, int state)
 {
 	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
 	auto slide = F_StartIntermission(SelectedSlideshow, state);
-	RunIntermission(nullptr, nullptr, slide, nullptr, [](bool)
+	RunIntermission(nullptr, nullptr, slide, nullptr, false, [](bool)
 	{
 		primaryLevel->SetMusic();
 		gamestate = GS_LEVEL;

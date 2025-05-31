@@ -123,12 +123,12 @@ void CallCreateFunction(const char* qname, DObject* runner)
 //
 //=============================================================================
 
-DObject* CreateRunner(bool clearbefore)
+DObject* CreateRunner(bool clearbefore, int skipType)
 {
 	auto obj = cutscene.runnerclass->CreateNew();
 	auto func = LookupFunction("ScreenJobRunner.Init", false);
-	VMValue val[3] = { obj, clearbefore, false };
-	VMCall(func, val, 3, nullptr, 0);
+	VMValue val[4] = { obj, clearbefore, false, skipType };
+	VMCall(func, val, 4, nullptr, 0);
 	return obj;
 }
 

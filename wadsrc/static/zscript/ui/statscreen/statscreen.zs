@@ -80,7 +80,7 @@ class StatusScreen : ScreenJob abstract version("2.5")
 
 	InterBackground bg;
 	int				acceleratestage;	// used to accelerate or skip a stage
-	bool				playerready[MAXPLAYERS];
+	bool				playerready[MAXPLAYERS]; // This is no longer used since the server needs to track this
 	int				me;					// wbs.pnum
 	int				bcnt;
 	int				CurState;				// specifies current CurState

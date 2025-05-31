@@ -26,7 +26,6 @@ class DeathmatchStatusScreen : StatusScreen
 
 		for(i = 0; i < MAXPLAYERS; i++)
 		{
-			playerready[i] = false;
 			cnt_frags[i] = cnt_deaths[i] = player_deaths[i] = 0;
 		}
 		total_frags = 0;
@@ -124,7 +123,6 @@ class DeathmatchStatusScreen : StatusScreen
 		}
 		else if (ng_state == 6)
 		{
-			// All players are ready; proceed.
 			if ((acceleratestage) || doautoskip)
 			{
 				PlaySound("intermission/pastdmstats");
@@ -141,17 +139,15 @@ class DeathmatchStatusScreen : StatusScreen
 		}
 	}
 
-	override void drawStats ()
+	protected void DrawScoreboard(int y)
 	{
-		int i, pnum, x, y, ypadding, height, lineheight;
+		int i, pnum, x, ypadding, height, lineheight;
 		int maxnamewidth, maxscorewidth, maxiconheight;
 		int pwidth = IntermissionFont.GetCharWidth("%");
 		int icon_x, name_x, frags_x, deaths_x;
 		int deaths_len;
 		String text_deaths, text_frags;
 		TextureID readyico = TexMan.CheckForTexture("READYICO", TexMan.Type_MiscPatch);
-
-		y = drawLF();
 
 		[maxnamewidth, maxscorewidth, maxiconheight] = GetPlayerWidths();
 		// Use the readyico height if it's bigger.
@@ -199,7 +195,7 @@ class DeathmatchStatusScreen : StatusScreen
 
 			screen.Dim(player.GetDisplayColor(), 0.8, x, y - ypadding, (deaths_x - x) + (8 * CleanXfac), lineheight);
 
-			//if (playerready[pnum] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
+			if (ScreenJobRunner.IsPlayerReady(pnum)) // Bots are automatically assumed ready, to prevent confusion
 				screen.DrawTexture(readyico, true, x - (readysize.X * CleanXfac), y, DTA_CleanNoMove, true);
 
 			let thiscolor = GetRowColor(player, pnum == consoleplayer);
@@ -238,5 +234,57 @@ class DeathmatchStatusScreen : StatusScreen
 
 		String leveltime = Stringtable.Localize("$SCORE_LVLTIME") .. ": " .. String.Format("%02i:%02i:%02i", hours, minutes, seconds);
 		drawTextScaled(displayFont, x, y, leveltime, FontScale, textcolor);
+	}
+
+	override void drawStats ()
+	{
+		DrawScoreboard(drawLF());
+	}
+
+	override void drawShowNextLoc()
+	{
+		bg.drawBackground(CurState, true, snl_pointeron);
+
+		// This has to be expanded out because drawEL() doesn't return its y offset and it's a virtual
+		// meaning it's too late to change :(
+		bool ispatch = TexMan.OkForLocalization(enteringPatch, "$WI_ENTERING");
+		int oldy = TITLEY * scaleFactorY;
+
+		if (!ispatch)
+		{
+			let asc = entering.mFont.GetMaxAscender("$WI_ENTERING");
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * scaleFactorY;
+			}
+		}
+
+		int y = DrawPatchOrText(oldy, entering, enteringPatch, "$WI_ENTERING");
+		
+		// If the displayed info is made of patches we need some additional offsetting here.
+		
+		if (ispatch)
+		{
+			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+			let size = TexMan.GetScaledSize(enteringPatch);
+			int h2 = int(size.Y);
+			let disp = min(h1, h2) / 4;
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (!wbs.LName1.isValid())
+			{
+				disp += mapname.mFont.GetMaxAscender(lnametexts[1]);
+			}
+			y += disp * scaleFactorY;
+		}
+
+		y = DrawName(y, wbs.LName1, lnametexts[1]);
+
+		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
+		{
+			// Consdider the ascender height of the following text.
+			y += author.mFont.GetMaxAscender(authortexts[1]) * scaleFactorY;
+		}
+			
+		DrawScoreboard(DrawAuthor(y, authortexts[1]));
 	}
 }

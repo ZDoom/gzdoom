@@ -808,7 +808,8 @@ class PlayerPawn : Actor
 	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
 	{
 		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
-		Super.PlayerDiedMakeRumble(inflictor);
+
+		if (player.mo == self) Super.PlayerDiedMakeRumble(inflictor);
 
 		if (player != NULL && player.mo == self) player.bonuscount = 0;
 		

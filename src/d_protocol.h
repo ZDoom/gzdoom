@@ -163,10 +163,11 @@ enum EDemoCommand
 	DEM_NETEVENT,		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
 	DEM_MDK,			// 71 String: Damage type
 	DEM_SETINV,			// 72 SetInventory
-	DEM_ENDSCREENJOB,
+	DEM_ENDSCREENJOB,	// 73
 	DEM_ZSC_CMD,		// 74 String: Command, Word: Byte size of command
 	DEM_CHANGESKILL,	// 75 Int: Skill
 	DEM_KICK,			// 76 Byte: Player number
+	DEM_READIED,		// 77 
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

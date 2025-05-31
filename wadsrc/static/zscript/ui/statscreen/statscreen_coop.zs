@@ -27,7 +27,6 @@ class CoopStatusScreen : StatusScreen
 
 		for (int i = 0; i < MAXPLAYERS; i++)
 		{
-			playerready[i] = false;
 			cnt_kills[i] = cnt_items[i] = cnt_secret[i] = cnt_frags[i] = 0;
 
 			if (!playeringame[i])
@@ -216,7 +215,6 @@ class CoopStatusScreen : StatusScreen
 		}
 		else if (ng_state == 12)
 		{
-			// All players are ready; proceed.
 			if ((acceleratestage) || autoskip)
 			{
 				PlaySound("intermission/pastcoopstats");
@@ -239,9 +237,9 @@ class CoopStatusScreen : StatusScreen
 	//
 	//====================================================================
 
-	override void drawStats ()
+	protected void DrawScoreboard(int y)
 	{
-		int i, x, y, ypadding, height, lineheight;
+		int i, x, ypadding, height, lineheight;
 		int maxnamewidth, maxscorewidth, maxiconheight;
 		int pwidth = IntermissionFont.GetCharWidth("%");
 		int icon_x, name_x, kills_x, bonus_x, secret_x;
@@ -251,8 +249,6 @@ class CoopStatusScreen : StatusScreen
 		int color;
 		String text_bonus, text_secret, text_kills;
 		TextureID readyico = TexMan.CheckForTexture("READYICO", TexMan.Type_MiscPatch);
-
-		y = drawLF();
 
 		[maxnamewidth, maxscorewidth, maxiconheight] = GetPlayerWidths();
 		// Use the readyico height if it's bigger.
@@ -282,7 +278,6 @@ class CoopStatusScreen : StatusScreen
 		bonus_x += x;
 		secret_x += x;
 
-
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_NAME"), FontScale, textcolor);
 		drawTextScaled(displayFont, kills_x - displayFont.StringWidth(text_kills) * FontScale, y, text_kills, FontScale, textcolor);
 		drawTextScaled(displayFont, bonus_x - bonus_len * FontScale, y, text_bonus, FontScale, textcolor);
@@ -303,7 +298,7 @@ class CoopStatusScreen : StatusScreen
 
 			screen.Dim(player.GetDisplayColor(), 0.8f, x, y - ypadding, (secret_x - x) + (8 * CleanXfac), lineheight);
 
-			//if (playerready[i] || player.Bot != NULL) // Bots are automatically assumed ready, to prevent confusion
+			if (ScreenJobRunner.IsPlayerReady(i)) // Bots are automatically assumed ready, to prevent confusion
 				screen.DrawTexture(readyico, true, x - (readysize.Y * CleanXfac), y, DTA_CleanNoMove, true);
 
 			Color thiscolor = GetRowColor(player, i == consoleplayer);
@@ -368,5 +363,57 @@ class CoopStatusScreen : StatusScreen
 			drawTimeScaled(displayFont, kills_x, y, cnt_time, FontScale, textcolor);
 			drawTimeScaled(displayFont, secret_x, y, cnt_total_time, FontScale, textcolor);
 		}
+	}
+
+	override void drawStats ()
+	{
+		DrawScoreboard(drawLF());
+	}
+
+	override void drawShowNextLoc()
+	{
+		bg.drawBackground(CurState, true, snl_pointeron);
+
+		// This has to be expanded out because drawEL() doesn't return its y offset and it's a virtual
+		// meaning it's too late to change :(
+		bool ispatch = TexMan.OkForLocalization(enteringPatch, "$WI_ENTERING");
+		int oldy = TITLEY * scaleFactorY;
+
+		if (!ispatch)
+		{
+			let asc = entering.mFont.GetMaxAscender("$WI_ENTERING");
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * scaleFactorY;
+			}
+		}
+
+		int y = DrawPatchOrText(oldy, entering, enteringPatch, "$WI_ENTERING");
+		
+		// If the displayed info is made of patches we need some additional offsetting here.
+		
+		if (ispatch)
+		{
+			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+			let size = TexMan.GetScaledSize(enteringPatch);
+			int h2 = int(size.Y);
+			let disp = min(h1, h2) / 4;
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (!wbs.LName1.isValid())
+			{
+				disp += mapname.mFont.GetMaxAscender(lnametexts[1]);
+			}
+			y += disp * scaleFactorY;
+		}
+
+		y = DrawName(y, wbs.LName1, lnametexts[1]);
+
+		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
+		{
+			// Consdider the ascender height of the following text.
+			y += author.mFont.GetMaxAscender(authortexts[1]) * scaleFactorY;
+		}
+			
+		DrawScoreboard(DrawAuthor(y, authortexts[1]));
 	}
 }

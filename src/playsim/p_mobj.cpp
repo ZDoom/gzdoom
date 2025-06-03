@@ -7729,12 +7729,12 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 
 	AActor *th = Spawn (source->Level, type, pos, ALLOW_REPLACE);
-	
-	P_PlaySpawnSound(th, source);
 
 	// record missile's originator
 	if (owner == NULL) owner = source;
 	th->target = owner;
+
+	P_PlaySpawnSound(th, source);
 
 	double speed = th->Speed;
 
@@ -7828,8 +7828,9 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	}
 	AActor *th = Spawn (source->Level, type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
+
+	P_PlaySpawnSound(th, source);
 
 	th->Angles.Yaw = source->AngleTo(dest);
 	th->VelFromAngle();
@@ -7921,9 +7922,11 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 
 	mo = Spawn (source->Level, type, source->PosAtZ(z), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
+
+	P_PlaySpawnSound(mo, source);
+
 	mo->Angles.Yaw = angle;
 	mo->VelFromAngle(speed);
 	mo->Vel.Z = vz;
@@ -8070,8 +8073,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	DVector3 pos = source->Vec2OffsetZ(x, y, z);
 	AActor *MissileActor = Spawn (source->Level, type, pos, ALLOW_REPLACE);
 	if (pMissileActor) *pMissileActor = MissileActor;
-	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
+	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->Angles.Yaw = an;
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER | MF3_CEILINGHUGGER))
 	{

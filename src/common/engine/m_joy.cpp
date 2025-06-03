@@ -746,7 +746,7 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
 	FName * mapping = RumbleMapping.CheckKey(idenifier);
 
-	if (!mapping)
+	if (!mapping && idenifier.GetChars()[0] != '\0')
 	{
 		if (fallback.IsValidName())
 		{

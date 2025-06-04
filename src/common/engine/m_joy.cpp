@@ -435,9 +435,25 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
 
+
 const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
 	FName * mapping = RumbleMapping.CheckKey(idenifier);
+
+	// convert unknown skinned sound to sound
+	if (!mapping)
+	{
+		FString idString = idenifier.GetChars();
+
+		auto skindex = idString.IndexOf("*");
+
+		if (skindex >= 0)
+		{
+			idString.Remove(0, skindex);
+		}
+
+		mapping = RumbleMapping.CheckKey(FName(idString));
+	}
 
 	if (!mapping && idenifier.GetChars()[0] != '\0')
 	{

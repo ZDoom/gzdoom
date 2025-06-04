@@ -569,6 +569,52 @@ class OptionMenuItemControl : OptionMenuItemControlBase
 	}
 }
 
+class OptionMenuItemDoubleTapControl : OptionMenuItemControlBase
+{
+	OptionMenuItemDoubleTapControl Init(String label, Name command)
+	{
+		Super.Init(label, command, DoubleBindings);
+		return self;
+	}
+}
+
+class OptionMenuItemDoubleControl : OptionMenuItemControlBase
+{
+	string mDoubleAction;
+	KeyBindings mDoubleBindings;
+
+	OptionMenuItemDoubleControl Init(String label, Name command, Name doublecommand)
+	{
+		Super.Init(label, command, Bindings);
+		mDoubleAction = doublecommand;
+		mDoubleBindings = DoubleBindings;
+		return self;
+	}
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (mkey == Menu.MKEY_Input)
+		{
+			mWaiting = false;
+			mBindings.SetBind(mInput, mAction);
+			mDoubleBindings.SetBind(mInput, mDoubleAction);
+			return true;
+		}
+		else if (mkey == Menu.MKEY_Clear)
+		{
+			mBindings.UnbindACommand(mAction);
+			mDoubleBindings.UnbindACommand(mDoubleAction);
+			return true;
+		}
+		else if (mkey == Menu.MKEY_Abort)
+		{
+			mWaiting = false;
+			return true;
+		}
+		return false;
+	}
+}
+
 class OptionMenuItemMapControl : OptionMenuItemControlBase
 {
 	OptionMenuItemMapControl Init(String label, Name command)

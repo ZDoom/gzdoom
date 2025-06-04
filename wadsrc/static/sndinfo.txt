@@ -260,11 +260,22 @@ dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
 
 // define set of rumble routines to be mapped later
-$rumbletype	HEAVY	4	1	1	1	1
-$rumbletype	MEDIUM	4	0.5	1	1	1
-$rumbletype	LIGHT	2	0.1	1	0.5	0.5
-$rumbletype	DEATH	35	1	1	1	1
-$rumbletype	GRUNT	2	0.5	1	0.5	0.5
+$rumbletype	HEAVY		4	1	1	1	1
+$rumbletype	MEDIUM		4	0.5	1	1	1
+$rumbletype	LIGHT		2	0.1	1	0.5	0.5
+$rumbletype	NONE		0	0	0	0	0
+
+$rumbletype	P_HURT		4	1	1	1	1
+$rumbletype	P_DEATH		35	1	1	1	1
+$rumbletype	P_GRUNT		2	0.5	1	0.5	0.5
+
+$rumbletype	W_RELOAD	1	0.5	1	0	0
+$rumbletype	W_MELEE		3	1	1	0	0
+$rumbletype	W_BULLET	3	1	1	1	1
+$rumbletype	W_SHELL		6	1	1	1	1
+$rumbletype	W_ROCKET	6	1	1	1	1
+$rumbletype	W_ENERGY	2	1	1	0	0
+$rumbletype	W_SAW_IDLE	1	0	1	0	0
 
 // map predefined rumble routines to sound names
 $rumblemapping	menu/cursor			LIGHT
@@ -279,29 +290,41 @@ $rumblemapping	menu/clear			MEDIUM
 $rumblemapping	menu/invalid		MEDIUM
 
 $rumblemapping	misc/startupdone	MEDIUM
+$rumblemapping	misc/armor_pkup		LIGHT
+$rumblemapping	misc/health_pkup	LIGHT
+$rumblemapping	misc/ammo_pkup		LIGHT
+$rumblemapping	misc/w_pkup			LIGHT
 
-$rumblemapping	player/grunt		GRUNT
-$rumblemapping	player/death		DEATH
-$rumblemapping	player/damage		HEAVY
+$rumblemapping	player/death		P_DEATH
+$rumblemapping	player/damage		P_HURT
+$rumblemapping	*pain100			P_HURT
+$rumblemapping	*pain75				P_HURT
+$rumblemapping	*pain50				P_HURT
+$rumblemapping	*pain25				P_HURT
 
-$rumblemapping	fire/misc				HEAVY
-$rumblemapping	fire/Chainsaw			HEAVY
-$rumblemapping	fire/Pistol				HEAVY
-$rumblemapping	fire/Shotgun			HEAVY
-$rumblemapping	fire/Chaingun			HEAVY
-$rumblemapping	fire/RocketLauncher		HEAVY
-$rumblemapping	fire/PlasmaRifle		HEAVY
-$rumblemapping	fire/BFG9000			HEAVY
-$rumblemapping	fire/Fist				HEAVY
-$rumblemapping	fire/SuperShotgun		HEAVY
-$rumblemapping	fire/D64Pistol			HEAVY
-$rumblemapping	fire/D64Shotgun			HEAVY
-$rumblemapping	fire/D64SuperShotgun	HEAVY
-$rumblemapping	fire/D64Chaingun		HEAVY
-$rumblemapping	fire/D64RocketLauncher	HEAVY
-$rumblemapping	fire/D64PlasmaRifle		HEAVY
-$rumblemapping	fire/D64BFG9000			HEAVY
-$rumblemapping	fire/D64LaserRifle		HEAVY
-$rumblemapping	fire/D64Fist			HEAVY
-$rumblemapping	fire/D64Chainsaw		HEAVY
+$rumblemapping	*grunt				P_GRUNT
+$rumblemapping	*land				P_GRUNT
+$rumblemapping	*jump				NONE
+$rumblemapping	*usefail			P_GRUNT
+$rumblemapping	*death				P_DEATH
 
+$rumblemapping	*fist				W_MELEE
+$rumblemapping	weapons/bfgf		W_ENERGY
+$rumblemapping	weapons/bfgx		NONE
+$rumblemapping	weapons/chngun		W_BULLET
+$rumblemapping	weapons/pistol		W_BULLET
+$rumblemapping	weapons/plasmaf		W_ENERGY
+$rumblemapping	weapons/plasmaidle	LIGHT
+$rumblemapping	weapons/plasmax		NONE
+$rumblemapping	weapons/rocklf		W_ROCKET
+$rumblemapping	weapons/rocklx		NONE
+$rumblemapping	weapons/sawfull		HEAVY
+$rumblemapping	weapons/sawhit		HEAVY
+$rumblemapping	weapons/sawidle		W_SAW_IDLE
+$rumblemapping	weapons/sawup		LIGHT
+$rumblemapping	weapons/shotgf		W_SHELL
+$rumblemapping	weapons/sshotc		W_RELOAD
+$rumblemapping	weapons/sshotf		W_SHELL
+$rumblemapping	weapons/sshotl		W_RELOAD
+$rumblemapping	weapons/sshoto		W_RELOAD
+$rumblemapping	weapons/unmaker		W_ENERGY

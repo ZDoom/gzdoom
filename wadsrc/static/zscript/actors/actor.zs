@@ -1628,7 +1628,7 @@ class Actor : Thinker native
 			// Why should this number vary by gravity?
 			if (self.Vel.Z < -self.player.mo.GruntSpeed)
 			{
-				A_StartSound("*grunt", CHAN_VOICE);
+				A_StartSound("*grunt", CHAN_VOICE | CHANF_NORUMBLE);
 				grunted = true;
 			}
 			bool isliquid = (pos.Z <= floorz) && HitFloor ();
@@ -1636,11 +1636,11 @@ class Actor : Thinker native
 			{
 				if (!grunted)
 				{
-					A_StartSound("*land", CHAN_AUTO);
+					A_StartSound("*land", CHAN_AUTO | CHANF_NORUMBLE);
 				}
 				else
 				{
-					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO);
+					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO | CHANF_NORUMBLE);
 				}
 			}
 		}
@@ -1684,18 +1684,14 @@ class Actor : Thinker native
 
 	virtual void PlayerLandedMakeRumble(actor onmobj)
 	{
-		// mirror structure of PlayerLandedMakeGruntSound
-		if (self.health > 0 && !Alternative)
+		bool isliquid = (pos.Z <= floorz) && HitFloor ();
+		if (onmobj != NULL || !isliquid)
 		{
-			if (self.Vel.Z < -self.player.mo.GruntSpeed)
-			{
-				Haptics.Rumble("player/grunt");
-			}
-			bool isliquid = (pos.Z <= floorz) && HitFloor ();
-			if (onmobj != NULL || !isliquid)
-			{
-				Haptics.Rumble("player/grunt");
-			}
+			Haptics.Rumble("*land");
+		}
+		else if (self.Vel.Z < -self.player.mo.GruntSpeed)
+		{
+			Haptics.Rumble("*grunt");
 		}
 	}
 

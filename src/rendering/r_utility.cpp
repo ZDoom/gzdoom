@@ -36,6 +36,7 @@
 #include "doomdef.h"
 #include "d_net.h"
 #include "doomstat.h"
+#include "m_joy.h"
 #include "m_random.h"
 #include "m_bbox.h"
 #include "r_sky.h"
@@ -1039,6 +1040,8 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		FQuakeJiggers jiggers;
 		if (DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers) > 0)
 		{
+			Joy_Rumble("world/quake");
+
 			const double quakeFactor = r_quakeintensity;
 			if (jiggers.RollIntensity || jiggers.RollWave)
 				iView->AngleOffsets.Roll = DAngle::fromDeg(QuakePower(quakeFactor, jiggers.RollIntensity, jiggers.RollWave));

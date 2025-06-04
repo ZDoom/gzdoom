@@ -290,6 +290,7 @@ $rumblemapping	menu/prompt			MEDIUM
 $rumblemapping	menu/backup			MEDIUM
 $rumblemapping	menu/clear			MEDIUM
 $rumblemapping	menu/invalid		MEDIUM
+$rumblemapping	menu/quit1			MEDIUM
 
 $rumblemapping	world/quake			QUAKE
 
@@ -298,6 +299,10 @@ $rumblemapping	misc/armor_pkup		LIGHT
 $rumblemapping	misc/health_pkup	LIGHT
 $rumblemapping	misc/ammo_pkup		LIGHT
 $rumblemapping	misc/w_pkup			LIGHT
+$rumblemapping	misc/k_pkup			LIGHT
+$rumblemapping	misc/i_pkup 		LIGHT
+$rumblemapping	misc/p_pkup 		LIGHT
+$rumblemapping	misc/keytry 		LIGHT
 
 $rumblemapping	player/death		P_DEATH
 $rumblemapping	player/damage		P_HURT
@@ -332,3 +337,5 @@ $rumblemapping	weapons/sshotf		W_SHELL
 $rumblemapping	weapons/sshotl		W_RELOAD
 $rumblemapping	weapons/sshoto		W_RELOAD
 $rumblemapping	weapons/unmaker		W_ENERGY
+
+unknown rumble mapping 'menu/quit1'

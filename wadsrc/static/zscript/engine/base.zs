@@ -195,6 +195,7 @@ struct _ native unsafe(internal)	// These are the global variables, the struct i
     native internal readonly Map<Name , Service> AllServices;
 	native readonly bool multiplayer;
 	native @KeyBindings Bindings;
+	native @KeyBindings DoubleBindings;
 	native @KeyBindings AutomapBindings;
 	native readonly @GameInfoStruct gameinfo;
 	native readonly ui bool netgame;

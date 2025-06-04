@@ -35,6 +35,7 @@
 */ 
 
 
+#include "m_joy.h"
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef _WIN32
@@ -519,6 +520,18 @@ void DoomSoundEngine::StopChannel(FSoundChan* chan)
 
 void S_SoundPitchActor(AActor *ent, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime)
 {
+	if (!(flags & CHANF_NORUMBLE))
+	{
+		auto self = &players[consoleplayer];
+		bool isSelf = ent->player == self;
+		bool isSelfMissile = (ent->target != NULL) && (ent->target->player == self) && (ent->flags & MF_MISSILE);
+
+		if (isSelf || isSelfMissile)
+		{
+			Joy_Rumble(soundEngine->GetSoundName(sound_id));
+		}
+	}
+
 	if (VerifyActorSound(ent, sound_id, channel, flags))
 		soundEngine->StartSound (SOURCE_Actor, ent, nullptr, channel, flags, sound_id, volume, attenuation, 0, pitch, startTime);
 }

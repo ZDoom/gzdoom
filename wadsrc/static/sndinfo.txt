@@ -269,6 +269,8 @@ $rumbletype	P_HURT		4	1	1	1	1
 $rumbletype	P_DEATH		35	1	1	1	1
 $rumbletype	P_GRUNT		2	0.5	1	0.5	0.5
 
+$rumbletype	QUAKE		2	1	1	0	0
+
 $rumbletype	W_RELOAD	1	0.5	1	0	0
 $rumbletype	W_MELEE		3	1	1	0	0
 $rumbletype	W_BULLET	3	1	1	1	1
@@ -288,6 +290,8 @@ $rumblemapping	menu/prompt			MEDIUM
 $rumblemapping	menu/backup			MEDIUM
 $rumblemapping	menu/clear			MEDIUM
 $rumblemapping	menu/invalid		MEDIUM
+
+$rumblemapping	world/quake			QUAKE
 
 $rumblemapping	misc/startupdone	MEDIUM
 $rumblemapping	misc/armor_pkup		LIGHT

@@ -874,9 +874,17 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 	if (debugfile && player && (player->cheats & CF_PREDICTING))
 		fprintf (debugfile, "for pl %d: SetState while predicting!\n", Level->PlayerNum(player));
 	
+	int statelooplimit = 300000;
 	auto oldstate = state;
 	do
 	{
+		if (!(--statelooplimit))
+		{
+			Printf(TEXTCOLOR_RED "Infinite state loop in Actor '%s' state '%s'\n", GetClass()->TypeName.GetChars(), FState::StaticGetStateName(state).GetChars());
+			state = nullptr;
+			Destroy();
+			return false;
+		}
 		if (newstate == NULL)
 		{
 			state = NULL;

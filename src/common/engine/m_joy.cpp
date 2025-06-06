@@ -35,6 +35,7 @@
 #include <math.h>
 #include "doomdef.h"
 #include "doomstat.h"
+#include "name.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
@@ -391,7 +392,7 @@ struct {
 		double right_trigger = 1.0; // [0,inf)
 	} strength;
 	struct Haptics current = {0,0,0,0,0}; // current state of the controller
-	struct Haptics channel[1] {{0,0,0,0,0}}; // active rumbles (that will be mixed)
+	TMap<FName, struct Haptics> channels; // active rumbles (that will be mixed)
 	// todo: add multiple channels
 } Haptics;
 
@@ -434,7 +435,6 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
-
 
 const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
@@ -495,9 +495,7 @@ void Joy_MapRumbleType(const FName sound, const FName idenifier)
 	RumbleMapping.Insert(sound, idenifier);
 }
 
-
 void Joy_RumbleTick() {
-
 	if (!Haptics.enabled) return;
 
 	// pause detection
@@ -521,27 +519,44 @@ void Joy_RumbleTick() {
 	}
 
 	if (Haptics.tic >= gametic) return;
-	Haptics.tic = gametic;
 
-	if (Haptics.current.ticks != 0 && Haptics.current.ticks < Haptics.tic)
-	{
-		Haptics.current.ticks = 0;
-		Haptics.current.high_frequency = 0;
-		Haptics.current.low_frequency = 0;
-		Haptics.current.left_trigger = 0;
-		Haptics.current.right_trigger = 0;
-		Haptics.dirty = true;
-	}
+	Haptics.tic = gametic;
+	Haptics.dirty |= Haptics.current.ticks < Haptics.tic;
 
 	if (!Haptics.dirty) return;
 
-	if (Haptics.channel[0].ticks >= Haptics.tic)
+	Haptics.current.ticks = 0;
+	Haptics.current.high_frequency = 0;
+	Haptics.current.low_frequency = 0;
+	Haptics.current.left_trigger = 0;
+	Haptics.current.right_trigger = 0;
+
+	TMapIterator<FName, struct Haptics> it(Haptics.channels);
+	TMap<FName, struct Haptics>::Pair* pair;
+	TArray<FName> stale;
+
+	while (it.NextPair(pair))
 	{
-		Haptics.current.ticks = Haptics.channel[0].ticks;
-		Haptics.current.high_frequency = Haptics.channel[0].high_frequency;
-		Haptics.current.low_frequency = Haptics.channel[0].low_frequency;
-		Haptics.current.left_trigger = Haptics.channel[0].left_trigger;
-		Haptics.current.right_trigger = Haptics.channel[0].right_trigger;
+		if (pair->Value.ticks < Haptics.tic)
+		{
+			stale.Push(pair->Key);
+		}
+	}
+
+	for (auto key: stale)
+	{
+		Haptics.channels.Remove(key);
+	}
+
+	it.Reset();
+
+	if (it.NextPair(pair))
+	{
+		Haptics.current.ticks = pair->Value.ticks;
+		Haptics.current.high_frequency = pair->Value.high_frequency;
+		Haptics.current.low_frequency = pair->Value.low_frequency;
+		Haptics.current.left_trigger = pair->Value.left_trigger;
+		Haptics.current.right_trigger = pair->Value.right_trigger;
 	}
 
 	I_Rumble(
@@ -554,16 +569,18 @@ void Joy_RumbleTick() {
 	Haptics.dirty = false;
 }
 
-void Joy_Rumble(const struct Haptics data)
+void Joy_Rumble(const FName source, const struct Haptics data)
 {
 	if (!Haptics.enabled) return;
 	if (data.ticks <= 0) return;
 
-	Haptics.channel[0].ticks = Haptics.tic + data.ticks + 1;
-	Haptics.channel[0].high_frequency = data.high_frequency * Haptics.strength.high_frequency;
-	Haptics.channel[0].low_frequency = data.low_frequency * Haptics.strength.low_frequency;
-	Haptics.channel[0].left_trigger = data.left_trigger * Haptics.strength.left_trigger;
-	Haptics.channel[0].right_trigger = data.right_trigger * Haptics.strength.right_trigger;
+	Haptics.channels.Insert(source, {
+		Haptics.tic + data.ticks + 1,
+		data.high_frequency * Haptics.strength.high_frequency,
+		data.low_frequency * Haptics.strength.low_frequency,
+		data.left_trigger * Haptics.strength.left_trigger,
+		data.right_trigger * Haptics.strength.right_trigger,
+	});
 
 	Haptics.dirty = true;
 }
@@ -578,7 +595,7 @@ void Joy_Rumble(const FName identifier, const FName fallback)
 
 	if (rumble == nullptr) return;
 
-	Joy_Rumble(* rumble);
+	Joy_Rumble(identifier, * rumble);
 }
 
 CCMD (rumble)
@@ -590,7 +607,7 @@ CCMD (rumble)
 	switch (count) {
 		case 0:
 			Printf("testing rumble for 5s\n");
-			Joy_Rumble({5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
+			Joy_Rumble("", {5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
 			break;
 		case 1:
 			Printf("testing rumble for action '%s'\n", argv[1]);
@@ -608,7 +625,7 @@ CCMD (rumble)
 				return;
 			}
 			Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", ticks, high_freq, low_freq, left_trig, right_trig);
-			Joy_Rumble({ticks, high_freq, low_freq, left_trig, right_trig});
+			Joy_Rumble("", {ticks, high_freq, low_freq, left_trig, right_trig});
 			break;
 		default:
 			Printf(
@@ -646,19 +663,20 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleOr, _RumbleOr)
 	return 0;
 }
 
-void _RumbleDirect(int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
-	Joy_Rumble({tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
+void _RumbleDirect(int source, int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
+	Joy_Rumble(ENamedName(source), {tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleDirect, _RumbleDirect)
 {
 	PARAM_PROLOGUE;
+	PARAM_INT(source);
 	PARAM_INT(tic_count);
 	PARAM_FLOAT(high_frequency);
 	PARAM_FLOAT(low_frequency);
 	PARAM_FLOAT(left_trigger);
 	PARAM_FLOAT(right_trigger);
-	_RumbleDirect(tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	_RumbleDirect(source, tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
 	return 0;
 }
 

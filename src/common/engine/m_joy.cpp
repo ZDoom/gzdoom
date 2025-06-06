@@ -393,7 +393,6 @@ struct {
 	} strength;
 	struct Haptics current = {0,0,0,0,0}; // current state of the controller
 	TMap<FName, struct Haptics> channels; // active rumbles (that will be mixed)
-	// todo: add multiple channels
 } Haptics;
 
 // for fine-control, if user wants/needs
@@ -521,10 +520,13 @@ void Joy_RumbleTick() {
 	if (Haptics.tic >= gametic) return;
 
 	Haptics.tic = gametic;
+
+	// new value OR time elapsed
 	Haptics.dirty |= Haptics.current.ticks < Haptics.tic;
 
 	if (!Haptics.dirty) return;
 
+	// init
 	Haptics.current.ticks = 0;
 	Haptics.current.high_frequency = 0;
 	Haptics.current.low_frequency = 0;
@@ -535,6 +537,7 @@ void Joy_RumbleTick() {
 	TMap<FName, struct Haptics>::Pair* pair;
 	TArray<FName> stale;
 
+	// remove old rumble data
 	while (it.NextPair(pair))
 	{
 		if (pair->Value.ticks < Haptics.tic)
@@ -542,22 +545,31 @@ void Joy_RumbleTick() {
 			stale.Push(pair->Key);
 		}
 	}
-
 	for (auto key: stale)
 	{
 		Haptics.channels.Remove(key);
 	}
 
 	it.Reset();
-
-	if (it.NextPair(pair))
+	while (it.NextPair(pair))
 	{
-		Haptics.current.ticks = pair->Value.ticks;
-		Haptics.current.high_frequency = pair->Value.high_frequency;
-		Haptics.current.low_frequency = pair->Value.low_frequency;
-		Haptics.current.left_trigger = pair->Value.left_trigger;
-		Haptics.current.right_trigger = pair->Value.right_trigger;
+		// grab upcoming event time
+		Haptics.current.ticks = Haptics.current.ticks == 0
+			? pair->Value.ticks
+			: std::min(Haptics.current.ticks, pair->Value.ticks);
+
+		// simple intensity mixing
+		Haptics.current.high_frequency += pair->Value.high_frequency;
+		Haptics.current.low_frequency += pair->Value.low_frequency;
+		Haptics.current.left_trigger += pair->Value.left_trigger;
+		Haptics.current.right_trigger += pair->Value.right_trigger;
 	}
+
+	// should this be clamped to [0,1]? Maybe a controller api will support "hdr" haptics lol
+	// Haptics.current.high_frequency = std::min(std::max(0.0, Haptics.current.high_frequency), 1.0);
+	// Haptics.current.low_frequency = std::min(std::max(0.0, Haptics.current.low_frequency), 1.0);
+	// Haptics.current.left_trigger = std::min(std::max(0.0, Haptics.current.left_trigger), 1.0);
+	// Haptics.current.right_trigger = std::min(std::max(0.0, Haptics.current.right_trigger), 1.0);
 
 	I_Rumble(
 		Haptics.current.high_frequency,
@@ -574,6 +586,7 @@ void Joy_Rumble(const FName source, const struct Haptics data)
 	if (!Haptics.enabled) return;
 	if (data.ticks <= 0) return;
 
+	// this will overwrite stuff from same source mapping (weapons/pistol not W_BULLET)
 	Haptics.channels.Insert(source, {
 		Haptics.tic + data.ticks + 1,
 		data.high_frequency * Haptics.strength.high_frequency,

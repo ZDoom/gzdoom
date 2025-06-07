@@ -625,6 +625,8 @@ struct LevelLocals native
 
 	native void SpawnParticle(FSpawnParticleParams p);
 	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
+
+	clearscope native static bool WorldPaused();
 }
 
 // a few values of this need to be readable by the play code.

@@ -39,6 +39,8 @@
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 
+void I_GetWindowEvent();
+
 void I_GetEvent();
 
 enum

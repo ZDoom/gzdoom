@@ -581,24 +581,27 @@ void Joy_RumbleTick() {
 	Haptics.dirty = false;
 }
 
-void Joy_Rumble(const FName source, const struct Haptics data)
+void Joy_Rumble(const FName source, const struct Haptics data, double attenuation)
 {
 	if (!Haptics.enabled) return;
 	if (data.ticks <= 0) return;
+	if (attenuation >= 1) return;
+
+	float strength = 1 - (attenuation < 0? 0: attenuation);
 
 	// this will overwrite stuff from same source mapping (weapons/pistol not W_BULLET)
 	Haptics.channels.Insert(source, {
 		Haptics.tic + data.ticks + 1,
-		data.high_frequency * Haptics.strength.high_frequency,
-		data.low_frequency * Haptics.strength.low_frequency,
-		data.left_trigger * Haptics.strength.left_trigger,
-		data.right_trigger * Haptics.strength.right_trigger,
+		data.high_frequency * Haptics.strength.high_frequency * strength,
+		data.low_frequency * Haptics.strength.low_frequency * strength,
+		data.left_trigger * Haptics.strength.left_trigger * strength,
+		data.right_trigger * Haptics.strength.right_trigger * strength,
 	});
 
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(const FName identifier, const FName fallback)
+void Joy_Rumble(const FName identifier, double attenuation, const FName fallback)
 {
 	const FName * mapping = Joy_GetMapping(identifier, fallback);
 
@@ -608,7 +611,7 @@ void Joy_Rumble(const FName identifier, const FName fallback)
 
 	if (rumble == nullptr) return;
 
-	Joy_Rumble(identifier, * rumble);
+	Joy_Rumble(identifier, * rumble, attenuation);
 }
 
 CCMD (rumble)

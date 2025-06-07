@@ -258,3 +258,82 @@ dehextra/sound196	dsfre196
 dehextra/sound197	dsfre197
 dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
+
+// define set of rumble routines to be mapped later
+$rumbletype	HEAVY		4	.6	.6	.6	.6
+$rumbletype	MEDIUM		4	.3	.6	.6	.6
+$rumbletype	LIGHT		2	.1	.6	.3	.3
+$rumbletype	NONE		0	0	0	0	0
+
+$rumbletype	P_HURT		4	.6	.6	.6	.6
+$rumbletype	P_DEATH		35	.6	.6	.6	.6
+$rumbletype	P_GRUNT		2	.3	.6	.3	.3
+
+$rumbletype	QUAKE		2	1	1	0	0
+
+$rumbletype	W_RELOAD	1	.3	.6	0	0
+$rumbletype	W_MELEE		3	.6	.6	0	0
+$rumbletype	W_BULLET	3	.6	.6	.6	.6
+$rumbletype	W_SHELL		6	.6	.6	.6	.6
+$rumbletype	W_ROCKET	6	.6	.6	.6	.6
+$rumbletype	W_ENERGY	2	.6	.6	0	0
+$rumbletype	W_SAW_IDLE	1	0	.6	0	0
+
+// map predefined rumble routines to sound names
+$rumblemapping	menu/cursor			LIGHT
+$rumblemapping	menu/change			LIGHT
+$rumblemapping	menu/choose			HEAVY
+$rumblemapping	menu/advance		HEAVY
+$rumblemapping	menu/activate		HEAVY
+$rumblemapping	menu/dismiss		MEDIUM
+$rumblemapping	menu/prompt			MEDIUM
+$rumblemapping	menu/backup			MEDIUM
+$rumblemapping	menu/clear			MEDIUM
+$rumblemapping	menu/invalid		MEDIUM
+$rumblemapping	menu/quit1			MEDIUM
+
+$rumblemapping	world/quake			QUAKE
+
+$rumblemapping	misc/startupdone	MEDIUM
+$rumblemapping	misc/armor_pkup		LIGHT
+$rumblemapping	misc/health_pkup	LIGHT
+$rumblemapping	misc/ammo_pkup		LIGHT
+$rumblemapping	misc/w_pkup			LIGHT
+$rumblemapping	misc/k_pkup			LIGHT
+$rumblemapping	misc/i_pkup 		LIGHT
+$rumblemapping	misc/p_pkup 		LIGHT
+$rumblemapping	misc/keytry 		LIGHT
+
+$rumblemapping	player/death		P_DEATH
+$rumblemapping	player/damage		P_HURT
+$rumblemapping	*pain100			P_HURT
+$rumblemapping	*pain75				P_HURT
+$rumblemapping	*pain50				P_HURT
+$rumblemapping	*pain25				P_HURT
+
+$rumblemapping	*grunt				P_GRUNT
+$rumblemapping	*land				P_GRUNT
+$rumblemapping	*jump				NONE
+$rumblemapping	*usefail			P_GRUNT
+$rumblemapping	*death				P_DEATH
+
+$rumblemapping	*fist				W_MELEE
+$rumblemapping	weapons/bfgf		W_ENERGY
+$rumblemapping	weapons/bfgx		NONE
+$rumblemapping	weapons/chngun		W_BULLET
+$rumblemapping	weapons/pistol		W_BULLET
+$rumblemapping	weapons/plasmaf		W_ENERGY
+$rumblemapping	weapons/plasmaidle	LIGHT
+$rumblemapping	weapons/plasmax		NONE
+$rumblemapping	weapons/rocklf		W_ROCKET
+$rumblemapping	weapons/rocklx		NONE
+$rumblemapping	weapons/sawfull		HEAVY
+$rumblemapping	weapons/sawhit		HEAVY
+$rumblemapping	weapons/sawidle		W_SAW_IDLE
+$rumblemapping	weapons/sawup		LIGHT
+$rumblemapping	weapons/shotgf		W_SHELL
+$rumblemapping	weapons/sshotc		W_RELOAD
+$rumblemapping	weapons/sshotf		W_SHELL
+$rumblemapping	weapons/sshotl		W_RELOAD
+$rumblemapping	weapons/sshoto		W_RELOAD
+$rumblemapping	weapons/unmaker		W_ENERGY

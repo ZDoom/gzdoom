@@ -1038,9 +1038,11 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	if (!paused)
 	{
 		FQuakeJiggers jiggers;
-		if (DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers) > 0)
+		int intensity = DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers);
+		if (intensity > 0)
 		{
-			Joy_Rumble("world/quake");
+			// f(0)->1 f(9)->0
+			Joy_Rumble("world/quake", (9.0-intensity)/9);
 
 			const double quakeFactor = r_quakeintensity;
 			if (jiggers.RollIntensity || jiggers.RollWave)

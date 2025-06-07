@@ -61,6 +61,9 @@
 #include "texturemanager.h"
 #include "v_draw.h"
 
+extern int paused;
+extern bool pauseext;
+
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
@@ -498,6 +501,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 AdjustFloorClip(self);
 	 return 0;
  }
+
+int WorldPaused()
+{
+	if (paused)
+		return true;
+
+	if (netgame || gamestate != GS_LEVEL)
+		return false;
+
+	return pauseext || menuactive == MENU_On || ConsoleState != c_up;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, WorldPaused, WorldPaused)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_BOOL(WorldPaused());
+}
 
 static sector_t *PointInSectorXY(FLevelLocals *self, double x, double y)
 {

@@ -71,6 +71,8 @@
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
+int WorldPaused();
+
 IMPLEMENT_CLASS(DBaseStatusBar, false, true)
 
 IMPLEMENT_POINTERS_START(DBaseStatusBar)
@@ -682,31 +684,34 @@ int DBaseStatusBar::GetPlayer ()
 
 void DBaseStatusBar::Tick ()
 {
-	PrevCrosshairSize = CrosshairSize;
-
-	for (size_t i = 0; i < countof(Messages); ++i)
+	if (!WorldPaused())
 	{
-		DHUDMessageBase *msg = Messages[i];
+		PrevCrosshairSize = CrosshairSize;
 
-		while (msg)
+		for (size_t i = 0; i < countof(Messages); ++i)
 		{
-			DHUDMessageBase *next = msg->Next;
+			DHUDMessageBase* msg = Messages[i];
 
-			if (msg->CallTick ())
+			while (msg)
 			{
-				DetachMessage(msg);
-				msg->Destroy();
+				DHUDMessageBase* next = msg->Next;
+
+				if (msg->CallTick())
+				{
+					DetachMessage(msg);
+					msg->Destroy();
+				}
+				msg = next;
 			}
-			msg = next;
-		}
 
-		// If the crosshair has been enlarged, shrink it.
-		if (CrosshairSize > 1.)
-		{
-			CrosshairSize -= XHAIRSHRINKSIZE;
-			if (CrosshairSize < 1.)
+			// If the crosshair has been enlarged, shrink it.
+			if (CrosshairSize > 1.)
 			{
-				CrosshairSize = 1.;
+				CrosshairSize -= XHAIRSHRINKSIZE;
+				if (CrosshairSize < 1.)
+				{
+					CrosshairSize = 1.;
+				}
 			}
 		}
 	}

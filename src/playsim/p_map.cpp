@@ -64,6 +64,7 @@
 
 
 #include "m_bbox.h"
+#include "m_joy.h"
 #include "m_random.h"
 #include "c_dispatch.h"
 
@@ -5733,10 +5734,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle, bool rumble)
 {
 	if (!CanTalk(self))
 		return false;
+
+	if (rumble)
+		Joy_Rumble("dialogue/start");
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);
@@ -5749,7 +5753,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, StartConversation, NativeStartConversation
 	PARAM_OBJECT(player, AActor);
 	PARAM_BOOL(faceTalker);
 	PARAM_BOOL(saveAngle);
-	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle));
+	PARAM_BOOL(rumble);
+	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle, rumble));
 }
 
 bool P_TalkFacing(AActor *player)
@@ -5761,7 +5766,9 @@ bool P_TalkFacing(AActor *player)
 	{
 		P_AimLineAttack(player, player->Angles.Yaw + DAngle::fromDeg(angle), TALKRANGE, &t, DAngle::fromDeg(35.), ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != nullptr)
-			return NativeStartConversation(t.linetarget, player, true, true);
+		{
+			return NativeStartConversation(t.linetarget, player, true, true, true);
+		}
 	}
 	return false;
 }

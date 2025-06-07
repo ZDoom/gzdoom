@@ -36,6 +36,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "name.h"
+#include "tarray.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
@@ -621,12 +622,43 @@ CCMD (rumble)
 	double high_freq, low_freq, left_trig, right_trig;
 
 	switch (count) {
-		case 0:
-			Printf("testing rumble for 5s\n");
+		case 0: {
+			TMapIterator<FName, FName> it(RumbleMapping);
+			TMap<FName, FName>::Pair* pair;
+			TArray<FString> unused, used;
+
+			while (it.NextPair(pair)) unused.AddUnique(pair->Value.GetChars());
+			it.Reset();
+
+			Printf("Mappings:\n");
+			while (it.NextPair(pair)) {
+				used.AddUnique(pair->Value.GetChars());
+				auto index = unused.Find(pair->Value.GetChars());
+				if (index < unused.Size()) unused.Delete(index);
+				auto mapping = Joy_GetRumble(pair->Value);
+				Printf(
+					"\t'%s'\t->\t'%s'\t->\t{ %d %g %g %g %g }\n",
+					pair->Key.GetChars(),
+					pair->Value.GetChars(),
+					mapping->ticks,
+					mapping->high_frequency,
+					mapping->low_frequency,
+					mapping->left_trigger,
+					mapping->right_trigger
+				);
+			}
+
+			Printf("Used:\n");
+			for (auto i:used) Printf("\t'%s'\n", i.GetChars());
+			Printf("Unused:\n");
+			for (auto i:unused) Printf("\t'%s'\n", i.GetChars());
+
+			Printf("Testing rumble for 5s\n");
 			Joy_Rumble("", {5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
-			break;
+		}
+		break;
 		case 1:
-			Printf("testing rumble for action '%s'\n", argv[1]);
+			Printf("Testing rumble for action '%s'\n", argv[1]);
 			Joy_Rumble(argv[1]);
 			break;
 		case 5:

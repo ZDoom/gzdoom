@@ -272,6 +272,7 @@ $rumbletype	P_GRUNT		2	.3	.6	.3	.3
 $rumbletype	QUAKE		2	1	1	0	0
 $rumbletype	TELEPORT	35	.3	.6	0	0
 $rumbletype	SECRET		35	.3	.6	0	0
+$rumbletype	FRICTION	2	.1	.3	0	0
 
 $rumbletype	W_RELOAD	1	.3	.6	0	0
 $rumbletype	W_MELEE		3	.6	.6	0	0
@@ -309,6 +310,7 @@ $rumblemapping	intermission/tick			LIGHT
 $rumblemapping	world/quake					QUAKE
 $rumblemapping	misc/teleport				TELEPORT
 $rumblemapping	misc/secret					SECRET
+$rumblemapping	misc/push					FRICTION
 
 $rumblemapping	misc/startupdone			MEDIUM
 $rumblemapping	misc/armor_pkup				LIGHT

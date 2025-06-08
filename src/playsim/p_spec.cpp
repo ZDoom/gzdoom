@@ -196,6 +196,13 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		{
 			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		}
+
+		if ((mo == players[consoleplayer].mo || mo == players[consoleplayer].camera) &&
+			(activationType == SPAC_Use || activationType ==  SPAC_Push || activationType == SPAC_UseThrough || activationType == SPAC_UseBack))
+		{
+			// todo : virtual
+			Joy_Rumble("*usesuccess");
+		}
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
 	else if (activationType == SPAC_Impact &&					// only for shootable triggers
@@ -210,9 +217,6 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
-
-	if ((activationType == SPAC_Cross && line->special == Teleport) || (activationType & (SPAC_PlayerActivate^SPAC_Cross)))
-		Joy_Rumble("*usesuccess");
 
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)

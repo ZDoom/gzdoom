@@ -1709,6 +1709,16 @@ class Actor : Thinker native
 		Haptics.Rumble("player/death");
 	}
 
+	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)
+	{
+		Haptics.Rumble("*usesuccess");
+	}
+
+	virtual void PlayerTeleportedMakeRumble()
+	{
+		Haptics.Rumble("misc/teleport");
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// PROC A_CheckSkullDone

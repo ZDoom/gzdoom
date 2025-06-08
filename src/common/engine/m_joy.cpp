@@ -523,7 +523,7 @@ void Joy_RumbleTick() {
 	Haptics.tic = gametic;
 
 	// new value OR time elapsed
-	Haptics.dirty |= Haptics.current.ticks < Haptics.tic;
+	Haptics.dirty |= Haptics.current.ticks != 0 && Haptics.current.ticks < Haptics.tic;
 
 	if (!Haptics.dirty) return;
 
@@ -571,16 +571,6 @@ void Joy_RumbleTick() {
 	// Haptics.current.low_frequency = std::min(std::max(0.0, Haptics.current.low_frequency), 1.0);
 	// Haptics.current.left_trigger = std::min(std::max(0.0, Haptics.current.left_trigger), 1.0);
 	// Haptics.current.right_trigger = std::min(std::max(0.0, Haptics.current.right_trigger), 1.0);
-
-	if (developer >= DMSG_SPAMMY)
-		Printf(
-			"Rumble %d %.1f %.1f %.1f %.1f\n",
-			Haptics.current.ticks,
-			Haptics.current.high_frequency,
-			Haptics.current.low_frequency,
-			Haptics.current.left_trigger,
-			Haptics.current.right_trigger
-		);
 
 	I_Rumble(
 		Haptics.current.high_frequency,

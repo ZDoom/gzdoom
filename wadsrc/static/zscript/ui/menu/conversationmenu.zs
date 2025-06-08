@@ -312,6 +312,7 @@ class ConversationMenu : Menu
 			if (mkey == MKEY_Back)
 			{
 				Close();
+				Haptics.Rumble("menu/dismiss");
 				return true;
 			}
 			return false;
@@ -319,17 +320,20 @@ class ConversationMenu : Menu
 		if (mkey == MKEY_Up)
 		{
 			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
+			Haptics.Rumble("menu/cursor");
 			return true;
 		}
 		else if (mkey == MKEY_Down)
 		{
 			if (++mSelection >= mResponses.Size()) mSelection = 0;
+			Haptics.Rumble("menu/cursor");
 			return true;
 		}
 		else if (mkey == MKEY_Back)
 		{
 			SendConversationReply(-1, GetReplyNum());
 			Close();
+			Haptics.Rumble("menu/dismiss");
 			return true;
 		}
 		else if (mkey == MKEY_Enter)
@@ -345,6 +349,7 @@ class ConversationMenu : Menu
 				SendConversationReply(mCurNode.ThisNodeNum, replynum);
 			}
 			Close();
+			Haptics.Rumble("menu/choose");
 			return true;
 		}
 		return false;

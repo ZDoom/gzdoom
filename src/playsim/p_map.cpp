@@ -605,9 +605,6 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 		}
 	}
 
-	// todo : virtual
-	Joy_Rumble("misc/teleport");
-
 	return true;
 }
 

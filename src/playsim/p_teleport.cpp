@@ -190,6 +190,14 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		{
 			player->mo->Angles.Pitch = nullAngle;
 		}
+		if (player->mo == players[consoleplayer].mo || player->mo == players[consoleplayer].camera)
+		{
+			IFVIRTUALPTR(player->mo, AActor, PlayerUsedSomethingMakeRumble)
+			{
+				VMValue params[0] = { };
+				VMCall(func, params, 0, nullptr, 0);
+			}
+		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))
 	{

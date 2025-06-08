@@ -281,7 +281,22 @@ class SDLInputJoystickManager
 public:
 	SDLInputJoystickManager()
 	{
-		for(int i = 0;i < SDL_NumJoysticks();i++)
+		this->UpdateDeviceList();
+	}
+	~SDLInputJoystickManager()
+	{
+		for(unsigned int i = 0;i < Joysticks.Size();i++)
+			delete Joysticks[i];
+	}
+
+	void UpdateDeviceList()
+	{
+		for (int i = 0; i < Joysticks.SSize(); i++)
+		{
+			delete Joysticks[i];
+		}
+		Joysticks.clear();
+		for(int i = 0; i < SDL_NumJoysticks(); i++)
 		{
 			SDLInputJoystick *device = new SDLInputJoystick(i);
 			if(device->IsValid())
@@ -289,11 +304,6 @@ public:
 			else
 				delete device;
 		}
-	}
-	~SDLInputJoystickManager()
-	{
-		for(unsigned int i = 0;i < Joysticks.Size();i++)
-			delete Joysticks[i];
 	}
 
 	void AddAxes(float axes[NUM_JOYAXIS])
@@ -364,5 +374,6 @@ void I_ProcessJoysticks()
 
 IJoystickConfig *I_UpdateDeviceList()
 {
+	JoystickManager->UpdateDeviceList();
 	return NULL;
 }

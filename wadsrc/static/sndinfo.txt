@@ -311,6 +311,7 @@ $rumblemapping	world/quake					QUAKE
 $rumblemapping	misc/teleport				TELEPORT
 $rumblemapping	misc/secret					SECRET
 $rumblemapping	misc/push					FRICTION
+$rumblemapping	misc/pushed					FRICTION
 
 $rumblemapping	misc/startupdone			MEDIUM
 $rumblemapping	misc/armor_pkup				LIGHT

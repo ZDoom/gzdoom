@@ -1732,6 +1732,15 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					VMCall(func, params, 1, nullptr, 0);
 				}
 			}
+			else if (thing == players[consoleplayer].mo || thing == players[consoleplayer].camera)
+			{
+				// I assume the player can be pushed, correct?
+				IFVIRTUALPTR(thing, AActor, PlayerWasPushedMakeRumble)
+				{
+					VMValue params[1] = { tm.thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
 		}
 	}
 	solid = (thing->flags & MF_SOLID) &&

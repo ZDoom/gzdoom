@@ -509,6 +509,7 @@ enum ActorRenderFlag2
 	RF2_SQUAREPIXELS			= 0x0100,	// apply +ROLLSPRITE scaling math so that non rolling sprites get the same scaling
 	RF2_STRETCHPIXELS			= 0x0200,	// don't apply SQUAREPIXELS for ROLLSPRITES
 	RF2_LIGHTMULTALPHA			= 0x0400,	// attached lights use alpha as intensity multiplier
+	RF2_ANGLEDROLL				= 0x0800,	// Sprite roll amount depends on (actor.Angle - actor.AngledRollOffset)
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -1147,6 +1148,7 @@ public:
 
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
+	DAngle			AngledRollOffset;	// Offset for angle-dependent sprite rolling (see RF2_ANGLEDROLL)
 	DVector2		AutomapOffsets;		// Offset the actors' sprite view on the automap by these coordinates.
 	float			isoscaleY;				// Y-scale to compensate for Y-billboarding for isometric sprites
 	float			isotheta;				// Rotation angle to compensate for Y-billboarding for isometric sprites

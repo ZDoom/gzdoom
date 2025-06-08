@@ -32,6 +32,7 @@
 */
 #include <SDL.h>
 #include "m_argv.h"
+#include "m_joy.h"
 #include "v_video.h"
 
 #include "d_eventbase.h"
@@ -466,6 +467,13 @@ void MessagePump (const SDL_Event &sev)
 		event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
 		if(event.data1 != 0)
 			D_PostEvent(&event);
+		break;
+
+	case SDL_JOYDEVICEADDED:
+	case SDL_JOYDEVICEREMOVED:
+		I_UpdateDeviceList();
+		event.type = EV_DeviceChange;
+		D_PostEvent (&event);
 		break;
 	}
 }

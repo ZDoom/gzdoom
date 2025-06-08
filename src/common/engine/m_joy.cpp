@@ -572,6 +572,16 @@ void Joy_RumbleTick() {
 	// Haptics.current.left_trigger = std::min(std::max(0.0, Haptics.current.left_trigger), 1.0);
 	// Haptics.current.right_trigger = std::min(std::max(0.0, Haptics.current.right_trigger), 1.0);
 
+	if (developer >= DMSG_SPAMMY)
+		Printf(
+			"Rumble %d %.1f %.1f %.1f %.1f\n",
+			Haptics.current.ticks,
+			Haptics.current.high_frequency,
+			Haptics.current.low_frequency,
+			Haptics.current.left_trigger,
+			Haptics.current.right_trigger
+		);
+
 	I_Rumble(
 		Haptics.current.high_frequency,
 		Haptics.current.low_frequency,
@@ -589,6 +599,9 @@ void Joy_Rumble(const FName source, const struct Haptics data, double attenuatio
 	if (attenuation >= 1) return;
 
 	float strength = 1 - (attenuation < 0? 0: attenuation);
+
+	if (developer >= DMSG_SPAMMY)
+		Printf("Rumble %s * %g\n", source.GetChars(), strength);
 
 	// this will overwrite stuff from same source mapping (weapons/pistol not W_BULLET)
 	Haptics.channels.Insert(source, {

@@ -270,6 +270,7 @@ $rumbletype	P_DEATH		35	.6	.6	.6	.6
 $rumbletype	P_GRUNT		2	.3	.6	.3	.3
 
 $rumbletype	QUAKE		2	1	1	0	0
+$rumbletype	SECRET		35	.3	.6	0	0
 
 $rumbletype	W_RELOAD	1	.3	.6	0	0
 $rumbletype	W_MELEE		3	.6	.6	0	0
@@ -293,6 +294,9 @@ $rumblemapping	menu/invalid		MEDIUM
 $rumblemapping	menu/quit1			MEDIUM
 
 $rumblemapping	dialogue/start		MEDIUM
+$rumblemapping	dialogue/dismiss	MEDIUM
+$rumblemapping	dialogue/cursor		LIGHT
+$rumblemapping	dialogue/choose		MEDIUM
 
 $rumblemapping	world/quake			QUAKE
 
@@ -305,6 +309,7 @@ $rumblemapping	misc/k_pkup			LIGHT
 $rumblemapping	misc/i_pkup 		LIGHT
 $rumblemapping	misc/p_pkup 		LIGHT
 $rumblemapping	misc/keytry 		LIGHT
+$rumblemapping	misc/secret			SECRET
 
 $rumblemapping	player/death		P_DEATH
 $rumblemapping	player/damage		P_HURT

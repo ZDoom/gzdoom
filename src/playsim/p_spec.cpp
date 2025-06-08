@@ -643,7 +643,11 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 					Printf(PRINT_HIGH | PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
-			if (playsound) S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
+			if (playsound)
+			{
+				S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
+				Joy_Rumble("misc/secret");
+			}
 		}
 	}
 	Level->found_secrets++;

@@ -211,7 +211,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		line->special = 0;
 	}
 
-	if (activationType & (SPAC_PlayerActivate^SPAC_Cross))
+	if ((activationType == SPAC_Cross && line->special == Teleport) || (activationType & (SPAC_PlayerActivate^SPAC_Cross)))
 		Joy_Rumble("*usesuccess");
 
 // end of changed code

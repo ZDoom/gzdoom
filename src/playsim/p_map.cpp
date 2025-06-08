@@ -1717,11 +1717,21 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	}
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
 	{ // Push thing
+
 		if (thing->lastpush != tm.PushTime)
 		{
 			thing->PlayPushSound();
 			thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 			thing->lastpush = tm.PushTime;
+
+			if (tm.thing == players[consoleplayer].mo || tm.thing == players[consoleplayer].camera)
+			{
+				IFVIRTUALPTR(tm.thing, AActor, PlayerPushedSomethingMakeRumble)
+				{
+					VMValue params[1] = { thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
 		}
 	}
 	solid = (thing->flags & MF_SOLID) &&

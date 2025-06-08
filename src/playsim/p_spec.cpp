@@ -68,6 +68,7 @@
 #include <stdlib.h>
 
 
+#include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -209,7 +210,10 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
-	Joy_Rumble("*usesuccess");
+
+	if (activationType & (SPAC_PlayerActivate^SPAC_Cross))
+		Joy_Rumble("*usesuccess");
+
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{

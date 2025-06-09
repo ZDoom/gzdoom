@@ -283,19 +283,10 @@ public:
 	{
 		this->UpdateDeviceList();
 	}
-	~SDLInputJoystickManager()
-	{
-		for(unsigned int i = 0;i < Joysticks.Size();i++)
-			delete Joysticks[i];
-	}
 
 	void UpdateDeviceList()
 	{
-		for (int i = 0; i < Joysticks.SSize(); i++)
-		{
-			delete Joysticks[i];
-		}
-		Joysticks.clear();
+		Joysticks.DeleteAndClear();
 		for(int i = 0; i < SDL_NumJoysticks(); i++)
 		{
 			SDLInputJoystick *device = new SDLInputJoystick(i);
@@ -311,6 +302,7 @@ public:
 		for(unsigned int i = 0;i < Joysticks.Size();i++)
 			Joysticks[i]->AddAxes(axes);
 	}
+
 	void GetDevices(TArray<IJoystickConfig *> &sticks)
 	{
 		for(unsigned int i = 0;i < Joysticks.Size();i++)
@@ -325,8 +317,9 @@ public:
 		for(unsigned int i = 0;i < Joysticks.Size();++i)
 			if(Joysticks[i]->Enabled) Joysticks[i]->ProcessInput();
 	}
+
 protected:
-	TArray<SDLInputJoystick *> Joysticks;
+	TDeletingArray<SDLInputJoystick *> Joysticks;
 };
 static SDLInputJoystickManager *JoystickManager;
 

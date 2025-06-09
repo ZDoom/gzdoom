@@ -4292,7 +4292,7 @@ void AActor::CalcBones(bool recalc)
 
 TRS AActor::GetBoneTRS(int model_index, int bone_index, bool with_override)
 {
-	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() < model_index && modelData->modelBoneInfo[model_index].bones.SSize() < bone_index)
+	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() > model_index && modelData->modelBoneInfo[model_index].bones.SSize() > bone_index)
 	{
 		return with_override ? modelData->modelBoneInfo[model_index].bones_with_override[bone_index] : modelData->modelBoneInfo[model_index].bones[bone_index];
 	}
@@ -4301,7 +4301,7 @@ TRS AActor::GetBoneTRS(int model_index, int bone_index, bool with_override)
 
 void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, double *outMat)
 {
-	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() < model_index && modelData->modelBoneInfo[model_index].positions.SSize() < bone_index)
+	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() > model_index && modelData->modelBoneInfo[model_index].positions.SSize() > bone_index)
 	{
 		VSMatrix boneMatrix = (with_override ? modelData->modelBoneInfo[model_index].positions_with_override : modelData->modelBoneInfo[model_index].positions)[bone_index];
 
@@ -4314,7 +4314,7 @@ void AActor::GetBoneMatrix(int model_index, int bone_index, bool with_override, 
 
 DVector3 AActor::GetBoneEulerAngles(int model_index, int bone_index, bool with_override)
 {
-	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() < model_index && modelData->modelBoneInfo[model_index].positions.SSize() < bone_index)
+	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() > model_index && modelData->modelBoneInfo[model_index].positions.SSize() > bone_index)
 	{
 		if(picnum.isValid()) return DVector3(0,0,0); // picnum overrides don't render models
 
@@ -4394,7 +4394,7 @@ DVector3 AActor::GetBoneEulerAngles(int model_index, int bone_index, bool with_o
 
 void AActor::GetBonePosition(int model_index, int bone_index, bool with_override, DVector3 &pos, DVector3 &fwd, DVector3 &up)
 {
-	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() < model_index && modelData->modelBoneInfo[model_index].positions.SSize() < bone_index)
+	if(modelData && (modelData->flags & MODELDATA_GET_BONE_INFO) && model_index >= 0 && bone_index >= 0 && modelData->modelBoneInfo.SSize() > model_index && modelData->modelBoneInfo[model_index].positions.SSize() > bone_index)
 	{
 		if(picnum.isValid()) return; // picnum overrides don't render models
 

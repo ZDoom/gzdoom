@@ -76,6 +76,7 @@ public:
 	{
 		if(Device != NULL)
 			M_SaveJoystickConfig(this);
+		SDL_GameControllerClose(Mapping);
 		SDL_JoystickClose(Device);
 	}
 

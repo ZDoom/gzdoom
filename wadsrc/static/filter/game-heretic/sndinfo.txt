@@ -292,3 +292,23 @@ $alias				intermission/nextstage		doors/dr1_clos
 $alias				intermission/paststats		plats/pt1_stop
 $alias				intermission/pastcoopstats	plats/pt1_stop
 $alias				intermission/pastdmstats	*gibbed
+
+$rumblemapping	*evillaugh					LIGHT
+$rumblemapping	misc/invuse					MEDIUM
+$rumblemapping	weapons/blastershoot		W_BULLET
+$rumblemapping	weapons/bowhit				NONE
+$rumblemapping	weapons/bowshoot			W_BULLET
+$rumblemapping	weapons/gauntletsactivate	LIGHT
+$rumblemapping	weapons/gauntletshit		MEDIUM
+$rumblemapping	weapons/gauntletson			W_SAW_IDLE
+$rumblemapping	weapons/gauntletsuse		LIGHT
+$rumblemapping	weapons/hornrodhit			NONE
+$rumblemapping	weapons/hornrodshoot		W_ENERGY
+$rumblemapping	weapons/macebounce			NONE
+$rumblemapping	weapons/macehit				NONE
+$rumblemapping	weapons/maceshoot			W_BULLET
+$rumblemapping	weapons/phoenixhit			NONE
+$rumblemapping	weapons/phoenixshoot		W_ENERGY
+$rumblemapping	weapons/staffcrackle		NONE
+$rumblemapping	weapons/staffhit			W_MELEE
+$rumblemapping	weapons/wandhit				W_BULLET

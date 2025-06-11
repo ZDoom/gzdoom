@@ -36,6 +36,7 @@
 
 
 #include "m_joy.h"
+#include "printf.h"
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef _WIN32
@@ -520,13 +521,22 @@ void DoomSoundEngine::StopChannel(FSoundChan* chan)
 
 void S_SoundPitchActor(AActor *ent, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime)
 {
+	#if 0
+	Printf("sound '%s' -> '%s'\n", ent->GetClass()->TypeName.GetChars(), soundEngine->GetSoundName(sound_id));
+	#endif
+
 	if (!(flags & CHANF_NORUMBLE))
 	{
 		auto self = &players[consoleplayer];
 		bool isSelf = ent->player == self;
 		bool isSelfMissile = (ent->target != NULL) && (ent->target->player == self) && (ent->flags & MF_MISSILE);
+		// I want to only detect melee. I know a puff has PF_MELEERANGE set at spawn, but I don't think the
+		// actor gets actually gets that flag. I've tried `ent->state == ent->MeleeState`, but that does not work.
+		// Can an actor flag be created for that purpose? I think that is a bad idea
+		// Can a channel flag be created to rumble? I think that would probably be fine - would make S_Sound more flexible
+		bool isMeleeHit = (ent->flags9 & MF9_ISPUFF) && (ent->damagesource != NULL) && (ent->damagesource.Get() == self->mo);
 
-		if (isSelf || isSelfMissile)
+		if (isSelf || isSelfMissile || isMeleeHit)
 		{
 			Joy_Rumble(soundEngine->GetSoundName(sound_id));
 		}

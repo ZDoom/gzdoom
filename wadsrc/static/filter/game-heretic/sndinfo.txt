@@ -294,7 +294,6 @@ $alias				intermission/pastcoopstats	plats/pt1_stop
 $alias				intermission/pastdmstats	*gibbed
 
 $rumblemapping	*evillaugh					LIGHT
-$rumblemapping	misc/invuse					MEDIUM
 $rumblemapping	weapons/blastershoot		W_BULLET
 $rumblemapping	weapons/bowhit				NONE
 $rumblemapping	weapons/bowshoot			W_BULLET

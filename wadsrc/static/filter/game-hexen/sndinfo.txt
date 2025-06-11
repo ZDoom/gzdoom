@@ -193,7 +193,6 @@ $limit SorcererPain 0
 $limit DragonPain 0
 
 $rumblemapping	*fistgrunt				P_GRUNT
-$rumblemapping	misc/invuse				MEDIUM
 $rumblemapping	misc/ripslop			NONE
 $rumblemapping	WeaponBuild				LIGHT
 $rumblemapping	MageWandFire			W_ENERGY

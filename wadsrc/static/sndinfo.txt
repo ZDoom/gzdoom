@@ -275,11 +275,11 @@ $rumbletype	SECRET		35	.3	.6	0	0
 $rumbletype	FRICTION	2	.1	.3	0	0
 
 $rumbletype	W_RELOAD	1	.3	.6	0	0
-$rumbletype	W_MELEE		3	.6	.6	0	0
+$rumbletype	W_MELEE		3	.6	.6	.6	.6
 $rumbletype	W_BULLET	3	.6	.6	.6	.6
 $rumbletype	W_SHELL		6	.6	.6	.6	.6
 $rumbletype	W_ROCKET	6	.6	.6	.6	.6
-$rumbletype	W_ENERGY	2	.6	.6	0	0
+$rumbletype	W_ENERGY	2	.6	.6	.6	.6
 $rumbletype	W_SAW_IDLE	1	0	.6	0	0
 
 // map predefined rumble routines to sound names
@@ -322,6 +322,7 @@ $rumblemapping	misc/k_pkup					LIGHT
 $rumblemapping	misc/i_pkup 				LIGHT
 $rumblemapping	misc/p_pkup 				LIGHT
 $rumblemapping	misc/keytry 				LIGHT
+$rumblemapping	misc/invuse					LIGHT
 
 $rumblemapping	player/death				P_DEATH
 $rumblemapping	player/damage				P_HURT

@@ -299,9 +299,9 @@ void FGameConfigFile::DoAutoloadSetup (FIWadManager *iwad_man)
 		"# playing.  You may have have files that are loaded for all similar IWADs\n"
 		"# (the game) and files that are only loaded for particular IWADs. For example,\n"
 		"# any files listed under 'doom.Autoload' will be loaded for any version of Doom,\n"
-		"# but files listed under 'doom.doom2.Autoload' will only load when you are\n"
-		"# playing a Doom 2 based game (doom2.wad, tnt.wad or plutonia.wad), and files listed under\n"
-		"# 'doom.doom2.commercial.Autoload' only when playing doom2.wad.\n\n");
+		"# but files listed under 'doom.id.doom2.Autoload' will only load when you are\n"
+		"# playing a Doom 2 based game (doom2.wad, tnt.wad or plutonia.wad), and files\n"
+		"# listed under 'doom.id.doom2.commercial.Autoload' only when playing doom2.wad.\n\n");
 }
 
 void FGameConfigFile::DoGlobalSetup ()

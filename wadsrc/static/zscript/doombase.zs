@@ -1025,3 +1025,5 @@ struct FRailParams
 	native int SpiralOffset;
 	native int limit;
 };	// [RH] Shoot a railgun
+
+class StaticMapModel : Actor {}  // For compatibility with VkDoom

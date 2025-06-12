@@ -640,6 +640,56 @@ OptionMenu "InventoryControlsMenu" protected
 
 	StaticText ""
 	Control    "$CNTRLMNU_DROPWEAPON"   , "weapdrop"
+
+	IfGame(Heretic, Hexen, Strife)
+	{
+		StaticText	""
+		StaticText	"$CNTRLMNU_INVENTORY_HOTKEYS"
+	}
+
+	IfGame(Heretic)
+	{
+		Control		"$CNTRLMNU_ARTI_CHAOS",		"use ArtiTeleport"
+		Control		"$CNTRLMNU_ARTI_EGG",		"use ArtiEgg"
+		Control		"$CNTRLMNU_ARTI_URN",		"use ArtiSuperHealth"
+		Control		"$CNTRLMNU_ARTI_FLASK",		"use ArtiHealth"
+		Control		"$CNTRLMNU_ARTI_RING",		"use ArtiInvulnerability"
+		Control		"$CNTRLMNU_ARTI_SHADOW",	"use ArtiInvisibility"
+		Control		"$CNTRLMNU_ARTI_BOMB",		"use ArtiTimeBomb"
+		Control		"$CNTRLMNU_ARTI_TOME",		"use ArtiTomeOfPower"
+		Control		"$CNTRLMNU_ARTI_TORCH",		"use ArtiTorch"
+		Control		"$CNTRLMNU_ARTI_WINGS",		"use ArtiFly"
+	}
+
+	IfGame(Hexen)
+	{
+		Control		"$CNTRLMNU_ARTI_BANISH",	"use ArtiTeleportOther"
+		Control		"$CNTRLMNU_ARTI_BOOTS",		"use ArtiSpeedboots"
+		Control		"$CNTRLMNU_ARTI_CHAOS",		"use ArtiTeleport"
+		Control		"$CNTRLMNU_ARTI_SERVANT",	"use ArtiDarkServant"
+		Control		"$CNTRLMNU_ARTI_BRACERS",	"use ArtiBoostArmor"
+		Control		"$CNTRLMNU_ARTI_FLECHETTE",	"useflechette"
+		Control		"$CNTRLMNU_ARTI_RING",		"use ArtiInvulnerability2"
+		Control		"$CNTRLMNU_ARTI_KRATER",	"use ArtiBoostMana"
+		Control		"$CNTRLMNU_ARTI_INCANT",	"use ArtiHealingRadius"
+		Control		"$CNTRLMNU_ARTI_URN",		"use ArtiSuperHealth"
+		Control		"$CNTRLMNU_ARTI_PORK",		"use ArtiPork"
+		Control		"$CNTRLMNU_ARTI_FLASK",		"use ArtiHealth"
+		Control		"$CNTRLMNU_ARTI_TORCH",		"use ArtiTorch"
+		Control		"$CNTRLMNU_ARTI_WINGS",		"use ArtiFly"
+	}
+
+	IfGame(Strife)
+	{
+		//Control	"$CNTRLMNU_INV_STRIFEHEALTH",	"usestrifehealth"
+		Control		"$CNTRLMNU_INV_LARMOR",			"use LeatherArmor"
+		Control		"$CNTRLMNU_INV_MARMOR",			"use MetalArmor"
+		Control		"$CNTRLMNU_INV_ENVSUIT",		"use EnvironmentalSuit"
+		Control		"$CNTRLMNU_INV_SHADOWARMOR",	"use ShadowArmor"
+		Control		"$CNTRLMNU_INV_BEACON",			"use TeleporterBeacon"
+		Control		"$CNTRLMNU_INV_TARGETER",		"use Targeter"
+		Control		"$CNTRLMNU_INV_SCANNER",		"use Scanner"
+	}
 }
 
 OptionMenu "OtherControlsMenu" protected

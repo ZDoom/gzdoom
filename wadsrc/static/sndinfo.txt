@@ -260,101 +260,101 @@ dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
 
 // define set of rumble routines to be mapped later
-$rumbletype	HEAVY		4	.6	.6	.6	.6
-$rumbletype	MEDIUM		4	.3	.6	.6	.6
-$rumbletype	LIGHT		2	.1	.6	.3	.3
-$rumbletype	NONE		0	0	0	0	0
+$rumbledef	HEAVY		4	.6	.6	.6	.6
+$rumbledef	MEDIUM		4	.3	.6	.6	.6
+$rumbledef	LIGHT		2	.1	.6	.3	.3
+$rumbledef	NONE		0	0	0	0	0
 
-$rumbletype	P_HURT		4	.6	.6	.6	.6
-$rumbletype	P_DEATH		35	.6	.6	.6	.6
-$rumbletype	P_GRUNT		2	.3	.6	.3	.3
+$rumbledef	P_HURT		4	.6	.6	.6	.6
+$rumbledef	P_DEATH		35	.6	.6	.6	.6
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
 
-$rumbletype	QUAKE		2	1	1	0	0
-$rumbletype	TELEPORT	35	.3	.6	0	0
-$rumbletype	SECRET		35	.3	.6	0	0
-$rumbletype	FRICTION	2	.1	.3	0	0
+$rumbledef	QUAKE		2	1	1	0	0
+$rumbledef	TELEPORT	35	.3	.6	0	0
+$rumbledef	SECRET		35	.3	.6	0	0
+$rumbledef	FRICTION	2	.1	.3	0	0
 
-$rumbletype	W_RELOAD	1	.3	.6	0	0
-$rumbletype	W_MELEE		3	.6	.6	.6	.6
-$rumbletype	W_BULLET	3	.6	.6	.6	.6
-$rumbletype	W_SHELL		6	.6	.6	.6	.6
-$rumbletype	W_ROCKET	6	.6	.6	.6	.6
-$rumbletype	W_ENERGY	2	.6	.6	.6	.6
-$rumbletype	W_SAW_IDLE	1	0	.6	0	0
+$rumbledef	W_RELOAD	1	.3	.6	0	0
+$rumbledef	W_MELEE		3	.6	.6	.6	.6
+$rumbledef	W_BULLET	3	.6	.6	.6	.6
+$rumbledef	W_SHELL		6	.6	.6	.6	.6
+$rumbledef	W_ROCKET	6	.6	.6	.6	.6
+$rumbledef	W_ENERGY	2	.6	.6	.6	.6
+$rumbledef	W_SAW_IDLE	1	0	.6	0	0
 
 // map predefined rumble routines to sound names
-$rumblemapping	menu/cursor					LIGHT
-$rumblemapping	menu/change					LIGHT
-$rumblemapping	menu/choose					HEAVY
-$rumblemapping	menu/advance				HEAVY
-$rumblemapping	menu/activate				HEAVY
-$rumblemapping	menu/dismiss				MEDIUM
-$rumblemapping	menu/prompt					MEDIUM
-$rumblemapping	menu/backup					MEDIUM
-$rumblemapping	menu/clear					MEDIUM
-$rumblemapping	menu/invalid				MEDIUM
-$rumblemapping	menu/quit1					MEDIUM
+$rumble	menu/cursor					LIGHT
+$rumble	menu/change					LIGHT
+$rumble	menu/choose					HEAVY
+$rumble	menu/advance				HEAVY
+$rumble	menu/activate				HEAVY
+$rumble	menu/dismiss				MEDIUM
+$rumble	menu/prompt					MEDIUM
+$rumble	menu/backup					MEDIUM
+$rumble	menu/clear					MEDIUM
+$rumble	menu/invalid				MEDIUM
+$rumble	menu/quit1					MEDIUM
 
-$rumblemapping	dialogue/start				MEDIUM
-$rumblemapping	dialogue/dismiss			MEDIUM
-$rumblemapping	dialogue/cursor				LIGHT
-$rumblemapping	dialogue/choose				MEDIUM
+$rumble	dialogue/start				MEDIUM
+$rumble	dialogue/dismiss			MEDIUM
+$rumble	dialogue/cursor				LIGHT
+$rumble	dialogue/choose				MEDIUM
 
-$rumblemapping	intermission/cooptotal		LIGHT
-$rumblemapping	intermission/nextstage		MEDIUM
-$rumblemapping	intermission/pastcoopstats	MEDIUM
-$rumblemapping	intermission/pastdmstats	MEDIUM
-$rumblemapping	intermission/paststats		MEDIUM
-$rumblemapping	intermission/tick			LIGHT
+$rumble	intermission/cooptotal		LIGHT
+$rumble	intermission/nextstage		MEDIUM
+$rumble	intermission/pastcoopstats	MEDIUM
+$rumble	intermission/pastdmstats	MEDIUM
+$rumble	intermission/paststats		MEDIUM
+$rumble	intermission/tick			LIGHT
 
-$rumblemapping	world/quake					QUAKE
-$rumblemapping	misc/teleport				TELEPORT
-$rumblemapping	misc/secret					SECRET
-$rumblemapping	misc/push					FRICTION
-$rumblemapping	misc/pushed					FRICTION
+$rumble	world/quake					QUAKE
+$rumble	misc/teleport				TELEPORT
+$rumble	misc/secret					SECRET
+$rumble	misc/push					FRICTION
+$rumble	misc/pushed					FRICTION
 
-$rumblemapping	misc/startupdone			MEDIUM
-$rumblemapping	misc/armor_pkup				LIGHT
-$rumblemapping	misc/health_pkup			LIGHT
-$rumblemapping	misc/ammo_pkup				LIGHT
-$rumblemapping	misc/w_pkup					LIGHT
-$rumblemapping	misc/k_pkup					LIGHT
-$rumblemapping	misc/i_pkup 				LIGHT
-$rumblemapping	misc/p_pkup 				LIGHT
-$rumblemapping	misc/keytry 				LIGHT
-$rumblemapping	misc/invuse					LIGHT
+$rumble	misc/startupdone			MEDIUM
+$rumble	misc/armor_pkup				LIGHT
+$rumble	misc/health_pkup			LIGHT
+$rumble	misc/ammo_pkup				LIGHT
+$rumble	misc/w_pkup					LIGHT
+$rumble	misc/k_pkup					LIGHT
+$rumble	misc/i_pkup 				LIGHT
+$rumble	misc/p_pkup 				LIGHT
+$rumble	misc/keytry 				LIGHT
+$rumble	misc/invuse					LIGHT
 
-$rumblemapping	player/death				P_DEATH
-$rumblemapping	player/damage				P_HURT
-$rumblemapping	*pain100					P_HURT
-$rumblemapping	*pain75						P_HURT
-$rumblemapping	*pain50						P_HURT
-$rumblemapping	*pain25						P_HURT
+$rumble	player/death				P_DEATH
+$rumble	player/damage				P_HURT
+$rumble	*pain100					P_HURT
+$rumble	*pain75						P_HURT
+$rumble	*pain50						P_HURT
+$rumble	*pain25						P_HURT
 
-$rumblemapping	*grunt						P_GRUNT
-$rumblemapping	*land						P_GRUNT
-$rumblemapping	*jump						NONE
-$rumblemapping	*usefail					P_GRUNT
-$rumblemapping	*usesuccess					MEDIUM
-$rumblemapping	*death						P_DEATH
+$rumble	*grunt						P_GRUNT
+$rumble	*land						P_GRUNT
+$rumble	*jump						NONE
+$rumble	*usefail					P_GRUNT
+$rumble	*usesuccess					MEDIUM
+$rumble	*death						P_DEATH
 
-$rumblemapping	*fist						W_MELEE
-$rumblemapping	weapons/bfgf				W_ENERGY
-$rumblemapping	weapons/bfgx				NONE
-$rumblemapping	weapons/chngun				W_BULLET
-$rumblemapping	weapons/pistol				W_BULLET
-$rumblemapping	weapons/plasmaf				W_ENERGY
-$rumblemapping	weapons/plasmaidle			LIGHT
-$rumblemapping	weapons/plasmax				NONE
-$rumblemapping	weapons/rocklf				W_ROCKET
-$rumblemapping	weapons/rocklx				NONE
-$rumblemapping	weapons/sawfull				HEAVY
-$rumblemapping	weapons/sawhit				HEAVY
-$rumblemapping	weapons/sawidle				W_SAW_IDLE
-$rumblemapping	weapons/sawup				LIGHT
-$rumblemapping	weapons/shotgf				W_SHELL
-$rumblemapping	weapons/sshotc				W_RELOAD
-$rumblemapping	weapons/sshotf				W_SHELL
-$rumblemapping	weapons/sshotl				W_RELOAD
-$rumblemapping	weapons/sshoto				W_RELOAD
-$rumblemapping	weapons/unmaker				W_ENERGY
+$rumble	*fist						W_MELEE
+$rumble	weapons/bfgf				W_ENERGY
+$rumble	weapons/bfgx				HEAVY
+$rumble	weapons/chngun				W_BULLET
+$rumble	weapons/pistol				W_BULLET
+$rumble	weapons/plasmaf				W_ENERGY
+$rumble	weapons/plasmaidle			LIGHT
+$rumble	weapons/plasmax				NONE
+$rumble	weapons/rocklf				W_ROCKET
+$rumble	weapons/rocklx				NONE
+$rumble	weapons/sawfull				HEAVY
+$rumble	weapons/sawhit				HEAVY
+$rumble	weapons/sawidle				W_SAW_IDLE
+$rumble	weapons/sawup				LIGHT
+$rumble	weapons/shotgf				W_SHELL
+$rumble	weapons/sshotc				W_RELOAD
+$rumble	weapons/sshotf				W_SHELL
+$rumble	weapons/sshotl				W_RELOAD
+$rumble	weapons/sshoto				W_RELOAD
+$rumble	weapons/unmaker				W_ENERGY

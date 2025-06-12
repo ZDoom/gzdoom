@@ -734,8 +734,7 @@ void FLevelLocals::ReadMultiplePlayers(FSerializer &arc, int numPlayers, bool fr
 {
 	TArray<NetworkPlayerInfo> tempPlayers = {};
 	tempPlayers.Reserve(numPlayers);
-	TArray<bool> assignedPlayers = {};
-	assignedPlayers.Reserve(MAXPLAYERS);
+	bool assignedPlayers[MAXPLAYERS] = {};
 
 	// Read all the save game players into a temporary array
 	for (auto& p : tempPlayers)

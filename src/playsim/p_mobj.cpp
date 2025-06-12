@@ -7008,13 +7008,17 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
+		bool meleeFromPlayer = (
+			(flags & PF_MELEERANGE) && source->player
+			&& (source->player->mo == players[consoleplayer].mo || source->player->mo == players[consoleplayer].camera));
+
 		if ((flags & PF_HITTHING) && puff->SeeSound.isvalid())
 		{ // Hit thing sound
-			S_Sound (puff, CHAN_BODY, 0, puff->SeeSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, meleeFromPlayer? CHANF_RUMBLE: CHANF_NONE, puff->SeeSound, 1, ATTN_NORM);
 		}
 		else if (puff->AttackSound.isvalid())
 		{
-			S_Sound (puff, CHAN_BODY, 0, puff->AttackSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, meleeFromPlayer? CHANF_RUMBLE: CHANF_NONE, puff->AttackSound, 1, ATTN_NORM);
 		}
 	}
 

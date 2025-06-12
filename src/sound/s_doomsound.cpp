@@ -527,16 +527,16 @@ void S_SoundPitchActor(AActor *ent, int channel, EChanFlags flags, FSoundID soun
 
 	if (!(flags & CHANF_NORUMBLE))
 	{
-		auto self = &players[consoleplayer];
-		bool isSelf = ent->player == self;
-		bool isSelfMissile = (ent->target != NULL) && (ent->target->player == self) && (ent->flags & MF_MISSILE);
-		// I want to only detect melee. I know a puff has PF_MELEERANGE set at spawn, but I don't think the
-		// actor gets actually gets that flag. I've tried `ent->state == ent->MeleeState`, but that does not work.
-		// Can an actor flag be created for that purpose? I think that is a bad idea
-		// Can a channel flag be created to rumble? I think that would probably be fine - would make S_Sound more flexible
-		bool isMeleeHit = (ent->flags9 & MF9_ISPUFF) && (ent->damagesource != NULL) && (ent->damagesource.Get() == self->mo);
-
-		if (isSelf || isSelfMissile || isMeleeHit)
+		if (
+			// rumble hint
+			(flags & CHANF_RUMBLE) ||
+			// sound from self
+			(ent->player && (ent->player->mo == players[consoleplayer].mo || ent->player->mo == players[consoleplayer].camera)) ||
+			// sound from self missile
+			((ent->flags & MF_MISSILE)
+				&& ent->target && ent->target->player
+				&& (ent->target->player->mo == players[consoleplayer].mo || ent->target->player->mo == players[consoleplayer].camera))
+		)
 		{
 			Joy_Rumble(soundEngine->GetSoundName(sound_id));
 		}

@@ -792,8 +792,17 @@ public:
 				break;
 
 			case NAME_light_softshadowradius:
+			case NAME_light_linearity:
+			case NAME_light_noshadowmap:
+			case NAME_light_dontlightactors:
+			case NAME_light_dontlightmap:
+			case NAME_light_shadowminquality:
 			case NAME_lm_suncolor:
+			case NAME_lm_sunintensity:
 			case NAME_lm_sampledist:
+			case NAME_lm_bounce:
+			case NAME_lm_ao:
+			case NAME_lm_dynamic:
 				CHECK_N(Zd | Zdt)
 					break;
 
@@ -2205,6 +2214,7 @@ public:
 
 				case NAME_lm_sampledist_floor:
 				case NAME_lm_sampledist_ceiling:
+				case NAME_lm_dynamic:
 					CHECK_N(Zd | Zdt)
 					break;
 

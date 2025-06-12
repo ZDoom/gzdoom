@@ -871,9 +871,17 @@ xx(lm_sampledist_floor)
 xx(lm_sampledist_ceiling)
 xx(lm_dynamic)
 xx(lm_suncolor)
+xx(lm_sunintensity)
+xx(lm_bounce)
+xx(lm_ao)
 
 // Light keywords
 xx(light_softshadowradius)
+xx(light_linearity)
+xx(light_noshadowmap)
+xx(light_dontlightactors)
+xx(light_dontlightmap)
+xx(light_shadowminquality)
 
 xx(skew_bottom_type)
 xx(skew_middle_type)

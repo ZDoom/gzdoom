@@ -315,36 +315,36 @@ $alias				intermission/paststats		world/barrelx
 $alias				intermission/pastcoopstats	world/barrelx
 $alias				intermission/pastdmstats	*gibbed
 
-$rumbletype	W_BOLT			6	.2	.4	.4	.4
-$rumbletype	W_GRENADE		6	.2	.4	0	.4
-$rumbletype	W_FLAME_IDLE	1	0	.3	0	0
-$rumbletype	W_FLAME			6	.4	.6	.6	.6
-$rumbletype	W_MAULER_CHARGE	3	.3	.3	.3	.3
-$rumbletype	W_MAULER_ALT	6	.6	.6	.6	.6
-$rumbletype	W_MAULER		6	.6	.6	.6	.6
-$rumbletype	W_SIGIL			18	.6	.6	.6	.6
+$rumbledef	W_BOLT			6	.2	.4	.4	.4
+$rumbledef	W_GRENADE		6	.2	.4	0	.4
+$rumbledef	W_FLAME_IDLE	1	0	.3	0	0
+$rumbledef	W_FLAME			6	.4	.6	.6	.6
+$rumbledef	W_MAULER_CHARGE	3	.3	.3	.3	.3
+$rumbledef	W_MAULER_ALT	6	.6	.6	.6	.6
+$rumbledef	W_MAULER		6	.6	.6	.6	.6
+$rumbledef	W_SIGIL			18	.6	.6	.6	.6
 
-$rumblemapping	misc/swish				LIGHT
-$rumblemapping	misc/meathit			W_MELEE
-$rumblemapping	misc/metalhit			W_MELEE
-$rumblemapping	weapons/sigilcharge		HEAVY
-$rumblemapping	weapons/xbowshoot		W_BOLT
-$rumblemapping	weapons/xbowhit			NONE
-$rumblemapping	weapons/assaultgun		W_BULLET
-$rumblemapping	weapons/minimissile		W_ROCKET
-$rumblemapping	misc/missileinflight	NONE
-$rumblemapping	weapons/minimissilehit	NONE
-$rumblemapping	weapons/phgrenadeshoot	W_GRENADE
-$rumblemapping	weapons/phgrenadebang	NONE
-$rumblemapping	weapons/hegrenadeshoot	W_GRENADE
-$rumblemapping	weapons/hegrenadebang	NONE
-$rumblemapping	weapons/flameidle		W_FLAME_IDLE
-$rumblemapping	weapons/flamethrower	W_FLAME
-$rumblemapping	weapons/mauler2charge	W_MAULER_CHARGE
-$rumblemapping	weapons/mauler2fire		W_MAULER_ALT
-$rumblemapping	weapons/mauler2hit		NONE
-$rumblemapping	weapons/mauler1			W_MAULER
-$rumblemapping	weapons/sigil			W_SIGIL
-$rumblemapping	weapons/sigilhit		NONE
-$rumblemapping	misc/mask				NONE
-$rumblemapping	misc/disruptordeath		NONE
+$rumble	misc/swish				LIGHT
+$rumble	misc/meathit			W_MELEE
+$rumble	misc/metalhit			W_MELEE
+$rumble	weapons/sigilcharge		HEAVY
+$rumble	weapons/xbowshoot		W_BOLT
+$rumble	weapons/xbowhit			NONE
+$rumble	weapons/assaultgun		W_BULLET
+$rumble	weapons/minimissile		W_ROCKET
+$rumble	misc/missileinflight	NONE
+$rumble	weapons/minimissilehit	NONE
+$rumble	weapons/phgrenadeshoot	W_GRENADE
+$rumble	weapons/phgrenadebang	NONE
+$rumble	weapons/hegrenadeshoot	W_GRENADE
+$rumble	weapons/hegrenadebang	NONE
+$rumble	weapons/flameidle		W_FLAME_IDLE
+$rumble	weapons/flamethrower	W_FLAME
+$rumble	weapons/mauler2charge	W_MAULER_CHARGE
+$rumble	weapons/mauler2fire		W_MAULER_ALT
+$rumble	weapons/mauler2hit		NONE
+$rumble	weapons/mauler1			W_MAULER
+$rumble	weapons/sigil			W_SIGIL
+$rumble	weapons/sigilhit		NONE
+$rumble	misc/mask				NONE
+$rumble	misc/disruptordeath		NONE

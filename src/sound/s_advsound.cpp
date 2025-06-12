@@ -149,8 +149,8 @@ enum SICommands
 	SI_Attenuation,
 	SI_PitchSet,
 	SI_ModPlayer,
-	SI_RumbleType,
-	SI_RumbleMapping,
+	SI_RumbleDef,
+	SI_Rumble,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -241,8 +241,8 @@ static const char *SICommandStrings[] =
 	"$attenuation",
 	"$pitchset",
 	"$modplayer",
-	"$rumbletype",
-	"$rumblemapping",
+	"$rumbledef",
+	"$rumble",
 	nullptr
 };
 
@@ -1142,8 +1142,8 @@ static void S_AddSNDINFO (int lump)
 				skipToEndIf = !CheckGame(sc.String+3, true);
 				break;
 
-			case SI_RumbleType: {
-				// $rumbletype <identifier> <tic_dur> <lo_freq> <hi_freq> <l_trig> <r_trig>
+			case SI_RumbleDef: {
+				// $rumbledef <identifier> <tic_dur> <lo_freq> <hi_freq> <l_trig> <r_trig>
 
 				sc.MustGetString();
 				FString identifier (sc.String);
@@ -1165,8 +1165,8 @@ static void S_AddSNDINFO (int lump)
 			}
 			break;
 
-			case SI_RumbleMapping: {
-				// $rumblemapping <sound identifier> <rumble identifier>
+			case SI_Rumble: {
+				// $rumble <sound identifier> <rumble identifier>
 
 				sc.MustGetString();
 				FString sound (sc.String);

@@ -435,6 +435,7 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
+TArray<FName> RumbleMissed = {};
 
 const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
@@ -462,8 +463,9 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 			mapping = RumbleMapping.CheckKey(fallback);
 		}
 
-		if (!mapping)
+		if (!mapping && !RumbleMissed.Contains(idenifier))
 		{
+			RumbleMissed.Push(idenifier);
 			Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
 		}
 	}
@@ -475,7 +477,8 @@ const struct Haptics * Joy_GetRumble(const FName idenifier)
 {
 	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
 
-	if (!rumble) {
+	if (!rumble && !RumbleMissed.Contains(idenifier)) {
+		RumbleMissed.Push(idenifier);
 		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
 		return nullptr;
 	}

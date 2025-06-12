@@ -431,6 +431,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       lm_sunintensity = <float>;    // lightmap sun intensity multiplier. Default = 1.0 [VKDOOM]
       lm_ao = <bool>;               // enables ambient occlusion baking with VKTool. [VKDOOM]
       lm_bounce = <bool>;           // enables bounce light baking with VKTool. [VKDOOM]
+      lm_dynamic = <bool>;          // enables dynamic lightmap updates for the whole map (without having to do it per sector). Use with care as this can drag down performance. Default = false [VKDOOM]
 
       // Dynamic and lightmap light fields [VKDOOM]
       light_softshadowradius = <float>;    // lightmap light and raytraced dynamic light soft shadow amount. Higher values produce softer shadows. Default = 5.0 [VKDOOM]

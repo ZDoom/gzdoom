@@ -523,8 +523,6 @@ void Joy_AddRumbleType(const FName idenifier, const struct Haptics data)
 
 void Joy_MapRumbleType(const FName sound, const FName idenifier)
 {
-	if (!Joy_GetRumble(idenifier)) return;
-
 	RumbleMapping.Insert(sound, idenifier);
 }
 
@@ -680,16 +678,17 @@ CCMD (rumble)
 					FString val = pair->Value.GetChars();
 					key.ToLower();
 					val.ToUpper();
-					Printf(
-						"\t'%s'\t->\t'%s'\t->\t{ %d %g %g %g %g }\n",
-						key.GetChars(),
-						val.GetChars(),
-						mapping->ticks,
-						mapping->high_frequency,
-						mapping->low_frequency,
-						mapping->left_trigger,
-						mapping->right_trigger
-					);
+					FString a = FStringf("'%s'\t->\t'%s'", key.GetChars(), val.GetChars());
+					FString b = mapping
+						? FStringf(
+							"{ %d %g %g %g %g }",
+							mapping->ticks,
+							mapping->high_frequency,
+							mapping->low_frequency,
+							mapping->left_trigger,
+							mapping->right_trigger
+						) : "[undefined]";
+					Printf("\t%s\t->\t%s\n", a.GetChars(), b.GetChars());
 				}
 			}
 

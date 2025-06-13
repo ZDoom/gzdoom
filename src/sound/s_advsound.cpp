@@ -1144,24 +1144,46 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_RumbleDef: {
 				// $rumbledef <identifier> <tic_dur> <lo_freq> <hi_freq> <l_trig> <r_trig>
+				// $rumbledef <alias identifier> <actual identifier>
 
 				sc.MustGetString();
 				FString identifier (sc.String);
-				sc.MustGetNumber();
-				int duration = sc.Number;
-				sc.MustGetFloat();
-				double low_freq = sc.Float;
-				sc.MustGetFloat();
-				double high_freq = sc.Float;
-				sc.MustGetFloat();
-				double left_trig = sc.Float;
-				sc.MustGetFloat();
-				double right_trig = sc.Float;
 
-				Joy_AddRumbleType(
-					identifier,
-					{ duration, low_freq, high_freq, left_trig, right_trig, }
-				);
+				sc.GetToken();
+				bool isAlias = sc.TokenType == TK_Identifier;
+				sc.UnGet();
+
+				if (isAlias)
+				{
+					sc.MustGetString();
+					Joy_AddRumbleAlias(identifier, FName(sc.String));
+				}
+				else
+				{
+					sc.MustGetNumber();
+					int duration = sc.Number;
+					sc.MustGetFloat();
+					double low_freq = sc.Float;
+					sc.MustGetFloat();
+					double high_freq = sc.Float;
+					sc.MustGetFloat();
+					double left_trig = sc.Float;
+					sc.MustGetFloat();
+					double right_trig = sc.Float;
+
+					Joy_AddRumbleType(
+						identifier,
+						{ duration, low_freq, high_freq, left_trig, right_trig, }
+					);
+				}
+
+				// if (sc.CheckToken(TK_IntConst))
+				// {
+				// }
+				// else
+				// {
+				// 	Printf("Alias: %s\n", identifier.GetChars());
+				// }
 			}
 			break;
 

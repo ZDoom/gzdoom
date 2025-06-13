@@ -434,8 +434,13 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 	if (!Haptics.enabled) I_Rumble(0, 0, 0, 0);
 }
 
+#ifndef MAX_TRY_DEPTH
+#define MAX_TRY_DEPTH 8
+#endif
+
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
+TMap<FName, FName> RumbleAlias = {};
 TArray<FName> RumbleMissed = {};
 
 const FName * Joy_GetMapping(const FName idenifier)
@@ -448,10 +453,6 @@ const FName * Joy_GetMapping(const FName idenifier)
 	if (!mapping)
 	{
 		auto id = soundEngine->FindSoundTentative(idenifier.GetChars());
-
-		#ifndef MAX_TRY_DEPTH
-		#define MAX_TRY_DEPTH 8
-		#endif
 
 		// loop a couple layers deep, trying to find a candidate
 		for (auto i = 0; i < MAX_TRY_DEPTH; i++) {
@@ -505,9 +506,19 @@ const FName * Joy_GetMapping(const FName idenifier)
 	return mapping;
 }
 
-const struct Haptics * Joy_GetRumble(const FName idenifier)
+const struct Haptics * Joy_GetRumble(FName idenifier)
 {
 	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
+	FName * actual = &idenifier;
+
+	// should aliases be resolved at the end of S_ParseSndInfo?
+	// that way circular refs could easily be complained about
+	for (auto i = 0; !rumble && i < MAX_TRY_DEPTH; i++)
+	{
+		actual = RumbleAlias.CheckKey(*actual);
+		if (!actual) break;
+		rumble = RumbleDefinition.CheckKey(*actual);
+	}
 
 	if (!rumble && !RumbleMissed.Contains(idenifier)) {
 		RumbleMissed.Push(idenifier);
@@ -521,6 +532,11 @@ const struct Haptics * Joy_GetRumble(const FName idenifier)
 void Joy_AddRumbleType(const FName idenifier, const struct Haptics data)
 {
 	RumbleDefinition.Insert(idenifier, data);
+}
+
+void Joy_AddRumbleAlias(const FName alias, const FName actual)
+{
+	RumbleAlias.Insert(alias, actual);
 }
 
 void Joy_MapRumbleType(const FName sound, const FName idenifier)
@@ -666,7 +682,20 @@ CCMD (rumble)
 				TMap<FName, struct Haptics>::Pair* pair;
 				while (it.NextPair(pair)) unused.AddUnique(pair->Key.GetChars());
 			}
-
+			{
+				TMapIterator<FName, FName> it(RumbleAlias);
+				TMap<FName, FName>::Pair* pair;
+				while (it.NextPair(pair)) unused.AddUnique(pair->Key.GetChars());
+			}
+			{
+				TMapIterator<FName, FName> it(RumbleAlias);
+				TMap<FName, FName>::Pair* pair;
+				while (it.NextPair(pair))
+				{
+					if (unused.Contains(pair->Value.GetChars()))
+						unused.Delete(unused.Find(pair->Value.GetChars()));
+				}
+			}
 			{
 				TMapIterator<FName, FName> it(RumbleMapping);
 				TMap<FName, FName>::Pair* pair;

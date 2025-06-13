@@ -1702,12 +1702,12 @@ class Actor : Thinker native
 
 	virtual void PlayerHurtMakeRumble(actor source)
 	{
-		Haptics.Rumble("player/damage");
+		Haptics.Rumble("*pain");
 	}
 
 	virtual void PlayerDiedMakeRumble(actor source)
 	{
-		Haptics.Rumble("player/death");
+		Haptics.Rumble("*death");
 	}
 
 	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)

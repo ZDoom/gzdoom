@@ -446,12 +446,17 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 	if (!mapping)
 	{
 		auto id = soundEngine->FindSoundTentative(idenifier.GetChars());
-		auto sfx = soundEngine->GetSfx(id);
+		// writable to be able to get random sound
+		auto sfx = soundEngine->GetWritableSfx(id);
 
-		// can linked sounds be multiple layers deep?
-		if (sfx->link.isvalid())
+		// is there a way to get the actual random sound? Selecting the first is probably fine
+		id = sfx->bRandomHeader
+			? soundEngine->ResolveRandomSound(sfx)->Choices[0]
+			: sfx->link;
+
+		if (id.isvalid())
 		{
-			FName name = soundEngine->GetSoundName(sfx->link);
+			FName name = soundEngine->GetSoundName(id);
 			mapping = RumbleMapping.CheckKey(name);
 		}
 	}

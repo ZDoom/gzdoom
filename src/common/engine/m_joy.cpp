@@ -494,7 +494,7 @@ const FName * Joy_GetMapping(const FName idenifier)
 	{
 		// cache miss
 		RumbleMissed.Push(idenifier);
-		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
+		Printf(DMSG_WARNING, TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", idenifier.GetChars());
 	}
 
 	if (mapping && actual != idenifier && actual.IsValidName())
@@ -509,20 +509,10 @@ const FName * Joy_GetMapping(const FName idenifier)
 const struct Haptics * Joy_GetRumble(FName idenifier)
 {
 	struct Haptics * rumble = RumbleDefinition.CheckKey(idenifier);
-	FName * actual = &idenifier;
-
-	// should aliases be resolved at the end of S_ParseSndInfo?
-	// that way circular refs could easily be complained about
-	for (auto i = 0; !rumble && i < MAX_TRY_DEPTH; i++)
-	{
-		actual = RumbleAlias.CheckKey(*actual);
-		if (!actual) break;
-		rumble = RumbleDefinition.CheckKey(*actual);
-	}
 
 	if (!rumble && !RumbleMissed.Contains(idenifier)) {
 		RumbleMissed.Push(idenifier);
-		Printf(DMSG_ERROR, "rumble mapping not found! '%s'\n", idenifier.GetChars());
+		Printf(DMSG_ERROR, TEXTCOLOR_RED "Rumble mapping not found! '%s'\n", idenifier.GetChars());
 		return nullptr;
 	}
 
@@ -542,6 +532,60 @@ void Joy_AddRumbleAlias(const FName alias, const FName actual)
 void Joy_MapRumbleType(const FName sound, const FName idenifier)
 {
 	RumbleMapping.Insert(sound, idenifier);
+}
+
+void Joy_ResetRumbleMapping()
+{
+	RumbleMapping.Clear();
+	RumbleAlias.Clear();
+	RumbleMissed.Clear();
+	RumbleDefinition.Clear();
+	Haptics.channels.Clear();
+	Haptics.current.high_frequency = Haptics.current.low_frequency =
+	Haptics.current.left_trigger = Haptics.current.right_trigger =
+	Haptics.current.ticks = 0;
+	I_Rumble(0, 0, 0, 0);
+}
+
+void Joy_ReadyRumbleMapping()
+{
+	TArray<FName> found;
+	TMapIterator<FName, FName> it(RumbleAlias);
+	TMap<FName, FName>::Pair* pair;
+
+	while (RumbleAlias.CountUsed())
+	{
+		while (it.NextPair(pair))
+		{
+			auto predefined = RumbleDefinition.CheckKey(pair->Key);
+			if (predefined)
+			{
+				Printf(DMSG_ERROR, TEXTCOLOR_RED "Rumble alias trying to redefine mapping! '%s'\n", pair->Key.GetChars());
+				continue;
+			}
+
+			auto mapping = RumbleDefinition.CheckKey(pair->Value);
+			if (!mapping) continue;
+
+			found.AddUnique(pair->Key);
+			RumbleDefinition.Insert(pair->Key, *mapping);
+		}
+		it.Reset();
+
+		if (found.Size() == 0)
+		{
+			FString list = "[";
+			while (it.NextPair(pair))
+				list.AppendFormat(" '%s'->'%s'", pair->Key.GetChars(), pair->Value.GetChars());
+			Printf(DMSG_ERROR, TEXTCOLOR_RED "Circular rumble alias found! (%d) %s ]\n", RumbleAlias.CountUsed(), list.GetChars());
+			break;
+		}
+
+		while (found.size() > 0) {
+			RumbleAlias.Remove(found.Last());
+			found.Pop();
+		}
+	}
 }
 
 void Joy_RumbleTick() {

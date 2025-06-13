@@ -36,6 +36,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "name.h"
+#include "s_soundinternal.h"
 #include "tarray.h"
 #include "vectors.h"
 #include "m_joy.h"
@@ -440,6 +441,20 @@ TArray<FName> RumbleMissed = {};
 const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 {
 	FName * mapping = RumbleMapping.CheckKey(idenifier);
+
+	// try to grab an aliased sound
+	if (!mapping)
+	{
+		auto id = soundEngine->FindSoundTentative(idenifier.GetChars());
+		auto sfx = soundEngine->GetSfx(id);
+
+		// can linked sounds be multiple layers deep?
+		if (sfx->link.isvalid())
+		{
+			FName name = soundEngine->GetSoundName(sfx->link);
+			mapping = RumbleMapping.CheckKey(name);
+		}
+	}
 
 	// convert unknown skinned sound to sound
 	if (!mapping)

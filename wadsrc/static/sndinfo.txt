@@ -260,101 +260,34 @@ dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
 
 // define set of rumble routines to be mapped later
+$rumbledef	INTENSE		35	.6	.6	.6	.6
 $rumbledef	HEAVY		4	.6	.6	.6	.6
-$rumbledef	MEDIUM		4	.3	.6	.6	.6
-$rumbledef	LIGHT		2	.1	.6	.3	.3
+$rumbledef	MEDIUM		3	.4	.5	.4	.4
+$rumbledef	LIGHT		2	.2	.4	.3	.3
+$rumbledef	SUBTLE		2	.1	.3	0	0
 $rumbledef	NONE		0	0	0	0	0
-
-$rumbledef	P_HURT		4	.6	.6	.6	.6
-$rumbledef	P_DEATH		35	.6	.6	.6	.6
-$rumbledef	P_GRUNT		2	.3	.6	.3	.3
-
 $rumbledef	QUAKE		2	1	1	0	0
-$rumbledef	TELEPORT	35	.3	.6	0	0
 $rumbledef	SECRET		35	.3	.6	0	0
-$rumbledef	FRICTION	2	.1	.3	0	0
 
-$rumbledef	W_RELOAD	1	.3	.6	0	0
-$rumbledef	W_MELEE		3	.6	.6	.6	.6
-$rumbledef	W_BULLET	3	.6	.6	.6	.6
-$rumbledef	W_SHELL		6	.6	.6	.6	.6
-$rumbledef	W_ROCKET	6	.6	.6	.6	.6
-$rumbledef	W_ENERGY	2	.6	.6	.6	.6
-$rumbledef	W_SAW_IDLE	1	0	.6	0	0
-
-// map predefined rumble routines to sound names
-$rumble	menu/cursor					LIGHT
-$rumble	menu/change					LIGHT
-$rumble	menu/choose					HEAVY
-$rumble	menu/advance				HEAVY
-$rumble	menu/activate				HEAVY
-$rumble	menu/dismiss				MEDIUM
-$rumble	menu/prompt					MEDIUM
-$rumble	menu/backup					MEDIUM
-$rumble	menu/clear					MEDIUM
-$rumble	menu/invalid				MEDIUM
-$rumble	menu/quit1					MEDIUM
-
-$rumble	dialogue/start				MEDIUM
-$rumble	dialogue/dismiss			MEDIUM
-$rumble	dialogue/cursor				LIGHT
-$rumble	dialogue/choose				MEDIUM
-
-$rumble	intermission/cooptotal		LIGHT
-$rumble	intermission/nextstage		MEDIUM
-$rumble	intermission/pastcoopstats	MEDIUM
-$rumble	intermission/pastdmstats	MEDIUM
-$rumble	intermission/paststats		MEDIUM
-$rumble	intermission/tick			LIGHT
-
-$rumble	world/quake					QUAKE
-$rumble	misc/teleport				TELEPORT
-$rumble	misc/secret					SECRET
-$rumble	misc/push					FRICTION
-$rumble	misc/pushed					FRICTION
-
-$rumble	misc/startupdone			MEDIUM
-$rumble	misc/armor_pkup				LIGHT
-$rumble	misc/health_pkup			LIGHT
-$rumble	misc/ammo_pkup				LIGHT
-$rumble	misc/w_pkup					LIGHT
-$rumble	misc/k_pkup					LIGHT
-$rumble	misc/i_pkup 				LIGHT
-$rumble	misc/p_pkup 				LIGHT
-$rumble	misc/keytry 				LIGHT
-$rumble	misc/invuse					LIGHT
-
-$rumble	player/death				P_DEATH
-$rumble	player/damage				P_HURT
-$rumble	*pain100					P_HURT
-$rumble	*pain75						P_HURT
-$rumble	*pain50						P_HURT
-$rumble	*pain25						P_HURT
-
-$rumble	*grunt						P_GRUNT
-$rumble	*land						P_GRUNT
-$rumble	*jump						NONE
-$rumble	*usefail					P_GRUNT
-$rumble	*usesuccess					MEDIUM
-$rumble	*death						P_DEATH
-
-$rumble	*fist						W_MELEE
-$rumble	weapons/bfgf				W_ENERGY
-$rumble	weapons/bfgx				HEAVY
-$rumble	weapons/chngun				W_BULLET
-$rumble	weapons/pistol				W_BULLET
-$rumble	weapons/plasmaf				W_ENERGY
-$rumble	weapons/plasmaidle			LIGHT
-$rumble	weapons/plasmax				NONE
-$rumble	weapons/rocklf				W_ROCKET
-$rumble	weapons/rocklx				NONE
-$rumble	weapons/sawfull				HEAVY
-$rumble	weapons/sawhit				HEAVY
-$rumble	weapons/sawidle				W_SAW_IDLE
-$rumble	weapons/sawup				LIGHT
-$rumble	weapons/shotgf				W_SHELL
-$rumble	weapons/sshotc				W_RELOAD
-$rumble	weapons/sshotf				W_SHELL
-$rumble	weapons/sshotl				W_RELOAD
-$rumble	weapons/sshoto				W_RELOAD
-$rumble	weapons/unmaker				W_ENERGY
+// these exist hard-coded
+// if the corresponding sounds also exist in game specific
+// sndinfo files, they are overwritten there
+$rumble	world/quake			QUAKE
+$rumble	misc/teleport		SECRET
+$rumble	misc/startupdone	MEDIUM
+$rumble	misc/push			SUBTLE
+$rumble	misc/pushed			SUBTLE
+$rumble	misc/i_pkup			LIGHT
+$rumble	menu/activate		HEAVY
+$rumble	menu/invalid		MEDIUM
+$rumble	menu/dismiss		MEDIUM
+$rumble	menu/choose			HEAVY
+$rumble	menu/change			LIGHT
+$rumble	menu/cursor			LIGHT
+$rumble	misc/secret			SECRET
+$rumble	menu/cursor			LIGHT
+$rumble	*death				INTENSE
+$rumble	*usesuccess			MEDIUM
+$rumble	*grunt				MEDIUM
+$rumble	*land				MEDIUM
+$rumble	*pain				HEAVY

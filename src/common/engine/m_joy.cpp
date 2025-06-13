@@ -444,6 +444,7 @@ const FName * Joy_GetMapping(const FName idenifier)
 	FName actual = idenifier;
 
 	// try to grab an aliased sound
+	// todo: mapping candidate for aliases
 	if (!mapping)
 	{
 		auto id = soundEngine->FindSoundTentative(idenifier.GetChars());

@@ -353,6 +353,8 @@ void S_CheckIntegrity()
 			sfx.link = NO_SOUND;	// link to the empty sound.
 		}
 	}
+
+	Joy_ReadyRumbleMapping();
 }
 
 //==========================================================================
@@ -579,6 +581,8 @@ void S_ClearSoundData()
 	MidiDevices.Clear();
 	HexenMusic.Clear();
 	ModPlayers.Clear();
+
+	Joy_ResetRumbleMapping();
 }
 
 //==========================================================================

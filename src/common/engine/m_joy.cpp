@@ -629,35 +629,50 @@ CCMD (rumble)
 
 	switch (count) {
 		case 0: {
-			TMapIterator<FName, FName> it(RumbleMapping);
-			TMap<FName, FName>::Pair* pair;
 			TArray<FString> unused, used;
 
-			while (it.NextPair(pair)) unused.AddUnique(pair->Value.GetChars());
-			it.Reset();
-
-			Printf("Mappings:\n");
-			while (it.NextPair(pair)) {
-				used.AddUnique(pair->Value.GetChars());
-				auto index = unused.Find(pair->Value.GetChars());
-				if (index < unused.Size()) unused.Delete(index);
-				auto mapping = Joy_GetRumble(pair->Value);
-				Printf(
-					"\t'%s'\t->\t'%s'\t->\t{ %d %g %g %g %g }\n",
-					pair->Key.GetChars(),
-					pair->Value.GetChars(),
-					mapping->ticks,
-					mapping->high_frequency,
-					mapping->low_frequency,
-					mapping->left_trigger,
-					mapping->right_trigger
-				);
+			{
+				TMapIterator<FName, struct Haptics> it(RumbleDefinition);
+				TMap<FName, struct Haptics>::Pair* pair;
+				while (it.NextPair(pair)) unused.AddUnique(pair->Key.GetChars());
 			}
 
-			Printf("Used:\n");
-			for (auto i:used) Printf("\t'%s'\n", i.GetChars());
-			Printf("Unused:\n");
-			for (auto i:unused) Printf("\t'%s'\n", i.GetChars());
+			{
+				TMapIterator<FName, FName> it(RumbleMapping);
+				TMap<FName, FName>::Pair* pair;
+				Printf("Mappings:\n");
+				while (it.NextPair(pair)) {
+					used.AddUnique(pair->Value.GetChars());
+					if (unused.Contains(pair->Value.GetChars()))
+						unused.Delete(unused.Find(pair->Value.GetChars()));
+					auto mapping = Joy_GetRumble(pair->Value);
+					FString key = pair->Key.GetChars();
+					FString val = pair->Value.GetChars();
+					key.ToLower();
+					val.ToUpper();
+					Printf(
+						"\t'%s'\t->\t'%s'\t->\t{ %d %g %g %g %g }\n",
+						key.GetChars(),
+						val.GetChars(),
+						mapping->ticks,
+						mapping->high_frequency,
+						mapping->low_frequency,
+						mapping->left_trigger,
+						mapping->right_trigger
+					);
+				}
+			}
+
+			if (unused.Size() > 0)
+			{
+				Printf("Unused:\n");
+				for (auto i:unused)
+				{
+					FString s = i.GetChars();
+					s.ToUpper();
+					Printf("\t'%s'\n", s.GetChars());
+				}
+			}
 
 			Printf("Testing rumble for 5s\n");
 			Joy_Rumble("", {5 * TICRATE, 1.0, 1.0, 1.0, 1.0});

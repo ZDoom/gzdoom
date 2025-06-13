@@ -438,9 +438,10 @@ TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
 TArray<FName> RumbleMissed = {};
 
-const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
+const FName * Joy_GetMapping(const FName idenifier)
 {
 	FName * mapping = RumbleMapping.CheckKey(idenifier);
+	FName actual = idenifier;
 
 	// try to grab an aliased sound
 	if (!mapping)
@@ -455,10 +456,8 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 		for (auto i = 0; i < MAX_TRY_DEPTH; i++) {
 			if (!id.isvalid()) break;
 
-			FName name = soundEngine->GetSoundName(id);
-			mapping = RumbleMapping.CheckKey(name);
-
-			Printf("'%s' -> '%s'\n", idenifier.GetChars(), name.GetChars());
+			actual = soundEngine->GetSoundName(id);
+			mapping = RumbleMapping.CheckKey(actual);
 
 			if (mapping) break;
 
@@ -472,6 +471,7 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 	}
 
 	// convert unknown skinned sound to sound
+	// is there a better way to do this?
 	if (!mapping)
 	{
 		FString idString = idenifier.GetChars();
@@ -483,21 +483,22 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 			idString.Remove(0, skindex);
 		}
 
-		mapping = RumbleMapping.CheckKey(FName(idString));
+		actual = FName(idString);
+
+		mapping = RumbleMapping.CheckKey(actual);
 	}
 
-	if (!mapping && idenifier.GetChars()[0] != '\0')
+	if (!mapping && !RumbleMissed.Contains(idenifier) && idenifier != "")
 	{
-		if (fallback.IsValidName())
-		{
-			mapping = RumbleMapping.CheckKey(fallback);
-		}
+		// cache miss
+		RumbleMissed.Push(idenifier);
+		Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
+	}
 
-		if (!mapping && !RumbleMissed.Contains(idenifier))
-		{
-			RumbleMissed.Push(idenifier);
-			Printf(DMSG_WARNING, "unknown rumble mapping '%s'\n", idenifier.GetChars());
-		}
+	if (mapping && actual != idenifier && actual.IsValidName())
+	{
+		// cache replacement
+		RumbleMapping.Insert(idenifier, *mapping);
 	}
 
 	return mapping;
@@ -636,9 +637,9 @@ void Joy_Rumble(const FName source, const struct Haptics data, double attenuatio
 	Haptics.dirty = true;
 }
 
-void Joy_Rumble(const FName identifier, double attenuation, const FName fallback)
+void Joy_Rumble(const FName identifier, double attenuation)
 {
-	const FName * mapping = Joy_GetMapping(identifier, fallback);
+	const FName * mapping = Joy_GetMapping(identifier);
 
 	if (mapping == nullptr) return;
 

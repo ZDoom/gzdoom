@@ -5759,7 +5759,7 @@ static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker
 		return false;
 
 	if (rumble)
-		Joy_Rumble("dialogue/start");
+		Joy_Rumble("menu/activate");
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);

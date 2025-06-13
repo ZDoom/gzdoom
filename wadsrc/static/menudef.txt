@@ -669,7 +669,7 @@ OptionMenu "InventoryControlsMenu" protected
 		Control		"$CNTRLMNU_ARTI_SERVANT",	"use ArtiDarkServant"
 		Control		"$CNTRLMNU_ARTI_BRACERS",	"use ArtiBoostArmor"
 		Control		"$CNTRLMNU_ARTI_FLECHETTE",	"useflechette"
-		Control		"$CNTRLMNU_ARTI_RING",		"use ArtiInvulnerability2"
+		Control		"$CNTRLMNU_ARTI_ICON",		"use ArtiInvulnerability2"
 		Control		"$CNTRLMNU_ARTI_KRATER",	"use ArtiBoostMana"
 		Control		"$CNTRLMNU_ARTI_INCANT",	"use ArtiHealingRadius"
 		Control		"$CNTRLMNU_ARTI_URN",		"use ArtiSuperHealth"
@@ -681,7 +681,7 @@ OptionMenu "InventoryControlsMenu" protected
 
 	IfGame(Strife)
 	{
-		//Control	"$CNTRLMNU_INV_STRIFEHEALTH",	"usestrifehealth"
+		Control		"$CNTRLMNU_INV_SURGERYKIT",		"use SurgeryKit"
 		Control		"$CNTRLMNU_INV_LARMOR",			"use LeatherArmor"
 		Control		"$CNTRLMNU_INV_MARMOR",			"use MetalArmor"
 		Control		"$CNTRLMNU_INV_ENVSUIT",		"use EnvironmentalSuit"

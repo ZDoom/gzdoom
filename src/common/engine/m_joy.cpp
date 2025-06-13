@@ -446,18 +446,28 @@ const FName * Joy_GetMapping(const FName idenifier, const FName fallback)
 	if (!mapping)
 	{
 		auto id = soundEngine->FindSoundTentative(idenifier.GetChars());
-		// writable to be able to get random sound
-		auto sfx = soundEngine->GetWritableSfx(id);
 
-		// is there a way to get the actual random sound? Selecting the first is probably fine
-		id = sfx->bRandomHeader
-			? soundEngine->ResolveRandomSound(sfx)->Choices[0]
-			: sfx->link;
+		#ifndef MAX_TRY_DEPTH
+		#define MAX_TRY_DEPTH 8
+		#endif
 
-		if (id.isvalid())
-		{
+		// loop a couple layers deep, trying to find a candidate
+		for (auto i = 0; i < MAX_TRY_DEPTH; i++) {
+			if (!id.isvalid()) break;
+
 			FName name = soundEngine->GetSoundName(id);
 			mapping = RumbleMapping.CheckKey(name);
+
+			Printf("'%s' -> '%s'\n", idenifier.GetChars(), name.GetChars());
+
+			if (mapping) break;
+
+			// writable to be able to get random sound
+			auto sfx = soundEngine->GetWritableSfx(id);
+			// is there a way to get the actual random sound? Selecting the first is probably fine
+			id = sfx->bRandomHeader
+				? soundEngine->ResolveRandomSound(sfx)->Choices[0]
+				: sfx->link;
 		}
 	}
 

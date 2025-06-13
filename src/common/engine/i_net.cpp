@@ -98,6 +98,7 @@ typedef int SOCKET;
 #endif
 
 #ifdef __WIN32__
+# include "common/scripting/dap/GameEventEmit.h"
 typedef int socklen_t;
 const char* neterror(void);
 #else
@@ -265,8 +266,10 @@ static void StartNetwork(bool autoPort)
 {
 #ifdef __WIN32__
 	WSADATA data;
-	if (WSAStartup(0x0101, &data))
-		I_FatalError("Couldn't initialize Windows sockets");
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()) {
+		if (WSAStartup(0x0101, &data))
+			I_FatalError("Couldn't initialize Windows sockets");
+	}
 #endif
 
 	netgame = true;
@@ -291,7 +294,9 @@ void CloseNetwork()
 		netgame = false;
 	}
 #ifdef __WIN32__
-	WSACleanup();
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()){
+		WSACleanup();
+	}
 #endif
 }
 

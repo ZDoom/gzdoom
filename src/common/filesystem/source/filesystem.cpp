@@ -744,6 +744,24 @@ ptrdiff_t FileSystem::FileLength (int lump) const
 
 //==========================================================================
 //
+// FileHash
+//
+// Returns the file hash.
+//
+//==========================================================================
+
+uint32_t FileSystem::FileHash (int lump) const
+{
+  if ((size_t)lump >= NumEntries)
+  {
+    return -1;
+  }
+  const auto &lump_p = FileInfo[lump];
+  return lump_p.resfile->GetEntryHash(lump_p.resindex);
+}
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================

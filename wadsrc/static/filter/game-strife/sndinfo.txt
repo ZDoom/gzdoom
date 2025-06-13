@@ -59,10 +59,10 @@ $rumble	*jump		NONE
 $rumble	*fist		P_FIST
 $rumble	*usefail	P_GRUNT
 
-$rumbledef	P_DEATH	35	.6	.6	.6	.6
-$rumbledef	P_HURT	4	.6	.6	.6	.6
-$rumbledef	P_GRUNT	2	.3	.6	.3	.3
-$rumbledef	P_FIST	3	.6	.6	.6	.6
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+$rumbledef	P_FIST		3	.6	.6	.6	.6
 
 weapons/xbowshoot	dsxbow
 weapons/xbowhit		dsfirxpl

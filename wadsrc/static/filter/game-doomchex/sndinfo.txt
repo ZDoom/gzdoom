@@ -134,10 +134,10 @@ $rumble	*gibbed		P_DEATH
 $rumble	*fist		P_FIST
 $rumble	*usefail	P_GRUNT
 
-$rumbledef	P_DEATH	35	.6	.6	.6	.6
-$rumbledef	P_HURT	4	.6	.6	.6	.6
-$rumbledef	P_GRUNT	2	.3	.6	.3	.3
-$rumbledef	P_FIST	3	.6	.6	.6	.6
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+$rumbledef	P_FIST		3	.6	.6	.6	.6
 
 //
 // Weapons
@@ -488,6 +488,9 @@ $rumble	misc/p_pkup 		LIGHT
 $rumble	misc/i_pkup 		LIGHT
 $rumble	misc/k_pkup			LIGHT
 $rumble	misc/teleport		TELEPORT
+
+$rumbledef	TELEPORT	35	.3	.6	0	0
+$rumbledef	SECRET		35	.3	.6	0	0
 
 menu/activate			dsswtchn	// Activate a new menu
 menu/backup			dsswtchn	// Backup to previous menu

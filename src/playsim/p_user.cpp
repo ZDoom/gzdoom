@@ -284,6 +284,7 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	viewheight = p.viewheight;
 	deltaviewheight = p.deltaviewheight;
 	bob = p.bob;
+	BobTimer = p.BobTimer;
 	Vel = p.Vel;
 	centering = p.centering;
 	turnticks = p.turnticks;
@@ -1294,6 +1295,8 @@ void P_PlayerThink (player_t *player)
 		player->LastSafePos = player->mo->Pos();
 	}
 
+	++player->BobTimer;
+
 	// Bots do not think in freeze mode.
 	if (player->mo->Level->isFrozen() && player->Bot != nullptr)
 	{
@@ -1710,6 +1713,7 @@ void player_t::Serialize(FSerializer &arc)
 		("viewheight", viewheight)
 		("deltaviewheight", deltaviewheight)
 		("bob", bob)
+		("bobtimer", BobTimer)
 		("vel", Vel)
 		("centering", centering)
 		("health", health)
@@ -1819,6 +1823,7 @@ DEFINE_FIELD_X(PlayerInfo, player_t, viewz)
 DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, bob)
+DEFINE_FIELD_X(PlayerInfo, player_t, BobTimer)
 DEFINE_FIELD_X(PlayerInfo, player_t, Vel)
 DEFINE_FIELD_X(PlayerInfo, player_t, centering)
 DEFINE_FIELD_X(PlayerInfo, player_t, turnticks)

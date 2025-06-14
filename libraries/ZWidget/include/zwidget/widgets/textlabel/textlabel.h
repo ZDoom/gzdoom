@@ -3,7 +3,7 @@
 
 #include "../../core/widget.h"
 
-enum TextLabelAlignment
+enum class TextLabelAlignment
 {
 	Left,
 	Center,

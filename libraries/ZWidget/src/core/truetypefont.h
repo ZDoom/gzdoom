@@ -445,7 +445,7 @@ public:
 class TrueTypeFontFileData
 {
 public:
-	TrueTypeFontFileData(std::vector<uint8_t>& data) : dataVector(std::move(data))
+	TrueTypeFontFileData(std::vector<uint8_t> data) : dataVector(std::move(data))
 	{
 		dataPtr = dataVector.data();
 		dataSize = dataVector.size();
@@ -491,7 +491,7 @@ private:
 class TrueTypeFont
 {
 public:
-	TrueTypeFont(std::shared_ptr<TrueTypeFontFileData>& data, int ttcFontIndex = 0);
+	TrueTypeFont(std::shared_ptr<TrueTypeFontFileData> data, int ttcFontIndex = 0);
 
 	static std::vector<TTCFontName> GetFontNames(const std::shared_ptr<TrueTypeFontFileData>& data);
 

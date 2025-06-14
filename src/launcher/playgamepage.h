@@ -16,6 +16,7 @@ public:
 
 	void SetExtraArgs(const std::string& args);
 	std::string GetExtraArgs();
+
 	int GetSelectedGame();
 
 private:

@@ -6,14 +6,16 @@
 #include <zwidget/core/image.h>
 #include <zwidget/widgets/pushbutton/pushbutton.h>
 #include <zwidget/widgets/scrollbar/scrollbar.h>
+#include <zwidget/systemdialogs/save_file_dialog.h>
+#include <miniz.h>
 
-bool ErrorWindow::ExecModal(const std::string& text, const std::string& log)
+bool ErrorWindow::ExecModal(const std::string& text, const std::string& log, std::vector<uint8_t> minidump)
 {
 	Size screenSize = GetScreenSize();
 	double windowWidth = 1200.0;
 	double windowHeight = 700.0;
 
-	auto window = std::make_unique<ErrorWindow>();
+	auto window = std::make_unique<ErrorWindow>(std::move(minidump));
 	window->SetText(text, log);
 	window->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
 	window->Show();
@@ -23,7 +25,7 @@ bool ErrorWindow::ExecModal(const std::string& text, const std::string& log)
 	return window->Restart;
 }
 
-ErrorWindow::ErrorWindow() : Widget(nullptr, WidgetType::Window)
+ErrorWindow::ErrorWindow(std::vector<uint8_t> initminidump) : Widget(nullptr, WidgetType::Window), minidump(std::move(initminidump))
 {
 	FStringf caption("Fatal Error - " GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
 	SetWindowTitle(caption.GetChars());
@@ -34,13 +36,21 @@ ErrorWindow::ErrorWindow() : Widget(nullptr, WidgetType::Window)
 
 	LogView = new LogViewer(this);
 	ClipboardButton = new PushButton(this);
-	RestartButton = new PushButton(this);
-
 	ClipboardButton->OnClick = [=]() { OnClipboardButtonClicked(); };
-	RestartButton->OnClick = [=]() { OnRestartButtonClicked(); };
-
 	ClipboardButton->SetText("Copy to clipboard");
-	RestartButton->SetText("Restart");
+
+	if (minidump.empty())
+	{
+		RestartButton = new PushButton(this);
+		RestartButton->OnClick = [=]() { OnRestartButtonClicked(); };
+		RestartButton->SetText("Restart");
+	}
+	else
+	{
+		SaveReportButton = new PushButton(this);
+		SaveReportButton->OnClick = [=]() { OnSaveReportButtonClicked(); };
+		SaveReportButton->SetText("Save Report");
+	}
 
 	LogView->SetFocus();
 }
@@ -83,6 +93,37 @@ void ErrorWindow::OnRestartButtonClicked()
 	DisplayWindow::ExitLoop();
 }
 
+void ErrorWindow::OnSaveReportButtonClicked()
+{
+	auto dialog = SaveFileDialog::Create(this);
+	dialog->AddFilter("Crash Report Zip Files", "*.zip");
+	dialog->AddFilter("All Files", "*.*");
+	dialog->SetFilename("CrashReport.zip");
+	dialog->SetDefaultExtension("zip");
+	if (dialog->Show())
+	{
+		std::string filename = dialog->Filename();
+
+		mz_zip_archive zip = {};
+		if (mz_zip_writer_init_heap(&zip, 0, 16 * 1024 * 1024))
+		{
+			mz_zip_writer_add_mem(&zip, "minidump.dmp", minidump.data(), minidump.size(), MZ_DEFAULT_COMPRESSION);
+			mz_zip_writer_add_mem(&zip, "log.txt", clipboardtext.data(), clipboardtext.size(), MZ_DEFAULT_COMPRESSION);
+		}
+		void* buffer = nullptr;
+		size_t buffersize = 0;
+		mz_zip_writer_finalize_heap_archive(&zip, &buffer, &buffersize);
+		mz_zip_writer_end(&zip);
+
+		std::unique_ptr<FileWriter> f(FileWriter::Open(filename.c_str()));
+		if (f)
+		{
+			f->Write(buffer, buffersize);
+			f->Close();
+		}
+	}
+}
+
 void ErrorWindow::OnClose()
 {
 	Restart = false;
@@ -96,7 +137,10 @@ void ErrorWindow::OnGeometryChanged()
 
 	double y = GetHeight() - 15.0 - ClipboardButton->GetPreferredHeight();
 	ClipboardButton->SetFrameGeometry(20.0, y, 170.0, ClipboardButton->GetPreferredHeight());
-	RestartButton->SetFrameGeometry(GetWidth() - 20.0 - 100.0, y, 100.0, RestartButton->GetPreferredHeight());
+	if (RestartButton)
+		RestartButton->SetFrameGeometry(GetWidth() - 20.0 - 100.0, y, 100.0, RestartButton->GetPreferredHeight());
+	else if (SaveReportButton)
+		SaveReportButton->SetFrameGeometry(GetWidth() - 20.0 - 100.0, y, 100.0, SaveReportButton->GetPreferredHeight());
 	y -= 20.0;
 
 	LogView->SetFrameGeometry(Rect::xywh(0.0, 0.0, w, y));
@@ -212,44 +256,44 @@ void LogViewer::OnPaint(Canvas* canvas)
 	}
 }
 
-bool LogViewer::OnMouseWheel(const Point& pos, EInputKey key)
+bool LogViewer::OnMouseWheel(const Point& pos, InputKey key)
 {
-	if (key == IK_MouseWheelUp)
+	if (key == InputKey::MouseWheelUp)
 	{
 		ScrollUp(4);
 	}
-	else if (key == IK_MouseWheelDown)
+	else if (key == InputKey::MouseWheelDown)
 	{
 		ScrollDown(4);
 	}
 	return true;
 }
 
-void LogViewer::OnKeyDown(EInputKey key)
+void LogViewer::OnKeyDown(InputKey key)
 {
-	if (key == IK_Home)
+	if (key == InputKey::Home)
 	{
 		scrollbar->SetPosition(0.0f);
 		Update();
 	}
-	if (key == IK_End)
+	if (key == InputKey::End)
 	{
 		scrollbar->SetPosition(scrollbar->GetMax());
 		Update();
 	}
-	else if (key == IK_PageUp)
+	else if (key == InputKey::PageUp)
 	{
 		ScrollUp(20);
 	}
-	else if (key == IK_PageDown)
+	else if (key == InputKey::PageDown)
 	{
 		ScrollDown(20);
 	}
-	else if (key == IK_Up)
+	else if (key == InputKey::Up)
 	{
 		ScrollUp(4);
 	}
-	else if (key == IK_Down)
+	else if (key == InputKey::Down)
 	{
 		ScrollDown(4);
 	}

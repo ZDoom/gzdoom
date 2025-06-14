@@ -331,7 +331,7 @@ static float nsvg__normalize(float *x, float* y)
 }
 
 static float nsvg__absf(float x) { return x < 0 ? -x : x; }
-static float nsvg__roundf(float x) { return (x >= 0) ? floorf(x + 0.5) : ceilf(x - 0.5); }
+static float nsvg__roundf(float x) { return (x >= 0) ? (float)floorf(x + 0.5f) : (float)ceilf(x - 0.5f); }
 
 static void nsvg__flattenCubicBez(NSVGrasterizer* r,
 								  float x1, float y1, float x2, float y2,

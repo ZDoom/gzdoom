@@ -146,7 +146,7 @@ void PathFillRasterizer::Rasterize(const PathFillDesc& path, uint8_t* dest, int 
 		height = block_height;
 
 		scanlines.resize(block_height);
-		first_scanline = scanlines.size();
+		first_scanline = (int)scanlines.size();
 		last_scanline = 0;
 	}
 
@@ -264,7 +264,7 @@ void PathFillRasterizer::Clear()
 		}
 	}
 
-	first_scanline = scanlines.size();
+	first_scanline = (int)scanlines.size();
 	last_scanline = 0;
 }
 

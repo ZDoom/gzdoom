@@ -118,6 +118,7 @@
 #include "screenjob.h"
 #include "startscreen.h"
 #include "shiftstate.h"
+#include "common/widgets/errorwindow.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -3750,6 +3751,15 @@ static int D_DoomMain_Internal (void)
 
 int GameMain()
 {
+	// On Windows, prefer the native win32 backend.
+	// On other platforms, use SDL until the other backends are more mature.
+	auto zwidget = DisplayBackend::TryCreateWin32();
+	if (!zwidget)
+		zwidget = DisplayBackend::TryCreateSDL2();
+	if (!zwidget)
+		return -1;
+	DisplayBackend::Set(std::move(zwidget));
+
 	int ret = 0;
 	GameTicRate = TICRATE;
 	I_InitTime();

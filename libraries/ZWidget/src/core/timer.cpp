@@ -13,6 +13,8 @@ Timer::Timer(Widget* owner) : OwnerObj(owner)
 
 Timer::~Timer()
 {
+	Stop();
+
 	if (PrevTimerObj)
 		PrevTimerObj->NextTimerObj = NextTimerObj;
 	if (NextTimerObj)

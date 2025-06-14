@@ -21,15 +21,14 @@ public:
 
 protected:
 	void OnPaint(Canvas* canvas) override;
-	bool OnMouseDown(const Point& pos, int key) override;
-	bool OnMouseUp(const Point& pos, int key) override;
+	bool OnMouseDown(const Point& pos, InputKey key) override;
+	bool OnMouseUp(const Point& pos, InputKey key) override;
 	void OnMouseLeave() override;
-	void OnKeyUp(EInputKey key) override;
+	void OnKeyUp(InputKey key) override;
 
 private:
 	std::string text;
 	bool checked = false;
 	bool radiostyle = false;
 	bool mouseDownActive = false;
-
 };

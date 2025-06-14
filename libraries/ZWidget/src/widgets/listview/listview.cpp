@@ -4,7 +4,7 @@
 
 ListView::ListView(Widget* parent) : Widget(parent)
 {
-	SetNoncontentSizes(10.0, 10.0, 3.0, 10.0);
+	SetStyleClass("listview");
 
 	scrollbar = new Scrollbar(this);
 	scrollbar->FuncScroll = [=]() { OnScrollbarScroll(); };
@@ -28,7 +28,7 @@ void ListView::SetColumnWidths(const std::vector<double>& widths)
 		while (column.size() > newWidth)
 		{
 			updated = true;
-			column.erase(column.end());
+			column.pop_back();
 		}
 	}
 
@@ -146,6 +146,9 @@ void ListView::OnPaint(Canvas* canvas)
 	double w = GetWidth() - scrollbar->GetPreferredWidth() - 2.0;
 	double h = 20.0;
 
+	Colorf textColor = GetStyleColor("color");
+	Colorf selectionColor = GetStyleColor("selection-color");
+
 	int index = 0;
 	for (const std::vector<std::string>& item : items)
 	{
@@ -154,12 +157,12 @@ void ListView::OnPaint(Canvas* canvas)
 		{
 			if (index == selectedItem)
 			{
-				canvas->fillRect(Rect::xywh(x - 2.0, itemY, w, h), Colorf::fromRgba8(100, 100, 100));
+				canvas->fillRect(Rect::xywh(x - 2.0, itemY, w, h), selectionColor);
 			}
 			double cx = x;
 			for (size_t entry = 0u; entry < item.size(); ++entry)
 			{
-				canvas->drawText(Point(cx, y + 15.0), Colorf::fromRgba8(255, 255, 255), item[entry]);
+				canvas->drawText(Point(cx, y + 15.0), textColor, item[entry]);
 				cx += columnwidths[entry];
 			}
 		}
@@ -168,23 +171,11 @@ void ListView::OnPaint(Canvas* canvas)
 	}
 }
 
-void ListView::OnPaintFrame(Canvas* canvas)
-{
-	double w = GetFrameGeometry().width;
-	double h = GetFrameGeometry().height;
-	Colorf bordercolor = Colorf::fromRgba8(100, 100, 100);
-	canvas->fillRect(Rect::xywh(0.0, 0.0, w, h), Colorf::fromRgba8(38, 38, 38));
-	canvas->fillRect(Rect::xywh(0.0, 0.0, w, 1.0), bordercolor);
-	canvas->fillRect(Rect::xywh(0.0, h - 1.0, w, 1.0), bordercolor);
-	canvas->fillRect(Rect::xywh(0.0, 0.0, 1.0, h - 0.0), bordercolor);
-	canvas->fillRect(Rect::xywh(w - 1.0, 0.0, 1.0, h - 0.0), bordercolor);
-}
-
-bool ListView::OnMouseDown(const Point& pos, int key)
+bool ListView::OnMouseDown(const Point& pos, InputKey key)
 {
 	SetFocus();
 
-	if (key == IK_LeftMouse)
+	if (key == InputKey::LeftMouse)
 	{
 		int index = (int)((pos.y - 5.0 + scrollbar->GetPosition()) / 20.0);
 		if (index >= 0 && (size_t)index < items.size())
@@ -196,31 +187,31 @@ bool ListView::OnMouseDown(const Point& pos, int key)
 	return true;
 }
 
-bool ListView::OnMouseDoubleclick(const Point& pos, int key)
+bool ListView::OnMouseDoubleclick(const Point& pos, InputKey key)
 {
-	if (key == IK_LeftMouse)
+	if (key == InputKey::LeftMouse)
 	{
 		Activate();
 	}
 	return true;
 }
 
-bool ListView::OnMouseWheel(const Point& pos, EInputKey key)
+bool ListView::OnMouseWheel(const Point& pos, InputKey key)
 {
-	if (key == IK_MouseWheelUp)
+	if (key == InputKey::MouseWheelUp)
 	{
 		scrollbar->SetPosition(std::max(scrollbar->GetPosition() - 20.0, 0.0));
 	}
-	else if (key == IK_MouseWheelDown)
+	else if (key == InputKey::MouseWheelDown)
 	{
 		scrollbar->SetPosition(std::min(scrollbar->GetPosition() + 20.0, scrollbar->GetMax()));
 	}
 	return true;
 }
 
-void ListView::OnKeyDown(EInputKey key)
+void ListView::OnKeyDown(InputKey key)
 {
-	if (key == IK_Down)
+	if (key == InputKey::Down)
 	{
 		if (selectedItem + 1 < (int)items.size())
 		{
@@ -228,7 +219,7 @@ void ListView::OnKeyDown(EInputKey key)
 		}
 		ScrollToItem(selectedItem);
 	}
-	else if (key == IK_Up)
+	else if (key == InputKey::Up)
 	{
 		if (selectedItem > 0)
 		{
@@ -236,7 +227,7 @@ void ListView::OnKeyDown(EInputKey key)
 		}
 		ScrollToItem(selectedItem);
 	}
-	else if (key == IK_Enter)
+	else if (key == InputKey::Enter)
 	{
 		Activate();
 	}

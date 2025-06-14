@@ -3,6 +3,7 @@
 
 CheckboxLabel::CheckboxLabel(Widget* parent) : Widget(parent)
 {
+	SetStyleClass("checkbox-label");
 }
 
 void CheckboxLabel::SetText(const std::string& value)
@@ -40,30 +41,37 @@ double CheckboxLabel::GetPreferredHeight() const
 
 void CheckboxLabel::OnPaint(Canvas* canvas)
 {
+	// To do: add and use GetStyleImage for the checkbox
+	
+	double center = GridFitPoint(GetHeight() * 0.5);
+	double borderwidth = GridFitSize(1.0);
+	double outerboxsize = GridFitSize(10.0);
+	double innerboxsize = outerboxsize - 2.0 * borderwidth;
+	double checkedsize = innerboxsize - 2.0 * borderwidth;
 
 	if (checked)
 	{
-		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 6.0, 10.0, 10.0), Colorf::fromRgba8(100, 100, 100));
-		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 5.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
-		canvas->fillRect(Rect::xywh(2.0, GetHeight() * 0.5 - 4.0, 6.0, 6.0), Colorf::fromRgba8(226, 223, 219));
+		canvas->fillRect(Rect::xywh(0.0, center - 6.0 * borderwidth, outerboxsize, outerboxsize), GetStyleColor("checked-outer-border-color"));
+		canvas->fillRect(Rect::xywh(1.0 * borderwidth, center - 5.0 * borderwidth, innerboxsize, innerboxsize), GetStyleColor("checked-inner-border-color"));
+		canvas->fillRect(Rect::xywh(2.0 * borderwidth, center - 4.0 * borderwidth, checkedsize, checkedsize), GetStyleColor("checked-color"));
 	}
 	else
 	{
-		canvas->fillRect(Rect::xywh(0.0, GetHeight() * 0.5 - 6.0, 10.0, 10.0), Colorf::fromRgba8(99, 99, 99));
-		canvas->fillRect(Rect::xywh(1.0, GetHeight() * 0.5 - 5.0, 8.0, 8.0), Colorf::fromRgba8(51, 51, 51));
+		canvas->fillRect(Rect::xywh(0.0, center - 6.0 * borderwidth, outerboxsize, outerboxsize), GetStyleColor("unchecked-outer-border-color"));
+		canvas->fillRect(Rect::xywh(1.0 * borderwidth, center - 5.0 * borderwidth, innerboxsize, innerboxsize), GetStyleColor("unchecked-inner-border-color"));
 	}
 
-	canvas->drawText(Point(14.0, GetHeight() - 5.0), Colorf::fromRgba8(255, 255, 255), text);
+	canvas->drawText(Point(14.0, GetHeight() - 5.0), GetStyleColor("color"), text);
 }
 
-bool CheckboxLabel::OnMouseDown(const Point& pos, int key)
+bool CheckboxLabel::OnMouseDown(const Point& pos, InputKey key)
 {
 	mouseDownActive = true;
 	SetFocus();
 	return true;
 }
 
-bool CheckboxLabel::OnMouseUp(const Point& pos, int key)
+bool CheckboxLabel::OnMouseUp(const Point& pos, InputKey key)
 {
 	if (mouseDownActive)
 	{
@@ -78,9 +86,9 @@ void CheckboxLabel::OnMouseLeave()
 	mouseDownActive = false;
 }
 
-void CheckboxLabel::OnKeyUp(EInputKey key)
+void CheckboxLabel::OnKeyUp(InputKey key)
 {
-	if (key == IK_Space)
+	if (key == InputKey::Space)
 		Toggle();
 }
 

@@ -1,120 +1,201 @@
 
 #include "window/window.h"
+#include "window/stub/stub_open_folder_dialog.h"
+#include "window/stub/stub_open_file_dialog.h"
+#include "window/stub/stub_save_file_dialog.h"
+#include "window/sdl2nativehandle.h"
+#include "core/widget.h"
 #include <stdexcept>
 
-#ifdef _WIN32
-
-#include "win32/win32window.h"
-
-std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
+std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost, bool popupWindow, DisplayWindow* owner, RenderAPI renderAPI)
 {
-	return std::make_unique<Win32Window>(windowHost);
+	return DisplayBackend::Get()->Create(windowHost, popupWindow, owner, renderAPI);
 }
 
 void DisplayWindow::ProcessEvents()
 {
-	Win32Window::ProcessEvents();
+	DisplayBackend::Get()->ProcessEvents();
 }
 
 void DisplayWindow::RunLoop()
 {
-	Win32Window::RunLoop();
+	DisplayBackend::Get()->RunLoop();
 }
 
 void DisplayWindow::ExitLoop()
 {
-	Win32Window::ExitLoop();
-}
-
-Size DisplayWindow::GetScreenSize()
-{
-	return Win32Window::GetScreenSize();
+	DisplayBackend::Get()->ExitLoop();
 }
 
 void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-	return Win32Window::StartTimer(timeoutMilliseconds, std::move(onTimer));
+	return DisplayBackend::Get()->StartTimer(timeoutMilliseconds, onTimer);
 }
 
 void DisplayWindow::StopTimer(void* timerID)
 {
-	Win32Window::StopTimer(timerID);
-}
-
-#elif defined(__APPLE__)
-
-std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
-{
-	throw std::runtime_error("DisplayWindow::Create not implemented");
-}
-
-void DisplayWindow::ProcessEvents()
-{
-	throw std::runtime_error("DisplayWindow::ProcessEvents not implemented");
-}
-
-void DisplayWindow::RunLoop()
-{
-	throw std::runtime_error("DisplayWindow::RunLoop not implemented");
-}
-
-void DisplayWindow::ExitLoop()
-{
-	throw std::runtime_error("DisplayWindow::ExitLoop not implemented");
+	DisplayBackend::Get()->StopTimer(timerID);
 }
 
 Size DisplayWindow::GetScreenSize()
 {
-	throw std::runtime_error("DisplayWindow::GetScreenSize not implemented");
+	return DisplayBackend::Get()->GetScreenSize();
 }
 
-void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+/////////////////////////////////////////////////////////////////////////////
+
+static std::unique_ptr<DisplayBackend>& GetBackendVar()
 {
-	throw std::runtime_error("DisplayWindow::StartTimer not implemented");
+	// In C++, static variables in functions are constructed on first encounter and is destructed in the reverse order when main() ends.
+	static std::unique_ptr<DisplayBackend> p;
+	return p;
 }
 
-void DisplayWindow::StopTimer(void* timerID)
+DisplayBackend* DisplayBackend::Get()
 {
-	throw std::runtime_error("DisplayWindow::StopTimer not implemented");
+	return GetBackendVar().get();
+}
+
+void DisplayBackend::Set(std::unique_ptr<DisplayBackend> instance)
+{
+	GetBackendVar() = std::move(instance);
+}
+
+std::unique_ptr<OpenFileDialog> DisplayBackend::CreateOpenFileDialog(DisplayWindow* owner)
+{
+	return std::make_unique<StubOpenFileDialog>(owner);
+}
+
+std::unique_ptr<SaveFileDialog> DisplayBackend::CreateSaveFileDialog(DisplayWindow* owner)
+{
+	return std::make_unique<StubSaveFileDialog>(owner);
+}
+
+std::unique_ptr<OpenFolderDialog> DisplayBackend::CreateOpenFolderDialog(DisplayWindow* owner)
+{
+	return std::make_unique<StubOpenFolderDialog>(owner);
+}
+
+#ifdef _MSC_VER
+#pragma warning(disable: 4996) // warning C4996 : 'getenv' : This function or variable may be unsafe.Consider using _dupenv_s instead.To disable deprecation, use _CRT_SECURE_NO_WARNINGS.See online help for details.
+#endif
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateBackend()
+{
+	std::unique_ptr<DisplayBackend> backend;
+
+	// Check if there is an environment variable specified for the desired backend
+	const char* backendSelectionEnv = std::getenv("ZWIDGET_DISPLAY_BACKEND");
+	if (backendSelectionEnv)
+	{
+		std::string backendSelectionStr(backendSelectionEnv);
+		if (backendSelectionStr == "Win32")
+		{
+			backend = TryCreateWin32();
+		}
+		else if (backendSelectionStr == "X11")
+		{
+			backend = TryCreateX11();
+		}
+		else if (backendSelectionStr == "SDL2")
+		{
+			backend = TryCreateSDL2();
+		}
+	}
+
+	if (!backend)
+	{
+		backend = TryCreateWin32();
+		if (!backend) backend = TryCreateWayland();
+		if (!backend) backend = TryCreateX11();
+		if (!backend) backend = TryCreateSDL2();
+	}
+
+	return backend;
+}
+
+#ifdef WIN32
+
+#include "win32/win32_display_backend.h"
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateWin32()
+{
+	return std::make_unique<Win32DisplayBackend>();
 }
 
 #else
 
-#include "sdl2/sdl2displaywindow.h"
-
-std::unique_ptr<DisplayWindow> DisplayWindow::Create(DisplayWindowHost* windowHost)
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateWin32()
 {
-	return std::make_unique<SDL2DisplayWindow>(windowHost);
+	return nullptr;
 }
 
-void DisplayWindow::ProcessEvents()
+#endif
+
+#ifdef USE_SDL2
+
+#include "sdl2/sdl2_display_backend.h"
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateSDL2()
 {
-	SDL2DisplayWindow::ProcessEvents();
+	return std::make_unique<SDL2DisplayBackend>();
 }
 
-void DisplayWindow::RunLoop()
+#else
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateSDL2()
 {
-	SDL2DisplayWindow::RunLoop();
+	return nullptr;
 }
 
-void DisplayWindow::ExitLoop()
+#endif
+
+#ifdef USE_X11
+
+#include "x11/x11_display_backend.h"
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateX11()
 {
-	SDL2DisplayWindow::ExitLoop();
+	try
+	{
+		return std::make_unique<X11DisplayBackend>();
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
 }
 
-Size DisplayWindow::GetScreenSize()
+#else
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateX11()
 {
-	return SDL2DisplayWindow::GetScreenSize();
+	return nullptr;
 }
 
-void* DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
+#endif
+
+#ifdef USE_WAYLAND
+
+#include "wayland/wayland_display_backend.h"
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateWayland()
 {
-	return SDL2DisplayWindow::StartTimer(timeoutMilliseconds, std::move(onTimer));
+	try
+	{
+		return std::make_unique<WaylandDisplayBackend>();
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
 }
 
-void DisplayWindow::StopTimer(void* timerID)
+#else
+
+std::unique_ptr<DisplayBackend> DisplayBackend::TryCreateWayland()
 {
-	SDL2DisplayWindow::StopTimer(timerID);
+	return nullptr;
 }
 
 #endif

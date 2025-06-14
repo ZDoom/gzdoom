@@ -4,10 +4,13 @@
 #include "widgets/toolbar/toolbar.h"
 #include "widgets/statusbar/statusbar.h"
 
-MainWindow::MainWindow() : Widget(nullptr, WidgetType::Window)
+MainWindow::MainWindow(RenderAPI api) : Widget(nullptr, WidgetType::Window, api)
 {
 	MenubarWidget = new Menubar(this);
-	// ToolbarWidget = new Toolbar(this);
+	TopToolbarWidget = new Toolbar(this);
+	TopToolbarWidget->SetDirection(ToolbarDirection::Horizontal);
+	LeftToolbarWidget = new Toolbar(this);
+	LeftToolbarWidget->SetDirection(ToolbarDirection::Vertical);
 	StatusbarWidget = new Statusbar(this);
 }
 
@@ -32,9 +35,10 @@ void MainWindow::OnGeometryChanged()
 	Size s = GetSize();
 
 	MenubarWidget->SetFrameGeometry(0.0, 0.0, s.width, 32.0);
-	// ToolbarWidget->SetFrameGeometry(0.0, 32.0, s.width, 36.0);
+	TopToolbarWidget->SetFrameGeometry(0.0, 32.0, s.width, 32.0);
+	LeftToolbarWidget->SetFrameGeometry(0.0, 64.0, 32.0, s.height - 64.0);
 	StatusbarWidget->SetFrameGeometry(0.0, s.height - 32.0, s.width, 32.0);
 
 	if (CentralWidget)
-		CentralWidget->SetFrameGeometry(0.0, 32.0, s.width, s.height - 32.0 - 32.0);
+		CentralWidget->SetFrameGeometry(32.0, 64.0, s.width - 32.0, s.height - 64.0 - 32.0);
 }

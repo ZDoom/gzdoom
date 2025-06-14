@@ -922,6 +922,8 @@ static void R_DoActorTickerAngleChanges(player_t* const player, DRotator& angles
 EXTERN_CVAR(Float, chase_dist)
 EXTERN_CVAR(Float, chase_height)
 
+int WorldPaused();
+
 void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AActor* const actor)
 {
 	viewPoint.TicFrac = I_GetTimeFrac();
@@ -958,8 +960,17 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	iView->AngleOffsets.Zero();
 	if (iView->prevTic != -1 && curTic > iView->prevTic)
 	{
-		iView->prevTic = curTic;
-		iView->Old = iView->New;
+		// If it's been more than a tic since it was rendered, don't interpolate
+		// from whatever last position it had (it's probably no longer valid).
+		if (curTic - iView->prevTic > 1)
+		{
+			iView->prevTic = -1;
+		}
+		else
+		{
+			iView->prevTic = curTic;
+			iView->Old = iView->New;
+		}
 	}
 
 	const auto& mainView = r_viewpoint;
@@ -1034,7 +1045,7 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(camPos)->sector;
 	}
 
-	if (!paused)
+	if (!WorldPaused())
 	{
 		FQuakeJiggers jiggers;
 		if (DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers) > 0)

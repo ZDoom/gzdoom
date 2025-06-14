@@ -3,7 +3,7 @@
 #include <zwidget/core/widget.h>
 #include "gstrings.h"
 
-#define RENDER_BACKENDS
+// #define RENDER_BACKENDS
 
 class LauncherWindow;
 class TextLabel;

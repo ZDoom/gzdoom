@@ -10,11 +10,12 @@ class Statusbar;
 class MainWindow : public Widget
 {
 public:
-	MainWindow();
+	MainWindow(RenderAPI api = RenderAPI::Unspecified);
 	~MainWindow();
 
 	Menubar* GetMenubar() const { return MenubarWidget; }
-	Toolbar* GetToolbar() const { return ToolbarWidget; }
+	Toolbar* GetTopToolbar() const { return TopToolbarWidget; }
+	Toolbar* GetLeftToolbar() const { return LeftToolbarWidget; }
 	Statusbar* GetStatusbar() const { return StatusbarWidget; }
 	Widget* GetCentralWidget() const { return CentralWidget; }
 
@@ -25,7 +26,8 @@ protected:
 
 private:
 	Menubar* MenubarWidget = nullptr;
-	Toolbar* ToolbarWidget = nullptr;
+	Toolbar* TopToolbarWidget = nullptr;
+	Toolbar* LeftToolbarWidget = nullptr;
 	Widget* CentralWidget = nullptr;
 	Statusbar* StatusbarWidget = nullptr;
 };

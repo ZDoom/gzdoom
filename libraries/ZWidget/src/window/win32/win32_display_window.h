@@ -1,21 +1,17 @@
 #pragma once
 
-#define NOMINMAX
-#define WIN32_MEAN_AND_LEAN
-#ifndef WINVER
-#define WINVER 0x0605
-#endif
-#include <Windows.h>
+#include "win32_util.h"
 
 #include <list>
 #include <unordered_map>
 #include <zwidget/window/window.h>
+#include <zwidget/window/win32nativehandle.h>
 
-class Win32Window : public DisplayWindow
+class Win32DisplayWindow : public DisplayWindow
 {
 public:
-	Win32Window(DisplayWindowHost* windowHost);
-	~Win32Window();
+	Win32DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, Win32DisplayWindow* owner, RenderAPI renderAPI);
+	~Win32DisplayWindow();
 
 	void SetWindowTitle(const std::string& text) override;
 	void SetWindowFrame(const Rect& box) override;
@@ -25,6 +21,7 @@ public:
 	void ShowMaximized() override;
 	void ShowMinimized() override;
 	void ShowNormal() override;
+	bool IsWindowFullscreen() override;
 	void Hide() override;
 	void Activate() override;
 	void ShowCursor(bool enable) override;
@@ -33,7 +30,7 @@ public:
 	void CaptureMouse() override;
 	void ReleaseMouseCapture() override;
 	void Update() override;
-	bool GetKeyState(EInputKey key) override;
+	bool GetKeyState(InputKey key) override;
 
 	void SetCursor(StandardCursor cursor) override;
 	void UpdateCursor();
@@ -53,7 +50,15 @@ public:
 	std::string GetClipboardText() override;
 	void SetClipboardText(const std::string& text) override;
 
+	Point MapFromGlobal(const Point& pos) const override;
+	Point MapToGlobal(const Point& pos) const override;
+
 	Point GetLParamPos(LPARAM lparam) const;
+
+	void* GetNativeHandle() override { return &WindowHandle; }
+
+	std::vector<std::string> GetVulkanInstanceExtensions() override;
+	VkSurfaceKHR CreateVulkanSurface(VkInstance instance) override;
 
 	static void ProcessEvents();
 	static void RunLoop();
@@ -64,8 +69,8 @@ public:
 	static void StopTimer(void* timerID);
 
 	static bool ExitRunLoop;
-	static std::list<Win32Window*> Windows;
-	std::list<Win32Window*>::iterator WindowsIterator;
+	static std::list<Win32DisplayWindow*> Windows;
+	std::list<Win32DisplayWindow*>::iterator WindowsIterator;
 
 	static std::unordered_map<UINT_PTR, std::function<void()>> Timers;
 
@@ -73,12 +78,15 @@ public:
 	static LRESULT CALLBACK WndProc(HWND windowhandle, UINT msg, WPARAM wparam, LPARAM lparam);
 
 	DisplayWindowHost* WindowHost = nullptr;
+	bool PopupWindow = false;
 
-	HWND WindowHandle = 0;
+	Win32NativeHandle WindowHandle;
 	bool Fullscreen = false;
 
 	bool MouseLocked = false;
 	POINT MouseLockPos = {};
+
+	bool TrackMouseActive = false;
 
 	HDC PaintDC = 0;
 

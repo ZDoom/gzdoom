@@ -407,7 +407,9 @@ void Net_ResetCommands(bool midTic)
 		
 		// Make sure not to run its current command either.
 		auto& curTic = state.Tics[tic % BACKUPTICS];
+		const int running = (curTic.Command.buttons & BT_RUN); // This isn't delta'd so needs to be kept.
 		memset(&curTic.Command, 0, sizeof(curTic.Command));
+		curTic.Command.buttons |= running;
 	}
 
 	NetEvents.ResetStream();

@@ -745,6 +745,41 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)
 	ACTION_RETURN_BOOL(self->Resurrect());
 }
 
+player_t* player_t::GetNextPlayer(player_t* p, bool noBots)
+{
+	int pNum = player_t::GetNextPlayerNumber(p == nullptr ? -1 : p - players);
+	return pNum != -1 ? &players[pNum] : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerInfo, GetNextPlayer, player_t::GetNextPlayer)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(p, player_t);
+	PARAM_BOOL(noBots);
+
+	ACTION_RETURN_POINTER(player_t::GetNextPlayer(p, noBots));
+}
+
+int player_t::GetNextPlayerNumber(int pNum, bool noBots)
+{
+	int i = max<int>(pNum + 1, 0);
+	for (; i < MaxClients; ++i)
+	{
+		if (playeringame[i] && (!noBots || players[i].Bot == nullptr))
+			break;
+	}
+
+	return i < MaxClients ? i : -1;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerInfo, GetNextPlayerNumber, player_t::GetNextPlayerNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(pNum);
+	PARAM_BOOL(noBots);
+
+	ACTION_RETURN_INT(player_t::GetNextPlayerNumber(pNum, noBots));
+}
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
 {

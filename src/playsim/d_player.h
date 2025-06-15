@@ -476,6 +476,9 @@ public:
 	bool HasWeaponsInSlot(int slot) const;
 	bool Resurrect();
 
+	static player_t* GetNextPlayer(player_t* p, bool noBots = false);
+	static int GetNextPlayerNumber(int pNum, bool noBots = false);
+
 	// Scaled angle adjustment info. Not for direct manipulation.
 	DRotator angleOffsetTargets;
 };

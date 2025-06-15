@@ -197,19 +197,22 @@ void D_LoadWadSettings ()
 			// Comments begin with //
 			char *stop = &command[linePos];
 			char *comment = &command[0];
+			char prevChar = 0;
 			bool inQuote = false;
 
 			while (comment < stop)
 			{
-				// if (*comment != '\\' && *(comment + 1) == '\"')
+				// if (prevChar != '\\' && *comment == '\"')
 				if (*comment == '\"')
 				{
 					inQuote = !inQuote;
 				}
-				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
+				else if (!inQuote && prevChar == '/' && *comment == '/')
 				{
+					comment--; // 'comment' is on the second slash
 					break;
 				}
+				prevChar = *comment;
 				comment++;
 			}
 			// 'comment' will either be the end of the string, or the starting

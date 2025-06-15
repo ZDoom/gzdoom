@@ -3004,6 +3004,9 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	
 	native clearscope int GetAverageLatency() const;
 
+	native clearscope static PlayerInfo GetNextPlayer(PlayerInfo p, bool noBots = false);
+	native clearscope static int GetNextPlayerNumber(int pNum, bool noBots = false);
+
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
 	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")
 	{

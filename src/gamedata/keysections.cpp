@@ -174,20 +174,20 @@ void D_LoadWadSettings ()
 
 		while (conf < eof)
 		{
-			size_t linepos = 0;
+			size_t linePos = 0;
 
 			// Fetch a line to execute
 			command.Clear();
-			for (linepos = 0; (conf + linepos) < eof && conf[linepos] != '\n' && conf[linepos] != '\r'; ++linepos)
+			for (linePos = 0; (conf + linePos) < eof && conf[linePos] != '\n' && conf[linePos] != '\r'; ++linePos)
 			{
-				command.Push(conf[linepos]);
+				command.Push(conf[linePos]);
 			}
-			if (linepos == 0 && conf >= eof) // End of file
+			if (linePos == 0 && conf >= eof) // End of file
 			{
 				break;
 			}
 			// Increment 'conf' pointer to next line
-			conf += linepos;
+			conf += linePos;
 			while (conf < eof && (*conf == '\n' || *conf == '\r'))
 			{
 				conf++;
@@ -195,13 +195,9 @@ void D_LoadWadSettings ()
 
 			// Does 'command' have a comment? If so, remove it.
 			// Comments begin with //
-			char *stop = &command[linepos];
+			char *stop = &command[linePos];
 			char *comment = &command[0];
 			bool inQuote = false;
-
-			if (*stop == '\r' || *stop == '\n') {
-				*stop-- = 0;
-			}
 
 			while (comment < stop)
 			{
@@ -218,7 +214,7 @@ void D_LoadWadSettings ()
 			}
 			// 'comment' will either be the end of the string, or the starting
 			// position of an inline comment.
-			if ((comment - &command[0]) < linepos) {
+			if ((comment - &command[0]) < linePos) {
 				*comment = 0;
 			} else {
 				// Just in case 'comment' is at EOF

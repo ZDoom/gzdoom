@@ -183,10 +183,6 @@ void D_LoadWadSettings ()
 			{
 				command.Push(conf[linePos]);
 			}
-			if (linePos == 0 && conf >= eof) // End of file
-			{
-				break;
-			}
 			// Increment 'conf' pointer to next line
 			conf += linePos;
 			while (conf < eof && (*conf == '\n' || *conf == '\r'))

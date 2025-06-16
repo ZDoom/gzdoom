@@ -5,6 +5,8 @@
 #include <sys/param.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
+#include <limits.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>

@@ -595,6 +595,9 @@ class Actor : Thinker native
 		return true;
 	}
 
+	// Called after an Actor has been resurrected.
+	virtual void OnRevive() {}
+
 	// Called when an actor is to be reflected by a disc of repulsion.
 	// Returns true to continue normal blast processing.
 	virtual bool SpecialBlastHandling (Actor source, double strength)

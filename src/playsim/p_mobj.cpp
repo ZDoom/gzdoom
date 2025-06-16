@@ -8485,6 +8485,10 @@ void AActor::Revive()
 		Level->total_monsters++;
 	}
 
+	IFOVERRIDENVIRTUALPTRNAME(this, NAME_Actor, OnRevive)
+	{
+		VMCallVoid<AActor*>(func, this);
+	}
 	// [ZZ] resurrect hook
 	Level->localEventManager->WorldThingRevived(this);
 }

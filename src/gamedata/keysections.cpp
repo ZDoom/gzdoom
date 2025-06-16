@@ -101,7 +101,8 @@ CCMD (addkeysection)
 
 		FString name(argv[2]);
 		// Limit the ini name to 32 chars
-		if (name.Len() > 32) {
+		if (name.Len() > 32)
+		{
 			DPrintf(DMSG_ERROR, "WARNING: %s is too long as an ini name! The ini name should be 32 bytes or less.\n", &name[0]);
 			name.Truncate(32);
 		}
@@ -217,9 +218,12 @@ void D_LoadWadSettings ()
 			}
 			// 'comment' will either be the end of the string, or the starting
 			// position of an inline comment.
-			if ((comment - &command[0]) < linePos) {
+			if ((comment - &command[0]) < linePos)
+			{
 				*comment = 0;
-			} else {
+			}
+			else
+			{
 				// Just in case 'comment' is at EOF
 				command.Push(0);
 			}

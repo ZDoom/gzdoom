@@ -984,6 +984,7 @@ void Joy_RumbleTick() {
 
 void Joy_Rumble(const FName source, const struct Haptics data, double attenuation)
 {
+	if (!use_joystick) return;
 	if (!Haptics.enabled) return;
 	if (data.ticks <= 0) return;
 	if (attenuation >= 1) return;

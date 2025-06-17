@@ -826,6 +826,7 @@ class Actor : Thinker native
 	native bool CheckMeleeRange(double range = -1);
 	native bool TriggerPainChance(Name mod, bool forcedPain = false);
 	native virtual int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
+	native virtual bool ReactToDamage(Actor inflictor, Actor source, int damage, Name mod, int flags, int originaldamage);
 	native void PoisonMobj (Actor inflictor, Actor source, int damage, int duration, int period, Name type);
 	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
 	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null, double offsetz = 0., double offsetforward = 0., double offsetside = 0.);

@@ -824,19 +824,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
 	return 0;
 }
 
-void _RumbleOr(const int identifier, const int fallback) {
-	Joy_Rumble(ENamedName(identifier), ENamedName(fallback));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleOr, _RumbleOr)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(identifier);
-	PARAM_INT(fallback);
-	_RumbleOr(identifier, fallback);
-	return 0;
-}
-
 void _RumbleDirect(int source, int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
 	Joy_Rumble(ENamedName(source), {tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
 }

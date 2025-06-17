@@ -779,14 +779,9 @@ class StatusScreen : ScreenJob abstract version("2.5")
 	//
 	//====================================================================
 
-	static void PlaySound(Sound snd, bool rumble = true)
+	static void PlaySound(Sound snd)
 	{
-		if (rumble)
-		{
-			String asString = snd;
-			Haptics.Rumble(Name(asString));
-		}
-		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHANF_UI, 1, ATTN_NONE);
+		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHANF_UI|CHANF_RUMBLE, 1, ATTN_NONE);
 	}
 	
 	

@@ -314,8 +314,7 @@ void OnMenuOpen(bool makeSound)
 
 	if (makeSound)
 	{
-		Joy_Rumble("menu/activate");
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 }
 
@@ -408,8 +407,7 @@ CCMD (menu_quit)
 		{
 			if (gameinfo.quitSound.IsNotEmpty())
 			{
-				Joy_Rumble(gameinfo.quitSound);
-				S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
+				S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
 				I_WaitVBL(105);
 			}
 		}
@@ -449,14 +447,12 @@ CCMD (menu_endgame)
 {	// F7
 	if (!usergame)
 	{
-		Joy_Rumble("menu/invalid");
-		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 		
 	//M_StartControlPanel (true);
-	Joy_Rumble("menu/activate");
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	ActivateEndGameMenu();
 }
@@ -471,8 +467,7 @@ CCMD (quicksave)
 {	// F6
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		Joy_Rumble("menu/invalid");
-		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 
@@ -488,8 +483,7 @@ CCMD (quicksave)
 		
 	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
-		Joy_Rumble("menu/activate");
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
 		M_SetMenu(NAME_SavegameMenu);
 		return;
@@ -502,8 +496,7 @@ CCMD (quicksave)
 		return;
 	}
 
-	Joy_Rumble("menu/activate");
-	S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	FString tempstring = GStrings.GetString("QSPROMPT");
 	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
@@ -512,8 +505,7 @@ CCMD (quicksave)
 	{
 		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
 
-		Joy_Rumble("menu/dismiss");
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
 
@@ -558,8 +550,7 @@ CCMD (quickload)
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
 	{
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
-		Joy_Rumble("menu/dismiss");
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
 	M_ActivateMenu(newmenu);
@@ -598,8 +589,7 @@ CCMD (sizedown)
 		screenblocks = screenblocks - 1;
 	}
 
-	Joy_Rumble("menu/change");
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
@@ -613,8 +603,7 @@ CCMD (sizeup)
 		screenblocks = screenblocks + 1;
 	}
 
-	Joy_Rumble("menu/change");
-	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound(CHAN_VOICE, CHANF_UI|CHANF_RUMBLE, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(reset2defaults)

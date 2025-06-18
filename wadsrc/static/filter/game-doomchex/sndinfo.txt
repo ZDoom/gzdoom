@@ -121,6 +121,24 @@ $playercompat	player	other	*jump		player/cyborg/jump1
 $playercompat	player	other	*gibbed		player/cyborg/gibbed
 $playercompat	player	other	*fist		player/cyborg/fist
 
+$rumble	*death		P_DEATH
+$rumble	*xdeath		P_DEATH
+$rumble	*pain100	P_HURT
+$rumble	*pain75		P_HURT
+$rumble	*pain50		P_HURT
+$rumble	*pain25		P_HURT
+$rumble	*grunt		P_GRUNT
+$rumble	*land		P_GRUNT
+$rumble	*jump		NONE
+$rumble	*gibbed		P_DEATH
+$rumble	*fist		P_FIST
+$rumble	*usefail	P_GRUNT
+
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+$rumbledef	P_FIST		3	.6	.6	.6	.6
+
 //
 // Weapons
 //
@@ -150,6 +168,34 @@ weapons/railgf			railgf1
 weapons/grbnce          dsbounce
 weapons/grenlx			dsgrnexp
 weapons/grenlf			dsglaunc
+
+$rumble	weapons/sawup				LIGHT
+$rumble	weapons/sawidle				W_SAW_IDLE
+$rumble	weapons/sawfull				W_SAW_FULL
+$rumble	weapons/sawhit				W_SAW_FULL
+$rumble	weapons/pistol				W_BULLET
+$rumble	weapons/shotgf				W_SHELL
+$rumble	weapons/shotgr				W_RELOAD	// is this ever used?
+$rumble	weapons/sshotf				W_SHELL
+$rumble	weapons/sshoto				W_RELOAD
+$rumble	weapons/sshotc				W_RELOAD
+$rumble	weapons/sshotl				W_RELOAD
+$rumble	weapons/chngun				W_BULLET
+$rumble	weapons/rocklx				NONE
+$rumble	weapons/rocklf				W_ROCKET
+$rumble	weapons/plasmaf				W_ENERGY
+$rumble	weapons/plasmax				NONE
+$rumble	weapons/bfgf				W_BFG
+$rumble	weapons/bfgx				NONE
+
+$rumbledef	W_SAW_IDLE	1	0	.6	0	0
+$rumbledef	W_SAW_FULL	4	.6	.6	.6	.6
+$rumbledef	W_BULLET	3	.6	.6	.6	.6
+$rumbledef	W_SHELL		6	.6	.6	.6	.6
+$rumbledef	W_RELOAD	1	.3	.6	0	0
+$rumbledef	W_ROCKET	6	.6	.6	.6	.6
+$rumbledef	W_ENERGY	2	.6	.6	.6	.6
+$rumbledef	W_BFG		35	.6	.6	.6	.6
 
 // Problem: weapons/rocklx needs to be unlimited but
 // is also used for the MAP30 brain explosion.
@@ -436,6 +482,16 @@ switches/exitbutn		dsswtchx
 
 misc/teleport			dstelept
 
+$rumble	misc/secret			SECRET
+$rumble	misc/w_pkup			LIGHT
+$rumble	misc/p_pkup 		LIGHT
+$rumble	misc/i_pkup 		LIGHT
+$rumble	misc/k_pkup			LIGHT
+$rumble	misc/teleport		TELEPORT
+
+$rumbledef	TELEPORT	35	.3	.6	0	0
+$rumbledef	SECRET		35	.3	.6	0	0
+
 menu/activate			dsswtchn	// Activate a new menu
 menu/backup			dsswtchn	// Backup to previous menu
 menu/prompt			dsswtchn	// Activate a prompt "menu"
@@ -450,6 +506,19 @@ $alias menu/advance menu/choose	// Open a submenu
 $random menu/quit1 { player/male/death1 demon/pain grunt/pain misc/gibbed misc/teleport grunt/sight1 grunt/sight3 demon/melee }
 $random menu/quit2 { vile/active misc/p_pkup brain/cube misc/gibbed skeleton/swing knight/death baby/active demon/melee  }
 
+$rumble	menu/activate	HEAVY
+$rumble	menu/backup		MEDIUM
+$rumble	menu/prompt		MEDIUM
+$rumble	menu/cursor		LIGHT
+$rumble	menu/change		LIGHT
+$rumble	menu/invalid	MEDIUM
+$rumble	menu/dismiss	MEDIUM
+$rumble	menu/choose		HEAVY
+$rumble	menu/clear		MEDIUM
+$rumble	menu/advance	HEAVY
+$rumble	menu/quit1		MEDIUM
+$rumble	menu/quit2		MEDIUM
+
 $alias				intermission/tick			weapons/pistol
 $alias				intermission/cooptotal		*death
 $alias				intermission/nextstage		weapons/rocklx
@@ -457,6 +526,12 @@ $alias				intermission/paststats		weapons/shotgr
 $alias				intermission/pastcoopstats	weapons/shotgr
 $alias				intermission/pastdmstats	*gibbed
 
+$rumble	intermission/tick			LIGHT
+$rumble	intermission/cooptotal		LIGHT
+$rumble	intermission/nextstage		MEDIUM
+$rumble	intermission/paststats		MEDIUM
+$rumble	intermission/pastcoopstats	MEDIUM
+$rumble	intermission/pastdmstats	MEDIUM
 
 // id24 sounds
 
@@ -517,3 +592,17 @@ weapons/incinerator/hot3	dsincht3
 weapons/calamityblade/charge	dshetchg
 weapons/calamityblade/shoot	dshetsht
 weapons/calamityblade/explode	dshetxpl
+
+$rumble	weapons/incinerator/fire1		W_FIRE_FIRE
+$rumble	weapons/incinerator/fire2		W_FIRE_FIRE
+$rumble	weapons/incinerator/burn		NONE
+$rumble	weapons/incinerator/hot1		NONE
+$rumble	weapons/incinerator/hot2		NONE
+$rumble	weapons/incinerator/hot3		NONE
+$rumble	weapons/calamityblade/charge	W_FIRE_CHARGE
+$rumble	weapons/calamityblade/shoot		W_FIRE_FIRE
+$rumble	weapons/calamityblade/explode	NONE
+$rumble	weapons/unmaker					W_ENERGY	// from Doom64CE
+
+$rumbledef	W_FIRE_CHARGE	2	.4	.4	.4	.4
+$rumbledef	W_FIRE_FIRE		4	.6	.6	.6	.6

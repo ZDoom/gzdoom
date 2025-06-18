@@ -38,6 +38,26 @@ chicken/attack			chicatk
 
 misc/burn			hedat1
 
+$rumble	*wimpydeath		P_DEATH
+$rumble	*death			P_DEATH
+$rumble	*crazydeath		P_DEATH
+$rumble	*gibbed			P_DEATH
+$rumble	*pain100		P_HURT
+$rumble	*pain75			P_HURT
+$rumble	*pain50			P_HURT
+$rumble	*pain25			P_HURT
+$rumble	*weaponlaugh	LIGHT
+$rumble	*evillaugh		LIGHT
+$rumble	*grunt			P_GRUNT
+$rumble	*usefail		P_GRUNT
+$rumble	*land			P_GRUNT
+$rumble	*jump			NONE
+$rumble	*burndeath		P_DEATH
+
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+
 weapons/staffhit		stfhit
 weapons/staffpowerhit		stfpow
 weapons/staffcrackle		stfcrk
@@ -80,6 +100,43 @@ $limit weapons/hornrodshoot 0
 $limit weapons/hornrodhit 0
 $limit weapons/maceshoot 0
 
+$rumble	weapons/staffhit			W_STAFF
+$rumble	weapons/staffpowerhit		W_STAFF
+$rumble	weapons/staffcrackle		NONE
+$rumble	weapons/wandhit				W_CRYSTAL
+$rumble	weapons/bowshoot			W_ARROW
+$rumble	weapons/bowhit				NONE
+$rumble	weapons/gauntletsactivate	NONE
+$rumble	weapons/gauntletsuse		NONE
+$rumble	weapons/gauntletson			W_GAUNTLET_IDLE
+$rumble	weapons/gauntletshit		W_GAUNTLET_FULL
+$rumble	weapons/gauntletspowhit		W_GAUNTLET_FULL
+$rumble	weapons/maceshoot			W_SPHERE
+$rumble	weapons/macebounce			NONE
+$rumble	weapons/macehit				NONE
+$rumble	weapons/macestop			NONE
+$rumble	weapons/maceexplode			NONE
+$rumble	weapons/blasterhit			NONE
+$rumble	weapons/blasterpowhit		NONE
+$rumble	weapons/blastershoot		W_ENERGY_ORB
+$rumble	weapons/hornrodshoot		W_RUNE
+$rumble	weapons/hornrodhit			NONE
+$rumble	weapons/hornrodpowshoot		W_RUNE
+$rumble	weapons/hornrodpowhit		NONE
+$rumble	weapons/phoenixhit			NONE
+$rumble	weapons/phoenixshoot		W_INFERNO_ORB
+$rumble	weapons/phoenixpowshoot		W_INFERNO_ORB
+
+$rumbledef	W_STAFF			2	.6	.6	.6	.6
+$rumbledef	W_GAUNTLET_IDLE	1	0	.6	0	0
+$rumbledef	W_GAUNTLET_FULL	4	.6	.6	.6	.6
+$rumbledef	W_CRYSTAL		2	.6	.6	.6	.6
+$rumbledef	W_ARROW			2	.6	.6	.6	.6
+$rumbledef	W_SPHERE		3	.6	.6	.6	.6
+$rumbledef	W_ENERGY_ORB	3	.6	.6	.6	.6
+$rumbledef	W_RUNE			3	.6	.6	.6	.6
+$rumbledef	W_INFERNO_ORB	3	.6	.6	.6	.6
+
 himp/sight			impsit
 himp/attack			impat1
 himp/pain			imppai
@@ -90,6 +147,8 @@ himp/leaderattack		impat2
 misc/invuse			artiuse
 
 $limit	misc/invuse		1
+
+$rumble	misc/invuse	LIGHT
 
 world/podexplode		podexp
 world/podgrow			newpod
@@ -109,6 +168,11 @@ misc/rain			ramrain
 misc/spawn			respawn
 
 $limit misc/spawn		1
+
+$rumble	misc/i_pkup LIGHT
+$rumble	misc/k_pkup	LIGHT
+$rumble	misc/p_pkup LIGHT
+$rumble	misc/w_pkup	LIGHT
 
 //
 // Minotaur sounds
@@ -196,6 +260,10 @@ misc/teleport			telept
 misc/ripslop			ripslop
 
 $limit misc/chat		1
+
+$rumble	misc/teleport	TELEPORT
+
+$rumbledef	TELEPORT	35	.3	.6	0	0
 
 world/drip			gloop
 world/watersplash		gloop
@@ -285,10 +353,31 @@ menu/dismiss			dorcls
 menu/clear			dorcls
 $alias menu/advance menu/choose
 
+$rumble	menu/activate	HEAVY
+$rumble	menu/backup		MEDIUM
+$rumble	menu/prompt		MEDIUM
+$rumble	menu/choose		HEAVY
+$rumble	menu/cursor		LIGHT
+$rumble	menu/change		LIGHT
+$rumble	menu/invalid	MEDIUM
+$rumble	menu/dismiss	MEDIUM
+$rumble	menu/clear		MEDIUM
+$rumble	menu/advance	HEAVY
+
 misc/secret			dssecret
+
+$rumble	misc/secret	SECRET
+
+$rumbledef	SECRET	35	.3	.6	0	0
 
 $alias				intermission/cooptotal		*death
 $alias				intermission/nextstage		doors/dr1_clos
 $alias				intermission/paststats		plats/pt1_stop
 $alias				intermission/pastcoopstats	plats/pt1_stop
 $alias				intermission/pastdmstats	*gibbed
+
+$rumble	intermission/cooptotal		LIGHT
+$rumble	intermission/nextstage		MEDIUM
+$rumble	intermission/paststats		MEDIUM
+$rumble	intermission/pastcoopstats	MEDIUM
+$rumble	intermission/pastdmstats	MEDIUM

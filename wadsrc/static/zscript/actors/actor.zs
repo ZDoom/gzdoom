@@ -737,7 +737,7 @@ class Actor : Thinker native
 	protected native void CheckPortalTransition(bool linked = true);
 	native clearscope bool HasConversation() const;
 	native clearscope bool CanTalk() const;
-	native bool StartConversation(Actor player, bool faceTalker = true, bool saveAngle = true);
+	native bool StartConversation(Actor player, bool faceTalker = true, bool saveAngle = true, bool rumble = true);
 
 	native clearscope string GetTag(string defstr = "") const;
 	native clearscope string GetCharacterName() const;
@@ -1620,7 +1620,7 @@ class Actor : Thinker native
 			A_StartSound(ActiveSound, CHAN_VOICE);
 		}
 	}
-	
+
 	virtual void PlayerLandedMakeGruntSound(actor onmobj)
 	{
 		bool grunted;
@@ -1632,7 +1632,7 @@ class Actor : Thinker native
 			// Why should this number vary by gravity?
 			if (self.Vel.Z < -self.player.mo.GruntSpeed)
 			{
-				A_StartSound("*grunt", CHAN_VOICE);
+				A_StartSound("*grunt", CHAN_VOICE | CHANF_NORUMBLE);
 				grunted = true;
 			}
 			bool isliquid = (pos.Z <= floorz) && HitFloor ();
@@ -1640,11 +1640,11 @@ class Actor : Thinker native
 			{
 				if (!grunted)
 				{
-					A_StartSound("*land", CHAN_AUTO);
+					A_StartSound("*land", CHAN_AUTO | CHANF_NORUMBLE);
 				}
 				else
 				{
-					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO);
+					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO | CHANF_NORUMBLE);
 				}
 			}
 		}
@@ -1678,6 +1678,55 @@ class Actor : Thinker native
 			}
 			// If we were running out of air, then ResetAirSupply() will play *gasp.
 		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// player rumble events
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void PlayerLandedMakeRumble(actor onmobj)
+	{
+		bool isliquid = (pos.Z <= floorz) && HitFloor ();
+		if (onmobj != NULL || !isliquid)
+		{
+			Haptics.Rumble("*land");
+		}
+		else if (self.Vel.Z < -self.player.mo.GruntSpeed)
+		{
+			Haptics.Rumble("*grunt");
+		}
+	}
+
+	virtual void PlayerHurtMakeRumble(actor source)
+	{
+		Haptics.Rumble("*pain");
+	}
+
+	virtual void PlayerDiedMakeRumble(actor source)
+	{
+		Haptics.Rumble("*death");
+	}
+
+	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)
+	{
+		Haptics.Rumble("*usesuccess");
+	}
+
+	virtual void PlayerTeleportedMakeRumble()
+	{
+		Haptics.Rumble("misc/teleport");
+	}
+
+	virtual void PlayerPushedSomethingMakeRumble(actor thing)
+	{
+		Haptics.Rumble("misc/push");
+	}
+
+	virtual void PlayerWasPushedMakeRumble(actor source)
+	{
+		Haptics.Rumble("misc/pushed");
 	}
 
 	//----------------------------------------------------------------------------

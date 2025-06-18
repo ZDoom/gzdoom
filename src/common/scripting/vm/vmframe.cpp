@@ -575,6 +575,30 @@ template<> void VMCheckParam<double>(VMFunction* func, int index)
 		I_FatalError("%s argument %d is not a double", func->PrintableName, index);
 }
 
+template<> void VMCheckParam<DVector2>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeVector2)
+		I_FatalError("%s argument %d is not a vector2", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<DVector3>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeVector3)
+		I_FatalError("%s argument %d is not a vector3", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<DVector4>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeVector4)
+		I_FatalError("%s argument %d is not a vector4", func->PrintableName, index);
+}
+
+template<> void VMCheckParam<DQuaternion>(VMFunction* func, int index)
+{
+	if (func->Proto->ArgumentTypes[index] != TypeQuaternion)
+		I_FatalError("%s argument %d is not a quat", func->PrintableName, index);
+}
+
 template<> void VMCheckParam<FString>(VMFunction* func, int index)
 {
 	if (func->Proto->ArgumentTypes[index] != TypeString)
@@ -601,6 +625,30 @@ template<> void VMCheckReturn<double>(VMFunction* func, int index)
 {
 	if (func->Proto->ReturnTypes[index] != TypeFloat64)
 		I_FatalError("%s return value %d is not a double", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<DVector2>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeVector2)
+		I_FatalError("%s return value %d is not a vector2", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<DVector3>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeVector3)
+		I_FatalError("%s return value %d is not a vector3", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<DVector4>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeVector4)
+		I_FatalError("%s return value %d is not a vector4", func->PrintableName, index);
+}
+
+template<> void VMCheckReturn<DQuaternion>(VMFunction* func, int index)
+{
+	if (func->Proto->ReturnTypes[index] != TypeQuaternion)
+		I_FatalError("%s return value %d is not a quat", func->PrintableName, index);
 }
 
 template<> void VMCheckReturn<FString>(VMFunction* func, int index)

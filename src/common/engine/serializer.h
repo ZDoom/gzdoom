@@ -230,7 +230,9 @@ public:
 	FString mLumpName;
 };
 
+#if !defined(__sun) || !defined(__sun__)
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval);
+#endif
 
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_t *defval);

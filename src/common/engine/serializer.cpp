@@ -1052,6 +1052,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint3
 //
 //==========================================================================
 
+#if !defined(__sun) || !defined(__sun__)
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval)
 {
 	int32_t vv = value;
@@ -1060,6 +1061,7 @@ FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* def
 	value = (int8_t)vv;
 	return arc;
 }
+#endif
 
 FSerializer &Serialize(FSerializer &arc, const char *key, int8_t &value, int8_t *defval)
 {

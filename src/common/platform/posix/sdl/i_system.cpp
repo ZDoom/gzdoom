@@ -53,6 +53,10 @@
 #include <sys/mman.h>
 #endif
 
+#if defined(__sun) || defined(__sun__)
+#include <termios.h>
+#endif
+
 #include <SDL.h>
 
 #include "version.h"

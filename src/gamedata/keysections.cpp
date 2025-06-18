@@ -175,7 +175,7 @@ void D_LoadWadSettings ()
 
 		while (conf < eof)
 		{
-			size_t linePos = 0;
+			ptrdiff_t linePos = 0;
 
 			// Fetch a line to execute
 			command.Clear();

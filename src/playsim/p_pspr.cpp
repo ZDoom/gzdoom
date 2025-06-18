@@ -637,19 +637,16 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac)
 {
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon)
 	{
-		VMValue param[] = { player->mo, ticfrac };
-		DVector2 result;
-		VMReturn ret(&result);
-		VMCall(func, param, 2, &ret, 1);
+		DVector2 result = CallVM<DVector2>(func, player->mo, ticfrac);
 		
-		auto inv = player->mo->Inventory;
+		auto inv = player->mo->Inventory.Get();
 		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe)) // same loop as ModifyDamage, except it actually checks if it's overriden before calling
 		{
-			auto nextinv = inv->Inventory;
+			auto nextinv = inv->Inventory.Get();
 			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob)
 			{
-				VMValue param[] = { (DObject*)inv, result.X, result.Y, ticfrac };
-				VMCall(func, param, 4, &ret, 1);
+				DVector2 r2 = CallVM<DVector2>(func, inv, result, ticfrac);
+				result = r2;
 			}
 			inv = nextinv;
 		}
@@ -665,31 +662,23 @@ void P_BobWeapon3D (player_t *player, FVector3 *translation, FVector3 *rotation,
 {
 	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, BobWeapon3D)
 	{
-		VMValue param[] = { player->mo, ticfrac };
-		DVector3 t, r;
-		VMReturn returns[2];
-		returns[0].Vec3At(&t);
-		returns[1].Vec3At(&r);
-		VMCall(func, param, 2, returns, 2);
+		auto [t, r] = CallVM<DVector3, DVector3>(func, player->mo, ticfrac);
 
-		auto inv = player->mo->Inventory;
+		auto inv = player->mo->Inventory.Get();
 		while(inv != nullptr && !(inv->ObjectFlags & OF_EuthanizeMe))
 		{
-			auto nextinv = inv->Inventory;
+			auto nextinv = inv->Inventory.Get();
 			IFOVERRIDENVIRTUALPTRNAME(inv, NAME_Inventory, ModifyBob3D)
 			{
-				VMValue param[] = { (DObject*)inv, t.X, t.Y, t.Z, r.X, r.Y, r.Z, ticfrac };
-				VMCall(func, param, 8, returns, 2);
+				auto [t2, r2] = CallVM<DVector3, DVector3>(func, inv, t, r, ticfrac);
+				t = t2;
+				r = r2;
 			}
 			inv = nextinv;
 		}
 
-		translation->X = (float)t.X;
-		translation->Y = (float)t.Y;
-		translation->Z = (float)t.Z;
-		rotation->X = (float)r.X;
-		rotation->Y = (float)r.Y;
-		rotation->Z = (float)r.Z;
+		*translation = FVector3(t);
+		*rotation = FVector3(r);
 		return;
 	}
 	*translation = *rotation = {};

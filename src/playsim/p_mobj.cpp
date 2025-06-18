@@ -2374,7 +2374,7 @@ bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise
 			double aimheight = target->Height/2;
 			if (target->player)
 			{
-				aimheight = target->player->DefaultViewHeight();
+				aimheight = target->player->viewz - target->Z();
 			}
 			pitch = DVector2(dist, target->Z() + aimheight - actor->Center()).Angle();
 		}

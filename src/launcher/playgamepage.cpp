@@ -11,6 +11,8 @@
 PlayGamePage::PlayGamePage(LauncherWindow* launcher, WadStuff* wads, int numwads, int defaultiwad) : Widget(nullptr), Launcher(launcher)
 {
 	WelcomeLabel = new TextLabel(this);
+	VersionLabel = new TextLabel(this);
+	VersionLabel->SetTextAlignment(TextLabelAlignment::Right);
 	SelectLabel = new TextLabel(this);
 	ParametersLabel = new TextLabel(this);
 	GamesList = new ListView(this);
@@ -62,6 +64,9 @@ void PlayGamePage::UpdateLanguage()
 	FString welcomeText = GStrings.GetString("PICKER_WELCOME");
 	welcomeText.Substitute("%s", GAMENAME);
 	WelcomeLabel->SetText(welcomeText.GetChars());
+	FString versionText = GStrings.GetString("PICKER_VERSION");
+	versionText.Substitute("%s", GetVersionString());
+	VersionLabel->SetText(versionText.GetChars());
 }
 
 void PlayGamePage::OnGamesListActivated()
@@ -80,6 +85,8 @@ void PlayGamePage::OnGeometryChanged()
 
 	WelcomeLabel->SetFrameGeometry(0.0, y, GetWidth(), WelcomeLabel->GetPreferredHeight());
 	y += WelcomeLabel->GetPreferredHeight();
+
+	VersionLabel->SetFrameGeometry(20.0, y - VersionLabel->GetPreferredHeight(), GetWidth() - 19.0, VersionLabel->GetPreferredHeight());
 
 	y += 10.0;
 

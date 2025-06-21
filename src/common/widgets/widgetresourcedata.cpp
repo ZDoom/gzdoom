@@ -23,7 +23,7 @@ void InitWidgetResources(const char* filename)
 	if (!WidgetResources)
 		I_FatalError("Unable to open %s", filename);
 
-	WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>());
+	WidgetTheme::SetTheme(std::make_unique<LightWidgetTheme>()); // GZDoom uses a different theme than VKDoom
 }
 
 void CloseWidgetResources()

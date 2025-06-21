@@ -27,6 +27,7 @@ private:
 	LauncherWindow* Launcher = nullptr;
 
 	TextLabel* WelcomeLabel = nullptr;
+	TextLabel* VersionLabel = nullptr;
 	TextLabel* SelectLabel = nullptr;
 	TextLabel* ParametersLabel = nullptr;
 	ListView* GamesList = nullptr;

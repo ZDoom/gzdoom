@@ -68,7 +68,6 @@ void LauncherWindow::UpdateLanguage()
 {
 	Pages->SetTabText(PlayGame, GStrings.GetString("PICKER_TAB_PLAY"));
 	Pages->SetTabText(Settings, GStrings.GetString("OPTMNU_TITLE"));
-	Banner->UpdateLanguage();
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();
 	Buttonbar->UpdateLanguage();

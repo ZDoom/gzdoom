@@ -5587,7 +5587,7 @@ void P_RailAttack(FRailParams *p)
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
 		// [RK] If the attack source is a player, send the DMG_PLAYERATTACK flag.
-		int newdam = P_DamageMobj(hitactor, hitpuff ? hitpuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0), hitangle);
+		int newdam = P_DamageMobj(hitactor, hitpuff ? hitpuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0) | DMG_RAILGUN, hitangle);
 
 		if (bleed)
 		{
@@ -5630,7 +5630,7 @@ void P_RailAttack(FRailParams *p)
 		}
 	}
 
-	source->Level->localEventManager->WorldRailgunFired(source, start, trace.HitPos, thepuff, flags);
+	source->Level->localEventManager->WorldRailgunFired(source, start, trace.HitPos, thepuff, p->flags);
 
 	if (thepuff != NULL)
 	{

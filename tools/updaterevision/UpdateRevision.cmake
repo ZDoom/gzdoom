@@ -15,16 +15,20 @@ endmacro()
 # Populate variables "Hash", "Tag", and "Timestamp" with relevant information
 # from source repository.  If anything goes wrong return something in "Error."
 function(query_repo_info)
-	execute_process(
-		COMMAND git describe --tags --dirty=-m
-		RESULT_VARIABLE Error
-		OUTPUT_VARIABLE Tag
-		ERROR_QUIET
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-	if(NOT "${Error}" STREQUAL "0")
-		ret_var(Error)
-		return()
+	if(DEFINED ENV{GIT_DESCRIBE})
+		set(Tag "$ENV{GIT_DESCRIBE}")
+	else()
+		execute_process(
+			COMMAND git describe --tags --dirty=-m
+			RESULT_VARIABLE Error
+			OUTPUT_VARIABLE Tag
+			ERROR_QUIET
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+		if(NOT "${Error}" STREQUAL "0")
+			ret_var(Error)
+			return()
+		endif()
 	endif()
 
 	execute_process(

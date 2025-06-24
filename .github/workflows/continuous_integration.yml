@@ -73,7 +73,11 @@ jobs:
           wget -q "https://github.com/coelckers/gzdoom/releases/download/ci_deps/${ZMUSIC_PACKAGE}"
           tar -xf "${ZMUSIC_PACKAGE}"
         fi
-    
+
+    - name: Git describe
+      id: ghd
+      uses: proudust/gh-describe@v2
+
     - name: Configure
       shell: bash
       run: |
@@ -82,6 +86,7 @@ jobs:
     - name: Build
       shell: bash
       run: |
+        export GIT_DESCRIBE="${{ steps.ghd.outputs.describe }}"
         export MAKEFLAGS=--keep-going
         cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
 

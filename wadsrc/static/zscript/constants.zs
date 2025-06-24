@@ -977,6 +977,7 @@ enum EDmgFlags
 	DMG_NO_PAIN = 1024,
 	DMG_EXPLOSION = 2048,
 	DMG_NO_ENHANCE = 4096,
+	DMG_RAILGUN = 8192,
 }
 
 enum EReplace

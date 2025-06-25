@@ -1651,6 +1651,19 @@ void NetUpdate(int tics)
 // from the frontend should be put in these, all backend handling should be
 // done in the core files.
 
+size_t Net_SetEngineInfo(uint8_t*& stream)
+{
+	stream[0] = VER_MAJOR % 256;
+	stream[1] = VER_MINOR % 256;
+	stream[2] = VER_REVISION % 256;
+	return 3u;
+}
+
+bool Net_VerifyEngine(uint8_t*& stream)
+{
+	return stream[0] == (VER_MAJOR % 256) && stream[1] == (VER_MINOR % 256) && stream[2] == (VER_REVISION % 256);
+}
+
 void Net_SetupUserInfo()
 {
 	D_SetupUserInfo();

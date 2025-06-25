@@ -76,7 +76,6 @@
 #include "printf.h"
 #include "i_interface.h"
 #include "c_cvars.h"
-#include "version.h"
 #include "i_net.h"
 #include "m_random.h"
 
@@ -187,6 +186,9 @@ CUSTOM_CVAR(String, net_password, "", CVAR_IGNORE)
 	}
 }
 
+// Game-specific API
+size_t Net_SetEngineInfo(uint8_t*& stream);
+bool Net_VerifyEngine(uint8_t*& stream);
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
 size_t Net_SetUserInfo(int client, uint8_t*& stream);
@@ -785,6 +787,7 @@ static bool Host_CheckForConnections(void* connected)
 			if (RemoteClient >= 0)
 				continue;
 
+			uint8_t* engineInfo = &NetBuffer[2];
 			size_t banned = 0u;
 			for (; banned < BannedConnections.Size(); ++banned)
 			{
@@ -796,7 +799,7 @@ static bool Host_CheckForConnections(void* connected)
 			{
 				RejectConnection(from, PRE_BANNED);
 			}
-			else if (NetBuffer[2] % 256 != VER_MAJOR || NetBuffer[3] % 256 != VER_MINOR || NetBuffer[4] % 256 != VER_REVISION)
+			else if (!Net_VerifyEngine(engineInfo))
 			{
 				RejectConnection(from, PRE_WRONG_ENGINE);
 			}
@@ -1181,12 +1184,11 @@ static bool Guest_ContactHost(void* unused)
 	if (consoleplayer == -1)
 	{
 		NetBuffer[1] = PRE_CONNECT;
-		NetBuffer[2] = VER_MAJOR % 256;
-		NetBuffer[3] = VER_MINOR % 256;
-		NetBuffer[4] = VER_REVISION % 256;
+		uint8_t* engineInfo = &NetBuffer[2];
+		const size_t end = 2u + Net_SetEngineInfo(engineInfo);
 		const size_t passSize = strlen(net_password) + 1;
-		memcpy(&NetBuffer[5], net_password, passSize);
-		NetBufferLength = 5u + passSize;
+		memcpy(&NetBuffer[end], net_password, passSize);
+		NetBufferLength = end + passSize;
 		SendPacket(Connected[0].Address);
 	}
 	else

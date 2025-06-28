@@ -229,33 +229,53 @@ enum ECheatCommand
 	CHT_MASSACRE2
 };
 
-void StartChunk (int id, uint8_t **stream);
-void FinishChunk (uint8_t **stream);
-void SkipChunk (uint8_t **stream);
+void StartChunk (int id, TArrayView<uint8_t>& stream);
+void FinishChunk (TArrayView<uint8_t>& stream);
+void SkipChunk (TArrayView<uint8_t>& stream);
 
-// Returns the number of bytes written to the stream
-int UnpackUserCmd(usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
-int PackUserCmd(const usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
-int WriteUserCmdMessage(const usercmd_t& ucmd, const usercmd_t *basis, uint8_t*& stream);
+void UnpackUserCmd(usercmd_t& ucmd, const usercmd_t* basis, TArrayView<uint8_t>& stream);
+void PackUserCmd(const usercmd_t& ucmd, const usercmd_t* basis, TArrayView<uint8_t>& stream);
+void WriteUserCmdMessage(const usercmd_t& ucmd, const usercmd_t *basis, TArrayView<uint8_t>& stream);
 
-int SkipUserCmdMessage(uint8_t*& stream);
-int ReadUserCmdMessage(uint8_t*& stream, int player, int tic);
+void SkipUserCmdMessage(TArrayView<uint8_t>& stream);
+void ReadUserCmdMessage(TArrayView<uint8_t>& stream, int player, int tic);
 void RunPlayerCommands(int player, int tic);
 
-uint8_t ReadInt8 (uint8_t **stream);
-int16_t ReadInt16 (uint8_t **stream);
-int32_t ReadInt32 (uint8_t **stream);
-int64_t ReadInt64(uint8_t** stream);
-float ReadFloat (uint8_t **stream);
-double ReadDouble(uint8_t** stream);
-char *ReadString (uint8_t **stream);
-const char *ReadStringConst(uint8_t **stream);
-void WriteInt8 (uint8_t val, uint8_t **stream);
-void WriteInt16 (int16_t val, uint8_t **stream);
-void WriteInt32 (int32_t val, uint8_t **stream);
-void WriteInt64(int64_t val, uint8_t** stream);
-void WriteFloat (float val, uint8_t **stream);
-void WriteDouble(double val, uint8_t** stream);
-void WriteString (const char *string, uint8_t **stream);
+uint8_t UncheckedReadInt8(uint8_t** stream);
+int16_t UncheckedReadInt16(uint8_t** stream);
+int32_t UncheckedReadInt32(uint8_t** stream);
+int64_t UncheckedReadInt64(uint8_t** stream);
+float UncheckedReadFloat(uint8_t** stream);
+double UncheckedReadDouble(uint8_t** stream);
+char* UncheckedReadString(uint8_t** stream);
+const char* UncheckedReadStringConst(uint8_t** stream);
+void UncheckedWriteInt8(uint8_t val, uint8_t** stream);
+void UncheckedWriteInt16(int16_t val, uint8_t** stream);
+void UncheckedWriteInt32(int32_t val, uint8_t** stream);
+void UncheckedWriteInt64(int64_t val, uint8_t** stream);
+void UncheckedWriteFloat(float val, uint8_t** stream);
+void UncheckedWriteDouble(double val, uint8_t** stream);
+void UncheckedWriteString(const char* string, uint8_t** stream);
+
+void AdvanceStream(TArrayView<uint8_t>& stream, size_t bytes);
+
+uint8_t ReadInt8(TArrayView<uint8_t>& stream);
+int16_t ReadInt16(TArrayView<uint8_t>& stream);
+int32_t ReadInt32(TArrayView<uint8_t>& stream);
+int64_t ReadInt64(TArrayView<uint8_t>& stream);
+float ReadFloat(TArrayView<uint8_t>& stream);
+double ReadDouble(TArrayView<uint8_t>& stream);
+char* ReadString(TArrayView<uint8_t>& stream);
+const char* ReadStringConst(TArrayView<uint8_t>& stream);
+void ReadBytes(TArrayView<uint8_t>& dst, TArrayView<uint8_t>& stream);
+void WriteInt8(uint8_t val, TArrayView<uint8_t>& stream);
+void WriteInt16(int16_t val, TArrayView<uint8_t>& stream);
+void WriteInt32(int32_t val, TArrayView<uint8_t>& stream);
+void WriteInt64(int64_t val, TArrayView<uint8_t>& stream);
+void WriteFloat(float val, TArrayView<uint8_t>& stream);
+void WriteDouble(double val, TArrayView<uint8_t>& stream);
+void WriteString(const char* string, TArrayView<uint8_t>& stream);
+void WriteBytes(const TArrayView<uint8_t>& source, TArrayView<uint8_t>& stream);
+void WriteFString(FString& string, TArrayView<uint8_t>& stream);
 
 #endif //__D_PROTOCOL_H__

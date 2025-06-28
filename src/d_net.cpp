@@ -158,7 +158,7 @@ void D_ProcessEvents(void);
 void G_BuildTiccmd(usercmd_t *cmd);
 void D_DoAdvanceDemo(void);
 
-static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always);
+static void RunScript(TArrayView<uint8_t>& stream, AActor *pawn, int snum, int argn, int always);
 
 extern	bool	 advancedemo;
 
@@ -297,7 +297,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(1);
-			WriteInt8(it, &CurrentStream);
+			UncheckedWriteInt8(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -307,7 +307,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(2);
-			WriteInt16(it, &CurrentStream);
+			UncheckedWriteInt16(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -317,7 +317,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(4);
-			WriteInt32(it, &CurrentStream);
+			UncheckedWriteInt32(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -327,7 +327,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(8);
-			WriteInt64(it, &CurrentStream);
+			UncheckedWriteInt64(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -337,7 +337,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(4);
-			WriteFloat(it, &CurrentStream);
+			UncheckedWriteFloat(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -347,7 +347,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(8);
-			WriteDouble(it, &CurrentStream);
+			UncheckedWriteDouble(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -357,7 +357,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(strlen(it) + 1);
-			WriteString(it, &CurrentStream);
+			UncheckedWriteString(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -603,24 +603,24 @@ static size_t GetNetBufferSize()
 	if (NetBufferLength < totalBytes + playerCount * padding)
 		return totalBytes + playerCount * padding;
 
-	uint8_t* skipper = &NetBuffer[totalBytes];
+	TArrayView<uint8_t> skipper = TArrayView(&NetBuffer[totalBytes], MAX_MSGLEN - totalBytes);
 	for (int p = 0; p < playerCount; ++p)
 	{
-		++skipper;
+		AdvanceStream(skipper, 1);
 		if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
-			skipper += 2;
+			AdvanceStream(skipper, 2);
 
 		for (int i = 0; i < ranTics; ++i)
-			skipper += 3;
+			AdvanceStream(skipper, 3);
 
 		for (int i = 0; i < numTics; ++i)
 		{
-			++skipper;
+			AdvanceStream(skipper, 1);
 			SkipUserCmdMessage(skipper);
 		}
 	}
 
-	return int(skipper - NetBuffer);
+	return int(skipper.Data() - NetBuffer);
 }
 
 //
@@ -992,14 +992,19 @@ static void GetPackets()
 			// Each tic within a given packet is given a sequence number to ensure that things were put
 			// back together correctly. Normally this wouldn't matter as much but since we need to keep
 			// clients in lock step a misordered packet will instantly cause a desync.
-			TArray<uint8_t*> data = {};
+			TArray<TArrayView<uint8_t>> data = {}; // each contained TArrayView represents a packet.
 			for (int t = 0; t < totalTics; ++t)
 			{
 				// Try and reorder the tics if they're all there but end up out of order.
 				const int ofs = NetBuffer[curByte++];
-				data.Insert(ofs, &NetBuffer[curByte]);
-				uint8_t* skipper = &NetBuffer[curByte];
-				curByte += SkipUserCmdMessage(skipper);
+
+				TArrayView<uint8_t> skipper = TArrayView(&NetBuffer[curByte], MAX_MSGLEN - curByte);
+				SkipUserCmdMessage(skipper);
+
+				TArrayView<uint8_t> packet = TArrayView(&NetBuffer[curByte], skipper.Data() - &NetBuffer[curByte]);
+				data.Insert(ofs, packet);
+
+				curByte += skipper.Data() - &NetBuffer[curByte];
 			}
 
 			// If it's from a previous waiting period, the commands are no longer relevant.
@@ -1722,38 +1727,29 @@ void NetUpdate(int tics)
 
 				// Client commands.
 
-				uint8_t* cmd = &NetBuffer[size];
+				TArrayView<uint8_t> cmd = TArrayView(&NetBuffer[size], MAX_MSGLEN - size);
 				for (int i = 0; i < playerCount; ++i)
 				{
-					cmd[0] = playerNums[i];
-					++cmd;
+					WriteInt8(playerNums[i], cmd);
 
 					auto& clientState = ClientStates[playerNums[i]];
 					// Time used to track latency since in packet server mode we want each
 					// client's latency to the server itself.
 					if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
 					{
-						cmd[0] = (clientState.AverageLatency >> 8);
-						++cmd;
-						cmd[0] = clientState.AverageLatency;
-						++cmd;
+						WriteInt16(clientState.AverageLatency, cmd);
 					}
 
 					for (int r = 0; r < sendCon; ++r)
 					{
-						cmd[0] = r;
-						++cmd;
+						WriteInt8(r, cmd);
 						const int tic = (baseConsistency + curTicOfs + r) % BACKUPTICS;
-						cmd[0] = (clientState.LocalConsistency[tic] >> 8);
-						++cmd;
-						cmd[0] = clientState.LocalConsistency[tic];
-						++cmd;
+						WriteInt16(clientState.LocalConsistency[tic], cmd);
 					}
 
 					for (int t = 0; t < sendTics; ++t)
 					{
-						cmd[0] = t;
-						++cmd;
+						WriteInt8(t, cmd);
 
 						int curTic = sequenceNum + curTicOfs + t, lastTic = curTic - 1;
 						if (playerNums[i] == consoleplayer)
@@ -1763,11 +1759,7 @@ void NetUpdate(int tics)
 							// Write out the net events before the user commands so inputs can
 							// be used as a marker for when the given command ends.
 							auto& stream = NetEvents.Streams[curTic % BACKUPTICS];
-							if (stream.Used)
-							{
-								memcpy(cmd, stream.Stream, stream.Used);
-								cmd += stream.Used;
-							}
+							WriteBytes(TArrayView(stream.Stream, stream.Used), cmd);
 
 							WriteUserCmdMessage(LocalCmds[realTic],
 								realLastTic >= 0 ? &LocalCmds[realLastTic] : nullptr, cmd);
@@ -1776,13 +1768,8 @@ void NetUpdate(int tics)
 						{
 							auto& netTic = clientState.Tics[curTic % BACKUPTICS];
 
-							int len;
-							uint8_t* data = netTic.Data.GetData(&len);
-							if (data != nullptr)
-							{
-								memcpy(cmd, data, len);
-								cmd += len;
-							}
+							auto data = netTic.Data.GetTArrayView();
+							WriteBytes(data, cmd);
 
 							WriteUserCmdMessage(netTic.Command,
 								lastTic >= 0 ? &clientState.Tics[lastTic % BACKUPTICS].Command : nullptr, cmd);
@@ -1790,9 +1777,9 @@ void NetUpdate(int tics)
 					}
 				}
 
-				HSendPacket(client, int(cmd - NetBuffer));
+				HSendPacket(client, int(cmd.Data() - NetBuffer));
 				if (net_extratic && !isSelf)
-					HSendPacket(client, int(cmd - NetBuffer));
+					HSendPacket(client, int(cmd.Data() - NetBuffer));
 			}
 		}
 	}
@@ -1834,70 +1821,52 @@ const char* Net_GetClientName(int client, unsigned int charLimit = 0u)
 	return players[client].userinfo.GetName(charLimit);
 }
 
-size_t Net_SetUserInfo(int client, uint8_t*& stream)
+void Net_SetUserInfo(int client, TArrayView<uint8_t>& stream)
 {
 	auto str = D_GetUserInfoStrings(client, true);
-	const size_t userSize = str.Len() + 1;
-	memcpy(stream, str.GetChars(), userSize);
-	return userSize;
+	WriteFString(str, stream);
 }
 
-size_t Net_ReadUserInfo(int client, uint8_t*& stream)
+void Net_ReadUserInfo(int client, TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	D_ReadUserInfoStrings(client, &stream, false);
-	return stream - start;
+	D_ReadUserInfoStrings(client, stream, false);
 }
 
-size_t Net_SetGameInfo(uint8_t*& stream)
+void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	WriteString(startmap.GetChars(), &stream);
-	WriteInt32(rngseed, &stream);
-	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
+	WriteFString(startmap, stream);
+	WriteInt32(rngseed, stream);
+	C_WriteCVars(stream, CVAR_SERVERINFO, true);
 
 	auto load = Args->CheckValue("-loadgame");
 	if (load != nullptr)
 	{
-		stream[0] = true;
-		const size_t len = strlen(load) + 1;
-		memcpy(&stream[1], load, len);
-		stream += len;
+		WriteInt8(1, stream);
+		WriteString(load, stream);
 	}
 	else
 	{
-		stream[0] = false;
+		WriteInt8(0, stream);
 	}
-
-	return (stream + 1) - start;
 }
 
-size_t Net_ReadGameInfo(uint8_t*& stream)
+void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	startmap = ReadStringConst(&stream);
-	rngseed = ReadInt32(&stream);
-	C_ReadCVars(&stream);
+	startmap = ReadStringConst(stream);
+	rngseed = ReadInt32(stream);
+	C_ReadCVars(stream);
 
-	if (stream[0])
+	if (ReadInt8(stream))
 	{
-		++stream;
-		const size_t len = strlen((char*)stream) + 1;
+		auto load = ReadString(stream);
 		// Don't override the existing argument in case they need to use
 		// a custom savefile name.
 		if (!Args->CheckParm("-loadgame"))
 		{
 			Args->AppendArg("-loadgame");
-			Args->AppendArg((char*)stream);
+			Args->AppendArg(load);
 		}
-		stream += len;
 	}
-	else
-	{
-		++stream;
-	}
-
-	return stream - start;
 }
 
 // Connects players to each other if needed.
@@ -2412,6 +2381,11 @@ uint8_t *FDynamicBuffer::GetData(int *len)
 	return m_Len ? m_Data : nullptr;
 }
 
+TArrayView<uint8_t> FDynamicBuffer::GetTArrayView()
+{
+	return TArrayView(m_Data, m_Len);
+}
+
 static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 {
 	AActor *actor;
@@ -2447,7 +2421,7 @@ static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
-void Net_DoCommand(int cmd, uint8_t **stream, int player)
+void Net_DoCommand(int cmd, TArrayView<uint8_t>& stream, int player)
 {
 	uint8_t pos = 0;
 	const char* s = nullptr;
@@ -3040,7 +3014,7 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 }
 
 // Used by DEM_RUNSCRIPT, DEM_RUNSCRIPT2, and DEM_RUNNAMEDSCRIPT
-static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always)
+static void RunScript(TArrayView<uint8_t>& stream, AActor *pawn, int snum, int argn, int always)
 {
 	// Scripts can be invoked without a level loaded, e.g. via puke(name) CCMD in fullscreen console
 	if (pawn == nullptr)
@@ -3061,44 +3035,44 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 // not to execute them. Right now this is making setting up net commands a nightmare.
 // Reads through the network stream but doesn't actually execute any command. Used for getting the size of a stream.
 // The skip amount is the number of bytes the command possesses. This should mirror the bytes in Net_DoCommand().
-void Net_SkipCommand(int cmd, uint8_t **stream)
+void Net_SkipCommand(int cmd, TArrayView<uint8_t>& stream)
 {
 	size_t skip = 0;
 	switch (cmd)
 	{
 		case DEM_SAY:
-			skip = strlen((char *)(*stream + 1)) + 2;
+			skip = strlen((char *)(stream.Data() + 1)) + 2;
 			break;
 
 		case DEM_ADDBOT:
-			skip = strlen((char *)(*stream + 1)) + 6;
+			skip = strlen((char *)(stream.Data() + 1)) + 6;
 			break;
 
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
-			skip = strlen((char *)(*stream)) + 5;
+			skip = strlen((char *)(stream.Data())) + 5;
 			break;
 
 		case DEM_SETINV:
-			skip = strlen((char *)(*stream)) + 6;
+			skip = strlen((char *)(stream.Data())) + 6;
 			break;
 
 		case DEM_NETEVENT:
-			skip = strlen((char *)(*stream)) + 15;
+			skip = strlen((char *)(stream.Data())) + 15;
 			break;
 
 		case DEM_ZSC_CMD:
-			skip = strlen((char*)(*stream)) + 1;
-			skip += (((*stream)[skip] << 8) | (*stream)[skip + 1]) + 2;
+			skip = strlen((char*)(stream.Data())) + 1;
+			skip += (stream[skip] << 8) | (stream[skip + 1]) + 2;
 			break;
 
 		case DEM_SUMMON2:
 		case DEM_SUMMONFRIEND2:
 		case DEM_SUMMONFOE2:
-			skip = strlen((char *)(*stream)) + 26;
+			skip = strlen((char *)(stream.Data())) + 26;
 			break;
 		case DEM_CHANGEMAP2:
-			skip = strlen((char *)(*stream + 1)) + 2;
+			skip = strlen((char *)(stream.Data() + 1)) + 2;
 			break;
 		case DEM_MUSICCHANGE:
 		case DEM_PRINT:
@@ -3114,7 +3088,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 		case DEM_MORPHEX:
 		case DEM_KILLCLASSCHEAT:
 		case DEM_MDK:
-			skip = strlen((char *)(*stream)) + 1;
+			skip = strlen((char *)(stream.Data())) + 1;
 			break;
 
 		case DEM_WARPCHEAT:
@@ -3141,14 +3115,14 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 			break;
 
 		case DEM_SAVEGAME:
-			skip = strlen((char *)(*stream)) + 1;
-			skip += strlen((char *)(*stream) + skip) + 1;
+			skip = strlen((char *)(stream.Data())) + 1;
+			skip += strlen((char *)(stream.Data()) + skip) + 1;
 			break;
 
 		case DEM_SINFCHANGEDXOR:
 		case DEM_SINFCHANGED:
 			{
-				uint8_t t = **stream;
+				uint8_t t = stream[0];
 				skip = 1 + (t & 63);
 				if (cmd == DEM_SINFCHANGED)
 				{
@@ -3162,7 +3136,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 						skip += 4;
 						break;
 					case CVAR_String:
-						skip += strlen((char*)(*stream + skip)) + 1;
+						skip += strlen((char*)(stream.Data() + skip)) + 1;
 						break;
 					}
 				}
@@ -3175,16 +3149,16 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 
 		case DEM_RUNSCRIPT:
 		case DEM_RUNSCRIPT2:
-			skip = 3 + *(*stream + 2) * 4;
+			skip = 3 + *(stream.Data() + 2) * 4;
 			break;
 
 		case DEM_RUNNAMEDSCRIPT:
-			skip = strlen((char *)(*stream)) + 2;
-			skip += ((*(*stream + skip - 1)) & 127) * 4;
+			skip = strlen((char *)(stream.Data())) + 2;
+			skip += ((*(stream.Data() + skip - 1)) & 127) * 4;
 			break;
 
 		case DEM_RUNSPECIAL:
-			skip = 3 + *(*stream + 2) * 4;
+			skip = 3 + *(stream.Data() + 2) * 4;
 			break;
 
 		case DEM_CONVREPLY:
@@ -3195,14 +3169,14 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 		case DEM_SETSLOTPNUM:
 			{
 				skip = 2 + (cmd == DEM_SETSLOTPNUM);
-				for (int numweapons = (*stream)[skip-1]; numweapons > 0; --numweapons)
-					skip += 1 + ((*stream)[skip] >> 7);
+				for (int numweapons = stream[skip-1]; numweapons > 0; --numweapons)
+					skip += 1 + (stream[skip] >> 7);
 			}
 			break;
 
 		case DEM_ADDSLOT:
 		case DEM_ADDSLOTDEFAULT:
-			skip = 2 + ((*stream)[1] >> 7);
+			skip = 2 + (stream[1] >> 7);
 			break;
 
 		case DEM_SETPITCHLIMIT:
@@ -3210,7 +3184,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 			break;
 	}
 
-	*stream += skip;
+	AdvanceStream(stream, skip);
 }
 
 // This was taken out of shared_hud, because UI code shouldn't do low level calculations that may change if the backing implementation changes.

@@ -249,9 +249,9 @@ void D_PickRandomTeam (int player)
 {
 	static char teamline[8] = "\\team\\X";
 
-	uint8_t *foo = (uint8_t *)teamline;
+	auto foo = TArrayView((uint8_t *)teamline, sizeof(teamline));
 	teamline[6] = (char)D_PickRandomTeam() + '0';
-	D_ReadUserInfoStrings (player, &foo, teamplay);
+	D_ReadUserInfoStrings (player, foo, teamplay);
 }
 
 int D_PickRandomTeam ()
@@ -581,7 +581,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	Net_WriteString (foo);
 }
 
-static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)
+static const char *SetServerVar (char *name, ECVarType type, TArrayView<uint8_t>& stream, bool singlebit)
 {
 	FBaseCVar *var = FindCVar (name, NULL);
 	UCVarValue value;
@@ -711,7 +711,7 @@ bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 	return false;
 }
 
-void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
+void D_DoServerInfoChange (TArrayView<uint8_t>& stream, bool singlebit)
 {
 	const char *value;
 	char name[64];
@@ -723,8 +723,8 @@ void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
 	len &= 0x3f;
 	if (len == 0)
 		return;
-	memcpy (name, *stream, len);
-	*stream += len;
+	auto dst = TArrayView((uint8_t*)name, len);
+	ReadBytes(dst, stream);
 	name[len] = 0;
 
 	if ( (value = SetServerVar (name, (ECVarType)type, stream, singlebit)) && netgame)
@@ -808,12 +808,12 @@ FString D_GetUserInfoStrings(int pnum, bool compact)
 	return result;
 }
 
-void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
+void D_ReadUserInfoStrings (int pnum, TArrayView<uint8_t>& stream, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 	TArray<FName> compact_names(info->CountUsed());
 	FBaseCVar **cvar_ptr;
-	const char *ptr = *((const char **)stream);
+	const char *ptr = (const char *)stream.Data();
 	const char *breakpt;
 	FString value;
 	bool compact;
@@ -944,7 +944,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			}
 		}
 	}
-	*stream += strlen (*((char **)stream)) + 1;
+	AdvanceStream(stream, strlen((char*)stream.Data()) + 1);
 }
 
 void WriteUserInfo(FSerializer &arc, userinfo_t &info)

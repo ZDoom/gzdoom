@@ -2617,7 +2617,7 @@ void G_BeginRecording (const char *startmap)
 			WriteInt8((uint8_t)i, &demo_p);
 			auto str = D_GetUserInfoStrings(i);
 			memcpy(demo_p, str.GetChars(), str.Len() + 1);
-			demo_p += str.Len();
+			demo_p += str.Len() + 1;
 			FinishChunk(&demo_p);
 		}
 	}

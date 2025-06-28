@@ -248,7 +248,7 @@ private:
 		DPrintf(DMSG_NOTIFY, "Expanding special size to %zu\n", MaxSize);
 
 		for (auto& stream : Streams)
-			Streams->Grow(MaxSize);
+			stream.Grow(MaxSize);
 
 		CurrentStream = Streams[CurrentClientTic % BACKUPTICS].Stream + CurrentSize;
 	}

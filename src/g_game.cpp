@@ -127,7 +127,7 @@ CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
-EXTERN_CVAR(Bool, net_disablepause)
+EXTERN_CVAR(Int, net_disablepause)
 
 //==========================================================================
 //
@@ -351,10 +351,18 @@ CCMD (land)
 
 CCMD (pause)
 {
-	if (netgame && !players[consoleplayer].settings_controller && net_disablepause)
+	if (netgame)
 	{
-		Printf("Only settings controllers can currently (un)pause the game\n");
-		return;
+		if (net_disablepause == 2 && (!paused || !players[consoleplayer].settings_controller))
+		{
+			Printf("Pausing the game is currently disabled\n");
+			return;
+		}
+		else if (net_disablepause == 1 && !players[consoleplayer].settings_controller)
+		{
+			Printf("Only settings controllers can currently (un)pause the game\n");
+			return;
+		}
 	}
 
 	sendpause = true;

@@ -265,6 +265,11 @@ FString &FString::operator = (const char *copyStr)
 	return *this;
 }
 
+TArrayView<uint8_t> FString::GetTArrayView()
+{
+	return TArrayView((uint8_t*)Chars, Len() + 1);
+}
+
 void FString::Format (const char *fmt, ...)
 {
 	va_list arglist;

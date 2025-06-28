@@ -319,7 +319,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
+void FCajunMaster::TryAddBot (FLevelLocals *Level, TArrayView<uint8_t>& stream, int player)
 {
 	int botshift = ReadInt8 (stream);
 	char *info = ReadString (stream);
@@ -342,7 +342,7 @@ void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
 		}
 	}
 
-	if (DoAddBot (Level,(uint8_t *)info, skill))
+	if (DoAddBot (Level, TArrayView((uint8_t*)info, strlen(info)+1), skill))
 	{
 		//Increment this.
 		botnum++;
@@ -363,7 +363,7 @@ void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
 	delete[] info;
 }
 
-bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skill)
+bool FCajunMaster::DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, botskill_t skill)
 {
 	int bnum;
 
@@ -381,7 +381,7 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skil
 		return false;
 	}
 
-	D_ReadUserInfoStrings (bnum, &info, false);
+	D_ReadUserInfoStrings (bnum, info, false);
 
 	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
 	players[bnum].Bot = Level->CreateThinker<DBot>();

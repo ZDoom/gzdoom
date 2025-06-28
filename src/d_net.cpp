@@ -1990,7 +1990,7 @@ void TryRunTics()
 	// If the amount of tics to run is falling behind the amount of available tics,
 	// speed the playsim up a bit to help catch up.
 	int runTics = min<int>(totalTics, availableTics);
-	if (totalTics > 0 && totalTics < availableTics - 1 && !singletics)
+	if (totalTics > 0 && totalTics < availableTics && !singletics)
 		++runTics;
 
 	// Test player prediction code in singleplayer

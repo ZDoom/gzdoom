@@ -533,6 +533,10 @@ void MessagePump (const SDL_Event &sev)
 			D_PostEvent(&event);
 		break;
 
+	case SDL_CONTROLLERBUTTONDOWN:
+	case SDL_CONTROLLERBUTTONUP:
+		break;
+
 	case SDL_JOYDEVICEADDED:
 	case SDL_JOYDEVICEREMOVED:
 		I_UpdateDeviceList();

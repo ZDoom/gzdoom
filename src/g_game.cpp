@@ -246,7 +246,7 @@ CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
 #endif // _M_X64 && _MSC_VER < 1910
 
 // [RH] Allow turbo setting anytime during game
-CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
+CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL | CVAR_CHEAT)
 {
 	if (self < 10.f)
 	{

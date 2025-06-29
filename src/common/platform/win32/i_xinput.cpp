@@ -67,6 +67,8 @@
 
 extern bool AppActive;
 
+EXTERN_CVAR(Bool, use_joystick)
+
 // TYPES -------------------------------------------------------------------
 
 typedef DWORD (WINAPI *XInputGetStateType)(DWORD index, XINPUT_STATE *state);
@@ -1035,6 +1037,8 @@ void I_StartupXInput()
 }
 
 void I_Rumble(double high_freq, double low_freq, double _left_trig, double _right_trig) {
+	if (!use_joystick) return;
+
 	FXInputManager* XInputManager = & static_cast<FXInputManager&> (*JoyDevices[INPUT_XInput]);
 	if (XInputManager != NULL)
 	{

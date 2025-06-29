@@ -22,6 +22,7 @@ class PlayerPawn : Actor
 	int			MaxHealth;
 	int			BonusHealth;
 	int			MugShotMaxHealth;
+	int			MaxPickupHealth; // overrides MaxAmount of pickups and BonusHealth.
 	int			RunHealth;
 	private int	PlayerFlags;
 	clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar

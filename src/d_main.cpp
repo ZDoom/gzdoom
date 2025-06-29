@@ -2079,6 +2079,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 static void CheckCmdLine()
 {
 	int flags = dmflags;
+	int flags3 = dmflags3;
 	int p;
 	const char *v;
 
@@ -2099,8 +2100,18 @@ static void CheckCmdLine()
 		deathmatch = 1;
 		flags |= DF_WEAPONS_STAY | DF_ITEMS_RESPAWN;
 	}
+	else if (Args->CheckParm("-coop"))
+	{
+		deathmatch = teamplay = 0;
+		flags |= DF_NO_COOP_WEAPON_SPAWN;
+		flags3 |= DF3_NO_PLAYER_CLIP | DF3_COOP_SHARE_KEYS | DF3_REMEMBER_LAST_WEAP;
+		// Hexen already has a bunch of custom coop items so let it handle it.
+		if (gameinfo.gametype != GAME_Hexen)
+			flags3 |= DF3_LOCAL_ITEMS;
+	}
 
 	dmflags = flags;
+	dmflags3 = flags3;
 
 	// get skill / episode / map from parms
 	if (gameinfo.gametype != GAME_Hexen)
@@ -3906,6 +3917,7 @@ UNSAFE_CCMD(debug_restart)
 	Args->RemoveArgs("-file");
 	Args->RemoveArgs("-altdeath");
 	Args->RemoveArgs("-deathmatch");
+	Args->RemoveArgs("-coop");
 	Args->RemoveArgs("-skill");
 	Args->RemoveArgs("-savedir");
 	Args->RemoveArgs("-xlat");

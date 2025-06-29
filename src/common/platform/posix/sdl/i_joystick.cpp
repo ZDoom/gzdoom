@@ -43,6 +43,8 @@
 #define HAPTICS          0b0001
 #define HAPTICS_TRIGGERS 0b0010
 
+EXTERN_CVAR(Bool, use_joystick)
+
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
@@ -587,6 +589,8 @@ void I_GetAxes(float axes[NUM_JOYAXIS])
 
 void I_Rumble(double high_freq, double low_freq, double left_trig, double right_trig)
 {
+	if (!use_joystick) return;
+
 	JoystickManager->Rumble(
 		-1, // just turn on for max time. we will handle turning off
 		static_cast<uint16_t> (0xffff * std::min(std::max(0.0, high_freq), 1.0)),

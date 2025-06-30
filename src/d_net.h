@@ -109,6 +109,7 @@ struct FClientNetState
 
 	int				Flags = 0;				// State of this client.
 
+	uint8_t			StabilityBuffer = 0u;	// If in packet-server mode, account for if the client is trying to stabilize when measuring their performance.
 	uint8_t			ResendID = 0u;			// Make sure that if the retransmit happened on a wait barrier, it can be properly resent back over.
 	int				ResendSequenceFrom = -1; // If >= 0, send from this sequence up to the most recent one, capped to MAXSENDTICS.
 	int				SequenceAck = -1;		// The last sequence the client reported from us.

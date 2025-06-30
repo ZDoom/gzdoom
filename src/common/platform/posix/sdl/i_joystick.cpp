@@ -40,7 +40,7 @@
 #include "m_joy.h"
 #include "keydef.h"
 
-#define DEFAULT_DEADZONE 0.25f;
+#define DEFAULT_DEADZONE 0.1f;
 
 // Very small deadzone so that floating point magic doesn't happen
 #define MIN_DEADZONE 0.000001f
@@ -239,8 +239,8 @@ protected:
 		double Value;
 		uint8_t ButtonValue;
 	};
-	static const EJoyAxis DefaultJoystickAxes[5];
-	static const EJoyAxis DefaultControllerAxes[6];
+	static const EJoyAxis DefaultJoystickAxes[4];
+	static const EJoyAxis DefaultControllerAxes[4];
 	const EJoyAxis * DefaultAxes;
 	int DefaultAxesCount;
 
@@ -258,12 +258,11 @@ protected:
 };
 
 // [Nash 4 Feb 2024] seems like on Linux, the third axis is actually the Left Trigger, resulting in the player uncontrollably looking upwards.
-const EJoyAxis SDLInputJoystick::DefaultJoystickAxes[5] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_None, JOYAXIS_Yaw, JOYAXIS_Pitch};
+// [Marcus 30 June 2025] reverted in favour of using GameController API
+const EJoyAxis SDLInputJoystick::DefaultJoystickAxes[4] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Yaw, JOYAXIS_Pitch};
 
-// Defaults if we have access to the Gamepad API for this device
-const EJoyAxis SDLInputJoystick::DefaultControllerAxes[6] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Yaw, JOYAXIS_Pitch, JOYAXIS_None, JOYAXIS_None};
-
-
+// Defaults if we have access to the GameController API for this device
+const EJoyAxis SDLInputJoystick::DefaultControllerAxes[4] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Yaw, JOYAXIS_Pitch};
 
 class SDLInputJoystickManager
 {

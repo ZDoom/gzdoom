@@ -36,6 +36,7 @@
 #include "basics.h"
 #include "cmdlib.h"
 
+#include "d_eventbase.h"
 #include "m_joy.h"
 #include "keydef.h"
 
@@ -226,88 +227,7 @@ public:
 		}
 	}
 
-	void ProcessInput()
-	{
-		uint8_t buttonstate;
-
-		if (Mapping)
-		{
-			// GameController API available
-
-			for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
-			{
-				buttonstate = 0;
-
-				Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
-				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-			}
-
-			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
-			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
-			Axes[0].ButtonValue = buttonstate;
-
-		}
-		else
-		{
-			// Joystick API fallback
-
-			for (int i = 0; i < NumAxes; ++i)
-			{
-				buttonstate = 0;
-
-				Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
-				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-
-				// Map button to axis
-				// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.
-				if (NumAxes == 1 || (i >= 2 && i < NUM_JOYAXISBUTTONS))
-				{
-					Joy_GenerateButtonEvents(Axes[i].ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
-					Axes[i].ButtonValue = buttonstate;
-				}
-			}
-
-			if(NumAxes > 1)
-			{
-				buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
-				Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
-				Axes[0].ButtonValue = buttonstate;
-			}
-
-			// Map POV hats to buttons and axes.  Why axes?  Well apparently I have
-			// a gamepad where the left control stick is a POV hat (instead of the
-			// d-pad like you would expect, no that's pressure sensitive).  Also
-			// KDE's joystick dialog maps them to axes as well.
-			for (int i = 0; i < NumHats; ++i)
-			{
-				AxisInfo &x = Axes[NumAxes + i*2];
-				AxisInfo &y = Axes[NumAxes + i*2 + 1];
-
-				buttonstate = SDL_JoystickGetHat(Device, i);
-
-				// If we're going to assume that we can pass SDL's value into
-				// Joy_GenerateButtonEvents then we might as well assume the format here.
-				if(buttonstate & 0x1) // Up
-					y.Value = -1.0;
-				else if(buttonstate & 0x4) // Down
-					y.Value = 1.0;
-				else
-					y.Value = 0.0;
-				if(buttonstate & 0x2) // Left
-					x.Value = 1.0;
-				else if(buttonstate & 0x8) // Right
-					x.Value = -1.0;
-				else
-					x.Value = 0.0;
-
-				if(i < 4)
-				{
-					Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
-					x.ButtonValue = buttonstate;
-				}
-			}
-		}
-	}
+	void ProcessInput();
 
 protected:
 	struct AxisInfo
@@ -342,6 +262,8 @@ const EJoyAxis SDLInputJoystick::DefaultJoystickAxes[5] = {JOYAXIS_Side, JOYAXIS
 
 // Defaults if we have access to the Gamepad API for this device
 const EJoyAxis SDLInputJoystick::DefaultControllerAxes[6] = {JOYAXIS_Side, JOYAXIS_Forward, JOYAXIS_Yaw, JOYAXIS_Pitch, JOYAXIS_None, JOYAXIS_None};
+
+
 
 class SDLInputJoystickManager
 {
@@ -430,6 +352,105 @@ void I_ProcessJoysticks()
 {
 	if (use_joystick && JoystickManager)
 		JoystickManager->ProcessInput();
+}
+
+void PostKeyEvent(bool down, EKeyCodes which)
+{
+	event_t event = { 0,0,0,0,0,0,0 };
+	event.type = down ? EV_KeyDown : EV_KeyUp;
+	event.data1 = which;
+	D_PostEvent(&event);
+}
+
+void SDLInputJoystick::ProcessInput() {
+	uint8_t buttonstate;
+
+	if (Mapping)
+	{
+		// GameController API available
+
+		auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
+		auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+
+		for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
+		{
+			buttonstate = 0;
+
+			Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
+			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
+		}
+
+		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
+		auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+
+		if (lastTriggerL != currTriggerL) PostKeyEvent(currTriggerL, KEY_PAD_LTRIGGER);
+		if (lastTriggerR != currTriggerR) PostKeyEvent(currTriggerR, KEY_PAD_RTRIGGER);
+
+		buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+		Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+		Axes[0].ButtonValue = buttonstate;
+
+	}
+	else
+	{
+		// Joystick API fallback
+
+		for (int i = 0; i < NumAxes; ++i)
+		{
+			buttonstate = 0;
+
+			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
+			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
+
+			// Map button to axis
+			// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.
+			if (NumAxes == 1 || (i >= 2 && i < NUM_JOYAXISBUTTONS))
+			{
+				Joy_GenerateButtonEvents(Axes[i].ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+				Axes[i].ButtonValue = buttonstate;
+			}
+		}
+
+		if(NumAxes > 1)
+		{
+			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+			Axes[0].ButtonValue = buttonstate;
+		}
+
+		// Map POV hats to buttons and axes.  Why axes?  Well apparently I have
+		// a gamepad where the left control stick is a POV hat (instead of the
+		// d-pad like you would expect, no that's pressure sensitive).  Also
+		// KDE's joystick dialog maps them to axes as well.
+		for (int i = 0; i < NumHats; ++i)
+		{
+			AxisInfo &x = Axes[NumAxes + i*2];
+			AxisInfo &y = Axes[NumAxes + i*2 + 1];
+
+			buttonstate = SDL_JoystickGetHat(Device, i);
+
+			// If we're going to assume that we can pass SDL's value into
+			// Joy_GenerateButtonEvents then we might as well assume the format here.
+			if(buttonstate & 0x1) // Up
+				y.Value = -1.0;
+			else if(buttonstate & 0x4) // Down
+				y.Value = 1.0;
+			else
+				y.Value = 0.0;
+			if(buttonstate & 0x2) // Left
+				x.Value = 1.0;
+			else if(buttonstate & 0x8) // Right
+				x.Value = -1.0;
+			else
+				x.Value = 0.0;
+
+			if(i < 4)
+			{
+				Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
+				x.ButtonValue = buttonstate;
+			}
+		}
+	}
 }
 
 IJoystickConfig *I_UpdateDeviceList()

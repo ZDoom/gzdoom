@@ -548,7 +548,7 @@ void MessagePump (const SDL_Event &sev)
 			case SDL_CONTROLLER_BUTTON_X:             event.data1 = KEY_PAD_X;          break;
 			case SDL_CONTROLLER_BUTTON_Y:             event.data1 = KEY_PAD_Y;          break;
 			case SDL_CONTROLLER_BUTTON_BACK:          event.data1 = KEY_PAD_BACK;       break;
-			case SDL_CONTROLLER_BUTTON_GUIDE:         event.data1 = KEY_JOY1;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_GUIDE:         event.data1 = KEY_PAD_GUIDE;      break;
 			case SDL_CONTROLLER_BUTTON_START:         event.data1 = KEY_PAD_START;      break;
 			case SDL_CONTROLLER_BUTTON_LEFTSTICK:     event.data1 = KEY_PAD_LTHUMB;     break;
 			case SDL_CONTROLLER_BUTTON_RIGHTSTICK:    event.data1 = KEY_PAD_RTHUMB;     break;
@@ -558,12 +558,12 @@ void MessagePump (const SDL_Event &sev)
 			case SDL_CONTROLLER_BUTTON_DPAD_DOWN:     event.data1 = KEY_PAD_DPAD_DOWN;  break;
 			case SDL_CONTROLLER_BUTTON_DPAD_LEFT:     event.data1 = KEY_PAD_DPAD_LEFT;  break;
 			case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:    event.data1 = KEY_PAD_DPAD_RIGHT; break;
-			case SDL_CONTROLLER_BUTTON_MISC1:         event.data1 = KEY_JOY2;           break; // What should this map to?
-			case SDL_CONTROLLER_BUTTON_PADDLE1:       event.data1 = KEY_JOY3;           break; // What should this map to?
-			case SDL_CONTROLLER_BUTTON_PADDLE2:       event.data1 = KEY_JOY4;           break; // What should this map to?
-			case SDL_CONTROLLER_BUTTON_PADDLE3:       event.data1 = KEY_JOY5;           break; // What should this map to?
-			case SDL_CONTROLLER_BUTTON_PADDLE4:       event.data1 = KEY_JOY6;           break; // What should this map to?
-			case SDL_CONTROLLER_BUTTON_TOUCHPAD:      event.data1 = KEY_JOY7;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_MISC1:         event.data1 = KEY_PAD_MISC1;      break;
+			case SDL_CONTROLLER_BUTTON_PADDLE1:       event.data1 = KEY_PAD_PADDLE1;    break;
+			case SDL_CONTROLLER_BUTTON_PADDLE2:       event.data1 = KEY_PAD_PADDLE2;    break;
+			case SDL_CONTROLLER_BUTTON_PADDLE3:       event.data1 = KEY_PAD_PADDLE3;    break;
+			case SDL_CONTROLLER_BUTTON_PADDLE4:       event.data1 = KEY_PAD_PADDLE4;    break;
+			case SDL_CONTROLLER_BUTTON_TOUCHPAD:      event.data1 = KEY_PAD_TOUCHPAD;   break;
 			default:                                  event.data1 = 0;
 		}
 		if(event.data1 != 0)

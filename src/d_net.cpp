@@ -378,7 +378,7 @@ void Net_ClearBuffers()
 		memset(state.RecvTime, 0, sizeof(state.RecvTime));
 		state.bNewLatency = true;
 
-		state.ResendID = 0u;
+		state.ResendID = state.StabilityBuffer = 0u;
 		state.CurrentNetConsistency = state.LastVerifiedConsistency = state.ConsistencyAck = state.ResendConsistencyFrom = -1;
 		state.CurrentSequence = state.SequenceAck = state.ResendSequenceFrom = -1;
 		state.Flags = 0;
@@ -535,6 +535,7 @@ void Net_ResetCommands(bool midTic)
 	{
 		auto& state = ClientStates[client];
 		state.Flags &= CF_QUIT;
+		state.StabilityBuffer = 0u;
 		state.CurrentSequence = min<int>(state.CurrentSequence, tic);
 		state.SequenceAck = min<int>(state.SequenceAck, tic);
 		if (state.ResendSequenceFrom >= tic)
@@ -589,7 +590,8 @@ static size_t GetNetBufferSize()
 	const int ranTics = NetBuffer[totalBytes++];
 	if (ranTics > 0)
 		totalBytes += 4;
-	if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
+	// Stability buffer/commands ahead
+	if (NetMode == NET_PacketServer)
 		++totalBytes;
 
 	// Minimum additional packet size per player:
@@ -931,12 +933,16 @@ static void GetPackets()
 		if (ranTics > 0)
 			baseConsistency = (NetBuffer[curByte++] << 24) | (NetBuffer[curByte++] << 16) | (NetBuffer[curByte++] << 8) | NetBuffer[curByte++];
 
-		if (NetMode == NET_PacketServer && clientNum == Net_Arbitrator)
+		if (NetMode == NET_PacketServer)
 		{
 			if (validID)
-				CommandsAhead = NetBuffer[curByte++];
-			else
-				++curByte;
+			{
+				if (clientNum == Net_Arbitrator)
+					CommandsAhead = NetBuffer[curByte];
+				else if (consoleplayer == Net_Arbitrator)
+					clientState.StabilityBuffer = NetBuffer[curByte];
+			}
+			++curByte;
 		}
 		
 		for (int p = 0; p < playerCount; ++p)
@@ -1696,8 +1702,13 @@ void NetUpdate(int tics)
 					NetBuffer[size++] = baseConsistency + curTicOfs;
 				}
 
-				if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
-					NetBuffer[size++] = client == Net_Arbitrator ? 0 : max<int>(curState.CurrentSequence - newestTic, 0);
+				if (NetMode == NET_PacketServer)
+				{
+					if (consoleplayer == Net_Arbitrator)
+						NetBuffer[size++] = client == Net_Arbitrator ? 0 : max<int>(curState.CurrentSequence + curState.StabilityBuffer - newestTic, 0);
+					else
+						NetBuffer[size++] = max<int>(StabilityBuffer, 0);
+				}
 
 				// Client commands.
 

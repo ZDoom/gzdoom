@@ -45,16 +45,12 @@
 // Very small deadzone so that floating point magic doesn't happen
 #define MIN_DEADZONE 0.000001f
 
-// force use of use of fallback api
-// temporary until a per-controller setting is implemented
-const bool force_joystick = false; // also in i_input.cpp
-
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
 	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(1.0f) , Enabled(true)
 	{
-		if (!force_joystick && SDL_IsGameController(DeviceIndex))
+		if (SDL_IsGameController(DeviceIndex))
 		{
 			Mapping = SDL_GameControllerOpen(DeviceIndex);
 

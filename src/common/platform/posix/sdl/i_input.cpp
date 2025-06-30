@@ -31,6 +31,7 @@
 **
 */
 #include <SDL.h>
+#include "c_cvars.h"
 #include "dobject.h"
 #include "m_argv.h"
 #include "m_joy.h"
@@ -57,6 +58,9 @@ static bool NativeMouse = true;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+// force use of use of fallback api
+// temporary until a per-controller setting is  implemented
+const bool force_joystick = false; // also in i_joystick.cpp
 
 extern int WaitingForKey;
 
@@ -528,7 +532,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_JOYBUTTONDOWN:
 	case SDL_JOYBUTTONUP:
-		if (SDL_IsGameController(sev.jdevice.which))
+		if (!force_joystick && SDL_IsGameController(sev.jdevice.which))
 		{
 			break; // let SDL_CONTROLLERBUTTON* handle this
 		}
@@ -540,6 +544,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_CONTROLLERBUTTONDOWN:
 	case SDL_CONTROLLERBUTTONUP:
+		if (force_joystick) break;
 		event.type = sev.type == SDL_CONTROLLERBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		switch (sev.cbutton.button)
 		{

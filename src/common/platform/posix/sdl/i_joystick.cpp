@@ -49,27 +49,39 @@ class SDLInputJoystick: public IJoystickConfig
 public:
 	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(1.0f) , Enabled(true)
 	{
-		Device = SDL_JoystickOpen(DeviceIndex);
-
-		if (SDL_IsGameController(DeviceIndex)) {
-			Mapping = SDL_GameControllerOpen(DeviceIndex);
-		}
-
-		DefaultAxes = Mapping? DefaultControllerAxes: DefaultJoystickAxes;
-		DefaultAxesCount = (Mapping? sizeof(DefaultControllerAxes): sizeof(DefaultJoystickAxes)) / sizeof(EJoyAxis);
-
-		if(Device != NULL)
+		if (SDL_IsGameController(DeviceIndex))
 		{
-			NumAxes = SDL_JoystickNumAxes(Device);
-			NumHats = SDL_JoystickNumHats(Device);
-			NumButtons = SDL_JoystickNumButtons(Device);
+			Mapping = SDL_GameControllerOpen(DeviceIndex);
 
-			SetDefaultConfig();
+			DefaultAxes = DefaultControllerAxes;
+			DefaultAxesCount = sizeof(DefaultControllerAxes) / sizeof(EJoyAxis);
+
+			if(Mapping != NULL)
+			{
+				NumAxes = SDL_CONTROLLER_AXIS_MAX;
+				NumHats = 0;
+
+				SetDefaultConfig();
+			}
+		}
+		else
+		{
+			Device = SDL_JoystickOpen(DeviceIndex);
+			DefaultAxes = DefaultJoystickAxes;
+			DefaultAxesCount = sizeof(DefaultJoystickAxes) / sizeof(EJoyAxis);
+
+			if(Device != NULL)
+			{
+				NumAxes = SDL_JoystickNumAxes(Device);
+				NumHats = SDL_JoystickNumHats(Device);
+
+				SetDefaultConfig();
+			}
 		}
 	}
 	~SDLInputJoystick()
 	{
-		if(Device != NULL)
+		if(Device != NULL || Mapping != NULL)
 			M_SaveJoystickConfig(this);
 		SDL_GameControllerClose(Mapping);
 		SDL_JoystickClose(Device);
@@ -77,7 +89,7 @@ public:
 
 	bool IsValid() const
 	{
-		return Device != NULL;
+		return Device != NULL || Mapping != NULL;
 	}
 
 	FString GetName()
@@ -97,9 +109,7 @@ public:
 
 	int GetNumAxes()
 	{
-		return (Mapping)
-			? NumAxes
-			: NumAxes + NumHats*2;
+		return NumAxes + NumHats*2;
 	}
 	float GetAxisDeadZone(int axis)
 	{
@@ -218,24 +228,28 @@ public:
 
 	void ProcessInput()
 	{
+		uint8_t buttonstate;
+
 		if (Mapping)
 		{
 			// GameController API available
 
 			for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
 			{
-				Axes[i].Value = Joy_RemoveDeadZone(
-					SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i)) / 32767.0,
-					Axes[i].DeadZone,
-					NULL
-				);
+				buttonstate = 0;
+
+				Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
+				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
 			}
+
+			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+			Axes[0].ButtonValue = buttonstate;
 
 		}
 		else
 		{
 			// Joystick API fallback
-			uint8_t buttonstate;
 
 			for (int i = 0; i < NumAxes; ++i)
 			{
@@ -319,7 +333,6 @@ protected:
 	TArray<AxisInfo>	Axes;
 	int					NumAxes;
 	int					NumHats;
-	int					NumButtons;
 
 	friend class SDLInputJoystickManager;
 };

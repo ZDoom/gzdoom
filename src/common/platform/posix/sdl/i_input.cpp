@@ -31,6 +31,7 @@
 **
 */
 #include <SDL.h>
+#include "dobject.h"
 #include "m_argv.h"
 #include "m_joy.h"
 #include "v_video.h"
@@ -527,6 +528,10 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_JOYBUTTONDOWN:
 	case SDL_JOYBUTTONUP:
+		if (SDL_IsGameController(sev.jdevice.which))
+		{
+			break; // let SDL_CONTROLLERBUTTON* handle this
+		}
 		event.type = sev.type == SDL_JOYBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
 		if(event.data1 != 0)
@@ -535,6 +540,34 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_CONTROLLERBUTTONDOWN:
 	case SDL_CONTROLLERBUTTONUP:
+		event.type = sev.type == SDL_CONTROLLERBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
+		switch (sev.cbutton.button)
+		{
+			case SDL_CONTROLLER_BUTTON_A:             event.data1 = KEY_PAD_A;          break;
+			case SDL_CONTROLLER_BUTTON_B:             event.data1 = KEY_PAD_B;          break;
+			case SDL_CONTROLLER_BUTTON_X:             event.data1 = KEY_PAD_X;          break;
+			case SDL_CONTROLLER_BUTTON_Y:             event.data1 = KEY_PAD_Y;          break;
+			case SDL_CONTROLLER_BUTTON_BACK:          event.data1 = KEY_PAD_BACK;       break;
+			case SDL_CONTROLLER_BUTTON_GUIDE:         event.data1 = KEY_JOY1;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_START:         event.data1 = KEY_PAD_START;      break;
+			case SDL_CONTROLLER_BUTTON_LEFTSTICK:     event.data1 = KEY_PAD_LTHUMB;     break;
+			case SDL_CONTROLLER_BUTTON_RIGHTSTICK:    event.data1 = KEY_PAD_RTHUMB;     break;
+			case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:  event.data1 = KEY_PAD_LSHOULDER;  break;
+			case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: event.data1 = KEY_PAD_RSHOULDER;  break;
+			case SDL_CONTROLLER_BUTTON_DPAD_UP:       event.data1 = KEY_PAD_DPAD_UP;    break;
+			case SDL_CONTROLLER_BUTTON_DPAD_DOWN:     event.data1 = KEY_PAD_DPAD_DOWN;  break;
+			case SDL_CONTROLLER_BUTTON_DPAD_LEFT:     event.data1 = KEY_PAD_DPAD_LEFT;  break;
+			case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:    event.data1 = KEY_PAD_DPAD_RIGHT; break;
+			case SDL_CONTROLLER_BUTTON_MISC1:         event.data1 = KEY_JOY2;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_PADDLE1:       event.data1 = KEY_JOY3;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_PADDLE2:       event.data1 = KEY_JOY4;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_PADDLE3:       event.data1 = KEY_JOY5;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_PADDLE4:       event.data1 = KEY_JOY6;           break; // What should this map to?
+			case SDL_CONTROLLER_BUTTON_TOUCHPAD:      event.data1 = KEY_JOY7;           break; // What should this map to?
+			default:                                  event.data1 = 0;
+		}
+		if(event.data1 != 0)
+			D_PostEvent(&event);
 		break;
 
 	case SDL_JOYDEVICEADDED:

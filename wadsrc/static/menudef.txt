@@ -2440,6 +2440,7 @@ OptionMenu NetworkOptions protected
 	StaticText " "
 	StaticText "$NETMNU_HOSTOPTIONS", 1
 	Option "$NETMNU_EXTRATICS",				"net_extratic", "OnOff"
+	Option "$NETMNU_BALANCETICS",			"net_ticbalance", "OnOff"
 	Option "$NETMNU_LIMITCONVO",			"net_limitconversations", "OnOff"
 	Option "$NETMNU_REPEATCOOLDOWN",		"net_repeatableactioncooldown", "OnOff"
 	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "PauseTypes"

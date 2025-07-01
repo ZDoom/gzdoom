@@ -68,4 +68,10 @@ const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 
 using std::min;
 using std::max;
-using std::clamp;
+//using std::clamp;
+
+template<typename T>
+T clamp(T val, T minval, T maxval)
+{
+    return std::max<T>(std::min<T>(val, maxval), minval);
+}

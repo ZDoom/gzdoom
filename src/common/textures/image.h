@@ -5,6 +5,8 @@
 #include "bitmap.h"
 #include "memarena.h"
 
+#include "common/utility/basics.h"
+
 #ifndef MAKE_ID
 #ifndef __BIG_ENDIAN__
 #define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
@@ -12,11 +14,6 @@
 #define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
 #endif
 #endif
-
-using std::min;
-using std::max;
-using std::clamp;
-
 
 class FImageSource;
 using PrecacheInfo = TMap<int, std::pair<int, int>>;

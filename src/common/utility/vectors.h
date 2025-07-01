@@ -46,6 +46,8 @@
 #include <string.h>
 #include <algorithm>
 
+#include "common/utility/basics.h"
+
 // this is needed to properly normalize angles. We cannot do that with compiler provided conversions because they differ too much
 #include "xs_Float.h"
 
@@ -1585,7 +1587,7 @@ constexpr inline TVector2<T> clamp(const TVector2<T> &vec, const TVector2<T> &mi
 template<class T>
 constexpr inline TVector3<T> clamp(const TVector3<T> &vec, const TVector3<T> &min, const TVector3<T> &max)
 {
-	return TVector3<T>(std::clamp<T>(vec.X, min.X, max.X), std::clamp<T>(vec.Y, min.Y, max.Y), std::clamp<T>(vec.Z, min.Z, max.Z));
+	return TVector3<T>(clamp<T>(vec.X, min.X, max.X), clamp<T>(vec.Y, min.Y, max.Y), clamp<T>(vec.Z, min.Z, max.Z));
 }
 
 template<class T>

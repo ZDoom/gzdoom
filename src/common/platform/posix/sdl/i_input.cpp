@@ -31,6 +31,7 @@
 **
 */
 #include <SDL.h>
+#include <SDL_events.h>
 #include "c_cvars.h"
 #include "dobject.h"
 #include "m_argv.h"
@@ -570,6 +571,10 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_JOYDEVICEADDED:
 	case SDL_JOYDEVICEREMOVED:
+	case SDL_CONTROLLERDEVICEADDED:
+	case SDL_CONTROLLERDEVICEREMOVED:
+		if ((sev.type == SDL_JOYDEVICEADDED || sev.type == SDL_JOYDEVICEREMOVED) && SDL_IsGameController(sev.jdevice.which))
+			break; // skip double event
 		I_UpdateDeviceList();
 		event.type = EV_DeviceChange;
 		D_PostEvent (&event);

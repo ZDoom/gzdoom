@@ -1228,7 +1228,7 @@ static bool Net_UpdateStatus()
 	// Wait for the game to stabilize a bit after launch before skipping commands.
 	bool updated = false;
 	int lowestDiff = INT_MAX;
-	if (gametic > TICRATE * 2)
+	if (gametic > TICRATE * 2 && !(gametic % TicDup))
 	{
 		if (NetMode != NET_PacketServer)
 		{
@@ -1402,9 +1402,19 @@ void NetUpdate(int tics)
 		LevelStartDelay = max<int>(LevelStartDelay - tics, 0);
 	}
 		
-	const bool netGood = Net_UpdateStatus();
+	bool netGood = Net_UpdateStatus();
 	const int startTic = ClientTic;
 	tics = min<int>(tics, MAXSENDTICS * TicDup);
+	if ((startTic + tics - gametic) / TicDup > BACKUPTICS / 2)
+	{
+		tics = (gametic + BACKUPTICS / 2 * TicDup) - startTic;
+		if (tics <= 0)
+		{
+			tics = 1;
+			netGood = false;
+		}
+	}
+
 	for (int i = 0; i < tics; ++i)
 	{
 		I_StartTic();
@@ -2002,9 +2012,12 @@ ADD_STAT(network)
 
 	const int delay = max<int>((ClientTic - gametic) / TicDup, 0);
 	const int msDelay = min<int>(delay * TicDup * 1000.0 / TICRATE, 999);
-	out.AppendFormat("\nLocal\n\tIs arbitrator: %d\tDelay: %02d (%03dms)",
+	const int buffer = max<int>(StabilityBuffer, 0);
+	const int msBuffer = min<int>(buffer * 1000.0 / TICRATE, 999);
+	out.AppendFormat("\nLocal\n\tIs arbitrator: %d\tDelay: %02d (%03dms)\tStability Buffer: %02d (%03dms)",
 		consoleplayer == Net_Arbitrator,
-		delay, msDelay);
+		delay, msDelay,
+		buffer, msBuffer);
 
 	if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
 		out.AppendFormat("\tAvg latency: %03ums", min<unsigned int>(ClientStates[consoleplayer].AverageLatency, 999u));

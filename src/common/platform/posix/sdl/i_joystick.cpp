@@ -41,6 +41,8 @@
 #include "m_joy.h"
 #include "keydef.h"
 
+#define DEFAULT_DEADZONE 0.1f
+
 // Very small deadzone so that floating point magic doesn't happen
 #define MIN_DEADZONE 0.000001f
 
@@ -164,6 +166,18 @@ public:
 	{
 		return Axes[axis].Multiplier;
 	}
+	float GetAxisDigitalThreshold(int axis)
+	{
+		return Axes[axis].DigitalThreshold;
+	}
+	float GetAxisResponseCurveA(int axis)
+	{
+		return Axes[axis].ResponseCurveA;
+	}
+	float GetAxisResponseCurveB(int axis)
+	{
+		return Axes[axis].ResponseCurveB;
+	}
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
@@ -177,6 +191,18 @@ public:
 	{
 		Axes[axis].Multiplier = scale;
 	}
+	void SetAxisDigitalThreshold(int axis, float threshold)
+	{
+		Axes[axis].DigitalThreshold = threshold;
+	}
+	void SetAxisResponseCurveA(int axis, float point)
+	{
+		Axes[axis].ResponseCurveA = point;
+	}
+	void SetAxisResponseCurveB(int axis, float point)
+	{
+		Axes[axis].ResponseCurveB = point;
+	}
 
 	// Used by the saver to not save properties that are at their defaults.
 	bool IsSensitivityDefault()
@@ -185,7 +211,9 @@ public:
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{
-		return Axes[axis].DeadZone <= MIN_DEADZONE;
+		if(axis >= DefaultAxesCount)
+			return Axes[axis].DeadZone == MIN_DEADZONE;
+		return Axes[axis].DeadZone == DefaultAxes[axis].DeadZone;
 	}
 	bool IsAxisMapDefault(int axis)
 	{
@@ -195,7 +223,23 @@ public:
 	}
 	bool IsAxisScaleDefault(int axis)
 	{
-		return Axes[axis].Multiplier == 1.0f;
+		if(axis >= DefaultAxesCount)
+			return Axes[axis].Multiplier == 1.0f;
+		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
+	}
+	bool IsAxisDigitalThresholdDefault(int axis)
+	{
+		if(axis >= DefaultAxesCount)
+			return Axes[axis].DigitalThreshold == THRESH_DEFAULT;
+		return Axes[axis].DigitalThreshold == DefaultAxes[axis].DigitalThreshold;
+	}
+	bool IsAxisResponseCurveDefault(int axis)
+	{
+		if(axis >= DefaultAxesCount)
+			return Axes[axis].ResponseCurveA == CURVE_DEFAULT_A
+				&& Axes[axis].ResponseCurveB == CURVE_DEFAULT_B;
+		return Axes[axis].ResponseCurveA == DefaultAxes[axis].ResponseCurveA
+			&& Axes[axis].ResponseCurveB == DefaultAxes[axis].ResponseCurveB;
 	}
 
 	void SetDefaultConfig()
@@ -322,21 +366,21 @@ protected:
 
 // [Nash 4 Feb 2024] seems like on Linux, the third axis is actually the Left Trigger, resulting in the player uncontrollably looking upwards.
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultJoystickAxes[5] = {
-	{MIN_DEADZONE, JOYAXIS_Side,    1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_Forward, 1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_None,    1, THRESH_DEFAULT, CURVE_DEFAULT_A, CURVE_DEFAULT_B},
-	{MIN_DEADZONE, JOYAXIS_Yaw,     1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_Pitch,   1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B}
+	{DEFAULT_DEADZONE, JOYAXIS_Side,    1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Forward, 1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_None,    1, THRESH_DEFAULT, CURVE_DEFAULT_A, CURVE_DEFAULT_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Yaw,     1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Pitch,   1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B}
 };
 
 // Defaults if we have access to the GameController API for this device
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultControllerAxes[6] = {
-	{MIN_DEADZONE, JOYAXIS_Side,    1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_Forward, 1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_Yaw,     1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_Pitch,   1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{MIN_DEADZONE, JOYAXIS_None,    1, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
-	{MIN_DEADZONE, JOYAXIS_None,    1, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Side,    1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Forward, 1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Yaw,     1, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_Pitch,   1, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
+	{DEFAULT_DEADZONE, JOYAXIS_None,    1, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
+	{DEFAULT_DEADZONE, JOYAXIS_None,    1, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
 };
 
 class SDLInputJoystickManager

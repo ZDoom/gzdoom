@@ -31,10 +31,16 @@ struct IJoystickConfig
 	virtual EJoyAxis GetAxisMap(int axis) = 0;
 	virtual const char *GetAxisName(int axis) = 0;
 	virtual float GetAxisScale(int axis) = 0;
+	virtual float GetAxisDigitalThreshold(int axis) = 0;
+	virtual float GetAxisResponseCurveA(int axis) = 0;
+	virtual float GetAxisResponseCurveB(int axis) = 0;
 
 	virtual void SetAxisDeadZone(int axis, float zone) = 0;
 	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
 	virtual void SetAxisScale(int axis, float scale) = 0;
+	virtual void SetAxisDigitalThreshold(int axis, float threshold) = 0;
+	virtual void SetAxisResponseCurveA(int axis, float point) = 0;
+	virtual void SetAxisResponseCurveB(int axis, float point) = 0;
 
 	virtual bool GetEnabled() = 0;
 	virtual void SetEnabled(bool enabled) = 0;
@@ -48,6 +54,8 @@ struct IJoystickConfig
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;
 	virtual bool IsAxisMapDefault(int axis) = 0;
 	virtual bool IsAxisScaleDefault(int axis) = 0;
+	virtual bool IsAxisDigitalThresholdDefault(int axis) = 0;
+	virtual bool IsAxisResponseCurveDefault(int axis) = 0;
 
 	virtual void SetDefaultConfig() = 0;
 	virtual FString GetIdentifier() = 0;

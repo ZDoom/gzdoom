@@ -163,6 +163,27 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 			joy->SetAxisScale(i, (float)atof(value));
 		}
 
+		mysnprintf(key + axislen, countof(key) - axislen, "threshold");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisDigitalThreshold(i, (float)atof(value));
+		}
+
+		mysnprintf(key + axislen, countof(key) - axislen, "curveA");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisResponseCurveA(i, (float)atof(value));
+		}
+
+		mysnprintf(key + axislen, countof(key) - axislen, "curveB");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisResponseCurveB(i, (float)atof(value));
+		}
+
 		mysnprintf(key + axislen, countof(key) - axislen, "map");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
@@ -225,6 +246,21 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 			{
 				mysnprintf(key + axislen, countof(key) - axislen, "scale");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisScale(i));
+				GameConfig->SetValueForKey(key, value);
+			}
+			if (!joy->IsAxisDigitalThresholdDefault(i))
+			{
+				mysnprintf(key + axislen, countof(key) - axislen, "threshold");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisDigitalThreshold(i));
+				GameConfig->SetValueForKey(key, value);
+			}
+			if (!joy->IsAxisResponseCurveDefault(i))
+			{
+				mysnprintf(key + axislen, countof(key) - axislen, "curveA");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurveA(i));
+				GameConfig->SetValueForKey(key, value);
+				mysnprintf(key + axislen, countof(key) - axislen, "curveB");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurveB(i));
 				GameConfig->SetValueForKey(key, value);
 			}
 			if (!joy->IsAxisMapDefault(i))

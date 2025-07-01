@@ -48,7 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_DEADZONE			0.25f
 #define STATUS_SWITCH_TIME			3
 
 #define VID_PLAY_COM							0x0b43
@@ -652,7 +651,7 @@ void FRawPS2Controller::AddAxes(float axes[NUM_JOYAXIS])
 
 void FRawPS2Controller::SetDefaultConfig()
 {
-	Multiplier = 1;
+	Multiplier = DEFAULT_SENSITIVITY;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = DEFAULT_DEADZONE;
@@ -720,7 +719,7 @@ void FRawPS2Controller::SetSensitivity(float scale)
 
 bool FRawPS2Controller::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == DEFAULT_SENSITIVITY;
 }
 
 //==========================================================================

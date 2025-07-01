@@ -439,7 +439,7 @@ void FXInputController::AddAxes(float axes[NUM_JOYAXIS])
 
 void FXInputController::SetDefaultConfig()
 {
-	Multiplier = 1;
+	Multiplier = DEFAULT_SENSITIVITY;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = DefaultAxes[i].DeadZone;
@@ -502,7 +502,7 @@ void FXInputController::SetSensitivity(float scale)
 
 bool FXInputController::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == DEFAULT_SENSITIVITY;
 }
 
 //==========================================================================

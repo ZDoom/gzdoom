@@ -185,10 +185,6 @@ private:
 
 	io_object_t m_notification;
 
-
-	static const float DEFAULT_DEADZONE;
-	static const float DEFAULT_SENSITIVITY;
-
 	void ProcessAxes();
 	bool ProcessAxis  (const IOHIDEventStruct& event);
 	bool ProcessButton(const IOHIDEventStruct& event);
@@ -206,10 +202,6 @@ private:
 	void AddToQueue(IOHIDElementCookie cookie);
 	void RemoveFromQueue(IOHIDElementCookie cookie);
 };
-
-
-const float IOKitJoystick::DEFAULT_DEADZONE    = 0.25f;
-const float IOKitJoystick::DEFAULT_SENSITIVITY = 1.0f;
 
 
 IOHIDDeviceInterface** CreateDeviceInterface(const io_object_t device)

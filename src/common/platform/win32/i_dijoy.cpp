@@ -146,7 +146,6 @@ public:
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_DEADZONE			0.25f
 
 // TYPES -------------------------------------------------------------------
 
@@ -769,11 +768,11 @@ void FDInputJoystick::SetDefaultConfig()
 {
 	unsigned i;
 
-	Multiplier = 1;
+	Multiplier = DEFAULT_SENSITIVITY;
 	for (i = 0; i < Axes.Size(); ++i)
 	{
 		Axes[i].DeadZone = DEFAULT_DEADZONE;
-		Axes[i].Multiplier = 1;
+		Axes[i].Multiplier = DEFAULT_SENSITIVITY;
 		Axes[i].GameAxis = JOYAXIS_None;
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.
@@ -857,7 +856,7 @@ void FDInputJoystick::SetSensitivity(float scale)
 
 bool FDInputJoystick::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == DEFAULT_SENSITIVITY;
 }
 
 //===========================================================================

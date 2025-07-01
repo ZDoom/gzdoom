@@ -51,6 +51,24 @@
 #define THRESH_AXIS_X 0.667f
 #define THRESH_AXIS_Y 0.333f
 
+// TODO: cvar, flesh out
+#define CURVED true
+#define CURVE_A 0.1
+#define CURVE_B 1
+
+// y component of bezier curve with control points (0,0) (0,a) (1,b) (1, 1)
+double Bezier(double a, double b, double t) {
+	// clamp + trivial cases
+	if (t == 0) return 0;
+	double sign = (t >= 0)? 1.0: -1.0;
+	t = abs(t);
+	t = (t > 1.0)? 1.0: t;
+	if (t == 1.0) return sign*t;
+
+	double T = 1-t;
+	return sign*((3.0*T*T*t*a)+(3.0*T*t*t*b)+(t*t*t));
+}
+
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
@@ -383,6 +401,9 @@ void SDLInputJoystick::ProcessInput() {
 
 			Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
 			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
+			if (i == 0) printf("%g\n", Axes[i].Value);
+			if (CURVED) Axes[i].Value = Bezier(CURVE_A, CURVE_B, Axes[i].Value);
+			if (i == 0) printf("%g\n\n", Axes[i].Value);
 		}
 
 		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > THRESH_TRIGGER;
@@ -408,6 +429,9 @@ void SDLInputJoystick::ProcessInput() {
 
 			Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
 			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
+			if (i == 0) printf("%g\n", Axes[i].Value);
+			if (CURVED) Axes[i].Value = Bezier(CURVE_A, CURVE_B, Axes[i].Value);
+			if (i == 0) printf("%g\n\n", Axes[i].Value);
 
 			// Map button to axis
 			// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.

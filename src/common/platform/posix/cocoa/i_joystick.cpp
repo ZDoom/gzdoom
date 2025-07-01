@@ -94,15 +94,23 @@ public:
 	virtual EJoyAxis GetAxisMap(int axis);
 	virtual const char* GetAxisName(int axis);
 	virtual float GetAxisScale(int axis);
+	float GetAxisDigitalThreshold(int axis) { /* TODO:STUB */ return 0; }
+	float GetAxisResponseCurveA(int axis) { /* TODO:STUB */ return 0; }
+	float GetAxisResponseCurveB(int axis) { /* TODO:STUB */ return 0; }
 
 	virtual void SetAxisDeadZone(int axis, float deadZone);
 	virtual void SetAxisMap(int axis, EJoyAxis gameAxis);
 	virtual void SetAxisScale(int axis, float scale);
+	void SetAxisDigitalThreshold(int axis, float threshold) { /* TODO:STUB */ }
+	void SetAxisResponseCurveA(int axis, float point) { /* TODO:STUB */ }
+	void SetAxisResponseCurveB(int axis, float point) { /* TODO:STUB */ }
 
 	virtual bool IsSensitivityDefault();
 	virtual bool IsAxisDeadZoneDefault(int axis);
 	virtual bool IsAxisMapDefault(int axis);
 	virtual bool IsAxisScaleDefault(int axis);
+	bool IsAxisDigitalThresholdDefault(int axis) { /* TODO:STUB */ return true; }
+	bool IsAxisResponseCurveDefault(int axis) { /* TODO:STUB */ return true; }
 
 	virtual bool GetEnabled();
 	virtual void SetEnabled(bool enabled);

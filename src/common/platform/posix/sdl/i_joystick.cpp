@@ -32,6 +32,7 @@
 */
 #include <SDL.h>
 #include <SDL_gamecontroller.h>
+#include <cstdlib>
 
 #include "basics.h"
 #include "cmdlib.h"
@@ -44,6 +45,11 @@
 
 // Very small deadzone so that floating point magic doesn't happen
 #define MIN_DEADZONE 0.000001f
+
+// TODO: cvar
+#define THRESH_TRIGGER 0.001f
+#define THRESH_AXIS_X 0.667f
+#define THRESH_AXIS_Y 0.333f
 
 class SDLInputJoystick: public IJoystickConfig
 {
@@ -368,8 +374,8 @@ void SDLInputJoystick::ProcessInput() {
 	{
 		// GameController API available
 
-		auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
-		auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+		auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > THRESH_TRIGGER;
+		auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > THRESH_TRIGGER;
 
 		for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
 		{
@@ -379,16 +385,18 @@ void SDLInputJoystick::ProcessInput() {
 			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
 		}
 
-		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
-		auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > THRESH_TRIGGER;
+		auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > THRESH_TRIGGER;
 
 		if (lastTriggerL != currTriggerL) PostKeyEvent(currTriggerL, KEY_PAD_LTRIGGER);
 		if (lastTriggerR != currTriggerR) PostKeyEvent(currTriggerR, KEY_PAD_RTRIGGER);
 
-		buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+		buttonstate = Joy_XYAxesToButtons(
+			abs(Axes[0].Value)>THRESH_AXIS_X? Axes[0].Value: 0,
+			abs(Axes[1].Value)>THRESH_AXIS_Y? Axes[1].Value: 0
+		);
 		Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 		Axes[0].ButtonValue = buttonstate;
-
 	}
 	else
 	{
@@ -412,7 +420,10 @@ void SDLInputJoystick::ProcessInput() {
 
 		if(NumAxes > 1)
 		{
-			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, Axes[1].Value);
+			buttonstate = Joy_XYAxesToButtons(
+				abs(Axes[0].Value)>THRESH_AXIS_X? Axes[0].Value: 0,
+				abs(Axes[1].Value)>THRESH_AXIS_Y? Axes[1].Value: 0
+			);
 			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 			Axes[0].ButtonValue = buttonstate;
 		}

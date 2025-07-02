@@ -42,6 +42,8 @@
 
 #include "version.h"	// for GAMENAME
 
+extern bool netgame;
+
 
 FString GetUserFile (const char *file)
 {
@@ -191,7 +193,10 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("$HOME/" GAME_DIR "/savegames/");
+	FString pName = "$HOME/" GAME_DIR "/savegames/";
+	if (netgame)
+		pName << "netgame/";
+	return NicePath(pName.GetChars());
 }
 
 //===========================================================================

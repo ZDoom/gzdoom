@@ -159,6 +159,7 @@ CVAR(Bool, vid_lowerinbackground, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE) // Currently deprecated, but may be brought back later.
 CVAR(Bool, net_extratic, false, CVAR_SERVERINFO | CVAR_NOSAVE)
+CVAR(Bool, net_limitsaves, true, CVAR_SERVERINFO | CVAR_NOSAVE)
 CVAR(Bool, net_repeatableactioncooldown, true, CVAR_SERVERINFO | CVAR_NOSAVE)
 CVAR(Bool, net_limitconversations, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 CUSTOM_CVAR(Int, net_disablepause, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
@@ -1818,7 +1819,21 @@ size_t Net_SetGameInfo(uint8_t*& stream)
 	WriteString(startmap.GetChars(), &stream);
 	WriteInt32(rngseed, &stream);
 	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
-	return stream - start;
+
+	auto load = Args->CheckValue("-loadgame");
+	if (load != nullptr)
+	{
+		stream[0] = true;
+		const size_t len = strlen(load) + 1;
+		memcpy(&stream[1], load, len);
+		stream += len;
+	}
+	else
+	{
+		stream[0] = false;
+	}
+
+	return (stream + 1) - start;
 }
 
 size_t Net_ReadGameInfo(uint8_t*& stream)
@@ -1827,6 +1842,25 @@ size_t Net_ReadGameInfo(uint8_t*& stream)
 	startmap = ReadStringConst(&stream);
 	rngseed = ReadInt32(&stream);
 	C_ReadCVars(&stream);
+
+	if (stream[0])
+	{
+		++stream;
+		const size_t len = strlen((char*)stream) + 1;
+		// Don't override the existing argument in case they need to use
+		// a custom savefile name.
+		if (!Args->CheckParm("-loadgame"))
+		{
+			Args->AppendArg("-loadgame");
+			Args->AppendArg((char*)stream);
+		}
+		stream += len;
+	}
+	else
+	{
+		++stream;
+	}
+
 	return stream - start;
 }
 

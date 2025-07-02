@@ -128,6 +128,7 @@ CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
 EXTERN_CVAR(Int, net_disablepause)
+EXTERN_CVAR(Bool, net_limitsaves)
 
 //==========================================================================
 //
@@ -2161,6 +2162,10 @@ void G_SaveGame (const char *filename, const char *description)
     {
 		Printf ("%s\n", GStrings.GetString("TXT_SPPLAYERDEAD"));
     }
+	else if (netgame && net_limitsaves && !players[consoleplayer].settings_controller)
+	{
+		Printf("Only settings controllers can save the game\n");
+	}
 	else
 	{
 		savegamefile = filename;
@@ -2196,6 +2201,10 @@ CUSTOM_CVAR (Int, quicksaverotationcount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void G_DoAutoSave ()
 {
+	// Never autosave in netgames since you can't load this properly anyway.
+	if (netgame)
+		return;
+
 	FString description;
 	FString file;
 	// Keep up to four autosaves at a time
@@ -2231,6 +2240,10 @@ void G_DoAutoSave ()
 
 void G_DoQuickSave ()
 {
+	// Never quicksave in netgames since you can't load this properly anyway.
+	if (netgame)
+		return;
+
 	FString description;
 	FString file;
 	// Keeps a rotating set of quicksaves

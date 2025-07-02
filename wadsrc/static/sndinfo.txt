@@ -292,6 +292,8 @@ $rumblemapping	menu/clear			MEDIUM
 $rumblemapping	menu/invalid		MEDIUM
 $rumblemapping	menu/quit1			MEDIUM
 
+$rumblemapping	dialogue/start		MEDIUM
+
 $rumblemapping	world/quake			QUAKE
 
 $rumblemapping	misc/startupdone	MEDIUM
@@ -315,6 +317,7 @@ $rumblemapping	*grunt				P_GRUNT
 $rumblemapping	*land				P_GRUNT
 $rumblemapping	*jump				NONE
 $rumblemapping	*usefail			P_GRUNT
+$rumblemapping	*usesuccess			MEDIUM
 $rumblemapping	*death				P_DEATH
 
 $rumblemapping	*fist				W_MELEE

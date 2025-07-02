@@ -9,14 +9,7 @@
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 
-#ifdef RENDER_BACKENDS
-EXTERN_CVAR(Int, vid_preferbackend);
-#endif
-
-EXTERN_CVAR(String, language)
-EXTERN_CVAR(Bool, queryiwad);
-
-SettingsPage::SettingsPage(LauncherWindow* launcher, int* autoloadflags) : Widget(nullptr), Launcher(launcher), AutoloadFlags(autoloadflags)
+SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
 {
 	LangLabel = new TextLabel(this);
 	GeneralLabel = new TextLabel(this);
@@ -28,30 +21,27 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, int* autoloadflags) : Widge
 	BrightmapsCheckbox = new CheckboxLabel(this);
 	WidescreenCheckbox = new CheckboxLabel(this);
 
+	FullscreenCheckbox->SetChecked(info.DefaultFullscreen);
+	DontAskAgainCheckbox->SetChecked(!info.DefaultQueryIWAD);
+
+	DisableAutoloadCheckbox->SetChecked(info.DefaultStartFlags & 1);
+	LightsCheckbox->SetChecked(info.DefaultStartFlags & 2);
+	BrightmapsCheckbox->SetChecked(info.DefaultStartFlags & 4);
+	WidescreenCheckbox->SetChecked(info.DefaultStartFlags & 8);
+
 #ifdef RENDER_BACKENDS
 	BackendLabel = new TextLabel(this);
 	VulkanCheckbox = new CheckboxLabel(this);
 	OpenGLCheckbox = new CheckboxLabel(this);
 	GLESCheckbox = new CheckboxLabel(this);
-#endif
 
-	FullscreenCheckbox->SetChecked(vid_fullscreen);
-	DontAskAgainCheckbox->SetChecked(!queryiwad);
-
-	int flags = *autoloadflags;
-	DisableAutoloadCheckbox->SetChecked(flags & 1);
-	LightsCheckbox->SetChecked(flags & 2);
-	BrightmapsCheckbox->SetChecked(flags & 4);
-	WidescreenCheckbox->SetChecked(flags & 8);
-
-#ifdef RENDER_BACKENDS
 	OpenGLCheckbox->SetRadioStyle(true);
 	VulkanCheckbox->SetRadioStyle(true);
 	GLESCheckbox->SetRadioStyle(true);
 	OpenGLCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
 	VulkanCheckbox->FuncChanged = [this](bool on) { if (on) { OpenGLCheckbox->SetChecked(false); GLESCheckbox->SetChecked(false); }};
 	GLESCheckbox->FuncChanged = [this](bool on) { if (on) { VulkanCheckbox->SetChecked(false); OpenGLCheckbox->SetChecked(false); }};
-	switch (vid_preferbackend)
+	switch (info.DefaultBackend)
 	{
 	case 0:
 		OpenGLCheckbox->SetChecked(true);
@@ -101,32 +91,33 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, int* autoloadflags) : Widge
 	for (auto& l : languages)
 	{
 		LangList->AddItem(l.second.GetChars());
-		if (!l.first.CompareNoCase(::language))
+		if (!l.first.CompareNoCase(info.DefaultLanguage))
 			LangList->SetSelectedItem(i);
-		i++;
+		++i;
 	}
 
 	LangList->OnChanged = [=](int i) { OnLanguageChanged(i); };
 }
 
-void SettingsPage::Save()
+void SettingsPage::SetValues(FStartupSelectionInfo& info) const
 {
-	vid_fullscreen = FullscreenCheckbox->GetChecked();
-	queryiwad = !DontAskAgainCheckbox->GetChecked();
+	info.DefaultFullscreen = FullscreenCheckbox->GetChecked();
+	info.DefaultQueryIWAD = !DontAskAgainCheckbox->GetChecked();
+	info.DefaultLanguage = languages[LangList->GetSelectedItem()].first.GetChars();
 
 	int flags = 0;
 	if (DisableAutoloadCheckbox->GetChecked()) flags |= 1;
 	if (LightsCheckbox->GetChecked()) flags |= 2;
 	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
 	if (WidescreenCheckbox->GetChecked()) flags |= 8;
-	*AutoloadFlags = flags;
+	info.DefaultStartFlags = flags;
 
 #ifdef RENDER_BACKENDS
 	int v = 1;
 	if (OpenGLCheckbox->GetChecked()) v = 0;
 	else if (VulkanCheckbox->GetChecked()) v = 1;
 	else if (GLESCheckbox->GetChecked()) v = 2;
-	if (v != vid_preferbackend) vid_preferbackend = v;
+	info.DefaultBackend = v;
 #endif
 }
 
@@ -152,8 +143,7 @@ void SettingsPage::UpdateLanguage()
 
 void SettingsPage::OnLanguageChanged(int i)
 {
-	::language = languages[i].first.GetChars();
-	GStrings.UpdateLanguage(::language); // CVAR callbacks are not active yet.
+	GStrings.UpdateLanguage(languages[i].first.GetChars());
 	UpdateLanguage();
 	Update();
 	Launcher->UpdateLanguage();
@@ -204,4 +194,6 @@ void SettingsPage::OnGeometryChanged()
 		y += LangLabel->GetPreferredHeight();
 		LangList->SetFrameGeometry(0.0, y, w, std::max(h - y, 0.0));
 	}
+
+	Launcher->UpdatePlayButton();
 }

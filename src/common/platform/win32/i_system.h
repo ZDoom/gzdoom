@@ -9,6 +9,7 @@
 #include "utf8.h"
 
 struct WadStuff;
+struct FStartupSelectionInfo;
 
 // [RH] Detects the OS the game is running under.
 void I_DetectOS (void);
@@ -37,7 +38,7 @@ void I_PrintStr (const char *cp);
 void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
-int I_PickIWad(WadStuff* wads, int numwads, bool queryiwad, int defaultiwad, int& autoloadflags, FString &extraArgs);
+bool I_PickIWad(bool showwin, FStartupSelectionInfo& info);
 
 // The ini could not be saved at exit
 bool I_WriteIniFailed (const char* filename);

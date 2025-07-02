@@ -51,6 +51,8 @@
 
 static int isportable = -1;
 
+extern bool netgame;
+
 //===========================================================================
 //
 // IsProgramDirectoryWritable
@@ -377,6 +379,8 @@ FString M_GetSavegamesPath()
 		path = GetKnownFolder(-1, FOLDERID_SavedGames, true);
 		path << "/" GAMENAME "/";
 	}
+	if (netgame)
+		path << "NetGame/";
 	return path;
 }
 

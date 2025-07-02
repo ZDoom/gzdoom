@@ -5742,7 +5742,8 @@ int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool 
 
 	if (netgame && net_limitconversations && player->player != nullptr && player->player->mo == player && !player->player->settings_controller)
 	{
-		Printf("Only settings controllers can start conversations with NPCs\n");
+		if (player == players[consoleplayer].mo)
+			Printf("Only settings controllers can start conversations with NPCs\n");
 		return false;
 	}
 

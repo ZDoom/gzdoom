@@ -33,6 +33,7 @@
 
 #include "i_common.h"
 #include "c_cvars.h"
+#include "i_interface.h"
 
 #include <fnmatch.h>
 #include <sys/sysctl.h>
@@ -122,21 +123,27 @@ void I_ShowFatalError(const char *message)
 }
 
 
-int I_PickIWad(WadStuff* const wads, const int numwads, const bool showwin, const int defaultiwad, int&, FString&)
+bool I_PickIWad(bool showwin, FStartupSelectionInfo& info)
 {
 	if (!showwin)
 	{
-		return defaultiwad;
+		return true;
 	}
 
 	I_SetMainWindowVisible(false);
 
 	extern int I_PickIWad_Cocoa(WadStuff*, int, bool, int);
-	const int result = I_PickIWad_Cocoa(wads, numwads, showwin, defaultiwad);
+	const int result = I_PickIWad_Cocoa(&(*info.Wads)[0], (int)info.Wads->Size(), showwin, info.DefaultIWAD);
 
 	I_SetMainWindowVisible(true);
 
-	return result;
+	if (result >= 0)
+	{
+		info.DefaultIWAD = result;
+		return true;
+	}
+
+	return false;
 }
 
 

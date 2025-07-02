@@ -306,8 +306,8 @@ public:
 
 			// todo: right stick
 			buttonstate = Joy_XYAxesToButtons(
-				abs(Axes[0].Value)>Axes[0].DigitalThreshold? Axes[0].Value: 0,
-											  abs(Axes[1].Value)>Axes[1].DigitalThreshold? Axes[1].Value: 0
+				abs(Axes[0].Value) < Axes[0].DigitalThreshold ? 0 : Axes[0].Value,
+				abs(Axes[1].Value) < Axes[1].DigitalThreshold ? 0 : Axes[1].Value
 			);
 			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 			Axes[0].ButtonValue = buttonstate;
@@ -336,8 +336,8 @@ public:
 			if(NumAxes > 1)
 			{
 				buttonstate = Joy_XYAxesToButtons(
-					abs(Axes[0].Value)>Axes[0].DigitalThreshold? Axes[0].Value: 0,
-												  abs(Axes[1].Value)>Axes[1].DigitalThreshold? Axes[1].Value: 0
+					abs(Axes[0].Value) < Axes[0].DigitalThreshold ? 0 : Axes[0].Value,
+					abs(Axes[1].Value) < Axes[1].DigitalThreshold ? 0 : Axes[1].Value
 				);
 				Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 				Axes[0].ButtonValue = buttonstate;

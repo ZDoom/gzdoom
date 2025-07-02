@@ -301,6 +301,11 @@ void P_ThinkParticles (FLevelLocals *Level)
 		}
 		
 		particle->alpha -= particle->fadestep;
+		if (!!(particle->flags & SPF_FADE_INOUT) && particle->alpha >= 1.0)
+		{
+			particle->alpha = 1.0;
+			particle->fadestep = -particle->fadestep;
+		}
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
@@ -356,8 +361,16 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Acc = FVector3(accel);
 		particle->color = ParticleColor(color);
 		particle->alpha = float(startalpha);
-		if ((fadestep < 0 && !(flags & SPF_NEGATIVE_FADESTEP)) || fadestep <= -1.0) particle->fadestep = FADEFROMTTL(lifetime);
-		else particle->fadestep = float(fadestep);
+		if ((fadestep < 0 && !(flags & SPF_NEGATIVE_FADESTEP)) || fadestep <= -1.0)
+		{
+			particle->fadestep = FADEFROMTTL(lifetime);
+		}
+		else
+		{
+			particle->fadestep = float(fadestep);
+			if (flags & SPF_FADE_INOUT)
+				particle->fadestep *= (float)-2;
+		}
 		particle->ttl = lifetime;
 		particle->size = size;
 		particle->sizestep = sizestep;

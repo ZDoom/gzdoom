@@ -79,6 +79,7 @@ enum EParticleFlags
 	SPF_ROLLCENTER				= 1 << 13,
 	SPF_STRETCHPIXELS			= 1 << 14,
 	SPF_ALLOWSHADERS			= 1 << 15,
+	SPF_FADE_INOUT				= 1 << 16,
 };
 
 class DVisualThinker;

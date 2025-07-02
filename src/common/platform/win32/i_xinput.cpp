@@ -94,23 +94,23 @@ public:
 	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
-	float GetAxisDigitalThreshold(int axis) { /* TODO:STUB */ return 0; }
-	float GetAxisResponseCurveA(int axis) { /* TODO:STUB */ return 0; }
-	float GetAxisResponseCurveB(int axis) { /* TODO:STUB */ return 0; }
+	float GetAxisDigitalThreshold(int axis);
+	float GetAxisResponseCurveA(int axis);
+	float GetAxisResponseCurveB(int axis);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
-	void SetAxisDigitalThreshold(int axis, float threshold) { /* TODO:STUB */ }
-	void SetAxisResponseCurveA(int axis, float point) { /* TODO:STUB */ }
-	void SetAxisResponseCurveB(int axis, float point) { /* TODO:STUB */ }
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurveA(int axis, float point);
+	void SetAxisResponseCurveB(int axis, float point);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
-	bool IsAxisDigitalThresholdDefault(int axis) { /* TODO:STUB */ return true; }
-	bool IsAxisResponseCurveDefault(int axis) { /* TODO:STUB */ return true; }
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
@@ -130,12 +130,18 @@ protected:
 		float Multiplier;
 		EJoyAxis GameAxis;
 		uint8_t ButtonValue;
+		float DigitalThreshold;
+		float ResponseCurveA;
+		float ResponseCurveB;
 	};
 	struct DefaultAxisConfig
 	{
 		float DeadZone;
 		EJoyAxis GameAxis;
 		float Multiplier;
+		float DigitalThreshold;
+		float ResponseCurveA;
+		float ResponseCurveB;
 	};
 	enum
 	{
@@ -219,13 +225,13 @@ static const char *AxisNames[] =
 
 FXInputController::DefaultAxisConfig FXInputController::DefaultAxes[NUM_AXES] =
 {
-	// Dead zone, game axis, multiplier
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Side, 1 },		// ThumbLX
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Forward, 1 },	// ThumbLY
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw, 1 },		// ThumbRX
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch, 0.75 },	// ThumbRY
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, 0 },			// LeftTrigger
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, 0 }			// RightTrigger
+	// Dead zone, game axis, multiplier, digitalthreshold, curveA, curveB
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Side,    1,    THRESH_STICK_X, CURVE_STICK_A, CURVE_STICK_B },	// ThumbLX
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Forward, 1,    THRESH_STICK_Y, CURVE_STICK_A, CURVE_STICK_B },	// ThumbLY
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw,     1,    THRESH_STICK_X, CURVE_STICK_A, CURVE_STICK_B },	// ThumbRX
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch,   0.75, THRESH_STICK_Y, CURVE_STICK_A, CURVE_STICK_B },	// ThumbRY
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    0,    THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B }, // LeftTrigger
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    0,    THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B } // RightTrigger
 };
 
 // CODE --------------------------------------------------------------------
@@ -335,11 +341,16 @@ void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 	axisval2 = (value2 - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
 	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
+	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurveA, axis1->ResponseCurveB, axisval1);
+	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurveA, axis2->ResponseCurveB, axisval2);
 	axis1->Value = float(axisval1);
 	axis2->Value = float(axisval2);
 
 	// We store all four buttons in the first axis and ignore the second.
-	buttonstate = Joy_XYAxesToButtons(axisval1, axisval2);
+	buttonstate = Joy_XYAxesToButtons(
+		abs(axisval1) < axis1->DigitalThreshold ? 0: axisval1,
+		abs(axisval2) < axis2->DigitalThreshold ? 0: axisval2
+	);
 	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
 	axis1->ButtonValue = buttonstate;
 }
@@ -359,6 +370,11 @@ void FXInputController::ProcessTrigger(int value, AxisInfo *axis, int base)
 	double axisval;
 
 	axisval = Joy_RemoveDeadZone(value / 256.0, axis->DeadZone, &buttonstate);
+	axisval = Joy_ApplyResponseCurveBezier(axis->ResponseCurveA, axis->ResponseCurveB, axisval);
+
+	// TODO: probably just put this into Joy_RemoveDeadZone
+	if (abs(axisval) < axis->DigitalThreshold) buttonstate = 0;
+
 	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 1, base);
 	axis->ButtonValue = buttonstate;
 	axis->Value = float(axisval);
@@ -445,6 +461,9 @@ void FXInputController::SetDefaultConfig()
 		Axes[i].DeadZone = DefaultAxes[i].DeadZone;
 		Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 		Axes[i].Multiplier = DefaultAxes[i].Multiplier;
+		Axes[i].DigitalThreshold = DefaultAxes[i].DigitalThreshold;
+		Axes[i].ResponseCurveA = DefaultAxes[i].ResponseCurveA;
+		Axes[i].ResponseCurveB = DefaultAxes[i].ResponseCurveB;
 	}
 }
 
@@ -573,7 +592,52 @@ float FXInputController::GetAxisScale(int axis)
 	{
 		return Axes[axis].Multiplier;
 	}
-	return 0;
+	return DEFAULT_SENSITIVITY;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetAxisDigitalThreshold
+//
+//==========================================================================
+
+float FXInputController::GetAxisDigitalThreshold(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].DigitalThreshold;
+	}
+	return THRESH_DEFAULT;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetAxisResponseCurveA
+//
+//==========================================================================
+
+float FXInputController::GetAxisResponseCurveA(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].ResponseCurveA;
+	}
+	return CURVE_DEFAULT_A;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetAxisResponseCurveB
+//
+//==========================================================================
+
+float FXInputController::GetAxisResponseCurveB(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].ResponseCurveB;
+	}
+	return CURVE_DEFAULT_B;
 }
 
 //==========================================================================
@@ -618,6 +682,48 @@ void FXInputController::SetAxisScale(int axis, float scale)
 	}
 }
 
+//==========================================================================
+//
+// FXInputController :: SetAxisDigitalThreshold
+//
+//==========================================================================
+
+void FXInputController::SetAxisDigitalThreshold(int axis, float threshold)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		Axes[axis].DigitalThreshold = threshold;
+	}
+}
+
+//==========================================================================
+//
+// FXInputController :: SetAxisResponseCurveA
+//
+//==========================================================================
+
+void FXInputController::SetAxisResponseCurveA(int axis, float point)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		Axes[axis].ResponseCurveA = point;
+	}
+}
+
+//==========================================================================
+//
+// FXInputController :: SetAxisResponseCurveB
+//
+//==========================================================================
+
+void FXInputController::SetAxisResponseCurveB(int axis, float point)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		Axes[axis].ResponseCurveB = point;
+	}
+}
+
 //===========================================================================
 //
 // FXInputController :: IsAxisDeadZoneDefault
@@ -644,6 +750,37 @@ bool FXInputController::IsAxisScaleDefault(int axis)
 	if (unsigned(axis) < NUM_AXES)
 	{
 		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisDigitalThresholdDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisDigitalThresholdDefault(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].DigitalThreshold == DefaultAxes[axis].DigitalThreshold;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisResponseCurveDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisResponseCurveDefault(int axis)
+{
+	if (unsigned(axis) < NUM_AXES)
+	{
+		return Axes[axis].ResponseCurveA == DefaultAxes[axis].ResponseCurveA
+			&& Axes[axis].ResponseCurveB == DefaultAxes[axis].ResponseCurveB;
 	}
 	return true;
 }

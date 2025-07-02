@@ -169,23 +169,23 @@ public:
 	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
-	float GetAxisDigitalThreshold(int axis) { /* TODO:STUB */ return 0; }
-	float GetAxisResponseCurveA(int axis) { /* TODO:STUB */ return 0; }
-	float GetAxisResponseCurveB(int axis) { /* TODO:STUB */ return 0; }
+	float GetAxisDigitalThreshold(int axis);
+	float GetAxisResponseCurveA(int axis);
+	float GetAxisResponseCurveB(int axis);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
-	void SetAxisDigitalThreshold(int axis, float threshold) { /* TODO:STUB */ }
-	void SetAxisResponseCurveA(int axis, float point) { /* TODO:STUB */ }
-	void SetAxisResponseCurveB(int axis, float point) { /* TODO:STUB */ }
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurveA(int axis, float point);
+	void SetAxisResponseCurveB(int axis, float point);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
-	bool IsAxisDigitalThresholdDefault(int axis) { /* TODO:STUB */ return true; }
-	bool IsAxisResponseCurveDefault(int axis) { /* TODO:STUB */ return true; }
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
@@ -208,6 +208,9 @@ protected:
 		float Value;
 		float DeadZone, DefaultDeadZone;
 		float Multiplier, DefaultMultiplier;
+		float DigitalThreshold, DefaultDigitalThreshold;
+		float ResponseCurveA, DefaultResponseCurveA;
+		float ResponseCurveB, DefaultResponseCurveB;
 		EJoyAxis GameAxis, DefaultGameAxis;
 		uint8_t ButtonValue;
 	};
@@ -461,16 +464,21 @@ void FDInputJoystick::ProcessInput()
 		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
 		// Cancel out dead zone
 		axisval = Joy_RemoveDeadZone(axisval, info->DeadZone, &buttonstate);
+		axisval = Joy_ApplyResponseCurveBezier(info->ResponseCurveA, info->ResponseCurveB, axisval);
 		info->Value = float(axisval);
 		if (i < NUM_JOYAXISBUTTONS && (i > 2 || Axes.Size() == 1))
 		{
+			if (abs(axisval) < info->DigitalThreshold) buttonstate = 0;
 			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
 		}
 		else if (i == 1)
 		{
 			// Since we sorted the axes, we know that the first two are definitely X and Y.
 			// They are probably a single stick, so use angular position to determine buttons.
-			buttonstate = Joy_XYAxesToButtons(Axes[0].Value, axisval);
+			buttonstate = Joy_XYAxesToButtons(
+				(abs(Axes[0].Value) < Axes[0].DigitalThreshold) ? 0 : Axes[0].Value,
+				(abs(axisval)       < info->DigitalThreshold)   ? 0 : axisval
+			);
 			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
 		}
 		info->ButtonValue = buttonstate;
@@ -774,32 +782,50 @@ void FDInputJoystick::SetDefaultConfig()
 		Axes[i].DeadZone = DEFAULT_DEADZONE;
 		Axes[i].Multiplier = DEFAULT_SENSITIVITY;
 		Axes[i].GameAxis = JOYAXIS_None;
+		Axes[i].DigitalThreshold = THRESH_DEFAULT;
+		Axes[i].ResponseCurveA = i <= 5 ? CURVE_STICK_A : CURVE_DEFAULT_A;
+		Axes[i].ResponseCurveB = i <= 5 ? CURVE_STICK_B : CURVE_DEFAULT_B;
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.
 	if (Axes.Size() == 5 && Axes[4].Guid == GUID_ZAxis)
 	{
 		Axes[4].DeadZone = 30 / 256.f;
+		Axes[4].DigitalThreshold = THRESH_TRIGGER;
+		Axes[4].ResponseCurveA = CURVE_TRIGGER_A;
+		Axes[4].ResponseCurveB = CURVE_TRIGGER_B;
 	}
 	// Two axes? Horizontal is yaw and vertical is forward.
 	if (Axes.Size() == 2)
 	{
 		Axes[0].GameAxis = JOYAXIS_Yaw;
+		Axes[0].DigitalThreshold = THRESH_STICK_X;
+
 		Axes[1].GameAxis = JOYAXIS_Forward;
+		Axes[1].DigitalThreshold = THRESH_STICK_Y;
 	}
 	// Three axes? First two are movement, third is yaw.
 	else if (Axes.Size() >= 3)
 	{
 		Axes[0].GameAxis = JOYAXIS_Side;
+		Axes[0].DigitalThreshold = THRESH_STICK_X;
+
 		Axes[1].GameAxis = JOYAXIS_Forward;
+		Axes[1].DigitalThreshold = THRESH_STICK_Y;
+
 		Axes[2].GameAxis = JOYAXIS_Yaw;
+		Axes[2].DigitalThreshold = THRESH_STICK_X;
+
 		// Four axes? First two are movement, last two are looking around.
 		if (Axes.Size() >= 4)
 		{
-			Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = 0.75f;
+			Axes[3].GameAxis = JOYAXIS_Pitch;
+			Axes[3].Multiplier = 0.75f;
+			Axes[3].DigitalThreshold = THRESH_STICK_Y;
 			// Five axes? Use the fifth one for moving up and down.
 			if (Axes.Size() >= 5)
 			{
 				Axes[4].GameAxis = JOYAXIS_Up;
+				Axes[4].DigitalThreshold = THRESH_STICK_Y;
 			}
 		}
 	}
@@ -812,6 +838,9 @@ void FDInputJoystick::SetDefaultConfig()
 		Axes[i].DefaultDeadZone = Axes[i].DeadZone;
 		Axes[i].DefaultMultiplier = Axes[i].Multiplier;
 		Axes[i].DefaultGameAxis = Axes[i].GameAxis;
+		Axes[i].DefaultDigitalThreshold = Axes[i].DigitalThreshold;
+		Axes[i].DefaultResponseCurveA = Axes[i].ResponseCurveA;
+		Axes[i].DefaultResponseCurveB = Axes[i].ResponseCurveB;
 	}
 }
 
@@ -932,6 +961,51 @@ float FDInputJoystick::GetAxisScale(int axis)
 
 //===========================================================================
 //
+// FDInputJoystick :: GetAxisDigitalThreshold
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisDigitalThreshold(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return THRESH_DEFAULT;
+	}
+	return Axes[axis].DigitalThreshold;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisResponseCurveA
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisResponseCurveA(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return CURVE_DEFAULT_A;
+	}
+	return Axes[axis].ResponseCurveA;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisResponseCurveB
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisResponseCurveB(int axis)
+{
+	if (unsigned(axis) >= Axes.Size())
+	{
+		return CURVE_DEFAULT_B;
+	}
+	return Axes[axis].ResponseCurveB;
+}
+
+//===========================================================================
+//
 // FDInputJoystick :: SetAxisDeadZone
 //
 //===========================================================================
@@ -974,6 +1048,48 @@ void FDInputJoystick::SetAxisScale(int axis, float scale)
 
 //===========================================================================
 //
+// FDInputJoystick :: SetAxisDigitalThreshold
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisDigitalThreshold(int axis, float threshold)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].DigitalThreshold = threshold;
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisResponseCurveA
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisResponseCurveA(int axis, float point)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].ResponseCurveA = point;
+	}
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisResponseCurveB
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisResponseCurveB(int axis, float point)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		Axes[axis].ResponseCurveB = point;
+	}
+}
+
+//===========================================================================
+//
 // FDInputJoystick :: IsAxisDeadZoneDefault
 //
 //===========================================================================
@@ -998,6 +1114,37 @@ bool FDInputJoystick::IsAxisScaleDefault(int axis)
 	if (unsigned(axis) < Axes.Size())
 	{
 		return Axes[axis].Multiplier == Axes[axis].DefaultMultiplier;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisDigitalThresholdDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisDigitalThresholdDefault(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].DigitalThreshold == Axes[axis].DefaultDigitalThreshold;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisResponseCurveDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisResponseCurveDefault(int axis)
+{
+	if (unsigned(axis) < Axes.Size())
+	{
+		return Axes[axis].ResponseCurveA == Axes[axis].DefaultResponseCurveA
+			&& Axes[axis].ResponseCurveB == Axes[axis].DefaultResponseCurveB;
 	}
 	return true;
 }

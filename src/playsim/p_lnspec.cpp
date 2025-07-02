@@ -134,6 +134,8 @@ FName MODtoDamageType (int mod)
 	}
 }
 
+int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle);
+
 FUNC(LS_NOP)
 {
 	return false;
@@ -3401,24 +3403,7 @@ FUNC(LS_StartConversation)
 		return false;
 	}
 
-	// Dead things can't talk.
-	if (target->health <= 0)
-	{
-		return false;
-	}
-	// Fighting things don't talk either.
-	if (target->flags4 & MF4_INCOMBAT)
-	{
-		return false;
-	}
-	if (target->Conversation != NULL)
-	{
-		// Give the NPC a chance to play a brief animation
-		target->ConversationAnimation (0);
-		P_StartConversation (target, it, !!arg1, true);
-		return true;
-	}
-	return false;
+	return NativeStartConversation(target, it, !!arg1, true);
 }
 
 FUNC(LS_Thing_SetConversation)

@@ -114,6 +114,8 @@ static FRandom pr_crunch("DoCrunch");
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
+EXTERN_CVAR(Bool, net_limitconversations)
+
 //==========================================================================
 //
 // P_ShouldPassThroughPlayer
@@ -5733,10 +5735,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
 {
 	if (!CanTalk(self))
 		return false;
+
+	if (netgame && net_limitconversations && player->player != nullptr && player->player->mo == player && !player->player->settings_controller)
+	{
+		Printf("Only settings controllers can start conversations with NPCs\n");
+		return false;
+	}
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);

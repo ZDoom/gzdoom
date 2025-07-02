@@ -75,6 +75,7 @@
 #include "gstrings.h"
 #include "events.h"
 
+#include "m_joy.h"
 #include "m_random.h"
 
 #include "p_local.h"
@@ -208,6 +209,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
+	Joy_Rumble("*usesuccess");
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{

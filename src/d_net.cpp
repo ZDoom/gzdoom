@@ -2392,9 +2392,9 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 				if (deathmatch && teamplay)
 					Printf(PRINT_CHAT, "(All) ");
 				if ((who & MSG_BOLD) && !cl_noboldchat)
-					Printf(PRINT_CHAT, TEXTCOLOR_BOLD "* %s" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, s);
+					Printf(PRINT_CHAT, TEXTCOLOR_BOLD "* %s [%d]" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, player, s);
 				else
-					Printf(PRINT_CHAT, "%s" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, s);
+					Printf(PRINT_CHAT, "%s [%d]" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, player, s);
 
 				if (!cl_nochatsound)
 					S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1.0f, ATTN_NONE);
@@ -2408,9 +2408,9 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 				if (deathmatch && teamplay)
 					Printf(PRINT_TEAMCHAT, "(Team) ");
 				if ((who & MSG_BOLD) && !cl_noboldchat)
-					Printf(PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* %s" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, s);
+					Printf(PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* %s [%d]" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, player, s);
 				else
-					Printf(PRINT_TEAMCHAT, "%s" TEXTCOLOR_TEAMCHAT ": %s" TEXTCOLOR_TEAMCHAT "\n", name, s);
+					Printf(PRINT_TEAMCHAT, "%s [%d]" TEXTCOLOR_TEAMCHAT ": %s" TEXTCOLOR_TEAMCHAT "\n", name, player, s);
 
 				if (!cl_nochatsound)
 					S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1.0f, ATTN_NONE);
@@ -2775,8 +2775,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 		{
 			uint8_t playernum = ReadInt8(stream);
 			players[playernum].settings_controller = true;
-			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf("%s has been added to the controller list.\n", players[playernum].userinfo.GetName());
+			if (consoleplayer == playernum)
+				Printf("You can now control game settings\n");
+			else if (consoleplayer == Net_Arbitrator)
+				Printf("%s [%d] is now a settings controller\n", players[playernum].userinfo.GetName(), playernum);
 		}
 		break;
 
@@ -2784,8 +2786,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 		{
 			uint8_t playernum = ReadInt8(stream);
 			players[playernum].settings_controller = false;
-			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf("%s has been removed from the controller list.\n", players[playernum].userinfo.GetName());
+			if (consoleplayer == playernum)
+				Printf("You can no longer control game settings\n");
+			else if (consoleplayer == Net_Arbitrator)
+				Printf("%s [%d] is no longer a settings controller\n", players[playernum].userinfo.GetName(), playernum);
 		}
 		break;
 
@@ -2937,11 +2941,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 			{
 				I_Error("You have been kicked from the game");
 			}
-			else
+			else if (NetworkClients.InGame(pNum))
 			{
-				Printf("%s has been kicked from the game\n", players[pNum].userinfo.GetName());
-				if (NetworkClients.InGame(pNum))
-					DisconnectClient(pNum);
+				Printf("%s [%d] has been kicked from the game\n", players[pNum].userinfo.GetName(), pNum);
+				DisconnectClient(pNum);
 			}
 		}
 		break;
@@ -3203,7 +3206,7 @@ CCMD(pings)
 {
 	if (!netgame)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
@@ -3214,37 +3217,21 @@ CCMD(pings)
 	for (auto client : NetworkClients)
 	{
 		if ((NetMode == NET_PeerToPeer && client != consoleplayer) || (NetMode == NET_PacketServer && client != Net_Arbitrator))
-			Printf("%ums %s\n", ClientStates[client].AverageLatency, players[client].userinfo.GetName());
-	}
-}
-
-CCMD(listplayers)
-{
-	if (!netgame)
-	{
-		Printf("Not currently in a net game\n");
-		return;
-	}
-
-	for (auto client : NetworkClients)
-	{
-		if (client == consoleplayer)
-			Printf("* ");
-		Printf("%s - %d\n", players[client].userinfo.GetName(), client);
+			Printf("%ums %s [%d]\n", ClientStates[client].AverageLatency, players[client].userinfo.GetName(), client);
 	}
 }
 
 CCMD(kick)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: kick <player number>\n");
+		Printf("Usage: kick <client numbers>\nRemove these clients from the game\n");
 		return;
 	}
 
 	if (!netgame)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
@@ -3252,99 +3239,102 @@ CCMD(kick)
 	// the host can grant.
 	if (consoleplayer != Net_Arbitrator)
 	{
-		Printf("Only the host is allowed to kick other players\n");
+		Printf("This command is only accessible to the host\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad client number %s\n", argv[i]);
+		else if (cNum != consoleplayer && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto cNum : cNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!NetworkClients.InGame(cNum))
+		{
+			Printf("Client %d is not in game\n", cNum);
+		}
+		else
+		{
+			Net_WriteInt8(DEM_KICK);
+			Net_WriteInt8(cNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player is not currently in the game\n");
-		return;
-	}
-
-	Net_WriteInt8(DEM_KICK);
-	Net_WriteInt8(pNum);
 }
 
 CCMD(mute)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: mute <player number> - Don't receive messages from this player\n");
+		Printf("Usage: mute <player numbers>\nDisable messages from these players\n");
 		return;
 	}
 
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> pNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int pNum = -1;
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
+			pNums.Push(pNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto pNum : pNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!playeringame[pNum])
+		{
+			Printf("Player %d is not in game\n", pNum);
+		}
+		else
+		{
+			MutedClients |= (uint64_t)1u << pNum;
+			Printf("Muted player %s [%d]\n", players[pNum].userinfo.GetName(), pNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player is not currently in the game\n");
-		return;
-	}
-
-	MutedClients |= (uint64_t)1u << pNum;
 }
 
 CCMD(muteall)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	for (auto client : NetworkClients)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (client != consoleplayer)
-			MutedClients |= (uint64_t)1u << client;
+		if (playeringame[i] && i != consoleplayer)
+			MutedClients |= (uint64_t)1u << i;
 	}
 }
 
 CCMD(listmuted)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
 	bool found = false;
-	for (auto client : NetworkClients)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (MutedClients & ((uint64_t)1u << client))
+		if (MutedClients & ((uint64_t)1u << i))
 		{
 			found = true;
-			Printf("%s - %d\n", players[client].userinfo.GetName(), client);
+			Printf("%d. %s\n", i, players[i].userinfo.GetName());
 		}
 	}
 
@@ -3354,39 +3344,47 @@ CCMD(listmuted)
 
 CCMD(unmute)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: unmute <player number> - Allow messages from this player again\n");
+		Printf("Usage: unmute <player numbers>\nAllow messages from these players again\n");
 		return;
 	}
 
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> pNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int pNum = -1;
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
+			pNums.Push(pNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto pNum : pNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!playeringame[pNum])
+		{
+			Printf("Player %d is not in game\n", pNum);
+		}
+		else
+		{
+			MutedClients &= ~((uint64_t)1u << pNum);
+			Printf("Unmuted player %s [%d]\n", players[pNum].userinfo.GetName(), pNum);
+		}
 	}
-
-	MutedClients &= ~((uint64_t)1u << pNum);
 }
 
 CCMD(unmuteall)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
@@ -3395,108 +3393,158 @@ CCMD(unmuteall)
 
 //==========================================================================
 //
-// Network_Controller
+// Net_ChangeSettingsControllers
 //
 // Implement players who have the ability to change settings in a network
 // game.
 //
 //==========================================================================
 
-static void Network_Controller(int pNum, bool add)
+static void Net_ChangeSettingsControllers(const TArray<int>& cNums, bool add)
 {
 	if (!netgame)
 	{
-		Printf("This command can only be used when playing a net game.\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
 	if (consoleplayer != Net_Arbitrator)
 	{
-		Printf("This command is only accessible to the host.\n");
+		Printf("This command is only accessible to the host\n");
 		return;
 	}
 
-	if (pNum == Net_Arbitrator)
+	for (auto cNum : cNums)
 	{
-		Printf("The host cannot change their own settings controller status.\n");
-		return;
+		if (cNum == Net_Arbitrator)
+		{
+			Printf("The host cannot change their own settings controller status\n");
+		}
+		else if (!NetworkClients.InGame(cNum))
+		{
+			Printf("Client %d is not in game\n", cNum);
+		}
+		else if (players[cNum].settings_controller && add)
+		{
+			Printf("Client %d is already a settings controller\n", cNum);
+		}
+		else if (!players[cNum].settings_controller && !add)
+		{
+			Printf("Client %d is already not a settings controller\n", cNum);
+		}
+		else
+		{
+			Net_WriteInt8(add ? DEM_ADDCONTROLLER : DEM_DELCONTROLLER);
+			Net_WriteInt8(cNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player %d is not a valid client\n", pNum);
-		return;
-	}
-
-	if (players[pNum].settings_controller && add)
-	{
-		Printf("%s is already on the setting controller list.\n", players[pNum].userinfo.GetName());
-		return;
-	}
-
-	if (!players[pNum].settings_controller && !add)
-	{
-		Printf("%s is not on the setting controller list.\n", players[pNum].userinfo.GetName());
-		return;
-	}
-
-	Net_WriteInt8(add ? DEM_ADDCONTROLLER : DEM_DELCONTROLLER);
-	Net_WriteInt8(pNum);
 }
 
 //==========================================================================
 //
-// CCMD net_addcontroller
+// CCMD addsettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_addcontroller)
+CCMD(addsettingscontrollers)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: net_addcontroller <player num>\n");
+		Printf("Usage: addsettingscontrollers <client numbers>\nAllow these clients to control game settings\n");
 		return;
 	}
 
-	Network_Controller(atoi (argv[1]), true);
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
+	{
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad client number %s\n", argv[i]);
+		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
+	}
+
+	Net_ChangeSettingsControllers(cNums, true);
 }
 
 //==========================================================================
 //
-// CCMD net_removecontroller
+// CCMD removesettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_removecontroller)
+CCMD(removesettingscontrollers)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: net_removecontroller <player num>\n");
+		Printf("Usage: removesettingscontrollers <client numbers>\nRemove the ability for these clients to control game settings\n");
 		return;
 	}
 
-	Network_Controller(atoi(argv[1]), false);
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
+	{
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
+	}
+
+	Net_ChangeSettingsControllers(cNums, false);
 }
 
 //==========================================================================
 //
-// CCMD net_listcontrollers
+// CCMD removeallsettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_listcontrollers)
+CCMD(removeallsettingscontrollers)
+{
+	TArray<int> cNums = {};
+	for (auto client : NetworkClients)
+	{
+		if (client != Net_Arbitrator && players[client].settings_controller)
+			cNums.Push(client);
+	}
+
+	Net_ChangeSettingsControllers(cNums, false);
+}
+
+//==========================================================================
+//
+// CCMD listsettingscontrollers
+//
+//==========================================================================
+
+CCMD(listsettingscontrollers)
 {
 	if (!netgame)
 	{
-		Printf ("This command can only be used when playing a net game.\n");
+		Printf("This command can only be used when playing in a net game\n");
+		return;
+	}
+
+	TArray<int> cNums = {};
+	for (auto client : NetworkClients)
+	{
+		if (client != Net_Arbitrator && players[client].settings_controller)
+			cNums.Push(client);
+	}
+
+	if (!cNums.Size())
+	{
+		Printf("No other settings controllers\n");
 		return;
 	}
 
 	Printf("The following players can change the game settings:\n");
-
-	for (auto client : NetworkClients)
+	for (auto cNum : cNums)
 	{
-		if (players[client].settings_controller)
-			Printf("- %s\n", players[client].userinfo.GetName());
+		Printf("%d. %s", cNum, players[cNum].userinfo.GetName());
+		if (cNum == consoleplayer)
+			Printf(" [*]");
+		Printf("\n");
 	}
 }

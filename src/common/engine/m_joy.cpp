@@ -319,21 +319,47 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
 //
 // Joy_ApplyResponseCurveBezier
 //
-// y component of bezier curve with control points (0,0) (0,a) (1,b) (1, 1)
+// Applies cubic bezier easing function
+// Curve is defined by control points [(0,0) (x1,y1) (x2,y2) (1,1)]
+// https://developer.mozilla.org/en-US/docs/Web/CSS/easing-function/cubic-bezier
 //
 //===========================================================================
 
-double Joy_ApplyResponseCurveBezier(float a, float b, double t)
+double Joy_ApplyResponseCurveBezier(float a, float b, double input)
 {
-	// clamp + trivial cases
-	if (t == 0) return 0;
-	double sign = (t >= 0)? 1.0: -1.0;
-	t = abs(t);
-	t = (t > 1.0)? 1.0: t;
-	if (t == 1.0) return sign*t;
+	// TODO: these are the args to this function
+	float x1 = CURVE_DEFAULT_X1;
+	float y1 = CURVE_DEFAULT_Y1;
+	float x2 = CURVE_DEFAULT_X2;
+	float y2 = CURVE_DEFAULT_Y2;
 
-	double T = 1-t;
-	return sign*((3.0*T*T*t*a)+(3.0*T*t*t*b)+(t*t*t));
+	// clamp + trivial cases
+	if (input == 0) return 0;
+	double sign = (input >= 0)? 1.0: -1.0;
+	input = abs(input);
+	input = (input > 1.0)? 1.0: input;
+	if (input == 1.0) return sign*input;
+
+	double t = input, T;
+
+	const int max_iter = 4;
+	for (auto i = 0; i < max_iter; i++)
+	{
+		T = 1-t;
+
+		double x = 3*T*T*t*x1 + 3*T*t*t*x2 + t*t*t;
+		double dx = 3*T*T*x1 + 6*T*t*(x2-x1) + 3*t*t*(1-x2);
+
+		// no div by 0
+		if (abs(dx) < 0.00001) break;
+
+		t = clamp(t - (x-input)/dx, 0.0, 1.0);
+	}
+
+	T = 1-t;
+	t = 3*T*T*t*y1 + 3*T*t*t*y2 + t*t*t;
+
+	return sign*t;
 }
 
 //===========================================================================

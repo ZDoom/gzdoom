@@ -15,17 +15,32 @@ static const float THRESH_TRIGGER = 0.001;
 static const float THRESH_STICK_X = 0.667;
 static const float THRESH_STICK_Y = 0.333;
 
-static const float CURVE_EASE_A = 0.1;
-static const float CURVE_EASE_B = 1.0;
-static const float CURVE_LINE_A = 0.0;
-static const float CURVE_LINE_B = 1.0;
-static const float CURVE_QUAD_A = 0.1;
-static const float CURVE_QUAD_B = 0.5;
-static const float CURVE_CUBE_A = 0.1;
-static const float CURVE_CUBE_B = 0.2;
+static const float CURVE_LINE_X1 = 0.0;
+static const float CURVE_LINE_Y1 = 0.0;
+static const float CURVE_LINE_X2 = 1.0;
+static const float CURVE_LINE_Y2 = 1.0;
 
-static const float CURVE_DEFAULT_A = CURVE_EASE_A;
-static const float CURVE_DEFAULT_B = CURVE_EASE_A;
+static const float CURVE_QUAD_X1 = 0.3;
+static const float CURVE_QUAD_Y1 = 0.0;
+static const float CURVE_QUAD_X2 = 0.7;
+static const float CURVE_QUAD_Y2 = 0.4;
+
+static const float CURVE_CUBE_X1 = 0.5;
+static const float CURVE_CUBE_Y1 = 0.0;
+static const float CURVE_CUBE_X2 = 0.7;
+static const float CURVE_CUBE_Y2 = 0.2;
+
+static const float CURVE_DEFAULT_X1 = CURVE_QUAD_X1;
+static const float CURVE_DEFAULT_Y1 = CURVE_QUAD_Y1;
+static const float CURVE_DEFAULT_X2 = CURVE_QUAD_X2;
+static const float CURVE_DEFAULT_Y2 = CURVE_QUAD_Y2;
+
+// the plan is the save a enum of the setting. LINEAR, QUADRATIC, CUBIC, CUSTOM
+// if custom, then expose the 2 control knobs
+
+// TODO: remove these
+static const float CURVE_DEFAULT_A = 0;
+static const float CURVE_DEFAULT_B = 0;
 static const float CURVE_STICK_A   = CURVE_DEFAULT_A;
 static const float CURVE_STICK_B   = CURVE_DEFAULT_B;
 static const float CURVE_TRIGGER_A = CURVE_DEFAULT_A;

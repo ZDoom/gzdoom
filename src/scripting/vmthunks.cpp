@@ -510,7 +510,7 @@ int WorldPaused()
 	if (netgame || gamestate != GS_LEVEL)
 		return false;
 
-	return pauseext || menuactive == MENU_On || ConsoleState != c_up;
+	return pauseext || menuactive == MENU_On || ConsoleState == c_down || ConsoleState == c_falling;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, WorldPaused, WorldPaused)

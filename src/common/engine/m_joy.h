@@ -6,45 +6,25 @@
 #include "tarray.h"
 #include "c_cvars.h"
 
-static const float DEFAULT_DEADZONE = 0.1; // reduced from 0.25
+union CubicBezier {
+	struct {
+		float x1;
+		float y1;
+		float x2;
+		float y2;
+	};
+	float pts[4];
+};
 
-static const float DEFAULT_SENSITIVITY = 1.0;
+enum JoyResponseCurve {
+	JOYCURVE_CUSTOM = -1,
+	JOYCURVE_DEFAULT,
+	JOYCURVE_LINEAR,
+	JOYCURVE_QUADRATIC,
+	JOYCURVE_CUBIC,
 
-static const float THRESH_DEFAULT = 0.001;
-static const float THRESH_TRIGGER = 0.001;
-static const float THRESH_STICK_X = 0.667;
-static const float THRESH_STICK_Y = 0.333;
-
-static const float CURVE_LINE_X1 = 0.0;
-static const float CURVE_LINE_Y1 = 0.0;
-static const float CURVE_LINE_X2 = 1.0;
-static const float CURVE_LINE_Y2 = 1.0;
-
-static const float CURVE_QUAD_X1 = 0.3;
-static const float CURVE_QUAD_Y1 = 0.0;
-static const float CURVE_QUAD_X2 = 0.7;
-static const float CURVE_QUAD_Y2 = 0.4;
-
-static const float CURVE_CUBE_X1 = 0.5;
-static const float CURVE_CUBE_Y1 = 0.0;
-static const float CURVE_CUBE_X2 = 0.7;
-static const float CURVE_CUBE_Y2 = 0.2;
-
-static const float CURVE_DEFAULT_X1 = CURVE_QUAD_X1;
-static const float CURVE_DEFAULT_Y1 = CURVE_QUAD_Y1;
-static const float CURVE_DEFAULT_X2 = CURVE_QUAD_X2;
-static const float CURVE_DEFAULT_Y2 = CURVE_QUAD_Y2;
-
-// the plan is the save a enum of the setting. LINEAR, QUADRATIC, CUBIC, CUSTOM
-// if custom, then expose the 2 control knobs
-
-// TODO: remove these
-static const float CURVE_DEFAULT_A = 0;
-static const float CURVE_DEFAULT_B = 0;
-static const float CURVE_STICK_A   = CURVE_DEFAULT_A;
-static const float CURVE_STICK_B   = CURVE_DEFAULT_B;
-static const float CURVE_TRIGGER_A = CURVE_DEFAULT_A;
-static const float CURVE_TRIGGER_B = CURVE_DEFAULT_B;
+	NUM_JOYCURVE
+};
 
 enum EJoyAxis
 {
@@ -54,9 +34,21 @@ enum EJoyAxis
 	JOYAXIS_Forward,
 	JOYAXIS_Side,
 	JOYAXIS_Up,
-//	JOYAXIS_Roll,		// Ha ha. No roll for you.
+	//	JOYAXIS_Roll,		// Ha ha. No roll for you.
 	NUM_JOYAXIS,
 };
+
+extern const float JOYDEADZONE_DEFAULT;
+
+extern const float JOYSENSITIVITY_DEFAULT;
+
+extern const float JOYTHRESH_DEFAULT;
+
+extern const float JOYTHRESH_TRIGGER;
+extern const float JOYTHRESH_STICK_X;
+extern const float JOYTHRESH_STICK_Y;
+
+extern const CubicBezier JOYCURVE[NUM_JOYCURVE];
 
 // Generic configuration interface for a controller.
 struct IJoystickConfig
@@ -73,15 +65,15 @@ struct IJoystickConfig
 	virtual const char *GetAxisName(int axis) = 0;
 	virtual float GetAxisScale(int axis) = 0;
 	virtual float GetAxisDigitalThreshold(int axis) = 0;
-	virtual float GetAxisResponseCurveA(int axis) = 0;
-	virtual float GetAxisResponseCurveB(int axis) = 0;
+	virtual JoyResponseCurve GetAxisResponseCurve(int axis) = 0;
+	virtual float GetAxisResponseCurvePoint(int axis, int point) = 0;
 
 	virtual void SetAxisDeadZone(int axis, float zone) = 0;
 	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
 	virtual void SetAxisScale(int axis, float scale) = 0;
 	virtual void SetAxisDigitalThreshold(int axis, float threshold) = 0;
-	virtual void SetAxisResponseCurveA(int axis, float point) = 0;
-	virtual void SetAxisResponseCurveB(int axis, float point) = 0;
+	virtual void SetAxisResponseCurve(int axis, JoyResponseCurve preset) = 0;
+	virtual void SetAxisResponseCurvePoint(int axis, int point, float value) = 0;
 
 	virtual bool GetEnabled() = 0;
 	virtual void SetEnabled(bool enabled) = 0;
@@ -112,7 +104,7 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, in
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
 int Joy_XYAxesToButtons(double x, double y);
 double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons);
-double Joy_ApplyResponseCurveBezier(float a, float b, double t);
+double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input);
 
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);

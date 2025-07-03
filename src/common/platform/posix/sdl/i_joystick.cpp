@@ -43,7 +43,7 @@
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
-	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(DEFAULT_SENSITIVITY) , Enabled(true)
+	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(JOYSENSITIVITY_DEFAULT) , Enabled(true)
 	{
 		if (SDL_IsGameController(DeviceIndex))
 		{
@@ -127,14 +127,16 @@ public:
 	{
 		return Axes[axis].DigitalThreshold;
 	}
-	float GetAxisResponseCurveA(int axis)
+	JoyResponseCurve GetAxisResponseCurve(int axis)
 	{
-		return Axes[axis].ResponseCurveA;
+		return Axes[axis].ResponseCurvePreset;
 	}
-	float GetAxisResponseCurveB(int axis)
+	float GetAxisResponseCurvePoint(int axis, int point)
 	{
-		return Axes[axis].ResponseCurveB;
-	}
+		return unsigned(point) < 4
+			? Axes[axis].ResponseCurve.pts[point]
+			: 0;
+	};
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
@@ -152,24 +154,31 @@ public:
 	{
 		Axes[axis].DigitalThreshold = threshold;
 	}
-	void SetAxisResponseCurveA(int axis, float point)
+	void SetAxisResponseCurve(int axis, JoyResponseCurve preset)
 	{
-		Axes[axis].ResponseCurveA = point;
+		if (preset >= NUM_JOYCURVE || preset < JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurvePreset = preset;
+		if (preset == JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurve = JOYCURVE[preset];
 	}
-	void SetAxisResponseCurveB(int axis, float point)
+	void SetAxisResponseCurvePoint(int axis, int point, float value)
 	{
-		Axes[axis].ResponseCurveB = point;
+		if (unsigned(point) < 4)
+		{
+			Axes[axis].ResponseCurvePreset = JOYCURVE_CUSTOM;
+			Axes[axis].ResponseCurve.pts[point] = value;
+		}
 	}
 
 	// Used by the saver to not save properties that are at their defaults.
 	bool IsSensitivityDefault()
 	{
-		return Multiplier == DEFAULT_SENSITIVITY;
+		return Multiplier == JOYSENSITIVITY_DEFAULT;
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{
 		if(axis >= DefaultAxesCount)
-			return Axes[axis].DeadZone == DEFAULT_DEADZONE;
+			return Axes[axis].DeadZone == JOYDEADZONE_DEFAULT;
 		return Axes[axis].DeadZone == DefaultAxes[axis].DeadZone;
 	}
 	bool IsAxisMapDefault(int axis)
@@ -181,22 +190,20 @@ public:
 	bool IsAxisScaleDefault(int axis)
 	{
 		if(axis >= DefaultAxesCount)
-			return Axes[axis].Multiplier == DEFAULT_SENSITIVITY;
+			return Axes[axis].Multiplier == JOYSENSITIVITY_DEFAULT;
 		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
 	}
 	bool IsAxisDigitalThresholdDefault(int axis)
 	{
 		if(axis >= DefaultAxesCount)
-			return Axes[axis].DigitalThreshold == THRESH_DEFAULT;
+			return Axes[axis].DigitalThreshold == JOYTHRESH_DEFAULT;
 		return Axes[axis].DigitalThreshold == DefaultAxes[axis].DigitalThreshold;
 	}
 	bool IsAxisResponseCurveDefault(int axis)
 	{
 		if(axis >= DefaultAxesCount)
-			return Axes[axis].ResponseCurveA == CURVE_DEFAULT_A
-				&& Axes[axis].ResponseCurveB == CURVE_DEFAULT_B;
-		return Axes[axis].ResponseCurveA == DefaultAxes[axis].ResponseCurveA
-			&& Axes[axis].ResponseCurveB == DefaultAxes[axis].ResponseCurveB;
+			return Axes[axis].ResponseCurvePreset == JOYCURVE_DEFAULT;
+		return Axes[axis].ResponseCurvePreset == DefaultAxes[axis].ResponseCurvePreset;
 	}
 
 	void SetDefaultConfig()
@@ -231,17 +238,17 @@ public:
 				info.DeadZone = DefaultAxes[i].DeadZone;
 				info.Multiplier = DefaultAxes[i].Multiplier;
 				info.DigitalThreshold = DefaultAxes[i].DigitalThreshold;
-				info.ResponseCurveA = DefaultAxes[i].ResponseCurveA;
-				info.ResponseCurveB = DefaultAxes[i].ResponseCurveB;
+				info.ResponseCurvePreset = DefaultAxes[i].ResponseCurvePreset;
+				info.ResponseCurve = JOYCURVE[DefaultAxes[i].ResponseCurvePreset];
 			}
 			else
 			{
 				info.GameAxis = JOYAXIS_None;
-				info.DeadZone = DEFAULT_DEADZONE;
-				info.Multiplier = DEFAULT_SENSITIVITY;
-				info.DigitalThreshold = THRESH_DEFAULT;
-				info.ResponseCurveA = CURVE_DEFAULT_A;
-				info.ResponseCurveB = CURVE_DEFAULT_B;
+				info.DeadZone = JOYDEADZONE_DEFAULT;
+				info.Multiplier = JOYSENSITIVITY_DEFAULT;
+				info.DigitalThreshold = JOYTHRESH_DEFAULT;
+				info.ResponseCurvePreset = JOYCURVE_DEFAULT;
+				info.ResponseCurve = JOYCURVE[JOYCURVE_DEFAULT];
 			}
 
 			Axes.Push(info);
@@ -295,7 +302,7 @@ public:
 
 				Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
 				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurveA, Axes[i].ResponseCurveB, Axes[i].Value);
+				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurve, Axes[i].Value);
 			}
 
 			auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].DigitalThreshold;
@@ -322,7 +329,7 @@ public:
 
 				Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
 				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurveA, Axes[i].ResponseCurveB, Axes[i].Value);
+				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurve, Axes[i].Value);
 
 				// Map button to axis
 				// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.
@@ -385,8 +392,8 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		float DigitalThreshold;
-		float ResponseCurveA;
-		float ResponseCurveB;
+		JoyResponseCurve ResponseCurvePreset;
+		CubicBezier ResponseCurve;
 		EJoyAxis GameAxis;
 		double Value;
 		uint8_t ButtonValue;
@@ -397,8 +404,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
-		float ResponseCurveA;
-		float ResponseCurveB;
+		JoyResponseCurve ResponseCurvePreset;
 	};
 	static const DefaultAxisConfig DefaultJoystickAxes[5];
 	static const DefaultAxisConfig DefaultControllerAxes[6];
@@ -420,21 +426,21 @@ protected:
 
 // [Nash 4 Feb 2024] seems like on Linux, the third axis is actually the Left Trigger, resulting in the player uncontrollably looking upwards.
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultJoystickAxes[5] = {
-	{DEFAULT_DEADZONE, JOYAXIS_Side,    DEFAULT_SENSITIVITY, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Forward, DEFAULT_SENSITIVITY, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_None,    DEFAULT_SENSITIVITY, THRESH_DEFAULT, CURVE_DEFAULT_A, CURVE_DEFAULT_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Yaw,     DEFAULT_SENSITIVITY, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Pitch,   DEFAULT_SENSITIVITY, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B}
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_DEFAULT, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT}
 };
 
 // Defaults if we have access to the GameController API for this device
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultControllerAxes[6] = {
-	{DEFAULT_DEADZONE, JOYAXIS_Side,    DEFAULT_SENSITIVITY, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Forward, DEFAULT_SENSITIVITY, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Yaw,     DEFAULT_SENSITIVITY, THRESH_STICK_X, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_Pitch,   DEFAULT_SENSITIVITY, THRESH_STICK_Y, CURVE_STICK_A,   CURVE_STICK_B},
-	{DEFAULT_DEADZONE, JOYAXIS_None,    DEFAULT_SENSITIVITY, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
-	{DEFAULT_DEADZONE, JOYAXIS_None,    DEFAULT_SENSITIVITY, THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
 };
 
 class SDLInputJoystickManager

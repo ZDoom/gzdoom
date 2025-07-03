@@ -33,7 +33,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include "c_dispatch.h"
+#include "gain_analysis.h"
 #include "keydef.h"
+#include "name.h"
+#include "tarray.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
@@ -41,6 +45,7 @@
 #include "d_eventbase.h"
 #include "cmdlib.h"
 #include "printf.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,6 +62,23 @@
 EXTERN_CVAR(Bool, joy_ps2raw)
 EXTERN_CVAR(Bool, joy_dinput)
 EXTERN_CVAR(Bool, joy_xinput)
+
+extern const float JOYDEADZONE_DEFAULT = 0.1; // reduced from 0.25
+
+extern const float JOYSENSITIVITY_DEFAULT = 1.0;
+
+extern const float JOYTHRESH_DEFAULT = 0.001;
+extern const float JOYTHRESH_TRIGGER = 0.001;
+extern const float JOYTHRESH_STICK_X = 0.667;
+extern const float JOYTHRESH_STICK_Y = 0.333;
+
+extern const CubicBezier JOYCURVE[NUM_JOYCURVE] = {
+	{{0.3, 0.0, 0.7, 0.4}}, // DEFAULT -> QUADRATIC
+
+	{{0.0, 0.0, 1.0, 1.0}}, // LINEAR
+	{{0.3, 0.0, 0.7, 0.4}}, // QUADRATIC
+	{{0.5, 0.0, 0.7, 0.2}}, // CUBIC
+};
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -171,18 +193,39 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 			joy->SetAxisDigitalThreshold(i, (float)atof(value));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveA");
+		mysnprintf(key + axislen, countof(key) - axislen, "curve");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
-			joy->SetAxisResponseCurveA(i, (float)atof(value));
+			joy->SetAxisResponseCurve(i, (JoyResponseCurve)clamp(atoi(value), (int)JOYCURVE_CUSTOM, (int)NUM_JOYCURVE-1));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveB");
+		mysnprintf(key + axislen, countof(key) - axislen, "curveX1");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
-			joy->SetAxisResponseCurveB(i, (float)atof(value));
+			joy->SetAxisResponseCurvePoint(i, 0, (float)atof(value));
+		}
+
+		mysnprintf(key + axislen, countof(key) - axislen, "curveY1");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisResponseCurvePoint(i, 1, (float)atof(value));
+		}
+
+		mysnprintf(key + axislen, countof(key) - axislen, "curveX2");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisResponseCurvePoint(i, 2, (float)atof(value));
+		}
+
+		mysnprintf(key + axislen, countof(key) - axislen, "curveY2");
+		value = GameConfig->GetValueForKey(key);
+		if (value)
+		{
+			joy->SetAxisResponseCurvePoint(i, 3, (float)atof(value));
 		}
 
 		mysnprintf(key + axislen, countof(key) - axislen, "map");
@@ -257,11 +300,23 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 			}
 			if (!joy->IsAxisResponseCurveDefault(i))
 			{
-				mysnprintf(key + axislen, countof(key) - axislen, "curveA");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurveA(i));
+				mysnprintf(key + axislen, countof(key) - axislen, "curve");
+				mysnprintf(value, countof(value), "%d", joy->GetAxisResponseCurve(i));
 				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curveB");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurveB(i));
+			}
+			if (joy->GetAxisResponseCurve(i) == -1)
+			{
+				mysnprintf(key + axislen, countof(key) - axislen, "curveX1");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 0));
+				GameConfig->SetValueForKey(key, value);
+				mysnprintf(key + axislen, countof(key) - axislen, "curveY1");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 1));
+				GameConfig->SetValueForKey(key, value);
+				mysnprintf(key + axislen, countof(key) - axislen, "curveX2");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 2));
+				GameConfig->SetValueForKey(key, value);
+				mysnprintf(key + axislen, countof(key) - axislen, "curveY2");
+				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 3));
 				GameConfig->SetValueForKey(key, value);
 			}
 			if (!joy->IsAxisMapDefault(i))
@@ -280,6 +335,133 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 	}
 }
 
+CCMD (gamepad)
+{
+	int COMMAND = 1, PAD = 2, AXIS = 3, PAD_VALUE = 3, AXIS_VALUE = 4;
+	int argc = argv.argc()-1;
+
+	TArray<IJoystickConfig *> sticks;
+	I_GetJoysticks(sticks);
+
+	auto usage = []()
+	{
+		Printf(
+			"usage:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n",
+			"gamepad list",
+			"gamepad deadzone  pad# axis# [float]",
+			"gamepad scale     pad# axis# [float]",
+			"gamepad threshold pad# axis# [float]",
+			"gamepad curve     pad# axis# [-1|0|1|2|3]",
+			"gamepad curve-x1  pad# axis# [float]",
+			"gamepad curve-y1  pad# axis# [float]",
+			"gamepad curve-x2  pad# axis# [float]",
+			"gamepad curve-y2  pad# axis# [float]"
+		);
+	};
+
+	if (argc < COMMAND)
+	{
+		return usage();
+	};
+
+	FName command = argv[COMMAND];
+
+	if (argc < PAD)
+	{
+		if (command == "list")
+		{
+			for (int i = 0; i < sticks.SSize(); i++)
+			{
+				Printf("%d: '%s'\n", i, sticks[i]->GetName().GetChars());
+				for (int j = 0; j < sticks[i]->GetNumAxes(); j++)
+				{
+					Printf("  %d.%d: '%s'\n", i, j, sticks[i]->GetAxisName(j));
+				}
+			}
+			return;
+		}
+		return usage();
+	}
+
+	if (argc < AXIS)
+	{
+		return usage();
+	}
+
+	int pad, axis;
+
+	try {
+		pad = std::stoi(argv[PAD], nullptr, 10);
+		axis = std::stoi(argv[AXIS], nullptr, 10);
+	} catch (...) {
+		return (void) Printf("Failed to parse args\n");
+	}
+
+	if (pad < 0 || pad >= sticks.SSize())
+	{
+		return (void) Printf("Pad # out of range\n");
+	}
+
+	if (axis < 0 || axis >= sticks[pad]->GetNumAxes())
+	{
+		return (void) Printf("Pad # out of range\n");
+	}
+
+	float value = 0;
+	bool set = argc >= AXIS_VALUE;
+
+	if (set)
+	{
+		try {
+			value = std::stof(argv[AXIS_VALUE], nullptr);
+		} catch (...) {
+			return (void) Printf("Failed to parse args\n");
+		}
+	}
+
+	if (command == "deadzone")
+	{
+		if (set) sticks[pad]->SetAxisDeadZone(axis, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisDeadZone(axis));
+	}
+	if (command == "scale")
+	{
+		if (set) sticks[pad]->SetAxisScale(axis, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisScale(axis));
+	}
+	if (command == "threshold")
+	{
+		if (set) sticks[pad]->SetAxisDigitalThreshold(axis, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisDigitalThreshold(axis));
+	}
+	if (command == "curve")
+	{
+		if (set) sticks[pad]->SetAxisResponseCurve(axis, (JoyResponseCurve)value);
+		return (void) Printf("%d\n", sticks[pad]->GetAxisResponseCurve(axis));
+	}
+	if (command == "curve-x1")
+	{
+		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 0, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 0));
+	}
+	if (command == "curve-y1")
+	{
+		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 1, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 1));
+	}
+	if (command == "curve-x2")
+	{
+		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 2, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 2));
+	}
+	if (command == "curve-y2")
+	{
+		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 3, value);
+		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 3));
+	}
+
+	return usage();
+}
 
 //===========================================================================
 //
@@ -325,14 +507,8 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
 //
 //===========================================================================
 
-double Joy_ApplyResponseCurveBezier(float a, float b, double input)
+double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input)
 {
-	// TODO: these are the args to this function
-	float x1 = CURVE_DEFAULT_X1;
-	float y1 = CURVE_DEFAULT_Y1;
-	float x2 = CURVE_DEFAULT_X2;
-	float y2 = CURVE_DEFAULT_Y2;
-
 	// clamp + trivial cases
 	if (input == 0) return 0;
 	double sign = (input >= 0)? 1.0: -1.0;
@@ -341,6 +517,7 @@ double Joy_ApplyResponseCurveBezier(float a, float b, double input)
 	if (input == 1.0) return sign*input;
 
 	double t = input, T;
+	float x1 = curve.x1, y1 = curve.y1, x2 = curve.x2, y2 = curve.y2;
 
 	const int max_iter = 4;
 	for (auto i = 0; i < max_iter; i++)

@@ -170,15 +170,15 @@ public:
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	float GetAxisResponseCurveA(int axis);
-	float GetAxisResponseCurveB(int axis);
+	JoyResponseCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurveA(int axis, float point);
-	void SetAxisResponseCurveB(int axis, float point);
+	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
@@ -209,8 +209,8 @@ protected:
 		float DeadZone, DefaultDeadZone;
 		float Multiplier, DefaultMultiplier;
 		float DigitalThreshold, DefaultDigitalThreshold;
-		float ResponseCurveA, DefaultResponseCurveA;
-		float ResponseCurveB, DefaultResponseCurveB;
+		JoyResponseCurve ResponseCurvePreset, DefaultResponseCurvePreset;
+		CubicBezier ResponseCurve;
 		EJoyAxis GameAxis, DefaultGameAxis;
 		uint8_t ButtonValue;
 	};
@@ -464,7 +464,7 @@ void FDInputJoystick::ProcessInput()
 		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
 		// Cancel out dead zone
 		axisval = Joy_RemoveDeadZone(axisval, info->DeadZone, &buttonstate);
-		axisval = Joy_ApplyResponseCurveBezier(info->ResponseCurveA, info->ResponseCurveB, axisval);
+		axisval = Joy_ApplyResponseCurveBezier(info->ResponseCurve, axisval);
 		info->Value = float(axisval);
 		if (i < NUM_JOYAXISBUTTONS && (i > 2 || Axes.Size() == 1))
 		{
@@ -776,56 +776,54 @@ void FDInputJoystick::SetDefaultConfig()
 {
 	unsigned i;
 
-	Multiplier = DEFAULT_SENSITIVITY;
+	Multiplier = JOYSENSITIVITY_DEFAULT;
 	for (i = 0; i < Axes.Size(); ++i)
 	{
-		Axes[i].DeadZone = DEFAULT_DEADZONE;
-		Axes[i].Multiplier = DEFAULT_SENSITIVITY;
+		Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
+		Axes[i].Multiplier = JOYSENSITIVITY_DEFAULT;
 		Axes[i].GameAxis = JOYAXIS_None;
-		Axes[i].DigitalThreshold = THRESH_DEFAULT;
-		Axes[i].ResponseCurveA = i <= 5 ? CURVE_STICK_A : CURVE_DEFAULT_A;
-		Axes[i].ResponseCurveB = i <= 5 ? CURVE_STICK_B : CURVE_DEFAULT_B;
+		Axes[i].DigitalThreshold = JOYTHRESH_DEFAULT;
+		Axes[i].ResponseCurvePreset = JOYCURVE_DEFAULT;
+		Axes[i].ResponseCurve = JOYCURVE[JOYCURVE_DEFAULT];
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.
 	if (Axes.Size() == 5 && Axes[4].Guid == GUID_ZAxis)
 	{
 		Axes[4].DeadZone = 30 / 256.f;
-		Axes[4].DigitalThreshold = THRESH_TRIGGER;
-		Axes[4].ResponseCurveA = CURVE_TRIGGER_A;
-		Axes[4].ResponseCurveB = CURVE_TRIGGER_B;
+		Axes[4].DigitalThreshold = JOYTHRESH_TRIGGER;
 	}
 	// Two axes? Horizontal is yaw and vertical is forward.
 	if (Axes.Size() == 2)
 	{
 		Axes[0].GameAxis = JOYAXIS_Yaw;
-		Axes[0].DigitalThreshold = THRESH_STICK_X;
+		Axes[0].DigitalThreshold = JOYTHRESH_STICK_X;
 
 		Axes[1].GameAxis = JOYAXIS_Forward;
-		Axes[1].DigitalThreshold = THRESH_STICK_Y;
+		Axes[1].DigitalThreshold = JOYTHRESH_STICK_Y;
 	}
 	// Three axes? First two are movement, third is yaw.
 	else if (Axes.Size() >= 3)
 	{
 		Axes[0].GameAxis = JOYAXIS_Side;
-		Axes[0].DigitalThreshold = THRESH_STICK_X;
+		Axes[0].DigitalThreshold = JOYTHRESH_STICK_X;
 
 		Axes[1].GameAxis = JOYAXIS_Forward;
-		Axes[1].DigitalThreshold = THRESH_STICK_Y;
+		Axes[1].DigitalThreshold = JOYTHRESH_STICK_Y;
 
 		Axes[2].GameAxis = JOYAXIS_Yaw;
-		Axes[2].DigitalThreshold = THRESH_STICK_X;
+		Axes[2].DigitalThreshold = JOYTHRESH_STICK_X;
 
 		// Four axes? First two are movement, last two are looking around.
 		if (Axes.Size() >= 4)
 		{
 			Axes[3].GameAxis = JOYAXIS_Pitch;
-			Axes[3].Multiplier = 0.75f;
-			Axes[3].DigitalThreshold = THRESH_STICK_Y;
+			// Axes[3].Multiplier = 0.75f;
+			Axes[3].DigitalThreshold = JOYTHRESH_STICK_Y;
 			// Five axes? Use the fifth one for moving up and down.
 			if (Axes.Size() >= 5)
 			{
 				Axes[4].GameAxis = JOYAXIS_Up;
-				Axes[4].DigitalThreshold = THRESH_STICK_Y;
+				Axes[4].DigitalThreshold = JOYTHRESH_STICK_Y;
 			}
 		}
 	}
@@ -839,8 +837,7 @@ void FDInputJoystick::SetDefaultConfig()
 		Axes[i].DefaultMultiplier = Axes[i].Multiplier;
 		Axes[i].DefaultGameAxis = Axes[i].GameAxis;
 		Axes[i].DefaultDigitalThreshold = Axes[i].DigitalThreshold;
-		Axes[i].DefaultResponseCurveA = Axes[i].ResponseCurveA;
-		Axes[i].DefaultResponseCurveB = Axes[i].ResponseCurveB;
+		Axes[i].DefaultResponseCurvePreset = Axes[i].ResponseCurvePreset;
 	}
 }
 
@@ -885,7 +882,7 @@ void FDInputJoystick::SetSensitivity(float scale)
 
 bool FDInputJoystick::IsSensitivityDefault()
 {
-	return Multiplier == DEFAULT_SENSITIVITY;
+	return Multiplier == JOYSENSITIVITY_DEFAULT;
 }
 
 //===========================================================================
@@ -969,39 +966,39 @@ float FDInputJoystick::GetAxisDigitalThreshold(int axis)
 {
 	if (unsigned(axis) >= Axes.Size())
 	{
-		return THRESH_DEFAULT;
+		return JOYTHRESH_DEFAULT;
 	}
 	return Axes[axis].DigitalThreshold;
 }
 
 //===========================================================================
 //
-// FDInputJoystick :: GetAxisResponseCurveA
+// FDInputJoystick :: GetAxisResponseCurve
 //
 //===========================================================================
 
-float FDInputJoystick::GetAxisResponseCurveA(int axis)
+JoyResponseCurve FDInputJoystick::GetAxisResponseCurve(int axis)
 {
 	if (unsigned(axis) >= Axes.Size())
 	{
-		return CURVE_DEFAULT_A;
+		return JOYCURVE_DEFAULT;
 	}
-	return Axes[axis].ResponseCurveA;
+	return Axes[axis].ResponseCurvePreset;
 }
 
 //===========================================================================
 //
-// FDInputJoystick :: GetAxisResponseCurveB
+// FDInputJoystick :: GetAxisResponseCurvePoint
 //
 //===========================================================================
 
-float FDInputJoystick::GetAxisResponseCurveB(int axis)
+float FDInputJoystick::GetAxisResponseCurvePoint(int axis, int point)
 {
-	if (unsigned(axis) >= Axes.Size())
+	if (unsigned(axis) >= Axes.Size() || unsigned(point) >= 4)
 	{
-		return CURVE_DEFAULT_B;
+		return 0;
 	}
-	return Axes[axis].ResponseCurveB;
+	return Axes[axis].ResponseCurve.pts[point];
 }
 
 //===========================================================================
@@ -1062,29 +1059,33 @@ void FDInputJoystick::SetAxisDigitalThreshold(int axis, float threshold)
 
 //===========================================================================
 //
-// FDInputJoystick :: SetAxisResponseCurveA
+// FDInputJoystick :: SetAxisResponseCurve
 //
 //===========================================================================
 
-void FDInputJoystick::SetAxisResponseCurveA(int axis, float point)
+void FDInputJoystick::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
 {
 	if (unsigned(axis) < Axes.Size())
 	{
-		Axes[axis].ResponseCurveA = point;
+		if (preset >= NUM_JOYCURVE || preset < JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurvePreset = preset;
+		if (preset == JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurve = JOYCURVE[preset];
 	}
 }
 
 //===========================================================================
 //
-// FDInputJoystick :: SetAxisResponseCurveB
+// FDInputJoystick :: SetAxisResponseCurvePoint
 //
 //===========================================================================
 
-void FDInputJoystick::SetAxisResponseCurveB(int axis, float point)
+void FDInputJoystick::SetAxisResponseCurvePoint(int axis, int point, float value)
 {
-	if (unsigned(axis) < Axes.Size())
+	if (unsigned(axis) < Axes.Size() && unsigned(point) < 4)
 	{
-		Axes[axis].ResponseCurveB = point;
+		Axes[axis].ResponseCurvePreset = JOYCURVE_CUSTOM;
+		Axes[axis].ResponseCurve.pts[point] = value;
 	}
 }
 
@@ -1143,8 +1144,7 @@ bool FDInputJoystick::IsAxisResponseCurveDefault(int axis)
 {
 	if (unsigned(axis) < Axes.Size())
 	{
-		return Axes[axis].ResponseCurveA == Axes[axis].DefaultResponseCurveA
-			&& Axes[axis].ResponseCurveB == Axes[axis].DefaultResponseCurveB;
+		return Axes[axis].ResponseCurvePreset == Axes[axis].DefaultResponseCurvePreset;
 	}
 	return true;
 }

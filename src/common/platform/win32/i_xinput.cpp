@@ -95,15 +95,15 @@ public:
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	float GetAxisResponseCurveA(int axis);
-	float GetAxisResponseCurveB(int axis);
+	JoyResponseCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurveA(int axis, float point);
-	void SetAxisResponseCurveB(int axis, float point);
+	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
@@ -131,8 +131,8 @@ protected:
 		EJoyAxis GameAxis;
 		uint8_t ButtonValue;
 		float DigitalThreshold;
-		float ResponseCurveA;
-		float ResponseCurveB;
+		JoyResponseCurve ResponseCurvePreset;
+		CubicBezier ResponseCurve;
 	};
 	struct DefaultAxisConfig
 	{
@@ -140,8 +140,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
-		float ResponseCurveA;
-		float ResponseCurveB;
+		JoyResponseCurve ResponseCurvePreset;
 	};
 	enum
 	{
@@ -226,12 +225,12 @@ static const char *AxisNames[] =
 FXInputController::DefaultAxisConfig FXInputController::DefaultAxes[NUM_AXES] =
 {
 	// Dead zone, game axis, multiplier, digitalthreshold, curveA, curveB
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Side,    1,    THRESH_STICK_X, CURVE_STICK_A, CURVE_STICK_B },	// ThumbLX
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Forward, 1,    THRESH_STICK_Y, CURVE_STICK_A, CURVE_STICK_B },	// ThumbLY
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw,     1,    THRESH_STICK_X, CURVE_STICK_A, CURVE_STICK_B },	// ThumbRX
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch,   0.75, THRESH_STICK_Y, CURVE_STICK_A, CURVE_STICK_B },	// ThumbRY
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    0,    THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B }, // LeftTrigger
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    0,    THRESH_TRIGGER, CURVE_TRIGGER_A, CURVE_TRIGGER_B } // RightTrigger
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbLX
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f,  JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbLY
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbRX
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbRY
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT }, // LeftTrigger
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f,      JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT }  // RightTrigger
 };
 
 // CODE --------------------------------------------------------------------
@@ -341,8 +340,8 @@ void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 	axisval2 = (value2 - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
 	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
-	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurveA, axis1->ResponseCurveB, axisval1);
-	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurveA, axis2->ResponseCurveB, axisval2);
+	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurve, axisval1);
+	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurve, axisval2);
 	axis1->Value = float(axisval1);
 	axis2->Value = float(axisval2);
 
@@ -370,7 +369,7 @@ void FXInputController::ProcessTrigger(int value, AxisInfo *axis, int base)
 	double axisval;
 
 	axisval = Joy_RemoveDeadZone(value / 256.0, axis->DeadZone, &buttonstate);
-	axisval = Joy_ApplyResponseCurveBezier(axis->ResponseCurveA, axis->ResponseCurveB, axisval);
+	axisval = Joy_ApplyResponseCurveBezier(axis->ResponseCurve, axisval);
 
 	// TODO: probably just put this into Joy_RemoveDeadZone
 	if (abs(axisval) < axis->DigitalThreshold) buttonstate = 0;
@@ -455,15 +454,15 @@ void FXInputController::AddAxes(float axes[NUM_JOYAXIS])
 
 void FXInputController::SetDefaultConfig()
 {
-	Multiplier = DEFAULT_SENSITIVITY;
+	Multiplier = JOYSENSITIVITY_DEFAULT;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = DefaultAxes[i].DeadZone;
 		Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 		Axes[i].Multiplier = DefaultAxes[i].Multiplier;
 		Axes[i].DigitalThreshold = DefaultAxes[i].DigitalThreshold;
-		Axes[i].ResponseCurveA = DefaultAxes[i].ResponseCurveA;
-		Axes[i].ResponseCurveB = DefaultAxes[i].ResponseCurveB;
+		Axes[i].ResponseCurve = JOYCURVE[DefaultAxes[i].ResponseCurvePreset];
+		Axes[i].ResponseCurvePreset = DefaultAxes[i].ResponseCurvePreset;
 	}
 }
 
@@ -521,7 +520,7 @@ void FXInputController::SetSensitivity(float scale)
 
 bool FXInputController::IsSensitivityDefault()
 {
-	return Multiplier == DEFAULT_SENSITIVITY;
+	return Multiplier == JOYSENSITIVITY_DEFAULT;
 }
 
 //==========================================================================
@@ -592,7 +591,7 @@ float FXInputController::GetAxisScale(int axis)
 	{
 		return Axes[axis].Multiplier;
 	}
-	return DEFAULT_SENSITIVITY;
+	return JOYSENSITIVITY_DEFAULT;
 }
 
 //==========================================================================
@@ -607,37 +606,37 @@ float FXInputController::GetAxisDigitalThreshold(int axis)
 	{
 		return Axes[axis].DigitalThreshold;
 	}
-	return THRESH_DEFAULT;
+	return JOYTHRESH_DEFAULT;
 }
 
 //==========================================================================
 //
-// FXInputController :: GetAxisResponseCurveA
+// FXInputController :: GetAxisResponseCurve
 //
 //==========================================================================
 
-float FXInputController::GetAxisResponseCurveA(int axis)
+JoyResponseCurve FXInputController::GetAxisResponseCurve(int axis)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{
-		return Axes[axis].ResponseCurveA;
+		return Axes[axis].ResponseCurvePreset;
 	}
-	return CURVE_DEFAULT_A;
+	return JOYCURVE_DEFAULT;
 }
 
 //==========================================================================
 //
-// FXInputController :: GetAxisResponseCurveB
+// FXInputController :: GetAxisResponseCurvePoint
 //
 //==========================================================================
 
-float FXInputController::GetAxisResponseCurveB(int axis)
+float FXInputController::GetAxisResponseCurvePoint(int axis, int point)
 {
-	if (unsigned(axis) < NUM_AXES)
+	if (unsigned(axis) < NUM_AXES && unsigned(point) < 4)
 	{
-		return Axes[axis].ResponseCurveB;
+		return Axes[axis].ResponseCurve.pts[point];
 	}
-	return CURVE_DEFAULT_B;
+	return 0;
 }
 
 //==========================================================================
@@ -698,29 +697,33 @@ void FXInputController::SetAxisDigitalThreshold(int axis, float threshold)
 
 //==========================================================================
 //
-// FXInputController :: SetAxisResponseCurveA
+// FXInputController :: SetAxisResponseCurve
 //
 //==========================================================================
 
-void FXInputController::SetAxisResponseCurveA(int axis, float point)
+void FXInputController::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{
-		Axes[axis].ResponseCurveA = point;
+		if (preset >= NUM_JOYCURVE || preset < JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurvePreset = preset;
+		if (preset == JOYCURVE_CUSTOM) return;
+		Axes[axis].ResponseCurve = JOYCURVE[preset];
 	}
 }
 
 //==========================================================================
 //
-// FXInputController :: SetAxisResponseCurveB
+// FXInputController :: SetAxisResponseCurvePoint
 //
 //==========================================================================
 
-void FXInputController::SetAxisResponseCurveB(int axis, float point)
+void FXInputController::SetAxisResponseCurvePoint(int axis, int point, float value)
 {
-	if (unsigned(axis) < NUM_AXES)
+	if (unsigned(axis) < NUM_AXES && unsigned(point) < 4)
 	{
-		Axes[axis].ResponseCurveB = point;
+		Axes[axis].ResponseCurvePreset = JOYCURVE_CUSTOM;
+		Axes[axis].ResponseCurve.pts[point] = value;
 	}
 }
 
@@ -779,8 +782,7 @@ bool FXInputController::IsAxisResponseCurveDefault(int axis)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{
-		return Axes[axis].ResponseCurveA == DefaultAxes[axis].ResponseCurveA
-			&& Axes[axis].ResponseCurveB == DefaultAxes[axis].ResponseCurveB;
+		return Axes[axis].ResponseCurvePreset == DefaultAxes[axis].ResponseCurvePreset;
 	}
 	return true;
 }

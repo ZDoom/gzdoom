@@ -1689,6 +1689,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
 	PARAM_FLOAT	(startroll)	
 	PARAM_FLOAT	(rollvel)	
 	PARAM_FLOAT	(rollacc)
+	PARAM_FLOAT (fadeoutstep)
 
 	startalpha = clamp(startalpha, 0., 1.);
 	fadestep = clamp(fadestep, -1.0, 1.0);
@@ -1729,7 +1730,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnParticleEx)
 			style = STYLE_None;
 		}
 
-		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style), startroll, rollvel, rollacc);
+		P_SpawnParticle(self->Level, self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags, texid, ERenderStyle(style), startroll, rollvel, rollacc, fadeoutstep);
 	}
 	return 0;
 }

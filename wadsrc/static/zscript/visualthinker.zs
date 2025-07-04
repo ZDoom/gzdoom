@@ -12,7 +12,7 @@ Class VisualThinker : Thinker native
 	native TranslationID	Translation;
 	native int16			LightLevel;
 	
-	native uint16			Flags;
+	native uint				Flags;
 	native int				VisualThinkerFlags;
     
     FlagDef                 FlipOffsetX :       VisualThinkerFlags, 0;

@@ -200,28 +200,28 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 			joy->SetAxisResponseCurve(i, (JoyResponseCurve)clamp(atoi(value), (int)JOYCURVE_CUSTOM, (int)NUM_JOYCURVE-1));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveX1");
+		mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
 			joy->SetAxisResponseCurvePoint(i, 0, (float)atof(value));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveY1");
+		mysnprintf(key + axislen, countof(key) - axislen, "curve-y1");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
 			joy->SetAxisResponseCurvePoint(i, 1, (float)atof(value));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveX2");
+		mysnprintf(key + axislen, countof(key) - axislen, "curve-x2");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
 			joy->SetAxisResponseCurvePoint(i, 2, (float)atof(value));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "curveY2");
+		mysnprintf(key + axislen, countof(key) - axislen, "curve-y2");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
@@ -306,16 +306,16 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 			}
 			if (joy->GetAxisResponseCurve(i) == -1)
 			{
-				mysnprintf(key + axislen, countof(key) - axislen, "curveX1");
+				mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 0));
 				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curveY1");
+				mysnprintf(key + axislen, countof(key) - axislen, "curve-y1");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 1));
 				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curveX2");
+				mysnprintf(key + axislen, countof(key) - axislen, "curve-x2");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 2));
 				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curveY2");
+				mysnprintf(key + axislen, countof(key) - axislen, "curve-y2");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 3));
 				GameConfig->SetValueForKey(key, value);
 			}
@@ -337,7 +337,7 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 
 CCMD (gamepad)
 {
-	int COMMAND = 1, PAD = 2, AXIS = 3, PAD_VALUE = 3, AXIS_VALUE = 4;
+	int COMMAND = 1, IDENTIFIER = 2, VALUE = 3;
 	int argc = argv.argc()-1;
 
 	TArray<IJoystickConfig *> sticks;
@@ -346,16 +346,22 @@ CCMD (gamepad)
 	auto usage = []()
 	{
 		Printf(
-			"usage:\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n",
-			"gamepad list",
-			"gamepad deadzone  pad# axis# [float]",
-			"gamepad scale     pad# axis# [float]",
-			"gamepad threshold pad# axis# [float]",
-			"gamepad curve     pad# axis# [-1|0|1|2|3]",
-			"gamepad curve-x1  pad# axis# [float]",
-			"gamepad curve-y1  pad# axis# [float]",
-			"gamepad curve-x2  pad# axis# [float]",
-			"gamepad curve-y2  pad# axis# [float]"
+			"usage:"
+			"\n\tgamepad list"
+			"\n\tgamepad reset       pad"
+			"\n\tgamepad enabled     pad      [0|1]"
+			"\n\tgamepad background  pad      [0|1]"
+			"\n\tgamepad sensitivity pad      [float]"
+			"\n\tgamepad deadzone    pad.axis [float]"
+			"\n\tgamepad scale       pad.axis [float]"
+			"\n\tgamepad threshold   pad.axis [float]"
+			"\n\tgamepad curve       pad.axis [-1|0|1|2|3]"
+			"\n\tgamepad curve-x1    pad.axis [float]"
+			"\n\tgamepad curve-y1    pad.axis [float]"
+			"\n\tgamepad curve-x2    pad.axis [float]"
+			"\n\tgamepad curve-y2    pad.axis [float]"
+			"\n\tgamepad map         pad.axis [-1|0|1|2|3|4]"
+			"\n"
 		);
 	};
 
@@ -366,7 +372,7 @@ CCMD (gamepad)
 
 	FName command = argv[COMMAND];
 
-	if (argc < PAD)
+	if (argc < IDENTIFIER)
 	{
 		if (command == "list")
 		{
@@ -383,42 +389,72 @@ CCMD (gamepad)
 		return usage();
 	}
 
-	if (argc < AXIS)
-	{
-		return usage();
-	}
+	const char * id = argv[IDENTIFIER];
+	const char * hasAxis = strchr(id, '.');
 
 	int pad, axis;
 
 	try {
-		pad = std::stoi(argv[PAD], nullptr, 10);
-		axis = std::stoi(argv[AXIS], nullptr, 10);
+		pad = (int)std::stod(id);
+
+		if (pad < 0 || pad >= sticks.SSize())
+		{
+			return (void) Printf("Pad # out of range\n");
+		}
 	} catch (...) {
-		return (void) Printf("Failed to parse args\n");
+		return (void) Printf("Failed to parse pad #\n");
 	}
 
-	if (pad < 0 || pad >= sticks.SSize())
+	if (hasAxis)
 	{
-		return (void) Printf("Pad # out of range\n");
-	}
+		try {
+			axis = (int)std::stod(hasAxis+1);
 
-	if (axis < 0 || axis >= sticks[pad]->GetNumAxes())
-	{
-		return (void) Printf("Pad # out of range\n");
+			if (axis < 0 || axis >= sticks[pad]->GetNumAxes())
+			{
+				return (void) Printf("Axis # out of range\n");
+			}
+		} catch (...) {
+			return (void) Printf("Failed to parse axis #\n");
+		}
 	}
 
 	float value = 0;
-	bool set = argc >= AXIS_VALUE;
+	bool set = argc >= VALUE;
 
 	if (set)
 	{
 		try {
-			value = std::stof(argv[AXIS_VALUE], nullptr);
+			value = std::stod(argv[VALUE]);
 		} catch (...) {
 			return (void) Printf("Failed to parse args\n");
 		}
 	}
 
+	if (command == "reset")
+	{
+		if (set) return usage();
+		sticks[pad]->SetDefaultConfig();
+		sticks[pad]->SetEnabled(true);
+		sticks[pad]->SetEnabledInBackground(sticks[pad]->AllowsEnabledInBackground());
+		sticks[pad]->SetSensitivity(1);
+		return;
+	}
+	if (command == "enabled")
+	{
+		if (set) sticks[pad]->SetEnabled((int)value);
+		return (void) Printf("%d\n", sticks[pad]->GetEnabled());
+	}
+	if (command == "background")
+	{
+		if (set) sticks[pad]->SetEnabledInBackground((int)value);
+		return (void) Printf("%d\n", sticks[pad]->GetEnabledInBackground());
+	}
+	if (command == "sensitivity")
+	{
+		if (set) sticks[pad]->SetSensitivity(value);
+		return (void) Printf("%g\n", sticks[pad]->GetSensitivity());
+	}
 	if (command == "deadzone")
 	{
 		if (set) sticks[pad]->SetAxisDeadZone(axis, value);
@@ -458,6 +494,11 @@ CCMD (gamepad)
 	{
 		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 3, value);
 		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 3));
+	}
+	if (command == "map")
+	{
+		if (set) sticks[pad]->SetAxisMap(axis, (EJoyAxis)value);
+		return (void) Printf("%d\n", sticks[pad]->GetAxisMap(axis));
 	}
 
 	return usage();

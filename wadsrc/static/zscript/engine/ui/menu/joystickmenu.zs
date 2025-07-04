@@ -130,7 +130,94 @@ class OptionMenuSliderJoyDeadZone : OptionMenuSliderBase
 
 //=============================================================================
 //
-// 
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyDigitalThreshold : OptionMenuSliderBase
+{
+	int mAxis;
+	int mNeg;
+	JoystickConfig mJoy;
+
+	OptionMenuSliderJoyDigitalThreshold Init(String label, int axis, double min, double max, double step, int showval, JoystickConfig joy)
+	{
+		Super.Init(label, min, max, step, showval);
+		mAxis = axis;
+		mNeg = 1;
+		mJoy = joy;
+		return self;
+	}
+
+	override double GetSliderValue()
+	{
+		double d = mJoy.GetAxisDigitalThreshold(mAxis);
+		mNeg = d < 0? -1:1;
+		return d;
+	}
+
+	override void SetSliderValue(double val)
+	{
+		mJoy.SetAxisDigitalThreshold(mAxis, val * mNeg);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuItemJoyCurve : OptionMenuItemOptionBase
+{
+	int mAxis;
+	JoystickConfig mJoy;
+
+	OptionMenuItemJoyCurve Init(String label, int axis, Name values, int center, JoystickConfig joy)
+	{
+		Super.Init(label, 'none', values, null, center);
+		mAxis = axis;
+		mJoy = joy;
+		return self;
+	}
+
+	override int GetSelection()
+	{
+		double f = mJoy.GetAxisResponseCurve(mAxis);
+		let opt = OptionValues.GetCount(mValues);
+		if (opt > 0)
+		{
+			// Map from joystick curve to menu selection.
+			for(int i = 0; i < opt; i++)
+			{
+				if (f ~== OptionValues.GetValue(mValues, i))
+				{
+					return i;
+				}
+			}
+		}
+		return JoystickConfig.JOYCURVE_CUSTOM;
+	}
+
+	override void SetSelection(int selection)
+	{
+		let opt = OptionValues.GetCount(mValues);
+		// Map from menu selection to joystick curve.
+		if (opt == 0 || selection >= opt)
+		{
+			selection = JoystickConfig.JOYCURVE_DEFAULT;
+		}
+		else
+		{
+			selection = int(OptionValues.GetValue(mValues, selection));
+		}
+		mJoy.setAxisResponseCurve(mAxis, selection);
+	}
+}
+
+//=============================================================================
+//
+//
 //
 //=============================================================================
 
@@ -340,7 +427,24 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 					opt.mItems.Push(it);
 					it = new("OptionMenuItemInverter").Init("$JOYMNU_INVERT", i, false, joy);
 					opt.mItems.Push(it);
+					it = new("OptionMenuItemJoyCurve").Init("$JOYMNU_CURVE", i, "JoyAxisCurveNames", false, joy);
+					opt.mItems.Push(it);
+					// // is there a way to do something like this?
+					// // add extra options if the selected value is something specific?
+					// if (joy.GetAxisResponseCurve(i) == JoystickConfig.JOYCURVE_CUSTOM)
+					// {
+					// 	it = new("OptionMenuItemStaticText").Init("$JOYMNU_CURVE_X1", false);
+					// 	opt.mItems.Push(it);
+					// 	it = new("OptionMenuItemStaticText").Init("$JOYMNU_CURVE_Y1", false);
+					// 	opt.mItems.Push(it);
+					// 	it = new("OptionMenuItemStaticText").Init("$JOYMNU_CURVE_X2", false);
+					// 	opt.mItems.Push(it);
+					// 	it = new("OptionMenuItemStaticText").Init("$JOYMNU_CURVE_Y2", false);
+					// 	opt.mItems.Push(it);
+					// }
 					it = new("OptionMenuSliderJoyDeadZone").Init("$JOYMNU_DEADZONE", i, 0, 0.9, 0.05, 3, joy);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyDigitalThreshold").Init("$JOYMNU_THESHOLD", i, 0, 0.9, 0.05, 3, joy);
 					opt.mItems.Push(it);
 				}
 			}

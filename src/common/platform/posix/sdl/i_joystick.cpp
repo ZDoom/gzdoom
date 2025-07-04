@@ -208,50 +208,54 @@ public:
 
 	void SetDefaultConfig()
 	{
+		if (Axes.size() == 0)
+		{
+			for(int i = 0;i < GetNumAxes();i++)
+			{
+				Axes.Push({});
+			}
+		}
+
 		for(int i = 0;i < GetNumAxes();i++)
 		{
-			AxisInfo info;
-
 			if (Mapping) {
 				switch(i) {
-					case SDL_CONTROLLER_AXIS_LEFTX: info.Name = "Left Stick X"; break;
-					case SDL_CONTROLLER_AXIS_LEFTY: info.Name = "Left Stick Y"; break;
-					case SDL_CONTROLLER_AXIS_RIGHTX: info.Name = "Right Stick X"; break;
-					case SDL_CONTROLLER_AXIS_RIGHTY: info.Name = "Right Stick Y"; break;
-					case SDL_CONTROLLER_AXIS_TRIGGERLEFT: info.Name = "Left Trigger"; break;
-					case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: info.Name = "Right Trigger"; break;
-					default: info.Name.Format("Axis %d", i+1); break;
+					case SDL_CONTROLLER_AXIS_LEFTX: Axes[i].Name = "Left Stick X"; break;
+					case SDL_CONTROLLER_AXIS_LEFTY: Axes[i].Name = "Left Stick Y"; break;
+					case SDL_CONTROLLER_AXIS_RIGHTX: Axes[i].Name = "Right Stick X"; break;
+					case SDL_CONTROLLER_AXIS_RIGHTY: Axes[i].Name = "Right Stick Y"; break;
+					case SDL_CONTROLLER_AXIS_TRIGGERLEFT: Axes[i].Name = "Left Trigger"; break;
+					case SDL_CONTROLLER_AXIS_TRIGGERRIGHT: Axes[i].Name = "Right Trigger"; break;
+					default: Axes[i].Name.Format("Axis %d", i+1); break;
 				}
 			} else {
 				if(i < NumAxes)
-					info.Name.Format("Axis %d", i+1);
+					Axes[i].Name.Format("Axis %d", i+1);
 				else
-					info.Name.Format("Hat %d (%c)", (i-NumAxes)/2 + 1, (i-NumAxes)%2 == 0 ? 'x' : 'y');
+					Axes[i].Name.Format("Hat %d (%c)", (i-NumAxes)/2 + 1, (i-NumAxes)%2 == 0 ? 'x' : 'y');
 			}
 
-			info.Value = 0.0;
-			info.ButtonValue = 0;
+			Axes[i].Value = 0.0;
+			Axes[i].ButtonValue = 0;
 
 			if (i < DefaultAxesCount)
 			{
-				info.GameAxis = DefaultAxes[i].GameAxis;
-				info.DeadZone = DefaultAxes[i].DeadZone;
-				info.Multiplier = DefaultAxes[i].Multiplier;
-				info.DigitalThreshold = DefaultAxes[i].DigitalThreshold;
-				info.ResponseCurvePreset = DefaultAxes[i].ResponseCurvePreset;
-				info.ResponseCurve = JOYCURVE[DefaultAxes[i].ResponseCurvePreset];
+				Axes[i].GameAxis = DefaultAxes[i].GameAxis;
+				Axes[i].DeadZone = DefaultAxes[i].DeadZone;
+				Axes[i].Multiplier = DefaultAxes[i].Multiplier;
+				Axes[i].DigitalThreshold = DefaultAxes[i].DigitalThreshold;
+				Axes[i].ResponseCurvePreset = DefaultAxes[i].ResponseCurvePreset;
+				Axes[i].ResponseCurve = JOYCURVE[DefaultAxes[i].ResponseCurvePreset];
 			}
 			else
 			{
-				info.GameAxis = JOYAXIS_None;
-				info.DeadZone = JOYDEADZONE_DEFAULT;
-				info.Multiplier = JOYSENSITIVITY_DEFAULT;
-				info.DigitalThreshold = JOYTHRESH_DEFAULT;
-				info.ResponseCurvePreset = JOYCURVE_DEFAULT;
-				info.ResponseCurve = JOYCURVE[JOYCURVE_DEFAULT];
+				Axes[i].GameAxis = JOYAXIS_None;
+				Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
+				Axes[i].Multiplier = JOYSENSITIVITY_DEFAULT;
+				Axes[i].DigitalThreshold = JOYTHRESH_DEFAULT;
+				Axes[i].ResponseCurvePreset = JOYCURVE_DEFAULT;
+				Axes[i].ResponseCurve = JOYCURVE[JOYCURVE_DEFAULT];
 			}
-
-			Axes.Push(info);
 		}
 	}
 

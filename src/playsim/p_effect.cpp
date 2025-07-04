@@ -305,6 +305,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 		{
 			particle->alpha = 1.0;
 			particle->fadestep = -particle->fadestep;
+			particle->flags &= ~SPF_FADE_IN_OUT;
 		}
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))

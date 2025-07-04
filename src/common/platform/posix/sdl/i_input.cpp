@@ -32,13 +32,13 @@
 */
 #include <SDL.h>
 #include <SDL_events.h>
+#include "i_input.h"
 #include "c_cvars.h"
 #include "dobject.h"
 #include "m_argv.h"
 #include "m_joy.h"
 #include "v_video.h"
 
-#include "d_eventbase.h"
 #include "d_gui.h"
 #include "c_buttons.h"
 #include "c_console.h"
@@ -49,10 +49,6 @@
 #include "i_interface.h"
 #include "engineerrors.h"
 #include "i_interface.h"
-
-
-static void I_CheckGUICapture ();
-static void I_CheckNativeMouse ();
 
 bool GUICapture;
 static bool NativeMouse = true;
@@ -534,7 +530,7 @@ void MessagePump (const SDL_Event &sev)
 		event.type = sev.type == SDL_JOYBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
 		if(event.data1 != 0)
-			D_PostEvent(&event);
+			I_JoyConsumeEvent(sev.jdevice.which, &event);
 		break;
 
 	case SDL_CONTROLLERBUTTONDOWN:
@@ -566,7 +562,7 @@ void MessagePump (const SDL_Event &sev)
 			default:                                  event.data1 = 0;
 		}
 		if(event.data1 != 0)
-			D_PostEvent(&event);
+			I_JoyConsumeEvent(sev.cbutton.which, &event);
 		break;
 
 	case SDL_JOYDEVICEADDED:

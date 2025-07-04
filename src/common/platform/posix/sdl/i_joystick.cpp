@@ -38,6 +38,7 @@
 #include "cmdlib.h"
 
 #include "d_eventbase.h"
+#include "i_input.h"
 #include "m_joy.h"
 
 class SDLInputJoystick: public IJoystickConfig
@@ -488,6 +489,11 @@ public:
 			if(Joysticks[i]->Enabled) Joysticks[i]->ProcessInput();
 	}
 
+	bool IsJoystickEnabled(int id)
+	{
+		return id < Joysticks.SSize() && Joysticks[id]->Enabled;
+	}
+
 protected:
 	TDeletingArray<SDLInputJoystick *> Joysticks;
 };
@@ -533,6 +539,16 @@ void I_ProcessJoysticks()
 {
 	if (use_joystick && JoystickManager)
 		JoystickManager->ProcessInput();
+}
+
+void I_JoyConsumeEvent(int source, event_t * event)
+{
+	if (event->type == EV_KeyDown)
+	{
+		bool okay = use_joystick && JoystickManager && JoystickManager->IsJoystickEnabled(source);
+		if (!okay) return;
+	}
+	D_PostEvent(event);
 }
 
 IJoystickConfig *I_UpdateDeviceList()

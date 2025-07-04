@@ -95,14 +95,14 @@ public:
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	JoyResponseCurve GetAxisResponseCurve(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
@@ -131,7 +131,7 @@ protected:
 		EJoyAxis GameAxis;
 		uint8_t ButtonValue;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
 	};
 	struct DefaultAxisConfig
@@ -140,7 +140,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 	};
 	enum
 	{
@@ -615,7 +615,7 @@ float FXInputController::GetAxisDigitalThreshold(int axis)
 //
 //==========================================================================
 
-JoyResponseCurve FXInputController::GetAxisResponseCurve(int axis)
+EJoyCurve FXInputController::GetAxisResponseCurve(int axis)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{
@@ -701,7 +701,7 @@ void FXInputController::SetAxisDigitalThreshold(int axis, float threshold)
 //
 //==========================================================================
 
-void FXInputController::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
+void FXInputController::SetAxisResponseCurve(int axis, EJoyCurve preset)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{

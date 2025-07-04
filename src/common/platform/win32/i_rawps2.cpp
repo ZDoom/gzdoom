@@ -104,14 +104,14 @@ public:
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	JoyResponseCurve GetAxisResponseCurve(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
@@ -138,7 +138,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
 		EJoyAxis GameAxis;
 		uint8_t ButtonValue;
@@ -148,7 +148,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 	};
 	enum
 	{
@@ -824,7 +824,7 @@ float FRawPS2Controller::GetAxisDigitalThreshold(int axis)
 //
 //==========================================================================
 
-JoyResponseCurve FRawPS2Controller::GetAxisResponseCurve(int axis)
+EJoyCurve FRawPS2Controller::GetAxisResponseCurve(int axis)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{
@@ -910,7 +910,7 @@ void FRawPS2Controller::SetAxisDigitalThreshold(int axis, float threshold)
 //
 //==========================================================================
 
-void FRawPS2Controller::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
+void FRawPS2Controller::SetAxisResponseCurve(int axis, EJoyCurve preset)
 {
 	if (unsigned(axis) < NUM_AXES)
 	{

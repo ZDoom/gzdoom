@@ -16,7 +16,7 @@ union CubicBezier {
 	float pts[4];
 };
 
-enum JoyResponseCurve {
+enum EJoyCurve {
 	JOYCURVE_CUSTOM = -1,
 	JOYCURVE_DEFAULT,
 	JOYCURVE_LINEAR,
@@ -65,14 +65,14 @@ struct IJoystickConfig
 	virtual const char *GetAxisName(int axis) = 0;
 	virtual float GetAxisScale(int axis) = 0;
 	virtual float GetAxisDigitalThreshold(int axis) = 0;
-	virtual JoyResponseCurve GetAxisResponseCurve(int axis) = 0;
+	virtual EJoyCurve GetAxisResponseCurve(int axis) = 0;
 	virtual float GetAxisResponseCurvePoint(int axis, int point) = 0;
 
 	virtual void SetAxisDeadZone(int axis, float zone) = 0;
 	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
 	virtual void SetAxisScale(int axis, float scale) = 0;
 	virtual void SetAxisDigitalThreshold(int axis, float threshold) = 0;
-	virtual void SetAxisResponseCurve(int axis, JoyResponseCurve preset) = 0;
+	virtual void SetAxisResponseCurve(int axis, EJoyCurve preset) = 0;
 	virtual void SetAxisResponseCurvePoint(int axis, int point, float value) = 0;
 
 	virtual bool GetEnabled() = 0;

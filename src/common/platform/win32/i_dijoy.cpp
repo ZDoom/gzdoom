@@ -170,14 +170,14 @@ public:
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	JoyResponseCurve GetAxisResponseCurve(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
@@ -209,7 +209,7 @@ protected:
 		float DeadZone, DefaultDeadZone;
 		float Multiplier, DefaultMultiplier;
 		float DigitalThreshold, DefaultDigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset, DefaultResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset, DefaultResponseCurvePreset;
 		CubicBezier ResponseCurve;
 		EJoyAxis GameAxis, DefaultGameAxis;
 		uint8_t ButtonValue;
@@ -977,7 +977,7 @@ float FDInputJoystick::GetAxisDigitalThreshold(int axis)
 //
 //===========================================================================
 
-JoyResponseCurve FDInputJoystick::GetAxisResponseCurve(int axis)
+EJoyCurve FDInputJoystick::GetAxisResponseCurve(int axis)
 {
 	if (unsigned(axis) >= Axes.Size())
 	{
@@ -1063,7 +1063,7 @@ void FDInputJoystick::SetAxisDigitalThreshold(int axis, float threshold)
 //
 //===========================================================================
 
-void FDInputJoystick::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
+void FDInputJoystick::SetAxisResponseCurve(int axis, EJoyCurve preset)
 {
 	if (unsigned(axis) < Axes.Size())
 	{

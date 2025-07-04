@@ -197,7 +197,7 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 		value = GameConfig->GetValueForKey(key);
 		if (value)
 		{
-			joy->SetAxisResponseCurve(i, (JoyResponseCurve)clamp(atoi(value), (int)JOYCURVE_CUSTOM, (int)NUM_JOYCURVE-1));
+			joy->SetAxisResponseCurve(i, (EJoyCurve)clamp(atoi(value), (int)JOYCURVE_CUSTOM, (int)NUM_JOYCURVE-1));
 		}
 
 		mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
@@ -472,7 +472,7 @@ CCMD (gamepad)
 	}
 	if (command == "curve")
 	{
-		if (set) sticks[pad]->SetAxisResponseCurve(axis, (JoyResponseCurve)value);
+		if (set) sticks[pad]->SetAxisResponseCurve(axis, (EJoyCurve)value);
 		return (void) Printf("%d\n", sticks[pad]->GetAxisResponseCurve(axis));
 	}
 	if (command == "curve-x1")

@@ -95,14 +95,14 @@ public:
 	virtual const char* GetAxisName(int axis);
 	virtual float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
-	JoyResponseCurve GetAxisResponseCurve(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	virtual void SetAxisDeadZone(int axis, float deadZone);
 	virtual void SetAxisMap(int axis, EJoyAxis gameAxis);
 	virtual void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
-	void SetAxisResponseCurve(int axis, JoyResponseCurve preset);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	virtual bool IsSensitivityDefault();
@@ -156,8 +156,8 @@ private:
 		float defaultSensitivity;
 		float digitalThreshold;
 		float defaultDigitalThreshold;
-		JoyResponseCurve responseCurvePreset;
-		JoyResponseCurve defaultResponseCurvePreset;
+		EJoyCurve responseCurvePreset;
+		EJoyCurve defaultResponseCurvePreset;
 		CubicBezier responseCurve;
 
 		EJoyAxis gameAxis;
@@ -396,7 +396,7 @@ float IOKitJoystick::GetAxisDigitalThreshold(int axis)
 	return IS_AXIS_VALID ? m_axes[axis].digitalThreshold : JOYTHRESH_DEFAULT;
 }
 
-JoyResponseCurve IOKitJoystick::GetAxisResponseCurve(int axis)
+EJoyCurve IOKitJoystick::GetAxisResponseCurve(int axis)
 {
 	return IS_AXIS_VALID ? m_axes[axis].responseCurvePreset : JOYCURVE_DEFAULT;
 }
@@ -440,7 +440,7 @@ void IOKitJoystick::SetAxisDigitalThreshold(int axis, float threshold)
 	}
 }
 
-void IOKitJoystick::SetAxisResponseCurve(int axis, JoyResponseCurve preset)
+void IOKitJoystick::SetAxisResponseCurve(int axis, EJoyCurve preset)
 {
 	if (IS_AXIS_VALID)
 	{

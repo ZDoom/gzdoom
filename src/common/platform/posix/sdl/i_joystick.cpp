@@ -127,7 +127,7 @@ public:
 	{
 		return Axes[axis].DigitalThreshold;
 	}
-	JoyResponseCurve GetAxisResponseCurve(int axis)
+	EJoyCurve GetAxisResponseCurve(int axis)
 	{
 		return Axes[axis].ResponseCurvePreset;
 	}
@@ -154,7 +154,7 @@ public:
 	{
 		Axes[axis].DigitalThreshold = threshold;
 	}
-	void SetAxisResponseCurve(int axis, JoyResponseCurve preset)
+	void SetAxisResponseCurve(int axis, EJoyCurve preset)
 	{
 		if (preset >= NUM_JOYCURVE || preset < JOYCURVE_CUSTOM) return;
 		Axes[axis].ResponseCurvePreset = preset;
@@ -396,7 +396,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
 		EJoyAxis GameAxis;
 		double Value;
@@ -408,7 +408,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
-		JoyResponseCurve ResponseCurvePreset;
+		EJoyCurve ResponseCurvePreset;
 	};
 	static const DefaultAxisConfig DefaultJoystickAxes[5];
 	static const DefaultAxisConfig DefaultControllerAxes[6];

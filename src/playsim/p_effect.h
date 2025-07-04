@@ -97,8 +97,8 @@ struct particle_t
     ERenderStyle style; //+4 = 88
     float Roll, RollVel, RollAcc; //+12 = 100
     uint16_t    tnext, snext, tprev; //+6 = 106
-	uint16_t flags; //+2 = 108
-	// uint32_t padding; //+4 = 112
+	// uint16_t padding; //+2 = 108
+	uint32_t flags; //+4 = 112
 	FStandaloneAnimation animData; //+16 = 128
 };
 

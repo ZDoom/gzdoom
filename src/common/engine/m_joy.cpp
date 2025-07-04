@@ -304,7 +304,7 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 				mysnprintf(value, countof(value), "%d", joy->GetAxisResponseCurve(i));
 				GameConfig->SetValueForKey(key, value);
 			}
-			if (joy->GetAxisResponseCurve(i) == -1)
+			if (joy->GetAxisResponseCurve(i) == JOYCURVE_CUSTOM)
 			{
 				mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 0));

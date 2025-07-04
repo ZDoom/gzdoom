@@ -74,10 +74,11 @@ public:
 				SetDefaultConfig();
 			}
 		}
+		M_LoadJoystickConfig(this);
 	}
 	~SDLInputJoystick()
 	{
-		if(Device != NULL || Mapping != NULL)
+		if(IsValid())
 			M_SaveJoystickConfig(this);
 		SDL_GameControllerClose(Mapping);
 		SDL_JoystickClose(Device);
@@ -451,9 +452,7 @@ class SDLInputJoystickManager
 {
 public:
 	SDLInputJoystickManager()
-	{
-		this->UpdateDeviceList();
-	}
+	{}
 
 	void UpdateDeviceList()
 	{

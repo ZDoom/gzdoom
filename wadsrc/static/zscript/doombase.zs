@@ -473,6 +473,7 @@ struct FSpawnParticleParams
 	
 	native double startalpha;
 	native double fadestep;
+	native double fadeoutstep; // unlike fadestep, this is always expected to be a positive value.
 
 	native double startroll;
 	native double rollvel;

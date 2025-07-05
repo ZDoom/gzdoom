@@ -1364,13 +1364,18 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("lightlevel", LightLevel)
 		("animData", PT.animData)
 		("flags", PT.flags)
-		("visualThinkerFlags", flags)
-		("next", _next)
-		("prev", _prev);
+		("visualThinkerFlags", flags);
     
     if(arc.isReading())
     {
         UpdateSector();
+		_prev = _next = nullptr;
+		if (Level->VisualThinkerHead != nullptr)
+		{
+			Level->VisualThinkerHead->_prev = this;
+			_next = Level->VisualThinkerHead;
+		}
+		Level->VisualThinkerHead = this;
     }
 }
 

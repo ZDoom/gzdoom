@@ -104,6 +104,16 @@ CUSTOM_CVAR(Int, adl_volume_model, 0 /*ADLMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE 
 {
 	FORWARD_CVAR(adl_volume_model);
 }
+
+CUSTOM_CVAR(Int, adl_chan_alloc, 0 /*ADLMIDI_ChanAlloc_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_chan_alloc);
+}
+
+CUSTOM_CVAR(Bool, adl_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
+}
 #endif
 //==========================================================================
 //
@@ -271,6 +281,20 @@ CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_STRING_CVAR(opn_custom_bank);
 }
 
+CUSTOM_CVAR(Int, opn_volume_model, 0 /*OPNMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_volume_model);
+}
+
+CUSTOM_CVAR(Int, opn_chan_alloc, -1 /*OPNMIDI_ChanAlloc_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_chan_alloc);
+}
+
+CUSTOM_CVAR(Bool, opn_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
+}
 //==========================================================================
 //
 // GUS MIDI device

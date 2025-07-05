@@ -301,12 +301,14 @@ void P_ThinkParticles (FLevelLocals *Level)
 		}
 		
 		particle->alpha -= particle->fadestep;
-		if (!!(particle->flags & SPF_FADE_IN_OUT) && particle->alpha >= 1.0)
-		{
+		if (	(!!(particle->flags & SPF_FADE_IN_OUT) && particle->alpha >= 1.0)
+			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadestep)) <= 1.0)
+		) { // [Jay] if SPF_FADE_IN_HOLD_OUT, hold until the fade out would line up with ttl
 			particle->alpha = 1.0;
 			particle->fadestep = -particle->fadestep;
-			particle->flags &= ~SPF_FADE_IN_OUT;
+			particle->flags &= ~(SPF_FADE_IN_OUT|SPF_FADE_IN_HOLD_OUT);
 		}
+
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
@@ -367,6 +369,8 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 			particle->fadestep = FADEFROMTTL(lifetime);
 			if (flags & SPF_FADE_IN_OUT)
 				particle->fadestep *= (float)-2;
+			else if (flags & SPF_FADE_IN_HOLD_OUT)
+				particle->fadestep *= (float)-3;
 		}
 		else
 		{

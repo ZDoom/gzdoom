@@ -82,7 +82,7 @@ extern const CubicBezier JOYCURVE[NUM_JOYCURVE] = {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVARD(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present") 
+CUSTOM_CVARD(Bool, use_joystick, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present")
 {
 #ifdef _WIN32
 	joy_ps2raw->Callback();

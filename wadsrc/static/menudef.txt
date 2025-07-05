@@ -2286,12 +2286,14 @@ OptionMenu ModReplayerOptions protected
 	4, "$OPTVAL_NP2OPNA"
 	5, "$OPTVAL_MAMEOPNA"
 	6, "$OPTVAL_YMFMOPNA"
-	7, "$OPTVAL_NUKEDOPN2YM2612"
+	// 7'th is a VGM Dumper, it should NEVER been used during normal runtime
+	8, "$OPTVAL_NUKEDOPN2YM2612"
  }
 
  OptionMenu ADLOptions protected
  {
 	Title "$ADVSNDMNU_ADLMIDI"
+	Slider "$ADVSNDMNU_FLUIDGAIN",		 "adl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
@@ -2309,6 +2311,7 @@ OptionMenu ModReplayerOptions protected
  OptionMenu OPNOptions protected
  {
 	Title "$ADVSNDMNU_OPNMIDI"
+	Slider "$ADVSNDMNU_FLUIDGAIN",		 "opn_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0

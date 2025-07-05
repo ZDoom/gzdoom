@@ -837,6 +837,15 @@ OptionMenu "JoystickOptions" protected
 	Title "$JOYMNU_OPTIONS"
 }
 
+OptionValue "JoyAxisCurveNames"
+{
+	-1, "$OPTVAL_CUSTOM"
+	0, "$OPTVAL_DEFAULT"
+	1, "$OPTVAL_LINEAR"
+	2, "$OPTVAL_QUADRATIC"
+	3, "$OPTVAL_CUBIC"
+}
+
 OptionValue "JoyAxisMapNames"
 {
 	-1, "$OPTVAL_NONE"

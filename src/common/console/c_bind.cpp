@@ -147,7 +147,9 @@ const char *KeyNames[NUM_KEYS] =
 	"DPadUp","DPadDown","DPadLeft","DPadRight",	// Gamepad buttons
 	"Pad_Start","Pad_Back","LThumb","RThumb",
 	"LShoulder","RShoulder","LTrigger","RTrigger",
-	"Pad_A", "Pad_B", "Pad_X", "Pad_Y"
+	"Pad_A", "Pad_B", "Pad_X", "Pad_Y",
+	"Paddle_1", "Paddle_2", "Paddle_3", "Paddle_4",
+	"Guide", "Pad_Misc", "Pad_Touchpad"
 };
 
 FKeyBindings Bindings;

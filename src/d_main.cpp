@@ -2029,7 +2029,8 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		}
 	}
 
-	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload") && !disableautoload)
+	// Disable autoloading in netgames as we don't want people who are hosting/joining loading up random files.
+	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload") && !disableautoload && !Args->CheckParm("-host") && !Args->CheckParm("-join"))
 	{
 		FString file;
 

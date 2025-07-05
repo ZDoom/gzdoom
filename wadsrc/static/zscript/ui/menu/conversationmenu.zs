@@ -116,6 +116,7 @@ class ConversationMenu : Menu
 		mShowGold = false;
 		ConversationPauseTic = gametic + 20;
 		DontDim = true;
+		NoFade = true;
 		
 		let tex = TexMan.CheckForTexture (CurNode.Backdrop, TexMan.Type_MiscPatch);
 		mHasBackdrop = tex.isValid();

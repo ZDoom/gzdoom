@@ -138,6 +138,7 @@ class Menu : Object native ui version("2.4")
 	native bool DontBlur;
 	native bool AnimatedTransition;
 	native bool Animated;
+	native bool NoFade;
 
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
@@ -162,6 +163,7 @@ class Menu : Object native ui version("2.4")
 		DontBlur = false;
 		AnimatedTransition = false;
 		Animated = false;
+		NoFade = false;
 	}
 
 	//=============================================================================
@@ -287,11 +289,11 @@ class Menu : Object native ui version("2.4")
 				int y = (!(m_show_backbutton&2))? 0:screen.GetHeight() - h;
 				if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
 				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255), DTA_NOOFFSET, true);
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255), DTA_NOOFFSET, true, DTA_NoAlpha, true);
 				}
 				else
 				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, DTA_NOOFFSET, true);
+					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, DTA_NOOFFSET, true, DTA_NoAlpha, true);
 				}
 			}
 		}

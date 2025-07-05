@@ -120,7 +120,7 @@ CUSTOM_CVAR(Bool, adl_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
 }
 
-CUSTOM_CVAR(Float, adl_gain, 0.5, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, adl_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (!mus_usereplaygain)
 	{
@@ -262,6 +262,20 @@ CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIR
 	FORWARD_BOOL_CVAR(opl_fullpan);
 }
 
+CUSTOM_CVAR(Float, opl_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	if (!mus_usereplaygain)
+	{
+		FORWARD_CVAR(opl_gain);
+	}
+	else
+	{
+		// Replay gain will disable the user setting for consistency.
+		float newval;
+		ChangeMusicSetting(zmusic_opl_gain, mus_playing.handle, 1.0f, & newval);
+	}
+}
+
 #ifndef ZMUSIC_LITE
 //==========================================================================
 //
@@ -315,7 +329,7 @@ CUSTOM_CVAR(Bool, opn_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
 }
 
-CUSTOM_CVAR(Float, opn_gain, 0.5, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, opn_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (!mus_usereplaygain)
 	{

@@ -2225,6 +2225,7 @@ OptionMenu ModReplayerOptions protected
  	Title "$ADVSNDMNU_OPLSYNTHESIS"
 	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
+	Slider "$ADVSNDMNU_OPLGAIN",		 	"opl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
  }
 
@@ -2293,7 +2294,7 @@ OptionMenu ModReplayerOptions protected
  OptionMenu ADLOptions protected
  {
 	Title "$ADVSNDMNU_ADLMIDI"
-	Slider "$ADVSNDMNU_FLUIDGAIN",		 "adl_gain", 0, 10, 0.1, 1
+	Slider "$ADVSNDMNU_ADLGAIN",		 "adl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
@@ -2312,7 +2313,7 @@ OptionMenu ModReplayerOptions protected
  OptionMenu OPNOptions protected
  {
 	Title "$ADVSNDMNU_OPNMIDI"
-	Slider "$ADVSNDMNU_FLUIDGAIN",		 "opn_gain", 0, 10, 0.1, 1
+	Slider "$ADVSNDMNU_OPNGAIN",		 "opn_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0

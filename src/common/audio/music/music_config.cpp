@@ -95,6 +95,11 @@ CUSTOM_CVAR(Bool, adl_use_custom_bank, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
 
+CUSTOM_CVAR(Bool, adl_use_genmidi, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_use_genmidi);
+}
+
 CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(adl_custom_bank);
@@ -103,6 +108,30 @@ CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL | CVAR_SYST
 CUSTOM_CVAR(Int, adl_volume_model, 0 /*ADLMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(adl_volume_model);
+}
+
+CUSTOM_CVAR(Int, adl_chan_alloc, 0 /*ADLMIDI_ChanAlloc_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_chan_alloc);
+}
+
+CUSTOM_CVAR(Bool, adl_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
+}
+
+CUSTOM_CVAR(Float, adl_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	if (!mus_usereplaygain)
+	{
+		FORWARD_CVAR(adl_gain);
+	}
+	else
+	{
+		// Replay gain will disable the user setting for consistency.
+		float newval;
+		ChangeMusicSetting(zmusic_adl_gain, mus_playing.handle, 1.0f, & newval);
+	}
 }
 #endif
 //==========================================================================
@@ -233,6 +262,20 @@ CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIR
 	FORWARD_BOOL_CVAR(opl_fullpan);
 }
 
+CUSTOM_CVAR(Float, opl_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	if (!mus_usereplaygain)
+	{
+		FORWARD_CVAR(opl_gain);
+	}
+	else
+	{
+		// Replay gain will disable the user setting for consistency.
+		float newval;
+		ChangeMusicSetting(zmusic_opl_gain, mus_playing.handle, 1.0f, & newval);
+	}
+}
+
 #ifndef ZMUSIC_LITE
 //==========================================================================
 //
@@ -271,6 +314,34 @@ CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_STRING_CVAR(opn_custom_bank);
 }
 
+CUSTOM_CVAR(Int, opn_volume_model, 0 /*OPNMIDI_VolumeModel_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_volume_model);
+}
+
+CUSTOM_CVAR(Int, opn_chan_alloc, -1 /*OPNMIDI_ChanAlloc_AUTO*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	FORWARD_CVAR(adl_chan_alloc);
+}
+
+CUSTOM_CVAR(Bool, opn_auto_arpeggio, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_auto_arpeggio);
+}
+
+CUSTOM_CVAR(Float, opn_gain, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+{
+	if (!mus_usereplaygain)
+	{
+		FORWARD_CVAR(opn_gain);
+	}
+	else
+	{
+		// Replay gain will disable the user setting for consistency.
+		float newval;
+		ChangeMusicSetting(zmusic_opn_gain, mus_playing.handle, 1.0f, & newval);
+	}
+}
 //==========================================================================
 //
 // GUS MIDI device

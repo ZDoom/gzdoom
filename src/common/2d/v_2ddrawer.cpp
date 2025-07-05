@@ -222,6 +222,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
 int F2DDrawer::AddCommand(RenderCommand *data) 
 {
 	data->mScreenFade = screenFade;
+	data->mAlpha = data->noAlpha ? 1.0 : Alpha;
 	if (mData.Size() > 0 && data->isCompatible(mData.Last()))
 	{
 		// Merge with the last command.
@@ -568,6 +569,7 @@ void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 	dg.transform.Cells[1][2] += offset.Y;
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += 6;
+	dg.noAlpha = parms.noalpha;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
 	offset = osave;
@@ -707,6 +709,7 @@ void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 	dg.shape2DBufIndex = shape->bufferInfo->bufIndex;
 	shape->bufferInfo->lastCommand += 1;
 	dg.shape2DCommandCounter = shape->bufferInfo->lastCommand;
+	dg.noAlpha = parms.noalpha;
 	AddCommand(&dg);
 	offset = osave;
 }
@@ -1029,6 +1032,7 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 		// Only needed by Raze's fullscreen blends because they are being calculated late when half of the 2D content has already been submitted,
 		// This ensures they are below the HUD, not above it.
 		dg.mScreenFade = screenFade;
+		dg.mAlpha = dg.noAlpha ? 1.0 : Alpha;
 		mData.Insert(0, dg);
 	}
 }
@@ -1205,6 +1209,7 @@ void F2DDrawer::Clear()
 		mIsFirstPass = true;
 	}
 	screenFade = 1.f;
+	Alpha = 1.f;
 }
 
 //==========================================================================

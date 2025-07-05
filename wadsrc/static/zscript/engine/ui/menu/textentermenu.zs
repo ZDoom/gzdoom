@@ -78,6 +78,7 @@ class TextEnterMenu : Menu
 		AllowColors = allowcolors; // [TP]
 		displayFont = dpf;
 		CursorSize = displayFont.StringWidth(displayFont.GetCursor());
+		NoFade = true;
 	}
 
 	// This had to be deprecated because the unit for maxlen is 8 pixels.

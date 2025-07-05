@@ -141,6 +141,8 @@ public:
 		uint8_t mLightLevel;
 		uint8_t mFlags;
 		float mScreenFade;
+		float mAlpha;
+		bool noAlpha;
 
 		bool useTransform;
 		DMatrix3x3 transform;
@@ -177,6 +179,7 @@ public:
 				mColor1.d == other.mColor1.d &&
 				useTransform == other.useTransform &&
 				mScreenFade == other.mScreenFade &&
+				mAlpha == other.mAlpha &&
 				(
 					!useTransform ||
 					(
@@ -195,6 +198,7 @@ public:
 	bool isIn2D = false;
 	bool locked = false;	// prevents clearing of the data so it can be reused multiple times (useful for screen fades)
 	float screenFade = 1.f;
+	float Alpha = 1.f;
 	DVector2 offset;
 	DMatrix3x3 transform;
 public:
@@ -238,6 +242,7 @@ public:
 	void Clear();
 	void Lock() { locked = true; }
 	void SetScreenFade(float factor) { screenFade = factor; }
+	void SetAlpha(float factor) { Alpha = factor; }
 	void Unlock() { locked = false; }
 	int GetWidth() const { return Width; }
 	int GetHeight() const { return Height; }

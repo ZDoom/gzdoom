@@ -102,6 +102,9 @@ DMenu			*CurrentMenu;
 int				MenuTime;
 DObject*		menuDelegate;
 static MenuTransition transition;
+static uint64_t fade_start;
+static uint64_t fade_length;
+static bool fade_inmenu = false;
 
 
 extern PClass *DefaultListMenuClass;
@@ -350,6 +353,7 @@ void DMenu::Close ()
 	if (CurrentMenu == nullptr) return;	// double closing can happen in the save menu.
 	assert(CurrentMenu == this);
 	CurrentMenu = mParentMenu;
+	bool noFade = false;
 
 	if (CurrentMenu != nullptr)
 	{
@@ -363,12 +367,22 @@ void DMenu::Close ()
 		{
 			return;
 		}
+		else
+		{
+			noFade = this->NoFade || CurrentMenu->NoFade || (CurrentMenu == this);
+		}
 	}
 
 	Destroy();
 	if (CurrentMenu == nullptr)
 	{
 		M_ClearMenus();
+	}
+	else if (!noFade)
+	{
+		fade_start = I_GetTimeNS();
+		fade_length = 300'000'000;
+		fade_inmenu = true;
 	}
 }
 
@@ -463,6 +477,7 @@ bool M_IsAnimated()
 	if (!CurrentMenu) return false;
 	if (CurrentMenu->Animated) return true;
 	if (transition.previous) return true;
+	if ((I_GetTimeNS() - fade_start) < fade_length) return true;
 	return false;
 }
 
@@ -483,7 +498,18 @@ void M_ActivateMenu(DMenu *menu)
 			CurrentMenu->mMouseCapture = false;
 			I_ReleaseMouseCapture();
 		}
-		transition.StartTransition(CurrentMenu, menu, MA_Advance);
+		if (!transition.StartTransition(CurrentMenu, menu, MA_Advance))
+		{
+			if (!menu->NoFade && !CurrentMenu->NoFade && CurrentMenu != menu)
+			fade_start = I_GetTimeNS();
+			fade_length = 300'000'000;
+			fade_inmenu = true;
+		}
+	}
+	else
+	{
+		fade_start = I_GetTimeNS();
+		fade_length = 100'000'000;
 	}
 	CurrentMenu = menu;
 	GC::WriteBarrier(CurrentMenu);
@@ -844,7 +870,15 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount);
+		auto period = I_GetTimeNS() - fade_start;
+		auto fadeIn = 1.0;
+		if (period < fade_length)
+		{
+			fadeIn = period / (double)fade_length;
+		}
+		if (!fade_inmenu)
+			twod->SetAlpha(fadeIn);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(menuBlurAmount * fadeIn);
 		if (!CurrentMenu->DontDim)
 		{
 			if (sysCallbacks.MenuDim) sysCallbacks.MenuDim();
@@ -860,10 +894,18 @@ void M_Drawer (void)
 				transition.current = nullptr;
 			}
 		}
+		if (fade_inmenu && fadeIn < 1.0)
+		{
+			fadeIn = sin((M_PI / 2.) * fadeIn + M_PI) + 1.;
+			twod->SetOffset(DVector2((twod->GetWidth() / 20) * fadeIn, 0));
+			twod->SetAlpha(1. - fadeIn);
+		}
 		if (!going)
 		{
 			CurrentMenu->CallDrawer();
 		}
+		twod->SetOffset(DVector2(0, 0));
+		twod->SetAlpha(1.0);
 	}
 }
 
@@ -888,6 +930,7 @@ void M_ClearMenus()
 		CurrentMenu = parent;
 	}
 	menuactive = MENU_Off;
+	fade_inmenu = false;
 	if (CurrentScaleOverrider)  delete CurrentScaleOverrider;
 	CurrentScaleOverrider = nullptr;
 	if (sysCallbacks.MenuClosed) sysCallbacks.MenuClosed();
@@ -1011,6 +1054,7 @@ DEFINE_FIELD(DMenu, DontDim);
 DEFINE_FIELD(DMenu, DontBlur);
 DEFINE_FIELD(DMenu, AnimatedTransition);
 DEFINE_FIELD(DMenu, Animated);
+DEFINE_FIELD(DMenu, NoFade);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

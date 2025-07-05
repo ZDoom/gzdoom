@@ -133,6 +133,7 @@ enum
 	DTA_CleanTop,			// Like DTA_Clean but aligns to the top of the screen instead of the center.
 	DTA_NoOffset,			// Ignore 2D drawer's offset.
 	DTA_Localize,		// localize drawn string, for DrawText only
+	DTA_NoAlpha,            // Ignore 2D drawer's alpha.
 
 };
 
@@ -202,6 +203,7 @@ struct DrawParms
 	bool flipoffsets;
 	bool indexed;
 	bool nooffset;
+	bool noalpha;
 	int8_t fsscalemode;
 	double srcx, srcy;
 	double srcwidth, srcheight;

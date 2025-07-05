@@ -148,6 +148,10 @@ void Draw2D(F2DDrawer* drawer, FRenderState& state, int x, int y, int width, int
 			state.SetObjectColor(cmd.mSpecialColormap[0]);
 			state.SetAddColor(cmd.mSpecialColormap[1]);
 		}
+		else
+		{
+			state.SetObjectColor(0x00ffffff | ((uint32_t)(0xff * cmd.mAlpha) << 24));
+		}
 		state.SetFog(cmd.mColor1, 0);
 		state.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 		if (cmd.mFlags & F2DDrawer::DTF_Indexed) state.SetSoftLightLevel(cmd.mLightLevel);

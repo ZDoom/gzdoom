@@ -2305,6 +2305,7 @@ OptionMenu ModReplayerOptions protected
 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
 	StaticText ""
 	Option "$ADVSNDMNU_ADLCUSTOMBANK", 	 "adl_use_custom_bank", "OnOff"
+	Option "$ADVSNDMNU_ADLUSEWADBANK", 	 "adl_use_genmidi", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPLBANKFILE", "adl_custom_bank", "ADLMIDICustomBanksMenu"
  }
 

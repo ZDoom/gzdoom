@@ -995,7 +995,6 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("automap", automap)
 		("interpolator", interpolator)
 		("frozenstate", frozenstate)
-		("visualthinkerhead", VisualThinkerHead)
 		("actorbehaviors", ActorBehaviors);
 
 

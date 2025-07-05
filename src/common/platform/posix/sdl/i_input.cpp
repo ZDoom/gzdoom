@@ -525,7 +525,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_JOYBUTTONDOWN:
 	case SDL_JOYBUTTONUP:
-		if (SDL_IsGameController(sev.jdevice.which))
+		if (SDL_GameControllerFromInstanceID(sev.jdevice.which))
 			break; // let SDL_CONTROLLERBUTTON* handle this
 		event.type = sev.type == SDL_JOYBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
@@ -566,10 +566,18 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_JOYDEVICEADDED:
-	case SDL_JOYDEVICEREMOVED:
 	case SDL_CONTROLLERDEVICEADDED:
+		if (sev.type == SDL_JOYDEVICEADDED && SDL_IsGameController(sev.jdevice.which)) // DeviceIndex Here
+			break; // skip double event
+		I_UpdateDeviceList();
+		event.type = EV_DeviceChange;
+		D_PostEvent (&event);
+		break;
+
+	case SDL_JOYDEVICEREMOVED:
 	case SDL_CONTROLLERDEVICEREMOVED:
-		if ((sev.type == SDL_JOYDEVICEADDED || sev.type == SDL_JOYDEVICEREMOVED) && SDL_IsGameController(sev.jdevice.which))
+	case SDL_CONTROLLERDEVICEREMAPPED:
+		if (sev.type == SDL_JOYDEVICEREMOVED && SDL_GameControllerFromInstanceID(sev.jdevice.which))
 			break; // skip double event
 		I_UpdateDeviceList();
 		event.type = EV_DeviceChange;

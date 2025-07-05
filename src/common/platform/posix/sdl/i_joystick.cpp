@@ -54,6 +54,7 @@ public:
 		if (SDL_IsGameController(DeviceIndex))
 		{
 			Mapping = SDL_GameControllerOpen(DeviceIndex);
+			Device = NULL;
 
 			DefaultAxes = DefaultControllerAxes;
 			DefaultAxesCount = sizeof(DefaultControllerAxes) / sizeof(DefaultAxisConfig);
@@ -69,6 +70,8 @@ public:
 		else
 		{
 			Device = SDL_JoystickOpen(DeviceIndex);
+			Mapping = NULL;
+
 			DefaultAxes = DefaultJoystickAxes;
 			DefaultAxesCount = sizeof(DefaultJoystickAxes) / sizeof(DefaultAxisConfig);
 
@@ -86,8 +89,10 @@ public:
 	{
 		if(IsValid() && SettingsChanged)
 			M_SaveJoystickConfig(this);
-		SDL_GameControllerClose(Mapping);
-		SDL_JoystickClose(Device);
+		if (Mapping)
+			SDL_GameControllerClose(Mapping);
+		if (Device)
+			SDL_JoystickClose(Device);
 	}
 
 	bool IsValid() const

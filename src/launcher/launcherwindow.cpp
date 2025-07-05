@@ -91,7 +91,7 @@ void LauncherWindow::UpdateLanguage()
 {
 	Pages->SetTabText(PlayGame, GStrings.GetString("PICKER_TAB_PLAY"));
 	Pages->SetTabText(Settings, GStrings.GetString("OPTMNU_TITLE"));
-	Pages->SetTabText(Network, "Multiplayer");
+	Pages->SetTabText(Network, GStrings.GetString("PICKER_TAB_MULTI"));
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();
 	Network->UpdateLanguage();

@@ -67,6 +67,8 @@
 
 extern bool AppActive;
 
+EXTERN_CVAR(Bool, use_joystick)
+
 // TYPES -------------------------------------------------------------------
 
 typedef DWORD (WINAPI *XInputGetStateType)(DWORD index, XINPUT_STATE *state);
@@ -107,6 +109,8 @@ public:
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
 
+	void Rumble(unsigned short low_freq, unsigned short high_freq);
+
 	bool AllowsEnabledInBackground() { return true; }
 	bool GetEnabledInBackground() { return EnabledInBackground; }
 	void SetEnabledInBackground(bool enabled) { EnabledInBackground = enabled; }
@@ -129,6 +133,7 @@ protected:
 		EJoyAxis GameAxis;
 		float Multiplier;
 	};
+	XINPUT_VIBRATION Vibration;
 	enum
 	{
 		AXIS_ThumbLX,
@@ -169,6 +174,8 @@ public:
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
+
+	void Rumble(unsigned short low_freq, unsigned short high_freq);
 
 protected:
 	HMODULE XInputDLL;
@@ -377,6 +384,12 @@ void FXInputController::Attached()
 		Axes[i].ButtonValue = 0;
 	}
 	UpdateJoystickMenu(this);
+}
+
+void FXInputController::Rumble(unsigned short low_freq, unsigned short high_freq) {
+	Vibration.wLeftMotorSpeed = low_freq;
+	Vibration.wRightMotorSpeed = high_freq;
+	XInputSetState(Index, &Vibration);
 }
 
 //==========================================================================
@@ -821,6 +834,16 @@ bool FXInputManager::WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPA
 	return false;
 }
 
+void FXInputManager::Rumble(unsigned short low_freq, unsigned short high_freq) {
+	for (int i = 0; i < XUSER_MAX_COUNT; ++i)
+	{
+		if (Devices[i] && Devices[i]->IsConnected())
+		{
+			Devices[i]->Rumble(low_freq, high_freq);
+		}
+	}
+}
+
 //===========================================================================
 //
 // FXInputManager :: Rescan
@@ -866,3 +889,15 @@ void I_StartupXInput()
 	}
 }
 
+void I_Rumble(double high_freq, double low_freq, double _left_trig, double _right_trig) {
+	if (!use_joystick) return;
+
+	FXInputManager* XInputManager = & static_cast<FXInputManager&> (*JoyDevices[INPUT_XInput]);
+	if (XInputManager != NULL)
+	{
+		XInputManager->Rumble(
+			static_cast<unsigned short> (USHRT_MAX * std::min(std::max(0.0, high_freq), 1.0)),
+			static_cast<unsigned short> (USHRT_MAX * std::min(std::max(0.0, low_freq), 1.0))
+		);
+	}
+}

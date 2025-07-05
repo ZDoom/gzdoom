@@ -68,6 +68,7 @@
 #include <stdlib.h>
 
 
+#include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_event.h"
@@ -75,6 +76,7 @@
 #include "gstrings.h"
 #include "events.h"
 
+#include "m_joy.h"
 #include "m_random.h"
 
 #include "p_local.h"
@@ -194,6 +196,16 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		{
 			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		}
+
+		if ((mo == players[consoleplayer].mo || mo == players[consoleplayer].camera) &&
+			(activationType == SPAC_Use || activationType ==  SPAC_Push || activationType == SPAC_UseThrough || activationType == SPAC_UseBack))
+		{
+			IFVIRTUALPTR(mo, AActor, PlayerUsedSomethingMakeRumble)
+			{
+				VMValue params[5] = { mo, activationType, Level->levelnum, line->linenum, line->special};
+				VMCall(func, params, 5, nullptr, 0);
+			}
+		}
 	}
 	// some old WADs use this method to create walls that change the texture when shot.
 	else if (activationType == SPAC_Impact &&					// only for shootable triggers
@@ -208,6 +220,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
+
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
@@ -637,7 +650,11 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 					Printf(PRINT_HIGH | PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
-			if (playsound) S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
+			if (playsound)
+			{
+				S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
+				Joy_Rumble("misc/secret");
+			}
 		}
 	}
 	Level->found_secrets++;

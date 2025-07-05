@@ -64,6 +64,7 @@
 
 
 #include "m_bbox.h"
+#include "m_joy.h"
 #include "m_random.h"
 #include "c_dispatch.h"
 
@@ -1718,11 +1719,30 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	}
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
 	{ // Push thing
+
 		if (thing->lastpush != tm.PushTime)
 		{
 			thing->PlayPushSound();
 			thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 			thing->lastpush = tm.PushTime;
+
+			if (tm.thing == players[consoleplayer].mo || tm.thing == players[consoleplayer].camera)
+			{
+				IFVIRTUALPTR(tm.thing, AActor, PlayerPushedSomethingMakeRumble)
+				{
+					VMValue params[1] = { thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
+			else if (thing == players[consoleplayer].mo || thing == players[consoleplayer].camera)
+			{
+				// I assume the player can be pushed, correct?
+				IFVIRTUALPTR(thing, AActor, PlayerWasPushedMakeRumble)
+				{
+					VMValue params[1] = { tm.thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
 		}
 	}
 	solid = (thing->flags & MF_SOLID) &&
@@ -5735,7 +5755,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle, bool rumble)
 {
 	if (!CanTalk(self))
 		return false;
@@ -5746,6 +5766,9 @@ int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool 
 			Printf("Only settings controllers can start conversations with NPCs\n");
 		return false;
 	}
+
+	if (rumble)
+		Joy_Rumble("menu/activate");
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);
@@ -5758,7 +5781,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, StartConversation, NativeStartConversation
 	PARAM_OBJECT(player, AActor);
 	PARAM_BOOL(faceTalker);
 	PARAM_BOOL(saveAngle);
-	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle));
+	PARAM_BOOL(rumble);
+	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle, rumble));
 }
 
 bool P_TalkFacing(AActor *player)
@@ -5770,7 +5794,9 @@ bool P_TalkFacing(AActor *player)
 	{
 		P_AimLineAttack(player, player->Angles.Yaw + DAngle::fromDeg(angle), TALKRANGE, &t, DAngle::fromDeg(35.), ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != nullptr)
-			return NativeStartConversation(t.linetarget, player, true, true);
+		{
+			return NativeStartConversation(t.linetarget, player, true, true, true);
+		}
 	}
 	return false;
 }

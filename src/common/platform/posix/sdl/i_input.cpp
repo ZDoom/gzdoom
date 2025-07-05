@@ -497,6 +497,7 @@ void I_StartTic ()
 	I_CheckGUICapture ();
 	I_CheckNativeMouse ();
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 void I_ProcessJoysticks ();

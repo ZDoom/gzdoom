@@ -90,6 +90,7 @@ EXTERN_CVAR(Float, snd_musicvolume)
 EXTERN_CVAR(Int, snd_mididevice)
 EXTERN_CVAR(Float, mod_dumb_mastervolume)
 EXTERN_CVAR(Float, fluid_gain)
+EXTERN_CVAR(Float, opl_gain)
 EXTERN_CVAR(Float, adl_gain)
 EXTERN_CVAR(Float, opn_gain)
 

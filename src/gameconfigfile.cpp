@@ -71,6 +71,11 @@ EXTERN_CVAR (Bool, vid_scale_linear)
 EXTERN_CVAR(Float, m_sensitivity_x)
 EXTERN_CVAR(Float, m_sensitivity_y)
 EXTERN_CVAR(Int, adl_volume_model)
+EXTERN_CVAR(Int, adl_chan_alloc)
+EXTERN_CVAR(Bool, adl_auto_arpeggio)
+EXTERN_CVAR(Int, opn_volume_model)
+EXTERN_CVAR(Int, opn_chan_alloc)
+EXTERN_CVAR(Bool, opn_auto_arpeggio)
 EXTERN_CVAR (Int, gl_texture_hqresize_targets)
 EXTERN_CVAR(Int, wipetype)
 EXTERN_CVAR(Bool, i_pauseinbackground)
@@ -587,6 +592,12 @@ void FGameConfigFile::DoGlobalSetup ()
 				m_sensitivity_y = (float)yfact;
 
 				adl_volume_model = 0;
+				adl_chan_alloc = -1;
+				adl_auto_arpeggio = false;
+
+				opn_volume_model = 0;
+				opn_chan_alloc = -1;
+				opn_auto_arpeggio = false;
 
 				// if user originally wanted the in-game textures resized, set model skins to resize too
 				int old_targets = gl_texture_hqresize_targets;

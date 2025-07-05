@@ -302,9 +302,9 @@ void P_ThinkParticles (FLevelLocals *Level)
 		
 		particle->alpha -= particle->fadestep;
 		if (	(!!(particle->flags & SPF_FADE_IN_OUT) && particle->alpha >= 1.0)
-			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadestep)) <= 1.0)
+			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadestep)) <= std::min(1.0f, fabs(particle->alpha)))
 		) { // [Jay] if SPF_FADE_IN_HOLD_OUT, hold until the fade out would line up with ttl
-			particle->alpha = 1.0;
+			particle->alpha = std::min(1.0f, fabs(particle->alpha));
 			particle->fadestep = -particle->fadestep;
 			particle->flags &= ~(SPF_FADE_IN_OUT|SPF_FADE_IN_HOLD_OUT);
 		}

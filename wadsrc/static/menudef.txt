@@ -2244,6 +2244,24 @@ OptionMenu ModReplayerOptions protected
 	11, "$ADLVLMODEL_HMIOLD"
  }
 
+ OptionValue OpnVolumeModels
+ {
+	0, "$OPNVLMODEL_AUTO"
+	1, "$OPNVLMODEL_GENERIC"
+	2, "$OPNVLMODEL_NATIVE"
+	3, "$OPNVLMODEL_DMX"
+	4, "$OPNVLMODEL_APOGEE"
+	5, "$OPNVLMODEL_WIN9X"
+ }
+
+ OptionValue AdlChanAllocs
+ {
+	-1, "$ADLCHANALLOC_AUTO"
+	0, "$ADLCHANALLOC_OFFDELAY"
+	1, "$ADLCHANALLOC_SAMEINST"
+	2, "$ADLCHANALLOC_ANYREL"
+ }
+
  OptionValue ADLOplCores
  {
 	0, "$OPTVAL_NUKEDOPL3"
@@ -2251,16 +2269,24 @@ OptionMenu ModReplayerOptions protected
 	2, "$OPTVAL_DOSBOXOPL3"
 	3, "$OPTVAL_OPALOPL3"
 	4, "$OPTVAL_JAVAOPL3"
+	5, "$OPTVAL_ESFMu"
+	6, "$OPTVAL_MAMEOPL2"
+	7, "$OPTVAL_YMFMOPL2"
+	8, "$OPTVAL_YMFMOPL3"
+	9, "$OPTVAL_LLENUKEDOPL2"
+	10, "$OPTVAL_LLENUKEDOPL3"
  }
 
  OptionValue OpnCores
  {
 	0, "$OPTVAL_MAMEOPN2"
-	1, "$OPTVAL_NUKEDOPN2"
+	1, "$OPTVAL_NUKEDOPN2YM3438"
 	2, "$OPTVAL_GENSOPN2"
+	3, "$OPTVAL_YMFMOPN2"
 	4, "$OPTVAL_NP2OPNA"
 	5, "$OPTVAL_MAMEOPNA"
-	6, "$OPTVAL_PMDWINOPNA"
+	6, "$OPTVAL_YMFMOPNA"
+	7, "$OPTVAL_NUKEDOPN2YM2612"
  }
 
  OptionMenu ADLOptions protected
@@ -2271,6 +2297,8 @@ OptionMenu ModReplayerOptions protected
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "adl_fullpan", "OnOff"
 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "adl_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "adl_auto_arpeggio", "OnOff"
 	StaticText ""
 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
 	StaticText ""
@@ -2285,6 +2313,9 @@ OptionMenu ModReplayerOptions protected
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "opn_fullpan", "OnOff"
+	Option "$ADVSNDMNU_VLMODEL",		 "opn_volume_model", "OpnVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "opn_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "opn_auto_arpeggio", "OnOff"
 	StaticText ""
 	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"

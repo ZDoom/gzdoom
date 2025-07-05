@@ -90,6 +90,8 @@ EXTERN_CVAR(Float, snd_musicvolume)
 EXTERN_CVAR(Int, snd_mididevice)
 EXTERN_CVAR(Float, mod_dumb_mastervolume)
 EXTERN_CVAR(Float, fluid_gain)
+EXTERN_CVAR(Float, adl_gain)
+EXTERN_CVAR(Float, opn_gain)
 
 
 CVAR(Bool, mus_calcgain, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // changing this will only take effect for the next song.

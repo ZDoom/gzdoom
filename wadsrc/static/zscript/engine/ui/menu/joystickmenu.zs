@@ -444,7 +444,7 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 					// }
 					it = new("OptionMenuSliderJoyDeadZone").Init("$JOYMNU_DEADZONE", i, 0, 0.9, 0.05, 3, joy);
 					opt.mItems.Push(it);
-					it = new("OptionMenuSliderJoyDigitalThreshold").Init("$JOYMNU_THESHOLD", i, 0, 0.9, 0.05, 3, joy);
+					it = new("OptionMenuSliderJoyDigitalThreshold").Init("$JOYMNU_THRESHOLD", i, 0, 0.9, 0.05, 3, joy);
 					opt.mItems.Push(it);
 				}
 			}

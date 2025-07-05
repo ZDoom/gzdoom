@@ -44,7 +44,12 @@
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
-	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(JOYSENSITIVITY_DEFAULT) , Enabled(true)
+	SDLInputJoystick(int DeviceIndex) :
+	DeviceIndex(DeviceIndex),
+	InstanceID(SDL_JoystickGetDeviceInstanceID(DeviceIndex)),
+	Multiplier(JOYSENSITIVITY_DEFAULT),
+	Enabled(true),
+	SettingsChanged(false)
 	{
 		if (SDL_IsGameController(DeviceIndex))
 		{
@@ -79,7 +84,7 @@ public:
 	}
 	~SDLInputJoystick()
 	{
-		if(IsValid())
+		if(IsValid() && SettingsChanged)
 			M_SaveJoystickConfig(this);
 		SDL_GameControllerClose(Mapping);
 		SDL_JoystickClose(Device);
@@ -102,6 +107,7 @@ public:
 	}
 	void SetSensitivity(float scale)
 	{
+		SettingsChanged = true;
 		Multiplier = scale;
 	}
 
@@ -142,23 +148,28 @@ public:
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
+		SettingsChanged = true;
 		Axes[axis].DeadZone = clamp(zone, 0.f, 1.f);
 	}
 	void SetAxisMap(int axis, EJoyAxis gameaxis)
 	{
+		SettingsChanged = true;
 		Axes[axis].GameAxis = gameaxis;
 	}
 	void SetAxisScale(int axis, float scale)
 	{
+		SettingsChanged = true;
 		Axes[axis].Multiplier = scale;
 	}
 	void SetAxisDigitalThreshold(int axis, float threshold)
 	{
+		SettingsChanged = true;
 		Axes[axis].DigitalThreshold = threshold;
 	}
 	void SetAxisResponseCurve(int axis, EJoyCurve preset)
 	{
 		if (preset >= NUM_JOYCURVE || preset < JOYCURVE_CUSTOM) return;
+		SettingsChanged = true;
 		Axes[axis].ResponseCurvePreset = preset;
 		if (preset == JOYCURVE_CUSTOM) return;
 		Axes[axis].ResponseCurve = JOYCURVE[preset];
@@ -167,6 +178,7 @@ public:
 	{
 		if (unsigned(point) < 4)
 		{
+			SettingsChanged = true;
 			Axes[axis].ResponseCurvePreset = JOYCURVE_CUSTOM;
 			Axes[axis].ResponseCurve.pts[point] = value;
 		}
@@ -268,6 +280,7 @@ public:
 
 	void SetEnabled(bool enabled)
 	{
+		SettingsChanged = true;
 		Enabled = enabled;
 	}
 
@@ -418,6 +431,7 @@ protected:
 	int DefaultAxesCount;
 
 	int					DeviceIndex;
+	int					InstanceID;
 	SDL_Joystick		*Device;
 	SDL_GameController	*Mapping;
 
@@ -426,6 +440,7 @@ protected:
 	TArray<AxisInfo>	Axes;
 	int					NumAxes;
 	int					NumHats;
+	bool 				SettingsChanged;
 
 	friend class SDLInputJoystickManager;
 };
@@ -453,7 +468,9 @@ class SDLInputJoystickManager
 {
 public:
 	SDLInputJoystickManager()
-	{}
+	{
+		UpdateDeviceList();
+	}
 
 	void UpdateDeviceList()
 	{
@@ -489,9 +506,17 @@ public:
 			if(Joysticks[i]->Enabled) Joysticks[i]->ProcessInput();
 	}
 
-	bool IsJoystickEnabled(int id)
+	bool IsJoystickEnabled(int instanceID)
 	{
-		return id < Joysticks.SSize() && Joysticks[id]->Enabled;
+		for(unsigned int i = 0; i < Joysticks.Size(); i++)
+		{
+			if (Joysticks[i]->InstanceID != instanceID)
+			{
+				continue;
+			}
+			return Joysticks[i]->Enabled;
+		}
+		return false;
 	}
 
 protected:
@@ -541,11 +566,11 @@ void I_ProcessJoysticks()
 		JoystickManager->ProcessInput();
 }
 
-void I_JoyConsumeEvent(int source, event_t * event)
+void I_JoyConsumeEvent(int instanceID, event_t * event)
 {
 	if (event->type == EV_KeyDown)
 	{
-		bool okay = use_joystick && JoystickManager && JoystickManager->IsJoystickEnabled(source);
+		bool okay = use_joystick && JoystickManager && JoystickManager->IsJoystickEnabled(instanceID);
 		if (!okay) return;
 	}
 	D_PostEvent(event);

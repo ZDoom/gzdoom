@@ -8,6 +8,6 @@ extern int WaitingForKey;
 static void I_CheckGUICapture ();
 static void I_CheckNativeMouse ();
 
-void I_JoyConsumeEvent(int source, event_t * event);
+void I_JoyConsumeEvent(int instanceID, event_t * event);
 
 #endif

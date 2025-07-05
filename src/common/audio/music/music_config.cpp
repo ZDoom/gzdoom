@@ -95,6 +95,11 @@ CUSTOM_CVAR(Bool, adl_use_custom_bank, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
 	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
 
+CUSTOM_CVAR(Bool, adl_use_genmidi, false, CVAR_ARCHIVE | CVAR_VIRTUAL)
+{
+	FORWARD_BOOL_CVAR(adl_use_genmidi);
+}
+
 CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_VIRTUAL | CVAR_SYSTEM_ONLY)
 {
 	FORWARD_STRING_CVAR(adl_custom_bank);

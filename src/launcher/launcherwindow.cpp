@@ -3,6 +3,7 @@
 #include "launcherbuttonbar.h"
 #include "playgamepage.h"
 #include "settingspage.h"
+#include "networkpage.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_interface.h"
@@ -12,25 +13,22 @@
 #include <zwidget/window/window.h>
 #include <zwidget/widgets/tabwidget/tabwidget.h>
 
-int LauncherWindow::ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags, FString * extraArgs)
+bool LauncherWindow::ExecModal(FStartupSelectionInfo& info)
 {
 	Size screenSize = GetScreenSize();
 	double windowWidth = 615.0;
 	double windowHeight = 700.0;
 
-	auto launcher = std::make_unique<LauncherWindow>(wads, numwads, defaultiwad, autoloadflags);
+	auto launcher = std::make_unique<LauncherWindow>(info);
 	launcher->SetFrameGeometry((screenSize.width - windowWidth) * 0.5, (screenSize.height - windowHeight) * 0.5, windowWidth, windowHeight);
-	if(extraArgs) launcher->PlayGame->SetExtraArgs(extraArgs->GetChars());
 	launcher->Show();
 
 	DisplayWindow::RunLoop();
 
-	if(extraArgs) *extraArgs = launcher->PlayGame->GetExtraArgs();
-
 	return launcher->ExecResult;
 }
 
-LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags) : Widget(nullptr, WidgetType::Window)
+LauncherWindow::LauncherWindow(FStartupSelectionInfo& info) : Widget(nullptr, WidgetType::Window), Info(&info)
 {
 	SetWindowTitle(GAMENAME);
 
@@ -38,11 +36,15 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	Pages = new TabWidget(this);
 	Buttonbar = new LauncherButtonbar(this);
 
-	PlayGame = new PlayGamePage(this, wads, numwads, defaultiwad);
-	Settings = new SettingsPage(this, autoloadflags);
+	PlayGame = new PlayGamePage(this, info);
+	Settings = new SettingsPage(this, info);
+	Network = new NetworkPage(this, info);
 
 	Pages->AddTab(PlayGame, "Play");
 	Pages->AddTab(Settings, "Settings");
+	Pages->AddTab(Network, "Multiplayer");
+
+	Network->InitializeTabs(info);
 
 	UpdateLanguage();
 
@@ -50,17 +52,38 @@ LauncherWindow::LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int
 	PlayGame->SetFocus();
 }
 
+void LauncherWindow::UpdatePlayButton()
+{
+	Buttonbar->UpdateLanguage();
+}
+
+bool LauncherWindow::IsInMultiplayer() const
+{
+	return Pages->GetCurrentIndex() >= 0 ? Pages->GetCurrentWidget() == Network : false;
+}
+
+bool LauncherWindow::IsHosting() const
+{
+	return IsInMultiplayer() && Network->IsInHost();
+}
+
 void LauncherWindow::Start()
 {
-	Settings->Save();
+	Info->bNetStart = IsInMultiplayer();
 
-	ExecResult = PlayGame->GetSelectedGame();
+	Settings->SetValues(*Info);
+	if (Info->bNetStart)
+		Network->SetValues(*Info);
+	else
+		PlayGame->SetValues(*Info);
+
+	ExecResult = true;
 	DisplayWindow::ExitLoop();
 }
 
 void LauncherWindow::Exit()
 {
-	ExecResult = -1;
+	ExecResult = false;
 	DisplayWindow::ExitLoop();
 }
 
@@ -68,8 +91,10 @@ void LauncherWindow::UpdateLanguage()
 {
 	Pages->SetTabText(PlayGame, GStrings.GetString("PICKER_TAB_PLAY"));
 	Pages->SetTabText(Settings, GStrings.GetString("OPTMNU_TITLE"));
+	Pages->SetTabText(Network, GStrings.GetString("PICKER_TAB_MULTI"));
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();
+	Network->UpdateLanguage();
 	Buttonbar->UpdateLanguage();
 }
 

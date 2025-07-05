@@ -9,18 +9,23 @@ class LauncherBanner;
 class LauncherButtonbar;
 class PlayGamePage;
 class SettingsPage;
+class NetworkPage;
 struct WadStuff;
+struct FStartupSelectionInfo;
 
 class LauncherWindow : public Widget
 {
 public:
-	static int ExecModal(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags, FString * extraArgs = nullptr);
+	static bool ExecModal(FStartupSelectionInfo& info);
 
-	LauncherWindow(WadStuff* wads, int numwads, int defaultiwad, int* autoloadflags);
+	LauncherWindow(FStartupSelectionInfo& info);
 	void UpdateLanguage();
 
 	void Start();
 	void Exit();
+	bool IsInMultiplayer() const;
+	bool IsHosting() const;
+	void UpdatePlayButton();
 
 private:
 	void OnClose() override;
@@ -32,6 +37,9 @@ private:
 
 	PlayGamePage* PlayGame = nullptr;
 	SettingsPage* Settings = nullptr;
+	NetworkPage* Network = nullptr;
 
-	int ExecResult = -1;
+	FStartupSelectionInfo* Info = nullptr;
+
+	bool ExecResult = false;
 };

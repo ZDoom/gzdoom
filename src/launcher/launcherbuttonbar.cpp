@@ -15,7 +15,14 @@ LauncherButtonbar::LauncherButtonbar(LauncherWindow* parent) : Widget(parent)
 
 void LauncherButtonbar::UpdateLanguage()
 {
-	PlayButton->SetText(GStrings.GetString("PICKER_PLAY"));
+	auto launcher = GetLauncher();
+	if (!launcher->IsInMultiplayer())
+		PlayButton->SetText(GStrings.GetString("PICKER_PLAY"));
+	else if (launcher->IsHosting())
+		PlayButton->SetText(GStrings.GetString("PICKER_PLAYHOST"));
+	else
+		PlayButton->SetText(GStrings.GetString("PICKER_PLAYJOIN"));
+
 	ExitButton->SetText(GStrings.GetString("PICKER_EXIT"));
 }
 

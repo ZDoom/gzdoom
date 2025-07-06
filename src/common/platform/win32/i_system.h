@@ -38,6 +38,7 @@ void I_PrintStr (const char *cp);
 void I_SetIWADInfo ();
 
 // Pick from multiple IWADs to use
+bool HoldingQueryKey(const char* key);
 bool I_PickIWad(bool showwin, FStartupSelectionInfo& info);
 
 // The ini could not be saved at exit

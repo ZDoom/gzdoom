@@ -68,16 +68,6 @@ struct JoystickConfig native version("2.4")
 		NUM_JOYAXIS,
 	};
 
-	enum EJoyCurve {
-		JOYCURVE_CUSTOM = -1,
-		JOYCURVE_DEFAULT,
-		JOYCURVE_LINEAR,
-		JOYCURVE_QUADRATIC,
-		JOYCURVE_CUBIC,
-
-		NUM_JOYCURVE
-	};
-
 	native float GetSensitivity();
 	native void SetSensitivity(float scale);
 
@@ -86,15 +76,6 @@ struct JoystickConfig native version("2.4")
 
 	native float GetAxisDeadZone(int axis);
 	native void SetAxisDeadZone(int axis, float zone);
-
-	native float GetAxisDigitalThreshold(int axis);
-	native void SetAxisDigitalThreshold(int axis, float thresh);
-
-	native int GetAxisResponseCurve(int axis);
-	native void SetAxisResponseCurve(int axis, int preset);
-
-	native float GetAxisResponseCurvePoint(int axis, int point);
-	native void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	native int GetAxisMap(int axis);
 	native void SetAxisMap(int axis, int gameaxis);

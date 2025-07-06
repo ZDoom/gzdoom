@@ -20,6 +20,7 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 	LightsCheckbox = new CheckboxLabel(this);
 	BrightmapsCheckbox = new CheckboxLabel(this);
 	WidescreenCheckbox = new CheckboxLabel(this);
+	SupportWadsCheckbox = new CheckboxLabel(this);
 
 	FullscreenCheckbox->SetChecked(info.DefaultFullscreen);
 	DontAskAgainCheckbox->SetChecked(!info.DefaultQueryIWAD);
@@ -28,6 +29,7 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 	LightsCheckbox->SetChecked(info.DefaultStartFlags & 2);
 	BrightmapsCheckbox->SetChecked(info.DefaultStartFlags & 4);
 	WidescreenCheckbox->SetChecked(info.DefaultStartFlags & 8);
+	SupportWadsCheckbox->SetChecked(info.DefaultStartFlags & 16);
 
 #ifdef RENDER_BACKENDS
 	BackendLabel = new TextLabel(this);
@@ -110,6 +112,7 @@ void SettingsPage::SetValues(FStartupSelectionInfo& info) const
 	if (LightsCheckbox->GetChecked()) flags |= 2;
 	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
 	if (WidescreenCheckbox->GetChecked()) flags |= 8;
+	if (SupportWadsCheckbox->GetChecked()) flags |= 16;
 	info.DefaultStartFlags = flags;
 
 #ifdef RENDER_BACKENDS
@@ -132,6 +135,7 @@ void SettingsPage::UpdateLanguage()
 	LightsCheckbox->SetText(GStrings.GetString("PICKER_LIGHTS"));
 	BrightmapsCheckbox->SetText(GStrings.GetString("PICKER_BRIGHTMAPS"));
 	WidescreenCheckbox->SetText(GStrings.GetString("PICKER_WIDESCREEN"));
+	SupportWadsCheckbox->SetText(GStrings.GetString("PICKER_SUPPORTWADS"));
 
 #ifdef RENDER_BACKENDS
 	BackendLabel->SetText(GStrings.GetString("PICKER_PREFERBACKEND"));
@@ -172,6 +176,10 @@ void SettingsPage::OnGeometryChanged()
 	WidescreenCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());
 	y += DontAskAgainCheckbox->GetPreferredHeight();
 
+	SupportWadsCheckbox->SetFrameGeometry(0.0, y, 190.0, SupportWadsCheckbox->GetPreferredHeight());
+	y += SupportWadsCheckbox->GetPreferredHeight();
+	const double optionsBottom = y;
+
 #ifdef RENDER_BACKENDS
 	double x = w / 2 - panelWidth / 2;
 	y = 0;
@@ -188,6 +196,7 @@ void SettingsPage::OnGeometryChanged()
 	y += GLESCheckbox->GetPreferredHeight();
 #endif
 
+	y = max<double>(y, optionsBottom);
 	if (!hideLanguage)
 	{
 		LangLabel->SetFrameGeometry(0.0, y, w, LangLabel->GetPreferredHeight());

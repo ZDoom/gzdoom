@@ -52,6 +52,7 @@
 #include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
+EXTERN_CVAR(String, queryiwad_key);
 EXTERN_CVAR(Bool, disableautoload)
 EXTERN_CVAR(Bool, autoloadlights)
 EXTERN_CVAR(Bool, autoloadbrightmaps)
@@ -698,7 +699,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				picks.Clear();
 				picks.Push(found);
 				pickedprio = mIWadInfos[found.mInfoIndex].prio;
-				foundprio = true;
+				foundprio = !HoldingQueryKey(queryiwad_key);
 			}
 		}
 	}
@@ -774,7 +775,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		if (autoloadwidescreen) flags |= 8;
 
 		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
-		if (I_PickIWad(queryiwad, info))
+		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
 			pick = info.SaveInfo();
 			disableautoload = !!(info.DefaultStartFlags & 1);

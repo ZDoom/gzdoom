@@ -33,11 +33,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
-#include "c_dispatch.h"
-#include "gain_analysis.h"
-#include "keydef.h"
-#include "name.h"
-#include "tarray.h"
 #include "vectors.h"
 #include "m_joy.h"
 #include "configfile.h"
@@ -45,7 +40,6 @@
 #include "d_eventbase.h"
 #include "cmdlib.h"
 #include "printf.h"
-#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -63,26 +57,9 @@ EXTERN_CVAR(Bool, joy_ps2raw)
 EXTERN_CVAR(Bool, joy_dinput)
 EXTERN_CVAR(Bool, joy_xinput)
 
-extern const float JOYDEADZONE_DEFAULT = 0.1; // reduced from 0.25
-
-extern const float JOYSENSITIVITY_DEFAULT = 1.0;
-
-extern const float JOYTHRESH_DEFAULT = 0.05;
-extern const float JOYTHRESH_TRIGGER = 0.05;
-extern const float JOYTHRESH_STICK_X = 0.65;
-extern const float JOYTHRESH_STICK_Y = 0.35;
-
-extern const CubicBezier JOYCURVE[NUM_JOYCURVE] = {
-	{{0.3, 0.0, 0.7, 0.4}}, // DEFAULT -> QUADRATIC
-
-	{{0.0, 0.0, 1.0, 1.0}}, // LINEAR
-	{{0.3, 0.0, 0.7, 0.4}}, // QUADRATIC
-	{{0.5, 0.0, 0.7, 0.2}}, // CUBIC
-};
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVARD(Bool, use_joystick, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present")
+CUSTOM_CVARD(Bool, use_joystick, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present") 
 {
 #ifdef _WIN32
 	joy_ps2raw->Callback();
@@ -186,48 +163,6 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 			joy->SetAxisScale(i, (float)atof(value));
 		}
 
-		mysnprintf(key + axislen, countof(key) - axislen, "threshold");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisDigitalThreshold(i, (float)atof(value));
-		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "curve");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisResponseCurve(i, (EJoyCurve)clamp(atoi(value), (int)JOYCURVE_CUSTOM, (int)NUM_JOYCURVE-1));
-		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisResponseCurvePoint(i, 0, (float)atof(value));
-		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "curve-y1");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisResponseCurvePoint(i, 1, (float)atof(value));
-		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "curve-x2");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisResponseCurvePoint(i, 2, (float)atof(value));
-		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "curve-y2");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			joy->SetAxisResponseCurvePoint(i, 3, (float)atof(value));
-		}
-
 		mysnprintf(key + axislen, countof(key) - axislen, "map");
 		value = GameConfig->GetValueForKey(key);
 		if (value)
@@ -292,33 +227,6 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 				mysnprintf(value, countof(value), "%g", joy->GetAxisScale(i));
 				GameConfig->SetValueForKey(key, value);
 			}
-			if (!joy->IsAxisDigitalThresholdDefault(i))
-			{
-				mysnprintf(key + axislen, countof(key) - axislen, "threshold");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisDigitalThreshold(i));
-				GameConfig->SetValueForKey(key, value);
-			}
-			if (!joy->IsAxisResponseCurveDefault(i))
-			{
-				mysnprintf(key + axislen, countof(key) - axislen, "curve");
-				mysnprintf(value, countof(value), "%d", joy->GetAxisResponseCurve(i));
-				GameConfig->SetValueForKey(key, value);
-			}
-			if (joy->GetAxisResponseCurve(i) == JOYCURVE_CUSTOM)
-			{
-				mysnprintf(key + axislen, countof(key) - axislen, "curve-x1");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 0));
-				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curve-y1");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 1));
-				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curve-x2");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 2));
-				GameConfig->SetValueForKey(key, value);
-				mysnprintf(key + axislen, countof(key) - axislen, "curve-y2");
-				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 3));
-				GameConfig->SetValueForKey(key, value);
-			}
 			if (!joy->IsAxisMapDefault(i))
 			{
 				mysnprintf(key + axislen, countof(key) - axislen, "map");
@@ -335,174 +243,6 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 	}
 }
 
-CCMD (gamepad)
-{
-	int COMMAND = 1, IDENTIFIER = 2, VALUE = 3;
-	int argc = argv.argc()-1;
-
-	TArray<IJoystickConfig *> sticks;
-	I_GetJoysticks(sticks);
-
-	auto usage = []()
-	{
-		Printf(
-			"usage:"
-			"\n\tgamepad list"
-			"\n\tgamepad reset       pad"
-			"\n\tgamepad enabled     pad      [0|1]"
-			"\n\tgamepad background  pad      [0|1]"
-			"\n\tgamepad sensitivity pad      [float]"
-			"\n\tgamepad deadzone    pad.axis [float]"
-			"\n\tgamepad scale       pad.axis [float]"
-			"\n\tgamepad threshold   pad.axis [float]"
-			"\n\tgamepad curve       pad.axis [-1|0|1|2|3]"
-			"\n\tgamepad curve-x1    pad.axis [float]"
-			"\n\tgamepad curve-y1    pad.axis [float]"
-			"\n\tgamepad curve-x2    pad.axis [float]"
-			"\n\tgamepad curve-y2    pad.axis [float]"
-			"\n\tgamepad map         pad.axis [-1|0|1|2|3|4]"
-			"\n"
-		);
-	};
-
-	if (argc < COMMAND)
-	{
-		return usage();
-	};
-
-	FName command = argv[COMMAND];
-
-	if (argc < IDENTIFIER)
-	{
-		if (command == "list")
-		{
-			for (int i = 0; i < sticks.SSize(); i++)
-			{
-				Printf("%d: '%s'\n", i, sticks[i]->GetName().GetChars());
-				for (int j = 0; j < sticks[i]->GetNumAxes(); j++)
-				{
-					Printf("  %d.%d: '%s'\n", i, j, sticks[i]->GetAxisName(j));
-				}
-			}
-			return;
-		}
-		return usage();
-	}
-
-	const char * id = argv[IDENTIFIER];
-	const char * hasAxis = strchr(id, '.');
-
-	int pad, axis;
-
-	try {
-		pad = (int)std::stod(id);
-
-		if (pad < 0 || pad >= sticks.SSize())
-		{
-			return (void) Printf("Pad # out of range\n");
-		}
-	} catch (...) {
-		return (void) Printf("Failed to parse pad #\n");
-	}
-
-	if (hasAxis)
-	{
-		try {
-			axis = (int)std::stod(hasAxis+1);
-
-			if (axis < 0 || axis >= sticks[pad]->GetNumAxes())
-			{
-				return (void) Printf("Axis # out of range\n");
-			}
-		} catch (...) {
-			return (void) Printf("Failed to parse axis #\n");
-		}
-	}
-
-	float value = 0;
-	bool set = argc >= VALUE;
-
-	if (set)
-	{
-		try {
-			value = std::stod(argv[VALUE]);
-		} catch (...) {
-			return (void) Printf("Failed to parse args\n");
-		}
-	}
-
-	if (command == "reset")
-	{
-		if (set) return usage();
-		sticks[pad]->SetDefaultConfig();
-		sticks[pad]->SetEnabled(true);
-		sticks[pad]->SetEnabledInBackground(sticks[pad]->AllowsEnabledInBackground());
-		sticks[pad]->SetSensitivity(1);
-		return;
-	}
-	if (command == "enabled")
-	{
-		if (set) sticks[pad]->SetEnabled((int)value);
-		return (void) Printf("%d\n", sticks[pad]->GetEnabled());
-	}
-	if (command == "background")
-	{
-		if (set) sticks[pad]->SetEnabledInBackground((int)value);
-		return (void) Printf("%d\n", sticks[pad]->GetEnabledInBackground());
-	}
-	if (command == "sensitivity")
-	{
-		if (set) sticks[pad]->SetSensitivity(value);
-		return (void) Printf("%g\n", sticks[pad]->GetSensitivity());
-	}
-	if (command == "deadzone")
-	{
-		if (set) sticks[pad]->SetAxisDeadZone(axis, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisDeadZone(axis));
-	}
-	if (command == "scale")
-	{
-		if (set) sticks[pad]->SetAxisScale(axis, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisScale(axis));
-	}
-	if (command == "threshold")
-	{
-		if (set) sticks[pad]->SetAxisDigitalThreshold(axis, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisDigitalThreshold(axis));
-	}
-	if (command == "curve")
-	{
-		if (set) sticks[pad]->SetAxisResponseCurve(axis, (EJoyCurve)value);
-		return (void) Printf("%d\n", sticks[pad]->GetAxisResponseCurve(axis));
-	}
-	if (command == "curve-x1")
-	{
-		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 0, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 0));
-	}
-	if (command == "curve-y1")
-	{
-		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 1, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 1));
-	}
-	if (command == "curve-x2")
-	{
-		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 2, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 2));
-	}
-	if (command == "curve-y2")
-	{
-		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 3, value);
-		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 3));
-	}
-	if (command == "map")
-	{
-		if (set) sticks[pad]->SetAxisMap(axis, (EJoyAxis)value);
-		return (void) Printf("%d\n", sticks[pad]->GetAxisMap(axis));
-	}
-
-	return usage();
-}
 
 //===========================================================================
 //
@@ -536,48 +276,6 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
 		*buttons = butt;
 	}
 	return axisval;
-}
-
-//===========================================================================
-//
-// Joy_ApplyResponseCurveBezier
-//
-// Applies cubic bezier easing function
-// Curve is defined by control points [(0,0) (x1,y1) (x2,y2) (1,1)]
-// https://developer.mozilla.org/en-US/docs/Web/CSS/easing-function/cubic-bezier
-//
-//===========================================================================
-
-double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input)
-{
-	// clamp + trivial cases
-	if (input == 0) return 0;
-	double sign = (input >= 0)? 1.0: -1.0;
-	input = abs(input);
-	input = (input > 1.0)? 1.0: input;
-	if (input == 1.0) return sign*input;
-
-	double t = input, T;
-	float x1 = curve.x1, y1 = curve.y1, x2 = curve.x2, y2 = curve.y2;
-
-	const int max_iter = 4;
-	for (auto i = 0; i < max_iter; i++)
-	{
-		T = 1-t;
-
-		double x = 3*T*T*t*x1 + 3*T*t*t*x2 + t*t*t;
-		double dx = 3*T*T*x1 + 6*T*t*(x2-x1) + 3*t*t*(1-x2);
-
-		// no div by 0
-		if (abs(dx) < 0.00001) break;
-
-		t = clamp(t - (x-input)/dx, 0.0, 1.0);
-	}
-
-	T = 1-t;
-	t = 3*T*T*t*y1 + 3*T*t*t*y2 + t*t*t;
-
-	return sign*t;
 }
 
 //===========================================================================
@@ -619,22 +317,6 @@ int Joy_XYAxesToButtons(double x, double y)
 
 //===========================================================================
 //
-// Joy_GenerateButtonEvent
-//
-// Send either a button up or button down event for supplied key code
-//
-//===========================================================================
-
-void Joy_GenerateButtonEvent(bool down, EKeyCodes which)
-{
-	event_t event = { 0,0,0,0,0,0,0 };
-	event.type = down ? EV_KeyDown : EV_KeyUp;
-	event.data1 = which;
-	D_PostEvent(&event);
-}
-
-//===========================================================================
-//
 // Joy_GenerateButtonEvents
 //
 // Provided two bitmasks for a set of buttons, generates events to reflect
@@ -648,12 +330,15 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, in
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
+		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{
 			if (changed & mask)
 			{
-				Joy_GenerateButtonEvent(newbuttons & mask, static_cast<EKeyCodes>(base + j));
+				ev.data1 = base + j;
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
 			}
 		}
 	}
@@ -664,12 +349,15 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
+		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{
 			if (changed & mask)
 			{
-				Joy_GenerateButtonEvent(newbuttons & mask, static_cast<EKeyCodes>(keys[j]));
+				ev.data1 = keys[j];
+				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent(&ev);
 			}
 		}
 	}

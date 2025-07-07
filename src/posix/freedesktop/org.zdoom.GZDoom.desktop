@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GZDoom
+Comment=Multi-game launcher for Doom era games
+Icon=org.zdoom.GZDoom
+Categories=Game;Shooter;
+Exec=gzdoom
+StartupNotify=true
+PrefersNonDefaultGPU=true
+Terminal=false
+Type=Application
+Keywords=Doom;Heretic;Hexen;strife;pwad;iwad;first;person;shooter;

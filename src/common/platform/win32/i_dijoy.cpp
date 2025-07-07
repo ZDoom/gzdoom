@@ -170,15 +170,23 @@ public:
 	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
+	float GetAxisDigitalThreshold(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
@@ -925,6 +933,39 @@ float FDInputJoystick::GetAxisScale(int axis)
 
 //===========================================================================
 //
+// FDInputJoystick :: GetAxisDigitalThreshold
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisDigitalThreshold(int axis)
+{
+	return 0;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisResponseCurve
+//
+//===========================================================================
+
+EJoyCurve FDInputJoystick::GetAxisResponseCurve(int axis)
+{
+	return JOYCURVE_DEFAULT;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetAxisResponseCurvePoint
+//
+//===========================================================================
+
+float FDInputJoystick::GetAxisResponseCurvePoint(int axis, int point)
+{
+	return 0;
+}
+
+//===========================================================================
+//
 // FDInputJoystick :: SetAxisDeadZone
 //
 //===========================================================================
@@ -967,6 +1008,36 @@ void FDInputJoystick::SetAxisScale(int axis, float scale)
 
 //===========================================================================
 //
+// FDInputJoystick :: SetAxisDigitalThreshold
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisDigitalThreshold(int axis, float threshold)
+{
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisResponseCurve
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisResponseCurve(int axis, EJoyCurve preset)
+{
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetAxisResponseCurvePoint
+//
+//===========================================================================
+
+void FDInputJoystick::SetAxisResponseCurvePoint(int axis, int point, float value)
+{
+}
+
+//===========================================================================
+//
 // FDInputJoystick :: IsAxisDeadZoneDefault
 //
 //===========================================================================
@@ -988,10 +1059,28 @@ bool FDInputJoystick::IsAxisDeadZoneDefault(int axis)
 
 bool FDInputJoystick::IsAxisScaleDefault(int axis)
 {
-	if (unsigned(axis) < Axes.Size())
-	{
-		return Axes[axis].Multiplier == Axes[axis].DefaultMultiplier;
-	}
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisDigitalThresholdDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisDigitalThresholdDefault(int axis)
+{
+	return true;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsAxisResponseCurveDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsAxisResponseCurveDefault(int axis)
+{
 	return true;
 }
 

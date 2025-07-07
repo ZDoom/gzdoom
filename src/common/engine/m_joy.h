@@ -2,8 +2,29 @@
 #define M_JOY_H
 
 #include "basics.h"
+#include "keydef.h"
 #include "tarray.h"
 #include "c_cvars.h"
+
+union CubicBezier {
+	struct {
+		float x1;
+		float y1;
+		float x2;
+		float y2;
+	};
+	float pts[4];
+};
+
+enum EJoyCurve {
+	JOYCURVE_CUSTOM = -1,
+	JOYCURVE_DEFAULT,
+	JOYCURVE_LINEAR,
+	JOYCURVE_QUADRATIC,
+	JOYCURVE_CUBIC,
+
+	NUM_JOYCURVE
+};
 
 enum EJoyAxis
 {
@@ -31,10 +52,16 @@ struct IJoystickConfig
 	virtual EJoyAxis GetAxisMap(int axis) = 0;
 	virtual const char *GetAxisName(int axis) = 0;
 	virtual float GetAxisScale(int axis) = 0;
+	virtual float GetAxisDigitalThreshold(int axis) = 0;
+	virtual EJoyCurve GetAxisResponseCurve(int axis) = 0;
+	virtual float GetAxisResponseCurvePoint(int axis, int point) = 0;
 
 	virtual void SetAxisDeadZone(int axis, float zone) = 0;
 	virtual void SetAxisMap(int axis, EJoyAxis gameaxis) = 0;
 	virtual void SetAxisScale(int axis, float scale) = 0;
+	virtual void SetAxisDigitalThreshold(int axis, float threshold) = 0;
+	virtual void SetAxisResponseCurve(int axis, EJoyCurve preset) = 0;
+	virtual void SetAxisResponseCurvePoint(int axis, int point, float value) = 0;
 
 	virtual bool GetEnabled() = 0;
 	virtual void SetEnabled(bool enabled) = 0;
@@ -48,6 +75,8 @@ struct IJoystickConfig
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;
 	virtual bool IsAxisMapDefault(int axis) = 0;
 	virtual bool IsAxisScaleDefault(int axis) = 0;
+	virtual bool IsAxisDigitalThresholdDefault(int axis) = 0;
+	virtual bool IsAxisResponseCurveDefault(int axis) = 0;
 
 	virtual void SetDefaultConfig() = 0;
 	virtual FString GetIdentifier() = 0;
@@ -58,10 +87,12 @@ EXTERN_CVAR(Bool, use_joystick);
 bool M_LoadJoystickConfig(IJoystickConfig *joy);
 void M_SaveJoystickConfig(IJoystickConfig *joy);
 
+void Joy_GenerateButtonEvent(bool down, EKeyCodes which);
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
 int Joy_XYAxesToButtons(double x, double y);
 double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons);
+double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input);
 
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_JOYAXIS]);

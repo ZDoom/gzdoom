@@ -280,6 +280,48 @@ double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
 
 //===========================================================================
 //
+// Joy_ApplyResponseCurveBezier
+//
+// Applies cubic bezier easing function
+// Curve is defined by control points [(0,0) (x1,y1) (x2,y2) (1,1)]
+// https://developer.mozilla.org/en-US/docs/Web/CSS/easing-function/cubic-bezier
+//
+//===========================================================================
+
+double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input)
+{
+	// clamp + trivial cases
+	if (input == 0) return 0;
+	double sign = (input >= 0)? 1.0: -1.0;
+	input = abs(input);
+	input = (input > 1.0)? 1.0: input;
+	if (input == 1.0) return sign*input;
+
+	double t = input, T;
+	float x1 = curve.x1, y1 = curve.y1, x2 = curve.x2, y2 = curve.y2;
+
+	const int max_iter = 4;
+	for (auto i = 0; i < max_iter; i++)
+	{
+		T = 1-t;
+
+		double x = 3*T*T*t*x1 + 3*T*t*t*x2 + t*t*t;
+		double dx = 3*T*T*x1 + 6*T*t*(x2-x1) + 3*t*t*(1-x2);
+
+		// no div by 0
+		if (abs(dx) < 0.00001) break;
+
+		t = clamp(t - (x-input)/dx, 0.0, 1.0);
+	}
+
+	T = 1-t;
+	t = 3*T*T*t*y1 + 3*T*t*t*y2 + t*t*t;
+
+	return sign*t;
+}
+
+//===========================================================================
+//
 // Joy_XYAxesToButtons
 //
 // Given two axes, returns a button set for them. They should have already
@@ -317,6 +359,22 @@ int Joy_XYAxesToButtons(double x, double y)
 
 //===========================================================================
 //
+// Joy_GenerateButtonEvent
+//
+// Send either a button up or button down event for supplied key code
+//
+//===========================================================================
+
+void Joy_GenerateButtonEvent(bool down, EKeyCodes which)
+{
+	event_t event = { 0,0,0,0,0,0,0 };
+	event.type = down ? EV_KeyDown : EV_KeyUp;
+	event.data1 = which;
+	D_PostEvent(&event);
+}
+
+//===========================================================================
+//
 // Joy_GenerateButtonEvents
 //
 // Provided two bitmasks for a set of buttons, generates events to reflect
@@ -330,15 +388,12 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, in
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
-		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{
 			if (changed & mask)
 			{
-				ev.data1 = base + j;
-				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent(&ev);
+				Joy_GenerateButtonEvent(newbuttons & mask, static_cast<EKeyCodes>(base + j));
 			}
 		}
 	}
@@ -349,15 +404,12 @@ void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, co
 	int changed = oldbuttons ^ newbuttons;
 	if (changed != 0)
 	{
-		event_t ev = { 0, 0, 0, 0, 0, 0, 0 };
 		int mask = 1;
 		for (int j = 0; j < numbuttons; mask <<= 1, ++j)
 		{
 			if (changed & mask)
 			{
-				ev.data1 = keys[j];
-				ev.type = (newbuttons & mask) ? EV_KeyDown : EV_KeyUp;
-				D_PostEvent(&ev);
+				Joy_GenerateButtonEvent(newbuttons & mask, static_cast<EKeyCodes>(keys[j]));
 			}
 		}
 	}

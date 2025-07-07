@@ -104,10 +104,18 @@ public:
 	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
+	float GetAxisDigitalThreshold(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
@@ -788,6 +796,39 @@ float FRawPS2Controller::GetAxisScale(int axis)
 
 //==========================================================================
 //
+// FRawPS2Controller :: GetAxisDigitalThreshold
+//
+//==========================================================================
+
+float FRawPS2Controller::GetAxisDigitalThreshold(int axis)
+{
+	return 0;
+}
+
+//==========================================================================
+//
+// FRawPS2Controller :: GetAxisResponseCurve
+//
+//==========================================================================
+
+EJoyCurve FRawPS2Controller::GetAxisResponseCurve(int axis)
+{
+	return JOYCURVE_DEFAULT;
+}
+
+//==========================================================================
+//
+// FRawPS2Controller :: GetAxisResponseCurvePoint
+//
+//==========================================================================
+
+float FRawPS2Controller::GetAxisResponseCurvePoint(int axis, int point)
+{
+	return 0;
+}
+
+//==========================================================================
+//
 // FRawPS2Controller :: SetAxisDeadZone
 //
 //==========================================================================
@@ -828,6 +869,36 @@ void FRawPS2Controller::SetAxisScale(int axis, float scale)
 	}
 }
 
+//==========================================================================
+//
+// FRawPS2Controller :: SetAxisDigitalThreshold
+//
+//==========================================================================
+
+void FRawPS2Controller::SetAxisDigitalThreshold(int axis, float threshold)
+{
+}
+
+//==========================================================================
+//
+// FRawPS2Controller :: SetAxisResponseCurve
+//
+//==========================================================================
+
+void FRawPS2Controller::SetAxisResponseCurve(int axis, EJoyCurve preset)
+{
+}
+
+//==========================================================================
+//
+// FRawPS2Controller :: SetAxisResponseCurvePoint
+//
+//==========================================================================
+
+void FRawPS2Controller::SetAxisResponseCurvePoint(int axis, int point, float value)
+{
+}
+
 //===========================================================================
 //
 // FRawPS2Controller :: IsAxisDeadZoneDefault
@@ -836,10 +907,6 @@ void FRawPS2Controller::SetAxisScale(int axis, float scale)
 
 bool FRawPS2Controller::IsAxisDeadZoneDefault(int axis)
 {
-	if (unsigned(axis) < NUM_AXES)
-	{
-		return Axes[axis].DeadZone == DEFAULT_DEADZONE;
-	}
 	return true;
 }
 
@@ -851,10 +918,28 @@ bool FRawPS2Controller::IsAxisDeadZoneDefault(int axis)
 
 bool FRawPS2Controller::IsAxisScaleDefault(int axis)
 {
-	if (unsigned(axis) < NUM_AXES)
-	{
-		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
-	}
+	return true;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: IsAxisDigitalThresholdDefault
+//
+//===========================================================================
+
+bool FRawPS2Controller::IsAxisDigitalThresholdDefault(int axis)
+{
+	return true;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: IsAxisResponseCurveDefault
+//
+//===========================================================================
+
+bool FRawPS2Controller::IsAxisResponseCurveDefault(int axis)
+{
 	return true;
 }
 

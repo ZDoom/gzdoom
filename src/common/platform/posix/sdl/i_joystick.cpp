@@ -128,6 +128,18 @@ public:
 	{
 		return Axes[axis].Multiplier;
 	}
+	float GetAxisDigitalThreshold(int axis)
+	{
+		return 0;
+	}
+	EJoyCurve GetAxisResponseCurve(int axis)
+	{
+		return JOYCURVE_DEFAULT;
+	}
+	float GetAxisResponseCurvePoint(int axis, int point)
+	{
+		return 0;
+	};
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
@@ -140,6 +152,15 @@ public:
 	void SetAxisScale(int axis, float scale)
 	{
 		Axes[axis].Multiplier = scale;
+	}
+	void SetAxisDigitalThreshold(int axis, float threshold)
+	{
+	}
+	void SetAxisResponseCurve(int axis, EJoyCurve preset)
+	{
+	}
+	void SetAxisResponseCurvePoint(int axis, int point, float value)
+	{
 	}
 
 	// Used by the saver to not save properties that are at their defaults.
@@ -161,6 +182,14 @@ public:
 	{
 		return Axes[axis].Multiplier == 1.0f;
 	}
+	bool IsAxisDigitalThresholdDefault(int axis)
+	{
+		return true;
+	}
+	bool IsAxisResponseCurveDefault(int axis)
+	{
+		return true;
+ 	}
 
 	void SetDefaultConfig()
 	{

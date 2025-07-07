@@ -94,15 +94,23 @@ public:
 	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
+	float GetAxisDigitalThreshold(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
 	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
@@ -570,6 +578,39 @@ float FXInputController::GetAxisScale(int axis)
 
 //==========================================================================
 //
+// FXInputController :: GetAxisDigitalThreshold
+//
+//==========================================================================
+
+float FXInputController::GetAxisDigitalThreshold(int axis)
+{
+	return 0;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetAxisResponseCurve
+//
+//==========================================================================
+
+EJoyCurve FXInputController::GetAxisResponseCurve(int axis)
+{
+	return JOYCURVE_DEFAULT;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetAxisResponseCurvePoint
+//
+//==========================================================================
+
+float FXInputController::GetAxisResponseCurvePoint(int axis, int point)
+{
+	return 0;
+}
+
+//==========================================================================
+//
 // FXInputController :: SetAxisDeadZone
 //
 //==========================================================================
@@ -610,6 +651,36 @@ void FXInputController::SetAxisScale(int axis, float scale)
 	}
 }
 
+//==========================================================================
+//
+// FXInputController :: SetAxisDigitalThreshold
+//
+//==========================================================================
+
+void FXInputController::SetAxisDigitalThreshold(int axis, float threshold)
+{
+}
+
+//==========================================================================
+//
+// FXInputController :: SetAxisResponseCurve
+//
+//==========================================================================
+
+void FXInputController::SetAxisResponseCurve(int axis, EJoyCurve preset)
+{
+}
+
+//==========================================================================
+//
+// FXInputController :: SetAxisResponseCurvePoint
+//
+//==========================================================================
+
+void FXInputController::SetAxisResponseCurvePoint(int axis, int point, float value)
+{
+}
+
 //===========================================================================
 //
 // FXInputController :: IsAxisDeadZoneDefault
@@ -637,6 +708,28 @@ bool FXInputController::IsAxisScaleDefault(int axis)
 	{
 		return Axes[axis].Multiplier == DefaultAxes[axis].Multiplier;
 	}
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisDigitalThresholdDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisDigitalThresholdDefault(int axis)
+{
+	return true;
+}
+
+//===========================================================================
+//
+// FXInputController :: IsAxisResponseCurveDefault
+//
+//===========================================================================
+
+bool FXInputController::IsAxisResponseCurveDefault(int axis)
+{
 	return true;
 }
 

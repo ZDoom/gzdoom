@@ -94,15 +94,23 @@ public:
 	virtual EJoyAxis GetAxisMap(int axis);
 	virtual const char* GetAxisName(int axis);
 	virtual float GetAxisScale(int axis);
+	float GetAxisDigitalThreshold(int axis);
+	EJoyCurve GetAxisResponseCurve(int axis);
+	float GetAxisResponseCurvePoint(int axis, int point);
 
 	virtual void SetAxisDeadZone(int axis, float deadZone);
 	virtual void SetAxisMap(int axis, EJoyAxis gameAxis);
 	virtual void SetAxisScale(int axis, float scale);
+	void SetAxisDigitalThreshold(int axis, float threshold);
+	void SetAxisResponseCurve(int axis, EJoyCurve preset);
+	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	virtual bool IsSensitivityDefault();
 	virtual bool IsAxisDeadZoneDefault(int axis);
 	virtual bool IsAxisMapDefault(int axis);
 	virtual bool IsAxisScaleDefault(int axis);
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	virtual bool GetEnabled();
 	virtual void SetEnabled(bool enabled);
@@ -386,6 +394,21 @@ float IOKitJoystick::GetAxisScale(int axis)
 	return IS_AXIS_VALID ? m_axes[axis].sensitivity : 0.0f;
 }
 
+float IOKitJoystick::GetAxisDigitalThreshold(int axis)
+{
+	return 0;
+}
+
+EJoyCurve IOKitJoystick::GetAxisResponseCurve(int axis)
+{
+	return JOYCURVE_DEFAULT;
+}
+
+float IOKitJoystick::GetAxisResponseCurvePoint(int axis, int point)
+{
+	return 0;
+}
+
 void IOKitJoystick::SetAxisDeadZone(int axis, float deadZone)
 {
 	if (IS_AXIS_VALID)
@@ -412,6 +435,17 @@ void IOKitJoystick::SetAxisScale(int axis, float scale)
 	}
 }
 
+void IOKitJoystick::SetAxisDigitalThreshold(int axis, float threshold)
+{
+}
+
+void IOKitJoystick::SetAxisResponseCurve(int axis, EJoyCurve preset)
+{
+}
+
+void IOKitJoystick::SetAxisResponseCurvePoint(int axis, int point, float value)
+{
+}
 
 bool IOKitJoystick::IsSensitivityDefault()
 {
@@ -423,6 +457,16 @@ bool IOKitJoystick::IsAxisDeadZoneDefault(int axis)
 	return IS_AXIS_VALID
 		? (m_axes[axis].deadZone == m_axes[axis].defaultDeadZone)
 		: true;
+}
+
+bool IOKitJoystick::IsAxisDigitalThresholdDefault(int axis)
+{
+	return true;
+}
+
+bool IOKitJoystick::IsAxisResponseCurveDefault(int axis)
+{
+	return true;
 }
 
 bool IOKitJoystick::IsAxisMapDefault(int axis)

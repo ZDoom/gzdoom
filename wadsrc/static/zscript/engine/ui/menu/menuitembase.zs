@@ -21,7 +21,8 @@ class MenuItemBase : Object native ui version("2.4")
 	virtual bool CheckCoordinate(int x, int y) { return false; }
 	virtual void Ticker() {}
 	virtual void Drawer(bool selected) {}
-	virtual bool Selectable() {return false; }
+	virtual bool Selectable() { return false; }
+	virtual bool Visible() { return true; }
 	virtual bool Activate() { return false; }
 	virtual Name, int GetAction() { return mAction, 0; }
 	virtual bool SetString(int i, String s) { return false; }

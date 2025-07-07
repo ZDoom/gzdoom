@@ -231,6 +231,29 @@ public:
 			ConstructEmpty(0, Count - 1);
 		}
 	}
+	
+	TArray (std::initializer_list<T> list)
+	{
+		Most = list.size;
+		Count = list.size;
+
+		if (Count > 0)
+		{
+			Array = (T *)M_Malloc (sizeof(T) * Count);
+
+			const T* it = list.begin();
+
+			for (unsigned int i = 0; i < Count; ++i)
+			{
+				::new(&Array[i]) T(*it++);
+			}
+		}
+		else
+		{
+			Array = nullptr;
+		}
+	}
+
 	TArray (const TArray<T,TT> &other)
 	{
 		DoCopy (other);

@@ -2714,7 +2714,7 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 					if (typeinfo && typeinfo->IsDescendantOf("VisualThinker"))
 					{
 						DVector3 spawnpos = source->Vec3Angle(source->radius * 4, source->Angles.Yaw, 8.);
-						auto vt = DVisualThinker::NewVisualThinker(source->Level, typeinfo);
+						auto vt = DVisualThinker::NewVisualThinker(source->Level, typeinfo, false);
 						if (vt)
 						{
 							vt->PT.Pos = spawnpos;

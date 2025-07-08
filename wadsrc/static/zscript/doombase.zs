@@ -624,7 +624,7 @@ struct LevelLocals native
 	native String GetEpisodeName();
 
 	native void SpawnParticle(FSpawnParticleParams p);
-	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
+	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type, bool clientSide = false);
 
 	clearscope native static bool WorldPaused();
 }

@@ -84,6 +84,56 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisDeadZone)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisDigitalThreshold)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	ACTION_RETURN_FLOAT(self->GetAxisDigitalThreshold(axis));
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisDigitalThreshold)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	PARAM_FLOAT(dt);
+	self->SetAxisDigitalThreshold(axis, (float)dt);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisResponseCurve)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	ACTION_RETURN_INT(self->GetAxisResponseCurve(axis));
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisResponseCurve)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	PARAM_INT(curve);
+	self->SetAxisResponseCurve(axis, (EJoyCurve)curve);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisResponseCurvePoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	PARAM_INT(point);
+	ACTION_RETURN_FLOAT(self->GetAxisResponseCurvePoint(axis, point));
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisResponseCurvePoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_INT(axis);
+	PARAM_INT(point);
+	PARAM_FLOAT(value);
+	self->SetAxisResponseCurvePoint(axis, point, value);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisMap)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);

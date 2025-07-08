@@ -446,9 +446,10 @@ public:
 		Reinit();
 	}
 
-	DBehaviorIterator(const FLevelLocals& level, PClass* type, PClass* ownerType)
+	DBehaviorIterator(const FLevelLocals& level, PClass* type, PClass* ownerType, bool clientSide)
 	{
-		for (auto& b : level.ActorBehaviors)
+		auto& list = clientSide ? level.ClientSideActorBehaviors : level.ActorBehaviors;
+		for (auto& b : list)
 		{
 			if (ownerType != nullptr && !b->Owner->IsKindOf(ownerType))
 				continue;
@@ -498,7 +499,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateFrom, CreateBehaviorItFro
 
 static DBehaviorIterator* CreateBehaviorIt(PClass* type, PClass* ownerType)
 {
-	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType);
+	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType, false);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
@@ -507,6 +508,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
 	PARAM_CLASS(type, DBehavior);
 	PARAM_CLASS(ownerType, AActor);
 	ACTION_RETURN_OBJECT(CreateBehaviorIt(type, ownerType));
+}
+
+static DBehaviorIterator* CreateClientSideBehaviorIt(PClass* type, PClass* ownerType)
+{
+	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType, true);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateClientSide, CreateClientSideBehaviorIt)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, DBehavior);
+	PARAM_CLASS(ownerType, AActor);
+	ACTION_RETURN_OBJECT(CreateClientSideBehaviorIt(type, ownerType));
 }
 
 static DBehavior* NextBehavior(DBehaviorIterator* self)

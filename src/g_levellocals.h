@@ -762,7 +762,7 @@ public:
 	DVisualThinker* VisualThinkerHead = nullptr;
 
 	// links to global game objects
-	TArray<DBehavior*> ActorBehaviors;
+	TArray<DBehavior*> ActorBehaviors, ClientSideActorBehaviors;
 	TArray<TObjPtr<AActor *>> CorpseQueue;
 	TObjPtr<DFraggleThinker *> FraggleScriptThinker = MakeObjPtr<DFraggleThinker*>(nullptr);
 	TObjPtr<DACSThinker*> ACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
@@ -780,7 +780,10 @@ public:
 		if (b.Level == nullptr)
 		{
 			b.Level = this;
-			ActorBehaviors.Push(&b);
+			if (b.IsClientside())
+				ClientSideActorBehaviors.Push(&b);
+			else
+				ActorBehaviors.Push(&b);
 		}
 	}
 
@@ -789,7 +792,10 @@ public:
 		if (b.Level == this)
 		{
 			b.Level = nullptr;
-			ActorBehaviors.Delete(ActorBehaviors.Find(&b));
+			if (b.IsClientside())
+				ClientSideActorBehaviors.Delete(ClientSideActorBehaviors.Find(&b));
+			else
+				ActorBehaviors.Delete(ActorBehaviors.Find(&b));
 		}
 	}
 

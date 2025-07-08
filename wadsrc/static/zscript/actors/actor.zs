@@ -88,6 +88,7 @@ class BehaviorIterator native abstract final version("4.15.1")
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
 	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
+	native static BehaviorIterator CreateClientSide(class<Behavior> type = null, class<Actor> ownerType = null);
 
 	native Behavior Next();
 	native void Reinit();

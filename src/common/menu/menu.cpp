@@ -774,7 +774,7 @@ bool M_Responder (event_t *ev)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu(NAME_Mainmenu, -1);
+				M_SetMenu(NAME_MainMenu, -1);
 				return true;
 			}
 			return false;
@@ -783,7 +783,7 @@ bool M_Responder (event_t *ev)
 				 ConsoleState != c_down && gamestate != GS_LEVEL && m_use_mouse)
 		{
 			M_StartControlPanel(true);
-			M_SetMenu(NAME_Mainmenu, -1);
+			M_SetMenu(NAME_MainMenu, -1);
 			return true;
 		}
 	}

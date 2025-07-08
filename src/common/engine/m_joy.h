@@ -38,6 +38,18 @@ enum EJoyAxis
 	NUM_JOYAXIS,
 };
 
+extern const float JOYDEADZONE_DEFAULT;
+
+extern const float JOYSENSITIVITY_DEFAULT;
+
+extern const float JOYTHRESH_DEFAULT;
+
+extern const float JOYTHRESH_TRIGGER;
+extern const float JOYTHRESH_STICK_X;
+extern const float JOYTHRESH_STICK_Y;
+
+extern const CubicBezier JOYCURVE[NUM_JOYCURVE];
+
 // Generic configuration interface for a controller.
 struct IJoystickConfig
 {

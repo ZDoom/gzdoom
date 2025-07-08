@@ -220,12 +220,12 @@ static const char *AxisNames[] =
 FXInputController::DefaultAxisConfig FXInputController::DefaultAxes[NUM_AXES] =
 {
 	// Dead zone, game axis, multiplier
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Side, 1 },		// ThumbLX
-	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Forward, 1 },	// ThumbLY
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw, 1 },		// ThumbRX
-	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch, 0.75 },	// ThumbRY
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, 0 },			// LeftTrigger
-	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, 0 }			// RightTrigger
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Side, JOYSENSITIVITY_DEFAULT },		// ThumbLX
+	{ XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE / 32768.f, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT },	// ThumbLY
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Yaw, JOYSENSITIVITY_DEFAULT },		// ThumbRX
+	{ XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE / 32768.f, JOYAXIS_Pitch, JOYSENSITIVITY_DEFAULT },	// ThumbRY
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, JOYSENSITIVITY_DEFAULT },			// LeftTrigger
+	{ XINPUT_GAMEPAD_TRIGGER_THRESHOLD / 256.f, JOYAXIS_None, JOYSENSITIVITY_DEFAULT }			// RightTrigger
 };
 
 // CODE --------------------------------------------------------------------
@@ -439,7 +439,7 @@ void FXInputController::AddAxes(float axes[NUM_JOYAXIS])
 
 void FXInputController::SetDefaultConfig()
 {
-	Multiplier = 1;
+	Multiplier = JOYSENSITIVITY_DEFAULT;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = DefaultAxes[i].DeadZone;
@@ -502,7 +502,7 @@ void FXInputController::SetSensitivity(float scale)
 
 bool FXInputController::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == JOYSENSITIVITY_DEFAULT;
 }
 
 //==========================================================================
@@ -573,7 +573,7 @@ float FXInputController::GetAxisScale(int axis)
 	{
 		return Axes[axis].Multiplier;
 	}
-	return 0;
+	return JOYSENSITIVITY_DEFAULT;
 }
 
 //==========================================================================

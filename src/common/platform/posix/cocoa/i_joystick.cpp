@@ -185,10 +185,6 @@ private:
 
 	io_object_t m_notification;
 
-
-	static const float DEFAULT_DEADZONE;
-	static const float DEFAULT_SENSITIVITY;
-
 	void ProcessAxes();
 	bool ProcessAxis  (const IOHIDEventStruct& event);
 	bool ProcessButton(const IOHIDEventStruct& event);
@@ -206,10 +202,6 @@ private:
 	void AddToQueue(IOHIDElementCookie cookie);
 	void RemoveFromQueue(IOHIDElementCookie cookie);
 };
-
-
-const float IOKitJoystick::DEFAULT_DEADZONE    = 0.25f;
-const float IOKitJoystick::DEFAULT_SENSITIVITY = 1.0f;
 
 
 IOHIDDeviceInterface** CreateDeviceInterface(const io_object_t device)
@@ -294,7 +286,7 @@ IOHIDQueueInterface** CreateDeviceQueue(IOHIDDeviceInterface** const interface)
 IOKitJoystick::IOKitJoystick(const io_object_t device)
 : m_interface(CreateDeviceInterface(device))
 , m_queue(CreateDeviceQueue(m_interface))
-, m_sensitivity(DEFAULT_SENSITIVITY)
+, m_sensitivity(JOYSENSITIVITY_DEFAULT)
 , m_enabled(true)
 , m_useAxesPolling(true)
 , m_notification(0)
@@ -449,7 +441,7 @@ void IOKitJoystick::SetAxisResponseCurvePoint(int axis, int point, float value)
 
 bool IOKitJoystick::IsSensitivityDefault()
 {
-	return DEFAULT_SENSITIVITY == m_sensitivity;
+	return JOYSENSITIVITY_DEFAULT == m_sensitivity;
 }
 
 bool IOKitJoystick::IsAxisDeadZoneDefault(int axis)
@@ -498,14 +490,14 @@ void IOKitJoystick::SetEnabled(bool enabled)
 
 void IOKitJoystick::SetDefaultConfig()
 {
-	m_sensitivity = DEFAULT_SENSITIVITY;
+	m_sensitivity = JOYSENSITIVITY_DEFAULT;
 
 	const size_t axisCount = m_axes.Size();
 
 	for (size_t i = 0; i < axisCount; ++i)
 	{
-		m_axes[i].deadZone    = DEFAULT_DEADZONE;
-		m_axes[i].sensitivity = DEFAULT_SENSITIVITY;
+		m_axes[i].deadZone    = JOYDEADZONE_DEFAULT;
+		m_axes[i].sensitivity = JOYSENSITIVITY_DEFAULT;
 		m_axes[i].gameAxis    = JOYAXIS_None;
 	}
 

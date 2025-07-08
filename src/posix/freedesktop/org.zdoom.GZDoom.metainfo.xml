@@ -46,7 +46,7 @@
         <li>Crosshairs</li>
         <li>Free look (look up/down)</li>
         <li>Jumping, crouching, swimming, and flying</li>
-        <li>Up to 8 player network games using UDP/IP, including team-based gameplay</li>
+        <li>Network games for up to 64 players, including team-based gameplay</li>
         <li>Support for the Bloodbath announcer from the classic Monolith game Blood</li>
         <li>Walk over/under monsters and other things</li>
     </ul>

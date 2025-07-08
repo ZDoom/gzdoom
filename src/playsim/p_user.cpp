@@ -1474,22 +1474,10 @@ nodetype *RestoreNodeList(AActor *act, nodetype *linktype::*otherlist, TArray<no
 
 void P_PredictPlayer (player_t *player)
 {
-	int maxtic;
-
-	if (demoplayback ||
+	if (demoplayback || gamestate != GS_LEVEL ||
 		player->mo == NULL ||
 		player != player->mo->Level->GetConsolePlayer() ||
-		player->playerstate != PST_LIVE ||
-		(!netgame && cl_debugprediction == 0) ||
-		/*player->morphTics ||*/
 		(player->cheats & CF_PREDICTING))
-	{
-		return;
-	}
-
-	maxtic = ClientTic;
-
-	if (gametic == maxtic)
 	{
 		return;
 	}
@@ -1545,6 +1533,12 @@ void P_PredictPlayer (player_t *player)
 		block = block->NextBlock;
 	}
 	act->BlockNode = NULL;
+
+	int maxtic = ClientTic;
+	if (gametic == maxtic || player->playerstate != PST_LIVE)
+	{
+		return;
+	}
 
 	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
 	// called. Call order is preserved.

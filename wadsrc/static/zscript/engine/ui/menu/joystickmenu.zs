@@ -100,6 +100,50 @@ class OptionMenuSliderJoyScale : OptionMenuSliderBase
 //
 //=============================================================================
 
+class OptionMenuSliderJoyCurve : OptionMenuSliderBase
+{
+	int mAxis;
+	int mNeg;
+	int mPoint;
+	bool mShown;
+	JoystickConfig mJoy;
+
+	OptionMenuSliderJoyCurve Init(String label, int axis, double min, double max, double step, int showval, JoystickConfig joy, int point)
+	{
+		Super.Init(label, min, max, step, showval);
+		mAxis = axis;
+		mNeg = 1;
+		mJoy = joy;
+		mPoint = point;
+		mShown = false;
+		return self;
+	}
+
+	override bool Visible()
+	{
+ 		mShown |= mJoy.GetAxisResponseCurve(mAxis) == JoystickConfig.JOYCURVE_CUSTOM;
+		return mShown;
+	}
+
+	override double GetSliderValue()
+	{
+		double d = mJoy.GetAxisResponseCurvePoint(mAxis, mPoint);
+		mNeg = d < 0? -1:1;
+		return d;
+	}
+
+	override void SetSliderValue(double val)
+	{
+		mJoy.SetAxisResponseCurvePoint(mAxis, mPoint, val * mNeg);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 class OptionMenuSliderJoyDeadZone : OptionMenuSliderBase
 {
 	int mAxis;
@@ -130,7 +174,94 @@ class OptionMenuSliderJoyDeadZone : OptionMenuSliderBase
 
 //=============================================================================
 //
-// 
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyDigitalThreshold : OptionMenuSliderBase
+{
+	int mAxis;
+	int mNeg;
+	JoystickConfig mJoy;
+
+	OptionMenuSliderJoyDigitalThreshold Init(String label, int axis, double min, double max, double step, int showval, JoystickConfig joy)
+	{
+		Super.Init(label, min, max, step, showval);
+		mAxis = axis;
+		mNeg = 1;
+		mJoy = joy;
+		return self;
+	}
+
+	override double GetSliderValue()
+	{
+		double d = mJoy.GetAxisDigitalThreshold(mAxis);
+		mNeg = d < 0? -1:1;
+		return d;
+	}
+
+	override void SetSliderValue(double val)
+	{
+		mJoy.SetAxisDigitalThreshold(mAxis, val * mNeg);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuItemJoyCurve : OptionMenuItemOptionBase
+{
+	int mAxis;
+	JoystickConfig mJoy;
+
+	OptionMenuItemJoyCurve Init(String label, int axis, Name values, int center, JoystickConfig joy)
+	{
+		Super.Init(label, 'none', values, null, center);
+		mAxis = axis;
+		mJoy = joy;
+		return self;
+	}
+
+	override int GetSelection()
+	{
+		double f = mJoy.GetAxisResponseCurve(mAxis);
+		let opt = OptionValues.GetCount(mValues);
+		if (opt > 0)
+		{
+			// Map from joystick curve to menu selection.
+			for(int i = 0; i < opt; i++)
+			{
+				if (f ~== OptionValues.GetValue(mValues, i))
+				{
+					return i;
+				}
+			}
+		}
+		return JoystickConfig.JOYCURVE_CUSTOM;
+	}
+
+	override void SetSelection(int selection)
+	{
+		let opt = OptionValues.GetCount(mValues);
+		// Map from menu selection to joystick curve.
+		if (opt == 0 || selection >= opt)
+		{
+			selection = JoystickConfig.JOYCURVE_DEFAULT;
+		}
+		else
+		{
+			selection = int(OptionValues.GetValue(mValues, selection));
+		}
+		mJoy.setAxisResponseCurve(mAxis, selection);
+	}
+}
+
+//=============================================================================
+//
+//
 //
 //=============================================================================
 
@@ -340,7 +471,19 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 					opt.mItems.Push(it);
 					it = new("OptionMenuItemInverter").Init("$JOYMNU_INVERT", i, false, joy);
 					opt.mItems.Push(it);
+					it = new("OptionMenuItemJoyCurve").Init("$JOYMNU_CURVE", i, "JoyAxisCurveNames", false, joy);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyCurve").Init("$JOYMNU_CURVE_X1", i, 0, 0.9, 0.05, 3, joy, 0);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyCurve").Init("$JOYMNU_CURVE_Y1", i, 0, 0.9, 0.05, 3, joy, 1);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyCurve").Init("$JOYMNU_CURVE_X2", i, 0, 0.9, 0.05, 3, joy, 2);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyCurve").Init("$JOYMNU_CURVE_Y2", i, 0, 0.9, 0.05, 3, joy, 3);
+					opt.mItems.Push(it);
 					it = new("OptionMenuSliderJoyDeadZone").Init("$JOYMNU_DEADZONE", i, 0, 0.9, 0.05, 3, joy);
+					opt.mItems.Push(it);
+					it = new("OptionMenuSliderJoyDigitalThreshold").Init("$JOYMNU_THRESHOLD", i, 0, 0.9, 0.05, 3, joy);
 					opt.mItems.Push(it);
 				}
 			}

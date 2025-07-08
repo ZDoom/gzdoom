@@ -1551,7 +1551,6 @@ void P_PredictPlayer (player_t *player)
 		// Make sure any portal paths have been cleared from the previous movement.
 		R_ClearInterpolationPath();
 		r_NoInterpolate = false;
-		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
 		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
 		// Got snagged on something. Start correcting towards the player's final predicted position. We're
@@ -1710,6 +1709,7 @@ void P_UnPredictPlayer ()
 		}
 
 		act->UpdateRenderSectorList();
+		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
 		actInvSel = InvSel;
 		player->inventorytics = inventorytics;

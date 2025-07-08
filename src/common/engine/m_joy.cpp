@@ -58,6 +58,23 @@ EXTERN_CVAR(Bool, joy_ps2raw)
 EXTERN_CVAR(Bool, joy_dinput)
 EXTERN_CVAR(Bool, joy_xinput)
 
+extern const float JOYDEADZONE_DEFAULT = 0.1; // reduced from 0.25
+
+extern const float JOYSENSITIVITY_DEFAULT = 1.0;
+
+extern const float JOYTHRESH_DEFAULT = 0.05;
+extern const float JOYTHRESH_TRIGGER = 0.05;
+extern const float JOYTHRESH_STICK_X = 0.65;
+extern const float JOYTHRESH_STICK_Y = 0.35;
+
+extern const CubicBezier JOYCURVE[NUM_JOYCURVE] = {
+	{{0.3, 0.0, 0.7, 0.4}}, // DEFAULT -> QUADRATIC
+
+	{{0.0, 0.0, 1.0, 1.0}}, // LINEAR
+	{{0.3, 0.0, 0.7, 0.4}}, // QUADRATIC
+	{{0.5, 0.0, 0.7, 0.2}}, // CUBIC
+};
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CUSTOM_CVARD(Bool, use_joystick, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "enables input from the joystick if it is present")

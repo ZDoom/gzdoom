@@ -48,7 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_DEADZONE			0.25f
 #define STATUS_SWITCH_TIME			3
 
 #define VID_PLAY_COM							0x0b43
@@ -114,13 +113,13 @@ public:
 	void SetAxisDigitalThreshold(int axis, float threshold);
 	void SetAxisResponseCurve(int axis, EJoyCurve preset);
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
-	bool IsAxisDigitalThresholdDefault(int axis);
-	bool IsAxisResponseCurveDefault(int axis);
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
+	bool IsAxisDigitalThresholdDefault(int axis);
+	bool IsAxisResponseCurveDefault(int axis);
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
@@ -366,10 +365,10 @@ static const char *AxisNames[] =
 FRawPS2Controller::DefaultAxisConfig FRawPS2Controller::DefaultAxes[NUM_AXES] =
 {
 	// Game axis, multiplier
-	{ JOYAXIS_Side, 1 },		// ThumbLX
-	{ JOYAXIS_Forward, 1 },		// ThumbLY
-	{ JOYAXIS_Yaw, 1 },			// ThumbRX
-	{ JOYAXIS_Pitch, 0.75 },	// ThumbRY
+	{ JOYAXIS_Side, JOYSENSITIVITY_DEFAULT },		// ThumbLX
+	{ JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT },		// ThumbLY
+	{ JOYAXIS_Yaw, JOYSENSITIVITY_DEFAULT },			// ThumbRX
+	{ JOYAXIS_Pitch, JOYSENSITIVITY_DEFAULT },	// ThumbRY
 };
 
 // CODE --------------------------------------------------------------------
@@ -652,10 +651,10 @@ void FRawPS2Controller::AddAxes(float axes[NUM_JOYAXIS])
 
 void FRawPS2Controller::SetDefaultConfig()
 {
-	Multiplier = 1;
+	Multiplier = JOYSENSITIVITY_DEFAULT;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
-		Axes[i].DeadZone = DEFAULT_DEADZONE;
+		Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
 		Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 		Axes[i].Multiplier = DefaultAxes[i].Multiplier;
 	}
@@ -720,7 +719,7 @@ void FRawPS2Controller::SetSensitivity(float scale)
 
 bool FRawPS2Controller::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == JOYSENSITIVITY_DEFAULT;
 }
 
 //==========================================================================

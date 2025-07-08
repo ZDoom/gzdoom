@@ -146,8 +146,6 @@ public:
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_DEADZONE			0.25f
-
 // TYPES -------------------------------------------------------------------
 
 class FDInputJoystick : public FInputDevice, IJoystickConfig
@@ -769,11 +767,11 @@ void FDInputJoystick::SetDefaultConfig()
 {
 	unsigned i;
 
-	Multiplier = 1;
+	Multiplier = JOYSENSITIVITY_DEFAULT;
 	for (i = 0; i < Axes.Size(); ++i)
 	{
-		Axes[i].DeadZone = DEFAULT_DEADZONE;
-		Axes[i].Multiplier = 1;
+		Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
+		Axes[i].Multiplier = JOYSENSITIVITY_DEFAULT;
 		Axes[i].GameAxis = JOYAXIS_None;
 	}
 	// Triggers on a 360 controller have a much smaller deadzone.
@@ -796,7 +794,8 @@ void FDInputJoystick::SetDefaultConfig()
 		// Four axes? First two are movement, last two are looking around.
 		if (Axes.Size() >= 4)
 		{
-			Axes[3].GameAxis = JOYAXIS_Pitch;	Axes[3].Multiplier = 0.75f;
+			Axes[3].GameAxis = JOYAXIS_Pitch;
+			// Axes[3].Multiplier = 0.75f;
 			// Five axes? Use the fifth one for moving up and down.
 			if (Axes.Size() >= 5)
 			{
@@ -857,7 +856,7 @@ void FDInputJoystick::SetSensitivity(float scale)
 
 bool FDInputJoystick::IsSensitivityDefault()
 {
-	return Multiplier == 1;
+	return Multiplier == JOYSENSITIVITY_DEFAULT;
 }
 
 //===========================================================================

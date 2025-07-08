@@ -40,15 +40,13 @@
 #include "m_joy.h"
 #include "keydef.h"
 
-#define DEFAULT_DEADZONE 0.25f;
-
-// Very small deadzone so that floating point magic doesn't happen
-#define MIN_DEADZONE 0.000001f
-
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
-	SDLInputJoystick(int DeviceIndex) : DeviceIndex(DeviceIndex), Multiplier(1.0f) , Enabled(true)
+	SDLInputJoystick(int DeviceIndex) :
+	DeviceIndex(DeviceIndex),
+	Multiplier(JOYSENSITIVITY_DEFAULT) ,
+	Enabled(true)
 	{
 		if (SDL_IsGameController(DeviceIndex))
 		{
@@ -143,7 +141,7 @@ public:
 
 	void SetAxisDeadZone(int axis, float zone)
 	{
-		Axes[axis].DeadZone = clamp(zone, MIN_DEADZONE, 1.f);
+		Axes[axis].DeadZone = clamp(zone, 0.f, 1.f);
 	}
 	void SetAxisMap(int axis, EJoyAxis gameaxis)
 	{
@@ -166,11 +164,11 @@ public:
 	// Used by the saver to not save properties that are at their defaults.
 	bool IsSensitivityDefault()
 	{
-		return Multiplier == 1.0f;
+		return Multiplier == JOYSENSITIVITY_DEFAULT;
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{
-		return Axes[axis].DeadZone <= MIN_DEADZONE;
+		return Axes[axis].DeadZone <= JOYDEADZONE_DEFAULT;
 	}
 	bool IsAxisMapDefault(int axis)
 	{
@@ -180,7 +178,7 @@ public:
 	}
 	bool IsAxisScaleDefault(int axis)
 	{
-		return Axes[axis].Multiplier == 1.0f;
+		return Axes[axis].Multiplier == JOYSENSITIVITY_DEFAULT;
 	}
 	bool IsAxisDigitalThresholdDefault(int axis)
 	{
@@ -214,8 +212,8 @@ public:
 					info.Name.Format("Hat %d (%c)", (i-NumAxes)/2 + 1, (i-NumAxes)%2 == 0 ? 'x' : 'y');
 			}
 
-			info.DeadZone = DEFAULT_DEADZONE;
-			info.Multiplier = 1.0f;
+			info.DeadZone = JOYDEADZONE_DEFAULT;
+			info.Multiplier = JOYSENSITIVITY_DEFAULT;
 			info.Value = 0.0;
 			info.ButtonValue = 0;
 
@@ -398,8 +396,8 @@ void SDLInputJoystick::ProcessInput() {
 	{
 		// GameController API available
 
-		auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
-		auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+		auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > JOYTHRESH_DEFAULT;
+		auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > JOYTHRESH_DEFAULT;
 
 		for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
 		{
@@ -409,8 +407,8 @@ void SDLInputJoystick::ProcessInput() {
 			Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
 		}
 
-		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > MIN_DEADZONE;
-		auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > MIN_DEADZONE;
+		auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > JOYTHRESH_DEFAULT;
+		auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > JOYTHRESH_DEFAULT;
 
 		if (lastTriggerL != currTriggerL) PostKeyEvent(currTriggerL, KEY_PAD_LTRIGGER);
 		if (lastTriggerR != currTriggerR) PostKeyEvent(currTriggerR, KEY_PAD_RTRIGGER);

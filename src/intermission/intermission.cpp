@@ -1006,7 +1006,7 @@ bool DIntermissionController::Responder (FInputEvent *ev)
 				else if (!stricmp(cmd, "menu_main") || !stricmp(cmd, "pause"))
 				{
 					M_StartControlPanel(true);
-					M_SetMenu(NAME_Mainmenu, -1);
+					M_SetMenu(NAME_MainMenu, -1);
 					return true;
 				}
 			}

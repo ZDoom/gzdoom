@@ -446,11 +446,11 @@ xx(Inter_Strife_MAP10)
 
 xx(BuiltinCallLineSpecial)
 
-xx(MainmenuTextOnly)
-xx(Playerclassmenu)
-xx(HexenDefaultPlayerclassmenu)
-xx(Readthismenu)
-xx(Playermenu)
+xx(MainMenuTextOnly)
+xx(PlayerclassMenu)
+xx(HexenDefaultPlayerclassMenu)
+xx(ReadthisMenu)
+xx(PlayerMenu)
 
 // more stuff
 xx(Behavior)

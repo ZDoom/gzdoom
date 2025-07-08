@@ -417,7 +417,7 @@ size_t DObject::PropagateMark()
 //
 //==========================================================================
 
-void DObject::ClearNativePointerFields(const TArray<FName>& types)
+void DObject::ClearNativePointerFields(const TArrayView<FName>& types)
 {
 	auto cls = GetClass();
 	if (cls->VMType == nullptr)

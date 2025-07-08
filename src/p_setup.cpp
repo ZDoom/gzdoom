@@ -300,9 +300,9 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 
 		// Make sure map data gets cleared appropriately so any leftover Objects aren't pointing
 		// towards anything invalid.
-		TArray<FName> fieldTypes = { NAME_SectorPortal, NAME_LinePortal, NAME_Vertex, NAME_Side, NAME_Line, NAME_SecPlane, NAME_F3DFloor, NAME_Sector };
+		FName fieldTypes[] = { NAME_SectorPortal, NAME_LinePortal, NAME_Vertex, NAME_Side, NAME_Line, NAME_SecPlane, NAME_F3DFloor, NAME_Sector };
 		for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
-			probe->ClearNativePointerFields(fieldTypes);
+			probe->ClearNativePointerFields({ fieldTypes, std::size(fieldTypes) });
 	}
 	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.

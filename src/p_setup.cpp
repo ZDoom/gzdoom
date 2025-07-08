@@ -387,6 +387,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	levelMesh = nullptr;
 	VisualThinkerHead = nullptr;
 	ActorBehaviors.Clear();
+	ClientSideActorBehaviors.Clear();
 	if (screen)
 		screen->SetAABBTree(nullptr);
 }

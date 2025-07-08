@@ -56,7 +56,7 @@
       <code>~/.var/app/org.zdoom.GZDoom/.config/gzdoom</code> by default for security reasons.
       You will need to place your IWADs and PWADS there, or use an application like Flatseal
       to give GZDoom additional permissions.</p>
-  </7escription>
+  </description>
 
   <screenshots>
     <screenshot type="default">

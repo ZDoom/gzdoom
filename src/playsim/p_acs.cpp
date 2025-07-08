@@ -652,10 +652,35 @@ struct CallReturn
 	unsigned int EntryInstrCount;
 };
 
-
-static bool IsClientSideScript(const ScriptPtr& script)
+// Only objects owned by the client are allowed to call client-side scripts. These same scripts must be ignored from
+// objects belonging to other clients since the nature of them calling after the client is backed up will be as though
+// they were never called at all. For things with no activator, assume it's from a frontend script and the modder knows
+// what they're doing.
+static bool CanCreateClientSideScripts(const AActor* activator)
 {
-	return (script.Flags & SCRIPTF_ClientSide);
+	return activator == nullptr || activator->IsClientside() || (activator->player != nullptr && activator->player->mo == activator);
+}
+
+static AActor* GetScriptOwner(AActor& activator)
+{
+	return activator.player != nullptr ? activator.player->mo : &activator;
+}
+
+static bool ShouldIgnoreClientSideScript(AActor* activator)
+{
+	if (activator == nullptr || activator->IsClientside())
+		return false;
+
+	AActor* owner = GetScriptOwner(*activator);
+	return !owner->Level->isConsolePlayer(owner);
+}
+
+// Even if it's marked as such, don't allow things that don't belong to clients to be called locally. Treat
+// them like server calls (in the future they may be ignored entirely since a proper ownership system is
+// preferred).
+static bool IsClientSideScript(const AActor* activator, const ScriptPtr& script)
+{
+	return (script.Flags & SCRIPTF_ClientSide) && CanCreateClientSideScripts(activator);
 }
 
 class DLevelScript : public DObject
@@ -790,7 +815,7 @@ private:
 };
 
 static DLevelScript *P_GetScriptGoing (FLevelLocals *Level, AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	const int *args, int argcount, int flags, bool clientside);
+	const int *args, int argcount, int flags);
 
 
 struct FBehavior::ArrayInfo
@@ -3328,7 +3353,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 		if (ptr->Type == type)
 		{
 			DLevelScript *runningScript = P_GetScriptGoing (Level, activator, NULL, ptr->Number,
-				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0, IsClientSideScript(*ptr));
+				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0);
 			if (nullptr != runningScript && runNow)
 			{
 				runningScript->RunScript();
@@ -10419,8 +10444,14 @@ scriptwait:
 #undef PushtoStack
 
 static DLevelScript *P_GetScriptGoing (FLevelLocals *l, AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	const int *args, int argcount, int flags, bool clientside)
+	const int *args, int argcount, int flags)
 {
+	// Intentionally not checking netgame status here as this should be consistent between singleplayer
+	// and multiplayer (this is how it will work should client/server ever get in, so force it now).
+	const bool clientside = IsClientSideScript(who, *code);
+	if (clientside && ShouldIgnoreClientSideScript(who))
+		return nullptr;
+
 	DACSThinker *controller = clientside ? l->ClientSideACSThinker : l->ACSThinker;
 	DLevelScript **running;
 
@@ -10535,7 +10566,7 @@ void FLevelLocals::DoDeferedScripts ()
 				nullptr, def->script,
 				scriptdata, module,
 				def->args, 3,
-				def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0, IsClientSideScript(*scriptdata));
+				def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);
 			break;
 
 		case acsdefered_t::defsuspend:
@@ -10581,7 +10612,9 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 	}
 }
 
-EXTERN_CVAR (Bool, sv_cheats)
+// Allow debugging by default in singleplayer, but give the option to test request denials.
+CVAR(Bool, allowsingleplayerscripts, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, sv_allowallscripts, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 
 int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
@@ -10592,30 +10625,30 @@ int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, 
 
 		if ((scriptdata = Level->Behaviors.FindScript (script, module)) != NULL)
 		{
-			if ((flags & ACS_NET) && netgame && !sv_cheats)
+			// Make sure only scripts flagged as Net can be ran if requesting one.
+			if ((flags & ACS_NET) && !(scriptdata->Flags & SCRIPTF_Net)
+				&& !sv_allowallscripts && (netgame || !allowsingleplayerscripts))
 			{
-				// If playing multiplayer and cheats are disallowed, check to
-				// make sure only net scripts are run.
-				if (!(scriptdata->Flags & SCRIPTF_Net))
+				if (who->Level->isConsolePlayer(who))
+				{
+					Printf(PRINT_BOLD, "Non-net scripts are currently not requestable\n");
+				}
+				else if (consoleplayer == Net_Arbitrator && !IsClientSideScript(who, *scriptdata))
 				{
 					Printf(PRINT_BOLD, "%s tried to puke %s (\n",
 						who->player->userinfo.GetName(), ScriptPresentation(script).GetChars());
 					for (int i = 0; i < argcount; ++i)
 					{
-						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount-1 ? "" : ", ");
+						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount - 1 ? "" : ", ");
 					}
 					Printf(PRINT_BOLD, ")\n");
-					return false;
 				}
+				
+				return false;
 			}
 
-			DLevelScript* runningScript = nullptr;
-			const bool clientside = IsClientSideScript(*scriptdata);
-			if (!(flags & ACS_NET) || !clientside || (who && Level->isConsolePlayer(who->player->mo)))
-			{
-				runningScript = P_GetScriptGoing(Level, who, where, script,
-					scriptdata, module, args, argcount, flags, clientside);
-			}
+			DLevelScript* runningScript = P_GetScriptGoing(Level, who, where, script,
+				scriptdata, module, args, argcount, flags);
 
 			if (runningScript != NULL)
 			{

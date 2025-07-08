@@ -234,8 +234,8 @@ public:
 	
 	TArray (std::initializer_list<T> list)
 	{
-		Most = list.size;
-		Count = list.size;
+		Most = list.size();
+		Count = list.size();
 
 		if (Count > 0)
 		{

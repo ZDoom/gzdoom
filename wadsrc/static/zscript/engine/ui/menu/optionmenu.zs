@@ -299,7 +299,6 @@ class OptionMenu : Menu
 					int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
 
 					int maxitems = (lastrow - y) / rowheight + 1;
-					Console.printf("%d %d", maxitems, RemainingVisibleItems(0));
 					if (maxitems < RemainingVisibleItems(0))
 					{
 						maxItems -= 2;

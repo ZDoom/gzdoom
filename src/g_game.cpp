@@ -219,6 +219,8 @@ CVAR (Float,	m_side,			2.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 CVAR (Float, cl_analog_sensitivity_yaw,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 CVAR (Float, cl_analog_sensitivity_pitch,	0.6f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
+CVAR (Bool, cl_analog_straferun, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+
 int 			turnheld;								// for accelerative turning 
 
 EXTERN_CVAR (Bool, invertmouse)
@@ -739,6 +741,29 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	{
 		axis_pitch = axis_forward;
 		axis_forward = 0.0f;
+	}
+
+	if (cl_analog_straferun)
+	{
+		// Rescale diagonal analog input from roughly [0.77, 0.77] to [1.0, 1.0],
+		// which enables analog sticks to be able to strafe run like a keyboard can.
+
+		// This is inaccurate to how Doom had originally handled analog input, but
+		// that's why it's an option, after all.
+
+		const float sqrtOf2Frac = 0.41421356237309504880; // sqrt(2)'s fractional value
+
+		float move_min = min<float>(fabs(axis_side), fabs(axis_forward));
+		float move_max = max<float>(fabs(axis_side), fabs(axis_forward));
+
+		float scale = 1.0f;
+		if (move_max > EQUAL_EPSILON)
+		{
+			scale += (move_min / move_max) * sqrtOf2Frac;
+		}
+
+		axis_forward = std::clamp(axis_forward * scale, -1.f, 1.f);
+		axis_side = std::clamp(axis_side * scale, -1.f, 1.f);
 	}
 
 	if (axis_pitch != 0)

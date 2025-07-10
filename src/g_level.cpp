@@ -1624,51 +1624,102 @@ void G_DoWorldDone (void)
 //
 // G_StartTravel
 //
-// Moves players (and eventually their inventory) to a different statnum,
+// Moves players (and eventually their owned Actors) to a different statnum,
 // so they will not be destroyed when switching levels. This only applies
 // to real players, not voodoo dolls.
 //
 //==========================================================================
 
-void FLevelLocals::StartTravel ()
+void FLevelLocals::UnlinkActorFromLevel(AActor& mo)
 {
-	if (deathmatch)
-		return;
+	mo.UnlinkFromWorld(nullptr);
+	mo.UnlinkBehaviorsFromLevel();
+	const int tid = mo.tid;
+	mo.SetTID(0);
+	mo.tid = tid; // Restore the TID for later relinking.
+	mo.DeleteAttachedLights();
+}
 
-	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
+void FLevelLocals::StartTravel()
+{
+	bTravelling = true;
+
+	if (!deathmatch)
 	{
-		if (playeringame[i])
+		for (size_t i = 0u; i < MAXPLAYERS; ++i)
 		{
-			AActor *pawn = Players[i]->mo;
-			AActor *inv;
-			Players[i]->camera = nullptr;
-
-			// Only living players travel. Dead ones get a new body on the new level.
-			if (Players[i]->health > 0)
-			{
-				pawn->UnlinkFromWorld (nullptr);
-				pawn->UnlinkBehaviorsFromLevel();
-				int tid = pawn->tid;	// Save TID
-				pawn->SetTID(0);
-				pawn->tid = tid;		// Restore TID (but no longer linked into the hash chain)
-				pawn->ChangeStatNum (STAT_TRAVELLING);
-				pawn->DeleteAttachedLights();
-
-				for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
-				{
-					inv->ChangeStatNum (STAT_TRAVELLING);
-					inv->UnlinkFromWorld (nullptr);
-					inv->UnlinkBehaviorsFromLevel();
-					inv->DeleteAttachedLights();
-					tid = inv->tid;
-					inv->SetTID(0);
-					inv->tid = tid;
-				}
-			}
+			if (PlayerInGame(i) && Players[i]->health > 0 && !(Players[i]->mo->ObjectFlags & OF_EuthanizeMe))
+				Players[i]->mo->ChangeStatNum(STAT_TRAVELLING);
 		}
 	}
 
-	BotInfo.StartTravel ();
+	// Start building the list of everything that needs to travel. Since things can only be added
+	// to STAT_TRAVELLING at this point, it's safe to assume nothing will be removed unless destroyed
+	// (which will clean up anything it owns as well).
+	auto it = GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
+	DThinker* th = nullptr;
+	unsigned count = 0u;
+	do
+	{
+		count = 0u;
+		it.Reinit();
+
+		while ((th = it.Next()) != nullptr)
+		{
+			// Already processed this Thinker.
+			if (th->ObjectFlags & OF_Travelling)
+				continue;
+
+			++count;
+			auto mo = dyn_cast<AActor>(th);
+			if (mo != nullptr)
+			{
+				if (mo->player != nullptr)
+				{
+					// No voodoo dolls allowed.
+					if (mo->player->mo != mo)
+					{
+						mo->ChangeStatNum(STAT_PLAYER);
+						continue;
+					}
+
+					if (mo->player->Bot != nullptr)
+						mo->player->Bot->ChangeStatNum(STAT_TRAVELLING);
+				}
+
+				if (!mo->IsKindOf(NAME_Inventory) || mo->PointerVar<AActor>(NAME_Owner) == nullptr)
+				{
+					for (AActor* inv = mo->Inventory; inv != nullptr; inv = inv->Inventory)
+						inv->ChangeStatNum(STAT_TRAVELLING);
+				}
+
+				if (!(mo->flags & MF_UNMORPHED) && mo->alternative != nullptr)
+					mo->alternative->ChangeStatNum(STAT_TRAVELLING);
+			}
+
+			th->ObjectFlags |= OF_Travelling;
+			IFOVERRIDENVIRTUALPTRNAME(th, NAME_Thinker, PreTravelled)
+				VMCallVoid<DThinker*>(func, th);
+		}
+	} while (count);
+
+	// Now that the list is complete, unlink everything. We want to do this after the
+	// callback so someone can't attempt to relink things.
+	auto unlinker = GetThinkerIterator<AActor>(NAME_Actor, STAT_TRAVELLING);
+	AActor* mo = nullptr;
+	while ((mo = unlinker.Next()) != nullptr)
+	{
+		UnlinkActorFromLevel(*mo);
+		mo->BlockingMobj = nullptr;
+		mo->BlockingLine = mo->MovementBlockingLine = nullptr;
+		mo->BlockingFloor = mo->BlockingCeiling = mo->Blocking3DFloor = nullptr;
+		mo->Sector = nullptr;
+		mo->subsector = nullptr;
+		mo->section = nullptr;
+		mo->floorsector = mo->ceilingsector = nullptr;
+	}
+
+	bTravelling = false;
 }
 
 //==========================================================================
@@ -1682,136 +1733,174 @@ void FLevelLocals::StartTravel ()
 //
 //==========================================================================
 
-int FLevelLocals::FinishTravel ()
+void FLevelLocals::LinkActorToLevel(AActor& mo)
 {
-	auto it = GetThinkerIterator<AActor>(NAME_PlayerPawn, STAT_TRAVELLING);
-	AActor *pawn, *pawndup, *oldpawn, *next;
-	AActor *inv;
-	FPlayerStart *start;
-	int pnum;
-	int failnum = 0;
+	mo.LinkToWorld(nullptr);
+	mo.LinkBehaviorsToLevel();
+	const int tid = mo.tid;
+	mo.tid = 0;	// Allow the Actor to be linked back into the hashmap.
+	mo.SetTID(tid);
+	mo.SetDynamicLights();
+}
 
-	// 
-	AActor* pawns[MAXPLAYERS];
-	int pawnsnum = 0;
-
-	next = it.Next ();
-	while ( (pawn = next) != NULL)
+int FLevelLocals::FinishTravel()
+{
+	// From this point onward things can't be added back into the list, only removed. Callbacks
+	// are done after setting everything up so that the Thinkers have initialized objects to work with.
+	TArray<DThinker*> toCallBack = {};
+	int failNum = 0;
+	auto it = GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
+	DThinker* th = nullptr;
+	while ((th = it.Next()) != nullptr)
 	{
-		next = it.Next ();
-		pnum = int(pawn->player - players);
-		pawn->ChangeStatNum (STAT_PLAYER);
-		pawndup = pawn->player->mo;
-		assert (pawn != pawndup);
+		assert(th->ObjectFlags & OF_Travelling);
 
-		start = PickPlayerStart(pnum, 0);
-		if (start == NULL)
+		toCallBack.Push(th);
+		
+		th->ObjectFlags &= ~OF_Travelling;
+		auto mo = dyn_cast<AActor>(th);
+		if (mo == nullptr)
 		{
-			if (pawndup != nullptr)
+			if (th->IsKindOf(NAME_Bot))
+				th->ChangeStatNum(STAT_BOT);
+			else
+				th->ChangeStatNum(STAT_DEFAULT);
+
+			continue;
+		}
+		
+		// Check the actual pawn type here since its player field isn't guaranteed
+		// to be set e.g. unmorphed Actors.
+		const bool player = mo->IsKindOf(NAME_PlayerPawn);
+		if (player)
+			mo->ChangeStatNum(STAT_PLAYER);
+		else if (mo->IsKindOf(NAME_Inventory) && mo->PointerVar<AActor>(NAME_Owner) != nullptr)
+			mo->ChangeStatNum(STAT_INVENTORY);
+		else
+			mo->ChangeStatNum(STAT_DEFAULT);
+
+		mo->flags2 &= ~MF2_BLASTED;
+		mo->ClearFOVInterpolation();
+		LinkActorToLevel(*mo);
+
+		if (!player || mo->player == nullptr)
+		{
+			// Do some basic relinking. Modders will figure out what to do with it
+			// in the callback.
+			if (mo->flags & MF_UNMORPHED)
 			{
-				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
-				// Move to the coordinates this player had when they left the level.
-				pawn->SetXYZ(pawndup->Pos());
+				mo->Angles = mo->alternative->Angles;
+				mo->SetOrigin(mo->alternative->Pos(), true);
 			}
 			else
 			{
-				// Could not find a start for this player at all. This really should never happen but if it does, let's better abort.
-				if (failnum == 0) failnum = pnum + 1;
+				P_FindFloorCeiling(mo);
+			}
+
+			mo->Vel.Zero();
+			mo->ClearInterpolation();
+			mo->UpdateWaterLevel(false);
+			continue;
+		}
+
+		const int pNum = PlayerNum(mo->player);
+		// This will be whatever previous pawn was in the level for this player, be it from a snapshot
+		// or a map spawn.
+		auto doll = mo->player->mo;
+		assert(mo != doll);
+
+		auto start = PickPlayerStart(pNum, 0);
+		if (start == nullptr)
+		{
+			if (doll != nullptr)
+			{
+				Printf(TEXTCOLOR_RED "No player %d start to travel to\n", pNum + 1);
+				mo->SetOrigin(doll->Pos(), true);
+			}
+			else if (failNum <= 0)
+			{
+				// Couldn't find a start for this player at all. This should never happen but if it does, let's abort.
+				failNum = pNum + 1; 
 			}
 		}
-		oldpawn = pawndup;
 
-		// The player being spawned here is a short lived dummy and
-		// must not start any ENTER script or big problems will happen.
-		pawndup = SpawnPlayer(start, pnum, SPF_TEMPPLAYER);
-		if (pawndup != NULL)
+		auto mapDoll = doll;
+
+		// Find the actual spawn location taking hub entrances into account. This player
+		// is only meant to be short-lived so don't fire off any events unless there truly
+		// was no other player spawned beforehand (can happen in co-op).
+		doll = SpawnPlayer(start, pNum, SPF_TEMPPLAYER);
+		if (doll != nullptr)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
-			{
-				pawn->Angles = pawndup->Angles;
-			}
-			pawn->SetXYZ(pawndup->Pos());
-			pawn->Vel = pawndup->Vel;
-			pawn->Sector = pawndup->Sector;
-			pawn->floorz = pawndup->floorz;
-			pawn->ceilingz = pawndup->ceilingz;
-			pawn->dropoffz = pawndup->dropoffz;
-			pawn->floorsector = pawndup->floorsector;
-			pawn->floorpic = pawndup->floorpic;
-			pawn->floorterrain = pawndup->floorterrain;
-			pawn->ceilingsector = pawndup->ceilingsector;
-			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->Floorclip = pawndup->Floorclip;
-			pawn->waterlevel = pawndup->waterlevel;
-			pawn->waterdepth = pawndup->waterdepth;
-		}
-		else if (failnum == 0)	// In the failure case this may run into some undefined data.
-		{
-			P_FindFloorCeiling(pawn);
-		}
-		pawn->target = nullptr;
-		pawn->lastenemy = nullptr;
-		pawn->player->mo = pawn;
-		pawn->player->camera = pawn;
-		pawn->player->viewheight = pawn->player->DefaultViewHeight();
-		pawn->flags2 &= ~MF2_BLASTED;
-		if (oldpawn != nullptr)
-		{
-			PlayerPointerSubstitution (oldpawn, pawn, true);
-			oldpawn->Destroy();
-		}
-		if (pawndup != NULL)
-		{
-			pawndup->Destroy();
-		}
-		pawn->LinkToWorld (nullptr);
-		pawn->LinkBehaviorsToLevel();
-		pawn->ClearInterpolation();
-		pawn->ClearFOVInterpolation();
-		int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
-		pawn->tid = 0;				// Reset TID
-		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
-		pawn->SetState(pawn->SpawnState);
-		pawn->player->SendPitchLimits();
+				mo->Angles = doll->Angles;
 
-		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
-		{
-			inv->ChangeStatNum (STAT_INVENTORY);
-			inv->LinkToWorld (nullptr);
-			P_FindFloorCeiling(inv, FFCF_ONLYSPAWNPOS);
-			inv->LinkBehaviorsToLevel();
-			tid = inv->tid;
-			inv->tid = 0;
-			inv->SetTID(tid);
-
-			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
-			{
-				VMValue params[1] = { inv };
-				VMCall(func, params, 1, nullptr, 0);
-			}
+			mo->SetOrigin(doll->Pos(), true);
+			mo->Vel = doll->Vel;
 		}
+		else
+		{
+			P_FindFloorCeiling(mo);
+		}
+
+		mo->ClearInterpolation();
+		mo->UpdateWaterLevel(false);
+
+		mo->target = nullptr;
+		mo->lastenemy = nullptr;
+		mo->player->mo = mo;
+		mo->player->camera = mo;
+		mo->player->viewheight = mo->player->DefaultViewHeight();
+		
+		if (mapDoll != nullptr)
+		{
+			// Make sure anything targetting the previous pawn gets pointed back to the real one.
+			PlayerPointerSubstitution(mapDoll, mo, true);
+			mapDoll->Destroy();
+		}
+		// Don't propagate back any changes this might've made from ZScript since it's meant
+		// to be temporary only.
+		if (doll != nullptr)
+			doll->Destroy();
+
+		mo->player->SendPitchLimits();
 		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
-		{
-			pawn->Speed = pawn->GetDefault()->Speed;
-		}
-
-		IFVIRTUALPTRNAME(pawn, NAME_PlayerPawn, Travelled)
-		{
-			VMValue params[1] = { pawn };
-			VMCall(func, params, 1, nullptr, 0);
-		}
-		// [ZZ] we probably don't want to fire any scripts before all players are in, especially with runNow = true.
-		pawns[pawnsnum++] = pawn;
+			mo->Speed = mo->GetDefault()->Speed;
 	}
 
-	BotInfo.FinishTravel ();
-
-	// make sure that, after travelling has completed, no travelling thinkers are left.
-	// Since this list is excluded from regular thinker cleaning, anything that may survive through here
-	// will endlessly multiply and severely break the following savegames or just simply crash on broken pointers.
 	Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
 	ClientsideThinkers.DestroyThinkersInList(STAT_TRAVELLING);
-	return failnum;
+
+	// Some ZScript will be called here so we have to do this last.
+	for (size_t i = 0u; i < MAXPLAYERS; ++i)
+	{
+		if (PlayerInGame(i))
+			Players[i]->mo->SetState(Players[i]->mo->SpawnState);
+	}
+
+	for (auto th : toCallBack)
+	{
+		if (!(th->ObjectFlags & OF_EuthanizeMe))
+		{
+			IFOVERRIDENVIRTUALPTRNAME(th, NAME_Thinker, Travelled)
+				VMCallVoid<DThinker*>(func, th);
+		}
+	}
+
+	for (auto th : toCallBack)
+	{
+		if (th->ObjectFlags & OF_EuthanizeMe)
+			continue;
+
+		auto mo = dyn_cast<AActor>(th);
+		if (mo != nullptr)
+		{
+			mo->ClearFOVInterpolation();
+			mo->ClearInterpolation();
+		}
+	}
+
+	return failNum;
 }
  
 //==========================================================================

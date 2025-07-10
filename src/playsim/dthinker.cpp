@@ -362,6 +362,20 @@ void FThinkerCollection::DestroyAllThinkers(bool fullgc)
 //
 //==========================================================================
 
+void FThinkerCollection::OnLoad()
+{
+	for (auto& list : FreshThinkers)
+		list.OnLoad();
+	for (auto& list : Thinkers)
+		list.OnLoad();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FThinkerCollection::SerializeThinkers(FSerializer &arc, bool hubLoad)
 {
 	//DThinker *thinker;
@@ -415,12 +429,12 @@ void FThinkerCollection::SerializeThinkers(FSerializer &arc, bool hubLoad)
 								else if (thinker->ObjectFlags & OF_JustSpawned)
 								{
 									FreshThinkers[i].AddTail(thinker);
-									thinker->CallPostSerialize();
+									thinker->PostSerialize();
 								}
 								else
 								{
 									Thinkers[i].AddTail(thinker);
-									thinker->CallPostSerialize();
+									thinker->PostSerialize();
 								}
 							}
 						}
@@ -645,6 +659,30 @@ void FThinkerList::SaveList(FSerializer &arc)
 //
 //==========================================================================
 
+void FThinkerList::OnLoad()
+{
+	DThinker* node = GetHead();
+	if (node == nullptr)
+		return;
+
+	while (node != Sentinel)
+	{
+		NextToThink = node->NextThinker;
+		if (!(node->ObjectFlags & OF_EuthanizeMe))
+		{
+			IFOVERRIDENVIRTUALPTRNAME(node, NAME_Thinker, OnLoad)
+				VMCallVoid<DThinker*>(func, node);
+		}
+		node = NextToThink;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 int FThinkerList::TickThinkers(FThinkerList *dest)
 {
 	int count = 0;
@@ -831,16 +869,6 @@ void DThinker::CallPostBeginPlay()
 
 void DThinker::PostSerialize()
 {
-}
-
-void DThinker::CallPostSerialize()
-{
-	PostSerialize();
-	IFOVERRIDENVIRTUALPTRNAME(this, NAME_Thinker, OnLoad)
-	{
-		VMValue params[] = { this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
 }
 
 //==========================================================================

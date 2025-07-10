@@ -4,6 +4,7 @@ class ArtiBlastRadius : CustomInventory
 	Default
 	{
 		+FLOATBOB
+		+WEAPONSPAWN
 		Inventory.DefMaxAmount;
 		Inventory.PickupFlash "PickupFlash";
 		+INVENTORY.INVBAR +INVENTORY.FANCYPICKUPSOUND

@@ -50,6 +50,8 @@ class FThinkerIterator;
 
 enum { MAX_STATNUM = 127 };
 
+extern bool bTravelling;
+
 // Doubly linked ring list of thinkers
 struct FThinkerList
 {

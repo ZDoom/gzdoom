@@ -248,6 +248,24 @@ class Thinker : Object native play
 		return int(tics / TICRATE);
 	}
 
+	//===========================================================================
+	//
+	// Called before the Thinker moves to another map, in case it needs to do
+	// special clean-up.
+	//
+	//===========================================================================
+
+	virtual void PreTravelled() {}
+
+	//===========================================================================
+	//
+	// Called after the Thinker moved to another map, in case it needs to do
+	// special reinitialization.
+	//
+	//===========================================================================
+
+	virtual void Travelled() {}
+
 }
 
 class ThinkerIterator : Object native

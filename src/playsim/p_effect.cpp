@@ -302,12 +302,16 @@ void P_ThinkParticles (FLevelLocals *Level)
 		
 		particle->alpha -= particle->fadestep;
 		if (	(!!(particle->flags & SPF_FADE_IN_OUT) && particle->alpha >= 1.0)
-			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadestep)) <= std::min(1.0f, fabs(particle->alpha)))
+			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadeoutstep)) <= std::min(1.0f, fabs(particle->alpha)))
 		) { // [Jay] if SPF_FADE_IN_HOLD_OUT, hold until the fade out would line up with ttl
 			particle->alpha = std::min(1.0f, fabs(particle->alpha));
-			particle->fadestep = -particle->fadestep;
+			particle->fadestep = particle->fadeoutstep;
 			particle->flags &= ~(SPF_FADE_IN_OUT|SPF_FADE_IN_HOLD_OUT);
 		}
+
+		// It looks really glitchy if the alpha is allowed to overshoot
+		if (particle->alpha > 1.0)
+			particle->alpha = 1.0;
 
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))
@@ -353,7 +357,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 }
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
-	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
+	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc, double fadeoutstep)
 {
 	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
@@ -364,6 +368,8 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Acc = FVector3(accel);
 		particle->color = ParticleColor(color);
 		particle->alpha = float(startalpha);
+		if ((flags & SPF_FADE_IN_OUT) || (flags & SPF_FADE_IN_HOLD_OUT))
+			particle->fadeoutstep = fadeoutstep;
 		if ((fadestep < 0 && !(flags & SPF_NEGATIVE_FADESTEP)) || fadestep <= -1.0)
 		{
 			particle->fadestep = FADEFROMTTL(lifetime);

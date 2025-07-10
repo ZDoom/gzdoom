@@ -40,7 +40,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "c_cvars.h"
-#include "d_protocol.h"
+#include "i_protocol.h"
 #include "engineerrors.h"
 #include "printf.h"
 #include "palutil.h"

@@ -276,7 +276,6 @@ class OptionMenu : Menu
 				break;
 			}
 
-			int previousSelection = mDesc.mSelectedItem;
 			do
 			{
 				mDesc.mSelectedItem--;
@@ -285,13 +284,14 @@ class OptionMenu : Menu
 					mDesc.mSelectedItem = mDesc.mItems.Size() - 1;
 				}
 			}
-			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != previousSelection);
+			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != startedAt);
 
-			if (mDesc.mSelectedItem != previousSelection)
+			if (mDesc.mSelectedItem != startedAt)
 			{
 				int viewTop = mDesc.mScrollTop + mDesc.mScrollPos;
+				int lastItem = LastVisibleItem();
 
-				if (previousSelection == FirstSelectable() && mDesc.mSelectedItem == LastVisibleItem())
+				if (startedAt == FirstSelectable() && mDesc.mSelectedItem == lastItem)
 				{
 					int y = mDesc.mPosition;
 					if (y <= 0) y = DrawCaption(mDesc.mTitle, -y, false);
@@ -305,7 +305,6 @@ class OptionMenu : Menu
 					}
 					if (maxitems <= 0) maxitems = 1;
 
-					int lastItem = LastVisibleItem();
 					int newTopIndex = 0;
 					int visibleItemsOnPage = 0;
 					for (int i = lastItem; i >= 0; i--)
@@ -322,11 +321,12 @@ class OptionMenu : Menu
 					}
 
 					mDesc.mScrollPos = newTopIndex - mDesc.mScrollTop;
+					if (mDesc.mScrollPos <= 0) mDesc.mScrollPos = 0;
 				}
 				else if (mDesc.mSelectedItem < viewTop)
 				{
 					int visibleLinesJumped = 0;
-					for (int i = previousSelection - 1; i >= mDesc.mSelectedItem; i--)
+					for (int i = startedAt - 1; i >= mDesc.mSelectedItem; i--)
 					{
 						if (mDesc.mItems[i].Visible())
 						{
@@ -358,25 +358,24 @@ class OptionMenu : Menu
 				break;
 			}
 
-			int previousSelection = mDesc.mSelectedItem;
 			do
 			{
 				mDesc.mSelectedItem++;
 				if (mDesc.mSelectedItem >= mDesc.mItems.Size())
 					mDesc.mSelectedItem = 0;
 			}
-			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != previousSelection);
+			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != startedAt);
 
-			if (mDesc.mSelectedItem != previousSelection)
+			if (mDesc.mSelectedItem != startedAt)
 			{
-				if (previousSelection == LastVisibleItem())
+				if (startedAt == LastVisibleItem())
 				{
 					mDesc.mScrollPos = 0;
 				}
 				else if (mDesc.mSelectedItem > VisBottom && VisBottom != -1)
 				{
 					int visibleLinesJumped = 0;
-					for (int i = previousSelection + 1; i <= mDesc.mSelectedItem; i++)
+					for (int i = startedAt + 1; i <= mDesc.mSelectedItem; i++)
 					{
 						if (mDesc.mItems[i].Visible())
 						{

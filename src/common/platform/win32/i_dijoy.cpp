@@ -451,33 +451,58 @@ void FDInputJoystick::ProcessInput()
 	// into button presses.
 	for (i = 0; i < Axes.Size(); ++i)
 	{
-		AxisInfo *info = &Axes[i];
-		LONG value = *(LONG *)(state + info->Ofs);
-		double axisval;
 		uint8_t buttonstate = 0;
 
-		// Scale to [-1.0, 1.0]
-		axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
-		// Cancel out dead zone
-		axisval = Joy_RemoveDeadZone(axisval, info->DeadZone, &buttonstate);
-		axisval = Joy_ApplyResponseCurveBezier(info->ResponseCurve, axisval);
-		info->Value = float(axisval);
 		if (i < NUM_JOYAXISBUTTONS && (i > 2 || Axes.Size() == 1))
 		{
-			if (abs(axisval) < info->DigitalThreshold) buttonstate = 0;
+			AxisInfo *info = &Axes[i];
+			LONG value = *(LONG *)(state + info->Ofs);
+			double axisval;
+
+			// Scale to [-1.0, 1.0]
+			axisval = (value - info->Min) * 2.0 / (info->Max - info->Min) - 1.0;
+
+			// Cancel out dead zone
+			axisval = Joy_ManageSingleAxis(
+				axisval,
+				info->DeadZone,
+				info->DigitalThreshold,
+				info->ResponseCurve,
+				&buttonstate
+			);
+
 			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+			info->ButtonValue = buttonstate;
 		}
 		else if (i == 1)
 		{
 			// Since we sorted the axes, we know that the first two are definitely X and Y.
-			// They are probably a single stick, so use angular position to determine buttons.
-			buttonstate = Joy_XYAxesToButtons(
-				(abs(Axes[0].Value) < Axes[0].DigitalThreshold) ? 0 : Axes[0].Value,
-				(abs(axisval)       < info->DigitalThreshold)   ? 0 : axisval
+			// They are probably a single stick, so treat them as one.
+			AxisInfo *info_x = &Axes[i - 1];
+			AxisInfo *info_y = &Axes[i];
+
+			LONG value_x = *(LONG *)(state + info_x->Ofs);
+			LONG value_y = *(LONG *)(state + info_y->Ofs);
+
+			double axisval_x, axisval_y;
+
+			// Scale to [-1.0, 1.0]
+			axisval_x = (value_x - info_x->Min) * 2.0 / (info_x->Max - info_x->Min) - 1.0;
+			axisval_y = (value_y - info_y->Min) * 2.0 / (info_y->Max - info_y->Min) - 1.0;
+
+			// Cancel out dead zone
+			Joy_ManageThumbstick(
+				&axisval_x, &axisval_y,
+				info_x->DeadZone, info_y->DeadZone,
+				info_x->DigitalThreshold, info_y->DigitalThreshold,
+				info_x->ResponseCurve, info_y->ResponseCurve,
+				&buttonstate
 			);
-			Joy_GenerateButtonEvents(info->ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+
+			// We store all four buttons in the first axis and ignore the second.
+			Joy_GenerateButtonEvents(info_x->ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS + (i-1)*2);
+			info_x->ButtonValue = buttonstate;
 		}
-		info->ButtonValue = buttonstate;
 	}
 
 	// Compare button states and generate events for buttons that have changed.

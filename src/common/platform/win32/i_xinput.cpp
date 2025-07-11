@@ -343,18 +343,19 @@ void FXInputController::ProcessThumbstick(int value1, AxisInfo *axis1,
 
 	axisval1 = (value1 - SHRT_MIN) * 2.0 / 65536 - 1.0;
 	axisval2 = (value2 - SHRT_MIN) * 2.0 / 65536 - 1.0;
-	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
-	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
-	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurve, axisval1);
-	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurve, axisval2);
+
+	Joy_ManageThumbstick(
+		&axisval1, &axisval2,
+		axis1->DeadZone, axis2->DeadZone,
+		axis1->DigitalThreshold, axis2->DigitalThreshold,
+		axis1->ResponseCurve, axis2->ResponseCurve,
+		&buttonstate
+	);
+
 	axis1->Value = float(axisval1);
 	axis2->Value = float(axisval2);
 
 	// We store all four buttons in the first axis and ignore the second.
-	buttonstate = Joy_XYAxesToButtons(
-		abs(axisval1) < axis1->DigitalThreshold ? 0: axisval1,
-		abs(axisval2) < axis2->DigitalThreshold ? 0: axisval2
-	);
 	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
 	axis1->ButtonValue = buttonstate;
 }
@@ -373,15 +374,15 @@ void FXInputController::ProcessTrigger(int value, AxisInfo *axis, int base)
 	uint8_t buttonstate;
 	double axisval;
 
-	axisval = Joy_RemoveDeadZone(value / 256.0, axis->DeadZone, &buttonstate);
-	axisval = Joy_ApplyResponseCurveBezier(axis->ResponseCurve, axisval);
+	axisval = Joy_ManageSingleAxis(
+		value / 256.0,
+		axis->DeadZone, axis->DigitalThreshold, axis->ResponseCurve,
+		&buttonstate
+	);
 
-	// TODO: probably just put this into Joy_RemoveDeadZone
-	if (abs(axisval) < axis->DigitalThreshold) buttonstate = 0;
-
+	axis->Value = float(axisval);
 	Joy_GenerateButtonEvents(axis->ButtonValue, buttonstate, 1, base);
 	axis->ButtonValue = buttonstate;
-	axis->Value = float(axisval);
 }
 
 //==========================================================================

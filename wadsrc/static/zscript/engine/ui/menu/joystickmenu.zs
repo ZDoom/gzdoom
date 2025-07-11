@@ -265,8 +265,11 @@ class OptionMenuItemJoyCurve : OptionMenuItemOptionBase
 //
 //=============================================================================
 
-class OptionMenuItemJoyMap : OptionMenuItemOptionBase
+class OptionMenuItemJoyMap : OptionMenuItemOptionBase deprecated("4.15.1", "Axis mapping was replaced with binds; use OptionMenuItemStaticText to display JoystickConfig.GetAxisName instead")
 {
+	// For backwards compatibility with menu mods, we need to leave this class alone.
+	// It simply is always set to "None" and does nothing now.
+
 	int mAxis;
 	JoystickConfig mJoy;
 
@@ -465,7 +468,7 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 					it = new("OptionMenuItemStaticText").Init(" ", false);
 					opt.mItems.Push(it);
 
-					it = new("OptionMenuItemJoyMap").Init(joy.GetAxisName(i), i, "JoyAxisMapNames", false, joy);
+					it = new("OptionMenuItemStaticText").Init(joy.GetAxisName(i), false);
 					opt.mItems.Push(it);
 					it = new("OptionMenuSliderJoyScale").Init("$JOYMNU_OVRSENS", i, 0, 4, 0.1, 3, joy);
 					opt.mItems.Push(it);

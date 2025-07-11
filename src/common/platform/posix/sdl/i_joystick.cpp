@@ -124,10 +124,6 @@ public:
 	{
 		return Axes[axis].DeadZone;
 	}
-	EJoyAxis GetAxisMap(int axis)
-	{
-		return Axes[axis].GameAxis;
-	}
 	const char *GetAxisName(int axis)
 	{
 		return Axes[axis].Name.GetChars();
@@ -155,11 +151,6 @@ public:
 	{
 		SettingsChanged = true;
 		Axes[axis].DeadZone = clamp(zone, 0.f, 1.f);
-	}
-	void SetAxisMap(int axis, EJoyAxis gameaxis)
-	{
-		SettingsChanged = true;
-		Axes[axis].GameAxis = gameaxis;
 	}
 	void SetAxisScale(int axis, float scale)
 	{
@@ -199,12 +190,6 @@ public:
 		if(axis >= DefaultAxesCount)
 			return Axes[axis].DeadZone == JOYDEADZONE_DEFAULT;
 		return Axes[axis].DeadZone == DefaultAxes[axis].DeadZone;
-	}
-	bool IsAxisMapDefault(int axis)
-	{
-		if(axis >= DefaultAxesCount)
-			return Axes[axis].GameAxis == JOYAXIS_None;
-		return Axes[axis].GameAxis == DefaultAxes[axis].GameAxis;
 	}
 	bool IsAxisScaleDefault(int axis)
 	{
@@ -259,7 +244,6 @@ public:
 
 			if (i < DefaultAxesCount)
 			{
-				Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 				Axes[i].DeadZone = DefaultAxes[i].DeadZone;
 				Axes[i].Multiplier = DefaultAxes[i].Multiplier;
 				Axes[i].DigitalThreshold = DefaultAxes[i].DigitalThreshold;
@@ -268,7 +252,6 @@ public:
 			}
 			else
 			{
-				Axes[i].GameAxis = JOYAXIS_None;
 				Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
 				Axes[i].Multiplier = JOYSENSITIVITY_DEFAULT;
 				Axes[i].DigitalThreshold = JOYTHRESH_DEFAULT;
@@ -300,17 +283,32 @@ public:
 		return id;
 	}
 
-	void AddAxes(float axes[NUM_JOYAXIS])
+	void AddAxes(float axes[NUM_AXIS_CODES])
 	{
 		// Add to game axes.
 		for (int i = 0; i < GetNumAxes(); ++i)
 		{
-			if(Axes[i].GameAxis != JOYAXIS_None)
-				axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+			float axis_value = float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+			int code = AXIS_CODE_NULL;
+
+			if (axis_value > 0.0f)
+			{
+				code = Axes[i].Codes[0];
+			}
+			else if (axis_value < 0.0f)
+			{
+				code = Axes[i].Codes[1];
+			}
+
+			if (code != AXIS_CODE_NULL)
+			{
+				axes[code] += fabs(axis_value);
+			}
 		}
 	}
 
-	void ProcessInput() {
+	void ProcessInput()
+	{
 		uint8_t buttonstate;
 
 		if (Mapping)
@@ -323,6 +321,16 @@ public:
 			for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
 			{
 				buttonstate = 0;
+
+				if (i < NUM_JOYAXISBUTTONS)
+				{
+					Axes[i].Codes[0] = AXIS_CODE_JOY1_PLUS + (i * 2);
+					Axes[i].Codes[1] = AXIS_CODE_JOY1_PLUS + (i * 2) + 1;
+				}
+				else
+				{
+					Axes[i].Codes[0] = Axes[i].Codes[1] = AXIS_CODE_NULL;
+				}
 
 				Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
 				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
@@ -351,6 +359,16 @@ public:
 			{
 				buttonstate = 0;
 
+				if (i < NUM_JOYAXISBUTTONS)
+				{
+					Axes[i].Codes[0] = AXIS_CODE_JOY1_PLUS + (i * 2);
+					Axes[i].Codes[1] = AXIS_CODE_JOY1_PLUS + (i * 2) + 1;
+				}
+				else
+				{
+					Axes[i].Codes[0] = Axes[i].Codes[1] = AXIS_CODE_NULL;
+				}
+
 				Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
 				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
 				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurve, Axes[i].Value);
@@ -364,7 +382,7 @@ public:
 				}
 			}
 
-			if(NumAxes > 1)
+			if (NumAxes > 1)
 			{
 				buttonstate = Joy_XYAxesToButtons(
 					abs(Axes[0].Value) < Axes[0].DigitalThreshold ? 0 : Axes[0].Value,
@@ -400,7 +418,7 @@ public:
 				else
 					x.Value = 0.0;
 
-				if(i < 4)
+				if (i < 4)
 				{
 					Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
 					x.ButtonValue = buttonstate;
@@ -418,14 +436,13 @@ protected:
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
-		EJoyAxis GameAxis;
+		int Codes[2]; // 0: positive, 1: negative
 		double Value;
 		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
 		float DeadZone;
-		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
@@ -452,21 +469,21 @@ protected:
 
 // [Nash 4 Feb 2024] seems like on Linux, the third axis is actually the Left Trigger, resulting in the player uncontrollably looking upwards.
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultJoystickAxes[5] = {
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_DEFAULT, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT}
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_DEFAULT, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT}
 };
 
 // Defaults if we have access to the GameController API for this device
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultControllerAxes[6] = {
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
 };
 
 class SDLInputJoystickManager
@@ -490,7 +507,7 @@ public:
 		}
 	}
 
-	void AddAxes(float axes[NUM_JOYAXIS])
+	void AddAxes(float axes[NUM_AXIS_CODES])
 	{
 		for(unsigned int i = 0;i < Joysticks.Size();i++)
 			Joysticks[i]->AddAxes(axes);
@@ -553,12 +570,13 @@ void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
 		JoystickManager->GetDevices(sticks);
 }
 
-void I_GetAxes(float axes[NUM_JOYAXIS])
+void I_GetAxes(float axes[NUM_AXIS_CODES])
 {
-	for (int i = 0; i < NUM_JOYAXIS; ++i)
+	for (int i = 0; i < NUM_AXIS_CODES; ++i)
 	{
-		axes[i] = 0;
+		axes[i] = 0.0f;
 	}
+
 	if (use_joystick && JoystickManager)
 	{
 		JoystickManager->AddAxes(axes);

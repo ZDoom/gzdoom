@@ -449,6 +449,7 @@ OptionMenu "NewPlayerMenu" protected
 	Option "$PLYRMNU_VERTSPREAD", vertspread, "OnOff"
 	PlayerSwitchOnPickupItem "$PLYRMNU_SWITCHONPICKUP", "OffOn"
 	Option "$PLYRMNU_ALWAYSRUN", cl_run, "OnOff"
+	Option "$PLYRMNU_ANALOGSTRAFERUN", cl_analogstraferun, "OnOff"
 	Class "NewPlayerMenu"
 }
 

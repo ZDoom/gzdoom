@@ -138,7 +138,7 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisMap)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	PARAM_INT(axis);
-	ACTION_RETURN_INT(self->GetAxisMap(axis));
+	ACTION_RETURN_INT(-1); // JOYAXIS_None's old value
 }
 
 DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisMap)
@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisMap)
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	PARAM_INT(axis);
 	PARAM_INT(map);
-	self->SetAxisMap(axis, (EJoyAxis)map);
+	//self->SetAxisMap(axis, (EJoyAxis)map);
 	return 0;
 }
 

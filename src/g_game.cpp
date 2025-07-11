@@ -825,6 +825,17 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	cmd->sidemove <<= 8;
 }
 
+ADD_STAT (analog)
+{
+	FString out;
+
+	float axis_forward = buttonMap.ButtonAnalog(Button_Forward) - buttonMap.ButtonAnalog(Button_Back);
+	float axis_side = buttonMap.ButtonAnalog(Button_MoveLeft) - buttonMap.ButtonAnalog(Button_MoveRight);
+	out.AppendFormat("[%.3f, %.3f]", axis_forward, axis_side);
+
+	return out;
+}
+
 static int LookAdjust(int look)
 {
 	look <<= 16;

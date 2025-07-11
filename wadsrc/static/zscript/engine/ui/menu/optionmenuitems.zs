@@ -36,16 +36,26 @@ class OptionMenuItem : MenuItemBase
 {
 	String mLabel;
 	bool mCentered;
-	CVar mGrayCheck;
-	int mGrayCheckVal;
+	CVar mGrayCheck;	int mGrayCheckVal;
+	CVar mHiddenCheck;	int mHiddenCheckVal;
 
-	protected void Init(String label, String command, bool center = false, CVar graycheck = null, int graycheckVal = 0)
+	protected void Init(
+		String label,
+		String command,
+		bool center = false,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
 		Super.Init(0, 0, command);
 		mLabel = label;
 		mCentered = center;
 		mGrayCheck = graycheck;
 		mGrayCheckVal = graycheckVal;
+		mHiddenCheck = hiddencheck;
+		mHiddenCheckVal = hiddencheckVal;
 	}
 
 	protected void drawText(int x, int y, int color, String text, bool grayed = false)
@@ -78,6 +88,11 @@ class OptionMenuItem : MenuItemBase
 	virtual bool IsGrayed()
 	{
 		return mGrayCheck != null && mGrayCheck.GetInt() == mGrayCheckVal;
+	}
+
+	override bool Visible()
+	{
+		return mHiddenCheck == null || mHiddenCheck.GetInt() != mHiddenCheckVal;
 	}
 
 	override bool Selectable()
@@ -265,9 +280,18 @@ class OptionMenuItemOptionBase : OptionMenuItem
 
 	const OP_VALUES = 0x11001;
 
-	protected void Init(String label, Name command, Name values, CVar graycheck, int center, int graycheckVal = 0)
+	protected void Init(
+		String label,
+		Name command,
+		Name values,
+		CVar graycheck,
+		int center,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, false, graycheck, graycheckVal);
+		Super.Init(label, command, false, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mValues = values;
 		mCenter = center;
 	}
@@ -363,9 +387,18 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 
 	private static native void SetCVarDescription(CVar cv, String label);
 
-	OptionMenuItemOption Init(String label, Name command, Name values, CVar graycheck = null, int center = 0, int graycheckVal = 0)
+	OptionMenuItemOption Init(
+		String label,
+		Name command,
+		Name values,
+		CVar graycheck = null,
+		int center = 0,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, values, graycheck, center, graycheckVal);
+		Super.Init(label, command, values, graycheck, center, graycheckVal, hiddencheck, hiddencheckVal);
 		mCVar = CVar.FindCVar(mAction);
 		if (mCVar) SetCVarDescription(mCVar, label);
 		return self;
@@ -747,9 +780,20 @@ class OptionMenuSliderBase : OptionMenuItem
 	int mDrawX;
 	int mSliderShort;
 
-	protected void Init(String label, double min, double max, double step, int showval, Name command = 'none', CVar graycheck = NULL, int graycheckVal = 0)
+	protected void Init(
+		String label,
+		double min,
+		double max,
+		double step,
+		int showval,
+		Name command = 'none',
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, false, graycheck, graycheckVal);
+		Super.Init(label, command, false, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mMin = min;
 		mMax = max;
 		mStep = step;
@@ -903,9 +947,20 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 {
 	CVar mCVar;
 
-	OptionMenuItemSlider Init(String label, Name command, double min, double max, double step, int showval = 1, CVar graycheck = NULL, int graycheckVal = 0)
+	OptionMenuItemSlider Init(
+		String label,
+		Name command,
+		double min,
+		double max,
+		double step,
+		int showval = 1,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, min, max, step, showval, command, graycheck, graycheckVal);
+		Super.Init(label, min, max, step, showval, command, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mCVar =CVar.FindCVar(command);
 		return self;
 	}
@@ -943,9 +998,16 @@ class OptionMenuItemColorPicker : OptionMenuItem
 
 	const CPF_RESET = 0x20001;
 
-	OptionMenuItemColorPicker Init(String label, Name command, CVar graycheck = null, int graycheckVal = 0)
+	OptionMenuItemColorPicker Init(
+		String label,
+		Name command,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, false, graycheck, graycheckVal);
+		Super.Init(label, command, false, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		CVar cv = CVar.FindCVar(command);
 		if (cv != null && cv.GetRealType() != CVar.CVAR_Color) cv = null;
 		mCVar = cv;
@@ -1022,9 +1084,16 @@ class OptionMenuFieldBase : OptionMenuItem
 {
 	CVar mCVar;
 
-	void Init (String label, Name command, CVar graycheck = null, int graycheckVal = 0)
+	void Init (
+		String label,
+		Name command,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, false, graycheck, graycheckVal);
+		Super.Init(label, command, false, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mCVar = CVar.FindCVar(mAction);
 	}
 
@@ -1085,9 +1154,16 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 {
 	TextEnterMenu mEnter;
 
-	OptionMenuItemTextField Init (String label, Name command, CVar graycheck = null, int graycheckVal = 0)
+	OptionMenuItemTextField Init (
+		String label,
+		Name command,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, graycheck, graycheckVal);
+		Super.Init(label, command, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mEnter = null;
 		return self;
 	}
@@ -1157,9 +1233,19 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 
 class OptionMenuItemNumberField : OptionMenuFieldBase
 {
-	OptionMenuItemNumberField Init (String label, Name command, float minimum = 0, float maximum = 100, float step = 1, CVar graycheck = null, int graycheckVal = 0)
+	OptionMenuItemNumberField Init (
+		String label,
+		Name command,
+		float minimum = 0,
+		float maximum = 100,
+		float step = 1,
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, graycheck, graycheckVal);
+		Super.Init(label, command, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mMinimum = min(minimum, maximum);
 		mMaximum = max(minimum, maximum);
 		mStep = max(1, step);
@@ -1217,9 +1303,21 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	String TextNegOne;
 	int mClickVal;
 
-	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "", CVar graycheck = null, int graycheckVal = 0)
+	OptionMenuItemScaleSlider Init(
+		String label,
+		Name command,
+		double min,
+		double max,
+		double step,
+		String zero,
+		String negone = "",
+		CVar graycheck = null,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, min, max, step, 0, graycheck, graycheckVal);
+		Super.Init(label, command, min, max, step, 0, graycheck, graycheckVal, hiddencheck, hiddencheckVal);
 		mCVar =CVar.FindCVar(command);
 		TextZero = zero;
 		TextNEgOne = negone;
@@ -1285,9 +1383,19 @@ class OptionMenuItemFlagOption : OptionMenuItemOption
 {
 	int mBitShift;
 
-	OptionMenuItemFlagOption Init(String label, Name command, Name values, int bitShift, CVar greycheck = null, int center = 0, int graycheckVal = 0)
+	OptionMenuItemFlagOption Init(
+		String label,
+		Name command,
+		Name values,
+		int bitShift,
+		CVar greycheck = null,
+		int center = 0,
+		int graycheckVal = 0,
+		CVar hiddencheck = null,
+		int hiddencheckVal = 0
+	)
 	{
-		Super.Init(label, command, values, greycheck, center, graycheckVal);
+		Super.Init(label, command, values, greycheck, center, graycheckVal, hiddencheck, hiddencheckVal);
 		mBitShift = bitShift;
 
 		return self;

@@ -565,18 +565,19 @@ void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value
 
 	axisval1 = value1 * (2.0 / 255) - 1.0;
 	axisval2 = value2 * (2.0 / 255) - 1.0;
-	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
-	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
-	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurve, axisval1);
-	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurve, axisval2);
+
+	Joy_ManageThumbstick(
+		&axisval1, &axisval2,
+		axis1->DeadZone, axis2->DeadZone,
+		axis1->DigitalThreshold, axis2->DigitalThreshold,
+		axis1->ResponseCurve, axis2->ResponseCurve,
+		&buttonstate
+	);
+
 	axis1->Value = float(axisval1);
 	axis2->Value = float(axisval2);
 
 	// We store all four buttons in the first axis and ignore the second.
-	buttonstate = Joy_XYAxesToButtons(
-		(abs(axisval1) < axis1->DigitalThreshold) ? 0 : axisval1,
-		(abs(axisval2) < axis2->DigitalThreshold) ? 0 : axisval2
-	);
 	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
 	axis1->ButtonValue = buttonstate;
 }

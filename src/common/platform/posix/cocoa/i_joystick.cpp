@@ -638,40 +638,80 @@ void IOKitJoystick::ProcessAxes()
 
 	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
 	{
-		AnalogAxis& axis = m_axes[i];
-		uint8_t buttonstate = 0;
-
 		static const double scaledMin = -1;
 		static const double scaledMax =  1;
 
-		IOHIDEventStruct event;
-
-		if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis.cookie, &event))
-		{
-			const double scaledValue = scaledMin +
-				(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
-			const double filteredValue = Joy_RemoveDeadZone(scaledValue, axis.deadZone, &buttonstate);
-			const double smoothedValue = Joy_ApplyResponseCurveBezier(axis.responseCurve, filteredValue);
-
-			axis.value = static_cast<float>(smoothedValue * m_sensitivity * axis.sensitivity);
-		}
-		else
-		{
-			axis.value = 0.0f;
-		}
-
 		if (i < NUM_JOYAXISBUTTONS && (i > 2 || m_axes.Size() == 1))
 		{
+			AnalogAxis& axis = m_axes[i];
+			uint8_t buttonstate = 0;
+
+			IOHIDEventStruct event;
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis.cookie, &event))
+			{
+				const double scaledValue = scaledMin +
+					(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
+
+				const double filteredValue = Joy_ManageSingleAxis(
+					scaledValue,
+					axis.deadZone,
+					axis.digitalThreshold,
+					axis.responseCurve,
+					&buttonstate
+				);
+
+				axis.value = static_cast<float>(filteredValue * m_sensitivity * axis.sensitivity);
+			}
+			else
+			{
+				axis.value = 0.0f;
+			}
+
 			Joy_GenerateButtonEvents(axis.buttonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+			axis.buttonValue = buttonstate;
 		}
 		else if (i == 1)
 		{
 			// Since we sorted the axes, we know that the first two are definitely X and Y.
-			// They are probably a single stick, so use angular position to determine buttons.
-			buttonstate = Joy_XYAxesToButtons(m_axes[0].value, axis.value);
-			Joy_GenerateButtonEvents(axis.buttonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
+			// They are probably a single stick, so treat them as one.
+
+			AnalogAxis& axis_x = m_axes[i - 1];
+			AnalogAxis& axis_y = m_axes[i];
+
+			uint8_t buttonstate = 0;
+			double axisval_x = 0.0f;
+			double axisval_y = 0.0f;
+
+			IOHIDEventStruct event;
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis_x.cookie, &event))
+			{
+				axisval_x = scaledMin +
+					(event.value - axis_x.minValue) * (scaledMax - scaledMin) / (axis_x.maxValue - axis_x.minValue);
+			}
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis_y.cookie, &event))
+			{
+				axisval_y = scaledMin +
+					(event.value - axis_y.minValue) * (scaledMax - scaledMin) / (axis_y.maxValue - axis_y.minValue);
+			}
+
+			Joy_ManageThumbstick(
+				&axisval_x, &axisval_y,
+				axis_x.deadZone, axis_y.deadZone,
+				axis_x.digitalThreshold, axis_y.digitalThreshold,
+				axis_x.responseCurve, axis_y.responseCurve,
+				&buttonstate
+			);
+
+			axis_x.value = static_cast<float>(axisval_x * m_sensitivity * axis_x.sensitivity);
+			axis_y.value = static_cast<float>(axisval_y * m_sensitivity * axis_y.sensitivity);
+
+			// We store all four buttons in the first axis and ignore the second.
+			Joy_GenerateButtonEvents(axis_x.buttonValue, buttonstate, 4, KEY_JOYAXIS1PLUS + (i-1)*2);
+			axis_x.buttonValue = buttonstate;
 		}
-		axis.buttonValue = buttonstate;
 	}
 }
 
@@ -698,10 +738,16 @@ bool IOKitJoystick::ProcessAxis(const IOHIDEventStruct& event)
 
 		const double scaledValue = scaledMin +
 			(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
-		const double filteredValue = Joy_RemoveDeadZone(scaledValue, axis.deadZone, &buttonstate);
-		const double smoothedValue = Joy_ApplyResponseCurveBezier(axis.responseCurve, filteredValue);
 
-		axis.value = static_cast<float>(smoothedValue * m_sensitivity * axis.sensitivity);
+		const double filteredValue = Joy_ManageSingleAxis(
+			scaledValue,
+			axis.deadZone,
+			axis.digitalThreshold,
+			axis.responseCurve,
+			&buttonstate
+		);
+
+		axis.value = static_cast<float>(filteredValue * m_sensitivity * axis.sensitivity);
 
 		if (i < NUM_JOYAXISBUTTONS)
 		{

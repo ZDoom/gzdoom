@@ -88,9 +88,13 @@ void M_SaveJoystickConfig(IJoystickConfig *joy);
 void Joy_GenerateButtonEvent(bool down, EKeyCodes which);
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, int base);
 void Joy_GenerateButtonEvents(int oldbuttons, int newbuttons, int numbuttons, const int *keys);
-int Joy_XYAxesToButtons(double x, double y);
-double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons);
+
 double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input);
+double Joy_ManageSingleAxis(double axisval, double deadzone, double threshold, const CubicBezier &curve, uint8_t *buttons);
+int Joy_XYAxesToButtons(double x, double y);
+double Joy_ManageThumbstick(double *axis_x, double *axis_y, double deadzone_x, double deadzone_y,
+	double threshold_x, double threshold_y, const CubicBezier &curve_x, const CubicBezier &curve_y, uint8_t *buttons);
+
 
 // These ought to be provided by a system-specific i_input.cpp.
 void I_GetAxes(float axes[NUM_AXIS_CODES]);

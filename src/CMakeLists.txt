@@ -1464,6 +1464,13 @@ if( UNIX AND NOT APPLE )
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.svg
 			DESTINATION share/icons/hicolor/scalable/apps
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom-mime.xml
+			DESTINATION share/mime/packages
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	# note:
+	# A post-install script would most likely need to run the following to register the desktop and mime files with the system
+	# update-mime-database /usr/local/share/mime
+	# update-desktop-database
 endif()
 
 if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

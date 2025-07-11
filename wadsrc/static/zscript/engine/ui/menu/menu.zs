@@ -352,8 +352,12 @@ class Menu : Object native ui version("2.4")
 	//
 	//=============================================================================
 
-	static void MenuSound(Name snd)
+	static void MenuSound(Name snd, bool rumble = true)
 	{
+		if (rumble)
+		{
+			Haptics.Rumble(snd);
+		}
 		menuDelegate.PlaySound(snd);
 	}
 

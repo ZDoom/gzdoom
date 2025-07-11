@@ -365,6 +365,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
 	Submenu "$OPTMNU_HUD",				"HUDOptions"
+	Submenu "$OPTMNU_HAPTICS",			"HapticsOptions"
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
@@ -818,6 +819,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
 	Option "$JOYMNU_NOMENU", "m_blockcontrollers", "YesNo"
+	ScaleSlider "$JOYMNU_HAPTICS", "haptics_strength", 0, 10, 1, "$OPTVAL_OFF" // todo: visibility
 	IfOption(Windows)
 	{
 		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"
@@ -1235,6 +1237,34 @@ OptionMenu "AltHUDOptions" protected
 	option "$ALTHUDMNU_COORDINATEMODE",			"map_point_coordinates", "AMCoordinates"
 	option "$ALTHUDMNU_STATSNAMECOLOR",			"hudcolor_statnames", "TextColors"
 	option "$ALTHUDMNU_STATSCOLOR",				"hudcolor_stats", "TextColors"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Haptics menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue HapticsCompatTypes
+{
+	0.0, "$TXT_NONE"
+	1.0, "$OPTVAL_PLAYER"
+	2.0, "$OPTVAL_ALL"
+}
+
+OptionMenu "HapticsOptions" protected
+{
+	Title		"$HAPMNU_TITLE"
+
+	ScaleSlider	"$JOYMNU_HAPTICS",			"haptics_strength",		0, 10, 1, "$OPTVAL_OFF"
+	Option 		"$HAPMNU_COMPAT",			"haptics_compat",		"HapticsCompatTypes"
+	StaticText	""
+	StaticText	"$HAPMNU_OPTIONS"
+	Option		"$HAPMNU_OPT_DAMAGE",		"haptics_damage",		"OnOff"
+	Option		"$HAPMNU_OPT_PLAYER",		"haptics_player",		"OnOff"
+	Option		"$HAPMNU_OPT_ENVIRONMENT",	"haptics_environment",	"OnOff"
+	Option		"$HAPMNU_OPT_MENU",			"haptics_menu",			"OnOff"
+	Option		"$HAPMNU_OPT_CONVERATION",	"haptics_conversation",	"OnOff"
 }
 
 //-------------------------------------------------------------------------------------------

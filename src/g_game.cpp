@@ -316,7 +316,7 @@ CCMD (slot)
 		if (slot < NUM_WEAPON_SLOTS && mo)
 		{
 			// Needs to be redone
-			IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickWeapon)
+			IFVM(PlayerPawn, FindWeapon)
 			{
 				SendItemUse = CallVM<AActor *>(func, mo, slot, (int)!(dmflags2 & DF2_DONTCHECKAMMO));
 			}
@@ -380,7 +380,7 @@ CCMD (weapnext)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickNextWeapon)
+		IFVM(PlayerPawn, FindNextWeapon)
 		{
 			SendItemUse = CallVM<AActor *>(func, mo);
 		}
@@ -405,7 +405,7 @@ CCMD (weapprev)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickPrevWeapon)
+		IFVM(PlayerPawn, FindPrevWeapon)
 		{
 			SendItemUse = CallVM<AActor *>(func, mo);
 		}

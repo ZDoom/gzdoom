@@ -65,6 +65,7 @@ struct StrifeDialogueReply native version("2.4")
 	native int NextNode;	// index into StrifeDialogues
 	native int LogNumber;
 	native bool NeedsGold;
+	native bool CloseDialog;
 	
 	native bool ShouldSkipReply(PlayerInfo player);
 }

@@ -560,6 +560,18 @@ class OptionMenu : Menu
 			MenuScrollViewport(MaxItems, true);
 			break;
 
+		case MKEY_Home:
+			MenuScrollViewport(-mDesc.mItems.Size(), true);
+			mDesc.mSelectedItem = -1;
+			MenuMoveCursor(1);
+			break;
+
+		case MKEY_End:
+			MenuScrollViewport(mDesc.mItems.Size(), true);
+			mDesc.mSelectedItem = -1;
+			MenuMoveCursor(-1);
+			break;
+
 		case MKEY_Enter:
 			if (mDesc.mSelectedItem >= 0 && mDesc.mItems[mDesc.mSelectedItem].Activate())
 			{

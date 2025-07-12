@@ -318,15 +318,16 @@ void HWWall::SkyTop(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t * b
 		float frontreflect = fs->GetReflect(sector_t::ceiling);
 		if (frontreflect > 0)
 		{
-			float backreflect = bs->GetReflect(sector_t::ceiling);
-			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD() && !bs->isClosed())
-			{
-				// Don't add intra-portal line to the portal.
-				if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
-				{
-					return;
-				}
-			}
+			// [DVR] Changed the stencil for planemirrors, so now I need intra-portal lines
+			// float backreflect = bs->GetReflect(sector_t::ceiling);
+			// if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD() && !bs->isClosed())
+			// {
+			// 	Don't add intra-portal line to the portal.
+			// 	if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
+			// 	{
+			// 		return;
+			// 	}
+			// }
 		}
 		else
 		{
@@ -400,15 +401,16 @@ void HWWall::SkyBottom(HWWallDispatcher *di, seg_t * seg,sector_t * fs,sector_t 
 		float frontreflect = fs->GetReflect(sector_t::floor);
 		if (frontreflect > 0)
 		{
-			float backreflect = bs->GetReflect(sector_t::floor);
-			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD() && !bs->isClosed())
-			{
-				// Don't add intra-portal line to the portal.
-				if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
-				{
-					return;
-				}
-			}
+			// [DVR] Changed the stencil for planemirrors, so now I need intra-portal lines
+			// float backreflect = bs->GetReflect(sector_t::floor);
+			// if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD() && !bs->isClosed())
+			// {
+			// 	// Don't add intra-portal line to the portal.
+			// 	if (!(di->di && di->di->Viewpoint.IsAllowedOoB()))
+			// 	{
+			// 		return;
+			// 	}
+			// }
 		}
 		else
 		{

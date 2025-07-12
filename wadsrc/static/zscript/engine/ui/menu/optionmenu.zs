@@ -225,12 +225,18 @@ class OptionMenu : Menu
 	{
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
-			MenuScrollViewport(-2, true);
+			if (MenuScrollViewport(-2, true))
+			{
+				MenuSound ("menu/cursor");
+			}
 			return true;
 		}
 		else if (ev.type == UIEvent.Type_WheelDown)
 		{
-			MenuScrollViewport(2, true);
+			if (MenuScrollViewport(2, true))
+			{
+				MenuSound ("menu/cursor");
+			}
 			return true;
 		}
 		else if (ev.type == UIEvent.Type_Char)

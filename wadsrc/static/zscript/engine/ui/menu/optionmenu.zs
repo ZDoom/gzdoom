@@ -97,6 +97,8 @@ class OptionMenu : Menu
 	bool CanScrollUp;
 	bool CanScrollDown;
 	int VisBottom;
+	int LastRow;
+	int MaxItems;
 	OptionMenuItem mFocusControl;
 
 	//=============================================================================
@@ -223,18 +225,12 @@ class OptionMenu : Menu
 	{
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
-			if (MenuMoveCursor(-2) != 0)
-			{
-				MenuSound ("menu/cursor");
-			}
+			MenuScrollViewport(-2, true);
 			return true;
 		}
 		else if (ev.type == UIEvent.Type_WheelDown)
 		{
-			if (MenuMoveCursor(2) != 0)
-			{
-				MenuSound ("menu/cursor");
-			}
+			MenuScrollViewport(2, true);
 			return true;
 		}
 		else if (ev.type == UIEvent.Type_Char)
@@ -274,16 +270,14 @@ class OptionMenu : Menu
 
 	int MenuMoveCursor(int items)
 	{
-		// trivial case
-		if (items == 0)
+		if (items == 0) // trivial case
 		{
 			return 0;
 		}
 
 		int startedAt = mDesc.mSelectedItem;
 
-		// trivial case
-		if (startedAt == -1)
+		if (startedAt == -1) // trivial case
 		{
 			if (items < 0)
 			{
@@ -297,27 +291,24 @@ class OptionMenu : Menu
 			return mDesc.mSelectedItem - startedAt;
 		}
 
-		if (items < -1)
+		if (items < -1) // extended case up
 		{
-			// extended case up
 			do
 			{
 				MenuMoveCursor(-1);
 				items++;
 			} while (startedAt > mDesc.mSelectedItem && items < 0)
 		}
-		else if (items > 1)
+		else if (items > 1) // extended case down
 		{
-			// extended case down
 			do
 			{
 				MenuMoveCursor(1);
 				items--;
 			} while (startedAt <= mDesc.mSelectedItem && items > 0)
 		}
-		else if (items == -1)
+		else if (items == -1) // base case up
 		{
-			// base case up
 			do
 			{
 				mDesc.mSelectedItem--;
@@ -341,15 +332,12 @@ class OptionMenu : Menu
 				{
 					int y = mDesc.mPosition;
 					if (y <= 0) y = DrawCaption(mDesc.mTitle, -y, false);
-					int lastrow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
-					int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
-
-					int maxitems = (lastrow - y) / rowheight + 1;
-					if (maxitems < RemainingVisibleItems(0))
+					int maxItemsInternal = MaxItems;
+					if (maxItemsInternal < RemainingVisibleItems(0))
 					{
-						maxItems -= 2;
+						maxItemsInternal -= 2;
 					}
-					if (maxitems <= 0) maxitems = 1;
+					if (maxItemsInternal <= 0) maxItemsInternal = 1;
 
 					int newTopIndex = 0;
 					int visibleItemsOnPage = 0;
@@ -358,7 +346,7 @@ class OptionMenu : Menu
 						if (mDesc.mItems[i].Visible())
 						{
 							visibleItemsOnPage++;
-							if (visibleItemsOnPage >= maxitems)
+							if (visibleItemsOnPage >= maxItemsInternal)
 							{
 								newTopIndex = i;
 								break;
@@ -397,9 +385,8 @@ class OptionMenu : Menu
 				}
 			}
 		}
-		else if (items == 1)
+		else if (items == 1) // base case down
 		{
-			// base case down
 			do
 			{
 				mDesc.mSelectedItem++;
@@ -448,6 +435,99 @@ class OptionMenu : Menu
 
 	//=============================================================================
 	//
+	// Moves the viewport by the specified number of lines
+	// Keeps cursor in view if cursor is true
+	// Does not wrap
+	// Returns number of lines moved
+	//
+	//=============================================================================
+
+	int MenuScrollViewport(int lines, bool cursor)
+	{
+		if (lines == 0) // trivial case
+		{
+			return 0;
+		}
+
+		int startedAtScroll = mDesc.mScrollPos;
+		int startedAt = mDesc.mSelectedItem;
+
+		if (lines > 0 && !CanScrollDown) // trivial case
+		{
+			return 0;
+		}
+
+		if (lines < 0 && startedAtScroll <= 0) // trivial case
+		{
+			return 0;
+		}
+
+		if (lines < 0) // base case up
+		{
+			mDesc.mScrollPos += lines;
+
+			// backtrack if we overshot
+			if (mDesc.mScrollPos < 0)
+			{
+				mDesc.mScrollPos = 0;
+			}
+
+			// ensure cursor is visible (if possible)
+			int lastItem = LastVisibleItem();
+			int lastSelectable = -1;
+			int visible = 0;
+			for (int i = mDesc.mScrollPos; visible <= MaxItems && i < lastItem; i++)
+			{
+				if (!mDesc.mItems[i].Visible()) continue;
+				visible++;
+				if (!mDesc.mItems[i].Selectable()) continue;
+				lastSelectable = i;
+			}
+			if (lastSelectable != -1 && mDesc.mSelectedItem > lastSelectable)
+			{
+				mDesc.mSelectedItem = lastSelectable;
+			}
+		}
+		else if (lines > 0) // base case down
+		{
+			mDesc.mScrollPos += lines;
+
+			// backtrack if we overshot
+			int visible = RemainingVisibleItems(mDesc.mScrollPos);
+			if (visible < MaxItems)
+			{
+				mDesc.mScrollPos = MAX(0, LastVisibleItem() - MaxItems);
+				visible = RemainingVisibleItems(mDesc.mScrollPos);
+				while (visible < MaxItems && mDesc.mScrollPos > 0)
+				{
+					if (mDesc.mItems[mDesc.mScrollPos].Visible())
+					{
+						visible++;
+					}
+					mDesc.mScrollPos--;
+				}
+			}
+
+			// ensure cursor is visible (if possible)
+			if (cursor && mDesc.mSelectedItem < mDesc.mScrollPos + mDesc.mScrollTop)
+			{
+				int temp = mDesc.mScrollPos + mDesc.mScrollTop;
+				for (int i = 0, v = 0; v < visible; i++)
+				{
+					if (!mDesc.mItems[temp + i].Visible()) continue;
+					v++;
+					if (!mDesc.mItems[temp + i].Selectable()) continue;
+					mDesc.mSelectedItem = temp + i;
+					break;
+				}
+			}
+		}
+
+		return mDesc.mSelectedItem - startedAt;
+	}
+
+	//=============================================================================
+	//
 	//
 	//
 	//=============================================================================
@@ -467,58 +547,11 @@ class OptionMenu : Menu
 			break;
 
 		case MKEY_PageUp:
-			if (mDesc.mScrollPos > 0)
-			{
-				mDesc.mScrollPos -= VisBottom - mDesc.mScrollPos - mDesc.mScrollTop;
-				if (mDesc.mScrollPos < 0)
-				{
-					mDesc.mScrollPos = 0;
-				}
-				if (mDesc.mSelectedItem != -1)
-				{
-					mDesc.mSelectedItem = mDesc.mScrollTop + mDesc.mScrollPos + 1;
-					while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()))
-					{
-						if (++mDesc.mSelectedItem >= RemainingVisibleItems(0))
-						{
-							mDesc.mSelectedItem = 0;
-						}
-					}
-					if (mDesc.mScrollPos > mDesc.mSelectedItem)
-					{
-						mDesc.mScrollPos = mDesc.mSelectedItem;
-					}
-				}
-			}
+			MenuScrollViewport(-MaxItems, true);
 			break;
 
 		case MKEY_PageDown:
-			if (CanScrollDown)
-			{
-				int pagesize = VisBottom - mDesc.mScrollPos - mDesc.mScrollTop;
-				if (pagesize > 0) mDesc.mScrollPos += pagesize;
-				else mDesc.mScrollPos++;
-
-				if (mDesc.mScrollPos + mDesc.mScrollTop + pagesize > mDesc.mItems.Size())
-				{
-					mDesc.mScrollPos = mDesc.mItems.Size() - mDesc.mScrollTop - pagesize;
-				}
-				if (mDesc.mSelectedItem != -1)
-				{
-					mDesc.mSelectedItem = mDesc.mScrollTop + mDesc.mScrollPos;
-					while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()))
-					{
-						if (++mDesc.mSelectedItem >= mDesc.mItems.Size())
-						{
-							mDesc.mSelectedItem = 0;
-						}
-					}
-					if (mDesc.mScrollPos > mDesc.mSelectedItem)
-					{
-						mDesc.mScrollPos = mDesc.mSelectedItem;
-					}
-				}
-			}
+			MenuScrollViewport(MaxItems, true);
 			break;
 
 		case MKEY_Enter:
@@ -526,7 +559,10 @@ class OptionMenu : Menu
 			{
 				return true;
 			}
-			// fall through to default
+			else
+			{
+				// fall through to default
+			}
 		default:
 			if (mDesc.mSelectedItem >= 0 &&
 				mDesc.mItems[mDesc.mSelectedItem].MenuEvent(mkey, fromcontroller)) return true;
@@ -667,11 +703,13 @@ class OptionMenu : Menu
 		int indent = GetIndent();
 
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
-		int lastrow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
+		LastRow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
+		int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
+		MaxItems = (LastRow - y) / rowheight + 1;
 
 		int i;
 		int lastDrawnItemIndex = -1;
-		for (i = 0; i < mDesc.mItems.Size() && y <= lastrow; i++)
+		for (i = 0; i < mDesc.mItems.Size() && y <= LastRow; i++)
 		{
 			// Don't scroll the uppermost items
 			if (i == mDesc.mScrollTop)

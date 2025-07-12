@@ -122,6 +122,8 @@ class Menu : Object native ui version("2.4")
 		MKEY_Right,
 		MKEY_PageUp,
 		MKEY_PageDown,
+		MKEY_Home,
+		MKEY_End,
 		MKEY_Enter,
 		MKEY_Back,
 		MKEY_Clear,

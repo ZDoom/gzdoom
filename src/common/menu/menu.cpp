@@ -668,6 +668,9 @@ bool M_Responder (event_t *ev)
 				case GK_BACKSPACE:		mkey = MKEY_Clear;		break;
 				case GK_PGUP:			mkey = MKEY_PageUp;		break;
 				case GK_PGDN:			mkey = MKEY_PageDown;	break;
+				case GK_HOME:			mkey = MKEY_Home;		break;
+				case GK_END:			mkey = MKEY_End;		break;
+
 				default:
 					if (!keyup)
 					{

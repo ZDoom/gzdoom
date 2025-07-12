@@ -761,3 +761,4 @@ DEFINE_FIELD(FStrifeDialogueReply, LogString);
 DEFINE_FIELD(FStrifeDialogueReply, NextNode);
 DEFINE_FIELD(FStrifeDialogueReply, LogNumber);
 DEFINE_FIELD(FStrifeDialogueReply, NeedsGold);
+DEFINE_FIELD(FStrifeDialogueReply, CloseDialog);

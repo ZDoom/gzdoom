@@ -1102,6 +1102,7 @@ set (PCH_SOURCES
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
 	common/engine/i_net.cpp
+	common/engine/i_protocol.cpp
 	common/engine/i_interface.cpp
 	common/engine/renderstyle.cpp
 	common/engine/v_colortables.cpp

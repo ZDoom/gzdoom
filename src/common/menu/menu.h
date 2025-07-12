@@ -28,6 +28,8 @@ enum EMenuKey
 	MKEY_Right,
 	MKEY_PageUp,
 	MKEY_PageDown,
+	MKEY_Home,
+	MKEY_End,
 	//----------------- Keys past here do not repeat.
 	MKEY_Enter,
 	MKEY_Back,		// Back to previous menu

@@ -223,11 +223,19 @@ class OptionMenu : Menu
 	{
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
-			return MenuEvent(MKEY_Up, false);
+			if (MenuMoveCursor(-2) != 0)
+			{
+				MenuSound ("menu/cursor");
+			}
+			return true;
 		}
 		else if (ev.type == UIEvent.Type_WheelDown)
 		{
-			return MenuEvent(MKEY_Down, false);
+			if (MenuMoveCursor(2) != 0)
+			{
+				MenuSound ("menu/cursor");
+			}
+			return true;
 		}
 		else if (ev.type == UIEvent.Type_Char)
 		{
@@ -258,24 +266,58 @@ class OptionMenu : Menu
 
 	//=============================================================================
 	//
-	//
+	// Moves the cursor by the specified number of selectable items.
+	// Stops immediately after wrapping
+	// Returns number of lines moved
 	//
 	//=============================================================================
 
-	override bool MenuEvent (int mkey, bool fromcontroller)
+	int MenuMoveCursor(int items)
 	{
+		// trivial case
+		if (items == 0)
+		{
+			return 0;
+		}
+
 		int startedAt = mDesc.mSelectedItem;
 
-		switch (mkey)
+		// trivial case
+		if (startedAt == -1)
 		{
-		case MKEY_Up:
-		{
-			if (mDesc.mSelectedItem == -1)
+			if (items < 0)
 			{
 				mDesc.mSelectedItem = LastVisibleItem();
-				break;
+			}
+			else
+			{
+				mDesc.mSelectedItem = FirstSelectable();
 			}
 
+			return mDesc.mSelectedItem - startedAt;
+		}
+
+		if (items < -1)
+		{
+			// extended case up
+			do
+			{
+				MenuMoveCursor(-1);
+				items++;
+			} while (startedAt > mDesc.mSelectedItem && items < 0)
+		}
+		else if (items > 1)
+		{
+			// extended case down
+			do
+			{
+				MenuMoveCursor(1);
+				items--;
+			} while (startedAt <= mDesc.mSelectedItem && items > 0)
+		}
+		else if (items == -1)
+		{
+			// base case up
 			do
 			{
 				mDesc.mSelectedItem--;
@@ -284,7 +326,11 @@ class OptionMenu : Menu
 					mDesc.mSelectedItem = mDesc.mItems.Size() - 1;
 				}
 			}
-			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != startedAt);
+			while (
+				!(mDesc.mItems[mDesc.mSelectedItem].Selectable()
+					&& mDesc.mItems[mDesc.mSelectedItem].Visible())
+				&& mDesc.mSelectedItem != startedAt
+			);
 
 			if (mDesc.mSelectedItem != startedAt)
 			{
@@ -339,7 +385,10 @@ class OptionMenu : Menu
 					while (visibleLinesToScroll < visibleLinesJumped && newScrollPos > 0)
 					{
 						newScrollPos--;
-						if ((newScrollPos + mDesc.mScrollTop) >= 0 && mDesc.mItems[newScrollPos + mDesc.mScrollTop].Visible())
+						if (
+							(newScrollPos + mDesc.mScrollTop) >= 0
+							&& mDesc.mItems[newScrollPos + mDesc.mScrollTop].Visible()
+						)
 						{
 							visibleLinesToScroll++;
 						}
@@ -347,24 +396,21 @@ class OptionMenu : Menu
 					mDesc.mScrollPos = newScrollPos;
 				}
 			}
-			break;
 		}
-
-		case MKEY_Down:
+		else if (items == 1)
 		{
-			if (mDesc.mSelectedItem == -1)
-			{
-				mDesc.mSelectedItem = FirstSelectable();
-				break;
-			}
-
+			// base case down
 			do
 			{
 				mDesc.mSelectedItem++;
 				if (mDesc.mSelectedItem >= mDesc.mItems.Size())
 					mDesc.mSelectedItem = 0;
 			}
-			while (!(mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mItems[mDesc.mSelectedItem].Visible()) && mDesc.mSelectedItem != startedAt);
+			while (
+				!(mDesc.mItems[mDesc.mSelectedItem].Selectable()
+					&& mDesc.mItems[mDesc.mSelectedItem].Visible())
+				&& mDesc.mSelectedItem != startedAt
+			);
 
 			if (mDesc.mSelectedItem != startedAt)
 			{
@@ -395,8 +441,30 @@ class OptionMenu : Menu
 					mDesc.mScrollPos = newScrollPos;
 				}
 			}
-			break;
 		}
+
+		return mDesc.mSelectedItem - startedAt;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent (int mkey, bool fromcontroller)
+	{
+		int startedAt = mDesc.mSelectedItem;
+
+		switch (mkey)
+		{
+		case MKEY_Up:
+			MenuMoveCursor(-1);
+			break;
+
+		case MKEY_Down:
+			MenuMoveCursor(1);
+			break;
 
 		case MKEY_PageUp:
 			if (mDesc.mScrollPos > 0)

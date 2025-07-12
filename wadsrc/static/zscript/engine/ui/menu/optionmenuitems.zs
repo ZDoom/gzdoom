@@ -440,6 +440,7 @@ class EnterKey : Menu
 		mOwner = owner;
 		SetMenuMessage(1);
 		menuactive = Menu.WaitKey;	// There should be a better way to disable GUI capture...
+		NoFade = true;
 	}
 
 	override bool TranslateKeyboardEvents()

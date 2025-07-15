@@ -105,6 +105,8 @@ OptionMenu MiscOptionsSimple protected
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",	"enablescriptscreenshot", "OnOff"
 	Option "$OPTMNU_LANGUAGE",					"language", "LanguageOptions"
 	Option "$MSGMNU_LONGSAVEMESSAGES",			"longsavemessages",	"OnOff"
+	StaticText " "
+	Option "$MISCMNU_DISCORDRPC",				"i_discordrpc",	"OnOff"
 }
 
 OptionMenu "MouseOptionsSimple" protected

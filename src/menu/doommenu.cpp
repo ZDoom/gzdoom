@@ -32,42 +32,31 @@
 **
 */
 
-#include "c_dispatch.h"
-#include "d_gui.h"
-#include "c_buttons.h"
-#include "c_console.h"
 #include "c_bind.h"
-#include "d_eventbase.h"
-#include "g_input.h"
-#include "configfile.h"
+#include "c_dispatch.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "d_player.h"
+#include "doommenu.h"
+#include "g_game.h"
+#include "g_level.h"
+#include "gameconfigfile.h"
+#include "gamestate.h"
+#include "gi.h"
 #include "gstrings.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "i_interface.h"
+#include "i_time.h"
 #include "menu.h"
-#include "vm.h"
-#include "v_video.h"
-#include "i_system.h"
-#include "types.h"
+#include "p_tick.h"
+#include "r_utility.h"
+#include "s_music.h"
+#include "shiftstate.h"
+#include "startscreen.h"
+#include "teaminfo.h"
 #include "texturemanager.h"
 #include "v_draw.h"
 #include "vm.h"
-#include "gamestate.h"
-#include "i_interface.h" 
-#include "gi.h"
-#include "g_game.h"
-#include "g_level.h"
-#include "d_event.h"
-#include "p_tick.h"
-#include "startscreen.h"
-#include "d_main.h"
-#include "i_system.h"
-#include "doommenu.h"
-#include "r_utility.h"
-#include "gameconfigfile.h"
-#include "d_player.h"
-#include "teaminfo.h"
-#include "i_time.h"
-#include "shiftstate.h"
-#include "s_music.h"
-#include "hwrenderer/scene/hw_drawinfo.h"
 
 EXTERN_CVAR(Int, cl_gfxlocalization)
 EXTERN_CVAR(Bool, m_quickexit)
@@ -76,7 +65,8 @@ EXTERN_CVAR(Bool, quicksaverotation)
 EXTERN_CVAR(Bool, show_messages)
 EXTERN_CVAR(Float, hud_scalefactor)
 
-CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Bool, m_simpleoptions_view, true, 0);
 
 typedef void(*hfunc)();
 DMenu* CreateMessageBoxMenu(DMenu* parent, const char* message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr);
@@ -269,10 +259,17 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		break;
 
 	case NAME_OptionsMenu:
+		if (m_simpleoptions_view != m_simpleoptions)
+			m_simpleoptions_view->SetGenericRep(m_simpleoptions->ToInt(), CVAR_Bool);
 		if (m_simpleoptions) menu = NAME_OptionsMenuSimple;
 		break;
 
+	case NAME_OptionsMenuSimple:
+		if (!m_simpleoptions_view) m_simpleoptions_view->SetGenericRep(true, CVAR_Bool);
+		break;
+
 	case NAME_OptionsMenuFull:
+		if (m_simpleoptions_view) m_simpleoptions_view->SetGenericRep(false, CVAR_Bool);
 		menu = NAME_OptionsMenu;
 		break;
 

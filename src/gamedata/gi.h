@@ -151,6 +151,7 @@ struct gameinfo_t
 	FName BasicArmorClass;
 	FName HexenArmorClass;
 	FString PauseSign;
+	bool UsePauseString;
 	FString Endoom;
 	double Armor2Percent;
 	FString quitSound;

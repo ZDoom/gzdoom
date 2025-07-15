@@ -316,7 +316,8 @@ enum EFxType
 	EFX_LocalArrayDeclaration,
 	EFX_OutVarDereference,
 	EFX_ToVector,
-	EFX_COUNT
+	EFX_COUNT,
+	EFX_FStateOffset,
 };
 
 //==========================================================================
@@ -2388,7 +2389,7 @@ public:
 struct CompileEnvironment
 {
 	FxExpression* (*SpecialTypeCast)(FxTypeCast* func, FCompileContext& ctx);
-	bool (*CheckForCustomAddition)(FxAddSub* func, FCompileContext& ctx);
+	FxExpression* (*CheckForCustomAddition)(FxAddSub* func, FCompileContext& ctx);
 	FxExpression* (*CheckSpecialIdentifier)(FxIdentifier* func, FCompileContext& ctx);
 	FxExpression* (*CheckSpecialGlobalIdentifier)(FxIdentifier* func, FCompileContext& ctx);
 	FxExpression* (*ResolveSpecialIdentifier)(FxIdentifier* func, FxExpression*& object, PContainerType* objtype, FCompileContext& ctx);

@@ -3326,11 +3326,11 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 
 	if (compileEnvironment.CheckForCustomAddition)
 	{
-		auto result = compileEnvironment.CheckForCustomAddition(this, ctx);
-		if (result)
+		auto expr = compileEnvironment.CheckForCustomAddition(this, ctx);
+		if (expr)
 		{
-			ABORT(right);
-			goto goon;
+			delete this;
+			return expr->Resolve(ctx);
 		}
 	}
 

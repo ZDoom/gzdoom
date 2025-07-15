@@ -170,6 +170,7 @@ extend class Object
 	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
 	private native static TranslationID BuiltinFindTranslation(Name nm);
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
+	private native static State BuiltinStateOffset(State st, int offset);
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);

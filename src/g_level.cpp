@@ -1666,7 +1666,6 @@ void FLevelLocals::StartTravel()
 
 		while ((th = it.Next()) != nullptr)
 		{
-			// Already processed this Thinker.
 			if (th->ObjectFlags & OF_Travelling)
 				continue;
 
@@ -1679,7 +1678,7 @@ void FLevelLocals::StartTravel()
 					// No voodoo dolls allowed.
 					if (mo->player->mo != mo)
 					{
-						mo->ChangeStatNum(STAT_PLAYER);
+						mo->ChangeStatNum(mo->GetStatNum());
 						continue;
 					}
 
@@ -1758,32 +1757,17 @@ int FLevelLocals::FinishTravel()
 		toCallBack.Push(th);
 		
 		th->ObjectFlags &= ~OF_Travelling;
+		th->ChangeStatNum(th->GetStatNum());
+
 		auto mo = dyn_cast<AActor>(th);
 		if (mo == nullptr)
-		{
-			if (th->IsKindOf(NAME_Bot))
-				th->ChangeStatNum(STAT_BOT);
-			else
-				th->ChangeStatNum(STAT_DEFAULT);
-
 			continue;
-		}
-		
-		// Check the actual pawn type here since its player field isn't guaranteed
-		// to be set e.g. unmorphed Actors.
-		const bool player = mo->IsKindOf(NAME_PlayerPawn);
-		if (player)
-			mo->ChangeStatNum(STAT_PLAYER);
-		else if (mo->IsKindOf(NAME_Inventory) && mo->PointerVar<AActor>(NAME_Owner) != nullptr)
-			mo->ChangeStatNum(STAT_INVENTORY);
-		else
-			mo->ChangeStatNum(STAT_DEFAULT);
 
 		mo->flags2 &= ~MF2_BLASTED;
 		mo->ClearFOVInterpolation();
 		LinkActorToLevel(*mo);
 
-		if (!player || mo->player == nullptr)
+		if (mo->player == nullptr || !mo->IsKindOf(NAME_PlayerPawn))
 		{
 			// Do some basic relinking. Modders will figure out what to do with it
 			// in the callback.
@@ -1806,16 +1790,16 @@ int FLevelLocals::FinishTravel()
 		const int pNum = PlayerNum(mo->player);
 		// This will be whatever previous pawn was in the level for this player, be it from a snapshot
 		// or a map spawn.
-		auto doll = mo->player->mo;
-		assert(mo != doll);
+		auto mapDoll = mo->player->mo;
+		assert(mo != mapDoll);
 
 		auto start = PickPlayerStart(pNum, 0);
 		if (start == nullptr)
 		{
-			if (doll != nullptr)
+			if (mapDoll != nullptr)
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to\n", pNum + 1);
-				mo->SetOrigin(doll->Pos(), true);
+				mo->SetOrigin(mapDoll->Pos(), true);
 			}
 			else if (failNum <= 0)
 			{
@@ -1824,12 +1808,10 @@ int FLevelLocals::FinishTravel()
 			}
 		}
 
-		auto mapDoll = doll;
-
 		// Find the actual spawn location taking hub entrances into account. This player
 		// is only meant to be short-lived so don't fire off any events unless there truly
 		// was no other player spawned beforehand (can happen in co-op).
-		doll = SpawnPlayer(start, pNum, SPF_TEMPPLAYER);
+		auto doll = SpawnPlayer(start, pNum, SPF_TEMPPLAYER);
 		if (doll != nullptr)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))

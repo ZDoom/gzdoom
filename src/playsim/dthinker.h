@@ -113,6 +113,7 @@ public:
 	size_t PropagateMark();
 	
 	void ChangeStatNum (int statnum);
+	inline int GetStatNum() const { return _statNum; }
 
 private:
 	void Remove();
@@ -123,6 +124,7 @@ private:
 	friend class DObject;
 	friend class FDoomSerializer;
 
+	int8_t _statNum = -1;
 	DThinker *NextThinker = nullptr, *PrevThinker = nullptr;
 
 public:

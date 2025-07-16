@@ -240,6 +240,7 @@ class Thinker : Object native play
 	virtual native void PostBeginPlay();
 	virtual void OnLoad() {}
 	native void ChangeStatNum(int stat);
+	native clearscope int GetStatNum() const;
 	
 	static clearscope int Tics2Seconds(int tics)
 	{

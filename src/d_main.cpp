@@ -3227,7 +3227,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	int max_progress = TexMan.GuesstimateNumTextures();
 	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
-	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || Args->CheckParm("-norun");
+
+	bool norun = Args->CheckParm("-norun");
+	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || norun;
 
 	if (GameStartupInfo.Type == FStartupInfo::DefaultStartup)
 	{
@@ -3252,7 +3254,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		exec = NULL;
 	}
 
-	if (!restart)
+	if (!(restart || norun))
 		V_Init2();
 
 	// [RH] Initialize localizable strings. 
@@ -3276,12 +3278,12 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	TexMan.Init();
 	
-	if (!batchrun) Printf ("V_Init: allocate screen.\n");
-	if (!restart)
+	if (!(batchrun || norun)) Printf ("V_Init: allocate screen.\n");
+	if (!(restart || norun))
 	{
 		screen->CompileNextShader();
 	}
-	else
+	else if(!norun)
 	{
 		// Update screen palette when restarting
 		screen->UpdatePalette();
@@ -3491,6 +3493,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
 
+	if (norun || batchrun)
+	{
+		return 1337; // special exit
+	}
+
 	// [RH] Run any saved commands from the command line or autoexec.cfg now.
 	gamestate = GS_FULLCONSOLE;
 	Net_Initialize();
@@ -3513,11 +3520,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		}
 
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
-
-		if (Args->CheckParm("-norun") || batchrun)
-		{
-			return 1337; // special exit
-		}
 
 		if (StartScreen)
 		{
@@ -3849,7 +3851,10 @@ int GameMain()
 	M_SaveDefaultsFinal();
 	DeleteStartupScreen();
 	C_UninitCVars(); // must come last so that nothing will access the CVARs anymore after deletion.
-	CloseWidgetResources();
+	if(ret != 1337)
+	{
+		CloseWidgetResources();
+	}
 	delete Args;
 	Args = nullptr;
 	return ret;

@@ -734,6 +734,7 @@ class OptionMenu : Menu
 			{
 				i += mDesc.mScrollPos;
 				if (i >= mDesc.mItems.Size()) break;	// skipped beyond end of menu
+				if (i < 0) i = 0;
 			}
 
 			if (!mDesc.mItems[i].Visible())

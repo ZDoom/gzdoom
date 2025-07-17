@@ -647,6 +647,7 @@ void DObject::Serialize(FSerializer &arc)
 	SerializeFlag("spawned", OF_Spawned);
 	SerializeFlag("networked", OF_Networked);
 	SerializeFlag("clientside", OF_ClientSide);
+	SerializeFlag("travelling", OF_Travelling);
 		
 	ObjectFlags |= OF_SerialSuccess;
 

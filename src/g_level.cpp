@@ -1292,8 +1292,9 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 			G_PlayerFinishLevel (i, mode, changeflags);
 		}
 	}
+	StartTravel();
 	soundEngine->BlockNewSounds(false);
-
+	
 	if (mode == FINISH_SameHub)
 	{ // Remember the level's state for re-entry.
 		if (!(flags2 & LEVEL2_FORGETSTATE))
@@ -1613,7 +1614,7 @@ void G_DoWorldDone (void)
 		Printf ("No next map specified.\n");
 		nextlevel = primaryLevel->MapName;
 	}
-	primaryLevel->StartTravel ();
+	primaryLevel->MoveTravellers();
 	G_DoLoadLevel (nextlevel, startpos, true, false);
 	gameaction = ga_nothing;
 	viewactive = true; 
@@ -1640,74 +1641,72 @@ void FLevelLocals::UnlinkActorFromLevel(AActor& mo)
 	mo.DeleteAttachedLights();
 }
 
+void FLevelLocals::AddToTravellingList(DThinker* th)
+{
+	if (th == nullptr || (th->ObjectFlags & (OF_EuthanizeMe | OF_Travelling)))
+		return;
+
+	auto mo = dyn_cast<AActor>(th);
+	// No voodoo dolls allowed.
+	if (mo != nullptr && mo->player != nullptr && mo->player->mo != mo)
+		return;
+
+	th->ObjectFlags |= OF_Travelling;
+	TravellingThinkers.Push(th);
+	if (mo != nullptr)
+	{
+		if (mo->player != nullptr)
+			AddToTravellingList(mo->player->Bot);
+
+		if (!(mo->flags & MF_UNMORPHED))
+			AddToTravellingList(mo->alternative);
+
+		if (!mo->IsKindOf(NAME_Inventory) || mo->PointerVar<AActor>(NAME_Owner) == nullptr)
+		{
+			for (AActor* inv = mo->Inventory; inv != nullptr; inv = inv->Inventory)
+				AddToTravellingList(inv);
+		}
+	}
+}
+
 void FLevelLocals::StartTravel()
 {
-	bTravelling = true;
-
 	if (!deathmatch)
 	{
 		for (size_t i = 0u; i < MAXPLAYERS; ++i)
 		{
-			if (PlayerInGame(i) && Players[i]->health > 0 && !(Players[i]->mo->ObjectFlags & OF_EuthanizeMe))
-				Players[i]->mo->ChangeStatNum(STAT_TRAVELLING);
+			if (PlayerInGame(i) && Players[i]->health > 0)
+				AddToTravellingList(Players[i]->mo);
 		}
 	}
 
-	// Start building the list of everything that needs to travel. Since things can only be added
-	// to STAT_TRAVELLING at this point, it's safe to assume nothing will be removed unless destroyed
-	// (which will clean up anything it owns as well).
-	auto it = GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
-	DThinker* th = nullptr;
-	unsigned count = 0u;
-	do
+	// Start building the list of everything that needs to travel. This will keep growing
+	// as we add more things so don't use the C++ iterators.
+	for (size_t i = 0u; i < TravellingThinkers.Size(); ++i)
 	{
-		count = 0u;
-		it.Reinit();
-
-		while ((th = it.Next()) != nullptr)
+		auto th = TravellingThinkers[i];
+		if (!(th->ObjectFlags & OF_EuthanizeMe))
 		{
-			if (th->ObjectFlags & OF_Travelling)
-				continue;
-
-			++count;
-			auto mo = dyn_cast<AActor>(th);
-			if (mo != nullptr)
-			{
-				if (mo->player != nullptr)
-				{
-					// No voodoo dolls allowed.
-					if (mo->player->mo != mo)
-					{
-						mo->ChangeStatNum(mo->GetStatNum());
-						continue;
-					}
-
-					if (mo->player->Bot != nullptr)
-						mo->player->Bot->ChangeStatNum(STAT_TRAVELLING);
-				}
-
-				if (!mo->IsKindOf(NAME_Inventory) || mo->PointerVar<AActor>(NAME_Owner) == nullptr)
-				{
-					for (AActor* inv = mo->Inventory; inv != nullptr; inv = inv->Inventory)
-						inv->ChangeStatNum(STAT_TRAVELLING);
-				}
-
-				if (!(mo->flags & MF_UNMORPHED) && mo->alternative != nullptr)
-					mo->alternative->ChangeStatNum(STAT_TRAVELLING);
-			}
-
-			th->ObjectFlags |= OF_Travelling;
 			IFOVERRIDENVIRTUALPTRNAME(th, NAME_Thinker, PreTravelled)
 				VMCallVoid<DThinker*>(func, th);
 		}
-	} while (count);
+	}
+}
 
-	// Now that the list is complete, unlink everything. We want to do this after the
-	// callback so someone can't attempt to relink things.
-	auto unlinker = GetThinkerIterator<AActor>(NAME_Actor, STAT_TRAVELLING);
-	AActor* mo = nullptr;
-	while ((mo = unlinker.Next()) != nullptr)
+// We do this after snapshotting so the flag can be saved out but it won't be saved into
+// the actual STAT_TRAVELLING list when snapshotting.
+void FLevelLocals::MoveTravellers()
+{
+	for (auto th : TravellingThinkers)
 	{
+		if (th->ObjectFlags & OF_EuthanizeMe)
+			continue;
+
+		th->ChangeStatNum(STAT_TRAVELLING);
+		auto mo = dyn_cast<AActor>(th);
+		if (mo == nullptr)
+			continue;
+
 		UnlinkActorFromLevel(*mo);
 		mo->BlockingMobj = nullptr;
 		mo->BlockingLine = mo->MovementBlockingLine = nullptr;
@@ -1718,7 +1717,7 @@ void FLevelLocals::StartTravel()
 		mo->floorsector = mo->ceilingsector = nullptr;
 	}
 
-	bTravelling = false;
+	TravellingThinkers.Clear();
 }
 
 //==========================================================================
@@ -1744,8 +1743,6 @@ void FLevelLocals::LinkActorToLevel(AActor& mo)
 
 int FLevelLocals::FinishTravel()
 {
-	// From this point onward things can't be added back into the list, only removed. Callbacks
-	// are done after setting everything up so that the Thinkers have initialized objects to work with.
 	TArray<DThinker*> toCallBack = {};
 	int failNum = 0;
 	auto it = GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
@@ -1850,13 +1847,16 @@ int FLevelLocals::FinishTravel()
 			mo->Speed = mo->GetDefault()->Speed;
 	}
 
-	Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
-	ClientsideThinkers.DestroyThinkersInList(STAT_TRAVELLING);
+	// Clean up anything that wasn't linked back to avoid memory leaks. We also need to wipe any
+	// remaining thinkers that were set to travel when they left if recovering from a snapshot,
+	// otherwise they'll pile up infinitely.
+	Thinkers.CleanUpTravellers(savegamerestore);
+	ClientsideThinkers.CleanUpTravellers(savegamerestore);
 
 	// Some ZScript will be called here so we have to do this last.
 	for (size_t i = 0u; i < MAXPLAYERS; ++i)
 	{
-		if (PlayerInGame(i))
+		if (PlayerInGame(i) && !(Players[i]->mo->ObjectFlags & OF_EuthanizeMe) && toCallBack.Find(Players[i]->mo) < toCallBack.Size())
 			Players[i]->mo->SetState(Players[i]->mo->SpawnState);
 	}
 

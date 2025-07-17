@@ -19,13 +19,13 @@ jobs:
           build_type: Debug
 
         - name: macOS
-          os: macos-14
+          os: macos-14 -DBUILD_SHARED_LIBS=ON
           deps_cmdline: brew install libvpx
           build_type: Release
 
         - name: macOS
           os: macos-14
-          extra_options: -G Xcode -DDYN_OPENAL=OFF
+          extra_options: -G Xcode -DDYN_OPENAL=OFF -DBUILD_SHARED_LIBS=ON
           deps_cmdline: brew install libvpx
           build_type: Debug
 

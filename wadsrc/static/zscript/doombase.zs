@@ -241,6 +241,7 @@ class Thinker : Object native play
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
 	virtual void OnLoad() {}
+	native void AddToTravellingList();
 	native void ChangeStatNum(int stat);
 	native clearscope int GetStatNum() const;
 	

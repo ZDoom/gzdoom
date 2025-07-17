@@ -1441,10 +1441,10 @@ class CommandDrawNumber : public CommandDrawString
 					static VMFunction *func = nullptr;
 					if (func == nullptr) PClass::FindFunction(&func, NAME_PlayerPawn, "GetEffectTicsForItem");
 					VMValue params[] = { statusBar->CPlayer->mo, inventoryItem };
-					int ret1 = 0, ret2 = 0;
-					VMReturn rets[] = { &ret1, &ret2 };
-					VMCall(func, params, 2, rets, 2);
-					num = ret1 < 0? 0 :  ret1 / TICRATE + 1;
+					int retv;
+					VMReturn ret(&retv);
+					VMCall(func, params, 2, &ret, 1);
+					num = retv < 0? 0 :  retv / TICRATE + 1;
 					break;
 				}
 				case INVENTORY:

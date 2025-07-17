@@ -2532,10 +2532,8 @@ void FParser::SF_PlayerWeapon()
 						
 						IFVM(PlayerPawn, PickNewWeapon)
 						{
-							AActor* weap = nullptr;
 							VMValue param[] = { Level->Players[playernum]->mo, (void*)nullptr };
-							VMReturn rets[] = { (void**)&weap };
-							VMCall(func, param, 2, rets, 1);
+							VMCall(func, param, 2, nullptr, 0);
 						}
 					}
 				}

@@ -34,7 +34,7 @@
 #include "c_cvars.h"
 
 extern bool		advancedemo;
-EXTERN_CVAR(Bool, hud_toggled);
+extern bool hud_toggled;
 void D_ToggleHud();
 
 struct event_t;

@@ -13,9 +13,9 @@ class FSkyBox;
 
 struct HWSkyInfo
 {
-	float x_offset[3];
+	float x_offset[2];
 	float y_offset;		// doubleskies don't have a y-offset
-	FGameTexture * texture[3];
+	FGameTexture * texture[2];
 	FTextureID skytexno1;
 	bool mirrored;
 	bool doublesky;
@@ -350,6 +350,7 @@ public:
 	}
 
 };
+
 
 struct HWSkyPortal : public HWPortal
 {

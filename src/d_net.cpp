@@ -203,14 +203,6 @@ CUSTOM_CVAR(Int, cl_showchat, CHAT_GLOBAL, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = CHAT_GLOBAL;
 }
 
-CUSTOM_CVAR(Int, cl_debugprediction, 0, CVAR_CHEAT)
-{
-	if (self < 0)
-		self = 0;
-	else if (self > BACKUPTICS - 1)
-		self = BACKUPTICS - 1;
-}
-
 // Used to write out all network events that occured leading up to the next tick.
 static struct NetEventData
 {
@@ -365,8 +357,6 @@ public:
 
 void Net_ClearBuffers()
 {
-	CloseNetwork();
-
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		playeringame[i] = false;
@@ -559,7 +549,7 @@ void Net_SetWaiting()
 
 // [RH] Rewritten to properly calculate the packet size
 //		with our variable length Command.
-static size_t GetNetBufferSize()
+static int GetNetBufferSize()
 {
 	if (NetBuffer[0] & NCMD_EXIT)
 		return 1 + (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator);
@@ -670,7 +660,7 @@ static bool HGetPacket()
 	if (RemoteClient == -1)
 		return false;
 
-	size_t sizeCheck = GetNetBufferSize();
+	int sizeCheck = GetNetBufferSize();
 	if (NetBufferLength != sizeCheck)
 	{
 		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
@@ -975,7 +965,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < consistencies.Size(); ++i)
 			{
-				const int cTic = baseConsistency + int(i);
+				const int cTic = baseConsistency + i;
 				if (cTic <= pState.CurrentNetConsistency)
 					continue;
 
@@ -1013,7 +1003,7 @@ static void GetPackets()
 
 			for (size_t i = 0u; i < data.Size(); ++i)
 			{
-				const int seq = baseSequence + int(i);
+				const int seq = baseSequence + i;
 				// Duplicate command, ignore it.
 				if (seq <= pState.CurrentSequence)
 					continue;
@@ -1035,9 +1025,6 @@ static void GetPackets()
 				{
 					pState.CurrentSequence = seq;
 				}
-				// Update this so host switching doesn't have any hiccups in packet-server mode.
-				if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator && pNum != Net_Arbitrator)
-					pState.SequenceAck = seq;
 			}
 		}
 	}
@@ -1511,13 +1498,13 @@ void NetUpdate(int tics)
 		return;
 	}
 
-	constexpr int MaxPlayersPerPacket = 16;
+	constexpr size_t MaxPlayersPerPacket = 16u;
 
 	int startSequence = startTic / TicDup;
 	int endSequence = newestTic;
 	int quitters = 0;
 	int quitNums[MAXPLAYERS];
-	int players = 1u;
+	size_t players = 1u;
 	int maxCommands = MAXSENDTICS;
 	if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
 	{
@@ -1585,31 +1572,16 @@ void NetUpdate(int tics)
 		curState.Flags &= ~CF_MISSING;
 
 		NetBuffer[1] = (curState.Flags & CF_RETRANSMIT_SEQ) ? curState.ResendID : CurrentLobbyID;
-		int lastSeq = curState.CurrentSequence;
-		int lastCon = curState.CurrentNetConsistency;
-		if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
-		{
-			// If in packet-server mode, make sure to get the lowest sequence of all players
-			// since the host themselves might have gotten updated but someone else in the packet
-			// did not. That way the host knows to send over the correct tic.
-			for (auto cl : NetworkClients)
-			{
-				if (ClientStates[cl].CurrentSequence < lastSeq)
-					lastSeq = ClientStates[cl].CurrentSequence;
-				if (ClientStates[cl].CurrentNetConsistency < lastCon)
-					lastCon = ClientStates[cl].CurrentNetConsistency;
-			}
-		}
 		// Last sequence we got from this client.
-		NetBuffer[2] = (lastSeq >> 24);
-		NetBuffer[3] = (lastSeq >> 16);
-		NetBuffer[4] = (lastSeq >> 8);
-		NetBuffer[5] = lastSeq;
+		NetBuffer[2] = (curState.CurrentSequence >> 24);
+		NetBuffer[3] = (curState.CurrentSequence >> 16);
+		NetBuffer[4] = (curState.CurrentSequence >> 8);
+		NetBuffer[5] = curState.CurrentSequence;
 		// Last consistency we got from this client.
-		NetBuffer[6] = (lastCon >> 24);
-		NetBuffer[7] = (lastCon >> 16);
-		NetBuffer[8] = (lastCon >> 8);
-		NetBuffer[9] = lastCon;
+		NetBuffer[6] = (curState.CurrentNetConsistency >> 24);
+		NetBuffer[7] = (curState.CurrentNetConsistency >> 16);
+		NetBuffer[8] = (curState.CurrentNetConsistency >> 8);
+		NetBuffer[9] = curState.CurrentNetConsistency;
 
 		if (curState.Flags & CF_RETRANSMIT_SEQ)
 		{
@@ -1874,6 +1846,9 @@ bool D_CheckNetGame()
 {
 	if (!I_InitNetwork())
 		return false;
+
+	if (GameID != DEFAULT_GAME_ID)
+		I_FatalError("Invalid id set for network buffer");
 
 	if (Args->CheckParm("-extratic"))
 		net_extratic = true;

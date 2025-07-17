@@ -7,7 +7,6 @@
 #include "matrix.h"
 #include "name.h"
 #include "hw_renderstate.h"
-#include "zvulkan/vulkanbuilders.h"
 #include <list>
 
 #define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 11
@@ -90,8 +89,6 @@ private:
 	FString LoadPublicShaderLump(const char *lumpname);
 	FString LoadPrivateShaderLump(const char *lumpname);
 
-	static ShaderIncludeResult OnInclude(FString headerName, FString includerName, size_t depth);
-
 	VulkanRenderDevice* fb = nullptr;
 
 	std::vector<VkShaderProgram> mMaterialShaders[MAX_PASS_TYPES];
@@ -101,5 +98,4 @@ private:
 	int compileIndex = 0;
 
 	std::list<VkPPShader*> PPShaders;
-	friend class VkPPShader;
 };

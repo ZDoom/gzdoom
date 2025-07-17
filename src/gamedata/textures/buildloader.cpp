@@ -283,12 +283,7 @@ void InitBuildTiles()
 				}
 
 				auto& artdata = TexMan.GetNewBuildTileData();
-
-				ptrdiff_t len = fileSystem.FileLength(lumpnum);
-
-				assert(len >= 0 && len < UINT_MAX);
-
-				artdata.Resize((unsigned int)len);
+				artdata.Resize(fileSystem.FileLength(lumpnum));
 				fileSystem.ReadFile(lumpnum, &artdata[0]);
 
 				if ((numtiles = CountTiles(&artdata[0])) > 0)

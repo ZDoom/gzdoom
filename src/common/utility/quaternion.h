@@ -13,7 +13,7 @@ public:
 
 	TQuaternion() = default;
 
-	constexpr TQuaternion(vec_t x, vec_t y, vec_t z, vec_t w)
+	TQuaternion(vec_t x, vec_t y, vec_t z, vec_t w)
 		: X(x), Y(y), Z(z), W(w)
 	{
 	}
@@ -38,17 +38,6 @@ public:
 	void Zero()
 	{
 		Z = Y = X = W = 0;
-	}
-
-	void MakeIdentity()
-	{
-		Z = Y = X = 0;
-		W = 1;
-	}
-
-	static constexpr TQuaternion Identity()
-	{
-		return {0,0,0,1};
 	}
 
 	bool isZero() const
@@ -82,15 +71,25 @@ public:
 	}
 
 	// returns the XY fields as a 2D-vector.
-	Vector2 XY() const
+	const Vector2& XY() const
 	{
-		return Vector2(X, Y);
+		return *reinterpret_cast<const Vector2*>(this);
 	}
 
-	// returns the XYZ fields as a 3D-vector.
-	Vector3 XYZ() const
+	Vector2& XY()
 	{
-		return Vector3(X, Y, Z);
+		return *reinterpret_cast<Vector2*>(this);
+	}
+
+	// returns the XY fields as a 2D-vector.
+	const Vector3& XYZ() const
+	{
+		return *reinterpret_cast<const Vector3*>(this);
+	}
+
+	Vector3& XYZ()
+	{
+		return *reinterpret_cast<Vector3*>(this);
 	}
 
 
@@ -310,10 +309,7 @@ public:
 		auto factor = sinTheta / g_sqrt(lengthSquared);
 		TQuaternion<vec_t> ret;
 		ret.W = cosTheta;
-		auto xyz = vec_t(factor) * axis;
-		ret.X = vec_t(xyz.X);
-		ret.Y = vec_t(xyz.Y);
-		ret.Z = vec_t(xyz.Z);
+		ret.XYZ() = factor * axis;
 		return ret;
 	}
 	static TQuaternion<vec_t> FromAngles(TAngle<vec_t> yaw, TAngle<vec_t> pitch, TAngle<vec_t> roll)
@@ -349,12 +345,6 @@ public:
 			auto scale1 = (theta * t).Sin();
 			return (from * scale0 + to * scale1).Unit();
 		}
-	}
-
-	template<typename U>
-	explicit operator TVector4<U>()
-	{
-		return TVector4<U>(U(X),U(Y),U(Z),U(W));
 	}
 };
 

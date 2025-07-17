@@ -22,7 +22,6 @@ union FRenderStyle;
 class DObject;
 class FTextureID;
 struct FTranslationID;
-struct BoneOverride;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -256,7 +255,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, struct AnimModelOverri
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnim &ao, ModelAnim *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelAnimFrame &ao, ModelAnimFrame *def);
 FSerializer &Serialize(FSerializer& arc, const char* key, FTranslationID& value, FTranslationID* defval);
-FSerializer &Serialize(FSerializer& arc, const char* key, BoneOverride& value, BoneOverride* defval);
 
 void SerializeFunctionPointer(FSerializer &arc, const char *key, FunctionPointerValue *&p);
 
@@ -351,16 +349,6 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DV
 	return arc.Array<double>(key, &p[0], def? &(*def)[0] : nullptr, 3, true);
 }
 
-inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector4 &p, DVector4 *def)
-{
-	return arc.Array<double>(key, &p[0], def? &(*def)[0] : nullptr, 4, true);
-}
-
-inline FSerializer& Serialize(FSerializer& arc, const char* key, DQuaternion& p, DQuaternion* def)
-{
-	return arc.Array<double>(key, &p[0], def ? &(*def)[0] : nullptr, 4, true);
-}
-
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DRotator &p, DRotator *def)
 {
 	return arc.Array<DAngle>(key, &p[0], def? &(*def)[0] : nullptr, 3, true);
@@ -372,11 +360,6 @@ inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector2 &p, DV
 }
 
 inline FSerializer& Serialize(FSerializer& arc, const char* key, FVector4& p, FVector4* def)
-{
-	return arc.Array<float>(key, &p[0], def ? &(*def)[0] : nullptr, 4, true);
-}
-
-inline FSerializer& Serialize(FSerializer& arc, const char* key, FQuaternion& p, FQuaternion* def)
 {
 	return arc.Array<float>(key, &p[0], def ? &(*def)[0] : nullptr, 4, true);
 }

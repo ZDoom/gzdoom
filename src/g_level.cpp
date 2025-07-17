@@ -150,7 +150,7 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 
 CUSTOM_CVAR(Int, gl_maplightmode, -1, CVAR_NOINITCALL | CVAR_CHEAT) // this is just for testing. -1 means 'inactive'
 {
-	if (self > 4 || self < -1) self = -1;
+	if (self > 5 || self < -1) self = -1;
 }
 
 CUSTOM_CVARD(Int, gl_lightmode, 1, CVAR_ARCHIVE, "Select lighting mode. 2 is vanilla accurate, 1 is accurate to the ZDoom software renderer and 0 is a less demanding non-shader implementation")
@@ -622,9 +622,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 		primaryLevel->maptime = 0;
 		primaryLevel->totaltime = 0;
 		primaryLevel->spawnindex = 0;
-
-		primaryLevel->lightlists.wall_dlist.Clear();
-		primaryLevel->lightlists.flat_dlist.Clear();
 
 		if (!multiplayer || !deathmatch)
 		{
@@ -1846,10 +1843,8 @@ void FLevelLocals::Init()
 
 	skyspeed1 = info->skyspeed1;
 	skyspeed2 = info->skyspeed2;
-	skymistspeed = info->skymistspeed;
 	skytexture1 = TexMan.GetTextureID(info->SkyPic1.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	skytexture2 = TexMan.GetTextureID(info->SkyPic2.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	skymisttexture = TexMan.GetTextureID(info->SkyMistPic.GetChars(), ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
 	fadeto = info->fadeto;
 	cdtrack = info->cdtrack;
 	cdid = info->cdid;
@@ -1913,9 +1908,6 @@ void FLevelLocals::Init()
 	outsidefogdensity = info->outsidefogdensity;
 	skyfog = info->skyfog;
 	deathsequence = info->deathsequence;
-
-	thickfogdistance = info->thickfogdistance;
-	thickfogmultiplier = info->thickfogmultiplier;
 
 	pixelstretch = info->pixelstretch;
 
@@ -2048,7 +2040,7 @@ void G_ReadSnapshots(FResourceFile *resf)
 
 	G_ClearSnapshots();
 
-	for (unsigned j = 0; j < resf->EntryCountU(); j++)
+	for (unsigned j = 0; j < resf->EntryCount(); j++)
 	{
 		auto name = resf->getName(j);
 		auto ptr = strstr(name, ".map.json");

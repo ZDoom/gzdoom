@@ -5,7 +5,6 @@ class CrystalVial : Health
 		+FLOATBOB
 		Inventory.Amount 10;
 		Inventory.PickupMessage "$TXT_ITEMHEALTH";
-		Tag "$TAG_ITEMHEALTH";
 	}
 	States
 	{

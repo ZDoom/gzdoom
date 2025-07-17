@@ -101,7 +101,6 @@
 #include "fragglescript/t_fs.h"
 #include "shadowinlines.h"
 #include "model.h"
-#include "models.h"
 #include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
@@ -150,10 +149,6 @@ FRandom pr_spawnmissile("SpawnMissile");
 
 CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_NOINITCALL)
 {
-	// test NAN and INF
-	if (((double)self != (double)self) || isinf((double)self))
-		sv_gravity = 800.f;
-
 	for (auto Level : AllLevels())
 	{
 		Level->gravity = self;
@@ -247,6 +242,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("angles", Angles)
 		A("frame", frame)
 		A("scale", Scale)
+		A("nolocalrender", NoLocalRender) // Note: This will probably be removed later since a better solution is needed
 		A("renderstyle", RenderStyle)
 		A("renderflags", renderflags)
 		A("renderflags2", renderflags2)
@@ -1793,30 +1789,6 @@ void SerializeModelID(FSerializer &arc, const char *key, int &id)
 	}
 }
 
-template<typename T>
-static FSerializer &SerializeBoneOverrideComponent(FSerializer &arc, const char *key, T &comp)
-{
-	arc.BeginObject(key);
-	arc("mode", comp.mode);
-	arc("prev_mode", comp.prev_mode);
-	arc("switchtic", comp.switchtic);
-	arc("interplen", comp.interplen);
-	arc("prev", comp.prev);
-	arc("cur", comp.cur);
-	arc.EndObject();
-	return arc;
-}
-
-FSerializer &Serialize(FSerializer &arc, const char *key, BoneOverride &mod, BoneOverride *def)
-{
-	arc.BeginObject(key);
-	SerializeBoneOverrideComponent(arc, "translation", mod.translation);
-	SerializeBoneOverrideComponent(arc, "rotation", mod.rotation);
-	SerializeBoneOverrideComponent(arc, "scaling", mod.scaling);
-	arc.EndObject();
-	return arc;
-}
-
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelOverride &mo, ModelOverride *def)
 {
 	arc.BeginObject(key);
@@ -1922,7 +1894,6 @@ void DActorModelData::Serialize(FSerializer& arc)
 		("skinIDs", skinIDs)
 		("animationIDs", animationIDs)
 		("modelFrameGenerators", modelFrameGenerators)
-		("modelBoneOverrides", modelBoneOverrides)
 		("flags", flags)
 		("overrideFlagsSet", overrideFlagsSet)
 		("overrideFlagsClear", overrideFlagsClear)
@@ -4521,11 +4492,6 @@ void AActor::Tick ()
 		return;
 	}
 
-	if(flags9 & MF9_DECOUPLEDANIMATIONS)
-	{
-		CalcBones(false);
-	}
-
 	AActor *onmo;
 
 	//assert (state != NULL);
@@ -5085,11 +5051,6 @@ void AActor::Tick ()
 			if (!SetState(state->GetNextState()))
 				return; 		// freed itself
 		}
-	}
-
-	if(!(flags9 & MF9_DECOUPLEDANIMATIONS) && modelData && !(modelData->flags & MODELDATA_GET_BONE_INFO_RECALC))
-	{
-		CalcBones(false);
 	}
 
 	if (tics == -1 || state->GetCanRaise())
@@ -6383,10 +6344,8 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	IFVIRTUALPTRNAME(p->mo, NAME_PlayerPawn, ResetAirSupply)
 	{
-		int drowning = 0;
 		VMValue params[] = { p->mo, false };
-		VMReturn rets[] = { &drowning };
-		VMCall(func, params, 2, rets, 1);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
@@ -6421,7 +6380,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		IFVM(PlayerPawn, FilterCoopRespawnInventory)
 		{
 			VMValue params[] = { p->mo, oldactor, ((heldWeap == nullptr || (heldWeap->ObjectFlags & OF_EuthanizeMe)) ? nullptr : heldWeap) };
-			VMCall(func, params, 3, nullptr, 0);
+			VMCall(func, params, 2, nullptr, 0);
 		}
 	}
 	if (oldactor != NULL)
@@ -7040,19 +6999,19 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPuff)
 // 
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *originator)
+void P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *originator)
 {
-	AActor *th = nullptr;
+	AActor *th;
 	PClassActor *bloodcls = originator->GetBloodType();
 	DVector3 pos = pos1;
 	pos.Z += pr_spawnblood.Random2() / 64.;
 
 	int bloodtype = cl_bloodtype;
 	
-	if (bloodcls != nullptr && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
+	if (bloodcls != NULL && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
 		bloodtype = 0;
 
-	if (bloodcls != nullptr)
+	if (bloodcls != NULL)
 	{
 		th = Spawn(originator->Level, bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		th->Vel.Z = 2;
@@ -7073,7 +7032,6 @@ AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *orig
 		}
 		
 		// Moved out of the blood actor so that replacing blood is easier
-		bool foundState = false;
 		if (gameinfo.gametype & GAME_DoomStrifeChex)
 		{
 			if (gameinfo.gametype == GAME_Strife)
@@ -7081,60 +7039,53 @@ AActor *P_SpawnBlood (const DVector3 &pos1, DAngle dir, int damage, AActor *orig
 				if (damage > 13)
 				{
 					FState *state = th->FindState(NAME_Spray);
-					if (state != nullptr)
+					if (state != NULL)
 					{
 						th->SetState (state);
-						foundState = true;
+						goto statedone;
 					}
 				}
 				else damage += 2;
 			}
-			if (!foundState)
+			int advance = 0;
+			if (damage <= 12 && damage >= 9)
 			{
-				int advance = 0;
-				if (damage <= 12 && damage >= 9)
-				{
-					advance = 1;
-				}
-				else if (damage < 9)
-				{
-					advance = 2;
-				}
+				advance = 1;
+			}
+			else if (damage < 9)
+			{
+				advance = 2;
+			}
 
-				PClassActor* cls = th->GetClass();
-				bool good = false;
-				while (cls != RUNTIME_CLASS(AActor))
+			PClassActor *cls = th->GetClass();
+
+			while (cls != RUNTIME_CLASS(AActor))
+			{
+				int checked_advance = advance;
+				if (cls->OwnsState(th->SpawnState))
 				{
-					int checked_advance = advance;
-					if (cls->OwnsState(th->SpawnState))
+					for (; checked_advance > 0; --checked_advance)
 					{
-						for (; checked_advance > 0; --checked_advance)
+						// [RH] Do not set to a state we do not own.
+						if (cls->OwnsState(th->SpawnState + checked_advance))
 						{
-							// [RH] Do not set to a state we do not own.
-							if (cls->OwnsState(th->SpawnState + checked_advance))
-							{
-								th->SetState(th->SpawnState + checked_advance);
-								good = true;
-								break;
-							}
+							th->SetState(th->SpawnState + checked_advance);
+							goto statedone;
 						}
-						if (good)
-							break;
 					}
-					// We can safely assume the ParentClass is of type PClassActor
-					// since we stop when we see the Actor base class.
-					cls = static_cast<PClassActor*>(cls->ParentClass);
 				}
+				// We can safely assume the ParentClass is of type PClassActor
+				// since we stop when we see the Actor base class.
+				cls = static_cast<PClassActor *>(cls->ParentClass);
 			}
 		}
 
+	statedone:
 		if (!(bloodtype <= 1)) th->renderflags |= RF_INVISIBLE;
 	}
 
 	if (bloodtype >= 1)
 		P_DrawSplash2 (originator->Level, 40, pos, dir, 2, originator->BloodColor);
-
-	return th;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
@@ -7145,7 +7096,8 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
 	PARAM_FLOAT(z);
 	PARAM_ANGLE(dir);
 	PARAM_INT(damage);
-	ACTION_RETURN_OBJECT(P_SpawnBlood(DVector3(x, y, z), dir, damage, self));
+	P_SpawnBlood(DVector3(x, y, z), dir, damage, self);
+	return 0;
 }
 
 

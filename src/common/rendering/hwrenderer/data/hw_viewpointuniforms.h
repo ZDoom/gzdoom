@@ -30,9 +30,6 @@ struct HWViewpointUniforms
 
 	int mLightBlendMode = 0;
 
-	float mThickFogDistance = -1.f;
-	float mThickFogMultiplier = 30.f;
-
 	void CalcDependencies()
 	{
 		mNormalViewMatrix.computeNormalMatrix(mViewMatrix);

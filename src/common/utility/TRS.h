@@ -33,27 +33,24 @@
 
 #pragma once
 #include "vectors.h"
-#include "quaternion.h"
 
 class TRS
 {
 public:
-	FVector3 translation = FVector3(0,0,0);
-	FQuaternion rotation = FQuaternion::Identity();
-	FVector3 scaling = FVector3(0,0,0);
+	FVector3 translation;
+	FVector4 rotation;
+	FVector3 scaling;
 
-	bool operator==(const TRS& other) const
+	TRS()
 	{
-		return other.translation == translation && other.rotation == rotation && other.scaling == scaling;
+		translation = FVector3(0,0,0);
+		rotation = FVector4(0,0,0,1);
+		scaling = FVector3(0,0,0);
 	}
 
-	template<typename T>
-	TRS& operator=(const T& other)
-	{ // templated because IQMJoint is defined in model_iqm.h
-		translation = other.Translate;
-		rotation = other.Quaternion;
-		scaling = other.Scale;
-		return *this;
+	bool Equals(TRS& compare)
+	{
+		return compare.translation == this->translation && compare.rotation == this->rotation && compare.scaling == this->scaling;
 	}
 };
 

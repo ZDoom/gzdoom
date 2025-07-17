@@ -5113,7 +5113,6 @@ static void CleanupModelData(AActor * mobj)
 		&& mobj->modelData->modelFrameGenerators.Size() == 0
 		&& mobj->modelData->skinIDs.Size() == 0
 		&& mobj->modelData->animationIDs.Size() == 0
-		&& mobj->modelData->modelBoneOverrides.Size() == 0
 		&& mobj->modelData->modelDef == nullptr
 		&&(mobj->modelData->flags & ~MODELDATA_HADMODEL) == 0 )
 	{
@@ -6252,9 +6251,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		ThrowAbortException(X_OTHER, "Cannot set animation for non-decoupled actors");
 	}
 
-	auto smf_class = (self->modelData && self->modelData->modelDef) ? self->modelData->modelDef : self->GetClass();
-
-	if(!BaseSpriteModelFrames.CheckKey(smf_class))
+	if(!BaseSpriteModelFrames.CheckKey(self->GetClass()))
 	{
 		ThrowAbortException(X_OTHER, "Actor class is missing a MODELDEF definition or a MODELDEF BaseFrame");
 	}
@@ -6265,11 +6262,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(animName == NAME_None)
 	{
-		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
-
 		self->modelData->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
 		return;
 	}
 
@@ -6288,33 +6281,29 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 	else
 	{
-		animID = BaseSpriteModelFrames[smf_class].animationIDs[0];
+		animID = BaseSpriteModelFrames[self->GetClass()].animationIDs[0];
 	}
 
 	FModel * animation = nullptr;
-	if (animID >= 0 && animID < Models.SSize())
+	if (animID >= 0 && animID < Models.Size())
 	{
 		animation = Models[animID];
 	}
-	else if(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.SSize())
+	else if(self->modelData->models.Size() && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.Size())
 	{
 		animation = Models[self->modelData->models[0].modelID];
 	}
 	else
 	{
-		animation = Models[BaseSpriteModelFrames[smf_class].modelIDs[0]];
+		animation = Models[BaseSpriteModelFrames[self->GetClass()].modelIDs[0]];
 	}
 
 	int animStart = animation->FindFirstFrame(animName);
 
 	if(animStart == FErr_NotFound)
 	{
-		Printf("Could not find animation %s\n", animName.GetChars());
-		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
-
 		self->modelData->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
+		Printf("Could not find animation %s\n", animName.GetChars());
 		return;
 	}
 
@@ -6363,32 +6352,20 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(startFrame >= len)
 	{
-		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
-		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
-
 		self->modelData->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
+		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(loopFrame >= len)
 	{
-		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
-		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
-
 		self->modelData->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
+		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
 		return;
 	}
 	else if(endFrame >= len)
 	{
-		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
-		if(self->modelData->curAnim.flags & MODELANIM_NONE) return;
-
 		self->modelData->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
+		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
 		return;
 	}
 	
@@ -6410,8 +6387,6 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		self->modelData->curAnim.startTic = tic;
 		self->modelData->curAnim.switchOffset = 0;
 	}
-
-	self->CalcBones(true);
 }
 
 void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
@@ -6473,60 +6448,29 @@ void SetAnimationFrameRateUINative(AActor * self, double framerate)
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac());
 }
 
-void SetModelFlag(AActor * self, int flag, int iqmFlag)
+void SetModelFlag(AActor * self, int flag)
 {
 	EnsureModelData(self);
-
-	iqmFlag &= MODELDATA_IQMFLAGS;
-
-	if(flag)
-	{
-		self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
-		self->modelData->overrideFlagsSet |= flag;
-		self->modelData->overrideFlagsClear &= ~flag;
-	}
-
-	if(iqmFlag)
-	{
-		self->modelData->flags |= iqmFlag;
-	}
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsSet |= flag;
+	self->modelData->overrideFlagsClear &= ~flag;
 }
 
-void ClearModelFlag(AActor * self, int flag, int iqmFlag)
+void ClearModelFlag(AActor * self, int flag)
 {
 	EnsureModelData(self);
-
-	iqmFlag &= MODELDATA_IQMFLAGS;
-
-	if(flag)
-	{
-		self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
-		self->modelData->overrideFlagsClear |= flag;
-		self->modelData->overrideFlagsSet &= ~flag;
-	}
-
-	if(iqmFlag)
-	{
-		self->modelData->flags &= ~iqmFlag;
-	}
-	
+	self->modelData->flags |= MODELDATA_OVERRIDE_FLAGS;
+	self->modelData->overrideFlagsClear |= flag;
+	self->modelData->overrideFlagsSet &= ~flag;
 }
 
-void ResetModelFlags(AActor * self, int resetModel, int resetIqm)
+void ResetModelFlags(AActor * self)
 {
 	if(self->modelData)
 	{
-		if(resetModel)
-		{
-			self->modelData->overrideFlagsClear = 0;
-			self->modelData->overrideFlagsSet = 0;
-			self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
-		}
-
-		if(resetIqm)
-		{
-			self->modelData->flags &= ~MODELDATA_IQMFLAGS;
-		}
+		self->modelData->overrideFlagsClear = 0;
+		self->modelData->overrideFlagsSet = 0;
+		self->modelData->flags &= ~MODELDATA_OVERRIDE_FLAGS;
 	}
 }
 
@@ -6617,18 +6561,12 @@ void ChangeModelNative(
 			}
 			surfaceSkins.Push(skindata);
 			mobj->modelData->models.Push({queryModel, std::move(surfaceSkins)});
-			
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
 		}
 		else
 		{
 			mobj->modelData->models.Push({queryModel, {}});
 			mobj->modelData->modelFrameGenerators.Push(generatorindex);
-		}
-		
-		if(queryModel != -1 && mobj->modelData->modelBoneOverrides.Size() > modelindex)
-		{
-			mobj->modelData->modelBoneOverrides[modelindex].Clear();
 		}
 	}
 	else
@@ -6649,15 +6587,7 @@ void ChangeModelNative(
 				mobj->modelData->models[modelindex].surfaceSkinIDs[skinindex] = skindata;
 			}
 		}
-		if(queryModel != -1)
-		{
-			mobj->modelData->models[modelindex].modelID = queryModel;
-			
-			if(mobj->modelData->modelBoneOverrides.Size() > modelindex)
-			{
-				mobj->modelData->modelBoneOverrides[modelindex].Clear();
-			}
-		}
+		if(queryModel != -1) mobj->modelData->models[modelindex].modelID = queryModel;
 		if(generatorindex != -1) mobj->modelData->modelFrameGenerators[modelindex] = generatorindex;
 	}
 
@@ -6694,11 +6624,6 @@ void ChangeModelNative(
 	}
 
 	CleanupModelData(mobj);
-
-	if(animation != NAME_None || modeldef != nullptr)
-	{
-		mobj->CalcBones(true);
-	}
 
 	return;
 }
@@ -6780,9 +6705,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flag);
-	PARAM_INT(flagIqm);
 
-	SetModelFlag(self, flag, flagIqm);
+	SetModelFlag(self, flag);
 
 	return 0;
 }
@@ -6791,9 +6715,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(flag);
-	PARAM_INT(flagIqm);
 
-	ClearModelFlag(self, flag, flagIqm);
+	ClearModelFlag(self, flag);
 
 	return 0;
 }
@@ -6801,10 +6724,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearModelFlag, ClearModelFlag)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ResetModelFlags, ResetModelFlags)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(resetModel);
-	PARAM_BOOL(resetIqm);
 	
-	ResetModelFlags(self, resetModel, resetIqm);
+	ResetModelFlags(self);
 
 	return 0;
 }

@@ -333,7 +333,7 @@ public:
 	int dynlightindex;
 
 	void CreateSkyboxVertices(FFlatVertex *buffer);
-	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata, int portalgroup);
+	void SetupLights(HWDrawInfo *di, FLightNode *head, FDynLightData &lightdata, int portalgroup);
 
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);

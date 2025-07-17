@@ -9,7 +9,6 @@ Class SuperMap : MapRevealer
 		+FLOATBOB
 		Inventory.MaxAmount 0;
 		Inventory.PickupMessage "$TXT_ITEMSUPERMAP";
-		Tag "$TAG_ITEMSUPERMAP";
 	}
 	States
 	{

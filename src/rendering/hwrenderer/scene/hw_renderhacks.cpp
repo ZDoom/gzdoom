@@ -115,30 +115,23 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 	{
 		Plane p;
 
+		FLightNode * node = sub->section->lighthead;
+
 		lightdata.Clear();
-
-		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sub->section);
-
-		if (flatLightList)
+		while (node)
 		{
-			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
-			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
-			while (it.NextPair(pair))
+			FDynamicLight * light = node->lightsource;
+
+			if (!light->IsActive())
 			{
-				auto node = pair->Value.get();
-				if (!node) continue;
-
-				FDynamicLight * light = node->lightsource;
-
-				if (!light->IsActive())
-				{
-					continue;
-				}
-				iter_dlightf++;
-
-				p.Set(plane->Normal(), plane->fD());
-				draw_dlightf += GetLight(lightdata, sub->sector->PortalGroup, p, light, true);
+				node = node->nextLight;
+				continue;
 			}
+			iter_dlightf++;
+
+			p.Set(plane->Normal(), plane->fD());
+			draw_dlightf += GetLight(lightdata, sub->sector->PortalGroup, p, light, true);
+			node = node->nextLight;
 		}
 
 		return screen->mLights->UploadLights(lightdata);

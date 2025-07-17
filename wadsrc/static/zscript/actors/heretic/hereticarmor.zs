@@ -7,7 +7,6 @@ Class SilverShield : BasicArmorPickup
 	{
 		+FLOATBOB
 		Inventory.Pickupmessage "$TXT_ITEMSHIELD1";
-		Tag "$TAG_ITEMSHIELD1";
 		Inventory.Icon "SHLDA0";
 		Armor.Savepercent 50;
 		Armor.Saveamount 100;
@@ -28,7 +27,6 @@ Class EnchantedShield : BasicArmorPickup
 	{
 		+FLOATBOB
 		Inventory.Pickupmessage "$TXT_ITEMSHIELD2";
-		Tag "$TAG_ITEMSHIELD2";
 		Inventory.Icon "SHD2A0";
 		Armor.Savepercent 75;
 		Armor.Saveamount 200;

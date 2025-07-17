@@ -274,7 +274,6 @@ enum ELevelFlags : unsigned int
 	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
 	LEVEL3_SECRET				= 0x00200000,   // level is a secret level
-	LEVEL3_SKYMIST				= 0x00400000,   // level skyfog uses the skymist texture
 };
 
 
@@ -334,7 +333,6 @@ struct level_info_t
 	FString		PName;
 	FString		SkyPic1;
 	FString		SkyPic2;
-	FString		SkyMistPic;
 	FString		FadeTable;
 	FString		CustomColorMap;
 	FString		F1Pic;
@@ -361,7 +359,6 @@ struct level_info_t
 	TArray<acsdefered_t> deferred;
 	float		skyspeed1;
 	float		skyspeed2;
-	float		skymistspeed;
 	uint32_t	fadeto;
 	uint32_t	outsidefog;
 	int			cdtrack;
@@ -382,8 +379,6 @@ struct level_info_t
 	int			fogdensity;
 	int			outsidefogdensity;
 	int			skyfog;
-	float		thickfogdistance;
-	float		thickfogmultiplier;
 	float		pixelstretch;
 
 	// Redirection: If any player is carrying the specified item, then

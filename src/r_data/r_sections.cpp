@@ -712,6 +712,7 @@ public:
 			dest.sector = &Level->sectors[group.groupedSections[0].section->sectorindex];
 			dest.mapsection = (short)group.groupedSections[0].section->mapsection;
 			dest.hacked = false;
+			dest.lighthead = nullptr;
 			dest.validcount = 0;
 			dest.segments.Set(&output.allLines[numsegments], group.segments.Size());
 			dest.sides.Set(&output.allSides[numsides], group.sideMap.CountUsed());

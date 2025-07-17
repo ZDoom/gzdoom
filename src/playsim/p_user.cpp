@@ -133,8 +133,6 @@ CUSTOM_CVAR(Float, cl_rubberband_limit, 756.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 		self = 0.0f;
 }
 
-EXTERN_CVAR (Int, cl_debugprediction)
-
 ColorSetList ColorSets;
 PainFlashList PainFlashes;
 
@@ -828,7 +826,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkin)
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetSkinCount)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
-	ACTION_RETURN_INT(Skins.SSize());
+	ACTION_RETURN_INT(Skins.size());
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetGender)

@@ -57,13 +57,6 @@
 #include "doom_aabbtree.h"
 #include "doom_levelmesh.h"
 #include "p_visualthinker.h"
-#include <memory>
-
-struct FGlobalDLightLists
-{
-	TMap<FSection*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
-	TMap<side_t*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
-};
 
 //============================================================================
 //
@@ -687,14 +680,12 @@ public:
 	unsigned int cdid;
 	FTextureID	skytexture1;
 	FTextureID	skytexture2;
-	FTextureID	skymisttexture;
 
 	float		skyspeed1;				// Scrolling speed of sky textures, in pixels per ms
 	float		skyspeed2;
-	float		skymistspeed;
 
 	double		sky1pos, sky2pos;
-	float		hw_sky1pos, hw_sky2pos, hw_skymistpos;
+	float		hw_sky1pos, hw_sky2pos;
 	bool		skystretch;
 	uint32_t	globalcolormap;
 
@@ -753,10 +744,6 @@ public:
 	bool		lightadditivesurfaces;
 	bool		notexturefill;
 	int			ImpactDecalCount;
-	float		thickfogdistance;
-	float		thickfogmultiplier;
-
-	FGlobalDLightLists lightlists;
 
 	FDynamicLight *lights;
 	DVisualThinker* VisualThinkerHead = nullptr;

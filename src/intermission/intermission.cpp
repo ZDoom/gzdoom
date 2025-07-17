@@ -325,10 +325,8 @@ void DIntermissionScreenCutscene::Drawer ()
 	ScaleOverrider ovr(twod);
 	IFVIRTUALPTRNAME(mScreenJobRunner, NAME_ScreenJobRunner, RunFrame)
 	{
-		int res = 0;
 		VMValue parm[] = { mScreenJobRunner, I_GetTimeFrac() };
-		VMReturn ret[] = { &res };
-		VMCall(func, parm, 2, ret, 1);
+		VMCall(func, parm, 2, nullptr, 0);
 	}
 }
 

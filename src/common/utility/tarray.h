@@ -1403,18 +1403,6 @@ public:
 		return n->Pair.Value;
 	}
 
-	template<typename... Args>
-	VT &TryEmplace(const KT key, Args&&... args)
-	{
-		Node *n = FindKey(key);
-		if (n == NULL)
-		{
-			n = NewKey(key);
-			::new(&n->Pair.Value) VT(std::forward<Args>(args)...);
-		}
-		return n->Pair.Value;
-	}
-
 	//=======================================================================
 	//
 	// Remove

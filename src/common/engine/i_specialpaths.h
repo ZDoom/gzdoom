@@ -2,7 +2,7 @@
 
 #include "zstring.h"
 
-#if defined(__unix__) || defined(__HAIKU__)
+#ifdef __unix__
 FString GetUserFile (const char *path);
 #endif
 FString M_GetAppDataPath(bool create);

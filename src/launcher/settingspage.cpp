@@ -83,7 +83,7 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 			}
 		}
 	}
-	catch (const std::exception&)
+	catch (const std::exception& ex)
 	{
 		hideLanguage = true;
 	}

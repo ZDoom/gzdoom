@@ -1036,30 +1036,29 @@ void FString::MergeChars (const char *charset, char newchar)
 	UnlockBuffer();
 }
 
-bool FString::Substitute (const FString &oldstr, const FString &newstr)
+void FString::Substitute (const FString &oldstr, const FString &newstr)
 {
 	return Substitute (oldstr.Chars, newstr.Chars, oldstr.Len(), newstr.Len());
 }
 
-bool FString::Substitute (const char *oldstr, const FString &newstr)
+void FString::Substitute (const char *oldstr, const FString &newstr)
 {
 	return Substitute (oldstr, newstr.Chars, strlen(oldstr), newstr.Len());
 }
 
-bool FString::Substitute (const FString &oldstr, const char *newstr)
+void FString::Substitute (const FString &oldstr, const char *newstr)
 {
 	return Substitute (oldstr.Chars, newstr, oldstr.Len(), strlen(newstr));
 }
 
-bool FString::Substitute (const char *oldstr, const char *newstr)
+void FString::Substitute (const char *oldstr, const char *newstr)
 {
 	return Substitute (oldstr, newstr, strlen(oldstr), strlen(newstr));
 }
 
-bool FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
+void FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrlen, size_t newstrlen)
 {
-	if (oldstr == nullptr || newstr == nullptr || *oldstr == 0) return false;
-	bool found = false;
+	if (oldstr == nullptr || newstr == nullptr || *oldstr == 0) return;
 	LockBuffer();
 	for (size_t checkpt = 0; checkpt < Len(); )
 	{
@@ -1067,7 +1066,6 @@ bool FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 		size_t len = Len();
 		if (match != NULL)
 		{
-			found = true;
 			size_t matchpt = match - Chars;
 			if (oldstrlen != newstrlen)
 			{
@@ -1083,7 +1081,6 @@ bool FString::Substitute (const char *oldstr, const char *newstr, size_t oldstrl
 		}
 	}
 	UnlockBuffer();
-	return found;
 }
 
 bool FString::IsInt () const

@@ -73,7 +73,6 @@ class DynamicLight : Actor
 		+FIXMAPTHINGPOS
 		+INVISIBLE
 		+NOTONAUTOMAP
-		+LIGHTMULTALPHA
 	}
 	
 	//==========================================================================

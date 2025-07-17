@@ -39,7 +39,6 @@
 #include "textures.h"
 #include "hw_renderstate.h"
 #include "v_video.h"
-#include "printf.h"
 
 
 static bool IsGlslWhitespace(char c)
@@ -82,8 +81,8 @@ FString RemoveLegacyUserUniforms(FString code)
 {
 	// User shaders must declare their uniforms via the GLDEFS file.
 
-	bool found = code.Substitute("uniform sampler2D tex;", "                      ");
-	found = code.Substitute("uniform float timer;", "                    ") || found;
+	code.Substitute("uniform sampler2D tex;", "                      ");
+	code.Substitute("uniform float timer;", "                    ");
 
 	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
 
@@ -121,20 +120,12 @@ FString RemoveLegacyUserUniforms(FString code)
 					chars[i] = ' ';
 			}
 			startIndex = statementEndIndex;
-			found = true;
 		}
 		else
 		{
 			startIndex = matchIndex + 7;
 		}
 	}
-
-	if(found)
-	{
-		DPrintf(DMSG_WARNING, TEXTCOLOR_ORANGE "timer and tex uniforms should not be explicitly declared.\n");
-	}
-
-	bool foundtexture2d = false;
 
 	// Also remove all occurences of the token 'texture2d'. Some shaders may still use this deprecated function to access a sampler.
 	// Modern GLSL only allows use of 'texture'.
@@ -144,8 +135,6 @@ FString RemoveLegacyUserUniforms(FString code)
 		if (matchIndex == -1)
 			break;
 
-		foundtexture2d = true;
-
 		// Check if this is a real token.
 		bool isKeywordStart = matchIndex == 0 || !isalnum(chars[matchIndex - 1] & 255);
 		bool isKeywordEnd = matchIndex + 9 == len || !isalnum(chars[matchIndex + 9] & 255);
@@ -154,11 +143,6 @@ FString RemoveLegacyUserUniforms(FString code)
 			chars[matchIndex + 7] = chars[matchIndex + 8] = ' ';
 		}
 		startIndex = matchIndex + 9;
-	}
-
-	if(foundtexture2d)
-	{
-		DPrintf(DMSG_WARNING, TEXTCOLOR_ORANGE "texture2d is deprecated, use texture instead.\n");
 	}
 
 	code.UnlockBuffer();

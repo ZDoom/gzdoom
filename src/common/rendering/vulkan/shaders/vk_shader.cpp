@@ -30,32 +30,6 @@
 #include "version.h"
 #include "cmdlib.h"
 
-ShaderIncludeResult VkShaderManager::OnInclude(FString headerName, FString includerName, size_t depth)
-{
-	if (depth > 8)
-		I_Error("Too much include recursion!");
-
-	FString includeguardname;
-	includeguardname << "_HEADERGUARD_" << headerName.GetChars();
-	includeguardname.ReplaceChars("/\\.", '_');
-
-	FString code;
-	code << "#ifndef " << includeguardname.GetChars() << "\n";
-	code << "#define " << includeguardname.GetChars() << "\n";
-	code << "#line 1\n";
-
-	int lumpNum = fileSystem.FindFile(headerName.GetChars());
-
-	if(lumpNum >= 0)
-	{
-		code << GetStringFromLump(lumpNum, false);
-	}
-
-	code << "\n#endif\n";
-
-	return ShaderIncludeResult(headerName.GetChars(), code.GetChars());
-}
-
 bool VkShaderManager::CompileNextShader()
 {
 	const char *mainvp = "shaders/glsl/main.vp";
@@ -204,9 +178,6 @@ static const char *shaderBindings = R"(
 		int uShadowmapFilter;
 		
 		int uLightBlendMode;
-
-		float uThickFogDistance;
-		float uThickFogMultiplier;
 	};
 
 	layout(set = 1, binding = 1, std140) uniform MatricesUBO {
@@ -370,7 +341,6 @@ static const char *shaderBindings = R"(
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString code = GetTargetGlslVersion();
-	code << "#extension GL_GOOGLE_include_directive : enable\n";
 	code << defines;
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 #ifdef NPOT_EMULATION
@@ -385,15 +355,12 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 		.Type(ShaderType::Vertex)
 		.AddSource(shadername.GetChars(), code.GetChars())
 		.DebugName(shadername.GetChars())
-		.OnIncludeLocal(OnInclude)
-		.OnIncludeSystem(OnInclude)
 		.Create(shadername.GetChars(), fb->device.get());
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
-	code << "#extension GL_GOOGLE_include_directive : enable\n";
 	if (fb->RaytracingEnabled())
 		code << "\n#define SUPPORTS_RAYTRACING\n";
 	code << defines;
@@ -481,8 +448,6 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 		.Type(ShaderType::Fragment)
 		.AddSource(shadername.GetChars(), code.GetChars())
 		.DebugName(shadername.GetChars())
-		.OnIncludeLocal(OnInclude)
-		.OnIncludeSystem(OnInclude)
 		.Create(shadername.GetChars(), fb->device.get());
 }
 

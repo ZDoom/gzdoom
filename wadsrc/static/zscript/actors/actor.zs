@@ -815,7 +815,7 @@ class Actor : Thinker native
 	
 	native Actor OldSpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnPuff(class<Actor> pufftype, vector3 pos, double hitdir, double particledir, int updown, int flags = 0, Actor victim = null);
-	native Actor SpawnBlood (Vector3 pos1, double dir, int damage);
+	native void SpawnBlood (Vector3 pos1, double dir, int damage);
 	native void BloodSplatter (Vector3 pos, double hitangle, bool axe = false);
 	native bool HitWater (sector sec, Vector3 pos, bool checkabove = false, bool alert = true, bool force = false, int flags = 0);
 	native void PlaySpawnSound(Actor missile);
@@ -1363,7 +1363,7 @@ class Actor : Thinker native
 	action native void A_OverlayTranslation(int layer, name trname);
 	
 	native bool A_AttachLightDef(Name lightid, Name lightdef);
-	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0, double intensity = 1.0);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
 	native bool A_RemoveLight(Name lightid);
 
 	//================================================
@@ -1530,9 +1530,9 @@ class Actor : Thinker native
 	native version("4.12") void SetAnimationFrameRate(double framerate);
 	native version("4.12") ui void SetAnimationFrameRateUI(double framerate);
 
-	native version("4.12") void SetModelFlag(int flag, int iqmFlags = 0);
-	native version("4.12") void ClearModelFlag(int flag, int iqmFlags = 0);
-	native version("4.12") void ResetModelFlags(bool resetModel = true, bool resetIqm = false);
+	native version("4.12") void SetModelFlag(int flag);
+	native version("4.12") void ClearModelFlag(int flag);
+	native version("4.12") void ResetModelFlags();
     
     
 	action version("4.12") void A_SetAnimation(Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0)

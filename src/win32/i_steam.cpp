@@ -339,7 +339,7 @@ TArray<FString> I_GetSteamPath()
 			}
 		}
 	}
-	catch (const CRecoverableError&)
+	catch (const CRecoverableError& err)
 	{
 		// don't abort on errors in here. Just return an empty path.
 	}

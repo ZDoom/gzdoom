@@ -730,6 +730,7 @@ public:
 
 protected:
 	DLevelScript	*next, *prev;
+	TObjPtr<DACSThinker*> controller;
 	int				script;
 	TArray<int32_t>	Localvars;
 	int				*pc;
@@ -738,7 +739,6 @@ protected:
 	TObjPtr<AActor*>	activator;
 	line_t			*activationline;
 	bool			backSide;
-	bool			bClientSide;
 	FFont			*activefont = nullptr;
 	int				hudwidth, hudheight;
 	int				ClipRectLeft, ClipRectTop, ClipRectWidth, ClipRectHeight;
@@ -766,7 +766,6 @@ protected:
 		}
 	}
 
-	DACSThinker* GetController() const;
 	void Link();
 	void Unlink();
 	void PutLast();
@@ -3545,8 +3544,7 @@ void DLevelScript::Serialize(FSerializer &arc)
 		("cliprectheight", ClipRectHeight)
 		("wrapwidth", WrapWidth)
 		("inmodulescriptnum", InModuleScriptNumber)
-		("level", Level)
-		("bclientside", bClientSide);
+		("level", Level);
 
 	if (arc.isReading())
 	{
@@ -3561,14 +3559,8 @@ void DLevelScript::Serialize(FSerializer &arc)
 	}
 }
 
-DACSThinker* DLevelScript::GetController() const
-{
-	return bClientSide ? Level->ClientSideACSThinker : Level->ACSThinker;
-}
-
 void DLevelScript::Unlink ()
 {
-	auto controller = GetController();
 	if (controller->LastScript == this)
 	{
 		controller->LastScript = prev;
@@ -3593,7 +3585,6 @@ void DLevelScript::Unlink ()
 
 void DLevelScript::Link ()
 {
-	auto controller = GetController();
 	next = controller->Scripts;
 	GC::WriteBarrier(this, next);
 	if (controller->Scripts)
@@ -3612,7 +3603,6 @@ void DLevelScript::Link ()
 
 void DLevelScript::PutLast ()
 {
-	auto controller = GetController();
 	if (controller->LastScript == this)
 		return;
 
@@ -3633,7 +3623,6 @@ void DLevelScript::PutLast ()
 
 void DLevelScript::PutFirst ()
 {
-	auto controller = GetController();
 	if (controller->Scripts == this)
 		return;
 
@@ -5570,7 +5559,6 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 		{
 			if (args[0] == 1) Level->skyspeed1 = ACSToFloat(args[1]);
 			else if (args[0] == 2) Level->skyspeed2 = ACSToFloat(args[1]);
-			else if (args[0] == 3) Level->skymistspeed = ACSToFloat(args[1]);
 			return 1;
 		}
 
@@ -6977,7 +6965,6 @@ int DLevelScript::RunScript()
 
 	// Hexen truncates all special arguments to bytes (only when using an old MAPINFO and old ACS format
 	const int specialargmask = ((Level->flags2 & LEVEL2_HEXENHACK) && activeBehavior->GetFormat() == ACS_Old) ? 255 : ~0;
-	auto controller = GetController();
 
 	switch (state)
 	{
@@ -10478,14 +10465,14 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 		if (Level->ClientSideACSThinker == nullptr)
 			Level->ClientSideACSThinker = Level->CreateClientsideThinker<DACSThinker>();
 
-		bClientSide = true;
+		controller = Level->ClientSideACSThinker;
 	}
 	else
 	{
 		if (Level->ACSThinker == nullptr)
 			Level->ACSThinker = Level->CreateThinker<DACSThinker>();
 
-		bClientSide = false;
+		controller = Level->ACSThinker;
 	}
 
 	script = num;
@@ -10513,7 +10500,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 	// goes by while they're in their default state.
 
 	if (!(flags & ACS_ALWAYS))
-		GetController()->RunningScripts[num] = this;
+		controller->RunningScripts[num] = this;
 
 	Link();
 

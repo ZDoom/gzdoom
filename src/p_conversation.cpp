@@ -218,10 +218,8 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 
 	IFVM(Actor, TakeInventory)
 	{
-		int taken = false;
 		VMValue params[] = { player->mo, itemtype, amount, false, false };
-		VMReturn rets[] = { &taken };
-		VMCall(func, params, 5, rets, 1);
+		VMCall(func, params, 5, nullptr, 0);
 	}
 }
 

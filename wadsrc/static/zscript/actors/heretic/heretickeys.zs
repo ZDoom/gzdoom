@@ -16,7 +16,6 @@ Class KeyGreen : HereticKey
 	Default
 	{
 		Inventory.PickupMessage "$TXT_GOTGREENKEY";
-		Tag "$TAG_GOTGREENKEY";
 		Inventory.Icon "GKEYICON";
 	}
 	States
@@ -34,7 +33,6 @@ Class KeyBlue : HereticKey
 	Default
 	{
 		Inventory.PickupMessage "$TXT_GOTBLUEKEY";
-		Tag "$TAG_GOTBLUEKEY";
 		Inventory.Icon "BKEYICON";
 	}
 	States
@@ -52,7 +50,6 @@ Class KeyYellow : HereticKey
 	Default
 	{
 		Inventory.PickupMessage "$TXT_GOTYELLOWKEY";
-		Tag "$TAG_GOTYELLOWKEY";
 		Inventory.Icon "YKEYICON";
 	}
 	States

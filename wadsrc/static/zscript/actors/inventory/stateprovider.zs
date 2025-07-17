@@ -413,7 +413,7 @@ class StateProvider : Inventory
 	//
 	//---------------------------------------------------------------------------
 
-	action void A_ReFire(statelabel flash = null, bool autoSwitch = true)
+	action void A_ReFire(statelabel flash = null)
 	{
 		let player = player;
 		bool pending;
@@ -438,7 +438,7 @@ class StateProvider : Inventory
 		else
 		{
 			player.refire = 0;
-			player.ReadyWeapon.CheckAmmo (player.ReadyWeapon.bAltFire? Weapon.AltFire : Weapon.PrimaryFire, autoSwitch);
+			player.ReadyWeapon.CheckAmmo (player.ReadyWeapon.bAltFire? Weapon.AltFire : Weapon.PrimaryFire, true);
 		}
 	}
 	

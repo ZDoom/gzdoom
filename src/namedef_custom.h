@@ -483,9 +483,6 @@ xx(PowerupType)
 xx(PlayerPawn)
 xx(RipSound)
 xx(Archvile)
-xx(Obituary)
-xx(HitObituary)
-xx(SelfObituary)
 
 xx(ResolveState)
 

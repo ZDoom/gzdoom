@@ -77,7 +77,6 @@ public:
 	void SetDontLightOthers(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTOTHERS; else m_lightFlags &= ~LF_DONTLIGHTOTHERS; }
 	void SetDontLightMap(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTMAP; else m_lightFlags &= ~LF_DONTLIGHTMAP; }
 	void SetNoShadowmap(bool on) { if (on) m_lightFlags |= LF_NOSHADOWMAP; else m_lightFlags &= ~LF_NOSHADOWMAP; }
-	void SetLightDefIntensity(double i) { m_LightDefIntensity = i; }
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = DAngle::fromDeg(angle); }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = DAngle::fromDeg(angle); }
@@ -129,7 +128,6 @@ protected:
 	DAngle m_spotInnerAngle = DAngle::fromDeg(10.0);
 	DAngle m_spotOuterAngle = DAngle::fromDeg(25.0);
 	DAngle m_pitch = nullAngle;
-	double m_LightDefIntensity = 1.0; // Light over/underbright multiplication for GLDEFS-defined lights
 	
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def);
 };
@@ -197,12 +195,6 @@ struct FLightNode
 	};
 };
 
-struct FDynamicLightTouchLists
-{
-	TMap<FSection*, FSection*> flat_tlist;
-	TMap<side_t*, side_t*> wall_tlist;
-};
-
 struct FDynamicLight
 {
 	friend class FLightDefaults;
@@ -233,7 +225,6 @@ struct FDynamicLight
 	int GetBlue() const { return pArgs[LIGHT_BLUE]; }
 	int GetIntensity() const { return pArgs[LIGHT_INTENSITY]; }
 	int GetSecondaryIntensity() const { return pArgs[LIGHT_SECONDARY_INTENSITY]; }
-	double GetLightDefIntensity() const { return lightDefIntensity; }
 
 	bool IsSubtractive() const { return !!((*pLightFlags) & LF_SUBTRACTIVE); }
 	bool IsAdditive() const { return !!((*pLightFlags) & LF_ADDITIVE); }
@@ -254,7 +245,6 @@ struct FDynamicLight
 
 	void Tick();
 	void UpdateLocation();
-	void AddLightNode(FSection *section, side_t *sidedef);
 	void LinkLight();
 	void UnlinkLight();
 	void ReleaseLight();
@@ -296,9 +286,6 @@ public:
 	bool swapped;
 	bool explicitpitch;
 
-	double lightDefIntensity;
-
-	FDynamicLightTouchLists touchlists;
 };
 
 

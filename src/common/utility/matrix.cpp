@@ -114,22 +114,6 @@ void VSMatrix::multQuaternion(const TVector4<FLOATTYPE>& q)
 	multMatrix(m);
 }
 
-void VSMatrix::multQuaternion(const TQuaternion<FLOATTYPE>& q)
-{
-	FLOATTYPE m[16] = { FLOATTYPE(0.0) };
-	m[0 * 4 + 0] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.Y * q.Y - FLOATTYPE(2.0) * q.Z * q.Z;
-	m[1 * 4 + 0] = FLOATTYPE(2.0) * q.X * q.Y - FLOATTYPE(2.0) * q.W * q.Z;
-	m[2 * 4 + 0] = FLOATTYPE(2.0) * q.X * q.Z + FLOATTYPE(2.0) * q.W * q.Y;
-	m[0 * 4 + 1] = FLOATTYPE(2.0) * q.X * q.Y + FLOATTYPE(2.0) * q.W * q.Z;
-	m[1 * 4 + 1] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.X * q.X - FLOATTYPE(2.0) * q.Z * q.Z;
-	m[2 * 4 + 1] = FLOATTYPE(2.0) * q.Y * q.Z - FLOATTYPE(2.0) * q.W * q.X;
-	m[0 * 4 + 2] = FLOATTYPE(2.0) * q.X * q.Z - FLOATTYPE(2.0) * q.W * q.Y;
-	m[1 * 4 + 2] = FLOATTYPE(2.0) * q.Y * q.Z + FLOATTYPE(2.0) * q.W * q.X;
-	m[2 * 4 + 2] = FLOATTYPE(1.0) - FLOATTYPE(2.0) * q.X * q.X - FLOATTYPE(2.0) * q.Y * q.Y;
-	m[3 * 4 + 3] = FLOATTYPE(1.0);
-	multMatrix(m);
-}
-
 
 // gl LoadMatrix implementation
 void 

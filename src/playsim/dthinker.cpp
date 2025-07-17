@@ -70,9 +70,6 @@ struct ProfileInfo
 static TMap<FName, ProfileInfo> Profiles;
 static unsigned int profilethinkers, profilelimit;
 DThinker *NextToThink;
-// Denote that non-travelling Thinkers are about to start doing so. While active, only
-// allow things to be added to the list, not removed.
-bool bTravelling = false;
 
 //==========================================================================
 //
@@ -356,6 +353,22 @@ void FThinkerCollection::DestroyAllThinkers(bool fullgc)
 		ClearGlobalVMStack();
 		if (fullgc) I_Error("DestroyAllThinkers failed");
 		else I_FatalError("DestroyAllThinkers failed");
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FThinkerCollection::CleanUpTravellers(bool saveGame)
+{
+	DestroyThinkersInList(STAT_TRAVELLING);
+	for (size_t i = 0u; i <= MAX_STATNUM; ++i)
+	{
+		FreshThinkers[i].RemoveTravellers(saveGame);
+		Thinkers[i].RemoveTravellers(saveGame);
 	}
 }
 
@@ -662,6 +675,32 @@ void FThinkerList::SaveList(FSerializer &arc)
 //
 //==========================================================================
 
+void FThinkerList::RemoveTravellers(bool saveGame)
+{
+	DThinker* node = GetHead();
+	if (node == nullptr)
+		return;
+
+	while (node != Sentinel)
+	{
+		NextToThink = node->NextThinker;
+		if ((node->ObjectFlags & OF_Travelling) && !(node->ObjectFlags & OF_EuthanizeMe))
+		{
+			if (saveGame)
+				node->ObjectFlags &= ~OF_Travelling;
+			else
+				node->Destroy();
+		}
+		node = NextToThink;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FThinkerList::OnLoad()
 {
 	DThinker* node = GetHead();
@@ -930,16 +969,6 @@ void DThinker::ChangeStatNum(int statnum)
 
 static void ChangeStatNum(DThinker *self, int statnum)
 {
-	// Wait until after these Thinkers are processed to allow modifying them,
-	// otherwise relinking and callbacks will be completely messed up. This can
-	// only happen from map objects spawning in intentionally trying to mess with
-	// the list.
-	if (self->ObjectFlags & OF_Travelling)
-	{
-		Printf(TEXTCOLOR_RED "Travelling Thinkers cannot have their statnum changed\n");
-		return;
-	}
-
 	// This will always break Actors, they should use STAT_TRAVELLING instead to
 	// transition between levels.
 	if (statnum == STAT_STATIC && self->IsKindOf(NAME_Actor))
@@ -947,44 +976,9 @@ static void ChangeStatNum(DThinker *self, int statnum)
 		Printf(TEXTCOLOR_RED "Actors cannot be added to STAT_STATIC\n");
 		return;
 	}
-
-	if (bTravelling)
-	{
-		// Don't let things be moved out of the list, only into it.
-		if (statnum != STAT_TRAVELLING)
-		{
-			Printf(TEXTCOLOR_RED "Thinkers can only be moved into STAT_TRAVELLING while changing levels\n");
-			return;
-		}
-		// These should be handled by the owning Actor, otherwise they'll lose them and become useless anyway.
-		if (self->IsKindOf(NAME_Inventory) && self->PointerVar<AActor>(NAME_Owner) != nullptr)
-		{
-			Printf(TEXTCOLOR_RED "Owned Inventory items must travel with their owner on level change\n");
-			return;
-		}
-		if (self->IsKindOf(NAME_Bot))
-		{
-			Printf(TEXTCOLOR_RED "Bot Thinkers must travel with their owner on level change\n");
-			return;
-		}
-		auto mo = dyn_cast<AActor>(self);
-		if (mo != nullptr && (mo->flags & MF_UNMORPHED))
-		{
-			Printf(TEXTCOLOR_RED "Unmorphed Actors must travel with their owner on level change\n");
-			return;
-		}
-		// These need to be locked down since they have native fields that won't be cleared
-		// properly at the moment.
-		auto cls = self->GetClass()->NativeClass();
-		if (cls->TypeName != NAME_Thinker && cls->TypeName != NAME_Actor)
-		{
-			Printf(TEXTCOLOR_RED "Native thinkers cannot travel\n");
-			return;
-		}
-	}
 	else if (statnum == STAT_TRAVELLING)
 	{
-		Printf(TEXTCOLOR_RED "Thinkers cannot be added to STAT_TRAVELLING while the game isn't changing levels\n");
+		Printf(TEXTCOLOR_RED "Thinkers cannot be added to STAT_TRAVELLING manually\n");
 		return;
 	}
 
@@ -996,6 +990,50 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 	PARAM_SELF_PROLOGUE(DThinker);
 	PARAM_INT(stat);
 	ChangeStatNum(self, stat);
+	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static void AddToTravellingList(DThinker* self)
+{
+	// These should be handled by the owning Actor, otherwise they'll lose them and become useless anyway.
+	if (self->IsKindOf(NAME_Inventory) && self->PointerVar<AActor>(NAME_Owner) != nullptr)
+	{
+		Printf(TEXTCOLOR_RED "Owned Inventory items must travel with their owner on level change\n");
+		return;
+	}
+	if (self->IsKindOf(NAME_Bot))
+	{
+		Printf(TEXTCOLOR_RED "Bot Thinkers must travel with their owner on level change\n");
+		return;
+	}
+	auto mo = dyn_cast<AActor>(self);
+	if (mo != nullptr && (mo->flags & MF_UNMORPHED))
+	{
+		Printf(TEXTCOLOR_RED "Unmorphed Actors must travel with their owner on level change\n");
+		return;
+	}
+	// These need to be locked down since they have native fields that won't be cleared
+	// properly at the moment.
+	auto cls = self->GetClass()->NativeClass();
+	if (cls->TypeName != NAME_Thinker && cls->TypeName != NAME_Actor)
+	{
+		Printf(TEXTCOLOR_RED "Native thinkers cannot travel\n");
+		return;
+	}
+
+	self->Level->AddToTravellingList(self);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DThinker, AddToTravellingList, AddToTravellingList)
+{
+	PARAM_SELF_PROLOGUE(DThinker);
+	AddToTravellingList(self);
 	return 0;
 }
 

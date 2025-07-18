@@ -1,3 +1,5 @@
+// clang-format off
+
 xx(TK_Identifier,			"identifier")
 xx(TK_StringConst,			"string constant")
 xx(TK_NameConst,			"name constant")
@@ -156,3 +158,5 @@ xx(TK_Bright,				"'bright'")
 xx(TK_Let,					"'let'")
 xx(TK_StaticConst,			"'static const'")
 #undef xx
+
+// clang-format on

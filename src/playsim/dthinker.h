@@ -60,6 +60,7 @@ struct FThinkerList
 	bool IsEmpty() const;
 	void DestroyThinkers();
 	bool DoDestroyThinkers();
+	void RemoveTravellers(bool saveGame);
 	void OnLoad();
 	int TickThinkers(FThinkerList *dest);	// Returns: # of thinkers ticked
 	int ProfileThinkers(FThinkerList *dest);
@@ -82,6 +83,7 @@ struct FThinkerCollection
 	void RunThinkers(FLevelLocals *Level);	// The level is needed to tick the lights
 	void RunClientsideThinkers(FLevelLocals* Level);
 	void DestroyAllThinkers(bool fullgc = true);
+	void CleanUpTravellers(bool saveGame);
 	void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	void MarkRoots();
 	void OnLoad();
@@ -111,6 +113,7 @@ public:
 	size_t PropagateMark();
 	
 	void ChangeStatNum (int statnum);
+	inline int GetStatNum() const { return _statNum; }
 
 private:
 	void Remove();
@@ -121,6 +124,7 @@ private:
 	friend class DObject;
 	friend class FDoomSerializer;
 
+	int8_t _statNum = -1;
 	DThinker *NextThinker = nullptr, *PrevThinker = nullptr;
 
 public:

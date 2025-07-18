@@ -234,8 +234,15 @@ struct InputEvent native play version("2.4")
         Key_Pad_B = 0x1C1,
         Key_Pad_X = 0x1C2,
         Key_Pad_Y = 0x1C3,
+        Key_Pad_Paddle1 = 0x1C4,
+        Key_Pad_Paddle2 = 0x1C5,
+        Key_Pad_Paddle3 = 0x1C6,
+        Key_Pad_Paddle4 = 0x1C7,
+        Key_Pad_Guide = 0x1C8,
+        Key_Pad_Misc1 = 0x1C9,
+        Key_Pad_Touchpad = 0x1CA,
 
-        Num_Keys = 0x1C4
+        Num_Keys = 0x1CB
     }
     
     //

@@ -621,7 +621,7 @@ public:
 	// This needs to be done better, but for now it should be good enough.
 	bool PlayerInGame(player_t *player)
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		for (uint i = 0; i < MAXPLAYERS; i++)
 		{
 			if (player == Players[i]) return PlayerInGame(i);
 		}
@@ -630,7 +630,7 @@ public:
 
 	int PlayerNum(player_t *player)
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		for (uint i = 0; i < MAXPLAYERS; i++)
 		{
 			if (player == Players[i]) return i;
 		}

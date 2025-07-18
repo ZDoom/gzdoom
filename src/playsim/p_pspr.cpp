@@ -458,7 +458,7 @@ void DPSprite::NewTick()
 	// This function should be called after the beginning of a tick, before any possible
 	// prprite-event, or near the end, after any possible psprite event.
 	// Because data is reset for every tick (which it must be) this has no impact on savegames.
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (uint i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 		{
@@ -1489,7 +1489,7 @@ ADD_STAT(psprites)
 {
 	FString out;
 	DPSprite *pspr;
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (uint i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;

@@ -228,7 +228,7 @@ FTranslationID CreateBloodTranslation(PalEntry color)
 
 void R_InitTranslationTables ()
 {
-	int i;
+	uint i;
 
 	// Each player gets two translations. Doom and Strife don't use the
 	// extra ones, but Heretic and Hexen do. These are set up during

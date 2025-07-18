@@ -577,9 +577,9 @@ VMFrame *VMFrameStack::PopFrame()
 
 void VMCheckParamCount(VMFunction* func, int retcount, int argcount)
 {
-	if (func->Proto->ReturnTypes.Size() != retcount)
+	if (func->Proto->ReturnTypes.SSize() != retcount)
 		I_FatalError("Incorrect return value passed to %s", func->PrintableName);
-	if (func->Proto->ArgumentTypes.Size() != argcount)
+	if (func->Proto->ArgumentTypes.SSize() != argcount)
 		I_FatalError("Incorrect parameter count passed to %s", func->PrintableName);
 }
 

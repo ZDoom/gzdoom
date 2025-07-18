@@ -54,7 +54,7 @@ NetworkPage::NetworkPage(LauncherWindow* launcher, const FStartupSelectionInfo& 
 		IWADsList->AddItem(work.GetChars());
 	}
 
-	if (info.DefaultNetIWAD >= 0 && info.DefaultNetIWAD < info.Wads->Size())
+	if (info.DefaultNetIWAD >= 0 && info.DefaultNetIWAD < info.Wads->SSize())
 	{
 		IWADsList->SetSelectedItem(info.DefaultNetIWAD);
 		IWADsList->ScrollToItem(info.DefaultNetIWAD);

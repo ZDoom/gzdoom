@@ -114,7 +114,7 @@ void DEarthquake::Serialize(FSerializer &arc)
 
 void DEarthquake::Tick ()
 {
-	int i;
+	uint i;
 
 	if (m_Spot == NULL)
 	{

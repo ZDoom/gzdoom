@@ -322,7 +322,7 @@ void P_FreeStrifeConversations ()
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
 	AActor *oldtarget;
-	int i;
+	uint i;
 
 	// Make sure this is actually a player.
 	if (pc == nullptr || pc->player == nullptr || npc == nullptr || !pc->Level->isPrimaryLevel()) return;
@@ -377,7 +377,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	while (CurNode->ItemCheck.Size() > 0 && CurNode->ItemCheck[0].Item != NULL)
 	{
 		bool jump = true;
-		for (i = 0; i < (int)CurNode->ItemCheck.Size(); ++i)
+		for (i = 0; i < CurNode->ItemCheck.Size(); ++i)
 		{
 			if(!CheckStrifeItem (pc->player, CurNode->ItemCheck[i].Item, CurNode->ItemCheck[i].Amount))
 			{
@@ -446,7 +446,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 void P_ResumeConversation ()
 {
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (uint i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;

@@ -489,7 +489,7 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 	bool only_indexed = request.filter.value("") == "indexed";
 	bool only_named = request.filter.value("") == "named";
 
-	for (int64_t i = 0; i < variableNodes.size(); i++)
+	for (int64_t i = 0; i < (int64_t)variableNodes.size(); i++)
 	{
 		auto asVariableSerializable = dynamic_cast<IProtocolVariableSerializable *>(variableNodes.at(i).get());
 		if (!asVariableSerializable)

@@ -263,7 +263,7 @@ PClassActor * FParser::T_GetMobjType(svalue_t arg)
 //==========================================================================
 int FParser::T_GetPlayerNum(const svalue_t &arg)
 {
-	int playernum;
+	uint playernum;
 	if(arg.type == svt_mobj)
 	{
 		if(!actorvalue(arg) || !arg.value.mobj->player)

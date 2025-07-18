@@ -141,6 +141,8 @@ public:
 	FString TakeValue(const FArg check);
 	int NumArgs() const;
 
+	static void PrintHelpMessage(bool full);
+
 private:
 	void FlushArgs();
 	void SetArg(int argnum, const char *arg);

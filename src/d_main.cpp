@@ -3834,6 +3834,20 @@ static int D_DoomMain_Internal (void)
 
 	C_InitConsole(80*8, 25*8, false);
 
+	bool wantsVersion = Args->CheckParm(FArg_version)
+		|| Args->CheckParm(FArg_v);
+	bool wantsHelp = Args->CheckParm(FArg_help)
+		|| Args->CheckParm(FArg_h)
+		|| Args->CheckParm(FArg_help_all)
+		|| Args->CheckParm(FArg_doshelp);
+
+	if (wantsVersion || wantsHelp)
+	{
+		if (wantsHelp)
+			FArgs::PrintHelpMessage(Args->CheckParm(FArg_help_all));
+		return 0;
+	}
+
 	I_DetectOS();
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.

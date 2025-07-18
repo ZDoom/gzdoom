@@ -1776,7 +1776,7 @@ static int UseInventory (FLevelLocals *Level, AActor *activator, const char *typ
 	}
 	if (activator == NULL)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (uint i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (Level->PlayerInGame(i))
 				ret += DoUseInv (Level->Players[i]->mo, info);
@@ -3753,7 +3753,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 
 int DLevelScript::CountPlayers ()
 {
-	int count = 0, i;
+	uint count = 0, i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (Level->PlayerInGame(i))
@@ -3906,7 +3906,7 @@ void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
 	bool fadingFrom = a1 >= 0;
 	float fr1 = 0, fg1 = 0, fb1 = 0, fa1 = 0;
 	float fr2, fg2, fb2, fa2;
-	int i;
+	uint i;
 
 	fr2 = (float)r2 / 255.f;
 	fg2 = (float)g2 / 255.f;
@@ -10189,7 +10189,7 @@ scriptwait:
 
 		case PCD_CHECKPLAYERCAMERA:
 			{
-				int playernum = STACK(1);
+				uint playernum = STACK(1);
 
 				if (playernum < 0 || playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum) ||
 					Level->Players[playernum]->camera == nullptr || Level->Players[playernum]->camera->player != nullptr)

@@ -261,7 +261,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 	// lowered below somebody's current frag count.
 	if (deathmatch && self > 0)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (uint i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
@@ -509,7 +509,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	if ((self & DF2_NO_AUTOMAP) && automapactive)
 		AM_Stop ();
 
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (uint i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t *p = &players[i];
 
@@ -2236,7 +2236,7 @@ static void CheckEpisodeCmd()
 	if (v != nullptr)
 	{
 		episode = atoi(v) - 1;
-		if (episode < 0 || episode >= AllEpisodes.Size())
+		if (episode < 0 || episode >= AllEpisodes.SSize())
 		{
 			Printf("Invalid episode %s\n", v);
 			episode = 0;
@@ -3039,7 +3039,7 @@ static void GC_MarkGameRoots()
 		Level->Mark();
 
 	// Mark players.
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (uint i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 			players[i].PropagateMark();

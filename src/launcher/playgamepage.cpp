@@ -41,7 +41,7 @@ PlayGamePage::PlayGamePage(LauncherWindow* launcher, const FStartupSelectionInfo
 		GamesList->AddItem(work.GetChars());
 	}
 
-	if (info.DefaultIWAD >= 0 && info.DefaultIWAD < info.Wads->Size())
+	if (info.DefaultIWAD >= 0 && info.DefaultIWAD < info.Wads->SSize())
 	{
 		GamesList->SetSelectedItem(info.DefaultIWAD);
 		GamesList->ScrollToItem(info.DefaultIWAD);

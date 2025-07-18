@@ -750,7 +750,7 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 	static const char *const INVOKER = "invoker";
 	static const char *const STATE_POINTER = "stateinfo";
 
-	auto implicitCount = GetImplicitParmeterCount(m_stackFrame);
+	int implicitCount = GetImplicitParmeterCount(m_stackFrame);
 	if (paramidx < implicitCount)
 	{
 		switch (paramidx)
@@ -771,7 +771,7 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 	if (variant)
 	{
 		auto &params = variant->ArgNames;
-		if (paramidx < params.Size())
+		if (paramidx < params.SSize())
 		{
 			return params[paramidx].GetChars();
 		}

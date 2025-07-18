@@ -347,7 +347,7 @@ CCMD(dumplinktable)
 
 CCMD(printinv)
 {
-	int pnum = consoleplayer;
+	uint pnum = consoleplayer;
 
 #ifdef _DEBUG
 	// Only allow peeking on other players' inventory in debug builds.
@@ -446,7 +446,7 @@ CCMD(listsnapshots)
 		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
 		if (snapshot->mBuffer != nullptr)
 		{
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
+			Printf("%s (%lu -> %lu bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
 		}
 	}
 }

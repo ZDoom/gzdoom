@@ -75,7 +75,7 @@ FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs
 
 	if (defaultiwad[0] != '\0')
 	{
-		for (int i = 0; i < wads.Size(); ++i)
+		for (int i = 0; i < wads.SSize(); ++i)
 		{
 			if (!wads[i].Name.CompareNoCase(defaultiwad))
 			{
@@ -89,7 +89,7 @@ FStartupSelectionInfo::FStartupSelectionInfo(const TArray<WadStuff>& wads, FArgs
 
 	if (defaultnetiwad[0] != '\0')
 	{
-		for (int i = 0; i < wads.Size(); ++i)
+		for (int i = 0; i < wads.SSize(); ++i)
 		{
 			if (!wads[i].Name.CompareNoCase(defaultnetiwad))
 			{

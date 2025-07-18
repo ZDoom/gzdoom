@@ -1776,7 +1776,7 @@ int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 
 int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
-	int 		c;
+	uint 		c;
 	int			pnum;
 	player_t*	player;
 	bool chasegoal = params? (!(params->flags & LOF_DONTCHASEGOAL)) : true;
@@ -3234,7 +3234,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 
 int CheckBossDeath (AActor *actor)
 {
-	int i;
+	uint i;
 
 	// make sure there is a player alive for victory
 	for (i = 0; i < MAXPLAYERS; i++)

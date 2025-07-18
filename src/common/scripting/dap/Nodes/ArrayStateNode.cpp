@@ -214,7 +214,7 @@ bool ArrayStateNode::GetChildNode(std::string name, std::shared_ptr<StateNodeBas
 				break;
 			default:
 				// too large, return a ptr to the array element
-				assert(elementIndex <= static_cast<FArray *>(array_head)->Count);
+				assert(unsigned(elementIndex) <= static_cast<FArray *>(array_head)->Count);
 				element_val = VMValue((void *)(((char *)static_cast<FArray *>(array_head)->Array) + (elementIndex * elementType->Size)));
 			}
 		}

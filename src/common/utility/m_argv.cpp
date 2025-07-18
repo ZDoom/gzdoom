@@ -36,6 +36,7 @@
 #include <cassert>
 #include "m_argv.h"
 #include "name.h"
+#include "printf.h"
 #include "tarray.h"
 #include "zstring.h"
 
@@ -76,6 +77,164 @@ FArg::FArg(
 		: _summary;
 
 	FArg::Available().Insert(name, this);
+}
+
+void FArgs::PrintHelpMessage(bool full)
+{
+	int fullwidth = 80;
+
+	// I tried using TEXTCOLOR_BOLD and TEXTCOLOR_OFF, but they just make white text. :(
+	// Also, these are supported on the windows 10 terminal, so I see no reason to disable them on windows.
+#define OFF "\x1b[0m"
+#define BOLD "\x1b[1m"
+#define DIM "\x1b[2m"
+
+#if defined(__linux)
+	if (isatty(STDOUT_FILENO))
+	{
+		struct winsize sizeOfWindow;
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizeOfWindow);
+		fullwidth = sizeOfWindow.ws_col;
+	}
+#elif defined(_WIN32)
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+	if (hConsole != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo(hConsole, &csbi))
+	{
+		fullwidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	}
+#endif
+
+	TMap<FName, TMap<FString, FArg>> args;
+	TArray<FName> sections;
+	int maxlen = 0;
+
+	{
+		TMapIterator<FString, FArg *> it(FArg::Available());
+		TMap<FString, FArg*>::Pair * pair;
+
+		while (it.NextPair(pair))
+		{
+			if (pair->Value->advanced && !full) continue;
+
+			auto* sectionMap = args.CheckKey(pair->Value->section);
+			if (!sectionMap)
+			{
+				TMap<FString, FArg> newMap;
+				args.Insert(pair->Value->section, newMap);
+				sections.Push(pair->Value->section.GetChars());
+				sectionMap = args.CheckKey(pair->Value->section);
+			}
+
+			sectionMap->Insert(pair->Key, *pair->Value);
+
+			int len = strlen(pair->Key.GetChars());
+			if (maxlen < len) maxlen = len;
+		}
+	}
+
+	std::sort(sections.begin(), sections.end());
+
+	int indent = maxlen + 1;
+	bool breaklines = indent >= fullwidth / 2;
+	if (breaklines) indent = 4;
+	maxlen = fullwidth - indent - 1;
+
+	for (int i = 0; i < sections.SSize(); i++)
+	{
+		auto section = * args.CheckKey(sections[i]);
+		TArray<FString> lines;
+
+		{
+			TMapIterator<FString, FArg> it(section);
+			TMap<FString, FArg>::Pair * pair;
+			while (it.NextPair(pair))
+			{
+				lines.Push(pair->Value.name.GetChars());
+			}
+			std::sort(lines.begin(), lines.end());
+		}
+
+		Printf(
+			"\n" BOLD "%s%s options:" OFF "\n",
+			FString(sections[i].GetChars()).Left(1).MakeUpper().GetChars(),
+			FString(sections[i].GetChars()).Mid(1).MakeLower().GetChars()
+		);
+
+		if (breaklines)
+		{
+			for (int j = 0; j < lines.SSize(); j++)
+			{
+				auto arg = section.CheckKey(lines[j]);
+
+				auto name = arg->name;
+				auto usage = (!full || arg->usage.IsEmpty())
+					? ""
+					: FStringf(" " DIM "%s" OFF, arg->usage.GetChars());
+				auto blurb = full? arg->details: arg->summary;
+
+				Printf("\n" BOLD "%s" OFF "%s\n%s\n", name.GetChars(), usage.GetChars(), blurb.GetChars());
+			}
+		}
+		else
+		{
+			auto fformat = FStringf(BOLD "%%%ds" OFF " %%s\n", indent);
+			auto format = fformat.GetChars();
+
+			if (!full) Printf("\n");
+
+			for (int j = 0; j < lines.SSize(); j++)
+			{
+				auto arg = section.CheckKey(lines[j]);
+				auto desc = (!full)
+					? arg->summary
+					: (arg->usage.IsEmpty())
+						? arg->details
+						: FStringf(DIM "%s" OFF "\n%s", arg->usage.GetChars(), arg->details.GetChars());
+
+				FString left = arg->name.GetChars(), right;
+				int space, nextSpace = 0;
+				left.ToLower();
+
+				if (full) Printf("\n");
+
+				do
+				{
+					int nextBreak = desc.IndexOf("\n", nextSpace+1);
+
+					if (nextBreak != -1 || desc.Len() > unsigned(maxlen))
+					{
+						do
+						{
+							space = nextSpace;
+
+							nextBreak = desc.IndexOf("\n", nextSpace+1);
+							nextSpace = desc.IndexOf(" ", nextSpace+1);
+
+							if (nextBreak > -1 && nextBreak < nextSpace)
+							{
+								space = nextBreak;
+								break;
+							}
+						} while (nextSpace > -1 && nextSpace < maxlen);
+
+						right = desc.Left(space);
+						desc = desc.Mid(space + 1);
+						nextSpace = 0;
+					}
+					else
+					{
+						right = desc;
+						desc = "";
+					}
+
+					Printf(format, left.GetChars(), right.GetChars());
+					left = "";
+				} while (desc.Len() > 0);
+			}
+		}
+	}
 }
 
 //===========================================================================

@@ -1461,7 +1461,7 @@ if( UNIX AND NOT APPLE )
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.metainfo.xml
 			DESTINATION share/metainfo
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/org.zdoom.GZDoom.svg
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.svg
 			DESTINATION share/icons/hicolor/scalable/apps
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
 endif()

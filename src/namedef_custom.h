@@ -1,3 +1,5 @@
+// clang-format off
+
 // GZDoom specific names
 
 xx(Doom)
@@ -927,3 +929,5 @@ xx(movefactor)
 
 xx(Corona)
 xx(BuiltinStateOffset)
+
+// clang-format on

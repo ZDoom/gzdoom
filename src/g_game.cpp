@@ -126,9 +126,13 @@ CVAR (Bool, longsavemessages, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 EXTERN_CVAR (Float, con_midtime);
-EXTERN_CVAR(Int, net_disablepause)
-EXTERN_CVAR(Bool, net_limitsaves)
+EXTERN_CVAR(Int, net_disablepause);
+EXTERN_CVAR(Bool, net_limitsaves);
+
+FARG(nodraw, "", "", "", "");
+FARG(noblit, "", "", "", "");
 
 //==========================================================================
 //
@@ -2950,8 +2954,8 @@ void G_DoPlayDemo (void)
 //
 void G_TimeDemo (const char* name)
 {
-	nodrawers = !!Args->CheckParm ("-nodraw");
-	noblit = !!Args->CheckParm ("-noblit");
+	nodrawers = !!Args->CheckParm (FArg_nodraw);
+	noblit = !!Args->CheckParm (FArg_noblit);
 	timingdemo = true;
 
 	defdemoname = name;

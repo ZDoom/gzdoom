@@ -77,6 +77,10 @@ void JitDumpLog(FILE *file, VMScriptFunction *func);
 // [RH] Made this CVAR_SERVERINFO
 CVAR (Int, infighting, 0, CVAR_SERVERINFO)
 
+#ifdef HAVE_VM_JIT
+EXTERN_FARG(dumpjit);
+#endif // HAVE_VM_JIT
+
 static bool LoadDehSupp ();
 static void UnloadDehSupp ();
 
@@ -1148,7 +1152,7 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 		disasmdump.Write(sfunc, sfunc->PrintableName);
 
 #ifdef HAVE_VM_JIT
-		if (Args->CheckParm("-dumpjit"))
+		if (Args->CheckParm(FArg_dumpjit))
 		{
 			FILE *dump = fopen("dumpjit.txt", "a");
 			if (dump != nullptr)

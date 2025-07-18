@@ -342,10 +342,11 @@ FStartScreen* CreateHereticStartScreen(int max_progress);
 FStartScreen* CreateStrifeStartScreen(int max_progress);
 FStartScreen* CreateGenericStartScreen(int max_progress);
 
+FARG(nostartup, "", "", "", "");
 
 FStartScreen* GetGameStartScreen(int max_progress)
 {
-	if (!Args->CheckParm("-nostartup"))
+	if (!Args->CheckParm(FArg_nostartup))
 	{
 		try
 		{

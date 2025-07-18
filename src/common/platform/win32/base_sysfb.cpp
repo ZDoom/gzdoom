@@ -60,6 +60,8 @@ extern "C" {
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
 
+FARG(0, "", "", "", "");
+
 //==========================================================================
 //
 // Windows framebuffer
@@ -131,7 +133,7 @@ void SystemBaseFrameBuffer::KeepWindowOnScreen(int &winx, int &winy, int winw, i
 void SystemBaseFrameBuffer::SaveWindowedPos()
 {
 	// Don't save if we were run with the -0 option.
-	if (Args->CheckParm("-0"))
+	if (Args->CheckParm(FArg_0))
 	{
 		return;
 	}
@@ -186,7 +188,7 @@ void SystemBaseFrameBuffer::RestoreWindowedPos()
 	GetCenteredPos(win_w, win_h, winx, winy, winw, winh, scrwidth, scrheight);
 
 	// Just move to (0,0) if we were run with the -0 option.
-	if (Args->CheckParm("-0"))
+	if (Args->CheckParm(FArg_0))
 	{
 		winx = winy = 0;
 	}
@@ -204,7 +206,7 @@ void SystemBaseFrameBuffer::RestoreWindowedPos()
 	}
 	SetWindowPos(mainwindow.GetHandle(), nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
 
-	if (win_maximized && !Args->CheckParm("-0"))
+	if (win_maximized && !Args->CheckParm(FArg_0))
 		ShowWindow(mainwindow.GetHandle(), SW_MAXIMIZE);
 }
 
@@ -237,7 +239,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 		GetCenteredPos(w, h, winx, winy, winw, winh, scrwidth, scrheight);
 
 		// Just move to (0,0) if we were run with the -0 option.
-		if (Args->CheckParm("-0"))
+		if (Args->CheckParm(FArg_0))
 		{
 			winx = winy = 0;
 		}

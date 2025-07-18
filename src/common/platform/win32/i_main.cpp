@@ -108,6 +108,7 @@ int GameMain();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern const char * const BACKEND = "Win32";
 extern EXCEPTION_POINTERS CrashPointers;
 extern UINT TimerPeriod;
 EXTERN_FARG(0);

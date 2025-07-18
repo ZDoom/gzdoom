@@ -148,6 +148,14 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	func->MaxParam = MaxParam;
 	func->StackSize = VMFrame::FrameSize(func->NumRegD, func->NumRegF, func->NumRegS, func->NumRegA, func->MaxParam, func->ExtraSpace);
 
+	int i = 0;
+	for (auto &block : Blocks)
+	{
+		
+		std::pair new_key = { func->Code + block.first.first, func->Code + block.first.second };
+		func->LocalVariableBlocks.Push({{new_key.first, new_key.second}, block.second});
+		i++;
+	}
 	// Technically, there's no reason why we can't end the function with
 	// entries on the parameter stack, but it means the caller probably
 	// did something wrong.
@@ -199,6 +207,11 @@ void VMFunctionBuilder::FillStringConstants(FString *konst)
 	{
 		*konst++ = s;
 	}
+}
+
+void VMFunctionBuilder::AddBlock(const TArray<VMLocalVariable> &block, size_t start, size_t end)
+{
+	Blocks.Push( {{ start, end }, block});
 }
 
 //==========================================================================

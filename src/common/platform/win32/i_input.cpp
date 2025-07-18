@@ -123,6 +123,8 @@ int BlockMouseMove;
 
 static bool EventHandlerResultForNativeMouse;
 
+// This is only used by the debugger to disable input while execution is paused.
+bool win32EnableInput = true;
 
 EXTERN_CVAR(Bool, i_pauseinbackground);
 
@@ -332,58 +334,60 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result;
 
-	if (message == WM_INPUT)
-	{
-		UINT size;
-
-		if (!GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) &&
-			size != 0)
+	if (win32EnableInput){
+		if (message == WM_INPUT)
 		{
-			TArray<uint8_t> array(size, true);
-			uint8_t *buffer = array.data();
-			if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) == size)
+			UINT size;
+
+			if (!GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) &&
+				size != 0)
 			{
-				int code = GET_RAWINPUT_CODE_WPARAM(wParam);
-				if (Keyboard == NULL || !Keyboard->ProcessRawInput((RAWINPUT *)buffer, code))
+				TArray<uint8_t> array(size, true);
+				uint8_t *buffer = array.data();
+				if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer, &size, sizeof(RAWINPUTHEADER)) == size)
 				{
-					if (Mouse == NULL || !Mouse->ProcessRawInput((RAWINPUT *)buffer, code))
+					int code = GET_RAWINPUT_CODE_WPARAM(wParam);
+					if (Keyboard == NULL || !Keyboard->ProcessRawInput((RAWINPUT *)buffer, code))
 					{
-						if (JoyDevices[INPUT_RawPS2] != NULL)
+						if (Mouse == NULL || !Mouse->ProcessRawInput((RAWINPUT *)buffer, code))
 						{
-							JoyDevices[INPUT_RawPS2]->ProcessRawInput((RAWINPUT *)buffer, code);
+							if (JoyDevices[INPUT_RawPS2] != NULL)
+							{
+								JoyDevices[INPUT_RawPS2]->ProcessRawInput((RAWINPUT *)buffer, code);
+							}
 						}
 					}
 				}
 			}
+			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
 
-	if (CallHook(Keyboard, hWnd, message, wParam, lParam, &result))
-	{
-		return result;
-	}
-	if (CallHook(Mouse, hWnd, message, wParam, lParam, &result))
-	{
-		return result;
-	}
-	for (int i = 0; i < NUM_JOYDEVICES; ++i)
-	{
-		if (CallHook(JoyDevices[i], hWnd, message, wParam, lParam, &result))
+		if (CallHook(Keyboard, hWnd, message, wParam, lParam, &result))
 		{
 			return result;
 		}
-	}
-	if (GUICapture && GUIWndProcHook(hWnd, message, wParam, lParam, &result))
-	{
-		return result;
-	}
-
-	if (message == WM_LBUTTONDOWN && sysCallbacks.WantLeftButton() && sysCallbacks.WantLeftButton())
-	{
-		if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
+		if (CallHook(Mouse, hWnd, message, wParam, lParam, &result))
 		{
 			return result;
+		}
+		for (int i = 0; i < NUM_JOYDEVICES; ++i)
+		{
+			if (CallHook(JoyDevices[i], hWnd, message, wParam, lParam, &result))
+			{
+				return result;
+			}
+		}
+		if (GUICapture && GUIWndProcHook(hWnd, message, wParam, lParam, &result))
+		{
+			return result;
+		}
+
+		if (message == WM_LBUTTONDOWN && sysCallbacks.WantLeftButton() && sysCallbacks.WantLeftButton())
+		{
+			if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
+			{
+				return result;
+			}
 		}
 	}
 
@@ -571,7 +575,7 @@ void I_ShutdownInput ()
 	}
 }
 
-void I_GetEvent ()
+void I_GetWindowEvent()
 {
 	MSG mess;
 
@@ -590,6 +594,12 @@ void I_GetEvent ()
 		}
 		DispatchMessage (&mess);
 	}
+}
+
+
+void I_GetEvent ()
+{
+	I_GetWindowEvent();
 
 	if (Keyboard != NULL)
 	{

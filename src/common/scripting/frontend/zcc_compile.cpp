@@ -916,6 +916,7 @@ void ZCCCompiler::CreateClassTypes()
 						else
 						{
 							c->cls->Type = NewClassType(newclass, AST.FileNo);
+							newclass->SourceLumpName = *c->cls->SourceName;
 							DPrintf(DMSG_SPAMMY, "Created class %s with parent %s\n", c->Type()->TypeName.GetChars(), c->ClassType()->ParentClass->TypeName.GetChars());
 						}
 					}

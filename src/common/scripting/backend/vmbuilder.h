@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 
+
+class FxCompoundStatement;
 class VMFunctionBuilder;
 class FxExpression;
 class FxLocalVariableDeclaration;
@@ -52,6 +54,8 @@ public:
 		friend class VMFunctionBuilder;
 	};
 
+	using BlockMap = TArray<std::pair<std::pair<size_t, size_t>, TArray<VMLocalVariable>>>;
+
 	VMFunctionBuilder(int numimplicits);
 	~VMFunctionBuilder();
 
@@ -97,6 +101,8 @@ public:
 	void FillAddressConstants(FVoidObj *konst);
 	void FillStringConstants(FString *strings);
 
+	void AddBlock(const TArray<VMLocalVariable> &vars, size_t start, size_t end);
+
 	// PARAM increases ActiveParam; CALL decreases it.
 	void ParamChange(int delta);
 
@@ -128,7 +134,7 @@ private:
 	int ActiveParam;
 
 	TArray<VMOP> Code;
-
+	BlockMap Blocks;
 };
 
 void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen);

@@ -450,8 +450,8 @@ public:
 private:
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
 	void DrawMessages (int layer, int bottom);
-	void DrawConsistancy () const;
-	void DrawWaiting () const;
+	double DrawConsistancy (double yOfs) const;
+	double DrawWaiting (double yOfs) const;
 
 	TObjPtr<DHUDMessageBase*> Messages[NUM_HUDMSGLAYERS];
 };

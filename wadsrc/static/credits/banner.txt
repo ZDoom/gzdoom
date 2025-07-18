@@ -1,0 +1,2 @@
+GZDoom banner artwork for the new ZWidget-based launcher created by Kinsie,
+based off the existing GZDoom logo artwork by Tormentor667.

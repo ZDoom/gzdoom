@@ -1911,6 +1911,13 @@ static int ExecScriptFunc(VMFrameStack *stack, VMReturn *ret, int numret)
 			reinterpret_cast<DQuaternion&>(reg.f[A]) = q1 * q2;
 		}
 		NEXTOP;
+	OP(CONJQ):
+		ASSERTF(a + 3); ASSERTF(B + 3);
+		{
+			const DQuaternion& q = reinterpret_cast<DQuaternion&>(reg.f[B]);
+			reinterpret_cast<DQuaternion&>(reg.f[A]) = q.Conjugate();
+		}
+		NEXTOP;
 	OP(ADDA_RR):
 		ASSERTA(a); ASSERTA(B); ASSERTD(C);
 		c = reg.d[C];

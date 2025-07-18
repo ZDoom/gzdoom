@@ -166,6 +166,8 @@ public:
 
 	const char *GetChars() const { return Chars; }
 
+	TArrayView<uint8_t> GetTArrayView();
+
 	const char &operator[] (int index) const { return Chars[index]; }
 #if defined(_WIN32) && !defined(_WIN64) && defined(_MSC_VER)
 	// Compiling 32-bit Windows source with MSVC: size_t is typedefed to an

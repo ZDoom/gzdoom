@@ -88,6 +88,7 @@ class BehaviorIterator native abstract final version("4.15.1")
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
 	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
+	native static BehaviorIterator CreateClientSide(class<Behavior> type = null, class<Actor> ownerType = null);
 
 	native Behavior Next();
 	native void Reinit();
@@ -595,6 +596,9 @@ class Actor : Thinker native
 		return true;
 	}
 
+	// Called after an Actor has been resurrected.
+	virtual void OnRevive() {}
+
 	// Called when an actor is to be reflected by a disc of repulsion.
 	// Returns true to continue normal blast processing.
 	virtual bool SpecialBlastHandling (Actor source, double strength)
@@ -823,6 +827,7 @@ class Actor : Thinker native
 	native bool CheckMeleeRange(double range = -1);
 	native bool TriggerPainChance(Name mod, bool forcedPain = false);
 	native virtual int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags = 0, double angle = 0);
+	native virtual bool ReactToDamage(Actor inflictor, Actor source, int damage, Name mod, int flags, int originaldamage);
 	native void PoisonMobj (Actor inflictor, Actor source, int damage, int duration, int period, Name type);
 	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
 	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null, double offsetz = 0., double offsetforward = 0., double offsetside = 0.);
@@ -1356,7 +1361,7 @@ class Actor : Thinker native
 	action native void A_OverlayTranslation(int layer, name trname);
 	
 	native bool A_AttachLightDef(Name lightid, Name lightdef);
-	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0, double intensity = 1.0);
 	native bool A_RemoveLight(Name lightid);
 
 	//================================================
@@ -1475,21 +1480,28 @@ class Actor : Thinker native
 	// 
 	//================================================
 	
-	/* rotation, translation, scaling */
-	native version("4.15.1") Quat, Vector3, Vector3 GetBone(int boneIndex, bool include_offsets = true);
-	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBone(Name boneName, bool include_offsets = true);
+	/* rotation, translation, scaling, doesn't include parent bones */
+	native version("4.15.1") Quat, Vector3, Vector3 GetBoneTRS(int boneIndex, bool include_offsets = true);
+	native version("4.15.1") Quat, Vector3, Vector3 GetNamedBoneTRS(Name boneName, bool include_offsets = true);
 	
-	native version("4.15.1") Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
-	native version("4.15.1") Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 direction = (0,0,0), bool include_offsets = true);
+	/* angle, pitch, roll, includes parent bones */
+	native version("4.15.1") Vector3 GetBoneEulerAngles(int boneIndex, bool include_offsets = true);
+	native version("4.15.1") Vector3 GetNamedBoneEulerAngles(Name boneName, bool include_offsets = true);
+
+	//input position/direction vectors are in xzy, model space
+	native version("4.15.1") Vector3, Vector3, Vector3 TransformByBone(int boneIndex, Vector3 position, Vector3 forward = (1,0,0), Vector3 up = (0,0,1), bool include_offsets = true);
+	native version("4.15.1") Vector3, Vector3, Vector3 TransformByNamedBone(Name boneName, Vector3 position, Vector3 forward = (1,0,0), Vector3 up = (0,0,1), bool include_offsets = true);
 	
-	version("4.15.1") Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
+	version("4.15.1") Vector3, Vector3, Vector3 GetBonePosition(int boneIndex, bool include_offsets = true)
 	{
-		return TransformByBone(boneIndex, GetBoneBasePosition(boneIndex), include_offsets:include_offsets);
+		let [a, b, c] = TransformByBone(boneIndex, GetBoneBasePosition(boneIndex), include_offsets:include_offsets);
+		return a, b, c;
 	}
 	
-	version("4.15.1") Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
+	version("4.15.1") Vector3, Vector3, Vector3 GetNamedBonePosition(name boneName, bool include_offsets = true)
 	{
-		return GetBonePosition(GetBoneIndex(boneName), include_offsets);
+		let [a, b, c] = GetBonePosition(GetBoneIndex(boneName), include_offsets);
+		return a, b, c;
 	}
 
 	//================================================

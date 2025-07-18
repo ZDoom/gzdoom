@@ -18,11 +18,11 @@ class PlayerPawn : Actor
 	// 16 pixels of bob
 	const MAXBOB = 16.;
 	
-	int			BobTimer;	// Use a local timer for this so it can be predicted correctly.
 	int			crouchsprite;
 	int			MaxHealth;
 	int			BonusHealth;
 	int			MugShotMaxHealth;
+	int			MaxPickupHealth; // overrides MaxAmount of pickups and BonusHealth.
 	int			RunHealth;
 	private int	PlayerFlags;
 	clearscope Inventory	InvFirst;		// first inventory item displayed on inventory bar
@@ -634,7 +634,7 @@ class PlayerPawn : Actor
 		{
 			if (player.health > 0)
 			{
-				angle = BobTimer / (120 * TICRATE / 35.) * 360.;
+				angle = player.BobTimer / (120 * TICRATE / 35.) * 360.;
 				bob = player.GetStillBob() * sin(angle);
 			}
 			else
@@ -644,7 +644,7 @@ class PlayerPawn : Actor
 		}
 		else
 		{
-			angle = BobTimer / (ViewBobSpeed * TICRATE / 35.) * 360.;
+			angle = player.BobTimer / (ViewBobSpeed * TICRATE / 35.) * 360.;
 			bob = player.bob * sin(angle) * (waterlevel > 1 ? 0.25f : 0.5f);
 		}
 
@@ -1668,7 +1668,6 @@ class PlayerPawn : Actor
 			PlayerFlags |= PF_VOODOO_ZOMBIE;
 		}
 		
-		++BobTimer;
 		CheckFOV();
 
 		CheckCheats();
@@ -2543,7 +2542,7 @@ class PlayerPawn : Actor
 		for (int i = 0; i < 2; i++)
 		{
 			// Bob the weapon based on movement speed. ([SP] And user's bob speed setting)
-			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(BobTimer - 1 + i)) * (360. / 8192.);
+			double angle = (BobSpeed * player.GetWBobSpeed() * 35 /	TICRATE*(player.BobTimer - 1 + i)) * (360. / 8192.);
 
 			// [RH] Smooth transitions between bobbing and not-bobbing frames.
 			// This also fixes the bug where you can "stick" a weapon off-center by
@@ -2894,6 +2893,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double viewheight;
 	native double deltaviewheight;
 	native double bob;
+	native int BobTimer;
 	native vector2 vel;
 	native bool centering;
 	native uint8 turnticks;
@@ -3002,6 +3002,11 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope bool GetClassicFlight() const;
 	native void SendPitchLimits();
 	native clearscope bool HasWeaponsInSlot(int slot) const;
+	
+	native clearscope int GetAverageLatency() const;
+
+	native clearscope static PlayerInfo GetNextPlayer(PlayerInfo p, bool noBots = false);
+	native clearscope static int GetNextPlayerNumber(int pNum, bool noBots = false);
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
 	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(PlayerInfo activator, class<PlayerPawn> spawnType, int duration, EMorphFlags style, class<Actor> enterFlash = "TeleportFog", class<Actor> exitFlash = "TeleportFog")

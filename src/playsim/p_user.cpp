@@ -284,6 +284,7 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	viewheight = p.viewheight;
 	deltaviewheight = p.deltaviewheight;
 	bob = p.bob;
+	BobTimer = p.BobTimer;
 	Vel = p.Vel;
 	centering = p.centering;
 	turnticks = p.turnticks;
@@ -745,6 +746,41 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, Resurrect)
 	ACTION_RETURN_BOOL(self->Resurrect());
 }
 
+player_t* player_t::GetNextPlayer(player_t* p, bool noBots)
+{
+	int pNum = player_t::GetNextPlayerNumber(p == nullptr ? -1 : p - players);
+	return pNum != -1 ? &players[pNum] : nullptr;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerInfo, GetNextPlayer, player_t::GetNextPlayer)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(p, player_t);
+	PARAM_BOOL(noBots);
+
+	ACTION_RETURN_POINTER(player_t::GetNextPlayer(p, noBots));
+}
+
+int player_t::GetNextPlayerNumber(int pNum, bool noBots)
+{
+	int i = max<int>(pNum + 1, 0);
+	for (; i < MaxClients; ++i)
+	{
+		if (playeringame[i] && (!noBots || players[i].Bot == nullptr))
+			break;
+	}
+
+	return i < MaxClients ? i : -1;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerInfo, GetNextPlayerNumber, player_t::GetNextPlayerNumber)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(pNum);
+	PARAM_BOOL(noBots);
+
+	ACTION_RETURN_INT(player_t::GetNextPlayerNumber(pNum, noBots));
+}
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetUserName)
 {
@@ -1294,6 +1330,8 @@ void P_PlayerThink (player_t *player)
 		player->LastSafePos = player->mo->Pos();
 	}
 
+	++player->BobTimer;
+
 	// Bots do not think in freeze mode.
 	if (player->mo->Level->isFrozen() && player->Bot != nullptr)
 	{
@@ -1436,22 +1474,10 @@ nodetype *RestoreNodeList(AActor *act, nodetype *linktype::*otherlist, TArray<no
 
 void P_PredictPlayer (player_t *player)
 {
-	int maxtic;
-
-	if (demoplayback ||
+	if (demoplayback || gamestate != GS_LEVEL ||
 		player->mo == NULL ||
 		player != player->mo->Level->GetConsolePlayer() ||
-		player->playerstate != PST_LIVE ||
-		(!netgame && cl_debugprediction == 0) ||
-		/*player->morphTics ||*/
 		(player->cheats & CF_PREDICTING))
-	{
-		return;
-	}
-
-	maxtic = ClientTic;
-
-	if (gametic == maxtic)
 	{
 		return;
 	}
@@ -1508,6 +1534,12 @@ void P_PredictPlayer (player_t *player)
 	}
 	act->BlockNode = NULL;
 
+	int maxtic = ClientTic;
+	if (gametic == maxtic || player->playerstate != PST_LIVE)
+	{
+		return;
+	}
+
 	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
 	// called. Call order is preserved.
 	bool rubberband = false, rubberbandLimit = false;
@@ -1519,7 +1551,6 @@ void P_PredictPlayer (player_t *player)
 		// Make sure any portal paths have been cleared from the previous movement.
 		R_ClearInterpolationPath();
 		r_NoInterpolate = false;
-		// Because we're always predicting, this will get set by teleporters and then can never unset itself in the renderer properly.
 		player->mo->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
 		// Got snagged on something. Start correcting towards the player's final predicted position. We're
@@ -1678,6 +1709,7 @@ void P_UnPredictPlayer ()
 		}
 
 		act->UpdateRenderSectorList();
+		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 
 		actInvSel = InvSel;
 		player->inventorytics = inventorytics;
@@ -1710,6 +1742,7 @@ void player_t::Serialize(FSerializer &arc)
 		("viewheight", viewheight)
 		("deltaviewheight", deltaviewheight)
 		("bob", bob)
+		("bobtimer", BobTimer)
 		("vel", Vel)
 		("centering", centering)
 		("health", health)
@@ -1819,6 +1852,7 @@ DEFINE_FIELD_X(PlayerInfo, player_t, viewz)
 DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, bob)
+DEFINE_FIELD_X(PlayerInfo, player_t, BobTimer)
 DEFINE_FIELD_X(PlayerInfo, player_t, Vel)
 DEFINE_FIELD_X(PlayerInfo, player_t, centering)
 DEFINE_FIELD_X(PlayerInfo, player_t, turnticks)

@@ -40,6 +40,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "c_cvars.h"
+#include "i_protocol.h"
 #include "engineerrors.h"
 #include "printf.h"
 #include "palutil.h"
@@ -1265,12 +1266,10 @@ void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter)
 	}
 }
 
-void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact)
+void C_WriteCVars (TArrayView<uint8_t>& demo_p, uint32_t filter, bool compact)
 {
 	FString dump = C_GetMassCVarString(filter, compact);
-	size_t dumplen = dump.Len() + 1;	// include terminating \0
-	memcpy(*demo_p, dump.GetChars(), dumplen);
-	*demo_p += dumplen;
+	WriteFString(dump, demo_p);
 }
 
 FString C_GetMassCVarString (uint32_t filter, bool compact)
@@ -1306,9 +1305,9 @@ FString C_GetMassCVarString (uint32_t filter, bool compact)
 	return dump;
 }
 
-void C_ReadCVars (uint8_t **demo_p)
+void C_ReadCVars (TArrayView<uint8_t>& demo_p)
 {
-	char *ptr = *((char **)demo_p);
+	char *ptr = (char *)demo_p.Data();
 	char *breakpt;
 
 	if (*ptr++ != '\\')
@@ -1371,7 +1370,7 @@ void C_ReadCVars (uint8_t **demo_p)
 			}
 		}
 	}
-	*demo_p += strlen (*((char **)demo_p)) + 1;
+	AdvanceStream(demo_p, strlen((char*)demo_p.Data()) + 1);
 }
 
 struct FCVarBackup

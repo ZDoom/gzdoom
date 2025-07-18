@@ -1283,6 +1283,7 @@ DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL(AllServices)
 
 DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(DoubleBindings)
 DEFINE_GLOBAL(AutomapBindings)
 DEFINE_GLOBAL(generic_ui)
 
@@ -1393,40 +1394,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, SLerp, QuatSLerp)
 
 	DQuaternion quat;
 	QuatSLerp(ax, ay, az, aw, bx, by, bz, bw, t, &quat);
-	ACTION_RETURN_QUAT(quat);
-}
-
-void QuatConjugate(
-	double x, double y, double z, double w,
-	DQuaternion* pquat
-)
-{
-	*pquat = DQuaternion(x, y, z, w).Conjugate();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Conjugate, QuatConjugate)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
-
-	DQuaternion quat;
-	QuatConjugate(self->X, self->Y, self->Z, self->W, &quat);
-	ACTION_RETURN_QUAT(quat);
-}
-
-void QuatInverse(
-	double x, double y, double z, double w,
-	DQuaternion* pquat
-)
-{
-	*pquat = DQuaternion(x, y, z, w).Inverse();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_QuatStruct, Inverse, QuatInverse)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(DQuaternion);
-
-	DQuaternion quat;
-	QuatInverse(self->X, self->Y, self->Z, self->W, &quat);
 	ACTION_RETURN_QUAT(quat);
 }
 

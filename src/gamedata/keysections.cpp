@@ -99,8 +99,13 @@ CCMD (addkeysection)
 			return;
 		}
 
+		FString name(argv[2]);
 		// Limit the ini name to 32 chars
-		FString name(argv[2], 32);
+		if (name.Len() > 32)
+		{
+			DPrintf(DMSG_ERROR, "WARNING: %s is too long as an ini name! The ini name should be 32 bytes or less.\n", &name[0]);
+			name.Truncate(32);
+		}
 
 		for (unsigned i = 0; i < KeySections.Size(); i++)
 		{
@@ -170,55 +175,55 @@ void D_LoadWadSettings ()
 
 		while (conf < eof)
 		{
-			size_t i = 0;
+			ptrdiff_t linePos = 0;
 
 			// Fetch a line to execute
 			command.Clear();
-			for (i = 0; conf + i < eof && conf[i] != '\n'; ++i)
+			for (linePos = 0; (conf + linePos) < eof && conf[linePos] != '\n' && conf[linePos] != '\r'; ++linePos)
 			{
-				command.Push(conf[i]);
+				command.Push(conf[linePos]);
 			}
-			if (i == 0) // Blank line
-			{
-				conf++;
-				continue;
-			}
-			command.Push(0);
-			conf += i;
-			if (conf >= eof || *conf == '\n')
+			// Increment 'conf' pointer to next line
+			conf += linePos;
+			while (conf < eof && (*conf == '\n' || *conf == '\r'))
 			{
 				conf++;
 			}
 
+			// Does 'command' have a comment? If so, remove it.
 			// Comments begin with //
-			char *stop = &command[i - 1];
+			char *stop = &command[linePos];
 			char *comment = &command[0];
-			int inQuote = 0;
-
-			if (*stop == '\r')
-				*stop-- = 0;
+			char prevChar = 0;
+			bool inQuote = false;
 
 			while (comment < stop)
 			{
+				// if (prevChar != '\\' && *comment == '\"')
 				if (*comment == '\"')
 				{
-					inQuote ^= 1;
+					inQuote = !inQuote;
 				}
-				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
+				else if (!inQuote && prevChar == '/' && *comment == '/')
 				{
+					comment--; // 'comment' is on the second slash
 					break;
 				}
+				prevChar = *comment;
 				comment++;
 			}
-			if (comment == &command[0])
-			{ // Comment at line beginning
-				continue;
-			}
-			else if (comment < stop)
-			{ // Comment in middle of line
+			// 'comment' will either be the end of the string, or the starting
+			// position of an inline comment.
+			if ((comment - &command[0]) < linePos)
+			{
 				*comment = 0;
 			}
-
+			else
+			{
+				// Just in case 'comment' is at EOF
+				command.Push(0);
+			}
+			// DPrintf(DMSG_ERROR, "command: %s\n", &command[0]);
 			AddCommandString (&command[0]);
 		}
 	}

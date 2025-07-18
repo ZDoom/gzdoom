@@ -293,9 +293,16 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 		auto it = GetThinkerIterator<AActor>(NAME_None, STAT_TRAVELLING);
 		for (AActor *actor = it.Next(); actor != nullptr; actor = it.Next())
 		{
+			actor->BlockingMobj = nullptr;
 			actor->BlockingLine = actor->MovementBlockingLine = nullptr;
 			actor->BlockingFloor = actor->BlockingCeiling = actor->Blocking3DFloor = nullptr;
 		}
+
+		// Make sure map data gets cleared appropriately so any leftover Objects aren't pointing
+		// towards anything invalid.
+		FName fieldTypes[] = { NAME_SectorPortal, NAME_LinePortal, NAME_Vertex, NAME_Side, NAME_Line, NAME_SecPlane, NAME_F3DFloor, NAME_Sector };
+		for (DObject* probe = GC::Root; probe != nullptr; probe = probe->ObjNext)
+			probe->ClearNativePointerFields({ fieldTypes, std::size(fieldTypes) });
 	}
 	
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
@@ -387,6 +394,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	levelMesh = nullptr;
 	VisualThinkerHead = nullptr;
 	ActorBehaviors.Clear();
+	ClientSideActorBehaviors.Clear();
 	if (screen)
 		screen->SetAABBTree(nullptr);
 }

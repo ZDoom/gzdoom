@@ -1048,9 +1048,10 @@ DIntermissionController* FLevelLocals::CreateIntermission()
 //
 //=============================================================================
 
-void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, std::function<void(bool)> completionf)
+void RunIntermission(level_info_t* fromMap, level_info_t* toMap, DIntermissionController* intermissionScreen, DObject* statusScreen, bool ending, std::function<void(bool)> completionf)
 {
-	cutscene.runner = CreateRunner(false);
+	// Make sure the finale can't be skipped, otherwise the intermission always needs to be skippable.
+	cutscene.runner = CreateRunner(false, ending ? ST_UNSKIPPABLE : ST_MUST_BE_SKIPPABLE);
 	GC::WriteBarrier(cutscene.runner);
 	cutscene.completion = std::move(completionf);
 	
@@ -1139,7 +1140,7 @@ void G_DoCompleted (void)
 	bool endgame = strncmp(nextlevel.GetChars(), "enDSeQ", 6) == 0;
 	intermissionScreen = primaryLevel->CreateIntermission();
 	auto nextinfo = !playinter || endgame? nullptr : FindLevelInfo(nextlevel.GetChars(), false);
-	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, [=](bool)
+	RunIntermission(primaryLevel->info, nextinfo, intermissionScreen, statusScreen, endgame, [=](bool)
 	{
 		if (!endgame) primaryLevel->WorldDone();
 		else D_StartTitle();
@@ -1537,6 +1538,10 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		I_Error("no start for player %d found.", pnumerr);
 	}
+
+	// If loading in from existing data, allow things to reinitialize if needed.
+	if (FromSnapshot || savegamerestore)
+		Thinkers.OnLoad();
 }
 
 
@@ -1641,6 +1646,9 @@ void FLevelLocals::StartTravel ()
 					inv->UnlinkFromWorld (nullptr);
 					inv->UnlinkBehaviorsFromLevel();
 					inv->DeleteAttachedLights();
+					tid = inv->tid;
+					inv->SetTID(0);
+					inv->tid = tid;
 				}
 			}
 		}
@@ -1746,7 +1754,7 @@ int FLevelLocals::FinishTravel ()
 		pawn->LinkBehaviorsToLevel();
 		pawn->ClearInterpolation();
 		pawn->ClearFOVInterpolation();
-		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
+		int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
 		pawn->tid = 0;				// Reset TID
 		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
 		pawn->SetState(pawn->SpawnState);
@@ -1758,6 +1766,9 @@ int FLevelLocals::FinishTravel ()
 			inv->LinkToWorld (nullptr);
 			P_FindFloorCeiling(inv, FFCF_ONLYSPAWNPOS);
 			inv->LinkBehaviorsToLevel();
+			tid = inv->tid;
+			inv->tid = 0;
+			inv->SetTID(tid);
 
 			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
 			{

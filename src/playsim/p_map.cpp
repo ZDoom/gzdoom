@@ -114,6 +114,8 @@ static FRandom pr_crunch("DoCrunch");
 TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
+EXTERN_CVAR(Bool, net_limitconversations)
+
 //==========================================================================
 //
 // P_ShouldPassThroughPlayer
@@ -5587,7 +5589,7 @@ void P_RailAttack(FRailParams *p)
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
 		// [RK] If the attack source is a player, send the DMG_PLAYERATTACK flag.
-		int newdam = P_DamageMobj(hitactor, hitpuff ? hitpuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0), hitangle);
+		int newdam = P_DamageMobj(hitactor, hitpuff ? hitpuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0) | DMG_RAILGUN, hitangle);
 
 		if (bleed)
 		{
@@ -5630,7 +5632,7 @@ void P_RailAttack(FRailParams *p)
 		}
 	}
 
-	source->Level->localEventManager->WorldRailgunFired(source, start, trace.HitPos, thepuff, flags);
+	source->Level->localEventManager->WorldRailgunFired(source, start, trace.HitPos, thepuff, p->flags);
 
 	if (thepuff != NULL)
 	{
@@ -5733,10 +5735,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-static int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
 {
 	if (!CanTalk(self))
 		return false;
+
+	if (netgame && net_limitconversations && player->player != nullptr && player->player->mo == player && !player->player->settings_controller)
+	{
+		if (player == players[consoleplayer].mo)
+			Printf("Only settings controllers can start conversations with NPCs\n");
+		return false;
+	}
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);

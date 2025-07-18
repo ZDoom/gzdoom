@@ -35,6 +35,7 @@ class ArtiEgg : CustomInventory
 		+INVENTORY.INVBAR
 		Inventory.PickupFlash "PickupFlash";
 		+INVENTORY.FANCYPICKUPSOUND
+		+WEAPONSPAWN
 		Inventory.Icon "ARTIEGGC";
 		Inventory.PickupSound "misc/p_pkup";
 		Inventory.PickupMessage "$TXT_ARTIEGG";
@@ -90,6 +91,7 @@ class ArtiPork : CustomInventory
 		+INVENTORY.INVBAR
 		Inventory.PickupFlash "PickupFlash";
 		+INVENTORY.FANCYPICKUPSOUND
+		+WEAPONSPAWN
 		Inventory.Icon "ARTIPORK";
 		Inventory.PickupSound "misc/p_pkup";
 		Inventory.PickupMessage "$TXT_ARTIEGG2";

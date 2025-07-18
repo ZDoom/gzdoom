@@ -1,6 +1,8 @@
 // for flag changer functions.
 const FLAG_NO_CHANGE = -1;
 const MAXPLAYERS = 64;
+const TEAM_NONE = 255;
+const TEAM_MAXIMUM = 16;
 
 enum EStateUseFlags
 {
@@ -975,6 +977,7 @@ enum EDmgFlags
 	DMG_NO_PAIN = 1024,
 	DMG_EXPLOSION = 2048,
 	DMG_NO_ENHANCE = 4096,
+	DMG_RAILGUN = 8192,
 }
 
 enum EReplace
@@ -1418,6 +1421,7 @@ enum ELevelFlags
 	LEVEL3_LIGHTCREATED			= 0x00080000,	// a light had been created in the last frame
 	LEVEL3_NOFOGOFWAR			= 0x00100000,	// disables effect of r_radarclipper CVAR on this map
 	LEVEL3_SECRET				= 0x00200000,	// level is a secret level
+	LEVEL3_SKYMIST				= 0x00400000,   // level skyfog uses the skymist texture
 };
 
 // [RH] Compatibility flags.

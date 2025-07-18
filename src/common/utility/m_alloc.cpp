@@ -43,6 +43,15 @@
 #else
 #include <malloc.h>
 #endif
+#if defined(__sun__) || defined(__sun)
+size_t _msize(void* block)
+{
+	// TODO: find an actual fix for solaris
+	(void) block;
+	return 0;
+}
+#endif
+
 
 #include "engineerrors.h"
 #include "dobjgc.h"
@@ -54,7 +63,7 @@
 #endif
 
 #ifndef _DEBUG
-#if !defined(__solaris__) && !defined(__OpenBSD__) && !defined(__DragonFly__)
+#if !defined(__solaris__) && !defined(__sun__) && !defined(_sun) && !defined(__OpenBSD__) && !defined(__DragonFly__)
 void *M_Malloc(size_t size)
 {
 	void *block = malloc(size);
@@ -127,7 +136,7 @@ void* M_Calloc(size_t v1, size_t v2)
 #include <crtdbg.h>
 #endif
 
-#if !defined(__solaris__) && !defined(__OpenBSD__) && !defined(__DragonFly__)
+#if !defined(__solaris__) && !defined(__sun__) && !defined(_sun) && !defined(__OpenBSD__) && !defined(__DragonFly__)
 void *M_Malloc_Dbg(size_t size, const char *file, int lineno)
 {
 	void *block = _malloc_dbg(size, _NORMAL_BLOCK, file, lineno);
@@ -194,7 +203,7 @@ void M_Free (void *block)
 	if (block != nullptr)
 	{
 		GC::ReportDealloc(_msize(block));
-#if !defined(__solaris__) && !defined(__OpenBSD__) && !defined(__DragonFly__)
+#if !defined(__solaris__) && !defined(__sun__) && !defined(_sun) && !defined(__OpenBSD__) && !defined(__DragonFly__)
 		free(block);
 #else
 		free(((size_t*) block)-1);

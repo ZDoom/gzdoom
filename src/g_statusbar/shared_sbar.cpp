@@ -71,6 +71,8 @@
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
+int WorldPaused();
+
 IMPLEMENT_CLASS(DBaseStatusBar, false, true)
 
 IMPLEMENT_POINTERS_START(DBaseStatusBar)
@@ -682,31 +684,34 @@ int DBaseStatusBar::GetPlayer ()
 
 void DBaseStatusBar::Tick ()
 {
-	PrevCrosshairSize = CrosshairSize;
-
-	for (size_t i = 0; i < countof(Messages); ++i)
+	if (!WorldPaused())
 	{
-		DHUDMessageBase *msg = Messages[i];
+		PrevCrosshairSize = CrosshairSize;
 
-		while (msg)
+		for (size_t i = 0; i < countof(Messages); ++i)
 		{
-			DHUDMessageBase *next = msg->Next;
+			DHUDMessageBase* msg = Messages[i];
 
-			if (msg->CallTick ())
+			while (msg)
 			{
-				DetachMessage(msg);
-				msg->Destroy();
+				DHUDMessageBase* next = msg->Next;
+
+				if (msg->CallTick())
+				{
+					DetachMessage(msg);
+					msg->Destroy();
+				}
+				msg = next;
 			}
-			msg = next;
-		}
 
-		// If the crosshair has been enlarged, shrink it.
-		if (CrosshairSize > 1.)
-		{
-			CrosshairSize -= XHAIRSHRINKSIZE;
-			if (CrosshairSize < 1.)
+			// If the crosshair has been enlarged, shrink it.
+			if (CrosshairSize > 1.)
 			{
-				CrosshairSize = 1.;
+				CrosshairSize -= XHAIRSHRINKSIZE;
+				if (CrosshairSize < 1.)
+				{
+					CrosshairSize = 1.;
+				}
 			}
 		}
 	}
@@ -1217,16 +1222,16 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 	primaryLevel->localEventManager->RenderOverlay(state);
 
-	DrawConsistancy ();
-	DrawWaiting ();
+	double yOfs = DrawConsistancy (0.0);
+	DrawWaiting (yOfs);
 	if ((ShowLog && MustDrawLog(state)) || (inter_subtitles && CPlayer->SubtitleCounter > 0)) DrawLog ();
 }
 
 
-void DBaseStatusBar::DrawConsistancy() const
+double DBaseStatusBar::DrawConsistancy(double yOfs) const
 {
 	if (!netgame)
-		return;
+		return yOfs;
 
 	bool desync = false;
 	FString text = "Out of sync with:";
@@ -1238,21 +1243,21 @@ void DBaseStatusBar::DrawConsistancy() const
 			// Fell out of sync with the host in packet server mode. Which specific user it is doesn't really matter.
 			if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
 			{
-				text.AppendFormat(" %s (%d)", players[Net_Arbitrator].userinfo.GetName(10u), Net_Arbitrator + 1);
+				text = "Out of sync with host";
 				break;
 			}
 			else
 			{
-				text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client + 1);
+				text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client);
 			}
 		}
 	}
 
+	double y = yOfs;
 	if (desync)
 	{
 		auto lines = V_BreakLines(SmallFont, twod->GetWidth() / CleanXfac - 40, text.GetChars());
 		const int height = SmallFont->GetHeight() * CleanYfac;
-		double y = 0.0;
 		for (auto& line : lines)
 		{
 			DrawText(twod, SmallFont, CR_GREEN,
@@ -1261,12 +1266,14 @@ void DBaseStatusBar::DrawConsistancy() const
 			y += height;
 		}
 	}
+
+	return y;
 }
 
-void DBaseStatusBar::DrawWaiting() const
+double DBaseStatusBar::DrawWaiting(double yOfs) const
 {
 	if (!netgame)
-		return;
+		return yOfs;
 
 	FString text = "Waiting for:";
 	bool isWaiting = false;
@@ -1275,15 +1282,23 @@ void DBaseStatusBar::DrawWaiting() const
 		if (players[client].waiting)
 		{
 			isWaiting = true;
-			text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client + 1);
+			if (NetMode == NET_PacketServer && consoleplayer != Net_Arbitrator)
+			{
+				text = "Waiting for host";
+				break;
+			}
+			else
+			{
+				text.AppendFormat(" %s (%d)", players[client].userinfo.GetName(10u), client);
+			}
 		}
 	}
 
+	double y = yOfs;
 	if (isWaiting)
 	{
 		auto lines = V_BreakLines(SmallFont, twod->GetWidth() / CleanXfac - 40, text.GetChars());
 		const int height = SmallFont->GetHeight() * CleanYfac;
-		double y = 0.0;
 		for (auto& line : lines)
 		{
 			DrawText(twod, SmallFont, CR_ORANGE,
@@ -1292,6 +1307,8 @@ void DBaseStatusBar::DrawWaiting() const
 			y += height;
 		}
 	}
+
+	return y;
 }
 
 void DBaseStatusBar::NewGame ()

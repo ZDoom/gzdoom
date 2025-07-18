@@ -76,7 +76,6 @@
 #include "printf.h"
 #include "i_interface.h"
 #include "c_cvars.h"
-#include "version.h"
 #include "i_net.h"
 #include "m_random.h"
 
@@ -188,12 +187,15 @@ CUSTOM_CVAR(String, net_password, "", CVAR_IGNORE)
 	}
 }
 
+// Game-specific API
+size_t Net_SetEngineInfo(uint8_t*& stream);
+bool Net_VerifyEngine(uint8_t*& stream);
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
-size_t Net_SetUserInfo(int client, uint8_t*& stream);
-size_t Net_ReadUserInfo(int client, uint8_t*& stream);
-size_t Net_ReadGameInfo(uint8_t*& stream);
-size_t Net_SetGameInfo(uint8_t*& stream);
+void Net_SetUserInfo(int client, TArrayView<uint8_t>& stream);
+void Net_ReadUserInfo(int client, TArrayView<uint8_t>& stream);
+void Net_ReadGameInfo(TArrayView<uint8_t>& stream);
+void Net_SetGameInfo(TArrayView<uint8_t>& stream);
 
 static SOCKET CreateUDPSocket()
 {
@@ -281,7 +283,7 @@ static void StartNetwork(bool autoPort)
 #ifndef __sun
 	ioctlsocket(MySocket, FIONBIO, &trueVal);
 #else
-	fcntl(mysocket, F_SETFL, trueval | O_NONBLOCK);
+	fcntl(MySocket, F_SETFL, trueVal | O_NONBLOCK);
 #endif
 }
 
@@ -790,6 +792,7 @@ static bool Host_CheckForConnections(void* connected)
 			if (RemoteClient >= 0)
 				continue;
 
+			uint8_t* engineInfo = &NetBuffer[2];
 			size_t banned = 0u;
 			for (; banned < BannedConnections.Size(); ++banned)
 			{
@@ -801,7 +804,7 @@ static bool Host_CheckForConnections(void* connected)
 			{
 				RejectConnection(from, PRE_BANNED);
 			}
-			else if (NetBuffer[2] % 256 != VER_MAJOR || NetBuffer[3] % 256 != VER_MINOR || NetBuffer[4] % 256 != VER_REVISION)
+			else if (!Net_VerifyEngine(engineInfo))
 			{
 				RejectConnection(from, PRE_WRONG_ENGINE);
 			}
@@ -835,7 +838,7 @@ static bool Host_CheckForConnections(void* connected)
 		{
 			if (Connected[RemoteClient].Status == CSTAT_CONNECTING)
 			{
-				uint8_t* stream = &NetBuffer[2];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[2], MAX_MSGLEN-2);
 				Net_ReadUserInfo(RemoteClient, stream);
 				Connected[RemoteClient].Status = CSTAT_WAITING;
 				I_NetClientConnected(RemoteClient, 16u);
@@ -888,8 +891,9 @@ static bool Host_CheckForConnections(void* connected)
 				memcpy(&NetBuffer[3], GameID, 8);
 				NetBufferLength = 11u;
 
-				uint8_t* stream = &NetBuffer[NetBufferLength];
-				NetBufferLength += Net_SetGameInfo(stream);
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+				Net_SetGameInfo(stream);
+				NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 				SendPacket(con.Address);
 				clientReady = false;
 			}
@@ -913,8 +917,9 @@ static bool Host_CheckForConnections(void* connected)
 							NetBufferLength += addrSize;
 						}
 
-						uint8_t* stream = &NetBuffer[NetBufferLength];
-						NetBufferLength += Net_SetUserInfo(i, stream);
+						TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+						Net_SetUserInfo(i, stream);
+						NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 						SendPacket(con.Address);
 					}
 					clientReady = false;
@@ -1133,7 +1138,7 @@ static bool Guest_ContactHost(void* unused)
 			{
 				TicDup = clamp<int>(NetBuffer[2], 1, MAXTICDUP);
 				memcpy(GameID, &NetBuffer[3], 8);
-				uint8_t* stream = &NetBuffer[11];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[11], MAX_MSGLEN - 11);
 				Net_ReadGameInfo(stream);
 				Connected[consoleplayer].bHasGameInfo = true;
 			}
@@ -1160,7 +1165,7 @@ static bool Guest_ContactHost(void* unused)
 				{
 					Connected[c].Status = CSTAT_READY;
 				}
-				uint8_t* stream = &NetBuffer[byte];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[byte], MAX_MSGLEN - byte);
 				Net_ReadUserInfo(c, stream);
 				SetClientAck(consoleplayer, c, true);
 
@@ -1186,12 +1191,11 @@ static bool Guest_ContactHost(void* unused)
 	if (consoleplayer == -1)
 	{
 		NetBuffer[1] = PRE_CONNECT;
-		NetBuffer[2] = VER_MAJOR % 256;
-		NetBuffer[3] = VER_MINOR % 256;
-		NetBuffer[4] = VER_REVISION % 256;
+		uint8_t* engineInfo = &NetBuffer[2];
+		const size_t end = 2u + Net_SetEngineInfo(engineInfo);
 		const size_t passSize = strlen(net_password) + 1;
-		memcpy(&NetBuffer[5], net_password, passSize);
-		NetBufferLength = 5u + passSize;
+		memcpy(&NetBuffer[end], net_password, passSize);
+		NetBufferLength = end + passSize;
 		SendPacket(Connected[0].Address);
 	}
 	else
@@ -1202,8 +1206,9 @@ static bool Guest_ContactHost(void* unused)
 			NetBuffer[1] = PRE_USER_INFO;
 			NetBufferLength = 2u;
 
-			uint8_t* stream = &NetBuffer[NetBufferLength];
-			NetBufferLength += Net_SetUserInfo(consoleplayer, stream);
+			TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+			Net_SetUserInfo(consoleplayer, stream);
+			NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 			SendPacket(Connected[0].Address);
 		}
 		else if (con.Status == CSTAT_WAITING)

@@ -170,6 +170,7 @@ extend class Object
 	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
 	private native static TranslationID BuiltinFindTranslation(Name nm);
 	private native static int BuiltinCallLineSpecial(int special, Actor activator, int arg1, int arg2, int arg3, int arg4, int arg5);
+	private native static State BuiltinStateOffset(State st, int offset);
 	// These really should be global functions...
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
@@ -389,6 +390,7 @@ struct LevelInfo native
 	native readonly String NextSecretMap;
 	native readonly String SkyPic1;
 	native readonly String SkyPic2;
+	native readonly String SkyMistPic;
 	native readonly String F1Pic;
 	native readonly int cluster;
 	native readonly int partime;
@@ -404,6 +406,7 @@ struct LevelInfo native
 	native readonly int musicorder;
 	native readonly float skyspeed1;
 	native readonly float skyspeed2;
+	native readonly float skymistspeed;
 	native readonly int cdtrack;
 	native readonly double gravity;
 	native readonly double aircontrol;
@@ -496,8 +499,10 @@ struct LevelLocals native
 	native readonly int musicorder;
 	native readonly TextureID skytexture1;
 	native readonly TextureID skytexture2;
+	native readonly TextureID skymisttexture;
 	native float skyspeed1;
 	native float skyspeed2;
+	native float skymistspeed;
 	native int total_secrets;
 	native int found_secrets;
 	native int total_items;
@@ -587,9 +592,14 @@ struct LevelLocals native
 	native clearscope int ActorOnLineSide(Actor mo, Line l) const;
 	native clearscope int BoxOnLineSide(Vector2 pos, double radius, Line l) const;
 
+	native clearscope int PlayerNum(PlayerInfo player) const;
+
 	native String GetChecksum() const;
 
 	native void ChangeSky(TextureID sky1, TextureID sky2 );
+	native void ChangeSkyMist(TextureID skymist, bool usemist = true);
+	native void SetSkyFog(int fogdensity);
+	native void SetThickFog(float distance, float multiplier);
 	native void ForceLightning(int mode = 0, sound tempSound = "");
 
 	native clearscope Thinker CreateClientsideThinker(class<Thinker> type, int statnum = Thinker.STAT_DEFAULT);
@@ -615,7 +625,9 @@ struct LevelLocals native
 	native String GetEpisodeName();
 
 	native void SpawnParticle(FSpawnParticleParams p);
-	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type);
+	native VisualThinker SpawnVisualThinker(Class<VisualThinker> type, bool clientSide = false);
+
+	clearscope native static bool WorldPaused();
 }
 
 // a few values of this need to be readable by the play code.

@@ -11,7 +11,7 @@
 #include <fstream>
 #endif
 
-TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData>& initdata, int ttcFontIndex) : data(initdata)
+TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData> initdata, int ttcFontIndex) : data(std::move(initdata))
 {
 	if (data->size() > 0x7fffffff)
 		throw std::runtime_error("TTF file is larger than 2 gigabytes!");
@@ -23,7 +23,7 @@ TrueTypeFont::TrueTypeFont(std::shared_ptr<TrueTypeFontFileData>& initdata, int 
 	if (memcmp(versionTag.data(), "ttcf", 4) == 0) // TTC header
 	{
 		ttcHeader.Load(reader);
-		if (ttcFontIndex >= ttcHeader.numFonts)
+		if (ttcFontIndex >= (int)ttcHeader.numFonts)
 			throw std::runtime_error("TTC font index out of bounds");
 		reader.Seek(ttcHeader.tableDirectoryOffsets[ttcFontIndex]);
 	}
@@ -122,7 +122,7 @@ TrueTypeGlyph TrueTypeFont::LoadGlyph(uint32_t glyphIndex, double height) const
 	path.fill_mode = PathFillMode::winding;
 
 	int startPoint = 0;
-	int numberOfContours = g.endPtsOfContours.size();
+	int numberOfContours = (int)g.endPtsOfContours.size();
 	for (int i = 0; i < numberOfContours; i++)
 	{
 		int endPoint = g.endPtsOfContours[i];
@@ -310,7 +310,7 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 
 	if (numberOfContours > 0) // Simple glyph
 	{
-		int pointsOffset = g.points.size();
+		int pointsOffset = (int)g.points.size();
 		for (ttf_uint16 i = 0; i < numberOfContours; i++)
 			g.endPtsOfContours.push_back(pointsOffset + reader.ReadUInt16());
 
@@ -339,15 +339,15 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 			if (g.flags[i] & TTF_X_SHORT_VECTOR)
 			{
 				ttf_int16 x = reader.ReadUInt8();
-				g.points[i].x = (g.flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) ? x : -x;
+				g.points[i].x = (float)((g.flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR) ? x : -x);
 			}
 			else if (g.flags[i] & TTF_X_IS_SAME_OR_POSITIVE_X_SHORT_VECTOR)
 			{
-				g.points[i].x = 0;
+				g.points[i].x = 0.0f;
 			}
 			else
 			{
-				g.points[i].x = reader.ReadInt16();
+				g.points[i].x = (float)reader.ReadInt16();
 			}
 		}
 
@@ -356,15 +356,15 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 			if (g.flags[i] & TTF_Y_SHORT_VECTOR)
 			{
 				ttf_int16 y = reader.ReadUInt8();
-				g.points[i].y = (g.flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) ? y : -y;
+				g.points[i].y = (float)((g.flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR) ? y : -y);
 			}
 			else if (g.flags[i] & TTF_Y_IS_SAME_OR_POSITIVE_Y_SHORT_VECTOR)
 			{
-				g.points[i].y = 0;
+				g.points[i].y = 0.0f;
 			}
 			else
 			{
-				g.points[i].y = reader.ReadInt16();
+				g.points[i].y = (float)reader.ReadInt16();
 			}
 		}
 
@@ -380,7 +380,7 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 		if (compositeDepth == 8)
 			throw std::runtime_error("Composite glyph recursion exceeded");
 
-		int parentPointsOffset = g.points.size();
+		int parentPointsOffset = (int)g.points.size();
 
 		bool weHaveInstructions = false;
 		while (true)
@@ -420,7 +420,7 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 			bool transform = true;
 			if (flags & TTF_WE_HAVE_A_SCALE)
 			{
-				ttf_F2DOT14 scale = F2DOT14_ToFloat(reader.ReadF2DOT14());
+				float scale = F2DOT14_ToFloat(reader.ReadF2DOT14());
 				mat2x2[0] = scale;
 				mat2x2[1] = 0;
 				mat2x2[2] = 0;
@@ -445,7 +445,7 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 				transform = false;
 			}
 
-			int childPointsOffset = g.points.size();
+			int childPointsOffset = (int)g.points.size();
 			LoadGlyph(g, childGlyphIndex, compositeDepth + 1);
 
 			if (transform)
@@ -463,8 +463,8 @@ void TrueTypeFont::LoadGlyph(TTF_SimpleGlyph& g, uint32_t glyphIndex, int compos
 
 			if (flags & TTF_ARGS_ARE_XY_VALUES)
 			{
-				dx = argument1;
-				dy = argument2;
+				dx = (float)argument1;
+				dy = (float)argument2;
 
 				// Spec states we must fall back to TTF_UNSCALED_COMPONENT_OFFSET if both flags are set
 				if ((flags & (TTF_SCALED_COMPONENT_OFFSET | TTF_UNSCALED_COMPONENT_OFFSET)) == TTF_SCALED_COMPONENT_OFFSET)
@@ -976,8 +976,8 @@ void TTF_NamingTable::Load(TrueTypeFileReader& reader)
 		for (ttf_uint16 i = 0; i < langTagCount; i++)
 		{
 			LangTagRecord record;
-			ttf_uint16 length;
-			ttf_Offset16 langTagOffset;
+			record.length = reader.ReadUInt16();
+			record.langTagOffset = reader.ReadOffset16();
 			langTagRecord.push_back(record);
 		}
 	}

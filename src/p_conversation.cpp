@@ -667,7 +667,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 //
 //============================================================================
 
-void P_ConversationCommand (int netcode, int pnum, uint8_t **stream)
+void P_ConversationCommand (int netcode, int pnum, TArrayView<uint8_t>& stream)
 {
 	player_t *player = &players[pnum];
 
@@ -761,3 +761,4 @@ DEFINE_FIELD(FStrifeDialogueReply, LogString);
 DEFINE_FIELD(FStrifeDialogueReply, NextNode);
 DEFINE_FIELD(FStrifeDialogueReply, LogNumber);
 DEFINE_FIELD(FStrifeDialogueReply, NeedsGold);
+DEFINE_FIELD(FStrifeDialogueReply, CloseDialog);

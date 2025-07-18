@@ -245,6 +245,9 @@ public:
 	template<class T> T*& PointerVar(FName field);
 	inline int* IntArray(FName field);
 
+	// Make sure native data is wiped correctly since it has no read barriers.
+	void ClearNativePointerFields(const TArrayView<FName>& types);
+
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail);
 

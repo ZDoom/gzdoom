@@ -417,6 +417,67 @@ size_t DObject::PropagateMark()
 //
 //==========================================================================
 
+void DObject::ClearNativePointerFields(const TArrayView<FName>& types)
+{
+	auto cls = GetClass();
+	if (cls->VMType == nullptr)
+		return;
+
+	auto it = cls->VMType->Symbols.GetIterator();
+	TMap<FName, PSymbol*>::Pair* sym = nullptr;
+	while (it.NextPair(sym))
+	{
+		auto field = dyn_cast<PField>(sym->Value);
+		if (field == nullptr)
+			continue;
+
+		PType* base = field->Type;
+		PType* t = base;
+		if (base->isArray() && !base->isStaticArray())
+			t = static_cast<PArray*>(base)->ElementType;
+		else if (base->isDynArray())
+			t = static_cast<PDynArray*>(base)->ElementType;
+		else if (base->isMap())
+			t = static_cast<PMap*>(base)->ValueType;
+
+		if (!t->isRealPointer())
+			continue;
+
+		auto pType = static_cast<PPointer*>(t)->PointedType;
+		if (!pType->isStruct() || !static_cast<PStruct*>(pType)->isNative || types.Find(static_cast<PStruct*>(pType)->TypeName) >= types.Size())
+			continue;
+
+		if (base->isArray() && !base->isStaticArray())
+		{
+			auto arr = (void**)ScriptVar(sym->Key, nullptr);
+			const size_t count = static_cast<PArray*>(base)->ElementCount;
+			for (size_t i = 0u; i < count; ++i)
+				arr[i] = nullptr;
+		}
+		else if (base->isDynArray())
+		{
+			static_cast<TArray<void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+		}
+		else if (base->isMap())
+		{
+			if (static_cast<PMap*>(base)->BackingClass == PMap::MAP_I32_PTR)
+				static_cast<ZSMap<int, void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+			else
+				static_cast<ZSMap<FString, void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+		}
+		else
+		{
+			PointerVar<void>(sym->Key) = nullptr;
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 template<typename M>
 static void MapPointerSubstitution(M *map, size_t &changed, DObject *old, DObject *notOld, const bool shouldSwap)
 {

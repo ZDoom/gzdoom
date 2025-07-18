@@ -52,14 +52,13 @@
 #include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
-EXTERN_CVAR(String, defaultiwad);
 EXTERN_CVAR(Bool, disableautoload)
 EXTERN_CVAR(Bool, autoloadlights)
 EXTERN_CVAR(Bool, autoloadbrightmaps)
 EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
-CVAR(Int, i_loadsupportwad, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // 0=never, 1=singleplayer only, 2=always
+CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -584,8 +583,6 @@ FString FIWadManager::IWADPathFileSearch(const FString &file)
 	return "";
 }
 
-CVAR(String, extra_args, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-
 int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
 {
 	const char *iwadparm = Args->CheckValue ("-iwad");
@@ -759,69 +756,39 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// Present the IWAD selection box.
 	bool alwaysshow = (queryiwad && !Args->CheckParm("-iwad") && !foundprio);
 
-	if (alwaysshow || picks.Size() > 1)
+	if (!havepicked && (alwaysshow || picks.Size() > 1))
 	{
-		// Locate the user's prefered IWAD, if it was found.
-		if (defaultiwad[0] != '\0')
+		TArray<WadStuff> wads;
+		for (auto & found : picks)
 		{
-			for (unsigned i = 0; i < picks.Size(); ++i)
-			{
-				FString &basename = mIWadInfos[picks[i].mInfoIndex].Name;
-				if (basename.CompareNoCase(defaultiwad) == 0)
-				{
-					pick = i;
-					break;
-				}
-			}
+			WadStuff stuff;
+			stuff.Name = mIWadInfos[found.mInfoIndex].Name;
+			stuff.Path = ExtractFileBase(found.mFullPath.GetChars());
+			wads.Push(stuff);
 		}
-		if (alwaysshow || picks.Size() > 1)
+
+		int flags = 0;
+		if (disableautoload) flags |= 1;
+		if (autoloadlights) flags |= 2;
+		if (autoloadbrightmaps) flags |= 4;
+		if (autoloadwidescreen) flags |= 8;
+		if (i_loadsupportwad) flags |= 16;
+
+		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
+		if (I_PickIWad(queryiwad, info))
 		{
-			if (!havepicked)
-			{
-				TArray<WadStuff> wads;
-				for (auto & found : picks)
-				{
-					WadStuff stuff;
-					stuff.Name = mIWadInfos[found.mInfoIndex].Name;
-					stuff.Path = ExtractFileBase(found.mFullPath.GetChars());
-					wads.Push(stuff);
-				}
-				int flags = 0;;
-
-				if (disableautoload) flags |= 1;
-				if (autoloadlights) flags |= 2;
-				if (autoloadbrightmaps) flags |= 4;
-				if (autoloadwidescreen) flags |= 8;
-
-				FString extraArgs = *extra_args;
-
-				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags, extraArgs);
-				if (pick >= 0)
-				{
-					extraArgs.StripLeftRight();
-
-					extra_args = extraArgs.GetChars();
-					
-					if(extraArgs.Len() > 0)
-					{
-						Args->AppendArgsString(extraArgs);
-					}
-
-					disableautoload = !!(flags & 1);
-					autoloadlights = !!(flags & 2);
-					autoloadbrightmaps = !!(flags & 4);
-					autoloadwidescreen = !!(flags & 8);
-
-					// The newly selected IWAD becomes the new default
-					defaultiwad = mIWadInfos[picks[pick].mInfoIndex].Name.GetChars();
-				}
-				else
-				{
-					return -1;
-				}
-				havepicked = true;
-			}
+			pick = info.SaveInfo();
+			disableautoload = !!(info.DefaultStartFlags & 1);
+			autoloadlights = !!(info.DefaultStartFlags & 2);
+			autoloadbrightmaps = !!(info.DefaultStartFlags & 4);
+			autoloadwidescreen = !!(info.DefaultStartFlags & 8);
+			i_loadsupportwad = !!(info.DefaultStartFlags & 16);
 		}
+		else
+		{
+			return -1;
+		}
+		havepicked = true;
 	}
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
@@ -848,9 +815,9 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	if(info.SupportWAD.IsNotEmpty())
 	{
-		bool wantsnetgame = (Args->CheckParm("-join") || Args->CheckParm("-host"));
-
-		if ((!wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
+		// For net games all wads must be explicitly named to make it easier for the host to know
+		// exactly what's being loaded.
+		if (i_loadsupportwad && !Args->CheckParm("-join") && !Args->CheckParm("-host"))
 		{
 			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
 

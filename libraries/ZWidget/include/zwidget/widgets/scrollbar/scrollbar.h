@@ -47,8 +47,8 @@ public:
 	std::function<void()> FuncScrollEnd;
 
 protected:
-	bool OnMouseDown(const Point& pos, int key) override;
-	bool OnMouseUp(const Point& pos, int key) override;
+	bool OnMouseDown(const Point& pos, InputKey key) override;
+	bool OnMouseUp(const Point& pos, InputKey key) override;
 	void OnMouseMove(const Point& pos) override;
 	void OnMouseLeave() override;
 	void OnPaint(Canvas* canvas) override;

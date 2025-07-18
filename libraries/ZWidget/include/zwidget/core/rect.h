@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 class Point
 {
 public:

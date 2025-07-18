@@ -48,6 +48,11 @@
 #include <fnmatch.h>
 #include <dirent.h>
 
+#else
+
+#include <windows.h>
+#include <direct.h>
+
 #endif
 
 namespace FileSys {
@@ -201,9 +206,6 @@ static size_t FS_GetFileSize(findstate_t* handle, const char* pathname)
 
 
 #else
-
-#include <windows.h>
-#include <direct.h>
 
 std::wstring toWide(const char* str)
 {

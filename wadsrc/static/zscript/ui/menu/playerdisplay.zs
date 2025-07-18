@@ -161,7 +161,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 
 			[seltype, classnum] = mOwner.mItems[mOwner.mSelectedItem].GetAction();
 
-			if (seltype != 'Episodemenu') return false;
+			if (seltype != 'EpisodeMenu') return false;
 			if (PlayerClasses.Size() == 0) return false;
 
 			SetPlayerClass(classnum);

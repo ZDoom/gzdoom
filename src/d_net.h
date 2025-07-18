@@ -65,6 +65,7 @@ public:
 
 	void SetData(const uint8_t* data, int len);
 	uint8_t* GetData(int* len = nullptr);
+	TArrayView<uint8_t> GetTArrayView();
 
 private:
 	uint8_t* m_Data;
@@ -109,6 +110,7 @@ struct FClientNetState
 
 	int				Flags = 0;				// State of this client.
 
+	uint8_t			StabilityBuffer = 0u;	// If in packet-server mode, account for if the client is trying to stabilize when measuring their performance.
 	uint8_t			ResendID = 0u;			// Make sure that if the retransmit happened on a wait barrier, it can be properly resent back over.
 	int				ResendSequenceFrom = -1; // If >= 0, send from this sequence up to the most recent one, capped to MAXSENDTICS.
 	int				SequenceAck = -1;		// The last sequence the client reported from us.
@@ -148,9 +150,11 @@ void Net_WriteDouble(double);
 void Net_WriteString(const char *);
 void Net_WriteBytes(const uint8_t *, int len);
 
-void Net_DoCommand(int cmd, uint8_t **stream, int player);
-void Net_SkipCommand(int cmd, uint8_t **stream);
+void Net_DoCommand(int cmd, TArrayView<uint8_t>& stream, int player);
+void Net_SkipCommand(int cmd, TArrayView<uint8_t>& stream);
 
+bool Net_CheckCutsceneReady();
+void Net_AdvanceCutscene();
 void Net_ResetCommands(bool midTic);
 void Net_SetWaiting();
 void Net_ClearBuffers();

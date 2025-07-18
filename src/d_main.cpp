@@ -119,6 +119,7 @@
 #include "startscreen.h"
 #include "shiftstate.h"
 #include "common/scripting/dap/DebugServer.h"
+#include "common/widgets/errorwindow.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -319,6 +320,7 @@ const char *D_DrawIcon;	// [RH] Patch name of icon to draw on next refresh
 int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
 bool singletics = false;	// debug flag to cancel adaptiveness
 FString startmap;
+bool setmap;
 bool autostart;
 bool advancedemo;
 FILE *debugfile;
@@ -2031,7 +2033,8 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		}
 	}
 
-	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload") && !disableautoload)
+	// Disable autoloading in netgames as we don't want people who are hosting/joining loading up random files.
+	if (!(gameinfo.flags & GI_SHAREWARE) && !Args->CheckParm("-noautoload") && !disableautoload && !Args->CheckParm("-host") && !Args->CheckParm("-join"))
 	{
 		FString file;
 
@@ -2082,6 +2085,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 static void CheckCmdLine()
 {
 	int flags = dmflags;
+	int flags3 = dmflags3;
 	int p;
 	const char *v;
 
@@ -2102,10 +2106,21 @@ static void CheckCmdLine()
 		deathmatch = 1;
 		flags |= DF_WEAPONS_STAY | DF_ITEMS_RESPAWN;
 	}
+	else if (Args->CheckParm("-coop"))
+	{
+		deathmatch = teamplay = 0;
+		flags |= DF_NO_COOP_WEAPON_SPAWN;
+		flags3 |= DF3_NO_PLAYER_CLIP | DF3_COOP_SHARE_KEYS | DF3_REMEMBER_LAST_WEAP;
+		// Hexen already has a bunch of custom coop items so let it handle it.
+		if (gameinfo.gametype != GAME_Hexen)
+			flags3 |= DF3_LOCAL_ITEMS;
+	}
 
 	dmflags = flags;
+	dmflags3 = flags3;
 
 	// get skill / episode / map from parms
+	setmap = false;
 	if (gameinfo.gametype != GAME_Hexen)
 	{
 		startmap = (gameinfo.flags & GI_MAPxx) ? "MAP01" : "E1M1";
@@ -2145,7 +2160,7 @@ static void CheckCmdLine()
 		}
 
 		startmap = CalcMapName (ep, map);
-		autostart = true;
+		autostart = setmap = true;
 	}
 
 	// [RH] Hack to handle +map. The standard console command line handler
@@ -2161,7 +2176,7 @@ static void CheckCmdLine()
 		else
 		{
 			startmap = mapvalue;
-			autostart = true;
+			autostart = setmap = true;
 		}
 	}
 
@@ -2209,6 +2224,37 @@ static void CheckCmdLine()
 		FStringf temp("Warp to map %s, Skill %d ", startmap.GetChars(), gameskill + 1);
 		StartScreen->AppendStatusLine(temp.GetChars());
 	}
+}
+
+// Attempt to account for wads with episodes much better when playing online. Defaulting to MAP01 is sometimes
+// a really bad idea e.g. if a hub map is the actual start area.
+static void CheckEpisodeCmd()
+{
+	bool setEpisode = false;
+	int episode = 0;
+	auto v = Args->CheckValue("-episode");
+	if (v != nullptr)
+	{
+		episode = atoi(v) - 1;
+		if (episode < 0 || episode >= AllEpisodes.Size())
+		{
+			Printf("Invalid episode %s\n", v);
+			episode = 0;
+		}
+		else
+		{
+			setEpisode = true;
+		}
+	}
+
+	// If -warp or +map were already used, keep whatever existing value they had.
+	if (!setEpisode && setmap)
+		return;
+
+	startmap = AllEpisodes[episode].mEpisodeMap;
+	setmap = true;
+	if (setEpisode)
+		autostart = true;
 }
 
 static void NewFailure ()
@@ -3210,7 +3256,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	int max_progress = TexMan.GuesstimateNumTextures();
 	int per_shader_progress = 0;//screen->GetShaderCount()? (max_progress / 10 / screen->GetShaderCount()) : 0;
-	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || Args->CheckParm("-norun");
+
+	bool norun = Args->CheckParm("-norun");
+	bool nostartscreen = batchrun || restart || Args->CheckParm("-join") || Args->CheckParm("-host") || norun;
 
 	if (GameStartupInfo.Type == FStartupInfo::DefaultStartup)
 	{
@@ -3221,8 +3269,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		else if (gameinfo.gametype == GAME_Strife)
 			GameStartupInfo.Type = FStartupInfo::StrifeStartup;
 	}
-
-	StartScreen = nostartscreen? nullptr : GetGameStartScreen(per_shader_progress > 0 ? max_progress * 10 / 9 : max_progress + 3);
 	
 	GameConfig->DoKeySetup(gameinfo.ConfigName.GetChars());
 
@@ -3237,7 +3283,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		exec = NULL;
 	}
 
-	if (!restart)
+	if (!(restart || norun))
 		V_Init2();
 
 	// [RH] Initialize localizable strings. 
@@ -3261,13 +3307,12 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	TexMan.Init();
 	
-	if (!batchrun) Printf ("V_Init: allocate screen.\n");
-	if (!restart)
+	if (!(batchrun || norun)) Printf ("V_Init: allocate screen.\n");
+	if (!(restart || norun))
 	{
 		screen->CompileNextShader();
-		if (StartScreen != nullptr) StartScreen->Render();
 	}
-	else
+	else if(!norun)
 	{
 		// Update screen palette when restarting
 		screen->UpdatePalette();
@@ -3275,6 +3320,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
+
+	StartScreen = nostartscreen? nullptr : GetGameStartScreen(per_shader_progress > 0 ? max_progress * 10 / 9 : max_progress + 3);
+	if (StartScreen != nullptr) StartScreen->Render();
 	
 	// +compatmode cannot be used on the command line, so use this as a substitute
 	auto compatmodeval = Args->CheckValue("-compatmode");
@@ -3305,6 +3353,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	// [RH] Parse through all loaded mapinfo lumps
 	if (!batchrun) Printf ("G_ParseMapInfo: Load map definitions.\n");
 	G_ParseMapInfo (iwad_info->MapInfo);
+	CheckEpisodeCmd();
 	MessageBoxClass = gameinfo.MessageBoxClass;
 	endoomName = gameinfo.Endoom;
 	menuBlurAmount = gameinfo.bluramount;
@@ -3473,6 +3522,11 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
 
+	if (norun || batchrun)
+	{
+		return 1337; // special exit
+	}
+
 	// [RH] Run any saved commands from the command line or autoexec.cfg now.
 	gamestate = GS_FULLCONSOLE;
 	Net_Initialize();
@@ -3495,11 +3549,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		}
 
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
-
-		if (Args->CheckParm("-norun") || batchrun)
-		{
-			return 1337; // special exit
-		}
 
 		if (StartScreen)
 		{
@@ -3801,6 +3850,15 @@ static int D_DoomMain_Internal (void)
 
 int GameMain()
 {
+	// On Windows, prefer the native win32 backend.
+	// On other platforms, use SDL until the other backends are more mature.
+	auto zwidget = DisplayBackend::TryCreateWin32();
+	if (!zwidget)
+		zwidget = DisplayBackend::TryCreateSDL2();
+	if (!zwidget)
+		return -1;
+	DisplayBackend::Set(std::move(zwidget));
+
 	int ret = 0;
 	GameTicRate = TICRATE;
 	I_InitTime();
@@ -3844,7 +3902,10 @@ int GameMain()
 	M_SaveDefaultsFinal();
 	DeleteStartupScreen();
 	C_UninitCVars(); // must come last so that nothing will access the CVARs anymore after deletion.
-	CloseWidgetResources();
+	if(ret != 1337)
+	{
+		CloseWidgetResources();
+	}
 	delete Args;
 	Args = nullptr;
 	return ret;
@@ -3952,6 +4013,7 @@ UNSAFE_CCMD(debug_restart)
 	Args->RemoveArgs("-file");
 	Args->RemoveArgs("-altdeath");
 	Args->RemoveArgs("-deathmatch");
+	Args->RemoveArgs("-coop");
 	Args->RemoveArgs("-skill");
 	Args->RemoveArgs("-savedir");
 	Args->RemoveArgs("-xlat");

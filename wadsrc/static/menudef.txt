@@ -640,6 +640,56 @@ OptionMenu "InventoryControlsMenu" protected
 
 	StaticText ""
 	Control    "$CNTRLMNU_DROPWEAPON"   , "weapdrop"
+
+	IfGame(Heretic, Hexen, Strife)
+	{
+		StaticText	""
+		StaticText	"$CNTRLMNU_INVENTORY_HOTKEYS"
+	}
+
+	IfGame(Heretic)
+	{
+		Control		"$CNTRLMNU_ARTI_CHAOS",		"use ArtiTeleport"
+		Control		"$CNTRLMNU_ARTI_EGG",		"use ArtiEgg"
+		Control		"$CNTRLMNU_ARTI_URN",		"use ArtiSuperHealth"
+		Control		"$CNTRLMNU_ARTI_FLASK",		"use ArtiHealth"
+		Control		"$CNTRLMNU_ARTI_RING",		"use ArtiInvulnerability"
+		Control		"$CNTRLMNU_ARTI_SHADOW",	"use ArtiInvisibility"
+		Control		"$CNTRLMNU_ARTI_BOMB",		"use ArtiTimeBomb"
+		Control		"$CNTRLMNU_ARTI_TOME",		"use ArtiTomeOfPower"
+		Control		"$CNTRLMNU_ARTI_TORCH",		"use ArtiTorch"
+		Control		"$CNTRLMNU_ARTI_WINGS",		"use ArtiFly"
+	}
+
+	IfGame(Hexen)
+	{
+		Control		"$CNTRLMNU_ARTI_BANISH",	"use ArtiTeleportOther"
+		Control		"$CNTRLMNU_ARTI_BOOTS",		"use ArtiSpeedboots"
+		Control		"$CNTRLMNU_ARTI_CHAOS",		"use ArtiTeleport"
+		Control		"$CNTRLMNU_ARTI_SERVANT",	"use ArtiDarkServant"
+		Control		"$CNTRLMNU_ARTI_BRACERS",	"use ArtiBoostArmor"
+		Control		"$CNTRLMNU_ARTI_FLECHETTE",	"useflechette"
+		Control		"$CNTRLMNU_ARTI_ICON",		"use ArtiInvulnerability2"
+		Control		"$CNTRLMNU_ARTI_KRATER",	"use ArtiBoostMana"
+		Control		"$CNTRLMNU_ARTI_INCANT",	"use ArtiHealingRadius"
+		Control		"$CNTRLMNU_ARTI_URN",		"use ArtiSuperHealth"
+		Control		"$CNTRLMNU_ARTI_PORK",		"use ArtiPork"
+		Control		"$CNTRLMNU_ARTI_FLASK",		"use ArtiHealth"
+		Control		"$CNTRLMNU_ARTI_TORCH",		"use ArtiTorch"
+		Control		"$CNTRLMNU_ARTI_WINGS",		"use ArtiFly"
+	}
+
+	IfGame(Strife)
+	{
+		Control		"$CNTRLMNU_INV_SURGERYKIT",		"use SurgeryKit"
+		Control		"$CNTRLMNU_INV_LARMOR",			"use LeatherArmor"
+		Control		"$CNTRLMNU_INV_MARMOR",			"use MetalArmor"
+		Control		"$CNTRLMNU_INV_ENVSUIT",		"use EnvironmentalSuit"
+		Control		"$CNTRLMNU_INV_SHADOWARMOR",	"use ShadowArmor"
+		Control		"$CNTRLMNU_INV_BEACON",			"use TeleporterBeacon"
+		Control		"$CNTRLMNU_INV_TARGETER",		"use Targeter"
+		Control		"$CNTRLMNU_INV_SCANNER",		"use Scanner"
+	}
 }
 
 OptionMenu "OtherControlsMenu" protected
@@ -785,6 +835,15 @@ OptionMenu "JoystickOptionsDefaults" protected
 OptionMenu "JoystickOptions" protected
 {
 	Title "$JOYMNU_OPTIONS"
+}
+
+OptionValue "JoyAxisCurveNames"
+{
+	-1, "$OPTVAL_CUSTOM"
+	0, "$OPTVAL_DEFAULT"
+	1, "$OPTVAL_LINEAR"
+	2, "$OPTVAL_QUADRATIC"
+	3, "$OPTVAL_CUBIC"
 }
 
 OptionValue "JoyAxisMapNames"
@@ -1261,6 +1320,9 @@ OptionMenu "MiscOptions" protected
 
 	StaticText " "
 	Option "$MISCMNU_ALWAYSTALLY",				"sv_alwaystally", "AlwaysTally"
+
+	StaticText " "
+	Option "$MISCMNU_DISCORDRPC",				"i_discordrpc",	"OnOff"
 	
 }
 
@@ -2163,6 +2225,7 @@ OptionMenu ModReplayerOptions protected
  	Title "$ADVSNDMNU_OPLSYNTHESIS"
 	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
+	Slider "$ADVSNDMNU_OPLGAIN",		 	"opl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
  }
 
@@ -2182,6 +2245,24 @@ OptionMenu ModReplayerOptions protected
 	11, "$ADLVLMODEL_HMIOLD"
  }
 
+ OptionValue OpnVolumeModels
+ {
+	0, "$OPNVLMODEL_AUTO"
+	1, "$OPNVLMODEL_GENERIC"
+	2, "$OPNVLMODEL_NATIVE"
+	3, "$OPNVLMODEL_DMX"
+	4, "$OPNVLMODEL_APOGEE"
+	5, "$OPNVLMODEL_WIN9X"
+ }
+
+ OptionValue AdlChanAllocs
+ {
+	-1, "$ADLCHANALLOC_AUTO"
+	0, "$ADLCHANALLOC_OFFDELAY"
+	1, "$ADLCHANALLOC_SAMEINST"
+	2, "$ADLCHANALLOC_ANYREL"
+ }
+
  OptionValue ADLOplCores
  {
 	0, "$OPTVAL_NUKEDOPL3"
@@ -2189,40 +2270,57 @@ OptionMenu ModReplayerOptions protected
 	2, "$OPTVAL_DOSBOXOPL3"
 	3, "$OPTVAL_OPALOPL3"
 	4, "$OPTVAL_JAVAOPL3"
+	5, "$OPTVAL_ESFMu"
+	6, "$OPTVAL_MAMEOPL2"
+	7, "$OPTVAL_YMFMOPL2"
+	8, "$OPTVAL_YMFMOPL3"
+	9, "$OPTVAL_LLENUKEDOPL2"
+	10, "$OPTVAL_LLENUKEDOPL3"
  }
 
  OptionValue OpnCores
  {
 	0, "$OPTVAL_MAMEOPN2"
-	1, "$OPTVAL_NUKEDOPN2"
+	1, "$OPTVAL_NUKEDOPN2YM3438"
 	2, "$OPTVAL_GENSOPN2"
+	3, "$OPTVAL_YMFMOPN2"
 	4, "$OPTVAL_NP2OPNA"
 	5, "$OPTVAL_MAMEOPNA"
-	6, "$OPTVAL_PMDWINOPNA"
+	6, "$OPTVAL_YMFMOPNA"
+	// 7'th is a VGM Dumper, it should NEVER been used during normal runtime
+	8, "$OPTVAL_NUKEDOPN2YM2612"
  }
 
  OptionMenu ADLOptions protected
  {
 	Title "$ADVSNDMNU_ADLMIDI"
+	Slider "$ADVSNDMNU_ADLGAIN",		 "adl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "adl_fullpan", "OnOff"
 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "adl_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "adl_auto_arpeggio", "OnOff"
 	StaticText ""
 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
 	StaticText ""
 	Option "$ADVSNDMNU_ADLCUSTOMBANK", 	 "adl_use_custom_bank", "OnOff"
+	Option "$ADVSNDMNU_ADLUSEWADBANK", 	 "adl_use_genmidi", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPLBANKFILE", "adl_custom_bank", "ADLMIDICustomBanksMenu"
  }
 
  OptionMenu OPNOptions protected
  {
 	Title "$ADVSNDMNU_OPNMIDI"
+	Slider "$ADVSNDMNU_OPNGAIN",		 "opn_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "opn_fullpan", "OnOff"
+	Option "$ADVSNDMNU_VLMODEL",		 "opn_volume_model", "OpnVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "opn_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "opn_auto_arpeggio", "OnOff"
 	StaticText ""
 	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"
@@ -2390,9 +2488,29 @@ OptionMenu NetworkOptions protected
 	StaticText " "
 	StaticText "$NETMNU_HOSTOPTIONS", 1
 	Option "$NETMNU_EXTRATICS",				"net_extratic", "OnOff"
-	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "OnOff"
-	NumberField "$NETMNU_CHATSLOMO",		"net_chatslowmode", 0, 300, 5
+	Option "$NETMNU_BALANCETICS",			"net_ticbalance", "OnOff"
+	Option "$NETMNU_LIMITCONVO",			"net_limitconversations", "OnOff"
+	Option "$NETMNU_REPEATCOOLDOWN",		"net_repeatableactioncooldown", "OnOff"
+	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "PauseTypes"
+	Option "$NETMNU_READYTYPE",				"net_cutscenereadytype", "ReadyTypes"
+	Slider "$NETMNU_READYPERCENT",			"net_cutscenereadypercent", "0", "1", "0.05", 2
+	Slider "$NETMNU_READYCOUNTDOWN",		"net_cutscenecountdown", 0, 300, 5
+	Slider "$NETMNU_CHATSLOMO",				"net_chatslowmode", 0, 300, 5
 
+}
+
+OptionValue "PauseTypes"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_HOSTONLY"
+	2, "$OPTVAL_ON"
+}
+
+OptionValue "ReadyTypes"
+{
+	0, "$OPTVAL_VOTE"
+	1, "$OPTVAL_ANYONE"
+	2, "$OPTVAL_HOSTONLY"
 }
 
 OptionValue "ChatTypes"

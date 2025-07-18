@@ -3,12 +3,13 @@
 #include <list>
 #include <unordered_map>
 #include <zwidget/window/window.h>
+#include <zwidget/window/sdl2nativehandle.h>
 #include <SDL2/SDL.h>
 
 class SDL2DisplayWindow : public DisplayWindow
 {
 public:
-	SDL2DisplayWindow(DisplayWindowHost* windowHost);
+	SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, SDL2DisplayWindow* owner, RenderAPI renderAPI);
 	~SDL2DisplayWindow();
 
 	void SetWindowTitle(const std::string& text) override;
@@ -19,6 +20,7 @@ public:
 	void ShowMaximized() override;
 	void ShowMinimized() override;
 	void ShowNormal() override;
+	bool IsWindowFullscreen() override;
 	void Hide() override;
 	void Activate() override;
 	void ShowCursor(bool enable) override;
@@ -27,7 +29,7 @@ public:
 	void CaptureMouse() override;
 	void ReleaseMouseCapture() override;
 	void Update() override;
-	bool GetKeyState(EInputKey key) override;
+	bool GetKeyState(InputKey key) override;
 	void SetCursor(StandardCursor cursor) override;
 
 	Rect GetWindowFrame() const override;
@@ -45,6 +47,14 @@ public:
 	std::string GetClipboardText() override;
 	void SetClipboardText(const std::string& text) override;
 
+	Point MapFromGlobal(const Point& pos) const override;
+	Point MapToGlobal(const Point& pos) const override;
+
+	void* GetNativeHandle() override { return &Handle; }
+
+	std::vector<std::string> GetVulkanInstanceExtensions() override;
+	VkSurfaceKHR CreateVulkanSurface(VkInstance instance) override;
+
 	static void DispatchEvent(const SDL_Event& event);
 	static SDL2DisplayWindow* FindEventWindow(const SDL_Event& event);
 
@@ -58,10 +68,10 @@ public:
 	void OnMouseMotion(const SDL_MouseMotionEvent& event);
 	void OnPaintEvent();
 
-	EInputKey GetMouseButtonKey(const SDL_MouseButtonEvent& event);
+	InputKey GetMouseButtonKey(const SDL_MouseButtonEvent& event);
 
-	static EInputKey ScancodeToInputKey(SDL_Scancode keycode);
-	static SDL_Scancode InputKeyToScancode(EInputKey inputkey);
+	static InputKey ScancodeToInputKey(SDL_Scancode keycode);
+	static SDL_Scancode InputKeyToScancode(InputKey inputkey);
 
 	template<typename T>
 	Point GetMousePos(const T& event)
@@ -79,11 +89,14 @@ public:
 	static void StopTimer(void* timerID);
 
 	DisplayWindowHost* WindowHost = nullptr;
-	SDL_Window* WindowHandle = nullptr;
+	SDL2NativeHandle Handle;
 	SDL_Renderer* RendererHandle = nullptr;
 	SDL_Texture* BackBufferTexture = nullptr;
 	int BackBufferWidth = 0;
 	int BackBufferHeight = 0;
+
+	bool CursorLocked = false;
+	bool isFullscreen = false;
 
 	static bool ExitRunLoop;
 	static Uint32 PaintEventNumber;

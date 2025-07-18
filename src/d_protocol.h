@@ -35,6 +35,7 @@
 #define __D_PROTOCOL_H__
 
 #include "doomtype.h"
+#include "i_protocol.h"
 
 // The IFF routines here all work with big-endian IDs, even if the host
 // system is little-endian.
@@ -163,10 +164,11 @@ enum EDemoCommand
 	DEM_NETEVENT,		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
 	DEM_MDK,			// 71 String: Damage type
 	DEM_SETINV,			// 72 SetInventory
-	DEM_ENDSCREENJOB,
+	DEM_ENDSCREENJOB,	// 73
 	DEM_ZSC_CMD,		// 74 String: Command, Word: Byte size of command
 	DEM_CHANGESKILL,	// 75 Int: Skill
 	DEM_KICK,			// 76 Byte: Player number
+	DEM_READIED,		// 77 
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -228,33 +230,16 @@ enum ECheatCommand
 	CHT_MASSACRE2
 };
 
-void StartChunk (int id, uint8_t **stream);
-void FinishChunk (uint8_t **stream);
-void SkipChunk (uint8_t **stream);
+void StartChunk (int id, TArrayView<uint8_t>& stream);
+void FinishChunk (TArrayView<uint8_t>& stream);
+void SkipChunk (TArrayView<uint8_t>& stream);
 
-// Returns the number of bytes written to the stream
-int UnpackUserCmd(usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
-int PackUserCmd(const usercmd_t& ucmd, const usercmd_t* basis, uint8_t*& stream);
-int WriteUserCmdMessage(const usercmd_t& ucmd, const usercmd_t *basis, uint8_t*& stream);
+void UnpackUserCmd(usercmd_t& ucmd, const usercmd_t* basis, TArrayView<uint8_t>& stream);
+void PackUserCmd(const usercmd_t& ucmd, const usercmd_t* basis, TArrayView<uint8_t>& stream);
+void WriteUserCmdMessage(const usercmd_t& ucmd, const usercmd_t *basis, TArrayView<uint8_t>& stream);
 
-int SkipUserCmdMessage(uint8_t*& stream);
-int ReadUserCmdMessage(uint8_t*& stream, int player, int tic);
+void SkipUserCmdMessage(TArrayView<uint8_t>& stream);
+void ReadUserCmdMessage(TArrayView<uint8_t>& stream, int player, int tic);
 void RunPlayerCommands(int player, int tic);
-
-uint8_t ReadInt8 (uint8_t **stream);
-int16_t ReadInt16 (uint8_t **stream);
-int32_t ReadInt32 (uint8_t **stream);
-int64_t ReadInt64(uint8_t** stream);
-float ReadFloat (uint8_t **stream);
-double ReadDouble(uint8_t** stream);
-char *ReadString (uint8_t **stream);
-const char *ReadStringConst(uint8_t **stream);
-void WriteInt8 (uint8_t val, uint8_t **stream);
-void WriteInt16 (int16_t val, uint8_t **stream);
-void WriteInt32 (int32_t val, uint8_t **stream);
-void WriteInt64(int64_t val, uint8_t** stream);
-void WriteFloat (float val, uint8_t **stream);
-void WriteDouble(double val, uint8_t** stream);
-void WriteString (const char *string, uint8_t **stream);
 
 #endif //__D_PROTOCOL_H__

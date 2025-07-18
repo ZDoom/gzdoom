@@ -53,6 +53,8 @@ CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_SYSTEM_ONLY);
 FString SavegameFolder;
 CVAR(Int, save_sort_order, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+extern bool netgame;
+
 //=============================================================================
 //
 // Save data maintenance 
@@ -264,12 +266,47 @@ void FSavegameManagerBase::DoSave(int Selected, const char *savegamestring)
 		FString filename;
 		int i;
 
-		for (i = 0;; ++i)
+		if (netgame)
 		{
-			filename = BuildSaveName("save", i);
-			if (!FileExists(filename))
+			// For netgames it's usually a bad idea to use the default savexx names, so instead
+			// sanitize the description to use as a name.
+			filename = savegamestring;
+			FixPathSeperator(filename);
+			bool failed = false;
+			if (filename[0] == '/')
 			{
-				break;
+				Printf("saving to an absolute path is not allowed\n");
+				failed = true;
+			}
+			else if (filename.IndexOf("..") >= 0)
+			{
+				Printf("'..' not allowed in file names\n");
+				failed = true;
+			}
+#ifdef _WIN32
+			// block all invalid characters for Windows file names
+			else if (filename.IndexOfAny(":?*<>|") >= 0)
+			{
+				Printf("file name contains invalid characters\n");
+				failed = true;
+			}
+#endif
+			if (failed)
+			{
+				M_ClearMenus();
+				return;
+			}
+			filename = G_BuildSaveName(filename.GetChars());
+		}
+		else
+		{
+			for (i = 0;; ++i)
+			{
+				filename = BuildSaveName("save", i);
+				if (!FileExists(filename))
+				{
+					break;
+				}
 			}
 		}
 		PerformSaveGame(filename.GetChars(), savegamestring);
@@ -561,7 +598,15 @@ FString G_GetSavegamesFolder()
 	FString name;
 	bool usefilter;
 
-	if (const char* const dir = Args->CheckValue("-savedir"))
+	// Always use the netgame folder for multiplayer games to prevent any singleplayer saves
+	// from being overridden by someone else. Also makes it easier for everyone to load from
+	// it.
+	if (netgame)
+	{
+		name = M_GetSavegamesPath();
+		usefilter = true;
+	}
+	else if (const char* const dir = Args->CheckValue("-savedir"))
 	{
 		name = dir;
 		usefilter = false; //-savedir specifies an absolute save directory path.

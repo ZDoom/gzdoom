@@ -3326,11 +3326,11 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 
 	if (compileEnvironment.CheckForCustomAddition)
 	{
-		auto result = compileEnvironment.CheckForCustomAddition(this, ctx);
-		if (result)
+		auto expr = compileEnvironment.CheckForCustomAddition(this, ctx);
+		if (expr)
 		{
-			ABORT(right);
-			goto goon;
+			delete this;
+			return expr->Resolve(ctx);
 		}
 	}
 
@@ -8072,7 +8072,6 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	{
 		arraytype = static_cast<PArray*>(Array->ValueType);
 	}
-	ExpEmit arrayvar = Array->Emit(build);
 	ExpEmit start;
 	ExpEmit bound;
 	bool nestedarray = false;
@@ -8080,31 +8079,99 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	if (SizeAddr != ~0u)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
-
-		start = ExpEmit(build, REGT_POINTER);
-		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
-
+		
 		auto f = Create<PField>(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
 		auto arraymemberbase = static_cast<FxMemberBase *>(Array);
 
-		auto origmembervar = arraymemberbase->membervar;
-		auto origaddrreq = arraymemberbase->AddressRequested;
-		auto origvaluetype = Array->ValueType;
+		if (Array->ExprType == EFX_StructMember || Array->ExprType == EFX_ClassMember)
+		{
+			struct DummyVar : public FxExpression
+			{
+				ExpEmit dummy;
+				DummyVar(ExpEmit e) : FxExpression(EFX_Expression,{}), dummy(e){}
+				ExpEmit Emit(VMFunctionBuilder *build)
+				{
+					return dummy;
+				};
+			};
 
-		arraymemberbase->membervar = f;
-		arraymemberbase->AddressRequested = false;
-		Array->ValueType = TypeUInt32;
+			//fix expression bug
+			FxStructMember * orig = static_cast<FxStructMember *>(Array);
+			FxExpression * prev = orig->classx;
+			ExpEmit objvar = prev->Emit(build);
+			bool wasFixed = objvar.Fixed;
 
-		bound = Array->Emit(build);
+			objvar.Fixed = true;
 
-		arraymemberbase->membervar = origmembervar;
-		arraymemberbase->AddressRequested = origaddrreq;
-		Array->ValueType = origvaluetype;
+			orig->classx = new DummyVar(objvar);
+			orig->classx->ValueType = prev->ValueType;
+			ExpEmit arrayvar = Array->Emit(build);
+			start = ExpEmit(build, REGT_POINTER);
+			delete orig->classx;
+			orig->classx = prev;
 
-		arrayvar.Free(build);
+			build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
+
+			if(ismeta)
+			{
+				// [Jay0]
+				// ugh do it the old way for meta since i don't want to duplicate that code here, but this time it only double-emits the member access, not the function call, so no bad side-effects, still not "right" though
+				// TODO handle meta better
+
+				auto origmembervar = arraymemberbase->membervar;
+				auto origaddrreq = arraymemberbase->AddressRequested;
+				auto origvaluetype = Array->ValueType;
+
+				arraymemberbase->membervar = f;
+				arraymemberbase->AddressRequested = false;
+				Array->ValueType = TypeUInt32;
+
+				bound = Array->Emit(build);
+
+				arraymemberbase->membervar = origmembervar;
+				arraymemberbase->AddressRequested = origaddrreq;
+				Array->ValueType = origvaluetype;
+			}
+			else
+			{
+				bound = ExpEmit(build, REGT_INT);
+				build->Emit(OP_LW, bound.RegNum, objvar.RegNum, build->GetConstantInt((int)SizeAddr));
+			}
+
+			objvar.Fixed = wasFixed;
+			objvar.Free(build);
+			arrayvar.Free(build);
+		}
+		else
+		{   
+			// [Jay0]
+			// now only runs for global variables and stack variables, so the double-emit is """fine"""
+			// TODO replace this entirely with something better still
+			
+			ExpEmit arrayvar = Array->Emit(build);
+
+			start = ExpEmit(build, REGT_POINTER);
+			build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
+
+			auto origmembervar = arraymemberbase->membervar;
+			auto origaddrreq = arraymemberbase->AddressRequested;
+			auto origvaluetype = Array->ValueType;
+
+			arraymemberbase->membervar = f;
+			arraymemberbase->AddressRequested = false;
+			Array->ValueType = TypeUInt32;
+
+			bound = Array->Emit(build);
+
+			arraymemberbase->membervar = origmembervar;
+			arraymemberbase->AddressRequested = origaddrreq;
+			Array->ValueType = origvaluetype;
+			arrayvar.Free(build);
+		}
 	}
 	else if ((Array->ExprType == EFX_ArrayElement || Array->ExprType == EFX_OutVarDereference) && Array->isStaticArray())
 	{
+		ExpEmit arrayvar = Array->Emit(build);
 		bound = ExpEmit(build, REGT_INT);
 		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
 
@@ -8114,7 +8181,10 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 		nestedarray = true;
 	}
-	else start = arrayvar;
+	else
+	{
+		start = Array->Emit(build);
+	}
 
 	if (index->isConstant())
 	{
@@ -9063,7 +9133,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	else if (Self->IsQuaternion())
 	{
 		// Reuse vector built-ins for quaternion
-		if (MethodName == NAME_Length || MethodName == NAME_LengthSquared || MethodName == NAME_Unit)
+		if (MethodName == NAME_Length || MethodName == NAME_LengthSquared || MethodName == NAME_Unit || MethodName == NAME_Conjugate || MethodName == NAME_Inverse)
 		{
 			if (ArgList.Size() > 0)
 			{
@@ -10361,6 +10431,9 @@ FxExpression *FxVectorBuiltin::Resolve(FCompileContext &ctx)
 		ValueType = TypeFloat64;
 		break;
 
+	case NAME_Conjugate:
+	case NAME_Inverse:
+		assert(Self->IsQuaternion());
 	case NAME_Unit:
 		ValueType = Self->ValueType;
 		break;
@@ -10411,6 +10484,18 @@ ExpEmit FxVectorBuiltin::Emit(VMFunctionBuilder *build)
 		ExpEmit len(build, REGT_FLOAT);
 		build->Emit(vecSize == 2 ? OP_LENV2 : vecSize == 3 ? OP_LENV3 : OP_LENV4, len.RegNum, op.RegNum);
 		build->Emit(vecSize == 2 ? OP_DIVVF2_RR : vecSize == 3 ? OP_DIVVF3_RR : OP_DIVVF4_RR, to.RegNum, op.RegNum, len.RegNum);
+		len.Free(build);
+	}
+	else if (Function == NAME_Conjugate)
+	{
+		build->Emit(OP_CONJQ, to.RegNum, op.RegNum);
+	}
+	else if (Function == NAME_Inverse)
+	{
+		ExpEmit len(build, REGT_FLOAT);
+		build->Emit(OP_DOTV4_RR, len.RegNum, op.RegNum, op.RegNum);
+		build->Emit(OP_CONJQ, to.RegNum, op.RegNum);
+		build->Emit(OP_DIVVF4_RR, to.RegNum, to.RegNum, len.RegNum);
 		len.Free(build);
 	}
 	else if (Function == NAME_Angle)

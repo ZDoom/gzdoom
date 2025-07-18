@@ -46,6 +46,7 @@ extern uint8_t globalfreeze, globalchangefreeze;
 
 void C_Ticker();
 void M_Ticker();
+void D_RunCutscene();
 
 //==========================================================================
 //
@@ -91,6 +92,10 @@ void P_RunClientsideLogic()
 		// TODO: Should this be called on all maps...?
 		if (gamestate == GS_LEVEL)
 			primaryLevel->automap->Ticker();
+	}
+	else if (gamestate == GS_CUTSCENE || gamestate == GS_INTRO)
+	{
+		D_RunCutscene();
 	}
 
 	// [MK] Additional ticker for UI events right after all others

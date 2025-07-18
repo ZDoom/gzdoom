@@ -60,6 +60,7 @@ struct FThinkerList
 	bool IsEmpty() const;
 	void DestroyThinkers();
 	bool DoDestroyThinkers();
+	void OnLoad();
 	int TickThinkers(FThinkerList *dest);	// Returns: # of thinkers ticked
 	int ProfileThinkers(FThinkerList *dest);
 	void SaveList(FSerializer &arc);
@@ -83,6 +84,7 @@ struct FThinkerCollection
 	void DestroyAllThinkers(bool fullgc = true);
 	void SerializeThinkers(FSerializer &arc, bool keepPlayers);
 	void MarkRoots();
+	void OnLoad();
 	DThinker *FirstThinker(int statnum);
 	void Link(DThinker *thinker, int statnum);
 
@@ -105,7 +107,6 @@ public:
 	virtual void PostBeginPlay ();	// Called just before the first tick
 	virtual void CallPostBeginPlay(); // different in actor.
 	virtual void PostSerialize();
-	void CallPostSerialize();
 	void Serialize(FSerializer &arc) override;
 	size_t PropagateMark();
 	

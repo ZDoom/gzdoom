@@ -207,7 +207,7 @@ dap::ResponseOrError<dap::SetBreakpointsResponse> BreakpointManager::SetBreakpoi
 				found.pop();
 				continue;
 			}
-			for (uint i = 0; i < func->LineInfoCount; i++)
+			for (unsigned int i = 0; i < func->LineInfoCount; i++)
 			{
 				if (func->LineInfo[i].LineNumber == line)
 				{
@@ -453,7 +453,7 @@ dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> BreakpointManager::
 
 	dap::SetInstructionBreakpointsResponse response;
 	ClearBreakpointsType(BreakpointInfo::Type::Instruction);
-	for (uint i = 0; i < breakpoints.size(); i++)
+	for (unsigned int i = 0; i < breakpoints.size(); i++)
 	{
 		auto &bp = breakpoints[i];
 		void *srcAddress = (void *)(std::stoull(bp.instructionReference.substr(2), nullptr, 16));

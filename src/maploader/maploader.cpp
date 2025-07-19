@@ -3209,7 +3209,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		LoadLightmap(map);
 	}
 
-	for (uint i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (Level->PlayerInGame(i) && Level->Players[i]->mo != nullptr)
 			Level->Players[i]->health = Level->Players[i]->mo->health;

@@ -337,7 +337,7 @@ dap::array<dap::Breakpoint> DebugExecutionManager::SetExceptionBreakpointFilters
 {
 	m_exceptionFilters.clear();
 	dap::array<dap::Breakpoint> breakpoints;
-	for (uint i = 0; i < filterIds.size(); i++)
+	for (unsigned int i = 0; i < filterIds.size(); i++)
 	{
 		auto breakpoint = dap::Breakpoint();
 		int64_t id = (int64_t)DebugExecutionManager::GetFilterID(filterIds[i]);

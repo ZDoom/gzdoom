@@ -25,10 +25,6 @@ typedef int32_t							fixed_t;
 
 typedef uint32_t			angle_t;
 
-#ifdef _WIN32
-typedef unsigned int		uint;
-#endif
-
 #if defined(__GNUC__)
 // With versions of GCC newer than 4.2, it appears it was determined that the
 // cost of an unaligned pointer on PPC was high enough to add padding to the

@@ -347,7 +347,7 @@ CCMD(dumplinktable)
 
 CCMD(printinv)
 {
-	uint pnum = consoleplayer;
+	unsigned int pnum = consoleplayer;
 
 #ifdef _DEBUG
 	// Only allow peeking on other players' inventory in debug builds.

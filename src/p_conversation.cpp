@@ -322,7 +322,7 @@ void P_FreeStrifeConversations ()
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
 	AActor *oldtarget;
-	uint i;
+	unsigned int i;
 
 	// Make sure this is actually a player.
 	if (pc == nullptr || pc->player == nullptr || npc == nullptr || !pc->Level->isPrimaryLevel()) return;
@@ -446,7 +446,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 void P_ResumeConversation ()
 {
-	for (uint i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;

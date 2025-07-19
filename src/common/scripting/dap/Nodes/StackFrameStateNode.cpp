@@ -67,7 +67,7 @@ bool StackFrameStateNode::SerializeToProtocol(dap::StackFrame &stackFrame, PexCa
 			{
 				// end of the function, get the max line number
 				int max_line = 0;
-				for (uint i = 0; i < scriptFunction->LineInfoCount; i++)
+				for (unsigned int i = 0; i < scriptFunction->LineInfoCount; i++)
 				{
 					if (scriptFunction->LineInfo[i].LineNumber > max_line)
 					{

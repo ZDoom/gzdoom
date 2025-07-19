@@ -283,7 +283,7 @@ void DBot::Dofire (usercmd_t *cmd)
 
 bool FCajunMaster::IsLeader (player_t *player)
 {
-	for (uint count = 0; count < MAXPLAYERS; count++)
+	for (unsigned int count = 0; count < MAXPLAYERS; count++)
 	{
 		if (players[count].Bot != NULL
 			&& players[count].Bot->mate == player->mo)
@@ -301,7 +301,7 @@ void FCajunMaster::BotTick(AActor *mo)
 {
 	BotSupportCycles.Clock();
 	m_Thinking = true;
-	for (uint i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i] || players[i].Bot == NULL)
 			continue;
@@ -342,7 +342,7 @@ void FCajunMaster::BotTick(AActor *mo)
 //the mate (teammate coop mate).
 AActor *DBot::Choose_Mate ()
 {
-	uint count;
+	unsigned int count;
 	double closest_dist, test;
 	AActor *target;
 
@@ -413,7 +413,7 @@ AActor *DBot::Choose_Mate ()
 //MAKEME: Make this a smart decision
 AActor *DBot::Find_enemy ()
 {
-	uint count;
+	unsigned int count;
 	double closest_dist, temp; //To target.
 	AActor *target;
 	DAngle vangle;
@@ -580,7 +580,7 @@ bool FCajunMaster::SafeCheckPosition (AActor *actor, double x, double y, FCheckP
 
 void FCajunMaster::StartTravel ()
 {
-	for (uint i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (players[i].Bot != NULL)
 		{
@@ -591,7 +591,7 @@ void FCajunMaster::StartTravel ()
 
 void FCajunMaster::FinishTravel ()
 {
-	for (uint i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (players[i].Bot != NULL)
 		{

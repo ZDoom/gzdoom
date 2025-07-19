@@ -880,6 +880,12 @@ static int ReactToDamage(AActor *target, AActor *inflictor, AActor *source, int 
 		if ((player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN) ||
 			((player->cheats & CF_GODMODE) && damage < TELEFRAG_DAMAGE))
 			return false;
+
+		IFVIRTUALPTR(target, AActor, PlayerHurtMakeRumble)
+		{
+			VMValue params[2] = { target, inflictor };
+			VMCall(func, params, 2, nullptr, 0);
+		}
 	}
 	
 	woundstate = target->FindState(NAME_Wound, modName);

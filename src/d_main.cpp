@@ -2791,7 +2791,7 @@ static bool System_CaptureModeInGame()
 
 static void System_PlayStartupSound(const char* sndname)
 {
-	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
+	S_Sound(CHAN_BODY, CHANF_RUMBLE, sndname, 1, ATTN_NONE);
 }
 
 static bool System_IsSpecialUI()
@@ -3548,7 +3548,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			autostart = true;
 		}
 
-		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
+		S_Sound (CHAN_BODY, CHANF_RUMBLE, "misc/startupdone", 1, ATTN_NONE);
 
 		if (StartScreen)
 		{

@@ -13,7 +13,7 @@
   <summary>Game engine for Classic Doom</summary>
 
   <url type="homepage">https://zdoom.org/index</url>
-  <url type="bugtracker">https://github.com/coelckers/gzdoom</url>
+  <url type="bugtracker">https://github.com/ZDoom/gzdoom/issues</url>
   <url type="help">https://zdoom.org/wiki/Main_Page</url>
   <url type="faq">https://zdoom.org/about</url>
   <url type="contact">https://forum.zdoom.org/</url>
@@ -60,19 +60,19 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://cdn.jsdelivr.net/gh/flathub/org.zdoom.GZDoom/images/image_02.png</image>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_doom.png</image>
       <caption>Doom screenshot</caption>
     </screenshot>
     <screenshot>
-      <image>https://cdn.jsdelivr.net/gh/flathub/org.zdoom.GZDoom/images/image_01.png</image>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_strife.png</image>
       <caption>Strife screenshot</caption>
     </screenshot>
     <screenshot>
-      <image>https://cdn.jsdelivr.net/gh/flathub/org.zdoom.GZDoom/images/image_03.png</image>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_heretic.png</image>
       <caption>Heretic screenshot</caption>
     </screenshot>
     <screenshot>
-      <image>https://cdn.jsdelivr.net/gh/flathub/org.zdoom.GZDoom/images/image_04.png</image>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_hexen.png</image>
       <caption>Hexen screenshot</caption>
     </screenshot>
   </screenshots>

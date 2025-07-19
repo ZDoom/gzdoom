@@ -211,7 +211,16 @@ CVAR (Bool,		freelook,		true,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
 CVAR (Bool,		lookstrafe,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always strafe with mouse?
 CVAR (Float,	m_forward,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 CVAR (Float,	m_side,			2.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
- 
+
+#define ANALOG_LOOK_BASE	1280
+
+// You can change cl_analog_sensitivity_pitch's default to 1.6f if the old historical
+// behavior is preferred, but IMO that is so fast that it's practically unplayable...
+CVAR (Float, cl_analog_sensitivity_yaw,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CVAR (Float, cl_analog_sensitivity_pitch,	0.6f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+
+CVAR (Bool, cl_analog_straferun, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+
 int 			turnheld;								// for accelerative turning 
 
 EXTERN_CVAR (Bool, invertmouse)
@@ -611,6 +620,9 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	base = G_BaseTiccmd (); 
 	*cmd = *base;
 
+	// Update axis polling for the button map
+	buttonMap.GetAxes();
+
 	strafe = buttonMap.ButtonDown(Button_Strafe);
 	speed = buttonMap.ButtonDown(Button_Speed) ^ (int)cl_run;
 
@@ -619,7 +631,7 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	// [RH] only use two stage accelerative turning on the keyboard
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
-	if (buttonMap.ButtonDown(Button_Left) || buttonMap.ButtonDown(Button_Right))
+	if (buttonMap.ButtonDownDigital(Button_Left) || buttonMap.ButtonDownDigital(Button_Right))
 		turnheld += TicDup;
 	else
 		turnheld = 0;
@@ -627,9 +639,9 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	// let movement keys cancel each other out
 	if (strafe)
 	{
-		if (buttonMap.ButtonDown(Button_Right))
+		if (buttonMap.ButtonDownDigital(Button_Right))
 			side += sidemove[speed];
-		if (buttonMap.ButtonDown(Button_Left))
+		if (buttonMap.ButtonDownDigital(Button_Left))
 			side -= sidemove[speed];
 	}
 	else
@@ -639,48 +651,48 @@ void G_BuildTiccmd (usercmd_t *cmd)
 		if (turnheld < SLOWTURNTICS)
 			tspeed += 2;		// slow turn
 		
-		if (buttonMap.ButtonDown(Button_Right))
+		if (buttonMap.ButtonDownDigital(Button_Right))
 		{
 			G_AddViewAngle (*angleturn[tspeed]);
 		}
-		if (buttonMap.ButtonDown(Button_Left))
+		if (buttonMap.ButtonDownDigital(Button_Left))
 		{
 			G_AddViewAngle (-*angleturn[tspeed]);
 		}
 	}
 
-	if (buttonMap.ButtonDown(Button_LookUp))
+	if (buttonMap.ButtonDownDigital(Button_LookUp))
 	{
 		G_AddViewPitch (lookspeed[speed]);
 	}
-	if (buttonMap.ButtonDown(Button_LookDown))
+	if (buttonMap.ButtonDownDigital(Button_LookDown))
 	{
 		G_AddViewPitch (-lookspeed[speed]);
 	}
 
-	if (buttonMap.ButtonDown(Button_MoveUp))
+	if (buttonMap.ButtonDownDigital(Button_MoveUp))
 		fly += flyspeed[speed];
-	if (buttonMap.ButtonDown(Button_MoveDown))
+	if (buttonMap.ButtonDownDigital(Button_MoveDown))
 		fly -= flyspeed[speed];
 
 	if (buttonMap.ButtonDown(Button_Klook))
 	{
-		if (buttonMap.ButtonDown(Button_Forward))
+		if (buttonMap.ButtonDownDigital(Button_Forward))
 			G_AddViewPitch (lookspeed[speed]);
-		if (buttonMap.ButtonDown(Button_Back))
+		if (buttonMap.ButtonDownDigital(Button_Back))
 			G_AddViewPitch (-lookspeed[speed]);
 	}
 	else
 	{
-		if (buttonMap.ButtonDown(Button_Forward))
+		if (buttonMap.ButtonDownDigital(Button_Forward))
 			forward += forwardmove[speed];
-		if (buttonMap.ButtonDown(Button_Back))
+		if (buttonMap.ButtonDownDigital(Button_Back))
 			forward -= forwardmove[speed];
 	}
 
-	if (buttonMap.ButtonDown(Button_MoveRight))
+	if (buttonMap.ButtonDownDigital(Button_MoveRight))
 		side += sidemove[speed];
-	if (buttonMap.ButtonDown(Button_MoveLeft))
+	if (buttonMap.ButtonDownDigital(Button_MoveLeft))
 		side -= sidemove[speed];
 
 	// buttons
@@ -712,35 +724,60 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	if (buttonMap.ButtonDown(Button_ShowScores))	cmd->buttons |= BT_SHOWSCORES;
 	if (speed) cmd->buttons |= BT_RUN;
 
-	// Handle joysticks/game controllers.
-	float joyaxes[NUM_JOYAXIS];
-
-	I_GetAxes(joyaxes);
-
 	// Remap some axes depending on button state.
+	float axis_yaw = buttonMap.ButtonAnalog(Button_Left) - buttonMap.ButtonAnalog(Button_Right);
+	float axis_pitch = buttonMap.ButtonAnalog(Button_LookUp) - buttonMap.ButtonAnalog(Button_LookDown);
+	float axis_forward = buttonMap.ButtonAnalog(Button_Forward) - buttonMap.ButtonAnalog(Button_Back);
+	float axis_side = buttonMap.ButtonAnalog(Button_MoveLeft) - buttonMap.ButtonAnalog(Button_MoveRight);
+	float axis_up = buttonMap.ButtonAnalog(Button_MoveUp) - buttonMap.ButtonAnalog(Button_MoveDown);
+
 	if (buttonMap.ButtonDown(Button_Strafe) || (buttonMap.ButtonDown(Button_Mlook) && lookstrafe))
 	{
-		joyaxes[JOYAXIS_Side] = joyaxes[JOYAXIS_Yaw];
-		joyaxes[JOYAXIS_Yaw] = 0;
+		axis_side = axis_yaw;
+		axis_yaw = 0.0f;
 	}
+
 	if (buttonMap.ButtonDown(Button_Mlook))
 	{
-		joyaxes[JOYAXIS_Pitch] = joyaxes[JOYAXIS_Forward];
-		joyaxes[JOYAXIS_Forward] = 0;
+		axis_pitch = axis_forward;
+		axis_forward = 0.0f;
 	}
 
-	if (joyaxes[JOYAXIS_Pitch] != 0)
+	if (cl_analog_straferun)
 	{
-		G_AddViewPitch(joyint(joyaxes[JOYAXIS_Pitch] * 2048));
-	}
-	if (joyaxes[JOYAXIS_Yaw] != 0)
-	{
-		G_AddViewAngle(joyint(-1280 * joyaxes[JOYAXIS_Yaw]));
+		// Rescale diagonal analog input from roughly [0.77, 0.77] to [1.0, 1.0],
+		// which enables analog sticks to be able to strafe run like a keyboard can.
+
+		// This is inaccurate to how Doom had originally handled analog input, but
+		// that's why it's an option, after all.
+
+		const float sqrtOf2Frac = 0.41421356237309504880; // sqrt(2)'s fractional value
+
+		float move_min = min<float>(fabs(axis_side), fabs(axis_forward));
+		float move_max = max<float>(fabs(axis_side), fabs(axis_forward));
+
+		float scale = 1.0f;
+		if (move_max > EQUAL_EPSILON)
+		{
+			scale += (move_min / move_max) * sqrtOf2Frac;
+		}
+
+		axis_forward = std::clamp(axis_forward * scale, -1.f, 1.f);
+		axis_side = std::clamp(axis_side * scale, -1.f, 1.f);
 	}
 
-	side -= joyint(sidemove[speed] * joyaxes[JOYAXIS_Side]);
-	forward += joyint(joyaxes[JOYAXIS_Forward] * forwardmove[speed]);
-	fly += joyint(joyaxes[JOYAXIS_Up] * 2048);
+	if (axis_pitch != 0)
+	{
+		G_AddViewPitch(joyint(axis_pitch * ANALOG_LOOK_BASE * cl_analog_sensitivity_pitch));
+	}
+	if (axis_yaw != 0)
+	{
+		G_AddViewAngle(joyint(-ANALOG_LOOK_BASE * cl_analog_sensitivity_yaw * axis_yaw));
+	}
+
+	side -= joyint(sidemove[speed] * axis_side);
+	forward += joyint(axis_forward * forwardmove[speed]);
+	fly += joyint(axis_up * 2048);
 
 	// Handle mice.
 	if (!buttonMap.ButtonDown(Button_Mlook) && !freelook)
@@ -818,6 +855,17 @@ void G_BuildTiccmd (usercmd_t *cmd)
 
 	cmd->forwardmove <<= 8;
 	cmd->sidemove <<= 8;
+}
+
+ADD_STAT (analog)
+{
+	FString out;
+
+	float axis_forward = buttonMap.ButtonAnalog(Button_Forward) - buttonMap.ButtonAnalog(Button_Back);
+	float axis_side = buttonMap.ButtonAnalog(Button_MoveLeft) - buttonMap.ButtonAnalog(Button_MoveRight);
+	out.AppendFormat("[%.3f, %.3f]", axis_forward, axis_side);
+
+	return out;
 }
 
 static int LookAdjust(int look)

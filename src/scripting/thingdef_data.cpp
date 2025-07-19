@@ -752,6 +752,21 @@ void InitThingdef()
 	lineportalstruct->Size = sizeof(FLinePortal);
 	lineportalstruct->Align = alignof(FLinePortal);
 
+	auto polyobjstruct = NewStruct("Polyobj", nullptr, true);
+	polyobjstruct->Size = sizeof(FPolyObj);
+	polyobjstruct->Align = alignof(FPolyObj);
+	NewPointer(polyobjstruct, false)->InstallHandlers(
+		[](FSerializer& ar, const char* key, const void* addr)
+		{
+			ar(key, *(FPolyObj**)addr);
+		},
+		[](FSerializer& ar, const char* key, void* addr)
+		{
+			Serialize<FPolyObj>(ar, key, *(FPolyObj**)addr, nullptr);
+			return true;
+		}
+	);
+
 	auto playerclassstruct = NewStruct("PlayerClass", nullptr, true);
 	playerclassstruct->Size = sizeof(FPlayerClass);
 	playerclassstruct->Align = alignof(FPlayerClass);

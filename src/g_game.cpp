@@ -211,7 +211,14 @@ CVAR (Bool,		freelook,		true,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
 CVAR (Bool,		lookstrafe,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always strafe with mouse?
 CVAR (Float,	m_forward,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 CVAR (Float,	m_side,			2.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
- 
+
+#define ANALOG_LOOK_BASE	1280
+
+// You can change cl_analog_sensitivity_pitch's default to 1.6f if the old historical
+// behavior is preferred, but IMO that is so fast that it's practically unplayable...
+CVAR (Float, cl_analog_sensitivity_yaw,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CVAR (Float, cl_analog_sensitivity_pitch,	0.6f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+
 int 			turnheld;								// for accelerative turning 
 
 EXTERN_CVAR (Bool, invertmouse)
@@ -736,11 +743,11 @@ void G_BuildTiccmd (usercmd_t *cmd)
 
 	if (axis_pitch != 0)
 	{
-		G_AddViewPitch(joyint(axis_pitch * 2048));
+		G_AddViewPitch(joyint(axis_pitch * ANALOG_LOOK_BASE * cl_analog_sensitivity_pitch));
 	}
 	if (axis_yaw != 0)
 	{
-		G_AddViewAngle(joyint(-1280 * axis_yaw));
+		G_AddViewAngle(joyint(-ANALOG_LOOK_BASE * cl_analog_sensitivity_yaw * axis_yaw));
 	}
 
 	side -= joyint(sidemove[speed] * axis_side);

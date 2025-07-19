@@ -192,11 +192,9 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		}
 		if (player->mo == players[consoleplayer].mo || player->mo == players[consoleplayer].camera)
 		{
-			IFVIRTUALPTR(player->mo, AActor, PlayerUsedSomethingMakeRumble)
+			IFVIRTUALPTR(player->mo, AActor, PlayerTeleportedMakeRumble)
 			{
-				// is this the correct way to call virtual with no args?
-				VMValue params[1] = { 0 };
-				VMCall(func, params, 0, nullptr, 0);
+				CallVM<void>(func, player->mo);
 			}
 		}
 	}

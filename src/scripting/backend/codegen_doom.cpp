@@ -95,9 +95,9 @@ static FState* NativeStateOffset(FState* state, int offset)
 DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinStateOffset, NativeStateOffset)
 {
 	PARAM_PROLOGUE;
-	PARAM_POINTER(state, FState);
+	PARAM_POINTER(st, FState);
 	PARAM_INT(offset);
-	ACTION_RETURN_STATE(NativeStateOffset(state, offset));
+	ACTION_RETURN_STATE(NativeStateOffset(st, offset));
 }
 
 ExpEmit FxFStateOffset::Emit(VMFunctionBuilder* build)

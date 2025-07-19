@@ -42,6 +42,8 @@
 #include "st_console.h"
 #include "v_text.h"
 
+CVAR(String, queryiwad_key, "", CVAR_GLOBALCONFIG | CVAR_ARCHIVE); // Currently unimplemented.
+
 EXTERN_CVAR(Bool, longsavemessages)
 double PerfToSec, PerfToMillisec;
 
@@ -122,6 +124,11 @@ void I_ShowFatalError(const char *message)
 	Mac_I_FatalError(message);
 }
 
+bool HoldingQueryKey(const char* key)
+{
+	// TODO: Implement
+	return false;
+}
 
 bool I_PickIWad(bool showwin, FStartupSelectionInfo& info)
 {

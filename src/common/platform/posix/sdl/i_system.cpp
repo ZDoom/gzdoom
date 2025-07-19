@@ -79,6 +79,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
+CVAR(String, queryiwad_key, "", CVAR_GLOBALCONFIG | CVAR_ARCHIVE); // Currently unimplemented.
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, longsavemessages)
@@ -300,6 +301,12 @@ void I_PrintStr(const char *cp)
 	fputs(printData.GetChars(),stdout);
 	if (terminal) fputs("\033[0m",stdout);
 	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
+}
+
+bool HoldingQueryKey(const char* key)
+{
+	// TODO: Implement
+	return false;
 }
 
 bool I_PickIWad (bool showwin, FStartupSelectionInfo& info)

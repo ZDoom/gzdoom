@@ -2,9 +2,13 @@
 #define __I_NET_H__
 
 #include <stdint.h>
+#include "m_argv.h"
 #include "tarray.h"
 
 inline constexpr size_t MAXPLAYERS = 64u;
+
+EXTERN_FARG(host);
+EXTERN_FARG(join);
 
 enum ENetConstants
 {

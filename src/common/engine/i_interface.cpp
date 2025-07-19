@@ -165,9 +165,9 @@ int FStartupSelectionInfo::SaveInfo()
 		}
 
 		if (!DefaultNetArgs.IsEmpty())
-			Args->AppendArgsString(DefaultNetArgs);
+			Args->AppendRawArgsString(DefaultNetArgs);
 		if (!AdditionalNetArgs.IsEmpty())
-			Args->AppendArgsString(AdditionalNetArgs);
+			Args->AppendRawArgsString(AdditionalNetArgs);
 
 		return DefaultNetIWAD;
 	}
@@ -177,7 +177,7 @@ int FStartupSelectionInfo::SaveInfo()
 	defaultargs = saveargs ? DefaultArgs.GetChars() : "";
 
 	if (!DefaultArgs.IsEmpty())
-		Args->AppendArgsString(DefaultArgs);
+		Args->AppendRawArgsString(DefaultArgs);
 
 	return DefaultIWAD;
 }

@@ -129,6 +129,7 @@ class Actor : Thinker native
 	native double Angle;
 	native double Pitch;
 	native double Roll;
+	native double AngledRollOffset;
 	native vector3 Vel;
 	native double Speed;
 	native double FloatSpeed;
@@ -464,6 +465,7 @@ class Actor : Thinker native
 		MissileHeight 32;
 		SpriteAngle 0;
 		SpriteRotation 0;
+		AngledRollOffset 0;
 		StencilColor "00 00 00";
 		VisibleAngles 0, 0;
 		VisiblePitch 0, 0;

@@ -421,6 +421,9 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 	const bool doRoll = (drawRollSpriteActor || drawRollParticle);
 
+	// [DVR] +ANGLEDROLL
+	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
+
 	// [fgsfds] check sprite type mask
 	uint32_t spritetype = (uint32_t)-1;
 	if (actor != nullptr) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
@@ -516,13 +519,31 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				// Compute center of sprite
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				float rollDegrees = Angles.Roll.Degrees();
+				float pitchDegrees = 0.0;
+
+				if (AngledRoll)
+				{
+					rollDegrees = fmodf(rollDegrees, 360.0f);
+					DAngle ang = di->Viewpoint.Angles.Yaw + actor->Angles.Yaw + actor->AngledRollOffset - DAngle::fromDeg(90.0);
+					angleRad = ang.Radians();
+					FVector3 relPos = center - FVector3(di->Viewpoint.Pos);
+					if (useOffsets) relPos += FVector3(xx, yy, zz);
+
+					Matrix3x4 rolltilt;
+					rolltilt.MakeIdentity();
+					ang = actor->Angles.Yaw + actor->AngledRollOffset;
+					rolltilt.Rotate(ang.Cos(), ang.Sin(), 0.0, -rollDegrees);
+					pitchDegrees = 270.0 - DVector3(rolltilt * relPos).Angle().Degrees();
+				}
 
 				mat.Translate(center.X, center.Z, center.Y);
-				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 				if (useOffsets) mat.Translate(xx, zz, yy);
+				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, -HWAngles.Yaw.Degrees()); // Cancel regular Y-billboarding
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
-				if (useOffsets) mat.Translate(-xx, -zz, -yy);
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, pitchDegrees); // New Y-billboarding about rolled z-axis
 				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
+				if (useOffsets) mat.Translate(-xx, -zz, -yy);
 				mat.Translate(-center.X, -center.Z, -center.Y);
 			}
 
@@ -928,8 +949,22 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (!modelframe)
 	{
 		bool mirror = false;
+		bool backfaced = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
 		if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
+		else if (actor && thing->renderflags2 & RF2_ANGLEDROLL)
+		{
+			Matrix3x4 rolltilt;
+			rolltilt.MakeIdentity();
+			DAngle tempang = thing->Angles.Yaw + thing->AngledRollOffset;
+			rolltilt.Rotate(tempang.Cos(), tempang.Sin(), 0.0, -thing->Angles.Roll.Degrees());
+			tempang = DVector3(rolltilt * FVector3(thingpos - vp.Pos)).Angle();
+			backfaced = fabs((ang - tempang).Degrees()) > 90.0;
+			if (backfaced) // (ang - tempang).Cos() < 0.0)
+			{
+				ang = DAngle::fromDeg(180.0) - ang;
+			}
+		}
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -1122,6 +1157,15 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 	if(thing->renderflags2 & RF2_ISOMETRICSPRITES) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
+	if(actor && (thing->renderflags2 & RF2_ANGLEDROLL) && !(thing->renderflags & RF_ROLLCENTER))
+	{
+		double rollsin = thing->Angles.Roll.Sin();
+		DAngle tempang2 = thing->Angles.Yaw + thing->AngledRollOffset + DAngle::fromDeg(rollsin < 0.0
+																						? 90.0 : -90.0);
+		double r2 = 0.5 * fabs((z2 - z1) * rollsin);
+		depth = (float)((x + r2 * tempang2.Cos() - vp.Pos.X) * vp.TanCos
+						+ (y + r2 * tempang2.Sin() - vp.Pos.Y) * vp.TanSin);
+	}
 	if (isSpriteShadow) depth += 1.f/65536.f; // always sort shadows behind the sprite.
 
 	if (gl_spriteclip == -1 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE) // perform anamorphosis
@@ -1171,7 +1215,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		z1 = z1 * spbias + vpz * vpbias;
 		x2 = x2 * spbias + vpx * vpbias;
 		y2 = y2 * spbias + vpy * vpbias;
-		z2 = z2 * spbias + vpz * vpbias;		
+		z2 = z2 * spbias + vpz * vpbias;
 	}
 
 	// light calculation

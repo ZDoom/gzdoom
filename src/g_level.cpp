@@ -636,6 +636,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 			players[i].playerstate = PST_ENTER;	// [BC]
 
 		STAT_StartNewGame(mapname);
+		GameUUID = GenerateUUID();
 	}
 
 	usergame = !bTitleLevel;		// will be set false if a demo

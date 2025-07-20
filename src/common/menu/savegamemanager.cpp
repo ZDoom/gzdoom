@@ -48,6 +48,7 @@
 #include "savegamemanager.h"
 #include "m_argv.h"
 #include "i_specialpaths.h"
+#include "i_interface.h"
 
 CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_SYSTEM_ONLY);
 FString SavegameFolder;
@@ -186,6 +187,7 @@ void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &tit
 		{
 			node->SaveTitle = title;
 			node->CreationTime = myasctime();
+			node->UUID = GameUUID;
 			node->bOldVersion = false;
 			node->bMissingWads = false;
 
@@ -205,6 +207,7 @@ void FSavegameManagerBase::NotifyNewSave(const FString &file, const FString &tit
 	auto node = new FSaveGameNode;
 	node->SaveTitle = title;
 	node->CreationTime = myasctime();
+	node->UUID = GameUUID;
 	node->Filename = file;
 	node->bOldVersion = false;
 	node->bMissingWads = false;
@@ -555,6 +558,27 @@ bool FSavegameManagerBase::RemoveNewSaveNode()
 	return false;
 }
 
+int FSavegameManagerBase::RemoveUUIDSaveSlots()
+{
+	if (GameUUID.IsEmpty())
+		return -1;
+
+	// Make sure there's any saves in the list first.
+	if (!SaveGames.Size())
+		ReadSaveStrings();
+
+	int index = -1;
+	for (int i = SaveGames.Size() - 1; i >= 0; --i)
+	{
+		auto& save = SaveGames[i];
+		if (save == &NewSaveNode || save->UUID.Compare(GameUUID))
+			continue;
+
+		index = RemoveSaveSlot(i);
+	}
+	return index;
+}
+
 DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveNewSaveNode)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManagerBase);
@@ -576,9 +600,15 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, ExtractSaveData)
 	ACTION_RETURN_INT(self->ExtractSaveData(sel));
 }
 
+DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveUUIDSaveSlots)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManagerBase);
+	ACTION_RETURN_INT(self->RemoveUUIDSaveSlots());
+}
 
 DEFINE_FIELD(FSaveGameNode, SaveTitle);
 DEFINE_FIELD(FSaveGameNode, Filename);
+DEFINE_FIELD(FSaveGameNode, UUID);
 DEFINE_FIELD(FSaveGameNode, bOldVersion);
 DEFINE_FIELD(FSaveGameNode, bMissingWads);
 DEFINE_FIELD(FSaveGameNode, bNoDelete);

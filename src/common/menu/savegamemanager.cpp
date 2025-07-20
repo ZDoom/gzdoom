@@ -113,6 +113,11 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveSaveSlot)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManagerBase);
 	PARAM_INT(sel);
+	if (!DMenu::InMenu)
+	{
+		Printf("Saves can only be deleted from within a menu\n");
+		ACTION_RETURN_INT(-1);
+	}
 	ACTION_RETURN_INT(self->RemoveSaveSlot(sel));
 }
 

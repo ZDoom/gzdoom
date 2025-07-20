@@ -217,6 +217,7 @@ struct gameinfo_t
 	bool nomergepickupmsg;
 	bool mHideParTimes;
 	CutsceneDef IntroScene;
+	double BloodSplatDecalDistance;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

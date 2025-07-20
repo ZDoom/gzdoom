@@ -504,7 +504,8 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 
 	// If we get here, that means the actor isn't holding an appropriate key.
 
-	if (owner->CheckLocalView())
+	// if we're seeing the actor, or is the actor a voodoo doll of the current viewed player?
+	if (owner->CheckLocalView() || (owner->player && owner->player->mo && owner->player->mo->CheckLocalView()))
 	{
 		PrintMessage(failtext);
 

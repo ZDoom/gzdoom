@@ -367,7 +367,7 @@ void Net_ClearBuffers()
 {
 	CloseNetwork();
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		playeringame[i] = false;
 		players[i].waiting = players[i].inconsistant = false;
@@ -579,7 +579,7 @@ static size_t GetNetBufferSize()
 	}
 
 	// Header info
-	int totalBytes = 10;
+	unsigned int totalBytes = 10;
 	if (NetBuffer[0] & NCMD_QUITTERS)
 		totalBytes += NetBuffer[totalBytes] + 1;
 
@@ -3387,7 +3387,7 @@ CCMD(listmuted)
 	}
 
 	bool found = false;
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (MutedClients & ((uint64_t)1u << i))
 		{

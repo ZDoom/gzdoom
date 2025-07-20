@@ -118,6 +118,7 @@
 #include "screenjob.h"
 #include "startscreen.h"
 #include "shiftstate.h"
+#include "common/scripting/dap/DebugServer.h"
 #include "common/widgets/errorwindow.h"
 
 #ifdef __unix__
@@ -131,6 +132,8 @@ EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)
 EXTERN_CVAR(Bool, log_vgafont)
 EXTERN_CVAR(Bool, dlg_vgafont)
+EXTERN_CVAR(Bool, vm_jit)
+EXTERN_CVAR(Bool, vm_jit_aot)
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
 void DrawHUD();
@@ -258,7 +261,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 	// lowered below somebody's current frag count.
 	if (deathmatch && self > 0)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
@@ -333,6 +336,7 @@ extern bool AppActive;
 bool playedtitlemusic;
 
 FStartScreen* StartScreen;
+std::unique_ptr<DebugServer::DebugServer> debugServer;
 
 cycle_t FrameCycles;
 
@@ -505,7 +509,7 @@ CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	if ((self & DF2_NO_AUTOMAP) && automapactive)
 		AM_Stop ();
 
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t *p = &players[i];
 
@@ -2232,7 +2236,7 @@ static void CheckEpisodeCmd()
 	if (v != nullptr)
 	{
 		episode = atoi(v) - 1;
-		if (episode < 0 || episode >= AllEpisodes.Size())
+		if (episode < 0 || episode >= AllEpisodes.SSize())
 		{
 			Printf("Invalid episode %s\n", v);
 			episode = 0;
@@ -2677,6 +2681,23 @@ CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 	}
 }
 
+CUSTOM_CVAR(Bool, vm_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (vm_debug == false){
+		if (debugServer){
+			debugServer->Stop();
+			debugServer = nullptr;
+		}
+	} else {
+		// TODO: we wouldn't need to do this if we were able to recompile everything when it's enabled?
+		Printf("You must restart " GAMENAME " for this change to take effect.\n");
+		Printf("Note that enabling the debug server will disable JIT compilation.\n");
+	}
+	// TODO: save this to the config file?
+
+}
+
+CVAR(Int, vm_debug_port, 19021, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void Mlook_ReleaseHandler()
 {
@@ -3018,7 +3039,7 @@ static void GC_MarkGameRoots()
 		Level->Mark();
 
 	// Mark players.
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 			players[i].PropagateMark();
@@ -3112,6 +3133,14 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	NetworkEntityManager::InitializeNetworkEntities();
+	bool dap_debugging = vm_debug.get();
+	if (Args->CheckValue("-debug") || dap_debugging)
+	{
+		dap_debugging = true;
+		// disable vm_jit and vm_jit_aot when debugging
+		vm_jit = false;
+		vm_jit_aot = false;
+	}
 
 	if (!restart)
 	{
@@ -3431,7 +3460,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 
 	// clean up the compiler symbols which are not needed any longer.
-	RemoveUnusedSymbols();
+	if (!dap_debugging) RemoveUnusedSymbols();
 
 	InitActorNumsFromMapinfo();
 	InitSpawnablesFromMapinfo();
@@ -3732,6 +3761,12 @@ static int D_DoomMain_Internal (void)
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
 
+	bool should_debug = vm_debug.get();
+	const char * debug_port_arg = Args->CheckValue("-debug");
+	if (debug_port_arg) {
+		should_debug = true;
+	}
+
 	// reinit from here
 
 	do
@@ -3785,6 +3820,22 @@ static int D_DoomMain_Internal (void)
 
 		D_DoAnonStats();
 		I_UpdateWindowTitle();
+
+		// Launch debug server if enabled
+		if (should_debug) {
+			debugServer = std::make_unique<DebugServer::DebugServer>();
+			int debug_port = vm_debug_port.get()->ToInt();
+			if (should_debug) {
+				if (debug_port_arg) {
+					debug_port = atoi(debug_port_arg);
+				}
+			}
+			if (debug_port > 65535 || debug_port < 0) {
+				I_FatalError("Invalid debug port %d (must be between 0 and 65535)", debug_port);
+			}
+			debugServer->Listen(debug_port);
+		}
+
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.
 		// 
 		// Clean up after a restart
@@ -3868,6 +3919,11 @@ int GameMain()
 
 void D_Cleanup()
 {
+	if (debugServer)
+	{
+		debugServer->Stop();
+		debugServer = nullptr;
+	}
 	if (demorecording)
 	{
 		G_CheckDemoStatus();

@@ -3018,7 +3018,7 @@ FUNC(LS_SetPlayerProperty)
 					if (power != 4)
 					{
 						auto item = p->mo->GiveInventoryType ((PClass::FindActor(powers[power])));
-						if (item != NULL && power == 0 && arg1 == 1) 
+						if (item != NULL && power == 0 && arg1 == 1)
 						{
 							item->ColorVar(NAME_BlendColor) = MakeSpecialColormap(INVERSECOLORMAP);
 						}

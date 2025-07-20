@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+	<mime-type type="application/x-doom-wad">
+		<comment>Doom WAD file</comment>
+		<icon name="application-x-doom-wad"/>
+		<magic-deleteall />
+		<magic>
+			<match type="string" value="IWAD" offset="0"/>
+			<match type="string" value="PWAD" offset="0"/>
+		</magic>
+		<glob-deleteall/>
+		<glob pattern="*.wad"/>
+		<glob pattern="*.iwad"/>
+		<glob pattern="*.pwad"/>
+	</mime-type>
+	<mime-type type="application/x-doom-pk3">
+		<comment>Doom PK3 file</comment>
+		<icon name="application-x-doom-pk3"/>
+		<sub-class-of type="application/zip"/>
+		<glob-deleteall/>
+		<glob pattern="*.pk3"/>
+		<glob pattern="*.ipk3"/>
+		<glob pattern="*.pkz"/>
+	</mime-type>
+	<mime-type type="application/x-doom-pk7">
+		<comment>Doom PK7 file</comment>
+		<icon name="application-x-doom-pk7"/>
+		<sub-class-of type="application/x-7z-compressed"/>
+		<glob-deleteall/>
+		<glob pattern="*.pk7"/>
+		<glob pattern="*.ipk7"/>
+	</mime-type>
+</mime-info>

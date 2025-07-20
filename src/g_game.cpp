@@ -1154,7 +1154,7 @@ void G_Ticker ()
 
 	// do player reborns if needed
 	// TODO: These should really be moved to queues.
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (!playeringame[i])
 			continue;
@@ -1473,7 +1473,7 @@ double FLevelLocals::PlayersRangeFromSpot (FPlayerStart *spot)
 {
 	double closest = INT_MAX;
 	double distance;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1569,7 +1569,7 @@ void FLevelLocals::DeathMatchSpawnPlayer (int playernum)
 		I_Error ("No deathmatch starts");
 
 	bool hasSpawned = false;
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (PlayerInGame(i) && Players[i]->mo != nullptr && Players[i]->health > 0)
 		{
@@ -1799,7 +1799,7 @@ void G_DoPlayerPop(int playernum)
 	Printf("%s\n", message.GetChars());
 
 	// [RH] Revert each player to their own view if spying through the player who left
-	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	for (int ii = 0; ii < signed(MAXPLAYERS); ++ii)
 	{
 		if (playeringame[ii] && players[ii].camera == players[playernum].mo)
 		{
@@ -2604,7 +2604,7 @@ void G_RecordDemo (const char* name)
 
 void G_BeginRecording (const char *startmap)
 {
-	int i;
+	unsigned int i;
 
 	if (startmap == NULL)
 	{
@@ -2718,7 +2718,8 @@ bool G_ProcessIFFDemo (FString &mapname)
 	bool headerHit = false;
 	bool bodyHit = false;
 	int numPlayers = 0;
-	int id, len, i;
+	int id, len;
+	unsigned int i;
 	uLong uncompSize = 0;
 	uint8_t *nextchunk;
 
@@ -2991,7 +2992,7 @@ bool G_CheckDemoStatus (void)
 		demoplayback = false;
 		netgame = false;
 		multiplayer = false;
-		for (int i = 1; i < MAXPLAYERS; i++)
+		for (unsigned int i = 1; i < MAXPLAYERS; i++)
 			playeringame[i] = 0;
 		consoleplayer = 0;
 		players[0].camera = nullptr;

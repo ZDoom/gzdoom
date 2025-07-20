@@ -216,6 +216,9 @@ option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( VPX )
+if (NOT FORCE_INTERNAL_CPPDAP)
+	find_package( cppdap CONFIG )
+endif()
 
 include( TargetArch )
 
@@ -334,6 +337,9 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
+option(FORCE_INTERNAL_CPPDAP "Use internal cppdap" ON)
+
+
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
 if (HAVE_VULKAN)
@@ -383,6 +389,17 @@ else()
 	set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/bzip2" )
 	set( BZIP2_LIBRARIES bz2 )
 	set( BZIP2_LIBRARY bz2 )
+endif()
+
+if ( CPPDAP_FOUND AND NOT FORCE_INTERNAL_CPPDAP )
+	message( STATUS "Using system cppdap library, includes found at ${CPPDAP_INCLUDE_DIR}" )
+else()
+	message( STATUS "Using internal cppdap library" )
+	add_subdirectory( libraries/cppdap )
+	set( CPPDAP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/cppdap" )
+	set( CPPDAP_LIBRARIES cppdap )
+	set( CPPDAP_LIBRARY cppdap )
+	set( CPPDAP_FOUND TRUE )
 endif()
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )

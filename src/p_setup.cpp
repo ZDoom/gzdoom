@@ -426,7 +426,7 @@ void P_FreeLevelData (bool fullgc)
 
 void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 {
-	int i;
+	unsigned int i;
 
 	Level->ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
 

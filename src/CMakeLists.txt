@@ -391,6 +391,13 @@ if( ${HAVE_VM_JIT} )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
 endif()
 
+if ( CPPDAP_FOUND )
+	include_directories( SYSTEM "${CPPDAP_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${CPPDAP_LIBRARIES}")
+else()
+	message( SEND_ERROR "Could not find cppdap" )
+endif()
+
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	win32/i_steam.cpp
@@ -605,6 +612,9 @@ file( GLOB HEADER_FILES
 	common/rendering/vulkan/textures/*.h
 	common/scripting/core/*h
 	common/scripting/vm/*h
+	common/scripting/dap/*.h
+	common/scripting/dap/Nodes/*.h
+	common/scripting/dap/Protocol/*.h
 	common/scripting/jit/*h
 	common/scripting/interface/*.h
 	common/scripting/backend/*.h
@@ -1175,7 +1185,30 @@ set (PCH_SOURCES
 	common/scripting/frontend/zcc_parser.cpp
 	common/scripting/backend/vmbuilder.cpp
 	common/scripting/backend/codegen.cpp
-	
+	common/scripting/dap/BreakpointManager.cpp
+	common/scripting/dap/DebugExecutionManager.cpp
+	common/scripting/dap/DebugServer.cpp
+	common/scripting/dap/IdHandleBase.cpp
+	common/scripting/dap/IdMap.cpp
+	common/scripting/dap/IdProvider.cpp
+	common/scripting/dap/Nodes/ArrayStateNode.cpp
+	common/scripting/dap/Nodes/CVarScopeStateNode.cpp
+	common/scripting/dap/Nodes/LocalScopeStateNode.cpp
+	common/scripting/dap/Nodes/GlobalScopeStateNode.cpp
+	common/scripting/dap/Nodes/ObjectStateNode.cpp
+	common/scripting/dap/Nodes/StackFrameStateNode.cpp
+	common/scripting/dap/Nodes/StackStateNode.cpp
+	common/scripting/dap/Nodes/StateNodeBase.cpp
+	common/scripting/dap/Nodes/StructStateNode.cpp
+	common/scripting/dap/Nodes/ValueStateNode.cpp
+	common/scripting/dap/PexCache.cpp
+	common/scripting/dap/Protocol/struct_extensions.cpp
+	common/scripting/dap/RuntimeEvents.cpp
+	common/scripting/dap/RuntimeState.cpp
+	common/scripting/dap/ZScriptDebugger.cpp
+	common/scripting/dap/Nodes/RegistersScopeStateNode.cpp
+	common/scripting/dap/Nodes/StatePointerNode.cpp
+	common/scripting/dap/Nodes/DummyNode.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1272,7 +1305,6 @@ if( UNIX )
 endif()
 
 target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
-
 include_directories(
 	BEFORE
 	.
@@ -1337,6 +1369,7 @@ include_directories(
 	../libraries/ZVulkan/include
 	../libraries/ZWidget/include
 	../libraries/webp/include
+	../libraries/range_map/include
 	${SYSTEM_SOURCES_DIR}
 )
 
@@ -1419,6 +1452,26 @@ endif()
 install(DIRECTORY "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_banks"
 		DESTINATION ${INSTALL_SOUNDFONT_PATH}
 		COMPONENT "Soundfont resources")
+
+# Install Linux desktop launcher, icon and metadata
+if( UNIX AND NOT APPLE )
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.desktop
+			DESTINATION share/applications
+			PERMISSIONS WORLD_EXECUTE WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.metainfo.xml
+			DESTINATION share/metainfo
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.svg
+			DESTINATION share/icons/hicolor/scalable/apps
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom-mime.xml
+			DESTINATION share/mime/packages
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	# note:
+	# A post-install script would most likely need to run the following to register the desktop and mime files with the system
+	# update-mime-database /usr/local/share/mime
+	# update-desktop-database
+endif()
 
 if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.

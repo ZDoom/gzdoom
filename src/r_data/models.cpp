@@ -558,7 +558,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		out.skinid = smf->skinIDs[i];
 	}
 
-	return (out.modelid >= 0 && out.modelid < Models.size());
+	return (out.modelid >= 0 && out.modelid < Models.SSize());
 }
 
 

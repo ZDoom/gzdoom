@@ -254,7 +254,7 @@ CCMD (chase)
 {
 	if (demoplayback)
 	{
-		int i;
+		unsigned int i;
 
 		if (chasedemo)
 		{

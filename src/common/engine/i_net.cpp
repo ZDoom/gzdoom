@@ -97,6 +97,7 @@ typedef int SOCKET;
 #endif
 
 #ifdef __WIN32__
+# include "common/scripting/dap/GameEventEmit.h"
 typedef int socklen_t;
 const char* neterror(void);
 #else
@@ -267,8 +268,10 @@ static void StartNetwork(bool autoPort)
 {
 #ifdef __WIN32__
 	WSADATA data;
-	if (WSAStartup(0x0101, &data))
-		I_FatalError("Couldn't initialize Windows sockets");
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()) {
+		if (WSAStartup(0x0101, &data))
+			I_FatalError("Couldn't initialize Windows sockets");
+	}
 #endif
 
 	netgame = true;
@@ -293,7 +296,9 @@ void CloseNetwork()
 		netgame = false;
 	}
 #ifdef __WIN32__
-	WSACleanup();
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()){
+		WSACleanup();
+	}
 #endif
 }
 
@@ -489,7 +494,7 @@ static void SendPacket(const sockaddr_in& to)
 	// Huge packets should be sent out as sequences, not as one big packet, otherwise it's prone
 	// to high amounts of congestion and reordering needed.
 	if (NetBufferLength > MAX_MSGLEN)
-		I_FatalError("Netbuffer overflow: Tried to send %u bytes of data", NetBufferLength);
+		I_FatalError("Netbuffer overflow: Tried to send %lu bytes of data", NetBufferLength);
 
 	assert(!(NetBuffer[0] & NCMD_COMPRESSED));
 
@@ -968,7 +973,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	}
 
 	if (MaxClients > MAXPLAYERS)
-		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
+		I_FatalError("Cannot host a game with %u players. The limit is currently %lu", MaxClients, MAXPLAYERS);
 
 	GenerateGameID();
 	NetworkClients += 0;
@@ -1242,7 +1247,7 @@ static bool JoinGame(int arg)
 		throw CExitEvent(0);
 	}
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1u; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status != CSTAT_NONE)
 			Connected[i].Status = CSTAT_READY;

@@ -450,7 +450,7 @@ void P_ActorInSpecialSector (AActor *victim, sector_t * sector, F3DFloor* Ffloor
 
 	if (victim->player && sector->Flags & (SECF_EXIT1 | SECF_EXIT2))
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		for (unsigned int i = 0; i < MAXPLAYERS; i++)
 			if (playeringame[i])
 				P_DamageMobj(players[i].mo, nullptr, nullptr, TELEFRAG_DAMAGE, NAME_InstantDeath);
 		if (sector->Flags & SECF_EXIT2)

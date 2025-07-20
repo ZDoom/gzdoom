@@ -10963,12 +10963,17 @@ FxExpression *FxCompoundStatement::Resolve(FCompileContext &ctx)
 
 ExpEmit FxCompoundStatement::Emit(VMFunctionBuilder *build)
 {
+	auto start = build->GetAddress();
 	auto e = FxSequence::Emit(build);
+	TArray<VMLocalVariable> locals;
 	// Release all local variables in this block.
 	for (auto l : LocalVars)
 	{
+		locals.Push({l->Name, l->ValueType, l->VarFlags, l->RegCount, l->RegNum, l->ScriptPosition.ScriptLine, l->StackOffset});
 		l->Release(build);
 	}
+	auto end = build->GetAddress();
+	build->AddBlock(locals, start, end);
 	return e;
 }
 

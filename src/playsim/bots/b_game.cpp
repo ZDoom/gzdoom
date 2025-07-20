@@ -186,7 +186,7 @@ void FCajunMaster::Init ()
 //Called on each level exit (from g_game.c).
 void FCajunMaster::End ()
 {
-	int i;
+	unsigned int i;
 
 	//Arrange wanted botnum and their names, so they can be spawned next level.
 	getspawned.Clear();
@@ -365,7 +365,7 @@ void FCajunMaster::TryAddBot (FLevelLocals *Level, TArrayView<uint8_t>& stream, 
 
 bool FCajunMaster::DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, botskill_t skill)
 {
-	int bnum;
+	unsigned int bnum;
 
 	for (bnum = 0; bnum < MAXPLAYERS; bnum++)
 	{
@@ -377,7 +377,7 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, bots
 
 	if (bnum == MAXPLAYERS)
 	{
-		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
+		Printf ("The maximum of %lu players/bots has been reached\n", MAXPLAYERS);
 		return false;
 	}
 
@@ -403,7 +403,7 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, bots
 
 void FCajunMaster::RemoveAllBots (FLevelLocals *Level, bool fromlist)
 {
-	int i, j;
+	unsigned int i, j;
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{

@@ -265,7 +265,7 @@ int D_PickRandomTeam ()
 	int numTeams = 0;
 	int team;
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
@@ -380,7 +380,7 @@ int D_GetFragCount (player_t *player)
 		// Count total frags for this player's team
 		int count = 0;
 
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && players[i].userinfo.GetTeam() == team)
 			{
@@ -393,7 +393,7 @@ int D_GetFragCount (player_t *player)
 
 void D_SetupUserInfo ()
 {
-	int i;
+	unsigned int i;
 	userinfo_t *coninfo;
 
 	// Reset everybody's userinfo to a default state.
@@ -1019,7 +1019,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 CCMD(playerinfo)
 {
 	TArray<int> inGame = {};
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 			inGame.Push(i);

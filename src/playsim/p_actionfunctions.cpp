@@ -1745,7 +1745,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfSeen)
 	PARAM_SELF_PROLOGUE(AActor);
 
 	auto Level = self->Level;
-	for (int i = 0; i < MAXPLAYERS; i++) 
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (Level->PlayerInGame(i))
 		{
@@ -1818,7 +1818,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckSightOrRange)
 
 	range *= range;
 	auto Level = self->Level;
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (Level->PlayerInGame(i))
 		{
@@ -1848,7 +1848,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckRange)
 
 	range *= range;
 	auto Level = self->Level;
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (Level->PlayerInGame(i))
 		{

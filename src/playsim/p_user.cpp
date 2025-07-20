@@ -524,7 +524,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSkin)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(skinIndex);
-	if (skinIndex >= 0 && skinIndex < Skins.size())
+	if (skinIndex >= 0 && skinIndex < Skins.SSize())
 	{
 		// commented code - cvar_set calls this automatically, along with saving the skin selection.
 		//self->userinfo.SkinNumChanged(skinIndex);

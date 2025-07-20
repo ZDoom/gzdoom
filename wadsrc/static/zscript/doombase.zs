@@ -163,6 +163,7 @@ extend struct GameInfoStruct
 	native double normforwardmove[2];
 	native double normsidemove[2];
 	native bool mHideParTimes;
+	native readonly double BloodSplatDecalDistance;
 }
 
 extend class Object

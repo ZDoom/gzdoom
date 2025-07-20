@@ -84,6 +84,7 @@
 #include "events.h"
 #include "vm.h"
 #include "d_main.h"
+#include "gi.h"
 
 #include "decallib.h"
 
@@ -5264,7 +5265,11 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 		double cosp = bleedpitch.Cos();
 		DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
 
-		if (Trace(pos, actor->Sector, vdir, 172, 0, ML_BLOCKEVERYTHING, actor, bleedtrace, TRACE_NoSky))
+		double bleedDist = gameinfo.BloodSplatDecalDistance;
+		if (bleedDist <= 0.0)
+			bleedDist = (double)172.0;
+
+		if (Trace(pos, actor->Sector, vdir, bleedDist, 0, ML_BLOCKEVERYTHING, actor, bleedtrace, TRACE_NoSky))
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{

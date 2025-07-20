@@ -79,6 +79,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, defaultdropstyle)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normforwardmove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, normsidemove)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mHideParTimes)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, BloodSplatDecalDistance)
 
 const char *GameNames[17] =
 {
@@ -464,6 +465,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_TWODOUBLES(normsidemove, "normsidemove")
 			GAMEINFOKEY_BOOL(nomergepickupmsg, "nomergepickupmsg")
 			GAMEINFOKEY_BOOL(mHideParTimes, "hidepartimes")
+			GAMEINFOKEY_DOUBLE(BloodSplatDecalDistance, "bloodsplatdecaldistance")
 
 		else
 		{

@@ -38,6 +38,7 @@ struct SaveGameNode native
 {
 	native String SaveTitle;
 	native readonly String Filename;
+	native readonly String UUID;
 	native bool bOldVersion;
 	native bool bMissingWads;
 	native bool bNoDelete;
@@ -68,6 +69,7 @@ struct SavegameManager native ui
 	native SaveGameNode GetSavegame(int i);
 	native void InsertNewSaveNode();
 	native bool RemoveNewSaveNode();
+	native int RemoveUUIDSaveSlots();
 
 }
 

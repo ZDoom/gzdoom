@@ -2009,6 +2009,7 @@ void G_DoLoadGame ()
 	arc("Save Version", SaveVersion);
 	arc("Engine", engine);
 	arc("Current Map", map);
+	arc("GameUUID", GameUUID);
 
 	if (engine.CompareNoCase(GAMESIG) != 0)
 	{
@@ -2386,6 +2387,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	savegameinfo.AddString("Software", buf)
 		.AddString("Engine", GAMESIG)
 		("Save Version", ver)
+		("GameUUID", GameUUID)
 		.AddString("Title", description)
 		.AddString("Current Map", primaryLevel->MapName.GetChars());
 

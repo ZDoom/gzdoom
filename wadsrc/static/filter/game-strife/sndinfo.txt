@@ -46,6 +46,24 @@ $playersound	player	other	*jump		dscjump
 $playersound	player	other	*fist		dspunch
 $playersound	player	other	*usefail	dscnoway
 
+$rumble	*death		P_DEATH
+$rumble	*xdeath		P_DEATH
+$rumble	*gibbed		P_DEATH
+$rumble	*pain100	P_HURT
+$rumble	*pain75		P_HURT
+$rumble	*pain50		P_HURT
+$rumble	*pain25		P_HURT
+$rumble	*grunt		P_GRUNT
+$rumble	*land		P_GRUNT
+$rumble	*jump		NONE
+$rumble	*fist		P_FIST
+$rumble	*usefail	P_GRUNT
+
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+$rumbledef	P_FIST		3	.6	.6	.6	.6
+
 weapons/xbowshoot	dsxbow
 weapons/xbowhit		dsfirxpl
 weapons/assaultgun	dsrifle
@@ -64,6 +82,37 @@ weapons/phgrenadebang	dsexplod
 weapons/sigil		dssigil
 weapons/sigilhit	dssglhit
 weapons/sigilcharge	dssiglup
+
+$rumble	weapons/xbowshoot		W_BOLT
+$rumble	weapons/xbowhit			NONE
+$rumble	weapons/assaultgun		W_BULLET
+$rumble	weapons/minimissile		W_ROCKET
+$rumble	weapons/minimissilehit	NONE
+$rumble	weapons/flamethrower	W_FLAME
+$rumble	weapons/flameidle		W_FLAME_IDLE
+$rumble	weapons/mauler1			W_MAULER
+$rumble	weapons/mauler2charge	W_MAULER_CHARGE
+$rumble	weapons/mauler2fire		W_MAULER_ALT
+$rumble	weapons/mauler2hit		NONE
+$rumble	weapons/hegrenadeshoot	W_GRENADE
+$rumble	weapons/hegrenadebang	NONE
+$rumble	weapons/phgrenadeshoot	W_GRENADE
+$rumble	weapons/phgrenadebang	NONE
+$rumble	weapons/sigil			W_SIGIL
+$rumble	weapons/sigilhit		NONE
+$rumble	weapons/sigilcharge		W_SIGIL_CHARGE
+
+$rumbledef	W_BULLET		3	.6	.6	.6	.6
+$rumbledef	W_BOLT			6	.2	.4	.4	.4
+$rumbledef	W_GRENADE		6	.2	.4	0	.4
+$rumbledef	W_FLAME_IDLE	1	0	.3	0	0
+$rumbledef	W_FLAME			6	.4	.6	.6	.6
+$rumbledef	W_MAULER_CHARGE	3	.3	.3	.3	.3
+$rumbledef	W_MAULER_ALT	6	.6	.6	.6	.6
+$rumbledef	W_MAULER		6	.6	.6	.6	.6
+$rumbledef	W_SIGIL			18	.6	.6	.6	.6
+$rumbledef	W_SIGIL_CHARGE	4	.6	.6	.6	.6
+$rumbledef	W_ROCKET		6	.6	.6	.6	.6
 
 monsters/rifle		dsrifle
 
@@ -109,6 +158,17 @@ menu/choose		dsrifl		// Choose a menu item
 menu/clear		dsmtalht	// Close top menu
 $alias menu/advance menu/choose
 
+$rumble	menu/activate	HEAVY
+$rumble	menu/backup		MEDIUM
+$rumble	menu/prompt		MEDIUM
+$rumble	menu/cursor		LIGHT
+$rumble	menu/change		LIGHT
+$rumble	menu/invalid	MEDIUM
+$rumble	menu/dismiss	MEDIUM
+$rumble	menu/choose		HEAVY
+$rumble	menu/clear		MEDIUM
+$rumble	menu/advance	HEAVY
+
 misc/startupdone	dspsdtha
 misc/teleport		dstelept
 misc/swish		dsswish
@@ -134,6 +194,25 @@ misc/spawn			dsitmbk
 misc/chat			dsradio
 misc/invuse			dsitemup
 misc/mask			dsmask
+
+$rumble	misc/startupdone		MEDIUM
+$rumble	misc/teleport			TELEPORT
+$rumble	misc/swish				LIGHT
+$rumble	misc/meathit			W_MELEE
+$rumble	misc/metalhit			W_MELEE
+$rumble	misc/missileinflight	NONE
+$rumble	misc/disruptordeath		NONE
+$rumble	misc/secret				SECRET
+$rumble	misc/w_pkup				LIGHT
+$rumble	misc/p_pkup 			LIGHT
+$rumble	misc/i_pkup 			LIGHT
+$rumble	misc/k_pkup				LIGHT
+$rumble	misc/invuse				LIGHT
+$rumble	misc/mask				NONE
+
+$rumbledef	W_MELEE		3	.6	.6	.6	.6
+$rumbledef	TELEPORT	35	.3	.6	0	0
+$rumbledef	SECRET		35	.3	.6	0	0
 
 plats/pt1_strt			dspstart
 plats/pt1_stop			dspstop
@@ -314,3 +393,10 @@ $alias				intermission/nextstage		misc/explosion
 $alias				intermission/paststats		world/barrelx
 $alias				intermission/pastcoopstats	world/barrelx
 $alias				intermission/pastdmstats	*gibbed
+
+$rumble	intermission/tick			LIGHT
+$rumble	intermission/cooptotal		LIGHT
+$rumble	intermission/nextstage		MEDIUM
+$rumble	intermission/paststats		MEDIUM
+$rumble	intermission/pastcoopstats	MEDIUM
+$rumble	intermission/pastdmstats	MEDIUM

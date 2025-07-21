@@ -40,6 +40,7 @@
 #include "filesystem.h"
 #include "v_font.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 //===========================================================================
 //
@@ -504,7 +505,10 @@ int P_CheckKeys (AActor *owner, int keynum, bool remote, bool quiet)
 
 	// If we get here, that means the actor isn't holding an appropriate key.
 
-	if (owner->CheckLocalView())
+	// show a message if we're viewing as the current actor, or if the message was triggered by a voodoo doll of the current player
+	bool doprintmsg = owner->CheckLocalView() || 
+		(!(owner->Level->i_compatflags2 & COMPATF2_NOVDOLLLOCKMSG) && owner->player && owner->player->mo->CheckLocalView());
+	if ( doprintmsg )
 	{
 		PrintMessage(failtext);
 

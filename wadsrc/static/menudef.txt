@@ -1246,11 +1246,20 @@ OptionMenu "AltHUDOptions" protected
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue HapticsCompatTypes
+{
+	0, "$OPTVAL_WARN"
+	1, "$OPTVAL_NONE"
+	2, "$OPTVAL_MATCH"
+	3, "$OPTVAL_ALL"
+}
+
 OptionMenu "HapticsOptions" protected
 {
 	Title		"$HAPMNU_TITLE"
 
 	ScaleSlider	"$JOYMNU_HAPTICS",			"haptics_strength",		0, 10, 1, "$OPTVAL_OFF"
+	Option 		"$HAPMNU_COMPAT",			"haptics_compat",		"HapticsCompatTypes"
 	StaticText	""
 	StaticText	"$HAPMNU_OPTIONS"
 }

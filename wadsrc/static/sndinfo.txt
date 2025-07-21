@@ -258,3 +258,36 @@ dehextra/sound196	dsfre196
 dehextra/sound197	dsfre197
 dehextra/sound198	dsfre198
 dehextra/sound199	dsfre199
+
+// define set of rumble routines to be mapped later
+$rumbledef	INTENSE		35	.6	.6	.6	.6
+$rumbledef	HEAVY		4	.6	.6	.6	.6
+$rumbledef	MEDIUM		3	.4	.5	.4	.4
+$rumbledef	LIGHT		2	.2	.4	.3	.3
+$rumbledef	SUBTLE		2	.1	.3	0	0
+$rumbledef	NONE		0	0	0	0	0
+$rumbledef	QUAKE		2	1	1	0	0
+$rumbledef	SECRET		35	.3	.6	0	0
+
+// these exist hard-coded
+// if the corresponding sounds also exist in game specific
+// sndinfo files, they are overwritten there
+$rumble	world/quake			QUAKE
+$rumble	misc/teleport		SECRET
+$rumble	misc/startupdone	MEDIUM
+$rumble	misc/push			SUBTLE
+$rumble	misc/pushed			SUBTLE
+$rumble	misc/i_pkup			LIGHT
+$rumble	menu/activate		HEAVY
+$rumble	menu/invalid		MEDIUM
+$rumble	menu/dismiss		MEDIUM
+$rumble	menu/choose			HEAVY
+$rumble	menu/change			LIGHT
+$rumble	menu/cursor			LIGHT
+$rumble	misc/secret			SECRET
+$rumble	menu/cursor			LIGHT
+$rumble	*death				INTENSE
+$rumble	*usesuccess			MEDIUM
+$rumble	*grunt				MEDIUM
+$rumble	*land				MEDIUM
+$rumble	*pain				HEAVY

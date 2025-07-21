@@ -82,6 +82,46 @@ $playeralias   	pig     male   	*poison   	PigActive2
 $playeralias   	pig     male   	*falling   	PigPain
 $playeralias   	pig     male   	*splat   	PigDeath
 
+$playeralias	fighter	male	*death		PlayerFighterNormalDeath
+$playeralias	fighter	male	*crazydeath	PlayerFighterCrazyDeath
+$playeralias	fighter	male	*burndeath	PlayerFighterBurnDeath
+$playeralias	fighter	male	*xdeath		PlayerFighterExtremeDeathPicker
+$playeralias	fighter	male	*pain100	PlayerFighterPain
+$playersounddup	fighter	male	*pain75		*pain100
+$playersounddup	fighter	male	*pain50		*pain100
+$playersounddup	fighter	male	*pain25		*pain100
+$playeralias	fighter	male	*grunt		PlayerFighterGrunt
+$playeralias	fighter	male	*land		PlayerLand
+$playeralias	fighter	male	*poison		PlayerPoisonCough
+$playeralias	fighter	male	*falling	PlayerFighterFallingScream
+$playeralias	fighter	male	*splat		PlayerFallingSplat
+$playeralias	fighter	male	*usefail	PlayerFighterFailedUse
+$playeralias	fighter	male	*puzzfail	PuzzleFailFighter
+$playersound	fighter	male	*jump		fgtjump
+$playeralias	fighter male 	*fistgrunt	FighterGrunt
+
+$rumble	*death			P_DEATH
+$rumble	*crazydeath		P_DEATH
+$rumble	*burndeath		P_DEATH
+$rumble	*xdeath			P_DEATH
+$rumble	*pain100		P_HURT
+$rumble	*pain75			P_HURT
+$rumble	*pain50			P_HURT
+$rumble	*pain25			P_HURT
+$rumble	*grunt			P_GRUNT
+$rumble	*land			P_GRUNT
+$rumble	*poison			P_GRUNT
+$rumble	*falling		P_GRUNT
+$rumble	*splat			P_GRUNT
+$rumble	*usefail		P_GRUNT
+$rumble	*puzzfail		P_GRUNT
+$rumble	*jump			NONE
+$rumble	*fistgrunt		P_GRUNT
+
+$rumbledef	P_DEATH		INTENSE
+$rumbledef	P_HURT		HEAVY
+$rumbledef	P_GRUNT		2	.3	.6	.3	.3
+
 $alias world/drip		Ambient10
 $alias world/watersplash	WaterSplash
 $alias world/lavasizzle		LavaSizzle
@@ -89,6 +129,10 @@ $alias world/sludgegloop	SludgeGloop
 $alias world/wind		Wind
 $alias world/quake		Earthquake
 $alias world/thunder		ThunderCrash
+
+$rumble	world/quake	QUAKE
+
+$rumbledef	QUAKE		2	1	1	0	0
 
 $alias misc/w_pkup		PickupWeapon
 $alias misc/p_pkup		PickupArtifact
@@ -100,6 +144,16 @@ $alias misc/keytry		DoorLocked
 $alias misc/invuse		UseArtifact
 $alias misc/freeze		FreezeDeath
 $alias misc/icebreak		FreezeShatter
+
+$rumble	misc/w_pkup					LIGHT
+$rumble	misc/p_pkup 				LIGHT
+$rumble	misc/k_pkup					LIGHT
+$rumble	misc/i_pkup 				LIGHT
+$rumble	misc/teleport				TELEPORT
+$rumble	misc/keytry 				LIGHT
+$rumble	misc/invuse					LIGHT
+
+$rumbledef	TELEPORT	35	.3	.6	0	0
 
 $alias misc/chat		Chat
 $alias misc/chat2		Chat
@@ -156,6 +210,10 @@ $pitchshift PickupPiece			0
 $pitchshift WeaponBuild			0
 $pitchshift BellRing			0
 
+$rumble	MysticIncant	HEAVY
+$rumble	WeaponBuild		LIGHT
+$rumble	BlastRadius		NONE
+
 $alias menu/activate		DoorCloseLight
 $alias menu/backup		PickupKey
 $alias menu/prompt		Chat
@@ -167,16 +225,38 @@ $alias menu/choose		DoorCloseLight
 $alias menu/clear		PlatformStop
 $alias menu/advance menu/choose
 
+$rumble	menu/activate	HEAVY
+$rumble	menu/backup		MEDIUM
+$rumble	menu/prompt		MEDIUM
+$rumble	menu/cursor		LIGHT
+$rumble	menu/change		LIGHT
+$rumble	menu/invalid	MEDIUM
+$rumble	menu/dismiss	MEDIUM
+$rumble	menu/choose		HEAVY
+$rumble	menu/clear		MEDIUM
+$rumble	menu/advance	HEAVY
+
 // Hexen does not have ripslop sound like Heretic
 misc/ripslop			dsempty
 misc/netnotch			blddrp1
 misc/secret			dssecret
+
+$rumble	misc/ripslop	NONE
+$rumble	misc/secret		SECRET
+
+$rumbledef	SECRET		35	.3	.6	0	0
 
 $alias				intermission/cooptotal		*death
 $alias				intermission/nextstage		DoorCloseLight
 $alias				intermission/paststats		PlatformStop
 $alias				intermission/pastcoopstats	PlatformStop
 $alias				intermission/pastdmstats	*gibbed
+
+$rumble	intermission/cooptotal		LIGHT
+$rumble	intermission/nextstage		MEDIUM
+$rumble	intermission/paststats		MEDIUM
+$rumble	intermission/pastcoopstats	MEDIUM
+$rumble	intermission/pastdmstats	MEDIUM
 
 $limit DoorCloseLight 4
 
@@ -191,3 +271,53 @@ $limit EttinPain 0
 $limit FireDemonPain 0
 $limit SorcererPain 0
 $limit DragonPain 0
+
+$rumble	FighterPunchMiss		NONE
+$rumble	FighterPunchHitWall		W_F_PUNCH
+$rumble	FighterPunchHitThing	W_F_PUNCH
+$rumble	FighterAxeHitThing		W_F_AXE
+$rumble	FighterHammerMiss		W_F_HAMMER
+$rumble	FighterHammerHitWall	W_F_HAMMER
+$rumble	FighterHammerHitThing	W_F_HAMMER
+$rumble	FighterHammerContinuous	NONE
+$rumble	FighterHammerExplode	NONE
+$rumble	FighterSwordFire		W_F_SWORD
+$rumble	FighterSwordExplode		NONE
+
+$rumble	ClericCStaffFire		W_C_STAFF
+$rumble	ClericCStaffExplode		W_C_STAFF
+$rumble	ClericCStaffHitThing	W_C_MELEE
+$rumble	ClericFlameFire			W_C_FLAME
+$rumble	ClericFlameExplode		W_C_FLAME
+$rumble	ClericFlameCircle		NONE
+$rumble	HolySymbolFire			W_C_SYMBOL
+$rumble	SpiritActive			NONE
+$rumble	SpiritAttack			NONE
+$rumble	SpiritDie				NONE
+
+$rumble	MageWandFire			W_M_WAND
+$rumble	MageLightningFire		W_M_LIGHTNING
+$rumble	MageLightningContinuous	NONE
+$rumble	MageLightningReady		NONE
+$rumble	MageLightningZap		NONE
+$rumble	MageShardsFire			W_M_SHARD
+$rumble	MageShardsExplode		NONE
+$rumble	MageStaffFire			W_M_STAFF
+$rumble	MageStaffExplode		NONE
+
+$rumble	PigActive	W_P_BITE
+$rumble	PigAttack	W_P_BITE
+
+$rumbledef	W_F_PUNCH		2	.6	.6	.6	.6
+$rumbledef	W_F_AXE			3	.6	.6	.6	.6
+$rumbledef	W_F_HAMMER		4	.6	.6	.6	.6
+$rumbledef	W_F_SWORD		2	.6	.6	.6	.6
+$rumbledef	W_C_MELEE		2	.6	.6	.6	.6
+$rumbledef	W_C_STAFF		3	.6	.6	.6	.6
+$rumbledef	W_C_FLAME		3	.6	.6	.6	.6
+$rumbledef	W_C_SYMBOL		4	.6	.6	.6	.6
+$rumbledef	W_M_WAND		2	.6	.6	.6	.6
+$rumbledef	W_M_LIGHTNING	4	.6	.6	.6	.6
+$rumbledef	W_M_SHARD		2	.6	.6	.6	.6
+$rumbledef	W_M_STAFF		4	.6	.6	.6	.6
+$rumbledef	W_P_BITE		2	.6	.6	.6	.6

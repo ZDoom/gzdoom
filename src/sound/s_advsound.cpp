@@ -144,6 +144,8 @@ enum SICommands
 	SI_Attenuation,
 	SI_PitchSet,
 	SI_ModPlayer,
+	SI_RumbleDef,
+	SI_Rumble,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -234,6 +236,8 @@ static const char *SICommandStrings[] =
 	"$attenuation",
 	"$pitchset",
 	"$modplayer",
+	"$rumbledef",
+	"$rumble",
 	nullptr
 };
 
@@ -343,6 +347,8 @@ void S_CheckIntegrity()
 			sfx.link = NO_SOUND;	// link to the empty sound.
 		}
 	}
+
+	// Joy_ReadyRumbleMapping();
 }
 
 //==========================================================================
@@ -569,6 +575,8 @@ void S_ClearSoundData()
 	MidiDevices.Clear();
 	HexenMusic.Clear();
 	ModPlayers.Clear();
+
+	// Joy_ResetRumbleMapping();
 }
 
 //==========================================================================
@@ -1131,6 +1139,63 @@ static void S_AddSNDINFO (int lump)
 			case SI_IfHexen:
 				skipToEndIf = !CheckGame(sc.String+3, true);
 				break;
+
+			case SI_RumbleDef: {
+				// $rumbledef <identifier> <tic_dur> <lo_freq> <hi_freq> <l_trig> <r_trig>
+				// $rumbledef <alias identifier> <actual identifier>
+
+				sc.MustGetString();
+				FString identifier (sc.String);
+
+				sc.GetToken();
+				bool isAlias = sc.TokenType == TK_Identifier;
+				sc.UnGet();
+
+				if (isAlias)
+				{
+					sc.MustGetString();
+					// Joy_AddRumbleAlias(identifier, FName(sc.String));
+				}
+				else
+				{
+					sc.MustGetNumber();
+					int duration = sc.Number;
+					sc.MustGetFloat();
+					double low_freq = sc.Float;
+					sc.MustGetFloat();
+					double high_freq = sc.Float;
+					sc.MustGetFloat();
+					double left_trig = sc.Float;
+					sc.MustGetFloat();
+					double right_trig = sc.Float;
+
+					// Joy_AddRumbleType(
+					// 	identifier,
+					// 	{ duration, low_freq, high_freq, left_trig, right_trig, }
+					// );
+				}
+
+				// if (sc.CheckToken(TK_IntConst))
+				// {
+				// }
+				// else
+				// {
+				// 	Printf("Alias: %s\n", identifier.GetChars());
+				// }
+			}
+			break;
+
+			case SI_Rumble: {
+				// $rumble <sound identifier> <rumble identifier>
+
+				sc.MustGetString();
+				FString sound (sc.String);
+				sc.MustGetString();
+				FString mapping (sc.String);
+
+				// Joy_MapRumbleType(sound, mapping);
+			}
+			break;
 			}
 		}
 		else

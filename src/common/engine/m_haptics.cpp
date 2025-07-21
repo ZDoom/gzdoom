@@ -43,6 +43,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifndef MAX_TRY_DEPTH
+#define MAX_TRY_DEPTH 8
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -76,6 +80,7 @@ struct {
 TMap<FName, struct Haptics> RumbleDefinition = {};
 TMap<FName, FName> RumbleMapping = {};
 TMap<FName, FName> RumbleAlias = {};
+TArray<FName> RumbleMissed = {};
 
 // fallback names. these exist in base sndinfo
 const FName HapticIntense = "INTENSE",
@@ -130,7 +135,52 @@ CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Trans
 
 CVARD(Bool, haptics_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "print diagnostics for haptic feedback");
 
+CUSTOM_CVARD(Int, haptics_compat, HAPTCOMPAT_MATCH, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "haptic feedback compatibility level")
+{
+	if (self < 0) self = 0;
+	if (self >= NUM_HAPTCOMPAT) self = NUM_HAPTCOMPAT-1;
+}
+
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// Joy_GuessMapping
+//
+// Takes a sound name, and tried to figure out a similar mapping.
+// These are cached, so performance is probably not a huge deal
+// This can absolutely be expanded/improved, and probably should.
+//
+//==========================================================================
+
+const FName * Joy_GuessMapping(const FName identifier)
+{
+	FString text = identifier.GetChars();
+
+	text.ToLower();
+	// I would like to slugify here
+	// Maybe one day
+
+	auto search = [&text](TArray<FString> &strs) {
+		for (auto str: strs)
+		{
+			if (text.IndexOf(str) != -1) return true;
+		}
+		return false;
+	};
+
+	static TArray<FString> intense = { "quake", "death", "gibbed" };
+	static TArray<FString> heavy = { "teleport", "activate", "secret" };
+	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist", "weapon", "fire"};
+	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject" };
+
+	if (search(intense)) return &HapticIntense;
+	if (search(heavy)) return &HapticHeavy;
+	if (search(medium)) return &HapticMedium;
+	if (search(light)) return &HapticLight;
+
+	return nullptr;
+}
 
 //==========================================================================
 //
@@ -143,10 +193,82 @@ CVARD(Bool, haptics_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "print diagn
 const FName * Joy_GetMapping(const FName identifier)
 {
 	const FName * mapping = RumbleMapping.CheckKey(identifier);
+	FName actual = identifier;
+
+	// try to grab an aliased sound
+	// todo: mapping candidate for aliases
+	if (!mapping)
+	{
+		auto id = soundEngine->FindSoundTentative(identifier.GetChars());
+
+		// loop a couple layers deep, trying to find a candidate
+		for (auto i = 0; i < MAX_TRY_DEPTH; i++) {
+			if (!id.isvalid()) break;
+
+			actual = soundEngine->GetSoundName(id);
+			mapping = RumbleMapping.CheckKey(actual);
+
+			if (mapping) break;
+
+			// writable to be able to get random sound
+			auto sfx = soundEngine->GetWritableSfx(id);
+			// is there a way to get the actual random sound? Selecting the first is probably fine
+			id = sfx->bRandomHeader
+				? soundEngine->ResolveRandomSound(sfx)->Choices[0]
+				: sfx->link;
+		}
+	}
+
+	// convert unknown skinned sound to sound
+	// is there a better way to do this?
+	if (!mapping)
+	{
+		FString idString = identifier.GetChars();
+
+		auto skindex = idString.IndexOf("*");
+
+		if (skindex >= 0)
+		{
+			idString.Remove(0, skindex);
+		}
+
+		actual = FName(idString);
+
+		mapping = RumbleMapping.CheckKey(actual);
+	}
+
+	bool replaced = actual != identifier && actual.IsValidName();
+
+	auto warn = [&identifier]() {
+		RumbleMissed.Push(identifier);
+		Printf(DMSG_WARNING, "Unknown rumble mapping '%s'\n", identifier.GetChars());
+	};
 
 	if (!mapping && identifier != "")
 	{
-		Printf(DMSG_WARNING, "Unknown rumble mapping '%s'\n", identifier.GetChars());
+		switch (haptics_compat)
+		{
+		case HAPTCOMPAT_NONE: // sometimes warn for devs
+			if (!RumbleMissed.Contains(identifier)) warn();
+			break;
+		case HAPTCOMPAT_WARN: // always warn for authors
+			Printf(TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", identifier.GetChars());
+			break;
+		case HAPTCOMPAT_MATCH: // try our best to choose correct
+			if ((mapping = Joy_GuessMapping(identifier))) replaced = true;
+			else warn();
+			break;
+		case HAPTCOMPAT_ALL: // simple fallback
+			mapping = &HapticMedium;
+			replaced = true;
+			break;
+		}
+	}
+
+	if (mapping && replaced)
+	{
+		// cache replacement
+		RumbleMapping.Insert(identifier, *mapping);
 	}
 
 	return mapping;
@@ -164,7 +286,8 @@ const struct Haptics * Joy_GetRumble(FName identifier)
 {
 	struct Haptics * rumble = RumbleDefinition.CheckKey(identifier);
 
-	if (!rumble) {
+	if (!rumble && !RumbleMissed.Contains(identifier)) {
+		RumbleMissed.Push(identifier);
 		Printf(DMSG_ERROR, TEXTCOLOR_RED "Rumble mapping not found! '%s'\n", identifier.GetChars());
 		return nullptr;
 	}
@@ -224,6 +347,7 @@ void Joy_ResetRumbleMapping()
 {
 	RumbleMapping.Clear();
 	RumbleAlias.Clear();
+	RumbleMissed.Clear();
 	RumbleDefinition.Clear();
 	Haptics.channels.Clear();
 	Haptics.current.high_frequency = Haptics.current.low_frequency =

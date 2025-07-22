@@ -510,6 +510,20 @@ void DoomSoundEngine::StopChannel(FSoundChan* chan)
 
 void S_SoundPitchActor(AActor *ent, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime)
 {
+#if 0
+	// sound source debug printout
+	Printf("sound '%s' from '%s'\n", soundEngine->GetSoundName(sound_id), ent->GetClass()->TypeName.GetChars());
+#endif
+
+	if (flags & CHANF_NORUMBLE)
+	{
+		// remove conflicting flag
+		if (flags & CHANF_RUMBLE)
+		{
+			flags = (EChanFlag)(flags - CHANF_RUMBLE);
+		}
+	}
+
 	if (VerifyActorSound(ent, sound_id, channel, flags))
 		soundEngine->StartSound (SOURCE_Actor, ent, nullptr, channel, flags, sound_id, volume, attenuation, 0, pitch, startTime);
 }

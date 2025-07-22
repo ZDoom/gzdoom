@@ -60,6 +60,10 @@ struct IJoystickConfig
 	virtual float GetSensitivity() = 0;
 	virtual void SetSensitivity(float scale) = 0;
 
+	virtual bool HasHaptics() = 0;
+	virtual float GetHapticsStrength() = 0;
+	virtual void SetHapticsStrength(float strength) = 0;
+
 	virtual int GetNumAxes() = 0;
 	virtual float GetAxisDeadZone(int axis) = 0;
 	virtual EJoyAxis GetAxisMap(int axis) = 0;
@@ -85,6 +89,7 @@ struct IJoystickConfig
 
 	// Used by the saver to not save properties that are at their defaults.
 	virtual bool IsSensitivityDefault() = 0;
+	virtual bool IsHapticsStrengthDefault() = 0;
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;
 	virtual bool IsAxisMapDefault(int axis) = 0;
 	virtual bool IsAxisScaleDefault(int axis) = 0;

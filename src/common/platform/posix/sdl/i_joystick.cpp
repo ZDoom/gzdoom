@@ -125,6 +125,25 @@ public:
 		Multiplier = scale;
 	}
 
+	bool HasHaptics()
+	{
+		return Haptics != 0;
+	}
+
+	float GetHapticsStrength()
+	{
+		return HasHaptics()
+			? HapticsStrength
+			: 0;
+	}
+
+	void SetHapticsStrength(float strength)
+	{
+		if (!HasHaptics()) return;
+		SettingsChanged = true;
+		HapticsStrength = clamp(strength, 0.f, 2.f);
+	}
+
 	int GetNumAxes()
 	{
 		return NumAxes + NumHats*2;
@@ -202,6 +221,10 @@ public:
 	bool IsSensitivityDefault()
 	{
 		return Multiplier == JOYSENSITIVITY_DEFAULT;
+	}
+	bool IsHapticsStrengthDefault()
+	{
+		return HapticsStrength == JOYHAPSTRENGTH_DEFAULT;
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{

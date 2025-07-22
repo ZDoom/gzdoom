@@ -1,5 +1,6 @@
 /*
-**
+** m_joy.cpp
+** Gamepad abstraction
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
@@ -30,6 +31,7 @@
 **---------------------------------------------------------------------------
 **
 */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -168,6 +170,12 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 		joy->SetSensitivity((float)atof(value));
 	}
 
+	value = GameConfig->GetValueForKey("Haptics");
+	if (value)
+	{
+		joy->SetHapticsStrength((float)atof(value));
+	}
+
 	numaxes = joy->GetNumAxes();
 	for (int i = 0; i < numaxes; ++i)
 	{
@@ -270,12 +278,19 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 		{
 			GameConfig->SetValueForKey("EnabledInBackground", "1");
 		}
-		
+
 		if (!joy->IsSensitivityDefault())
 		{
 			mysnprintf(value, countof(value), "%g", joy->GetSensitivity());
 			GameConfig->SetValueForKey("Sensitivity", value);
 		}
+
+		if (!joy->IsHapticsStrengthDefault())
+		{
+			mysnprintf(value, countof(value), "%g", joy->GetHapticsStrength());
+			GameConfig->SetValueForKey("Haptics", value);
+		}
+
 		numaxes = joy->GetNumAxes();
 		for (int i = 0; i < numaxes; ++i)
 		{

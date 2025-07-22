@@ -17,7 +17,6 @@ extend struct _
 	native readonly Weapon WP_NOCHANGE;
 	deprecated("3.8", "Use Actor.isFrozen() or Level.isFrozen() instead") native readonly bool globalfreeze;
 	native int LocalViewPitch;
-	native readonly double DeltaTime;
 	
 	// sandbox state in multi-level setups:
 	native play @PlayerInfo players[MAXPLAYERS];

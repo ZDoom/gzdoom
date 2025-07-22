@@ -781,6 +781,8 @@ class Object native
 
 	native static uint MSTime();
 	native static double MSTimeF();
+	native ui static double GetDeltaTime(bool current = false);
+	native clearscope static double GetPhysicsTimeStep();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native static Function<void> FindFunction(Class<Object> cls, Name fn);

@@ -911,6 +911,8 @@ void D_Display ()
 
 	GC::CheckGC();
 
+	SetDeltaTime();
+
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
 	

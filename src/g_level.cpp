@@ -1384,6 +1384,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 	paused = 0;
+	ClearPrevTime(); // Avoid jumpy behaviors after a load barrier in the UI.
 
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole();

@@ -566,5 +566,6 @@ void PerformWipe(FTexture* startimg, FTexture* endimg, int wipe_type, bool stops
 	delete wiper;
 	I_FreezeTime(false);
 	GSnd->SetSfxPaused(false, 1);
+	ClearPrevTime(); // Make sure this isn't tracked as a part of the delta time.
 
 }

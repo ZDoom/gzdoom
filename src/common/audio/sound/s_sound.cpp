@@ -40,6 +40,7 @@
 #include "c_cvars.h"
 #include "gamestate.h"
 #include "i_soundinternal.h"
+#include "m_haptics.h"
 #include "m_random.h"
 #include "m_swap.h"
 #include "printf.h"
@@ -475,6 +476,11 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// Attenuate the attenuation based on the sound.
 	attenuation *= sfx->Attenuation;
 
+#if 0
+	// sound debug printout
+	Printf("sound: '%s' -> '%s' %g\n", soundEngine->GetSoundName(org_id), soundEngine->GetSoundName(sound_id), attenuation);
+#endif
+
 	// The passed rolloff overrides any sound-specific rolloff.
 	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)
 	{
@@ -607,6 +613,14 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	else
 	{
 		chanflags |= CHANF_LISTENERZ | CHANF_JUSTSTARTED;
+	}
+	if (chanflags & CHANF_RUMBLE && !(chanflags & CHANF_NORUMBLE))
+	{
+		// I would love to use attenuation here, but it seems weird.
+		// Pistol's attenuation is always 1, but it's not silent.
+		// I'm not sure why that is.
+		// Joy_Rumble(soundEngine->GetSoundName(org_id), (chanflags&CHANF_IS3D)? attenuation: 0);
+		Joy_Rumble(soundEngine->GetSoundName(org_id));
 	}
 	if (chan != NULL)
 	{

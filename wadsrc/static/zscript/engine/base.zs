@@ -2,6 +2,7 @@
 ** base.zs
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2016-2017 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -28,6 +29,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -67,6 +69,8 @@ enum ESoundFlags
 	CHANF_TRANSIENT = 32768,    // Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
 	CHANF_FORCE = 65536,		// Start, even if sound is paused.
 	CHANF_SINGULAR = 0x20000,	// Only start if no sound of this name is already playing.
+	CHANF_RUMBLE = 0x40000,		// Hint to rumble trigger rumble from sound
+	CHANF_NORUMBLE = 0x80000,	// Disable rumble even if it would normally happen
 
 	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
 };

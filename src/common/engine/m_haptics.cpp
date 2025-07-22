@@ -30,19 +30,18 @@
 #include <math.h>
 
 #include "c_cvars.h"
+#include "c_dispatch.h"
+#include "doomdef.h"
 #include "doomstat.h"
 #include "m_haptics.h"
 #include "name.h"
 #include "printf.h"
 #include "s_soundinternal.h"
 #include "tarray.h"
+#include "vm.h"
 #include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
-
-#ifndef MAX_TRY_DEPTH
-#define MAX_TRY_DEPTH 8
-#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -378,4 +377,173 @@ void Joy_Rumble(const FName identifier, double attenuation)
 	if (rumble == nullptr) return;
 
 	Joy_Rumble(identifier, * rumble, attenuation);
+}
+
+//==========================================================================
+//
+// rumble
+//
+// test command
+//
+//==========================================================================
+
+CCMD (rumble)
+{
+	int count = argv.argc()-1;
+	int ticks;
+	double high_freq, low_freq, left_trig, right_trig;
+
+	switch (count) {
+		case 0: {
+			TArray<FString> unused, used;
+
+			{
+				TMapIterator<FName, struct Haptics> it(RumbleDefinition);
+				TMap<FName, struct Haptics>::Pair* pair;
+				while (it.NextPair(pair)) unused.AddUnique(pair->Key.GetChars());
+			}
+			{
+				TMapIterator<FName, FName> it(RumbleAlias);
+				TMap<FName, FName>::Pair* pair;
+				while (it.NextPair(pair)) unused.AddUnique(pair->Key.GetChars());
+			}
+			{
+				TMapIterator<FName, FName> it(RumbleAlias);
+				TMap<FName, FName>::Pair* pair;
+				while (it.NextPair(pair))
+				{
+					if (unused.Contains(pair->Value.GetChars()))
+						unused.Delete(unused.Find(pair->Value.GetChars()));
+				}
+			}
+			{
+				TMapIterator<FName, FName> it(RumbleMapping);
+				TMap<FName, FName>::Pair* pair;
+				Printf("Mappings:\n");
+				while (it.NextPair(pair)) {
+					used.AddUnique(pair->Value.GetChars());
+					if (unused.Contains(pair->Value.GetChars()))
+						unused.Delete(unused.Find(pair->Value.GetChars()));
+					auto mapping = Joy_GetRumble(pair->Value);
+					FString key = pair->Key.GetChars();
+					FString val = pair->Value.GetChars();
+					key.ToLower();
+					val.ToUpper();
+					FString a = FStringf("'%s'\t->\t'%s'", key.GetChars(), val.GetChars());
+					FString b = mapping
+						? FStringf(
+							"{ %d %g %g %g %g }",
+							mapping->ticks,
+							mapping->high_frequency,
+							mapping->low_frequency,
+							mapping->left_trigger,
+							mapping->right_trigger
+						) : "[undefined]";
+					Printf("\t%s\t->\t%s\n", a.GetChars(), b.GetChars());
+				}
+			}
+
+			if (unused.Size() > 0)
+			{
+				Printf("Unused:\n");
+				for (auto i:unused)
+				{
+					FString s = i.GetChars();
+					s.ToUpper();
+					Printf("\t'%s'\n", s.GetChars());
+				}
+			}
+
+			Printf("Testing rumble for 5s\n");
+			Joy_Rumble("", {5 * TICRATE, 1.0, 1.0, 1.0, 1.0});
+		}
+		break;
+		case 1:
+			Printf("Testing rumble for action '%s'\n", argv[1]);
+			Joy_Rumble(argv[1]);
+			break;
+		case 5:
+			try {
+				ticks = std::stoi(argv[1], nullptr, 10);
+				high_freq = static_cast <double> (std::stof(argv[2], nullptr));
+				low_freq = static_cast <double> (std::stof(argv[3], nullptr));
+				left_trig = static_cast <double> (std::stof(argv[4], nullptr));
+				right_trig = static_cast <double> (std::stof(argv[5], nullptr));
+			} catch (...) {
+				Printf("Failed to parse args\n");
+				return;
+			}
+			Printf("testing rumble with params (%d, %f, %f, %f, %f)\n", ticks, high_freq, low_freq, left_trig, right_trig);
+			Joy_Rumble("", {ticks, high_freq, low_freq, left_trig, right_trig});
+			break;
+		default:
+			Printf(
+				"usage:\n  %s\n  %s\n  %s\n",
+				"rumble",
+				"rumble string_id",
+				"rumble int_duration float_high_freq float_low_freq float_left_trig float_right_trigger"
+			);
+			break;
+	}
+}
+
+//==========================================================================
+//
+// _Rumble
+//
+// VM wrapper for Joy_Rumble
+//
+//==========================================================================
+
+void _Rumble(const int identifier) {
+	Joy_Rumble(ENamedName(identifier));
+}
+
+//==========================================================================
+//
+// Rumble
+//
+// VM function for named Joy_Rumble
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, Rumble, _Rumble)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(identifier);
+	_Rumble(ENamedName(identifier));
+	return 0;
+}
+
+//==========================================================================
+//
+// _RumbleDirect
+//
+// VM wrapper for Joy_Rumble
+//
+//==========================================================================
+
+void _RumbleDirect(int source, int tic_count, double high_frequency, double low_frequency, double left_trigger, double right_trigger) {
+	Joy_Rumble(ENamedName(source), {tic_count, high_frequency, low_frequency, left_trigger, right_trigger});
+}
+
+//==========================================================================
+//
+// Rumble
+//
+// VM function for direct Joy_Rumble
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(DHaptics, RumbleDirect, _RumbleDirect)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(source);
+	PARAM_INT(tic_count);
+	PARAM_FLOAT(high_frequency);
+	PARAM_FLOAT(low_frequency);
+	PARAM_FLOAT(left_trigger);
+	PARAM_FLOAT(right_trigger);
+	_RumbleDirect(source, tic_count, high_frequency, low_frequency, left_trigger, right_trigger);
+	return 0;
 }

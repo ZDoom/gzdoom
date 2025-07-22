@@ -2,6 +2,7 @@
 ** actor.zs
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010-2017 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -28,6 +29,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -1707,6 +1709,19 @@ class Actor : Thinker native
 			}
 			// If we were running out of air, then ResetAirSupply() will play *gasp.
 		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// player rumble events
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)
+	{
+		if (!CVar.GetCVar("haptics_do_action").GetBool()) return;
+
+		Haptics.Rumble("*usesuccess");
 	}
 
 	//----------------------------------------------------------------------------

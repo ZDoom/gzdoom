@@ -119,6 +119,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR (Int,  cl_rockettrails)
+EXTERN_CVAR (Bool, haptics_do_action)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -6987,13 +6988,17 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
+		bool meleeFromPlayer = (
+			(flags & PF_MELEERANGE) && source->player
+			&& (source->player->mo == players[consoleplayer].mo || source->player->mo == players[consoleplayer].camera));
+
 		if ((flags & PF_HITTHING) && puff->SeeSound.isvalid())
 		{ // Hit thing sound
-			S_Sound (puff, CHAN_BODY, 0, puff->SeeSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, (meleeFromPlayer&&haptics_do_action)?CHANF_RUMBLE:CHANF_NONE, puff->SeeSound, 1, ATTN_NORM);
 		}
 		else if (puff->AttackSound.isvalid())
 		{
-			S_Sound (puff, CHAN_BODY, 0, puff->AttackSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, (meleeFromPlayer&&haptics_do_action)?CHANF_RUMBLE:CHANF_NONE, puff->AttackSound, 1, ATTN_NORM);
 		}
 	}
 
@@ -7702,11 +7707,11 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 
 	AActor *th = Spawn (source->Level, type, pos, ALLOW_REPLACE);
 	
-	P_PlaySpawnSound(th, source);
-
 	// record missile's originator
 	if (owner == NULL) owner = source;
 	th->target = owner;
+
+	P_PlaySpawnSound(th, source);
 
 	double speed = th->Speed;
 
@@ -7798,8 +7803,9 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	}
 	AActor *th = Spawn (source->Level, type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
+
+	P_PlaySpawnSound(th, source);
 
 	th->Angles.Yaw = source->AngleTo(dest);
 	th->VelFromAngle();
@@ -7889,9 +7895,11 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 
 	mo = Spawn (source->Level, type, source->PosAtZ(z), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
+
+	P_PlaySpawnSound(mo, source);
+
 	mo->Angles.Yaw = angle;
 	mo->VelFromAngle(speed);
 	mo->Vel.Z = vz;
@@ -8037,8 +8045,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	DVector3 pos = source->Vec2OffsetZ(x, y, z);
 	AActor *MissileActor = Spawn (source->Level, type, pos, ALLOW_REPLACE);
 	if (pMissileActor) *pMissileActor = MissileActor;
-	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
+	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->Angles.Yaw = an;
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER | MF3_CEILINGHUGGER))
 	{

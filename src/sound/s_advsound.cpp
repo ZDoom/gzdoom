@@ -42,6 +42,7 @@
 #include "gi.h"
 #include "i_music.h"
 #include "i_sound.h"
+#include "m_haptics.h"
 #include "r_data/sprites.h"
 #include "s_music.h"
 #include "serializer.h"
@@ -348,7 +349,7 @@ void S_CheckIntegrity()
 		}
 	}
 
-	// Joy_ReadyRumbleMapping();
+	Joy_ReadyRumbleMapping();
 }
 
 //==========================================================================
@@ -576,7 +577,7 @@ void S_ClearSoundData()
 	HexenMusic.Clear();
 	ModPlayers.Clear();
 
-	// Joy_ResetRumbleMapping();
+	Joy_ResetRumbleMapping();
 }
 
 //==========================================================================
@@ -1154,7 +1155,7 @@ static void S_AddSNDINFO (int lump)
 				if (isAlias)
 				{
 					sc.MustGetString();
-					// Joy_AddRumbleAlias(identifier, FName(sc.String));
+					Joy_AddRumbleAlias(identifier, FName(sc.String));
 				}
 				else
 				{
@@ -1169,10 +1170,10 @@ static void S_AddSNDINFO (int lump)
 					sc.MustGetFloat();
 					double right_trig = sc.Float;
 
-					// Joy_AddRumbleType(
-					// 	identifier,
-					// 	{ duration, low_freq, high_freq, left_trig, right_trig, }
-					// );
+					Joy_AddRumbleType(
+						identifier,
+						{ duration, low_freq, high_freq, left_trig, right_trig, }
+					);
 				}
 
 				// if (sc.CheckToken(TK_IntConst))
@@ -1193,7 +1194,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString();
 				FString mapping (sc.String);
 
-				// Joy_MapRumbleType(sound, mapping);
+				Joy_MapRumbleType(sound, mapping);
 			}
 			break;
 			}

@@ -80,6 +80,10 @@ struct JoystickConfig native version("2.4")
 	native float GetSensitivity();
 	native void SetSensitivity(float scale);
 
+	native bool HasHaptics();
+	native float GetHapticsStrength();
+	native void SetHapticsStrength(float strength);
+
 	native float GetAxisScale(int axis);
 	native void SetAxisScale(int axis, float scale);
 

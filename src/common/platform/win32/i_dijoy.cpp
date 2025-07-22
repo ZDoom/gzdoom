@@ -33,6 +33,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "m_joy.h"
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x800
 #include <windows.h>
@@ -163,6 +164,10 @@ public:
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
 
+	bool HasHaptics();
+	float GetHapticsStrength();
+	void SetHapticsStrength(float strength);
+
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
 	EJoyAxis GetAxisMap(int axis);
@@ -180,6 +185,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
+	bool IsHapticsStrengthDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
@@ -882,6 +888,50 @@ void FDInputJoystick::SetSensitivity(float scale)
 bool FDInputJoystick::IsSensitivityDefault()
 {
 	return Multiplier == JOYSENSITIVITY_DEFAULT;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: HasHaptics
+//
+//===========================================================================
+
+bool FDInputJoystick::HasHaptics()
+{
+	return false;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: GetHapticsStrength
+//
+//===========================================================================
+
+float FDInputJoystick::GetHapticsStrength()
+{
+	return JOYHAPSTRENGTH_DEFAULT;
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: SetHapticsStrength
+//
+//===========================================================================
+
+void FDInputJoystick::SetHapticsStrength(float strength)
+{
+	// nope
+}
+
+//===========================================================================
+//
+// FDInputJoystick :: IsHapticsStrengthDefault
+//
+//===========================================================================
+
+bool FDInputJoystick::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 //===========================================================================

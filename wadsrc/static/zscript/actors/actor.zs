@@ -1599,23 +1599,23 @@ class Actor : Thinker native
 	{
 		if (DeathSound)
 		{
-			A_StartSound(DeathSound, CHAN_VOICE, CHANF_DEFAULT, 1, bBoss || bFullvolDeath? ATTN_NONE : ATTN_NORM);
+			A_StartSound(DeathSound, CHAN_VOICE, CHANF_DEFAULT|CHANF_NORUMBLE, 1, bBoss || bFullvolDeath? ATTN_NONE : ATTN_NORM);
 		}
 	}
 
 	void A_XScream()
 	{
-		A_StartSound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE);
+		A_StartSound(player? Sound("*gibbed") : Sound("misc/gibbed"), CHAN_VOICE, CHANF_NORUMBLE);
 	}
 
 	void A_ActiveSound()
 	{
 		if (ActiveSound)
 		{
-			A_StartSound(ActiveSound, CHAN_VOICE);
+			A_StartSound(ActiveSound, CHAN_VOICE, CHANF_NORUMBLE);
 		}
 	}
-	
+
 	virtual void PlayerLandedMakeGruntSound(actor onmobj)
 	{
 		bool grunted;
@@ -1627,7 +1627,7 @@ class Actor : Thinker native
 			// Why should this number vary by gravity?
 			if (self.Vel.Z < -self.player.mo.GruntSpeed)
 			{
-				A_StartSound("*grunt", CHAN_VOICE);
+				A_StartSound("*grunt", CHAN_VOICE, CHANF_NORUMBLE);
 				grunted = true;
 			}
 			bool isliquid = (pos.Z <= floorz) && HitFloor ();
@@ -1635,11 +1635,11 @@ class Actor : Thinker native
 			{
 				if (!grunted)
 				{
-					A_StartSound("*land", CHAN_AUTO);
+					A_StartSound("*land", CHAN_AUTO, CHANF_NORUMBLE);
 				}
 				else
 				{
-					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO);
+					A_StartSoundIfNotSame("*land", "*grunt", CHAN_AUTO, CHANF_NORUMBLE);
 				}
 			}
 		}
@@ -1661,7 +1661,7 @@ class Actor : Thinker native
 		if (oldlevel < 3 && WaterLevel == 3)
 		{
 			// Our head just went under.
-			A_StartSound("*dive", CHAN_VOICE, attenuation: ATTN_NORM);
+			A_StartSound("*dive", CHAN_VOICE, CHANF_NORUMBLE, attenuation: ATTN_NORM);
 		}
 		else if (oldlevel == 3 && WaterLevel < 3)
 		{
@@ -1669,7 +1669,7 @@ class Actor : Thinker native
 			if (player.air_finished > Level.maptime)
 			{
 				// We hadn't run out of air yet.
-				A_StartSound("*surface", CHAN_VOICE, attenuation: ATTN_NORM);
+				A_StartSound("*surface", CHAN_VOICE, CHANF_NORUMBLE, attenuation: ATTN_NORM);
 			}
 			// If we were running out of air, then ResetAirSupply() will play *gasp.
 		}
@@ -1694,6 +1694,20 @@ class Actor : Thinker native
 		{
 			Haptics.Rumble("*grunt");
 		}
+	}
+
+	virtual void PlayerHurtMakeRumble(actor source)
+	{
+		if (!CVar.GetCVar("haptics_do_damage").GetBool()) return;
+
+		Haptics.Rumble("*pain");
+	}
+
+	virtual void PlayerDiedMakeRumble(actor source)
+	{
+		if (!CVar.GetCVar("haptics_do_damage").GetBool()) return;
+
+		Haptics.Rumble("*death");
 	}
 
 	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)

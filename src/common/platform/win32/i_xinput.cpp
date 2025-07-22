@@ -92,6 +92,10 @@ public:
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
 
+	bool HasHaptics();
+	float GetHapticsStrength();
+	void SetHapticsStrength(float strength);
+
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
 	EJoyAxis GetAxisMap(int axis);
@@ -109,6 +113,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
+	bool IsHapticsStrengthDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
@@ -550,6 +555,50 @@ void FXInputController::SetSensitivity(float scale)
 bool FXInputController::IsSensitivityDefault()
 {
 	return Multiplier == JOYSENSITIVITY_DEFAULT;
+}
+
+//==========================================================================
+//
+// FXInputController :: HasHaptics
+//
+//==========================================================================
+
+bool FXInputController::HasHaptics()
+{
+	return Haptics;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetHapticsStrength
+//
+//==========================================================================
+
+float FXInputController::GetHapticsStrength()
+{
+	return HapticStrength;
+}
+
+//==========================================================================
+//
+// FXInputController :: SetHapticsStrength
+//
+//==========================================================================
+
+void FXInputController::SetHapticsStrength(float strength)
+{
+	if (Haptics) HapticStrength = clamp(strength, 0.f, 2.f);
+}
+
+//==========================================================================
+//
+// FXInputController :: IsHapticsStrengthDefault
+//
+//==========================================================================
+
+bool FXInputController::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 //==========================================================================

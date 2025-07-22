@@ -52,6 +52,26 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetSensitivity)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, HasHaptics)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->HasHaptics());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_FLOAT(self->GetHapticsStrength());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_FLOAT(strength);
+	self->SetHapticsStrength((float)strength);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisScale)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);

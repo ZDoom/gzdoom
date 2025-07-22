@@ -405,11 +405,14 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 
 		return true;
 	}
-	
+
+	// [DVR] +ANGLEDROLL
+	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
+
 	// [BB] Billboard stuff
 	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & SPF_NO_XY_BILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& di->mViewActor != nullptr
-		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
+		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD)))) && !AngledRoll;
 
 	const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
 		gl_billboard_faces_camera
@@ -420,9 +423,6 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 	const bool drawRollSpriteActor = (actor != nullptr && actor->renderflags & RF_ROLLSPRITE);
 	const bool drawRollParticle = (particle != nullptr && particle->flags & SPF_ROLL);
 	const bool doRoll = (drawRollSpriteActor || drawRollParticle);
-
-	// [DVR] +ANGLEDROLL
-	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
 
 	// [fgsfds] check sprite type mask
 	uint32_t spritetype = (uint32_t)-1;

@@ -1717,11 +1717,47 @@ class Actor : Thinker native
 	//
 	//----------------------------------------------------------------------------
 
+	virtual void PlayerLandedMakeRumble(actor onmobj)
+	{
+		if (!CVar.GetCVar("haptics_do_world").GetBool()) return;
+
+		bool isliquid = (pos.Z <= floorz) && HitFloor ();
+		if (onmobj != NULL || !isliquid)
+		{
+			Haptics.Rumble("*land");
+		}
+		else if (self.Vel.Z < -self.player.mo.GruntSpeed)
+		{
+			Haptics.Rumble("*grunt");
+		}
+	}
+
 	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)
 	{
 		if (!CVar.GetCVar("haptics_do_action").GetBool()) return;
 
 		Haptics.Rumble("*usesuccess");
+	}
+
+	virtual void PlayerTeleportedMakeRumble()
+	{
+		if (!CVar.GetCVar("haptics_do_world").GetBool()) return;
+
+		Haptics.Rumble("misc/teleport");
+	}
+
+	virtual void PlayerPushedSomethingMakeRumble(actor thing)
+	{
+		if (!CVar.GetCVar("haptics_do_world").GetBool()) return;
+
+		Haptics.Rumble("misc/push");
+	}
+
+	virtual void PlayerWasPushedMakeRumble(actor source)
+	{
+		if (!CVar.GetCVar("haptics_do_world").GetBool()) return;
+
+		Haptics.Rumble("misc/pushed");
 	}
 
 	//----------------------------------------------------------------------------

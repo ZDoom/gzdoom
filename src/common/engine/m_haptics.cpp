@@ -142,6 +142,7 @@ CUSTOM_CVARD(Int, haptics_compat, HAPTCOMPAT_MATCH, CVAR_ARCHIVE | CVAR_GLOBALCO
 }
 
 CVARD(Bool, haptics_do_menus,  true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "allow haptic feedback for menus");
+CVARD(Bool, haptics_do_world,  true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "allow haptic feedback for things acting on player");
 CVARD(Bool, haptics_do_action, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "allow haptic feedback for player doing things");
 
 // CODE --------------------------------------------------------------------

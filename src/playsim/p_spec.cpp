@@ -81,6 +81,7 @@
 #include "g_levellocals.h"
 #include "gstrings.h"
 #include "i_soundinternal.h"
+#include "m_joy.h"
 #include "m_random.h"
 #include "p_3dmidtex.h"
 #include "p_acs.h"
@@ -97,6 +98,7 @@ static FRandom pr_actorinspecialsector ("ActorInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 EXTERN_CVAR(Bool, forcewater)
+EXTERN_CVAR (Bool, haptics_do_world)
 
 // [RH] Check dmflags for noexit and respond accordingly
 bool FLevelLocals::CheckIfExitIsGood (AActor *self, level_info_t *info)
@@ -210,6 +212,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
 		line->special = 0;
 	}
+
 // end of changed code
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
@@ -639,7 +642,8 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 					Printf(PRINT_HIGH | PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
-			if (playsound) S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
+			if (playsound)
+				S_Sound (CHAN_AUTO, CHANF_UI|(haptics_do_world?CHANF_RUMBLE:CHANF_NORUMBLE), "misc/secret", 1, ATTN_NORM);
 		}
 	}
 	Level->found_secrets++;

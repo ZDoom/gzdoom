@@ -44,6 +44,7 @@
 #include "i_interface.h"
 #include "i_time.h"
 #include "i_video.h"
+#include "m_haptics.h"
 #include "m_random.h"
 #include "p_3dmidtex.h"
 #include "p_effect.h"
@@ -64,6 +65,7 @@ const float MY_SQRT2    = float(1.41421356237309504880); // sqrt(2)
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, haptics_do_world)
 
 // TYPES -------------------------------------------------------------------
 
@@ -1040,8 +1042,15 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	if (!WorldPaused())
 	{
 		FQuakeJiggers jiggers;
-		if (DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers) > 0)
+		int intensity = DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers);
+		if (intensity > 0)
 		{
+			if (haptics_do_world)
+			{
+				// f(0)->1 f(9)->0
+				Joy_Rumble("world/quake", (9.0-intensity)/9);
+			}
+
 			const double quakeFactor = r_quakeintensity;
 			if (jiggers.RollIntensity || jiggers.RollWave)
 				iView->AngleOffsets.Roll = DAngle::fromDeg(QuakePower(quakeFactor, jiggers.RollIntensity, jiggers.RollWave));

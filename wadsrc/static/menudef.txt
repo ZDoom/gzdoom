@@ -1264,6 +1264,7 @@ OptionMenu "HapticsOptions" protected
 	StaticText	"$HAPMNU_OPTIONS"
 	Option		"$HAPMNU_OPT_MENU",			"haptics_do_menus",		"OnOff"
 	Option		"$HAPMNU_OPT_ACTION",		"haptics_do_action",	"OnOff"
+	Option		"$HAPMNU_OPT_WORLD",		"haptics_do_world",		"OnOff"
 }
 
 //-------------------------------------------------------------------------------------------

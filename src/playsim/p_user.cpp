@@ -968,11 +968,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 	{
 		if (self->DeathSound != NO_SOUND)
 		{
-			S_Sound (self, CHAN_VOICE, 0, self->DeathSound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, CHANF_NORUMBLE, self->DeathSound, 1, ATTN_NORM);
 		}
 		else
 		{
-			S_Sound (self, CHAN_VOICE, 0, "*death", 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, CHANF_NORUMBLE, "*death", 1, ATTN_NORM);
 		}
 		return 0;
 	}
@@ -1022,7 +1022,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 			}
 		}
 	}
-	S_Sound (self, chan, 0, sound, 1, ATTN_NORM);
+	S_Sound (self, chan, CHANF_NORUMBLE, sound, 1, ATTN_NORM);
 	return 0;
 }
 

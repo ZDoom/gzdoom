@@ -113,4 +113,7 @@ extern bool special_i;
 extern int 	paused;
 extern bool pauseext;
 
+extern double DeltaTime;
+void ClearPrevTime();
+
 void UpdateGenericUI(bool cvar);

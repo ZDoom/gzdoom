@@ -2146,6 +2146,8 @@ void TryRunTics()
 {
 	GC::CheckGC();
 
+	// Use a fixed timestep for this.
+	DeltaTime = 1.0 / GameTicRate;
 	if (ToggleFullscreen)
 	{
 		ToggleFullscreen = false;

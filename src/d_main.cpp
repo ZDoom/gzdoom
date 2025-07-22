@@ -902,6 +902,14 @@ static void End2DAndUpdate()
 //
 //==========================================================================
 
+double DeltaTime = 0.0;
+static uint64_t PrevTime = 0u;
+
+void ClearPrevTime()
+{
+	PrevTime = 0u;
+}
+
 void D_Display ()
 {
 	FTexture *wipestart = nullptr;
@@ -909,6 +917,15 @@ void D_Display ()
 	sector_t *viewsec;
 
 	GC::CheckGC();
+
+	const uint64_t time = I_nsTime();
+	if (!PrevTime)
+		PrevTime = time;
+
+	// Track delta time in seconds since this is more commonly useful, but don't
+	// go lower than 5 FPS or higher than 1000 FPS for consistency.
+	DeltaTime = clamp<double>((time - PrevTime) * 0.000000001, 0.001, 0.2);
+	PrevTime = time;
 
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling

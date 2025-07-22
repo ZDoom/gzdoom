@@ -1677,6 +1677,19 @@ class Actor : Thinker native
 
 	//----------------------------------------------------------------------------
 	//
+	// player rumble events
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void PlayerUsedSomethingMakeRumble(int activationType, int levelNum, int lineNum, int lineSpecial)
+	{
+		if (!CVar.GetCVar("haptics_do_action").GetBool()) return;
+
+		Haptics.Rumble("*usesuccess");
+	}
+
+	//----------------------------------------------------------------------------
+	//
 	// PROC A_CheckSkullDone
 	//
 	//----------------------------------------------------------------------------

@@ -32,8 +32,8 @@
 **
 */
 
-#include "menu.h"
 #include "m_joy.h"
+#include "menu.h"
 #include "vm.h"
 
 static TArray<IJoystickConfig *> Joysticks;
@@ -202,7 +202,6 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
 	self->SetEnabledInBackground(enabled);
 	return 0;
 }
-
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {

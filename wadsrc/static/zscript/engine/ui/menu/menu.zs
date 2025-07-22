@@ -32,7 +32,6 @@
 **
 */
 
-
 struct KeyBindings native version("2.4")
 {
 	native static String NameKeys(int k1, int k2);
@@ -129,7 +128,7 @@ class Menu : Object native ui version("2.4")
 		MKEY_Clear,
 		NUM_MKEYS,
 
-		// These are not buttons but events sent from other menus 
+		// These are not buttons but events sent from other menus
 
 		MKEY_Input,
 		MKEY_Abort,
@@ -207,7 +206,6 @@ class Menu : Object native ui version("2.4")
 		return false;
 	}
 
-
 	//=============================================================================
 	//
 	//
@@ -245,14 +243,14 @@ class Menu : Object native ui version("2.4")
 	//=============================================================================
 
 	virtual bool OnUIEvent(UIEvent ev)
-	{ 
+	{
 		bool res = false;
 		int y = ev.MouseY;
 		if (ev.type == UIEvent.Type_LButtonDown)
 		{
 			res = MouseEventBack(MOUSE_Click, ev.MouseX, y);
 			// make the menu's mouse handler believe that the current coordinate is outside the valid range
-			if (res) y = -1;	
+			if (res) y = -1;
 			res |= MouseEvent(MOUSE_Click, ev.MouseX, y);
 			if (res)
 			{
@@ -266,7 +264,7 @@ class Menu : Object native ui version("2.4")
 			if (mMouseCapture || m_use_mouse == 1)
 			{
 				res = MouseEventBack(MOUSE_Move, ev.MouseX, y);
-				if (res) y = -1;	
+				if (res) y = -1;
 				res |= MouseEvent(MOUSE_Move, ev.MouseX, y);
 			}
 		}
@@ -276,15 +274,15 @@ class Menu : Object native ui version("2.4")
 			{
 				SetCapture(false);
 				res = MouseEventBack(MOUSE_Release, ev.MouseX, y);
-				if (res) y = -1;	
+				if (res) y = -1;
 				res |= MouseEvent(MOUSE_Release, ev.MouseX, y);
 			}
 		}
-		return false; 
+		return false;
 	}
 
 	virtual bool OnInputEvent(InputEvent ev)
-	{ 
+	{
 		return false;
 	}
 
@@ -294,7 +292,7 @@ class Menu : Object native ui version("2.4")
 	//
 	//=============================================================================
 
-	virtual void Drawer () 
+	virtual void Drawer ()
 	{
 		if (self == GetCurrentMenu() && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 		{
@@ -369,7 +367,7 @@ class Menu : Object native ui version("2.4")
 		return NewSmallFont;
 	}
 
-	static int OptionHeight() 
+	static int OptionHeight()
 	{
 		return OptionFont().GetHeight();
 	}
@@ -385,7 +383,6 @@ class Menu : Object native ui version("2.4")
 		int overlay = grayed? Color(96,48,0,0) : 0;
 		screen.DrawText (OptionFont(), color, x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, DTA_Localize, localize);
 	}
-
 
 }
 

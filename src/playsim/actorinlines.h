@@ -30,6 +30,8 @@ inline void AActor::ClearInterpolation()
 {
 	Prev = Pos();
 	PrevAngles = Angles;
+	PrevScale = Scale;
+	PrevAlpha = Alpha;
 	if (Sector) PrevPortalGroup = Sector->PortalGroup;
 	else PrevPortalGroup = 0;
 }

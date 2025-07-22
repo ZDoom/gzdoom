@@ -510,6 +510,8 @@ enum ActorRenderFlag2
 	RF2_STRETCHPIXELS			= 0x0200,	// don't apply SQUAREPIXELS for ROLLSPRITES
 	RF2_LIGHTMULTALPHA			= 0x0400,	// attached lights use alpha as intensity multiplier
 	RF2_ANGLEDROLL				= 0x0800,	// Sprite roll amount depends on (actor.Angle - actor.AngledRollOffset)
+	RF2_INTERPOLATESCALE		= 0x1000,
+	RF2_INTERPOLATEALPHA		= 0x2000,
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -1396,6 +1398,8 @@ public:
 	// [RH] Used to interpolate the view to get >35 FPS
 	DVector3 Prev;
 	DRotator PrevAngles;
+	DVector2 PrevScale;
+	double PrevAlpha;
 	DAngle   PrevFOV;
 	TArray<FDynamicLight *> AttachedLights;
 	TDeletingArray<FLightDefaults *> UserLights;
@@ -1544,7 +1548,7 @@ public:
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{
 		if (renderflags & RF_DONTINTERPOLATE) return Pos();
-		else return Prev + (ticFrac * (Pos() - Prev));
+		else return Prev * (1.0 - ticFrac) + Pos() * ticFrac;
 	}
 	DRotator InterpolatedAngles(double ticFrac) const
 	{
@@ -1553,6 +1557,14 @@ public:
 		result.Pitch = PrevAngles.Pitch + deltaangle(PrevAngles.Pitch, Angles.Pitch) * ticFrac;
 		result.Roll = PrevAngles.Roll + deltaangle(PrevAngles.Roll, Angles.Roll) * ticFrac;
 		return result;
+	}
+	DVector2 InterpolatedScale(double ticFrac) const
+	{
+		return (renderflags2 & RF2_INTERPOLATESCALE) ? PrevScale * (1.0 - ticFrac) + Scale * ticFrac : Scale;
+	}
+	double InterpolatedAlpha(double ticFrac) const
+	{
+		return (renderflags2 & RF2_INTERPOLATEALPHA) ? PrevAlpha * (1.0 - ticFrac) + Alpha * ticFrac : Alpha;
 	}
 	float GetSpriteOffset(bool y) const
 	{

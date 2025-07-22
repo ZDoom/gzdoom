@@ -778,7 +778,13 @@ class StatusScreen : ScreenJob abstract version("2.5")
 
 	static void PlaySound(Sound snd)
 	{
-		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHANF_UI, 1, ATTN_NONE);
+		S_StartSound(
+			snd,
+			CHAN_VOICE,
+			CHANF_MAYBE_LOCAL|CHANF_UI|(CVar.GetCVar('haptics_do_menus').GetBool()? CHANF_RUMBLE: CHANF_NORUMBLE),
+			1,
+			ATTN_NONE
+		);
 	}
 
 	// ====================================================================

@@ -132,7 +132,7 @@ FName MODtoDamageType (int mod)
 	}
 }
 
-int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle);
+int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle, bool rumble);
 
 FUNC(LS_NOP)
 {
@@ -3389,7 +3389,7 @@ FUNC(LS_StartConversation)
 		return false;
 	}
 
-	return NativeStartConversation(target, it, !!arg1, true);
+	return NativeStartConversation(target, it, !!arg1, true, false); // TODO: expose rumble?
 }
 
 FUNC(LS_Thing_SetConversation)

@@ -73,6 +73,7 @@
 #include "g_levellocals.h"
 #include "gi.h"
 #include "m_bbox.h"
+#include "m_haptics.h"
 #include "m_random.h"
 #include "p_3dmidtex.h"
 #include "p_blockmap.h"
@@ -112,6 +113,7 @@ TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
 EXTERN_CVAR(Bool, net_limitconversations)
+EXTERN_CVAR(Bool, haptics_do_menus)
 
 //==========================================================================
 //
@@ -5711,7 +5713,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle, bool rumble)
 {
 	if (!CanTalk(self))
 		return false;
@@ -5722,6 +5724,9 @@ int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool 
 			Printf("Only settings controllers can start conversations with NPCs\n");
 		return false;
 	}
+
+	if (rumble && haptics_do_menus)
+		Joy_Rumble("menu/activate");
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);
@@ -5734,7 +5739,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, StartConversation, NativeStartConversation
 	PARAM_OBJECT(player, AActor);
 	PARAM_BOOL(faceTalker);
 	PARAM_BOOL(saveAngle);
-	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle));
+	PARAM_BOOL(rumble);
+	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle, rumble));
 }
 
 bool P_TalkFacing(AActor *player)
@@ -5746,7 +5752,9 @@ bool P_TalkFacing(AActor *player)
 	{
 		P_AimLineAttack(player, player->Angles.Yaw + DAngle::fromDeg(angle), TALKRANGE, &t, DAngle::fromDeg(35.), ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != nullptr)
-			return NativeStartConversation(t.linetarget, player, true, true);
+		{
+			return NativeStartConversation(t.linetarget, player, true, true, true);
+		}
 	}
 	return false;
 }

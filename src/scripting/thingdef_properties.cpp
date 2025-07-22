@@ -605,6 +605,16 @@ DEFINE_PROPERTY(tag, S, Actor)
 //==========================================================================
 //
 //==========================================================================
+DEFINE_PROPERTY(leanroll, 0, Actor)
+{
+	// sets the standard flags for angle-dependent roll
+	defaults->renderflags|=RF_ROLLSPRITE;
+	defaults->renderflags2|=RF2_STRETCHPIXELS|RF2_ANGLEDROLL;
+}
+
+//==========================================================================
+//
+//==========================================================================
 DEFINE_PROPERTY(painchance, ZI, Actor)
 {
 	PROP_STRING_PARM(str, 0);
@@ -1021,6 +1031,15 @@ DEFINE_PROPERTY(spriteangle, F, Actor)
 {
 	PROP_DOUBLE_PARM(i, 0);
 	defaults->SpriteAngle = DAngle::fromDeg(i);
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(angledrolloffset, F, Actor)
+{
+	PROP_DOUBLE_PARM(i, 0);
+	defaults->AngledRollOffset = DAngle::fromDeg(i);
 }
 
 //==========================================================================

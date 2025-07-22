@@ -391,6 +391,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF2, SQUAREPIXELS, AActor, renderflags2),
 	DEFINE_FLAG(RF2, STRETCHPIXELS, AActor, renderflags2),
 	DEFINE_FLAG(RF2, LIGHTMULTALPHA, AActor, renderflags2),
+	DEFINE_FLAG(RF2, ANGLEDROLL, AActor, renderflags2),
 	DEFINE_FLAG(RF2, INTERPOLATESCALE, AActor, renderflags2),
 	DEFINE_FLAG(RF2, INTERPOLATEALPHA, AActor, renderflags2),
 

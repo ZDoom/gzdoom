@@ -34,7 +34,6 @@
 **
 */ 
 
-#include "v_font.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,6 +42,7 @@
 #endif
 
 #include "a_sharedglobal.h"
+#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
 #include "d_player.h"
@@ -65,7 +65,12 @@
 #include "s_sound.h"
 #include "serializer_doom.h"
 #include "v_draw.h"
+#include "v_font.h"
 #include "vm.h"
+
+// EXTERNAL DATA DEFINITIONS -------------------------------------------------
+
+EXTERN_CVAR(Bool, haptics_do_action);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -522,6 +527,18 @@ void S_SoundPitchActor(AActor *ent, int channel, EChanFlags flags, FSoundID soun
 		{
 			flags = (EChanFlag)(flags - CHANF_RUMBLE);
 		}
+	}
+	else if (!(flags & CHANF_RUMBLE))
+	{
+		// add flag if needed
+		if (haptics_do_action && (
+			// sound from self
+			(ent->player && (ent->player->mo == players[consoleplayer].mo || ent->player->mo == players[consoleplayer].camera)) ||
+			// sound from self missile
+			((ent->flags & MF_MISSILE)
+				&& ent->target && ent->target->player
+				&& (ent->target->player->mo == players[consoleplayer].mo || ent->target->player->mo == players[consoleplayer].camera))
+		)) flags |= CHANF_RUMBLE;
 	}
 
 	if (VerifyActorSound(ent, sound_id, channel, flags))

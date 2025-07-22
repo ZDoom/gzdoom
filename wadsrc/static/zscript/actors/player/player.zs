@@ -835,6 +835,8 @@ class PlayerPawn : Actor
 	{
 		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
 
+		if (player.mo == self) Super.PlayerDiedMakeRumble(inflictor);
+
 		if (player != NULL && player.mo == self) player.bonuscount = 0;
 
 		// [RL0] To allow voodoo zombies, don't kill the player together with voodoo dolls if the compat flag is enabled

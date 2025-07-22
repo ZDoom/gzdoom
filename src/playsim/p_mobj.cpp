@@ -3288,6 +3288,15 @@ static void PlayerLandedMakeRumble(AActor* self, AActor *onmobj)
 	}
 }
 
+static void PlayerDiedMakeRumble(AActor* self, AActor *source)
+{
+	IFVIRTUALPTR(self, AActor, PlayerDiedMakeRumble)
+	{
+		VMValue params[2] = { self, source };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 //===========================================================================
 //
 // PlayerLandedOnThing
@@ -7723,7 +7732,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 
 	AActor *th = Spawn (source->Level, type, pos, ALLOW_REPLACE);
-	
+
 	// record missile's originator
 	if (owner == NULL) owner = source;
 	th->target = owner;

@@ -3214,7 +3214,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 			sfx_id = S_FindSound(pain_amount);
 		}
 
-		S_Sound (self, CHAN_VOICE, 0, sfx_id, 1, ATTN_NORM);
+		IFVIRTUALPTR(self, AActor, PlayerHurtMakeRumble)
+		{
+			VMValue params[2] = { self, self->player->attacker.Get() };
+			VMCall(func, params, 2, nullptr, 0);
+		}
+
+		S_Sound (self, CHAN_VOICE, CHANF_NORUMBLE, sfx_id, 1, ATTN_NORM);
 	}
 	else if (self->PainSound.isvalid())
 	{

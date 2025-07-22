@@ -1,5 +1,6 @@
 /*
-**
+** m_joy.cpp
+** Gamepad abstraction
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
@@ -30,17 +31,22 @@
 **---------------------------------------------------------------------------
 **
 */
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+
+#include "c_cvars.h"
 #include "c_dispatch.h"
-#include "vectors.h"
-#include "m_joy.h"
-#include "configfile.h"
-#include "i_interface.h"
-#include "d_eventbase.h"
 #include "cmdlib.h"
+#include "configfile.h"
+#include "d_eventbase.h"
+#include "i_interface.h"
+#include "m_joy.h"
+#include "name.h"
 #include "printf.h"
+#include "vectors.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -61,6 +67,8 @@ EXTERN_CVAR(Bool, joy_xinput)
 extern const float JOYDEADZONE_DEFAULT = 0.1; // reduced from 0.25
 
 extern const float JOYSENSITIVITY_DEFAULT = 1.0;
+
+extern const float JOYHAPSTRENGTH_DEFAULT = 1.0;
 
 extern const float JOYTHRESH_DEFAULT = 0.05;
 extern const float JOYTHRESH_TRIGGER = 0.05;
@@ -160,6 +168,12 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 	if (value)
 	{
 		joy->SetSensitivity((float)atof(value));
+	}
+
+	value = GameConfig->GetValueForKey("Haptics");
+	if (value)
+	{
+		joy->SetHapticsStrength((float)atof(value));
 	}
 
 	numaxes = joy->GetNumAxes();
@@ -264,12 +278,19 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 		{
 			GameConfig->SetValueForKey("EnabledInBackground", "1");
 		}
-		
+
 		if (!joy->IsSensitivityDefault())
 		{
 			mysnprintf(value, countof(value), "%g", joy->GetSensitivity());
 			GameConfig->SetValueForKey("Sensitivity", value);
 		}
+
+		if (!joy->IsHapticsStrengthDefault())
+		{
+			mysnprintf(value, countof(value), "%g", joy->GetHapticsStrength());
+			GameConfig->SetValueForKey("Haptics", value);
+		}
+
 		numaxes = joy->GetNumAxes();
 		for (int i = 0; i < numaxes; ++i)
 		{

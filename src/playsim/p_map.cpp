@@ -57,44 +57,41 @@
 **
 */
 
-#include <stdlib.h>
-#include <math.h>
 #include <algorithm>
-
-
-
-#include "m_bbox.h"
-#include "m_random.h"
-#include "c_dispatch.h"
-
-#include "doomdef.h"
-#include "p_local.h"
-#include "p_spec.h"
-#include "d_player.h"
-#include "p_maputl.h"
-#include "p_lnspec.h"
-#include "p_effect.h"
-#include "p_terrain.h"
-#include "p_trace.h"
-#include "p_checkposition.h"
-#include "p_linetracedata.h"
-#include "r_utility.h"
-#include "p_blockmap.h"
-#include "p_3dmidtex.h"
-#include "events.h"
-#include "vm.h"
-#include "d_main.h"
-
-#include "decallib.h"
-
-// State.
+#include <math.h>
+#include <stdlib.h>
 
 #include "a_sharedglobal.h"
-#include "p_conversation.h"
-#include "r_sky.h"
-#include "g_levellocals.h"
 #include "actorinlines.h"
-#include <shadowinlines.h>
+#include "c_cvars.h"
+#include "c_dispatch.h"
+#include "d_main.h"
+#include "d_player.h"
+#include "decallib.h"
+#include "doomdef.h"
+#include "events.h"
+#include "g_levellocals.h"
+#include "m_bbox.h"
+#include "m_haptics.h"
+#include "m_random.h"
+#include "p_3dmidtex.h"
+#include "p_blockmap.h"
+#include "p_checkposition.h"
+#include "p_conversation.h"
+#include "p_effect.h"
+#include "p_linetracedata.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_maputl.h"
+#include "p_spec.h"
+#include "p_terrain.h"
+#include "p_trace.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "shadowinlines.h"
+#include "vm.h"
+
+// State.
 
 CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
@@ -115,6 +112,7 @@ TArray<spechit_t> spechit;
 TArray<spechit_t> portalhit;
 
 EXTERN_CVAR(Bool, net_limitconversations)
+EXTERN_CVAR(Bool, haptics_do_menus)
 
 //==========================================================================
 //
@@ -275,6 +273,7 @@ static DVector2 FindRefPoint(line_t *ld, const DVector2 &pos)
 // only3d set means to only check against 3D floors and midtexes.
 //
 //==========================================================================
+
 bool ffcf_verbose;
 
 static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tmf, int flags)
@@ -341,7 +340,6 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 	}
 	return true;
 }
-
 
 //==========================================================================
 //
@@ -448,7 +446,6 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	}
 }
 
-
 // Debug CCMD for checking errors in the MultiBlockLinesIterator (needs to be removed when this code is complete)
 CCMD(ffcf)
 {
@@ -479,7 +476,6 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	sector_t *oldsec = thing->Sector;
 
 	// kill anything occupying the position
-
 
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
@@ -1224,7 +1220,6 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	return ret;
 }
 
-
 //==========================================================================
 //
 // Isolated to keep the code readable and fix the logic
@@ -1237,7 +1232,6 @@ static bool CheckRipLevel(AActor *victim, AActor *projectile)
 	if (victim->RipLevelMax > 0 && projectile->RipperLevel > victim->RipLevelMax) return false;
 	return true;
 }
-
 
 //==========================================================================
 //
@@ -1385,6 +1379,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DoMissileDamage, P_DoMissileDamage)
 	P_DoMissileDamage(self, victim);
 	return 0;
 }
+
 //==========================================================================
 //
 // PIT_CheckThing
@@ -1509,7 +1504,6 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	{
 		if (!P_CanCollideWith(tm.thing, thing)) return true;
 	}
-
 
 	if (tm.thing->player == NULL || !(tm.thing->player->cheats & CF_PREDICTING))
 	{
@@ -1718,11 +1712,30 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	}
 	if (thing->flags2 & MF2_PUSHABLE && !(tm.thing->flags2 & MF2_CANNOTPUSH))
 	{ // Push thing
+
 		if (thing->lastpush != tm.PushTime)
 		{
 			thing->PlayPushSound();
 			thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 			thing->lastpush = tm.PushTime;
+
+			if (tm.thing == players[consoleplayer].mo || tm.thing == players[consoleplayer].camera)
+			{
+				IFVIRTUALPTR(tm.thing, AActor, PlayerPushedSomethingMakeRumble)
+				{
+					VMValue params[1] = { thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
+			else if (thing == players[consoleplayer].mo || thing == players[consoleplayer].camera)
+			{
+				// I assume the player can be pushed, correct?
+				IFVIRTUALPTR(thing, AActor, PlayerWasPushedMakeRumble)
+				{
+					VMValue params[1] = { tm.thing };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+			}
 		}
 	}
 	solid = (thing->flags & MF_SOLID) &&
@@ -1748,8 +1761,6 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }
-
-
 
 /*
 ===============================================================================
@@ -1957,7 +1968,6 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-
 	FMultiBlockLinesIterator it(pcheck, thing->Level, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
@@ -2011,7 +2021,6 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
 	FCheckPosition tm;
 	return P_CheckPosition(thing, pos, tm, actorsonly);
 }
-
 
 //----------------------------------------------------------------------------
 //
@@ -2215,7 +2224,6 @@ int P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	if (pOnmobj) *pOnmobj = onmobj;
 	return onmobj == NULL;
 }
-
 
 //=============================================================================
 //
@@ -2495,7 +2503,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			dropoff = false;
 		}
 
-
 		// killough 3/15/98: Allow certain objects to drop off
 		if ((!dropoff && !(thing->flags & (MF_DROPOFF | MF_FLOAT | MF_MISSILE))) || (thing->flags5&MF5_NODROPOFF))
 		{
@@ -2580,7 +2587,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		thing->flags6 &= ~MF6_INTRYMOVE;
 		return false;
 	}
-
 
 	// Check for crossed portals
 	bool portalcrossed;
@@ -2695,8 +2701,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		}
 		break;
 	}
-
-
 
 	if (!portalcrossed)
 	{
@@ -2863,7 +2867,6 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	return P_TryMove(thing, pos, dropoff, onfloor, tm, missilecheck);
 }
 
-
 //==========================================================================
 //
 // P_CheckMove
@@ -2970,7 +2973,6 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	FCheckPosition tm;
 	return P_CheckMove(thing, pos, tm, flags);
 }
-
 
 //==========================================================================
 //
@@ -3135,7 +3137,6 @@ void FSlide::HitSlideLine(line_t* ld)
 	}																// phares
 }
 
-
 //==========================================================================
 //
 // PTR_SlideTraverse
@@ -3215,8 +3216,6 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		return;		// stop
 	}
 }
-
-
 
 //==========================================================================
 //
@@ -3515,7 +3514,6 @@ bool FSlide::BounceTraverse(const DVector2 &start, const DVector2 &end)
 				continue;			// don't hit the back side
 			goto bounceblocking;
 		}
-
 
 		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));	// set openrange, opentop, openbottom
 		if (open.range < slidemo->Height)
@@ -3986,7 +3984,6 @@ struct aim_t
 		return result;
 	}
 
-
 	//============================================================================
 	//
 	// AimTraverse3DFloors
@@ -4028,7 +4025,6 @@ struct aim_t
 
 					double ff_bottom = rover->bottom.plane->ZatPoint(trX, trY);
 					double ff_top = rover->top.plane->ZatPoint(trX, trY);
-
 
 					highpitch = -VecToAngle(dist, ff_top - shootz);
 					lowpitch = -VecToAngle(dist, ff_bottom - shootz);
@@ -4103,7 +4099,6 @@ struct aim_t
 		if (position == sector_t::ceiling && portalz < limitz) return;
 		else if (position == sector_t::floor && portalz > limitz) return;
 		aim_t newtrace = Clone();
-
 
 		newtrace.toppitch = newtoppitch;
 		newtrace.bottompitch = newbottompitch;
@@ -4299,7 +4294,6 @@ struct aim_t
 					EnterLinePortal(li, in->frac);
 					return;
 				}
-
 
 				if (!(li->flags & ML_TWOSIDED) || (li->flags & ML_BLOCKEVERYTHING))
 					return;				// stop
@@ -4688,7 +4682,6 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		return nullptr;
 	}
 
-
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
 	double shootz;
@@ -4702,7 +4695,6 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	bool spawnSky = false;
 	if (flags & LAF_NORANDOMPUFFZ)
 		puffFlags |= PF_NORANDOMZ;
-
 
 	if (victim != NULL)
 	{
@@ -5035,6 +5027,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 // P_LineTrace
 //
 //==========================================================================
+
 struct CheckLineData
 {
 	AActor *Caller;
@@ -5214,7 +5207,6 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 	int count;
 	double noise;
 
-
 	if ((actor->flags & MF_NOBLOOD) ||
 		(actor->flags5 & MF5_NOBLOODDECALS) ||
 		(actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)) ||
@@ -5291,7 +5283,6 @@ void P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, angle, pitch);
 }
 
-
 //==========================================================================
 //
 //
@@ -5337,7 +5328,6 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 	DAngle pitch = DAngle::fromDeg((pr_tracebleed() - 128) * (360 / 65536.));
 	P_TraceBleed(damage, t->linetarget->PosPlusZ(t->linetarget->Height/2), t->linetarget, t->angleFromSource, pitch);
 }
-
 
 //==========================================================================
 //
@@ -5453,6 +5443,7 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 //
 //
 //==========================================================================
+
 void P_RailAttack(FRailParams *p)
 {
 	AActor *source = p->source;
@@ -5735,7 +5726,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, HasConversation, HasConversation)
 	ACTION_RETURN_BOOL(HasConversation(self));
 }
 
-int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle)
+int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool saveAngle, bool rumble)
 {
 	if (!CanTalk(self))
 		return false;
@@ -5746,6 +5737,9 @@ int NativeStartConversation(AActor *self, AActor *player, bool faceTalker, bool 
 			Printf("Only settings controllers can start conversations with NPCs\n");
 		return false;
 	}
+
+	if (rumble && haptics_do_menus)
+		Joy_Rumble("menu/activate");
 
 	self->ConversationAnimation(0);
 	P_StartConversation(self, player, faceTalker, saveAngle);
@@ -5758,7 +5752,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, StartConversation, NativeStartConversation
 	PARAM_OBJECT(player, AActor);
 	PARAM_BOOL(faceTalker);
 	PARAM_BOOL(saveAngle);
-	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle));
+	PARAM_BOOL(rumble);
+	ACTION_RETURN_BOOL(NativeStartConversation(self, player, faceTalker, saveAngle, rumble));
 }
 
 bool P_TalkFacing(AActor *player)
@@ -5770,7 +5765,9 @@ bool P_TalkFacing(AActor *player)
 	{
 		P_AimLineAttack(player, player->Angles.Yaw + DAngle::fromDeg(angle), TALKRANGE, &t, DAngle::fromDeg(35.), ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != nullptr)
-			return NativeStartConversation(t.linetarget, player, true, true);
+		{
+			return NativeStartConversation(t.linetarget, player, true, true, true);
+		}
 	}
 	return false;
 }
@@ -6059,7 +6056,6 @@ int P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 // Most of the explosion code resides here. Except P_GeometryRadiusAttack().
 //
 //==========================================================================
-
 
 // [RH] Damage scale to apply to thing that shot the missile.
 static float selfthrustscale;
@@ -6444,7 +6440,6 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, double 
 //		if no crushing is desired.
 //
 //==========================================================================
-
 
 struct FChangePosition
 {
@@ -7066,7 +7061,6 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 	{
 		unsigned       i;
 		sector_t*      sec;
-
 
 		// Use different functions for the four different types of sector movement.
 		// for 3D-floors the meaning of floor and ceiling is inverted!!!

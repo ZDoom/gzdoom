@@ -33,6 +33,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "m_joy.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <xinput.h>
@@ -67,6 +68,8 @@
 
 extern bool AppActive;
 
+EXTERN_CVAR(Bool, use_joystick)
+
 // TYPES -------------------------------------------------------------------
 
 typedef DWORD (WINAPI *XInputGetStateType)(DWORD index, XINPUT_STATE *state);
@@ -89,6 +92,10 @@ public:
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
 
+	bool HasHaptics();
+	float GetHapticsStrength();
+	void SetHapticsStrength(float strength);
+
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
 	EJoyAxis GetAxisMap(int axis);
@@ -106,6 +113,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
+	bool IsHapticsStrengthDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
@@ -114,6 +122,8 @@ public:
 
 	bool GetEnabled();
 	void SetEnabled(bool enabled);
+
+	void Rumble(float low_freq, float high_freq);
 
 	bool AllowsEnabledInBackground() { return true; }
 	bool GetEnabledInBackground() { return EnabledInBackground; }
@@ -142,6 +152,7 @@ protected:
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
 	};
+	XINPUT_VIBRATION Vibration;
 	enum
 	{
 		AXIS_ThumbLX,
@@ -162,6 +173,8 @@ protected:
 	bool Connected;
 	bool Enabled;
 	bool EnabledInBackground;
+	bool Haptics;
+	float HapticStrength;
 
 	void Attached();
 	void Detached();
@@ -182,6 +195,8 @@ public:
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
+
+	void Rumble(float low_freq, float high_freq);
 
 protected:
 	HMODULE XInputDLL;
@@ -399,7 +414,25 @@ void FXInputController::Attached()
 		Axes[i].Value = 0;
 		Axes[i].ButtonValue = 0;
 	}
+	XINPUT_CAPABILITIES capabilities;
+	if (XInputGetCapabilities(Index, XINPUT_FLAG_GAMEPAD, &capabilities) == ERROR_SUCCESS)
+	{
+		Haptics = capabilities.Vibration.wLeftMotorSpeed != 0 || capabilities.Vibration.wRightMotorSpeed != 0;
+	}
 	UpdateJoystickMenu(this);
+}
+
+//==========================================================================
+//
+// FXInputController :: Rumble
+//
+//==========================================================================
+
+void FXInputController::Rumble(float low_freq, float high_freq)
+{
+	Vibration.wLeftMotorSpeed  = static_cast<unsigned short>(USHRT_MAX*clamp(high_freq*HapticStrength, 0.f, 1.f));
+	Vibration.wRightMotorSpeed = static_cast<unsigned short>(USHRT_MAX*clamp( low_freq*HapticStrength, 0.f, 1.f));
+	XInputSetState(Index, &Vibration);
 }
 
 //==========================================================================
@@ -455,6 +488,7 @@ void FXInputController::AddAxes(float axes[NUM_JOYAXIS])
 void FXInputController::SetDefaultConfig()
 {
 	Multiplier = JOYSENSITIVITY_DEFAULT;
+	HapticStrength = JOYHAPSTRENGTH_DEFAULT;
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = DefaultAxes[i].DeadZone;
@@ -521,6 +555,50 @@ void FXInputController::SetSensitivity(float scale)
 bool FXInputController::IsSensitivityDefault()
 {
 	return Multiplier == JOYSENSITIVITY_DEFAULT;
+}
+
+//==========================================================================
+//
+// FXInputController :: HasHaptics
+//
+//==========================================================================
+
+bool FXInputController::HasHaptics()
+{
+	return Haptics;
+}
+
+//==========================================================================
+//
+// FXInputController :: GetHapticsStrength
+//
+//==========================================================================
+
+float FXInputController::GetHapticsStrength()
+{
+	return HapticStrength;
+}
+
+//==========================================================================
+//
+// FXInputController :: SetHapticsStrength
+//
+//==========================================================================
+
+void FXInputController::SetHapticsStrength(float strength)
+{
+	if (Haptics) HapticStrength = clamp(strength, 0.f, 2.f);
+}
+
+//==========================================================================
+//
+// FXInputController :: IsHapticsStrengthDefault
+//
+//==========================================================================
+
+bool FXInputController::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 //==========================================================================
@@ -970,6 +1048,22 @@ bool FXInputManager::WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPA
 
 //===========================================================================
 //
+// FXInputManager :: Rumble
+//
+//===========================================================================
+
+void FXInputManager::Rumble(float low_freq, float high_freq) {
+	for (int i = 0; i < XUSER_MAX_COUNT; ++i)
+	{
+		if (Devices[i] && Devices[i]->IsConnected() && Devices[i]->GetEnabled())
+		{
+			Devices[i]->Rumble(low_freq, high_freq);
+		}
+	}
+}
+
+//===========================================================================
+//
 // FXInputManager :: Rescan
 //
 //===========================================================================
@@ -1013,3 +1107,12 @@ void I_StartupXInput()
 	}
 }
 
+void I_Rumble(double high_freq, double low_freq, double _left_trig, double _right_trig) {
+	if (!use_joystick) return;
+
+	FXInputManager* XInputManager = & static_cast<FXInputManager&> (*JoyDevices[INPUT_XInput]);
+	if (XInputManager != NULL)
+	{
+		XInputManager->Rumble(high_freq, low_freq);
+	}
+}

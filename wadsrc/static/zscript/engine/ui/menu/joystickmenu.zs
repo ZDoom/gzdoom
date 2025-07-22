@@ -1,5 +1,5 @@
 /*
-** joystickmenu.cpp
+** joystickmenu.zs
 ** The joystick configuration menus
 **
 **---------------------------------------------------------------------------
@@ -57,6 +57,34 @@ class OptionMenuSliderJoySensitivity : OptionMenuSliderBase
 	override void SetSliderValue(double val)
 	{
 		mJoy.SetSensitivity(val);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyHapticsStrength : OptionMenuSliderBase
+{
+	JoystickConfig mJoy;
+
+	OptionMenuSliderJoyHapticsStrength Init(String label, double min, double max, double step, int showval, JoystickConfig joy)
+	{
+		Super.Init(label, min, max, step, showval);
+		mJoy = joy;
+		return self;
+	}
+
+	override double GetSliderValue()
+	{
+		return mJoy.GetHapticsStrength();
+	}
+
+	override void SetSliderValue(double val)
+	{
+		mJoy.SetHapticsStrength(val);
 	}
 }
 
@@ -314,7 +342,7 @@ class OptionMenuItemJoyMap : OptionMenuItemOptionBase
 
 //=============================================================================
 //
-// 
+//
 //
 //=============================================================================
 
@@ -351,7 +379,6 @@ class OptionMenuItemInverter : OptionMenuItemOptionBase
 //
 //=============================================================================
 
-
 class OptionMenuJoyEnable : OptionMenuItemOptionBase
 {
 	JoystickConfig mJoy;
@@ -373,7 +400,6 @@ class OptionMenuJoyEnable : OptionMenuItemOptionBase
 		mJoy.SetEnabled(Selection);
 	}
 }
-
 
 class OptionMenuJoyEnableInBackground : OptionMenuItemOptionBase
 {
@@ -452,6 +478,13 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 
 			it = new("OptionMenuSliderJoySensitivity").Init("$JOYMNU_OVRSENS", 0, 2, 0.1, 3, joy);
 			opt.mItems.Push(it);
+
+			if (joy.HasHaptics())
+			{
+				it = new("OptionMenuSliderJoyHapticsStrength").Init("$JOYMNU_HAPTICS", 0, 2, 0.1, 3, joy);
+				opt.mItems.Push(it);
+			}
+
 			it = new("OptionMenuItemStaticText").Init(" ", false);
 			opt.mItems.Push(it);
 

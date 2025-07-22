@@ -1,5 +1,3 @@
-
-
 // constants for A_PlaySound
 enum ESoundFlags
 {
@@ -11,7 +9,7 @@ enum ESoundFlags
 	CHAN_5 = 5,
 	CHAN_6 = 6,
 	CHAN_7 = 7,
-	
+
 	// modifier flags
 	CHAN_LISTENERZ = 8,
 	CHAN_MAYBE_LOCAL = 16,
@@ -35,7 +33,8 @@ enum ESoundFlags
 	CHANF_TRANSIENT = 32768,    // Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
 	CHANF_FORCE = 65536,		// Start, even if sound is paused.
 	CHANF_SINGULAR = 0x20000,	// Only start if no sound of this name is already playing.
-
+	CHANF_RUMBLE = 0x40000,		// Hint to rumble trigger rumble from sound
+	CHANF_NORUMBLE = 0x80000,	// Disable rumble even if it would normally happen
 
 	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
 };
@@ -45,7 +44,6 @@ const ATTN_NONE = 0;
 const ATTN_NORM = 1;
 const ATTN_IDLE = 1.001;
 const ATTN_STATIC = 3;
-
 
 enum ERenderStyle
 {
@@ -70,7 +68,6 @@ enum ERenderStyle
 	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
 
 };
-
 
 enum EGameState
 {
@@ -121,7 +118,6 @@ const TEXTCOLOR_BOLD			= "\034+";
 
 const TEXTCOLOR_CHAT			= "\034*";
 const TEXTCOLOR_TEAMCHAT		= "\034!";
-
 
 enum EMonospacing
 {
@@ -264,7 +260,7 @@ struct MusPlayingInfo native
 	native int baseorder;
 	native bool loop;
 	native voidptr handle;
-	
+
 };
 
 struct TexMan
@@ -300,7 +296,7 @@ struct TexMan
 		ForceLookup = 128,
 		NoAlias = 256
 	};
-	
+
 	enum ETexReplaceFlags
 	{
 		NOT_BOTTOM			= 1,
@@ -374,7 +370,6 @@ enum EScaleMode
 	FSMode_ScaleToFit43Top = 5,
 	FSMode_ScaleToFit43Bottom = 6,
 	FSMode_ScaleToHeight = 7,
-
 
 	FSMode_Max,
 
@@ -621,7 +616,7 @@ struct Font native
 		CR_TEAL,
 		NUM_TEXT_COLORS
 	};
-	
+
 	const TEXTCOLOR_BRICK			= "\034A";
 	const TEXTCOLOR_TAN				= "\034B";
 	const TEXTCOLOR_GRAY			= "\034C";
@@ -775,7 +770,7 @@ class Object native
 	private native static Function<void> BuiltinFunctionPtrCast(Function<void> inptr, voidptr newtype);
 	private native static void HandleDeprecatedFlags(Object obj, bool set, int index);
 	private native static bool CheckDeprecatedFlags(Object obj, int index);
-	
+
 	native static Name ValidateNameIndex(int index);
 	static class<Object> FindClass(Name cls, class<Object> baseType = null) { return BuiltinNameToClass(cls, baseType); }
 
@@ -965,7 +960,7 @@ struct StringStruct native unsafe(internal)
 struct Translation version("2.4")
 {
 	Color colors[256];
-	
+
 	native TranslationID AddTranslation();
 	native static TranslationID MakeID(int group, int num);
 	native static TranslationID GetID(Name transname);
@@ -1035,7 +1030,7 @@ class ScriptScanner native
 	native void MustGetString();
 	native void MustGetStringName(String name);
 	native void MustGetBoolToken();
-	
+
 	// This DOES NOT advance the parser! This returns the string the parser got.
 	native String GetStringContents();
 

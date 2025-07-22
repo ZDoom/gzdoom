@@ -1,10 +1,9 @@
 #ifndef M_JOY_H
 #define M_JOY_H
 
-#include "basics.h"
+#include "c_cvars.h"
 #include "keydef.h"
 #include "tarray.h"
-#include "c_cvars.h"
 
 union CubicBezier {
 	struct {
@@ -42,6 +41,8 @@ extern const float JOYDEADZONE_DEFAULT;
 
 extern const float JOYSENSITIVITY_DEFAULT;
 
+extern const float JOYHAPSTRENGTH_DEFAULT;
+
 extern const float JOYTHRESH_DEFAULT;
 
 extern const float JOYTHRESH_TRIGGER;
@@ -58,6 +59,10 @@ struct IJoystickConfig
 	virtual FString GetName() = 0;
 	virtual float GetSensitivity() = 0;
 	virtual void SetSensitivity(float scale) = 0;
+
+	virtual bool HasHaptics() = 0;
+	virtual float GetHapticsStrength() = 0;
+	virtual void SetHapticsStrength(float strength) = 0;
 
 	virtual int GetNumAxes() = 0;
 	virtual float GetAxisDeadZone(int axis) = 0;
@@ -84,6 +89,7 @@ struct IJoystickConfig
 
 	// Used by the saver to not save properties that are at their defaults.
 	virtual bool IsSensitivityDefault() = 0;
+	virtual bool IsHapticsStrengthDefault() = 0;
 	virtual bool IsAxisDeadZoneDefault(int axis) = 0;
 	virtual bool IsAxisMapDefault(int axis) = 0;
 	virtual bool IsAxisScaleDefault(int axis) = 0;

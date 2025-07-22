@@ -53,6 +53,9 @@
 
 
 
+FARG(nocustommenu, "", "", "",
+	"");
+
 bool CheckSkipGameOptionBlock(FScanner& sc);
 
 MenuDescriptorList MenuDescriptors;
@@ -1588,7 +1591,7 @@ void M_ParseMenuDefs()
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
-		if (Args->CheckParm("-nocustommenu")) break;
+		if (Args->CheckParm(FArg_nocustommenu)) break;
 	}
 	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
@@ -1688,5 +1691,3 @@ void M_CreateMenus()
 		I_BuildALResamplersList(*opt);
 	}
 }
-
-

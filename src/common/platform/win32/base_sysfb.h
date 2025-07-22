@@ -1,6 +1,9 @@
 #pragma once
 
+#include "m_argv.h"
 #include "v_video.h"
+
+EXTERN_FARG(0);
 
 class SystemBaseFrameBuffer : public DFrameBuffer
 {

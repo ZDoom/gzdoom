@@ -51,3 +51,8 @@ void I_ResetInputTime();
 // [RH] Despite the name, it apparently never waited for the VBL, even in
 // the original DOS version (if the Heretic/Hexen source is any indicator).
 void I_WaitVBL(int count);
+
+double GetDeltaTime(bool current = false);
+double GetPhysicsTimeStep();
+void ClearPrevTime();
+void SetDeltaTime();

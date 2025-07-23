@@ -1787,20 +1787,21 @@ FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 	return exec;
 }
 
-static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
+static void GetCmdLineFiles(std::vector<std::string>& wadfiles, bool optional)
 {
 	FString *args;
 	int i;
 	int argc;
 
-	argc = Args->CheckParmList("-file", &args);
+	argc = optional ? Args->CheckParmList("-optfile", &args) : Args->CheckParmList("-file", &args);
 
 	assert(wadfiles.size() < INT_MAX);
 
-	// [RL0] Check for array size to only add new wads
-	for (i = int(wadfiles.size()); i < argc; ++i)
+	// Check for array size to only add new wads, but only to skip over the non-optional
+	// ones we added earlier.
+	for (i = optional ? 0 : int(wadfiles.size()); i < argc; ++i)
 	{
-		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig);
+		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig, optional);
 	}
 }
 
@@ -1992,7 +1993,8 @@ static void D_DoomInit()
 	Args->CollectFiles("-bex", ".bex");
 	Args->CollectFiles("-exec", ".cfg");
 	Args->CollectFiles("-playdemo", ".lmp");
-	Args->CollectFiles("-file", NULL);	// anything left goes after -file
+	Args->CollectFiles("-file", nullptr);	// anything left goes after -file
+	Args->CollectFiles("-optfile", nullptr);
 
 	gamestate = GS_STARTUP;
 
@@ -2017,19 +2019,19 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		{
 			const char *lightswad = BaseFileSearch ("lights.pk3", NULL, true, GameConfig);
 			if (lightswad)
-				D_AddFile (allwads, lightswad, true, -1, GameConfig);
+				D_AddFile (allwads, lightswad, true, -1, GameConfig, true);
 		}
 		if ((GameStartupInfo.LoadBrightmaps == 1 || (GameStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps)) && !(Args->CheckParm("-nobrightmaps")))
 		{
 			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL, true, GameConfig);
 			if (bmwad)
-				D_AddFile (allwads, bmwad, true, -1, GameConfig);
+				D_AddFile (allwads, bmwad, true, -1, GameConfig, true);
 		}
 		if ((GameStartupInfo.LoadWidescreen == 1 || (GameStartupInfo.LoadWidescreen != 0 && autoloadwidescreen)) && !(Args->CheckParm("-nowidescreen")))
 		{
 			const char *wswad = BaseFileSearch ("game_widescreen_gfx.pk3", NULL, true, GameConfig);
 			if (wswad)
-				D_AddFile (allwads, wswad, true, -1, GameConfig);
+				D_AddFile (allwads, wswad, true, -1, GameConfig, true);
 		}
 	}
 
@@ -2045,7 +2047,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		// it for something else, so this gets to stay here.
 		const char *wad = BaseFileSearch ("zvox.wad", NULL, false, GameConfig);
 		if (wad)
-			D_AddFile (allwads, wad, true, -1, GameConfig);
+			D_AddFile (allwads, wad, true, -1, GameConfig, true);
 	
 		// [RH] Add any .wad files in the skins directory
 #ifdef __unix__
@@ -2054,7 +2056,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		file = progdir;
 #endif
 		file += "skins";
-		D_AddDirectory (allwads, file.GetChars(), "*.wad", GameConfig);
+		D_AddDirectory (allwads, file.GetChars(), "*.wad", GameConfig, true);
 
 #ifdef __unix__
 		file = NicePath("$HOME/" GAME_DIR "/skins");
@@ -2062,7 +2064,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 #endif	
 
 		// Add common (global) wads
-		D_AddConfigFiles(allwads, "Global.Autoload", "*.wad", GameConfig);
+		D_AddConfigFiles(allwads, "Global.Autoload", "*.wad", GameConfig, true);
 
 		ptrdiff_t len;
 		ptrdiff_t lastpos = -1;
@@ -2070,7 +2072,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{
 			file = LumpFilterIWAD.Left(len) + ".Autoload";
-			D_AddConfigFiles(allwads, file.GetChars(), "*.wad", GameConfig);
+			D_AddConfigFiles(allwads, file.GetChars(), "*.wad", GameConfig, true);
 			lastpos = len;
 		}
 	}
@@ -3789,7 +3791,7 @@ static int D_DoomMain_Internal (void)
 		// the IWAD is known.
 
 		std::vector<std::string> pwads;
-		GetCmdLineFiles(pwads);
+		GetCmdLineFiles(pwads, false);
 		FString iwad = CheckGameInfo(pwads);
 
 		// The IWAD selection dialogue does not show in fullscreen so if the
@@ -3800,12 +3802,13 @@ static int D_DoomMain_Internal (void)
 		
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad.GetChars(), basewad.GetChars(), optionalwad.GetChars());
 
-		GetCmdLineFiles(pwads); // [RL0] Update with files passed on the launcher extra args
+		GetCmdLineFiles(pwads, false); // [RL0] Update with files passed on the launcher extra args
+		GetCmdLineFiles(pwads, true);
 
 		if (!iwad_info) return 0;	// user exited the selection popup via cancel button.
 		if ((iwad_info->flags & GI_SHAREWARE) && pwads.size() > 0)
 		{
-			I_FatalError ("You cannot -file with the shareware version. Register!");
+			I_FatalError ("You cannot -file or -optfile with the shareware version. Register!");
 		}
 		lastIWAD = iwad;
 
@@ -4011,6 +4014,7 @@ UNSAFE_CCMD(debug_restart)
 	Args->RemoveArgs("-bex");
 	Args->RemoveArgs("-playdemo");
 	Args->RemoveArgs("-file");
+	Args->RemoveArgs("-optfile");
 	Args->RemoveArgs("-altdeath");
 	Args->RemoveArgs("-deathmatch");
 	Args->RemoveArgs("-coop");

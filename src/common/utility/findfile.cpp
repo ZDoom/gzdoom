@@ -50,7 +50,7 @@
 //
 //==========================================================================
 
-bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check, int position, FConfigFile* config)
+bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check, int position, FConfigFile* config, bool optional)
 {
 	if (file == nullptr || *file == '\0')
 	{
@@ -127,7 +127,7 @@ bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check,
 //
 //==========================================================================
 
-void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const char *extension, FConfigFile* config)
+void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const char *extension, FConfigFile* config, bool optional)
 {
 	if (value == nullptr || *value == '\0')
 	{
@@ -137,7 +137,7 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 
 	if (wadfile != nullptr)
 	{
-		D_AddFile(wadfiles, wadfile, true, -1, config);
+		D_AddFile(wadfiles, wadfile, true, -1, config, optional);
 	}
 	else 
 	{
@@ -150,7 +150,7 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 		{ 
 			for(auto& entry : list)
 			{
-				D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config);
+				D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config, optional);
 			}
 		}
 	}
@@ -164,7 +164,7 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 //
 //==========================================================================
 
-void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, const char* extension, FConfigFile *config)
+void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, const char* extension, FConfigFile *config, bool optional)
 {
 	if (config && config->SetSection(section))
 	{
@@ -178,7 +178,7 @@ void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, c
 			{
 				// D_AddWildFile resets config's position, so remember it
 				config->GetPosition(pos);
-				D_AddWildFile(wadfiles, ExpandEnvVars(value).GetChars(), extension, config);
+				D_AddWildFile(wadfiles, ExpandEnvVars(value).GetChars(), extension, config, optional);
 				// Reset config's position to get next wad
 				config->SetPosition(pos);
 			}
@@ -194,7 +194,7 @@ void D_AddConfigFiles(std::vector<std::string>& wadfiles, const char* section, c
 //
 //==========================================================================
 
-void D_AddDirectory(std::vector<std::string>& wadfiles, const char* dir, const char *filespec, FConfigFile* config)
+void D_AddDirectory(std::vector<std::string>& wadfiles, const char* dir, const char *filespec, FConfigFile* config, bool optional)
 {
 	FileSys::FileList list;
 	if (FileSys::ScanDirectory(list, dir, "*.wad", true))
@@ -203,7 +203,7 @@ void D_AddDirectory(std::vector<std::string>& wadfiles, const char* dir, const c
 		{
 			if (!entry.isDirectory)
 			{
-				D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config);
+				D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config, optional);
 			}
 		}
 	}

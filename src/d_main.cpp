@@ -1110,14 +1110,21 @@ void D_Display ()
 			if (!skip)
 			{
 				int pausePos = 0;
+				int maxWidth = twod->GetWidth() / CleanXfac;
 				if (gameinfo.UsePauseString)
 				{
 					FFont* font = BigFont;
 					FString pauseString = GStrings.GetString("PAUSE_STRING");
-					DrawText(twod, font, CR_RED,
-						(twod->GetWidth() - font->StringWidth(pauseString) * CleanXfac) / 2, 4, pauseString.GetChars(),
-						DTA_CleanNoMove, true, TAG_DONE);
-					pausePos = font->GetHeight() * CleanYfac + 4;
+					TArray<FBrokenLines> pLines = V_BreakLines(font, maxWidth, pauseString);
+					int y = 4;
+
+					for (auto& line : pLines)
+					{
+						DrawText(twod, font, CR_RED, (twod->GetWidth() - line.Width * CleanXfac) / 2, y,
+							line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+						y += font->GetHeight() * CleanYfac;
+					}
+					pausePos = y;
 				}
 				else
 				{
@@ -1132,9 +1139,15 @@ void D_Display ()
 					FFont *font = generic_ui ? NewSmallFont : SmallFont;
 					FString plrString = GStrings.GetString("TXT_BY");
 					plrString.Substitute("%s", players[paused - 1].userinfo.GetName());
-					DrawText(twod, font, CR_RED,
-						(twod->GetWidth() - font->StringWidth(plrString)*CleanXfac) / 2, pausePos, plrString.GetChars(),
-						DTA_CleanNoMove, true, TAG_DONE);
+					TArray<FBrokenLines> txtbyLines = V_BreakLines(font, maxWidth, plrString);
+					int y = 4;
+
+					for (auto& line : txtbyLines)
+					{
+						DrawText(twod, font, CR_RED, (twod->GetWidth() - line.Width * CleanXfac) / 2, pausePos + y,
+							line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+						y += font->GetHeight() * CleanYfac;
+					}
 				}
 			}
 		}

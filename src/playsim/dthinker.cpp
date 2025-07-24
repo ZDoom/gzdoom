@@ -999,8 +999,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinker, ChangeStatNum, ChangeStatNum)
 //
 //==========================================================================
 
+bool bTravelling = false;
+
 static void AddToTravellingList(DThinker* self)
 {
+	if (!bTravelling)
+	{
+		Printf(TEXTCOLOR_RED "Thinkers can only be set to travel on level change\n");
+		return;
+	}
 	// These should be handled by the owning Actor, otherwise they'll lose them and become useless anyway.
 	if (self->IsKindOf(NAME_Inventory) && self->PointerVar<AActor>(NAME_Owner) != nullptr)
 	{

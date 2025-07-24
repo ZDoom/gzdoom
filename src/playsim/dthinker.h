@@ -97,6 +97,8 @@ private:
 	friend class FThinkerIterator;
 };
 
+extern bool bTravelling;
+
 class DThinker : public DObject
 {
 	DECLARE_CLASS (DThinker, DObject)

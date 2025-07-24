@@ -1657,6 +1657,8 @@ void FLevelLocals::AddToTravellingList(DThinker* th)
 
 void FLevelLocals::StartTravel()
 {
+	bTravelling = true;
+
 	if (!deathmatch)
 	{
 		for (size_t i = 0u; i < MAXPLAYERS; ++i)
@@ -1677,6 +1679,8 @@ void FLevelLocals::StartTravel()
 				VMCallVoid<DThinker*>(func, th);
 		}
 	}
+
+	bTravelling = false;
 }
 
 // We do this after snapshotting so the flag can be saved out but it won't be saved into

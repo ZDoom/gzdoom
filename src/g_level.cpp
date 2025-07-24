@@ -1745,18 +1745,17 @@ void FLevelLocals::LinkActorToLevel(AActor& mo)
 	mo.SetDynamicLights();
 }
 
-int FLevelLocals::FinishTravel()
+static int RemoveTravellingObjects(FLevelLocals& level, TArray<DThinker*>& toCallBack, bool clientSide)
 {
-	TArray<DThinker*> toCallBack = {};
 	int failNum = 0;
-	auto it = GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
+	auto it = clientSide ? level.GetClientsideThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING) : level.GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
 	DThinker* th = nullptr;
 	while ((th = it.Next()) != nullptr)
 	{
 		assert(th->ObjectFlags & OF_Travelling);
 
 		toCallBack.Push(th);
-		
+
 		th->ObjectFlags &= ~OF_Travelling;
 		th->ChangeStatNum(th->GetStatNum());
 
@@ -1766,7 +1765,7 @@ int FLevelLocals::FinishTravel()
 
 		mo->flags2 &= ~MF2_BLASTED;
 		mo->ClearFOVInterpolation();
-		LinkActorToLevel(*mo);
+		level.LinkActorToLevel(*mo);
 
 		if (mo->player == nullptr || !mo->IsKindOf(NAME_PlayerPawn))
 		{
@@ -1788,13 +1787,13 @@ int FLevelLocals::FinishTravel()
 			continue;
 		}
 
-		const int pNum = PlayerNum(mo->player);
+		const int pNum = level.PlayerNum(mo->player);
 		// This will be whatever previous pawn was in the level for this player, be it from a snapshot
 		// or a map spawn.
 		auto mapDoll = mo->player->mo;
 		assert(mo != mapDoll);
 
-		auto start = PickPlayerStart(pNum, 0);
+		auto start = level.PickPlayerStart(pNum, 0);
 		if (start == nullptr)
 		{
 			if (mapDoll != nullptr)
@@ -1805,14 +1804,14 @@ int FLevelLocals::FinishTravel()
 			else if (failNum <= 0)
 			{
 				// Couldn't find a start for this player at all. This should never happen but if it does, let's abort.
-				failNum = pNum + 1; 
+				failNum = pNum + 1;
 			}
 		}
 
 		// Find the actual spawn location taking hub entrances into account. This player
 		// is only meant to be short-lived so don't fire off any events unless there truly
 		// was no other player spawned beforehand (can happen in co-op).
-		auto doll = SpawnPlayer(start, pNum, SPF_TEMPPLAYER);
+		auto doll = level.SpawnPlayer(start, pNum, SPF_TEMPPLAYER);
 		if (doll != nullptr)
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
@@ -1834,7 +1833,7 @@ int FLevelLocals::FinishTravel()
 		mo->player->mo = mo;
 		mo->player->camera = mo;
 		mo->player->viewheight = mo->player->DefaultViewHeight();
-		
+
 		if (mapDoll != nullptr)
 		{
 			// Make sure anything targetting the previous pawn gets pointed back to the real one.
@@ -1847,9 +1846,18 @@ int FLevelLocals::FinishTravel()
 			doll->Destroy();
 
 		mo->player->SendPitchLimits();
-		if (ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
+		if (level.ib_compatflags & BCOMPATF_RESETPLAYERSPEED)
 			mo->Speed = mo->GetDefault()->Speed;
 	}
+
+	return failNum;
+}
+
+int FLevelLocals::FinishTravel()
+{
+	TArray<DThinker*> toCallBack = {};
+	const int failNum = RemoveTravellingObjects(*this, toCallBack, false);
+	RemoveTravellingObjects(*this, toCallBack, true);
 
 	// Clean up anything that wasn't linked back to avoid memory leaks. We also need to wipe any
 	// remaining thinkers that were set to travel when they left if recovering from a snapshot,

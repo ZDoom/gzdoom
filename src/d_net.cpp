@@ -2146,6 +2146,8 @@ void TryRunTics()
 {
 	GC::CheckGC();
 
+	// Use a fixed timestep for this.
+	SetDeltaTime(true);
 	if (ToggleFullscreen)
 	{
 		ToggleFullscreen = false;

@@ -1271,6 +1271,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_System, GetTimeFrac, Jit_GetTimeFrac)
 	ACTION_RETURN_FLOAT(I_GetTimeFrac());
 }
 
+DEFINE_GLOBAL(DeltaTime);
 
 DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);

@@ -478,6 +478,7 @@ struct LevelLocals native
 	native readonly Array<@Vertex> Vertexes;
 	native readonly Array<@LinePortal> LinePortals;
 	native internal readonly Array<@SectorPortal> SectorPortals;
+	native Array<@Polyobj> Polyobjects;
 	
 	native readonly int time;
 	native readonly int maptime;
@@ -596,6 +597,7 @@ struct LevelLocals native
 	native clearscope int PlayerNum(PlayerInfo player) const;
 
 	native String GetChecksum() const;
+	native Polyobj GetPolyobj(int polyNum) const;
 
 	native void ChangeSky(TextureID sky1, TextureID sky2 );
 	native void ChangeSkyMist(TextureID skymist, bool usemist = true);
@@ -963,6 +965,44 @@ class Ceiling : MovingCeiling native
 		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);
 	}
 	
+}
+
+class PolyAction : Thinker native
+{
+	native double GetSpeed() const;
+	native double GetDistance() const;
+	native PolyObj GetPolyobj() const;
+}
+
+class RotatePoly : PolyAction native{}
+
+class MovePoly : PolyAction native
+{
+	native Vector2 GetSpeedV() const;
+	native double GetAngle() const;
+}
+
+class MovePolyTo : PolyAction native
+{
+	native Vector2 GetSpeed() const;
+	native Vector2 GetTarget() const;
+}
+
+class PolyDoor : MovePoly native
+{
+	enum PODoorType
+	{
+		PODOOR_NONE,
+		PODOOR_SLIDE,
+		PODOOR_SWING,
+	};
+
+	native double GetDirection() const;
+	native double GetTotalDist() const;
+	native int GetTics() const;
+	native int GetWaitTics() const;
+	native PODoorType GetType() const;
+	native bool IsClose() const;
 }
 
 struct LookExParams

@@ -1,5 +1,6 @@
 
 #include "settingspage.h"
+#include "findfile.h"
 #include "launcherwindow.h"
 #include "gstrings.h"
 #include "i_interface.h"
@@ -8,6 +9,13 @@
 #include <zwidget/widgets/listview/listview.h>
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
+
+static constexpr struct { const char* string; int flag; } FILELOAD_OPTS[] = {
+	{"OPTVAL_LAX", REQUIRE_NONE},
+	{"OPTVAL_DEFAULT", REQUIRE_DEFAULT},
+	{"OPTVAL_STRICT", REQUIRE_ALL},
+	{"OPTVAL_CUSTOM", -1}
+};
 
 SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
 {
@@ -58,7 +66,6 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 #endif
 
 	LangList = new ListView(this);
-
 	try
 	{
 		auto data = LoadWidgetData("menudef.txt");
@@ -97,8 +104,21 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 			LangList->SetSelectedItem(i);
 		++i;
 	}
-
 	LangList->OnChanged = [=](int i) { OnLanguageChanged(i); };
+
+	{
+		LoadLabel = new TextLabel(this);
+		LoadList = new ListView(this); // TODO: replace with actual combobox
+		int opts = sizeof(FILELOAD_OPTS)/sizeof(FILELOAD_OPTS[0]), selected = opts-1;
+		for (int i = 0; i < opts; i++)
+		{
+			LoadList->AddItem(GStrings.GetString(FILELOAD_OPTS[i].string));
+			if (info.DefaultFileLoadBehaviour == FILELOAD_OPTS[i].flag) selected = i;
+		}
+		LoadList->SetFrameGeometry(0, 0, 0, LoadList->GetMinimumHeight()); // needed for scroll to item to work
+		LoadList->SetSelectedItem(selected);
+		LoadList->ScrollToItem(selected);
+	}
 }
 
 void SettingsPage::SetValues(FStartupSelectionInfo& info) const
@@ -115,6 +135,9 @@ void SettingsPage::SetValues(FStartupSelectionInfo& info) const
 	if (SupportWadsCheckbox->GetChecked()) flags |= 16;
 	info.DefaultStartFlags = flags;
 
+	int flBehaviour = FILELOAD_OPTS[LoadList->GetSelectedItem()].flag;
+	if (flBehaviour != -1) info.DefaultFileLoadBehaviour = flBehaviour;
+
 #ifdef RENDER_BACKENDS
 	int v = 1;
 	if (OpenGLCheckbox->GetChecked()) v = 0;
@@ -127,6 +150,7 @@ void SettingsPage::SetValues(FStartupSelectionInfo& info) const
 void SettingsPage::UpdateLanguage()
 {
 	LangLabel->SetText(GStrings.GetString("OPTMNU_LANGUAGE"));
+	LoadLabel->SetText(GStrings.GetString("PICKER_FILELOADING"));
 	GeneralLabel->SetText(GStrings.GetString("PICKER_GENERAL"));
 	ExtrasLabel->SetText(GStrings.GetString("PICKER_EXTRA"));
 	FullscreenCheckbox->SetText(GStrings.GetString("PICKER_FULLSCREEN"));
@@ -201,8 +225,20 @@ void SettingsPage::OnGeometryChanged()
 	{
 		LangLabel->SetFrameGeometry(0.0, y, w, LangLabel->GetPreferredHeight());
 		y += LangLabel->GetPreferredHeight();
-		LangList->SetFrameGeometry(0.0, y, w, std::max(h - y, 0.0));
+		double temp = std::max(h - y - LoadList->GetMinimumHeight() - 4.0, 0.0);
+		LangList->SetFrameGeometry(0.0, y, w, temp);
+		y += temp + 4.0;
 	}
+
+	LoadLabel->SetFrameGeometry(
+		0.0, y+(LoadList->GetMinimumHeight()-LoadLabel->GetPreferredHeight())/2,
+		LoadLabel->GetPreferredWidth(), LoadLabel->GetPreferredHeight()
+	);
+	LoadList->SetFrameGeometry(
+		LoadLabel->GetPreferredWidth()+4.0, y,
+		LoadList->GetPreferredWidth(), LoadList->GetMinimumHeight()
+	);
+	y += LoadList->GetHeight();
 
 	Launcher->UpdatePlayButton();
 }

@@ -27,6 +27,7 @@ private:
 	TextLabel* LangLabel = nullptr;
 	TextLabel* GeneralLabel = nullptr;
 	TextLabel* ExtrasLabel = nullptr;
+	TextLabel* LoadLabel = nullptr;
 	CheckboxLabel* FullscreenCheckbox = nullptr;
 	CheckboxLabel* DisableAutoloadCheckbox = nullptr;
 	CheckboxLabel* DontAskAgainCheckbox = nullptr;
@@ -41,6 +42,7 @@ private:
 	CheckboxLabel* GLESCheckbox = nullptr;
 #endif
 	ListView* LangList = nullptr;
+	ListView* LoadList = nullptr;
 
 	TArray<std::pair<FString, FString>> languages;
 	bool hideLanguage = false;

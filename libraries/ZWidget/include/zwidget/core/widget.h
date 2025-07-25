@@ -11,6 +11,7 @@
 
 class Canvas;
 class Timer;
+class Dropdown;
 
 enum class WidgetType
 {
@@ -238,4 +239,5 @@ private:
 	friend class OpenFileDialog;
 	friend class OpenFolderDialog;
 	friend class SaveFileDialog;
+	friend class Dropdown;
 };

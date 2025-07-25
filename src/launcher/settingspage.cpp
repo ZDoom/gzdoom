@@ -108,7 +108,7 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 
 	{
 		LoadLabel = new TextLabel(this);
-		LoadList = new ListView(this); // TODO: replace with actual combobox
+		LoadList = new ListView(this); // TODO: replace with actual dropdown
 		int opts = sizeof(FILELOAD_OPTS)/sizeof(FILELOAD_OPTS[0]), selected = opts-1;
 		for (int i = 0; i < opts; i++)
 		{

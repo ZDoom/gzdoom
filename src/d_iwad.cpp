@@ -60,6 +60,7 @@ EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
 CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
+EXTERN_CVAR(Int, i_exit_on_not_found);
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -829,6 +830,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		if (i_loadsupportwad) flags |= 16;
 
 		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
+		info.DefaultFileLoadBehaviour = i_exit_on_not_found;
 		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
 			pick = info.SaveInfo();
@@ -837,6 +839,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			autoloadbrightmaps = !!(info.DefaultStartFlags & 4);
 			autoloadwidescreen = !!(info.DefaultStartFlags & 8);
 			i_loadsupportwad = !!(info.DefaultStartFlags & 16);
+			i_exit_on_not_found = info.DefaultFileLoadBehaviour;
 		}
 		else
 		{

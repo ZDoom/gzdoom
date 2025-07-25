@@ -46,7 +46,7 @@
 #include "printf.h"
 #include "zstring.h"
 
-CUSTOM_CVARD(Int, i_exit_on_not_found, REQUIRE_IWAD|REQUIRE_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG, "Exits game if a specified file is not found") {
+CUSTOM_CVARD(Int, i_exit_on_not_found, REQUIRE_DEFAULT, CVAR_ARCHIVE|CVAR_GLOBALCONFIG, "Exits game if a specified file is not found") {
 	int masked = self & REQUIRE_ALL;
 	if (self != masked) self = masked;
 };

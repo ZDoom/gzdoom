@@ -1112,20 +1112,47 @@ void D_Display ()
 				VMCall(func, params, countof(params), &ret, 1);
 				skip = !!rv;
 			}
-			if ( !skip )
+			if (!skip)
 			{
-				auto tex = TexMan.GetGameTextureByName(gameinfo.PauseSign.GetChars(), true);
-				double x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
-					tex->GetDisplayLeftOffset() * CleanXfac;
-				DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+				int pausePos = 0;
+				int maxWidth = twod->GetWidth() / CleanXfac;
+				if (gameinfo.UsePauseString)
+				{
+					FFont* font = BigFont;
+					FString pauseString = GStrings.GetString("PAUSE_STRING");
+					TArray<FBrokenLines> pLines = V_BreakLines(font, maxWidth, pauseString);
+					int y = 4;
+
+					for (auto& line : pLines)
+					{
+						DrawText(twod, font, CR_RED, (twod->GetWidth() - line.Width * CleanXfac) / 2, y,
+							line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+						y += font->GetHeight() * CleanYfac;
+					}
+					pausePos = y;
+				}
+				else
+				{
+					auto tex = TexMan.GetGameTextureByName(gameinfo.PauseSign.GetChars(), true);
+					double x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac) / 2 +
+						tex->GetDisplayLeftOffset() * CleanXfac;
+					DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+					pausePos = tex->GetDisplayHeight() * CleanYfac + 4;
+				}
 				if (paused && multiplayer)
 				{
-					FFont *font = generic_ui? NewSmallFont : SmallFont;
-					FString pstring = GStrings.GetString("TXT_BY");
-					pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
-					DrawText(twod, font, CR_RED,
-						(twod->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
-						(tex->GetDisplayHeight() * CleanYfac) + 4, pstring.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+					FFont *font = generic_ui ? NewSmallFont : SmallFont;
+					FString plrString = GStrings.GetString("TXT_BY");
+					plrString.Substitute("%s", players[paused - 1].userinfo.GetName());
+					TArray<FBrokenLines> txtbyLines = V_BreakLines(font, maxWidth, plrString);
+					int y = 4;
+
+					for (auto& line : txtbyLines)
+					{
+						DrawText(twod, font, CR_RED, (twod->GetWidth() - line.Width * CleanXfac) / 2, pausePos + y,
+							line.Text.GetChars(), DTA_CleanNoMove, true, TAG_DONE);
+						y += font->GetHeight() * CleanYfac;
+					}
 				}
 			}
 		}

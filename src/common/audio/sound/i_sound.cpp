@@ -63,9 +63,12 @@ CUSTOM_CVAR(Int, snd_samplerate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, snd_buffersize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, snd_hrtf, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-FARG(nomusic, "", "", "", "");
-FARG(nosound, "", "", "", "");
-FARG(nosfx, "", "", "", "");
+FARG(nomusic, "Configuration", "Turns off in-game music playback.", "",
+	"Prevents the playback of music.");
+FARG(nosound, "Configuration", "Turns off all in-game sound/music.", "",
+	"Disables both music and sound effects.");
+FARG(nosfx, "Configuration", "Turns off in-game sound effects.", "",
+	"Prevents the playback of sound effects.");
 
 #if !defined(NO_OPENAL)	
 #define DEF_BACKEND "openal"

@@ -153,10 +153,22 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	setsizeneeded = true;
 }
 
-FARG(width, "", "", "", "");
-FARG(height, "", "", "", "");
+EXTERN_CVAR(Bool, r_blendmethod);
 
-EXTERN_CVAR(Bool, r_blendmethod)
+FARG(width, "Configuration", "Sets ZDoom's horizontal resolution.", "x",
+	"Specifies the desired resolution of the screen. If only one of -width or -height is"
+	" specified, ZDoom will try to guess the other one based on a standard aspect ratio. If the"
+	" specified resolution is not supported by your SDL/DirectDraw drivers, ZDoom will try various"
+	" resolutions until it either finds one that works, or it will finally give up. To determine"
+	" which resolutions ZDoom can use, use the vid_describemodes command from the console once you"
+	" have started the game.");
+FARG(height, "Configuration", "Sets ZDoom's vertical resolution.", "y",
+	"Specifies the desired resolution of the screen. If only one of -width or -height is"
+	" specified, ZDoom will try to guess the other one based on a standard aspect ratio. If the"
+	" specified resolution is not supported by your SDL/DirectDraw drivers, ZDoom will try various"
+	" resolutions until it either finds one that works, or it will finally give up. To determine"
+	" which resolutions ZDoom can use, use the vid_describemodes command from the console once you"
+	" have started the game.");
 
 int active_con_scale();
 

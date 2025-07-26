@@ -83,7 +83,9 @@ EXTERN_CVAR(Int, wipetype)
 EXTERN_CVAR(Bool, i_pauseinbackground)
 EXTERN_CVAR(Bool, i_soundinbackground)
 
-FARG(config, "", "", "", "");
+FARG(config, "Configuration", "Specifies an alternative configuration file to use.", "configfile",
+	"Causes ZDoom to use an alternative configuration file. If configfile does not exist, it will"
+	" be created.");
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)

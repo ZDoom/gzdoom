@@ -107,12 +107,24 @@ const char* neterror(void);
 #define neterror() strerror(errno)
 #endif
 
-FARG(host, "", "", "", "");
-FARG(join, "", "", "", "");
-FARG(dup, "", "", "", "");
-FARG(port, "", "", "", "");
-FARG(netmode, "", "", "", "");
-FARG(password, "", "", "", "");
+FARG(host, "Multiplayer", "Designates the machine as the host for a multiplayer game.", "x",
+	"This machine will function as a host for a multiplayer game with x players (including this"
+	" machine). It will wait for other machines to connect using the -join. parameter and then"
+	" start the game when everyone is connected.");
+FARG(join, "Multiplayer", "Connects to a multiplayer host.", "host's IP address[:host's port]",
+	 "Connect to a host for a multiplayer game.");
+FARG(dup, "Multiplayer", "Send less player movement commands over the network.", "x",
+	"Causes ZDoom to transmit fewer player movement commands across the network. Valid values"
+	" range from 1–9. For example, -dup 2 would cause ZDoom to send half as many movements"
+	" as normal.");
+FARG(port, "Multiplayer", "Specifies an alternative IP port for a network game.", "x",
+	"Specifies an alternate IP port for this machine to use during a network game. By default,"
+	" port 5029 is used.");
+FARG(netmode, "Multiplayer", "Changes the network mode", "0|1",
+	"Changes the network mode the game uses (Peer-to-Peer or Packet Server). More information on"
+	" each mode can be found on the Multiplayer page.");
+FARG(password, "", "", "",
+	"");
 
 // As per http://support.microsoft.com/kb/q192599/ the standard
 // size for network buffers is 8k.

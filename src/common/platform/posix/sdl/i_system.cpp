@@ -79,7 +79,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
-CVAR(String, queryiwad_key, "", CVAR_GLOBALCONFIG | CVAR_ARCHIVE); // Currently unimplemented.
+CVAR(String, queryiwad_key, "shift", CVAR_GLOBALCONFIG | CVAR_ARCHIVE);
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, longsavemessages)
@@ -305,8 +305,34 @@ void I_PrintStr(const char *cp)
 
 bool HoldingQueryKey(const char* key)
 {
-	// TODO: Implement
-	return false;
+	int code = 0;
+
+	if (!stricmp(key, "shift"))
+		code = SDL_SCANCODE_LSHIFT;
+	else if (!stricmp(key, "control") || !stricmp(key, "ctrl"))
+		code = SDL_SCANCODE_LCTRL;
+
+	if (!code) return false;
+
+	auto window = SDL_CreateWindow(
+		"HoldingQueryKey",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		1, 1,
+		SDL_WINDOW_HIDDEN
+	);
+
+	if (!window) return false;
+
+	SDL_PumpEvents();
+
+	auto keys = SDL_GetKeyboardState(nullptr);
+	bool state = (code == SDL_SCANCODE_LCTRL && (keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]))
+		|| (code == SDL_SCANCODE_LSHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]));
+
+	SDL_DestroyWindow(window);
+
+	return state;
 }
 
 bool I_PickIWad (bool showwin, FStartupSelectionInfo& info)

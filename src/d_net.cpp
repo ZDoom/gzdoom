@@ -78,7 +78,7 @@ EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_FARG(loadgame);
 
 FARG(extratic, "Multiplayer", "Sends backup commands over the network", "",
-	"Causes ZDoom to send a backup copy of every movement command across the network.");
+	"Causes " GAMENAME " to send a backup copy of every movement command across the network.");
 
 extern uint8_t		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern FString	savedescription;

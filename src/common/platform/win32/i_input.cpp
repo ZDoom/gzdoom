@@ -130,7 +130,8 @@ EXTERN_CVAR(Bool, i_pauseinbackground);
 
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-FARG(noidle, "", "", "", "");
+FARG_ADVANCED(noidle, "Deprecated", "",
+	"No longer has any effect. Used to reduce priority class when window was in background.");
 
 static void I_CheckGUICapture ()
 {

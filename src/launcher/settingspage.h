@@ -1,7 +1,6 @@
 #pragma once
 
 #include <zwidget/core/widget.h>
-#include "gstrings.h"
 
 #define RENDER_BACKENDS
 
@@ -9,6 +8,7 @@ class LauncherWindow;
 class TextLabel;
 class CheckboxLabel;
 class ListView;
+class Dropdown;
 struct FStartupSelectionInfo;
 
 class SettingsPage : public Widget
@@ -42,7 +42,7 @@ private:
 	CheckboxLabel* GLESCheckbox = nullptr;
 #endif
 	ListView* LangList = nullptr;
-	ListView* LoadList = nullptr;
+	Dropdown* LoadList = nullptr;
 
 	TArray<std::pair<FString, FString>> languages;
 	bool hideLanguage = false;

@@ -4,9 +4,11 @@
 #include "launcherwindow.h"
 #include "gstrings.h"
 #include "i_interface.h"
-#include "v_video.h"
+#include "sc_man.h"
+#include "zwidget/widgets/dropdown/dropdown.h"
 #include <zwidget/core/resourcedata.h>
 #include <zwidget/widgets/listview/listview.h>
+#include <zwidget/widgets/dropdown/dropdown.h>
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 
@@ -108,16 +110,16 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 
 	{
 		LoadLabel = new TextLabel(this);
-		LoadList = new ListView(this); // TODO: replace with actual dropdown
+		LoadList = new Dropdown(this);
+		LoadList->SetMaxDisplayItems(2);
+		LoadList->SetDropdownDirection(false);
 		int opts = sizeof(FILELOAD_OPTS)/sizeof(FILELOAD_OPTS[0]), selected = opts-1;
 		for (int i = 0; i < opts; i++)
 		{
 			LoadList->AddItem(GStrings.GetString(FILELOAD_OPTS[i].string));
 			if (info.DefaultFileLoadBehaviour == FILELOAD_OPTS[i].flag) selected = i;
 		}
-		LoadList->SetFrameGeometry(0, 0, 0, LoadList->GetMinimumHeight()); // needed for scroll to item to work
 		LoadList->SetSelectedItem(selected);
-		LoadList->ScrollToItem(selected);
 	}
 }
 
@@ -225,18 +227,18 @@ void SettingsPage::OnGeometryChanged()
 	{
 		LangLabel->SetFrameGeometry(0.0, y, w, LangLabel->GetPreferredHeight());
 		y += LangLabel->GetPreferredHeight();
-		double temp = std::max(h - y - LoadList->GetMinimumHeight() - 4.0, 0.0);
+		double temp = std::max(h - y - LoadList->GetPreferredHeight() - 4.0, 0.0);
 		LangList->SetFrameGeometry(0.0, y, w, temp);
 		y += temp + 4.0;
 	}
 
 	LoadLabel->SetFrameGeometry(
-		0.0, y+(LoadList->GetMinimumHeight()-LoadLabel->GetPreferredHeight())/2,
+		0.0, y+(LoadList->GetPreferredHeight()-LoadLabel->GetPreferredHeight())/2,
 		LoadLabel->GetPreferredWidth(), LoadLabel->GetPreferredHeight()
 	);
 	LoadList->SetFrameGeometry(
 		LoadLabel->GetPreferredWidth()+4.0, y,
-		LoadList->GetPreferredWidth(), LoadList->GetMinimumHeight()
+		LoadList->GetPreferredWidth(), LoadList->GetPreferredHeight()
 	);
 	y += LoadList->GetHeight();
 

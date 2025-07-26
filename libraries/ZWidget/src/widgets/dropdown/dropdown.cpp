@@ -1,11 +1,31 @@
 #include <algorithm>
 
 #include "widgets/dropdown/dropdown.h"
+#include "core/widget.h"
 
 Dropdown::Dropdown(Widget* parent) : Widget(parent)
 {
 	SetStyleClass("dropdown");
 	SetFocus();
+
+	// Subscribe to all parent widgets to receive notifications.
+	for (Widget* p = Parent(); p; p = p->Parent())
+		p->Subscribe(this);
+}
+
+void Dropdown::Notify(Widget* source, const WidgetEvent type)
+{
+	if (type != WidgetEvent::VisibilityChange) return;
+	if (!dropdownOpen) return;
+
+	for (Widget* p = this; p != nullptr; p = p->Parent())
+	{
+		if (p->IsHidden())
+		{
+			CloseDropdown();
+			return;
+		}
+	}
 }
 
 void Dropdown::AddItem(const std::string& text)
@@ -124,6 +144,7 @@ bool Dropdown::OnMouseDown(const Point& pos, InputKey key)
 	{
 		if (dropdownOpen)
 		{
+			// this set focus call will close the popup
 			SetFocus();
 			return true;
 		}
@@ -241,7 +262,6 @@ void Dropdown::OpenDropdown()
 
 void Dropdown::CloseDropdown()
 {
-
 	if (!dropdownOpen || !dropdown) return;
 
 	dropdown->Close();

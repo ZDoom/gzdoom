@@ -90,7 +90,7 @@ public:
 	~FRawPS2Controller();
 
 	bool ProcessInput(RAWHID *raw, int code);
-	void AddAxes(float axes[NUM_JOYAXIS]);
+	void AddAxes(float axes[NUM_AXIS_CODES]);
 	bool IsConnected() { return Connected; }
 
 	// IJoystickConfig interface
@@ -100,7 +100,6 @@ public:
 
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
-	EJoyAxis GetAxisMap(int axis);
 	const char *GetAxisName(int axis);
 	float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
@@ -108,7 +107,6 @@ public:
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	void SetAxisDeadZone(int axis, float deadzone);
-	void SetAxisMap(int axis, EJoyAxis gameaxis);
 	void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
 	void SetAxisResponseCurve(int axis, EJoyCurve preset);
@@ -116,7 +114,6 @@ public:
 
 	bool IsSensitivityDefault();
 	bool IsAxisDeadZoneDefault(int axis);
-	bool IsAxisMapDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
 	bool IsAxisDigitalThresholdDefault(int axis);
 	bool IsAxisResponseCurveDefault(int axis);
@@ -140,12 +137,10 @@ protected:
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
-		EJoyAxis GameAxis;
 		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
-		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
@@ -191,7 +186,7 @@ public:
 
 	bool GetDevice();
 	bool ProcessRawInput(RAWINPUT *raw, int code);
-	void AddAxes(float axes[NUM_JOYAXIS]);
+	void AddAxes(float axes[NUM_AXIS_CODES]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
 
@@ -367,13 +362,21 @@ static const char *AxisNames[] =
 	"Right Thumb Y Axis",
 };
 
+static const EAxisCodes AxisCodes[][2] =
+{
+	{ AXIS_CODE_PAD_LTHUMB_RIGHT, AXIS_CODE_PAD_LTHUMB_LEFT },
+	{ AXIS_CODE_PAD_LTHUMB_DOWN, AXIS_CODE_PAD_LTHUMB_UP },
+	{ AXIS_CODE_PAD_RTHUMB_RIGHT, AXIS_CODE_PAD_RTHUMB_LEFT },
+	{ AXIS_CODE_PAD_RTHUMB_DOWN, AXIS_CODE_PAD_RTHUMB_UP }
+};
+
 FRawPS2Controller::DefaultAxisConfig FRawPS2Controller::DefaultAxes[NUM_AXES] =
 {
-	// Game axis, multiplier, digital threshold, response curve A, response curve B
-	{ JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbLX
-	{ JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbLY
-	{ JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbRX
-	{ JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbRY
+	// multiplier, digital threshold, response curve A, response curve B
+	{ JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbLX
+	{ JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbLY
+	{ JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT }, // ThumbRX
+	{ JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT }, // ThumbRY
 };
 
 // CODE --------------------------------------------------------------------
@@ -562,18 +565,19 @@ void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value
 
 	axisval1 = value1 * (2.0 / 255) - 1.0;
 	axisval2 = value2 * (2.0 / 255) - 1.0;
-	axisval1 = Joy_RemoveDeadZone(axisval1, axis1->DeadZone, NULL);
-	axisval2 = Joy_RemoveDeadZone(axisval2, axis2->DeadZone, NULL);
-	axisval1 = Joy_ApplyResponseCurveBezier(axis1->ResponseCurve, axisval1);
-	axisval2 = Joy_ApplyResponseCurveBezier(axis2->ResponseCurve, axisval2);
+
+	Joy_ManageThumbstick(
+		&axisval1, &axisval2,
+		axis1->DeadZone, axis2->DeadZone,
+		axis1->DigitalThreshold, axis2->DigitalThreshold,
+		axis1->ResponseCurve, axis2->ResponseCurve,
+		&buttonstate
+	);
+
 	axis1->Value = float(axisval1);
 	axis2->Value = float(axisval2);
 
 	// We store all four buttons in the first axis and ignore the second.
-	buttonstate = Joy_XYAxesToButtons(
-		(abs(axisval1) < axis1->DigitalThreshold) ? 0 : axisval1,
-		(abs(axisval2) < axis2->DigitalThreshold) ? 0 : axisval2
-	);
 	Joy_GenerateButtonEvents(axis1->ButtonValue, buttonstate, 4, base);
 	axis1->ButtonValue = buttonstate;
 }
@@ -644,12 +648,27 @@ void FRawPS2Controller::NeutralInput()
 //
 //==========================================================================
 
-void FRawPS2Controller::AddAxes(float axes[NUM_JOYAXIS])
+void FRawPS2Controller::AddAxes(float axes[NUM_AXIS_CODES])
 {
-	// Add to game axes.
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
-		axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+		// Add to the game axis.
+		float axis_value = float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+		int code = AXIS_CODE_NULL;
+
+		if (axis_value > 0.0f)
+		{
+			code = AxisCodes[i][0];
+		}
+		else if (axis_value < 0.0f)
+		{
+			code = AxisCodes[i][1];
+		}
+
+		if (code != AXIS_CODE_NULL)
+		{
+			axes[code] += fabs(axis_value);
+		}
 	}
 }
 
@@ -665,7 +684,6 @@ void FRawPS2Controller::SetDefaultConfig()
 	for (int i = 0; i < NUM_AXES; ++i)
 	{
 		Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
-		Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 		Axes[i].Multiplier = DefaultAxes[i].Multiplier;
 	}
 }
@@ -760,21 +778,6 @@ float FRawPS2Controller::GetAxisDeadZone(int axis)
 
 //==========================================================================
 //
-// FRawPS2Controller :: GetAxisMap
-//
-//==========================================================================
-
-EJoyAxis FRawPS2Controller::GetAxisMap(int axis)
-{
-	if (unsigned(axis) < NUM_AXES)
-	{
-		return Axes[axis].GameAxis;
-	}
-	return JOYAXIS_None;
-}
-
-//==========================================================================
-//
 // FRawPS2Controller :: GetAxisName
 //
 //==========================================================================
@@ -859,20 +862,6 @@ void FRawPS2Controller::SetAxisDeadZone(int axis, float deadzone)
 	if (unsigned(axis) < NUM_AXES)
 	{
 		Axes[axis].DeadZone = clamp(deadzone, 0.f, 1.f);
-	}
-}
-
-//==========================================================================
-//
-// FRawPS2Controller :: SetAxisMap
-//
-//==========================================================================
-
-void FRawPS2Controller::SetAxisMap(int axis, EJoyAxis gameaxis)
-{
-	if (unsigned(axis) < NUM_AXES)
-	{
-		Axes[axis].GameAxis = (unsigned(gameaxis) < NUM_JOYAXIS) ? gameaxis : JOYAXIS_None;
 	}
 }
 
@@ -1018,21 +1007,6 @@ void FRawPS2Controller::SetEnabled(bool enabled)
 	Enabled = enabled;
 }
 
-//===========================================================================
-//
-// FRawPS2Controller :: IsAxisMapDefault
-//
-//===========================================================================
-
-bool FRawPS2Controller::IsAxisMapDefault(int axis)
-{
-	if (unsigned(axis) < NUM_AXES)
-	{
-		return Axes[axis].GameAxis == DefaultAxes[axis].GameAxis;
-	}
-	return true;
-}
-
 //==========================================================================
 //
 // FRawPS2Manager - Constructor
@@ -1094,7 +1068,7 @@ bool FRawPS2Manager::GetDevice()
 //
 //===========================================================================
 
-void FRawPS2Manager::AddAxes(float axes[NUM_JOYAXIS])
+void FRawPS2Manager::AddAxes(float axes[NUM_AXIS_CODES])
 {
 	for (unsigned i = 0; i < Devices.Size(); ++i)
 	{

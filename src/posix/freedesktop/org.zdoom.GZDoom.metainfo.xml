@@ -104,6 +104,19 @@
 
   <releases>
     <release version="4.14.2" date="2025-05-03">
+      <description>
+        <p>This update delivers various bug fixes, performance optimizations, and significantly expands modding capabilities.</p>
+        <ul>
+        <li>Ortho + OOB fixes and improvements</li>
+        <li>Revert clipper to older code path when not in Ortho/OOB (speed improvement)</li>
+        <li>Fix to some crashes and memory leaks</li>
+        <li>Exposed DDoor to ZScript, Exposed DPlat to ZScript, Exposed more of the Ceiling thinker, Exposed more of the Floor thinker, Exposed DElevator to ZScript.</li>
+        <li>Exported: GetLumpContainer, GetContainerName, GetLumpFullPath for WADS struct, useful for debugging custom-made parsers and identifying where problems may arise.</li>
+        <li>Added autoSwitch parameter to A_ReFire</li>
+        <li>add a few commonly-used gzdoom-specific properties to the dehacked parser</li>
+        <li>many more fixes and improvements</li>
+        </ul>
+      </description>
       <url>https://forum.zdoom.org/viewtopic.php?t=80447</url>
     </release>
     <release version="4.14.1" date="2025-03-01" />

@@ -81,6 +81,7 @@
 #include "c_cvars.h"
 #include "i_net.h"
 #include "m_random.h"
+#include "version.h"
 
 /* [Petteri] Get more portable: */
 #ifndef __WIN32__
@@ -114,9 +115,9 @@ FARG(host, "Multiplayer", "Designates the machine as the host for a multiplayer 
 FARG(join, "Multiplayer", "Connects to a multiplayer host.", "host's IP address[:host's port]",
 	 "Connect to a host for a multiplayer game.");
 FARG(dup, "Multiplayer", "Send less player movement commands over the network.", "x",
-	"Causes ZDoom to transmit fewer player movement commands across the network. Valid values"
-	" range from 1–9. For example, -dup 2 would cause ZDoom to send half as many movements"
-	" as normal.");
+	"Causes " GAMENAME " to transmit fewer player movement commands across the network. Valid"
+	" values range from 1–9. For example, -dup 2 would cause " GAMENAME " to send half as many"
+	" movements as normal.");
 FARG(port, "Multiplayer", "Specifies an alternative IP port for a network game.", "x",
 	"Specifies an alternate IP port for this machine to use during a network game. By default,"
 	" port 5029 is used.");

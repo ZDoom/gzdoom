@@ -66,7 +66,8 @@ CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
 EXTERN_CVAR(Int, r_maxparticles);
 
-FARG(numparticles, "", "", "", "");
+FARG(numparticles, "", "", "",
+	 "");
 
 FCRandom pr_railtrail("RailTrail");
 

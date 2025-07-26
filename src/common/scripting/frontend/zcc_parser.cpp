@@ -293,8 +293,10 @@ static void InitTokenMap()
 #undef TOKENDEF
 #undef TOKENDEF2
 
-FARG(dumpast, "", "", "", "");
-FARG(tracefile, "", "", "", "");
+FARG(dumpast, "", "", "",
+	"");
+FARG(tracefile, "", "", "",
+	"");
 
 //**--------------------------------------------------------------------------
 

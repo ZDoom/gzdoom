@@ -54,7 +54,8 @@
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);
 
-FARG(allowdecoratecrossincludes, "", "", "", "");
+FARG(allowdecoratecrossincludes, "", "", "",
+	"");
 
 //==========================================================================
 //

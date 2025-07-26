@@ -140,70 +140,178 @@ EXTERN_CVAR(Bool, vm_jit)
 EXTERN_CVAR(Bool, vm_jit_aot)
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
-FARG(nomonsters, "", "", "", "");
-FARG(respawn, "", "", "", "");
-FARG(fast, "", "", "", "");
-FARG(turbo, "", "", "", "");
-FARG(timer, "", "", "", "");
-FARG(avg, "", "", "", "");
+FARG(nomonsters, "Play", "Prevents monsters from spawning in levels.", "",
+	"Sets the dmflags CVAR so that monsters are not spawned on levels.");
+FARG(respawn, "Play", "Causes monsters to respawn on lower difficulties.", "",
+	"Sets the dmflags CVAR so that monsters respawn even if you are not playing at Nightmare"
+	" difficulty.");
+FARG(fast, "Play", "Makes monsters fast on lower difficulties.", "",
+	"Sets the dmflags CVAR to make the monsters as fast as in Nightmare mode even if you are not"
+	" playing Nightmare.");
+FARG(turbo, "Play", "Adjusts the player's movement speed.", "x",
+	"Causes player movement to be x% as fast as normal. Valid values are 10–255, with 100 being"
+	" normal. Values larger than 100 are considered cheating. This is equivalent to +set turbo"
+	" x.");
+FARG(timer, "Play", "Time limit in minutes before automatically advancing levels.", "x",
+	"Causes ZDoom to automatically advance to the next level after x minutes. This is equivalent"
+	" to +set timelimit x.");
+FARG(avg, "Play", "Automatically advances to the next level after 20 minutes.", "",
+	"Stands for “Austin Virtual Gaming”. Automatically advances to the next level after 20"
+	" minutes. This is equivalent to +set timelimit 20 or -timer 20.");
 
-FARG(oldsprites, "", "", "", "");
-FARG(iwad, "", "", "", "");
-FARG(savedir, "", "", "", "");
+FARG(oldsprites, "Configuration", "Prevents the game from renaming sprites.", "",
+	"Disables sprite renaming. Unless you are playing a mod for Heretic, Hexen or Strife that"
+	" replaced a few select sprites, you do not need this.");
+FARG(iwad, "Configuration", "Specifies primary game file", "iwadfile[.wad]",
+	"The IWAD file specified after this parameter will be used as the game IWAD file.\nZDoom will"
+	" look for the IWAD in the current directory, in the same directory as zdoom.exe, in the"
+	" directory set in the DOOMWADDIR environment variable, and in the directory set in the"
+	" HOME environment variable. (Verification needed)");
+FARG(savedir, "Configuration", "Sets an alternate directory for saving game files.", "path",
+	"Specifies an alternate directory to use for saved files. If this is not specified, ZDoom"
+	" stores them in the directory indicated by the save_dir CVAR.");
 
-FARG(devparm, "", "", "", "");
-FARG(norun, "", "", "", "");
-FARG(dumpjit, "", "", "", "");
+FARG(norun, "Debug", "Quits the game early to check for script errors.", "",
+	"Quits the game just before video initialization. To be used to check for errors in scripts"
+	" without actually running the game.");
+FARG(dumpjit, "Debug", "Outputs the ZScript JIT-compilation result to a text file.", "",
+	"Outputs a result of the ZScript JIT-compilation to Assembler to the external file"
+	" \"dumpjit.txt\".");
 
-FARG(altdeath, "", "", "", "");
-FARG(deathmatch, "", "", "", "");
+FARG(altdeath, "Multiplayer", "Starts a deathmatch game with respawning items.", "",
+	"Informs ZDoom that you will be playing a deathmatch game and sets the dmflags CVAR so that"
+	" items other than invulnerability and invisibilty respawn after being picked up. Only player"
+	" 1 needs to specify this.");
+FARG(deathmatch, "Multiplayer", "Starts a deathmatch game.", "",
+	"Informs ZDoom that you will be playing a deathmatch game and sets the dmflags CVAR so that"
+	" weapons stay behind when a player picks them up. Only player 1 needs to specify this.");
 
-FARG(file, "", "", "", "");
-FARG(optfile, "", "", "", "");
-FARG(noautoload, "", "", "", "");
-FARG(warp, "", "", "", "");
-FARG(noautoexec, "", "", "", "");
-FARG(allowduplicates, "", "", "", "");
-FARG(warpwipe, "", "", "", "");
-FARG(deh, "", "", "", "");
-FARG(bex, "", "", "", "");
-FARG(skill, "", "", "", "");
-FARG(record, "", "", "", "");
-FARG(loadgame, "", "", "", "");
-FARG(playdemo, "", "", "", "");
-FARG(timedemo, "", "", "", "");
-FARG(xlat, "", "", "", "");
+FARG(file, "Loading", "Loads one or more custom PWAD files.", "file1[.wad] file2[.wad] ...",
+	"Used to load one or more PWAD files which generally contain user-created levels. Files listed"
+	" further right take precedence to files listed before them, so as an example, if both"
+	" file1.wad and file2.wad contain have a MAP01, the MAP01 in file2.wad will be used instead of"
+	" the one in file1.wad. If the .wad extension is omitted, ZDoom will automatically add it.\n"
+	"Using this parameter is no longer needed, zdoom file1.wad file2.wad file3.wad will work just"
+	" as well as zdoom -file file1.wad file2.wad file3.wad.");
+FARG_ADVANCED(optfile, "Loading", "file1[.wad] file2[.wad] ...",
+	"Same as -file, but it will ignore missing files");
+FARG(noautoload, "Loading", "Prevents loading files automatically from config.", "",
+	"Prevents files from being autoloaded based on the \"AutoLoad\" sections in the user's"
+	" configuration file. This flag also disables autoloading of zvox.wad and the skins directory."
+	" This can be useful if you use files which are autoloaded when playing normally, but want to"
+	" load without them for debugging purposes or to play a mod which might be incompatible with"
+	" them.");
+FARG(warp, "Loading", "Starts the game on a specific map.", "[e] m",
+	"For Doom II, Final Doom, Hexen and Strife, starts the game on map m. For Chex Quest, Doom and"
+	" Heretic, starts the game on episode e, map m. The +map command can also be used to perform"
+	" this action, but it expects the actual name of the map (e.g. MAP01, E1M1).");
+FARG(noautoexec, "Loading", "Prevents the execution of autoexec.cfg files.", "",
+	"Disables the execution of the autoexec.cfg files.");
+FARG(allowduplicates, "Loading", "Permits the loading of multiple files with the same name.", "",
+	"(Verification needed)\nWhen loading files with -file, files with the same name are discarded"
+	" from the load list to prevent potential errors as a result. This command allows such files"
+	" to be loaded regardless.");
+FARG(warpwipe, "Loading", "Forces a screen wipe effect after loading a map at startup.", "",
+	"Forces a screen wipe to happen after loading a map immediately at startup. Useless unless"
+	" used in conjunction with -warp or +map.");
+FARG(deh, "Loading", "Applies a DeHackEd patch to the game", "dehfile[.deh]",
+	"Causes ZDoom to apply a DeHackEd or .bex patch to the game. This must be a text patch; binary"
+	" patches are not supported. (As far as I know, most patches are text patches, so this should"
+	" not be too much of a problem.) Also, only patch format 6 is known to be supported. Other"
+	" formats may or may not work properly. If the .deh extension is omitted, ZDoom will"
+	" automatically add it.");
+FARG(bex, "Loading", "Applies a .bex patch file to the game", "bexfile[.bex]",
+	"This is the same as -deh, except the default file extension is .bex.");
+FARG(skill, "Loading", "Sets the initial difficulty level for the game.", "x",
+	"Sets the initial skill level. This is overridden if you start a new game from the New Game"
+	" menu.\nNote that this is different from the skill CVAR, which ranges from 0-4.");
+FARG(record, "Loading", "Records a gameplay demo from the start of a map.", "demofile[.lmp]",
+	"Records a demo. The -warp parameter or +map command should also be used if you do not want to"
+	" record the demo on MAP01 or E1M1. You may only record from the start of a map. Loading a"
+	" savegame and recording from there is unsupported.\nTo stop the demo recording, use the"
+	" \"stop\" console command. If the .lmp extension is omitted, it will automatically be added."
+	" Unlike vanilla Doom, only one person in a multiplayer game needs to specify the -record"
+	" parameter if they want to record a demo. However, if someone quits before the person"
+	" recording the demo does, the person recording will automatically quit, too, because demos do"
+	" not have a way to record when a player leaves the game.");
+FARG(loadgame, "Loading", "Automatically loads specified savegame upon starting.", "saveXX.[zds]",
+	"Automatically loads the specified savegame. To find out a save's file name, press F1 while it"
+	" is highlighted in the save or load menu. If you do not include the .zds extension, ZDoom"
+	" will automatically add it for you.");
+FARG(playdemo, "Loading", "Automatically plays demo file upon startup.", "demofile[.lmp]",
+	"ZDoom will automatically play the specified demo when it starts. If the .lmp extension is"
+	" omitted, it will automatically be added.");
+FARG(timedemo, "Loading", "Plays back a demo quickly.", "demofile[.lmp]",
+	"Plays back a demo faster than -playdemo and displays a framerate when the demo is over. If"
+	" the .lmp extension is omitted, it will automatically be added.");
+FARG(xlat, "Loading", "Specifies a different default map translator to use.", "file",
+	"Specify a different default map translator to use if one isn't specified in MAPINFO. The"
+	" default translators are xlat/doom.txt for Doom, Chex Quest, Urban Brawl and Harmony;"
+	" xlat/heretic.txt for Heretic and Hexen (though Hexen maps normally need no translator since"
+	" only Doom-format maps are translated) and xlat/strife.txt for Strife. For playing an"
+	" Eternity Engine mod, the xlat/eternity.txt file can be used, though keep in mind that many"
+	" Eternity features are not implemented in ZDoom and will not work even after translation. You"
+	" can specify your own custom translator.");
 
-FARG(version, "", "", "", "");
-FARG_ADVANCED(v, "", "", "");
+FARG(version, "Other", "Print version", "",
+	"Print version and exit.");
+FARG_ADVANCED(v, "Other", "",
+	"Print version and exit.");
 
-FARG(help, "", "", "", "");
-FARG_ADVANCED(h, "", "", "");
+FARG(help, "Other", "Print help message", "",
+	"Print help message and exit.");
+FARG_ADVANCED(h, "Other", "",
+	"Print help message and exit.");
 
-FARG_CUSTOM(help_all, "-help-all", "", false, "", "", "");
+FARG_CUSTOM(help_all, "-help-all", "Other", false, "Print detailed help message", "",
+	"Print full help message and exit.");
 
 #ifdef _WIN32
-FARG_CUSTOM(doshelp, "/?", "", false, "", "", "");
+FARG_CUSTOM(doshelp, "/?", "Other", false, "Print help message", "",
+	"Print help message and exit.");
 #else
-FARG_CUSTOM(doshelp, "/?", "", true, "", "", "");
+FARG_CUSTOM(doshelp, "/?", "Other", true, "Print help message", "",
+	"Print help message and exit.");
 #endif
 
-FARG(exec, "", "", "", "");
+FARG(exec, "Zandronum Specific", "Executes a special config script file.", "Directory",
+	 "Executes a script file that houses configurations such as settings that can be used within"
+	" the virtual world and generalized game server specific settings, such as how votes are"
+	" managed. For example of usage: -exec \"..\\..\\My Configurations\\SpecialServer.cfg\"");
 
-FARG(episode, "", "", "", "");
-FARG(rngseed, "", "", "", "");
-FARG(compatmode, "", "", "", "");
-FARG(errorlog, "", "", "", "");
-FARG(noextras, "", "", "", "");
-FARG(coop, "", "", "", "");
-FARG(nointro, "", "", "", "");
-FARG(nolights, "", "", "", "");
-FARG(nobrightmaps, "", "", "", "");
-FARG(nowidescreen, "", "", "", "");
-FARG(bots, "", "", "", "");
-FARG(debug, "", "", "", "");
-FARG_CUSTOM(map, "+map", "", false, "", "", "");
-FARG_CUSTOM(logfile, "+logfile", "", false, "", "", "");
+FARG_ADVANCED(devparm, "Deprecated", "",
+	"Prints a message telling you that you \"useless mode is activated\". With the original Doom,"
+	" using -devparm was the only way to take screenshots. With ZDoom, screenshot is just another"
+	" command, so -devparm serves no real purpose.");
+
+FARG(episode, "", "", "",
+	"");
+FARG(rngseed, "", "", "",
+	"");
+FARG(compatmode, "", "", "",
+	"");
+FARG(errorlog, "", "", "",
+	"");
+FARG(noextras, "", "", "",
+	"");
+FARG(coop, "", "", "",
+	"");
+FARG(nointro, "", "", "",
+	"");
+FARG(nolights, "", "", "",
+	"");
+FARG(nobrightmaps, "", "", "",
+	"");
+FARG(nowidescreen, "", "", "",
+	"");
+FARG(bots, "", "", "",
+	"");
+FARG(debug, "", "", "",
+	"");
+FARG_CUSTOM(map, "+map", "", false, "", "",
+	"");
+FARG_CUSTOM(logfile, "+logfile", "", false, "", "",
+	"");
 
 EXTERN_FARG(join);
 EXTERN_FARG(host);

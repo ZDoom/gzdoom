@@ -61,7 +61,8 @@ extern "C" {
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
 
-FARG(0, "", "", "", "");
+FARG(0, "Debug", "Resets window position.", "",
+	"Resets the window position to the top-left corner of the screen.");
 
 //==========================================================================
 //

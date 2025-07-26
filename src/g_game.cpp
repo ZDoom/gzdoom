@@ -132,8 +132,11 @@ EXTERN_CVAR (Float, con_midtime);
 EXTERN_CVAR(Int, net_disablepause);
 EXTERN_CVAR(Bool, net_limitsaves);
 
-FARG(nodraw, "", "", "", "");
-FARG(noblit, "", "", "", "");
+FARG(nodraw, "Debug", "Stops the game from drawing anything.", "",
+	"Causes ZDoom not to draw anything at all. Only useful with -timedemo.");
+FARG(noblit, "Debug", "Prevents the screen from updating.", "",
+	"Causes ZDoom not to update the display on the screen, but it still draws everything to an"
+	" internal buffer. Only useful with -timedemo.");
 
 //==========================================================================
 //

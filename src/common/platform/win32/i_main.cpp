@@ -135,7 +135,9 @@ HANDLE			StdOut;
 bool			FancyStdOut, AttachedStdOut;
 
 // use custom here, because types are confusing sometimes
-FARG_CUSTOM(stdout, "-stdout", "", false, "", "", "");
+FARG_CUSTOM(stdout, "-stdout", "Debug", false, "Print output to system console", "",
+	"(Win32 only)\nSends all output to a system console. Unix and MacOS builds of ZDoom will"
+	" always do that.");
 
 // CODE --------------------------------------------------------------------
 

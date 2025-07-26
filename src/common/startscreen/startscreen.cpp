@@ -343,7 +343,9 @@ FStartScreen* CreateHereticStartScreen(int max_progress);
 FStartScreen* CreateStrifeStartScreen(int max_progress);
 FStartScreen* CreateGenericStartScreen(int max_progress);
 
-FARG(nostartup, "", "", "", "");
+FARG(nostartup, "Configuration", "Forces use of text-mode startup screen.", "",
+	"Disables the startup screens used by Heretic, Hexen and Strife, and use the Doom text-mode"
+	" startup instead.");
 
 FStartScreen* GetGameStartScreen(int max_progress)
 {

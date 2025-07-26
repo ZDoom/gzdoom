@@ -1552,6 +1552,8 @@ static void ParseImageScroller(FScanner& sc)
 //
 //=============================================================================
 
+FARG(nocustommenu, "", "", "", "");
+
 void M_ParseMenuDefs()
 {
 	int lump, lastlump = 0;
@@ -1627,7 +1629,7 @@ void M_ParseMenuDefs()
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
-		if (Args->CheckParm("-nocustommenu")) break;
+		if (Args->CheckParm(FArg_nocustommenu)) break;
 	}
 	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;

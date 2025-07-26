@@ -38,6 +38,7 @@
 #include <chrono>
 #include <vector>
 #include "i_soundinternal.h"
+#include "m_argv.h"
 #include "zstring.h"
 #include <zmusic.h>
 #include "files.h"
@@ -59,6 +60,9 @@ enum ECodecType
 	CODEC_Vorbis,
 };
 
+EXTERN_FARG(nomusic);
+EXTERN_FARG(nosound);
+EXTERN_FARG(nosfx);
 
 class SoundStream
 {

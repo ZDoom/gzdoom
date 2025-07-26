@@ -54,6 +54,8 @@ CVAR(String, save_dir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_SYSTEM_ONLY);
 FString SavegameFolder;
 CVAR(Int, save_sort_order, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+EXTERN_FARG(savedir);
+
 extern bool netgame;
 
 //=============================================================================
@@ -641,7 +643,7 @@ FString G_GetSavegamesFolder()
 		name = M_GetSavegamesPath();
 		usefilter = true;
 	}
-	else if (const char* const dir = Args->CheckValue("-savedir"))
+	else if (const char* const dir = Args->CheckValue(FArg_savedir))
 	{
 		name = dir;
 		usefilter = false; //-savedir specifies an absolute save directory path.

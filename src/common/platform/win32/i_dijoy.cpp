@@ -287,6 +287,7 @@ protected:
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern LPDIRECTINPUT8 g_pdi;
+EXTERN_FARG(nojoy);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1525,7 +1526,7 @@ IJoystickConfig *FDInputJoystickManager::Rescan()
 
 void I_StartupDirectInputJoystick()
 {
-	if (!joy_dinput || !use_joystick || Args->CheckParm("-nojoy"))
+	if (!joy_dinput || !use_joystick || Args->CheckParm(FArg_nojoy))
 	{
 		if (JoyDevices[INPUT_DIJoy] != NULL)
 		{

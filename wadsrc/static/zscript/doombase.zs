@@ -1027,3 +1027,6 @@ struct FRailParams
 	native int SpiralOffset;
 	native int limit;
 };	// [RH] Shoot a railgun
+
+// This is just here to prevent mods that used setting this directly from breaking.
+struct DecalBase native {}

@@ -265,7 +265,7 @@ class Actor : Thinker native
 	native readonly State SeeState;
 	native State MeleeState;
 	native State MissileState;
-	native readonly internal voidptr /*DecalBase*/ DecalGenerator;
+	native DecalBase DecalGenerator;
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;

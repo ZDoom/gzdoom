@@ -225,9 +225,10 @@ class OptionMenu : Menu
 	{
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
-			if (MenuScrollViewport(-2, true))
+			if (MenuScrollViewport(-2, true) )
 			{
-				MenuSound ("menu/cursor");
+				bool silence = Cvar.FindCVar("silence_menu_scroll").getInt();
+				if (!silence) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -235,7 +236,8 @@ class OptionMenu : Menu
 		{
 			if (MenuScrollViewport(2, true))
 			{
-				MenuSound ("menu/cursor");
+				bool silence = Cvar.FindCVar("silence_menu_scroll").getInt();
+				if (!silence) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -489,7 +491,7 @@ class OptionMenu : Menu
 				if (!mDesc.mItems[i].Selectable()) continue;
 				lastSelectable = i;
 			}
-			if (lastSelectable != -1 && mDesc.mSelectedItem > lastSelectable)
+			if (cursor && lastSelectable != -1 && mDesc.mSelectedItem > lastSelectable)
 			{
 				mDesc.mSelectedItem = lastSelectable;
 			}

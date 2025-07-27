@@ -12,6 +12,7 @@ class InvulnerabilitySphere : PowerupGiver
 		Powerup.Type "PowerInvulnerable";
 		Powerup.Color "InverseMap";
 		Inventory.PickupMessage "$GOTINVUL";
+		Tag "$TAG_INVULSPHERE";
 	}
 	States
 	{
@@ -35,6 +36,7 @@ class Soulsphere : Health
 		Inventory.MaxAmount 200;
 		Inventory.PickupMessage "$GOTSUPER";
 		Inventory.PickupSound "misc/p_pkup";
+		Tag "$TAG_SOULSPHERE";
 	}
 	States
 	{
@@ -76,6 +78,7 @@ class Megasphere : CustomInventory
 		+INVENTORY.ISARMOR
 		Inventory.PickupMessage "$GOTMSPHERE";
 		Inventory.PickupSound "misc/p_pkup";
+		Tag "$TAG_MEGASPHERE";
 	}
 	States
 	{
@@ -105,6 +108,7 @@ class BlurSphere : PowerupGiver
 		Powerup.Type "PowerInvisibility";
 		RenderStyle "Translucent";
 		Inventory.PickupMessage "$GOTINVIS";
+		Tag "$TAG_INVISSPHERE";
 	}
 	States
 	{
@@ -126,6 +130,7 @@ class RadSuit : PowerupGiver
 		Inventory.MaxAmount 0;
 		Inventory.PickupMessage "$GOTSUIT";
 		Powerup.Type "PowerIronFeet";
+		Tag "$TAG_RADSUIT";
 	}
 	States
 	{
@@ -147,6 +152,7 @@ class Infrared : PowerupGiver
 		Inventory.MaxAmount 0;
 		Powerup.Type "PowerLightAmp";
 		Inventory.PickupMessage "$GOTVISOR";
+		Tag "$TAG_VISOR";
 	}
 	States
 	{
@@ -169,6 +175,7 @@ class Allmap : MapRevealer
 		Inventory.MaxAmount 0;
 		Inventory.PickupSound "misc/p_pkup";
 		Inventory.PickupMessage "$GOTMAP";
+		Tag "$TAG_ALLMAP";
 	}
 	States
 	{
@@ -189,6 +196,7 @@ class Berserk : CustomInventory
 		+INVENTORY.ISHEALTH
 		Inventory.PickupMessage "$GOTBERSERK";
 		Inventory.PickupSound "misc/p_pkup";
+		Tag "$TAG_BERSERK";
 	}
 	States
 	{

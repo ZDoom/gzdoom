@@ -14,6 +14,7 @@ class ArmorBonus : BasicArmorBonus
 		Armor.Maxsaveamount 200;
 		+COUNTITEM
 		+INVENTORY.ALWAYSPICKUP
+		Tag "$TAG_ARMORBONUS";
 	}
 	States
 	{
@@ -35,6 +36,7 @@ class GreenArmor : BasicArmorPickup
 		Inventory.Icon "ARM1A0";
 		Armor.SavePercent 33.335;
 		Armor.SaveAmount 100;
+		Tag "$TAG_GREENARMOR";
 	}
 	States
 	{
@@ -57,6 +59,7 @@ class BlueArmor : BasicArmorPickup
 		Inventory.Icon "ARM2A0";
 		Armor.Savepercent 50;
 		Armor.Saveamount 200;
+		Tag "$TAG_BLUEARMOR";
 	}
 	States
 	{

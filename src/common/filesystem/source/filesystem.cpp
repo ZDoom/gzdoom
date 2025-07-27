@@ -1247,13 +1247,16 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 void FileSystem::ReadFile (int lump, void *dest)
 {
 	auto lumpr = OpenFileReader (lump);
-	auto size = lumpr.GetLength ();
-	auto numread = lumpr.Read (dest, size);
-
-	if (numread != size)
+	if (lumpr.mReader != nullptr)
 	{
-		throw FileSystemException("W_ReadFile: only read %td of %td on '%s'\n",
-			numread, size, FileInfo[lump].LongName);
+		auto size = lumpr.GetLength ();
+		auto numread = lumpr.Read (dest, size);
+
+		if (numread != size)
+		{
+			throw FileSystemException("W_ReadFile: only read %td of %td on '%s'\n",
+				numread, size, FileInfo[lump].LongName);
+		}
 	}
 }
 

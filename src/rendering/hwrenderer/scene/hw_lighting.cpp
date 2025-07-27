@@ -76,7 +76,7 @@ CUSTOM_CVAR(Int, gl_distfog, 70, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-int CalcLightLevel(ELightMode lightmode, int lightlevel, int rellight, bool weapon, int blendfactor)
+int CalcLightLevel(ELightMode lightmode, int lightlevel, int rellight, bool weapon, int blendfactor, bool weaponPureLightLevel)
 {
 	int light;
 
@@ -84,7 +84,7 @@ int CalcLightLevel(ELightMode lightmode, int lightlevel, int rellight, bool weap
 
 	bool darklightmode = (isDarkLightMode(lightmode)) || (isSoftwareLighting(lightmode) && blendfactor > 0);
 
-	if (darklightmode && lightlevel < 192 && !weapon) 
+	if ((darklightmode && lightlevel < 192 && !weapon) || (weapon && weaponPureLightLevel))
 	{
 		if (lightlevel > 100)
 		{

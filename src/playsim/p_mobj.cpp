@@ -2597,7 +2597,7 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 		if (!P_TryMove (mo, ptry, true, walkplane, tm))
 		{
 			// blocked move
-			AActor *BlockingMobj = mo->BlockingMobj;
+			AActor *BlockingMobj = mo->BlockingMobj.ForceGet();
 			line_t *BlockingLine = mo->MovementBlockingLine = mo->BlockingLine;
 
 			// [ZZ] 
@@ -4944,7 +4944,7 @@ void AActor::Tick ()
 			}
 
 		}
-		if (Vel.Z != 0 || BlockingMobj || Z() != floorz)
+		if (Vel.Z != 0 || BlockingMobj.ForceGet() || Z() != floorz)
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(Level->i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
@@ -7611,7 +7611,8 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	if (!(P_TryMove (th, newpos.XY(), false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
-		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
+		auto blocking = th->BlockingMobj.ForceGet();
+		if (blocking == NULL || !(th->flags2 & MF2_RIP) || (blocking->flags5 & MF5_DONTRIP))
 		{
 			// If this is a monster spawned by A_SpawnProjectile subtract it from the counter.
 			th->ClearCounters();
@@ -7626,7 +7627,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			}
 			else
 			{
-				P_ExplodeMissile (th, th->BlockingLine, th->BlockingMobj);
+				P_ExplodeMissile (th, th->BlockingLine, blocking);
 			}
 			return false;
 		}

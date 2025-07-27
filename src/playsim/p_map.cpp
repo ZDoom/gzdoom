@@ -1549,7 +1549,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	// Check for skulls slamming into things
 	if (tm.thing->flags & MF_SKULLFLY)
 	{
-		bool res = tm.thing->CallSlam(tm.thing->BlockingMobj);
+		bool res = tm.thing->CallSlam(tm.thing->BlockingMobj.ForceGet());
 		tm.thing->BlockingMobj = NULL;
 		return res;
 	}
@@ -1896,7 +1896,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 				// other things in the blocks and see if we hit something that is
 				// definitely blocking. Otherwise, we need to check the lines, or we
 				// could end up stuck inside a wall.
-				AActor* BlockingMobj = thing->BlockingMobj;
+				AActor* BlockingMobj = thing->BlockingMobj.ForceGet();
 
 				// If this blocks through a restricted line portal, it will always completely block.
 				if (BlockingMobj == NULL || (thing->Level->i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
@@ -2060,7 +2060,7 @@ AActor *P_CheckOnmobj(AActor *thing)
 	good = P_TestMobjZ(thing, false, &onmobj);
 
 	// Make sure we don't double call a collision with it.
-	if (!good && onmobj != nullptr && onmobj != thing->BlockingMobj
+	if (!good && onmobj != nullptr && onmobj != thing->BlockingMobj.ForceGet()
 		&& (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
 	{
 		P_CollidedWith(thing, onmobj);
@@ -2360,7 +2360,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	thing->flags6 |= MF6_INTRYMOVE;
 	if (!P_CheckPosition(thing, pos, tm))
 	{
-		AActor *BlockingMobj = thing->BlockingMobj;
+		AActor *BlockingMobj = thing->BlockingMobj.ForceGet();
 		// This gets called regardless of whether or not the following checks allow the thing to pass. This is because a player
 		// could step on top of an enemy but we still want it to register as a collision.
 		if (BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats & CF_PREDICTING)))
@@ -2646,8 +2646,9 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				thing->SetXYZ(thingpos.X, thingpos.Y, pos.Z);
 				if (!P_CheckPosition(thing, pos.XY(), true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
-					if (thing->BlockingMobj != nullptr && (thing->player == nullptr || !(thing->player->cheats && CF_PREDICTING)))
-						P_CollidedWith(thing, thing->BlockingMobj);
+					auto blocking = thing->BlockingMobj.ForceGet();
+					if (blocking != nullptr && (thing->player == nullptr || !(thing->player->cheats && CF_PREDICTING)))
+						P_CollidedWith(thing, blocking);
 
 					thing->SetXYZ(oldthingpos);
 					thing->flags6 &= ~MF6_INTRYMOVE;
@@ -2887,7 +2888,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int fla
 		{
 			return false;
 		}
-		if (!(flags & PCM_NOACTORS) && thing->BlockingMobj)
+		if (!(flags & PCM_NOACTORS) && thing->BlockingMobj.ForceGet())
 		{
 			return false;
 		}

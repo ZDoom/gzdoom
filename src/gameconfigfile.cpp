@@ -48,6 +48,7 @@
 #include "gi.h"
 #include "d_main.h"
 #include "v_video.h"
+#include "m_joy.h"
 #if !defined _MSC_VER && !defined __APPLE__
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_MSC_VER && !__APPLE__
@@ -637,6 +638,13 @@ void FGameConfigFile::DoGlobalSetup ()
 					var->SetGenericRep(v, CVAR_Int);
 				}
 			}
+			if (last < 226)
+			{
+				// We can't handle key config yet, because
+				// the files aren't fully loaded. Just queue
+				// up a flag to do this later.
+				b226ResetGamepad = true;
+			}
 		}
 	}
 }
@@ -742,6 +750,35 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 			}
 		}
 	}
+
+	if (b226ResetGamepad == true)
+	{
+		b226ResetGamepad = false;
+
+		// Multiple gamepad reworks were done during
+		// this version. There is not any particularly
+		// good way to transfer older settings, so we
+		// are just going to reset them completely.
+		TArray<IJoystickConfig *> sticks;
+		I_GetJoysticks(sticks);
+
+		// Reset analog stick settings
+		for (int joy = 0; joy < sticks.SSize(); joy++)
+		{
+			sticks[joy]->Reset();
+		}
+
+		// Reset digital binds
+		TArray<int> keys_to_reset;
+		keys_to_reset.Reserve(NUM_AXIS_CODES);
+		for (int i = 0; i < NUM_AXIS_CODES; i++)
+		{
+			keys_to_reset[i] = KeyAxisMapping[i];
+		}
+
+		C_SetDefaultBindings(&keys_to_reset);
+	}
+
 	OkayToWrite = true;
 }
 

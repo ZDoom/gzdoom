@@ -334,11 +334,23 @@ void FKeyBindings::DoBind (const char *key, const char *bind)
 //
 //=============================================================================
 
-void FKeyBindings::UnbindAll ()
+void FKeyBindings::UnbindAll (const TArray<int> *filter_ptr)
 {
-	for (int i = 0; i < NUM_KEYS; ++i)
+	if (filter_ptr != nullptr)
 	{
-		Binds[i] = "";
+		const TArray<int> &filter = *filter_ptr;
+		for (auto key : filter)
+		{
+			assert(key >= 0 && key < NUM_KEYS);
+			Binds[key] = "";
+		}
+	}
+	else
+	{
+		for (int i = 0; i < NUM_KEYS; ++i)
+		{
+			Binds[i] = "";
+		}
 	}
 }
 
@@ -555,11 +567,11 @@ void FKeyBindings::DefaultBind(const char *keyname, const char *cmd)
 //
 //=============================================================================
 
-void C_UnbindAll ()
+void C_UnbindAll (const TArray<int> *filter)
 {
-	Bindings.UnbindAll();
-	DoubleBindings.UnbindAll();
-	AutomapBindings.UnbindAll();
+	Bindings.UnbindAll(filter);
+	DoubleBindings.UnbindAll(filter);
+	AutomapBindings.UnbindAll(filter);
 }
 
 UNSAFE_CCMD (unbindall)
@@ -677,7 +689,7 @@ CCMD(rebind)
 //
 //=============================================================================
 
-void ReadBindings(int lump, bool override)
+void ReadBindings(int lump, bool override, const TArray<int> *filter = nullptr)
 {
 	FScanner sc(lump);
 
@@ -692,6 +704,15 @@ void ReadBindings(int lump, bool override)
 			if (override)
 			{
 				// This is only for games to clear unsuitable base defaults, not for mods.
+				if (filter != nullptr)
+				{
+					key = GetKeyFromName(sc.String);
+					if (!filter->Contains(key))
+					{
+						continue;
+					}
+				}
+
 				dest->UnbindKey(sc.String);
 			}
 			continue;
@@ -712,13 +733,17 @@ void ReadBindings(int lump, bool override)
 			dest = &AutomapBindings;
 			sc.MustGetString();
 		}
-		else if (sc.Compare("unbind"))
-		{
-			sc.MustGetString();
-			dest->UnbindKey(sc.String);
-			continue;
-		}
+
 		key = GetConfigKeyFromName(sc.String);
+
+		if (filter != nullptr)
+		{
+			if (!filter->Contains(key))
+			{
+				continue;
+			}
+		}
+
 		sc.MustGetString();
 		dest->SetBind(key, sc.String, override);
 	}
@@ -730,7 +755,7 @@ void ReadBindings(int lump, bool override)
 //
 //=============================================================================
 
-void C_SetDefaultKeys(const char* baseconfig)
+void C_SetDefaultKeys(const char* baseconfig, const TArray<int> *filter = nullptr)
 {
 	auto lump = fileSystem.CheckNumForFullName("engine/commonbinds.txt");
 	if (lump >= 0)
@@ -743,7 +768,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 				fileSystem.GetResourceFileFullName(fileno2), "engine/commonbinds.txt");
 		}
 
-		ReadBindings(lump, true);
+		ReadBindings(lump, true, filter);
 	}
 	int lastlump = 0;
 
@@ -751,7 +776,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 	{
 		// Read this only from the main game resources.
 		if (fileSystem.GetFileContainer(lump) <= fileSystem.GetMaxIwadNum())
-			ReadBindings(lump, true);
+			ReadBindings(lump, true, filter);
 	}
 
 	lastlump = 0;
@@ -761,9 +786,9 @@ void C_SetDefaultKeys(const char* baseconfig)
 		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
 		// If it comes from a user mod however, don't.
 		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
-			ReadBindings(lump, false);
+			ReadBindings(lump, false, filter);
 		else
-			ReadBindings(lump, true);
+			ReadBindings(lump, true, filter);
 	}
 }
 
@@ -775,15 +800,18 @@ void C_SetDefaultKeys(const char* baseconfig)
 CVAR(Int, cl_defaultconfiguration, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
-void C_BindDefaults()
+void C_BindDefaults(const TArray<int> *filter = nullptr)
 {
-	C_SetDefaultKeys(cl_defaultconfiguration == 1 ? "engine/origbinds.txt" : cl_defaultconfiguration == 2 ? "engine/leftbinds.txt" : "engine/defbinds.txt");
+	C_SetDefaultKeys(
+		cl_defaultconfiguration == 1 ? "engine/origbinds.txt" : cl_defaultconfiguration == 2 ? "engine/leftbinds.txt" : "engine/defbinds.txt",
+		filter
+	);
 }
 
-void C_SetDefaultBindings()
+void C_SetDefaultBindings(const TArray<int> *filter)
 {
-	C_UnbindAll();
-	C_BindDefaults();
+	C_UnbindAll(filter);
+	C_BindDefaults(filter);
 }
 
 

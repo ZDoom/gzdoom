@@ -628,7 +628,7 @@ class OptionMenu : Menu
 					}
 				}
 
-				if (!mDesc.mItems[i].Visible())
+				if (i < 0 || !mDesc.mItems[i].Visible())
 				{
 					continue;
 				}
@@ -639,9 +639,10 @@ class OptionMenu : Menu
 					{
 						if (i != mDesc.mSelectedItem)
 						{
+							mDesc.mSelectedItem = i;
+
 							bool silentHover = Cvar.FindCVar("silence_menu_hover").getInt();
 							if (!silentHover) MenuSound ("menu/cursor");
-							mDesc.mSelectedItem = i;
 						}
 						mDesc.mItems[i].MouseEvent(type, x, y);
 						return true;

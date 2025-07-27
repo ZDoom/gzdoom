@@ -56,7 +56,7 @@ public:
 	int  GetKeysForCommand (const char *cmd, int *first, int *second);
 	TArray<int> GetKeysForCommand (const char *cmd);
 	void UnbindACommand (const char *str);
-	void UnbindAll ();
+	void UnbindAll (const TArray<int> *filter = nullptr);
 	void UnbindKey(const char *key);
 	void DoBind (const char *key, const char *bind);
 	void DefaultBind(const char *keyname, const char *cmd);
@@ -92,8 +92,8 @@ extern FKeyBindings AutomapBindings;
 bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds);
 
 // Stuff used by the customize controls menu
-void C_SetDefaultBindings ();
-void C_UnbindAll ();
+void C_SetDefaultBindings (const TArray<int> *filter = nullptr);
+void C_UnbindAll (const TArray<int> *filter = nullptr);
 
 extern const char *KeyNames[];
 

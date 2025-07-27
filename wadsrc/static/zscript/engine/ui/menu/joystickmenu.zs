@@ -400,6 +400,44 @@ class OptionMenuJoyEnableInBackground : OptionMenuItemOptionBase
 	}
 }
 
+
+class OptionMenuJoyReset : OptionMenuItemSubmenu
+{
+	JoystickConfig mJoy;
+
+	OptionMenuJoyReset Init(String label, JoystickConfig joy)
+	{
+		Super.Init(label, "");
+		mJoy = joy;
+		return self;
+	}
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (mkey == Menu.MKEY_MBYes)
+		{
+			Menu.MenuSound("menu/choose");
+			mJoy.Reset();
+			return true;
+		}
+
+		return Super.MenuEvent(mkey, fromcontroller);
+	}
+
+	override bool Activate()
+	{
+		String msg = "$SAFEMESSAGE";
+		msg = StringTable.Localize(msg);
+		String actionLabel = StringTable.localize(mLabel);
+
+		String FullString;
+		FullString = String.Format("%s%s%s\n\n%s", TEXTCOLOR_WHITE, actionLabel, TEXTCOLOR_NORMAL, msg);
+		Menu.StartMessage(FullString, 0);
+		return true;
+	}
+}
+
+
 class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 {
 	JoystickConfig mJoy;
@@ -454,6 +492,8 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 			}
 
 			it = new("OptionMenuSliderJoySensitivity").Init("$JOYMNU_OVRSENS", 0, 2, 0.1, 3, joy);
+			opt.mItems.Push(it);
+			it = new("OptionMenuJoyReset").Init("$JOYMNU_RESETALL", joy);
 			opt.mItems.Push(it);
 			it = new("OptionMenuItemStaticText").Init(" ", false);
 			opt.mItems.Push(it);

@@ -32,9 +32,13 @@
 **
 */
 
+#include "c_cvars.h"
 #include "v_video.h"
 #include "menu.h"
 #include "vm.h"
+
+// by request of Nash
+CVARD(Bool, silence_menu_scroll, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when scrolling");
 
 
 //=============================================================================

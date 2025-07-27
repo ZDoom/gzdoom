@@ -871,6 +871,13 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 	}
 }
 
+FDecalBase* FDecalLib::GetDecalBaseByName(const char* name) const
+{
+	if (name == nullptr)
+		return nullptr;
+	return ScanTreeForName(name, Root);
+}
+
 const FDecalTemplate *FDecalLib::GetDecalByNum (uint16_t num) const
 {
 	if (num == 0)

@@ -99,6 +99,7 @@ public:
 	void ReadDecals (FScanner &sc);
 	void ReadAllDecals ();
 
+	FDecalBase* GetDecalBaseByName(const char* name) const;
 	const FDecalTemplate *GetDecalByNum (uint16_t num) const;
 	const FDecalTemplate *GetDecalByName (const char *name) const;
 

@@ -58,6 +58,7 @@
 #include "types.h"
 #include "dictionary.h"
 #include "events.h"
+#include "decallib.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -778,6 +779,21 @@ void InitThingdef()
 	auto skillstruct = NewStruct("SkillInfo", nullptr, true);
 	skillstruct->Size = sizeof(FSkillInfo);
 	skillstruct->Align = alignof(FSkillInfo);
+
+	auto decalbasestruct = NewStruct("DecalBase", nullptr, true);
+	decalbasestruct->Size = sizeof(FDecalBase);
+	decalbasestruct->Align = alignof(FDecalBase);
+	NewPointer(decalbasestruct, false)->InstallHandlers(
+		[](FSerializer& ar, const char* key, const void* addr)
+		{
+			ar(key, *(FDecalBase**)addr);
+		},
+		[](FSerializer& ar, const char* key, void* addr)
+		{
+			Serialize<FDecalBase>(ar, key, *(FDecalBase**)addr, nullptr);
+			return true;
+		}
+	);
 
 	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);

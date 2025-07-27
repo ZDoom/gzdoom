@@ -63,8 +63,8 @@ struct FLineTraceData
 
 struct LinkContext
 {
-	voidptr sector_list;	// really msecnode but that's not exported yet.
-	voidptr render_list;
+	readonly voidptr sector_list;	// really msecnode but that's not exported yet.
+	readonly voidptr render_list;
 }
 
 class ViewPosition native
@@ -265,7 +265,7 @@ class Actor : Thinker native
 	native readonly State SeeState;
 	native State MeleeState;
 	native State MissileState;
-	native voidptr /*DecalBase*/ DecalGenerator;
+	native readonly internal voidptr /*DecalBase*/ DecalGenerator;
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;

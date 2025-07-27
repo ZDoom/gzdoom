@@ -35,7 +35,7 @@
 class MessageBoxMenu : Menu
 {
 	BrokenLines mMessage;
-	voidptr Handler;
+	readonly internal voidptr Handler;
 	int mMessageMode;
 	int messageSelection;
 	int mMouseLeft, mMouseRight, mMouseY;
@@ -45,7 +45,7 @@ class MessageBoxMenu : Menu
 	int destWidth, destHeight;
 	String selector;
 
-	native static void CallHandler(voidptr hnd);
+	private native static void CallHandler(voidptr hnd);
 
 
 	//=============================================================================

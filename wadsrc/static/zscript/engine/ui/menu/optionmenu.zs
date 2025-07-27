@@ -223,12 +223,12 @@ class OptionMenu : Menu
 
 	override bool OnUIEvent(UIEvent ev)
 	{
+		bool silentScroll = Cvar.FindCVar("silence_menu_scroll").getInt();
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
 			if (MenuScrollViewport(-2, true) )
 			{
-				bool silence = Cvar.FindCVar("silence_menu_scroll").getInt();
-				if (!silence) MenuSound ("menu/cursor");
+				if (!silentScroll) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -236,8 +236,7 @@ class OptionMenu : Menu
 		{
 			if (MenuScrollViewport(2, true))
 			{
-				bool silence = Cvar.FindCVar("silence_menu_scroll").getInt();
-				if (!silence) MenuSound ("menu/cursor");
+				if (!silentScroll) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -604,6 +603,7 @@ class OptionMenu : Menu
 
 	override bool MouseEvent(int type, int x, int y)
 	{
+
 		y = (y / CleanYfac_1) - mDesc.mDrawTop;
 
 		if (mFocusControl)
@@ -639,7 +639,8 @@ class OptionMenu : Menu
 					{
 						if (i != mDesc.mSelectedItem)
 						{
-							MenuSound ("menu/cursor");
+							bool silentHover = Cvar.FindCVar("silence_menu_hover").getInt();
+							if (!silentHover) MenuSound ("menu/cursor");
 							mDesc.mSelectedItem = i;
 						}
 						mDesc.mItems[i].MouseEvent(type, x, y);

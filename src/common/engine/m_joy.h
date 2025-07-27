@@ -78,6 +78,14 @@ struct IJoystickConfig
 
 	virtual void SetDefaultConfig() = 0;
 	virtual FString GetIdentifier() = 0;
+
+	void Reset()
+	{
+		SetDefaultConfig();
+		SetEnabled(true);
+		SetEnabledInBackground(AllowsEnabledInBackground());
+		SetSensitivity(1);
+	}
 };
 
 EXTERN_CVAR(Bool, use_joystick);

@@ -188,6 +188,14 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
 }
 
 
+DEFINE_ACTION_FUNCTION(IJoystickConfig, Reset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	self->Reset();
+	return 0;
+}
+
+
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_JoystickOptions);

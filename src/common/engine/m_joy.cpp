@@ -410,10 +410,7 @@ CCMD (gamepad)
 	if (command == "reset")
 	{
 		if (set) return usage();
-		sticks[pad]->SetDefaultConfig();
-		sticks[pad]->SetEnabled(true);
-		sticks[pad]->SetEnabledInBackground(sticks[pad]->AllowsEnabledInBackground());
-		sticks[pad]->SetSensitivity(1);
+		sticks[pad]->Reset();
 		return;
 	}
 	if (command == "enabled")

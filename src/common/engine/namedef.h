@@ -278,6 +278,8 @@ xx(OptionMenuItemColorPicker)
 xx(OptionMenuItemStaticText)
 xx(OptionMenuItemStaticTextSwitchable)
 
+xx(Handler)
+
 xx(Color)
 
 xx(Mididevices)

@@ -3179,7 +3179,7 @@ FUNC(LS_TranslucentLine)
 
 FUNC(LS_Autosave)
 {
-	if (gameaction != ga_savegame)
+	if (gameaction != ga_savegame && gameaction != ga_quicksave)
 	{
 		Level->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 		Net_WriteInt8 (DEM_CHECKAUTOSAVE);

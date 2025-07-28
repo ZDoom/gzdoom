@@ -35,7 +35,7 @@
 class MessageBoxMenu : Menu
 {
 	BrokenLines mMessage;
-	readonly internal voidptr Handler;
+	readonly voidptr Handler;
 	int mMessageMode;
 	int messageSelection;
 	int mMouseLeft, mMouseRight, mMouseY;
@@ -45,7 +45,7 @@ class MessageBoxMenu : Menu
 	int destWidth, destHeight;
 	String selector;
 
-	private native static void CallHandler(voidptr hnd);
+	native void CallHandler();
 
 
 	//=============================================================================
@@ -54,7 +54,7 @@ class MessageBoxMenu : Menu
 	//
 	//=============================================================================
 
-	virtual void Init(Menu parent, String message, int messagemode, bool playsound = false, Name cmd = 'None', voidptr native_handler = null)
+	virtual void Init(Menu parent, String message, int messagemode, bool playsound = false, Name cmd = 'None')
 	{
 		Super.Init(parent);
 		mAction = cmd;
@@ -95,7 +95,6 @@ class MessageBoxMenu : Menu
 		{
 			MenuSound ("menu/prompt");
 		}
-		Handler = native_handler;
 	}
 
 	//=============================================================================
@@ -164,7 +163,7 @@ class MessageBoxMenu : Menu
 		{
 			if (res) 
 			{
-				CallHandler(Handler);
+				CallHandler();
 			}
 			else
 			{

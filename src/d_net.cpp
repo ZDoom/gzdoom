@@ -2094,7 +2094,7 @@ static bool ShouldStabilizeTick()
 {
 	return gameaction != ga_recordgame && gameaction != ga_newgame && gameaction != ga_newgame2
 			&& gameaction != ga_loadgame && gameaction != ga_loadgamehidecon && gameaction != ga_autoloadgame && gameaction != ga_loadgameplaydemo
-			&& gameaction != ga_savegame && gameaction != ga_autosave
+			&& gameaction != ga_savegame && gameaction != ga_autosave && gameaction != ga_quicksave
 			&& gameaction != ga_worlddone && gameaction != ga_completed && gameaction != ga_screenshot && gameaction != ga_fullconsole;
 }
 

@@ -64,7 +64,7 @@ void G_LoadGame (const char* name, bool hidecon=false);
 void G_DoLoadGame (void);
 
 // Called by M_Responder.
-void G_SaveGame (const char *filename, const char *description);
+void G_SaveGame (const char *filename, const char *description, bool quick = false);
 // Called by messagebox
 void G_DoQuickSave ();
 

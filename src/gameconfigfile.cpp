@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
+** Copyright 2017-2025 ZDoom + GZDoom teams, and contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,21 +35,22 @@
 
 #include <stdio.h>
 
-#include "gameconfigfile.h"
+#include "c_bind.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
-#include "c_bind.h"
-#include "m_argv.h"
 #include "cmdlib.h"
-#include "version.h"
-#include "m_misc.h"
-#include "v_font.h"
-#include "a_pickups.h"
-#include "doomstat.h"
-#include "gi.h"
 #include "d_main.h"
-#include "v_video.h"
+#include "doomstat.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "m_argv.h"
 #include "m_joy.h"
+#include "m_misc.h"
+#include "printf.h"
+#include "v_font.h"
+#include "v_video.h"
+#include "version.h"
+
 #if !defined _MSC_VER && !defined __APPLE__
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_MSC_VER && !__APPLE__
@@ -81,6 +83,7 @@ EXTERN_CVAR (Int, gl_texture_hqresize_targets)
 EXTERN_CVAR(Int, wipetype)
 EXTERN_CVAR(Bool, i_pauseinbackground)
 EXTERN_CVAR(Bool, i_soundinbackground)
+EXTERN_CVAR(Bool, i_is_new_release)
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)
@@ -322,6 +325,9 @@ void FGameConfigFile::DoGlobalSetup ()
 	}
 	if (SetSection ("LastRun"))
 	{
+		const char *lastRelease = GetValueForKey ("Release");
+		i_is_new_release = !lastRelease || strcmp(VERSIONSTR, lastRelease) != 0;
+
 		const char *lastver = GetValueForKey ("Version");
 		if (lastver != NULL)
 		{
@@ -929,6 +935,7 @@ void FGameConfigFile::ArchiveGlobalData ()
 	SetSection ("LastRun", true);
 	ClearCurrentSection ();
 	SetValueForKey ("Version", LASTRUNVERSION);
+	SetValueForKey ("Release", VERSIONSTR);
 
 	SetSection ("GlobalSettings", true);
 	ClearCurrentSection ();

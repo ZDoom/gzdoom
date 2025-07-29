@@ -333,10 +333,22 @@ void DObject::Destroy ()
 	GC::WriteBarrier(this);
 }
 
-DEFINE_ACTION_FUNCTION(DObject, Destroy)
+// This will be here until prediction can be reworked.
+// TODO: Fix prediction by serializing instead of using this terrible memcpy method.
+bool bPredictionGuard = false;
+
+static void NativeDestroy(DObject* self)
+{
+	if (bPredictionGuard && !(self->ObjectFlags & OF_ClientSide) && ((self->ObjectFlags & OF_Networked) || self->IsKindOf(NAME_Thinker)))
+		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Destroyed non-client-side Object %s while predicting\n", self->GetClass()->TypeName.GetChars());
+	if (!(self->ObjectFlags & OF_EuthanizeMe))
+		self->Destroy();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, Destroy, NativeDestroy)
 {
 	PARAM_SELF_PROLOGUE(DObject);
-	self->Destroy();
+	NativeDestroy(self);
 	return 0;	
 }
 

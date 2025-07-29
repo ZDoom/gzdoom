@@ -369,6 +369,8 @@ public:
 	virtual void EnableNetworking(const bool enable);
 };
 
+extern bool bPredictionGuard;
+
 // This is the only method aside from calling CreateNew that should be used for creating DObjects
 // to ensure that the Class pointer is always set.
 template<typename T, typename... Args>

@@ -60,6 +60,8 @@ EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
 CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
+CVAR(Bool, i_is_new_release, true, 0)
+CVAR(Bool, i_display_new_release, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -811,6 +813,8 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		if (i_loadsupportwad) flags |= 16;
 
 		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
+		info.isNewRelease = i_is_new_release;
+		info.notifyNewRelease = i_display_new_release;
 		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
 			pick = info.SaveInfo();

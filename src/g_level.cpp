@@ -1701,6 +1701,12 @@ void FLevelLocals::StartTravel()
 // the actual STAT_TRAVELLING list when snapshotting.
 void FLevelLocals::MoveTravellers()
 {
+	for (size_t i = 0u; i < MAXPLAYERS; ++i)
+	{
+		if (PlayerInGame(i))
+			Players[i]->camera = nullptr;
+	}
+
 	for (auto th : TravellingThinkers)
 	{
 		if (th->ObjectFlags & OF_EuthanizeMe)

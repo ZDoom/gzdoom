@@ -1,0 +1,6 @@
+ZMusic comes in two flavors: full and lite.
+The difference between these two is that the lite version omits all playback code that is licensed under the GPL so that it can be used in projects incompatible with the GPL v3.
+Omitted features in the lite version are: All MIDI synths except for FluidSynth were removed. In addition raw OPL playback had to be removed.
+
+The full version of zmusic can be used under the terms of the GPL v3. See gplv3.txt for details.
+The lite version can be used under the terms of the LGPL v2.1. See lgplv21.txt for details.

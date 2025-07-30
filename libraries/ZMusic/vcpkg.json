@@ -1,0 +1,30 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "builtin-baseline": "65c013b9667ff1f58fb8724209227e5a2e761043",
+    "name": "zmusic",
+    "description": "GZDoom's music system as a standalone library",
+    "features":
+    {
+        "vcpkg-libsndfile":
+        {
+            "description": "Use libsndfile provided by vcpkg.",
+            "dependencies":
+            [
+                {
+                    "name": "libsndfile",
+                    "default-features": false,
+                    "features": [ "mpeg", "external-libs" ]
+                }
+            ]
+        }
+    },
+    "dependencies": [
+        {
+            "name": "alsa",
+            "platform": "linux"
+        },
+        {
+            "name": "zlib"
+        }
+    ]
+}

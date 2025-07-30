@@ -1,0 +1,9 @@
+Copy opal.cpp here to make this emulator available.
+This is not distributed with the software while the license is undetermined.
+
+The opal.cpp file is part of REALITY ADLIB TRACKER V2.
+SHA1: c034dd637887d81770cee92da309fc547ef5fe18
+
+Configure the software with the option USE_OPAL_EMULATOR=ON.
+To enable soft panning, it is needed to patch with the file `opal-pan.diff` provided.
+for example: `patch -p0 -i opal-pan.diff`

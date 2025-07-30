@@ -1,0 +1,13 @@
+OPNA FMGen changelog since adding into libOPNMIDI
+
+- Shift-Jis to UTF8
+- compiler optimize flags
+- Added soft-panning to simulate full-panning when chip itself can do 3-state panning only
+- fixed warnings and Windows builds
+- fixed some mistakes in the code
+- fixed C++98 compatibility
+- Attempted to fix the SSG-EG behavior
+
+The detailed changelog can be seen here:
+https://github.com/Wohlstand/libOPNMIDI/commits/master/src/chips/np2
+

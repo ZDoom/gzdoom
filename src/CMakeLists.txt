@@ -288,8 +288,8 @@ endif()
 
 # Check for functions that may or may not exist.
 
-require_stricmp()
-require_strnicmp()
+gz_require_stricmp()
+gz_require_strnicmp()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
@@ -327,31 +327,7 @@ endif()
 list( APPEND PROJECT_LIBRARIES "zwidget" )
 list( APPEND PROJECT_LIBRARIES "webp" )
 
-# ZMUSIC
-
-if( MSVC )
-	find_package( ZMusic )
-else()
-	find_package( ZMusic REQUIRED )
-endif()
-
 message("Building for target architecture: ${TARGET_ARCHITECTURE}")
-
-if( MSVC AND NOT ZMUSIC_FOUND )
-	# Use prebuilt library
-	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
-	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
-	set( ZMUSIC_LIBRARIES zmusic )
-	if( X64 )
-		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
-	elseif( ARM64 )
-		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
-	else()
-		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
-	endif()
-	set( ZMUSIC_FOUND TRUE )
-endif()
-
 
 # VPX
 

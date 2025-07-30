@@ -969,6 +969,12 @@ void DThinker::ChangeStatNum(int statnum)
 
 static void ChangeStatNum(DThinker *self, int statnum)
 {
+	if (self->ObjectFlags & OF_Travelling)
+	{
+		Printf(TEXTCOLOR_RED "Thinkers cannot be moved while travelling\n");
+		return;
+	}
+
 	// This will always break Actors, they should use STAT_TRAVELLING instead to
 	// transition between levels.
 	if (statnum == STAT_STATIC && self->IsKindOf(NAME_Actor))

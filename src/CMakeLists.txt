@@ -1416,6 +1416,14 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
+if ( NOT APPLE )
+	# bring zmusic in
+	add_custom_command(TARGET zdoom POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>
+		DEPENDS zmusic )
+endif()
+
+
 if (VCPKG_TOOLCHAIN)
 	x_vcpkg_install_local_dependencies(TARGETS zdoom DESTINATION ".")
 endif()

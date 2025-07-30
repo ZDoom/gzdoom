@@ -1867,6 +1867,9 @@ void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 			Args->AppendArg(load);
 		}
 	}
+
+	// Reset this immediately so any further RNG calls the engine has to make will be synced.
+	FRandom::StaticClearRandom();
 }
 
 // Connects players to each other if needed.

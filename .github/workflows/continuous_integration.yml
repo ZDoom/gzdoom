@@ -1,0 +1,97 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - name: Visual Studio - Release
+          os: windows-latest
+          build_type: Release
+
+        - name: Visual Studio - Debug
+          os: windows-latest
+          build_type: Debug
+
+        - name: macOS Clang - Dynamic Deps
+          os: macos-latest
+          build_type: Release
+
+        - name: macOS Clang - Static Deps
+          os: macos-latest
+          build_type: Release
+          cmake_options: -DDYN_FLUIDSYNTH=OFF -DDYN_MPG123=OFF -DDYN_SNDFILE=OFF
+          deps_cmd: brew install libsndfile mpg123
+
+        - name: Linux GCC - Dynamic Deps
+          os: ubuntu-latest
+          build_type: Release
+          deps_cmd: sudo apt update && sudo apt install libglib2.0-dev
+
+        - name: Linux GCC - Static Deps
+          os: ubuntu-latest
+          build_type: Release
+          cmake_options: -DDYN_FLUIDSYNTH=OFF -DDYN_MPG123=OFF -DDYN_SNDFILE=OFF
+          deps_cmd: sudo apt update && sudo apt install libasound2-dev libglib2.0-dev libmpg123-dev libsndfile1-dev
+          
+        - name: Linux Clang - Dynamic Deps
+          os: ubuntu-latest
+          build_type: Release
+          cmake_options: -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+          deps_cmd: sudo apt update && sudo apt install libglib2.0-dev
+          
+        - name: Linux Clang - Static Deps
+          os: ubuntu-latest
+          build_type: Release
+          cmake_options: -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DDYN_FLUIDSYNTH=OFF -DDYN_MPG123=OFF -DDYN_SNDFILE=OFF
+          deps_cmd: sudo apt update && sudo apt install libasound2-dev libglib2.0-dev libmpg123-dev libsndfile1-dev
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        ${{ matrix.config.deps_cmd }}
+
+    - name: Configure
+      shell: bash
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_INSTALL_PREFIX=./build_install ${{ matrix.config.cmake_options }} .
+
+    - name: Build
+      shell: bash
+      run: |
+        export MAKEFLAGS=--keep-going
+        cmake --build build --target install --config ${{ matrix.config.build_type }} --parallel 3
+
+    - name: Test
+      shell: bash
+      run: |
+        cd samples/list_midi_devices
+        mkdir build
+        cd build
+        declare -x PREFIX=`pwd`/../../../build_install
+        cmake -DCMAKE_PREFIX_PATH=${PREFIX} ${{ matrix.config.cmake_options }} ..
+        cmake --build . --config ${{ matrix.config.build_type }}
+        if [[ "${{ runner.os }}" == 'macOS' ]]; then
+          declare -x DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${PREFIX}
+        fi
+        if [[ "${{ runner.os }}" == 'Windows' ]]; then
+          cp ${PREFIX}/bin/zmusic.dll ${{ matrix.config.build_type }}
+          ${{ matrix.config.build_type }}/list_midi_devices.exe
+        else
+          ./list_midi_devices
+        fi
+
+    - name: Upload Install Directory
+      if: false  # Remove this line to upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.config.name }}
+        path: build_install

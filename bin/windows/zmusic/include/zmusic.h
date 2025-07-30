@@ -85,7 +85,7 @@ typedef struct SoundStreamInfoEx_
 	ChannelConfig mChannelConfig;
 } SoundStreamInfoEx;
 
-
+// NOTE: The following enums are part of the ABI! Do not insert new values in the middle - always append them at the end!
 typedef enum EIntConfigKey_
 {
 	zmusic_adl_chips_count,
@@ -94,10 +94,7 @@ typedef enum EIntConfigKey_
 	zmusic_adl_fullpan,
 	zmusic_adl_bank,
 	zmusic_adl_use_custom_bank,
-	zmusic_adl_use_genmidi,
 	zmusic_adl_volume_model,
-	zmusic_adl_chan_alloc,
-	zmusic_adl_auto_arpeggio,
 
 	zmusic_fluid_reverb,
 	zmusic_fluid_chorus,
@@ -117,9 +114,6 @@ typedef enum EIntConfigKey_
 	zmusic_opn_run_at_pcm_rate,
 	zmusic_opn_fullpan,
 	zmusic_opn_use_custom_bank,
-	zmusic_opn_volume_model,
-	zmusic_opn_chan_alloc,
-	zmusic_opn_auto_arpeggio,
 
 	zmusic_gus_dmxgus,
 	zmusic_gus_midi_voices,
@@ -159,6 +153,14 @@ typedef enum EIntConfigKey_
 	zmusic_snd_outputrate,
 	zmusic_mod_preferredplayer,
 
+	// new constants since 1.2.0
+	zmusic_adl_use_genmidi,
+	zmusic_adl_chan_alloc,
+	zmusic_adl_auto_arpeggio,
+	zmusic_opn_volume_model,
+	zmusic_opn_chan_alloc,
+	zmusic_opn_auto_arpeggio,
+	
 	NUM_ZMUSIC_INT_CONFIGS
 } EIntConfigKey;
 
@@ -173,12 +175,6 @@ typedef enum EFloatConfigKey_
 	zmusic_fluid_chorus_speed,
 	zmusic_fluid_chorus_depth,
 
-	zmusic_opl_gain,
-
-	zmusic_adl_gain,
-
-	zmusic_opn_gain,
-
 	zmusic_timidity_drum_power,
 	zmusic_timidity_tempo_adjust,
 	zmusic_timidity_min_sustain_time,
@@ -190,6 +186,11 @@ typedef enum EFloatConfigKey_
 	zmusic_relative_volume,
 	zmusic_snd_mastervolume,
 
+	// new constants since 1.2.0
+	zmusic_opl_gain,
+	zmusic_adl_gain,
+	zmusic_opn_gain,
+	
 	NUM_FLOAT_CONFIGS
 } EFloatConfigKey;
 

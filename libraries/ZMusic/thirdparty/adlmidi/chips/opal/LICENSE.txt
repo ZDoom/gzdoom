@@ -1,0 +1,19 @@
+A quote from a letter sent by Willy Reeve to Vitaly Novichkov
+as a reply from a letter sent by Reality's (https://www.3eality.com/)
+contact form
+----------------------------------------------------------------
+All source code supplied with RAD is in the public domain.
+----------------------------------------------------------------
+
+================================================================
+The complete letter:
+================================================================
+Hi,
+
+All source code supplied with RAD is in the public domain.
+We'll clarify that in the documentation for the next release.
+
+Later...
+SHAYDE
+================================================================
+

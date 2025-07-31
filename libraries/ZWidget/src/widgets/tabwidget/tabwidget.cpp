@@ -112,6 +112,9 @@ void TabWidget::OnGeometryChanged()
 TabBar::TabBar(Widget* parent) : Widget(parent)
 {
 	SetStyleClass("tabbar");
+
+	leftSpacer = new TabBarSpacer(this);
+	rightSpacer = new TabBarSpacer(this);
 }
 
 int TabBar::AddTab(const std::string& label)
@@ -188,12 +191,25 @@ void TabBar::OnGeometryChanged()
 	double w = GetWidth();
 	double h = GetHeight();
 	double x = 0.0;
+
+	leftSpacer->SetFrameGeometry(Rect::xywh(x, 0.0, GetStyleDouble("spacer-left"), h));
+	x += GetStyleDouble("spacer-left");
+
 	for (TabBarTab* tab : Tabs)
 	{
 		double tabWidth = tab->GetNoncontentLeft() + tab->GetPreferredWidth() + tab->GetNoncontentRight();
 		tab->SetFrameGeometry(Rect::xywh(x, 0.0, tabWidth, h));
 		x += tabWidth;
 	}
+
+	rightSpacer->SetFrameGeometry(Rect::xywh(x, 0.0, std::max(w - x, 0.0), h));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+TabBarSpacer::TabBarSpacer(Widget* parent) : Widget(parent)
+{
+	SetStyleClass("tabbar-spacer");
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -9,7 +9,7 @@
 class SDL2DisplayWindow : public DisplayWindow
 {
 public:
-	SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, SDL2DisplayWindow* owner, RenderAPI renderAPI);
+	SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, SDL2DisplayWindow* owner, RenderAPI renderAPI, double uiscale);
 	~SDL2DisplayWindow();
 
 	void SetWindowTitle(const std::string& text) override;
@@ -67,6 +67,7 @@ public:
 	void OnMouseWheel(const SDL_MouseWheelEvent& event);
 	void OnMouseMotion(const SDL_MouseMotionEvent& event);
 	void OnPaintEvent();
+	static void OnTimerEvent(const SDL_UserEvent& event);
 
 	InputKey GetMouseButtonKey(const SDL_MouseButtonEvent& event);
 
@@ -83,10 +84,10 @@ public:
 	static void ProcessEvents();
 	static void RunLoop();
 	static void ExitLoop();
-	static Size GetScreenSize();
 
 	static void* StartTimer(int timeoutMilliseconds, std::function<void()> onTimer);
 	static void StopTimer(void* timerID);
+	static Uint32 ExecTimer(Uint32 interval, void* id);
 
 	DisplayWindowHost* WindowHost = nullptr;
 	SDL2NativeHandle Handle;
@@ -95,10 +96,17 @@ public:
 	int BackBufferWidth = 0;
 	int BackBufferHeight = 0;
 
+	double UIScale = 1.0;
+
 	bool CursorLocked = false;
 	bool isFullscreen = false;
 
 	static bool ExitRunLoop;
 	static Uint32 PaintEventNumber;
 	static std::unordered_map<int, SDL2DisplayWindow*> WindowList;
+
+	static std::unordered_map<void *, void *> TimerHandles;
+	static std::unordered_map<void *, std::function<void()>> Timers;
+	static unsigned long TimerIDs;
+	static Uint32 TimerEventNumber;
 };

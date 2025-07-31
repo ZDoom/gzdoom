@@ -154,6 +154,7 @@ DarkWidgetTheme::DarkWidgetTheme()
 	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
 	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
 	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
+	auto tabbar_spacer = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-spacer");
 	auto tabwidget_stack = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabwidget-stack");
 	auto checkbox_label = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "checkbox-label");
 	auto menubar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menubar");
@@ -219,14 +220,28 @@ DarkWidgetTheme::DarkWidgetTheme()
 	scrollbar->SetColor("track-color", Colorf::fromRgba8(33, 33, 33));
 	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(58, 58, 58));
 
-	tabbar->SetDouble("noncontent-left", 20.0);
-	tabbar->SetDouble("noncontent-right", 20.0);
-	tabbar->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
+	tabbar->SetDouble("spacer-left", 20.0);
+	tabbar->SetDouble("spacer-right", 20.0);
+	tabbar->SetColor("background-color", Colorf::fromRgba8(33, 33, 33));
 
 	tabbar_tab->SetDouble("noncontent-left", 15.0);
 	tabbar_tab->SetDouble("noncontent-right", 15.0);
+	tabbar_tab->SetDouble("noncontent-top", 1.0);
+	tabbar_tab->SetDouble("noncontent-bottom", 1.0);
+	tabbar_tab->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
+	tabbar_tab->SetColor("border-left-color", Colorf::fromRgba8(68, 68, 68));
+	tabbar_tab->SetColor("border-top-color", Colorf::fromRgba8(68, 68, 68));
+	tabbar_tab->SetColor("border-right-color", Colorf::fromRgba8(68, 68, 68));
+	tabbar_tab->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
 	tabbar_tab->SetColor("hover", "background-color", Colorf::fromRgba8(45, 45, 45));
 	tabbar_tab->SetColor("active", "background-color", Colorf::fromRgba8(51, 51, 51));
+	tabbar_tab->SetColor("active", "border-left-color", Colorf::fromRgba8(100, 100, 100));
+	tabbar_tab->SetColor("active", "border-top-color", Colorf::fromRgba8(100, 100, 100));
+	tabbar_tab->SetColor("active", "border-right-color", Colorf::fromRgba8(100, 100, 100));
+	tabbar_tab->SetColor("active", "border-bottom-color", Colorf::transparent());
+
+	tabbar_spacer->SetDouble("noncontent-bottom", 1.0);
+	tabbar_spacer->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
 
 	tabwidget_stack->SetDouble("noncontent-left", 20.0);
 	tabwidget_stack->SetDouble("noncontent-top", 5.0);
@@ -278,6 +293,7 @@ LightWidgetTheme::LightWidgetTheme()
 	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
 	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
 	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
+	auto tabbar_spacer = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-spacer");
 	auto tabwidget_stack = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabwidget-stack");
 	auto checkbox_label = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "checkbox-label");
 	auto menubar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menubar");
@@ -340,14 +356,27 @@ LightWidgetTheme::LightWidgetTheme()
 	scrollbar->SetColor("track-color", Colorf::fromRgba8(210, 210, 220));
 	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(180, 180, 180));
 
-	tabbar->SetDouble("noncontent-left", 20.0);
-	tabbar->SetDouble("noncontent-right", 20.0);
-	tabbar->SetColor("background-color", Colorf::fromRgba8(220, 220, 220));
+	tabbar->SetDouble("spacer-left", 20.0);
+	tabbar->SetDouble("spacer-right", 20.0);
+	tabbar->SetColor("background-color", Colorf::fromRgba8(210, 210, 210));
 
 	tabbar_tab->SetDouble("noncontent-left", 15.0);
 	tabbar_tab->SetDouble("noncontent-right", 15.0);
+	tabbar_tab->SetDouble("noncontent-top", 1.0);
+	tabbar_tab->SetDouble("noncontent-bottom", 1.0);
+	tabbar_tab->SetColor("background-color", Colorf::fromRgba8(220, 220, 220));
+	tabbar_tab->SetColor("border-left-color", Colorf::fromRgba8(200, 200, 200));
+	tabbar_tab->SetColor("border-top-color", Colorf::fromRgba8(200, 200, 200));
+	tabbar_tab->SetColor("border-right-color", Colorf::fromRgba8(200, 200, 200));
+	tabbar_tab->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
 	tabbar_tab->SetColor("hover", "background-color", Colorf::fromRgba8(210, 210, 210));
 	tabbar_tab->SetColor("active", "background-color", Colorf::fromRgba8(240, 240, 240));
+	tabbar_tab->SetColor("active", "border-left-color", Colorf::fromRgba8(155, 155, 155));
+	tabbar_tab->SetColor("active", "border-top-color", Colorf::fromRgba8(155, 155, 155));
+	tabbar_tab->SetColor("active", "border-right-color", Colorf::fromRgba8(155, 155, 155));
+	tabbar_tab->SetColor("active", "border-bottom-color", Colorf::transparent());
+
+	tabbar_spacer->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
 
 	tabwidget_stack->SetDouble("noncontent-left", 20.0);
 	tabwidget_stack->SetDouble("noncontent-top", 5.0);

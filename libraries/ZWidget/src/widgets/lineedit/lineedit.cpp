@@ -280,7 +280,7 @@ void LineEdit::SetSelectAllOnFocusGain(bool enable)
 
 void LineEdit::OnMouseMove(const Point& pos)
 {
-	if (mouse_selecting && !ignore_mouse_events)
+	if (mouse_selecting)
 	{
 		if (pos.x < 0.0 || pos.x >= GetWidth())
 		{
@@ -331,23 +331,13 @@ bool LineEdit::OnMouseUp(const Point& pos, InputKey key)
 {
 	if (mouse_selecting && key == InputKey::LeftMouse)
 	{
-		if (ignore_mouse_events) // This prevents text selection from changing from what was set when focus was gained.
-		{
-			ReleasePointerCapture();
-			ignore_mouse_events = false;
-			mouse_selecting = false;
-		}
-		else
-		{
-			scroll_timer->Stop();
-			ReleasePointerCapture();
-			mouse_selecting = false;
-			int sel_end = GetCharacterIndex(pos.x);
-			SetSelectionLength(sel_end - selection_start);
-			cursor_pos = sel_end;
-			SetFocus();
-			Update();
-		}
+		scroll_timer->Stop();
+		ReleasePointerCapture();
+		mouse_selecting = false;
+		int sel_end = GetCharacterIndex(pos.x);
+		SetSelectionLength(sel_end - selection_start);
+		cursor_pos = sel_end;
+		Update();
 	}
 	return true;
 }
@@ -604,7 +594,6 @@ void LineEdit::OnSetFocus()
 		timer->Start(500);
 	if (select_all_on_focus_gain)
 		SelectAll();
-	ignore_mouse_events = true;
 	cursor_pos = (int)text.length();
 
 	Update();

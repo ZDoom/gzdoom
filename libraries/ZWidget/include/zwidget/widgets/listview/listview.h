@@ -36,6 +36,8 @@ protected:
 	void OnGeometryChanged() override;
 	void OnScrollbarScroll();
 
+	static double getItemHeight();
+
 	Scrollbar* scrollbar = nullptr;
 
 	std::vector<std::vector<std::string>> items;

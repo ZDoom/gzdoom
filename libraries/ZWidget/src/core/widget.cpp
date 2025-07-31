@@ -409,7 +409,7 @@ bool Widget::IsVisible()
 void Widget::SetFocus()
 {
 	Widget* window = Window();
-	if (window)
+	if (window && window->FocusWidget != this)
 	{
 		if (window->FocusWidget)
 			window->FocusWidget->OnLostFocus();

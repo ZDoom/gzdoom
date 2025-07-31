@@ -37,6 +37,7 @@
 #include <thread>
 #include <assert.h>
 #include "i_time.h"
+#include "vm.h"
 
 //==========================================================================
 //
@@ -222,4 +223,54 @@ void I_ResetInputTime()
 {
 	// Reset lastinputtime to current time.
 	lastinputtime = I_msTimeF();
+}
+
+double DeltaTime = 0.0;
+static uint64_t PrevTime = 0u;
+
+void ClearPrevTime()
+{
+	PrevTime = 0u;
+}
+
+void SetDeltaTime(bool fixedStep)
+{
+	const uint64_t time = I_nsTime();
+	if (fixedStep)
+	{
+		DeltaTime = 1.0 / GameTicRate;
+		return;
+	}
+
+	if (!PrevTime)
+		PrevTime = time;
+
+	// Track delta time in seconds since this is more commonly useful, but don't
+	// go lower than 5 FPS or higher than 1000 FPS for consistency.
+	DeltaTime = clamp<double>((time - PrevTime) * 0.000000001, 0.001, 0.2);
+	PrevTime = time;
+}
+
+// For more precision.
+static double CurrentDeltaTime()
+{
+	const uint64_t time = I_nsTime();
+	return PrevTime ? (time - PrevTime) * 0.000000001 : 0.0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, CurrentDeltaTime, CurrentDeltaTime)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_FLOAT(CurrentDeltaTime());
+}
+
+static double PhysicsTimeStep()
+{
+	return 1.0 / GameTicRate;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, PhysicsTimeStep, PhysicsTimeStep)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_FLOAT(PhysicsTimeStep());
 }

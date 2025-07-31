@@ -233,6 +233,7 @@ struct _ native unsafe(internal)	// These are the global variables, the struct i
 	native readonly double NotifyFontScale;
 	native readonly int paused;
 	native readonly ui uint8 ConsoleState;
+	native readonly double DeltaTime;
 }
 
 struct System native
@@ -781,6 +782,8 @@ class Object native
 
 	native static uint MSTime();
 	native static double MSTimeF();
+	native ui static double CurrentDeltaTime();
+	native clearscope static double PhysicsTimeStep();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
 	native static Function<void> FindFunction(Class<Object> cls, Name fn);

@@ -511,7 +511,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 						}
 						else if (args[i]->isIntCompatible())
 						{
-							if (sc.Compare("true"))
+							if (sc.Compare("true")) 
 							{
     							params.Push(1);
     							continue;

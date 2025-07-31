@@ -1431,7 +1431,7 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 						{
 							int v;
 
-							if (sc.Compare("true"))
+							if (sc.Compare("true")) 
 							{
 								v = 1;
 							}

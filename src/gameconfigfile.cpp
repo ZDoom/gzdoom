@@ -118,6 +118,12 @@ FGameConfigFile::FGameConfigFile ()
 #else
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
+		// XDG_DATA_HOME is a FreeDesktop recommended standard for user data
+		// and used e.g. in Flatpak packages (where it's set to a path that
+		// will persist contents between sessions by default; usually
+		// $HOME/.var/app/[FreeDesktop app ID]/data).
+		// The recommended default otherwise is $HOME/.local/share.
+		SetValueForKey ("Path", "$XDG_DATA_HOME/" GAMENAMELOWERCASE, true);
 		// Arch Linux likes them in /usr/share/doom
 		// Debian likes them in /usr/share/games/doom
 		// I assume other distributions don't do anything radically different
@@ -900,7 +906,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 	{
 		return FString(pathval);
 	}
-	return M_GetConfigPath(tryProg);
+	return M_GetConfigFilePath(tryProg);
 }
 
 void FGameConfigFile::CreateStandardAutoExec(const char *section, bool start)
@@ -996,6 +1002,6 @@ void FGameConfigFile::SetStrifeDefaults ()
 
 CCMD (whereisini)
 {
-	FString path = M_GetConfigPath(false);
+	FString path = M_GetConfigFilePath(false);
 	Printf ("%s\n", path.GetChars());
 }

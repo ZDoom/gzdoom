@@ -406,6 +406,7 @@ endif()
 # ZMUSIC
 if( ZMUSIC_FOUND AND NOT FORCE_INTERNAL_ZMUSIC )
 	message( STATUS "Using system zmusic library, includes found at ${ZMUSIC_INCLUDE_DIR}" )
+	set( ZMUSIC_SYSTEM_INSTALL TRUE )
 else()
 	message( STATUS "Using internal zmusic library" )
 	add_subdirectory( libraries/ZMusic )
@@ -436,7 +437,6 @@ install(DIRECTORY docs/
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
 
 add_subdirectory( libraries/lzma )
-#add_subdirectory( libraries/miniz ) #ZMusic already includes this
 add_subdirectory( tools )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
@@ -444,6 +444,12 @@ add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
 add_subdirectory( wadsrc_widepix )
 add_subdirectory( src )
+
+if( ZMUSIC_SYSTEM_INSTALL )
+	# Internal ZMusic library provides miniz target, miniz.h file in partuclar
+	# It's not the case with system-wide ZMusic installation
+	add_subdirectory( libraries/miniz )
+endif()
 
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )

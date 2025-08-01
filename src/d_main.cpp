@@ -2055,6 +2055,7 @@ static void AddAutoloadFiles(const char *autoname, std::vector<std::string>& all
 #ifdef __unix__
 		if (std::getenv("XDG_DATA_HOME")) {
 			file = NicePath("$XDG_DATA_HOME/" GAMENAMELOWERCASE "/skins");
+			printf("Adding skins from %s.", file.GetChars());
 			D_AddDirectory (allwads, file.GetChars(), "*.wad", GameConfig);
 		}
 		file = NicePath("$HOME/" GAME_DIR "/skins");

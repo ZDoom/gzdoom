@@ -149,6 +149,12 @@ FGameConfigFile::FGameConfigFile ()
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
+		// XDG_DATA_HOME is a FreeDesktop recommended standard for user data
+		// and used e.g. in Flatpak packages (where it's set to a path that
+		// will persist contents between sessions by default; usually
+		// $HOME/.var/app/[FreeDesktop app ID]/data).
+		// The recommended default otherwise is $HOME/.local/share.
+		SetValueForKey ("Path", "$XDG_DATA_HOME/" GAMENAMELOWERCASE, true);
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
 		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
 		SetValueForKey ("Path", SHARE_DIR, true);

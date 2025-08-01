@@ -117,10 +117,7 @@ bool D_AddFile(std::vector<std::string>& wadfiles, const char* file, bool check,
 	std::string f = file;
 	for (auto& c : f) if (c == '\\') c = '/';
 	if (position == -1) wadfiles.push_back(f);
-	else {
-		printf("Adding %s", f.c_str());
-		wadfiles.insert(wadfiles.begin() + position, f);
-	}
+	else wadfiles.insert(wadfiles.begin() + position, f);
 	return true;
 }
 

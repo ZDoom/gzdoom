@@ -524,7 +524,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 							else
 							{
 								char *endp;
-								int v = (int)strtoll(sc.String, &endp, 0);
+								v = (int)strtoll(sc.String, &endp, 0);
 								if (*endp != 0)
 								{
 									// special check for font color ranges.
@@ -1140,7 +1140,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 							else
 							{
 								char *endp;
-								int v = (int)strtoll(sc.String, &endp, 0);
+								v = (int)strtoll(sc.String, &endp, 0);
 								if (*endp != 0)
 								{
 									// special check for font color ranges.
@@ -1442,7 +1442,7 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 							else
 							{
 								char* endp;
-								int v = (int)strtoll(sc.String, &endp, 0);
+								v = (int)strtoll(sc.String, &endp, 0);
 								if (*endp != 0)
 								{
 									// special check for font color ranges.

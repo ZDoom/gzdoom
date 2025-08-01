@@ -36,15 +36,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-#include "s_soundinternal.h"
-#include "m_swap.h"
-#include "superfasthash.h"
-#include "s_music.h"
-#include "m_random.h"
-#include "printf.h"
 #include "c_cvars.h"
 #include "gamestate.h"
+#include "i_soundinternal.h"
+#include "m_random.h"
+#include "m_swap.h"
+#include "printf.h"
+#include "s_music.h"
+#include "s_soundinternal.h"
 
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -1009,7 +1008,6 @@ void SoundEngine::RelinkSound (int sourcetype, const void *from, const void *to,
 	}
 }
 
-
 //==========================================================================
 //
 // S_ChangeSoundVolume
@@ -1450,7 +1448,6 @@ void SoundEngine::Reset()
 	RestoreEvictedChannels();
 }
 
-
 //==========================================================================
 //
 // S_FindSound
@@ -1560,7 +1557,6 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 	return id;
 }
 
-
 //==========================================================================
 //
 // S_FindSoundTentative
@@ -1580,7 +1576,6 @@ FSoundID SoundEngine::FindSoundTentative(const char* name, int nearlimit)
 	}
 	return id;
 }
-
 
 //==========================================================================
 //
@@ -1694,7 +1689,6 @@ void SoundEngine::HashSounds()
 	}
 	S_rnd.ShrinkToFit();
 
-
 }
 
 void SoundEngine::AddRandomSound(FSoundID Owner, TArray<FSoundID> list)
@@ -1728,7 +1722,6 @@ void S_SoundReset()
 #include "i_net.h"
 #include "i_interface.h"
 
-
 CCMD(cachesound)
 {
 	if (argv.argc() < 2)
@@ -1745,7 +1738,6 @@ CCMD(cachesound)
 		}
 	}
 }
-
 
 CCMD(listsoundchannels)
 {
@@ -1844,8 +1836,6 @@ void S_SetSoundPaused(int state)
 	}
 }
 
-
-
 CCMD(snd_status)
 {
 	GSnd->PrintStatus();
@@ -1875,5 +1865,4 @@ ADD_STAT(sound)
 {
 	return GSnd->GatherStats();
 }
-
 

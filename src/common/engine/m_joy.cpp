@@ -32,15 +32,19 @@
 */
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
-#include "c_dispatch.h"
-#include "vectors.h"
 #include "m_joy.h"
-#include "configfile.h"
-#include "i_interface.h"
-#include "d_eventbase.h"
+#include <math.h>
+
+#include "c_cvars.h"
+#include "c_dispatch.h"
 #include "cmdlib.h"
+#include "configfile.h"
+#include "d_eventbase.h"
+#include "i_interface.h"
+#include "name.h"
 #include "printf.h"
+#include "vectors.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 

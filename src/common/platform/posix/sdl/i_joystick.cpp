@@ -30,13 +30,14 @@
 **---------------------------------------------------------------------------
 **
 */
+
 #include <SDL.h>
 #include <SDL_gamecontroller.h>
+#include <cstdint>
 #include <cstdlib>
 
 #include "basics.h"
 #include "cmdlib.h"
-
 #include "d_eventbase.h"
 #include "i_input.h"
 #include "m_joy.h"

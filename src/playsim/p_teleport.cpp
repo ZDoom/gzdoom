@@ -28,11 +28,10 @@
 
 #include "d_player.h"
 #include "doomdef.h"
-#include "vm.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
-#include "gi.h"
 #include "r_utility.h"
+#include "vm.h"
 
 #define FUDGEFACTOR		10
 

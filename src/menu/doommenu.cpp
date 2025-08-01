@@ -72,7 +72,6 @@ typedef void(*hfunc)();
 DMenu* CreateMessageBoxMenu(DMenu* parent, const char* message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr);
 bool OkForLocalization(FTextureID texnum, const char* substitute);
 
-
 FNewGameStartup NewGameStartupInfo;
 int LastSkill = -1;
 
@@ -289,7 +288,6 @@ bool M_SetSpecialMenu(FName& menu, int param)
 		}
 	}
 
-
 	// End of special checks
 	return true;
 }
@@ -316,7 +314,6 @@ void OnMenuOpen(bool makeSound)
 		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 }
-
 
 //==========================================================================
 //
@@ -358,7 +355,6 @@ void System_M_Dim()
 
 	Dim(twod, dimmer, amount, 0, 0, twod->GetWidth(), twod->GetHeight());
 }
-
 
 static void M_Quit()
 {
@@ -413,11 +409,8 @@ CCMD (menu_quit)
 		M_Quit();
 	});
 
-
 	M_ActivateMenu(newmenu);
 }
-
-
 
 //=============================================================================
 //
@@ -554,9 +547,6 @@ CCMD (quickload)
 	M_ActivateMenu(newmenu);
 }
 
-
-
-
 //
 //		Toggle messages on/off
 //
@@ -621,7 +611,6 @@ CCMD(resetb2defaults)
 {
 	C_SetDefaultBindings ();
 }
-
 
 //=============================================================================
 //
@@ -1016,7 +1005,6 @@ static void InitKeySections()
 	}
 }
 
-
 //=============================================================================
 //
 // Special menus will be created once all engine data is loaded
@@ -1124,6 +1112,7 @@ DEFINE_ACTION_FUNCTION(DNewPlayerMenu, UpdateSkinOptions)
 // The skill menu must be refeshed each time it starts up
 //
 //=============================================================================
+
 extern int restart;
 
 void M_StartupSkillMenu(FNewGameStartup *gs)

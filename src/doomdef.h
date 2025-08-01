@@ -30,6 +30,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "gi.h"
 #include "i_net.h"
 
 //
@@ -48,7 +50,6 @@ typedef enum
 	undetermined	// Well, no IWAD found.
   
 } GameMode_t;
-
 
 // If rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
@@ -73,8 +74,6 @@ inline int Tics2Seconds(int tics)
 	return tics / TICRATE;
 }
 
-
-
 typedef float skill_t;
 
 /*
@@ -87,8 +86,6 @@ enum ESkillLevels
 	sk_nightmare
 };
 */
-
-
 
 #define TELEFOGHEIGHT			(gameinfo.telefogheight)
 
@@ -272,7 +269,6 @@ enum
 #define ORIG_FRICTION_FACTOR	(2048/65536.)	// original value
 #define FRICTION_LOW			(0xf900/65536.)
 #define FRICTION_FLY			(0xeb00/65536.)
-
 
 #define BLINKTHRESHOLD (4*32)
 

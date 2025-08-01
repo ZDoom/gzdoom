@@ -1,5 +1,5 @@
 /*
-** joystickmenu.cpp
+** joystickmenu.zs
 ** The joystick configuration menus
 **
 **---------------------------------------------------------------------------
@@ -314,7 +314,7 @@ class OptionMenuItemJoyMap : OptionMenuItemOptionBase
 
 //=============================================================================
 //
-// 
+//
 //
 //=============================================================================
 
@@ -351,7 +351,6 @@ class OptionMenuItemInverter : OptionMenuItemOptionBase
 //
 //=============================================================================
 
-
 class OptionMenuJoyEnable : OptionMenuItemOptionBase
 {
 	JoystickConfig mJoy;
@@ -373,7 +372,6 @@ class OptionMenuJoyEnable : OptionMenuItemOptionBase
 		mJoy.SetEnabled(Selection);
 	}
 }
-
 
 class OptionMenuJoyEnableInBackground : OptionMenuItemOptionBase
 {

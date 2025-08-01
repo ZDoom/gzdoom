@@ -32,23 +32,19 @@
 */
 #include <SDL.h>
 #include <SDL_events.h>
-#include "i_input.h"
-#include "c_cvars.h"
-#include "dobject.h"
-#include "m_argv.h"
-#include "m_joy.h"
-#include "v_video.h"
 
-#include "d_gui.h"
 #include "c_buttons.h"
 #include "c_console.h"
-#include "c_dispatch.h"
+#include "c_cvars.h"
+#include "d_gui.h"
 #include "dikeys.h"
-#include "utf8.h"
-#include "keydef.h"
-#include "i_interface.h"
 #include "engineerrors.h"
+#include "i_input.h"
 #include "i_interface.h"
+#include "keydef.h"
+#include "m_joy.h"
+#include "utf8.h"
+#include "v_video.h"
 
 bool GUICapture;
 static bool NativeMouse = true;

@@ -1,11 +1,11 @@
 #ifndef __SNDINT_H
 #define __SNDINT_H
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
-#include "vectors.h"
 #include "tflags.h"
+#include "vectors.h"
 
 enum EChanFlag
 {
@@ -32,6 +32,8 @@ enum EChanFlag
 	CHANF_TRANSIENT = 32768,	// Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
 	CHANF_FORCE = 65536,		// Start, even if sound is paused.
 	CHANF_SINGULAR = 0x20000,		// Only start if no sound of this name is already playing.
+	CHANF_RUMBLE = 0x40000,		// Hint to rumble trigger rumble from sound
+	CHANF_NORUMBLE = 0x80000,		// Disable rumble even if it would normally happen
 };
 
 typedef TFlags<EChanFlag> EChanFlags;
@@ -145,6 +147,5 @@ struct FISoundChannel
 };
 
 void S_SetSoundPaused(int state);
-
 
 #endif

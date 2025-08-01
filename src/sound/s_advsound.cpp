@@ -34,22 +34,19 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-
 #include "actor.h"
 #include "c_dispatch.h"
-#include "filesystem.h"
-#include "gi.h"
-#include "i_sound.h"
 #include "d_netinf.h"
 #include "d_player.h"
-#include "serializer.h"
-#include "v_text.h"
-#include "g_levellocals.h"
-#include "r_data/sprites.h"
-#include "vm.h"
-#include "i_system.h"
-#include "s_music.h"
+#include "filesystem.h"
+#include "gi.h"
 #include "i_music.h"
+#include "i_sound.h"
+#include "m_haptics.h"
+#include "r_data/sprites.h"
+#include "s_music.h"
+#include "serializer.h"
+#include "vm.h"
 
 using namespace FileSys;
 
@@ -148,6 +145,8 @@ enum SICommands
 	SI_Attenuation,
 	SI_PitchSet,
 	SI_ModPlayer,
+	SI_RumbleDef,
+	SI_Rumble,
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -238,6 +237,8 @@ static const char *SICommandStrings[] =
 	"$attenuation",
 	"$pitchset",
 	"$modplayer",
+	"$rumbledef",
+	"$rumble",
 	nullptr
 };
 
@@ -248,7 +249,6 @@ static bool PlayerClassesIsSorted;
 
 static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<FPlayerSoundHashTable> PlayerSounds;
-
 
 static FString DefPlayerClassName;
 static int DefPlayerClass;
@@ -348,6 +348,8 @@ void S_CheckIntegrity()
 			sfx.link = NO_SOUND;	// link to the empty sound.
 		}
 	}
+
+	Joy_ReadyRumbleMapping();
 }
 
 //==========================================================================
@@ -574,6 +576,8 @@ void S_ClearSoundData()
 	MidiDevices.Clear();
 	HexenMusic.Clear();
 	ModPlayers.Clear();
+
+	Joy_ResetRumbleMapping();
 }
 
 //==========================================================================
@@ -1136,6 +1140,63 @@ static void S_AddSNDINFO (int lump)
 			case SI_IfHexen:
 				skipToEndIf = !CheckGame(sc.String+3, true);
 				break;
+
+			case SI_RumbleDef: {
+				// $rumbledef <identifier> <tic_dur> <lo_freq> <hi_freq> <l_trig> <r_trig>
+				// $rumbledef <alias identifier> <actual identifier>
+
+				sc.MustGetString();
+				FString identifier (sc.String);
+
+				sc.GetToken();
+				bool isAlias = sc.TokenType == TK_Identifier;
+				sc.UnGet();
+
+				if (isAlias)
+				{
+					sc.MustGetString();
+					Joy_AddRumbleAlias(identifier, FName(sc.String));
+				}
+				else
+				{
+					sc.MustGetNumber();
+					int duration = sc.Number;
+					sc.MustGetFloat();
+					double low_freq = sc.Float;
+					sc.MustGetFloat();
+					double high_freq = sc.Float;
+					sc.MustGetFloat();
+					double left_trig = sc.Float;
+					sc.MustGetFloat();
+					double right_trig = sc.Float;
+
+					Joy_AddRumbleType(
+						identifier,
+						{ duration, low_freq, high_freq, left_trig, right_trig, }
+					);
+				}
+
+				// if (sc.CheckToken(TK_IntConst))
+				// {
+				// }
+				// else
+				// {
+				// 	Printf("Alias: %s\n", identifier.GetChars());
+				// }
+			}
+			break;
+
+			case SI_Rumble: {
+				// $rumble <sound identifier> <rumble identifier>
+
+				sc.MustGetString();
+				FString sound (sc.String);
+				sc.MustGetString();
+				FString mapping (sc.String);
+
+				Joy_MapRumbleType(sound, mapping);
+			}
+			break;
 			}
 		}
 		else
@@ -1403,7 +1464,6 @@ static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	}
 	return sndnum;
 }
-
 
 //==========================================================================
 //
@@ -1847,7 +1907,6 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Deactivate)
 	return 0;
 }
 
-
 //==========================================================================
 //
 // S_ParseMusInfo
@@ -1888,7 +1947,6 @@ void S_ParseMusInfo()
 		}
 	}
 }
-
 
 DEFINE_ACTION_FUNCTION(DObject, MarkSound)
 {

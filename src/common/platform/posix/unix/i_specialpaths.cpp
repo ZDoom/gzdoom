@@ -74,7 +74,7 @@ FString M_GetDocumentsPath()
 FString M_GetConfigPath()
 {
 	if (std::getenv("XDG_CONFIG_HOME")) {
-		return NicePath("$XDG_CONFIG_HOME");
+		return NicePath("$XDG_CONFIG_HOME/" GAMENAMELOWERCASE);
 	}
 	else
 	{
@@ -180,7 +180,7 @@ FString M_GetCachePath(bool create)
 	// share the node cache.
 	if (std::getenv("XDG_CACHE_HOME"))
 	{
-		path = NicePath("$XDG_CACHE_HOME");
+		path = NicePath("$XDG_CACHE_HOME/zdoom");
 	}
 	else
 	{

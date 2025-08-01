@@ -185,6 +185,16 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 #else
+		// /app/ is the default installation prefix as seen from within a Flatpak sandbox.
+		SetValueForKey("Path", "/app/share/games/doom/soundfonts", true);
+		SetValueForKey("Path", "/app/share/games/doom/fm_banks", true);
+		// XDG_DATA_HOME is a FreeDesktop recommended standard for user data
+		// and used e.g. in Flatpak packages (where it's set to a path that
+		// will persist contents between sessions by default; usually
+		// $HOME/.var/app/[FreeDesktop app ID]/data).
+		// The recommended default otherwise is $HOME/.local/share.
+		SetValueForKey("Path", "$XDG_DATA_HOME/" GAMENAMELOWERCASE "/soundfonts", true);
+		SetValueForKey("Path", "$XDG_DATA_HOME/" GAMENAMELOWERCASE "/fm_banks", true);
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
 		SetValueForKey("Path", "$HOME/.local/share/games/doom/soundfonts", true);

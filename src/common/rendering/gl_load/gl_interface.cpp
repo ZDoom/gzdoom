@@ -47,6 +47,9 @@ RenderContext gl;
 static double realglversion;
 static bool bindless;
 
+FARG(glversion, "", "", "",
+	"");
+
 //==========================================================================
 //
 // 
@@ -115,7 +118,7 @@ void gl_LoadExtensions()
 
 	const char *glversion = (const char*)glGetString(GL_VERSION);
 
-	const char *version = Args->CheckValue("-glversion");
+	const char *version = Args->CheckValue(FArg_glversion);
 	realglversion = strtod(glversion, NULL);
 
 

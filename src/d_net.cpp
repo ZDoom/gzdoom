@@ -81,6 +81,11 @@ EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR (Int, vid_maxfps)
 
+EXTERN_FARG(loadgame);
+
+FARG(extratic, "Multiplayer", "Sends backup commands over the network", "",
+	"Causes " GAMENAME " to send a backup copy of every movement command across the network.");
+
 extern uint8_t		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern FString	savedescription;
 extern FString	savegamefile;
@@ -1838,7 +1843,7 @@ void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 	WriteInt32(rngseed, stream);
 	C_WriteCVars(stream, CVAR_SERVERINFO, true);
 
-	auto load = Args->CheckValue("-loadgame");
+	auto load = Args->CheckValue(FArg_loadgame);
 	if (load != nullptr)
 	{
 		WriteInt8(1, stream);
@@ -1849,6 +1854,7 @@ void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 		WriteInt8(0, stream);
 	}
 }
+
 
 void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 {
@@ -1861,10 +1867,10 @@ void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 		auto load = ReadString(stream);
 		// Don't override the existing argument in case they need to use
 		// a custom savefile name.
-		if (!Args->CheckParm("-loadgame"))
+		if (!Args->CheckParm(FArg_loadgame))
 		{
-			Args->AppendArg("-loadgame");
-			Args->AppendArg(load);
+			Args->AppendArg(FArg_loadgame);
+			Args->AppendRawArg(load);
 		}
 	}
 
@@ -1878,7 +1884,7 @@ bool D_CheckNetGame()
 	if (!I_InitNetwork())
 		return false;
 
-	if (Args->CheckParm("-extratic"))
+	if (Args->CheckParm(FArg_extratic))
 		net_extratic = true;
 
 	players[Net_Arbitrator].settings_controller = true;

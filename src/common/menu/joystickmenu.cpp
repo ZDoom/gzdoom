@@ -134,22 +134,6 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisResponseCurvePoint)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(IJoystickConfig, GetAxisMap)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
-	PARAM_INT(axis);
-	ACTION_RETURN_INT(self->GetAxisMap(axis));
-}
-
-DEFINE_ACTION_FUNCTION(IJoystickConfig, SetAxisMap)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
-	PARAM_INT(axis);
-	PARAM_INT(map);
-	self->SetAxisMap(axis, (EJoyAxis)map);
-	return 0;
-}
-
 DEFINE_ACTION_FUNCTION(IJoystickConfig, GetName)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
@@ -200,6 +184,14 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	PARAM_BOOL(enabled);
 	self->SetEnabledInBackground(enabled);
+	return 0;
+}
+
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, Reset)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	self->Reset();
 	return 0;
 }
 

@@ -35,9 +35,9 @@ jobs:
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk2.0-dev libwebp-dev
           build_type: RelWithDebInfo
 
-        - name: Linux GCC 12
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12
+        - name: Linux GCC Latest
+          os: ubuntu-latest
+          extra_options: -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
           build_type: MinSizeRel
 
@@ -47,10 +47,10 @@ jobs:
           deps_cmdline: sudo apt-get update && sudo apt-get install clang-11 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
           build_type: Debug
 
-        - name: Linux Clang 15
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15
-          deps_cmdline: sudo apt-get update && sudo apt-get install clang-15 libsdl2-dev libvpx-dev libwebp-dev
+        - name: Linux Clang Latest
+          os: ubuntu-latest
+          extra_options: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          deps_cmdline: sudo apt-get update && sudo apt-get install clang libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
 
     steps:

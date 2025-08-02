@@ -241,12 +241,32 @@ class Thinker : Object native play
 	virtual native void Tick();
 	virtual native void PostBeginPlay();
 	virtual void OnLoad() {}
+	native void AddToTravellingList();
 	native void ChangeStatNum(int stat);
+	native clearscope int GetStatNum() const;
 	
 	static clearscope int Tics2Seconds(int tics)
 	{
 		return int(tics / TICRATE);
 	}
+
+	//===========================================================================
+	//
+	// Called before the Thinker moves to another map, in case it needs to do
+	// special clean-up.
+	//
+	//===========================================================================
+
+	virtual void PreTravelled() {}
+
+	//===========================================================================
+	//
+	// Called after the Thinker moved to another map, in case it needs to do
+	// special reinitialization.
+	//
+	//===========================================================================
+
+	virtual void Travelled() {}
 
 }
 

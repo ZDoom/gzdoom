@@ -78,6 +78,7 @@ struct FStartupSelectionInfo
 	FString DefaultLanguage = "auto";
 	int DefaultBackend = 1;
 	bool DefaultFullscreen = true;
+	int DefaultFileLoadBehaviour = 0;
 
 	// Net game info
 	int DefaultNetIWAD = 0;

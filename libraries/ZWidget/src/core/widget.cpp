@@ -1,4 +1,3 @@
-
 #include "core/widget.h"
 #include "core/timer.h"
 #include "core/colorf.h"
@@ -34,6 +33,12 @@ Widget::Widget(Widget* parent, WidgetType type, RenderAPI renderAPI) : Type(type
 
 Widget::~Widget()
 {
+	for (auto subscription: Subscriptions)
+		subscription->Subscribers.erase(this);
+
+	for (auto subscriber: Subscribers)
+		subscriber->Subscriptions.erase(this);
+
 	if (DispCanvas)
 		DispCanvas->detach();
 
@@ -44,6 +49,24 @@ Widget::~Widget()
 		delete FirstTimerObj;
 
 	DetachFromParent();
+}
+
+void Widget::Subscribe(Widget* subscriber)
+{
+	Subscribers.insert(subscriber);
+	subscriber->Subscriptions.insert(this);
+}
+
+void Widget::Unsubscribe(Widget* subscriber)
+{
+	Subscribers.erase(subscriber);
+	subscriber->Subscriptions.erase(this);
+}
+
+void Widget::NotifySubscribers(const WidgetEvent type)
+{
+	for (auto subscriber: Subscribers)
+		subscriber->Notify(this, type);
 }
 
 void Widget::SetCanvas(std::unique_ptr<Canvas> canvas)
@@ -206,10 +229,12 @@ void Widget::Show()
 	if (Type != WidgetType::Child)
 	{
 		DispWindow->Show();
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 	}
 	else if (HiddenFlag)
 	{
 		HiddenFlag = false;
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 		Update();
 	}
 }
@@ -260,11 +285,15 @@ void Widget::Hide()
 	if (Type != WidgetType::Child)
 	{
 		if (DispWindow)
+		{
 			DispWindow->Hide();
+			NotifySubscribers(WidgetEvent::VisibilityChange);
+		}
 	}
 	else if (!HiddenFlag)
 	{
 		HiddenFlag = true;
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 		Update();
 	}
 }

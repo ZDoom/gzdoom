@@ -32,25 +32,25 @@ jobs:
         - name: Linux GCC 9
           os: ubuntu-22.04
           extra_options: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
-          deps_cmdline: sudo apt update && sudo apt install libsdl2-dev libvpx-dev libgtk2.0-dev libwebp-dev
+          deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk2.0-dev libwebp-dev
           build_type: RelWithDebInfo
 
         - name: Linux GCC 12
           os: ubuntu-22.04
           extra_options: -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12
-          deps_cmdline: sudo apt update && sudo apt install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
+          deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
           build_type: MinSizeRel
 
         - name: Linux Clang 11
           os: ubuntu-22.04
           extra_options: -DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11 -DDYN_OPENAL=OFF
-          deps_cmdline: sudo apt update && sudo apt install clang-11 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
+          deps_cmdline: sudo apt-get update && sudo apt-get install clang-11 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
           build_type: Debug
 
         - name: Linux Clang 15
           os: ubuntu-22.04
           extra_options: -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15
-          deps_cmdline: sudo apt update && sudo apt install clang-15 libsdl2-dev libvpx-dev libwebp-dev
+          deps_cmdline: sudo apt-get update && sudo apt-get install clang-15 libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
 
     steps:

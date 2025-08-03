@@ -159,7 +159,7 @@ FString stb_include_string(FString str, FString filename, TArray<FString> &filen
     filenames.Push(filename);
     size_t curIndex = filenames.Size();
 
-    text.AppendFormat("\n#line 1 %d // %s\n", curIndex, filename.GetChars());
+    text.AppendFormat("\n#line 1 %zu // %s\n", curIndex, filename.GetChars());
 
     for (int64_t i = 0; i < num; ++i)
     {
@@ -172,7 +172,7 @@ FString stb_include_string(FString str, FString filename, TArray<FString> &filen
         }
         text += inc;
 
-        text.AppendFormat("\n#line %d %d // %s\n", inc_list[i].next_line_after, curIndex, filename.GetChars());
+        text.AppendFormat("\n#line %zu %zu // %s\n", inc_list[i].next_line_after, curIndex, filename.GetChars());
         // no newlines, because we kept the #include newlines, which will get appended next
         last = inc_list[i].end;
     }

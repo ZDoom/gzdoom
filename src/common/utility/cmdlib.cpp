@@ -152,6 +152,38 @@ bool FileExists (const char *filename)
 
 //==========================================================================
 //
+// RecursiveFileExists
+//
+// Returns the path to the file if it was found within a subdirectory,
+// otherwise returning an empty string.
+//
+//==========================================================================
+
+FString RecursiveFileExists(const FString& path, const FString& file)
+{
+	if (FileExists(path + "/" + file))
+		return path + "/" + file;
+
+	// If we couldn't find it in the base directory, time to start searching.
+	FileSys::FileList list;
+	if (FileSys::ScanDirectory(list, path.GetChars(), "*"))
+	{
+		for (auto& entry : list)
+		{
+			if (entry.isDirectory && !entry.isHidden && !entry.isSystem)
+			{
+				FStringf f("%s/%s", entry.FilePath.c_str(), file.GetChars());
+				if (FileExists(f))
+					return f;
+			}
+		}
+	}
+
+	return "";
+}
+
+//==========================================================================
+//
 // FileReadable
 //
 // Returns true if the file can be read.

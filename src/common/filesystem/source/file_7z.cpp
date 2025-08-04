@@ -337,7 +337,7 @@ FileData F7ZFile::Read(uint32_t entry)
 FileReader F7ZFile::GetEntryReader(uint32_t entry, int, int)
 {
 	FileReader fr;
-	if (entry < 0 || entry >= NumLumps) return fr;
+	if (entry >= NumLumps) return fr;
 	auto buffer = Read(entry);
 	if (buffer.size() > 0)
 		fr.OpenMemoryArray(buffer);

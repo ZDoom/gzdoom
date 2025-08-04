@@ -263,6 +263,25 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 					}
 				}
 			}
+			else if (stricmp(key, "RecursivePath") == 0)
+			{
+				FString dir;
+
+				dir = NicePath(value);
+				if (dir.IsNotEmpty())
+				{
+					if (dir.Back() == '/')
+						dir.Truncate(dir.Len() - 1);
+
+					// Folders can't be used here since those are going to be checked
+					// recursively, so only find actual files.
+					FString path = RecursiveFileExists(dir, file);
+					if (path.IsNotEmpty())
+					{
+						return path.GetChars();
+					}
+				}
+			}
 		}
 	}
 

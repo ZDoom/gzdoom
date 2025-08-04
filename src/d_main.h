@@ -123,6 +123,7 @@ class FIWadManager
 	TArray<FIWADInfo> mIWadInfos;
 	TArray<FString> mIWadNames;
 	TArray<FString> mSearchPaths;
+	TArray<FString> mRecursiveSearchPaths;
 	TArray<FString> mOrderNames;
 	TArray<FFoundWadInfo> mFoundWads;
 	TArray<int> mLumpsFound;
@@ -132,7 +133,7 @@ class FIWadManager
 	int CheckIWADInfo(const char *iwad);
 	int IdentifyVersion (std::vector<std::string>& wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
 	void CollectSearchPaths();
-	void AddIWADCandidates(const char *dir);
+	void AddIWADCandidates(const char *dir, bool nosubdir = true);
 	void ValidateIWADs();
 	FString IWADPathFileSearch(const FString &file);
 public:

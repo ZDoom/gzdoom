@@ -219,7 +219,9 @@ find_package( VPX )
 if (NOT FORCE_INTERNAL_CPPDAP)
 	find_package( cppdap CONFIG )
 endif()
-find_package( ZMusic )
+if (NOT FORCE_INTERNAL_ZMUSIC)
+	find_package( ZMusic )
+endif()
 
 include( TargetArch )
 
@@ -337,9 +339,9 @@ set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_C_F
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
+option(FORCE_INTERNAL_ZMUSIC "Use internal zmusic")
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 option(FORCE_INTERNAL_CPPDAP "Use internal cppdap" ON)
-
 
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 

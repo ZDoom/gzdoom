@@ -202,7 +202,7 @@ int DoMain (HINSTANCE hInstance)
 
 		if (GetConsoleMode(StdOut, &mode))
 		{
-			if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+			if (SetConsoleMode(StdOut, mode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 				FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
 		}
 	}
@@ -247,7 +247,7 @@ int DoMain (HINSTANCE hInstance)
 				DWORD mode;
 				if (GetConsoleMode(StdOut, &mode))
 				{
-					if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+					if (SetConsoleMode(StdOut, mode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 						FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
 				}
 			}

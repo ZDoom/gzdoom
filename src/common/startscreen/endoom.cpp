@@ -73,6 +73,8 @@ CUSTOM_CVAR(Int, showendoom, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else if (self > 2) self=2;
 }
 
+CVAR(Bool, consoleendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -192,9 +194,30 @@ int RunEndoom()
 	return 0;
 }
 
+void vga_to_ansi(const uint8_t *buf);
+
+void ConsoleEndoom()
+{
+	if (!consoleendoom || endoomName.Len() == 0)
+		return;
+
+	uint8_t buffer[4000];
+
+	int endoom_lump = fileSystem.CheckNumForFullName (endoomName.GetChars(), true);
+	
+	if (endoom_lump < 0 || fileSystem.FileLength (endoom_lump) != 4000)
+	{
+		return;
+	}
+	fileSystem.ReadFile(endoom_lump, buffer);
+
+	vga_to_ansi(buffer);
+}
+
 [[noreturn]]
 void ST_Endoom()
 {
+	ConsoleEndoom();
 	int code = RunEndoom();
 	throw CExitEvent(code);
 }

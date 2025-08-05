@@ -58,13 +58,16 @@
 
 extern FILE* Logfile;
 
+void ConsoleEndoom();
 CCMD (quit)
 {
+	ConsoleEndoom();
 	throw CExitEvent(0);
 }
 
 CCMD (exit)
 {
+	ConsoleEndoom();
 	throw CExitEvent(0);
 }
 

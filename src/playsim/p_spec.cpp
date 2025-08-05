@@ -164,10 +164,10 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	// [MK] Use WorldLinePreActivated to decide if activation should continue
 	bool shouldactivate = true;
 	Level->localEventManager->WorldLinePreActivated(line, mo, activationType, &shouldactivate);
-	if ( !shouldactivate ) return false;
+	if (!shouldactivate) return false;
 
 	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
-	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
+	if (line->locknumber > 0 && !P_CheckKeys(mo, line->locknumber, remote)) return false;
 
 	uint8_t special = line->special;
 	INTBOOL repeat = line->flags & ML_REPEAT_SPECIAL;
@@ -190,7 +190,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	if (buttonSuccess) Level->localEventManager->WorldLineActivated(line, mo, activationType);
 
 	// clear the special on non-retriggerable lines
-	if (!repeat && (buttonSuccess || switchWasAnimated))
+	if (!repeat && buttonSuccess)
 	{
 		line->special = 0;
 	}

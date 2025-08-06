@@ -50,7 +50,7 @@ public:
 
 	virtual ~FStartupScreen() = default;
 
-	virtual void Progress() {}
+	virtual void Progress(int advance = 1) {}
 	virtual void AppendStatusLine(const char* status) {}
 	virtual void LoadingStatus(const char* message, int colors) {}
 
@@ -77,7 +77,7 @@ public:
 	FBasicStartupScreen(int max_progress);
 	~FBasicStartupScreen();
 
-	void Progress() override;
+	void Progress(int advance = 1) override;
 
 	void NetInit(const char* message, bool host) override;
 	void NetMessage(const char* message) override;

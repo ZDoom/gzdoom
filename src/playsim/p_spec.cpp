@@ -172,15 +172,11 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	uint8_t special = line->special;
 	INTBOOL repeat = line->flags & ML_REPEAT_SPECIAL;
 	bool buttonSuccess = false;
-	bool switchWasAnimated = false;
 
 	// First, animate the switch if it's a clickable action
 	if (activationType == SPAC_Use || activationType == SPAC_Impact || activationType == SPAC_Push)
 	{
-		if (P_ChangeSwitchTexture(line->sidedef[0], repeat, special))
-		{
-			switchWasAnimated = true;
-		}
+		P_ChangeSwitchTexture(line->sidedef[0], repeat, special);
 	}
 
 	// The basic logic of the special action is fulfilled
@@ -196,11 +192,11 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	}
 	
 	// some old WADs use this method to create walls that change the texture when shot.
-	if (!buttonSuccess && !switchWasAnimated && activationType == SPAC_Impact &&	// only for shootable triggers
+	if (!buttonSuccess && activationType == SPAC_Impact &&	// only for shootable triggers
 		(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&					// this is only a compatibility setting for an old hack!
-		!repeat &&													// only non-repeatable triggers
+		!repeat &&												// only non-repeatable triggers
 		(special < Generic_Floor || special > Generic_Crusher) &&	// not for Boom's generalized linedefs
-		special &&													// not for lines without a special
+		special &&												// not for lines without a special
 		Level->LineHasId(line, line->args[0]) &&					// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
 		line->args[0] &&											// only if there's a tag (which is stored in the first arg)
 		Level->FindFirstSectorFromTag(line->args[0]) == -1)			// only if no sector is tagged to this linedef
@@ -208,17 +204,18 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		if (P_ChangeSwitchTexture(line->sidedef[0], repeat, special))
 		{
 			line->special = 0;
+			buttonSuccess = true;
 		}
 	}
 	
 // end of changed code
 
-	if (developer >= DMSG_SPAMMY && (buttonSuccess || switchWasAnimated))
+	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
 		Printf ("Line special %d activated on line %i\n", special, line->Index());
 	}
 	
-	return (buttonSuccess || switchWasAnimated);
+	return buttonSuccess;
 }
 
 DEFINE_ACTION_FUNCTION(_Line, Activate)

@@ -75,6 +75,10 @@ CUSTOM_CVAR(Int, showendoom, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Bool, consoleendoom, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+#ifdef _WIN32
+extern bool FancyStdOut;
+#endif
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -198,6 +202,12 @@ void vga_to_ansi(const uint8_t *buf);
 
 void ConsoleEndoom()
 {
+#ifdef _WIN32
+	// old versions of Windows don't get an ansi endoom
+	if (!FancyStdOut)
+		return;
+#endif
+
 	if (!consoleendoom || endoomName.Len() == 0)
 		return;
 

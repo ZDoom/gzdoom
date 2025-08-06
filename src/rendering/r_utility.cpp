@@ -550,7 +550,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 			const int prevPortalGroup = viewLvl->PointInRenderSubsector(iView->Old.Pos)->sector->PortalGroup;
 			const int curPortalGroup = viewLvl->PointInRenderSubsector(iView->New.Pos)->sector->PortalGroup;
 
-			if (viewPoint.IsAllowedOoB() && prevPortalGroup != curPortalGroup) viewPoint.Pos = iView->New.Pos;
+			if (viewPoint.bDoOob && prevPortalGroup != curPortalGroup) viewPoint.Pos = iView->New.Pos;
 			else
 			{
 				const DVector2 portalOffset = viewLvl->Displacements.getOffset(prevPortalGroup, curPortalGroup);
@@ -567,7 +567,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewPoint.sector = viewLvl->PointInRenderSubsector(viewPoint.Pos)->sector;
-	if (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer())
+	if (!viewPoint.bDoOob || !V_IsHardwareRenderer())
 	{
 		bool moved = false;
 		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
@@ -712,7 +712,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	ViewVector3D.Y = v.Y * PitchCos;
 	ViewVector3D.Z = -PitchSin;
 
-	if (IsOrtho() || IsAllowedOoB()) // These auto-ensure that camera and camera->ViewPos exist
+	if (bDoOrtho || bDoOob) // These auto-ensure that camera and camera->ViewPos exist
 	{
 		if (camera->tracer != NULL)
 		{
@@ -724,7 +724,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 		}
 	}
 
-	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
+	if (bDoOrtho && (camera->ViewPos->Offset.XY().Length() > 0.0))
 	{
 		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length() / tan (FieldOfView.Radians()*0.5); // [DVR] Estimated. +/-1 should be top/bottom of screen.
 		ScreenProjX = ScreenProj * 0.5 / viewWindow.WidescreenRatio;
@@ -953,6 +953,9 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	if (viewPoint.camera == nullptr)
 		I_Error("You lost your body. Bad dehacked work is likely to blame.");
 
+	viewPoint.bDoOob = viewPoint.IsAllowedOoB();
+	viewPoint.bDoOrtho = viewPoint.IsOrtho();
+
 	InterpolationViewer* const iView = FindPastViewer(viewPoint.camera);
 	// Always reset these back to zero.
 	iView->ViewOffset.Zero();
@@ -1101,14 +1104,14 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 
 	// Keep the view within the sector's floor and ceiling
 	// But allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using hardware renderer
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!viewPoint.bDoOob || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->ceilingplane.ZatPoint(viewPoint.Pos) - 4.0;
 		if (viewPoint.Pos.Z > z)
 			viewPoint.Pos.Z = z;
 	}
 
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!viewPoint.bDoOob || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->floorplane.ZatPoint(viewPoint.Pos) + 4.0;
 		if (viewPoint.Pos.Z < z)

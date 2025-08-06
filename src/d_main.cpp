@@ -735,6 +735,7 @@ CVAR (Flag, compat_nombf21,				compatflags2, COMPATF2_NOMBF21);
 CVAR (Flag, compat_voodoozombies,		compatflags2, COMPATF2_VOODOO_ZOMBIES);
 CVAR (Flag, compat_fdteleport,			compatflags2, COMPATF2_FDTELEPORT);
 CVAR (Flag, compat_novdolllockmsg,		compatflags2, COMPATF2_NOVDOLLLOCKMSG);
+CVAR (Flag, compat_animateswitchfirst,	compatflags2, COMPATF2_ANIMATESWITCHFIRST);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 

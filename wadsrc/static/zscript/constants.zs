@@ -1483,6 +1483,7 @@ enum ECompatFlags
 	COMPATF2_STAYONLIFT		= 1 << 13,	// yet another MBF thing.
 	COMPATF2_NOMBF21		= 1 << 14,	// disable MBF21 features that may clash with certain maps
 	COMPATF2_VOODOO_ZOMBIES = 1 << 15,  // allow playerinfo, playerpawn, and voodoo health to all be different, and allow monster targetting of 'dead' players that have positive health
+	COMPATF2_ANIMATESWITCHFIRST = 1 << 19, // Animate switch textures before executing the line special.
 };
 
 enum HitWaterFlags

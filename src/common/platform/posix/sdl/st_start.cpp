@@ -53,7 +53,7 @@ class FTTYStartupScreen : public FStartupScreen
 		FTTYStartupScreen(int max_progress);
 		~FTTYStartupScreen();
 
-		void Progress() override;
+		void Progress(int amount = 1) override;
 
 		void NetInit(const char* message, bool host) override;
 		void NetMessage(const char* message) override;
@@ -137,12 +137,9 @@ FTTYStartupScreen::~FTTYStartupScreen()
 //
 //===========================================================================
 
-void FTTYStartupScreen::Progress()
+void FTTYStartupScreen::Progress(int advance)
 {
-	if (CurPos < MaxPos)
-	{
-		++CurPos;
-	}
+	CurPos = min(CurPos + advance, MaxPos);
 	RedrawProgressBar(CurPos, MaxPos);
 }
 
@@ -240,6 +237,7 @@ void FTTYStartupScreen::NetProgress(int cur, int limit)
 
 void FTTYStartupScreen::NetDone()
 {	
+	CurPos = MaxPos;
 	CleanProgressBar();
 	// Restore stdin settings
 	if (DidNetInit)

@@ -216,10 +216,15 @@ void CleanProgressBar()
 }
 
 static int ProgressBarCurPos, ProgressBarMaxPos;
+static bool ProgressBarComplete;
 
 void RedrawProgressBar(int CurPos, int MaxPos)
 {
 	if (!isatty(STDOUT_FILENO)) return;
+
+	if (ProgressBarComplete && CurPos >= MaxPos) return;
+	ProgressBarComplete = CurPos >= MaxPos; // draw once
+
 	CleanProgressBar();
 	struct winsize sizeOfWindow;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizeOfWindow);

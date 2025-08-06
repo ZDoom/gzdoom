@@ -3366,7 +3366,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 	if (!restart)
 	{
-		StartWindow = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
+		StartWindow = FStartupScreen::CreateInstance(max_progress);
 	}
 	else
 	{
@@ -3581,7 +3581,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		}
 
 		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
+		if (!batchrun) Printf ("Init complete.\n");
 
+		StartWindow->Progress(max_progress);
 		if (StartScreen)
 		{
 			StartScreen->Progress(max_progress);	// advance progress bar to the end.

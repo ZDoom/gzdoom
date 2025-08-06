@@ -547,7 +547,7 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				mat.Translate(-center.X, -center.Z, -center.Y);
 			}
 
-			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
+			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.bDoOrtho)
 			{
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				mat.Translate(center.X, center.Z, center.Y);
@@ -952,7 +952,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		bool mirror = false;
 		bool backfaced = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
+		if (di->Viewpoint.bDoOrtho) ang = vp.Angles.Yaw;
 		else if (actor && thing->renderflags2 & RF2_ANGLEDROLL)
 		{
 			Matrix3x4 rolltilt;

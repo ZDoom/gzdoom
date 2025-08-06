@@ -532,7 +532,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	//
 	//
-	if ((which & SSRF_RENDERFLOOR) && (vp.IsOrtho() ? vp.ViewVector3D.dot(frontsector->floorplane.Normal()) < 0.0 : frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z) && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))
+	if ((which & SSRF_RENDERFLOOR) && (vp.bDoOrtho ? vp.ViewVector3D.dot(frontsector->floorplane.Normal()) < 0.0 : frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z) && (!section || !(section->flags & FSection::DONTRENDERFLOOR)))
 	{
 		// process the original floor first.
 
@@ -590,7 +590,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 	//
 	// 
 	//
-	if ((which & SSRF_RENDERCEILING) && (vp.IsOrtho() ? vp.ViewVector3D.dot(frontsector->ceilingplane.Normal()) < 0.0 : frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z) && (!section || !(section->flags & FSection::DONTRENDERCEILING)))
+	if ((which & SSRF_RENDERCEILING) && (vp.bDoOrtho ? vp.ViewVector3D.dot(frontsector->ceilingplane.Normal()) < 0.0 : frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z) && (!section || !(section->flags & FSection::DONTRENDERCEILING)))
 	{
 		// process the original ceiling first.
 
@@ -675,7 +675,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
 					if (ff_top < lastceilingheight)
 					{
-						if ((vp.IsOrtho() ? vp.ViewVector3D.dot(rover->top.plane->Normal()) > 0.0 : vp.Pos.Z <= rover->top.plane->ZatPoint(vp.Pos)))
+						if ((vp.bDoOrtho ? vp.ViewVector3D.dot(rover->top.plane->Normal()) > 0.0 : vp.Pos.Z <= rover->top.plane->ZatPoint(vp.Pos)))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -689,7 +689,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
 					if (ff_bottom < lastceilingheight)
 					{
-						if ((vp.IsOrtho() ? vp.ViewVector3D.dot(rover->bottom.plane->Normal()) > 0.0 : vp.Pos.Z <= rover->bottom.plane->ZatPoint(vp.Pos)))
+						if ((vp.bDoOrtho ? vp.ViewVector3D.dot(rover->bottom.plane->Normal()) > 0.0 : vp.Pos.Z <= rover->bottom.plane->ZatPoint(vp.Pos)))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -715,7 +715,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
 					if (ff_bottom > lastfloorheight || (rover->flags&FF_FIX))
 					{
-						if ((vp.IsOrtho() ? vp.ViewVector3D.dot(rover->bottom.plane->Normal()) > 0.0 : vp.Pos.Z >= rover->bottom.plane->ZatPoint(vp.Pos)))
+						if ((vp.bDoOrtho ? vp.ViewVector3D.dot(rover->bottom.plane->Normal()) > 0.0 : vp.Pos.Z >= rover->bottom.plane->ZatPoint(vp.Pos)))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -736,7 +736,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
 					if (ff_top > lastfloorheight)
 					{
-						if ((vp.IsOrtho() ? vp.ViewVector3D.dot(rover->top.plane->Normal()) > 0.0 : vp.Pos.Z >= rover->top.plane->ZatPoint(vp.Pos)))
+						if ((vp.bDoOrtho ? vp.ViewVector3D.dot(rover->top.plane->Normal()) > 0.0 : vp.Pos.Z >= rover->top.plane->ZatPoint(vp.Pos)))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;

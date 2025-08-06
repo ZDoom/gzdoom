@@ -1193,7 +1193,7 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_utility.cpp
 )
 
-if( ZMUSIC_SYSTEM_INSTALL OR BUILD_SHARED_LIBS)
+if( ZMUSIC_SYSTEM_INSTALL OR NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
 	set ( PCH_SOURCES ${PCH_SOURCES} common/utility/i_module.cpp )
 endif()
 

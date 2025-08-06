@@ -52,6 +52,7 @@
 #include "i_system.h"
 #include "i_interface.h"
 #include "printf.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -76,6 +77,8 @@ int GameMain();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+extern const char * const BACKEND = "SDL2";
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 FString sys_ostype;
 
@@ -95,7 +98,7 @@ static int GetCrashInfo (char *buffer, char *end)
 	return strlen(buffer);
 }
 
-void I_DetectOS()
+FString I_DetectOS()
 {
 	FString operatingSystem;
 
@@ -140,8 +143,10 @@ void I_DetectOS()
 		sys_ostype.Format("%s %s on %s", unameInfo.sysname, unameInfo.release, unameInfo.machine);
 	}
 
-	if (operatingSystem.Len() > 0)
-		Printf("OS: %s\n", operatingSystem.GetChars());
+	if (operatingSystem.Len() == 0)
+		operatingSystem = "Unknown";
+
+	return operatingSystem;
 }
 
 void I_StartupJoysticks();
@@ -154,9 +159,6 @@ int main (int argc, char **argv)
 		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", GetCrashInfo);
 	}
 #endif // !__APPLE__
-
-	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
-		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
 	// Set LC_NUMERIC environment variable in case some library decides to
@@ -171,8 +173,6 @@ int main (int argc, char **argv)
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
 	}
-
-	printf("\n");
 
 	Args = new FArgs(argc, argv);
 

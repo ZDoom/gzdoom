@@ -150,7 +150,7 @@ static HCURSOR CustomCursor;
 //
 //==========================================================================
 
-void I_DetectOS(void)
+FString I_DetectOS(void)
 {
 	OSVERSIONINFOEX info;
 	const char *osname;
@@ -204,12 +204,14 @@ void I_DetectOS(void)
 		break;
 	}
 
-	if (!batchrun) Printf ("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
-			osname,
-			info.dwMajorVersion, info.dwMinorVersion,
-			info.dwBuildNumber, info.szCSDVersion);
+	auto nicename = FStringf("Windows %s (NT %lu.%lu) Build %lu %s",
+		osname,
+		info.dwMajorVersion, info.dwMinorVersion,
+		info.dwBuildNumber, info.szCSDVersion);
 
 	sys_ostype = osname;
+
+	return nicename;
 }
 
 //==========================================================================

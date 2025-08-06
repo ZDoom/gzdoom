@@ -3,6 +3,7 @@
 
 #include "basics.h"
 #include "keydef.h"
+#include "m_argv.h"
 #include "tarray.h"
 #include "c_cvars.h"
 
@@ -95,6 +96,7 @@ struct IJoystickConfig
 };
 
 EXTERN_CVAR(Bool, use_joystick);
+EXTERN_FARG(nojoy);
 
 bool M_LoadJoystickConfig(IJoystickConfig *joy);
 void M_SaveJoystickConfig(IJoystickConfig *joy);

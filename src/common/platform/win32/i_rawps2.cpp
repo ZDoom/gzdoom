@@ -236,6 +236,8 @@ struct PS2Descriptor
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+EXTERN_FARG(nojoy);
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CUSTOM_CVAR(Bool, joy_ps2raw, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -1459,7 +1461,7 @@ void FRawPS2Manager::DoRegister()
 
 void I_StartupRawPS2()
 {
-	if (!joy_ps2raw || !use_joystick || Args->CheckParm("-nojoy"))
+	if (!joy_ps2raw || !use_joystick || Args->CheckParm(FArg_nojoy))
 	{
 		if (JoyDevices[INPUT_RawPS2] != NULL)
 		{

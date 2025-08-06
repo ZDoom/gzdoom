@@ -3793,7 +3793,7 @@ static int D_DoomMain_Internal (void)
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
 
-	bool should_debug = vm_debug.get();
+	bool should_debug = vm_debug;
 	const char * debug_port_arg = Args->CheckValue("-debug");
 	if (debug_port_arg) {
 		should_debug = true;

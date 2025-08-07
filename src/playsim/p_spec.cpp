@@ -204,7 +204,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		}
 		
 		// Handle the legacy DUMMYSWITCHES hack.
-		if (!buttonSuccess && !switchWasAnimated && activationType == SPAC_Impact &&
+		if (!buttonSuccess && activationType == SPAC_Impact &&
 			(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&
 			!repeat &&
 			(special < Generic_Floor || special > Generic_Crusher) &&
@@ -213,12 +213,13 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 			line->args[0] &&
 			Level->FindFirstSectorFromTag(line->args[0]) == -1)
 		{
-			if (P_ChangeSwitchTexture(line->sidedef[0], repeat, special))
+			// Only animate if it wasn't already animated.
+			if (!switchWasAnimated)
 			{
-				line->special = 0;
-				// This hack's only purpose is to animate, so consider it a success.
-				buttonSuccess = true;
+				P_ChangeSwitchTexture(line->sidedef[0], repeat, special);
 			}
+			// But always clear the special, just like in the original code.
+			line->special = 0;
 		}
 	}
 	else
@@ -249,21 +250,19 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 			line->args[0] &&
 			Level->FindFirstSectorFromTag(line->args[0]) == -1)
 		{
-			if(P_ChangeSwitchTexture (line->sidedef[0], repeat, special))
-			{
-				line->special = 0;
-				buttonSuccess = true;
-			}
+			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
+			line->special = 0;
 		}
 	}
 
-	// The debug message and return value must only reflect the success of the special action.
+	// The debug message should only trigger on actual success of the special.
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
 		Printf ("Line special %d activated on line %i\n", special, line->Index());
 	}
 	
-	return buttonSuccess;
+	// The function should always return true if the initial checks passed,
+	return true;
 }
 
 DEFINE_ACTION_FUNCTION(_Line, Activate)

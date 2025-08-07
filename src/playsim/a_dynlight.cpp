@@ -671,9 +671,10 @@ void FDynamicLight::UnlinkLight()
 		auto sidedef = touchlists.wall_tlist[i];
 		if (!sidedef) continue;
 		
-		assert(Level->lightlists.wall_dlist.SSize() < sidedef->Index());
-
-		Level->lightlists.wall_dlist[sidedef->Index()].Remove(this);
+		if(Level->lightlists.wall_dlist.SSize() < sidedef->Index())
+		{
+			Level->lightlists.wall_dlist[sidedef->Index()].Remove(this);
+		}
 	}
 
 	for(int i = 0; i < touchlists.flat_tlist.SSize(); i++)
@@ -681,9 +682,10 @@ void FDynamicLight::UnlinkLight()
 		auto sec = touchlists.flat_tlist[i];
 		if (!sec) continue;
 
-		assert(Level->lightlists.flat_dlist.SSize() < sec->Index());
-
-		Level->lightlists.flat_dlist[sec->Index()].Remove(this);
+		if(Level->lightlists.flat_dlist.SSize() < sec->Index())
+		{
+			Level->lightlists.flat_dlist[sec->Index()].Remove(this);
+		}
 	}
 
 	touchlists.flat_tlist.Clear();

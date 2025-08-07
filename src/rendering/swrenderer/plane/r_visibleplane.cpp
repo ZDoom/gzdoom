@@ -76,10 +76,10 @@ namespace swrenderer
 			return; // [SP] no dynlights if invul or lightamp
 
 		auto Level = sec->sector->Level;
-		auto flatLightList = Level->lightlists.flat_dlist.CheckKey(sec);
-		if (flatLightList)
+
+		if (Level->lightlists.flat_dlist.SSize() > sec->Index())
 		{
-			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(Level->lightlists.flat_dlist[sec->Index()]);
 			TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 			while (it.NextPair(pair))
 			{

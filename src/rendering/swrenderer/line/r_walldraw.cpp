@@ -224,10 +224,10 @@ namespace swrenderer
 		else if (curline && curline->sidedef)
 		{
 			auto Level = curline->Subsector->sector->Level;
-			auto wallLightList = Level->lightlists.wall_dlist.CheckKey(curline->sidedef);
-			if (wallLightList)
+
+			if (Level->lightlists.wall_dlist.SSize() > curline->sidedef->Index())
 			{
-				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*wallLightList);
+				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(Level->lightlists.wall_dlist[curline->sidedef->Index()]);
 				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 				while (it.NextPair(pair))
 				{

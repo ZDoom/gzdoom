@@ -61,8 +61,8 @@
 
 struct FGlobalDLightLists
 {
-	TMap<FSection*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
-	TMap<side_t*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
+	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
+	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
 };
 
 //============================================================================

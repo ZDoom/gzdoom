@@ -405,36 +405,14 @@ public:
 	// exact = false returns the closest match, to be used for, ex., insertions, exact = true returns Size() when no match, like Find does
 	unsigned int SortedFind(const T& item, bool exact = true) const
 	{
-		if(Count == 0) return 0;
-		if(Count == 1) return (item < Array[0]) ? 0 : 1;
-
-		unsigned int lo = 0;
-		unsigned int hi = Count - 1;
-
-		while(lo <= hi)
-		{
-			int mid = lo + ((hi - lo) / 2);
-
-			if(Array[mid] < item)
-			{
-				lo = mid + 1;
-			}
-			else if(item < Array[mid])
-			{
-				hi = mid - 1;
-			}
-			else
-			{
-				return mid;
-			}
-		}
+		unsigned int index = (std::lower_bound(begin(), end(), item) - begin());
 		if(exact)
 		{
-			return Count;
+			return (index < Count && Array[index] == item) ? index : Count;
 		}
 		else
 		{
-			return (lo == Count || (item < Array[lo])) ? lo : lo + 1;
+			return index;
 		}
 	}
 
@@ -444,37 +422,14 @@ public:
 	template<typename Func>
 	unsigned int SortedFind(const T& item, Func &&lt, bool exact = true) const
 	{
-		if(Count == 0) return 0;
-		if(Count == 1) return lt(item, Array[0]) ? 0 : 1;
-
-		unsigned int lo = 0;
-		unsigned int hi = Count - 1;
-
-		while(lo <= hi)
-		{
-			int mid = lo + ((hi - lo) / 2);
-
-			if(std::invoke(lt, Array[mid], item))
-			{
-				lo = mid + 1;
-			}
-			else if(std::invoke(lt, item, Array[mid]))
-			{
-				if(mid == 0) break; // prevent negative overflow due to unsigned numbers
-				hi = mid - 1;
-			}
-			else
-			{
-				return mid;
-			}
-		}
+		unsigned int index = (std::lower_bound(begin(), end(), item, lt) - begin());
 		if(exact)
 		{
-			return Count;
+			return (index < Count && !std::invoke(lt, Array[index], item) && !std::invoke(lt, item, Array[index])) ? index : Count;
 		}
 		else
 		{
-			return (lo == Count || std::invoke(lt, item, Array[lo])) ? lo : lo + 1;
+			return index;
 		}
 	}
 

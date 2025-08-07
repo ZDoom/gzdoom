@@ -199,8 +199,8 @@ struct FLightNode
 
 struct FDynamicLightTouchLists
 {
-	TMap<FSection*, FSection*> flat_tlist;
-	TMap<side_t*, side_t*> wall_tlist;
+	TArray<FSection*> flat_tlist;
+	TArray<side_t*> wall_tlist;
 };
 
 struct FDynamicLight

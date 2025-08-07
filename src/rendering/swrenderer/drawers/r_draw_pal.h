@@ -86,7 +86,7 @@ namespace swrenderer
 		ShadeConstants ColormapConstants() const { return wallargs->ColormapConstants(); }
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
-		FLightNode* LightList() const { return wallargs->lightlist; }
+		TMap<FDynamicLight*, std::unique_ptr<FLightNode>>* LightList() const { return wallargs->lightlist; }
 
 		const WallDrawerArgs* wallargs;
 

@@ -405,7 +405,7 @@ public:
 	// exact = false returns the closest match, to be used for, ex., insertions, exact = true returns Size() when no match, like Find does
 	unsigned int SortedFind(const T& item, bool exact = true) const
 	{
-		unsigned int index = (std::lower_bound(begin(), end(), item) - begin());
+		unsigned int index = (unsigned int)(std::lower_bound(begin(), end(), item) - begin());
 		if(exact)
 		{
 			return (index < Count && Array[index] == item) ? index : Count;

@@ -61,6 +61,7 @@
 
 struct FGlobalDLightLists
 {
+	//TODO add TSet and switch from TMap to TSet
 	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
 	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
 };

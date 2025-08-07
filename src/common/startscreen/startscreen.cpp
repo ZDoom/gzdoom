@@ -725,3 +725,33 @@ void FStartScreen::ValidateTexture()
 	}
 }
 
+void unicode_to_utf8(char* result, uint16_t code_point)
+{
+	if (code_point <= 0x7F)
+	{
+		// 1-byte sequence (ASCII)
+		result[0] = (unsigned char)code_point;
+		result[1] = 0;
+	}
+	else if (code_point <= 0x7FF)
+	{
+		// 2-byte sequence
+		result[0] = (unsigned char)(0xC0 | ((code_point >> 6) & 0x1F));
+		result[1] = (unsigned char)(0x80 | (code_point & 0x3F));
+		result[2] = 0;
+	}
+	else
+	{
+		// 3-byte sequence (up to U+FFFF)
+		result[0] = (unsigned char)(0xE0 | ((code_point >> 12) & 0x0F));
+		result[1] = (unsigned char)(0x80 | ((code_point >> 6) & 0x3F));
+		result[2] = (unsigned char)(0x80 | (code_point & 0x3F));
+		result[3] = 0;
+	}
+}
+
+void ibm437_to_utf8(char* result, char in)
+{
+	unicode_to_utf8(result, IBM437ToUnicode[(unsigned char)in]);
+}
+

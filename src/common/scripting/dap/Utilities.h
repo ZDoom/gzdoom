@@ -1,12 +1,14 @@
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <regex>
-#include <dap/protocol.h>
-#include <common/engine/printf.h>
 #include <map>
 #include <set>
+#include <sstream>
+#include <string>
+
+#include <dap/protocol.h>
+
+#include "printf.h"
+
 namespace DebugServer
 {
 
@@ -56,7 +58,25 @@ inline size_t CaseInsensitiveFind(const std::string &s1, const std::string &s2)
 	return std::distance(s1.begin(), pos);
 }
 
-template <typename... Args> std::string StringFormat(const char *fmt, Args... args)
+// if we use std::format, this wouldn't be needed -- we could also turn these into c style vargs, but I think that would be misguided
+#if defined(__clang__) && __clang_major__ >= 15
+#	define PRINTF_FORMAT(STR_INDEX, FIRST) __attribute__((format(printf, STR_INDEX, FIRST)))
+#	pragma clang diagnostic push
+#	pragma clang diagnostic ignored "-Wgcc-compat"
+// for GCC and older Clang, this feature is unsupported on templates, so the attribute is disabled
+// WARNING: This means no compile-time format string checking will occur on these compilers.
+#elif defined(__GNUC__) || defined(__clang__)
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wformat-security"
+#	define PRINTF_FORMAT(STR_INDEX, FIRST)
+#else
+// For other compilers (like MSVC), the attribute is also empty.
+#	define PRINTF_FORMAT(STR_INDEX, FIRST)
+#endif
+
+template <typename... Args>
+PRINTF_FORMAT(1, 2)
+std::string StringFormat(const char* fmt, Args... args)
 {
 	const size_t size = snprintf(nullptr, 0, fmt, args...);
 	std::string buf;
@@ -98,22 +118,34 @@ static inline std::string StripColorCodes(const std::string &str)
 	return copy.Data();
 }
 
-template <typename... Args> void LogInternal(const char *fmt, Args... args)
+template <typename... Args>
+PRINTF_FORMAT(1, 2)
+void LogInternal(const char *fmt, Args... args)
 {
 	Printf(PRINT_HIGH | PRINT_NODAPEVENT | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
 }
-template <typename... Args> void LogInternalError(const char *fmt, Args... args)
+template <typename... Args>
+PRINTF_FORMAT(1, 2)
+void LogInternalError(const char *fmt, Args... args)
 {
 	Printf(PRINT_HIGH | PRINT_NODAPEVENT | PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
 }
-template <typename... Args> void Log(const char *fmt, Args... args)
+template <typename... Args>
+PRINTF_FORMAT(1, 2)
+void Log(const char *fmt, Args... args)
 {
 	Printf(PRINT_HIGH | PRINT_NONOTIFY, "%s\n", StringFormat(fmt, args...).c_str());
 }
-template <typename... Args> void LogError(const char *fmt, Args... args)
+template <typename... Args>
+PRINTF_FORMAT(1, 2)
+void LogError(const char *fmt, Args... args)
 {
 	Printf(PRINT_HIGH | PRINT_NONOTIFY, TEXTCOLOR_RED "%s\n", StringFormat(fmt, args...).c_str());
 }
+
+#if defined(__GNUC__) || defined(__clang__)
+#	pragma GCC diagnostic pop
+#endif
 
 #define RETURN_DAP_ERROR(message) \
 	LogError("%s", message);      \

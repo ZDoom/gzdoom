@@ -3,6 +3,7 @@
 ** The Strife dialogue display
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010-2017 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -29,6 +30,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -312,24 +314,46 @@ class ConversationMenu : Menu
 			if (mkey == MKEY_Back)
 			{
 				Close();
+				if (CVar.GetCVar('haptics_do_menus').GetBool())
+				{
+					Haptics.Rumble("menu/dismiss");
+				}
 				return true;
 			}
 			return false;
 		}
 		if (mkey == MKEY_Up)
 		{
-			if (--mSelection < 0) mSelection = mResponses.Size() - 1;
+			if (--mSelection < 0)
+			{
+				mSelection = mResponses.Size() - 1;
+			}
+			if (CVar.GetCVar('haptics_do_menus').GetBool())
+			{
+				Haptics.Rumble("menu/cursor");
+			}
 			return true;
 		}
 		else if (mkey == MKEY_Down)
 		{
-			if (++mSelection >= mResponses.Size()) mSelection = 0;
+			if (++mSelection >= mResponses.Size())
+			{
+				mSelection = 0;
+			}
+			if (CVar.GetCVar('haptics_do_menus').GetBool())
+			{
+				Haptics.Rumble("menu/cursor");
+			}
 			return true;
 		}
 		else if (mkey == MKEY_Back)
 		{
 			SendConversationReply(-1, GetReplyNum());
 			Close();
+			if (CVar.GetCVar('haptics_do_menus').GetBool())
+			{
+				Haptics.Rumble("menu/dismiss");
+			}
 			return true;
 		}
 		else if (mkey == MKEY_Enter)
@@ -345,6 +369,10 @@ class ConversationMenu : Menu
 				SendConversationReply(mCurNode.ThisNodeNum, replynum);
 			}
 			Close();
+			if (CVar.GetCVar('haptics_do_menus').GetBool())
+			{
+				Haptics.Rumble("menu/choose");
+			}
 			return true;
 		}
 		return false;

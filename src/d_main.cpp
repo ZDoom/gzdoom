@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "c_cvars.h"
+#include "i_soundinternal.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -200,6 +202,7 @@ EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Bool, vid_fps)
+EXTERN_CVAR(Bool, haptics_do_menus)
 
 extern bool setmodeneeded;
 extern bool demorecording;
@@ -2823,14 +2826,13 @@ static bool System_CaptureModeInGame()
 
 static void System_PlayStartupSound(const char* sndname)
 {
-	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
+	S_Sound(CHAN_BODY, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), sndname, 1, ATTN_NONE);
 }
 
 static bool System_IsSpecialUI()
 {
 	return (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || multiplayer ||
 		(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
-
 }
 
 static bool System_DisableTextureFilter()
@@ -3577,7 +3579,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			autostart = true;
 		}
 
-		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
+		S_Sound(CHAN_BODY, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "misc/startupdone", 1, ATTN_NONE);
 		if (!batchrun) Printf ("Init complete.\n");
 
 		StartWindow->Progress(max_progress);

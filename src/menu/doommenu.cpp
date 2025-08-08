@@ -3,6 +3,7 @@
 ** Menu base class and global interface
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -29,6 +30,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -47,6 +49,8 @@
 #include "gstrings.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "i_interface.h"
+#include "i_net.h"
+#include "i_soundinternal.h"
 #include "i_time.h"
 #include "menu.h"
 #include "p_tick.h"
@@ -64,6 +68,7 @@ EXTERN_CVAR(Bool, m_quickexit)
 EXTERN_CVAR(Bool, saveloadconfirmation) // [mxd]
 EXTERN_CVAR(Bool, quicksaverotation)
 EXTERN_CVAR(Bool, show_messages)
+EXTERN_CVAR(Bool, haptics_do_menus)
 EXTERN_CVAR(Float, hud_scalefactor)
 
 CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -312,7 +317,7 @@ void OnMenuOpen(bool makeSound)
 
 	if (makeSound)
 	{
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 }
 
@@ -414,7 +419,7 @@ CCMD (menu_quit)
 		{
 			if (gameinfo.quitSound.IsNotEmpty())
 			{
-				S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
+				S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), gameinfo.quitSound, snd_menuvolume, ATTN_NONE);
 				I_WaitVBL(105);
 			}
 		}
@@ -451,12 +456,12 @@ CCMD (menu_endgame)
 {	// F7
 	if (!usergame)
 	{
-		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 		
 	//M_StartControlPanel (true);
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	ActivateEndGameMenu();
 }
@@ -471,7 +476,7 @@ CCMD (quicksave)
 {	// F6
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		S_Sound (CHAN_VOICE, CHANF_UI, "menu/invalid", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
 
@@ -487,7 +492,7 @@ CCMD (quicksave)
 		
 	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
 		M_SetMenu(NAME_SavegameMenu);
 		return;
@@ -500,7 +505,7 @@ CCMD (quicksave)
 		return;
 	}
 
-	S_Sound(CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+	S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
 
 	FString tempstring = GStrings.GetString("QSPROMPT");
 	tempstring.Substitute("%s", savegameManager.quickSaveSlot->SaveTitle.GetChars());
@@ -508,7 +513,8 @@ CCMD (quicksave)
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
 	{
 		G_SaveGame(savegameManager.quickSaveSlot->Filename.GetChars(), savegameManager.quickSaveSlot->SaveTitle.GetChars());
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+
+		S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
 
@@ -553,7 +559,7 @@ CCMD (quickload)
 	DMenu *newmenu = CreateMessageBoxMenu(CurrentMenu, tempstring.GetChars(), 0, false, NAME_None, []()
 	{
 		G_LoadGame(savegameManager.quickSaveSlot->Filename.GetChars());
-		S_Sound(CHAN_VOICE, CHANF_UI, "menu/dismiss", snd_menuvolume, ATTN_NONE);
+		S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/dismiss", snd_menuvolume, ATTN_NONE);
 		M_ClearMenus();
 	});
 	M_ActivateMenu(newmenu);
@@ -588,7 +594,8 @@ CCMD (sizedown)
 	{
 		screenblocks = screenblocks - 1;
 	}
-	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+
+	S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
@@ -601,7 +608,8 @@ CCMD (sizeup)
 	{
 		screenblocks = screenblocks + 1;
 	}
-	S_Sound(CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+
+	S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(reset2defaults)

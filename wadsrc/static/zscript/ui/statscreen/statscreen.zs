@@ -2,6 +2,7 @@
 ** statscreen.zs
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010-2017 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -28,6 +29,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -812,7 +814,13 @@ class StatusScreen : ScreenJob abstract version("2.5")
 
 	static void PlaySound(Sound snd)
 	{
-		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHANF_UI, 1, ATTN_NONE);
+		S_StartSound(
+			snd,
+			CHAN_VOICE,
+			CHANF_MAYBE_LOCAL|CHANF_UI|(CVar.GetCVar('haptics_do_menus').GetBool()? CHANF_RUMBLE: CHANF_NORUMBLE),
+			1,
+			ATTN_NONE
+		);
 	}
 
 	// ====================================================================

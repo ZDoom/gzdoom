@@ -3,6 +3,7 @@
 ** Handles line specials
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 1998-2007 Randy Heit
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -29,6 +30,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 ** Each function returns true if it caused something to happen
@@ -133,7 +135,7 @@ FName MODtoDamageType (int mod)
 	}
 }
 
-int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle);
+int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle, bool rumble);
 
 FUNC(LS_NOP)
 {
@@ -3390,7 +3392,7 @@ FUNC(LS_StartConversation)
 		return false;
 	}
 
-	return NativeStartConversation(target, it, !!arg1, true);
+	return NativeStartConversation(target, it, !!arg1, true, false); // TODO: expose rumble?
 }
 
 FUNC(LS_Thing_SetConversation)

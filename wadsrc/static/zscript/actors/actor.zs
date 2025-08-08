@@ -775,7 +775,7 @@ class Actor : Thinker native
 	protected native void CheckPortalTransition(bool linked = true);
 	native clearscope bool HasConversation() const;
 	native clearscope bool CanTalk() const;
-	native bool StartConversation(Actor player, bool faceTalker = true, bool saveAngle = true);
+	native bool StartConversation(Actor player, bool faceTalker = true, bool saveAngle = true, bool rumble = true);
 
 	native clearscope string GetTag(string defstr = "") const;
 	native clearscope string GetCharacterName() const;

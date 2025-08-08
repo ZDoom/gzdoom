@@ -1262,6 +1262,7 @@ OptionMenu "HapticsOptions" protected
 	Option 		"$HAPMNU_COMPAT",			"haptics_compat",		"HapticsCompatTypes"
 	StaticText	""
 	StaticText	"$HAPMNU_OPTIONS"
+	Option		"$HAPMNU_OPT_MENU",			"haptics_do_menus",		"OnOff"
 	Option		"$HAPMNU_OPT_ACTION",		"haptics_do_action",	"OnOff"
 }
 

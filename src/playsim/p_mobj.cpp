@@ -57,52 +57,50 @@
 */
 
 // HEADER FILES ------------------------------------------------------------
+
 #include <float.h>
 
-
-#include "m_random.h"
-#include "doomdef.h"
-#include "p_local.h"
-#include "p_maputl.h"
-#include "p_lnspec.h"
-#include "p_effect.h"
-#include "p_terrain.h"
-#include "hu_stuff.h"
-#include "v_video.h"
-#include "c_dispatch.h"
-#include "b_bot.h"	//Added by MC:
-#include "a_sharedglobal.h"
-#include "gi.h"
-#include "sbar.h"
-#include "p_acs.h"
-#include "cmdlib.h"
-#include "decallib.h"
-#include "a_keys.h"
-#include "p_conversation.h"
-#include "g_game.h"
-#include "teaminfo.h"
-#include "r_sky.h"
-#include "d_event.h"
-#include "p_enemy.h"
-#include "gstrings.h"
-#include "po_man.h"
-#include "p_spec.h"
-#include "p_checkposition.h"
-#include "serializer_doom.h"
-#include "serialize_obj.h"
-#include "r_utility.h"
-#include "thingdef.h"
-#include "d_player.h"
-#include "g_levellocals.h"
-#include "a_morph.h"
-#include "events.h"
-#include "actorinlines.h"
 #include "a_dynlight.h"
+#include "a_keys.h"
+#include "a_morph.h"
+#include "a_sharedglobal.h"
+#include "actorinlines.h"
+#include "b_bot.h"	//Added by MC:
+#include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_event.h"
+#include "d_net.h"
+#include "d_player.h"
+#include "decallib.h"
+#include "doomdef.h"
+#include "events.h"
 #include "fragglescript/t_fs.h"
-#include "shadowinlines.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "hu_stuff.h"
+#include "m_random.h"
 #include "model.h"
 #include "models.h"
-#include "d_net.h"
+#include "p_acs.h"
+#include "p_checkposition.h"
+#include "p_conversation.h"
+#include "p_effect.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_maputl.h"
+#include "p_spec.h"
+#include "p_terrain.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "sbar.h"
+#include "serialize_obj.h"
+#include "serializer_doom.h"
+#include "shadowinlines.h"
+#include "teaminfo.h"
+#include "thingdef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -120,6 +118,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR (Int,  cl_rockettrails)
+EXTERN_CVAR (Bool, haptics_do_action)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -436,7 +435,6 @@ void AActor::Serialize(FSerializer &arc)
 		("damagesource", damagesource)
 		("behaviors", Behaviors)
 		A("decalgenerator", DecalGenerator);
-
 
 		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
 		SerializeArgs(arc, "args", args, def->args, special);
@@ -838,7 +836,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FState, InStateSequence, InStateSequence)
 	ACTION_RETURN_BOOL(InStateSequence(self, basestate));
 }
 
-
 bool AActor::IsMapActor()
 {
 	// [SP] Don't remove owned inventory objects.
@@ -992,7 +989,6 @@ DEFINE_ACTION_FUNCTION(AActor, SetState)
 	ACTION_RETURN_BOOL(self->SetState(state, nofunction));
 };
 
-
 //============================================================================
 //
 // DestroyAllInventory
@@ -1035,6 +1031,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DestroyAllInventory, DestroyAllInventory)
 	DestroyAllInventory(self);
 	return 0;
 }
+
 //============================================================================
 //
 // AActor :: UseInventory
@@ -2103,7 +2100,6 @@ DEFINE_ACTION_FUNCTION(AActor, ExplodeMissile)
 	return 0;
 }
 
-
 void AActor::PlayBounceSound(bool onfloor, double volume)
 {
 	if (!onfloor && (BounceFlags & BOUNCE_NoWallSound))
@@ -2409,7 +2405,6 @@ bool P_SeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax, bool precise
 
 	return true;
 }
-
 
 //
 // P_XYMovement
@@ -2926,7 +2921,6 @@ static double P_XYMovement (AActor *mo, DVector2 scroll)
 	return Oldfloorz;
 }
 
-
 static void P_MonsterFallingDamage (AActor *mo)
 {
 	int damage;
@@ -2982,7 +2976,6 @@ static void P_ZMovement (AActor *mo, double oldfloorz)
 	{
 		mo->SetZ(mo->floorz + mo->specialf1);
 	}
-
 
 //
 // adjust height
@@ -3278,6 +3271,31 @@ DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
 	P_CheckFakeFloorTriggers(self, oldz, oldz_has_viewh);
 	return 0;
 }
+
+//==========================================================================
+//
+// Rumble functions
+//
+//==========================================================================
+
+static void PlayerLandedMakeRumble(AActor* self, AActor *onmobj)
+{
+	IFVIRTUALPTR(self, AActor, PlayerLandedMakeRumble)
+	{
+		VMValue params[2] = { self, onmobj };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+static void PlayerDiedMakeRumble(AActor* self, AActor *source)
+{
+	IFVIRTUALPTR(self, AActor, PlayerDiedMakeRumble)
+	{
+		VMValue params[2] = { self, source };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 //===========================================================================
 //
 // PlayerLandedOnThing
@@ -3311,6 +3329,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	P_FallingDamage (mo);
 
+	PlayerLandedMakeRumble(mo, onmobj);
 	PlayerLandedMakeGruntSound(mo, onmobj);
 
 //	mo->player->centering = true;
@@ -3520,7 +3539,6 @@ void P_NightmareRespawn (AActor *mobj)
 	mobj->Destroy ();
 }
 
-
 //
 // P_AddMobjToHash
 //
@@ -3587,7 +3605,6 @@ void AActor::SetTID (int newTID)
 
 	AddToHash();
 }
-
 
 //==========================================================================
 //
@@ -3670,7 +3687,6 @@ int FLevelLocals::FindUniqueTID(int start_tid, int limit, bool clientside)
 	// Nothing free found.
 	return 0;
 }
-
 
 CCMD(utid)
 {
@@ -3798,8 +3814,6 @@ bool AActor::CallSlam(AActor *thing)
 	}
 	else return Slam(thing);
 }
-
-
 
 // This virtual method only exists on the script side.
 int AActor::SpecialMissileHit (AActor *victim)
@@ -4188,7 +4202,6 @@ PClassActor *AActor::GetBloodType(int type) const
 	return nullptr;
 }
 
-
 DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 {
 	bool moved = false;
@@ -4221,8 +4234,6 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 	if (pSec) *pSec = sec;
 	return pos;
 }
-
-
 
 void AActor::CheckPortalTransition(bool islinked)
 {
@@ -4474,7 +4485,6 @@ void AActor::GetObjectToWorldMatrix(double *outMat)
 		}
 	}
 }
-
 
 //
 // P_MobjThinker
@@ -5559,7 +5569,6 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	actor->flags8 |= MF8_INSCROLLSEC;
 }
 
-
 AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing)
 {
 	if (type == NULL)
@@ -5755,7 +5764,6 @@ void AActor::CallBeginPlay()
 	else BeginPlay();
 }
 
-
 void AActor::PostBeginPlay ()
 {
 	PrevAngles = Angles;
@@ -5829,7 +5837,6 @@ void AActor::CallActivate(AActor *activator)
 	}
 	else Activate(activator);
 }
-
 
 //===========================================================================
 //
@@ -6913,6 +6920,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 // SpawnMapThing
 //
 //===========================================================================
+
 CVAR(Bool, dumpspawnedthings, false, 0)
 
 AActor *FLevelLocals::SpawnMapThing(int index, FMapThing *mt, int position)
@@ -6928,12 +6936,9 @@ AActor *FLevelLocals::SpawnMapThing(int index, FMapThing *mt, int position)
 	return spawned;
 }
 
-
-
 //
 // GAME SPAWN FUNCTIONS
 //
-
 
 //
 // P_SpawnPuff
@@ -7008,13 +7013,17 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1
 			if (cl_pufftype == 1) puff->renderflags |= RF_INVISIBLE;
 		}
 
+		bool meleeFromPlayer = (
+			(flags & PF_MELEERANGE) && source->player
+			&& (source->player->mo == players[consoleplayer].mo || source->player->mo == players[consoleplayer].camera));
+
 		if ((flags & PF_HITTHING) && puff->SeeSound.isvalid())
 		{ // Hit thing sound
-			S_Sound (puff, CHAN_BODY, 0, puff->SeeSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, (meleeFromPlayer&&haptics_do_action)?CHANF_RUMBLE:CHANF_NONE, puff->SeeSound, 1, ATTN_NORM);
 		}
 		else if (puff->AttackSound.isvalid())
 		{
-			S_Sound (puff, CHAN_BODY, 0, puff->AttackSound, 1, ATTN_NORM);
+			S_Sound (puff, CHAN_BODY, (meleeFromPlayer&&haptics_do_action)?CHANF_RUMBLE:CHANF_NONE, puff->AttackSound, 1, ATTN_NORM);
 		}
 	}
 
@@ -7150,7 +7159,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnBlood)
 	ACTION_RETURN_OBJECT(P_SpawnBlood(DVector3(x, y, z), dir, damage, self));
 }
 
-
 //---------------------------------------------------------------------------
 //
 // PROC P_BloodSplatter
@@ -7213,7 +7221,6 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	{
 		AActor *mo;
 
-
 		mo = Spawn (originator->Level, bloodcls, pos + add, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 
@@ -7243,7 +7250,6 @@ DEFINE_ACTION_FUNCTION(AActor, BloodSplatter)
 	else P_BloodSplatter(DVector3(x, y, z), self, dir);
 	return 0;
 }
-
 
 //---------------------------------------------------------------------------
 //
@@ -7308,7 +7314,6 @@ int P_GetThingFloorType (AActor *thing)
 		return thing->Sector->GetTerrain(sector_t::floor);
 	}
 }
-
 
 //---------------------------------------------------------------------------
 //
@@ -7486,7 +7491,6 @@ DEFINE_ACTION_FUNCTION(AActor, HitWater)
 	ACTION_RETURN_BOOL(P_HitWater(self, sec, DVector3(x, y, z), checkabove, alert, force, flags));
 }
 
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_HitFloor
@@ -7645,7 +7649,6 @@ DEFINE_ACTION_FUNCTION(AActor, CheckMissileSpawn)
 	ACTION_RETURN_BOOL(P_CheckMissileSpawn(self, add));
 }
 
-
 //---------------------------------------------------------------------------
 //
 // FUNC P_PlaySpawnSound
@@ -7684,8 +7687,6 @@ DEFINE_ACTION_FUNCTION(AActor, PlaySpawnSound)
 	P_PlaySpawnSound(missile, self);
 	return 0;
 }
-
-
 
 double GetDefaultSpeed(PClassActor *type)
 {
@@ -7730,12 +7731,12 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 
 	AActor *th = Spawn (source->Level, type, pos, ALLOW_REPLACE);
-	
-	P_PlaySpawnSound(th, source);
 
 	// record missile's originator
 	if (owner == NULL) owner = source;
 	th->target = owner;
+
+	P_PlaySpawnSound(th, source);
 
 	double speed = th->Speed;
 
@@ -7819,8 +7820,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnMissileZ)
 	ACTION_RETURN_OBJECT(P_SpawnMissileZ(self, z, dest, type));
 }
 
-
-
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
 	if (source == nullptr || type == nullptr)
@@ -7829,12 +7828,12 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	}
 	AActor *th = Spawn (source->Level, type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
+
+	P_PlaySpawnSound(th, source);
 
 	th->Angles.Yaw = source->AngleTo(dest);
 	th->VelFromAngle();
-
 
 	double dist = source->DistanceBySpeed(dest, max(1., th->Speed));
 	th->Vel.Z = (dest->Z() - source->Z()) / dist;
@@ -7856,7 +7855,6 @@ DEFINE_ACTION_FUNCTION(AActor, OldSpawnMissile)
 	PARAM_OBJECT(owner, AActor);
 	ACTION_RETURN_OBJECT(P_OldSpawnMissile(self, owner, dest, type));
 }
-
 
 //---------------------------------------------------------------------------
 //
@@ -7922,9 +7920,11 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 
 	mo = Spawn (source->Level, type, source->PosAtZ(z), ALLOW_REPLACE);
 
-	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
+
+	P_PlaySpawnSound(mo, source);
+
 	mo->Angles.Yaw = angle;
 	mo->VelFromAngle(speed);
 	mo->Vel.Z = vz;
@@ -7949,7 +7949,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnMissileAngleZSpeed)
 	PARAM_BOOL(checkspawn);
 	ACTION_RETURN_OBJECT(P_SpawnMissileAngleZSpeed(self, z, type, angle, vz, speed, owner, checkspawn));
 }
-
 
 AActor *P_SpawnSubMissile(AActor *source, PClassActor *type, AActor *target)
 {
@@ -8071,8 +8070,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	DVector3 pos = source->Vec2OffsetZ(x, y, z);
 	AActor *MissileActor = Spawn (source->Level, type, pos, ALLOW_REPLACE);
 	if (pMissileActor) *pMissileActor = MissileActor;
-	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
+	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->Angles.Yaw = an;
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER | MF3_CEILINGHUGGER))
 	{
@@ -8113,7 +8112,6 @@ DEFINE_ACTION_FUNCTION(AActor, SpawnPlayerMissile)
 	if (numret > 1) ret[1].SetObject(missileactor), numret = 2;
 	return numret;
 }
-
 
 int AActor::GetTeam()
 {
@@ -8351,7 +8349,6 @@ DEFINE_ACTION_FUNCTION(AActor, TakeSpecialDamage)
 	ACTION_RETURN_INT(self->TakeSpecialDamage(inflictor, source, damage, damagetype));
 }
 
-
 int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	IFVIRTUAL(AActor, TakeSpecialDamage)
@@ -8416,7 +8413,6 @@ void AActor::SetIdle(bool nofunction)
 	if (idle == NULL) idle = SpawnState;
 	SetState(idle, nofunction);
 }
-
 
 int AActor::SpawnHealth() const
 {
@@ -8533,7 +8529,6 @@ int AActor::GetGibHealth() const
 	return -SpawnHealth();
 }
 
-
 // killough 11/98:
 // Whether an object is "sentient" or not. Used for environmental influences.
 // (left precisely the same as MBF even though it doesn't make much sense.)
@@ -8541,7 +8536,6 @@ bool AActor::IsSentient() const
 {
 	return health > 0 && SeeState != NULL;
 }
-
 
 FSharedStringArena AActor::mStringPropertyData;
 
@@ -8625,7 +8619,6 @@ int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive, AActor
 	}
 	return damage;
 }
-
 
 int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 {

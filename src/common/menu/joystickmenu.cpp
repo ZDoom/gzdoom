@@ -32,8 +32,8 @@
 **
 */
 
-#include "menu.h"
 #include "m_joy.h"
+#include "menu.h"
 #include "vm.h"
 
 static TArray<IJoystickConfig *> Joysticks;
@@ -49,6 +49,26 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetSensitivity)
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	PARAM_FLOAT(sens);
 	self->SetSensitivity((float)sens);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, HasHaptics)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->HasHaptics());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_FLOAT(self->GetHapticsStrength());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_FLOAT(strength);
+	self->SetHapticsStrength((float)strength);
 	return 0;
 }
 
@@ -202,7 +222,6 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
 	self->SetEnabledInBackground(enabled);
 	return 0;
 }
-
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {

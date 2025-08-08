@@ -543,8 +543,16 @@ void FIWadManager::ValidateIWADs()
 {
 	TArray<int> returns;
 	unsigned originalsize = mIWadInfos.Size();
-	for (auto &p : mFoundWads)
+
+	// Iterating normally will give CheckIWADInfo name conflicts priority to
+	// whatever file is found first, rather than the file that the user
+	// specifically requests with -iwad, because IdentifyVersion appends
+	// the -iwad file to the end of the list. (And it's annoying to change
+	// to be the other way around.)
+	for (int i = mFoundWads.SSize() - 1; i >= 0; i--)
 	{
+		auto &p = mFoundWads[i];
+
 		int index;
 		auto x = strrchr(p.mFullPath.GetChars(), '.');
 		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, ".ipk7")))

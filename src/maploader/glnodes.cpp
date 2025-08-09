@@ -454,7 +454,7 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		numsubsectors /= sizeof(mapsubsector_t);
 		Level->subsectors.Alloc(numsubsectors);
 		auto &subsectors = Level->subsectors;
-		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
+		memset((void*)(&subsectors[0]),0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{
@@ -476,7 +476,7 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		numsubsectors /= sizeof(gl3_mapsubsector_t);
 		Level->subsectors.Alloc(numsubsectors);
 		auto &subsectors = Level->subsectors;
-		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
+		memset((void*)(&subsectors[0]),0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{

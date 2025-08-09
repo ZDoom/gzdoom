@@ -3159,7 +3159,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allwads, std::vector<std::string>& pwads)
 {
 	NetworkEntityManager::InitializeNetworkEntities();
-	bool dap_debugging = vm_debug.get();
+	bool dap_debugging = *vm_debug;
 	if (Args->CheckValue("-debug") || dap_debugging)
 	{
 		dap_debugging = true;

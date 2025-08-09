@@ -125,7 +125,7 @@ void DFA::findBaseState()
 						operator delete (s->go.span);
 						s->go.nSpans = nSpans;
 						s->go.span = allocate<Span> (nSpans);
-						memcpy(s->go.span, span, nSpans*sizeof(Span));
+						memcpy((void*)(s->go.span), span, nSpans*sizeof(Span));
 					}
 
 					break;

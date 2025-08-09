@@ -37,47 +37,47 @@
 
 #include <assert.h>
 
-#include "templates.h"
-#include "doomdef.h"
-#include "p_local.h"
-#include "d_player.h"
-#include "p_spec.h"
-#include "p_acs.h"
-#include "p_saveg.h"
-#include "p_lnspec.h"
-#include "p_enemy.h"
+#include "a_morph.h"
+#include "a_sharedglobal.h"
+#include "actorinlines.h"
+#include "actorptrselect.h"
+#include "c_bind.h"
 #include "c_console.h"
 #include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_player.h"
+#include "decallib.h"
+#include "doomdef.h"
+#include "filesystem.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "m_png.h"
+#include "p_acs.h"
+#include "p_effect.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_saveg.h"
+#include "p_setup.h"
+#include "p_spec.h"
+#include "p_terrain.h"
+#include "po_man.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "s_music.h"
 #include "s_sndseq.h"
 #include "sbar.h"
-#include "a_sharedglobal.h"
-#include "filesystem.h"
-#include "r_sky.h"
-#include "gstrings.h"
-#include "gi.h"
-#include "g_game.h"
-#include "c_bind.h"
-#include "cmdlib.h"
-#include "m_png.h"
-#include "p_setup.h"
-#include "po_man.h"
-#include "actorptrselect.h"
-#include "serializer_doom.h"
-#include "serialize_obj.h"
-#include "decallib.h"
-#include "p_terrain.h"
-#include "version.h"
-#include "p_effect.h"
-#include "r_utility.h"
-#include "a_morph.h"
-#include "thingdef.h"
-#include "g_levellocals.h"
-#include "actorinlines.h"
-#include "types.h"
 #include "scriptutil.h"
-#include "s_music.h"
-#include "v_video.h"
+#include "serialize_obj.h"
+#include "serializer_doom.h"
+#include "templates.h"
 #include "texturemanager.h"
+#include "thingdef.h"
+#include "types.h"
+#include "v_video.h"
+#include "version.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -470,7 +470,7 @@
 		PCD_TRANSLATIONRANGE4,
 		PCD_TRANSLATIONRANGE5,
 
-/*381*/	PCODE_COMMAND_COUNT
+/*385*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -10880,7 +10880,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, int ilimit,
 
 	if (ilimit > 0)
 	{
-		Printf(TEXTCOLOR_ORANGE "Top %lld %ss:\n", ilimit, typelabels[functions]);
+		Printf(TEXTCOLOR_ORANGE "Top %d %ss:\n", ilimit, typelabels[functions]);
 		limit = (unsigned int)ilimit;
 	}
 	else

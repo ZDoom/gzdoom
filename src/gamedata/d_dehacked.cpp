@@ -38,36 +38,31 @@
 ** executable, so it saves space on disk as well as in memory.
 */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
 
-#include "doomtype.h"
-
-#include "doomstat.h"
-#include "info.h"
-#include "d_dehacked.h"
-#include "g_level.h"
-#include "cmdlib.h"
-#include "gstrings.h"
-#include "filesystem.h"
-#include "d_player.h"
-#include "r_state.h"
-#include "c_dispatch.h"
-#include "decallib.h"
 #include "a_sharedglobal.h"
+#include "actorptrselect.h"
+#include "cmdlib.h"
+#include "codegen.h"
+#include "d_dehacked.h"
+#include "decallib.h"
+#include "doomstat.h"
+#include "doomtype.h"
 #include "engineerrors.h"
+#include "filesystem.h"
+#include "g_levellocals.h"
+#include "gstrings.h"
+#include "info.h"
+#include "m_argv.h"
 #include "p_effect.h"
+#include "r_state.h"
 #include "serializer.h"
 #include "thingdef.h"
-#include "v_text.h"
-#include "vmbuilder.h"
 #include "types.h"
-#include "m_argv.h"
-#include "actorptrselect.h"
-#include "g_levellocals.h"
-#include "codegen.h"
+#include "vmbuilder.h"
 
 extern TArray<PalEntry> TranslationColors;
 
@@ -3055,7 +3050,7 @@ static int PatchSoundNames (int dummy, int flags)
 		stripwhite(Line2);
 		FString newname = skipwhite (Line2);
 		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname.GetChars());
-		DPrintf (DMSG_SPAMMY, "Sound %d set to:\n%s\n", Line1, newname.GetChars());
+		DPrintf (DMSG_SPAMMY, "Sound %p set to:\n%s\n", Line1, newname.GetChars()); // should %p be %s ?
 	}
 
 	return result;
@@ -3090,7 +3085,7 @@ static int PatchSpriteNames (int dummy, int flags)
 			int v = GetSpriteIndex(newname.GetChars());
 			memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
 
-			DPrintf (DMSG_SPAMMY, "Sprite %d set to:\n%s\n", Line1, newname.GetChars());
+			DPrintf (DMSG_SPAMMY, "Sprite %p set to:\n%s\n", Line1, newname.GetChars()); // should %p be %s ?
 		}
 		
 		return result;

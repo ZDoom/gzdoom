@@ -26,52 +26,45 @@
 //-----------------------------------------------------------------------------
 
 #include <stddef.h>
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "version.h"
-#include "menu.h"
-#include "i_video.h"
-#include "i_net.h"
-#include "g_game.h"
-#include "c_console.h"
-#include "d_netinf.h"
-#include "d_net.h"
-#include "cmdlib.h"
-#include "m_cheat.h"
-#include "p_local.h"
-#include "c_dispatch.h"
-#include "sbar.h"
-#include "gi.h"
-#include "m_misc.h"
-#include "gameconfigfile.h"
-#include "p_acs.h"
-#include "p_trace.h"
-#include "a_sharedglobal.h"
-#include "st_start.h"
-#include "teaminfo.h"
-#include "p_conversation.h"
-#include "d_eventbase.h"
-#include "p_enemy.h"
-#include "m_argv.h"
-#include "p_lnspec.h"
-#include "p_spec.h"
-#include "hardware.h"
-#include "r_utility.h"
 #include "a_keys.h"
-#include "intermission/intermission.h"
-#include "g_levellocals.h"
+#include "a_sharedglobal.h"
 #include "actorinlines.h"
-#include "events.h"
-#include "i_time.h"
-#include "i_system.h"
-#include "vm.h"
-#include "gstrings.h"
-#include "s_music.h"
-#include "screenjob.h"
+#include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_eventbase.h"
 #include "d_main.h"
+#include "d_net.h"
+#include "d_netinf.h"
+#include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "gstrings.h"
 #include "i_interface.h"
+#include "i_net.h"
+#include "i_system.h"
+#include "i_time.h"
+#include "m_argv.h"
+#include "m_cheat.h"
+#include "menu.h"
+#include "p_conversation.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_spec.h"
+#include "p_trace.h"
+#include "r_utility.h"
+#include "s_music.h"
 #include "savegamemanager.h"
+#include "sbar.h"
+#include "screenjob.h"
+#include "version.h"
+#include "vm.h"
 
 void P_RunClientsideLogic();
 
@@ -673,7 +666,7 @@ static bool HGetPacket()
 	size_t sizeCheck = GetNetBufferSize();
 	if (NetBufferLength != sizeCheck)
 	{
-		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
+		Printf("Incorrect packet size %zu (expected %zu)\n", NetBufferLength, sizeCheck);
 		return false;
 	}
 

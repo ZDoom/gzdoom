@@ -2,13 +2,16 @@
 // Globally visible constants.
 //
 #pragma once
+
+#include "engineerrors.h"
+#include "texturemanager.h"
+#include "v_font.h"
+
 #define HU_FONTSTART	uint8_t('!')		// the first font characters
 #define HU_FONTEND		uint8_t('\377')	// the last font characters
 
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
-
-
 
 void InitDoomFonts()
 {

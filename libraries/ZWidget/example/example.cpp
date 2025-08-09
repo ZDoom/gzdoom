@@ -1,8 +1,10 @@
+#include <iostream>
 #include <zwidget/core/widget.h>
 #include <zwidget/core/resourcedata.h>
 #include <zwidget/core/image.h>
 #include <zwidget/core/theme.h>
 #include <zwidget/window/window.h>
+#include <zwidget/widgets/dropdown/dropdown.h>
 #include <zwidget/widgets/textedit/textedit.h>
 #include <zwidget/widgets/mainwindow/mainwindow.h>
 #include <zwidget/widgets/listview/listview.h>
@@ -34,6 +36,7 @@ public:
 		PlayButton = new PushButton(this);
 		ExitButton = new PushButton(this);
 		GamesList = new ListView(this);
+		Choices = new Dropdown(this);
 
 		SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
 		SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
@@ -59,6 +62,10 @@ public:
 		LightsCheckbox->SetText("Lights");
 		BrightmapsCheckbox->SetText("Brightmaps");
 		WidescreenCheckbox->SetText("Widescreen");
+
+		Choices->AddItem("First");
+		Choices->AddItem("Second");
+		Choices->AddItem("Third");
 
 		try
 		{
@@ -93,8 +100,10 @@ public:
 
 		y += 10.0;
 
-		SelectLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, SelectLabel->GetPreferredHeight());
+		SelectLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0 - Choices->GetPreferredWidth(), SelectLabel->GetPreferredHeight());
 		y += SelectLabel->GetPreferredHeight();
+
+		Choices->SetFrameGeometry(GetWidth() - 20.0 - Choices->GetPreferredWidth(), y-Choices->GetPreferredHeight(), Choices->GetPreferredWidth(), Choices->GetPreferredHeight());
 
 		double listViewTop = y + 10.0;
 
@@ -140,6 +149,7 @@ public:
 	PushButton* PlayButton = nullptr;
 	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
+	Dropdown* Choices = nullptr;
 };
 
 static std::vector<uint8_t> ReadAllBytes(const std::string& filename);
@@ -156,13 +166,23 @@ std::vector<uint8_t> LoadWidgetData(const std::string& name)
 	return ReadAllBytes(name);
 }
 
-int example()
+enum class Backend {
+	Default, Win32, SDL2, X11, Wayland
+};
+
+int example(Backend backend = Backend::Default)
 {
 	WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>());
 
-	// DisplayBackend::Set(DisplayBackend::TryCreateWin32());
-	// DisplayBackend::Set(DisplayBackend::TryCreateSDL2());
-	DisplayBackend::Set(DisplayBackend::TryCreateBackend());
+	// just for testing backends
+	switch (backend)
+	{
+		case Backend::Default: DisplayBackend::Set(DisplayBackend::TryCreateBackend()); break;
+		case Backend::Win32:   DisplayBackend::Set(DisplayBackend::TryCreateWin32());   break;
+		case Backend::SDL2:    DisplayBackend::Set(DisplayBackend::TryCreateSDL2());    break;
+		case Backend::X11:     DisplayBackend::Set(DisplayBackend::TryCreateX11());     break;
+		case Backend::Wayland: DisplayBackend::Set(DisplayBackend::TryCreateWayland()); break;
+	}
 
 #if 1
 	auto launcher = new LauncherWindow();
@@ -275,9 +295,20 @@ static std::vector<uint8_t> ReadAllBytes(const std::string& filename)
 	return buffer;
 }
 
-int main()
+int main(int argc, const char** argv)
 {
-	example();
+	std::string backendStr = argc > 1? argv[1]: "";
+	std::transform(backendStr.begin(), backendStr.end(), backendStr.begin(),
+		[](unsigned char c){ return std::tolower(c); });
+
+	Backend backend = Backend::Default;
+
+	if (backendStr == "sdl2")    backend = Backend::SDL2;
+	if (backendStr == "x11")     backend = Backend::X11;
+	if (backendStr == "wayland") backend = Backend::Wayland;
+	if (backendStr == "win32")   backend = Backend::Win32; // lol
+
+	example(backend);
 }
 
 #endif

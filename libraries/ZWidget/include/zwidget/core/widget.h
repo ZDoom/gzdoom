@@ -4,6 +4,7 @@
 #include <memory>
 #include <variant>
 #include <unordered_map>
+#include <unordered_set>
 #include "canvas.h"
 #include "rect.h"
 #include "colorf.h"
@@ -11,12 +12,20 @@
 
 class Canvas;
 class Timer;
+class Dropdown;
 
 enum class WidgetType
 {
 	Child,
 	Window,
 	Popup
+};
+
+enum class WidgetEvent
+{
+	VisibilityChange,
+
+	// TODO: add more events
 };
 
 class Widget : DisplayWindowHost
@@ -92,6 +101,9 @@ public:
 	void ShowMinimized();
 	void ShowNormal();
 	void Hide();
+
+	void Subscribe(Widget* subscriber);
+	void Unsubscribe(Widget* subscriber);
 
 	void ActivateWindow();
 
@@ -178,6 +190,8 @@ protected:
 	virtual void OnLostFocus() { }
 	virtual void OnEnableChanged() { }
 
+	virtual void Notify(Widget* source, const WidgetEvent type) { };
+
 private:
 	void DetachFromParent();
 
@@ -200,6 +214,8 @@ private:
 	void OnWindowActivated() override;
 	void OnWindowDeactivated() override;
 	void OnWindowDpiScaleChanged() override;
+
+	void NotifySubscribers(const WidgetEvent type);
 
 	WidgetType Type = {};
 
@@ -234,8 +250,12 @@ private:
 	Widget(const Widget&) = delete;
 	Widget& operator=(const Widget&) = delete;
 
+	std::unordered_set<Widget*> Subscribers;
+	std::unordered_set<Widget*> Subscriptions;
+
 	friend class Timer;
 	friend class OpenFileDialog;
 	friend class OpenFolderDialog;
 	friend class SaveFileDialog;
+	friend class Dropdown;
 };

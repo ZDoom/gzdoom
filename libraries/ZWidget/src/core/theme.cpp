@@ -151,6 +151,7 @@ DarkWidgetTheme::DarkWidgetTheme()
 	auto lineedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "lineedit");
 	auto textedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textedit");
 	auto listview = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "listview");
+	auto dropdown = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "dropdown");
 	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
 	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
 	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
@@ -216,6 +217,18 @@ DarkWidgetTheme::DarkWidgetTheme()
 	listview->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
 	listview->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
 	listview->SetColor("selection-color", Colorf::fromRgba8(100, 100, 100));
+
+	dropdown->SetDouble("noncontent-left", 5.0);
+	dropdown->SetDouble("noncontent-top", 5.0);
+	dropdown->SetDouble("noncontent-right", 5.0);
+	dropdown->SetDouble("noncontent-bottom", 5.0);
+	dropdown->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
+	dropdown->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
+	dropdown->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
+	dropdown->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
+	dropdown->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
+	dropdown->SetColor("selection-color", Colorf::fromRgba8(100, 100, 100));
+	dropdown->SetColor("arrow-color", Colorf::fromRgba8(100, 100, 100));
 
 	scrollbar->SetColor("track-color", Colorf::fromRgba8(33, 33, 33));
 	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(58, 58, 58));
@@ -290,6 +303,7 @@ LightWidgetTheme::LightWidgetTheme()
 	auto lineedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "lineedit");
 	auto textedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textedit");
 	auto listview = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "listview");
+	auto dropdown = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "dropdown");
 	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
 	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
 	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
@@ -352,6 +366,18 @@ LightWidgetTheme::LightWidgetTheme()
 	listview->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
 	listview->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
 	listview->SetColor("selection-color", Colorf::fromRgba8(200, 200, 200));
+
+	dropdown->SetDouble("noncontent-left", 5.0);
+	dropdown->SetDouble("noncontent-top", 5.0);
+	dropdown->SetDouble("noncontent-right", 5.0);
+	dropdown->SetDouble("noncontent-bottom", 5.0);
+	dropdown->SetColor("background-color", Colorf::fromRgba8(230, 230, 230));
+	dropdown->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
+	dropdown->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
+	dropdown->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
+	dropdown->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
+	dropdown->SetColor("selection-color", Colorf::fromRgba8(200, 200, 200));
+	dropdown->SetColor("arrow-color", Colorf::fromRgba8(200, 200, 200));
 
 	scrollbar->SetColor("track-color", Colorf::fromRgba8(210, 210, 220));
 	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(180, 180, 180));

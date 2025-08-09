@@ -22,6 +22,10 @@ public:
 	void SetSelectedItem(int index);
 	void ScrollToItem(int index);
 
+	double GetPreferredWidth();
+	double GetPreferredHeight();
+	double GetMinimumHeight() const;
+
 	void Activate();
 
 	std::function<void(int)> OnChanged;

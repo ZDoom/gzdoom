@@ -44,8 +44,8 @@ public:
   // [Init / Reset]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE void init(const CpuFeatures& other) noexcept { ::memcpy(this, &other, sizeof(*this)); }
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void init(const CpuFeatures& other) noexcept { ::memcpy((void*)this, &other, sizeof(*this)); }
+  ASMJIT_INLINE void reset() noexcept { ::memset((void*)this, 0, sizeof(*this)); }
 
   // --------------------------------------------------------------------------
   // [Ops]
@@ -260,8 +260,8 @@ public:
     _archInfo.init(archType, archMode);
   }
 
-  ASMJIT_INLINE void init(const CpuInfo& other) noexcept { ::memcpy(this, &other, sizeof(*this)); }
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void init(const CpuInfo& other) noexcept { ::memcpy((void*)this, &other, sizeof(*this)); }
+  ASMJIT_INLINE void reset() noexcept { ::memset((void*)this, 0, sizeof(*this)); }
 
   // --------------------------------------------------------------------------
   // [Detect]

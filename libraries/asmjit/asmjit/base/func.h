@@ -736,7 +736,7 @@ public:
 
   ASMJIT_INLINE FuncDetail() noexcept { reset(); }
   ASMJIT_INLINE FuncDetail(const FuncDetail& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
+    ::memcpy((void*)this, &other, sizeof(*this));
   }
 
   // --------------------------------------------------------------------------
@@ -745,7 +745,7 @@ public:
 
   //! Initialize this `FuncDetail` to the given signature.
   ASMJIT_API Error init(const FuncSignature& sign);
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void reset() noexcept { ::memset((void*)this, 0, sizeof(*this)); }
 
   // --------------------------------------------------------------------------
   // [Accessors - Calling Convention]
@@ -881,7 +881,7 @@ struct FuncFrameInfo {
   ASMJIT_INLINE FuncFrameInfo() noexcept { reset(); }
 
   ASMJIT_INLINE FuncFrameInfo(const FuncFrameInfo& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
+    ::memcpy((void*)this, &other, sizeof(*this));
   }
 
   // --------------------------------------------------------------------------
@@ -889,7 +889,7 @@ struct FuncFrameInfo {
   // --------------------------------------------------------------------------
 
   ASMJIT_INLINE void reset() noexcept {
-    ::memset(this, 0, sizeof(*this));
+    ::memset((void*)this, 0, sizeof(*this));
     _stackArgsRegId = Globals::kInvalidRegId;
   }
 
@@ -1182,7 +1182,7 @@ public:
 
   explicit ASMJIT_INLINE FuncArgsMapper(const FuncDetail* fd) noexcept { reset(fd); }
   ASMJIT_INLINE FuncArgsMapper(const FuncArgsMapper& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
+    ::memcpy((void*)this, &other, sizeof(*this));
   }
 
   // --------------------------------------------------------------------------

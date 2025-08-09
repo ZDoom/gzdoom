@@ -1,7 +1,8 @@
 //
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2005-2016 Christoph Oelckers
+// Copyright 2005-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +20,7 @@
 //
 //--------------------------------------------------------------------------
 //
+
 /*
 ** gl_models.cpp
 **
@@ -693,8 +695,7 @@ void InitModels()
 	for (unsigned i = 0; i < VoxelDefs.Size(); i++)
 	{
 		FVoxelModel *md = (FVoxelModel*)Models[VoxelDefs[i]->Voxel->VoxelIndex];
-		FSpriteModelFrame smf;
-		memset(&smf, 0, sizeof(smf));
+		FSpriteModelFrame smf{};
 		smf.isVoxel = true;
 		smf.modelsAmount = 1;
 		smf.modelframes.Alloc(1);
@@ -771,8 +772,7 @@ void ParseModelDefLump(int Lump)
 			FString path = "";
 			sc.MustGetString();
 
-			FSpriteModelFrame smf;
-			memset(&smf, 0, sizeof(smf));
+			FSpriteModelFrame smf{};
 			smf.xscale=smf.yscale=smf.zscale=1.f;
 
 			auto type = PClass::FindClass(sc.String);
@@ -1185,9 +1185,8 @@ FSpriteModelFrame * FindModelFrameRaw(const AActor * actorDefaults, const PClass
 {
 	if(actorDefaults->hasmodel)
 	{
-		FSpriteModelFrame smf;
+		FSpriteModelFrame smf{};
 
-		memset(&smf, 0, sizeof(smf));
 		smf.type = ti;
 		smf.sprite = sprite;
 		smf.frame = frame;

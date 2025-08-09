@@ -1,10 +1,9 @@
-#include "StackStateNode.h"
-
-#include <common/scripting/dap/RuntimeState.h>
-#include <common/scripting/dap/Utilities.h>
-
 #include <string>
+
 #include "StackFrameStateNode.h"
+#include "StackStateNode.h"
+#include "common/scripting/dap/RuntimeState.h"
+#include "common/scripting/dap/Utilities.h"
 
 namespace DebugServer
 {
@@ -19,13 +18,13 @@ bool StackStateNode::SerializeToProtocol(dap::Thread &thread) const
 
 	if (frames.empty())
 	{
-		thread.name = StringFormat("(%d)", thread.id);
+		thread.name = StringFormat("(%ld)",  static_cast<int64_t>(thread.id));
 	}
 	else
 	{
 		const auto frame = frames.back();
 		const auto name = frame->Func ? frame->Func->PrintableName : "<unknown>";
-		thread.name = StringFormat("%s (%d)", name, thread.id);
+		thread.name = StringFormat("%s (%ld)", name, static_cast<int64_t>(thread.id));
 	}
 
 	return true;

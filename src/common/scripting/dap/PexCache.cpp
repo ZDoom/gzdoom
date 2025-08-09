@@ -1,14 +1,12 @@
-#include "PexCache.h"
-#include "Utilities.h"
-#include "GameInterfaces.h"
-
-#include <functional>
 #include <algorithm>
 #include <string>
-#include <common/engine/filesystem.h>
-#include <zcc_parser.h>
+
+#include "GameInterfaces.h"
+#include "PexCache.h"
+#include "Utilities.h"
+
+#include "filesystem.h"
 #include "resourcefile.h"
-#include "RuntimeState.h"
 
 namespace DebugServer
 {
@@ -40,7 +38,7 @@ void PexCache::PrintOutAllLoadedScripts()
 	scripts_lock scriptLock(m_scriptsMutex);
 	for (auto &script : m_scripts)
 	{
-		Printf("Loaded %d functions from script: %s", script.second->GetFunctionCount(), script.second->GetQualifiedPath().c_str());
+		Printf("Loaded %zu functions from script: %s", script.second->GetFunctionCount(), script.second->GetQualifiedPath().c_str());
 	}
 }
 
@@ -579,13 +577,13 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 			}
 			if (comment_pos == std::string::npos)
 			{
-				LogError("!!!!!!Disassembly line %d has no comment!!!!!", i);
+				LogError("!!!!!!Disassembly line %zu has no comment!!!!!", i);
 				continue;
 			}
 		}
 		if (line.size() < 19)
 		{
-			LogError("!!!!!!Disassembly line %d too short!!!!!", i);
+			LogError("!!!!!!Disassembly line %zu too short!!!!!", i);
 			continue;
 		}
 		// lines go like this:
@@ -647,7 +645,7 @@ uint64_t PexCache::AddDisassemblyLines(VMScriptFunction *func, DisassemblyMap &i
 				currCodePointer++;
 
 				instruction = MakeInstruction(
-					func, ref, "--", StringFormat("%02X%02X%02X%02X", currCodePointer->op, currCodePointer->a, currCodePointer->b, currCodePointer->c), StringFormat("; jmp %08X", currCodePointer->i24), ipnum + 4, resolved_symbol);
+					func, ref, "--", StringFormat("%02hX%02hX%02hX%02hX", currCodePointer->op, currCodePointer->a, currCodePointer->b, currCodePointer->c), StringFormat("; jmp %08X", currCodePointer->i24), ipnum + 4, resolved_symbol);
 				min_line = std::min(min_line, instruction->line);
 				if (instruction->line > -1)
 				{

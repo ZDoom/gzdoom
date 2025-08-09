@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2010 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -442,20 +443,24 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 	lump.Seek(0, FileReader::SeekSet);
 	auto datab = lump.Read();
 	const unsigned numsegs = Level->segs.Size();
-	
+
 	if (numsubsectors == 0)
 	{
 		return false;
 	}
-	
+
 	if (!format5 && memcmp(datab.data(), "gNd3", 4))
 	{
 		auto data = (const mapsubsector_t*) datab.data();
 		numsubsectors /= sizeof(mapsubsector_t);
 		Level->subsectors.Alloc(numsubsectors);
 		auto &subsectors = Level->subsectors;
-		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
-	
+
+		for (i = 0; i < numsubsectors; i++)
+		{
+			subsectors[i] = {};
+		}
+
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleShort(data[i].numsegs );
@@ -476,8 +481,12 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		numsubsectors /= sizeof(gl3_mapsubsector_t);
 		Level->subsectors.Alloc(numsubsectors);
 		auto &subsectors = Level->subsectors;
-		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
-	
+
+		for (i = 0; i < numsubsectors; i++)
+		{
+			subsectors[i] = {};
+		}
+
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleLong(data[i].numsegs );

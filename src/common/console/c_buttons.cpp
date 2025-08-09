@@ -39,6 +39,8 @@
 #include "printf.h"
 #include "cmdlib.h"
 #include "c_console.h"
+#include "m_joy.h"
+#include "c_bind.h"
 
 ButtonMap buttonMap;
 
@@ -150,6 +152,26 @@ void ButtonMap::ResetButtonStates ()
 //
 //=============================================================================
 
+void ButtonMap::GetAxes ()
+{
+	float joyaxes[NUM_AXIS_CODES];
+	I_GetAxes(joyaxes);
+
+	for (int i = 0; i < Buttons.Size(); i++)
+	{
+		FButtonStatus &btn = Buttons[i];
+		FString &btn_name = NumToName[i];
+
+		btn.AddAxes(btn_name, joyaxes);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 bool FButtonStatus::PressKey (int keynum)
 {
 	int i, open;
@@ -238,6 +260,53 @@ bool FButtonStatus::ReleaseKey (int keynum)
 	}
 	// Returns true if releasing this key caused the button to go up.
 	return wasdown && !bDown;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void FButtonStatus::AddAxes (FString &btn_name, float joyaxes[NUM_AXIS_CODES])
+{
+	int i;
+
+	bIsAxis = false;
+	Axis = 0.0f;
+
+	char cmd_name[16];
+	strcpy(&cmd_name[1], btn_name.GetChars());
+
+	cmd_name[0] = '+';
+	TArray<int> positive_keys = Bindings.GetKeysForCommand(cmd_name);
+
+	cmd_name[0] = '-';
+	TArray<int> negative_keys = Bindings.GetKeysForCommand(cmd_name);
+
+	for (i = 0; i < NUM_AXIS_CODES; i++)
+	{
+		float axis_value = joyaxes[i];
+
+		if (axis_value > 0.0)
+		{
+			int key_code = KeyAxisMapping[i];
+
+			if (positive_keys.Contains(key_code))
+			{
+				Axis += axis_value;
+				bIsAxis = true;
+			}
+
+			if (negative_keys.Contains(key_code))
+			{
+				Axis -= axis_value;
+				bIsAxis = true;
+			}
+		}
+	}
+
+	Axis = clamp<float>(Axis, 0.0f, 1.0f);
 }
 
 //=============================================================================

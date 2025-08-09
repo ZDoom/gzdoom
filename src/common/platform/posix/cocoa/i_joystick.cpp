@@ -91,7 +91,6 @@ public:
 
 	virtual int GetNumAxes();
 	virtual float GetAxisDeadZone(int axis);
-	virtual EJoyAxis GetAxisMap(int axis);
 	virtual const char* GetAxisName(int axis);
 	virtual float GetAxisScale(int axis);
 	float GetAxisDigitalThreshold(int axis);
@@ -99,7 +98,6 @@ public:
 	float GetAxisResponseCurvePoint(int axis, int point);
 
 	virtual void SetAxisDeadZone(int axis, float deadZone);
-	virtual void SetAxisMap(int axis, EJoyAxis gameAxis);
 	virtual void SetAxisScale(int axis, float scale);
 	void SetAxisDigitalThreshold(int axis, float threshold);
 	void SetAxisResponseCurve(int axis, EJoyCurve preset);
@@ -107,7 +105,6 @@ public:
 
 	virtual bool IsSensitivityDefault();
 	virtual bool IsAxisDeadZoneDefault(int axis);
-	virtual bool IsAxisMapDefault(int axis);
 	virtual bool IsAxisScaleDefault(int axis);
 	bool IsAxisDigitalThresholdDefault(int axis);
 	bool IsAxisResponseCurveDefault(int axis);
@@ -122,7 +119,7 @@ public:
 	virtual void SetDefaultConfig();
 	virtual FString GetIdentifier();
 
-	void AddAxes(float axes[NUM_JOYAXIS]) const;
+	void AddAxes(float axes[NUM_AXIS_CODES]) const;
 
 	void Update();
 
@@ -160,8 +157,7 @@ private:
 		EJoyCurve defaultResponseCurvePreset;
 		CubicBezier responseCurve;
 
-		EJoyAxis gameAxis;
-		EJoyAxis defaultGameAxis;
+		uint8_t buttonValue;
 
 		AnalogAxis()
 		{
@@ -376,11 +372,6 @@ float IOKitJoystick::GetAxisDeadZone(int axis)
 	return IS_AXIS_VALID ? m_axes[axis].deadZone : 0.0f;
 }
 
-EJoyAxis IOKitJoystick::GetAxisMap(int axis)
-{
-	return IS_AXIS_VALID ? m_axes[axis].gameAxis : JOYAXIS_None;
-}
-
 const char* IOKitJoystick::GetAxisName(int axis)
 {
 	return IS_AXIS_VALID ? m_axes[axis].name : "Invalid";
@@ -411,16 +402,6 @@ void IOKitJoystick::SetAxisDeadZone(int axis, float deadZone)
 	if (IS_AXIS_VALID)
 	{
 		m_axes[axis].deadZone = clamp(deadZone, 0.0f, 1.0f);
-	}
-}
-
-void IOKitJoystick::SetAxisMap(int axis, EJoyAxis gameAxis)
-{
-	if (IS_AXIS_VALID)
-	{
-		m_axes[axis].gameAxis = (gameAxis> JOYAXIS_None && gameAxis <NUM_JOYAXIS)
-			? gameAxis
-			: JOYAXIS_None;
 	}
 }
 
@@ -472,13 +453,6 @@ bool IOKitJoystick::IsAxisDeadZoneDefault(int axis)
 		: true;
 }
 
-bool IOKitJoystick::IsAxisMapDefault(int axis)
-{
-	return IS_AXIS_VALID
-		? (m_axes[axis].gameAxis == m_axes[axis].defaultGameAxis)
-		: true;
-}
-
 bool IOKitJoystick::IsAxisScaleDefault(int axis)
 {
 	return IS_AXIS_VALID
@@ -521,7 +495,6 @@ void IOKitJoystick::SetDefaultConfig()
 	{
 		m_axes[i].deadZone    = JOYDEADZONE_DEFAULT;
 		m_axes[i].sensitivity = JOYSENSITIVITY_DEFAULT;
-		m_axes[i].gameAxis    = JOYAXIS_None;
 		m_axes[i].digitalThreshold = JOYTHRESH_DEFAULT;
 		m_axes[i].responseCurvePreset = JOYCURVE_DEFAULT;
 		m_axes[i].responseCurve = JOYCURVE[JOYCURVE_DEFAULT];
@@ -531,10 +504,7 @@ void IOKitJoystick::SetDefaultConfig()
 
 	if (2 == axisCount)
 	{
-		m_axes[0].gameAxis = JOYAXIS_Yaw;
 		m_axes[0].digitalThreshold = JOYTHRESH_STICK_X;
-
-		m_axes[1].gameAxis = JOYAXIS_Forward;
 		m_axes[1].digitalThreshold = JOYTHRESH_STICK_Y;
 	}
 
@@ -542,20 +512,14 @@ void IOKitJoystick::SetDefaultConfig()
 
 	else if (axisCount >= 3)
 	{
-		m_axes[0].gameAxis = JOYAXIS_Side;
 		m_axes[0].digitalThreshold = JOYTHRESH_STICK_X;
-
-		m_axes[1].gameAxis = JOYAXIS_Forward;
 		m_axes[1].digitalThreshold = JOYTHRESH_STICK_Y;
-
-		m_axes[2].gameAxis = JOYAXIS_Yaw;
 		m_axes[2].digitalThreshold = JOYTHRESH_STICK_X;
 
 		// Four axes? First two are movement, last two are looking around.
 
 		if (axisCount >= 4)
 		{
-			m_axes[3].gameAxis = JOYAXIS_Pitch;
 //	???		m_axes[3].sensitivity = 0.75f;
 			m_axes[3].digitalThreshold = JOYTHRESH_STICK_Y;
 
@@ -563,7 +527,6 @@ void IOKitJoystick::SetDefaultConfig()
 
 			if (axisCount >= 5)
 			{
-				m_axes[4].gameAxis = JOYAXIS_Up;
 				m_axes[4].digitalThreshold = JOYTHRESH_STICK_Y;
 			}
 		}
@@ -578,7 +541,6 @@ void IOKitJoystick::SetDefaultConfig()
 	{
 		m_axes[i].defaultDeadZone            = m_axes[i].deadZone;
 		m_axes[i].defaultSensitivity         = m_axes[i].sensitivity;
-		m_axes[i].defaultGameAxis            = m_axes[i].gameAxis;
 		m_axes[i].defaultDigitalThreshold    = m_axes[i].digitalThreshold;
 		m_axes[i].defaultResponseCurvePreset = m_axes[i].responseCurvePreset;
 	}
@@ -591,18 +553,30 @@ FString IOKitJoystick::GetIdentifier()
 }
 
 
-void IOKitJoystick::AddAxes(float axes[NUM_JOYAXIS]) const
+void IOKitJoystick::AddAxes(float axes[NUM_AXIS_CODES]) const
 {
 	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
 	{
-		const EJoyAxis axis = m_axes[i].gameAxis;
+		// Add to the game axis.
+		float axis_value = m_axes[i].value;
+		int code = AXIS_CODE_NULL;
 
-		if (JOYAXIS_None == axis)
+		if (i < NUM_JOYAXISBUTTONS)
 		{
-			continue;
+			if (axis_value > 0.0f)
+			{
+				code = AXIS_CODE_JOY1_PLUS + (i * 2);
+			}
+			else if (axis_value < 0.0f)
+			{
+				code = AXIS_CODE_JOY1_PLUS + (i * 2) + 1;
+			}
 		}
 
-		axes[axis] -= m_axes[i].value;
+		if (code != AXIS_CODE_NULL)
+		{
+			axes[code] += fabs(axis_value);
+		}
 	}
 }
 
@@ -664,25 +638,79 @@ void IOKitJoystick::ProcessAxes()
 
 	for (size_t i = 0, count = m_axes.Size(); i < count; ++i)
 	{
-		AnalogAxis& axis = m_axes[i];
-
 		static const double scaledMin = -1;
 		static const double scaledMax =  1;
 
-		IOHIDEventStruct event;
-
-		if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis.cookie, &event))
+		if (i < NUM_JOYAXISBUTTONS && (i > 2 || m_axes.Size() == 1))
 		{
-			const double scaledValue = scaledMin +
-				(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
-			const double filteredValue = Joy_RemoveDeadZone(scaledValue, axis.deadZone, NULL);
-			const double smoothedValue = Joy_ApplyResponseCurveBezier(axis.responseCurve, filteredValue);
+			AnalogAxis& axis = m_axes[i];
+			uint8_t buttonstate = 0;
 
-			axis.value = static_cast<float>(smoothedValue * m_sensitivity * axis.sensitivity);
+			IOHIDEventStruct event;
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis.cookie, &event))
+			{
+				const double scaledValue = scaledMin +
+					(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
+
+				const double filteredValue = Joy_ManageSingleAxis(
+					scaledValue,
+					axis.deadZone,
+					axis.digitalThreshold,
+					axis.responseCurve,
+					&buttonstate
+				);
+
+				axis.value = static_cast<float>(filteredValue * m_sensitivity * axis.sensitivity);
+			}
+			else
+			{
+				axis.value = 0.0f;
+			}
+
+			Joy_GenerateButtonEvents(axis.buttonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+			axis.buttonValue = buttonstate;
 		}
-		else
+		else if (i == 1)
 		{
-			axis.value = 0.0f;
+			// Since we sorted the axes, we know that the first two are definitely X and Y.
+			// They are probably a single stick, so treat them as one.
+
+			AnalogAxis& axis_x = m_axes[i - 1];
+			AnalogAxis& axis_y = m_axes[i];
+
+			uint8_t buttonstate = 0;
+			double axisval_x = 0.0f;
+			double axisval_y = 0.0f;
+
+			IOHIDEventStruct event;
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis_x.cookie, &event))
+			{
+				axisval_x = scaledMin +
+					(event.value - axis_x.minValue) * (scaledMax - scaledMin) / (axis_x.maxValue - axis_x.minValue);
+			}
+
+			if (kIOReturnSuccess == (*m_interface)->getElementValue(m_interface, axis_y.cookie, &event))
+			{
+				axisval_y = scaledMin +
+					(event.value - axis_y.minValue) * (scaledMax - scaledMin) / (axis_y.maxValue - axis_y.minValue);
+			}
+
+			Joy_ManageThumbstick(
+				&axisval_x, &axisval_y,
+				axis_x.deadZone, axis_y.deadZone,
+				axis_x.digitalThreshold, axis_y.digitalThreshold,
+				axis_x.responseCurve, axis_y.responseCurve,
+				&buttonstate
+			);
+
+			axis_x.value = static_cast<float>(axisval_x * m_sensitivity * axis_x.sensitivity);
+			axis_y.value = static_cast<float>(axisval_y * m_sensitivity * axis_y.sensitivity);
+
+			// We store all four buttons in the first axis and ignore the second.
+			Joy_GenerateButtonEvents(axis_x.buttonValue, buttonstate, 4, KEY_JOYAXIS1PLUS + (i-1)*2);
+			axis_x.buttonValue = buttonstate;
 		}
 	}
 }
@@ -703,17 +731,29 @@ bool IOKitJoystick::ProcessAxis(const IOHIDEventStruct& event)
 		}
 
 		AnalogAxis& axis = m_axes[i];
+		uint8_t buttonstate = 0;
 
 		static const double scaledMin = -1;
 		static const double scaledMax =  1;
 
 		const double scaledValue = scaledMin +
 			(event.value - axis.minValue) * (scaledMax - scaledMin) / (axis.maxValue - axis.minValue);
-		const double filteredValue = Joy_RemoveDeadZone(scaledValue, axis.deadZone, NULL);
-		const double smoothedValue = Joy_ApplyResponseCurveBezier(axis.responseCurve, filteredValue);
 
-		axis.value = static_cast<float>(smoothedValue * m_sensitivity * axis.sensitivity);
+		const double filteredValue = Joy_ManageSingleAxis(
+			scaledValue,
+			axis.deadZone,
+			axis.digitalThreshold,
+			axis.responseCurve,
+			&buttonstate
+		);
 
+		axis.value = static_cast<float>(filteredValue * m_sensitivity * axis.sensitivity);
+
+		if (i < NUM_JOYAXISBUTTONS)
+		{
+			Joy_GenerateButtonEvents(axis.buttonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+		}
+		axis.buttonValue = buttonstate;
 		return true;
 	}
 
@@ -1042,7 +1082,7 @@ public:
 
 	void GetJoysticks(TArray<IJoystickConfig*>& joysticks) const;
 
-	void AddAxes(float axes[NUM_JOYAXIS]) const;
+	void AddAxes(float axes[NUM_AXIS_CODES]) const;
 
 	// Updates axes/buttons states
 	void Update();
@@ -1133,7 +1173,7 @@ void IOKitJoystickManager::GetJoysticks(TArray<IJoystickConfig*>& joysticks) con
 	}
 }
 
-void IOKitJoystickManager::AddAxes(float axes[NUM_JOYAXIS]) const
+void IOKitJoystickManager::AddAxes(float axes[NUM_AXIS_CODES]) const
 {
 	for (size_t i = 0, count = m_joysticks.Size(); i < count; ++i)
 	{
@@ -1296,9 +1336,9 @@ void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
 	}
 }
 
-void I_GetAxes(float axes[NUM_JOYAXIS])
+void I_GetAxes(float axes[NUM_AXIS_CODES])
 {
-	for (size_t i = 0; i < NUM_JOYAXIS; ++i)
+	for (size_t i = 0; i < NUM_AXIS_CODES; ++i)
 	{
 		axes[i] = 0.0f;
 	}

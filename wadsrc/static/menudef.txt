@@ -825,6 +825,10 @@ OptionMenu "JoystickOptionsDefaults" protected
 		Option "$JOYMNU_PS2", "joy_ps2raw", "YesNo"
 	}
 	StaticText ""
+	Slider "$JOYMNU_TURNSPEED",			"cl_analog_sensitivity_yaw", 0, 2.5, 0.1
+	Slider "$JOYMNU_LOOKSPEED",			"cl_analog_sensitivity_pitch", 0, 2.5, 0.1
+	Option "$JOYMNU_ANALOGSTRAFERUN",	"cl_analog_straferun", "OnOff"
+	StaticText ""
 	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED1", "ConnectMessage1"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED2", "ConnectMessage2"

@@ -1,6 +1,8 @@
 #ifndef __A_MORPH__
 #define __A_MORPH__
 
+#include "info.h"
+
 #define MORPHTICS (40*TICRATE)
 #define MAXMORPHHEALTH 30
 

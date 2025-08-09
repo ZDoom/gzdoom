@@ -1,17 +1,16 @@
-#include "ZScriptDebugger.h"
-
 #include <functional>
 #include <string>
+
 #include <dap/protocol.h>
 #include <dap/session.h>
 
-#include "Utilities.h"
 #include "GameInterfaces.h"
+#include "Nodes/LocalScopeStateNode.h"
 #include "Nodes/StackFrameStateNode.h"
 #include "Nodes/StateNodeBase.h"
-#include "Nodes/CVarScopeStateNode.h"
-#include "common/scripting/dap/Nodes/LocalScopeStateNode.h"
-
+#include "RuntimeState.h"
+#include "Utilities.h"
+#include "ZScriptDebugger.h"
 
 // This is the main class that handles the debug session and the debug requests/responses and events
 
@@ -444,7 +443,7 @@ dap::ResponseOrError<dap::ScopesResponse> ZScriptDebugger::GetScopes(const dap::
 	std::vector<std::shared_ptr<StateNodeBase>> frameScopes;
 	if (request.frameId < 0)
 	{
-		RETURN_DAP_ERROR(StringFormat("Invalid frameId %d", request.frameId).c_str());
+		RETURN_DAP_ERROR(StringFormat("Invalid frameId %ld", static_cast<int64_t>(request.frameId)).c_str());
 	}
 	auto frameId = static_cast<uint32_t>(request.frameId);
 	if (!m_runtimeState->ResolveChildrenByParentId(frameId, frameScopes))
@@ -484,7 +483,7 @@ dap::ResponseOrError<dap::VariablesResponse> ZScriptDebugger::GetVariables(const
 	if (!m_runtimeState->ResolveChildrenByParentId(static_cast<uint32_t>(request.variablesReference), variableNodes, start, maxCount))
 	{
 		// Don't log, this happens as a result of a variables request being sent after a step request that invalidates the state
-		return dap::Error(StringFormat("No such variablesReference %d", request.variablesReference).c_str());
+		return dap::Error(StringFormat("No such variablesReference %ld", static_cast<int64_t>(request.variablesReference)).c_str());
 	}
 	bool only_indexed = request.filter.value("") == "indexed";
 	bool only_named = request.filter.value("") == "named";
@@ -641,11 +640,11 @@ dap::ResponseOrError<dap::EvaluateResponse> ZScriptDebugger::Evaluate(const dap:
 		if( m_runtimeState->ResolveStateById(frameId, _frameNode)){
 			auto frameNode = std::dynamic_pointer_cast<StackFrameStateNode>(_frameNode);
 			if (!frameNode){
-				RETURN_DAP_ERROR(StringFormat("Could not find frameId %d", frameId).c_str());
+				RETURN_DAP_ERROR(StringFormat("Could not find frameId %ld", frameId).c_str());
 			}
 			auto frameNodePath = m_runtimeState->GetPathById(frameNode->GetId());
 			if(frameNodePath.empty()){
-				RETURN_DAP_ERROR(StringFormat("Could not find frameId %d", frameId).c_str());
+				RETURN_DAP_ERROR(StringFormat("Could not find frameId %ld", frameId).c_str());
 			}
 			// try locals first
 			std::string localsPath = StringFormat("%s.%s", frameNodePath.c_str(), StackFrameStateNode::LOCAL_SCOPE_NAME);

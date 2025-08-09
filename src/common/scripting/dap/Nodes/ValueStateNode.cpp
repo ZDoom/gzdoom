@@ -1,20 +1,44 @@
+#include "common/scripting/dap/GameInterfaces.h"
+#include "common/scripting/dap/Utilities.h"
 #include "ValueStateNode.h"
 
-#include "actor.h"
-
-#include <common/scripting/dap/Utilities.h>
-#include "common/scripting/dap/GameInterfaces.h"
+#include "info.h"
+#include "palettecontainer.h"
+#include "s_soundinternal.h"
+#include "texturemanager.h"
 #include "types.h"
 #include "vm.h"
-#include <common/audio/sound/s_soundinternal.h>
-#include <palettecontainer.h>
-#include <texturemanager.h>
-#include <info.h>
 
 namespace DebugServer
 {
-static const char *basicTypeNames[] = {"NONE", "uint32",	 "int32",			"uint16",				 "int16", "uint8", "int8", "float",			 "double",	"bool",				 "string",
-																			 "name", "SpriteID", "TextureID", "TranslationID", "Sound", "Color", "Enum", "StateLabel", "pointer", "VoidPointer", nullptr};
+static const char *basicTypeNames[] = {
+	"NONE",
+
+	"uint32",
+	"int32",
+	"uint16",
+	"int16",
+	"uint8",
+	"int8",
+	"float",
+	"double",
+	"bool",
+	"string",
+
+	"name",
+	"SpriteID",
+	"TextureID",
+	"TranslationID",
+	"Sound",
+	"Color",
+	"Enum",
+	"StateLabel",
+
+	"pointer",
+	"VoidPointer",
+
+	nullptr
+};
 
 ValueStateNode::ValueStateNode(std::string name, VMValue variable, PType *type, PClass *stateOwningClass)
 	: StateNodeNamedVariable(name), m_variable(variable), m_type(type), m_StateOwningClass(stateOwningClass)
@@ -97,9 +121,9 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 	{ // explicitly not TYPE_IntNotInt
 		int64_t val = TruncateVMValue(&m_variable, basic_type).i;
 		if (basic_type == BASIC_uint32 || basic_type == BASIC_uint16 || basic_type == BASIC_uint8){
-			variable.value = StringFormat("%u", val);
+			variable.value = StringFormat("%lu", val);
 		} else {
-			variable.value = StringFormat("%d", val);
+			variable.value = StringFormat("%ld", val);
 		}
 	}
 	else if (m_type->isFloat())
@@ -166,7 +190,7 @@ dap::Variable ValueStateNode::ToVariable(const VMValue &m_variable, PType *m_typ
 			uint8_t g = (soundval >> 8) & 0xFF;
 			uint8_t b = soundval & 0xFF;
 			// hex format
-			variable.value = StringFormat("Color #%08X (a: %d, r: %d, g: %d, b: %d)", soundval, a, r, g, b);
+			variable.value = StringFormat("Color #%08X (a: %hu, r: %hu, g: %hu, b: %hu)", soundval, a, r, g, b);
 		}
 		else if (m_type == TypeStateLabel)
 		{

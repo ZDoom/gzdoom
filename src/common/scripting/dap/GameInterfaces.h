@@ -1,18 +1,17 @@
 #pragma once
 
-#include <common/console/c_dispatch.h>
-#include <common/scripting/vm/vmintern.h>
-#include <common/scripting/vm/vm.h>
-#include <common/scripting/core/types.h>
-#include <common/objects/dobject.h>
-#include <common/utility/zstring.h>
-#include "common/console/c_cvars.h"
-
 #include "Utilities.h"
+
 #include "actor.h"
+#include "c_cvars.h"
+#include "c_dispatch.h"
+#include "dobject.h"
 #include "filesystem.h"
 #include "resourcefile.h"
-
+#include "types.h"
+#include "vm.h"
+#include "vmintern.h"
+#include "zstring.h"
 
 struct FState;
 namespace DebugServer
@@ -776,7 +775,7 @@ static std::string GetParameterName(const VMFrame *m_stackFrame, int paramidx)
 			return params[paramidx].GetChars();
 		}
 	}
-	return StringFormat("%s%d", ARG, paramidx - GetImplicitParmeterCount(m_stackFrame));
+	return StringFormat("%s%zu", ARG, paramidx - GetImplicitParmeterCount(m_stackFrame));
 }
 
 static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame);
@@ -847,7 +846,7 @@ static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType
 	case REGT_INT:
 		if (idx >= m_stackFrame->NumRegD)
 		{
-			LogError("GetRegisterValue: Function %s, int reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegD);
+			LogError("GetRegisterValue: Function %s, int reg idx %d > %hu", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegD);
 			value = VMValue();
 			return false;
 		}
@@ -856,7 +855,7 @@ static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType
 	case REGT_FLOAT:
 		if (idx >= m_stackFrame->NumRegF)
 		{
-			LogError("GetRegisterValue: Function %s, float reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegF);
+			LogError("GetRegisterValue: Function %s, float reg idx %d > %hu", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegF);
 			value = VMValue();
 			return false;
 		}
@@ -864,7 +863,7 @@ static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType
 	case REGT_STRING:
 		if (idx >= m_stackFrame->NumRegS)
 		{
-			LogError("GetRegisterValue: Function %s, string reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegS);
+			LogError("GetRegisterValue: Function %s, string reg idx %d > %hu", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegS);
 			value = VMValue();
 			return false;
 		}
@@ -873,14 +872,14 @@ static bool GetRegisterValueChecked(const VMFrame *m_stackFrame, uint8_t regType
 	case REGT_POINTER:
 		if (idx >= m_stackFrame->NumRegA)
 		{
-			LogError("GetRegisterValue: Function %s, pointer reg idx %d > %d", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegA);
+			LogError("GetRegisterValue: Function %s, pointer reg idx %d > %hu", m_stackFrame->Func->PrintableName, idx, m_stackFrame->NumRegA);
 			value = VMValue();
 			return false;
 		}
 		break;
 	default:
 	{
-		LogError("GetRegisterValue: Function %s, invalid reg type %d", m_stackFrame->Func->PrintableName, regType);
+		LogError("GetRegisterValue: Function %s, invalid reg type %hu", m_stackFrame->Func->PrintableName, regType);
 		value = VMValue();
 		return false;
 	}
@@ -1011,7 +1010,7 @@ static FrameLocalsState GetLocalsState(const VMFrame *p_stackFrame)
 						state.RegCount = local.RegCount;
 						if (local.type->RegCount != local.RegCount)
 						{
-							LogError("GetReg: RegCount mismatch for %s: %d != %d", local_name, local.type->RegCount, local.RegCount);
+							LogError("GetReg: RegCount mismatch for %s: %hu != %d", local_name, local.type->RegCount, local.RegCount);
 						}
 						assert(fields.empty() || fields[0].second->Type->RegType == REGT_FLOAT);
 						state.RegNum = NumRegFloat;

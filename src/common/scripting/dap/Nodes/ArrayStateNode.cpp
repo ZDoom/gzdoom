@@ -1,9 +1,10 @@
 #include "ArrayStateNode.h"
 #include "common/scripting/dap/GameInterfaces.h"
+#include "common/scripting/dap/RuntimeState.h"
+#include "common/scripting/dap/Utilities.h"
+
 #include "dobject.h"
 #include "vm.h"
-#include <common/scripting/dap/Utilities.h>
-#include <common/scripting/dap/RuntimeState.h>
 
 namespace DebugServer
 {
@@ -96,7 +97,7 @@ bool ArrayStateNode::SerializeToProtocol(dap::Variable &variable)
 	}
 	else
 	{
-		variable.value = StringFormat("%s[%d]", elementTypeName.c_str(), variable.indexedVariables.value(0));
+		variable.value = StringFormat("%s[%ld]", elementTypeName.c_str(), static_cast<int64_t>(variable.indexedVariables.value(0)));
 		if (m_type->toPointer())
 		{
 			variable.value += StringFormat(" (%p)", m_value.a);

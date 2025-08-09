@@ -1,13 +1,12 @@
-#include "StatePointerNode.h"
-
-#include "types.h"
-#include "ValueStateNode.h"
-#include <common/scripting/dap/Utilities.h>
-#include <common/scripting/dap/RuntimeState.h>
-#include <common/objects/dobject.h>
-#include <common/scripting/core/symbols.h>
-#include <info.h>
 #include "DummyNode.h"
+#include "StatePointerNode.h"
+#include "ValueStateNode.h"
+#include "common/scripting/dap/Utilities.h"
+
+#include "dobject.h"
+#include "info.h"
+#include "symbols.h"
+#include "types.h"
 
 namespace DebugServer
 {
@@ -170,7 +169,7 @@ bool StatePointerNode::GetChildNode(std::string name, std::shared_ptr<StateNodeB
 		{
 			strings.push_back("STF_CONSUMEAMMO");
 		}
-		std::string value = StringFormat("%d (%s)", state->StateFlags, StringJoin(strings, " | ").c_str());
+		std::string value = StringFormat("%hu (%s)", state->StateFlags, StringJoin(strings, " | ").c_str());
 		node = std::make_shared<DummyNode>("StateFlags", value, "StateFlags");
 		return true;
 	}

@@ -1,4 +1,3 @@
-
 #include "widgets/listview/listview.h"
 #include "widgets/scrollbar/scrollbar.h"
 
@@ -283,4 +282,41 @@ void ListView::OnKeyDown(InputKey key)
 			ScrollToItem(selectedItem);
 		}
 	}
+}
+
+double ListView::GetPreferredWidth()
+{
+	double total = 0.0;
+
+	for (double width : columnwidths)
+	{
+		if (width > 0.0) total += width;
+	}
+
+	if (total == 0.0)
+	{
+		auto canvas = GetCanvas();
+
+		for (const auto& row : items)
+		{
+			double wRow = 0.0;
+			for (const auto& cell : row)
+			{
+				wRow += canvas->measureText(cell).width;
+			}
+			if (wRow > total) total = wRow;
+		}
+	}
+
+	return total + 10.0*2 + scrollbar->GetPreferredWidth();
+}
+
+double ListView::GetPreferredHeight()
+{
+	return items.size()*20.0 + 10.0*2; // Items plus top/bottom padding
+}
+
+double ListView::GetMinimumHeight() const
+{
+	return 20.0 + 10.0*2; // One item plus top/bottom padding
 }

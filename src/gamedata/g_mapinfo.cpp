@@ -1943,6 +1943,7 @@ MapFlagHandlers[] =
 	{ "compat_voodoozombies",			MITYPE_COMPATFLAG, 0, COMPATF2_VOODOO_ZOMBIES },
 	{ "compat_noacsargcheck",			MITYPE_COMPATFLAG, 0, COMPATF2_NOACSARGCHECK },
 	{ "compat_novdolllockmsg",			MITYPE_COMPATFLAG, 0, COMPATF2_NOVDOLLLOCKMSG },
+	{ "compat_animateswitchfirst",		MITYPE_COMPATFLAG, 0, COMPATF2_ANIMATESWITCHFIRST },
 
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },

@@ -1928,8 +1928,8 @@ void DActorModelData::Serialize(FSerializer& arc)
 		("flags", flags)
 		("overrideFlagsSet", overrideFlagsSet)
 		("overrideFlagsClear", overrideFlagsClear)
-		("curAnim", curAnim)
-		("prevAnim", prevAnim);
+		("curAnim", anims.curAnim)
+		("prevAnim", anims.prevAnim);
 }
 
 void DActorModelData::OnDestroy()
@@ -4559,9 +4559,9 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->anims.curAnim.flags & MODELANIM_NONE))
 			{
-				modelData->curAnim.startTic += 1;
+				modelData->anims.curAnim.startTic += 1;
 			}
 
 			return;
@@ -4612,9 +4612,9 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->anims.curAnim.flags & MODELANIM_NONE))
 			{
-				modelData->curAnim.startTic += 1;
+				modelData->anims.curAnim.startTic += 1;
 			}
 
 			return;

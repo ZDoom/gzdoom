@@ -298,11 +298,11 @@ class ZoneHeap {
   //!
   //! NOTE: To use it, you must first `init()` it.
   ASMJIT_INLINE ZoneHeap() noexcept {
-    ::memset(this, 0, sizeof(*this));
+    ::memset((void*)this, 0, sizeof(*this));
   }
   //! Create a new `ZoneHeap` initialized to use `zone`.
   explicit ASMJIT_INLINE ZoneHeap(Zone* zone) noexcept {
-    ::memset(this, 0, sizeof(*this));
+    ::memset((void*)this, 0, sizeof(*this));
     _zone = zone;
   }
   //! Destroy the `ZoneHeap`.

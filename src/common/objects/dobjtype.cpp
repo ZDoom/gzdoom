@@ -816,7 +816,7 @@ void PClass::BuildFlatPointers() const
 			else
 			{
 				pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * NativePointers.Size());
-				memcpy(flat, NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
+				memcpy((void*)flat, NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
 
 				FlatPointers = flat;
 				FlatPointersSize = NativePointers.Size();
@@ -849,15 +849,15 @@ void PClass::BuildFlatPointers() const
 
 				if (ParentClass->FlatPointersSize > 0)
 				{
-					memcpy (flat, ParentClass->FlatPointers, sizeof(pairType) * ParentClass->FlatPointersSize);
+					memcpy ((void*)flat, ParentClass->FlatPointers, sizeof(pairType) * ParentClass->FlatPointersSize);
 				}
 				if (NativePointers.Size() > 0)
 				{
-					memcpy(flat + ParentClass->FlatPointersSize, NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
+					memcpy((void*)(flat + ParentClass->FlatPointersSize), NativePointers.Data(), sizeof(pairType) * NativePointers.Size());
 				}
 				if (ScriptPointers.Size() > 0)
 				{
-					memcpy(flat + ParentClass->FlatPointersSize + NativePointers.Size(), &ScriptPointers[0], sizeof(pairType) * ScriptPointers.Size());
+					memcpy((void*)(flat + ParentClass->FlatPointersSize + NativePointers.Size()), &ScriptPointers[0], sizeof(pairType) * ScriptPointers.Size());
 				}
 				FlatPointers = flat;
 				FlatPointersSize = ParentClass->FlatPointersSize + NativePointers.Size() + ScriptPointers.Size();
@@ -913,12 +913,12 @@ void PClass::BuildArrayPointers() const
 			pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * (ParentClass->ArrayPointersSize + ScriptPointers.Size()));
 			if (ParentClass->ArrayPointersSize > 0)
 			{
-				memcpy(flat, ParentClass->ArrayPointers, sizeof(pairType) * ParentClass->ArrayPointersSize);
+				memcpy((void*)flat, ParentClass->ArrayPointers, sizeof(pairType) * ParentClass->ArrayPointersSize);
 			}
 
 			if (ScriptPointers.Size() > 0)
 			{
-				memcpy(flat + ParentClass->ArrayPointersSize, ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
+				memcpy((void*)(flat + ParentClass->ArrayPointersSize), ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
 			}
 
 			ArrayPointers = flat;
@@ -974,12 +974,12 @@ void PClass::BuildMapPointers() const
 			pairType *flat = (pairType*)ClassDataAllocator.Alloc(sizeof(pairType) * (ParentClass->MapPointersSize + ScriptPointers.Size()));
 			if (ParentClass->MapPointersSize > 0)
 			{
-				memcpy(flat, ParentClass->MapPointers, sizeof(pairType) * ParentClass->MapPointersSize); 
+				memcpy((void*)flat, ParentClass->MapPointers, sizeof(pairType) * ParentClass->MapPointersSize);
 			}
 
 			if (ScriptPointers.Size() > 0)
 			{
-				memcpy(flat + ParentClass->MapPointersSize, ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
+				memcpy((void*)(flat + ParentClass->MapPointersSize), ScriptPointers.Data(), sizeof(pairType) * ScriptPointers.Size());
 			}
 			MapPointers = flat;
 			MapPointersSize = ParentClass->MapPointersSize + ScriptPointers.Size();

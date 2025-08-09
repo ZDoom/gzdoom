@@ -68,7 +68,7 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 	auto &outSubs = theLevel.subsectors;
 	auto subCount = Subsectors.Size();
 	outSubs.Alloc(subCount);
-	memset(&outSubs[0], 0, subCount * sizeof(subsector_t));
+	memset((void*)(&outSubs[0]), 0, subCount * sizeof(subsector_t));
 
 	auto &outNodes = theLevel.nodes;
 	auto nodeCount = Nodes.Size ();
@@ -135,7 +135,7 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 	}
 	else
 	{
-		memcpy (&outSubs[0], &Subsectors[0], subCount*sizeof(subsector_t));
+		memcpy ((void*)(&outSubs[0]), &Subsectors[0], subCount*sizeof(subsector_t));
 		auto segCount = Segs.Size ();
 		outSegs.Alloc(segCount);
 		for (unsigned i = 0; i < segCount; ++i)
@@ -180,7 +180,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	}
 
 	bsp->Subsectors.Resize(Subsectors.Size());
-	memset(&bsp->Subsectors[0], 0, Subsectors.Size() * sizeof(subsector_t));
+	memset((void*)(&bsp->Subsectors[0]), 0, Subsectors.Size() * sizeof(subsector_t));
 
 	bsp->Nodes.Resize(Nodes.Size());
 	memcpy(&bsp->Nodes[0], &Nodes[0], Nodes.Size()*sizeof(node_t));
@@ -228,7 +228,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	}
 	else
 	{
-		memcpy(&bsp->Subsectors[0], &Subsectors[0], Subsectors.Size()*sizeof(subsector_t));
+		memcpy((void*)(&bsp->Subsectors[0]), &Subsectors[0], Subsectors.Size()*sizeof(subsector_t));
 		bsp->Segs.Resize(Segs.Size());
 		for (i = 0; i < Segs.Size(); ++i)
 		{

@@ -694,7 +694,7 @@ void InitModels()
 	{
 		FVoxelModel *md = (FVoxelModel*)Models[VoxelDefs[i]->Voxel->VoxelIndex];
 		FSpriteModelFrame smf;
-		memset(&smf, 0, sizeof(smf));
+		memset((void*)(&smf), 0, sizeof(smf));
 		smf.isVoxel = true;
 		smf.modelsAmount = 1;
 		smf.modelframes.Alloc(1);
@@ -772,7 +772,7 @@ void ParseModelDefLump(int Lump)
 			sc.MustGetString();
 
 			FSpriteModelFrame smf;
-			memset(&smf, 0, sizeof(smf));
+			memset((void*)(&smf), 0, sizeof(smf));
 			smf.xscale=smf.yscale=smf.zscale=1.f;
 
 			auto type = PClass::FindClass(sc.String);
@@ -1187,7 +1187,7 @@ FSpriteModelFrame * FindModelFrameRaw(const AActor * actorDefaults, const PClass
 	{
 		FSpriteModelFrame smf;
 
-		memset(&smf, 0, sizeof(smf));
+		memset((void*)(&smf), 0, sizeof(smf));
 		smf.type = ti;
 		smf.sprite = sprite;
 		smf.frame = frame;

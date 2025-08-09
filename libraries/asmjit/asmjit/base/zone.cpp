@@ -221,7 +221,7 @@ void ZoneHeap::reset(Zone* zone) noexcept {
   }
 
   // Zero the entire class and initialize to the given `zone`.
-  ::memset(this, 0, sizeof(*this));
+  ::memset((void*)this, 0, sizeof(*this));
   _zone = zone;
 }
 

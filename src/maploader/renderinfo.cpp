@@ -937,7 +937,7 @@ void MapLoader::FixHoles()
 				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", Index(segloop[0]->Subsector->render_sector));
 
 				subsector_t &sub = Level->subsectors[newssstart++];
-				memset(&sub, 0, sizeof(sub));
+				memset((void*)(&sub), 0, sizeof(sub));
 				sub.sector = segloop[0]->frontsector;
 				sub.render_sector = segloop[0]->Subsector->render_sector;
 				sub.numlines = segloop.Size();

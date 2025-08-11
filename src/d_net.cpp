@@ -1546,7 +1546,7 @@ void NetUpdate(int tics)
 		// If player count is < 8, scale the number of commands by 1 per every 1 less player.
 		// If player count is < 4, scale the number of commands by 4 per every 1 less player.
 		constexpr size_t MaxTicsPerPacket = 2u;
-		if (players > 1u)
+		if (players > 1)
 		{
 			maxCommands = MaxTicsPerPacket;
 			if (players >= MaxPlayersPerPacket / 2 && players < MaxPlayersPerPacket)
@@ -1878,7 +1878,7 @@ bool D_CheckNetGame()
 	for (auto client : NetworkClients)
 		playeringame[client] = true;
 
-	if (MaxClients > 1u)
+	if (MaxClients > 1)
 	{
 		if (consoleplayer == Net_Arbitrator)
 			Printf("Selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
@@ -3298,7 +3298,7 @@ CCMD(kick)
 	}
 
 	TArray<int> cNums = {};
-	for (size_t i = 1u; i < argv.argc(); ++i)
+	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
 		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
@@ -3336,7 +3336,7 @@ CCMD(mute)
 	}
 
 	TArray<int> pNums = {};
-	for (size_t i = 1u; i < argv.argc(); ++i)
+	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int pNum = -1;
 		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
@@ -3411,7 +3411,7 @@ CCMD(unmute)
 	}
 
 	TArray<int> pNums = {};
-	for (size_t i = 1u; i < argv.argc(); ++i)
+	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int pNum = -1;
 		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
@@ -3509,7 +3509,7 @@ CCMD(addsettingscontrollers)
 	}
 
 	TArray<int> cNums = {};
-	for (size_t i = 1u; i < argv.argc(); ++i)
+	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
 		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
@@ -3536,7 +3536,7 @@ CCMD(removesettingscontrollers)
 	}
 
 	TArray<int> cNums = {};
-	for (size_t i = 1u; i < argv.argc(); ++i)
+	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
 		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)

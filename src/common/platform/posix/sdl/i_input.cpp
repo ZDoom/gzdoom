@@ -449,6 +449,10 @@ void MessagePump (const SDL_Event &sev)
 				{
 					event.data2 = sev.key.keysym.sym;
 				}
+				SDL_Keymod kmod = SDL_GetModState();
+				event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+					((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+					((kmod & KMOD_ALT) ? GKM_ALT : 0);
 				D_PostEvent (&event);
 			}
 		}

@@ -277,7 +277,9 @@ void FKeyboard::PostKeyEvent(int key, INTBOOL down, bool foreground)
 	ev.data1 = key;
 	ev.data2 = Convert[key];
 	ev.data3 = 0;
-	if (CheckKey(DIK_LSHIFT) || CheckKey(DIK_RSHIFT)) ev.data3 |= 1;
+	if (CheckKey(DIK_LSHIFT)   || CheckKey(DIK_RSHIFT))   ev.data3 |= GKM_SHIFT;
+	if (CheckKey(DIK_LCONTROL) || CheckKey(DIK_RCONTROL)) ev.data3 |= GKM_CTRL;
+	if (CheckKey(DIK_LALT)     || CheckKey(DIK_RALT))     ev.data3 |= GKM_ALT;
 	D_PostEvent(&ev);
 }
 

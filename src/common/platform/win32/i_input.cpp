@@ -441,11 +441,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SYSKEYDOWN:
-		// Pressing Alt+Enter can toggle between fullscreen and windowed.
-		if (wParam == VK_RETURN && k_allowfullscreentoggle && !(lParam & 0x40000000))
-		{
-			ToggleFullscreen = !ToggleFullscreen;
-		}
 		// Pressing Alt+F4 quits the program.
 		if (wParam == VK_F4 && !(lParam & 0x40000000))
 		{

@@ -34,15 +34,19 @@
 */ 
 
 #include "c_bind.h"
-#include "d_eventbase.h"
 #include "c_console.h"
+#include "c_cvars.h"
+#include "d_eventbase.h"
 #include "d_gui.h"
-#include "menu.h"
-#include "utf8.h"
-#include "m_joy.h"
-#include "vm.h"
 #include "gamestate.h"
 #include "i_interface.h"
+#include "keydef.h"
+#include "m_joy.h"
+#include "menu.h"
+#include "utf8.h"
+#include "vm.h"
+
+extern bool ToggleFullscreen;
 
 int eventhead;
 int eventtail;
@@ -73,6 +77,7 @@ void D_ProcessEvents (void)
 	while (eventtail != eventhead)
 	{
 		event_t *ev = &events[eventtail];
+
 		eventtail = (eventtail + 1) & (MAXEVENTS - 1);
 
 		if (ev->type == EV_KeyUp && keywasdown[ev->data1])
@@ -85,6 +90,16 @@ void D_ProcessEvents (void)
 			continue;
 		if (ev->type == EV_DeviceChange)
 			UpdateJoystickMenu(I_UpdateDeviceList());
+
+#if defined(__linux__) || defined(_WIN32)
+		// I cannot test on macos, so it is disabled for now
+		if ((ev->type == EV_KeyDown && ev->data1 == KEY_ENTER && (ev->data3 & GKM_ALT))
+		|| (ev->type == EV_GUI_Event && ev->subtype == EV_GUI_KeyDown && ev->data1 == GK_RETURN && (ev->data3 & GKM_ALT)))
+		{
+			ToggleFullscreen = !ToggleFullscreen;
+			continue;
+		}
+#endif
 
 		// allow the game to intercept Escape before dispatching it.
 		if (ev->type != EV_KeyDown || ev->data1 != KEY_ESCAPE || !sysCallbacks.WantEscape || !sysCallbacks.WantEscape())

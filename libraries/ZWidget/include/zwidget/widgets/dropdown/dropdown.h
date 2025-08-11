@@ -7,23 +7,31 @@
 #include "../../core/widget.h"
 #include "../../widgets/listview/listview.h"
 
+class DropdownList : public ListView
+{
+public:
+	DropdownList(Widget* parent, Dropdown* owner);
+protected:
+	void OnKeyDown(InputKey key) override;
+	Dropdown* owner;
+};
+
 class Dropdown : public Widget
 {
 public:
 	Dropdown(Widget* parent);
 
-	void AddItem(const std::string& text);
-	void RemoveItem(int index);
+	void AddItem(const std::string& text, int index = -1);
+	bool UpdateItem(const std::string& text, int index);
+	bool RemoveItem(int index = -1);
 	void ClearItems();
+	const std::string& GetItem(int index);
 
 	void SetMaxDisplayItems(int items);
 	void SetDropdownDirection(bool below);
 
 	int GetSelectedItem() const { return selectedItem; }
 	void SetSelectedItem(int index);
-
-	std::string GetSelectedText() const;
-	std::string GetText() const { return text; }
 
 	double GetPreferredHeight() const;
 	double GetPreferredWidth() const;
@@ -39,8 +47,9 @@ protected:
 	void Notify(Widget* source, const WidgetEvent type) override;
 
 private:
-	void OpenDropdown();
-	void CloseDropdown();
+	void ItemsChanged();
+	bool OpenDropdown();
+	bool CloseDropdown();
 	void OnDropdownActivated();
 
 	size_t GetDisplayItems();
@@ -51,8 +60,10 @@ private:
 
 	bool dropdownOpen = false;
 	Widget* dropdown = nullptr;
-	ListView* listView = nullptr;
+	DropdownList* listView = nullptr;
 
 	int maxDisplayItems = 0;
 	bool dropdownDirection = true;
+
+	friend DropdownList;
 };

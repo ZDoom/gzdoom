@@ -607,11 +607,12 @@ Size WaylandDisplayBackend::GetScreenSize()
 
 void* WaylandDisplayBackend::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-    return nullptr;
+	throw std::logic_error("unimplemented: WaylandDisplayBackend::StartTimer");
 }
 
 void WaylandDisplayBackend::StopTimer(void* timerID)
 {
+	throw std::logic_error("unimplemented: WaylandDisplayBackend::StopTimer");
 }
 
 #ifdef USE_DBUS

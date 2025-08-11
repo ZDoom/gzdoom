@@ -1,9 +1,0 @@
-
-
-gameinfo
-{
-	swapmenu = true
-	cursorpic = "cursor"
-	forcenogfxsubstitution = true
-}
-

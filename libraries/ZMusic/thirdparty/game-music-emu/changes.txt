@@ -1,5 +1,0 @@
-Game_Music_Emu Change Log
--------------------------
-
-Please see the git version history (e.g. git shortlog tags/0.6.0..tags/0.6.1)
-for the accurate change log.

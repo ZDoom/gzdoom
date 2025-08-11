@@ -1,6 +1,0 @@
-{
-  "build":{ "dockerfile": "GZDoom.dockerfile" },
-  "name": "GZDoom",
-  "features": {
-  }
-}

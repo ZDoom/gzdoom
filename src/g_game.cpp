@@ -1274,7 +1274,7 @@ void G_Ticker ()
 
 		// check for turbo cheats
 		if (multiplayer && turbo > 100.f && cmd->forwardmove > TURBOTHRESHOLD &&
-			!(gametic & 31) && ((gametic >> 5) & (MAXPLAYERS-1)) == client)
+			!(gametic & 31) && (int)((gametic >> 5) & (MAXPLAYERS-1)) == client)
 		{
 			Printf("%s is turbo!\n", players[client].userinfo.GetName());
 		}

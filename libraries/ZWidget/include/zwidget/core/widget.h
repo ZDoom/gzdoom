@@ -225,6 +225,9 @@ private:
 	Widget* FirstChildObj = nullptr;
 	Widget* LastChildObj = nullptr;
 
+	std::unordered_set<Widget*> Subscribers;
+	std::unordered_set<Widget*> Subscriptions;
+
 	Timer* FirstTimerObj = nullptr;
 
 	Rect FrameGeometry = Rect::xywh(0.0, 0.0, 0.0, 0.0);

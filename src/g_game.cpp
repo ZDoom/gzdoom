@@ -2907,7 +2907,7 @@ void G_DoPlayDemo (void)
 		}
 		size_t demolen = fr.GetLength();
 		demobuffer.Resize(demolen);
-		if (fr.Read(demobuffer.Data(), demolen) != demolen)
+		if (fr.Read(demobuffer.Data(), demolen) != (FileSys::FileReader::Size)demolen)
 		{
 			I_Error("Unable to read demo '%s'", defdemoname.GetChars());
 		}

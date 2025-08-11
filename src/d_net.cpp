@@ -3301,7 +3301,7 @@ CCMD(kick)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
 			Printf("Bad client number %s\n", argv[i]);
 		else if (cNum != consoleplayer && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);
@@ -3339,7 +3339,7 @@ CCMD(mute)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int pNum = -1;
-		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= (int)MAXPLAYERS)
 			Printf("Bad player number %s\n", argv[i]);
 		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
 			pNums.Push(pNum);
@@ -3367,7 +3367,7 @@ CCMD(muteall)
 		return;
 	}
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (int i = 0; i < (int)MAXPLAYERS; ++i)
 	{
 		if (playeringame[i] && i != consoleplayer)
 			MutedClients |= (uint64_t)1u << i;
@@ -3414,7 +3414,7 @@ CCMD(unmute)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int pNum = -1;
-		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= (int)MAXPLAYERS)
 			Printf("Bad player number %s\n", argv[i]);
 		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
 			pNums.Push(pNum);
@@ -3512,7 +3512,7 @@ CCMD(addsettingscontrollers)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
 			Printf("Bad client number %s\n", argv[i]);
 		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);
@@ -3539,7 +3539,7 @@ CCMD(removesettingscontrollers)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
 			Printf("Bad player number %s\n", argv[i]);
 		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);

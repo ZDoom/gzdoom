@@ -2857,7 +2857,7 @@ FUNC(LS_ChangeCamera)
 	{
 		int i;
 
-		for (i = 0; i < MAXPLAYERS; i++)
+		for (i = 0; i < (int)MAXPLAYERS; i++)
 		{
 			if (!Level->PlayerInGame(i))
 				continue;
@@ -3007,7 +3007,7 @@ FUNC(LS_SetPlayerProperty)
 		{
 			int i;
 
-			for (i = 0; i < MAXPLAYERS; i++)
+			for (i = 0; i < (int)MAXPLAYERS; i++)
 			{
 				auto p = Level->Players[i];
 				if (!Level->PlayerInGame(i) || p->mo == nullptr)
@@ -3122,7 +3122,7 @@ FUNC(LS_SetPlayerProperty)
 			mask = CF_FROZEN | CF_TOTALLYFROZEN;
 		}
 
-		for (i = 0; i < MAXPLAYERS; i++)
+		for (i = 0; i < (int)MAXPLAYERS; i++)
 		{
 			if (!Level->PlayerInGame(i))
 				continue;
@@ -3363,7 +3363,7 @@ FUNC(LS_GlassBreak)
 		{ // Up stats and signal this mission is complete
 			if (it == NULL)
 			{
-				for (int i = 0; i < MAXPLAYERS; ++i)
+				for (int i = 0; i < (int)MAXPLAYERS; ++i)
 				{
 					if (Level->PlayerInGame(i))
 					{

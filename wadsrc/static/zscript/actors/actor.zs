@@ -1587,7 +1587,13 @@ class Actor : Thinker native
 	native version("4.15.1") ui PrecalculatedAnimationFrame CalculateAnimationUI(AnimationLayer layer);
 
 	native version("4.15.1") static clearscope PrecalculatedAnimationFrame BlendAnimationFrames(PrecalculatedAnimationFrame a, PrecalculatedAnimationFrame b, double t);
+	
+	native version("4.15.1") SetBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui SetBonesUI(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
 
+	native version("4.15.1") ui OverwriteBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD); // no interpolation, faster
+
+	native version("4.15.1") void ForceRecalculateBones(); // slow if called often
 	//================================================
 	// 
 	// 

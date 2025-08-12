@@ -7121,7 +7121,86 @@ DEFINE_ACTION_FUNCTION(AActor, BlendAnimationFrames)
 	{
 		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Size of a does not match size of b");
 	}
+}
 
+DEFINE_ACTION_FUNCTION(AActor, SetBones)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + 1.0;
+	
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
+	if(n > 0) self->CalcBones(true);
+	return 0;
+}
+
+
+
+DEFINE_ACTION_FUNCTION(AActor, SetBonesUI)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + I_GetTimeFrac();
+	
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OverwriteBones)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(mode);
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		overrides[i].Overwrite(bones->frameData[i], mode);
+	}
+
+	if(n > 0) self->CalcBones(true);
+	return 0;
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, ForceRecalculateBones)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	self->CalcBones(false);
+
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)

@@ -1381,7 +1381,7 @@ CCMD (mapinfo)
 	if (myLevel->RedirectCVARMapName.IsNotEmpty())
 	{
 		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName.GetChars());
-		
+
 		Printf("           LightMode: %i\n", (int8_t)myLevel->lightmode);
 	}
 

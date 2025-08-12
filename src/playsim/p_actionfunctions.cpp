@@ -7127,7 +7127,7 @@ DEFINE_ACTION_FUNCTION(AActor, BlendAnimationFrames)
 DEFINE_ACTION_FUNCTION(AActor, SetBones)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
 	PARAM_INT(mode);
 	PARAM_FLOAT(interplen);
 
@@ -7148,12 +7148,10 @@ DEFINE_ACTION_FUNCTION(AActor, SetBones)
 	return 0;
 }
 
-
-
 DEFINE_ACTION_FUNCTION(AActor, SetBonesUI)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
 	PARAM_INT(mode);
 	PARAM_FLOAT(interplen);
 
@@ -7177,7 +7175,7 @@ DEFINE_ACTION_FUNCTION(AActor, SetBonesUI)
 DEFINE_ACTION_FUNCTION(AActor, OverwriteBones)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(bones, DPrecalculatedAnimationFrame);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
 	PARAM_INT(mode);
 
 	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
@@ -7190,10 +7188,154 @@ DEFINE_ACTION_FUNCTION(AActor, OverwriteBones)
 		overrides[i].Overwrite(bones->frameData[i], mode);
 	}
 
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetBonesRange)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(start);
+	PARAM_INT(length);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + 1.0;
+
+	int n = std::min(bones->frameData.SSize(), std::min(overrides.SSize(), start + length));
+	for(int i = start; i < n; i++)
+	{
+		overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
 	if(n > 0) self->CalcBones(true);
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, SetBonesRangeUI)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(start);
+	PARAM_INT(length);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + I_GetTimeFrac();
+
+	int n = std::min(bones->frameData.SSize(), std::min(overrides.SSize(), start + length));
+	for(int i = start; i < n; i++)
+	{
+		overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OverwriteBonesRange)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_INT(start);
+	PARAM_INT(length);
+	PARAM_INT(mode);
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	int n = std::min(bones->frameData.SSize(), std::min(overrides.SSize(), start + length));
+	for(int i = start; i < n; i++)
+	{
+		overrides[i].Overwrite(bones->frameData[i], mode);
+	}
+
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetBonesMask)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_POINTER_NOT_NULL(mask, TArray<bool>);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + 1.0;
+
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		if((*mask)[i]) overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
+	if(n > 0) self->CalcBones(true);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, SetBonesMaskUI)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_POINTER_NOT_NULL(mask, TArray<bool>);
+	PARAM_INT(mode);
+	PARAM_FLOAT(interplen);
+
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	double tic = self->Level->totaltime + I_GetTimeFrac();
+
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		if((*mask)[i]) overrides[i].Set(bones->frameData[i], tic, mode, interplen);
+	}
+
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OverwriteBonesMask)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(bones, DPrecalculatedAnimationFrame);
+	PARAM_POINTER_NOT_NULL(mask, TArray<bool>);
+	PARAM_INT(mode);
+
+	FModel * mdl = SetGetBoneShared<true, true>(self, 0);
+
+	TArray<BoneOverride> &overrides = self->modelData->modelBoneOverrides[0];
+
+	int n = std::min(bones->frameData.SSize(), overrides.SSize());
+	for(int i = 0; i < n; i++)
+	{
+		if((*mask)[i]) overrides[i].Overwrite(bones->frameData[i], mode);
+	}
+
+	//if(n > 0) self->CalcBones(true); no need to calculate bones, this is in ui
+	return 0;
+}
 
 DEFINE_ACTION_FUNCTION(AActor, ForceRecalculateBones)
 {

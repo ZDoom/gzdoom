@@ -6320,6 +6320,40 @@ IMPLEMENT_POINTERS_START(DAnimationLayer)
 	IMPLEMENT_POINTER(prevAnim)
 IMPLEMENT_POINTERS_END;
 
+FModel * FindFModel(AActor * self)
+{
+	auto smf_class = (self->modelData && self->modelData->modelDef) ? self->modelData->modelDef : self->GetClass();
+
+	if(!BaseSpriteModelFrames.CheckKey(smf_class))
+	{
+		return nullptr;
+	}
+
+	int animID = -1;
+
+	if(self->modelData->animationIDs.Size() > 0 && self->modelData->animationIDs[0] >= 0)
+	{
+		animID = self->modelData->animationIDs[0];
+	}
+	else
+	{
+		animID = BaseSpriteModelFrames[smf_class].animationIDs[0];
+	}
+
+	if (animID >= 0 && animID < Models.SSize())
+	{
+		return Models[animID];
+	}
+	else if(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.SSize())
+	{
+		return Models[self->modelData->models[0].modelID];
+	}
+	else
+	{
+		return Models[BaseSpriteModelFrames[smf_class].modelIDs[0]];
+	}
+}
+
 void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac, AnimInfo *anims = nullptr)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
@@ -6359,31 +6393,7 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		tic += ticFrac;
 	}
 
-	int animID = -1;
-
-	
-	if(self->modelData->animationIDs.Size() > 0 && self->modelData->animationIDs[0] >= 0)
-	{
-		animID = self->modelData->animationIDs[0];
-	}
-	else
-	{
-		animID = BaseSpriteModelFrames[smf_class].animationIDs[0];
-	}
-
-	FModel * animation = nullptr;
-	if (animID >= 0 && animID < Models.SSize())
-	{
-		animation = Models[animID];
-	}
-	else if(self->modelData->models.Size() > 0 && self->modelData->models[0].modelID >= 0 && self->modelData->models[0].modelID < Models.SSize())
-	{
-		animation = Models[self->modelData->models[0].modelID];
-	}
-	else
-	{
-		animation = Models[BaseSpriteModelFrames[smf_class].modelIDs[0]];
-	}
+	FModel * animation = FindFModel(self);
 
 	int animStart = animation->FindFirstFrame(animName);
 
@@ -6937,6 +6947,16 @@ DAnimationLayer * AnimInfoToAnimLayer(AnimInfo &info)
 	return layer;
 }
 
+void RestoreAnimLayer(DAnimationLayer *layer, AnimInfo &info)
+{
+	if(layer && layer->prevAnim && layer->prevAnim->GetClass() == RUNTIME_CLASS(DPrecalculatedAnimationFrame))
+	{
+		assert(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(info.prevAnim));
+		DPrecalculatedAnimationFrame * frame = static_cast<DPrecalculatedAnimationFrame*>(layer->prevAnim.Get());
+		frame->frameData = std::move(std::get<ModelAnimFramePrecalculatedIQM>(info.prevAnim).precalcBones);
+	}
+}
+
 DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerAnimation)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -7009,6 +7029,99 @@ DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerFrameRateUI)
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac(), &nativeAnims);
 
 	ACTION_RETURN_POINTER(AnimInfoToAnimLayer(nativeAnims));
+}
+
+DPrecalculatedAnimationFrame* CalculateAnimationInternal(AActor * self, AnimInfo *anims, double tic)
+{
+	FModel * mdl = FindFModel(self);
+
+	if(!mdl)
+	{
+		return nullptr;
+	}
+
+	ModelAnimFrameInterp to;
+	float inter;
+
+	calcFrames(anims->curAnim, tic, to, inter);
+
+	ModelAnimFrame frame = mdl->PrecalculateFrame(anims->prevAnim, to, inter, mdl->AttachAnimationData());
+	assert(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(frame));
+
+	DPrecalculatedAnimationFrame * dframe = (DPrecalculatedAnimationFrame*)RUNTIME_CLASS(DPrecalculatedAnimationFrame)->CreateNew();
+	dframe->frameData = std::move(std::get<ModelAnimFramePrecalculatedIQM>(frame).precalcBones);
+	return dframe;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CalculateAnimation)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(layer, DAnimationLayer);
+
+	if(layer == nullptr)
+	{
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
+
+	DPrecalculatedAnimationFrame* calc = CalculateAnimationInternal(self, &nativeAnims, self->Level->totaltime + 1);
+
+	RestoreAnimLayer(layer, nativeAnims);
+
+	ACTION_RETURN_POINTER(calc);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CalculateAnimationUI)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(layer, DAnimationLayer);
+
+	if(layer == nullptr)
+	{
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
+
+	DPrecalculatedAnimationFrame* calc = CalculateAnimationInternal(self, &nativeAnims, self->Level->totaltime + I_GetTimeFrac());
+
+	RestoreAnimLayer(layer, nativeAnims);
+
+	ACTION_RETURN_POINTER(calc);
+}
+
+
+TRS InterpolateBone(const TRS &from, const TRS &to, float t, float invt);
+
+DEFINE_ACTION_FUNCTION(AActor, BlendAnimationFrames)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(a, DPrecalculatedAnimationFrame);
+	PARAM_OBJECT_NOT_NULL(b, DPrecalculatedAnimationFrame);
+	PARAM_FLOAT(t);
+
+	if(a->frameData.Size() == b->frameData.Size())
+	{
+		double invt = 1.0 - t;
+
+		DPrecalculatedAnimationFrame * dframe = (DPrecalculatedAnimationFrame*)RUNTIME_CLASS(DPrecalculatedAnimationFrame)->CreateNew();
+
+		dframe->frameData.Resize(std::max(a->frameData.Size(), b->frameData.Size()));
+
+		int n = a->frameData.SSize();
+		for(int i = 0; i < n; i++)
+		{
+			dframe->frameData[i] = InterpolateBone(a->frameData[i], b->frameData[i], t, invt);
+		}
+
+		ACTION_RETURN_POINTER(dframe);
+	}
+	else
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Size of a does not match size of b");
+	}
+
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, SetModelFlag, SetModelFlag)

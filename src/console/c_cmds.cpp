@@ -1363,9 +1363,11 @@ CCMD (mapinfo)
 		Printf("          SecretNext: %s\n", myLevel->NextSecretMap.GetChars());
 
 	if (myLevel->Music.IsNotEmpty())
+	{
 		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music.GetChars()));
 
 		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
+	}
 
 	if (myLevel->RedirectType != NAME_None)
 		Printf("     Redirect (Item): %s\n", myLevel->RedirectType.GetChars());
@@ -1377,9 +1379,11 @@ CCMD (mapinfo)
 		Printf("CVAR_Redirect (CVAR): %s\n", myLevel->RedirectCVAR.GetChars());
 
 	if (myLevel->RedirectCVARMapName.IsNotEmpty())
+	{
 		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName.GetChars());
-
+		
 		Printf("           LightMode: %i\n", (int8_t)myLevel->lightmode);
+	}
 
 	if (players[consoleplayer].mo && players[consoleplayer].mo->Level)
 	{

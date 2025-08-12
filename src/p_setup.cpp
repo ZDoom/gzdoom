@@ -297,6 +297,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 			probe->ClearNativePointerFields({ fieldTypes, std::size(fieldTypes) });
 	}
 	
+	TravellingThinkers.Clear();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Thinkers.DestroyAllThinkers(fullgc);
 	ClientsideThinkers.DestroyAllThinkers(fullgc);

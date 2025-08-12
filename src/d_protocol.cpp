@@ -282,7 +282,10 @@ void ReadUserCmdMessage(TArrayView<uint8_t>& stream, int player, int tic)
 		Net_SkipCommand(type, stream);
 
 	// Subtract a byte to account for the fact the stream head is now sitting on the
-	// user command.
+	// user command. This gets cleared first because it previously got cleared after
+	// executing but that breaks packet-server mode and I have no idea what side effects
+	// might happen if it's not wiped first.
+	curTic.Data.SetData(nullptr, 0u);
 	curTic.Data.SetData(start, int(stream.Data() - start - 1));
 
 	if (type == DEM_USERCMD)
@@ -311,9 +314,6 @@ void RunPlayerCommands(int player, int tic)
 	{
 		while (stream.Size() > 0)
 			Net_DoCommand(ReadInt8(stream), stream, player);
-
-		if (!demorecording)
-			data.SetData(nullptr, 0);
 	}
 }
 

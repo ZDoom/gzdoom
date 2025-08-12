@@ -2573,11 +2573,7 @@ void G_WriteDemoTiccmd (usercmd_t *cmd, int player, int buf)
 
 	// [RH] Write any special "ticcmds" for this player to the demo
 	if ((specdata = ClientStates[player].Tics[buf % BACKUPTICS].Data.GetData (&speclen)) && !(gametic % TicDup))
-	{
 		WriteBytes(TArrayView(specdata, speclen), demo_p);
-
-		ClientStates[player].Tics[buf % BACKUPTICS].Data.SetData(nullptr, 0);
-	}
 
 	// [RH] Now write out a "normal" ticcmd.
 	WriteUserCmdMessage (*cmd, &players[player].cmd, demo_p);

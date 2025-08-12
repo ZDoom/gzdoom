@@ -111,10 +111,15 @@ struct BoneOverride
 	{
 		return from + to;
 	}
+	
+	static inline FVector3 MultVec3(const FVector3 &from, const FVector3 &to)
+	{
+		return FVector3(from.X * to.X, from.Y * to.Y, from.Z * to.Z);
+	}
 
 	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> translation;
 	BoneOverrideComponent<FQuaternion, &InterpolateQuat, &AddQuat> rotation;
-	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> scaling;
+	BoneOverrideComponent<FVector3, &LerpVec3, &MultVec3> scaling;
 
 	void Modify(TRS &trs, double tic) const
 	{

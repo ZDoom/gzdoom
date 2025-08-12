@@ -569,7 +569,7 @@ FQuaternion InterpolateQuat(const FQuaternion &from, const FQuaternion &to, floa
 	return rot.Unit();
 }
 
-static TRS InterpolateBone(const TRS &from, const TRS &to, float t, float invt)
+TRS InterpolateBone(const TRS &from, const TRS &to, float t, float invt)
 {
 	TRS bone;
 

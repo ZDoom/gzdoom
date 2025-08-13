@@ -6354,7 +6354,7 @@ FModel * FindFModel(AActor * self)
 	}
 }
 
-void SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac, AnimInfo *anims = nullptr)
+bool SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac, AnimInfo *anims = nullptr, TArray<TRS> * prevAnimOld = nullptr)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
 
@@ -6378,13 +6378,13 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 	if(animName == NAME_None)
 	{
-		if(anims->curAnim.flags & MODELANIM_NONE) return;
+		if(anims->curAnim.flags & MODELANIM_NONE) return false;
 
 		anims->curAnim.flags = MODELANIM_NONE;
 
 		if(anims == &self->modelData->anims) self->CalcBones(true);
 
-		return;
+		return false;
 	}
 
 	double tic = self->Level->totaltime;
@@ -6400,20 +6400,62 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	if(animStart == FErr_NotFound)
 	{
 		Printf("Could not find animation %s\n", animName.GetChars());
-		if(anims->curAnim.flags & MODELANIM_NONE) return;
+		if(anims->curAnim.flags & MODELANIM_NONE) return false;
 
 		anims->curAnim.flags = MODELANIM_NONE;
 
 		if(anims == &self->modelData->anims) self->CalcBones(true);
 
-		return;
+		return false;
 	}
 
 	if((flags & SAF_NOOVERRIDE) && anims->curAnim.flags != MODELANIM_NONE && anims->curAnim.firstFrame == animStart)
 	{
 		//same animation as current, skip setting it
-		return;
+		return false;
 	}
+
+
+	int animEnd = animation->FindLastFrame(animName);
+
+	if(framerate < 0)
+	{
+		framerate = animation->FindFramerate(animName);
+	}
+
+	int len = animEnd - animStart;
+
+	if(startFrame >= len)
+	{
+		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		if(anims->curAnim.flags & MODELANIM_NONE) return false;
+
+		anims->curAnim.flags = MODELANIM_NONE;
+		if(anims == &self->modelData->anims) self->CalcBones(true);
+
+		return false;
+	}
+	else if(loopFrame >= len)
+	{
+		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
+		if(anims->curAnim.flags & MODELANIM_NONE) return false;
+
+		anims->curAnim.flags = MODELANIM_NONE;
+		if(anims == &self->modelData->anims) self->CalcBones(true);
+
+		return false;
+	}
+	else if(endFrame >= len)
+	{
+		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
+		if(anims->curAnim.flags & MODELANIM_NONE) return false;
+
+		anims->curAnim.flags = MODELANIM_NONE;
+		if(anims == &self->modelData->anims) self->CalcBones(true);
+
+		return false;
+	}
+
 
 	if(!(flags & SAF_INSTANT))
 	{
@@ -6428,10 +6470,22 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 
 				const TArray<TRS>* animationData = animation->AttachAnimationData();
 
-				anims->prevAnim = animation->PrecalculateFrame(anims->prevAnim, to, inter, animationData);
+				ModelAnimFrame tmp = animation->PrecalculateFrame(anims->prevAnim, to, inter, animationData);
+
+				if(prevAnimOld && std::holds_alternative<ModelAnimFramePrecalculatedIQM>(anims->prevAnim))
+				{ // save out old array
+					*prevAnimOld = std::move(std::get<ModelAnimFramePrecalculatedIQM>(anims->prevAnim).precalcBones);
+				}
+
+				anims->prevAnim = std::move(tmp);
 			}
 			else
 			{
+				if(prevAnimOld && std::holds_alternative<ModelAnimFramePrecalculatedIQM>(anims->prevAnim))
+				{ // save out old array
+					*prevAnimOld = std::move(std::get<ModelAnimFramePrecalculatedIQM>(anims->prevAnim).precalcBones);
+				}
+
 				anims->prevAnim = ModelAnimFrameInterp{}; 
 
 				calcFrame(anims->curAnim, tic, std::get<ModelAnimFrameInterp>(anims->prevAnim));
@@ -6440,49 +6494,14 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 	else
 	{
+		if(prevAnimOld && std::holds_alternative<ModelAnimFramePrecalculatedIQM>(anims->prevAnim))
+		{ // save out old array
+			*prevAnimOld = std::move(std::get<ModelAnimFramePrecalculatedIQM>(anims->prevAnim).precalcBones);
+		}
+
 		anims->prevAnim = nullptr;
 	}
 
-	int animEnd = animation->FindLastFrame(animName);
-
-	if(framerate < 0)
-	{
-		framerate = animation->FindFramerate(animName);
-	}
-	
-	int len = animEnd - animStart;
-
-	if(startFrame >= len)
-	{
-		Printf("frame %d (startFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
-		if(anims->curAnim.flags & MODELANIM_NONE) return;
-
-		anims->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
-		return;
-	}
-	else if(loopFrame >= len)
-	{
-		Printf("frame %d (loopFrame) is past the end of animation %s\n", startFrame, animName.GetChars());
-		if(anims->curAnim.flags & MODELANIM_NONE) return;
-
-		anims->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
-		return;
-	}
-	else if(endFrame >= len)
-	{
-		Printf("frame %d (endFrame) is past the end of animation %s\n", endFrame, animName.GetChars());
-		if(anims->curAnim.flags & MODELANIM_NONE) return;
-
-		anims->curAnim.flags = MODELANIM_NONE;
-		self->CalcBones(true);
-
-		return;
-	}
-	
 	anims->curAnim.firstFrame = animStart;
 	anims->curAnim.lastFrame = endFrame < 0 ? animEnd - 1 : animStart + endFrame;
 	anims->curAnim.startFrame = startFrame < 0 ? animStart : animStart + startFrame;
@@ -6502,7 +6521,8 @@ void SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 		anims->curAnim.switchOffset = 0;
 	}
 
-	self->CalcBones(true);
+	if(anims == &self->modelData->anims) self->CalcBones(true);
+	return true;
 }
 
 void SetAnimationNative(AActor * self, int i_animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags)
@@ -6546,6 +6566,8 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 		anims->curAnim.framerate = (float)framerate;
 		return;
 	}
+
+	anims->prevAnim = nullptr; // clear prev anim
 
 	double frame = getCurrentFrame(anims->curAnim, tic, nullptr);
 
@@ -6971,7 +6993,21 @@ DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerAnimation)
 
 	AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
 
-	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1, &nativeAnims);
+	TArray<TRS> tmp;
+
+	if(!SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, 1, &nativeAnims, &tmp))
+	{ // if animation setting failed, return null
+		RestoreAnimLayer(layer, nativeAnims);
+
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	if(tmp.Size() > 0)
+	{
+		assert(layer->prevAnim->GetClass() == RUNTIME_CLASS(DPrecalculatedAnimationFrame));
+		DPrecalculatedAnimationFrame * frame = static_cast<DPrecalculatedAnimationFrame*>(layer->prevAnim.Get());
+		frame->frameData = std::move(tmp);
+	}
 
 	ACTION_RETURN_POINTER(AnimInfoToAnimLayer(nativeAnims));
 }
@@ -6990,7 +7026,21 @@ DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerAnimationUI)
 
 	AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
 
-	SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac(), &nativeAnims);
+	TArray<TRS> tmp;
+
+	if(!SetAnimationInternal(self, animName, framerate, startFrame, loopFrame, endFrame, interpolateTics, flags, I_GetTimeFrac(), &nativeAnims, &tmp))
+	{ // if animation setting failed, return null
+		RestoreAnimLayer(layer, nativeAnims);
+
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	if(tmp.Size() > 0)
+	{
+		assert(layer->prevAnim->GetClass() == RUNTIME_CLASS(DPrecalculatedAnimationFrame));
+		DPrecalculatedAnimationFrame * frame = static_cast<DPrecalculatedAnimationFrame*>(layer->prevAnim.Get());
+		frame->frameData = std::move(tmp);
+	}
 
 	ACTION_RETURN_POINTER(AnimInfoToAnimLayer(nativeAnims));
 }
@@ -7010,6 +7060,12 @@ DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerFrameRate)
 
 	SetAnimationFrameRateInternal(self, framerate, 1, &nativeAnims);
 
+	if(layer && layer->prevAnim && layer->prevAnim->GetClass() == RUNTIME_CLASS(DPrecalculatedAnimationFrame) && std::holds_alternative<ModelAnimFramePrecalculatedIQM>(nativeAnims.prevAnim))
+	{
+		DPrecalculatedAnimationFrame * frame = static_cast<DPrecalculatedAnimationFrame*>(layer->prevAnim.Get());
+		frame->frameData = std::get<ModelAnimFramePrecalculatedIQM>(nativeAnims.prevAnim).precalcBones; // COPY, not move
+	}
+
 	ACTION_RETURN_POINTER(AnimInfoToAnimLayer(nativeAnims));
 }
 
@@ -7027,6 +7083,12 @@ DEFINE_ACTION_FUNCTION(AActor, SetAnimationLayerFrameRateUI)
 	AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
 
 	SetAnimationFrameRateInternal(self, framerate, I_GetTimeFrac(), &nativeAnims);
+
+	if(layer && layer->prevAnim && layer->prevAnim->GetClass() == RUNTIME_CLASS(DPrecalculatedAnimationFrame) && std::holds_alternative<ModelAnimFramePrecalculatedIQM>(nativeAnims.prevAnim))
+	{
+		DPrecalculatedAnimationFrame * frame = static_cast<DPrecalculatedAnimationFrame*>(layer->prevAnim.Get());
+		frame->frameData = std::get<ModelAnimFramePrecalculatedIQM>(nativeAnims.prevAnim).precalcBones; // COPY, not move
+	}
 
 	ACTION_RETURN_POINTER(AnimInfoToAnimLayer(nativeAnims));
 }

@@ -1,8 +1,0 @@
-// Chex Quest 3 gameinfo
-
-gameinfo
-{
-	creditpage = "ENDPIC", "VICTORY2"
-	finaleflat = "ENDPIC01"
-	finalepage = "CREDIT", "CREDIT", "ENDPIC"
-}

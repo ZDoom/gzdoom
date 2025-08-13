@@ -1,6 +1,0 @@
-gameinfo
-{
-	cursorpic = "cursor"
-	forcenogfxsubstitution = true
-}
-

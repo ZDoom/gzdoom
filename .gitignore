@@ -1,44 +1,6 @@
 # build artifacts
-/build*
-/wadsrc/*.pk3
-/appimage-build
-.flatpak-builder/
-*.AppImage
-*.flatpak
-flatpak/
-gzdoom-crash.log
-fmodapi*linux/
+/build
 
-# generated code
-/src/gitinfo.h
-
-# editor/tooling/os files
-*~
-.gdb_history
-.DS_Store
-.vs
-.idea
-.vscode
+# misc cache/backup/swap files
 .cache
-*.kate-swp
-
-# private dev files
-*.user
-*.local
-*.log
-
-# other / unknown
-*.ncb
-*.suo
-*.pdb
-*.ilk
-*.aps
-/wadsrc_wad
-/release_gcc
-/DOOMSTATS.TXT
-/disasm.txt
-/llvm
-/src/gl/unused
-/mapfiles_release/*.map
-/AppDir
-.cache/
+*~

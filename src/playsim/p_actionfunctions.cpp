@@ -7169,7 +7169,7 @@ DEFINE_ACTION_FUNCTION(AActor, BlendAnimationFrames)
 
 		DPrecalculatedAnimationFrame * dframe = (DPrecalculatedAnimationFrame*)RUNTIME_CLASS(DPrecalculatedAnimationFrame)->CreateNew();
 
-		dframe->frameData.Resize(std::max(a->frameData.Size(), b->frameData.Size()));
+		dframe->frameData.Resize(a->frameData.Size());
 
 		int n = a->frameData.SSize();
 		for(int i = 0; i < n; i++)
@@ -7182,6 +7182,37 @@ DEFINE_ACTION_FUNCTION(AActor, BlendAnimationFrames)
 	else
 	{
 		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Size of a does not match size of b");
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, OffsetAnimationFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(frame, DPrecalculatedAnimationFrame);
+	PARAM_OBJECT_NOT_NULL(offsets, DPrecalculatedAnimationFrame);
+
+	if(frame->frameData.Size() == offsets->frameData.Size())
+	{
+
+		DPrecalculatedAnimationFrame * dframe = (DPrecalculatedAnimationFrame*)RUNTIME_CLASS(DPrecalculatedAnimationFrame)->CreateNew();
+
+		dframe->frameData.Resize(frame->frameData.Size());
+
+		int n = frame->frameData.SSize();
+		for(int i = 0; i < n; i++)
+		{
+			dframe->frameData[i].translation = frame->frameData[i].translation + offsets->frameData[i].translation;
+			dframe->frameData[i].rotation = (frame->frameData[i].rotation * offsets->frameData[i].rotation).Unit();
+			dframe->frameData[i].scaling.X = frame->frameData[i].scaling.X * offsets->frameData[i].scaling.X;
+			dframe->frameData[i].scaling.Y = frame->frameData[i].scaling.Y * offsets->frameData[i].scaling.Y;
+			dframe->frameData[i].scaling.Z = frame->frameData[i].scaling.Z * offsets->frameData[i].scaling.Z;
+		}
+
+		ACTION_RETURN_POINTER(dframe);
+	}
+	else
+	{
+		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Size of frame does not match size of offsets");
 	}
 }
 

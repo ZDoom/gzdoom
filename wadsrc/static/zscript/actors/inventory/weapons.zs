@@ -143,6 +143,10 @@ class Weapon : StateProvider
 		}
 		return -1, 0;
 	}
+
+	virtual void OnSelect() {}
+	
+	virtual void OnDeselect() {}
 	
 	virtual State GetReadyState ()
 	{

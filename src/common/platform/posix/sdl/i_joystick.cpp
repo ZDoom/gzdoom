@@ -41,6 +41,16 @@
 #include "i_input.h"
 #include "m_joy.h"
 
+static const EAxisCodes ControllerAxisCodes[][2] =
+{
+	{ AXIS_CODE_PAD_LTHUMB_RIGHT, AXIS_CODE_PAD_LTHUMB_LEFT },
+	{ AXIS_CODE_PAD_LTHUMB_DOWN, AXIS_CODE_PAD_LTHUMB_UP },
+	{ AXIS_CODE_PAD_RTHUMB_RIGHT, AXIS_CODE_PAD_RTHUMB_LEFT },
+	{ AXIS_CODE_PAD_RTHUMB_DOWN, AXIS_CODE_PAD_RTHUMB_UP },
+	{ AXIS_CODE_PAD_LTRIGGER, AXIS_CODE_NULL },
+	{ AXIS_CODE_PAD_RTRIGGER, AXIS_CODE_NULL }
+};
+
 class SDLInputJoystick: public IJoystickConfig
 {
 public:
@@ -124,10 +134,6 @@ public:
 	{
 		return Axes[axis].DeadZone;
 	}
-	EJoyAxis GetAxisMap(int axis)
-	{
-		return Axes[axis].GameAxis;
-	}
 	const char *GetAxisName(int axis)
 	{
 		return Axes[axis].Name.GetChars();
@@ -155,11 +161,6 @@ public:
 	{
 		SettingsChanged = true;
 		Axes[axis].DeadZone = clamp(zone, 0.f, 1.f);
-	}
-	void SetAxisMap(int axis, EJoyAxis gameaxis)
-	{
-		SettingsChanged = true;
-		Axes[axis].GameAxis = gameaxis;
 	}
 	void SetAxisScale(int axis, float scale)
 	{
@@ -199,12 +200,6 @@ public:
 		if(axis >= DefaultAxesCount)
 			return Axes[axis].DeadZone == JOYDEADZONE_DEFAULT;
 		return Axes[axis].DeadZone == DefaultAxes[axis].DeadZone;
-	}
-	bool IsAxisMapDefault(int axis)
-	{
-		if(axis >= DefaultAxesCount)
-			return Axes[axis].GameAxis == JOYAXIS_None;
-		return Axes[axis].GameAxis == DefaultAxes[axis].GameAxis;
 	}
 	bool IsAxisScaleDefault(int axis)
 	{
@@ -259,7 +254,6 @@ public:
 
 			if (i < DefaultAxesCount)
 			{
-				Axes[i].GameAxis = DefaultAxes[i].GameAxis;
 				Axes[i].DeadZone = DefaultAxes[i].DeadZone;
 				Axes[i].Multiplier = DefaultAxes[i].Multiplier;
 				Axes[i].DigitalThreshold = DefaultAxes[i].DigitalThreshold;
@@ -268,7 +262,6 @@ public:
 			}
 			else
 			{
-				Axes[i].GameAxis = JOYAXIS_None;
 				Axes[i].DeadZone = JOYDEADZONE_DEFAULT;
 				Axes[i].Multiplier = JOYSENSITIVITY_DEFAULT;
 				Axes[i].DigitalThreshold = JOYTHRESH_DEFAULT;
@@ -300,112 +293,200 @@ public:
 		return id;
 	}
 
-	void AddAxes(float axes[NUM_JOYAXIS])
+	void AddAxes(float joyaxes[NUM_AXIS_CODES])
 	{
 		// Add to game axes.
 		for (int i = 0; i < GetNumAxes(); ++i)
 		{
-			if(Axes[i].GameAxis != JOYAXIS_None)
-				axes[Axes[i].GameAxis] -= float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+			float axis_value = float(Axes[i].Value * Multiplier * Axes[i].Multiplier);
+
+			int axis_code_pos = AXIS_CODE_NULL;
+			int axis_code_neg = AXIS_CODE_NULL;
+			int ret_code = AXIS_CODE_NULL;
+
+			if (Mapping)
+			{
+				if (i < SDL_CONTROLLER_AXIS_MAX)
+				{
+					axis_code_pos = ControllerAxisCodes[i][0];
+					axis_code_neg = ControllerAxisCodes[i][1];
+				}
+			}
+			else
+			{
+				if (i < NUM_JOYAXISBUTTONS)
+				{
+					axis_code_pos = AXIS_CODE_JOY1_PLUS + (i * 2);
+					axis_code_neg = AXIS_CODE_JOY1_PLUS + (i * 2) + 1;
+				}
+			}
+
+			if (axis_value > 0.0f)
+			{
+				ret_code = axis_code_pos;
+			}
+			else if (axis_value < 0.0f)
+			{
+				ret_code = axis_code_neg;
+			}
+
+			if (ret_code != AXIS_CODE_NULL)
+			{
+				joyaxes[ret_code] += fabs(axis_value);
+			}
 		}
 	}
 
-	void ProcessInput() {
+	void ProcessGameControllerThumbstick(int index1, int index2, int base)
+	{
+		AxisInfo &axis1 = Axes[index1];
+		AxisInfo &axis2 = Axes[index2];
+
+		uint8_t buttonstate;
+		double axisval1, axisval2;
+
+		axisval1 = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(index1)) / 32767.0;
+		axisval2 = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(index2)) / 32767.0;
+
+		Joy_ManageThumbstick(
+			&axisval1, &axisval2,
+			axis1.DeadZone, axis2.DeadZone,
+			axis1.DigitalThreshold, axis2.DigitalThreshold,
+			axis1.ResponseCurve, axis2.ResponseCurve,
+			&buttonstate
+		);
+
+		axis1.Value = float(axisval1);
+		axis2.Value = float(axisval2);
+
+		// We store all four buttons in the first axis and ignore the second.
+		Joy_GenerateButtonEvents(axis1.ButtonValue, buttonstate, 4, base);
+		axis1.ButtonValue = buttonstate;
+	}
+
+	void ProcessGameControllerTrigger(int index, int base)
+	{
+		AxisInfo &axis = Axes[index];
+
+		uint8_t buttonstate;
+		double axisval;
+
+		axisval = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(index)) / 32767.0;
+		axisval = Joy_ManageSingleAxis(
+			axisval,
+			axis.DeadZone, axis.DigitalThreshold, axis.ResponseCurve,
+			&buttonstate
+		);
+
+		axis.Value = float(axisval);
+		Joy_GenerateButtonEvents(axis.ButtonValue, buttonstate, 1, base);
+		axis.ButtonValue = buttonstate;
+	}
+
+	void ProcessGameControllerAxes()
+	{
+		// Refactored to match more closely with XInput / raw PS2 on Windows
+		ProcessGameControllerThumbstick(SDL_CONTROLLER_AXIS_LEFTX, SDL_CONTROLLER_AXIS_LEFTY, KEY_PAD_LTHUMB_RIGHT);
+		ProcessGameControllerThumbstick(SDL_CONTROLLER_AXIS_RIGHTX, SDL_CONTROLLER_AXIS_RIGHTY, KEY_PAD_RTHUMB_RIGHT);
+		ProcessGameControllerTrigger(SDL_CONTROLLER_AXIS_TRIGGERLEFT, KEY_PAD_LTRIGGER);
+		ProcessGameControllerTrigger(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, KEY_PAD_RTRIGGER);
+	}
+
+	void ProcessOldJoystickAxes()
+	{
 		uint8_t buttonstate;
 
+		for (int i = 0; i < NumAxes; ++i)
+		{
+			buttonstate = 0;
+
+			if (i < NUM_JOYAXISBUTTONS && (i > 2 || Axes.Size() == 1))
+			{
+				AxisInfo &info = Axes[i];
+				double axisval;
+
+				axisval = SDL_JoystickGetAxis(Device, i) / 32767.0;
+
+				info.Value = Joy_ManageSingleAxis(
+					axisval,
+					info.DeadZone,
+					info.DigitalThreshold,
+					info.ResponseCurve,
+					&buttonstate
+				);
+
+				Joy_GenerateButtonEvents(info.ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
+				info.ButtonValue = buttonstate;
+			}
+			else if (i == 1)
+			{
+				AxisInfo &info_x = Axes[i - 1];
+				AxisInfo &info_y = Axes[i];
+				double axisval_x, axisval_y;
+
+				axisval_x = SDL_JoystickGetAxis(Device, i - 1) / 32767.0;
+				axisval_y = SDL_JoystickGetAxis(Device,     i) / 32767.0;
+				Joy_ManageThumbstick(
+					&axisval_x, &axisval_y,
+					info_x.DeadZone, info_y.DeadZone,
+					info_x.DigitalThreshold, info_y.DigitalThreshold,
+					info_x.ResponseCurve, info_y.ResponseCurve,
+					&buttonstate
+				);
+
+				info_x.Value = axisval_x;
+				info_y.Value = axisval_y;
+
+				Joy_GenerateButtonEvents(info_x.ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS + (i-1)*2);
+				info_x.ButtonValue = buttonstate;
+			}
+		}
+
+		// Map POV hats to buttons and axes.  Why axes?  Well apparently I have
+		// a gamepad where the left control stick is a POV hat (instead of the
+		// d-pad like you would expect, no that's pressure sensitive).  Also
+		// KDE's joystick dialog maps them to axes as well.
+		for (int i = 0; i < NumHats; ++i)
+		{
+			AxisInfo &x = Axes[NumAxes + i*2];
+			AxisInfo &y = Axes[NumAxes + i*2 + 1];
+
+			buttonstate = SDL_JoystickGetHat(Device, i);
+
+			// If we're going to assume that we can pass SDL's value into
+			// Joy_GenerateButtonEvents then we might as well assume the format here.
+			if(buttonstate & 0x1) // Up
+				y.Value = -1.0;
+			else if(buttonstate & 0x4) // Down
+				y.Value = 1.0;
+			else
+				y.Value = 0.0;
+			if(buttonstate & 0x2) // Left
+				x.Value = 1.0;
+			else if(buttonstate & 0x8) // Right
+				x.Value = -1.0;
+			else
+				x.Value = 0.0;
+
+			if (i < 4)
+			{
+				Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
+				x.ButtonValue = buttonstate;
+			}
+		}
+	}
+
+	void ProcessInput()
+	{
 		if (Mapping)
 		{
 			// GameController API available
-
-			auto lastTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].DigitalThreshold;
-			auto lastTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].DigitalThreshold;
-
-			for (auto i = 0; i < SDL_CONTROLLER_AXIS_MAX && i < NumAxes; ++i)
-			{
-				buttonstate = 0;
-
-				Axes[i].Value = SDL_GameControllerGetAxis(Mapping, static_cast<SDL_GameControllerAxis>(i))/32767.0;
-				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurve, Axes[i].Value);
-			}
-
-			auto currTriggerL = Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].Value > Axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT].DigitalThreshold;
-			auto currTriggerR = Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].Value > Axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT].DigitalThreshold;
-
-			if (lastTriggerL != currTriggerL) Joy_GenerateButtonEvent(currTriggerL, KEY_PAD_LTRIGGER);
-			if (lastTriggerR != currTriggerR) Joy_GenerateButtonEvent(currTriggerR, KEY_PAD_RTRIGGER);
-
-			// todo: right stick
-			buttonstate = Joy_XYAxesToButtons(
-				abs(Axes[0].Value) < Axes[0].DigitalThreshold ? 0 : Axes[0].Value,
-				abs(Axes[1].Value) < Axes[1].DigitalThreshold ? 0 : Axes[1].Value
-			);
-			Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
-			Axes[0].ButtonValue = buttonstate;
+			ProcessGameControllerAxes();
 		}
 		else
 		{
 			// Joystick API fallback
-
-			for (int i = 0; i < NumAxes; ++i)
-			{
-				buttonstate = 0;
-
-				Axes[i].Value = SDL_JoystickGetAxis(Device, i)/32767.0;
-				Axes[i].Value = Joy_RemoveDeadZone(Axes[i].Value, Axes[i].DeadZone, &buttonstate);
-				Axes[i].Value = Joy_ApplyResponseCurveBezier(Axes[i].ResponseCurve, Axes[i].Value);
-
-				// Map button to axis
-				// X and Y are handled differently so if we have 2 or more axes then we'll use that code instead.
-				if (NumAxes == 1 || (i >= 2 && i < NUM_JOYAXISBUTTONS))
-				{
-					Joy_GenerateButtonEvents(Axes[i].ButtonValue, buttonstate, 2, KEY_JOYAXIS1PLUS + i*2);
-					Axes[i].ButtonValue = buttonstate;
-				}
-			}
-
-			if(NumAxes > 1)
-			{
-				buttonstate = Joy_XYAxesToButtons(
-					abs(Axes[0].Value) < Axes[0].DigitalThreshold ? 0 : Axes[0].Value,
-					abs(Axes[1].Value) < Axes[1].DigitalThreshold ? 0 : Axes[1].Value
-				);
-				Joy_GenerateButtonEvents(Axes[0].ButtonValue, buttonstate, 4, KEY_JOYAXIS1PLUS);
-				Axes[0].ButtonValue = buttonstate;
-			}
-
-			// Map POV hats to buttons and axes.  Why axes?  Well apparently I have
-			// a gamepad where the left control stick is a POV hat (instead of the
-			// d-pad like you would expect, no that's pressure sensitive).  Also
-			// KDE's joystick dialog maps them to axes as well.
-			for (int i = 0; i < NumHats; ++i)
-			{
-				AxisInfo &x = Axes[NumAxes + i*2];
-				AxisInfo &y = Axes[NumAxes + i*2 + 1];
-
-				buttonstate = SDL_JoystickGetHat(Device, i);
-
-				// If we're going to assume that we can pass SDL's value into
-				// Joy_GenerateButtonEvents then we might as well assume the format here.
-				if(buttonstate & 0x1) // Up
-					y.Value = -1.0;
-				else if(buttonstate & 0x4) // Down
-					y.Value = 1.0;
-				else
-					y.Value = 0.0;
-				if(buttonstate & 0x2) // Left
-					x.Value = 1.0;
-				else if(buttonstate & 0x8) // Right
-					x.Value = -1.0;
-				else
-					x.Value = 0.0;
-
-				if(i < 4)
-				{
-					Joy_GenerateButtonEvents(x.ButtonValue, buttonstate, 4, KEY_JOYPOV1_UP + i*4);
-					x.ButtonValue = buttonstate;
-				}
-			}
+			ProcessOldJoystickAxes();
 		}
 	}
 
@@ -418,14 +499,12 @@ protected:
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
 		CubicBezier ResponseCurve;
-		EJoyAxis GameAxis;
 		double Value;
 		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
 		float DeadZone;
-		EJoyAxis GameAxis;
 		float Multiplier;
 		float DigitalThreshold;
 		EJoyCurve ResponseCurvePreset;
@@ -452,21 +531,21 @@ protected:
 
 // [Nash 4 Feb 2024] seems like on Linux, the third axis is actually the Left Trigger, resulting in the player uncontrollably looking upwards.
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultJoystickAxes[5] = {
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_DEFAULT, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT}
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_DEFAULT, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT}
 };
 
 // Defaults if we have access to the GameController API for this device
 const SDLInputJoystick::DefaultAxisConfig SDLInputJoystick::DefaultControllerAxes[6] = {
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Side,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Forward, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Yaw,     JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_Pitch,   JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
-	{JOYDEADZONE_DEFAULT, JOYAXIS_None,    JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_X, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_STICK_Y, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
+	{JOYDEADZONE_DEFAULT, JOYSENSITIVITY_DEFAULT, JOYTHRESH_TRIGGER, JOYCURVE_DEFAULT},
 };
 
 class SDLInputJoystickManager
@@ -490,7 +569,7 @@ public:
 		}
 	}
 
-	void AddAxes(float axes[NUM_JOYAXIS])
+	void AddAxes(float axes[NUM_AXIS_CODES])
 	{
 		for(unsigned int i = 0;i < Joysticks.Size();i++)
 			Joysticks[i]->AddAxes(axes);
@@ -553,12 +632,13 @@ void I_GetJoysticks(TArray<IJoystickConfig *> &sticks)
 		JoystickManager->GetDevices(sticks);
 }
 
-void I_GetAxes(float axes[NUM_JOYAXIS])
+void I_GetAxes(float axes[NUM_AXIS_CODES])
 {
-	for (int i = 0; i < NUM_JOYAXIS; ++i)
+	for (int i = 0; i < NUM_AXIS_CODES; ++i)
 	{
-		axes[i] = 0;
+		axes[i] = 0.0f;
 	}
+
 	if (use_joystick && JoystickManager)
 	{
 		JoystickManager->AddAxes(axes);

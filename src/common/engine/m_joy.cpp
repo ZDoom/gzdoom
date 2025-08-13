@@ -222,18 +222,6 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 		{
 			joy->SetAxisResponseCurvePoint(i, 3, (float)atof(value));
 		}
-
-		mysnprintf(key + axislen, countof(key) - axislen, "map");
-		value = GameConfig->GetValueForKey(key);
-		if (value)
-		{
-			EJoyAxis gameaxis = (EJoyAxis)atoi(value);
-			if (gameaxis < JOYAXIS_None || gameaxis >= NUM_JOYAXIS)
-			{
-				gameaxis = JOYAXIS_None;
-			}
-			joy->SetAxisMap(i, gameaxis);
-		}
 	}
 	return true;
 }
@@ -314,12 +302,6 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 				mysnprintf(value, countof(value), "%g", joy->GetAxisResponseCurvePoint(i, 3));
 				GameConfig->SetValueForKey(key, value);
 			}
-			if (!joy->IsAxisMapDefault(i))
-			{
-				mysnprintf(key + axislen, countof(key) - axislen, "map");
-				mysnprintf(value, countof(value), "%d", joy->GetAxisMap(i));
-				GameConfig->SetValueForKey(key, value);
-			}
 		}
 		// If the joystick is entirely at its defaults, delete this section
 		// so that we don't write out a lone section header.
@@ -355,7 +337,6 @@ CCMD (gamepad)
 			"\n\tgamepad curve-y1    pad.axis [float]"
 			"\n\tgamepad curve-x2    pad.axis [float]"
 			"\n\tgamepad curve-y2    pad.axis [float]"
-			"\n\tgamepad map         pad.axis [-1|0|1|2|3|4]"
 			"\n"
 		);
 	};
@@ -429,10 +410,7 @@ CCMD (gamepad)
 	if (command == "reset")
 	{
 		if (set) return usage();
-		sticks[pad]->SetDefaultConfig();
-		sticks[pad]->SetEnabled(true);
-		sticks[pad]->SetEnabledInBackground(sticks[pad]->AllowsEnabledInBackground());
-		sticks[pad]->SetSensitivity(1);
+		sticks[pad]->Reset();
 		return;
 	}
 	if (command == "enabled")
@@ -490,47 +468,8 @@ CCMD (gamepad)
 		if (set) sticks[pad]->SetAxisResponseCurvePoint(axis, 3, value);
 		return (void) Printf("%g\n", sticks[pad]->GetAxisResponseCurvePoint(axis, 3));
 	}
-	if (command == "map")
-	{
-		if (set) sticks[pad]->SetAxisMap(axis, (EJoyAxis)value);
-		return (void) Printf("%d\n", sticks[pad]->GetAxisMap(axis));
-	}
 
 	return usage();
-}
-
-//===========================================================================
-//
-// Joy_RemoveDeadZone
-//
-//===========================================================================
-
-double Joy_RemoveDeadZone(double axisval, double deadzone, uint8_t *buttons)
-{
-	uint8_t butt;
-
-	// Cancel out deadzone.
-	if (fabs(axisval) < deadzone)
-	{
-		axisval = 0;
-		butt = 0;
-	}
-	// Make the dead zone the new 0.
-	else if (axisval < 0)
-	{
-		axisval = (axisval + deadzone) / (1.0 - deadzone);
-		butt = 2;	// button minus
-	}
-	else
-	{
-		axisval = (axisval - deadzone) / (1.0 - deadzone);
-		butt = 1;	// button plus
-	}
-	if (buttons != NULL)
-	{
-		*buttons = butt;
-	}
-	return axisval;
 }
 
 //===========================================================================
@@ -577,6 +516,54 @@ double Joy_ApplyResponseCurveBezier(const CubicBezier &curve, double input)
 
 //===========================================================================
 //
+// Joy_ManageSingleAxis
+//
+//===========================================================================
+
+double Joy_ManageSingleAxis(double axisval, double deadzone, double threshold, const CubicBezier &curve, uint8_t *buttons)
+{
+	uint8_t butt;
+
+	// Cancel out deadzone.
+	if (fabs(axisval) < deadzone)
+	{
+		axisval = 0;
+		butt = 0;
+	}
+	else
+	{
+		// Make the dead zone the new 0.
+		if (axisval < 0)
+		{
+			axisval = (axisval + deadzone) / (1.0 - deadzone);
+			butt = 2;	// button minus
+		}
+		else
+		{
+			axisval = (axisval - deadzone) / (1.0 - deadzone);
+			butt = 1;	// button plus
+		}
+
+		// Apply input response curve
+		axisval = Joy_ApplyResponseCurveBezier(curve, axisval);
+
+		if (abs(axisval) < threshold)
+		{
+			// Needs to meet digital threshold to send button
+			butt = 0;
+		}
+	}
+
+	if (buttons != NULL)
+	{
+		*buttons = butt;
+	}
+
+	return axisval;
+}
+
+//===========================================================================
+//
 // Joy_XYAxesToButtons
 //
 // Given two axes, returns a button set for them. They should have already
@@ -610,6 +597,86 @@ int Joy_XYAxesToButtons(double x, double y)
 	rad += pi::pi()/8;		// Offset
 	rad *= 4/pi::pi();		// Convert range from [0,2pi) to [0,8)
 	return JoyAngleButtons[int(rad) & 7];
+}
+
+//===========================================================================
+//
+// Joy_ManageThumbstick
+//
+// Given two axes and their settings, handle applying deadzone, digital
+// threshold, input response curve, and setting button state. This is
+// necessary, because doing the two axes individually creates awkward
+// behavior (such as cross shaped deadzones, sluggish input response when
+// pressing diagonally, so on).
+//
+//===========================================================================
+
+double Joy_ManageThumbstick(
+	double *axis_x, double *axis_y,
+	double deadzone_x, double deadzone_y,
+	double threshold_x, double threshold_y,
+	const CubicBezier &curve_x, const CubicBezier &curve_y,
+	uint8_t *buttons)
+{
+	double ret_x = *axis_x;
+	double ret_y = *axis_y;
+
+	double x_abs = abs(*axis_x);
+	double y_abs = abs(*axis_y);
+	double magnitude = sqrt((x_abs * x_abs) + (y_abs * y_abs));
+
+	double ret_dist = 0;
+	uint8_t ret_butt = 0;
+
+	double xy_lerp = 0.5;
+	if (magnitude > 0)
+	{
+		// Later it would be nice to have a single deadzone / threshold / curve setting
+		// for the whole thumbstick instead of awkwardly trying to combine them, but
+		// that requires re-considering how axes are exposed to the rest of the engine.
+		// This will do for now.
+		xy_lerp = abs(cos(atan2(ret_y, ret_x)));
+	}
+
+	double deadzone = (xy_lerp * deadzone_x) + ((1.0 - xy_lerp) * deadzone_y);
+	if (magnitude < deadzone)
+	{
+		ret_x = 0;
+		ret_y = 0;
+	}
+	else
+	{
+		// Make the dead zone the new 0.
+		ret_dist = (magnitude - deadzone) / (1.0 - deadzone);
+
+		const CubicBezier curve = {
+			(float)((xy_lerp * curve_x.x1) + ((1.0 - xy_lerp) * curve_y.x1)),
+			(float)((xy_lerp * curve_x.y1) + ((1.0 - xy_lerp) * curve_y.y1)),
+			(float)((xy_lerp * curve_x.x2) + ((1.0 - xy_lerp) * curve_y.x2)),
+			(float)((xy_lerp * curve_x.y2) + ((1.0 - xy_lerp) * curve_y.y2))
+		};
+
+		ret_dist = Joy_ApplyResponseCurveBezier(curve, ret_dist);
+
+		ret_x = (ret_x / magnitude) * ret_dist;
+		ret_y = (ret_y / magnitude) * ret_dist;
+
+		double threshold = (xy_lerp * threshold_x) + ((1.0 - xy_lerp) * threshold_y);
+		if (ret_dist >= threshold)
+		{
+			ret_butt = Joy_XYAxesToButtons(ret_x, ret_y);
+		}
+	}
+
+	*axis_x = ret_x;
+	*axis_y = ret_y;
+
+	if (buttons != NULL)
+	{
+		*buttons = ret_butt;
+	}
+
+	return ret_dist;
 }
 
 //===========================================================================

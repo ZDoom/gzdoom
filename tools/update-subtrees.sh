@@ -1,12 +1,12 @@
 #!/bin/bash
 
-pushd "$(git rev-parse --show-toplevel)" >/dev/null
+export GITROOT="$(git rev-parse --show-toplevel)"
 
 pull() {
 	if [[ "${1}" == "${2}" || "${1}" == "all" ]]
 	then
 		echo "fetching ${2}"
-		git subtree pull --prefix="${3}" "${4}" "${5}" --squash || exit
+		git -C $GITROOT subtree pull --prefix="${3}" "${4}" "${5}" --squash || exit
 	else
 		echo "${2} not specified, skipping"
 	fi

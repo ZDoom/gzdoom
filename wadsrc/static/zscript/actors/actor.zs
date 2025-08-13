@@ -1619,6 +1619,7 @@ class Actor : Thinker native
 	native version("4.15.1") ui PrecalculatedAnimationFrame CalculateAnimationUI(readonly<AnimationLayer> layer);
 
 	native version("4.15.1") static clearscope PrecalculatedAnimationFrame BlendAnimationFrames(PrecalculatedAnimationFrame a, PrecalculatedAnimationFrame b, double t);
+	native version("4.15.1") static clearscope PrecalculatedAnimationFrame OffsetAnimationFrame(PrecalculatedAnimationFrame frame, PrecalculatedAnimationFrame offset);
 	
 	native version("4.15.1") void SetBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") ui void SetBonesUI(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
@@ -1632,7 +1633,9 @@ class Actor : Thinker native
 	native version("4.15.1") ui void SetBonesMaskUI(PrecalculatedAnimationFrame bones, Array<bool> mask, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") ui void OverwriteBonesMask(PrecalculatedAnimationFrame bones, Array<bool> mask, int mode = SB_ADD); // no interpolation, faster
 
-	native version("4.15.1") void ForceRecalculateBones(); // slow if called often
+	native version("4.15.1") void ForceRecalculateBones(); // slow if called often, try and keep it to at most once per tick
+
+	version("4.15.1") ui virtual void AnimateBones(double ticfrac){}
 	//================================================
 	//
 	//

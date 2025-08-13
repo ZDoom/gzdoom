@@ -28,6 +28,57 @@
 #define RIDEV_INPUTSINK	(0x100)
 #endif
 
+// Code for delay loading DPI related functions, needed for continued Windows 7 compatibility.
+typedef BOOL (WINAPI *PFN_AdjustWindowRectExForDpi)(
+    LPRECT lpRect,
+    DWORD dwStyle,
+    BOOL bMenu,
+    DWORD dwExStyle,
+    UINT dpi
+);
+
+typedef UINT (WINAPI *PFN_GetDpiForWindow)(HWND hwnd);
+
+static PFN_AdjustWindowRectExForDpi pAdjustWindowRectExForDpi = nullptr;
+static PFN_GetDpiForWindow pGetDpiForWindow = nullptr;
+
+static void DPIDelayLoad()
+{
+    HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
+    if (hUser32) {
+        pAdjustWindowRectExForDpi = (PFN_AdjustWindowRectExForDpi)
+            GetProcAddress(hUser32, "AdjustWindowRectExForDpi");
+		pGetDpiForWindow = (PFN_GetDpiForWindow)
+			GetProcAddress(hUser32, "GetDpiForWindow");
+    }
+}
+
+static BOOL DelayLoadAdjustWindowRectExForDpi(
+    LPRECT lpRect,
+    DWORD dwStyle,
+    BOOL bMenu,
+    DWORD dwExStyle,
+    HWND hwnd
+) {
+	DPIDelayLoad();
+    if (pAdjustWindowRectExForDpi) {
+        return pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle,
+                                         pGetDpiForWindow(hwnd));
+    } else {
+        return AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+    }
+}
+
+static double DelayLoadGetDpiScale(HWND hwnd)
+{
+	DPIDelayLoad();
+    if (pGetDpiForWindow) {
+        return pGetDpiForWindow(hwnd) / 96.0;
+    } else {
+        return 1.0;
+    }
+}
+
 Win32DisplayWindow::Win32DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, Win32DisplayWindow* owner, RenderAPI renderAPI) : WindowHost(windowHost), PopupWindow(popupWindow)
 {
 	Windows.push_front(this);
@@ -113,7 +164,7 @@ void Win32DisplayWindow::SetClientFrame(const Rect& box)
 
 	DWORD style = (DWORD)GetWindowLongPtr(WindowHandle.hwnd, GWL_STYLE);
 	DWORD exstyle = (DWORD)GetWindowLongPtr(WindowHandle.hwnd, GWL_EXSTYLE);
-	AdjustWindowRectExForDpi(&rect, style, FALSE, exstyle, GetDpiForWindow(WindowHandle.hwnd));
+	DelayLoadAdjustWindowRectExForDpi(&rect, style, FALSE, exstyle, WindowHandle.hwnd);
 
 	SetWindowPos(WindowHandle.hwnd, nullptr, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
 }
@@ -291,7 +342,7 @@ int Win32DisplayWindow::GetPixelHeight() const
 
 double Win32DisplayWindow::GetDpiScale() const
 {
-	return GetDpiForWindow(WindowHandle.hwnd) / 96.0;
+	return DelayLoadGetDpiScale(WindowHandle.hwnd);
 }
 
 std::string Win32DisplayWindow::GetClipboardText()

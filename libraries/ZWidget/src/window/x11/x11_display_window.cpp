@@ -1084,11 +1084,12 @@ Size X11DisplayWindow::GetScreenSize()
 
 void* X11DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-	return nullptr;
+	throw std::logic_error("unimplemented: X11DisplayWindow::StartTimer");
 }
 
 void X11DisplayWindow::StopTimer(void* timerID)
 {
+	throw std::logic_error("unimplemented: X11DisplayWindow::StopTimer");
 }
 
 // This is to avoid needing all the Vulkan headers and the volk binding library just for this:

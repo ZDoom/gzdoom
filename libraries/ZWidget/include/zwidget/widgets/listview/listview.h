@@ -6,6 +6,7 @@
 #include <functional>
 
 class Scrollbar;
+class Dropdown;
 
 class ListView : public Widget
 {
@@ -47,4 +48,6 @@ protected:
 	std::vector<std::vector<std::string>> items;
 	std::vector<double> columnwidths;
 	int selectedItem = 0;
+
+	friend Dropdown;
 };

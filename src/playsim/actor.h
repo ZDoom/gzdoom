@@ -758,8 +758,7 @@ public:
 	int							 overrideFlagsSet;
 	int							 overrideFlagsClear;
 
-	ModelAnim curAnim;
-	ModelAnimFrame prevAnim; // used for interpolation when switching anims
+	AnimInfo anims;
 
 	DActorModelData() = default;
 	virtual void Serialize(FSerializer& arc) override;

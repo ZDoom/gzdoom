@@ -1,7 +1,8 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2004-2016 Christoph Oelckers
+// Copyright 2004-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -86,7 +87,6 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 		FreeList.Pop(ret);
 	}
 	else ret = (FDynamicLight*)DynLightArena.Alloc(sizeof(FDynamicLight));
-	memset(ret, 0, sizeof(*ret));
 	ret = new(ret)FDynamicLight();
 	ret->m_cycler.m_increment = true;
 	ret->next = Level->lights;

@@ -154,11 +154,6 @@ bool FLevelLocals::CheckIfExitIsGood (AActor *self, level_info_t *info)
 
 bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
-	int lineActivation;
-	INTBOOL repeat;
-	INTBOOL buttonSuccess;
-	uint8_t special;
-
 	if (!P_TestActivateLine (line, mo, side, activationType, optpos))
 	{
 		return false;
@@ -169,50 +164,104 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	// [MK] Use WorldLinePreActivated to decide if activation should continue
 	bool shouldactivate = true;
 	Level->localEventManager->WorldLinePreActivated(line, mo, activationType, &shouldactivate);
-	if ( !shouldactivate ) return false;
+	if (!shouldactivate) return false;
 
+	// Key check must happen before any action or animation.
 	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
-	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
+	if (line->locknumber > 0 && !P_CheckKeys(mo, line->locknumber, remote)) return false;
 
-	lineActivation = line->activation;
-	repeat = line->flags & ML_REPEAT_SPECIAL;
-	buttonSuccess = false;
-	buttonSuccess = P_ExecuteSpecial(line->GetLevel(), line->special, line, mo, side == 1, line->args[0], line->args[1], line->args[2], line->args[3], line->args[4]);
+	uint8_t special = line->special;
+	INTBOOL repeat = line->flags & ML_REPEAT_SPECIAL;
+	bool buttonSuccess = false;
 
-	// [MK] Fire up WorldLineActivated
-	if ( buttonSuccess ) Level->localEventManager->WorldLineActivated(line, mo, activationType);
-
-	special = line->special;
-	if (!repeat && buttonSuccess)
-	{ // clear the special on non-retriggerable lines
-		line->special = 0;
-	}
-
-	if (buttonSuccess)
+	if (Level->i_compatflags2 & COMPATF2_ANIMATESWITCHFIRST)
 	{
+		// =============================================================
+		// NEW LOGIC (when compat_animateswitchfirst is enabled)
+		// =============================================================
+		bool switchWasAnimated = false;
+
+		// Animate the switch first for clickable actions.
 		if (activationType == SPAC_Use || activationType == SPAC_Impact || activationType == SPAC_Push)
 		{
-			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
+			if (P_ChangeSwitchTexture(line->sidedef[0], repeat, special))
+			{
+				switchWasAnimated = true;
+			}
+		}
+
+		// Execute the special action.
+		buttonSuccess = P_ExecuteSpecial(Level, special, line, mo, side == 1, line->args[0], line->args[1], line->args[2], line->args[3], line->args[4]);
+
+		if (buttonSuccess)
+		{
+			Level->localEventManager->WorldLineActivated(line, mo, activationType);
+			// Clear one-time special ONLY if the action was successful to prevent softlocks.
+			if (!repeat)
+			{
+				line->special = 0;
+			}
+		}
+		
+		// Handle the legacy DUMMYSWITCHES hack.
+		if (!buttonSuccess && activationType == SPAC_Impact &&
+			(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&
+			!repeat &&
+			(special < Generic_Floor || special > Generic_Crusher) &&
+			special &&
+			Level->LineHasId(line, line->args[0]) &&
+			line->args[0] &&
+			Level->FindFirstSectorFromTag(line->args[0]) == -1)
+		{
+			// Only animate if it wasn't already animated.
+			if (!switchWasAnimated)
+			{
+				P_ChangeSwitchTexture(line->sidedef[0], repeat, special);
+			}
+			// But always clear the special, just like in the original code.
+			line->special = 0;
 		}
 	}
-	// some old WADs use this method to create walls that change the texture when shot.
-	else if (activationType == SPAC_Impact &&					// only for shootable triggers
-		(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&				// this is only a compatibility setting for an old hack!
-		!repeat &&												// only non-repeatable triggers
-		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
-		special &&												// not for lines without a special
-		Level->LineHasId(line, line->args[0]) &&							// Safety check: exclude edited UDMF linedefs or ones that don't map the tag to args[0]
-		line->args[0] &&										// only if there's a tag (which is stored in the first arg)
-		Level->FindFirstSectorFromTag (line->args[0]) == -1)			// only if no sector is tagged to this linedef
+	else
 	{
-		P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
-		line->special = 0;
+		// =============================================================
+		// ORIGINAL ENGINE LOGIC (default, for backwards compatibility)
+		// =============================================================
+		buttonSuccess = P_ExecuteSpecial(Level, special, line, mo, side == 1, line->args[0], line->args[1], line->args[2], line->args[3], line->args[4]);
+
+		if (buttonSuccess)
+		{
+			Level->localEventManager->WorldLineActivated(line, mo, activationType);
+			if (!repeat)
+			{
+				line->special = 0;
+			}
+			if (activationType == SPAC_Use || activationType == SPAC_Impact || activationType == SPAC_Push)
+			{
+				P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
+			}
+		}
+		else if (activationType == SPAC_Impact &&
+			(Level->flags2 & LEVEL2_DUMMYSWITCHES) &&
+			!repeat &&
+			(special < Generic_Floor || special > Generic_Crusher) &&
+			special &&
+			Level->LineHasId(line, line->args[0]) &&
+			line->args[0] &&
+			Level->FindFirstSectorFromTag(line->args[0]) == -1)
+		{
+			P_ChangeSwitchTexture (line->sidedef[0], repeat, special);
+			line->special = 0;
+		}
 	}
-// end of changed code
+
+	// The debug message should only trigger on actual success of the special.
 	if (developer >= DMSG_SPAMMY && buttonSuccess)
 	{
 		Printf ("Line special %d activated on line %i\n", special, line->Index());
 	}
+	
+	// The function should always return true if the initial checks passed,
 	return true;
 }
 

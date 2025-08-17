@@ -38,8 +38,8 @@
 #include "vm.h"
 
 // by request of Nash
-CVARD(Bool, silence_menu_scroll, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when using mouse wheel");
-CVARD(Bool, silence_menu_hover, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when implicitly selecting with mouse");
+CVARD(Bool, silence_menu_scroll, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when using mouse wheel");
+CVARD(Bool, silence_menu_hover, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when implicitly selecting with mouse");
 
 
 //=============================================================================

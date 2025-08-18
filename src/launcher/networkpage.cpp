@@ -12,6 +12,7 @@
 #include <zwidget/widgets/lineedit/lineedit.h>
 #include <zwidget/widgets/pushbutton/pushbutton.h>
 #include <zwidget/widgets/tabwidget/tabwidget.h>
+#include <zwidget/widgets/dropdown/dropdown.h>
 
 constexpr double EditHeight = 24.0;
 
@@ -22,14 +23,14 @@ NetworkPage::NetworkPage(LauncherWindow* launcher, const FStartupSelectionInfo& 
 	SaveFileEdit = new LineEdit(this);
 	SaveFileLabel = new TextLabel(this);
 	SaveFileCheckbox = new CheckboxLabel(this);
-	SaveArgsCheckbox = new CheckboxLabel(this);
-	IWADsList = new ListView(this);
+	SaveParametersCheckbox = new CheckboxLabel(this);
+	IWADsDropdown = new Dropdown(this);
 
 	SaveFileCheckbox->SetChecked(info.bSaveNetFile);
 	if (!info.DefaultNetSaveFile.IsEmpty())
 		SaveFileEdit->SetText(info.DefaultNetSaveFile.GetChars());
 
-	SaveArgsCheckbox->SetChecked(info.bSaveNetArgs);
+	SaveParametersCheckbox->SetChecked(info.bSaveNetArgs);
 	if (!info.DefaultNetArgs.IsEmpty())
 		ParametersEdit->SetText(info.DefaultNetArgs.GetChars());
 
@@ -51,16 +52,11 @@ NetworkPage::NetworkPage(LauncherWindow* launcher, const FStartupSelectionInfo& 
 		else
 			work = wad.Name.GetChars();
 
-		IWADsList->AddItem(work.GetChars());
+		IWADsDropdown->AddItem(work.GetChars());
 	}
 
 	if (info.DefaultNetIWAD >= 0 && info.DefaultNetIWAD < info.Wads->SSize())
-	{
-		IWADsList->SetSelectedItem(info.DefaultNetIWAD);
-		IWADsList->ScrollToItem(info.DefaultNetIWAD);
-	}
-
-	IWADsList->OnActivated = [=]() { OnIWADsListActivated(); };
+		IWADsDropdown->SetSelectedItem(info.DefaultNetIWAD);
 }
 
 // This has to be done after the main page is parented, otherwise it won't have the correct
@@ -88,12 +84,12 @@ void NetworkPage::OnIWADsListActivated()
 
 void NetworkPage::OnSetFocus()
 {
-	IWADsList->SetFocus();
+	IWADsDropdown->SetFocus();
 }
 
 void NetworkPage::SetValues(FStartupSelectionInfo& info) const
 {
-	info.DefaultNetIWAD = IWADsList->GetSelectedItem();
+	info.DefaultNetIWAD = IWADsDropdown->GetSelectedItem();
 	info.DefaultNetArgs = ParametersEdit->GetText();
 
 	info.bHosting = IsInHost();
@@ -109,7 +105,7 @@ void NetworkPage::SetValues(FStartupSelectionInfo& info) const
 	}
 
 	info.bSaveNetFile = SaveFileCheckbox->GetChecked();
-	info.bSaveNetArgs = SaveArgsCheckbox->GetChecked();
+	info.bSaveNetArgs = SaveParametersCheckbox->GetChecked();
 	const auto save = SaveFileEdit->GetText();
 	if (!save.empty())
 		info.AdditionalNetArgs.AppendFormat(" -loadgame %s", save.c_str());
@@ -131,29 +127,30 @@ void NetworkPage::OnGeometryChanged()
 	const double w = GetWidth();
 	const double h = GetHeight();
 
-	const double wSize = w * 0.45 - 2.5;
+	double y = 0.0;
+	IWADsDropdown->SetFrameGeometry(0.0, y, w, IWADsDropdown->GetPreferredHeight());
+	y += IWADsDropdown->GetPreferredHeight() + 7.0;
+	const double pageTop = y;
 
-	double y = h - SaveArgsCheckbox->GetPreferredHeight();
-	SaveArgsCheckbox->SetFrameGeometry(0.0, y, wSize, SaveArgsCheckbox->GetPreferredHeight());
+	y = h - SaveFileCheckbox->GetPreferredHeight();
+	SaveFileCheckbox->SetFrameGeometry(0.0, y, w, SaveFileCheckbox->GetPreferredHeight());
 
-	y -= SaveFileCheckbox->GetPreferredHeight();
-	SaveFileCheckbox->SetFrameGeometry(0.0, y, wSize, SaveFileCheckbox->GetPreferredHeight());
+	y -= SaveParametersCheckbox->GetPreferredHeight();
+	SaveParametersCheckbox->SetFrameGeometry(0.0, y, w, SaveParametersCheckbox->GetPreferredHeight());
 
 	y -= EditHeight + 2.0;
-	ParametersEdit->SetFrameGeometry(0.0, y, wSize, EditHeight);
+	ParametersEdit->SetFrameGeometry(0.0, y, w, EditHeight);
 	y -= ParametersLabel->GetPreferredHeight();
-	ParametersLabel->SetFrameGeometry(0.0, y, wSize, ParametersLabel->GetPreferredHeight());
+	ParametersLabel->SetFrameGeometry(0.0, y, w, ParametersLabel->GetPreferredHeight());
+
+	const double wSize = w * 0.5;
 
 	y -= EditHeight + 2.0;
 	SaveFileEdit->SetFrameGeometry(0.0, y, wSize, EditHeight);
 	y -= SaveFileLabel->GetPreferredHeight();
 	SaveFileLabel->SetFrameGeometry(0.0, y, wSize, SaveFileLabel->GetPreferredHeight());
-	y -= 5.0;
 
-	IWADsList->SetFrameGeometry(0.0, 0.0, wSize, y);
-
-	const double xOfs = w * 0.45 + 2.5;
-	StartPages->SetFrameGeometry(xOfs, 0.0, w - xOfs, h);
+	StartPages->SetFrameGeometry(0.0, pageTop, w, y - pageTop);
 }
 
 void NetworkPage::UpdateLanguage()
@@ -161,7 +158,7 @@ void NetworkPage::UpdateLanguage()
 	ParametersLabel->SetText(GStrings.GetString("PICKER_ADDPARM"));
 	SaveFileLabel->SetText(GStrings.GetString("PICKER_LOADSAVE"));
 	SaveFileCheckbox->SetText(GStrings.GetString("PICKER_REMSAVE"));
-	SaveArgsCheckbox->SetText(GStrings.GetString("PICKER_REMPARM"));
+	SaveParametersCheckbox->SetText(GStrings.GetString("PICKER_REMPARM"));
 
 	StartPages->SetTabText(HostPage, GStrings.GetString("PICKER_HOST"));
 	StartPages->SetTabText(JoinPage, GStrings.GetString("PICKER_JOIN"));
@@ -172,70 +169,37 @@ void NetworkPage::UpdateLanguage()
 HostSubPage::HostSubPage(NetworkPage* main, const FStartupSelectionInfo& info) : Widget(nullptr), MainTab(main)
 {
 	NetModesLabel = new TextLabel(this);
-	AutoNetmodeCheckbox = new CheckboxLabel(this);
-	PacketServerCheckbox = new CheckboxLabel(this);
-	PeerToPeerCheckbox = new CheckboxLabel(this);
+	NetModesDropdown = new Dropdown(this);
 
-	AutoNetmodeCheckbox->SetRadioStyle(true);
-	PacketServerCheckbox->SetRadioStyle(true);
-	PeerToPeerCheckbox->SetRadioStyle(true);
-	AutoNetmodeCheckbox->FuncChanged = [this](bool on) { if (on) { PacketServerCheckbox->SetChecked(false); PeerToPeerCheckbox->SetChecked(false); }};
-	PacketServerCheckbox->FuncChanged = [this](bool on) { if (on) { AutoNetmodeCheckbox->SetChecked(false); PeerToPeerCheckbox->SetChecked(false); }};
-	PeerToPeerCheckbox->FuncChanged = [this](bool on) { if (on) { PacketServerCheckbox->SetChecked(false); AutoNetmodeCheckbox->SetChecked(false); }};
-	
-	switch (info.DefaultNetMode)
-	{
-	case 0:
-		PeerToPeerCheckbox->SetChecked(true);
-		break;
-	case 1:
-		PacketServerCheckbox->SetChecked(true);
-		break;
-	default:
-		AutoNetmodeCheckbox->SetChecked(true);
-		break;
-	}
+	NetModesDropdown->AddItem("Auto (recommended)");
+	NetModesDropdown->AddItem("Packet-Server");
+	NetModesDropdown->AddItem("Peer-to-Peer");
+	NetModesDropdown->SetSelectedItem(max<int>(info.DefaultNetMode, 0));
 
-	TicDupList = new ListView(this);
 	TicDupLabel = new TextLabel(this);
+	TicDupDropdown = new Dropdown(this);
 	ExtraTicCheckbox = new CheckboxLabel(this);
 
-	std::vector<double> widths = { 30.0, 30.0 };
-	TicDupList->SetColumnWidths(widths);
-	TicDupList->AddItem("35.0");
-	TicDupList->UpdateItem("Hz", 0, 1);
-	TicDupList->AddItem("17.5");
-	TicDupList->UpdateItem("Hz", 1, 1);
-	TicDupList->AddItem("11.6");
-	TicDupList->UpdateItem("Hz", 2, 1);
-	TicDupList->SetSelectedItem(info.DefaultNetTicDup);
+	TicDupDropdown->AddItem("35 Hz");
+	TicDupDropdown->AddItem("17.5 Hz");
+	TicDupDropdown->AddItem("11.6 Hz");
+	TicDupDropdown->SetSelectedItem(max<int>(info.DefaultNetTicDup, 0));
+
 	ExtraTicCheckbox->SetChecked(info.DefaultNetExtraTic);
 
 	GameModesLabel = new TextLabel(this);
-	CoopCheckbox = new CheckboxLabel(this);
-	DeathmatchCheckbox = new CheckboxLabel(this);
+	GameModesDropdown = new Dropdown(this);
 	AltDeathmatchCheckbox = new CheckboxLabel(this);
-	TeamDeathmatchCheckbox = new CheckboxLabel(this);
+
+	GameModesDropdown->AddItem("None");
+	GameModesDropdown->AddItem("Co-op");
+	GameModesDropdown->AddItem("Deathmatch");
+	GameModesDropdown->AddItem("Team Deathmatch");
+	GameModesDropdown->SetSelectedItem(max<int>(info.DefaultNetGameMode, 0));
+
 	TeamLabel = new TextLabel(this);
 	TeamEdit = new LineEdit(this);
 
-	// These are intentionally not radio buttons, they just act similarly for clarity in the UI.
-	CoopCheckbox->FuncChanged = [this](bool on) { if (on) { DeathmatchCheckbox->SetChecked(false); TeamDeathmatchCheckbox->SetChecked(false); }};
-	DeathmatchCheckbox->FuncChanged = [this](bool on) { if (on) { CoopCheckbox->SetChecked(false); TeamDeathmatchCheckbox->SetChecked(false); }};
-	TeamDeathmatchCheckbox->FuncChanged = [this](bool on) { if (on) { CoopCheckbox->SetChecked(false); DeathmatchCheckbox->SetChecked(false); }};
-
-	switch (info.DefaultNetGameMode)
-	{
-	case 0:
-		CoopCheckbox->SetChecked(true);
-		break;
-	case 1:
-		DeathmatchCheckbox->SetChecked(true);
-		break;
-	case 2:
-		TeamDeathmatchCheckbox->SetChecked(true);
-		break;
-	}
 	AltDeathmatchCheckbox->SetChecked(info.DefaultNetAltDM);
 
 	TeamEdit->SetMaxLength(3);
@@ -267,26 +231,22 @@ HostSubPage::HostSubPage(NetworkPage* main, const FStartupSelectionInfo& info) :
 void HostSubPage::SetValues(FStartupSelectionInfo& info) const
 {
 	info.AdditionalNetArgs = "";
-	if (PacketServerCheckbox->GetChecked())
+	info.DefaultNetMode = NetModesDropdown->GetSelectedItem();
+	switch (info.DefaultNetMode)
 	{
+	case 1:
 		info.AdditionalNetArgs.AppendFormat(" -netmode 1");
-		info.DefaultNetMode = 1;
-	}
-	else if (PeerToPeerCheckbox->GetChecked())
-	{
+		break;
+	case 2:
 		info.AdditionalNetArgs.AppendFormat(" -netmode 0");
-		info.DefaultNetMode = 0;
-	}
-	else
-	{
-		info.DefaultNetMode = -1;
+		break;
 	}
 
 	info.DefaultNetExtraTic = ExtraTicCheckbox->GetChecked();
 	if (info.DefaultNetExtraTic)
 		info.AdditionalNetArgs.AppendFormat(" -extratic");
 
-	const int dup = TicDupList->GetSelectedItem();
+	const int dup = TicDupDropdown->GetSelectedItem();
 	if (dup > 0)
 		info.AdditionalNetArgs.AppendFormat(" -dup %d", dup + 1);
 	info.DefaultNetTicDup = dup;
@@ -305,60 +265,50 @@ void HostSubPage::SetValues(FStartupSelectionInfo& info) const
 	}
 
 	info.DefaultNetAltDM = AltDeathmatchCheckbox->GetChecked();
-	if (CoopCheckbox->GetChecked())
+	info.DefaultNetGameMode = GameModesDropdown->GetSelectedItem();
+	switch (info.DefaultNetGameMode)
 	{
+	case 1:
 		info.AdditionalNetArgs.AppendFormat(" -coop");
-		info.DefaultNetGameMode = 0;
-	}
-	else if (DeathmatchCheckbox->GetChecked())
-	{
-		if (AltDeathmatchCheckbox->GetChecked())
-			info.AdditionalNetArgs.AppendFormat(" -altdeath");
-		else
-			info.AdditionalNetArgs.AppendFormat(" -deathmatch");
-
-		info.DefaultNetGameMode = 1;
-	}
-	else if (TeamDeathmatchCheckbox->GetChecked())
-	{
-		if (AltDeathmatchCheckbox->GetChecked())
-			info.AdditionalNetArgs.AppendFormat(" -altdeath");
-		else
-			info.AdditionalNetArgs.AppendFormat(" -deathmatch");
-		info.AdditionalNetArgs.AppendFormat(" +teamplay 1");
-		info.DefaultNetGameMode = 2;
-
-		int team = 255;
-		if (!TeamEdit->GetText().empty())
+		break;
+	case 3:
 		{
-			team = TeamEdit->GetTextInt();
-			if (team < 0 || team > 255)
-				team = 255;
+			info.AdditionalNetArgs.AppendFormat(" +teamplay 1");
+			int team = 255;
+			if (!TeamEdit->GetText().empty())
+			{
+				team = TeamEdit->GetTextInt();
+				if (team < 0 || team > 255)
+					team = 255;
+			}
+			info.AdditionalNetArgs.AppendFormat(" +team %d", team);
+			info.DefaultNetHostTeam = team;
 		}
-		info.AdditionalNetArgs.AppendFormat(" +team %d", team);
-		info.DefaultNetHostTeam = team;
-	}
-	else
-	{
-		info.DefaultNetGameMode = -1;
+	case 2:
+		if (AltDeathmatchCheckbox->GetChecked())
+			info.AdditionalNetArgs.AppendFormat(" -altdeath");
+		else
+			info.AdditionalNetArgs.AppendFormat(" -deathmatch");
+		break;
 	}
 }
 
 void HostSubPage::UpdateLanguage()
 {
 	NetModesLabel->SetText(GStrings.GetString("PICKER_NETMODE"));
-	AutoNetmodeCheckbox->SetText(GStrings.GetString("PICKER_NETAUTO"));
-	PacketServerCheckbox->SetText(GStrings.GetString("PICKER_NETSERVER"));
-	PeerToPeerCheckbox->SetText(GStrings.GetString("PICKER_NETPEER"));
+	NetModesDropdown->UpdateItem(GStrings.GetString("PICKER_NETAUTO"), 0);
+	NetModesDropdown->UpdateItem(GStrings.GetString("PICKER_NETSERVER"), 1);
+	NetModesDropdown->UpdateItem(GStrings.GetString("PICKER_NETPEER"), 2);
 
 	TicDupLabel->SetText(GStrings.GetString("PICKER_NETRATE"));
 	ExtraTicCheckbox->SetText(GStrings.GetString("PICKER_NETBACKUP"));
 
 	GameModesLabel->SetText(GStrings.GetString("PICKER_GAMEMODE"));
-	CoopCheckbox->SetText(GStrings.GetString("PICKER_COOP"));
-	DeathmatchCheckbox->SetText(GStrings.GetString("PICKER_DM"));
+	GameModesDropdown->UpdateItem(GStrings.GetString("OPTVAL_NONE"), 0);
+	GameModesDropdown->UpdateItem(GStrings.GetString("PICKER_COOP"), 1);
+	GameModesDropdown->UpdateItem(GStrings.GetString("PICKER_DM"), 2);
+	GameModesDropdown->UpdateItem(GStrings.GetString("PICKER_TDM"), 3);
 	AltDeathmatchCheckbox->SetText(GStrings.GetString("PICKER_ALTDM"));
-	TeamDeathmatchCheckbox->SetText(GStrings.GetString("PICKER_TDM"));
 	TeamLabel->SetText(GStrings.GetString("PICKER_TEAM"));
 
 	MaxPlayersLabel->SetText(GStrings.GetString("PICKER_PLAYERS"));
@@ -374,67 +324,51 @@ void HostSubPage::OnGeometryChanged()
 	const double w = GetWidth();
 	const double h = GetHeight();
 
-	constexpr double LabelOfsSize = 90.0;
-	constexpr double hintOfs = 170.0;
+	constexpr double LabelOfsSize = 100.0;
+	constexpr double hintOfs = 160.0;
+	constexpr double DropdownSize = 220.0;
+	constexpr double EditWidth = 55.0;
 
 	double y = 0.0;
+	const double wSize = w * 0.5;
 
 	MaxPlayersLabel->SetFrameGeometry(0.0, y, LabelOfsSize, MaxPlayersLabel->GetPreferredHeight());
-	MaxPlayersEdit->SetFrameGeometry(MaxPlayersLabel->GetWidth(), y, 30.0, EditHeight);
+	MaxPlayersEdit->SetFrameGeometry(LabelOfsSize, y, EditWidth, EditHeight);
 	y += EditHeight + 2.0;
 
 	PortLabel->SetFrameGeometry(0.0, y, LabelOfsSize, PortLabel->GetPreferredHeight());
-	PortEdit->SetFrameGeometry(PortLabel->GetWidth(), y, 60.0, EditHeight);
+	PortEdit->SetFrameGeometry(LabelOfsSize, y, EditWidth, EditHeight);
 
-	MaxPlayerHintLabel->SetFrameGeometry(hintOfs, 0.0, w - hintOfs, MaxPlayerHintLabel->GetPreferredHeight());
-	PortHintLabel->SetFrameGeometry(hintOfs, y, w - hintOfs, PortHintLabel->GetPreferredHeight());
+	MaxPlayerHintLabel->SetFrameGeometry(hintOfs, 0.0, wSize - hintOfs, MaxPlayerHintLabel->GetPreferredHeight());
+	PortHintLabel->SetFrameGeometry(hintOfs, y, wSize - hintOfs, PortHintLabel->GetPreferredHeight());
 
 	y += EditHeight + 7.0;
 
-	const double optionsTop = y;
-	TicDupLabel->SetFrameGeometry(0.0, y, 100.0, TicDupLabel->GetPreferredHeight());
-	y += TicDupLabel->GetPreferredHeight();
-	TicDupList->SetFrameGeometry(0.0, y, 100.0, (TicDupList->GetItemAmount() + 1) * 20.0);
-	y += TicDupList->GetHeight() + ExtraTicCheckbox->GetPreferredHeight() + 2.0;
-
-	ExtraTicCheckbox->SetFrameGeometry(0.0, y, w, ExtraTicCheckbox->GetPreferredHeight());
-	y += ExtraTicCheckbox->GetPreferredHeight();
-
-	const double optionsBottom = y;
-	y = optionsTop;
-
-	constexpr double NetModeXOfs = 115.0;
-	NetModesLabel->SetFrameGeometry(NetModeXOfs, y, w - NetModeXOfs, NetModesLabel->GetPreferredHeight());
-	y += NetModesLabel->GetPreferredHeight();
-
-	AutoNetmodeCheckbox->SetFrameGeometry(NetModeXOfs, y, w - NetModeXOfs, AutoNetmodeCheckbox->GetPreferredHeight());
-	y += AutoNetmodeCheckbox->GetPreferredHeight();
-
-	PacketServerCheckbox->SetFrameGeometry(NetModeXOfs, y, w - NetModeXOfs, PacketServerCheckbox->GetPreferredHeight());
-	y += PacketServerCheckbox->GetPreferredHeight();
-
-	PeerToPeerCheckbox->SetFrameGeometry(NetModeXOfs, y, w - NetModeXOfs, PeerToPeerCheckbox->GetPreferredHeight());
-	y += PeerToPeerCheckbox->GetPreferredHeight();
-
-	y = max<int>(optionsBottom, y) + 10.0;
-	GameModesLabel->SetFrameGeometry(0.0, y, w, GameModesLabel->GetPreferredHeight());
+	GameModesLabel->SetFrameGeometry(0.0, y, wSize, GameModesLabel->GetPreferredHeight());
 	y += GameModesLabel->GetPreferredHeight();
+	GameModesDropdown->SetFrameGeometry(0.0, y, DropdownSize, GameModesDropdown->GetPreferredHeight());
+	y += GameModesDropdown->GetPreferredHeight() + 2.0;
 
-	CoopCheckbox->SetFrameGeometry(0.0, y, w, CoopCheckbox->GetPreferredHeight());
-	y += CoopCheckbox->GetPreferredHeight();
-
-	DeathmatchCheckbox->SetFrameGeometry(0.0, y, w, DeathmatchCheckbox->GetPreferredHeight());
-	y += DeathmatchCheckbox->GetPreferredHeight();
-
-	TeamDeathmatchCheckbox->SetFrameGeometry(0.0, y, w, TeamDeathmatchCheckbox->GetPreferredHeight());
-	y += TeamDeathmatchCheckbox->GetPreferredHeight() + 2.0;
-
-	TeamLabel->SetFrameGeometry(14.0, y, LabelOfsSize - 14.0, TeamLabel->GetPreferredHeight());
-	TeamEdit->SetFrameGeometry(TeamLabel->GetWidth() + 14.0, y, 45.0, EditHeight);
-	TeamHintLabel->SetFrameGeometry(hintOfs, y, w - hintOfs, TeamHintLabel->GetPreferredHeight());
+	TeamLabel->SetFrameGeometry(0.0, y, LabelOfsSize, TeamLabel->GetPreferredHeight());
+	TeamEdit->SetFrameGeometry(LabelOfsSize, y, EditWidth, EditHeight);
+	TeamHintLabel->SetFrameGeometry(hintOfs, y, wSize - hintOfs, TeamHintLabel->GetPreferredHeight());
 	y += EditHeight + 2.0;
 
-	AltDeathmatchCheckbox->SetFrameGeometry(0.0, y, w, AltDeathmatchCheckbox->GetPreferredHeight());
+	AltDeathmatchCheckbox->SetFrameGeometry(0.0, y, wSize, AltDeathmatchCheckbox->GetPreferredHeight());
+
+	y = 0.0;
+	
+	TicDupLabel->SetFrameGeometry(w - DropdownSize, y, DropdownSize, TicDupLabel->GetPreferredHeight());
+	y += TicDupLabel->GetPreferredHeight();
+	TicDupDropdown->SetFrameGeometry(w - DropdownSize, y, DropdownSize, TicDupDropdown->GetPreferredHeight());
+	y += TicDupDropdown->GetPreferredHeight() + 2.0;
+
+	NetModesLabel->SetFrameGeometry(w - DropdownSize, y, DropdownSize, NetModesLabel->GetPreferredHeight());
+	y += NetModesLabel->GetPreferredHeight();
+	NetModesDropdown->SetFrameGeometry(w - DropdownSize, y, DropdownSize, NetModesDropdown->GetPreferredHeight());
+	y += NetModesDropdown->GetPreferredHeight() + 2.0;
+
+	ExtraTicCheckbox->SetFrameGeometry(w - DropdownSize, y, DropdownSize, ExtraTicCheckbox->GetPreferredHeight());
 
 	MainTab->UpdatePlayButton();
 }
@@ -513,26 +447,26 @@ void JoinSubPage::OnGeometryChanged()
 	const double w = GetWidth();
 	const double h = GetHeight();
 
-	constexpr double LabelOfsSize = 90.0;
-	constexpr double hintOfs = 170.0;
+	constexpr double LabelOfsSize = 100.0;
+	constexpr double hintOfs = 160.0;
 
 	double y = 0.0;
 
 	AddressLabel->SetFrameGeometry(0.0, y, LabelOfsSize, AddressLabel->GetPreferredHeight());
-	AddressEdit->SetFrameGeometry(AddressLabel->GetWidth(), y, 120.0, EditHeight);
+	AddressEdit->SetFrameGeometry(LabelOfsSize, y, w * 0.5 - LabelOfsSize, EditHeight);
 	y += EditHeight + 2.0;
 
 	AddressPortLabel->SetFrameGeometry(0.0, y, LabelOfsSize, AddressPortLabel->GetPreferredHeight());
-	AddressPortEdit->SetFrameGeometry(AddressPortLabel->GetWidth(), y, 60.0, EditHeight);
+	AddressPortEdit->SetFrameGeometry(LabelOfsSize, y, 55.0, EditHeight);
 
 	AddressPortHintLabel->SetFrameGeometry(hintOfs, y, w - hintOfs, AddressPortHintLabel->GetPreferredHeight());
-	y += EditHeight + 12.0;
+	y += EditHeight + 7.0;
 
 	TeamDeathmatchLabel->SetFrameGeometry(0.0, y, w, TeamDeathmatchLabel->GetPreferredHeight());
 	y += TeamDeathmatchLabel->GetPreferredHeight();
 
 	TeamLabel->SetFrameGeometry(0.0, y, LabelOfsSize, TeamLabel->GetPreferredHeight());
-	TeamEdit->SetFrameGeometry(TeamLabel->GetWidth(), y, 45.0, EditHeight);
+	TeamEdit->SetFrameGeometry(LabelOfsSize, y, 55.0, EditHeight);
 	TeamHintLabel->SetFrameGeometry(hintOfs, y, w - hintOfs, TeamHintLabel->GetPreferredHeight());
 
 	MainTab->UpdatePlayButton();

@@ -177,7 +177,7 @@ void SettingsPage::OnGeometryChanged()
 	y += DontAskAgainCheckbox->GetPreferredHeight();
 
 	SupportWadsCheckbox->SetFrameGeometry(0.0, y, 190.0, SupportWadsCheckbox->GetPreferredHeight());
-	y += SupportWadsCheckbox->GetPreferredHeight();
+	y += SupportWadsCheckbox->GetPreferredHeight() + 10.0;
 	const double optionsBottom = y;
 
 #ifdef RENDER_BACKENDS

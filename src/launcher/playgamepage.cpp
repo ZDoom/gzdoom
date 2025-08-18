@@ -84,33 +84,30 @@ void PlayGamePage::OnGeometryChanged()
 {
 	double y = 10.0;
 
-	WelcomeLabel->SetFrameGeometry(0.0, y, GetWidth(), WelcomeLabel->GetPreferredHeight());
-	y += WelcomeLabel->GetPreferredHeight();
+	const double halfW = GetWidth() * 0.5;
+	WelcomeLabel->SetFrameGeometry(0.0, y, halfW, WelcomeLabel->GetPreferredHeight());
+	VersionLabel->SetFrameGeometry(halfW, y, halfW, VersionLabel->GetPreferredHeight());
 
-	VersionLabel->SetFrameGeometry(20.0, y - VersionLabel->GetPreferredHeight(), GetWidth() - 19.0, VersionLabel->GetPreferredHeight());
-
-	y += 10.0;
+	y += VersionLabel->GetPreferredHeight() + 10.0;
 
 	SelectLabel->SetFrameGeometry(0.0, y, GetWidth(), SelectLabel->GetPreferredHeight());
 	y += SelectLabel->GetPreferredHeight();
 
-	double listViewTop = y;
+	const double listViewTop = y;
 
-	y = GetHeight() - 10.0 - SaveArgsCheckbox->GetPreferredHeight();
+	y = GetHeight() - SaveArgsCheckbox->GetPreferredHeight();
 	SaveArgsCheckbox->SetFrameGeometry(0.0, y, GetWidth(), SaveArgsCheckbox->GetPreferredHeight());
-	y -= 2.0;
 
-	double editHeight = 24.0;
-	y -= editHeight;
+	const double editHeight = 24.0;
+	y -= editHeight + 2.0;
 	ParametersEdit->SetFrameGeometry(0.0, y, GetWidth(), editHeight);
 
-	double labelHeight = ParametersLabel->GetPreferredHeight();
+	const double labelHeight = ParametersLabel->GetPreferredHeight();
 	y -= labelHeight;
 	ParametersLabel->SetFrameGeometry(0.0, y, GetWidth(), labelHeight);
-	y -= 10.0;
 
-	double listViewBottom = y - 10.0;
-	GamesList->SetFrameGeometry(0.0, listViewTop, GetWidth(), std::max(listViewBottom - listViewTop, 0.0));
+	y -= 20.0;
+	GamesList->SetFrameGeometry(0.0, listViewTop, GetWidth(), std::max(y - listViewTop, 0.0));
 
 	Launcher->UpdatePlayButton();
 }

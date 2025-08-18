@@ -3301,7 +3301,7 @@ CCMD(kick)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || (unsigned int)cNum >= MAXPLAYERS)
 			Printf("Bad client number %s\n", argv[i]);
 		else if (cNum != consoleplayer && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);
@@ -3512,7 +3512,7 @@ CCMD(addsettingscontrollers)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || (unsigned int)cNum >= MAXPLAYERS)
 			Printf("Bad client number %s\n", argv[i]);
 		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);
@@ -3539,7 +3539,7 @@ CCMD(removesettingscontrollers)
 	for (size_t i = 1u; i < (size_t)argv.argc(); ++i)
 	{
 		int cNum = -1;
-		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= (int)MAXPLAYERS)
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || (unsigned int)cNum >= MAXPLAYERS)
 			Printf("Bad player number %s\n", argv[i]);
 		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
 			cNums.Push(cNum);

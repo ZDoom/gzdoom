@@ -2844,7 +2844,7 @@ void DAutomap::drawPlayers ()
 		return;
 	}
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t *p = &players[i];
 		AMColor color;

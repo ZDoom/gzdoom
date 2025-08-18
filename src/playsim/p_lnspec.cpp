@@ -3363,7 +3363,7 @@ FUNC(LS_GlassBreak)
 		{ // Up stats and signal this mission is complete
 			if (it == NULL)
 			{
-				for (int i = 0; i < (int)MAXPLAYERS; ++i)
+				for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 				{
 					if (Level->PlayerInGame(i))
 					{

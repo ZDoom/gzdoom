@@ -3367,7 +3367,7 @@ CCMD(muteall)
 		return;
 	}
 
-	for (int i = 0; i < (int)MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i] && i != consoleplayer)
 			MutedClients |= (uint64_t)1u << i;

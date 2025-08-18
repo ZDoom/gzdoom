@@ -258,7 +258,7 @@ bool FTeam::IsValid (unsigned int uiTeam)
 
 bool FTeam::ChangeTeam(unsigned int pNum, unsigned int newTeam)
 {
-	if (!multiplayer || !teamplay || pNum >= (int)MAXPLAYERS || !playeringame[pNum] || !FTeam::IsValid(newTeam) || players[pNum].userinfo.GetTeam() == (int)newTeam)
+	if (!multiplayer || !teamplay || pNum >= MAXPLAYERS || !playeringame[pNum] || !FTeam::IsValid(newTeam) || players[pNum].userinfo.GetTeam() == (int)newTeam)
 		return false;
 
 	players[pNum].userinfo.TeamChanged(newTeam);

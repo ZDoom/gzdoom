@@ -750,7 +750,7 @@ static int namesortfunc(const void *a, const void *b)
 FString D_GetUserInfoStrings(int pnum, bool compact)
 {
 	FString result;
-	if (pnum >= 0 && pnum < (int)MAXPLAYERS)
+	if (pnum >= 0 && (unsigned int)pnum < MAXPLAYERS)
 	{
 		userinfo_t* info = &players[pnum].userinfo;
 		TArray<TMap<FName, FBaseCVar*>::Pair*> userinfo_pairs(info->CountUsed());
@@ -838,7 +838,7 @@ void D_ReadUserInfoStrings (int pnum, TArrayView<uint8_t>& stream, bool update)
 		qsort(&compact_names[0], compact_names.Size(), sizeof(FName), namesortfunc);
 	}
 
-	if (pnum < (int)MAXPLAYERS)
+	if (pnum >= 0 && (unsigned int)pnum < MAXPLAYERS)
 	{
 		for (breakpt = ptr; breakpt != NULL; ptr = breakpt + 1)
 		{
@@ -1055,7 +1055,7 @@ CCMD(playerinfo)
 		{
 			i = consoleplayer;
 		}
-		else if (!C_IsValidInt(argv[1], i) || i < 0 || i >= (int)MAXPLAYERS)
+		else if (!C_IsValidInt(argv[1], i) || i < 0 || (unsigned int)i >= MAXPLAYERS)
 		{
 			Printf("Bad player number %s\n", argv[1]);
 			return;

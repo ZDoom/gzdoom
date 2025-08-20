@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2006-2007 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,14 +35,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <unistd.h>
+#include <csignal>
+#include <stdio.h>
 #include <sys/time.h>
 #include <termios.h>
+#include <unistd.h>
 
+#include "basics.h"
 #include "st_start.h"
-#include "i_system.h"
-#include "c_cvars.h"
-#include "engineerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -268,6 +269,12 @@ int FTTYStartupScreen::GetNetBanClient()
 	return -1;
 }
 
+static volatile sig_atomic_t netloop_running;
+void netloop_handler(int signal)
+{
+	netloop_running = false;
+}
+
 //===========================================================================
 //
 // FTTYStartupScreen :: NetLoop
@@ -290,7 +297,10 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 	char k;
 	bool stdin_eof = false;
 
-	for (;;)
+	netloop_running = true;
+	auto previous_handler = std::signal(SIGINT, netloop_handler);
+
+	while (netloop_running)
 	{
 		// Don't flood the network with packets on startup.
 		tv.tv_sec = 0;
@@ -328,11 +338,15 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 			{
 				if (k == 'q' || k == 'Q')
 				{
-					fprintf (stderr, "\nNetwork game synchronization aborted.");
-					return false;
+					netloop_running = false;
 				}
 			}
 		}
 	}
+
+	std::signal(SIGINT, previous_handler);
+
+	fprintf (stderr, "\nNetwork game synchronization aborted.");
+	return false;
 }
 

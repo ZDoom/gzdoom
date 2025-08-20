@@ -80,6 +80,7 @@ class FTTYStartupScreen : public FStartupScreen
 
 extern void RedrawProgressBar(int CurPos, int MaxPos);
 extern void CleanProgressBar();
+extern volatile sig_atomic_t gameloop_abort;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -269,12 +270,6 @@ int FTTYStartupScreen::GetNetBanClient()
 	return -1;
 }
 
-static volatile sig_atomic_t netloop_running;
-void netloop_handler(int signal)
-{
-	netloop_running = false;
-}
-
 //===========================================================================
 //
 // FTTYStartupScreen :: NetLoop
@@ -297,10 +292,7 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 	char k;
 	bool stdin_eof = false;
 
-	netloop_running = true;
-	auto previous_handler = std::signal(SIGINT, netloop_handler);
-
-	while (netloop_running)
+	while (!gameloop_abort)
 	{
 		// Don't flood the network with packets on startup.
 		tv.tv_sec = 0;
@@ -338,15 +330,13 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 			{
 				if (k == 'q' || k == 'Q')
 				{
-					netloop_running = false;
+					break;
 				}
 			}
 		}
 	}
 
-	std::signal(SIGINT, previous_handler);
-
-	fprintf (stderr, "\nNetwork game synchronization aborted.");
+	fprintf (stderr, "\nNetwork game synchronization aborted.\n");
 	return false;
 }
 

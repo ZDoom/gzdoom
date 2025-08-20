@@ -3,6 +3,7 @@
  **
  **---------------------------------------------------------------------------
  ** Copyright 2012-2018 Alexey Lysiuk
+ ** Copyright 2017-2025 GZDoom Maintainers and Contributors
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -36,6 +37,7 @@
 
 #include <sys/sysctl.h>
 #include <sys/stat.h>
+#include <csignal>
 
 #include "c_console.h"
 #include "c_cvars.h"
@@ -61,6 +63,8 @@ EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
 
 int GameMain();
+void SignalHandler(int signal);
+
 // ---------------------------------------------------------------------------
 
 
@@ -209,6 +213,11 @@ TArray<FString> s_argv;
 
 int DoMain(int argc, char** argv)
 {
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+	// signal(SIGHUP, SignalHandler);
+	// signal(SIGQUIT, SignalHandler);
+
 	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n\n",
 		GetVersionString(), GetGitTime(), __DATE__);
 

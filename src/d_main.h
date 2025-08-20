@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,8 +33,10 @@
 #include "gametype.h"
 #include "startupinfo.h"
 #include "c_cvars.h"
+#include <csignal>
 
 extern bool		advancedemo;
+extern volatile sig_atomic_t gameloop_abort;
 EXTERN_CVAR(Bool, hud_toggled);
 void D_ToggleHud();
 

@@ -329,6 +329,7 @@ FString lastIWAD;
 int restart = 0;
 extern bool AppActive;
 bool playedtitlemusic;
+volatile sig_atomic_t gameloop_abort = false;
 
 FStartScreen* StartScreen;
 std::unique_ptr<DebugServer::DebugServer> debugServer;
@@ -1259,6 +1260,12 @@ void D_DoomLoop ()
 			D_ProcessEvents();
 			D_Display ();
 			S_UpdateMusic();
+
+			if (gameloop_abort)
+			{
+				C_DoCommand("quickexit");
+			}
+
 			if (wantToRestart)
 			{
 				wantToRestart = false;
@@ -3739,7 +3746,6 @@ static int D_DoomMain_Internal (void)
 		RemapUserTranslation
 	};
 
-	
 	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
 
@@ -3877,6 +3883,20 @@ static int D_DoomMain_Internal (void)
 		gamestate = GS_STARTUP;
 	}
 	while (1);
+}
+
+void SignalHandler(int signal)
+{
+	if (gameloop_abort)
+	{
+		Printf("Received signal %d, exiting\n", signal);
+		exit(0);
+	}
+	else
+	{
+		Printf("Received signal %d, shutting down\n", signal);
+		gameloop_abort = true;
+	}
 }
 
 int GameMain()

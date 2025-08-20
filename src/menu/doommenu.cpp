@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -367,6 +368,17 @@ static void M_Quit()
 	S_StopMusic(true);
 	CleanSWDrawer();
 	ST_Endoom();
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+CCMD (quickexit)
+{
+	M_Quit();
 }
 
 //=============================================================================

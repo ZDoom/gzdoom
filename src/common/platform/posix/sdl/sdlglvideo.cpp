@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Christoph Oelckers et.al.
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -446,11 +447,6 @@ IVideo *gl_CreateVideo()
 SystemBaseFrameBuffer::SystemBaseFrameBuffer (void *, bool fullscreen)
 : DFrameBuffer (vid_defwidth, vid_defheight)
 {
-	if (Priv::window != nullptr)
-	{
-		SDL_SetWindowFullscreen(Priv::window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-		SDL_ShowWindow(Priv::window);
-	}
 }
 
 int SystemBaseFrameBuffer::GetClientWidth()
@@ -485,6 +481,7 @@ bool SystemBaseFrameBuffer::IsFullscreen ()
 
 void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 {
+	SDL_ShowWindow(Priv::window);
 	SDL_SetWindowFullscreen(Priv::window, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	if ( !yes )
 	{
@@ -565,7 +562,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
 	for ( ; glvers[glveridx][0] > 0; ++glveridx)
 	{
 		Priv::SetupPixelFormat(0, glvers[glveridx]);
-		Priv::CreateWindow(SDL_WINDOW_OPENGL | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
+		Priv::CreateWindow(SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
 		if (Priv::window == nullptr)
 		{

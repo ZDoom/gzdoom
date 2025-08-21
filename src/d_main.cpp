@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -3539,6 +3540,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		{
 			return 0;
 		}
+		setmodeneeded = true;
 	}
 
 	// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now

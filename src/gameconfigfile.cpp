@@ -965,9 +965,8 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	val.Bool = true;
 	con_centernotify->SetGenericRepDefault (val, CVAR_Bool);
 	snd_pitched->SetGenericRepDefault (val, CVAR_Bool);
-	val.Int = 9;
-	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_WHITE;
+	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	msgmidcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_YELLOW;
 	msgmidcolor2->SetGenericRepDefault (val, CVAR_Int);

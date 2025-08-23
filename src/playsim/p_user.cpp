@@ -5,6 +5,7 @@
 // Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -58,42 +59,38 @@
 **
 */
 
-
-#include "doomdef.h"
-#include "d_event.h"
-#include "p_local.h"
-#include "doomstat.h"
-#include "s_sound.h"
-#include "gi.h"
-#include "m_random.h"
-#include "p_pspr.h"
-#include "p_enemy.h"
-#include "a_sharedglobal.h"
 #include "a_keys.h"
-#include "filesystem.h"
-#include "cmdlib.h"
-#include "sbar.h"
-#include "intermission/intermission.h"
-#include "c_console.h"
-#include "c_dispatch.h"
-#include "d_net.h"
-#include "serializer_doom.h"
-#include "serialize_obj.h"
-#include "d_player.h"
-#include "r_utility.h"
-#include "p_blockmap.h"
 #include "a_morph.h"
-#include "p_spec.h"
-#include "vm.h"
-#include "g_levellocals.h"
 #include "actorinlines.h"
-#include "p_acs.h"
-#include "events.h"
-#include "g_game.h"
-#include "v_video.h"
-#include "gstrings.h"
-#include "s_music.h"
+#include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_event.h"
 #include "d_main.h"
+#include "d_net.h"
+#include "d_player.h"
+#include "doomdef.h"
+#include "doomstat.h"
+#include "events.h"
+#include "filesystem.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "intermission/intermission.h"
+#include "m_random.h"
+#include "p_acs.h"
+#include "p_blockmap.h"
+#include "p_enemy.h"
+#include "p_local.h"
+#include "p_pspr.h"
+#include "p_spec.h"
+#include "r_utility.h"
+#include "s_music.h"
+#include "s_sound.h"
+#include "sbar.h"
+#include "serialize_obj.h"
+#include "serializer_doom.h"
+#include "vm.h"
 
 extern int paused;
 
@@ -478,8 +475,6 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSubtitleNumber)
 	return 0;
 }
 
-
-
 int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
@@ -648,7 +643,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPainFlashForType, GetPainFlash)
 EXTERN_CVAR(Float, maxviewpitch)
 EXTERN_CVAR(Bool, cl_oldfreelooklimit);
 
-
 static int GetSoftPitch(bool down)
 {
 	int MAX_DN_ANGLE = min(56, (int)maxviewpitch); // Max looking down angle
@@ -685,7 +679,6 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SendPitchLimits)
 	return 0;
 }
 
-
 bool player_t::HasWeaponsInSlot(int slot) const
 {
 	for (int i = 0; i < weapons.SlotSize(slot); i++)
@@ -702,7 +695,6 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, HasWeaponsInSlot)
 	PARAM_INT(slot);
 	ACTION_RETURN_BOOL(self->HasWeaponsInSlot(slot));
 }
-
 
 bool player_t::Resurrect()
 {
@@ -885,7 +877,6 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetStillBob)
 	ACTION_RETURN_FLOAT(self->userinfo.GetStillBob());
 }
 
-
 //===========================================================================
 //
 // 
@@ -1034,7 +1025,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 	S_Sound (self, chan, 0, sound, 1, ATTN_NORM);
 	return 0;
 }
-
 
 //===========================================================================
 //
@@ -1283,7 +1273,6 @@ void P_CheckUse(player_t *player)
 		player->usedown = false;
 	}
 }
-
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUse)
 {
@@ -1840,7 +1829,6 @@ bool P_IsPlayerTotallyFrozen(const player_t *player)
 		player->cheats & CF_TOTALLYFROZEN ||
 		player->mo->isFrozen();
 }
-
 
 //==========================================================================
 //

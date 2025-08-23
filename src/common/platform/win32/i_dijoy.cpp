@@ -1,8 +1,11 @@
 /*
+** i_dijoy.cpp
 **
+** Handles direct input joysticks
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -40,19 +43,19 @@
 #ifndef __GNUC__
 #include <wbemidl.h>
 #endif
+
 #include <oleauto.h>
 #include <malloc.h>
 
 #include "i_input.h"
 #include "d_eventbase.h"
-
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "v_text.h"
 #include "m_argv.h"
 #include "keydef.h"
 #include "printf.h"
-
+#include "m_joy.h"
 #include "i_mainwindow.h"
 
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
@@ -145,7 +148,6 @@ public:
 #endif
 
 // MACROS ------------------------------------------------------------------
-
 
 // TYPES -------------------------------------------------------------------
 

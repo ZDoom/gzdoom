@@ -1,9 +1,10 @@
 /*
-** conversationmenu.txt
+** conversationmenu.zs
 ** The Strife dialogue display
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -66,10 +67,9 @@ struct StrifeDialogueReply native version("2.4")
 	native int LogNumber;
 	native bool NeedsGold;
 	native bool CloseDialog;
-	
+
 	native bool ShouldSkipReply(PlayerInfo player);
 }
-
 
 class ConversationMenu : Menu
 {
@@ -95,12 +95,12 @@ class ConversationMenu : Menu
 	int refwidth;
 	int refheight;
 	Array<double> ypositions;
-	
+
 	int SpeechWidth;
 	int ReplyWidth;
-	
+
 	native static void SendConversationReply(int node, int reply);
-	
+
 	const NUM_RANDOM_LINES = 10;
 	const NUM_RANDOM_GOODBYES = 3;
 
@@ -117,11 +117,11 @@ class ConversationMenu : Menu
 		mShowGold = false;
 		ConversationPauseTic = gametic + 20;
 		DontDim = true;
-		
+
 		let tex = TexMan.CheckForTexture (CurNode.Backdrop, TexMan.Type_MiscPatch);
 		mHasBackdrop = tex.isValid();
 		DontBlur = !mHasBackdrop;
-		
+
 		if (!generic_ui && !dlg_vgafont)
 		{
 			displayFont = SmallFont;
@@ -158,22 +158,21 @@ class ConversationMenu : Menu
 				SpeechWidth = speechDisplayWidth - (24*3 * CleanXfac / fontScale);
 				mConfineTextToBackdrop = true;
 			}
-			
+
 			LineHeight = displayFont.GetHeight() + 2;
 			ReplyLineHeight = LineHeight * fontScale / CleanYfac;
 		}
-		
 
 		FormatSpeakerMessage();
 		return FormatReplies(activereply);
 	}
-	
+
 	//=============================================================================
 	//
 	//
 	//
 	//=============================================================================
-	
+
 	virtual int FormatReplies(int activereply)
 	{
 		mSelection = -1;
@@ -206,7 +205,7 @@ class ConversationMenu : Menu
 			{
 				mResponseLines.Push(ReplyLines.StringAt(j));
 			}
-			
+
 			++i;
 			ReplyLines.Destroy();
 		}
@@ -242,7 +241,7 @@ class ConversationMenu : Menu
 		}
 		return mYpos;
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -270,7 +269,7 @@ class ConversationMenu : Menu
 		}
 		mDialogueLines = displayFont.BreakLines(toSay, SpeechWidth);
 	}
-	
+
 	//=============================================================================
 	//
 	//
@@ -364,7 +363,7 @@ class ConversationMenu : Menu
 
 		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 		x = ((x - (screen.GetWidth() / 2)) / fontScale) + refWidth/2;
-		
+
 		if (x >= 24 && x <= refWidth-24)
 		{
 			for (int i = 0; i < ypositions.Size()-1; i++)
@@ -383,7 +382,6 @@ class ConversationMenu : Menu
 		}
 		return true;
 	}
-
 
 	//=============================================================================
 	//
@@ -404,7 +402,7 @@ class ConversationMenu : Menu
 		}
 		return Super.OnUIEvent(ev);
 	}
-	
+
 	//============================================================================
 	//
 	// Draw the backdrop, returns true if the text background should be dimmed
@@ -444,7 +442,6 @@ class ConversationMenu : Menu
 			speakerName = players[consoleplayer].ConversationNPC.GetTag("$TXT_PERSON");
 		}
 
-		
 		// Dim the screen behind the dialogue (but only if there is no backdrop).
 		if (dimbg)
 		{
@@ -472,7 +469,6 @@ class ConversationMenu : Menu
 		}
 	}
 
-
 	//============================================================================
 	//
 	// Draw the replies
@@ -484,7 +480,6 @@ class ConversationMenu : Menu
 		// Dim the screen behind the PC's choices.
 		screen.Dim(0, 0.45, (24 - 160) * CleanXfac + screen.GetWidth() / 2, (mYpos - 2 - 100) * CleanYfac + screen.GetHeight() / 2,
 			272 * CleanXfac, MIN(mResponseLines.Size() * ReplyLineHeight + 4, 200 - mYpos) * CleanYfac);
-
 
 		int y = mYpos;
 
@@ -576,8 +571,7 @@ class ConversationMenu : Menu
 		DrawReplies();
 		DrawGold();
 	}
-	
-	
+
 	//============================================================================
 	//
 	//
@@ -592,5 +586,5 @@ class ConversationMenu : Menu
 			menuactive = Menu.On;
 		}
 	}
-	
+
 }

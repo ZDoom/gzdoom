@@ -1,9 +1,11 @@
 /*
 ** joystickmenu.cpp
+**
 ** The joystick configuration menus
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,8 +34,8 @@
 **
 */
 
-#include "menu.h"
 #include "m_joy.h"
+#include "menu.h"
 #include "vm.h"
 
 static TArray<IJoystickConfig *> Joysticks;
@@ -187,14 +189,12 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetEnabledInBackground)
 	return 0;
 }
 
-
 DEFINE_ACTION_FUNCTION(IJoystickConfig, Reset)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	self->Reset();
 	return 0;
 }
-
 
 void UpdateJoystickMenu(IJoystickConfig *selected)
 {
@@ -271,4 +271,3 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		}
 	}
 }
-

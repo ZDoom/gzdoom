@@ -5,6 +5,7 @@
 // Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,31 +29,28 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #include <stdlib.h>
 
-
-#include "m_random.h"
-
+#include "a_ceiling.h"
+#include "a_sharedglobal.h"
+#include "actorinlines.h"
+#include "d_player.h"
 #include "doomdef.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "i_soundinternal.h"
+#include "m_random.h"
+#include "p_blockmap.h"
+#include "p_checkposition.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
 #include "p_local.h"
 #include "p_maputl.h"
-#include "d_player.h"
-#include "p_lnspec.h"
-#include "g_game.h"
-#include "p_enemy.h"
-#include "a_sharedglobal.h"
-#include "p_blockmap.h"
-#include "teaminfo.h"
 #include "p_spec.h"
-#include "p_checkposition.h"
-#include "g_levellocals.h"
-#include "vm.h"
-#include "actorinlines.h"
-#include "a_ceiling.h"
 #include "shadowinlines.h"
-
-#include "gi.h"
+#include "teaminfo.h"
+#include "vm.h"
 
 static FRandom pr_checkmissilerange ("CheckMissileRange");
 static FRandom pr_opendoor ("OpenDoor");
@@ -111,7 +109,6 @@ double yspeed[8] = {0,SQRTHALF,1,SQRTHALF,0,-SQRTHALF,-1,-SQRTHALF};
 // but some can be made preaware
 //
 
-
 //----------------------------------------------------------------------------
 //
 // PROC P_RecursiveSound
@@ -153,7 +150,6 @@ static void NoiseMarkSector(sector_t *sec, AActor *soundtarget, bool splash, AAc
 	NoiseList.Push({ sec, soundblocks });
 }
 
-
 static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AActor *emitter, int soundblocks, double maxdist)
 {
 	bool checkabove = !sec->PortalBlocksSound(sector_t::ceiling);
@@ -183,7 +179,6 @@ static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AA
 				NoiseMarkSector(port->mDestination->frontsector, soundtarget, splash, emitter, soundblocks, maxdist);
 			}
 		}
-
 
 		if (check->sidedef[1] == NULL ||
 			!(check->flags & ML_TWOSIDED))
@@ -228,9 +223,6 @@ static void P_RecursiveSound(sector_t *sec, AActor *soundtarget, bool splash, AA
 		}
 	}
 }
-
-
-
 
 //----------------------------------------------------------------------------
 //
@@ -365,7 +357,6 @@ static int P_CheckMissileRange (AActor *actor)
 	
 	if (actor->MeleeState == NULL)
 		dist -= 128;	// no melee attack, so fire more
-
 
 	if (actor->maxtargetrange > 0 && dist > actor->maxtargetrange)
 		return false;	// The Arch Vile's special behavior turned into a property
@@ -673,7 +664,6 @@ static int P_Move (AActor *actor)
 			else
 				actor->AddZ(-actor->FloatSpeed);
 
-
 			// [RH] Check to make sure there's nothing in the way of the float
 			if (P_TestMobjZ(actor))
 			{
@@ -926,7 +916,6 @@ void P_DoNewChaseDir (AActor *actor, double deltax, double deltay)
 
 	actor->movedir = DI_NODIR;	// cannot move
 }
-
 
 //=============================================================================
 //
@@ -1763,7 +1752,6 @@ int P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 	return false;
 }
 
-
 /*
 ================
 =
@@ -1831,7 +1819,6 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 		// [SP] If you don't see any enemies in deathmatch, look for players (but only when friend to a specific player.)
 		if (actor->FriendPlayer == 0 && (!teamplay || actor->GetTeam() == TEAM_NONE)) return result;
 		if (result || !deathmatch) return true;
-
 
 	}	// [SP] if false, and in deathmatch, intentional fall-through
 	else if (actor->flags8 & MF8_SEEFRIENDLYMONSTERS)
@@ -2041,7 +2028,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	}
 	return 0;
 }
-
 
 //==========================================================================
 //
@@ -2254,6 +2240,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearLastHeard)
 // A_Wander
 //
 //==========================================================================
+
 enum ChaseFlags
 {
 	CHF_FASTCHASE = 1,
@@ -2315,6 +2302,7 @@ void A_Wander(AActor *self, int flags)
 // A_Look2
 //
 //==========================================================================
+
 DEFINE_ACTION_FUNCTION(AActor, A_Look2)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -2379,6 +2367,7 @@ nosee:
 // enhancements.
 //
 //=============================================================================
+
 #define CLASS_BOSS_STRAFE_RANGE	64*10
 
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
@@ -2743,6 +2732,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 // functions to check.
 // 
 //==========================================================================
+
 // [MC] Code is almost a duplicate of CanCollideWith but with changes to
 // accommodate checking of just one actor.
 bool P_CanResurrect(AActor *raiser, AActor *thing)
@@ -2942,7 +2932,6 @@ bool P_CheckForResurrection(AActor* self, bool usevilestates, FState* state = nu
 	return false;
 }
 
-
 // for internal use
 void A_Chase(AActor *self)
 {
@@ -3007,6 +2996,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_DoChase, A_DoChaseNative)
 // A_FaceTracer
 //
 //=============================================================================
+
 enum FAF_Flags
 {
 	FAF_BOTTOM = 1,
@@ -3122,6 +3112,7 @@ void A_FaceTarget(AActor *self)
 // New function to let monsters shoot a railgun
 //
 //===========================================================================
+
 DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 {
 	PARAM_SELF_PROLOGUE(AActor);

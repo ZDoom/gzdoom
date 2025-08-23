@@ -63,7 +63,6 @@ void InitDoomFonts()
 		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true, true);
 	}
 
-
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
 		if (fileSystem.CheckNumForName("STBFN033", FileSys::ns_graphics) >= 0)

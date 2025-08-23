@@ -1,11 +1,11 @@
 #ifndef __SNDINT_H
 #define __SNDINT_H
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
-#include "vectors.h"
 #include "tflags.h"
+#include "vectors.h"
 
 enum EChanFlag
 {
@@ -145,6 +145,5 @@ struct FISoundChannel
 };
 
 void S_SetSoundPaused(int state);
-
 
 #endif

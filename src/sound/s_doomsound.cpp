@@ -1,5 +1,5 @@
 /*
-** doomspund.cpp
+** s_doomsound.cpp
 **
 ** Game dependent part of the sound engine.
 **
@@ -7,6 +7,7 @@
 **
 ** Copyright 1999-2016 Randy Heit
 ** Copyright 2002-2019 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions
@@ -34,42 +35,40 @@
 **
 */ 
 
-
+#include "v_font.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 #ifdef _WIN32
 #include <io.h>
 #endif
 
-#include "i_system.h"
-#include "i_sound.h"
-#include "i_music.h"
-#include "s_sound.h"
-#include "s_sndseq.h"
-#include "s_playlist.h"
-#include "c_dispatch.h"
-#include "m_random.h"
-#include "filesystem.h"
-#include "p_local.h"
-#include "doomstat.h"
-#include "cmdlib.h"
-#include "v_video.h"
-#include "v_text.h"
 #include "a_sharedglobal.h"
-#include "gstrings.h"
-#include "gi.h"
-#include "po_man.h"
-#include "serializer_doom.h"
+#include "c_dispatch.h"
+#include "cmdlib.h"
 #include "d_player.h"
-#include "g_levellocals.h"
-#include "vm.h"
+#include "doomstat.h"
+#include "filesystem.h"
 #include "g_game.h"
-#include "s_music.h"
-#include "v_draw.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "i_music.h"
+#include "i_sound.h"
+#include "i_soundinternal.h"
 #include "m_argv.h"
+#include "m_random.h"
+#include "p_local.h"
+#include "po_man.h"
+#include "printf.h"
+#include "s_music.h"
+#include "s_sndseq.h"
+#include "s_sound.h"
+#include "serializer_doom.h"
+#include "v_draw.h"
+#include "vm.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 
 static FString LastLocalSndInfo;
 static FString LastLocalSndSeq;
@@ -99,13 +98,11 @@ class DoomSoundEngine : public SoundEngine
 		return SoundEngine::CheckSoundLimit(sfx, pos, near_limit, limit_range, sourcetype, actor, channel, attenuation);
 	}
 
-
 public:
 	DoomSoundEngine() = default;
 	void NoiseDebug(void);
 	void PrintSoundList();
 };
-
 
 //==========================================================================
 //
@@ -254,7 +251,6 @@ void S_Shutdown()
 	}
 }
 
-
 //==========================================================================
 //
 // S_Start
@@ -356,7 +352,6 @@ void S_PrecacheLevel(FLevelLocals* Level)
 	}
 }
 
-
 //==========================================================================
 //
 // S_InitData
@@ -369,7 +364,6 @@ void S_InitData()
 	S_ParseSndInfo(false);
 	S_ParseSndSeq(-1);
 }
-
 
 //==========================================================================
 //
@@ -436,7 +430,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, S_StartSoundAt, S_StartSoundAt)
 	S_StartSoundAt(x, y, z, id, channel, flags, volume, attn, pitch, startTime);
 	return 0;
 }
-
 
 //==========================================================================
 //
@@ -509,7 +502,6 @@ void DoomSoundEngine::StopChannel(FSoundChan* chan)
 	}
 	SoundEngine::StopChannel(chan);
 }
-
 
 //==========================================================================
 //
@@ -635,7 +627,6 @@ void A_PlaySound(AActor* self, int soundid, int channel, double volume, int loop
 	if (local) channel |= CHANF_LOCAL;
 	A_StartSound(self, soundid, channel & 7, channel & ~7, volume, attenuation, pitch, 0.0f);
 }
-
 
 //==========================================================================
 //
@@ -1186,6 +1177,7 @@ TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 // This is overridden to use a synchronized RNG.
 // 
 //==========================================================================
+
 static FCRandom pr_randsound("RandSound");
 
 FSoundID DoomSoundEngine::PickReplacement(FSoundID refid)
@@ -1233,7 +1225,6 @@ void DoomSoundEngine::NoiseDebug()
 	{
 		return;
 	}
-
 
 	listener = players[consoleplayer].camera->SoundPos();
 
@@ -1318,7 +1309,6 @@ void DoomSoundEngine::NoiseDebug()
 		mysnprintf(temp, countof(temp), "%u", GSnd->GetPosition(chan));
 		DrawText(twod, NewConsoleFont, color, 520, y, temp, TAG_DONE);
 
-
 		y += NewConsoleFont->GetHeight();
 		if (chan->PrevChan == &Channels)
 		{
@@ -1333,7 +1323,6 @@ ADD_STAT(sounddebug)
 	static_cast<DoomSoundEngine*>(soundEngine)->NoiseDebug();
 	return "";
 }
-
 
 //==========================================================================
 //

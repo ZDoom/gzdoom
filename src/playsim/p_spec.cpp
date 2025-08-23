@@ -5,6 +5,7 @@
 // Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -67,38 +68,30 @@
 
 #include <stdlib.h>
 
-
+#include "a_keys.h"
+#include "a_sharedglobal.h"
+#include "actorinlines.h"
+#include "d_event.h"
+#include "d_player.h"
+#include "doomdata.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "d_event.h"
-#include "g_level.h"
-#include "gstrings.h"
 #include "events.h"
-
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gstrings.h"
+#include "i_soundinternal.h"
 #include "m_random.h"
-
-#include "p_local.h"
-#include "p_spec.h"
+#include "p_3dmidtex.h"
+#include "p_acs.h"
 #include "p_blockmap.h"
 #include "p_lnspec.h"
-#include "p_terrain.h"
-#include "p_acs.h"
-#include "p_3dmidtex.h"
-
-#include "g_game.h"
-
-#include "a_sharedglobal.h"
-#include "a_keys.h"
-#include "c_dispatch.h"
-#include "r_sky.h"
-#include "d_player.h"
-#include "g_levellocals.h"
-#include "actorinlines.h"
-#include "vm.h"
+#include "p_local.h"
 #include "p_setup.h"
-
-#include "c_console.h"
-#include "p_spec_thinkers.h"
+#include "p_spec.h"
+#include "p_terrain.h"
+#include "r_sky.h"
+#include "vm.h"
 
 static FRandom pr_actorinspecialsector ("ActorInSpecialSector");
 
@@ -140,7 +133,6 @@ bool FLevelLocals::CheckIfExitIsGood (AActor *self, level_info_t *info)
 	}
 	return true;
 }
-
 
 //
 // UTILITIES

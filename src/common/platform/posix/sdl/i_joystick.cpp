@@ -1,8 +1,11 @@
 /*
 ** i_joystick.cpp
 **
+** Handles sdl joysticks and gamepads
+**
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -30,13 +33,14 @@
 **---------------------------------------------------------------------------
 **
 */
+
 #include <SDL.h>
 #include <SDL_gamecontroller.h>
+#include <cstdint>
 #include <cstdlib>
 
 #include "basics.h"
 #include "cmdlib.h"
-
 #include "d_eventbase.h"
 #include "i_input.h"
 #include "m_joy.h"

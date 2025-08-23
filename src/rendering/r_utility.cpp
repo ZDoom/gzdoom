@@ -4,6 +4,7 @@
 // Copyright 1994-1996 Raven Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,41 +33,31 @@
 #include <stdlib.h>
 #include <math.h>
 
-
-#include "doomdef.h"
-#include "d_net.h"
-#include "doomstat.h"
-#include "m_random.h"
-#include "m_bbox.h"
-#include "r_sky.h"
-#include "st_stuff.h"
-#include "c_dispatch.h"
-#include "v_video.h"
-#include "stats.h"
-#include "i_video.h"
 #include "a_sharedglobal.h"
-#include "p_3dmidtex.h"
-#include "r_data/r_interpolate.h"
-#include "po_man.h"
-#include "p_effect.h"
-#include "st_start.h"
-#include "v_font.h"
-#include "swrenderer/r_renderer.h"
-#include "serializer.h"
-#include "r_utility.h"
-#include "d_player.h"
-#include "p_local.h"
-#include "g_levellocals.h"
-#include "p_maputl.h"
-#include "sbar.h"
-#include "vm.h"
-#include "i_time.h"
 #include "actorinlines.h"
-#include "g_game.h"
-#include "i_system.h"
-#include "v_draw.h"
-#include "i_interface.h"
 #include "d_main.h"
+#include "d_net.h"
+#include "d_player.h"
+#include "doomstat.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "i_interface.h"
+#include "i_time.h"
+#include "i_video.h"
+#include "m_random.h"
+#include "p_3dmidtex.h"
+#include "p_effect.h"
+#include "p_local.h"
+#include "p_maputl.h"
+#include "r_data/r_interpolate.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "sbar.h"
+#include "serializer.h"
+#include "swrenderer/r_renderer.h"
+#include "v_draw.h"
+#include "v_video.h"
+#include "vm.h"
 
 const float MY_SQRT2    = float(1.41421356237309504880); // sqrt(2)
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -282,7 +273,6 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	{
 		viewwindow.centerxwide = viewwindow.centerx * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 	}
-
 
 	DAngle fov = viewpoint.FieldOfView;
 
@@ -855,7 +845,6 @@ bool R_GetViewInterpolationStatus()
 	return NoInterpolateView;
 }
 
-
 //==========================================================================
 //
 // R_ClearInterpolationPath
@@ -1214,7 +1203,6 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	viewPoint.ViewActor = viewPoint.showviewer ? nullptr : actor;
 }
 
-
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {
 	if (self>90.f) self = 90.f;
@@ -1265,6 +1253,5 @@ bool R_ShouldDrawSpriteShadow(AActor *thing)
 		}
 	}
 	return doit;
-
 
 }

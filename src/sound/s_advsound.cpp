@@ -1,9 +1,11 @@
 /*
 ** s_advsound.cpp
+**
 ** Routines for managing SNDINFO lumps and ambient sounds
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,22 +36,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-
 #include "actor.h"
 #include "c_dispatch.h"
-#include "filesystem.h"
-#include "gi.h"
-#include "i_sound.h"
 #include "d_netinf.h"
 #include "d_player.h"
-#include "serializer.h"
-#include "v_text.h"
-#include "g_levellocals.h"
-#include "r_data/sprites.h"
-#include "vm.h"
-#include "i_system.h"
-#include "s_music.h"
+#include "filesystem.h"
+#include "gi.h"
 #include "i_music.h"
+#include "i_sound.h"
+#include "r_data/sprites.h"
+#include "s_music.h"
+#include "serializer.h"
+#include "vm.h"
 
 using namespace FileSys;
 
@@ -248,7 +246,6 @@ static bool PlayerClassesIsSorted;
 
 static TArray<FPlayerClassLookup> PlayerClassLookups;
 static TArray<FPlayerSoundHashTable> PlayerSounds;
-
 
 static FString DefPlayerClassName;
 static int DefPlayerClass;
@@ -1404,7 +1401,6 @@ static FSoundID S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 	return sndnum;
 }
 
-
 //==========================================================================
 //
 // S_SavePlayerSound / S_RestorePlayerSounds
@@ -1847,7 +1843,6 @@ DEFINE_ACTION_FUNCTION(AAmbientSound, Deactivate)
 	return 0;
 }
 
-
 //==========================================================================
 //
 // S_ParseMusInfo
@@ -1888,7 +1883,6 @@ void S_ParseMusInfo()
 		}
 	}
 }
-
 
 DEFINE_ACTION_FUNCTION(DObject, MarkSound)
 {

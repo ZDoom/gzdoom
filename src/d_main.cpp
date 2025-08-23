@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
@@ -46,11 +46,13 @@
 #include "autosegs.h"
 #include "c_buttons.h"
 #include "c_console.h"
+#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
 #include "common/scripting/dap/DebugServer.h"
 #include "d_buttons.h"
 #include "d_dehacked.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "d_net.h"
 #include "d_netinf.h"
@@ -76,6 +78,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "i_interface.h"
 #include "i_sound.h"
+#include "i_soundinternal.h"
 #include "i_system.h"
 #include "i_time.h"
 #include "i_video.h"
@@ -224,7 +227,6 @@ CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
 	}
 }
 
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 #ifndef NO_SWRENDERER
@@ -338,7 +340,6 @@ cycle_t FrameCycles;
 
 // [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
 uint32_t r_renderercaps = 0;
-
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -800,6 +801,7 @@ static void DrawPaletteTester(int paletteno)
 // Draws the fps counter, dot ticker, and palette debug.
 //
 //==========================================================================
+
 uint64_t LastFPS, LastMSCount;
 
 void CalcFps()
@@ -1087,7 +1089,6 @@ void D_Display ()
 		case GS_INTRO:
 			ScreenJobDraw();
 			break;
-
 
 			default:
 				break;
@@ -1576,7 +1577,6 @@ void D_DoAdvanceDemo (void)
 		break;
 	}
 
-
 	if (pagename.IsNotEmpty())
 	{
 		Page = TexMan.CheckForTexture(pagename.GetChars(), ETextureType::MiscPatch);
@@ -1836,7 +1836,6 @@ static void GetCmdLineFiles(std::vector<std::string>& wadfiles, bool optional)
 		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig, optional);
 	}
 }
-
 
 static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, const char *data, int size)
 {
@@ -2296,7 +2295,6 @@ static void NewFailure ()
     I_FatalError ("Failed to allocate memory from system heap");
 }
 
-
 //==========================================================================
 //
 // RenameSprites
@@ -2477,6 +2475,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 // MD5 checksum for Unity version of NERVE.WAD: 4214c47651b63ee2257b1c2490a518c9 (3,821,966)
 //
 //==========================================================================
+
 void RenameNerve(FileSystem& fileSystem)
 {
 	if (gameinfo.gametype != GAME_Doom)
@@ -2663,7 +2662,6 @@ static void FindStrifeTeaserVoices(FileSystem& fileSystem)
 		}
 	}
 }
-
 
 static const char *DoomButtons[] =
 {
@@ -2959,7 +2957,6 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 
 void System_M_Dim();
 
-
 static void PatchTextures()
 {
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
@@ -3062,7 +3059,6 @@ static void Doom_CastSpriteIDToString(FString* a, unsigned int b)
 	*a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; 
 }
 
-
 extern DThinker* NextToThink;
 
 static void GC_MarkGameRoots()
@@ -3158,6 +3154,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 	}
 	return (int)text.Len();
 }
+
 //==========================================================================
 //
 // D_InitGame
@@ -3255,8 +3252,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		FString NewFilterName = (FString)"doom.doom" + LumpFilterIWAD.Mid(12); // "doom.id.doom" is 12 characters
 		lfi.gameTypeFilter.push_back(NewFilterName.GetChars());
 	}
-
-
 
 	GetReserved(lfi);
 
@@ -3492,7 +3487,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	M_Init();
 	M_CreateGameMenus();
 
-
 	// clean up the compiler symbols which are not needed any longer.
 	if (!dap_debugging) RemoveUnusedSymbols();
 
@@ -3688,6 +3682,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	staticEventManager.OnEngineInitialize();
 	return 0;
 }
+
 //==========================================================================
 //
 // D_DoomMain

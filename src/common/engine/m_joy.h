@@ -1,11 +1,9 @@
 #ifndef M_JOY_H
 #define M_JOY_H
 
-#include "basics.h"
-#include "keydef.h"
-#include "tarray.h"
 #include "c_cvars.h"
 #include "keydef.h"
+#include "tarray.h"
 
 union CubicBezier {
 	struct {

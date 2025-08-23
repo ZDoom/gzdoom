@@ -1,8 +1,11 @@
 /*
+** m_joy.cpp
 **
+** Cross-platform joystick/gamepad management
 **
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -30,17 +33,22 @@
 **---------------------------------------------------------------------------
 **
 */
+
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
-#include "c_dispatch.h"
-#include "vectors.h"
 #include "m_joy.h"
-#include "configfile.h"
-#include "i_interface.h"
-#include "d_eventbase.h"
+#include <math.h>
+
+#include "c_cvars.h"
+#include "c_dispatch.h"
 #include "cmdlib.h"
+#include "configfile.h"
+#include "d_eventbase.h"
+#include "i_interface.h"
+#include "name.h"
 #include "printf.h"
+#include "vectors.h"
+#include "zstring.h"
 
 // MACROS ------------------------------------------------------------------
 

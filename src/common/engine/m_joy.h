@@ -29,6 +29,8 @@ extern const float JOYDEADZONE_DEFAULT;
 
 extern const float JOYSENSITIVITY_DEFAULT;
 
+extern const float JOYHAPSTRENGTH_DEFAULT;
+
 extern const float JOYTHRESH_DEFAULT;
 
 extern const float JOYTHRESH_TRIGGER;

@@ -4,6 +4,7 @@
 ** The joystick configuration menus
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -30,6 +31,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -51,6 +53,26 @@ DEFINE_ACTION_FUNCTION(IJoystickConfig, SetSensitivity)
 	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
 	PARAM_FLOAT(sens);
 	self->SetSensitivity((float)sens);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, HasHaptics)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_BOOL(self->HasHaptics());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, GetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	ACTION_RETURN_FLOAT(self->GetHapticsStrength());
+}
+
+DEFINE_ACTION_FUNCTION(IJoystickConfig, SetHapticsStrength)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(IJoystickConfig);
+	PARAM_FLOAT(strength);
+	self->SetHapticsStrength((float)strength);
 	return 0;
 }
 

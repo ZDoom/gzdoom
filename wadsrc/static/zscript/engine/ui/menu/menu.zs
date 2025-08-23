@@ -3,6 +3,7 @@
 ** The menu engine core
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010-2020 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -29,6 +30,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -80,6 +82,10 @@ struct JoystickConfig native version("2.4")
 
 	native float GetSensitivity();
 	native void SetSensitivity(float scale);
+
+	native bool HasHaptics();
+	native float GetHapticsStrength();
+	native void SetHapticsStrength(float strength);
 
 	native float GetAxisScale(int axis);
 	native void SetAxisScale(int axis, float scale);

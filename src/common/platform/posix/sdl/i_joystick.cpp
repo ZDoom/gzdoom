@@ -4,6 +4,7 @@
 ** Handles sdl joysticks and gamepads
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2005-2016 Randy Heit
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -30,6 +31,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -138,6 +140,25 @@ public:
 		Multiplier = scale;
 	}
 
+	bool HasHaptics()
+	{
+		return Haptics != 0;
+	}
+
+	float GetHapticsStrength()
+	{
+		return HasHaptics()
+			? HapticsStrength
+			: 0;
+	}
+
+	void SetHapticsStrength(float strength)
+	{
+		if (!HasHaptics()) return;
+		SettingsChanged = true;
+		HapticsStrength = clamp(strength, 0.f, 2.f);
+	}
+
 	int GetNumAxes()
 	{
 		return NumAxes + NumHats*2;
@@ -206,6 +227,10 @@ public:
 	bool IsSensitivityDefault()
 	{
 		return Multiplier == JOYSENSITIVITY_DEFAULT;
+	}
+	bool IsHapticsStrengthDefault()
+	{
+		return HapticsStrength == JOYHAPSTRENGTH_DEFAULT;
 	}
 	bool IsAxisDeadZoneDefault(int axis)
 	{

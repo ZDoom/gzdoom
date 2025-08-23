@@ -2,6 +2,7 @@
 ** i_joystick.cpp
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2012-2015 Alexey Lysiuk
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -28,6 +29,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -45,10 +47,8 @@
 #include "printf.h"
 #include "keydef.h"
 
-
 EXTERN_CVAR(Bool, joy_axespolling)
 EXTERN_CVAR(Bool, use_joystick)
-
 
 namespace
 {
@@ -77,9 +77,7 @@ FString ToFString(const CFStringRef string)
 	return FString(buffer);
 }
 
-
 // ---------------------------------------------------------------------------
-
 
 class IOKitJoystick : public IJoystickConfig
 {
@@ -90,6 +88,10 @@ public:
 	virtual FString GetName();
 	virtual float GetSensitivity();
 	virtual void SetSensitivity(float scale);
+
+	virtual bool HasHaptics();
+	virtual float GetHapticsStrength();
+	virtual void SetHapticsStrength(float strength);
 
 	virtual int GetNumAxes();
 	virtual float GetAxisDeadZone(int axis);
@@ -106,6 +108,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	virtual bool IsSensitivityDefault();
+	virtual bool IsHapticsStrengthDefault();
 	virtual bool IsAxisDeadZoneDefault(int axis);
 	virtual bool IsAxisScaleDefault(int axis);
 	bool IsAxisDigitalThresholdDefault(int axis);
@@ -206,7 +209,6 @@ private:
 	void RemoveFromQueue(IOHIDElementCookie cookie);
 };
 
-
 IOHIDDeviceInterface** CreateDeviceInterface(const io_object_t device)
 {
 	IOCFPlugInInterface** plugInInterface = NULL;
@@ -285,7 +287,6 @@ IOHIDQueueInterface** CreateDeviceQueue(IOHIDDeviceInterface** const interface)
 	return queue;
 }
 
-
 IOKitJoystick::IOKitJoystick(const io_object_t device)
 : m_interface(CreateDeviceInterface(device))
 , m_queue(CreateDeviceQueue(m_interface))
@@ -344,12 +345,10 @@ IOKitJoystick::~IOKitJoystick()
 	}
 }
 
-
 FString IOKitJoystick::GetName()
 {
 	return m_name;
 }
-
 
 float IOKitJoystick::GetSensitivity()
 {
@@ -361,6 +360,20 @@ void IOKitJoystick::SetSensitivity(float scale)
 	m_sensitivity = scale;
 }
 
+bool IOKitJoystick::HasHaptics()
+{
+	return false;
+}
+
+float IOKitJoystick::GetHapticsStrength()
+{
+	return JOYHAPSTRENGTH_DEFAULT;
+}
+
+void IOKitJoystick::SetHapticsStrength(float strength)
+{
+	// nope
+}
 
 int IOKitJoystick::GetNumAxes()
 {
@@ -446,6 +459,11 @@ void IOKitJoystick::SetAxisResponseCurvePoint(int axis, int point, float value)
 bool IOKitJoystick::IsSensitivityDefault()
 {
 	return JOYSENSITIVITY_DEFAULT == m_sensitivity;
+}
+
+bool IOKitJoystick::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 bool IOKitJoystick::IsAxisDeadZoneDefault(int axis)
@@ -548,12 +566,10 @@ void IOKitJoystick::SetDefaultConfig()
 	}
 }
 
-
 FString IOKitJoystick::GetIdentifier()
 {
 	return m_identifier;
 }
-
 
 void IOKitJoystick::AddAxes(float axes[NUM_AXIS_CODES]) const
 {
@@ -582,7 +598,6 @@ void IOKitJoystick::AddAxes(float axes[NUM_AXIS_CODES]) const
 	}
 }
 
-
 void IOKitJoystick::UseAxesPolling(const bool axesPolling)
 {
 	m_useAxesPolling = axesPolling;
@@ -601,7 +616,6 @@ void IOKitJoystick::UseAxesPolling(const bool axesPolling)
 		}
 	}
 }
-
 
 void IOKitJoystick::Update()
 {
@@ -629,7 +643,6 @@ void IOKitJoystick::Update()
 
 	if(m_enabled) ProcessAxes();
 }
-
 
 void IOKitJoystick::ProcessAxes()
 {
@@ -716,7 +729,6 @@ void IOKitJoystick::ProcessAxes()
 		}
 	}
 }
-
 
 bool IOKitJoystick::ProcessAxis(const IOHIDEventStruct& event)
 {
@@ -808,7 +820,6 @@ bool IOKitJoystick::ProcessPOV(const IOHIDEventStruct& event)
 
 	return false;
 }
-
 
 void IOKitJoystick::GatherDeviceInfo(const io_object_t device, const CFDictionaryRef properties)
 {
@@ -914,7 +925,6 @@ void IOKitJoystick::GatherDeviceInfo(const io_object_t device, const CFDictionar
 	}
 }
 
-
 long GetElementValue(const CFDictionaryRef element, const CFStringRef key)
 {
 	const CFNumberRef number =
@@ -991,7 +1001,6 @@ void IOKitJoystick::GatherCollectionElements(const CFDictionaryRef properties)
 	CFArrayApplyFunction(topElement, range, GatherElementsHandler, this);
 }
 
-
 IOHIDElementCookie GetElementCookie(const CFDictionaryRef element)
 {
 	// Use C-style cast to avoid 32/64-bit IOHIDElementCookie type issue
@@ -1039,7 +1048,6 @@ void IOKitJoystick::AddPOV(CFDictionaryRef element)
 	AddToQueue(pov.cookie);
 }
 
-
 void IOKitJoystick::AddToQueue(const IOHIDElementCookie cookie)
 {
 	if (NULL == m_queue)
@@ -1066,15 +1074,12 @@ void IOKitJoystick::RemoveFromQueue(const IOHIDElementCookie cookie)
 	}
 }
 
-
 io_object_t* IOKitJoystick::GetNotificationPtr()
 {
 	return &m_notification;
 }
 
-
 // ---------------------------------------------------------------------------
-
 
 class IOKitJoystickManager
 {
@@ -1109,9 +1114,7 @@ private:
 		natural_t messageType, void* messageArgument);
 };
 
-
 IOKitJoystickManager* s_joystickManager;
-
 
 IOKitJoystickManager::IOKitJoystickManager()
 {
@@ -1160,7 +1163,6 @@ IOKitJoystickManager::~IOKitJoystickManager()
 	}
 }
 
-
 void IOKitJoystickManager::GetJoysticks(TArray<IJoystickConfig*>& joysticks) const
 {
 	const size_t joystickCount = m_joysticks.Size();
@@ -1183,7 +1185,6 @@ void IOKitJoystickManager::AddAxes(float axes[NUM_AXIS_CODES]) const
 	}
 }
 
-
 void IOKitJoystickManager::Update()
 {
 	for (size_t i = 0, count = m_joysticks.Size(); i < count; ++i)
@@ -1191,7 +1192,6 @@ void IOKitJoystickManager::Update()
 		m_joysticks[i]->Update();
 	}
 }
-
 
 void IOKitJoystickManager::UseAxesPolling(const bool axesPolling)
 {
@@ -1201,13 +1201,11 @@ void IOKitJoystickManager::UseAxesPolling(const bool axesPolling)
 	}
 }
 
-
 void PostDeviceChangeEvent()
 {
 	event_t event = { EV_DeviceChange };
 	D_PostEvent(&event);
 }
-
 
 void IOKitJoystickManager::Rescan(const int usagePage, const int usage, const size_t notificationPortIndex)
 {
@@ -1270,7 +1268,6 @@ void IOKitJoystickManager::AddDevices(const IONotificationPortRef notificationPo
 	}
 }
 
-
 void IOKitJoystickManager::OnDeviceAttached(void* const refcon, const io_iterator_t iterator)
 {
 	assert(NULL != refcon);
@@ -1309,9 +1306,7 @@ void IOKitJoystickManager::OnDeviceRemoved(void* const refcon, io_service_t, con
 
 } // unnamed namespace
 
-
 // ---------------------------------------------------------------------------
-
 
 void I_ShutdownInput()
 {
@@ -1358,9 +1353,7 @@ IJoystickConfig* I_UpdateDeviceList()
 	return NULL;
 }
 
-
 // ---------------------------------------------------------------------------
-
 
 void I_ProcessJoysticks()
 {
@@ -1370,9 +1363,7 @@ void I_ProcessJoysticks()
 	}
 }
 
-
 // ---------------------------------------------------------------------------
-
 
 CUSTOM_CVAR(Bool, joy_axespolling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -1388,3 +1379,4 @@ void I_Rumble(double high_freq, double low_freq, double left_trig, double right_
 
 	// stub
 }
+

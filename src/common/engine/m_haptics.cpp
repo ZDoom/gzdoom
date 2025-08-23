@@ -62,6 +62,13 @@ struct {
 	bool dirty = false; // do we need to do something next tick ?
 	bool enabled = true; // do we need to do anything ever ?
 	bool active = true; // is the game currently not paused ?
+	struct {
+		double base = 1.0; // [0,1] -> number <1 turns down rumble strength
+		double high_frequency = 1.0; // [0,inf)
+		double low_frequency = 1.0; // [0,inf)
+		double left_trigger = 1.0; // [0,inf)
+		double right_trigger = 1.0; // [0,inf)
+	} strength;
 	struct Haptics current = {0,0,0,0,0}; // current state of the controller
 	TMap<FName, struct Haptics> channels; // active rumbles (that will be mixed)
 } Haptics;
@@ -78,6 +85,48 @@ const FName HapticIntense = "INTENSE",
 			HapticSubtle = "SUBTLE";
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// for fine-control, if user wants/needs
+// added because trigger haptics are much stronger on xbone controller than expected
+CUSTOM_CVARD(Float, haptics_strength_lf, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "low frequency motor fine-control")
+{
+	if (self < 0) self = 0;
+	Haptics.strength.low_frequency = self * Haptics.strength.base;
+};
+CUSTOM_CVARD(Float, haptics_strength_hf, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "high frequency motor fine-control")
+{
+	if (self < 0) self = 0;
+	Haptics.strength.high_frequency = self * Haptics.strength.base;
+};
+CUSTOM_CVARD(Float, haptics_strength_lt, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "left trigger motor fine-control")
+{
+	if (self < 0) self = 0;
+	Haptics.strength.left_trigger = self * Haptics.strength.base;
+};
+CUSTOM_CVARD(Float, haptics_strength_rt, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "right trigger motor fine-control")
+{
+	if (self < 0) self = 0;
+	Haptics.strength.right_trigger = self * Haptics.strength.base;
+};
+
+CUSTOM_CVARD(Int, haptics_strength, 10, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "Translate linear haptics to audio taper")
+{
+	double l1 = self / 10.0;
+	double l2 = l1 * l1;
+	double l3 = l2 * l1;
+	double m3 = 2; // cubed portion
+	double m2 = -2; // squared portion
+	double m1 = 1 - m2 - m3; // linear portion
+
+	Haptics.enabled = self > 0;
+	Haptics.strength.base = l1*m1 + l2*m2 + l3*m3;
+	Haptics.strength.high_frequency = haptics_strength_hf * Haptics.strength.base;
+	Haptics.strength.low_frequency = haptics_strength_lf * Haptics.strength.base;
+	Haptics.strength.left_trigger = haptics_strength_lt * Haptics.strength.base;
+	Haptics.strength.right_trigger = haptics_strength_rt * Haptics.strength.base;
+
+	if (!Haptics.enabled) I_Rumble(0, 0, 0, 0);
+}
 
 CVARD(Bool, haptics_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "print diagnostics for haptic feedback");
 
@@ -349,10 +398,10 @@ void Joy_Rumble(const FName source, const struct Haptics data, double attenuatio
 	// this will overwrite stuff from same source mapping (weapons/pistol not W_BULLET)
 	Haptics.channels.Insert(source, {
 		Haptics.tic + data.ticks + 1,
-		data.high_frequency * strength,
-		data.low_frequency * strength,
-		data.left_trigger * strength,
-		data.right_trigger * strength,
+		data.high_frequency * Haptics.strength.high_frequency * strength,
+		data.low_frequency * Haptics.strength.low_frequency * strength,
+		data.left_trigger * Haptics.strength.left_trigger * strength,
+		data.right_trigger * Haptics.strength.right_trigger * strength,
 	});
 
 	Haptics.dirty = true;

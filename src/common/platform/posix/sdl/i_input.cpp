@@ -46,6 +46,7 @@
 #include "i_input.h"
 #include "i_interface.h"
 #include "keydef.h"
+#include "m_haptics.h"
 #include "m_joy.h"
 #include "utf8.h"
 #include "v_video.h"
@@ -609,6 +610,7 @@ void I_StartTic ()
 	I_CheckGUICapture ();
 	I_CheckNativeMouse ();
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 void I_ProcessJoysticks ();

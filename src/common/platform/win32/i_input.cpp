@@ -75,6 +75,7 @@
 #include "c_buttons.h"
 #include "cmdlib.h"
 #include "i_mainwindow.h"
+#include "m_haptics.h"
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -612,6 +613,7 @@ void I_StartTic ()
 	EventHandlerResultForNativeMouse = sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
+	Joy_RumbleTick();
 }
 
 //

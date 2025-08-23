@@ -36,7 +36,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "m_joy.h"
 #include <math.h>
 
 #include "c_cvars.h"
@@ -45,6 +44,7 @@
 #include "configfile.h"
 #include "d_eventbase.h"
 #include "i_interface.h"
+#include "m_joy.h"
 #include "name.h"
 #include "printf.h"
 #include "vectors.h"
@@ -69,6 +69,8 @@ EXTERN_CVAR(Bool, joy_xinput)
 extern const float JOYDEADZONE_DEFAULT = 0.1; // reduced from 0.25
 
 extern const float JOYSENSITIVITY_DEFAULT = 1.0;
+
+extern const float JOYHAPSTRENGTH_DEFAULT = 1.0;
 
 extern const float JOYTHRESH_DEFAULT = 0.05;
 extern const float JOYTHRESH_TRIGGER = 0.05;

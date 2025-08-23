@@ -60,6 +60,7 @@ if( WIN32 )
 		wsock32
 		winmm
 		dinput8
+		Xinput
 		ole32
 		user32
 		gdi32
@@ -1094,6 +1095,7 @@ set (PCH_SOURCES
 	common/engine/renderstyle.cpp
 	common/engine/v_colortables.cpp
 	common/engine/serializer.cpp
+	common/engine/m_haptics.cpp
 	common/engine/m_joy.cpp
 	common/engine/m_random.cpp
 	common/objects/autosegs.cpp

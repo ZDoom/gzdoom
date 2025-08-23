@@ -4605,7 +4605,7 @@ int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 		}
 		p = activator->player;
 	}
-	else if (playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum))
+	else if (playernum >= (int)MAXPLAYERS || !Level->PlayerInGame(playernum))
 	{
 		return 0;
 	}
@@ -5541,7 +5541,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 		case ACSF_GetAirSupply:
 			MIN_ARG_COUNT(1);
 		{
-			if (args[0] < 0 || args[0] >= MAXPLAYERS || !Level->PlayerInGame(args[0]))
+			if (args[0] < 0 || args[0] >= (int)MAXPLAYERS || !Level->PlayerInGame(args[0]))
 			{
 				return 0;
 			}
@@ -5554,7 +5554,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 		case ACSF_SetAirSupply:
 			MIN_ARG_COUNT(2);
 		{
-			if (args[0] < 0 || args[0] >= MAXPLAYERS || !Level->PlayerInGame(args[0]))
+			if (args[0] < 0 || args[0] >= (int)MAXPLAYERS || !Level->PlayerInGame(args[0]))
 			{
 				return 0;
 			}
@@ -5577,7 +5577,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args, int &
 		case ACSF_GetArmorType:
 			MIN_ARG_COUNT(2);
 		{
-			if (args[1] < 0 || args[1] >= MAXPLAYERS || !Level->PlayerInGame(args[1]))
+			if (args[1] < 0 || args[1] >= (int)MAXPLAYERS || !Level->PlayerInGame(args[1]))
 			{
 				return 0;
 			}
@@ -9865,7 +9865,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERINGAME:
-			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS)
+			if (STACK(1) < 0 || STACK(1) >= (int)MAXPLAYERS)
 			{
 				STACK(1) = false;
 			}
@@ -9876,7 +9876,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERISBOT:
-			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
+			if (STACK(1) < 0 || STACK(1) >= (int)MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
 			{
 				STACK(1) = false;
 			}
@@ -10075,7 +10075,7 @@ scriptwait:
 			break;
 
 		case PCD_PLAYERCLASS:		// [GRB]
-			if (STACK(1) < 0 || STACK(1) >= MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
+			if (STACK(1) < 0 || STACK(1) >= (int)MAXPLAYERS || !Level->PlayerInGame(STACK(1)))
 			{
 				STACK(1) = -1;
 			}
@@ -10086,7 +10086,7 @@ scriptwait:
 			break;
 
 		case PCD_GETPLAYERINFO:		// [GRB]
-			if (STACK(2) < 0 || STACK(2) >= MAXPLAYERS || !Level->PlayerInGame(STACK(2)))
+			if (STACK(2) < 0 || STACK(2) >= (int)MAXPLAYERS || !Level->PlayerInGame(STACK(2)))
 			{
 				STACK(2) = -1;
 			}

@@ -1322,7 +1322,7 @@ void G_Ticker ()
 
 		// check for turbo cheats
 		if (multiplayer && turbo > 100.f && cmd->forwardmove > TURBOTHRESHOLD &&
-			!(gametic & 31) && ((gametic >> 5) & (MAXPLAYERS-1)) == client)
+			!(gametic & 31) && (int)((gametic >> 5) & (MAXPLAYERS-1)) == client)
 		{
 			Printf("%s is turbo!\n", players[client].userinfo.GetName());
 		}
@@ -2951,7 +2951,7 @@ void G_DoPlayDemo (void)
 		}
 		size_t demolen = fr.GetLength();
 		demobuffer.Resize(demolen);
-		if (fr.Read(demobuffer.Data(), demolen) != demolen)
+		if (fr.Read(demobuffer.Data(), demolen) != (FileSys::FileReader::Size)demolen)
 		{
 			I_Error("Unable to read demo '%s'", defdemoname.GetChars());
 		}

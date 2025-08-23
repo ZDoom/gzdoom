@@ -2,6 +2,7 @@
 **
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2005-2016 Randy Heit
 ** All rights reserved.
 **
@@ -27,6 +28,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -98,6 +100,10 @@ public:
 	float GetSensitivity();
 	virtual void SetSensitivity(float scale);
 
+	bool HasHaptics();
+	float GetHapticsStrength();
+	void SetHapticsStrength(float strength);
+
 	int GetNumAxes();
 	float GetAxisDeadZone(int axis);
 	const char *GetAxisName(int axis);
@@ -113,6 +119,7 @@ public:
 	void SetAxisResponseCurvePoint(int axis, int point, float value);
 
 	bool IsSensitivityDefault();
+	bool IsHapticsStrengthDefault();
 	bool IsAxisDeadZoneDefault(int axis);
 	bool IsAxisScaleDefault(int axis);
 	bool IsAxisDigitalThresholdDefault(int axis);
@@ -748,6 +755,50 @@ void FRawPS2Controller::SetSensitivity(float scale)
 bool FRawPS2Controller::IsSensitivityDefault()
 {
 	return Multiplier == JOYSENSITIVITY_DEFAULT;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: HasHaptics
+//
+//===========================================================================
+
+bool FRawPS2Controller::HasHaptics()
+{
+	return false;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: GetHapticsStrength
+//
+//===========================================================================
+
+float FRawPS2Controller::GetHapticsStrength()
+{
+	return JOYHAPSTRENGTH_DEFAULT;
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: SetHapticsStrength
+//
+//===========================================================================
+
+void FRawPS2Controller::SetHapticsStrength(float strength)
+{
+	// nope
+}
+
+//===========================================================================
+//
+// FRawPS2Controller :: IsHapticsStrengthDefault
+//
+//===========================================================================
+
+bool FRawPS2Controller::IsHapticsStrengthDefault()
+{
+	return true;
 }
 
 //==========================================================================

@@ -3,6 +3,7 @@
 ** The joystick configuration menus
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2010-2017 Christoph Oelckers
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -29,6 +30,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -58,6 +60,34 @@ class OptionMenuSliderJoySensitivity : OptionMenuSliderBase
 	override void SetSliderValue(double val)
 	{
 		mJoy.SetSensitivity(val);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuSliderJoyHapticsStrength : OptionMenuSliderBase
+{
+	JoystickConfig mJoy;
+
+	OptionMenuSliderJoyHapticsStrength Init(String label, double min, double max, double step, int showval, JoystickConfig joy)
+	{
+		Super.Init(label, min, max, step, showval);
+		mJoy = joy;
+		return self;
+	}
+
+	override double GetSliderValue()
+	{
+		return mJoy.GetHapticsStrength();
+	}
+
+	override void SetSliderValue(double val)
+	{
+		mJoy.SetHapticsStrength(val);
 	}
 }
 
@@ -492,8 +522,16 @@ class OptionMenuItemJoyConfigMenu : OptionMenuItemSubmenu
 
 			it = new("OptionMenuSliderJoySensitivity").Init("$JOYMNU_OVRSENS", 0, 2, 0.1, 3, joy);
 			opt.mItems.Push(it);
+
+			if (joy.HasHaptics())
+			{
+				it = new("OptionMenuSliderJoyHapticsStrength").Init("$JOYMNU_HAPTICS", 0, 2, 0.1, 3, joy);
+				opt.mItems.Push(it);
+			}
+
 			it = new("OptionMenuJoyReset").Init("$JOYMNU_RESETALL", joy);
 			opt.mItems.Push(it);
+
 			it = new("OptionMenuItemStaticText").Init(" ", false);
 			opt.mItems.Push(it);
 

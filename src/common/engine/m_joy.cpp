@@ -4,6 +4,7 @@
 ** Cross-platform joystick/gamepad management
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 2005-2016 Randy Heit
 ** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
@@ -30,6 +31,7 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 */
@@ -172,6 +174,12 @@ bool M_LoadJoystickConfig(IJoystickConfig *joy)
 		joy->SetSensitivity((float)atof(value));
 	}
 
+	value = GameConfig->GetValueForKey("Haptics");
+	if (value)
+	{
+		joy->SetHapticsStrength((float)atof(value));
+	}
+
 	numaxes = joy->GetNumAxes();
 	for (int i = 0; i < numaxes; ++i)
 	{
@@ -262,12 +270,19 @@ void M_SaveJoystickConfig(IJoystickConfig *joy)
 		{
 			GameConfig->SetValueForKey("EnabledInBackground", "1");
 		}
-		
+
 		if (!joy->IsSensitivityDefault())
 		{
 			mysnprintf(value, countof(value), "%g", joy->GetSensitivity());
 			GameConfig->SetValueForKey("Sensitivity", value);
 		}
+
+		if (!joy->IsHapticsStrengthDefault())
+		{
+			mysnprintf(value, countof(value), "%g", joy->GetHapticsStrength());
+			GameConfig->SetValueForKey("Haptics", value);
+		}
+
 		numaxes = joy->GetNumAxes();
 		for (int i = 0; i < numaxes; ++i)
 		{

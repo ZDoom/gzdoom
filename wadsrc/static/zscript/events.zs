@@ -148,7 +148,7 @@ class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
-    clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
+    clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type, bool subclass = false); // just for convenience. who knows.
     
     // these are called when the handler gets registered or unregistered
     // you can set Order/IsUiProcessor here.

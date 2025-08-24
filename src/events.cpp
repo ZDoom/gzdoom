@@ -1699,9 +1699,14 @@ DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
+	PARAM_BOOL(subclass);
 	for (DStaticEventHandler* handler = currentVMLevel->localEventManager->FirstEventHandler; handler; handler = handler->next)
+	{
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
+		else if (subclass && handler->IsKindOf(t));
+			ACTION_RETURN_OBJECT(handler);
+	}
 	ACTION_RETURN_OBJECT(nullptr);
 }
 
@@ -1710,9 +1715,14 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Find)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
+	PARAM_BOOL(subclass);
 	for (DStaticEventHandler* handler = staticEventManager.FirstEventHandler; handler; handler = handler->next)
+	{
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
+		else if (subclass && handler->IsKindOf(t));
+			ACTION_RETURN_OBJECT(handler);
+	}
 	ACTION_RETURN_OBJECT(nullptr);
 }
 

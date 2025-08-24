@@ -50,20 +50,7 @@ pgdn +lookup
 del +lookdown
 end centerview
 
-// Xbox 360 / PS2 controllers
-pad_a +use
-pad_y +jump
-rtrigger +attack
-ltrigger +altattack
-lshoulder weapprev
-rshoulder weapnext
-dpadleft invprev
-dpadright invnext
-dpaddown invuse
-dpadup togglemap
-pad_start menu_main
-pad_back pause
-lthumb crouch
+// Gamepads
 lstickleft +moveleft
 lstickright +moveright
 lstickup +forward
@@ -72,6 +59,27 @@ rstickleft +left
 rstickright +right
 rstickup +lookup
 rstickdown +lookdown
+pad_a +use
+pad_b crouch
+pad_x +reload
+pad_y +jump
+rtrigger +attack
+ltrigger +altattack
+lshoulder weapprev
+rshoulder weapnext
+pad_start menu_main
+pad_back togglemap
+pad_touchpad togglemap
+rthumb +zoom
+guide pause
+dpadleft invprev
+dpadright invnext
+dpaddown invuse
+dpadup "slot 1"
+paddle_1 "slot 2"
+paddle_2 "slot 3"
+paddle_3 "slot 4"
+paddle_4 "slot 5"
 
 /* Default automap bindings */
 mapbind f am_togglefollow

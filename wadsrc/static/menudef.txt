@@ -828,6 +828,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	StaticText ""
 	Slider "$JOYMNU_TURNSPEED",			"cl_analog_sensitivity_yaw", 0, 2.5, 0.1
 	Slider "$JOYMNU_LOOKSPEED",			"cl_analog_sensitivity_pitch", 0, 2.5, 0.1
+	Option "$JOYMNU_ANALOGRUN",			"cl_analog_run", "OnOff"
 	Option "$JOYMNU_ANALOGSTRAFERUN",	"cl_analog_straferun", "OnOff"
 	StaticText ""
 	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"

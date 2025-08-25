@@ -6,6 +6,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2002-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -54,13 +55,11 @@
 
 void FNodeBuilder::Extract (FLevelLocals &theLevel)
 {
-	int i;
-
 	auto &outVerts = theLevel.vertexes; 
 	int vertCount = Vertices.Size ();
 	outVerts.Alloc(vertCount);
 
-	for (i = 0; i < vertCount; ++i)
+	for (int i = 0; i < vertCount; ++i)
 	{
 		outVerts[i].set(Vertices[i].x, Vertices[i].y);
 	}
@@ -68,13 +67,20 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 	auto &outSubs = theLevel.subsectors;
 	auto subCount = Subsectors.Size();
 	outSubs.Alloc(subCount);
-	memset(&outSubs[0], 0, subCount * sizeof(subsector_t));
+	for (unsigned i = 0; i < subCount; ++i)
+	{
+		outSubs[i] = {};
+	}
 
 	auto &outNodes = theLevel.nodes;
 	auto nodeCount = Nodes.Size ();
 	outNodes.Alloc(nodeCount);
 
-	memcpy (&outNodes[0], &Nodes[0], nodeCount*sizeof(node_t));
+	for (unsigned i = 0; i < nodeCount; ++i)
+	{
+		outNodes[i] = Nodes[i];
+	}
+
 	for (unsigned i = 0; i < nodeCount; ++i)
 	{
 		D(Printf(PRINT_LOG, "Node %d:  Splitter[%08x,%08x] [%08x,%08x]\n", i,
@@ -135,7 +141,11 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 	}
 	else
 	{
-		memcpy (&outSubs[0], &Subsectors[0], subCount*sizeof(subsector_t));
+		for (unsigned i = 0; i < subCount; ++i)
+		{
+			outSubs[i] = Subsectors[i];
+		}
+
 		auto segCount = Segs.Size ();
 		outSegs.Alloc(segCount);
 		for (unsigned i = 0; i < segCount; ++i)
@@ -161,7 +171,7 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 
 	D(Printf("%i segs, %i nodes, %i subsectors\n", segCount, nodeCount, subCount));
 
-	for (i = 0; i < Level.NumLines; ++i)
+	for (int i = 0; i < Level.NumLines; ++i)
 	{
 		Level.Lines[i].v1 = &outVerts[(size_t)Level.Lines[i].v1];
 		Level.Lines[i].v2 = &outVerts[(size_t)Level.Lines[i].v2];
@@ -180,10 +190,17 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	}
 
 	bsp->Subsectors.Resize(Subsectors.Size());
-	memset(&bsp->Subsectors[0], 0, Subsectors.Size() * sizeof(subsector_t));
+	for (i = 0; i < Subsectors.Size(); ++i)
+	{
+		bsp->Subsectors[i] = {};
+	}
 
 	bsp->Nodes.Resize(Nodes.Size());
-	memcpy(&bsp->Nodes[0], &Nodes[0], Nodes.Size()*sizeof(node_t));
+	for (i = 0; i < Nodes.Size(); ++i)
+	{
+		bsp->Nodes[i] = Nodes[i];
+	}
+
 	for (i = 0; i < Nodes.Size(); ++i)
 	{
 		D(Printf(PRINT_LOG, "Node %d:\n", i));
@@ -228,7 +245,11 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	}
 	else
 	{
-		memcpy(&bsp->Subsectors[0], &Subsectors[0], Subsectors.Size()*sizeof(subsector_t));
+		for (i = 0; i < Subsectors.Size(); ++i)
+		{
+			bsp->Subsectors[i] = Subsectors[i];
+		}
+
 		bsp->Segs.Resize(Segs.Size());
 		for (i = 0; i < Segs.Size(); ++i)
 		{

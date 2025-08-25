@@ -221,7 +221,7 @@ class StaticEventHandler : Object native play version("2.4")
 
 class EventHandler : StaticEventHandler native version("2.4")
 {
-    clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
+    clearscope static native StaticEventHandler Find(class<StaticEventHandler> type, bool subclass = false);
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
     version("4.12") clearscope static native vararg bool SendNetworkCommand(Name cmd, ...);
     version("4.12") clearscope static native bool SendNetworkBuffer(Name cmd, NetworkBuffer buffer);

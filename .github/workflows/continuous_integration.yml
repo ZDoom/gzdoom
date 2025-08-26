@@ -93,7 +93,6 @@ jobs:
         cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
 
     - name: Create Package
-      if: runner.os == 'Windows'  # Remove to make packages of all targets
       shell: bash
       run: |
         cd build
@@ -101,13 +100,15 @@ jobs:
         if [[ "${{ runner.os }}" == 'Windows' ]]; then
           cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 package
         elif [[ "${{ runner.os }}" == 'macOS' ]]; then
+          if [[ "${{ matrix.config.build_type }}" != 'Release' ]]; then
+            mv ${{ matrix.config.build_type }}/gzdoom.app gzdoom.app
+          fi
           cp -r gzdoom.app package
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
           cp gzdoom *.pk3 package
         fi
 
     - name: Upload Package
-      if: runner.os == 'Windows'  # Remove to store packages of all targets
       uses: actions/upload-artifact@v4
       with:
         path: build/package

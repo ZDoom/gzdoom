@@ -1,20 +1,47 @@
+/*
+** releasepage.cpp
+**
+** Release notes tab of launcher
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2025 Marcus Minhorst
+** Copyright 2025 ZDoom + GZDoom teams, and contributors
+**
+** This program is free software: you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation, either version 3 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program.  If not, see http://www.gnu.org/licenses/
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include <cstring>
 
-#include <zwidget/widgets/textedit/textedit.h>
-#include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 #include <rapidxml/rapidxml.hpp>
+#include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
+#include <zwidget/widgets/textedit/textedit.h>
 
-#include "releasepage.h"
 #include "findfile.h"
 #include "gameconfigfile.h"
-#include "launcherwindow.h"
+#include "gstrings.h"
 #include "i_interface.h"
+#include "launcherwindow.h"
 #include "name.h"
+#include "releasepage.h"
 #include "version.h"
 #include "zstring.h"
-#include "gstrings.h"
 
-FString GetReleaseNotes(rapidxml::xml_document<> &doc)
+FString _ParseReleaseNotes(rapidxml::xml_document<> &doc)
 {
 	// braindead html to plaintext parser
 
@@ -92,14 +119,8 @@ FString GetReleaseNotes(rapidxml::xml_document<> &doc)
 	return FStringf("%s\n%s\n%s", header.GetChars(), text.GetChars(), footer.GetChars());
 }
 
-//==========================================================================
-//
-// Open release notes as writable string
-//
 // Ensure you free returned pointer
-//
-//==========================================================================
-char * OpenRealeaseNotes()
+char * _OpenRealeaseNotes()
 {
 	auto wad = BaseFileSearch(BASEWAD, NULL, true, GameConfig);
 	if (!wad) return nullptr;
@@ -126,20 +147,33 @@ char * OpenRealeaseNotes()
 	return notes;
 }
 
+//==========================================================================
+//
+// Extract release notes from gzdoom.pk3
+//
+//==========================================================================
+FString GetReleaseNotes()
+{
+	// we need to be free
+	char * text = _OpenRealeaseNotes();
+
+	rapidxml::xml_document<> doc;
+	if (text) doc.parse<rapidxml::parse_default>(text);
+	FString content = _ParseReleaseNotes(doc);
+
+	free(text);
+
+	return content;
+}
+
 ReleasePage::ReleasePage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
 {
 	ShowThis = new CheckboxLabel(this);
 	Notes = new TextEdit(this);
 
-	char * text = OpenRealeaseNotes();
+	auto text = GetReleaseNotes();
 
-	rapidxml::xml_document<> doc;
-	if (text) doc.parse<rapidxml::parse_default>(text);
-	FString content = GetReleaseNotes(doc);
-
-	free(text);
-
-	Notes->SetText(content.GetChars());
+	Notes->SetText(text.GetChars());
 
 	ShowThis->SetChecked(info.notifyNewRelease);
 }

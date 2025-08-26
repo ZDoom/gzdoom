@@ -98,14 +98,14 @@ jobs:
         cd build
         mkdir package
         if [[ "${{ runner.os }}" == 'Windows' ]]; then
-          cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 package
+          cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 ${{ matrix.config.build_type }}/zmusic.dll package
         elif [[ "${{ runner.os }}" == 'macOS' ]]; then
           if [[ "${{ matrix.config.build_type }}" != 'Release' ]]; then
             mv ${{ matrix.config.build_type }}/gzdoom.app gzdoom.app
           fi
           cp -r gzdoom.app package
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          cp gzdoom *.pk3 package
+          cp gzdoom *.pk3 libzmusic.so* package
         fi
 
     - name: Upload Package

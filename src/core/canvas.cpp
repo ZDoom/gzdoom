@@ -549,9 +549,7 @@ void BitmapCanvas::plot(float x, float y, float alpha, const Colorf& color)
 	int xx = (int)x;
 	int yy = (int)y;
 
-	int dwidth = width;
-	int dheight = height;
-	uint32_t* dest = pixels.data() + xx + yy * dwidth;
+	uint32_t* dest = pixels.data() + xx + yy * width;
 
 	uint32_t cred = (int32_t)clamp(color.r * 256.0f, 0.0f, 256.0f);
 	uint32_t cgreen = (int32_t)clamp(color.g * 256.0f, 0.0f, 256.0f);
@@ -665,7 +663,6 @@ void BitmapCanvas::fillTile(float left, float top, float width, float height, Co
 		return;
 
 	int dwidth = this->width;
-	int dheight = this->height;
 	uint32_t* dest = this->pixels.data();
 
 	int x0 = (int)left;
@@ -771,11 +768,9 @@ void BitmapCanvas::drawTile(CanvasTexture* tex, float left, float top, float wid
 
 	auto texture = static_cast<BitmapTexture*>(tex);
 	int swidth = texture->Width;
-	int sheight = texture->Height;
 	const uint32_t* src = texture->Data.data();
 
 	int dwidth = this->width;
-	int dheight = this->height;
 	uint32_t* dest = this->pixels.data();
 
 	int x0 = (int)left;
@@ -880,11 +875,9 @@ void BitmapCanvas::drawGlyph(CanvasTexture* tex, float left, float top, float wi
 
 	auto texture = static_cast<BitmapTexture*>(tex);
 	int swidth = texture->Width;
-	int sheight = texture->Height;
 	const uint32_t* src = texture->Data.data();
 
 	int dwidth = this->width;
-	int dheight = this->height;
 	uint32_t* dest = this->pixels.data();
 
 	int x0 = (int)left;

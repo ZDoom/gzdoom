@@ -6,7 +6,7 @@ ListView::ListView(Widget* parent) : Widget(parent)
 	SetStyleClass("listview");
 
 	scrollbar = new Scrollbar(this);
-	scrollbar->FuncScroll = [=]() { OnScrollbarScroll(); };
+	scrollbar->FuncScroll = [this]() { OnScrollbarScroll(); };
 
 	SetColumnWidths({ 0.0 });
 }
@@ -37,7 +37,7 @@ void ListView::SetColumnWidths(const std::vector<double>& widths)
 
 void ListView::AddItem(const std::string& text, int index, int column)
 {
-	if (column < 0 || column >= columnwidths.size())
+	if (column < 0 || column >= (int)columnwidths.size())
 		return;
 
 	std::vector<std::string> newEntry;
@@ -47,10 +47,10 @@ void ListView::AddItem(const std::string& text, int index, int column)
 	newEntry[column] = text;
 	if (index >= 0)
 	{
-		if (index >= items.size())
+		if (index >= (int)items.size())
 		{
 			newEntry[column] = "";
-			while (items.size() < index)
+			while ((int)items.size() < index)
 				items.push_back(newEntry);
 
 			newEntry[column] = text;
@@ -71,7 +71,7 @@ void ListView::AddItem(const std::string& text, int index, int column)
 
 void ListView::UpdateItem(const std::string& text, int index, int column)
 {
-	if (index < 0 || index >= items.size() || column < 0 || column >= columnwidths.size())
+	if (index < 0 || index >= (int)items.size() || column < 0 || column >= (int)columnwidths.size())
 		return;
 
 	items[index][column] = text;
@@ -80,7 +80,7 @@ void ListView::UpdateItem(const std::string& text, int index, int column)
 
 void ListView::RemoveItem(int index)
 {
-	if (!items.size() || index >= items.size())
+	if (!items.size() || index >= (int)items.size())
 		return;
 
 	if (index < 0)
@@ -102,7 +102,7 @@ void ListView::Activate()
 
 void ListView::SetSelectedItem(int index)
 {
-	if (selectedItem != index && index >= 0 && index < items.size())
+	if (selectedItem != index && index >= 0 && index < (int)items.size())
 	{
 		selectedItem = index;
 		if (OnChanged) OnChanged(selectedItem);

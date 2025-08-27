@@ -23,6 +23,7 @@ public:
 	void SetDefaultExtension(const std::string& extension) override;
 
 private:
+	bool ShowWorkerThread();
 	void throw_if_failed(HRESULT result, const std::string& error);
 
 	Win32DisplayWindow* owner = nullptr;

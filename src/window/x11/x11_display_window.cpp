@@ -15,8 +15,8 @@ class X11Connection
 public:
 	X11Connection()
 	{
-		// If we ever want to support windows on multiple threads:
-		// XInitThreads();
+		// This is required by vulkan
+		XInitThreads();
 
 		display = XOpenDisplay(nullptr);
 		if (!display)
@@ -34,6 +34,47 @@ public:
 			// fallback to internal input method
 			XSetLocaleModifiers("@im=none");
 			xim = XOpenIM(display, 0, 0, 0);
+		}
+
+		// Look for XInput support
+		int event = 0, error = 0;
+		if (XQueryExtension(display, "XInputExtension", &XInputOpcode, &event, &error))
+		{
+			// We need XInput 2.0 support
+			int major = 2, minor = 0;
+			if (XIQueryVersion(display, &major, &minor) != BadRequest)
+			{
+				// And we need a master pointer ID
+				int ndevices = 0;
+				XIDeviceInfo *devices = XIQueryDevice(display, XIAllDevices, &ndevices);
+				if (devices)
+				{
+					for (int i = 0; i < ndevices; i++)
+					{
+						if (devices[i].use == XIMasterPointer)
+						{
+							MasterPointerID = devices[i].deviceid;
+							XInput2Supported = true;
+							break;
+						}
+					}
+					XIFreeDeviceInfo(devices);
+				}
+			}
+		}
+
+		// This XInput API is the gift that just keeps on giving. Instead of routing events to the
+		// focus window it sends it to the root window. Thanks!
+		if (XInput2Supported)
+		{
+			unsigned char mask[3] = { 0 };
+			XISetMask(mask, XI_RawMotion);
+			XIEventMask eventmask;
+			eventmask.deviceid = MasterPointerID;
+			eventmask.mask_len = sizeof(mask);
+			eventmask.mask = mask;
+			Window root = XRootWindow(display, XDefaultScreen(display));
+			XISelectEvents(display, root, &eventmask, 1);
 		}
 	}
 
@@ -53,6 +94,9 @@ public:
 	bool ExitRunLoop = false;
 
 	XIM xim = nullptr;
+	bool XInput2Supported = false;
+	int XInputOpcode = 0;
+	int MasterPointerID = 0;
 };
 
 static X11Connection* GetX11Connection()
@@ -75,18 +119,22 @@ static Atom GetAtom(const std::string& name)
 
 X11DisplayWindow::X11DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, X11DisplayWindow* owner, RenderAPI renderAPI) : windowHost(windowHost), owner(owner)
 {
-	display = GetX11Connection()->display;
+	auto connection = GetX11Connection();
+	display = connection->display;
 
 	screen = XDefaultScreen(display);
 	depth = XDefaultDepth(display, screen);
 	visual = XDefaultVisual(display, screen);
 	colormap = XDefaultColormap(display, screen);
 
-	int disp_width_px = XDisplayWidth(display, screen);
-	int disp_height_px = XDisplayHeight(display, screen);
-	int disp_width_mm = XDisplayWidthMM(display, screen);
-	double ppi = (disp_width_mm < 24) ? 96.0 : (25.4 * static_cast<double>(disp_width_px) / static_cast<double>(disp_width_mm));
-	dpiScale = std::round(ppi / 96.0 * 4.0) / 4.0; // 100%, 125%, 150%, 175%, 200%, etc.
+	if (char* value = XGetDefault(display, "Xft", "dpi"))
+	{
+		int dpi = std::atoi(value);
+		if (dpi != 0)
+		{
+			dpiScale = dpi / 96.0;
+		}
+	}
 
 	XSetWindowAttributes attributes = {};
 	attributes.backing_store = Always;
@@ -94,14 +142,32 @@ X11DisplayWindow::X11DisplayWindow(DisplayWindowHost* windowHost, bool popupWind
 	attributes.save_under = popupWindow ? True : False;
 	attributes.colormap = colormap;
 	attributes.event_mask =
-		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
-		EnterWindowMask | LeaveWindowMask | PointerMotionMask | KeymapStateMask |
+		KeyPressMask | KeyReleaseMask | 
+		EnterWindowMask | LeaveWindowMask | KeymapStateMask |
 		ExposureMask | StructureNotifyMask | FocusChangeMask | PropertyChangeMask;
+
+	if (!connection->XInput2Supported)
+	{
+		attributes.event_mask |= ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+	}
 		
 	unsigned long mask = CWBackingStore | CWSaveUnder | CWEventMask | CWOverrideRedirect;
 
 	window = XCreateWindow(display, XRootWindow(display, screen), 0, 0, 100, 100, 0, depth, InputOutput, visual, mask, &attributes);
-	GetX11Connection()->windows[window] = this;
+	connection->windows[window] = this;
+
+	if (connection->XInput2Supported)
+	{
+		unsigned char mask[1] = { 0 };
+		XISetMask(mask, XI_ButtonPress);
+		XISetMask(mask, XI_ButtonRelease);
+		XISetMask(mask, XI_Motion);
+		XIEventMask eventmask;
+		eventmask.deviceid = connection->MasterPointerID;
+		eventmask.mask_len = sizeof(mask);
+		eventmask.mask = mask;
+		XISelectEvents(display, window, &eventmask, 1);
+	}
 
 	if (owner)
 	{
@@ -158,10 +224,10 @@ X11DisplayWindow::X11DisplayWindow(DisplayWindowHost* windowHost, bool popupWind
 	}
 
 	// Create input context
-	if (GetX11Connection()->xim)
+	if (connection->xim)
 	{
 		xic = XCreateIC(
-			GetX11Connection()->xim,
+			connection->xim,
 			XNInputStyle,
 			XIMPreeditNothing | XIMStatusNothing,
 			XNClientWindow, window,
@@ -378,7 +444,7 @@ Rect X11DisplayWindow::GetWindowFrame() const
 	unsigned int height = 0;
 	unsigned int borderwidth = 0;
 	unsigned int depth = 0;
-	Status status = XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
+	/*Status status =*/ XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
 
 	return Rect::xywh(x / dpiscale, y / dpiscale, width / dpiscale, height / dpiscale);
 }
@@ -394,7 +460,7 @@ Size X11DisplayWindow::GetClientSize() const
 	unsigned int height = 0;
 	unsigned int borderwidth = 0;
 	unsigned int depth = 0;
-	Status status = XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
+	/*Status status =*/ XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
 
 	return Size(width / dpiscale, height / dpiscale);
 }
@@ -408,7 +474,7 @@ int X11DisplayWindow::GetPixelWidth() const
 	unsigned int height = 0;
 	unsigned int borderwidth = 0;
 	unsigned int depth = 0;
-	Status status = XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
+	/*Status status =*/ XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
 	return width;
 }
 
@@ -421,7 +487,7 @@ int X11DisplayWindow::GetPixelHeight() const
 	unsigned int height = 0;
 	unsigned int borderwidth = 0;
 	unsigned int depth = 0;
-	Status status = XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
+	/*Status status =*/ XGetGeometry(display, window, &root, &x, &y, &width, &height, &borderwidth, &depth);
 	return height;
 }
 
@@ -486,8 +552,8 @@ void X11DisplayWindow::SetCaptionTextColor(uint32_t bgra8)
 std::vector<uint8_t> X11DisplayWindow::GetWindowProperty(Atom property, Atom &actual_type, int &actual_format, unsigned long &item_count)
 {
 	long read_bytes = 0;
-	Atom _actual_type = actual_type;
-	int  _actual_format = actual_format;
+	//Atom _actual_type = actual_type;
+	//int  _actual_format = actual_format;
 	unsigned long _item_count = item_count;
 	unsigned long bytes_remaining = 0;
 	unsigned char *read_data = nullptr;
@@ -565,7 +631,7 @@ Point X11DisplayWindow::MapFromGlobal(const Point& pos) const
 	int srcy = (int)std::round(pos.y * dpiscale);
 	int destx = 0;
 	int desty = 0;
-	Bool result = XTranslateCoordinates(display, root, window, srcx, srcy, &destx, &desty, &child);
+	/*Bool result =*/ XTranslateCoordinates(display, root, window, srcx, srcy, &destx, &desty, &child);
 	return Point(destx / dpiscale, desty / dpiscale);
 }
 
@@ -578,7 +644,7 @@ Point X11DisplayWindow::MapToGlobal(const Point& pos) const
 	int srcy = (int)std::round(pos.y * dpiscale);
 	int destx = 0;
 	int desty = 0;
-	Bool result = XTranslateCoordinates(display, window, root, srcx, srcy, &destx, &desty, &child);
+	/*Bool result =*/ XTranslateCoordinates(display, window, root, srcx, srcy, &destx, &desty, &child);
 	return Point(destx / dpiscale, desty / dpiscale);
 }
 
@@ -652,6 +718,23 @@ void X11DisplayWindow::ExitLoop()
 void X11DisplayWindow::DispatchEvent(XEvent* event)
 {
 	X11Connection* connection = GetX11Connection();
+
+	if (connection->XInput2Supported)
+	{
+		// XInput sends all raw input to the root window. We want it routed to the focused window
+		if (event->xcookie.type == GenericEvent &&
+			event->xcookie.extension == connection->XInputOpcode &&
+			XGetEventData(connection->display, &event->xcookie))
+		{
+			for (auto& it : connection->windows)
+			{
+				X11DisplayWindow* window = it.second;
+				window->OnXInputEvent(event);
+			}
+			XFreeEventData(connection->display, &event->xcookie);
+		}
+	}
+
 	auto it = connection->windows.find(event->xany.window);
 	if (it != connection->windows.end())
 	{
@@ -731,11 +814,13 @@ void X11DisplayWindow::OnFocusIn(XEvent* event)
 	if (xic)
 		XSetICFocus(xic);
 
+	RawInput.Focused = true;
 	windowHost->OnWindowActivated();
 }
 
 void X11DisplayWindow::OnFocusOut(XEvent* event)
 {
+	RawInput.Focused = false;
 	windowHost->OnWindowDeactivated();
 }
 
@@ -949,6 +1034,8 @@ void X11DisplayWindow::OnKeyRelease(XEvent* event)
 
 void X11DisplayWindow::OnButtonPress(XEvent* event)
 {
+	// Note: this only gets called if XInput is not available
+
 	InputKey key = GetInputKey(event);
 	keyState[key] = true;
 	windowHost->OnWindowMouseDown(GetMousePos(event), key);
@@ -958,6 +1045,8 @@ void X11DisplayWindow::OnButtonPress(XEvent* event)
 
 void X11DisplayWindow::OnButtonRelease(XEvent* event)
 {
+	// Note: this only gets called if XInput is not available
+
 	InputKey key = GetInputKey(event);
 	keyState[key] = false;
 	windowHost->OnWindowMouseUp(GetMousePos(event), key);
@@ -965,6 +1054,8 @@ void X11DisplayWindow::OnButtonRelease(XEvent* event)
 
 void X11DisplayWindow::OnMotionNotify(XEvent* event)
 {
+	// Note: this only gets called if XInput is not available
+
 	double dpiScale = GetDpiScale();
 	int x = event->xmotion.x;
 	int y = event->xmotion.y;
@@ -974,18 +1065,127 @@ void X11DisplayWindow::OnMotionNotify(XEvent* event)
 	}
 	else
 	{
-		MouseX = ClientSizeX / 2;
-		MouseY = ClientSizeY / 2;
-
-		if (MouseX != -1 && MouseY != -1)
+		int dx = x - RawInput.LastX;
+		int dy = y - RawInput.LastY;
+		RawInput.LastX = x;
+		RawInput.LastY = y;
+		int centerX = ClientSizeX / 2;
+		int centerY = ClientSizeY / 2;
+		if (x != centerX || y != centerY)
 		{
-			windowHost->OnWindowRawMouseMove(x - MouseX, y - MouseY);
+			// We still have to contain the mouse even if we are using XInput.
+			// Maybe we can do that in a simpler way if XInput is available?
+			XWarpPointer(display, window, window, 0, 0, ClientSizeX, ClientSizeY, centerX, centerY);
+
+			// Use the accelerated mouse cursor if there's no XInput 2.0 support
+			if (!GetX11Connection()->XInput2Supported)
+			{
+				if (dx != 0 || dy != 0)
+					windowHost->OnWindowRawMouseMove(dx, dy);
+			}
+		}
+	}
+}
+
+void X11DisplayWindow::OnXInputEvent(XEvent* event)
+{
+	// This API is so horrible it makes Win32 look attractive!
+	if (event->xcookie.evtype == XI_ButtonPress || event->xcookie.evtype == XI_ButtonRelease)
+	{
+		auto deviceEvent = (XIDeviceEvent*)event->xcookie.data;
+		if (deviceEvent->event != window)
+			return;
+
+		InputKey key = {};
+		switch (deviceEvent->detail)
+		{
+		case 1: key = InputKey::LeftMouse; break;
+		case 2: key = InputKey::MiddleMouse; break;
+		case 3: key = InputKey::RightMouse; break;
+		case 4: key = InputKey::MouseWheelUp; break;
+		case 5: key = InputKey::MouseWheelDown; break;
+		// case 6: key = InputKey::XButton1; break;
+		// case 7: key = InputKey::XButton2; break;
+		default: return;
 		}
 
-		// Warp pointer to the center of the window
-		XWarpPointer(display, window, window, 0, 0, ClientSizeX, ClientSizeY, ClientSizeX / 2, ClientSizeY / 2);
-	}
+		double dpiScale = GetDpiScale();
+		int x = (int)std::round(deviceEvent->event_x);
+		int y = (int)std::round(deviceEvent->event_y);
+		Point mousePos(x / dpiScale, y / dpiScale);
 
+		if (!isCursorEnabled)
+		{
+			// Raw input gets blocked until we ungrab the pointer. Worst design EVER.
+			XUngrabPointer(display, deviceEvent->time);
+		}
+
+		if (event->xcookie.evtype == XI_ButtonPress)
+		{
+			keyState[key] = true;
+			windowHost->OnWindowMouseDown(mousePos, key);
+			// if (lastClickWithin400ms)
+			//	windowHost->OnWindowMouseDoubleclick(GetMousePos(event), InputKey::LeftMouse);
+		}
+		else
+		{
+			keyState[key] = false;
+			windowHost->OnWindowMouseUp(mousePos, key);
+		}
+	}
+	else if (event->xcookie.evtype == XI_Motion)
+	{
+		auto deviceEvent = (XIDeviceEvent*)event->xcookie.data;
+		if (deviceEvent->event != window)
+			return;
+
+		if (isCursorEnabled)
+		{
+			double dpiScale = GetDpiScale();
+			int x = (int)std::round(deviceEvent->event_x);
+			int y = (int)std::round(deviceEvent->event_y);
+			Point mousePos(x / dpiScale, y / dpiScale);
+			windowHost->OnWindowMouseMove(Point(x / dpiScale, y / dpiScale));
+		}
+		else if (RawInput.Focused)
+		{
+			int x = (int)std::round(deviceEvent->event_x);
+			int y = (int)std::round(deviceEvent->event_y);
+			int centerX = ClientSizeX / 2;
+			int centerY = ClientSizeY / 2;
+			if (x != centerX || y != centerY)
+			{
+				// We still have to contain the mouse even if we are using XInput.
+				// Maybe we can do that in a simpler way?
+				XWarpPointer(display, window, window, 0, 0, ClientSizeX, ClientSizeY, centerX, centerY);
+			}
+		}
+	}
+	else if (!isCursorEnabled && RawInput.Focused && event->xcookie.evtype == XI_RawMotion)
+	{
+		std::vector<double> values;
+		values.reserve(2);
+
+		auto rawEvent = (XIRawEvent*)event->xcookie.data;
+		double *rawValuator = rawEvent->raw_values;
+		for (int i = 0; i < rawEvent->valuators.mask_len * 8; i++)
+		{
+			if (XIMaskIsSet(rawEvent->valuators.mask, i))
+			{
+				values.push_back(*rawValuator);
+				rawValuator++;
+			}
+		}
+
+		if (values.size() >= 2)
+		{
+			// Values seems to be integers for my mouse. Is that always the case?
+			int dx = (int)std::round(values[0]);
+			int dy = (int)std::round(values[1]);
+			if (dx != 0 || dy != 0)
+				windowHost->OnWindowRawMouseMove(dx, dy);
+		}
+	}
 }
 
 void X11DisplayWindow::OnLeaveNotify(XEvent* event)

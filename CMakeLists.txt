@@ -17,6 +17,14 @@ if (UNIX AND NOT APPLE)
 	)
 endif()
 
+# SDL2 finding stuff
+# Optional on all platforms
+find_package(SDL2 QUIET)
+if(NOT ${SDL2_FOUND})
+	include(FindPkgConfig)
+	pkg_search_module(SDL2 sdl2)
+endif()
+
 set(ZWIDGET_SOURCES
 	src/core/canvas.cpp
 	src/core/font.cpp
@@ -226,11 +234,12 @@ elseif(APPLE)
 	set(ZWIDGET_DEFINES -DUNIX -D_UNIX)
 	set(ZWIDGET_LINK_OPTIONS -pthread)
 else()
-	set(ZWIDGET_SOURCES ${ZWIDGET_SOURCES} ${ZWIDGET_SDL2_SOURCES} ${ZWIDGET_X11_SOURCES})
-	set(ZWIDGET_LIBS ${CMAKE_DL_LIBS} -ldl -lX11)
-	set(ZWIDGET_DEFINES -DUNIX -D_UNIX -DUSE_SDL2 -DUSE_X11)
+	set(ZWIDGET_SOURCES ${ZWIDGET_SOURCES} ${ZWIDGET_X11_SOURCES})
+	set(ZWIDGET_LIBS ${CMAKE_DL_LIBS} -lX11 -lXi)
+	set(ZWIDGET_DEFINES -DUNIX -D_UNIX -DUSE_X11)
 	set(ZWIDGET_LINK_OPTIONS -pthread)
 	if (DBUS_FOUND)
+		include_directories("/usr/lib64/dbus-1.0/include") # Bazzite (and probably Fedora 42) keeps the platform-specific dbus headers in this folder
 		set(ZWIDGET_SOURCES ${ZWIDGET_SOURCES} ${ZWIDGET_DBUS_SOURCES})
 		set(ZWIDGET_INCLUDE_DIRS ${ZWIDGET_INCLUDE_DIRS} ${DBUS_INCLUDE_DIRS})
 		set(ZWIDGET_LIBS ${ZWIDGET_LIBS} ${DBUS_LDFLAGS})
@@ -244,10 +253,16 @@ else()
 	endif()
 endif()
 
+if(SDL2_FOUND)
+	set(ZWIDGET_SOURCES ${ZWIDGET_SOURCES} ${ZWIDGET_SDL2_SOURCES})
+	set(ZWIDGET_LIBS ${ZWIDGET_LIBS} ${SDL2_LIBRARIES} -lSDL2)
+	set(ZWIDGET_DEFINES ${ZWIDGET_DEFINES} -DUSE_SDL2)
+endif()
+
 if(MSVC)
-    set(CXX_WARNING_FLAGS /W3)
+	set(CXX_WARNING_FLAGS /W3)
 else()
-    set(CXX_WARNING_FLAGS -Wall -Wpedantic)
+	set(CXX_WARNING_FLAGS -Wall -Wpedantic)
 endif()
 
 add_library(zwidget STATIC ${ZWIDGET_SOURCES} ${ZWIDGET_INCLUDES})
@@ -256,7 +271,7 @@ target_compile_definitions(zwidget PRIVATE ${ZWIDGET_DEFINES})
 target_include_directories(zwidget PRIVATE ${ZWIDGET_INCLUDE_DIRS})
 target_link_options(zwidget PRIVATE ${ZWIDGET_LINK_OPTIONS})
 target_link_libraries(zwidget ${ZWIDGET_LIBS})
-set_target_properties(zwidget PROPERTIES CXX_STANDARD 17)
+set_target_properties(zwidget PROPERTIES CXX_STANDARD 20)
 target_compile_options(zwidget PRIVATE ${CXX_WARNING_FLAGS})
 
 if(MSVC)
@@ -275,7 +290,7 @@ if(ZWIDGET_BUILD_EXAMPLE)
 		example/picopng.cpp
 		example/picopng.h
 	)
-    target_compile_options(zwidget_example PRIVATE ${CXX_WARNING_FLAGS})
+	target_compile_options(zwidget_example PRIVATE ${CXX_WARNING_FLAGS})
 
 	add_custom_command(
 		TARGET zwidget_example POST_BUILD
@@ -296,10 +311,10 @@ if(ZWIDGET_BUILD_EXAMPLE)
 	elseif(APPLE)
 		target_link_libraries(zwidget_example PRIVATE "-framework Cocoa -framework OpenGL")
 	else()
-		target_link_libraries(zwidget_example PRIVATE ${ZWIDGET_LIBS} SDL2::SDL2)
+		target_link_libraries(zwidget_example PRIVATE ${ZWIDGET_LIBS})
 	endif()
 
-	set_target_properties(zwidget_example PROPERTIES CXX_STANDARD 17)
+	set_target_properties(zwidget_example PROPERTIES CXX_STANDARD 20)
 
 	if(MSVC)
 		set_property(TARGET zwidget_example PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

@@ -9,7 +9,7 @@ TabWidget::TabWidget(Widget* parent) : Widget(parent)
 	Bar = new TabBar(this);
 	PageStack = new TabWidgetStack(this);
 
-	Bar->OnCurrentChanged = [=]() { OnBarCurrentChanged(); };
+	Bar->OnCurrentChanged = [this]() { OnBarCurrentChanged(); };
 }
 
 int TabWidget::AddTab(Widget* page, const std::string& label)
@@ -127,7 +127,7 @@ int TabBar::AddTab(const std::shared_ptr<Image>& icon, const std::string& label)
 	TabBarTab* tab = new TabBarTab(this);
 	tab->SetIcon(icon);
 	tab->SetText(label);
-	tab->OnClick = [=]() { OnTabClicked(tab); };
+	tab->OnClick = [this,tab]() { OnTabClicked(tab); };
 	int pageIndex = (int)Tabs.size();
 	Tabs.push_back(tab);
 	if (CurrentIndex == -1)

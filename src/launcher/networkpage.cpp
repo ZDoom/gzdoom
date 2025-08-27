@@ -223,9 +223,10 @@ HostSubPage::HostSubPage(NetworkPage* main, const FStartupSelectionInfo& info) :
 	PortHintLabel = new TextLabel(this);
 	TeamHintLabel = new TextLabel(this);
 
-	MaxPlayerHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
-	PortHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
-	TeamHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
+	// TODO: Themeable de-emphasis
+	// MaxPlayerHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
+	// PortHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
+	// TeamHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
 }
 
 void HostSubPage::SetValues(FStartupSelectionInfo& info) const
@@ -397,8 +398,9 @@ JoinSubPage::JoinSubPage(NetworkPage* main, const FStartupSelectionInfo& info) :
 	AddressPortHintLabel = new TextLabel(this);
 	TeamHintLabel = new TextLabel(this);
 
-	AddressPortHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
-	TeamHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
+	// TODO: Themeable de-emphasis
+	// AddressPortHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
+	// TeamHintLabel->SetStyleColor("color", Colorf::fromRgba8(160, 160, 160));
 }
 
 void JoinSubPage::SetValues(FStartupSelectionInfo& info) const

@@ -107,12 +107,14 @@ void SDL2DisplayWindow::SetClientFrame(const Rect& box)
 void SDL2DisplayWindow::Show()
 {
 	SDL_ShowWindow(Handle.window);
+	WindowHost->OnWindowPaint();
 }
 
 void SDL2DisplayWindow::ShowFullscreen()
 {
 	SDL_ShowWindow(Handle.window);
 	SDL_SetWindowFullscreen(Handle.window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	WindowHost->OnWindowPaint();
 	isFullscreen = true;
 }
 
@@ -120,12 +122,14 @@ void SDL2DisplayWindow::ShowMaximized()
 {
 	SDL_ShowWindow(Handle.window);
 	SDL_MaximizeWindow(Handle.window);
+	WindowHost->OnWindowPaint();
 }
 
 void SDL2DisplayWindow::ShowMinimized()
 {
 	SDL_ShowWindow(Handle.window);
 	SDL_MinimizeWindow(Handle.window);
+	WindowHost->OnWindowPaint();
 }
 
 void SDL2DisplayWindow::ShowNormal()
@@ -133,6 +137,7 @@ void SDL2DisplayWindow::ShowNormal()
 	SDL_ShowWindow(Handle.window);
 	SDL_SetWindowFullscreen(Handle.window, 0);
 	isFullscreen = false;
+	WindowHost->OnWindowPaint();
 }
 
 bool SDL2DisplayWindow::IsWindowFullscreen()
@@ -469,7 +474,7 @@ void SDL2DisplayWindow::OnWindowEvent(const SDL_WindowEvent& event)
 	{
 		case SDL_WINDOWEVENT_CLOSE: WindowHost->OnWindowClose(); break;
 		case SDL_WINDOWEVENT_MOVED: WindowHost->OnWindowGeometryChanged(); break;
-		case SDL_WINDOWEVENT_RESIZED: WindowHost->OnWindowGeometryChanged(); break;
+		case SDL_WINDOWEVENT_RESIZED: WindowHost->OnWindowGeometryChanged(); WindowHost->OnWindowPaint(); break;
 		case SDL_WINDOWEVENT_SHOWN: WindowHost->OnWindowPaint(); break;
 		case SDL_WINDOWEVENT_EXPOSED: WindowHost->OnWindowPaint(); break;
 		case SDL_WINDOWEVENT_FOCUS_GAINED: WindowHost->OnWindowActivated(); break;

@@ -73,8 +73,7 @@ std::vector<std::string> SDL2DisplayWindow::GetVulkanInstanceExtensions()
 VkSurfaceKHR SDL2DisplayWindow::CreateVulkanSurface(VkInstance instance)
 {
 	VkSurfaceKHR surfaceHandle = {};
-	SDL_Vulkan_CreateSurface(Handle.window, instance, &surfaceHandle);
-	if (surfaceHandle)
+	if (SDL_Vulkan_CreateSurface(Handle.window, instance, &surfaceHandle) != SDL_TRUE)
 		throw std::runtime_error("Could not create vulkan surface");
 	return surfaceHandle;
 }

@@ -212,7 +212,7 @@ private:
 	Colorf cursor_color;
 
 	std::string::size_type sel_start = 0, sel_end = 0;
-	Colorf sel_foreground, sel_background = Colorf::fromRgba8(153, 201, 239);
+	Colorf sel_foreground, sel_background;
 
 	std::string text;
 	std::vector<SpanObject> objects;

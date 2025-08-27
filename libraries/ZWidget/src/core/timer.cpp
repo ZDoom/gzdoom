@@ -27,7 +27,7 @@ void Timer::Start(int timeoutMilliseconds, bool repeat)
 {
 	Stop();
 
-	TimerId = DisplayWindow::StartTimer(timeoutMilliseconds, [=]() {
+	TimerId = DisplayWindow::StartTimer(timeoutMilliseconds, [this,repeat]() {
 		if (!repeat)
 			Stop();
 		if (FuncExpired)

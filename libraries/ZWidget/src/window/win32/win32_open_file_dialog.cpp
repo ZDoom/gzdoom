@@ -3,6 +3,7 @@
 #include "win32_display_window.h"
 #include "core/widget.h"
 #include <stdexcept>
+#include <exception>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -14,6 +15,65 @@ Win32OpenFileDialog::Win32OpenFileDialog(Win32DisplayWindow* owner) : owner(owne
 
 bool Win32OpenFileDialog::Show()
 {
+	// For some reason this can hang deep inside Win32 if we do it on the calling thread!
+	bool done = false;
+	std::mutex mutex;
+	std::condition_variable condvar;
+	bool showResult = false;
+	std::exception_ptr exception;
+
+	std::thread thread([&]() {
+
+		try
+		{
+			showResult = ShowWorkerThread();
+		}
+		catch (...)
+		{
+			exception = std::current_exception();
+		}
+
+		std::unique_lock lock(mutex);
+		done = true;
+		condvar.notify_all();
+
+		});
+
+	std::unique_lock lock(mutex);
+	while (!done)
+	{
+		DisplayBackend::Get()->ProcessEvents();
+		using namespace std::chrono_literals;
+		condvar.wait_for(lock, 50ms, [&]() { return done; });
+	}
+	lock.unlock();
+	thread.join();
+
+	if (exception)
+		std::rethrow_exception(exception);
+
+	return showResult;
+}
+
+bool Win32OpenFileDialog::ShowWorkerThread()
+{
+	class InitCOM
+	{
+	public:
+		InitCOM()
+		{
+			HRESULT result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+			if (FAILED(result))
+				throw std::runtime_error("CoInitializeEx(COINIT_APARTMENTTHREADED) failed");
+		}
+
+		~InitCOM()
+		{
+			CoUninitialize();
+		}
+	};
+	InitCOM initCOM;
+
 	std::wstring title16 = to_utf16(title);
 	std::wstring initial_directory16 = to_utf16(initial_directory);
 
@@ -92,35 +152,10 @@ bool Win32OpenFileDialog::Show()
 		}
 	}
 
-	// For some reason this can hang deep inside Win32 if we do it on the calling thread!
-	{
-		bool done = false;
-		std::mutex mutex;
-		std::condition_variable condvar;
-
-		std::thread thread([&]() {
-
-			if (owner)
-				result = open_dialog->Show(owner->WindowHandle.hwnd);
-			else
-				result = open_dialog->Show(0);
-
-			std::unique_lock lock(mutex);
-			done = true;
-			condvar.notify_all();
-
-			});
-
-		std::unique_lock lock(mutex);
-		while (!done)
-		{
-			DisplayBackend::Get()->ProcessEvents();
-			using namespace std::chrono_literals;
-			condvar.wait_for(lock, 50ms, [&]() { return done; });
-		}
-		lock.unlock();
-		thread.join();
-	}
+	if (owner)
+		result = open_dialog->Show(owner->WindowHandle.hwnd);
+	else
+		result = open_dialog->Show(0);
 
 	if (SUCCEEDED(result))
 	{

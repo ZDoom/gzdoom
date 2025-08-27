@@ -55,7 +55,23 @@ public:
 
 class WidgetTheme
 {
+	struct SimpleTheme {
+		const Colorf bgMain;   // background
+		const Colorf fgMain;   //
+		const Colorf bgLight;  // headers / inputs
+		const Colorf fgLight;  //
+		const Colorf bgAction; // interactive elements
+		const Colorf fgAction; //
+		const Colorf bgHover;  // hover / highlight
+		const Colorf fgHover;  //
+		const Colorf bgActive; // click
+		const Colorf fgActive; //
+		const Colorf border;   // around elements
+		const Colorf divider;  // between elements
+	};
 public:
+	WidgetTheme() {}
+	WidgetTheme(const struct SimpleTheme &theme);
 	virtual ~WidgetTheme() = default;
 	
 	WidgetStyle* RegisterStyle(std::unique_ptr<WidgetStyle> widgetStyle, const std::string& widgetClass);

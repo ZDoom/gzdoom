@@ -36,7 +36,7 @@ void Menubar::ShowMenu(MenubarItem* item)
 	if (item->GetOpenCallback())
 	{
 		openMenu = new Menu(this);
-		openMenu->onCloseMenu = [=]() { CloseMenu(); };
+		openMenu->onCloseMenu = [this]() { CloseMenu(); };
 		item->GetOpenCallback()(openMenu);
 		if (item->AlignRight)
 			openMenu->SetRightPosition(item->MapToGlobal(Point(item->GetWidth(), item->GetHeight())));
@@ -215,7 +215,7 @@ void Menubar::OnKeyDown(InputKey key)
 
 /////////////////////////////////////////////////////////////////////////////
 
-MenubarItem::MenubarItem(Menubar* menubar, std::string text, bool alignRight) : Widget(menubar), menubar(menubar), text(text), AlignRight(alignRight)
+MenubarItem::MenubarItem(Menubar* menubar, std::string text, bool alignRight) : Widget(menubar), AlignRight(alignRight), menubar(menubar), text(text)
 {
 	SetStyleClass("menubaritem");
 }

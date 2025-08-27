@@ -13,136 +13,29 @@
 #include <zwidget/widgets/pushbutton/pushbutton.h>
 #include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 #include "picopng.h"
+#include <zwidget/widgets/tabwidget/tabwidget.h>
+
+// ************************************************************
+// Prototypes
+// ************************************************************
 
 static std::vector<uint8_t> ReadAllBytes(const std::string& filename);
 
-class LauncherWindow : public Widget
+class LauncherWindowTab1 : public Widget
 {
 public:
-	LauncherWindow() : Widget(nullptr, WidgetType::Window)
-	{
-		Logo = new ImageBox(this);
-		WelcomeLabel = new TextLabel(this);
-		VersionLabel = new TextLabel(this);
-		SelectLabel = new TextLabel(this);
-		GeneralLabel = new TextLabel(this);
-		ExtrasLabel = new TextLabel(this);
-		FullscreenCheckbox = new CheckboxLabel(this);
-		DisableAutoloadCheckbox = new CheckboxLabel(this);
-		DontAskAgainCheckbox = new CheckboxLabel(this);
-		LightsCheckbox = new CheckboxLabel(this);
-		BrightmapsCheckbox = new CheckboxLabel(this);
-		WidescreenCheckbox = new CheckboxLabel(this);
-		PlayButton = new PushButton(this);
-		ExitButton = new PushButton(this);
-		GamesList = new ListView(this);
-		Choices = new Dropdown(this);
+	LauncherWindowTab1(Widget parent);
+	void OnGeometryChanged() override;
+private:
+	TextEdit* Text = nullptr;
+};
 
-		SetWindowBackground(Colorf::fromRgba8(51, 51, 51));
-		SetWindowBorderColor(Colorf::fromRgba8(51, 51, 51));
-		SetWindowCaptionColor(Colorf::fromRgba8(33, 33, 33));
-		SetWindowCaptionTextColor(Colorf::fromRgba8(226, 223, 219));
-		SetWindowTitle("VKDoom Launcher");
-
-		WelcomeLabel->SetText("Welcome to VKDoom");
-		VersionLabel->SetText("Version 0xdeadbabe.");
-		SelectLabel->SetText("Select which game file (IWAD) to run.");
-		PlayButton->SetText("Play Game");
-		ExitButton->SetText("Exit");
-
-		ExitButton->OnClick = []{
-			DisplayWindow::ExitLoop();
-		};
-
-		GeneralLabel->SetText("General");
-		ExtrasLabel->SetText("Extra Graphics");
-		FullscreenCheckbox->SetText("Fullscreen");
-		DisableAutoloadCheckbox->SetText("Disable autoload");
-		DontAskAgainCheckbox->SetText("Don't ask me again");
-		LightsCheckbox->SetText("Lights");
-		BrightmapsCheckbox->SetText("Brightmaps");
-		WidescreenCheckbox->SetText("Widescreen");
-
-		Choices->SetMaxDisplayItems(2);
-		Choices->AddItem("First");
-		Choices->AddItem("Second");
-		Choices->AddItem("Third");
-		Choices->AddItem("Fourth");
-		Choices->AddItem("Fifth");
-		Choices->AddItem("Sixth");
-
-		Choices->OnChanged = [this](int index) {
-			std::cout << "Selected " << index << ":" << Choices->GetItem(index) << std::endl;
-		};
-
-		try
-		{
-			auto filedata = ReadAllBytes("banner.png");
-			std::vector<unsigned char> pixels;
-			unsigned long width = 0, height = 0;
-			int result = decodePNG(pixels, width, height, (const unsigned char*)filedata.data(), filedata.size(), true);
-			if (result == 0)
-			{
-				Logo->SetImage(Image::Create(width, height, ImageFormat::R8G8B8A8, pixels.data()));
-			}
-		}
-		catch (...)
-		{
-		}
-	}
-
-	void OnGeometryChanged() override
-	{
-		double y = 0.0;
-
-		Logo->SetFrameGeometry(0.0, y, GetWidth(), Logo->GetPreferredHeight());
-		y += Logo->GetPreferredHeight();
-
-		y += 10.0;
-
-		WelcomeLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, WelcomeLabel->GetPreferredHeight());
-		y += WelcomeLabel->GetPreferredHeight();
-
-		VersionLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0, VersionLabel->GetPreferredHeight());
-		y += VersionLabel->GetPreferredHeight();
-
-		y += 10.0;
-
-		SelectLabel->SetFrameGeometry(20.0, y, GetWidth() - 40.0 - Choices->GetPreferredWidth(), SelectLabel->GetPreferredHeight());
-		y += SelectLabel->GetPreferredHeight();
-
-		Choices->SetFrameGeometry(GetWidth() - 20.0 - Choices->GetPreferredWidth(), y-Choices->GetPreferredHeight(), Choices->GetPreferredWidth(), Choices->GetPreferredHeight());
-
-		double listViewTop = y + 10.0;
-
-		y = GetHeight() - 15.0 - PlayButton->GetPreferredHeight();
-		PlayButton->SetFrameGeometry(20.0, y, 120.0, PlayButton->GetPreferredHeight());
-		ExitButton->SetFrameGeometry(GetWidth() - 20.0 - 120.0, y, 120.0, PlayButton->GetPreferredHeight());
-
-		y -= 20.0;
-
-		double panelWidth = 150.0;
-		y -= DontAskAgainCheckbox->GetPreferredHeight();
-		DontAskAgainCheckbox->SetFrameGeometry(20.0, y, 190.0, DontAskAgainCheckbox->GetPreferredHeight());
-		WidescreenCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());
-
-		y -= DisableAutoloadCheckbox->GetPreferredHeight();
-		DisableAutoloadCheckbox->SetFrameGeometry(20.0, y, 190.0, DisableAutoloadCheckbox->GetPreferredHeight());
-		BrightmapsCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, BrightmapsCheckbox->GetPreferredHeight());
-
-		y -= FullscreenCheckbox->GetPreferredHeight();
-		FullscreenCheckbox->SetFrameGeometry(20.0, y, 190.0, FullscreenCheckbox->GetPreferredHeight());
-		LightsCheckbox->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, LightsCheckbox->GetPreferredHeight());
-
-		y -= GeneralLabel->GetPreferredHeight();
-		GeneralLabel->SetFrameGeometry(20.0, y, 190.0, GeneralLabel->GetPreferredHeight());
-		ExtrasLabel->SetFrameGeometry(GetWidth() - 20.0 - panelWidth, y, panelWidth, ExtrasLabel->GetPreferredHeight());
-
-		double listViewBottom = y - 10.0;
-		GamesList->SetFrameGeometry(20.0, listViewTop, GetWidth() - 40.0, std::max(listViewBottom - listViewTop, 0.0));
-	}
-
-	ImageBox* Logo = nullptr;
+class LauncherWindowTab2 : public Widget
+{
+public:
+	LauncherWindowTab2(Widget parent);
+	void OnGeometryChanged() override;
+private:
 	TextLabel* WelcomeLabel = nullptr;
 	TextLabel* VersionLabel = nullptr;
 	TextLabel* SelectLabel = nullptr;
@@ -154,13 +47,244 @@ public:
 	CheckboxLabel* LightsCheckbox = nullptr;
 	CheckboxLabel* BrightmapsCheckbox = nullptr;
 	CheckboxLabel* WidescreenCheckbox = nullptr;
-	PushButton* PlayButton = nullptr;
-	PushButton* ExitButton = nullptr;
 	ListView* GamesList = nullptr;
-	Dropdown* Choices = nullptr;
 };
 
-static std::vector<uint8_t> ReadAllBytes(const std::string& filename);
+class LauncherWindowTab3 : public Widget
+{
+public:
+	LauncherWindowTab3(Widget parent);
+	void OnGeometryChanged() override;
+private:
+	TextLabel* Label = nullptr;
+	Dropdown* Choices = nullptr;
+	PushButton* Popup = nullptr;
+};
+
+class LauncherWindow : public Widget
+{
+public:
+	LauncherWindow();
+private:
+	void OnClose() override;
+	void OnGeometryChanged() override;
+
+	ImageBox* Logo = nullptr;
+	TabWidget* Pages = nullptr;
+	PushButton* ExitButton = nullptr;
+
+	LauncherWindowTab1* Tab1 = nullptr;
+	LauncherWindowTab2* Tab2 = nullptr;
+	LauncherWindowTab3* Tab3 = nullptr;
+};
+
+// ************************************************************
+// UI implementation
+// ************************************************************
+
+LauncherWindow::LauncherWindow(): Widget(nullptr, WidgetType::Window)
+{
+	SetWindowTitle("ZWidget Demo");
+
+	Logo = new ImageBox(this);
+	ExitButton = new PushButton(this);
+	Pages = new TabWidget(this);
+
+	Tab1 = new LauncherWindowTab1(this);
+	Tab2 = new LauncherWindowTab2(this);
+	Tab3 = new LauncherWindowTab3(this);
+
+	Pages->AddTab(Tab1, "Welcome");
+	Pages->AddTab(Tab2, "VKDoom");
+	Pages->AddTab(Tab3, "ZWidgets");
+
+	ExitButton->SetText("Exit");
+
+	ExitButton->OnClick = []{
+		DisplayWindow::ExitLoop();
+	};
+
+	try
+	{
+		auto filedata = ReadAllBytes("banner.png");
+		std::vector<unsigned char> pixels;
+		unsigned long width = 0, height = 0;
+		int result = decodePNG(pixels, width, height, (const unsigned char*)filedata.data(), filedata.size(), true);
+		if (result == 0)
+		{
+			Logo->SetImage(Image::Create(width, height, ImageFormat::R8G8B8A8, pixels.data()));
+		}
+	}
+	catch (...)
+	{
+	}
+}
+
+void LauncherWindow::OnGeometryChanged()
+{
+	double y = 0, h;
+
+	h = Logo->GetPreferredHeight();
+	Logo->SetFrameGeometry(0, y, GetWidth(), h);
+	y += h;
+
+	h = GetHeight() - y - ExitButton->GetPreferredHeight() - 40;
+	Pages->SetFrameGeometry(0, y, GetWidth(), h);
+	y += h + 20;
+
+	ExitButton->SetFrameGeometry(GetWidth() - 20 - 120, y, 120, ExitButton->GetPreferredHeight());
+}
+
+void LauncherWindow::OnClose()
+{
+	DisplayWindow::ExitLoop();
+}
+
+LauncherWindowTab1::LauncherWindowTab1(Widget parent): Widget(nullptr)
+{
+	Text = new TextEdit(this);
+
+	Text->SetText(
+		"Welcome to VKDoom\n\n"
+		"Click the tabs to look at other widgets\n\n"
+		"Also, this text is editable\n"
+	);
+}
+
+void LauncherWindowTab1::OnGeometryChanged()
+{
+	Text->SetFrameGeometry(0, 10, GetWidth(), GetHeight());
+}
+
+LauncherWindowTab2::LauncherWindowTab2(Widget parent): Widget(nullptr)
+{
+	WelcomeLabel = new TextLabel(this);
+	VersionLabel = new TextLabel(this);
+	SelectLabel = new TextLabel(this);
+	GeneralLabel = new TextLabel(this);
+	ExtrasLabel = new TextLabel(this);
+	FullscreenCheckbox = new CheckboxLabel(this);
+	DisableAutoloadCheckbox = new CheckboxLabel(this);
+	DontAskAgainCheckbox = new CheckboxLabel(this);
+	LightsCheckbox = new CheckboxLabel(this);
+	BrightmapsCheckbox = new CheckboxLabel(this);
+	WidescreenCheckbox = new CheckboxLabel(this);
+	GamesList = new ListView(this);
+
+	WelcomeLabel->SetText("Welcome to VKDoom");
+	VersionLabel->SetText("Version 0xdeadbabe.");
+	SelectLabel->SetText("Select which game file (IWAD) to run.");
+
+	GamesList->AddItem("Doom");
+	GamesList->AddItem("Doom 2: Electric Boogaloo");
+	GamesList->AddItem("Doom 3D");
+	GamesList->AddItem("Doom 4: The Quest for Peace");
+	GamesList->AddItem("Doom on Ice");
+	GamesList->AddItem("The Doom");
+	GamesList->AddItem("Doom 2");
+
+	GeneralLabel->SetText("General");
+	ExtrasLabel->SetText("Extra Graphics");
+	FullscreenCheckbox->SetText("Fullscreen");
+	DisableAutoloadCheckbox->SetText("Disable autoload");
+	DontAskAgainCheckbox->SetText("Don't ask me again");
+	LightsCheckbox->SetText("Lights");
+	BrightmapsCheckbox->SetText("Brightmaps");
+	WidescreenCheckbox->SetText("Widescreen");
+}
+
+void LauncherWindowTab2::OnGeometryChanged()
+{
+	double y = 0, h;
+
+	h = WelcomeLabel->GetPreferredHeight();
+	WelcomeLabel->SetFrameGeometry(20, y, GetWidth() - 40, h);
+	y += h;
+
+	h = VersionLabel->GetPreferredHeight();
+	VersionLabel->SetFrameGeometry(20, y, GetWidth() - 40, h);
+	y += h + 10;
+
+	h = SelectLabel->GetPreferredHeight();
+	SelectLabel->SetFrameGeometry(20, y, GetWidth() - 40, h);
+	y += h;
+
+	double listViewTop = y + 10, listViewBottom;
+
+	y = GetHeight();
+
+	h = DontAskAgainCheckbox->GetPreferredHeight();
+	y -= h;
+	DontAskAgainCheckbox->SetFrameGeometry(20, y, 190, h);
+	WidescreenCheckbox->SetFrameGeometry(GetWidth() - 170, y, 150, WidescreenCheckbox->GetPreferredHeight());
+
+	h = DisableAutoloadCheckbox->GetPreferredHeight();
+	y -= h;
+	DisableAutoloadCheckbox->SetFrameGeometry(20, y, 190, h);
+	BrightmapsCheckbox->SetFrameGeometry(GetWidth() - 170, y, 150, BrightmapsCheckbox->GetPreferredHeight());
+
+	h = FullscreenCheckbox->GetPreferredHeight();
+	y -= h;
+	FullscreenCheckbox->SetFrameGeometry(20, y, 190, h);
+	LightsCheckbox->SetFrameGeometry(GetWidth() - 170, y, 150, LightsCheckbox->GetPreferredHeight());
+
+	h = GeneralLabel->GetPreferredHeight();
+	y -= h;
+	GeneralLabel->SetFrameGeometry(20, y, 190, GeneralLabel->GetPreferredHeight());
+	ExtrasLabel->SetFrameGeometry(GetWidth() - 170, y, 150, ExtrasLabel->GetPreferredHeight());
+
+	listViewBottom = y - 10;
+	GamesList->SetFrameGeometry(20, listViewTop, GetWidth() - 40, std::max<double>(listViewBottom - listViewTop, 0));
+}
+
+LauncherWindowTab3::LauncherWindowTab3(Widget parent): Widget(nullptr)
+{
+	Label = new TextLabel(this);
+	Choices = new Dropdown(this);
+	Popup = new PushButton(this);
+
+	Label->SetText("Oh my, even more widgets");
+	Popup->SetText("Click me.");
+
+	Choices->SetMaxDisplayItems(2);
+	Choices->AddItem("First");
+	Choices->AddItem("Second");
+	Choices->AddItem("Third");
+	Choices->AddItem("Fourth");
+	Choices->AddItem("Fifth");
+	Choices->AddItem("Sixth");
+
+	Choices->OnChanged = [this](int index) {
+		std::cout << "Selected " << index << ":" << Choices->GetItem(index) << std::endl;
+	};
+
+	Popup->OnClick = []{
+		std::cout << "TODO: open popup" << std::endl;
+	};
+}
+
+void LauncherWindowTab3::OnGeometryChanged()
+{
+	double y = 0, h;
+
+	y += 10;
+
+	h = Label->GetPreferredHeight();
+	Label->SetFrameGeometry(20, y, GetWidth() - 40, h);
+	y += h + 10;
+
+	h = Choices->GetPreferredHeight();
+	Choices->SetFrameGeometry(20, y, Choices->GetPreferredWidth(), h);
+	y += h + 10;
+
+	h = Popup->GetPreferredHeight();
+	Popup->SetFrameGeometry(20, y, 120, h);
+	y += h;
+}
+
+// ************************************************************
+// Shared code
+// ************************************************************
 
 std::vector<SingleFontData> LoadWidgetFontData(const std::string& name)
 {
@@ -178,9 +302,22 @@ enum class Backend {
 	Default, Win32, SDL2, X11, Wayland
 };
 
-int example(Backend backend = Backend::Default)
+enum class Theme {
+	Default, Light, Dark
+};
+
+int example(
+	Backend backend = Backend::Default,
+	Theme theme = Theme::Default
+)
 {
-	WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>());
+	// just for testing themes
+	switch (theme)
+	{
+		case Theme::Default: WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>()); break;
+		case Theme::Dark:    WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>()); break;
+		case Theme::Light:   WidgetTheme::SetTheme(std::make_unique<LightWidgetTheme>()); break;
+	}
 
 	// just for testing backends
 	switch (backend)
@@ -192,37 +329,18 @@ int example(Backend backend = Backend::Default)
 		case Backend::Wayland: DisplayBackend::Set(DisplayBackend::TryCreateWayland()); break;
 	}
 
-#if 1
 	auto launcher = new LauncherWindow();
 	launcher->SetFrameGeometry(100.0, 100.0, 615.0, 668.0);
 	launcher->Show();
-#else
-	auto mainwindow = new MainWindow();
-	auto textedit = new TextEdit(mainwindow);
-	textedit->SetText(R"(
-#version 460
-
-in vec4 AttrPos;
-in vec4 AttrColor;
-out vec4 Color;
-
-void main()
-{
-	gl_Position = AttrPos;
-	Color = AttrColor;
-}
-)");
-	mainwindow->SetWindowTitle("ZWidget Example");
-	mainwindow->SetFrameGeometry(100.0, 100.0, 1700.0, 900.0);
-	mainwindow->SetCentralWidget(textedit);
-	textedit->SetFocus();
-	mainwindow->Show();
-#endif
 
 	DisplayWindow::RunLoop();
 
 	return 0;
 }
+
+// ************************************************************
+// Platform-specific code
+// ************************************************************
 
 #ifdef WIN32
 
@@ -305,18 +423,25 @@ static std::vector<uint8_t> ReadAllBytes(const std::string& filename)
 
 int main(int argc, const char** argv)
 {
-	std::string backendStr = argc > 1? argv[1]: "";
-	std::transform(backendStr.begin(), backendStr.end(), backendStr.begin(),
-		[](unsigned char c){ return std::tolower(c); });
-
 	Backend backend = Backend::Default;
+	Theme theme = Theme::Default;
 
-	if (backendStr == "sdl2")    backend = Backend::SDL2;
-	if (backendStr == "x11")     backend = Backend::X11;
-	if (backendStr == "wayland") backend = Backend::Wayland;
-	if (backendStr == "win32")   backend = Backend::Win32; // lol
+	for (auto i = 1; i < argc; i++)
+	{
+		std::string s = argv[i];
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char c){ return std::tolower(c); });
 
-	example(backend);
+		if (s == "light") { theme = Theme::Light; continue; }
+		if (s == "dark")  { theme = Theme::Dark;  continue; }
+
+		if (s == "sdl2")    { backend = Backend::SDL2;    continue; }
+		if (s == "x11")     { backend = Backend::X11;     continue; }
+		if (s == "wayland") { backend = Backend::Wayland; continue; }
+		if (s == "win32")   { backend = Backend::Win32;   continue; } // lol
+	}
+
+	example(backend, theme);
 }
 
 #endif

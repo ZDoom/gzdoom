@@ -7,6 +7,7 @@
 #include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/XInput2.h>
 #include <map>
 
 class X11DisplayWindow : public DisplayWindow
@@ -85,6 +86,7 @@ private:
 	void OnSelectionClear(XEvent* event);
 	void OnSelectionNotify(XEvent* event);
 	void OnSelectionRequest(XEvent* event);
+	void OnXInputEvent(XEvent* event);
 
 	void CreateBackbuffer(int width, int height);
 	void DestroyBackbuffer();
@@ -117,8 +119,13 @@ private:
 
 	int ClientSizeX = 0;
 	int ClientSizeY = 0;
-	int MouseX = -1;
-	int MouseY = -1;
+
+	struct
+	{
+		int LastX = -1;
+		int LastY = -1;
+		bool Focused = false;
+	} RawInput;
 
 	Pixmap cursor_bitmap = None;
 	Cursor hidden_cursor = None;

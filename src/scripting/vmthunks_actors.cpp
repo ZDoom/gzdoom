@@ -2205,6 +2205,7 @@ DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, vel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, accel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startalpha);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, fadestep);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, fadeoutstep);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startroll);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollvel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollacc);
@@ -2215,7 +2216,7 @@ static void SpawnParticle(FLevelLocals *Level, FSpawnParticleParams *params)
 		params->color, params->startalpha, params->lifetime,
 		params->size, params->fadestep, params->sizestep,
 		params->flags, params->texture, ERenderStyle(params->style),
-		params->startroll, params->rollvel, params->rollacc);
+		params->startroll, params->rollvel, params->rollacc, params->fadeoutstep);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnParticle, SpawnParticle)

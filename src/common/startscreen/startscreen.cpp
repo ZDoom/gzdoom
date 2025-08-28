@@ -694,6 +694,13 @@ void FStartScreen::Render(bool force)
 			DrawTexture(twod, StartupTexture, 0, 0, DTA_VirtualWidthF, displaywidth, DTA_VirtualHeightF, displayheight, TAG_END);
 		}
 
+		if (setmodeneeded)
+		{
+			setmodeneeded = false;
+			screen->ToggleFullscreen(vid_fullscreen);
+			V_OutputResized(screen->GetWidth(), screen->GetHeight());
+		}
+
 		twod->End();
 		screen->Update();
 		twod->OnFrameDone();

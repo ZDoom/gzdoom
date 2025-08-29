@@ -87,7 +87,8 @@ const FName HapticIntense = "INTENSE",
 			HapticHeavy = "HEAVY",
 			HapticMedium = "MEDIUM",
 			HapticLight = "LIGHT",
-			HapticSubtle = "SUBTLE";
+			HapticSubtle = "SUBTLE",
+			HapticNone = "NONE";
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -174,11 +175,15 @@ const FName * Joy_GuessMapping(const FName identifier)
 		return false;
 	};
 
+	static TArray<FString> none = { "ricochet" };
 	static TArray<FString> intense = { "quake", "death", "gibbed" };
 	static TArray<FString> heavy = { "teleport", "activate", "secret" };
-	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist", "weapon", "fire"};
-	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject" };
+	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist",
+		"weapon", "fire", "shoot", "blast", "attack", "launch" };
+	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject",
+		"reload", "charge" };
 
+	if (search(none)) return &HapticNone;
 	if (search(intense)) return &HapticIntense;
 	if (search(heavy)) return &HapticHeavy;
 	if (search(medium)) return &HapticMedium;

@@ -6,7 +6,7 @@
 **---------------------------------------------------------------------------
 **
 ** Copyright 2025 Marcus Minhorst
-** Copyright 2025 ZDoom + GZDoom teams, and contributors
+** Copyright 2025 GZDoom Maintainers and Contributors
 **
 ** This program is free software: you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -257,11 +257,13 @@ const FName * Joy_GetMapping(const FName identifier)
 			if (!RumbleMissed.Contains(identifier)) warn();
 			break;
 		case HAPTCOMPAT_WARN: // always warn for authors
-			Printf(TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", identifier.GetChars());
+			replaced = nullptr != (mapping = Joy_GuessMapping(identifier));
+			if (replaced) Printf("Rumble compat mapped '%s' to '%s'\n", identifier.GetChars(), mapping->GetChars());
+			else Printf(TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", identifier.GetChars());
 			break;
-		case HAPTCOMPAT_MATCH: // try our best to choose correct
-			if ((mapping = Joy_GuessMapping(identifier))) replaced = true;
-			else warn();
+		case HAPTCOMPAT_MATCH: // try our best to choose correct (default)
+			replaced = nullptr != (mapping = Joy_GuessMapping(identifier));
+			if (!replaced) warn();
 			break;
 		case HAPTCOMPAT_ALL: // simple fallback
 			mapping = &HapticMedium;
@@ -270,7 +272,7 @@ const FName * Joy_GetMapping(const FName identifier)
 		}
 	}
 
-	if (mapping && replaced)
+	if (mapping && replaced && haptics_compat != HAPTCOMPAT_WARN)
 	{
 		// cache replacement
 		RumbleMapping.Insert(identifier, *mapping);

@@ -87,7 +87,8 @@ const FName HapticIntense = "INTENSE",
 			HapticHeavy = "HEAVY",
 			HapticMedium = "MEDIUM",
 			HapticLight = "LIGHT",
-			HapticSubtle = "SUBTLE";
+			HapticSubtle = "SUBTLE",
+			HapticNone = "NONE";
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -161,28 +162,26 @@ CVARD(Bool, haptics_do_action, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "allow ha
 const FName * Joy_GuessMapping(const FName identifier)
 {
 	FString text = identifier.GetChars();
-
-	text.ToLower();
 	// I would like to slugify here
 	// Maybe one day
+	text.ToLower();
 
-	auto search = [&text](TArray<FString> &strs) {
-		for (auto str: strs)
-		{
-			if (text.IndexOf(str) != -1) return true;
-		}
-		return false;
+	struct MapSet { const FName * mapping; const TArray<FString> tokens; };
+	static struct MapSet mappings[] = {
+		{ &HapticNone, { "ricochet", "casing" } },
+		{ &HapticIntense, { "quake", "death", "gibbed" } },
+		{ &HapticHeavy, { "teleport", "activate", "secret" } },
+		{ &HapticMedium, { "success", "grunt", "land", "pain", "pkup", "pickup", "fist", "weapon",
+			"fire", "shoot", "blast", "attack", "launch", "punch" } },
+		{ &HapticLight, { "push", "menu", "use", "fail", "open", "close", "eject", "reload",
+			"charge", "try" } },
+		{ &HapticNone, { "step", "floor" } },
 	};
 
-	static TArray<FString> intense = { "quake", "death", "gibbed" };
-	static TArray<FString> heavy = { "teleport", "activate", "secret" };
-	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist", "weapon", "fire"};
-	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject" };
-
-	if (search(intense)) return &HapticIntense;
-	if (search(heavy)) return &HapticHeavy;
-	if (search(medium)) return &HapticMedium;
-	if (search(light)) return &HapticLight;
+	for (auto mapping: mappings)
+		for (auto token: mapping.tokens)
+			if (text.IndexOf(token) != -1)
+				return mapping.mapping;
 
 	return nullptr;
 }

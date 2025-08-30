@@ -101,7 +101,7 @@ struct TiedReg {
   // --------------------------------------------------------------------------
 
   ASMJIT_INLINE TiedReg& operator=(const TiedReg& other) {
-    ::memcpy(this, &other, sizeof(TiedReg));
+    ::memcpy((void*)this, &other, sizeof(TiedReg));
     return *this;
   }
 

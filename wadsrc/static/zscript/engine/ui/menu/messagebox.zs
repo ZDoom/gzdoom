@@ -54,7 +54,7 @@ class MessageBoxMenu : Menu
 	//
 	//=============================================================================
 
-	virtual void Init(Menu parent, String message, int messagemode, bool playsound = false, Name cmd = 'None')
+	virtual void Init(Menu parent, String message, int messagemode, bool playsound = false, Name cmd = 'None', voidptr native_handler = null)
 	{
 		Super.Init(parent);
 		mAction = cmd;

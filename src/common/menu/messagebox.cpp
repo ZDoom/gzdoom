@@ -70,7 +70,7 @@ DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode,
 	IFVIRTUALPTRNAME(p, NAME_MessageBoxMenu, Init)
 	{
 		p->PointerVar<void>(NAME_Handler) = reinterpret_cast<void*>(handler);
-		VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex() };
+		VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex(), (void*)nullptr };
 		VMCall(func, params, countof(params), nullptr, 0);
 		return (DMenu*)p;
 	}

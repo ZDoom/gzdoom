@@ -148,7 +148,7 @@ class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
-    clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type, bool subclass = false); // just for convenience. who knows.
+    clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
     
     // these are called when the handler gets registered or unregistered
     // you can set Order/IsUiProcessor here.
@@ -221,7 +221,7 @@ class StaticEventHandler : Object native play version("2.4")
 
 class EventHandler : StaticEventHandler native version("2.4")
 {
-    clearscope static native StaticEventHandler Find(class<StaticEventHandler> type, bool subclass = false);
+    clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
     clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
     version("4.12") clearscope static native vararg bool SendNetworkCommand(Name cmd, ...);
     version("4.12") clearscope static native bool SendNetworkBuffer(Name cmd, NetworkBuffer buffer);

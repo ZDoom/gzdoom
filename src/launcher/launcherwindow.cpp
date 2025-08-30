@@ -4,6 +4,7 @@
 #include "playgamepage.h"
 #include "settingspage.h"
 #include "networkpage.h"
+#include "releasepage.h"
 #include "v_video.h"
 #include "version.h"
 #include "i_interface.h"
@@ -36,9 +37,19 @@ LauncherWindow::LauncherWindow(FStartupSelectionInfo& info) : Widget(nullptr, Wi
 	Pages = new TabWidget(this);
 	Buttonbar = new LauncherButtonbar(this);
 
+	bool releasenotes = info.isNewRelease && info.notifyNewRelease;
+
+	releasenotes = true;
+
 	PlayGame = new PlayGamePage(this, info);
 	Settings = new SettingsPage(this, info);
 	Network = new NetworkPage(this, info);
+
+	if (releasenotes)
+	{
+		Release = new ReleasePage(this, info);
+		Pages->AddTab(Release, "Release Notes");
+	}
 
 	Pages->AddTab(PlayGame, "Play");
 	Pages->AddTab(Settings, "Settings");
@@ -48,8 +59,8 @@ LauncherWindow::LauncherWindow(FStartupSelectionInfo& info) : Widget(nullptr, Wi
 
 	UpdateLanguage();
 
-	Pages->SetCurrentWidget(PlayGame);
-	PlayGame->SetFocus();
+	Pages->SetCurrentIndex(0);
+	Pages->GetCurrentWidget()->SetFocus();
 }
 
 void LauncherWindow::UpdatePlayButton()
@@ -95,6 +106,11 @@ void LauncherWindow::UpdateLanguage()
 	PlayGame->UpdateLanguage();
 	Settings->UpdateLanguage();
 	Network->UpdateLanguage();
+	if (Release)
+	{
+		Pages->SetTabText(Release, GStrings.GetString("PICKER_TAB_RELEASE"));
+		Release->UpdateLanguage();
+	}
 	Buttonbar->UpdateLanguage();
 }
 

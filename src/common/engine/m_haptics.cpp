@@ -87,7 +87,8 @@ const FName HapticIntense = "INTENSE",
 			HapticHeavy = "HEAVY",
 			HapticMedium = "MEDIUM",
 			HapticLight = "LIGHT",
-			HapticSubtle = "SUBTLE";
+			HapticSubtle = "SUBTLE",
+			HapticNone = "NONE";
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -174,11 +175,15 @@ const FName * Joy_GuessMapping(const FName identifier)
 		return false;
 	};
 
+	static TArray<FString> none = { "ricochet" };
 	static TArray<FString> intense = { "quake", "death", "gibbed" };
 	static TArray<FString> heavy = { "teleport", "activate", "secret" };
-	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist", "weapon", "fire"};
-	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject" };
+	static TArray<FString> medium = { "success", "grunt", "land", "pain", "pkup", "pickup", "fist",
+		"weapon", "fire", "shoot", "blast", "attack", "launch" };
+	static TArray<FString> light = { "push", "menu", "use", "fail", "open", "close", "eject",
+		"reload", "charge" };
 
+	if (search(none)) return &HapticNone;
 	if (search(intense)) return &HapticIntense;
 	if (search(heavy)) return &HapticHeavy;
 	if (search(medium)) return &HapticMedium;
@@ -245,8 +250,9 @@ const FName * Joy_GetMapping(const FName identifier)
 	bool replaced = actual != identifier && actual.IsValidName();
 
 	auto warn = [&identifier]() {
+		if (RumbleMissed.Contains(identifier)) return;
 		RumbleMissed.Push(identifier);
-		Printf(DMSG_WARNING, "Unknown rumble mapping '%s'\n", identifier.GetChars());
+		Printf(DMSG_WARNING|PRINT_NONOTIFY, "Unknown rumble mapping '%s'\n", identifier.GetChars());
 	};
 
 	if (!mapping && identifier != "")
@@ -257,11 +263,13 @@ const FName * Joy_GetMapping(const FName identifier)
 			if (!RumbleMissed.Contains(identifier)) warn();
 			break;
 		case HAPTCOMPAT_WARN: // always warn for authors
-			Printf(TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", identifier.GetChars());
+			replaced = nullptr != (mapping = Joy_GuessMapping(identifier));
+			if (replaced) Printf("Rumble compat mapped '%s' to '%s'\n", identifier.GetChars(), mapping->GetChars());
+			else Printf(TEXTCOLOR_ORANGE "Unknown rumble mapping '%s'\n", identifier.GetChars());
 			break;
-		case HAPTCOMPAT_MATCH: // try our best to choose correct
-			if ((mapping = Joy_GuessMapping(identifier))) replaced = true;
-			else warn();
+		case HAPTCOMPAT_MATCH: // try our best to choose correct (default)
+			replaced = nullptr != (mapping = Joy_GuessMapping(identifier));
+			if (!replaced) warn();
 			break;
 		case HAPTCOMPAT_ALL: // simple fallback
 			mapping = &HapticMedium;
@@ -270,7 +278,7 @@ const FName * Joy_GetMapping(const FName identifier)
 		}
 	}
 
-	if (mapping && replaced)
+	if (mapping && replaced && haptics_compat != HAPTCOMPAT_WARN)
 	{
 		// cache replacement
 		RumbleMapping.Insert(identifier, *mapping);

@@ -3353,6 +3353,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	FBaseCVar::EnableCallbacks ();
 
 	StartScreen = nostartscreen? nullptr : GetGameStartScreen(per_shader_progress > 0 ? max_progress * 10 / 9 : max_progress + 3);
+	setmodeneeded = true;
 	if (StartScreen != nullptr) StartScreen->Render();
 	
 	// +compatmode cannot be used on the command line, so use this as a substitute
@@ -3543,7 +3544,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		{
 			return 0;
 		}
-		setmodeneeded = true;
 	}
 
 	// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now

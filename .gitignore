@@ -21,6 +21,7 @@ fmodapi*linux/
 .vscode
 .cache
 *.kate-swp
+*.geany
 
 # private dev files
 *.user

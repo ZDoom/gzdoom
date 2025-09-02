@@ -17,7 +17,7 @@ vec4 ApplyGamma(vec4 c)
 	else
 		valgray = mix(vec3(dot(c.rgb, vec3(0.3,0.56,0.14))), c.rgb, Saturation);
 	vec3 val = valgray * Contrast - (Contrast - 1.0) * 0.5;
-	val += Brightness * 0.5;
+	val = (val + Brightness * 0.5) * (WhitePoint - BlackPoint) + BlackPoint;
 	val = pow(max(val, vec3(0.0)), vec3(InvGamma));
 	return vec4(val, c.a);
 }

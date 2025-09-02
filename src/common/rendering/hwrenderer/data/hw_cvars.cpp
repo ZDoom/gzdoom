@@ -93,6 +93,18 @@ CUSTOM_CVARD(Float, vid_saturation, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adju
 	else if (self > 3) self = 3;
 }
 
+CUSTOM_CVARD(Float, vid_blackpoint, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adjusts what the engine outputs as black")
+{
+	if (self < 0) self = 0;
+	if (self > 1) self = 1;
+}
+
+CUSTOM_CVARD(Float, vid_whitepoint, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adjusts what the engine outputs as white")
+{
+	if (self < 0) self = 0;
+	if (self > 1) self = 1;
+}
+
 CCMD (bumpgamma)
 {
 	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level

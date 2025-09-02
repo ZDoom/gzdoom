@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -64,6 +65,8 @@ CVAR (Int, r_rail_spiralsparsity, 1, CVAR_ARCHIVE);
 CVAR (Int, r_rail_trailsparsity, 1, CVAR_ARCHIVE);
 CVAR (Bool, r_particles, true, 0);
 EXTERN_CVAR(Int, r_maxparticles);
+
+FARG(numparticles, "", "", "", "");
 
 FCRandom pr_railtrail("RailTrail");
 
@@ -173,7 +176,7 @@ void P_InitParticles (FLevelLocals *Level)
 	const char *i;
 	int num;
 
-	if ((i = Args->CheckValue ("-numparticles")))
+	if ((i = Args->CheckValue (FArg_numparticles)))
 		num = atoi (i);
 	// [BC] Use r_maxparticles now.
 	else

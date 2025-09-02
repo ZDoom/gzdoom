@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -292,6 +293,9 @@ static void InitTokenMap()
 #undef TOKENDEF
 #undef TOKENDEF2
 
+FARG(dumpast, "", "", "", "");
+FARG(tracefile, "", "", "", "");
+
 //**--------------------------------------------------------------------------
 
 static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void *parser, ZCCParseState &state)
@@ -428,7 +432,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 
 #ifndef NDEBUG
 	FILE *f = nullptr;
-	const char *tracefile = Args->CheckValue("-tracefile");
+	const char *tracefile = Args->CheckValue(FArg_tracefile);
 	if (tracefile != nullptr)
 	{
 		f = fopen(tracefile, "w");
@@ -522,7 +526,7 @@ PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 #endif
 
 	// Make a dump of the AST before running the compiler for diagnostic purposes.
-	if (Args->CheckParm("-dumpast"))
+	if (Args->CheckParm(FArg_dumpast))
 	{
 		FString ast = ZCC_PrintAST(state.TopNode);
 		FString filename = fileSystem.GetFileFullPath(baselump).c_str();

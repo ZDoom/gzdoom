@@ -98,6 +98,8 @@ CUSTOM_CVARD(Bool, use_joystick, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 #endif
 }
 
+FARG(nojoy, "", "", "", "");
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Bits 0 is X+, 1 is X-, 2 is Y+, and 3 is Y-.

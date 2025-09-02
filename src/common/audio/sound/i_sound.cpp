@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -61,6 +62,10 @@ CUSTOM_CVAR(Int, snd_samplerate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 CVAR(Int, snd_buffersize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, snd_hrtf, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+FARG(nomusic, "", "", "", "");
+FARG(nosound, "", "", "", "");
+FARG(nosfx, "", "", "", "");
 
 #if !defined(NO_OPENAL)	
 #define DEF_BACKEND "openal"
@@ -250,8 +255,8 @@ void I_InitSound ()
 {
 	FModule_SetProgDir(progdir.GetChars());
 	/* Get command line options: */
-	nosound = !!Args->CheckParm ("-nosound");
-	nosfx = !!Args->CheckParm ("-nosfx");
+	nosound = !!Args->CheckParm (FArg_nosound);
+	nosfx = !!Args->CheckParm (FArg_nosfx);
 
 	GSnd = NULL;
 	if (nosound)

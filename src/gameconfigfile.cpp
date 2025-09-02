@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2008 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -81,6 +82,8 @@ EXTERN_CVAR (Int, gl_texture_hqresize_targets)
 EXTERN_CVAR(Int, wipetype)
 EXTERN_CVAR(Bool, i_pauseinbackground)
 EXTERN_CVAR(Bool, i_soundinbackground)
+
+FARG(config, "", "", "", "");
 
 #ifdef _WIN32
 EXTERN_CVAR(Int, in_mouse)
@@ -943,7 +946,7 @@ FString FGameConfigFile::GetConfigPath (bool tryProg)
 {
 	const char *pathval;
 
-	pathval = Args->CheckValue ("-config");
+	pathval = Args->CheckValue (FArg_config);
 	if (pathval != NULL)
 	{
 		return FString(pathval);
@@ -986,7 +989,7 @@ void FGameConfigFile::AddAutoexec (FArgs *list, const char *game)
 				FString expanded_path = ExpandEnvVars(value);
 				if (FileExists(expanded_path))
 				{
-					list->AppendArg (ExpandEnvVars(value));
+					list->AppendRawArg(ExpandEnvVars(value));
 				}
 			}
 		}

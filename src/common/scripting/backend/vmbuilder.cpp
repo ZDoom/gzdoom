@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
 ** Copyright 2016-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -42,8 +43,13 @@
 CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 CVAR(Bool, warningstoerrors, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
+FARG(dumpjitmod, "", "", "", "");
+FARG(dumpdisasm, "", "", "", "");
+
 EXTERN_CVAR(Bool, vm_jit)
 EXTERN_CVAR(Bool, vm_jit_aot)
+
+EXTERN_FARG(dumpjit);
 
 struct VMRemap
 {
@@ -975,8 +981,8 @@ void FFunctionBuildList::Build()
 
 	if (FScriptPosition::ErrorCounter == 0)
 	{
-		if (Args->CheckParm("-dumpjit")) DumpJit(true);
-		else if (Args->CheckParm("-dumpjitmod")) DumpJit(false);
+		if (Args->CheckParm(FArg_dumpjit)) DumpJit(true);
+		else if (Args->CheckParm(FArg_dumpjitmod)) DumpJit(false);
 	}
 	mItems.Clear();
 	mItems.ShrinkToFit();
@@ -1202,12 +1208,10 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 
 VMDisassemblyDumper::VMDisassemblyDumper(const FileOperationType operation)
 {
-	static const char *const DUMP_ARG_NAME = "-dumpdisasm";
-
-	if (Args->CheckParm(DUMP_ARG_NAME))
+	if (Args->CheckParm(FArg_dumpdisasm))
 	{
 		dump = fopen("disasm.txt", operation == Overwrite ? "w" : "a");
-		namefilter = Args->CheckValue(DUMP_ARG_NAME);
+		namefilter = Args->CheckValue(FArg_dumpdisasm);
 		namefilter.ToLower();
 	}
 }

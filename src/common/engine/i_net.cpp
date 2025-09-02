@@ -3,7 +3,10 @@
 //
 // $Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// Copyright 1993-1996 by id Software, Inc.
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -103,6 +106,13 @@ const char* neterror(void);
 #else
 #define neterror() strerror(errno)
 #endif
+
+FARG(host, "", "", "", "");
+FARG(join, "", "", "", "");
+FARG(dup, "", "", "", "");
+FARG(port, "", "", "", "");
+FARG(netmode, "", "", "", "");
+FARG(password, "", "", "", "");
 
 // As per http://support.microsoft.com/kb/q192599/ the standard
 // size for network buffers is 8k.
@@ -1267,33 +1277,33 @@ static bool JoinGame(int arg)
 bool I_InitNetwork()
 {
 	// set up for network
-	const char* v = Args->CheckValue("-dup");
+	const char* v = Args->CheckValue(FArg_dup);
 	if (v != nullptr)
 		TicDup = clamp<int>(atoi(v), 1, MAXTICDUP);
 
-	v = Args->CheckValue("-port");
+	v = Args->CheckValue(FArg_port);
 	if (v != nullptr)
 	{
 		GamePort = atoi(v);
 		Printf("Using alternate port %d\n", GamePort);
 	}
 
-	v = Args->CheckValue("-netmode");
+	v = Args->CheckValue(FArg_netmode);
 	if (v != nullptr)
 		NetMode = atoi(v) ? NET_PacketServer : NET_PeerToPeer;
 
-	net_password = Args->CheckValue("-password");
+	net_password = Args->CheckValue(FArg_password);
 
 	// parse network game options,
 	//		player 1: -host <numplayers>
 	//		player x: -join <player 1's address>
 	int arg = -1;
-	if ((arg = Args->CheckParm("-host")))
+	if ((arg = Args->CheckParm(FArg_host)))
 	{
 		if (!HostGame(arg + 1, v != nullptr))
 			return false;
 	}
-	else if ((arg = Args->CheckParm("-join")))
+	else if ((arg = Args->CheckParm(FArg_join)))
 	{
 		if (!JoinGame(arg + 1))
 			return false;

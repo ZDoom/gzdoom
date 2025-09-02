@@ -41,7 +41,7 @@
 class VideoOptions : OptionMenu
 {
 	const MARGIN = 20;
-	OptionMenuItem mylist[4];
+	OptionMenuItem mylist[3];
 	TextureID sampletex;
 	bool once;
 
@@ -57,16 +57,15 @@ class VideoOptions : OptionMenu
 		{
 			once = true; // Is there any other virtual that we can move this to?
 			mylist[0] = GetItem('vid_gamma');
-			mylist[1] = GetItem('vid_brightness');
-			mylist[2] = GetItem('vid_contrast');
-			mylist[3] = GetItem('vid_saturation');
+			mylist[1] = GetItem('vid_blackpoint');
+			mylist[2] = GetItem('vid_whitepoint');
 			sampletex = TexMan.CheckForTexture("GAMMA1"); // Replace with whatever texture lump from gzdoom.pk3
 		}
 
 		if (sampletex && mDesc.mSelectedItem >= 0)
 		{
 			OptionMenuItem li = mDesc.mItems[mDesc.mSelectedItem];
-			if (li && (li == mylist[0] || li == mylist[1] || li == mylist[2] || li == mylist[3]))
+			if (li && (li == mylist[0] || li == mylist[1] || li == mylist[2]))
 			{
 				int x = MARGIN;
 				int y = MARGIN + screen.GetHeight()/4;

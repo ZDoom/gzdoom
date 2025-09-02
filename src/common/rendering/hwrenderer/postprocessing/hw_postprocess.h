@@ -726,6 +726,8 @@ struct PresentUniforms
 	float Contrast;
 	float Brightness;
 	float Saturation;
+	float BlackPoint;
+	float WhitePoint;
 	int GrayFormula;
 	int WindowPositionParity; // top-of-window might not be top-of-screen
 	FVector2 Scale;
@@ -741,6 +743,8 @@ struct PresentUniforms
 			{ "Contrast", UniformType::Float, offsetof(PresentUniforms, Contrast) },
 			{ "Brightness", UniformType::Float, offsetof(PresentUniforms, Brightness) },
 			{ "Saturation", UniformType::Float, offsetof(PresentUniforms, Saturation) },
+			{ "BlackPoint", UniformType::Float, offsetof(PresentUniforms, BlackPoint) },
+			{ "WhitePoint", UniformType::Float, offsetof(PresentUniforms, WhitePoint) },
 			{ "GrayFormula", UniformType::Int, offsetof(PresentUniforms, GrayFormula) },
 			{ "WindowPositionParity", UniformType::Int, offsetof(PresentUniforms, WindowPositionParity) },
 			{ "UVScale", UniformType::Vec2, offsetof(PresentUniforms, Scale) },

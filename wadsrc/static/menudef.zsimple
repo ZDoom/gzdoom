@@ -80,6 +80,7 @@ OptionMenu VideoOptionsSimple protected
 	// the "full" menu doesn't have some of the options that are in this one.
 	//StaticText " "
 	//Submenu "$OPTMNU_FULLOPTIONS", "VideoModeMenu"
+	Class "VideoOptionsSimple"
 }
 
 OptionMenu ScalingOptionsSimple protected

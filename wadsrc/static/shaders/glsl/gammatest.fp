@@ -39,6 +39,6 @@ vec4 Process(vec4 color)
 		else { base_color = colorB; }
 	}
 
-	vec3 final_color = pow(base_color, vec3(1.0/u_gamma)); //InvGamma is not defined in material hardware shaders
+	vec3 final_color = pow(base_color, vec3(1.0/2.2));
 	return vec4(clamp(final_color, 0.0, 1.0), 1.0);
 }

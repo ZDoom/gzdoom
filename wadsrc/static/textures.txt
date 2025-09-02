@@ -77,3 +77,8 @@ Graphic optional STBAR, 320, 32
    Graphic "STMBARL", 0, 0
    Graphic "STMBARR", 104, 0
 }
+
+texture GAMMA1, 256, 512
+{
+  Patch "-NOFLAT-", 0, 0
+}

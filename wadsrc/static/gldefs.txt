@@ -1,0 +1,5 @@
+material GAMMA1
+{
+	Shader "shaders/glsl/gammatest.fp"
+	// define DITHERTRANS // As a test
+}

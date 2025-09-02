@@ -60,7 +60,7 @@ class VideoOptions : OptionMenu
 			mylist[1] = GetItem('vid_brightness');
 			mylist[2] = GetItem('vid_contrast');
 			mylist[3] = GetItem('vid_saturation');
-			sampletex = TexMan.CheckForTexture("sky1"); // Replace with whatever texture lump from gzdoom.pk3
+			sampletex = TexMan.CheckForTexture("GAMMA1"); // Replace with whatever texture lump from gzdoom.pk3
 		}
 
 		if (sampletex && mDesc.mSelectedItem >= 0)
@@ -69,7 +69,7 @@ class VideoOptions : OptionMenu
 			if (li && (li == mylist[0] || li == mylist[1] || li == mylist[2] || li == mylist[3]))
 			{
 				int x = MARGIN;
-				int y = MARGIN + screen.GetHeight()/3;
+				int y = MARGIN + screen.GetHeight()/4;
 				int xsize, ysize;
 				[xsize, ysize] = TexMan.GetSize(sampletex);
 				screen.DrawTexture(sampletex, false, x, y, DTA_DestWidth, screen.GetWidth()/4,

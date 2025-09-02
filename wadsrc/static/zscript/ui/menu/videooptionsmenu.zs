@@ -56,7 +56,7 @@ class VideoOptions : OptionMenu
 		if (!once)
 		{
 			once = true; // Is there any other virtual that we can move this to?
-			mylist[0] = GetItem('vid_gamma');
+			mylist[0] = GetItem('vid_fixgamma');
 			mylist[1] = GetItem('vid_blackpoint');
 			mylist[2] = GetItem('vid_whitepoint');
 			sampletex = TexMan.CheckForTexture("GAMMA1"); // Replace with whatever texture lump from gzdoom.pk3

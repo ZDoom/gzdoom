@@ -69,10 +69,36 @@ CUSTOM_CVAR(Bool, gl_plane_reflection, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	gl_plane_reflection_i = self;
 }
 
-CUSTOM_CVARD(Float, vid_gamma, 2.2f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adjusts gamma component of gamma ramp")
+#ifdef __APPLE__
+// TODO: test this on apple
+#	define GAMMA_DEFAULT 1.8f
+#	define GAMMA_HIGH 2.6f
+#else
+#	define GAMMA_DEFAULT 2.2f
+#	define GAMMA_HIGH 3.0f
+#endif
+
+CUSTOM_CVARD(Float, vid_gamma, GAMMA_DEFAULT, 0, "(internal) target output gamma")
 {
-	if (self < 0) self = 1;
-	else if (self > 4) self = 4;
+	if (self < 0.1) self = 0.1;
+}
+
+CUSTOM_CVARD(Float, vid_fixgamma, 0.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adjusts gamma component of gamma ramp")
+{
+	vid_gamma = self*(GAMMA_HIGH-GAMMA_DEFAULT) + GAMMA_DEFAULT;
+}
+
+CCMD (bumpgamma)
+{
+	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
+
+	float newgamma = (int)(vid_fixgamma*10+1)/10.f;
+
+	if (newgamma > 1.0)
+		newgamma = -0.5;
+
+	vid_fixgamma = newgamma;
+	Printf ("Gamma correction level % 0.1f (%0.2f)\n", newgamma, newgamma*(GAMMA_HIGH-GAMMA_DEFAULT) + GAMMA_DEFAULT);
 }
 
 CUSTOM_CVARD(Float, vid_contrast, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adjusts contrast component of gamma ramp")
@@ -104,21 +130,6 @@ CUSTOM_CVARD(Float, vid_whitepoint, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "adju
 	if (self < 0) self = 0;
 	if (self > 1) self = 1;
 }
-
-CCMD (bumpgamma)
-{
-	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
-	// Q: What are reasonable limits to use here?
-
-	float newgamma = vid_gamma + 0.1f;
-
-	if (newgamma > 4.0)
-		newgamma = 1.0;
-
-	vid_gamma = newgamma;
-	Printf ("Gamma correction level %g\n", newgamma);
-}
-
 
 CVAR(Int, gl_satformula, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 

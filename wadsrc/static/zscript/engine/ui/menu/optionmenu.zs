@@ -1,9 +1,10 @@
 /*
-** optionmenu.cpp
+** optionmenu.zs
 ** Handler class for the option menus and associated items
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -212,6 +213,23 @@ class OptionMenu : Menu
 	//
 	//=============================================================================
 
+	int LastSelectableItem()
+	{
+		int i = mDesc.mItems.Size();
+		do
+		{
+			i--;
+		}
+		while (i >= 0 && !(mDesc.mItems[i].Selectable() && mDesc.mItems[i].Visible()));
+		return i;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	int RemainingVisibleItems(int start)
 	{
 		int count = 0;
@@ -342,9 +360,8 @@ class OptionMenu : Menu
 			if (mDesc.mSelectedItem != startedAt)
 			{
 				int viewTop = mDesc.mScrollTop + mDesc.mScrollPos;
-				int lastItem = LastVisibleItem();
 
-				if (startedAt == FirstSelectable() && mDesc.mSelectedItem == lastItem)
+				if (startedAt == FirstSelectable() && mDesc.mSelectedItem == LastSelectableItem())
 				{
 					int y = mDesc.mPosition;
 					if (y <= 0) y = DrawCaption(mDesc.mTitle, -y, false);
@@ -357,7 +374,7 @@ class OptionMenu : Menu
 
 					int newTopIndex = 0;
 					int visibleItemsOnPage = 0;
-					for (int i = lastItem; i >= 0; i--)
+					for (int i = LastVisibleItem(); i >= 0; i--)
 					{
 						if (mDesc.mItems[i].Visible())
 						{
@@ -417,7 +434,7 @@ class OptionMenu : Menu
 
 			if (mDesc.mSelectedItem != startedAt)
 			{
-				if (startedAt == LastVisibleItem())
+				if (startedAt == LastSelectableItem())
 				{
 					mDesc.mScrollPos = 0;
 				}

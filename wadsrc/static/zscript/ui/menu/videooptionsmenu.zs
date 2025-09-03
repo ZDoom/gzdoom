@@ -41,8 +41,6 @@
 class VideoOptions : OptionMenu
 {
 	const MARGIN = 20;
-	OptionMenuItem mylist[3];
-	bool once;
 
 	//=============================================================================
 	//
@@ -52,42 +50,22 @@ class VideoOptions : OptionMenu
 
 	override void Drawer()
 	{
-		if (!once)
-		{
-			once = true; // Is there any other virtual that we can move this to?
-			mylist[0] = GetItem('vid_fixgamma');
-			mylist[1] = GetItem('vid_blackpoint');
-			mylist[2] = GetItem('vid_whitepoint');
-		}
+		int x = MARGIN;
+		int y = MARGIN + screen.GetHeight()/4 - 7 * NewSmallFont.GetHeight();
+		PPShader.SetUniform1i("GammaTestPattern", "uXmin", MARGIN);
+		PPShader.SetUniform1i("GammaTestPattern", "uXmax", Screen.GetWidth()/4 + MARGIN);
+		PPShader.SetUniform1i("GammaTestPattern", "uYmin", MARGIN + Screen.GetHeight()/2);
+		PPShader.SetUniform1i("GammaTestPattern", "uYmax", MARGIN + 3*Screen.GetHeight()/4);
+		PPShader.SetUniform1f("GammaTestPattern", "uInvGamma", 1.0/vid_gamma);
+		PPShader.SetUniform1f("GammaTestPattern", "uWhitePoint", vid_whitepoint);
+		PPShader.SetUniform1f("GammaTestPattern", "uBlackPoint", vid_blackpoint);
+		PPShader.SetEnabled("GammaTestPattern", true);
+		Screen.DrawText(NewSmallFont, Font.CR_CYAN, x, y,
+						"Adjust until this looks like\n a uniform Gray color.",
+						DTA_CleanNoMove_1, true);
+		DontDim = true;
+		DontBlur = true;
 
-		if (mDesc.mSelectedItem >= 0)
-		{
-			OptionMenuItem li = mDesc.mItems[mDesc.mSelectedItem];
-			if (li && (li == mylist[0] || li == mylist[1] || li == mylist[2]))
-			{
-				int x = MARGIN;
-				int y = MARGIN + screen.GetHeight()/4 - 7 * NewSmallFont.GetHeight();
-				PPShader.SetUniform1i("GammaTestPattern", "uXmin", MARGIN);
-				PPShader.SetUniform1i("GammaTestPattern", "uXmax", Screen.GetWidth()/4 + MARGIN);
-				PPShader.SetUniform1i("GammaTestPattern", "uYmin", MARGIN + Screen.GetHeight()/2);
-				PPShader.SetUniform1i("GammaTestPattern", "uYmax", MARGIN + 3*Screen.GetHeight()/4);
-				PPShader.SetUniform1f("GammaTestPattern", "uInvGamma", 1.0/vid_gamma);
-				PPShader.SetUniform1f("GammaTestPattern", "uWhitePoint", vid_whitepoint);
-				PPShader.SetUniform1f("GammaTestPattern", "uBlackPoint", vid_blackpoint);
-				PPShader.SetEnabled("GammaTestPattern", true);
-				Screen.DrawText(NewSmallFont, Font.CR_CYAN, x, y,
-								"Adjust until this looks like\n a uniform Gray color.",
-								DTA_CleanNoMove_1, true);
-				DontDim = true;
-				DontBlur = true;
-			}
-			else
-			{
-				DontDim = mDesc.mDontDim;
-				DontBlur = mDesc.mDontBlur;
-				PPShader.SetEnabled("GammaTestPattern", false);
-			}
-		}
 		Super.Drawer();
 	}
 
@@ -105,14 +83,4 @@ class VideoOptions : OptionMenu
 		}
 		return Super.MenuEvent(mkey, fromcontroller);
 	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-class VideoOptionsSimple : VideoOptions
-{
 }

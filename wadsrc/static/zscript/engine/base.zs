@@ -975,8 +975,12 @@ struct StringStruct native unsafe(internal)
 	native String MakeLower() const;
 	native static int CharUpper(int ch);
 	native static int CharLower(int ch);
+
+	native bool IsInt() const;
+	native bool IsDouble() const;
 	native int ToInt(int base = 0) const;
 	native double ToDouble() const;
+
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
 	native void AppendCharacter(int c);
 	native void DeleteLastCharacter();

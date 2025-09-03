@@ -6,6 +6,7 @@
 
 class MenuItemBase : Object native ui version("2.4")
 {
+	protected native string mTooltip;
 	protected native double mXpos, mYpos;
 	protected native Name mAction;
 	native int mEnabled;
@@ -37,6 +38,7 @@ class MenuItemBase : Object native ui version("2.4")
 	virtual int GetIndent() { return 0; }
 	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
 
+	string GetTooltip() const { return mTooltip; }
 	void OffsetPositionY(double ydelta) { mYpos += ydelta; }
 	double GetY() { return mYpos; }
 	double GetX() { return mXpos; }

@@ -124,6 +124,9 @@ class ListMenu : Menu
 		{
 			mDesc.mItems[i].OnMenuCreated();
 		}
+
+		if (mDesc.mSelectedItem >= 0)
+			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 	}
 
 	//=============================================================================
@@ -162,6 +165,7 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
+					UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem]);
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -171,6 +175,7 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
+					UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem]);
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -200,6 +205,7 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
+			else UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem]);
 			MenuSound("menu/cursor");
 			return true;
 
@@ -211,6 +217,7 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
+			else UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem]);
 			MenuSound("menu/cursor");
 			return true;
 
@@ -274,6 +281,7 @@ class ListMenu : Menu
 							//MenuSound("menu/cursor");
 						}
 						mDesc.mSelectedItem = i;
+						UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem]);
 						mDesc.mItems[i].MouseEvent(type, x, y);
 						return true;
 					}
@@ -281,6 +289,7 @@ class ListMenu : Menu
 			}
 		}
 		mDesc.mSelectedItem = -1;
+		UpdateTooltip(null);
 		return Super.MouseEvent(type, x, y);
 	}
 

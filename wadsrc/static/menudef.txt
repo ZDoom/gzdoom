@@ -369,6 +369,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
+	Submenu "$OPTMNU_ACCESSIBILITY",	"AccessibilityOptions"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
@@ -2339,6 +2340,27 @@ OptionMenu ModReplayerOptions protected
 	StaticText ""
 	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"
+ }
+ 
+ /*=======================================
+ *
+ * Accessibility Menu
+ *
+ *=======================================*/
+ 
+ OptionMenu AccessibilityOptions protected
+ {
+	Title "$ACCMNU_TITLE"
+	
+	StaticText "$ACCMNU_TOOLTIP"
+	Slider "$ACCMNU_TOOLTIP_LINES", "m_tooltip_lines", 1, 4, 1, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_SPEED", "m_tooltip_speed", 1.0, 5.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_DELAY", "m_tooltip_delay", 3.0, 15.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Option "$ACCMNU_TOOLTIP_CAP", "m_tooltip_capwidth", "OnOff"
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
  }
 
 /*=======================================

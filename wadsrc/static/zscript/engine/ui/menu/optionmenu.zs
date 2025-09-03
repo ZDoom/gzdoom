@@ -120,6 +120,10 @@ class OptionMenu : Menu
 		DontBlur = desc.mDontBlur;
 		AnimatedTransition = desc.mAnimatedTransition;
 		Animated = desc.mAnimated;
+		mTooltipFont = NewConsoleFont;
+		mCurrentTooltip = "";
+		mTooltipScrollTimer = m_tooltip_delay;
+		mTooltipScrollOffset = 0.0;
 
 		ScrollSound = ! Cvar.FindCVar("silence_menu_scroll").getInt();
 		HoverSound = ! Cvar.FindCVar("silence_menu_hover").getInt();
@@ -150,6 +154,9 @@ class OptionMenu : Menu
 		{
 			mDesc.mItems[i].OnMenuCreated();
 		}
+
+		if (mDesc.mSelectedItem >= 0)
+			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 	}
 
 
@@ -263,6 +270,7 @@ class OptionMenu : Menu
 				if (firstLabelCharacter == key)
 				{
 					mDesc.mSelectedItem = index;
+					UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 					break;
 				}
 			}
@@ -304,6 +312,7 @@ class OptionMenu : Menu
 				mDesc.mSelectedItem = FirstSelectable();
 			}
 
+			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 			return mDesc.mSelectedItem - startedAt;
 		}
 
@@ -446,6 +455,7 @@ class OptionMenu : Menu
 			}
 		}
 
+		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 		return mDesc.mSelectedItem - startedAt;
 	}
 
@@ -533,6 +543,7 @@ class OptionMenu : Menu
 			}
 		}
 
+		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 		return mDesc.mSelectedItem - startedAt;
 	}
 
@@ -643,7 +654,7 @@ class OptionMenu : Menu
 						if (i != mDesc.mSelectedItem)
 						{
 							mDesc.mSelectedItem = i;
-
+							UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
 							if (HoverSound) MenuSound ("menu/cursor");
 						}
 						mDesc.mItems[i].MouseEvent(type, x, y);
@@ -658,6 +669,7 @@ class OptionMenu : Menu
 		}
 
 		mDesc.mSelectedItem = -1;
+		UpdateTooltip(null);
 		return Super.MouseEvent(type, x, y);
 	}
 
@@ -728,8 +740,10 @@ class OptionMenu : Menu
 
 		int indent = GetIndent();
 
+		ScreenArea box;
+		GetTooltipArea(box);
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
-		LastRow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
+		LastRow = box.y - OptionHeight() * CleanYfac_1;
 		int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
 		MaxItems = (LastRow - y) / rowheight + 1;
 

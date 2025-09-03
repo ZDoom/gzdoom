@@ -811,14 +811,14 @@ void CalcFps()
 {
 	static uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastTic = 0;
 
-	uint64_t ms = screen->FrameTime / i_timescale;
-	uint64_t howlong = ms - LastMS;
+	uint64_t ms = screen->FrameTime;
+	uint64_t howlong = (ms - LastMS) / i_timescale;
 	if ((signed)howlong > 0) // do this only once per frame.
 	{
 		uint32_t thisSec = (uint32_t)(ms / 1000);
 		if (LastSec < thisSec)
 		{
-			LastFPS = FrameCount / (thisSec - LastSec);
+			LastFPS = FrameCount / (thisSec - LastSec) * i_timescale;
 			LastSec = thisSec;
 			FrameCount = 0;
 		}

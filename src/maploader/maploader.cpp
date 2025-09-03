@@ -5,6 +5,7 @@
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2018 Christoph Oelckers
 // Copyright 2010 James Haley
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -93,6 +94,14 @@ enum
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
+
+FARG(blockmap, "Configuration", "Regenerates the map's BLOCKMAP.", "",
+	"Causes " GAMENAME " to ignore all the BLOCKMAP information a map provides and generate it"
+	" instead. This is equivalent to +set genblockmap 1.");
+FARG(enablelightmaps, "", "", "",
+	"");
+
+EXTERN_FARG(xlat);
 
 inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int *numthings)
 {
@@ -2593,7 +2602,7 @@ void MapLoader::LoadBlockMap (MapData * map)
 
 	if (ForceNodeBuild || genblockmap ||
 		count/2 >= 0x10000 || count == 0 ||
-		Args->CheckParm("-blockmap")
+		Args->CheckParm(FArg_blockmap)
 		)
 	{
 		DPrintf (DMSG_SPAMMY, "Generating BLOCKMAP\n");
@@ -2963,7 +2972,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		else
 		{
 			// Has the user overridden the game's default translator with a commandline parameter?
-			translator = Args->CheckValue("-xlat");
+			translator = Args->CheckValue(FArg_xlat);
 			if (translator == nullptr)
 			{
 				// Use the game's default.
@@ -3356,7 +3365,7 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LPWidth = 0;
 	Level->LPHeight = 0;
 
-	if (!Args->CheckParm("-enablelightmaps"))
+	if (!Args->CheckParm(FArg_enablelightmaps))
 		return;		// this feature is still too early WIP to allow general access
 
 	if (!map->Size(ML_LIGHTMAP))

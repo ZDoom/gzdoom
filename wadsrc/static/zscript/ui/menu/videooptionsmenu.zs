@@ -42,7 +42,6 @@ class VideoOptions : OptionMenu
 {
 	const MARGIN = 20;
 	OptionMenuItem mylist[3];
-	TextureID sampletex;
 	bool once;
 
 	//=============================================================================
@@ -59,20 +58,26 @@ class VideoOptions : OptionMenu
 			mylist[0] = GetItem('vid_fixgamma');
 			mylist[1] = GetItem('vid_blackpoint');
 			mylist[2] = GetItem('vid_whitepoint');
-			sampletex = TexMan.CheckForTexture("GAMMA1"); // Replace with whatever texture lump from gzdoom.pk3
 		}
 
-		if (sampletex && mDesc.mSelectedItem >= 0)
+		if (mDesc.mSelectedItem >= 0)
 		{
 			OptionMenuItem li = mDesc.mItems[mDesc.mSelectedItem];
 			if (li && (li == mylist[0] || li == mylist[1] || li == mylist[2]))
 			{
 				int x = MARGIN;
-				int y = MARGIN + screen.GetHeight()/4;
-				int xsize, ysize;
-				[xsize, ysize] = TexMan.GetSize(sampletex);
-				screen.DrawTexture(sampletex, false, x, y, DTA_DestWidth, screen.GetWidth()/4,
-								   DTA_DestHeight, screen.GetWidth()*ysize/4/xsize);
+				int y = MARGIN + screen.GetHeight()/4 - 7 * NewSmallFont.GetHeight();
+				PPShader.SetUniform1i("GammaTestPattern", "uXmin", MARGIN);
+				PPShader.SetUniform1i("GammaTestPattern", "uXmax", Screen.GetWidth()/4 + MARGIN);
+				PPShader.SetUniform1i("GammaTestPattern", "uYmin", MARGIN + Screen.GetHeight()/2);
+				PPShader.SetUniform1i("GammaTestPattern", "uYmax", MARGIN + 3*Screen.GetHeight()/4);
+				PPShader.SetUniform1f("GammaTestPattern", "uInvGamma", 1.0/vid_gamma);
+				PPShader.SetUniform1f("GammaTestPattern", "uWhitePoint", vid_whitepoint);
+				PPShader.SetUniform1f("GammaTestPattern", "uBlackPoint", vid_blackpoint);
+				PPShader.SetEnabled("GammaTestPattern", true);
+				Screen.DrawText(NewSmallFont, Font.CR_CYAN, x, y,
+								"Adjust until this looks like\n a uniform Gray color.",
+								DTA_CleanNoMove_1, true);
 				DontDim = true;
 				DontBlur = true;
 			}
@@ -80,9 +85,25 @@ class VideoOptions : OptionMenu
 			{
 				DontDim = mDesc.mDontDim;
 				DontBlur = mDesc.mDontBlur;
+				PPShader.SetEnabled("GammaTestPattern", false);
 			}
 		}
 		Super.Drawer();
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		if (mkey == MKEY_Back)
+		{
+			PPShader.SetEnabled("GammaTestPattern", false);
+		}
+		return Super.MenuEvent(mkey, fromcontroller);
 	}
 }
 

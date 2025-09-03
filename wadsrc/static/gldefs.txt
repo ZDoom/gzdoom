@@ -1,5 +1,12 @@
-material GAMMA1
+HardwareShader PostProcess Screen
 {
-	Shader "shaders/glsl/gammatest.fp"
-	// define DITHERTRANS // As a test
+	Name "GammaTestPattern"
+	Shader "shaders/glsl/gammatest.fp" 330
+	Uniform float uInvGamma
+	Uniform float uWhitePoint
+	Uniform float uBlackPoint
+	Uniform int uXmin
+	Uniform int uXmax
+	Uniform int uYmin
+	Uniform int uYmax
 }

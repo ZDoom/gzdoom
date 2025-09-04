@@ -41,6 +41,8 @@
 #include "i_interface.h"
 #include "printf.h"
 #include "version.h"
+#include "menustate.h"
+#include "menu.h"
 
 #define NUMSCALEMODES countof(vScaleTable)
 extern bool setsizeneeded;
@@ -195,8 +197,19 @@ CUSTOM_CVAR(Bool, vid_cropaspect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	setsizeneeded = true;
 }
 
+static bool IsVideoMenuActive()
+{
+	if (menuactive != MENU_Off)
+		return CurrentMenu->IsKindOf("VideoOptions");
+	else
+		return false;
+}
+
 bool ViewportLinearScale()
 {
+	if (IsVideoMenuActive())
+		return false;
+
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	// always use linear if supersampling
@@ -212,6 +225,9 @@ bool ViewportLinearScale()
 
 int ViewportScaledWidth(int width, int height)
 {
+	if (IsVideoMenuActive())
+		return width;
+
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	refresh_minimums();
@@ -225,6 +241,9 @@ int ViewportScaledWidth(int width, int height)
 
 int ViewportScaledHeight(int width, int height)
 {
+	if (IsVideoMenuActive())
+		return height;
+
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
@@ -237,6 +256,9 @@ int ViewportScaledHeight(int width, int height)
 
 float ViewportPixelAspect()
 {
+	if (IsVideoMenuActive())
+		return 1.0;
+
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	// hack - use custom scaling if in "custom" mode

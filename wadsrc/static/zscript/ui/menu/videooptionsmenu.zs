@@ -54,14 +54,14 @@ class VideoOptions : OptionMenu
 		int y = MARGIN + screen.GetHeight()/4 - 7 * NewSmallFont.GetHeight();
 		PPShader.SetUniform1i("GammaTestPattern", "uXmin", MARGIN);
 		PPShader.SetUniform1i("GammaTestPattern", "uXmax", Screen.GetWidth()/4 + MARGIN);
-		PPShader.SetUniform1i("GammaTestPattern", "uYmin", MARGIN + Screen.GetHeight()/2);
-		PPShader.SetUniform1i("GammaTestPattern", "uYmax", MARGIN + 3*Screen.GetHeight()/4);
+		PPShader.SetUniform1i("GammaTestPattern", "uYmin", Screen.GetHeight()/4 - MARGIN);
+		PPShader.SetUniform1i("GammaTestPattern", "uYmax", 3*Screen.GetHeight()/4 + MARGIN);
 		PPShader.SetUniform1f("GammaTestPattern", "uInvGamma", 1.0/vid_gamma);
 		PPShader.SetUniform1f("GammaTestPattern", "uWhitePoint", vid_whitepoint);
 		PPShader.SetUniform1f("GammaTestPattern", "uBlackPoint", vid_blackpoint);
 		PPShader.SetEnabled("GammaTestPattern", true);
 		Screen.DrawText(NewSmallFont, Font.CR_CYAN, x, y,
-						"Adjust until this looks like\n a uniform Gray color.",
+						"Adjust until this looks like\na uniform Gray color.",
 						DTA_CleanNoMove_1, true);
 		DontDim = true;
 		DontBlur = true;

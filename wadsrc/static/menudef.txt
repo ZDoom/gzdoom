@@ -1025,13 +1025,15 @@ OptionMenu "ImageAdjustMenu" protected
 	Title "$DSPLYMNU_IMAGEADJUST"
 	Class "VideoOptions"
 
-	StaticText "Adjust to correct image for your monitor"
+	StaticText "From a normal viewing distance, adjust these sliders.", "Cyan"
+	StaticText "Upscaling/Supersampling may result in incorrect output.", "Cyan"
+	StaticText "Please disable them before adjusting.", "Cyan"
+	StaticText ""
 	Slider "$DSPLYMNU_GAMMA",		"vid_fixgamma",		-0.5,	1.0,	0.05,	2
 	Slider "$DSPLYMNU_BLACKPOINT",	"vid_blackpoint",	0.0,	0.25,	0.01,	2
 	Slider "$DSPLYMNU_WHITEPOINT",	"vid_whitepoint",	0.75,	1.0,	0.01,	2
-	StaticText " "
-	StaticText "Adjust to correct image to your taste"
-	Slider "$DSPLYMNU_BRIGHTNESS",	"vid_brightness",	-0.8,	0.8,	0.05,	2
+	StaticText ""
+	// Slider "$DSPLYMNU_BRIGHTNESS",	"vid_brightness",	-0.8,	0.8,	0.05,	2
 	Slider "$DSPLYMNU_CONTRAST",	"vid_contrast",		0.1,	3.0,	0.1,	1
 	Slider "$DSPLYMNU_SATURATION",	"vid_saturation",	-3.0,	3.0,	0.25,	2
 }

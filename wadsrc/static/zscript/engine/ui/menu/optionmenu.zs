@@ -495,21 +495,15 @@ class OptionMenu : Menu
 			return 0;
 		}
 
+		int lastItem = LastVisibleItem();
+		mDesc.mScrollPos = min(max(0, mDesc.mScrollPos + lines), lastItem);
+
 		if (lines < 0) // up
 		{
-			mDesc.mScrollPos += lines;
-
-			// backtrack if we overshot
-			if (mDesc.mScrollPos < 0)
-			{
-				mDesc.mScrollPos = 0;
-			}
-
 			// ensure cursor is visible (if possible)
-			int lastItem = LastVisibleItem();
 			int lastSelectable = -1;
 			int visible = 0;
-			for (int i = mDesc.mScrollPos; visible <= MaxItems && i < lastItem; i++)
+			for (int i = mDesc.mScrollPos; visible < MaxItems && i <= lastItem; i++)
 			{
 				if (!mDesc.mItems[i].Visible()) continue;
 				visible++;
@@ -523,8 +517,6 @@ class OptionMenu : Menu
 		}
 		else if (lines > 0) // down
 		{
-			mDesc.mScrollPos += lines;
-
 			// backtrack if we overshot
 			int visible;
 			int MinItems = MaxItems - OverScroll;
@@ -732,6 +724,7 @@ class OptionMenu : Menu
 	//=============================================================================
 	override void Drawer ()
 	{
+
 		int lastVisible;
 		bool drawCanScrollDown;
 		int y = mDesc.mPosition;
@@ -797,6 +790,7 @@ class OptionMenu : Menu
 		{
 			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
 		}
+
 		Super.Drawer();
 	}
 

@@ -221,7 +221,8 @@ void ZoneHeap::reset(Zone* zone) noexcept {
   }
 
   // Zero the entire class and initialize to the given `zone`.
-  ::memset(this, 0, sizeof(*this));
+  _dynamicBlocks = nullptr;
+  ::memset(_slots, 0, sizeof(_slots));
   _zone = zone;
 }
 

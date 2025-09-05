@@ -734,10 +734,18 @@ public:
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE FuncDetail() noexcept { reset(); }
-  ASMJIT_INLINE FuncDetail(const FuncDetail& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
-  }
+  ASMJIT_INLINE FuncDetail() noexcept:
+    _callConv{},
+    _argCount{},
+    _retCount{},
+    _usedRegs{},
+    _argStackSize{},
+    _rets{},
+    _args{}
+  {}
+
+  ASMJIT_INLINE FuncDetail(const FuncDetail& other) noexcept = default;
+  ASMJIT_INLINE FuncDetail& operator=(const FuncDetail& other) noexcept = default;
 
   // --------------------------------------------------------------------------
   // [Init / Reset]
@@ -745,7 +753,7 @@ public:
 
   //! Initialize this `FuncDetail` to the given signature.
   ASMJIT_API Error init(const FuncSignature& sign);
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void reset() noexcept { *this = FuncDetail{}; }
 
   // --------------------------------------------------------------------------
   // [Accessors - Calling Convention]
@@ -878,20 +886,23 @@ struct FuncFrameInfo {
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE FuncFrameInfo() noexcept { reset(); }
+  ASMJIT_INLINE FuncFrameInfo() noexcept:
+    _attributes{},
+    _dirtyRegs{},
+    _stackFrameAlignment{},
+    _callFrameAlignment{},
+    _stackArgsRegId{Globals::kInvalidRegId},
+    _stackFrameSize{},
+    _callFrameSize{}
+  {}
 
-  ASMJIT_INLINE FuncFrameInfo(const FuncFrameInfo& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
-  }
+  ASMJIT_INLINE FuncFrameInfo(const FuncFrameInfo& other) noexcept = default;
 
   // --------------------------------------------------------------------------
   // [Init / Reset]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE void reset() noexcept {
-    ::memset(this, 0, sizeof(*this));
-    _stackArgsRegId = Globals::kInvalidRegId;
-  }
+  ASMJIT_INLINE void reset() noexcept { *this = FuncFrameInfo{}; }
 
   // --------------------------------------------------------------------------
   // [Accessors]
@@ -1180,19 +1191,18 @@ public:
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  explicit ASMJIT_INLINE FuncArgsMapper(const FuncDetail* fd) noexcept { reset(fd); }
-  ASMJIT_INLINE FuncArgsMapper(const FuncArgsMapper& other) noexcept {
-    ::memcpy(this, &other, sizeof(*this));
-  }
+  explicit ASMJIT_INLINE FuncArgsMapper(const FuncDetail* fd = nullptr) noexcept:
+    _funcDetail(fd),
+    _args{}
+  {}
+
+  ASMJIT_INLINE FuncArgsMapper(const FuncArgsMapper& other) noexcept = default;
 
   // --------------------------------------------------------------------------
   // [Reset]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE void reset(const FuncDetail* fd = nullptr) noexcept {
-    _funcDetail = fd;
-    ::memset(_args, 0, sizeof(_args));
-  }
+  ASMJIT_INLINE void reset(const FuncDetail* fd = nullptr) noexcept { *this = FuncArgsMapper(fd); }
 
   // --------------------------------------------------------------------------
   // [Accessors]

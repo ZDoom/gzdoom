@@ -495,7 +495,7 @@ class OptionMenu : Menu
 			return 0;
 		}
 
-		if (lines < 0) // base case up
+		if (lines < 0) // up
 		{
 			mDesc.mScrollPos += lines;
 
@@ -521,7 +521,7 @@ class OptionMenu : Menu
 				mDesc.mSelectedItem = lastSelectable;
 			}
 		}
-		else if (lines > 0) // base case down
+		else if (lines > 0) // down
 		{
 			mDesc.mScrollPos += lines;
 
@@ -778,7 +778,8 @@ class OptionMenu : Menu
 					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
 				}
 			}
-			y += fontheight;
+
+			y += rowheight;
 		}
 
 		lastVisible = LastVisibleItem();

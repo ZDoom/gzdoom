@@ -384,7 +384,6 @@ OptionMenu "OptionsMenu" protected
 	Command "$OPTMNU_OPENCONFIG",		"openconfig"
 	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
 	Command "$OPTMNU_OPENSAVES",		"opensaves"
-	StaticText " "
 }
 
 //-------------------------------------------------------------------------------------------

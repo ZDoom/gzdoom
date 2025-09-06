@@ -1,9 +1,10 @@
 /*
-** optionmenu.cpp
+** optionmenu.zs
 ** Handler class for the option menus and associated items
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -120,6 +121,7 @@ class OptionMenu : Menu
 		DontBlur = desc.mDontBlur;
 		AnimatedTransition = desc.mAnimatedTransition;
 		Animated = desc.mAnimated;
+		MaxItems = 1;
 
 		ScrollSound = ! Cvar.FindCVar("silence_menu_scroll").getInt();
 		HoverSound = ! Cvar.FindCVar("silence_menu_hover").getInt();
@@ -169,7 +171,6 @@ class OptionMenu : Menu
 		return NULL;
 	}
 
-
 	//=============================================================================
 	//
 	//
@@ -203,6 +204,23 @@ class OptionMenu : Menu
 			i--;
 		}
 		while (i >= 0 && !mDesc.mItems[i].Visible());
+		return i;
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	int LastSelectableItem()
+	{
+		int i = mDesc.mItems.Size();
+		do
+		{
+			i--;
+		}
+		while (i >= 0 && !(mDesc.mItems[i].Selectable() && mDesc.mItems[i].Visible()));
 		return i;
 	}
 
@@ -342,9 +360,8 @@ class OptionMenu : Menu
 			if (mDesc.mSelectedItem != startedAt)
 			{
 				int viewTop = mDesc.mScrollTop + mDesc.mScrollPos;
-				int lastItem = LastVisibleItem();
 
-				if (startedAt == FirstSelectable() && mDesc.mSelectedItem == lastItem)
+				if (startedAt == FirstSelectable() && mDesc.mSelectedItem == LastSelectableItem())
 				{
 					int y = mDesc.mPosition;
 					if (y <= 0) y = DrawCaption(mDesc.mTitle, -y, false);
@@ -357,7 +374,7 @@ class OptionMenu : Menu
 
 					int newTopIndex = 0;
 					int visibleItemsOnPage = 0;
-					for (int i = lastItem; i >= 0; i--)
+					for (int i = LastVisibleItem(); i >= 0; i--)
 					{
 						if (mDesc.mItems[i].Visible())
 						{
@@ -417,7 +434,7 @@ class OptionMenu : Menu
 
 			if (mDesc.mSelectedItem != startedAt)
 			{
-				if (startedAt == LastVisibleItem())
+				if (startedAt == LastSelectableItem())
 				{
 					mDesc.mScrollPos = 0;
 				}
@@ -449,6 +466,36 @@ class OptionMenu : Menu
 		return mDesc.mSelectedItem - startedAt;
 	}
 
+	void ClampCursor()
+	{
+		int first = FirstSelectable();
+		int last = LastSelectableItem();
+
+		mDesc.mSelectedItem = min(max(first, mDesc.mSelectedItem), last);
+		if (mDesc.mSelectedItem < 0) mDesc.mSelectedItem = 0;
+
+		int firstSelectable = -1;
+		int lastSelectable = -1;
+		int visible = 0;
+		for (int i = mDesc.mScrollPos; visible < MaxItems && i <= last; i++)
+		{
+			if (!mDesc.mItems[i].Visible()) continue;
+			visible++;
+			if (!mDesc.mItems[i].Selectable()) continue;
+			lastSelectable = i;
+			if (firstSelectable == -1) firstSelectable = i;
+		}
+
+		if (firstSelectable != -1 && mDesc.mSelectedItem < firstSelectable)
+		{
+			mDesc.mSelectedItem = firstSelectable;
+		}
+		else if (lastSelectable != -1 && mDesc.mSelectedItem > lastSelectable)
+		{
+			mDesc.mSelectedItem = lastSelectable;
+		}
+	}
+
 	//=============================================================================
 	//
 	// Moves the viewport by the specified number of lines
@@ -478,36 +525,15 @@ class OptionMenu : Menu
 			return 0;
 		}
 
-		if (lines < 0) // base case up
+		mDesc.mScrollPos = min(max(0, mDesc.mScrollPos + lines), LastVisibleItem());
+
+		if (lines < 0) // up
 		{
-			mDesc.mScrollPos += lines;
-
-			// backtrack if we overshot
-			if (mDesc.mScrollPos < 0)
-			{
-				mDesc.mScrollPos = 0;
-			}
-
 			// ensure cursor is visible (if possible)
-			int lastItem = LastVisibleItem();
-			int lastSelectable = -1;
-			int visible = 0;
-			for (int i = mDesc.mScrollPos; visible <= MaxItems && i < lastItem; i++)
-			{
-				if (!mDesc.mItems[i].Visible()) continue;
-				visible++;
-				if (!mDesc.mItems[i].Selectable()) continue;
-				lastSelectable = i;
-			}
-			if (cursor && lastSelectable != -1 && mDesc.mSelectedItem > lastSelectable)
-			{
-				mDesc.mSelectedItem = lastSelectable;
-			}
+			if (cursor) ClampCursor();
 		}
-		else if (lines > 0) // base case down
+		else if (lines > 0) // down
 		{
-			mDesc.mScrollPos += lines;
-
 			// backtrack if we overshot
 			int visible;
 			int MinItems = MaxItems - OverScroll;
@@ -530,6 +556,7 @@ class OptionMenu : Menu
 					mDesc.mSelectedItem = temp + i;
 					break;
 				}
+				ClampCursor();
 			}
 		}
 
@@ -715,6 +742,7 @@ class OptionMenu : Menu
 	//=============================================================================
 	override void Drawer ()
 	{
+
 		int lastVisible;
 		bool drawCanScrollDown;
 		int y = mDesc.mPosition;
@@ -731,7 +759,11 @@ class OptionMenu : Menu
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
 		LastRow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
 		int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
-		MaxItems = (LastRow - y) / rowheight + 1;
+
+		int _MaxItems = (LastRow - y) / rowheight + 1;
+		bool resized = _MaxItems != MaxItems;
+		MaxItems = _MaxItems;
+		if (resized) ClampCursor();
 
 		int i;
 		int lastDrawnItemIndex = -1;
@@ -761,7 +793,8 @@ class OptionMenu : Menu
 					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
 				}
 			}
-			y += fontheight;
+
+			y += rowheight;
 		}
 
 		lastVisible = LastVisibleItem();
@@ -779,6 +812,7 @@ class OptionMenu : Menu
 		{
 			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
 		}
+
 		Super.Drawer();
 	}
 

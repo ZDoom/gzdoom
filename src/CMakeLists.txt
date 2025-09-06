@@ -271,7 +271,7 @@ if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC" )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC" )
 	endif()
-	
+
 	if(${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
 		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ljemalloc")
 	endif()
@@ -317,8 +317,8 @@ option(BUILD_FLATPAK "Enable Flatpak-specific build options" OFF)
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
-	COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/tools/updaterevision/UpdateRevision.cmake" src/gitinfo.h
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/tools/updaterevision/UpdateRevision.cmake" "${CMAKE_BINARY_DIR}/gitinfo.h"
+	WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
 # required libraries
@@ -412,7 +412,7 @@ if (MSVC AND ${TARGET_ARCHITECTURE} MATCHES "arm")
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/i_crash_arm.cpp )
 	add_definitions( -DNO_SSE -D__ARM__ -DRAPIDJSON_ENDIAN=RAPIDJSON_LITTLEENDIAN)
 endif()
-	
+
 set( PLAT_POSIX_SOURCES
 	posix/i_steam.cpp
 	common/platform/posix/i_system_posix.cpp )
@@ -725,7 +725,7 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_weapon.cpp
 	common/utility/matrix.cpp
 )
-	
+
 #Vulkan stuff must go into a separate list because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
 	common/rendering/vulkan/system/vk_renderdevice.cpp
@@ -1000,7 +1000,7 @@ set (PCH_SOURCES
 	common/fonts/font.cpp
 	common/fonts/hexfont.cpp
 	common/fonts/v_font.cpp
-	common/fonts/v_text.cpp	
+	common/fonts/v_text.cpp
 	common/textures/hw_ihwtexture.cpp
 	common/textures/hw_material.cpp
 	common/textures/bitmap.cpp
@@ -1062,7 +1062,7 @@ set (PCH_SOURCES
 	common/cutscenes/movieplayer.cpp
 	common/cutscenes/screenjob.cpp
 	common/utility/engineerrors.cpp
-	
+
 	common/utility/gitinfo.cpp
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
@@ -1113,7 +1113,7 @@ set (PCH_SOURCES
 	common/menu/menudef.cpp
 	common/menu/savegamemanager.cpp
 	common/statusbar/base_sbar.cpp
-	
+
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
 	common/rendering/r_thread.cpp
@@ -1268,6 +1268,8 @@ set( GAME_NONPCH_SOURCES ${GAME_SOURCES} )
 list( REMOVE_ITEM GAME_NONPCH_SOURCES ${PCH_SOURCES} )
 
 add_executable( zdoom WIN32 MACOSX_BUNDLE ${GAME_SOURCES} )
+
+target_include_directories( zdoom PRIVATE ${CMAKE_BINARY_DIR} )
 
 target_precompile_headers( zdoom PRIVATE g_pch.h )
 

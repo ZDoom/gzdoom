@@ -84,20 +84,6 @@ function(query_repo_info)
 	ret_var(Hash)
 endfunction()
 
-# Although configure_file doesn't overwrite the file if the contents are the
-# same we can't easily observe that to change the status message.  This
-# function parses the existing file (if it exists) and puts the hash in
-# variable "OldHash"
-function(get_existing_hash File)
-	if(EXISTS "${File}")
-		file(STRINGS "${File}" OldHash LIMIT_COUNT 1)
-		if(OldHash)
-			string(SUBSTRING "${OldHash}" 3 -1 OldHash)
-			ret_var(OldHash)
-		endif()
-	endif()
-endfunction()
-
 function(main)
 	if(NOT CMAKE_ARGC EQUAL 4) # cmake -P UpdateRevision.cmake <OutputFile>
 		message("Usage: ${CMAKE_ARGV2} <path to gitinfo.h>")
@@ -106,6 +92,7 @@ function(main)
 	set(OutputFile "${CMAKE_ARGV3}")
 
 	get_filename_component(ScriptDir "${CMAKE_SCRIPT_MODE_FILE}" DIRECTORY)
+	get_filename_component(ProjectDir "${CMAKE_SOURCE_DIR}/.." ABSOLUTE)
 
 	query_repo_info()
 	if(NOT Hash)
@@ -115,14 +102,10 @@ function(main)
 		set(Timestamp "")
 	endif()
 
-	get_existing_hash("${OutputFile}")
-	if(Hash STREQUAL OldHash)
-		message("${OutputFile} is up to date at commit ${Tag}.")
-		return()
-	endif()
+	configure_file("${ScriptDir}/gitinfo.h.in" "${OutputFile}" @ONLY)
 
-	configure_file("${ScriptDir}/gitinfo.h.in" "${OutputFile}")
-	message("${OutputFile} updated to commit ${Tag}.")
+	file(RELATIVE_PATH RelativeFile "${ProjectDir}" "${OutputFile}")
+	message(STATUS "Revision ${RelativeFile}: ${Tag}")
 endfunction()
 
 main()

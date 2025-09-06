@@ -15,9 +15,33 @@ endmacro()
 # Populate variables "Hash", "Tag", and "Timestamp" with relevant information
 # from source repository.  If anything goes wrong return something in "Error."
 function(query_repo_info)
+	# are we git?
+	execute_process(
+		COMMAND git rev-parse --is-inside-work-tree
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		RESULT_VARIABLE is_git
+		OUTPUT_QUIET
+	)
+
 	if(DEFINED ENV{GIT_DESCRIBE})
+		# from env
 		set(Tag "$ENV{GIT_DESCRIBE}")
-	else()
+
+		if (is_git EQUAL "0")
+			message(STATUS "Version tag overridden by GIT_DESCRIBE env var")
+		endif()
+
+		# Extract hash from "...-gabcdef"
+		string(REGEX MATCH "-g([0-9a-fA-F]+)" match_result "${Tag}")
+		if(match_result)
+			set(Hash "${CMAKE_MATCH_1}")
+		else()
+			set(Hash "0000000")
+		endif()
+
+		string(TIMESTAMP Timestamp "%Y-%m-%d %H:%M:%S %z")
+	elseif(is_git EQUAL "0")
+		# from git
 		execute_process(
 			COMMAND git describe --tags --dirty=-m
 			RESULT_VARIABLE Error
@@ -25,26 +49,35 @@ function(query_repo_info)
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
+
+		if(NOT "${Error}" STREQUAL "0")
+			message(STATUS "No git tags found! Set version tag by setting GIT_DESCRIBE env var")
+			ret_var(Error)
+			return()
+		endif()
+
+		execute_process(
+			COMMAND git log -1 "--format=%ai;%H"
+			RESULT_VARIABLE Error
+			OUTPUT_VARIABLE CommitInfo
+			ERROR_QUIET
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+
 		if(NOT "${Error}" STREQUAL "0")
 			ret_var(Error)
 			return()
 		endif()
-	endif()
 
-	execute_process(
-		COMMAND git log -1 "--format=%ai;%H"
-		RESULT_VARIABLE Error
-		OUTPUT_VARIABLE CommitInfo
-		ERROR_QUIET
-		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-	if(NOT "${Error}" STREQUAL "0")
+		string(REPLACE ";" ";" CommitInfoList "${CommitInfo}")
+		list(GET CommitInfoList 0 Timestamp)
+		list(GET CommitInfoList 1 Hash)
+	else()
+		# helpful message
+		message(STATUS "Not a git repo! Set version tag by setting GIT_DESCRIBE env var")
 		ret_var(Error)
 		return()
 	endif()
-
-	list(GET CommitInfo 0 Timestamp)
-	list(GET CommitInfo 1 Hash)
 
 	ret_var(Tag)
 	ret_var(Timestamp)

@@ -67,6 +67,7 @@ public:
 	PClass *mClass = nullptr;
 	bool mProtected = false;
 	TArray<DMenuItemBase *> mItems;
+	FFont* mTooltipFont = nullptr;
 
 	size_t PropagateMark() override;
 };

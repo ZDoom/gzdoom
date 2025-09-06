@@ -122,7 +122,7 @@ class OptionMenu : Menu
 		AnimatedTransition = desc.mAnimatedTransition;
 		Animated = desc.mAnimated;
 		MaxItems = 1;
-		mTooltipFont = NewConsoleFont;
+		mTooltipFont = desc.mTooltipFont;
 		mCurrentTooltip = "";
 		mTooltipScrollTimer = m_tooltip_delay;
 		mTooltipScrollOffset = 0.0;
@@ -158,7 +158,7 @@ class OptionMenu : Menu
 		}
 
 		if (mDesc.mSelectedItem >= 0)
-			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 	}
 
 
@@ -288,7 +288,7 @@ class OptionMenu : Menu
 				if (firstLabelCharacter == key)
 				{
 					mDesc.mSelectedItem = index;
-					UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+					UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 					break;
 				}
 			}
@@ -330,7 +330,7 @@ class OptionMenu : Menu
 				mDesc.mSelectedItem = FirstSelectable();
 			}
 
-			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 			return mDesc.mSelectedItem - startedAt;
 		}
 
@@ -472,7 +472,7 @@ class OptionMenu : Menu
 			}
 		}
 
-		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 		return mDesc.mSelectedItem - startedAt;
 	}
 
@@ -570,7 +570,7 @@ class OptionMenu : Menu
 			}
 		}
 
-		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+		UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 		return mDesc.mSelectedItem - startedAt;
 	}
 
@@ -681,7 +681,7 @@ class OptionMenu : Menu
 						if (i != mDesc.mSelectedItem)
 						{
 							mDesc.mSelectedItem = i;
-							UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem]);
+							UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 							if (HoverSound) MenuSound ("menu/cursor");
 						}
 						mDesc.mItems[i].MouseEvent(type, x, y);
@@ -696,7 +696,7 @@ class OptionMenu : Menu
 		}
 
 		mDesc.mSelectedItem = -1;
-		UpdateTooltip(null);
+		UpdateTooltip("");
 		return Super.MouseEvent(type, x, y);
 	}
 

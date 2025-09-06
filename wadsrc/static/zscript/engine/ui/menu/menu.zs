@@ -191,7 +191,7 @@ class Menu : Object native ui version("2.4")
 	native string mCurrentTooltip;
 	native double mTooltipScrollTimer;
 	native double mTooltipScrollOffset;
-	native Font mTooltipFont;
+	native Font mTooltipFont; // This is here so generic menus can still use it.
 
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
@@ -328,7 +328,7 @@ class Menu : Object native ui version("2.4")
 	{
 		int xPad = 10 * CleanXFac;
 		int yPad = 5 * CleanYFac;
-		int textHeight = mTooltipFont.GetHeight() * m_tooltip_lines * CleanYFac;
+		int textHeight = mTooltipFont.GetHeight() * m_tooltip_lines * (m_tooltip_small ? CleanYFac_1 : CleanYFac);
 
 		int w = Screen.GetWidth();
 		int h = Screen.GetHeight();
@@ -347,9 +347,8 @@ class Menu : Object native ui version("2.4")
 			text.SetArea(body.x + xPad, body.y + yPad, body.width - xPad * 2, body.height - yPad * 2);
 	}
 
-	virtual void UpdateTooltip(MenuItemBase item)
+	virtual void UpdateTooltip(string tooltip)
 	{
-		string tooltip = item ? item.GetTooltip() : "";
 		if (tooltip == mCurrentTooltip)
 			return;
 
@@ -366,7 +365,22 @@ class Menu : Object native ui version("2.4")
 		ScreenArea box, text;
 		GetTooltipArea(box, text);
 
-		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(mCurrentTooltip), text.width / CleanXFac);
+		DrawTextureTags scaleType;
+		int textXScale, textYScale;
+		if (m_tooltip_small)
+		{
+			textXScale = CleanXFac_1;
+			textYScale = CleanYFac_1;
+			scaleType = DTA_CleanNoMove_1;
+		}
+		else
+		{
+			textXScale = CleanXFac;
+			textYScale = CleanYFac;
+			scaleType = DTA_CleanNoMove;
+		}
+
+		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(mCurrentTooltip), text.width / textXScale);
 		int maxOffset;
 		if (bl.Count() > m_tooltip_lines)
 		{
@@ -392,17 +406,18 @@ class Menu : Object native ui version("2.4")
 			}
 		}
 
-		Screen.Dim(0u, 0.5, box.x, box.y, box.width, box.height);
+		Screen.Dim(0u, m_tooltip_alpha, box.x, box.y, box.width, box.height);
 
 		let [cx, cy, cw, ch] = Screen.GetClipRect();
 		Screen.SetClipRect(text.x, text.y, text.width, text.height);
 
-		int height = mTooltipFont.GetHeight() * CleanYFac;
+		
+		int height = mTooltipFont.GetHeight() * textYScale;
 		int curY = text.y - int(mTooltipScrollOffset * height);
 		for (int i; i < bl.Count(); ++i)
 		{
-			int xPos = text.x + (text.width - bl.StringWidth(i) * CleanXFac) / 2;
-			Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, curY, bl.StringAt(i), DTA_CleanNoMove, true);
+			int xPos = text.x + (text.width - bl.StringWidth(i) * textXScale) / 2;
+			Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, curY, bl.StringAt(i), scaleType, true);
 			curY += height;
 		}
 
@@ -410,10 +425,10 @@ class Menu : Object native ui version("2.4")
 
 		if (mTooltipScrollOffset < maxOffset)
 		{
-			int xPos = box.x + box.width - mTooltipFont.StringWidth(".") * CleanXFac;
+			int xPos = box.x + box.width - mTooltipFont.StringWidth(".") * textXScale;
 			int yPos = text.y - height / 2;
 			for (int i = 0; i < 3; ++i)
-				Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, yPos + height / 3 * i, ".", DTA_CleanNoMove, true);
+				Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, yPos + height / 3 * i, ".", scaleType, true);
 		}
 	}
 
@@ -531,6 +546,7 @@ class MenuDescriptor : Object native ui version("2.4")
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
+	native Font mTooltipFont;
 
 	native static MenuDescriptor GetDescriptor(Name n);
 }

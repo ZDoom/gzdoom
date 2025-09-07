@@ -54,6 +54,7 @@ struct OptionValues native version("2.4")
 	native static String GetText(Name group, int index);
 	native static double GetValue(Name group, int index);
 	native static String GetTextValue(Name group, int index);
+	native static String GetTooltip(Name group, int index);
 }
 
 struct JoystickConfig native version("2.4")

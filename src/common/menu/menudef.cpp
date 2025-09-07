@@ -135,6 +135,23 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 	ACTION_RETURN_STRING(val);
 }
 
+DEFINE_ACTION_FUNCTION(FOptionValues, GetTooltip)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	PARAM_UINT(index);
+	FString val;
+	FOptionValues** pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		if (index < (*pGrp)->mValues.Size())
+		{
+			val = (*pGrp)->mValues[index].Tooltip;
+		}
+	}
+	ACTION_RETURN_STRING(val);
+}
+
 
 void DeinitMenus()
 {
@@ -904,6 +921,11 @@ static void ParseOptionValue(FScanner &sc)
 		sc.MustGetStringName(",");
 		sc.MustGetString();
 		pair.Text = strbin1(sc.String);
+		if (sc.CheckString(","))
+		{
+			sc.MustGetString();
+			pair.Tooltip = strbin1(sc.String);
+		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != nullptr && *pOld != nullptr) 
@@ -935,6 +957,11 @@ static void ParseOptionString(FScanner &sc)
 		sc.MustGetStringName(",");
 		sc.MustGetString();
 		pair.Text = strbin1(sc.String);
+		if (sc.CheckString(","))
+		{
+			sc.MustGetString();
+			pair.Tooltip = strbin1(sc.String);
+		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != nullptr && *pOld != nullptr) 

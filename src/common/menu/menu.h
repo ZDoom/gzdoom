@@ -293,6 +293,7 @@ struct FOptionValues
 		double Value;
 		FString TextValue;
 		FString Text;
+		FString Tooltip;
 	};
 
 	TArray<Pair> mValues;

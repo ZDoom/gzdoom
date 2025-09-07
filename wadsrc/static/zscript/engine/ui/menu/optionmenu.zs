@@ -94,6 +94,8 @@ class OptionMenuDescriptor : MenuDescriptor native
 
 class OptionMenu : Menu
 {
+	const OPTION_VALUE_TOOLTIP_DELAY = 1.0;
+
 	OptionMenuDescriptor mDesc;
 	bool CanScrollUp;
 	bool CanScrollDown;
@@ -106,6 +108,8 @@ class OptionMenu : Menu
 	bool HoverSound;
 	int OverScroll;
 	int OverScrollThreshold; // >= 0 : how much smaller a menu can be than the page to overscroll
+
+	double mOptionValueTooltipTime;
 
 	//=============================================================================
 	//
@@ -126,6 +130,7 @@ class OptionMenu : Menu
 		mCurrentTooltip = "";
 		mTooltipScrollTimer = m_tooltip_delay;
 		mTooltipScrollOffset = 0.0;
+		mOptionValueTooltipTime = OPTION_VALUE_TOOLTIP_DELAY;
 
 		ScrollSound = ! Cvar.FindCVar("silence_menu_scroll").getInt();
 		HoverSound = ! Cvar.FindCVar("silence_menu_hover").getInt();
@@ -161,6 +166,65 @@ class OptionMenu : Menu
 			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 	}
 
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
+	override void UpdateTooltip(string tooltip)
+	{
+		mOptionValueTooltipTime = OPTION_VALUE_TOOLTIP_DELAY;
+		Super.UpdateTooltip(tooltip);
+	}
+
+	virtual void DrawHoverTooltip(OptionMenuItemOptionBase selected, int indent, int y, int bottom)
+	{
+		if (!selected)
+			return;
+
+		string text = OptionValues.GetTooltip(selected.mValues, selected.GetSelection());
+		if (text.IsEmpty())
+			return;
+
+		mOptionValueTooltipTime = Max(mOptionValueTooltipTime - GetDeltaTime(), 0.0);
+		if (mOptionValueTooltipTime > 0.0)
+			return;
+
+		int xPad = 10 * CleanXFac_1;
+		int yPad = 5 * CleanYFac_1;
+		int textHeight = mTooltipFont.GetHeight() * CleanYFac_1;
+		
+		int xCap;
+		if (Screen.GetAspectRatio() > 16.0 / 9.0)
+			xCap = int(Screen.GetHeight() * (16.0 / 9.0));
+		else
+			xCap = Screen.GetWidth();
+		xCap -= 11 * CleanXFac_1;
+		
+		int width = xCap - indent;
+		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(text), (width - xPad * 2) / CleanXFac_1);
+		int height = textHeight * bl.Count() + yPad * 2;
+
+		int curY = y + OptionMenuSettings.mLinespacing * CleanYFac_1;
+		if (curY + height > bottom)
+		{
+			int oldY = curY;
+			curY = y - height;
+			if (curY < 0)
+				curY = oldY;
+		}
+
+		Screen.Dim(0u, 1.0, indent, curY, width, height);
+
+		curY += yPad;
+		int curX = indent + xPad;
+		for (int i; i < bl.Count(); ++i)
+		{
+			Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, curX, curY, bl.StringAt(i), DTA_CleanNoMove_1, true);
+			curY += textHeight;
+		}
+	}
 
 	//=============================================================================
 	//
@@ -773,12 +837,14 @@ class OptionMenu : Menu
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
 		LastRow = box.y - OptionHeight() * CleanYfac_1;
 		int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;
-
+		
 		int _MaxItems = (LastRow - y) / rowheight + 1;
 		bool resized = _MaxItems != MaxItems;
 		MaxItems = _MaxItems;
 		if (resized) ClampCursor();
 
+		int hover = -1;
+		int hoverY;
 		int i;
 		int lastDrawnItemIndex = -1;
 		for (i = 0; i < mDesc.mItems.Size() && y <= LastRow; i++)
@@ -802,6 +868,11 @@ class OptionMenu : Menu
 			int cur_indent = mDesc.mItems[i].Draw(mDesc, y, indent, isSelected);
 			if (cur_indent >= 0 && isSelected && mDesc.mItems[i].Selectable() && mDesc.mItems[i].Visible())
 			{
+				if (GetCurrentMenu() == self)
+				{
+					hover = i;
+					hoverY = y;
+				}
 				if (((MenuTime() % 8) < 6) || GetCurrentMenu() != self)
 				{
 					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
@@ -825,6 +896,10 @@ class OptionMenu : Menu
 		if (drawCanScrollDown)
 		{
 			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
+		}
+		if (hover >= 0)
+		{
+			DrawHoverTooltip(OptionMenuItemOptionBase(mDesc.mItems[hover]), indent + mDesc.mItems[hover].CursorSpace(), hoverY, box.y);
 		}
 
 		Super.Drawer();

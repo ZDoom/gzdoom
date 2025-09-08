@@ -28,7 +28,12 @@ void Joy_MapRumbleType(const FName sound, const FName idenifier);
 void Joy_ResetRumbleMapping();
 void Joy_ReadyRumbleMapping();
 void Joy_RumbleTick();
-void Joy_Rumble(const FName source, const struct Haptics data, double attenuation = 0);
+void Joy_Rumble(
+	const FName source, int tic_count,
+	double high_frequency, double low_frequency,
+	double left_trigger = 0, double right_trigger = 0,
+	double attenuation = 0
+);
 void Joy_Rumble(const FName identifier, double attenuation = 0);
 
 #endif

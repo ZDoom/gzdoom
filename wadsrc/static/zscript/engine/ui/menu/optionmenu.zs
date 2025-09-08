@@ -195,14 +195,19 @@ class OptionMenu : Menu
 		int yPad = 5 * CleanYFac_1;
 		int textHeight = mTooltipFont.GetHeight() * CleanYFac_1;
 		
-		int xCap;
+		int xCap, diff;
 		if (Screen.GetAspectRatio() > 16.0 / 9.0)
+		{
 			xCap = int(Screen.GetHeight() * (16.0 / 9.0));
+			diff = (Screen.GetWidth() - xCap) / 2;
+		}
 		else
+		{
 			xCap = Screen.GetWidth();
+		}
 		xCap -= 11 * CleanXFac_1;
 		
-		int width = xCap - indent;
+		int width = xCap - (indent - diff);
 		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(text), (width - xPad * 2) / CleanXFac_1);
 		int height = textHeight * bl.Count() + yPad * 2;
 

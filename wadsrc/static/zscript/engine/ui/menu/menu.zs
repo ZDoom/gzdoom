@@ -408,10 +408,11 @@ class Menu : Object native ui version("2.4")
 		}
 
 		Screen.Dim(0u, m_tooltip_alpha, box.x, box.y, box.width, box.height);
+		Color col = (int(255 * m_tooltip_alpha) << 24) | 0x404040;
+		Screen.DrawLineFrame(col, box.x, box.y, box.width, box.height, CleanXFac_1);
 
 		let [cx, cy, cw, ch] = Screen.GetClipRect();
 		Screen.SetClipRect(text.x, text.y, text.width, text.height);
-
 		
 		int height = mTooltipFont.GetHeight() * textYScale;
 		int curY = text.y - int(mTooltipScrollOffset * height);

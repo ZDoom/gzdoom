@@ -109,7 +109,10 @@ class OptionMenu : Menu
 	int OverScroll;
 	int OverScrollThreshold; // >= 0 : how much smaller a menu can be than the page to overscroll
 
-	double mOptionValueTooltipTime;
+	int mOptionValueTooltipSelected;
+	double mOptionValueTooltipTimer;
+	double mOptionValueTooltipScrollTimer;
+	double mOptionValueTooltipScrollOffset;
 
 	//=============================================================================
 	//
@@ -130,7 +133,10 @@ class OptionMenu : Menu
 		mCurrentTooltip = "";
 		mTooltipScrollTimer = m_tooltip_delay;
 		mTooltipScrollOffset = 0.0;
-		mOptionValueTooltipTime = OPTION_VALUE_TOOLTIP_DELAY;
+		mOptionValueTooltipSelected = -1;
+		mOptionValueTooltipTimer = OPTION_VALUE_TOOLTIP_DELAY;
+		mOptionValueTooltipScrollOffset = 0.0;
+		mOptionValueTooltipScrollTimer = m_tooltip_delay;
 
 		ScrollSound = ! Cvar.FindCVar("silence_menu_scroll").getInt();
 		HoverSound = ! Cvar.FindCVar("silence_menu_hover").getInt();
@@ -174,7 +180,10 @@ class OptionMenu : Menu
 
 	override void UpdateTooltip(string tooltip)
 	{
-		mOptionValueTooltipTime = OPTION_VALUE_TOOLTIP_DELAY;
+		mOptionValueTooltipSelected = -1;
+		mOptionValueTooltipTimer = OPTION_VALUE_TOOLTIP_DELAY;
+		mOptionValueTooltipScrollOffset = 0.0;
+		mOptionValueTooltipScrollTimer = m_tooltip_delay;
 		Super.UpdateTooltip(tooltip);
 	}
 
@@ -183,12 +192,21 @@ class OptionMenu : Menu
 		if (!selected)
 			return;
 
-		string text = OptionValues.GetTooltip(selected.mValues, selected.GetSelection());
+		int val = selected.GetSelection();
+		if (val != mOptionValueTooltipSelected)
+		{
+			mOptionValueTooltipScrollOffset = 0.0;
+			mOptionValueTooltipScrollTimer = m_tooltip_delay;
+		}
+
+		mOptionValueTooltipSelected = val;
+		string text = OptionValues.GetTooltip(selected.mValues, val);
 		if (text.IsEmpty())
 			return;
 
-		mOptionValueTooltipTime = Max(mOptionValueTooltipTime - GetDeltaTime(), 0.0);
-		if (mOptionValueTooltipTime > 0.0)
+		double delta = GetDeltaTime();
+		mOptionValueTooltipTimer = Max(mOptionValueTooltipTimer - delta, 0.0);
+		if (mOptionValueTooltipTimer > 0.0)
 			return;
 
 		int xPad = 10 * CleanXFac_1;
@@ -210,25 +228,78 @@ class OptionMenu : Menu
 		int width = xCap - (indent - diff);
 		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(text), (width - xPad * 2) / CleanXFac_1);
 		int height = textHeight * bl.Count() + yPad * 2;
+		if (bl.Count() == 1)
+			width = bl.StringWidth(0) * CleanXFac_1 + xPad * 2;
 
+		// Try and best fit it all on the screen before falling back on scrolling.
+		int maxOffset;
 		int curY = y + OptionMenuSettings.mLinespacing * CleanYFac_1;
 		if (curY + height > bottom)
 		{
 			int oldY = curY;
 			curY = y - height;
 			if (curY < 0)
-				curY = oldY;
+			{
+				int space;
+				if (Abs(curY) > oldY + height - bottom)
+				{
+					curY = oldY;
+					space = (curY + height) - bottom - yPad;
+				}
+				else
+				{
+					space = Abs(curY) - yPad - CleanXFac_1;
+					curY = CleanXFac_1;
+				}
+				
+				maxOffset = int(Ceil(double(space) / textHeight));
+				height -= textHeight * maxOffset;
+				if (mOptionValueTooltipScrollTimer <= 0.0)
+					mOptionValueTooltipScrollOffset = Clamp(mOptionValueTooltipScrollOffset + (1.0 / m_tooltip_speed) * delta, 0.0, maxOffset);
+
+				if (mOptionValueTooltipScrollTimer > 0.0)
+				{
+					mOptionValueTooltipScrollTimer -= delta;
+					if (mOptionValueTooltipScrollTimer <= 0.0)
+						mOptionValueTooltipScrollTimer = -m_tooltip_delay;
+				}
+				else if (mOptionValueTooltipScrollTimer < 0.0 && mOptionValueTooltipScrollOffset >= maxOffset)
+				{
+					mOptionValueTooltipScrollTimer += delta;
+					if (mOptionValueTooltipScrollTimer >= 0.0)
+					{
+						mOptionValueTooltipScrollOffset = 0.0;
+						mOptionValueTooltipScrollTimer = m_tooltip_delay;
+					}
+				}
+			}
 		}
 
 		Screen.Dim(0u, 0.8, indent, curY, width, height);
 		Screen.DrawLineFrame(0xCC404040, indent, curY, width, height, CleanXFac_1);
 
 		curY += yPad;
+		int top = curY;
 		int curX = indent + xPad;
+
+		let [cx, cy, cw, ch] = Screen.GetClipRect();
+		Screen.SetClipRect(curX, curY, width - xPad * 2, height - yPad * 2);
+
+		curY -= int(textHeight * mOptionValueTooltipScrollOffset);
 		for (int i; i < bl.Count(); ++i)
 		{
 			Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, curX, curY, bl.StringAt(i), DTA_CleanNoMove_1, true);
 			curY += textHeight;
+		}
+
+		Screen.SetClipRect(cx, cy, cw, ch);
+
+		if (mOptionValueTooltipScrollOffset < maxOffset)
+		{
+			int xPos = indent + width - mTooltipFont.StringWidth(".") * CleanXFac_1;
+			int yPos = top - textHeight / 2;
+			for (int i = 0; i < 3; ++i)
+				Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, yPos + textHeight / 3 * i, ".", DTA_CleanNoMove_1, true);
 		}
 	}
 

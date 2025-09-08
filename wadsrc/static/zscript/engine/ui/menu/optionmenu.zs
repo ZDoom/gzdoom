@@ -215,7 +215,8 @@ class OptionMenu : Menu
 				curY = oldY;
 		}
 
-		Screen.Dim(0u, 1.0, indent, curY, width, height);
+		Screen.Dim(0u, 0.8, indent, curY, width, height);
+		Screen.DrawLineFrame(0xCC404040, indent, curY, width, height, CleanXFac_1);
 
 		curY += yPad;
 		int curX = indent + xPad;

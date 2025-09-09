@@ -211,6 +211,8 @@ protected:
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
+EXTERN_FARG(nojoy);
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CUSTOM_CVAR(Bool, joy_xinput, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -1062,7 +1064,7 @@ IJoystickConfig *FXInputManager::Rescan()
 
 void I_StartupXInput()
 {
-	if (!joy_xinput || !use_joystick || Args->CheckParm("-nojoy"))
+	if (!joy_xinput || !use_joystick || Args->CheckParm(FArg_nojoy))
 	{
 		if (JoyDevices[INPUT_XInput] != NULL)
 		{

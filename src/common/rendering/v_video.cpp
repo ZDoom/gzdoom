@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1999-2016 Randy Heit
 ** Copyright 2005-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -65,6 +66,8 @@
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
+
+EXTERN_FARG(devparm);
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -150,9 +153,22 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	setsizeneeded = true;
 }
 
+EXTERN_CVAR(Bool, r_blendmethod);
 
-
-EXTERN_CVAR(Bool, r_blendmethod)
+FARG(width, "Configuration", "Sets " GAMENAME "'s horizontal resolution.", "x",
+	"Specifies the desired resolution of the screen. If only one of -width or -height is"
+	" specified, " GAMENAME " will try to guess the other one based on a standard aspect ratio. If"
+	" the specified resolution is not supported by your SDL/DirectDraw drivers, " GAMENAME " will"
+	" try various resolutions until it either finds one that works, or it will finally give up. To"
+	" determine which resolutions " GAMENAME " can use, use the vid_describemodes command from the"
+	" console once you have started the game.");
+FARG(height, "Configuration", "Sets " GAMENAME "'s vertical resolution.", "y",
+	"Specifies the desired resolution of the screen. If only one of -width or -height is"
+	" specified, " GAMENAME " will try to guess the other one based on a standard aspect ratio. If"
+	" the specified resolution is not supported by your SDL/DirectDraw drivers, " GAMENAME " will"
+	" try various resolutions until it either finds one that works, or it will finally give up. To"
+	" determine which resolutions " GAMENAME " can use, use the vid_describemodes command from the"
+	" console once you have started the game.");
 
 int active_con_scale();
 
@@ -361,10 +377,10 @@ void V_InitScreenSize ()
 
 	width = height = bits = 0;
 
-	if ( (i = Args->CheckValue ("-width")) )
+	if ( (i = Args->CheckValue (FArg_width)) )
 		width = atoi (i);
 
-	if ( (i = Args->CheckValue ("-height")) )
+	if ( (i = Args->CheckValue (FArg_height)) )
 		height = atoi (i);
 
 	if (width == 0)
@@ -403,7 +419,7 @@ void V_Init2()
 
 	UCVarValue val;
 
-	val.Bool = !!Args->CheckParm("-devparm");
+	val.Bool = !!Args->CheckParm(FArg_devparm);
 	ticker->SetGenericRepDefault(val, CVAR_Bool);
 
 

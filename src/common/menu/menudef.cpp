@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -52,6 +53,9 @@
 #include "i_interface.h"
 
 
+
+FARG(nocustommenu, "", "", "",
+	"");
 
 bool CheckSkipGameOptionBlock(FScanner& sc);
 
@@ -1627,7 +1631,7 @@ void M_ParseMenuDefs()
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
-		if (Args->CheckParm("-nocustommenu")) break;
+		if (Args->CheckParm(FArg_nocustommenu)) break;
 	}
 	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;
@@ -1727,5 +1731,3 @@ void M_CreateMenus()
 		I_BuildALResamplersList(*opt);
 	}
 }
-
-

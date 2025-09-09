@@ -17,19 +17,23 @@ SettingsPage::SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo
 	FullscreenCheckbox = new CheckboxLabel(this);
 	DisableAutoloadCheckbox = new CheckboxLabel(this);
 	DontAskAgainCheckbox = new CheckboxLabel(this);
+#ifdef SUPPORT_WADS
 	LightsCheckbox = new CheckboxLabel(this);
 	BrightmapsCheckbox = new CheckboxLabel(this);
 	WidescreenCheckbox = new CheckboxLabel(this);
 	SupportWadsCheckbox = new CheckboxLabel(this);
+#endif
 
 	FullscreenCheckbox->SetChecked(info.DefaultFullscreen);
 	DontAskAgainCheckbox->SetChecked(!info.DefaultQueryIWAD);
 
 	DisableAutoloadCheckbox->SetChecked(info.DefaultStartFlags & 1);
+#ifdef SUPPORT_WADS
 	LightsCheckbox->SetChecked(info.DefaultStartFlags & 2);
 	BrightmapsCheckbox->SetChecked(info.DefaultStartFlags & 4);
 	WidescreenCheckbox->SetChecked(info.DefaultStartFlags & 8);
 	SupportWadsCheckbox->SetChecked(info.DefaultStartFlags & 16);
+#endif
 
 #ifdef RENDER_BACKENDS
 	BackendLabel = new TextLabel(this);
@@ -109,10 +113,12 @@ void SettingsPage::SetValues(FStartupSelectionInfo& info) const
 
 	int flags = 0;
 	if (DisableAutoloadCheckbox->GetChecked()) flags |= 1;
+#ifdef SUPPORT_WADS
 	if (LightsCheckbox->GetChecked()) flags |= 2;
 	if (BrightmapsCheckbox->GetChecked()) flags |= 4;
 	if (WidescreenCheckbox->GetChecked()) flags |= 8;
 	if (SupportWadsCheckbox->GetChecked()) flags |= 16;
+#endif
 	info.DefaultStartFlags = flags;
 
 #ifdef RENDER_BACKENDS
@@ -132,10 +138,13 @@ void SettingsPage::UpdateLanguage()
 	FullscreenCheckbox->SetText(GStrings.GetString("PICKER_FULLSCREEN"));
 	DisableAutoloadCheckbox->SetText(GStrings.GetString("PICKER_NOAUTOLOAD"));
 	DontAskAgainCheckbox->SetText(GStrings.GetString("PICKER_DONTASK"));
+
+#ifdef SUPPORT_WADS
 	LightsCheckbox->SetText(GStrings.GetString("PICKER_LIGHTS"));
 	BrightmapsCheckbox->SetText(GStrings.GetString("PICKER_BRIGHTMAPS"));
 	WidescreenCheckbox->SetText(GStrings.GetString("PICKER_WIDESCREEN"));
 	SupportWadsCheckbox->SetText(GStrings.GetString("PICKER_SUPPORTWADS"));
+#endif
 
 #ifdef RENDER_BACKENDS
 	BackendLabel->SetText(GStrings.GetString("PICKER_PREFERBACKEND"));
@@ -161,23 +170,21 @@ void SettingsPage::OnGeometryChanged()
 	double h = GetHeight();
 
 	GeneralLabel->SetFrameGeometry(0.0, y, 190.0, GeneralLabel->GetPreferredHeight());
-	ExtrasLabel->SetFrameGeometry(w - panelWidth, y, panelWidth, ExtrasLabel->GetPreferredHeight());
 	y += GeneralLabel->GetPreferredHeight();
 
 	FullscreenCheckbox->SetFrameGeometry(0.0, y, 190.0, FullscreenCheckbox->GetPreferredHeight());
-	LightsCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, LightsCheckbox->GetPreferredHeight());
 	y += FullscreenCheckbox->GetPreferredHeight();
 
 	DisableAutoloadCheckbox->SetFrameGeometry(0.0, y, 190.0, DisableAutoloadCheckbox->GetPreferredHeight());
-	BrightmapsCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, BrightmapsCheckbox->GetPreferredHeight());
 	y += DisableAutoloadCheckbox->GetPreferredHeight();
 
 	DontAskAgainCheckbox->SetFrameGeometry(0.0, y, 190.0, DontAskAgainCheckbox->GetPreferredHeight());
-	WidescreenCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());
 	y += DontAskAgainCheckbox->GetPreferredHeight();
 
+#ifdef SUPPORT_WADS
 	SupportWadsCheckbox->SetFrameGeometry(0.0, y, 190.0, SupportWadsCheckbox->GetPreferredHeight());
-	y += SupportWadsCheckbox->GetPreferredHeight() + 10.0;
+	y += SupportWadsCheckbox->GetPreferredHeight();
+#endif
 	const double optionsBottom = y;
 
 #ifdef RENDER_BACKENDS
@@ -195,8 +202,24 @@ void SettingsPage::OnGeometryChanged()
 	GLESCheckbox->SetFrameGeometry(x, y, 190.0, GLESCheckbox->GetPreferredHeight());
 	y += GLESCheckbox->GetPreferredHeight();
 #endif
+	const double backendsBottom = y;
 
-	y = max<double>(y, optionsBottom);
+#ifdef SUPPORT_WADS
+	y = 0;
+	ExtrasLabel->SetFrameGeometry(w - panelWidth, y, panelWidth, ExtrasLabel->GetPreferredHeight());
+	y += ExtrasLabel->GetPreferredHeight();
+
+	LightsCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, LightsCheckbox->GetPreferredHeight());
+	y += LightsCheckbox->GetPreferredHeight();
+
+	BrightmapsCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, BrightmapsCheckbox->GetPreferredHeight());
+	y += BrightmapsCheckbox->GetPreferredHeight();
+
+	WidescreenCheckbox->SetFrameGeometry(w - panelWidth, y, panelWidth, WidescreenCheckbox->GetPreferredHeight());
+	y += WidescreenCheckbox->GetPreferredHeight();
+#endif
+
+	y = max<double>(y, max<double>(optionsBottom, backendsBottom)) + 10.0;
 	if (!hideLanguage)
 	{
 		LangLabel->SetFrameGeometry(0.0, y, w, LangLabel->GetPreferredHeight());

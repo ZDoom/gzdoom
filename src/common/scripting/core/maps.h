@@ -80,7 +80,7 @@ struct ZSMapIterator
         }
         else
         {
-            ThrowAbortException(X_FORMAT_ERROR,"MapIterator::Next called from invalid iterator");
+            ThrowAbortException(X_OTHER, "MapIterator::Next called from invalid iterator");
         }
     }
 
@@ -92,7 +92,7 @@ struct ZSMapIterator
         }
         else
         {
-            ThrowAbortException(X_FORMAT_ERROR,p ? "MapIterator::GetValue called from invalid iterator" :  "MapIterator::GetValue called from invalid position");
+            ThrowAbortException(X_OTHER, p ? "MapIterator::GetValue called from invalid iterator" :  "MapIterator::GetValue called from invalid position");
         }
     }
 
@@ -104,7 +104,7 @@ struct ZSMapIterator
         }
         else
         {
-            ThrowAbortException(X_FORMAT_ERROR,p ? "MapIterator::GetKey called from invalid iterator" : "MapIterator::GetKey called from invalid position");
+            ThrowAbortException(X_OTHER, p ? "MapIterator::GetKey called from invalid iterator" : "MapIterator::GetKey called from invalid position");
         }
     }
 };

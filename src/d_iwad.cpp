@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
 ** Copyright 2009 Christoph Oelckers
+** Copyright 2017-2025 ZDoom + GZDoom teams, and contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,24 +33,22 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "d_main.h"
-#include "gi.h"
+
 #include "cmdlib.h"
-#include "doomstat.h"
-#include "i_system.h"
+#include "d_main.h"
+#include "engineerrors.h"
 #include "filesystem.h"
+#include "findfile.h"
+#include "fs_findfile.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "i_interface.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "sc_man.h"
-#include "v_video.h"
-#include "gameconfigfile.h"
 #include "version.h"
-#include "engineerrors.h"
-#include "v_text.h"
-#include "fs_findfile.h"
-#include "findfile.h"
-#include "i_interface.h"
-#include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
 EXTERN_CVAR(String, queryiwad_key);
@@ -61,7 +60,7 @@ EXTERN_CVAR(String, language)
 
 CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
 CVAR(Bool, i_is_new_release, true, 0)
-CVAR(Bool, i_display_new_release, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, i_display_new_release, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // 0:no, 1: yes, 2: always for testing
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -813,8 +812,8 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		if (i_loadsupportwad) flags |= 16;
 
 		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
-		info.isNewRelease = i_is_new_release;
-		info.notifyNewRelease = i_display_new_release;
+		info.isNewRelease = (i_display_new_release>1) || i_is_new_release;
+		info.notifyNewRelease = !!i_display_new_release;
 		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
 			pick = info.SaveInfo();
@@ -823,6 +822,8 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			autoloadbrightmaps = !!(info.DefaultStartFlags & 4);
 			autoloadwidescreen = !!(info.DefaultStartFlags & 8);
 			i_loadsupportwad = !!(info.DefaultStartFlags & 16);
+			if (!info.notifyNewRelease)
+				i_display_new_release = 0; // don't change truthy values
 		}
 		else
 		{

@@ -1,18 +1,41 @@
-#include "launcherwindow.h"
+/*
+** launcherwindow.cpp
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2024-2025 GZDoom Maintainers and Contributors
+**
+** This program is free software: you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation, either version 3 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program.  If not, see http://www.gnu.org/licenses/
+**
+**---------------------------------------------------------------------------
+**
+*/
+
+#include <zwidget/core/resourcedata.h>
+#include <zwidget/widgets/tabwidget/tabwidget.h>
+#include <zwidget/window/window.h>
+
+#include "gstrings.h"
+#include "i_interface.h"
 #include "launcherbanner.h"
 #include "launcherbuttonbar.h"
-#include "playgamepage.h"
-#include "settingspage.h"
+#include "launcherwindow.h"
 #include "networkpage.h"
+#include "playgamepage.h"
 #include "releasepage.h"
-#include "v_video.h"
+#include "settingspage.h"
 #include "version.h"
-#include "i_interface.h"
-#include "gstrings.h"
-#include "c_cvars.h"
-#include <zwidget/core/resourcedata.h>
-#include <zwidget/window/window.h>
-#include <zwidget/widgets/tabwidget/tabwidget.h>
 
 bool LauncherWindow::ExecModal(FStartupSelectionInfo& info)
 {
@@ -38,8 +61,6 @@ LauncherWindow::LauncherWindow(FStartupSelectionInfo& info) : Widget(nullptr, Wi
 	Buttonbar = new LauncherButtonbar(this);
 
 	bool releasenotes = info.isNewRelease && info.notifyNewRelease;
-
-	releasenotes = true;
 
 	PlayGame = new PlayGamePage(this, info);
 	Settings = new SettingsPage(this, info);
@@ -87,6 +108,9 @@ void LauncherWindow::Start()
 		Network->SetValues(*Info);
 	else
 		PlayGame->SetValues(*Info);
+
+	if (Release)
+		Release->SetValues(*Info);
 
 	ExecResult = true;
 	DisplayWindow::ExitLoop();

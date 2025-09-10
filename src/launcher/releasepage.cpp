@@ -6,7 +6,7 @@
 **---------------------------------------------------------------------------
 **
 ** Copyright 2025 Marcus Minhorst
-** Copyright 2025 ZDoom + GZDoom teams, and contributors
+** Copyright 2025 GZDoom Maintainers and Contributors
 **
 ** This program is free software: you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -180,6 +180,7 @@ ReleasePage::ReleasePage(LauncherWindow* launcher, const FStartupSelectionInfo& 
 
 void ReleasePage::SetValues(FStartupSelectionInfo& info) const
 {
+	info.notifyNewRelease = ShowThis->GetChecked();
 }
 
 void ReleasePage::UpdateLanguage()

@@ -50,5 +50,7 @@ EXTERN_CVAR(Float, gl_menu_blur)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Float, vid_saturation)
+EXTERN_CVAR(Float, vid_blackpoint)
+EXTERN_CVAR(Float, vid_whitepoint)
 EXTERN_CVAR(Int, gl_satformula)
 

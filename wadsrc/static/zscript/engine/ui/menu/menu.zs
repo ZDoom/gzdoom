@@ -54,6 +54,7 @@ struct OptionValues native version("2.4")
 	native static String GetText(Name group, int index);
 	native static double GetValue(Name group, int index);
 	native static String GetTextValue(Name group, int index);
+	native static String GetTooltip(Name group, int index);
 }
 
 struct JoystickConfig native version("2.4")
@@ -126,6 +127,20 @@ struct JoystickConfig native version("2.4")
 	native void Reset();
 }
 
+struct ScreenArea
+{
+	int x, y;
+	int width, height;
+
+	void SetArea(int xPos, int yPos, int w, int h)
+	{
+		x = xPos;
+		y = yPos;
+		width = w;
+		height = h;
+	}
+}
+
 class Menu : Object native ui version("2.4")
 {
 	enum EMenuKey
@@ -174,6 +189,11 @@ class Menu : Object native ui version("2.4")
 	native bool AnimatedTransition;
 	native bool Animated;
 
+	native string mCurrentTooltip;
+	native double mTooltipScrollTimer;
+	native double mTooltipScrollOffset;
+	native Font mTooltipFont; // This is here so generic menus can still use it.
+
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
 	native static clearscope void SetMenu(Name mnu, int param = 0);	// This is not 100% safe but needs to be available - but always make sure to check that only the desired player opens it!
@@ -197,6 +217,10 @@ class Menu : Object native ui version("2.4")
 		DontBlur = false;
 		AnimatedTransition = false;
 		Animated = false;
+		mTooltipFont = NewConsoleFont;
+		mCurrentTooltip = "";
+		mTooltipScrollTimer = m_tooltip_delay;
+		mTooltipScrollOffset = 0.0;
 	}
 
 	//=============================================================================
@@ -301,6 +325,115 @@ class Menu : Object native ui version("2.4")
 		return false;
 	}
 
+	virtual void GetTooltipArea(ScreenArea body, ScreenArea text = null)
+	{
+		int xPad = 10 * CleanXFac;
+		int yPad = 5 * CleanYFac;
+		int textHeight = mTooltipFont.GetHeight() * m_tooltip_lines * (m_tooltip_small ? CleanYFac_1 : CleanYFac);
+
+		int w = Screen.GetWidth();
+		int h = Screen.GetHeight();
+		if (m_tooltip_capwidth && double(w) / h > 16.0 / 9.0)
+		{
+			// Cap it to 16:9 to prevent it from stretching to the far corners of the screen.
+			int width = int(h * 16.0 / 9.0) - xPad * 2;
+			body.SetArea((w - width) / 2, h - textHeight - yPad * 3, width, textHeight + yPad * 2);
+		}
+		else
+		{
+			body.SetArea(xPad, h - textHeight - yPad * 3, w - xPad * 2, textHeight + yPad * 2);
+		}
+		
+		if (text)
+			text.SetArea(body.x + xPad, body.y + yPad, body.width - xPad * 2, body.height - yPad * 2);
+	}
+
+	virtual void UpdateTooltip(string tooltip)
+	{
+		if (tooltip == mCurrentTooltip)
+			return;
+
+		mCurrentTooltip = tooltip;
+		mTooltipScrollOffset = 0.0;
+		mTooltipScrollTimer = m_tooltip_delay;
+	}
+
+	virtual void DrawTooltip()
+	{
+		if (mCurrentTooltip.IsEmpty())
+			return;
+
+		ScreenArea box, text;
+		GetTooltipArea(box, text);
+
+		DrawTextureTags scaleType;
+		int textXScale, textYScale;
+		if (m_tooltip_small)
+		{
+			textXScale = CleanXFac_1;
+			textYScale = CleanYFac_1;
+			scaleType = DTA_CleanNoMove_1;
+		}
+		else
+		{
+			textXScale = CleanXFac;
+			textYScale = CleanYFac;
+			scaleType = DTA_CleanNoMove;
+		}
+
+		BrokenLines bl = mTooltipFont.BreakLines(StringTable.Localize(mCurrentTooltip), text.width / textXScale);
+		int maxOffset;
+		if (bl.Count() > m_tooltip_lines)
+		{
+			maxOffset = bl.Count() - m_tooltip_lines;
+			double delta = GetDeltaTime();
+			if (mTooltipScrollTimer <= 0.0)
+				mTooltipScrollOffset = Clamp(mTooltipScrollOffset + (1.0 / m_tooltip_speed) * delta, 0.0, maxOffset);
+
+			if (mTooltipScrollTimer > 0.0)
+			{
+				mTooltipScrollTimer -= delta;
+				if (mTooltipScrollTimer <= 0.0)
+					mTooltipScrollTimer = -m_tooltip_delay;
+			}
+			else if (mTooltipScrollTimer < 0.0 && mTooltipScrollOffset >= maxOffset)
+			{
+				mTooltipScrollTimer += delta;
+				if (mTooltipScrollTimer >= 0.0)
+				{
+					mTooltipScrollOffset = 0.0;
+					mTooltipScrollTimer = m_tooltip_delay;
+				}
+			}
+		}
+
+		Screen.Dim(0u, m_tooltip_alpha, box.x, box.y, box.width, box.height);
+		Color col = (int(255 * m_tooltip_alpha) << 24) | 0x404040;
+		Screen.DrawLineFrame(col, box.x, box.y, box.width, box.height, CleanXFac_1);
+
+		let [cx, cy, cw, ch] = Screen.GetClipRect();
+		Screen.SetClipRect(text.x, text.y, text.width, text.height);
+		
+		int height = mTooltipFont.GetHeight() * textYScale;
+		int curY = text.y - int(mTooltipScrollOffset * height);
+		for (int i; i < bl.Count(); ++i)
+		{
+			int xPos = text.x + (text.width - bl.StringWidth(i) * textXScale) / 2;
+			Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, curY, bl.StringAt(i), scaleType, true);
+			curY += height;
+		}
+
+		Screen.SetClipRect(cx, cy, cw, ch);
+
+		if (mTooltipScrollOffset < maxOffset)
+		{
+			int xPos = box.x + box.width - mTooltipFont.StringWidth(".") * textXScale;
+			int yPos = text.y - height / 2;
+			for (int i = 0; i < 3; ++i)
+				Screen.DrawText(mTooltipFont, Font.CR_UNTRANSLATED, xPos, yPos + height / 3 * i, ".", scaleType, true);
+		}
+	}
+
 	//=============================================================================
 	//
 	//
@@ -309,25 +442,30 @@ class Menu : Object native ui version("2.4")
 
 	virtual void Drawer ()
 	{
-		if (self == GetCurrentMenu() && BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
+		if (self == GetCurrentMenu())
 		{
-			let tex = TexMan.CheckForTexture(gameinfo.mBackButton, TexMan.Type_MiscPatch);
-			if (tex.IsValid())
+			if (BackbuttonAlpha > 0 && m_show_backbutton >= 0 && m_use_mouse)
 			{
-				Vector2 v = TexMan.GetScaledSize(tex);
-				int w = int(v.X + 0.5) * CleanXfac;
-				int h = int(v.Y + 0.5) * CleanYfac;
-				int x = (!(m_show_backbutton&1))? 0:screen.GetWidth() - w;
-				int y = (!(m_show_backbutton&2))? 0:screen.GetHeight() - h;
-				if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
+				let tex = TexMan.CheckForTexture(gameinfo.mBackButton, TexMan.Type_MiscPatch);
+				if (tex.IsValid())
 				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255), DTA_NOOFFSET, true);
-				}
-				else
-				{
-					screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, DTA_NOOFFSET, true);
+					Vector2 v = TexMan.GetScaledSize(tex);
+					int w = int(v.X + 0.5) * CleanXfac;
+					int h = int(v.Y + 0.5) * CleanYfac;
+					int x = (!(m_show_backbutton&1))? 0:screen.GetWidth() - w;
+					int y = (!(m_show_backbutton&2))? 0:screen.GetHeight() - h;
+					if (mBackbuttonSelected && (mMouseCapture || m_use_mouse == 1))
+					{
+						screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_ColorOverlay, Color(40, 255,255,255), DTA_NOOFFSET, true);
+					}
+					else
+					{
+						screen.DrawTexture(tex, true, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, DTA_NOOFFSET, true);
+					}
 				}
 			}
+
+			DrawTooltip();
 		}
 	}
 
@@ -410,6 +548,7 @@ class MenuDescriptor : Object native ui version("2.4")
 	native Name mMenuName;
 	native String mNetgameMessage;
 	native Class<Menu> mClass;
+	native Font mTooltipFont;
 
 	native static MenuDescriptor GetDescriptor(Name n);
 }

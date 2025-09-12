@@ -2054,9 +2054,14 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 	{
 		auto atype = static_cast<ZCC_DynArrayType *>(ztype);
 		auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
+
 		if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
 		{
-			if (field->NodeType == AST_VarDeclarator && (static_cast<ZCC_VarDeclarator*>(field)->Flags & ZCC_Native) && fileSystem.GetFileContainer(Lump) == 0)
+			if(ftype->isStruct() && static_cast<PStruct*>(ftype)->TypeName == "TRS")
+			{
+				retval = NewDynArray(ftype);
+			}
+			else if (field->NodeType == AST_VarDeclarator && (static_cast<ZCC_VarDeclarator*>(field)->Flags & ZCC_Native) && fileSystem.GetFileContainer(Lump) == 0)
 			{
 				// the internal definitions may declare native arrays to complex types.
 				// As long as they can be mapped to a static array type the VM can handle them, in a limited but sufficient fashion.

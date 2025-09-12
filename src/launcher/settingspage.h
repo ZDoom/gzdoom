@@ -5,6 +5,8 @@
 
 #define RENDER_BACKENDS
 
+#define SUPPORT_WADS
+
 class LauncherWindow;
 class TextLabel;
 class CheckboxLabel;
@@ -30,10 +32,12 @@ private:
 	CheckboxLabel* FullscreenCheckbox = nullptr;
 	CheckboxLabel* DisableAutoloadCheckbox = nullptr;
 	CheckboxLabel* DontAskAgainCheckbox = nullptr;
+#ifdef SUPPORT_WADS
 	CheckboxLabel* LightsCheckbox = nullptr;
 	CheckboxLabel* BrightmapsCheckbox = nullptr;
 	CheckboxLabel* WidescreenCheckbox = nullptr;
 	CheckboxLabel* SupportWadsCheckbox = nullptr;
+#endif
 #ifdef RENDER_BACKENDS
 	TextLabel* BackendLabel = nullptr;
 	CheckboxLabel* VulkanCheckbox = nullptr;

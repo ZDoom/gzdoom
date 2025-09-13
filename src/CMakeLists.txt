@@ -969,6 +969,7 @@ set (PCH_SOURCES
 	launcher/settingspage.cpp
 	launcher/networkpage.cpp
 	launcher/releasepage.cpp
+	launcher/aboutpage.cpp
 
 	common/audio/sound/i_sound.cpp
 	common/audio/sound/oalsound.cpp

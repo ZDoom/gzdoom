@@ -41,7 +41,45 @@
 #include "version.h"
 #include "zstring.h"
 
-FString _ParseReleaseNotes(rapidxml::xml_document<> &doc)
+ReleasePage::ReleasePage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
+{
+	ShowThis = new CheckboxLabel(this);
+	Notes = new TextEdit(this);
+
+	auto text = GetReleaseNotes();
+
+	Notes->SetText(text.GetChars());
+
+	ShowThis->SetChecked(info.notifyNewRelease);
+}
+
+void ReleasePage::SetValues(FStartupSelectionInfo& info) const
+{
+	info.notifyNewRelease = ShowThis->GetChecked();
+}
+
+void ReleasePage::UpdateLanguage()
+{
+	ShowThis->SetText(GStrings.GetString("PICKER_SHOWTHIS"));
+}
+
+void ReleasePage::OnGeometryChanged()
+{
+	double y = 0.0;
+	double w = GetWidth();
+	double h = GetHeight();
+
+	Notes->SetFrameGeometry(0.0, y, w, h - ShowThis->GetPreferredHeight());
+	y += h - ShowThis->GetPreferredHeight();
+
+	ShowThis->SetFrameGeometry(0.0, y, w, ShowThis->GetPreferredHeight());
+	y += ShowThis->GetPreferredHeight();
+
+	Launcher->UpdatePlayButton();
+}
+
+
+FString ReleasePage::_ParseReleaseNotes(rapidxml::xml_document<> &doc)
 {
 	// braindead html to plaintext parser
 
@@ -120,7 +158,7 @@ FString _ParseReleaseNotes(rapidxml::xml_document<> &doc)
 }
 
 // Ensure you free returned pointer
-char * _OpenRealeaseNotes()
+char * ReleasePage::_OpenRealeaseNotes()
 {
 	auto wad = BaseFileSearch(BASEWAD, NULL, true, GameConfig);
 	if (!wad) return nullptr;
@@ -152,7 +190,7 @@ char * _OpenRealeaseNotes()
 // Extract release notes from gzdoom.pk3
 //
 //==========================================================================
-FString GetReleaseNotes()
+FString ReleasePage::GetReleaseNotes()
 {
 	// we need to be free
 	char * text = _OpenRealeaseNotes();
@@ -164,41 +202,4 @@ FString GetReleaseNotes()
 	free(text);
 
 	return content;
-}
-
-ReleasePage::ReleasePage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
-{
-	ShowThis = new CheckboxLabel(this);
-	Notes = new TextEdit(this);
-
-	auto text = GetReleaseNotes();
-
-	Notes->SetText(text.GetChars());
-
-	ShowThis->SetChecked(info.notifyNewRelease);
-}
-
-void ReleasePage::SetValues(FStartupSelectionInfo& info) const
-{
-	info.notifyNewRelease = ShowThis->GetChecked();
-}
-
-void ReleasePage::UpdateLanguage()
-{
-	ShowThis->SetText(GStrings.GetString("PICKER_SHOWTHIS"));
-}
-
-void ReleasePage::OnGeometryChanged()
-{
-	double y = 0.0;
-	double w = GetWidth();
-	double h = GetHeight();
-
-	Notes->SetFrameGeometry(0.0, y, w, h - ShowThis->GetPreferredHeight());
-	y += h - ShowThis->GetPreferredHeight();
-
-	ShowThis->SetFrameGeometry(0.0, y, w, ShowThis->GetPreferredHeight());
-	y += ShowThis->GetPreferredHeight();
-
-	Launcher->UpdatePlayButton();
 }

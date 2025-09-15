@@ -628,12 +628,12 @@ void C_DrawConsole ()
 			if (textScale == 1)
 				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() - 8 -
 					CurrentConsoleFont->StringWidth (GetVersionString()),
-					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
+					round((float)ConBottom / textScale) - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(), TAG_DONE);
 			else
-				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() / textScale - 8 -
+				DrawText(twod, CurrentConsoleFont, CR_ORANGE, (float)twod->GetWidth() / textScale - 8 -
 					CurrentConsoleFont->StringWidth(GetVersionString()),
-					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
+					round((float)ConBottom / textScale) - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(),
 					DTA_VirtualWidth, twod->GetWidth() / textScale,
 					DTA_VirtualHeight, twod->GetHeight() / textScale,

@@ -599,7 +599,8 @@ void MapLoader::LoadZNodes(FileReader &data, int glnodes)
 
 	for (i = 0; i < Level->subsectors.Size(); i++)
 	{
-		Level->subsectors[i] = {};
+		Level->subsectors[i].sprites.Clear();
+		memset((void*)&Level->subsectors[i], 0, sizeof(mapsubsector_t));
 	}
 
 	for (i = currSeg = 0; i < numSubs; ++i)
@@ -1018,11 +1019,10 @@ bool MapLoader::LoadSubsectors (MapData * map)
 	subsectors.Alloc(numsubsectors);
 	auto &fr = map->Reader(ML_SSECTORS);
 
-	memset ((void*)(&subsectors[0]), 0, numsubsectors*sizeof(subsector_t));
-
 	for (unsigned i = 0; i < numsubsectors; i++)
 	{
-		subsectors[i] = {};
+		subsectors[i].sprites.Clear();
+		memset((void*)&subsectors[i], 0, sizeof(mapsubsector_t));
 	}
 
 	for (unsigned i = 0; i < numsubsectors; i++)

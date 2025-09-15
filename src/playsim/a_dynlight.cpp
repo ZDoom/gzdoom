@@ -87,6 +87,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 		FreeList.Pop(ret);
 	}
 	else ret = (FDynamicLight*)DynLightArena.Alloc(sizeof(FDynamicLight));
+	memset((void*)ret, 0, sizeof(*ret));
 	ret = new(ret)FDynamicLight();
 	ret->m_cycler.m_increment = true;
 	ret->next = Level->lights;

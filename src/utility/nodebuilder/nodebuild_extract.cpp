@@ -67,10 +67,7 @@ void FNodeBuilder::Extract (FLevelLocals &theLevel)
 	auto &outSubs = theLevel.subsectors;
 	auto subCount = Subsectors.Size();
 	outSubs.Alloc(subCount);
-	for (unsigned i = 0; i < subCount; ++i)
-	{
-		outSubs[i] = {};
-	}
+	memset((void*)&outSubs[0], 0, subCount * sizeof(subsector_t));
 
 	auto &outNodes = theLevel.nodes;
 	auto nodeCount = Nodes.Size ();
@@ -190,10 +187,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	}
 
 	bsp->Subsectors.Resize(Subsectors.Size());
-	for (i = 0; i < Subsectors.Size(); ++i)
-	{
-		bsp->Subsectors[i] = {};
-	}
+	memset((void*)&bsp->Subsectors[0], 0, Subsectors.Size() * sizeof(subsector_t));
 
 	bsp->Nodes.Resize(Nodes.Size());
 	for (i = 0; i < Nodes.Size(); ++i)

@@ -939,7 +939,9 @@ void MapLoader::FixHoles()
 
 				subsector_t &sub = Level->subsectors[newssstart++];
 
-				sub = {};
+				sub.sprites.Clear();
+				memset((void*)&sub, 0, sizeof(sub));
+
 				sub.sector = segloop[0]->frontsector;
 				sub.render_sector = segloop[0]->Subsector->render_sector;
 				sub.numlines = segloop.Size();

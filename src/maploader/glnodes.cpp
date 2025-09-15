@@ -458,7 +458,8 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 
 		for (i = 0; i < numsubsectors; i++)
 		{
-			subsectors[i] = {};
+			subsectors[i].sprites.Clear();
+			memset((void*)&subsectors[i], 0, sizeof(mapsubsector_t));
 		}
 
 		for (i=0; i<numsubsectors; i++)
@@ -484,7 +485,8 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 
 		for (i = 0; i < numsubsectors; i++)
 		{
-			subsectors[i] = {};
+			subsectors[i].sprites.Clear();
+			memset((void*)&subsectors[i], 0, sizeof(mapsubsector_t));
 		}
 
 		for (i=0; i<numsubsectors; i++)

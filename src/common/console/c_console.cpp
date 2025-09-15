@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,40 +33,34 @@
 **
 */
 
-#include <string>
-
-
-#include "version.h"
 #include "c_bind.h"
+#include "c_commandbuffer.h"
 #include "c_console.h"
+#include "c_consolebuffer.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
-#include "gamestate.h"
-#include "v_text.h"
-#include "filesystem.h"
-#include "d_gui.h"
+#include "c_notifybufferbase.h"
 #include "cmdlib.h"
+#include "common/scripting/dap/GameEventEmit.h"
 #include "d_eventbase.h"
-#include "c_consolebuffer.h"
+#include "d_gui.h"
+#include "g_input.h"
+#include "gamestate.h"
+#include "i_interface.h"
+#include "i_system.h"
+#include "i_time.h"
+#include "menu.h"
+#include "menustate.h"
+#include "printf.h"
+#include "texturemanager.h"
 #include "utf8.h"
 #include "v_2ddrawer.h"
 #include "v_draw.h"
 #include "v_font.h"
-#include "printf.h"
-#include "i_time.h"
-#include "texturemanager.h"
-#include "v_draw.h"
-#include "i_interface.h"
+#include "v_text.h"
 #include "v_video.h"
-#include "i_system.h"
-#include "menu.h"
-#include "menustate.h"
-#include "v_2ddrawer.h"
-#include "c_notifybufferbase.h"
-#include "g_input.h"
-#include "c_commandbuffer.h"
+#include "version.h"
 #include "vm.h"
-#include "common/scripting/dap/GameEventEmit.h"
 
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
@@ -762,6 +757,10 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 	int data1 = ev->data1;
 	bool keepappending = false;
 
+	int page_height = (twod->GetHeight()-4)/active_con_scale(twod) /
+		((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
+	int total_lines = conbuffer->GetFormattedLineCount();
+
 	switch (ev->subtype)
 	{
 	default:
@@ -813,10 +812,13 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGUP:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
-				RowAdjust += (twod->GetHeight()-4)/active_con_scale(twod) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
+				RowAdjust += page_height;
+				if (RowAdjust > total_lines - page_height - 1)
+				{
+					RowAdjust = total_lines - page_height - 1;
+				}
 			}
-			else if (RowAdjust < conbuffer->GetFormattedLineCount())
+			else if (RowAdjust < total_lines)
 			{ // Scroll console buffer up
 				if (ev->subtype == EV_GUI_WheelUp)
 				{
@@ -826,9 +828,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				{
 					RowAdjust++;
 				}
-				if (RowAdjust > conbuffer->GetFormattedLineCount())
+				if (RowAdjust > total_lines)
 				{
-					RowAdjust = conbuffer->GetFormattedLineCount();
+					RowAdjust = total_lines;
 				}
 			}
 			break;
@@ -836,15 +838,13 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGDN:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer down one page
-				const int scrollamt = (twod->GetHeight()-4)/active_con_scale(twod) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
-				if (RowAdjust < scrollamt)
+				if (RowAdjust < page_height)
 				{
 					RowAdjust = 0;
 				}
 				else
 				{
-					RowAdjust -= scrollamt;
+					RowAdjust -= page_height;
 				}
 			}
 			else if (RowAdjust > 0)
@@ -863,7 +863,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_HOME:
 			if (ev->data3 & GKM_CTRL)
 			{ // Move to top of console buffer
-				RowAdjust = conbuffer->GetFormattedLineCount();
+				RowAdjust = total_lines;
 			}
 			else
 			{ // Move cursor to start of line

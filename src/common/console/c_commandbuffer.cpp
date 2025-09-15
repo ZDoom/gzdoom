@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
 ** Copyright 2010-2020 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,11 +32,12 @@
 **---------------------------------------------------------------------------
 **
 */
+
 #include "c_commandbuffer.h"
-#include "v_draw.h"
-#include "v_2ddrawer.h"
-#include "v_font.h"
 #include "utf8.h"
+#include "v_2ddrawer.h"
+#include "v_draw.h"
+#include "v_font.h"
 
 FCommandBuffer CmdLine;
 
@@ -155,18 +157,23 @@ void FCommandBuffer::MakeStartPosGood()
 	}
 }
 
-void FCommandBuffer::CursorStart()
+bool FCommandBuffer::CursorStart()
 {
+	bool moved = CursorPos != 0;
 	CursorPos = 0;
 	StartPos = 0;
 	CursorPosCells = 0;
 	StartPosCells = 0;
+	return moved;
 }
 
-void FCommandBuffer::CursorEnd()
+bool FCommandBuffer::CursorEnd()
 {
-	CursorPos = (unsigned)Text.length();
+	unsigned len = Text.length();
+	bool moved = CursorPos != len;
+	CursorPos = len;
 	MakeStartPosGood();
+	return moved;
 }
 
 void FCommandBuffer::CursorLeft()

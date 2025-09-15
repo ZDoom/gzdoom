@@ -862,7 +862,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_HOME:
-			if (ev->data3 & GKM_CTRL)
+			if (ev->data3 & (GKM_CTRL|GKM_SHIFT))
 			{ // Move to top of console buffer
 				RowAdjust = top_row;
 			}
@@ -873,7 +873,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_END:
-			if (ev->data3 & GKM_CTRL)
+			if (ev->data3 & (GKM_CTRL|GKM_SHIFT))
 			{ // Move to bottom of console buffer
 				RowAdjust = 0;
 			}

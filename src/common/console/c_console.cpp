@@ -814,54 +814,32 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_PGUP:
-			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
+			if (ev->subtype == EV_GUI_WheelUp)
+			{ // Scroll console buffer up
+				if (ev->data3 & (GKM_SHIFT|GKM_CTRL)) RowAdjust += 1;
+				else RowAdjust += 3;
+
+				if (RowAdjust > total_lines) RowAdjust = total_lines;
+			}
+			else
 			{ // Scroll console buffer up one page
 				RowAdjust += page_height;
-				if (RowAdjust > top_row)
-				{
-					RowAdjust = top_row;
-				}
-			}
-			else if (RowAdjust < total_lines)
-			{ // Scroll console buffer up
-				if (ev->subtype == EV_GUI_WheelUp)
-				{
-					RowAdjust += 3;
-				}
-				else
-				{
-					RowAdjust++;
-				}
-				if (RowAdjust > total_lines)
-				{
-					RowAdjust = total_lines;
-				}
+
+				if (RowAdjust > top_row) RowAdjust = top_row; // intentionally different than scroll behavior
 			}
 			break;
 
 		case GK_PGDN:
-			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
-			{ // Scroll console buffer down one page
-				if (RowAdjust < page_height)
-				{
-					RowAdjust = 0;
-				}
-				else
-				{
-					RowAdjust -= page_height;
-				}
-			}
-			else if (RowAdjust > 0)
+			if (ev->subtype == EV_GUI_WheelDown)
 			{ // Scroll console buffer down
-				if (ev->subtype == EV_GUI_WheelDown)
-				{
-					RowAdjust = max (0, RowAdjust - 3);
-				}
-				else
-				{
-					RowAdjust--;
-				}
+				if (ev->data3 & (GKM_SHIFT|GKM_CTRL)) RowAdjust -= 1;
+				else RowAdjust -= 3;
 			}
+			else
+			{ // Scroll console buffer down one page
+				RowAdjust -= page_height;
+			}
+			if (RowAdjust < 0) RowAdjust = 0;
 			break;
 
 		case GK_HOME:

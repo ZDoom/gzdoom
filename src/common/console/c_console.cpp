@@ -760,6 +760,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 	int page_height = (twod->GetHeight()-4)/active_con_scale(twod) /
 		((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
 	int total_lines = conbuffer->GetFormattedLineCount();
+	int top_row = total_lines - page_height - 1;
 
 	switch (ev->subtype)
 	{
@@ -813,9 +814,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
 				RowAdjust += page_height;
-				if (RowAdjust > total_lines - page_height - 1)
+				if (RowAdjust > top_row)
 				{
-					RowAdjust = total_lines - page_height - 1;
+					RowAdjust = top_row;
 				}
 			}
 			else if (RowAdjust < total_lines)
@@ -863,7 +864,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_HOME:
 			if (ev->data3 & GKM_CTRL)
 			{ // Move to top of console buffer
-				RowAdjust = total_lines - page_height - 1;
+				RowAdjust = top_row;
 			}
 			else
 			{ // Move cursor to start of line
@@ -907,39 +908,53 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_UP:
-			// Move to previous entry in the command history
-			if (HistPos == NULL)
+			if (ev->data3 & GKM_SHIFT)
 			{
-				HistPos = HistHead;
-			}
-			else if (HistPos->Older)
-			{
-				HistPos = HistPos->Older;
-			}
-
-			if (HistPos)
-			{
-				buffer.SetString(HistPos->String);
-			}
-
-			TabbedLast = false;
-			TabbedList = false;
-			break;
-
-		case GK_DOWN:
-			// Move to next entry in the command history
-			if (HistPos && HistPos->Newer)
-			{
-				HistPos = HistPos->Newer;
-				buffer.SetString(HistPos->String);
+				RowAdjust = min (total_lines, RowAdjust + 1); // match mousewheel
 			}
 			else
 			{
-				HistPos = NULL;
-				buffer.SetString("");
+				// Move to previous entry in the command history
+				if (HistPos == NULL)
+				{
+					HistPos = HistHead;
+				}
+				else if (HistPos->Older)
+				{
+					HistPos = HistPos->Older;
+				}
+
+				if (HistPos)
+				{
+					buffer.SetString(HistPos->String);
+				}
+
+				TabbedLast = false;
+				TabbedList = false;
 			}
-			TabbedLast = false;
-			TabbedList = false;
+			break;
+
+		case GK_DOWN:
+			if (ev->data3 & GKM_SHIFT)
+			{
+				RowAdjust = max (0, RowAdjust - 1);
+			}
+			else
+			{
+				// Move to next entry in the command history
+				if (HistPos && HistPos->Newer)
+				{
+					HistPos = HistPos->Newer;
+					buffer.SetString(HistPos->String);
+				}
+				else
+				{
+					HistPos = NULL;
+					buffer.SetString("");
+				}
+				TabbedLast = false;
+				TabbedList = false;
+			}
 			break;
 
 		case 'X':

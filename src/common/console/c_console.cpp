@@ -863,7 +863,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_HOME:
 			if (ev->data3 & GKM_CTRL)
 			{ // Move to top of console buffer
-				RowAdjust = total_lines;
+				RowAdjust = total_lines - page_height - 1;
 			}
 			else
 			{ // Move cursor to start of line

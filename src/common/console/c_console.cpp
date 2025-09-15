@@ -135,6 +135,9 @@ CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
 	if (self > 1.f) self = 1.f;
 }
 
+CUSTOM_CVARD(Bool, con_quick_home_end, true, CVAR_ARCHIVE, "Use HOME/END keys to scroll when cursor is at start/end of line already")
+{}
+
 // Show developer messages if true.
 CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -862,24 +865,18 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_HOME:
-			if (ev->data3 & (GKM_CTRL|GKM_SHIFT))
+			if ((ev->data3 & (GKM_CTRL|GKM_SHIFT))
+				|| (!buffer.CursorStart() && con_quick_home_end)) // Try to move cursor to start of line
 			{ // Move to top of console buffer
 				RowAdjust = top_row;
-			}
-			else
-			{ // Move cursor to start of line
-				buffer.CursorStart();
 			}
 			break;
 
 		case GK_END:
-			if (ev->data3 & (GKM_CTRL|GKM_SHIFT))
+			if ((ev->data3 & (GKM_CTRL|GKM_SHIFT))
+				|| (!buffer.CursorEnd() && con_quick_home_end)) // Try to move cursor to end of line
 			{ // Move to bottom of console buffer
 				RowAdjust = 0;
-			}
-			else
-			{ // Move cursor to end of line
-				buffer.CursorEnd();
 			}
 			break;
 
@@ -1204,4 +1201,3 @@ CCMD(toggleconsole)
 {
 	C_ToggleConsole();
 }
-

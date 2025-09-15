@@ -41,6 +41,8 @@
 #include "version.h"
 #include "zstring.h"
 
+constexpr unsigned NUMBER_OF_RELEASES_TO_DISPLAY = 3;
+
 ReleasePage::ReleasePage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
 {
 	ShowThis = new CheckboxLabel(this);
@@ -79,31 +81,16 @@ void ReleasePage::OnGeometryChanged()
 }
 
 
-FString ReleasePage::_ParseReleaseNotes(rapidxml::xml_document<> &doc)
+FString ReleasePage::_ParseReleaseNotes(rapidxml::xml_node<char> * release)
 {
 	// braindead html to plaintext parser
 
-	auto fallback = "Unable to parse release notes";
-	auto unknown = "Unable to parse release notes";
+	if (!release) return GStrings.GetString("NOTES_FAIL"); // "Unable to parse release notes";
 
-	// traverse to first (latest) release node
-	auto release = doc.first_node("component");
-	if (!release) return fallback;
-	release = release->first_node("releases");
-	if (!release) return fallback;
-	release = release->first_node("release");
-	if (!release) return fallback;
 	auto description = release->first_node("description");
-	if (!description) return fallback;
-
 	auto version = release->first_attribute("version");
 	auto date = release->first_attribute("date");
 	auto url = release->first_node("url");
-
-	auto versionStr = version? version->value(): unknown;
-	auto dateStr = date? date->value(): unknown;
-	auto header = FStringf("GZDoom version %s, released %s\n", versionStr, dateStr);
-	auto footer = url? FStringf("For more details see: %s", url->value()): "";
 	FString text;
 
 	auto append = [&text](FName type, char * value)
@@ -153,8 +140,56 @@ FString ReleasePage::_ParseReleaseNotes(rapidxml::xml_document<> &doc)
 				: nullptr;
 		}
 	}
+	text.StripRight();
 
-	return FStringf("%s\n%s\n%s", header.GetChars(), text.GetChars(), footer.GetChars());
+	return FStringf{
+		GAMENAME " %s %s, %s %s\n\n%s\n%s",
+		GStrings.GetString("NOTES_VERSION"), // "version"
+		version
+			? version->value()
+			: GStrings.GetString("NOTES_UNKNOWN"), // "Unknown"
+		GStrings.GetString("NOTES_RELEASED"), // "released"
+		date
+			? date->value()
+			: GStrings.GetString("NOTES_UNKNOWN"), // "Unknown"
+		description
+			? text.GetChars()
+			: GStrings.GetString("NOTES_EMPTY"), // "No description provided."
+		url
+			? FStringf(
+				"\n%s %s",
+				GStrings.GetString("NOTES_DETAILS"), // "For more details see:"
+				url->value()
+			).GetChars()
+			: ""
+	};
+}
+
+FString ReleasePage::_BuildReleaseNotes(rapidxml::xml_document<> &doc)
+{
+	// braindead html to plaintext parser
+
+	// traverse to first (latest) release node
+	auto release = doc.first_node("component");
+	if (!release) return GStrings.GetString("NOTES_FAIL"); // "Unable to parse release notes";
+	release = release->first_node("releases");
+	if (!release) return GStrings.GetString("NOTES_FAIL"); // "Unable to parse release notes";
+	release = release->first_node("release");
+
+	FString text;
+
+	for (unsigned i = 1; ; i++)
+	{
+		release->type();
+		text.AppendFormat("%s", _ParseReleaseNotes(release).GetChars());
+
+		if (!release || i >= NUMBER_OF_RELEASES_TO_DISPLAY) break;
+
+		text.AppendFormat("\n\n---\n\n");
+		release = release->next_sibling("release");
+	}
+
+	return text;
 }
 
 // Ensure you free returned pointer
@@ -197,7 +232,7 @@ FString ReleasePage::GetReleaseNotes()
 
 	rapidxml::xml_document<> doc;
 	if (text) doc.parse<rapidxml::parse_default>(text);
-	FString content = _ParseReleaseNotes(doc);
+	FString content = _BuildReleaseNotes(doc);
 
 	free(text);
 

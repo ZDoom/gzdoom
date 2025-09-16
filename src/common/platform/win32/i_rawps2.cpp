@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 **
 ** Copyright 2005-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -237,6 +238,8 @@ struct PS2Descriptor
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+EXTERN_FARG(nojoy);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1484,7 +1487,7 @@ void FRawPS2Manager::DoRegister()
 
 void I_StartupRawPS2()
 {
-	if (!joy_ps2raw || !use_joystick || Args->CheckParm("-nojoy"))
+	if (!joy_ps2raw || !use_joystick || Args->CheckParm(FArg_nojoy))
 	{
 		if (JoyDevices[INPUT_RawPS2] != NULL)
 		{

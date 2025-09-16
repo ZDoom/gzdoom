@@ -98,6 +98,12 @@ CUSTOM_CVARD(Bool, use_joystick, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 #endif
 }
 
+FARG(nojoy, "Configuration", "Disables joystick support.", "",
+	"Disables joystick support. If you have an old-fashioned gameport (non-USB) device attached,"
+	" it can slow down the game even if you do not intend to use it. Use -nojoy to avoid the"
+	" slowdown that comes from polling it for input. Only the Windows version supports a"
+	" joystick.");
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Bits 0 is X+, 1 is X-, 2 is Y+, and 3 is Y-.

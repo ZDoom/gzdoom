@@ -40,12 +40,14 @@ jobs:
           extra_options: -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
           build_type: MinSizeRel
+          export_appimage: true
 
         - name: Linux GCC Latest # rolling default, not actually latest
           os: ubuntu-latest
           extra_options: -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
+          export_appimage: true
 
         - name: Linux Clang 11 # oldest version available
           os: ubuntu-22.04
@@ -58,12 +60,14 @@ jobs:
           extra_options: -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15
           deps_cmdline: sudo apt-get update && sudo apt-get install clang-15 libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
+          export_appimage: true
 
         - name: Linux Clang Latest # rolling default, not actually latest
           os: ubuntu-latest
           extra_options: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
+          export_appimage: true
 
     steps:
     - uses: actions/checkout@v4
@@ -105,7 +109,22 @@ jobs:
           fi
           cp -r gzdoom.app package
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
-          cp gzdoom *.pk3 libzmusic.so* package
+          if [[ -n "${{ matrix.config.export_appimage }}" ]]; then
+            mkdir AppDir
+            cmake --install . --prefix "$(realpath AppDir)/usr"
+
+            sudo apt-get install libfuse2 # renamed to libfuse2t64 in later releases
+            wget -qO - https://github.com/AppImageCrafters/appimage-builder/releases/download/v1.1.0/appimage-builder-1.1.0-x86_64.AppImage \
+              | tee appimage-builder | sha1sum
+            echo "6f83a789f6c47a745b97d1b0b3f1df2e7eea7a09 appimage-builder" | sha1sum -c -
+            chmod +x appimage-builder
+
+            export GIT_DESCRIBE="${{ steps.ghd.outputs.describe }}"
+            ./appimage-builder --skip-tests --recipe ../tools/AppImageBuilder.yml
+            cp *.AppImage package
+          else
+            cp gzdoom *.pk3 libzmusic.so* package
+          fi
         fi
 
     - name: Upload Package

@@ -162,3 +162,23 @@ struct DynArray_String native unsafe(internal)
 	native int Max() const;
 	native void Clear ();
 }
+
+struct DynArray_TRS native unsafe(internal)
+{
+	native readonly int Size;
+
+	native void Copy(DynArray_TRS other);
+	native void Move(DynArray_TRS other);
+	native void Append (DynArray_TRS other);
+	native int Find(TRS item) const;
+	native int Push(TRS item);
+	native bool Pop ();
+	native void Delete (uint index, int deletecount = 1);
+	native void Insert (uint index, TRS item);
+	native void ShrinkToFit ();
+	native void Grow (uint amount);
+	native void Resize (uint amount);
+	native int Reserve(uint amount);
+	native int Max() const;
+	native void Clear ();
+}

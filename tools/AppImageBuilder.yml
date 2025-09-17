@@ -1,29 +1,32 @@
 # appimage-builder recipe see https://appimage-builder.readthedocs.io for details
+
 version: 1
+
 AppDir:
-  path: ./AppDir
   app_info:
-    id: com.GZDoom.app
+    id: org.zdoom.GZDoom
     name: GZDoom
-    icon: game_icon.png
-    version: latest
-    exec: ./gzdoom
+    icon: org.zdoom.GZDoom
+    version: '{{GIT_DESCRIBE}}'
+    exec: ./usr/bin/gzdoom
     exec_args: $@
-  apt:
-    arch: amd64
-    allow_unauthenticated: true
-    sources:
-    - sourceline: deb http://us.archive.ubuntu.com/ubuntu/ jammy main restricted
-    - sourceline: deb http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted
-    include: []
+
+  runtime:
+    path_mappings:
+      - /usr/share/games/doom:$APPDIR/usr/share/games/doom
+
   files:
-    include: []
+    include:
+    - /lib64/ld-linux-x86-64.so.2
+    - /lib64/libbz2.so.1
     exclude:
     - usr/share/man
     - usr/share/doc/*/README.*
     - usr/share/doc/*/changelog.*
     - usr/share/doc/*/NEWS.*
     - usr/share/doc/*/TODO.*
+
+  # ... why are these so old ?
   test:
     fedora-30:
       image: appimagecrafters/tests-env:fedora-30
@@ -40,6 +43,7 @@ AppDir:
     ubuntu-xenial:
       image: appimagecrafters/tests-env:ubuntu-xenial
       command: ./AppRun
+
 AppImage:
   arch: x86_64
   update-information: guess

@@ -1499,6 +1499,17 @@ if( APPLE )
 	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rpath @executable_path" )
 endif()
 
+if ( NOT ZMUSIC_SYSTEM_INSTALL )
+	if ( WIN32 OR APPLE )
+		# nothing to do
+	else()
+		install(TARGETS zmusic
+			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			COMPONENT "Game executable"
+		)
+	endif()
+endif()
+
 if( WIN32 )
 	set( INSTALL_PATH . CACHE STRING "Directory where the executable will be placed during install." )
 else()

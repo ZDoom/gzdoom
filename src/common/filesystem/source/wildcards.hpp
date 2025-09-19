@@ -1735,19 +1735,19 @@ using u32string_view = basic_string_view<char32_t>;
 using wstring_view = basic_string_view<wchar_t>;
 namespace literals
 {
-constexpr string_view operator"" _sv(const char* str, std::size_t s)
+constexpr string_view operator ""_sv(const char* str, std::size_t s)
 {
 return {str, s};
 }
-constexpr u16string_view operator"" _sv(const char16_t* str, std::size_t s)
+constexpr u16string_view operator ""_sv(const char16_t* str, std::size_t s)
 {
 return {str, s};
 }
-constexpr u32string_view operator"" _sv(const char32_t* str, std::size_t s)
+constexpr u32string_view operator ""_sv(const char32_t* str, std::size_t s)
 {
 return {str, s};
 }
-constexpr wstring_view operator"" _sv(const wchar_t* str, std::size_t s)
+constexpr wstring_view operator ""_sv(const wchar_t* str, std::size_t s)
 {
 return {str, s};
 }
@@ -1807,22 +1807,22 @@ return make_matcher(std::forward<Pattern>(pattern), cards<container_item_t<Patte
 }
 namespace literals
 {
-constexpr auto operator"" _wc(const char* str, std::size_t s)
+constexpr auto operator ""_wc(const char* str, std::size_t s)
 -> decltype(make_matcher(cx::make_string_view(str, s + 1)))
 {
 return make_matcher(cx::make_string_view(str, s + 1));
 }
-constexpr auto operator"" _wc(const char16_t* str, std::size_t s)
+constexpr auto operator ""_wc(const char16_t* str, std::size_t s)
 -> decltype(make_matcher(cx::make_string_view(str, s + 1)))
 {
 return make_matcher(cx::make_string_view(str, s + 1));
 }
-constexpr auto operator"" _wc(const char32_t* str, std::size_t s)
+constexpr auto operator ""_wc(const char32_t* str, std::size_t s)
 -> decltype(make_matcher(cx::make_string_view(str, s + 1)))
 {
 return make_matcher(cx::make_string_view(str, s + 1));
 }
-constexpr auto operator"" _wc(const wchar_t* str, std::size_t s)
+constexpr auto operator ""_wc(const wchar_t* str, std::size_t s)
 -> decltype(make_matcher(cx::make_string_view(str, s + 1)))
 {
 return make_matcher(cx::make_string_view(str, s + 1));

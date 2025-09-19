@@ -40,8 +40,8 @@ public:
 	std::string GetWindowTitle() const;
 	void SetWindowTitle(const std::string& text);
 
-	// Icon GetWindowIcon() const;
-	// void SetWindowIcon(const Icon& icon);
+	std::vector<std::shared_ptr<Image>> GetWindowIcon() const;
+	void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images);
 
 	// Widget content box
 	Size GetSize() const;
@@ -233,6 +233,7 @@ private:
 	Colorf WindowBackground = Colorf::fromRgba8(240, 240, 240);
 
 	std::string WindowTitle;
+	std::vector<std::shared_ptr<Image>> WindowIcon;
 	std::unique_ptr<DisplayWindow> DispWindow;
 	std::unique_ptr<Canvas> DispCanvas;
 	Widget* FocusWidget = nullptr;

@@ -20,6 +20,8 @@ public:
 	bool Show() override;
 
 private:
+	static std::string unescapeUri(const std::string& s);
+	
 	std::string ownerHandle;
 	std::string title;
 	std::string initialDirectory;

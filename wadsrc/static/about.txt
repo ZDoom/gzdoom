@@ -1,0 +1,31 @@
+# GZDoom
+
+https://zdoom.org/
+
+GZDoom is a modern, feature-rich source port for the classic game DOOM. A continuation of ZDoom, GZDoom enhances the original DOOM engine, providing advanced features like high-resolution graphics, dynamic lighting, 3D floors, and extensive modding support for modern operating systems.
+
+GZDoom is free and open-source software, built and maintained by a dedicated community of developers and enthusiasts.
+
+# Acknowledgments
+
+GZDoom would not be possible without the work of many people. We extend our immense gratitude to:
+
+- id Software for creating the original DOOM and releasing its source code.
+- Marisa Heit for her foundational work on ZDoom, and Christoph Oelckers for his continual work on GZDoom.
+- The countless modders, mappers, and artists in the DOOM community who continue to create amazing content.
+- All the contributors who have submitted code, reported bugs, and helped improve the project over the years.
+
+# Licensing
+
+Copyright 1993-1996 id Software
+Copyright 1999-2016 Marisa Heit
+Copyright 2002-2016 Christoph Oelckers
+Copyright 2017-2025 GZDoom Maintainers and Contributors
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/
+
+# Contributors

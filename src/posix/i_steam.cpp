@@ -164,7 +164,10 @@ static struct SteamAppInfo
 	{"Ultimate Doom/rerelease/DOOM_Data/StreamingAssets", 2280},
 	{"Doom 2/rerelease/DOOM II_Data/StreamingAssets", 2300},
 	{"Doom 2/finaldoombase", 2300},
-    {"Master Levels of Doom/doom2", 9160}
+    {"Master Levels of Doom/doom2", 9160},
+	{"Heretic + Hexen/base/heretic", 3286930},
+	{"Heretic + Hexen/base/hexen", 3286930},
+	{"Heretic + Hexen/base/hexendk", 3286930}
 };
 
 TArray<FString> I_GetSteamPath()

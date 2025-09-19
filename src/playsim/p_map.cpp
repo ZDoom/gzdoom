@@ -6355,7 +6355,8 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, double 
 					if (!(flags & RADF_NODAMAGE) && !(bombspot->flags3 & MF3_BLOODLESSIMPACT))
 						P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
 
-					if ((flags & RADF_NODAMAGE && !(flags & RADF_THRUSTLESS)) || !(bombspot->flags2 & MF2_NODMGTHRUST) && !(flags & RADF_THRUSTLESS))
+					if ((flags & RADF_NODAMAGE && !(flags & RADF_THRUSTLESS)) ||
+						(!(bombspot->flags2 & MF2_NODMGTHRUST) && !(flags & RADF_THRUSTLESS)))
 					{
 						if (bombsource == NULL || !(bombsource->flags2 & MF2_NODMGTHRUST))
 						{

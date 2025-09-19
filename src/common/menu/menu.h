@@ -67,6 +67,7 @@ public:
 	PClass *mClass = nullptr;
 	bool mProtected = false;
 	TArray<DMenuItemBase *> mItems;
+	FFont* mTooltipFont = nullptr;
 
 	size_t PropagateMark() override;
 };
@@ -239,6 +240,10 @@ public:
 	bool DontBlur;
 	bool Animated;
 	bool AnimatedTransition;
+	FString mCurrentTooltip;
+	double mTooltipScrollTimer;
+	double mTooltipScrollOffset;
+	FFont* mTooltipFont;
 	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
@@ -265,6 +270,7 @@ public:
 	double mXpos, mYpos;
 	FName mAction;
 	int mEnabled;
+	FString mTooltip;
 
 	bool Activate();
 	bool SetString(int i, const char *s);
@@ -287,6 +293,7 @@ struct FOptionValues
 		double Value;
 		FString TextValue;
 		FString Text;
+		FString Tooltip;
 	};
 
 	TArray<Pair> mValues;

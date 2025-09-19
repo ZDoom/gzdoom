@@ -1,5 +1,7 @@
 
 #include "x11_display_window.h"
+#include "x11_connection.h"
+#include <zwidget/core/image.h>
 #include <stdexcept>
 #include <vector>
 #include <cmath>
@@ -9,113 +11,6 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <iostream>
-
-class X11Connection
-{
-public:
-	X11Connection()
-	{
-		// This is required by vulkan
-		XInitThreads();
-
-		display = XOpenDisplay(nullptr);
-		if (!display)
-			throw std::runtime_error("Could not open X11 display");
-
-		// Make auto-repeat keys detectable
-		Bool supports_detectable_autorepeat = {};
-		XkbSetDetectableAutoRepeat(display, True, &supports_detectable_autorepeat);
-
-		// Loads the XMODIFIERS environment variable to see what IME to use
-		XSetLocaleModifiers("");
-		xim = XOpenIM(display, 0, 0, 0);
-		if (!xim)
-		{
-			// fallback to internal input method
-			XSetLocaleModifiers("@im=none");
-			xim = XOpenIM(display, 0, 0, 0);
-		}
-
-		// Look for XInput support
-		int event = 0, error = 0;
-		if (XQueryExtension(display, "XInputExtension", &XInputOpcode, &event, &error))
-		{
-			// We need XInput 2.0 support
-			int major = 2, minor = 0;
-			if (XIQueryVersion(display, &major, &minor) != BadRequest)
-			{
-				// And we need a master pointer ID
-				int ndevices = 0;
-				XIDeviceInfo *devices = XIQueryDevice(display, XIAllDevices, &ndevices);
-				if (devices)
-				{
-					for (int i = 0; i < ndevices; i++)
-					{
-						if (devices[i].use == XIMasterPointer)
-						{
-							MasterPointerID = devices[i].deviceid;
-							XInput2Supported = true;
-							break;
-						}
-					}
-					XIFreeDeviceInfo(devices);
-				}
-			}
-		}
-
-		// This XInput API is the gift that just keeps on giving. Instead of routing events to the
-		// focus window it sends it to the root window. Thanks!
-		if (XInput2Supported)
-		{
-			unsigned char mask[3] = { 0 };
-			XISetMask(mask, XI_RawMotion);
-			XIEventMask eventmask;
-			eventmask.deviceid = MasterPointerID;
-			eventmask.mask_len = sizeof(mask);
-			eventmask.mask = mask;
-			Window root = XRootWindow(display, XDefaultScreen(display));
-			XISelectEvents(display, root, &eventmask, 1);
-		}
-	}
-
-	~X11Connection()
-	{
-		for (auto& it : standardCursors)
-			XFreeCursor(display, it.second);
-		if (xim)
-			XCloseIM(xim);
-		XCloseDisplay(display);
-	}
-
-	Display* display = nullptr;
-	std::map<std::string, Atom> atoms;
-	std::map<Window, X11DisplayWindow*> windows;
-	std::map<StandardCursor, Cursor> standardCursors;
-	bool ExitRunLoop = false;
-
-	XIM xim = nullptr;
-	bool XInput2Supported = false;
-	int XInputOpcode = 0;
-	int MasterPointerID = 0;
-};
-
-static X11Connection* GetX11Connection()
-{
-	static X11Connection connection;
-	return &connection;
-}
-
-static Atom GetAtom(const std::string& name)
-{
-	auto connection = GetX11Connection();
-	auto it = connection->atoms.find(name);
-	if (it != connection->atoms.end())
-		return it->second;
-	
-	Atom atom = XInternAtom(connection->display, name.c_str(), True);
-	connection->atoms[name] = atom;
-	return atom;
-}
 
 X11DisplayWindow::X11DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, X11DisplayWindow* owner, RenderAPI renderAPI) : windowHost(windowHost), owner(owner)
 {
@@ -175,51 +70,51 @@ X11DisplayWindow::X11DisplayWindow(DisplayWindowHost* windowHost, bool popupWind
 	}
 
 	// Tell window manager which process this window came from
-	if (GetAtom("_NET_WM_PID") != None)
+	if (connection->GetAtom("_NET_WM_PID") != None)
 	{
 		int32_t pid = getpid();
 		if (pid != 0)
 		{
-			XChangeProperty(display, window, GetAtom("_NET_WM_PID"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
+			XChangeProperty(display, window, connection->GetAtom("_NET_WM_PID"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
 		}
 	}
 
 	// Tell window manager which machine this window came from
-	if (GetAtom("WM_CLIENT_MACHINE") != None)
+	if (connection->GetAtom("WM_CLIENT_MACHINE") != None)
 	{
 		std::vector<char> hostname(256);
 		if (gethostname(hostname.data(), hostname.size()) >= 0)
 		{
 			hostname.push_back(0);
-			XChangeProperty(display, window, GetAtom("WM_CLIENT_MACHINE"), XA_STRING, 8, PropModeReplace, (unsigned char *)hostname.data(), strlen(hostname.data()));
+			XChangeProperty(display, window, connection->GetAtom("WM_CLIENT_MACHINE"), XA_STRING, 8, PropModeReplace, (unsigned char *)hostname.data(), strlen(hostname.data()));
 		}
 	}
 
 	// Tell window manager we want to listen to close events
-	if (GetAtom("WM_DELETE_WINDOW") != None)
+	if (connection->GetAtom("WM_DELETE_WINDOW") != None)
 	{
-		Atom protocol = GetAtom("WM_DELETE_WINDOW");
+		Atom protocol = connection->GetAtom("WM_DELETE_WINDOW");
 		XSetWMProtocols(display, window, &protocol, 1);
 	}
 
 	// Tell window manager what type of window we are
-	if (GetAtom("_NET_WM_WINDOW_TYPE") != None)
+	if (connection->GetAtom("_NET_WM_WINDOW_TYPE") != None)
 	{
 		Atom type = None;
 		if (popupWindow)
 		{
-			type = GetAtom("_NET_WM_WINDOW_TYPE_DROPDOWN_MENU");
+			type = connection->GetAtom("_NET_WM_WINDOW_TYPE_DROPDOWN_MENU");
 			if (type == None)
-				type =  GetAtom("_NET_WM_WINDOW_TYPE_POPUP_MENU");
+				type =  connection->GetAtom("_NET_WM_WINDOW_TYPE_POPUP_MENU");
 			if (type == None)
-				type = GetAtom("_NET_WM_WINDOW_TYPE_COMBO");
+				type = connection->GetAtom("_NET_WM_WINDOW_TYPE_COMBO");
 		}
 		if (type == None)
-			type = GetAtom("_NET_WM_WINDOW_TYPE_NORMAL");
+			type = connection->GetAtom("_NET_WM_WINDOW_TYPE_NORMAL");
 
 		if (type != None)
 		{
-			XChangeProperty(display, window, GetAtom("_NET_WM_WINDOW_TYPE"), XA_ATOM, 32, PropModeReplace, (unsigned char *)&type, 1);
+			XChangeProperty(display, window, connection->GetAtom("_NET_WM_WINDOW_TYPE"), XA_ATOM, 32, PropModeReplace, (unsigned char *)&type, 1);
 		}
 	}
 
@@ -252,6 +147,87 @@ X11DisplayWindow::~X11DisplayWindow()
 void X11DisplayWindow::SetWindowTitle(const std::string& text)
 {
 	XSetStandardProperties(display, window, text.c_str(), text.c_str(), None, nullptr, 0, nullptr);
+}
+
+void X11DisplayWindow::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	if (images.empty())
+		return;
+
+	double dpiscale = GetDpiScale();
+	int desiredSize = (int)std::round(32 * dpiscale);
+
+	Image* image = images.front().get();
+	for (const auto& i : images)
+	{
+		int curdist = std::abs(image->GetWidth() - desiredSize);
+		int dist = std::abs(i->GetWidth() - desiredSize);
+		if (dist < curdist)
+			image = i.get();
+	}
+
+	int width = image->GetWidth();
+	int height = image->GetHeight();
+	const uint32_t* s = (const uint32_t*)image->GetData();
+
+	unsigned int size = (width * height) + 2; // header is 2 ints
+	unsigned long* data = (unsigned long*)malloc(size * sizeof(unsigned long));
+
+	// set header
+	data[0] = width;
+	data[1] = height;
+
+	// on 64bit systems, the destination buffer is 64 bit per pixel
+	// thus, we have to copy each pixel individually (no memcpy)
+
+	// icon data is expected as ARGB
+
+	if (image->GetFormat() == ImageFormat::R8G8B8A8)
+	{
+		for (int y = 0; y < height; ++y)
+		{
+			const uint32_t* src = s + y * width;
+			unsigned long* dst = &data[2 + (y * width)];
+			for (int x = 0; x < width; ++x)
+			{
+				uint32_t r = src[x] & 0xff;
+				uint32_t g = (src[x] >> 8) & 0xff;
+				uint32_t b = (src[x] >> 16) & 0xff;
+				uint32_t a = (src[x] >> 24) & 0xff;
+				dst[x] = (a << 24) | (r << 16) | (g << 8) | b;
+			}
+		}
+	}
+	else if (image->GetFormat() == ImageFormat::B8G8R8A8)
+	{
+		for (int y = 0; y < height; ++y)
+		{
+			const uint32_t* src = s + y * width;
+			unsigned long* dst = &data[2 + (y * width)];
+			for (int x = 0; x < width; ++x)
+			{
+				dst[x] = src[x];
+			}
+		}
+	}
+	else
+	{
+		free(data);
+		return;
+	}
+
+	// set icon geometry
+	unsigned long* geom = (unsigned long*)malloc(4 * sizeof(unsigned long));
+	geom[0] = geom[1] = 0; // x, y
+	geom[2] = width;
+	geom[3] = height;
+
+	Atom propertyGeom = XInternAtom(display, "_NET_WM_ICON_GEOMETRY", 0);
+	XChangeProperty(display, window, propertyGeom, XA_CARDINAL, 32, PropModeReplace, (unsigned char*)geom, 4);
+
+	// set icon data
+	Atom property = XInternAtom(display, "_NET_WM_ICON", 0);
+	XChangeProperty(display, window, property, XA_CARDINAL, 32, PropModeReplace, (unsigned char*)data, size);
 }
 
 void X11DisplayWindow::SetWindowFrame(const Rect& box)
@@ -292,10 +268,11 @@ void X11DisplayWindow::ShowFullscreen()
 {
 	Show();
 
-	if (GetAtom("_NET_WM_STATE") != None && GetAtom("_NET_WM_STATE_FULLSCREEN") != None)
+	auto connection = GetX11Connection();
+	if (connection->GetAtom("_NET_WM_STATE") != None && connection->GetAtom("_NET_WM_STATE_FULLSCREEN") != None)
 	{
-		Atom state = GetAtom("_NET_WM_STATE_FULLSCREEN");
-		XChangeProperty(display, window, GetAtom("_NET_WM_STATE"), XA_ATOM, 32, PropModeReplace, (unsigned char *)&state, 1);
+		Atom state = connection->GetAtom("_NET_WM_STATE_FULLSCREEN");
+		XChangeProperty(display, window, connection->GetAtom("_NET_WM_STATE"), XA_ATOM, 32, PropModeReplace, (unsigned char *)&state, 1);
 		isFullscreen = true;
 	}
 }
@@ -582,7 +559,8 @@ std::vector<uint8_t> X11DisplayWindow::GetWindowProperty(Atom property, Atom &ac
 
 std::string X11DisplayWindow::GetClipboardText()
 {
-	Atom clipboard = GetAtom("CLIPBOARD");
+	auto connection = GetX11Connection();
+	Atom clipboard = connection->GetAtom("CLIPBOARD");
 	if (clipboard == None)
 		return {};
 
@@ -595,7 +573,7 @@ std::string X11DisplayWindow::GetClipboardText()
 	{
 		if (XCheckTypedWindowEvent(display, window, SelectionNotify, &event))
 			break;
-		if (!WaitForEvents(500))
+		if (!connection->WaitForEvents(500))
 			return {};
 	}
 
@@ -614,7 +592,8 @@ void X11DisplayWindow::SetClipboardText(const std::string& text)
 {
 	clipboardText = text;
 
-	Atom clipboard = GetAtom("CLIPBOARD");
+	auto connection = GetX11Connection();
+	Atom clipboard = connection->GetAtom("CLIPBOARD");
 	if (clipboard == None)
 		return;
 
@@ -651,96 +630,6 @@ Point X11DisplayWindow::MapToGlobal(const Point& pos) const
 void* X11DisplayWindow::GetNativeHandle()
 {
 	return reinterpret_cast<void*>(window);
-}
-
-bool X11DisplayWindow::WaitForEvents(int timeout)
-{
-	Display* display = GetX11Connection()->display;
-	int fd = XConnectionNumber(display);
-
-	struct timeval tv;
-	if (timeout > 0)
-	{
-		tv.tv_sec = timeout / 1000;
-		tv.tv_usec = (timeout % 1000) / 1000;
-	}
-
-	fd_set rfds;
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	int result = select(fd + 1, &rfds, nullptr, nullptr, timeout >= 0 ? &tv : nullptr);
-	return result > 0 && FD_ISSET(fd, &rfds);
-}
-
-void X11DisplayWindow::CheckNeedsUpdate()
-{
-	for (auto& it : GetX11Connection()->windows)
-	{
-		if (it.second->needsUpdate)
-		{
-			it.second->needsUpdate = false;
-			it.second->windowHost->OnWindowPaint();
-		}
-	}
-}
-
-void X11DisplayWindow::ProcessEvents()
-{
-	CheckNeedsUpdate();
-	Display* display = GetX11Connection()->display;
-	while (XPending(display) > 0)
-	{
-		XEvent event = {};
-		XNextEvent(display, &event);
-		DispatchEvent(&event);
-	}
-}
-
-void X11DisplayWindow::RunLoop()
-{
-	X11Connection* connection = GetX11Connection();
-	connection->ExitRunLoop = false;
-	while (!connection->ExitRunLoop && !connection->windows.empty())
-	{
-		CheckNeedsUpdate();
-		XEvent event = {};
-		XNextEvent(connection->display, &event);
-		DispatchEvent(&event);
-	}
-}
-
-void X11DisplayWindow::ExitLoop()
-{
-	X11Connection* connection = GetX11Connection();
-	connection->ExitRunLoop = true;
-}
-
-void X11DisplayWindow::DispatchEvent(XEvent* event)
-{
-	X11Connection* connection = GetX11Connection();
-
-	if (connection->XInput2Supported)
-	{
-		// XInput sends all raw input to the root window. We want it routed to the focused window
-		if (event->xcookie.type == GenericEvent &&
-			event->xcookie.extension == connection->XInputOpcode &&
-			XGetEventData(connection->display, &event->xcookie))
-		{
-			for (auto& it : connection->windows)
-			{
-				X11DisplayWindow* window = it.second;
-				window->OnXInputEvent(event);
-			}
-			XFreeEventData(connection->display, &event->xcookie);
-		}
-	}
-
-	auto it = connection->windows.find(event->xany.window);
-	if (it != connection->windows.end())
-	{
-		X11DisplayWindow* window = it->second;
-		window->OnEvent(event);
-	}
 }
 
 void X11DisplayWindow::OnEvent(XEvent* event)
@@ -786,11 +675,12 @@ void X11DisplayWindow::OnConfigureNotify(XEvent* event)
 
 void X11DisplayWindow::OnClientMessage(XEvent* event)
 {
-	Atom protocolsAtom = GetAtom("WM_PROTOCOLS");
+	auto connection = GetX11Connection();
+	Atom protocolsAtom = connection->GetAtom("WM_PROTOCOLS");
 	if (protocolsAtom != None && event->xclient.message_type == protocolsAtom)
 	{
-		Atom deleteAtom = GetAtom("WM_DELETE_WINDOW");
-		Atom pingAtom = GetAtom("_NET_WM_PING");
+		Atom deleteAtom = connection->GetAtom("WM_DELETE_WINDOW");
+		Atom pingAtom = connection->GetAtom("_NET_WM_PING");
 
 		Atom protocol = event->xclient.data.l[0];
 		if (deleteAtom != None && protocol == deleteAtom)
@@ -1087,14 +977,14 @@ void X11DisplayWindow::OnMotionNotify(XEvent* event)
 	}
 }
 
-void X11DisplayWindow::OnXInputEvent(XEvent* event)
+bool X11DisplayWindow::OnXInputEvent(XEvent* event)
 {
 	// This API is so horrible it makes Win32 look attractive!
 	if (event->xcookie.evtype == XI_ButtonPress || event->xcookie.evtype == XI_ButtonRelease)
 	{
 		auto deviceEvent = (XIDeviceEvent*)event->xcookie.data;
 		if (deviceEvent->event != window)
-			return;
+			return false;
 
 		InputKey key = {};
 		switch (deviceEvent->detail)
@@ -1106,7 +996,7 @@ void X11DisplayWindow::OnXInputEvent(XEvent* event)
 		case 5: key = InputKey::MouseWheelDown; break;
 		// case 6: key = InputKey::XButton1; break;
 		// case 7: key = InputKey::XButton2; break;
-		default: return;
+		default: return false;
 		}
 
 		double dpiScale = GetDpiScale();
@@ -1132,12 +1022,14 @@ void X11DisplayWindow::OnXInputEvent(XEvent* event)
 			keyState[key] = false;
 			windowHost->OnWindowMouseUp(mousePos, key);
 		}
+
+		return true;
 	}
 	else if (event->xcookie.evtype == XI_Motion)
 	{
 		auto deviceEvent = (XIDeviceEvent*)event->xcookie.data;
 		if (deviceEvent->event != window)
-			return;
+			return false;
 
 		if (isCursorEnabled)
 		{
@@ -1160,6 +1052,8 @@ void X11DisplayWindow::OnXInputEvent(XEvent* event)
 				XWarpPointer(display, window, window, 0, 0, ClientSizeX, ClientSizeY, centerX, centerY);
 			}
 		}
+
+		return true;
 	}
 	else if (!isCursorEnabled && RawInput.Focused && event->xcookie.evtype == XI_RawMotion)
 	{
@@ -1185,7 +1079,10 @@ void X11DisplayWindow::OnXInputEvent(XEvent* event)
 			if (dx != 0 || dy != 0)
 				windowHost->OnWindowRawMouseMove(dx, dy);
 		}
+
+		return true;
 	}
+	return false;
 }
 
 void X11DisplayWindow::OnLeaveNotify(XEvent* event)
@@ -1209,8 +1106,9 @@ void X11DisplayWindow::OnSelectionRequest(XEvent* event)
 	if (requestor == window)
 		return;
 
-	Atom targetsAtom = GetAtom("TARGETS");
-	Atom multipleAtom = GetAtom("MULTIPLE");
+	X11Connection* connection = GetX11Connection();
+	Atom targetsAtom = connection->GetAtom("TARGETS");
+	Atom multipleAtom = connection->GetAtom("MULTIPLE");
 
 	struct Request { Window target; Atom property; };
 	std::vector<Request> requests;
@@ -1265,31 +1163,6 @@ void X11DisplayWindow::OnSelectionRequest(XEvent* event)
 
 		XSendEvent(display, requestor, False, 0, &response);
 	}
-}
-
-Size X11DisplayWindow::GetScreenSize()
-{
-	X11Connection* connection = GetX11Connection();
-	Display* display = connection->display;
-	int screen = XDefaultScreen(display);
-
-	int disp_width_px = XDisplayWidth(display, screen);
-	int disp_height_px = XDisplayHeight(display, screen);
-	int disp_width_mm = XDisplayWidthMM(display, screen);
-	double ppi = (disp_width_mm < 24) ? 96.0 : (25.4 * static_cast<double>(disp_width_px) / static_cast<double>(disp_width_mm));
-	double dpiScale = ppi / 96.0;
-
-	return Size(disp_width_px / dpiScale, disp_height_px / dpiScale);
-}
-
-void* X11DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
-{
-	throw std::logic_error("unimplemented: X11DisplayWindow::StartTimer");
-}
-
-void X11DisplayWindow::StopTimer(void* timerID)
-{
-	throw std::logic_error("unimplemented: X11DisplayWindow::StopTimer");
 }
 
 // This is to avoid needing all the Vulkan headers and the volk binding library just for this:

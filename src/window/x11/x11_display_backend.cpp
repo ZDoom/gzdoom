@@ -1,6 +1,8 @@
 
 #include "x11_display_backend.h"
 #include "x11_display_window.h"
+#include "x11_connection.h"
+#include <stdexcept>
 
 #ifdef USE_DBUS
 #include "window/dbus/dbus_open_file_dialog.h"
@@ -15,32 +17,32 @@ std::unique_ptr<DisplayWindow> X11DisplayBackend::Create(DisplayWindowHost* wind
 
 void X11DisplayBackend::ProcessEvents()
 {
-	X11DisplayWindow::ProcessEvents();
+	GetX11Connection()->ProcessEvents();
 }
 
 void X11DisplayBackend::RunLoop()
 {
-	X11DisplayWindow::RunLoop();
+	GetX11Connection()->RunLoop();
 }
 
 void X11DisplayBackend::ExitLoop()
 {
-	X11DisplayWindow::ExitLoop();
+	GetX11Connection()->ExitLoop();
 }
 
 Size X11DisplayBackend::GetScreenSize()
 {
-	return X11DisplayWindow::GetScreenSize();
+	return GetX11Connection()->GetScreenSize();
 }
 
 void* X11DisplayBackend::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-	return X11DisplayWindow::StartTimer(timeoutMilliseconds, std::move(onTimer));
+	return GetX11Connection()->StartTimer(timeoutMilliseconds, onTimer);
 }
 
 void X11DisplayBackend::StopTimer(void* timerID)
 {
-	X11DisplayWindow::StopTimer(timerID);
+	GetX11Connection()->StopTimer(timerID);
 }
 
 #ifdef USE_DBUS

@@ -1,4 +1,3 @@
-
 #include "sdl2_display_window.h"
 #include <stdexcept>
 #include <SDL2/SDL_vulkan.h>
@@ -33,7 +32,7 @@ SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWi
 		if (result != 0)
 			throw std::runtime_error(std::string("Unable to create SDL window:") + SDL_GetError());
 	}
-	
+
 	WindowList[SDL_GetWindowID(Handle.window)] = this;
 }
 
@@ -81,6 +80,12 @@ VkSurfaceKHR SDL2DisplayWindow::CreateVulkanSurface(VkInstance instance)
 void SDL2DisplayWindow::SetWindowTitle(const std::string& text)
 {
 	SDL_SetWindowTitle(Handle.window, text.c_str());
+}
+
+void SDL2DisplayWindow::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	// To do: call SDL_SetWindowIcon for the highest resolution image (or maybe the first 32x32 or higher? not sure what is best here)
+	// To do: when this is upgraded to SDL3, call SDL_AddSurfaceAlternateImage for all the images
 }
 
 void SDL2DisplayWindow::SetWindowFrame(const Rect& box)
@@ -422,14 +427,14 @@ SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)
 	int windowID;
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT: windowID = event.window.windowID; break;
-	case SDL_TEXTINPUT: windowID = event.text.windowID; break;
-	case SDL_KEYUP: windowID = event.key.windowID; break;
-	case SDL_KEYDOWN: windowID = event.key.windowID; break;
-	case SDL_MOUSEBUTTONUP: windowID = event.button.windowID; break;
+	case SDL_WINDOWEVENT:     windowID = event.window.windowID; break;
+	case SDL_TEXTINPUT:       windowID = event.text.windowID;   break;
+	case SDL_KEYUP:           windowID = event.key.windowID;    break;
+	case SDL_KEYDOWN:         windowID = event.key.windowID;    break;
+	case SDL_MOUSEBUTTONUP:   windowID = event.button.windowID; break;
 	case SDL_MOUSEBUTTONDOWN: windowID = event.button.windowID; break;
-	case SDL_MOUSEWHEEL: windowID = event.wheel.windowID; break;
-	case SDL_MOUSEMOTION: windowID = event.motion.windowID; break;
+	case SDL_MOUSEWHEEL:      windowID = event.wheel.windowID;  break;
+	case SDL_MOUSEMOTION:     windowID = event.motion.windowID; break;
 	default:
 		if (event.type == PaintEventNumber) windowID = event.user.windowID;
 		else return nullptr;
@@ -450,14 +455,14 @@ void SDL2DisplayWindow::DispatchEvent(const SDL_Event& event)
 
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT: window->OnWindowEvent(event.window); break;
-	case SDL_TEXTINPUT: window->OnTextInput(event.text); break;
-	case SDL_KEYUP: window->OnKeyUp(event.key); break;
-	case SDL_KEYDOWN: window->OnKeyDown(event.key); break;
-	case SDL_MOUSEBUTTONUP: window->OnMouseButtonUp(event.button); break;
+	case SDL_WINDOWEVENT:     window->OnWindowEvent    (event.window); break;
+	case SDL_TEXTINPUT:       window->OnTextInput      (event.text);   break;
+	case SDL_KEYUP:           window->OnKeyUp          (event.key);    break;
+	case SDL_KEYDOWN:         window->OnKeyDown        (event.key);    break;
+	case SDL_MOUSEBUTTONUP:   window->OnMouseButtonUp  (event.button); break;
 	case SDL_MOUSEBUTTONDOWN: window->OnMouseButtonDown(event.button); break;
-	case SDL_MOUSEWHEEL: window->OnMouseWheel(event.wheel); break;
-	case SDL_MOUSEMOTION: window->OnMouseMotion(event.motion); break;
+	case SDL_MOUSEWHEEL:      window->OnMouseWheel     (event.wheel);  break;
+	case SDL_MOUSEMOTION:     window->OnMouseMotion    (event.motion); break;
 	default:
 		if (event.type == PaintEventNumber) window->OnPaintEvent();
 	}
@@ -467,13 +472,39 @@ void SDL2DisplayWindow::OnWindowEvent(const SDL_WindowEvent& event)
 {
 	switch (event.event)
 	{
-		case SDL_WINDOWEVENT_CLOSE: WindowHost->OnWindowClose(); break;
-		case SDL_WINDOWEVENT_MOVED: WindowHost->OnWindowGeometryChanged(); break;
-		case SDL_WINDOWEVENT_RESIZED: WindowHost->OnWindowGeometryChanged(); break;
-		case SDL_WINDOWEVENT_SHOWN: WindowHost->OnWindowPaint(); break;
-		case SDL_WINDOWEVENT_EXPOSED: WindowHost->OnWindowPaint(); break;
-		case SDL_WINDOWEVENT_FOCUS_GAINED: WindowHost->OnWindowActivated(); break;
-		case SDL_WINDOWEVENT_FOCUS_LOST: WindowHost->OnWindowDeactivated(); break;
+		case SDL_WINDOWEVENT_CLOSE:
+			WindowHost->OnWindowClose();
+			break;
+
+		case SDL_WINDOWEVENT_MOVED:
+		case SDL_WINDOWEVENT_SIZE_CHANGED:
+		case SDL_WINDOWEVENT_RESIZED:
+			WindowHost->OnWindowGeometryChanged();
+			break;
+
+		case SDL_WINDOWEVENT_SHOWN:
+		case SDL_WINDOWEVENT_EXPOSED:
+			WindowHost->OnWindowPaint();
+			break;
+
+		case SDL_WINDOWEVENT_FOCUS_GAINED:
+		case SDL_WINDOWEVENT_FOCUS_LOST:
+			WindowHost->OnWindowDeactivated();
+			break;
+
+		case SDL_WINDOWEVENT_NONE:
+		case SDL_WINDOWEVENT_HIDDEN:
+		case SDL_WINDOWEVENT_MINIMIZED:
+		case SDL_WINDOWEVENT_MAXIMIZED:
+		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_WINDOWEVENT_ENTER:
+		case SDL_WINDOWEVENT_LEAVE:
+		case SDL_WINDOWEVENT_TAKE_FOCUS:
+		case SDL_WINDOWEVENT_HIT_TEST:
+		case SDL_WINDOWEVENT_ICCPROF_CHANGED:
+		case SDL_WINDOWEVENT_DISPLAY_CHANGED:
+			// nope
+			break;
 	}
 }
 
@@ -787,5 +818,5 @@ SDL_Scancode SDL2DisplayWindow::InputKeyToScancode(InputKey inputkey)
 		case InputKey::RControl: return SDL_SCANCODE_RCTRL;
 		case InputKey::Tilde: return SDL_SCANCODE_GRAVE;
 		default: return (SDL_Scancode)0;
-	}	
+	}
 }

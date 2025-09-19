@@ -25,70 +25,71 @@ template <typename R, typename T, typename... Args>
 std::function<R(Args...)> bind_mem_fn(R(T::* func)(Args...), T *t)
 {
   return [func, t] (Args... args)
-    {
-      return (t->*func)(args...);
-    };
+	{
+	  return (t->*func)(args...);
+	};
 }
 
 class SharedMemHelper
 {
 public:
-    SharedMemHelper(size_t size)
-        : len(size)
-    {
-        std::stringstream ss;
-        std::random_device device;
-        std::default_random_engine engine(device());
-        std::uniform_int_distribution<unsigned int> distribution(0, std::numeric_limits<unsigned int>::max());
-        ss << distribution(engine);
-        name = ss.str();
+	SharedMemHelper(size_t size)
+		: len(size)
+	{
+		std::stringstream ss;
+		std::random_device device;
+		std::default_random_engine engine(device());
+		std::uniform_int_distribution<unsigned int> distribution(0, std::numeric_limits<unsigned int>::max());
+		ss << distribution(engine);
+		name = ss.str();
 
-        fd = memfd_create(name.c_str(), 0);
-        if(fd < 0)
-            throw std::runtime_error("shm_open failed.");
+		fd = memfd_create(name.c_str(), 0);
+		if(fd < 0)
+			throw std::runtime_error("shm_open failed.");
 
-        if(ftruncate(fd, size) < 0)
-            throw std::runtime_error("ftruncate failed.");
+		if(ftruncate(fd, size) < 0)
+			throw std::runtime_error("ftruncate failed.");
 
-        mem = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if(mem == MAP_FAILED) // NOLINT
-            throw std::runtime_error("mmap failed with len " + std::to_string(len) + ".");
-    }
+		mem = mmap(nullptr, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		if(mem == MAP_FAILED) // NOLINT
+			throw std::runtime_error("mmap failed with len " + std::to_string(len) + ".");
+	}
 
-    ~SharedMemHelper() noexcept
-    {
-        if(fd)
-        {
-            munmap(mem, len);
-            close(fd);
-            shm_unlink(name.c_str());
-        }
-    }
+	~SharedMemHelper() noexcept
+	{
+		if(fd)
+		{
+			munmap(mem, len);
+			close(fd);
+			shm_unlink(name.c_str());
+		}
+	}
 
-    int get_fd() const
-    {
-        return fd;
-    }
+	int get_fd() const
+	{
+		return fd;
+	}
 
-    void *get_mem()
-    {
-        return mem;
-    }
+	void *get_mem()
+	{
+		return mem;
+	}
 
 private:
-    std::string name;
-    int fd = 0;
-    size_t len = 0;
-    void *mem = nullptr;
+	std::string name;
+	int fd = 0;
+	size_t len = 0;
+	void *mem = nullptr;
 };
 
 class WaylandDisplayWindow : public DisplayWindow
 {
 public:
-    WaylandDisplayWindow(WaylandDisplayBackend* backend, DisplayWindowHost* windowHost, bool popupWindow, WaylandDisplayWindow* owner, RenderAPI renderAPI);
-    ~WaylandDisplayWindow();
+	WaylandDisplayWindow(WaylandDisplayBackend* backend, DisplayWindowHost* windowHost, bool popupWindow, WaylandDisplayWindow* owner, RenderAPI renderAPI);
+	~WaylandDisplayWindow();
 
-    void SetWindowTitle(const std::string& text) override;
+	void SetWindowTitle(const std::string& text) override;
+	void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images) override;
 	void SetWindowFrame(const Rect& box) override;
 	void SetClientFrame(const Rect& box) override;
 	void Show() override;
@@ -135,64 +136,69 @@ public:
 	bool IsWindowFullscreen() override;
 
 private:
-    // Event handlers as otherwise linking DisplayWindowHost On...() functions with Wayland events directly crashes the app
-    // Alternatively to avoid crashes one can capture by value ([=]) instead of reference ([&])
-    void OnXDGToplevelConfigureEvent(int32_t width, int32_t height);
-    void OnExportHandleEvent(std::string exportedHandle);
-    void OnExitEvent();
+	// Event handlers as otherwise linking DisplayWindowHost On...() functions with Wayland events directly crashes the app
+	// Alternatively to avoid crashes one can capture by value ([=]) instead of reference ([&])
+	void OnXDGToplevelConfigureEvent(int32_t width, int32_t height);
+	void OnExportHandleEvent(std::string exportedHandle);
+	void OnExitEvent();
 
-    void DrawSurface(uint32_t serial = 0);
+	void DrawSurface(uint32_t serial = 0);
 
-    void InitializeToplevel();
-    void InitializePopup();
+	void InitializeToplevel();
+	void InitializePopup();
 
-    WaylandDisplayBackend* backend = nullptr;
-    WaylandDisplayWindow* m_owner = nullptr;
-    DisplayWindowHost* windowHost = nullptr;
-    bool m_PopupWindow = false;
+	WaylandDisplayBackend* backend = nullptr;
+	WaylandDisplayWindow* m_owner = nullptr;
+	DisplayWindowHost* windowHost = nullptr;
+	bool m_PopupWindow = false;
 
-    bool m_NeedsUpdate = true;
+	bool m_NeedsUpdate = true;
 
-    Point m_WindowGlobalPos = Point(0, 0);
-    Size m_WindowSize = Size(0, 0);
-    double m_ScaleFactor = 1.0;
+	Point m_WindowGlobalPos = Point(0, 0);
+	Size m_WindowSize = Size(0, 0);
+	double m_ScaleFactor = 1.0;
 
-    Point m_SurfaceMousePos = Point(0, 0);
+	Point m_SurfaceMousePos = Point(0, 0);
 
-    WaylandNativeHandle m_NativeHandle;
-    RenderAPI m_renderAPI;
+	WaylandNativeHandle m_NativeHandle;
+	RenderAPI m_renderAPI;
 
-    wayland::data_device_t m_DataDevice;
-    wayland::data_source_t m_DataSource;
+	wayland::data_source_t m_DataSource;
 
-    wayland::zxdg_toplevel_decoration_v1_t m_XDGToplevelDecoration;
+	wayland::zxdg_toplevel_decoration_v1_t m_XDGToplevelDecoration;
 
-    wayland::fractional_scale_v1_t m_FractionalScale;
+	wayland::fractional_scale_v1_t m_FractionalScale;
 
-    wayland::surface_t m_AppSurface;
-    wayland::buffer_t m_AppSurfaceBuffer;
+	wayland::surface_t m_AppSurface;
+	wayland::buffer_t m_AppSurfaceBuffer;
 
-    wayland::xdg_surface_t m_XDGSurface;
-    wayland::xdg_toplevel_t m_XDGToplevel;
-    wayland::xdg_popup_t m_XDGPopup;
+	wayland::xdg_surface_t m_XDGSurface;
+	wayland::xdg_toplevel_t m_XDGToplevel;
+	wayland::xdg_popup_t m_XDGPopup;
 
-    wayland::zxdg_exported_v2_t m_XDGExported;
+	wayland::zxdg_exported_v2_t m_XDGExported;
 
-    wayland::zwp_locked_pointer_v1_t m_LockedPointer;
-    wayland::zwp_confined_pointer_v1_t m_ConfinedPointer;
+	wayland::zwp_locked_pointer_v1_t m_LockedPointer;
+	wayland::zwp_confined_pointer_v1_t m_ConfinedPointer;
 
-    wayland::callback_t m_FrameCallback;
+	wayland::xdg_toplevel_icon_v1_t m_XDGToplevelIcon;
 
-    std::string m_windowID;
-    std::string m_ClipboardContents;
+	wayland::callback_t m_FrameCallback;
 
-    std::shared_ptr<SharedMemHelper> shared_mem;
+	std::string m_windowID;
 
-    bool isFullscreen = false;
+	std::shared_ptr<SharedMemHelper> shared_mem;
 
-    // Helper functions
-    void CreateBuffers(int32_t width, int32_t height);
-    std::string GetWaylandWindowID();
+	std::vector<std::shared_ptr<SharedMemHelper>> appIconSharedMems;
+	std::vector<wayland::buffer_t> appIconBuffers;
 
-    friend WaylandDisplayBackend;
+	bool isFullscreen = false;
+
+	// Helper functions
+	void CreateBuffers(int32_t width, int32_t height);
+
+	void CreateAppIconBuffers(const std::vector<std::shared_ptr<Image>>& images);
+	std::string GetWaylandWindowID();
+
+	friend WaylandDisplayBackend;
 };

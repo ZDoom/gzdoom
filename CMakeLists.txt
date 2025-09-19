@@ -146,6 +146,8 @@ set(ZWIDGET_X11_SOURCES
 	src/window/x11/x11_display_backend.h
 	src/window/x11/x11_display_window.cpp
 	src/window/x11/x11_display_window.h
+	src/window/x11/x11_connection.cpp
+	src/window/x11/x11_connection.h
 )
 
 set(ZWIDGET_WAYLAND_SOURCES
@@ -155,6 +157,10 @@ set(ZWIDGET_WAYLAND_SOURCES
 	src/window/wayland/wayland_display_window.h
 	src/window/wayland/wl_fractional_scaling_protocol.cpp
 	src/window/wayland/wl_fractional_scaling_protocol.hpp
+	src/window/wayland/wl_cursor_shape.cpp
+	src/window/wayland/wl_cursor_shape.hpp
+	src/window/wayland/wl_xdg_toplevel_icon.cpp
+	src/window/wayland/wl_xdg_toplevel_icon.hpp
 )
 
 source_group("src" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/.+")
@@ -273,6 +279,9 @@ target_link_options(zwidget PRIVATE ${ZWIDGET_LINK_OPTIONS})
 target_link_libraries(zwidget ${ZWIDGET_LIBS})
 set_target_properties(zwidget PROPERTIES CXX_STANDARD 20)
 target_compile_options(zwidget PRIVATE ${CXX_WARNING_FLAGS})
+if(SDL2_FOUND)
+	target_include_directories(zwidget PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
 
 if(MSVC)
 	set_property(TARGET zwidget PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -281,10 +290,6 @@ endif()
 option(ZWIDGET_BUILD_EXAMPLE "Build the zwidget example application" ON)
 
 if(ZWIDGET_BUILD_EXAMPLE)
-	if (UNIX AND NOT APPLE)
-		find_package(SDL2 REQUIRED)
-	endif()
-
 	add_executable(zwidget_example WIN32
 		example/example.cpp
 		example/picopng.cpp

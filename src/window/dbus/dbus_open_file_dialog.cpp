@@ -281,8 +281,30 @@ bool DBusOpenFileDialog::Show()
 	for (const std::string& uri : uris)
 	{
 		if (uri.size() > 7 && uri.substr(0, 7) == "file://")
-			outputFilenames.push_back(uri.substr(7));
+			outputFilenames.push_back(unescapeUri(uri.substr(7)));
 	}
 		
 	return !uris.empty();
+}
+
+std::string DBusOpenFileDialog::unescapeUri(const std::string& s)
+{
+	// This needs to be much more advanced to support any kind of uri. Why did they have to pass it as an uri!? idiots.
+	std::string result;
+	result.reserve(s.size());
+	size_t i = 0;
+	while (i < s.length())
+	{
+		if (s[i] == '%' && i + 2 < s.length() && s[i + 1] == '2' && s[i + 2] == '0')
+		{
+			result += ' ';
+			i += 3;
+		}
+		else
+		{
+			result += s[i];
+			i++;
+		}
+	}
+	return result;
 }

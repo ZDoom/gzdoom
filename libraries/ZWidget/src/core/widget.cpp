@@ -173,6 +173,18 @@ void Widget::SetWindowTitle(const std::string& text)
 	}
 }
 
+std::vector<std::shared_ptr<Image>> Widget::GetWindowIcon() const
+{
+	return WindowIcon;
+}
+
+void Widget::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	WindowIcon = images;
+	if (DispWindow)
+		DispWindow->SetWindowIcon(WindowIcon);
+}
+
 Size Widget::GetSize() const
 {
 	return ContentGeometry.size();
@@ -365,7 +377,7 @@ void Widget::Repaint()
 	Widget* w = Window();
 	if (w->DispCanvas)
 	{
-		w->DispCanvas->begin(WindowBackground);
+		w->DispCanvas->begin(w->WindowBackground);
 		w->Paint(w->DispCanvas.get());
 		w->DispCanvas->end();
 	}

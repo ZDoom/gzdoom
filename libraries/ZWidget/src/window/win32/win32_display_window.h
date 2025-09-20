@@ -14,6 +14,7 @@ public:
 	~Win32DisplayWindow();
 
 	void SetWindowTitle(const std::string& text) override;
+	void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images) override;
 	void SetWindowFrame(const Rect& box) override;
 	void SetClientFrame(const Rect& box) override;
 	void Show() override;
@@ -89,6 +90,9 @@ public:
 	bool TrackMouseActive = false;
 
 	HDC PaintDC = 0;
+
+	HICON SmallIcon = {};
+	HICON LargeIcon = {};
 
 	StandardCursor CurrentCursor = StandardCursor::arrow;
 };

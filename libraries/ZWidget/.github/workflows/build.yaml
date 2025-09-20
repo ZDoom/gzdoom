@@ -64,30 +64,30 @@ jobs:
         shell: bash
         run: cmake --build . --config $BUILD_TYPE
 
-#  macos-build:
-#     runs-on: macos-10.15
-#     name: 🍎 macOS 10.15
-#     steps:
+  macos-build:
+     runs-on: macos-latest
+     name: 🍎 macOS arm64
+     steps:
 
-#       - name: 🧰 Checkout
-#         uses: actions/checkout@v2
-#         with:
-#           fetch-depth: 0
-#           submodules: true
+       - name: 🧰 Checkout
+         uses: actions/checkout@v2
+         with:
+           fetch-depth: 0
+           submodules: true
 
-#       - name: ⬇️ Install dependencies
-#         run: brew install sdl2 sdl2_mixer
+       - name: ⬇️ Install dependencies
+         run: brew install sdl2 sdl2_mixer
 
-#       - name: Create Build Environment
-#         run: cmake -E make_directory ${{runner.workspace}}/build
+       - name: Create Build Environment
+         run: cmake -E make_directory ${{runner.workspace}}/build
 
-#       - name: Configure CMake
-#         shell: bash
-#         working-directory: ${{runner.workspace}}/build
-#         run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+       - name: Configure CMake
+         shell: bash
+         working-directory: ${{runner.workspace}}/build
+         run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-#       - name: Build
-#         working-directory: ${{runner.workspace}}/build
-#         shell: bash
-#         run: |
-#           cmake --build . --config $BUILD_TYPE
+       - name: Build
+         working-directory: ${{runner.workspace}}/build
+         shell: bash
+         run: |
+           cmake --build . --config $BUILD_TYPE

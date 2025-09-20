@@ -86,6 +86,22 @@ LauncherWindow::LauncherWindow(): Widget(nullptr, WidgetType::Window)
 {
 	SetWindowTitle("ZWidget Demo");
 
+	try
+	{
+		SetWindowIcon({
+			Image::LoadResource("surreal-engine-icon-16.png"),
+			Image::LoadResource("surreal-engine-icon-24.png"),
+			Image::LoadResource("surreal-engine-icon-32.png"),
+			Image::LoadResource("surreal-engine-icon-48.png"),
+			Image::LoadResource("surreal-engine-icon-64.png"),
+			Image::LoadResource("surreal-engine-icon-128.png"),
+			Image::LoadResource("surreal-engine-icon-256.png")
+			});
+	}
+	catch (...)
+	{
+	}
+
 	Logo = new ImageBox(this);
 	ExitButton = new PushButton(this);
 	Pages = new TabWidget(this);
@@ -298,18 +314,17 @@ std::vector<uint8_t> LoadWidgetData(const std::string& name)
 	return ReadAllBytes(name);
 }
 
-enum class Backend {
+enum class Backend
+{
 	Default, Win32, SDL2, X11, Wayland
 };
 
-enum class Theme {
+enum class Theme
+{
 	Default, Light, Dark
 };
 
-int example(
-	Backend backend = Backend::Default,
-	Theme theme = Theme::Default
-)
+int example(Backend backend = Backend::Default, Theme theme = Theme::Default)
 {
 	// just for testing themes
 	switch (theme)
@@ -344,6 +359,8 @@ int example(
 
 #ifdef WIN32
 
+#define WIN32_MEAN_AND_LEAN
+#define NOMINMAX
 #include <Windows.h>
 #include <stdexcept>
 
@@ -395,6 +412,7 @@ static std::vector<uint8_t> ReadAllBytes(const std::string& filename)
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
 {
+	SetProcessDPIAware();
 	example();
 }
 

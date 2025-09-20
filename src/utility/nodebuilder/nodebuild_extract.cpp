@@ -190,7 +190,7 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 	for (i = 0; i < bsp->Subsectors.Size(); ++i)
 	{
 		bsp->Subsectors[i].sprites.Clear();
-		memset((void*)&bsp->Subsectors[i], 0, sizeof(mapsubsector_t));
+		memset((void*)&bsp->Subsectors[i], 0, sizeof(subsector_t));
 	}
 
 	bsp->Nodes.Resize(Nodes.Size());

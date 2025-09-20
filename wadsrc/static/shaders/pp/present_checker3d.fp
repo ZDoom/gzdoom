@@ -8,7 +8,7 @@ layout(binding=1) uniform sampler2D RightEyeTexture;
 vec4 ApplyGamma(vec4 c)
 {
 	vec3 val = c.rgb * Contrast - (Contrast - 1.0) * 0.5;
-	val += Brightness * 0.5;
+	val = (val + Brightness * 0.5) * (WhitePoint - BlackPoint) + BlackPoint;
 	val = pow(max(val, vec3(0.0)), vec3(InvGamma));
 	return vec4(val, c.a);
 }

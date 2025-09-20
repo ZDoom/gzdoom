@@ -3905,7 +3905,10 @@ int GameMain()
 	if (!zwidget)
 		zwidget = DisplayBackend::TryCreateSDL2();
 	if (!zwidget)
+    {
+		fprintf(stderr, "Unable to create init zwidget\n");
 		return -1;
+    }
 	DisplayBackend::Set(std::move(zwidget));
 
 	int ret = 0;

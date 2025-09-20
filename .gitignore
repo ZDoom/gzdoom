@@ -8,9 +8,6 @@ flatpak/
 gzdoom-crash.log
 fmodapi*linux/
 
-# generated code
-/src/gitinfo.h
-
 # editor/tooling/os files
 *~
 .gdb_history

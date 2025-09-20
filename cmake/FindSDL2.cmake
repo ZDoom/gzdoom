@@ -20,7 +20,6 @@
 # this module will try to find on your behalf.) Also for OS X, this
 # module will automatically add the -framework Cocoa on your behalf.
 #
-#
 # Additional Note: If you see an empty SDL2_LIBRARY_TEMP in your configuration
 # and no SDL2_LIBRARY, it means CMake did not find your SDL2 library
 # (SDL2.dll, libsdl2.so, SDL2.framework, etc).
@@ -28,7 +27,6 @@
 # Similarly, if you see an empty SDL2MAIN_LIBRARY, you should set this value
 # as appropriate. These values are used to generate the final SDL2_LIBRARY
 # variable, but when these values are unset, SDL2_LIBRARY does not get created.
-#
 #
 # $SDL2DIR is an environment variable that would
 # correspond to the ./configure --prefix=$SDL2DIR
@@ -72,8 +70,9 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   /sw # Fink
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
+  /opt/homebrew
   /opt
-  /boot/system/develop/headers/SDL2 #Hiaku OS
+  /boot/system/develop/headers/SDL2 #Haiku OS
 )
 #MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
 
@@ -86,10 +85,10 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   /sw
   /opt/local
   /opt/csw
+  /opt/homebrew
   /opt
-  /system/lib #Hiaku OS
+  /system/lib #Haiku OS
 )
-
 #MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
 
 IF(NOT SDL2_BUILDING_LIBRARY)
@@ -107,6 +106,7 @@ IF(NOT SDL2_BUILDING_LIBRARY)
       /sw
       /opt/local
       /opt/csw
+      /opt/homebrew
       /opt
     )
   ENDIF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")

@@ -310,6 +310,8 @@ else()
 	set( DEB_C_FLAGS "" )
 
 	if( APPLE )
+		list(PREPEND CMAKE_PREFIX_PATH "/opt/local")    # port
+		list(PREPEND CMAKE_PREFIX_PATH "/opt/homebrew") # brew
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
 			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.

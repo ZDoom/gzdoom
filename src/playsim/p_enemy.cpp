@@ -1445,8 +1445,8 @@ DEFINE_ACTION_FUNCTION(AActor, LookForEnemiesEx)
 
 	while (it.Next(&cres))
 	{
-		if (cres.thing->player == nullptr && ValidEnemyInBlock(cres.thing, self, params) ||
-			!noPlayers && cres.thing->player && isTargetablePlayer(self, cres.thing->player, allaround, params))
+		if ((cres.thing->player == nullptr && ValidEnemyInBlock(cres.thing, self, params)) ||
+			(!noPlayers && cres.thing->player && isTargetablePlayer(self, cres.thing->player, allaround, params)))
 			targets->Push(cres.thing);
 	}
 

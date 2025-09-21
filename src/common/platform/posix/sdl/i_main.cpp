@@ -35,25 +35,24 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <SDL.h>
-#include <unistd.h>
-#include <signal.h>
-#include <new>
-#include <sys/param.h>
+#include <SDL2/SDL.h>
+#include <csignal>
 #include <locale.h>
+#include <new>
+#include <signal.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
-#include <csignal>
+#include <unistd.h>
 
-#include "engineerrors.h"
-#include "m_argv.h"
 #include "c_console.h"
-#include "version.h"
 #include "cmdlib.h"
 #include "engineerrors.h"
-#include "i_system.h"
 #include "i_interface.h"
+#include "i_system.h"
+#include "m_argv.h"
 #include "printf.h"
+#include "version.h"
 
 // MACROS ------------------------------------------------------------------
 

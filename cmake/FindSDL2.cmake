@@ -48,31 +48,26 @@
 # SDL2_LIBRARY to override this selection or set the CMake environment
 # CMAKE_INCLUDE_PATH to modify the search paths.
 #
-# Note that the header path has changed from SDL2/SDL.h to just SDL.h
-# This needed to change because "proper" SDL2 convention
-# is #include "SDL.h", not <SDL2/SDL.h>. This is done for portability
-# reasons because not all systems place things in SDL2/ (see FreeBSD).
-#
 # Ported by Johnny Patterson. This is a literal port for SDL2 of the FindSDL.cmake
 # module with the minor edit of changing "SDL" to "SDL2" where necessary. This
 # was not created for redistribution, and exists temporarily pending official
 # SDL2 CMake modules.
 
-FIND_PATH(SDL2_INCLUDE_DIR SDL.h
+FIND_PATH(SDL2_INCLUDE_DIR SDL2/SDL.h
   HINTS
   $ENV{SDL2DIR}
-  PATH_SUFFIXES include/SDL2 include
+  PATH_SUFFIXES include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
-  /usr/local/include/SDL2
-  /usr/include/SDL2
+  /usr/local
+  /usr
   /sw # Fink
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
   /opt/homebrew
   /opt
-  /boot/system/develop/headers/SDL2 #Haiku OS
+  /boot/system/develop/headers #Haiku OS
 )
 #MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
 

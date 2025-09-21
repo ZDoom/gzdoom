@@ -34,8 +34,8 @@
 **
 */
 
-#include <SDL.h>
-#include <SDL_events.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
 
 #include "c_buttons.h"
 #include "c_console.h"

@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,21 +33,20 @@
 **
 */
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <signal.h>
 
-#include "i_system.h"
-#include "hardware.h"
-#include "c_dispatch.h"
-#include "v_text.h"
-#include "m_argv.h"
 #include "c_console.h"
+#include "c_dispatch.h"
+#include "hardware.h"
+#include "i_system.h"
+#include "m_argv.h"
 #include "printf.h"
+#include "v_text.h"
 
 IVideo *Video;
 
 void I_RestartRenderer();
-
 
 void I_ShutdownGraphics ()
 {

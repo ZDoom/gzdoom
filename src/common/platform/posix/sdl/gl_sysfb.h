@@ -1,7 +1,7 @@
 #ifndef __POSIX_SDL_GL_SYSFB_H__
 #define __POSIX_SDL_GL_SYSFB_H__
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "v_video.h"
 
@@ -46,4 +46,3 @@ protected:
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__
-

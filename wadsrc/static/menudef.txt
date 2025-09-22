@@ -2304,6 +2304,10 @@ OptionMenu ModReplayerOptions protected
 	6, "$OPTVAL_YMFMOPNA"
 	// 7'th is a VGM Dumper, it should NEVER been used during normal runtime
 	8, "$OPTVAL_NUKEDOPN2YM2612"
+	9, "$OPTVAL_OPN2YM2612LLE"
+	// 10'th is the OPNA-LLE which wasn't included with the build due to impossibility to run in real-time
+	11, "$OPTVAL_OPN2YM3438LLE"
+	12, "$OPTVAL_OPN2YMF276LLE"
  }
 
  OptionMenu ADLOptions protected

@@ -20,13 +20,13 @@ jobs:
 
         - name: macOS
           os: macos-14
-          deps_cmdline: brew install libvpx
+          deps_cmdline: brew install libvpx molten-vk vulkan-volk
           build_type: Release
 
         - name: macOS
           os: macos-14
           extra_options: -G Xcode -DDYN_OPENAL=OFF
-          deps_cmdline: brew install libvpx
+          deps_cmdline: brew install libvpx molten-vk vulkan-volk
           build_type: Debug
 
         - name: Linux GCC 9 # oldest version available

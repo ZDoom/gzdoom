@@ -820,7 +820,7 @@ class Object native
 	native clearscope static Object GetNetworkEntity(uint id);
 	native play void EnableNetworking(bool enable);
 	native clearscope uint GetNetworkID() const;
-	native clearscope bool IsClientside() const;
+	native clearscope bool IsClientSide() const;
 
 	native virtualscope void Destroy();
 

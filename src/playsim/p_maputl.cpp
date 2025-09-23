@@ -467,7 +467,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 	subsector = Level->PointInRenderSubsector(Pos());	// this is from the rendering nodes, not the gameplay nodes!
 	section = subsector->section;
 
-	const bool clientside = IsClientside();
+	const bool clientside = IsClientSide();
 	if (!(flags & MF_NOSECTOR))
 	{
 		if (!clientside)

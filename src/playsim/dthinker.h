@@ -81,7 +81,7 @@ struct FThinkerCollection
 	}
 
 	void RunThinkers(FLevelLocals *Level);	// The level is needed to tick the lights
-	void RunClientsideThinkers(FLevelLocals* Level);
+	void RunClientSideThinkers(FLevelLocals* Level);
 	void DestroyAllThinkers(bool fullgc = true);
 	void CleanUpTravellers(bool saveGame);
 	void SerializeThinkers(FSerializer &arc, bool keepPlayers);

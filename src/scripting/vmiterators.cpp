@@ -49,9 +49,9 @@ public:
 
 IMPLEMENT_CLASS(DThinkerIterator, true, false);
 
-static DThinkerIterator *CreateThinkerIterator(PClass *type, int statnum)
+static DThinkerIterator *CreateThinkerIterator(PClass *type, int statnum, bool clientSide)
 {
-	return Create<DThinkerIterator>(currentVMLevel, type, statnum);
+	return Create<DThinkerIterator>(currentVMLevel, type, statnum, clientSide);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
@@ -59,20 +59,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, DThinker);
 	PARAM_INT(statnum);
-	ACTION_RETURN_OBJECT(CreateThinkerIterator(type, statnum));
-}
-
-static DThinkerIterator* CreateClientsideThinkerIterator(PClass* type, int statnum)
-{
-	return Create<DThinkerIterator>(currentVMLevel, type, statnum, true);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, CreateClientside, CreateClientsideThinkerIterator)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(type, DThinker);
-	PARAM_INT(statnum);
-	ACTION_RETURN_OBJECT(CreateClientsideThinkerIterator(type, statnum));
+	PARAM_BOOL(clientSide);
+	ACTION_RETURN_OBJECT(CreateThinkerIterator(type, statnum, clientSide));
 }
 
 static DThinker *NextThinker(DThinkerIterator *self, bool exact)
@@ -365,9 +353,9 @@ public:
 
 IMPLEMENT_CLASS(DActorIterator, true, false);
 
-static DActorIterator *CreateActI(FLevelLocals *Level, int tid, PClassActor *type)
+static DActorIterator *CreateActI(FLevelLocals *Level, int tid, PClassActor *type, bool clientSide)
 {
-	return Create<DActorIterator>(Level->TIDHash, type, tid);
+	return Create<DActorIterator>(clientSide ? Level->ClientSideTIDHash : Level->TIDHash, type, tid);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateActorIterator, CreateActI)
@@ -375,20 +363,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateActorIterator, CreateActI)
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tid);
 	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_OBJECT(CreateActI(self, tid, type));
-}
-
-static DActorIterator* CreateClientSideActI(FLevelLocals* Level, int tid, PClassActor* type)
-{
-	return Create<DActorIterator>(Level->ClientSideTIDHash, type, tid);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateClientSideActorIterator, CreateClientSideActI)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	PARAM_INT(tid);
-	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_OBJECT(CreateClientSideActI(self, tid, type));
+	PARAM_BOOL(clientSide)
+	ACTION_RETURN_OBJECT(CreateActI(self, tid, type, clientSide));
 }
 
 static AActor *NextActI(DActorIterator *self)
@@ -497,9 +473,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateFrom, CreateBehaviorItFro
 	ACTION_RETURN_OBJECT(CreateBehaviorItFromActor(mobj, type));
 }
 
-static DBehaviorIterator* CreateBehaviorIt(PClass* type, PClass* ownerType)
+static DBehaviorIterator* CreateBehaviorIt(PClass* type, PClass* ownerType, bool clientSide)
 {
-	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType, false);
+	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType, clientSide);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
@@ -507,20 +483,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, Create, CreateBehaviorIt)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, DBehavior);
 	PARAM_CLASS(ownerType, AActor);
-	ACTION_RETURN_OBJECT(CreateBehaviorIt(type, ownerType));
-}
-
-static DBehaviorIterator* CreateClientSideBehaviorIt(PClass* type, PClass* ownerType)
-{
-	return Create<DBehaviorIterator>(*primaryLevel, type, ownerType, true);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(DBehaviorIterator, CreateClientSide, CreateClientSideBehaviorIt)
-{
-	PARAM_PROLOGUE;
-	PARAM_CLASS(type, DBehavior);
-	PARAM_CLASS(ownerType, AActor);
-	ACTION_RETURN_OBJECT(CreateClientSideBehaviorIt(type, ownerType));
+	PARAM_BOOL(clientSide);
+	ACTION_RETURN_OBJECT(CreateBehaviorIt(type, ownerType, clientSide));
 }
 
 static DBehavior* NextBehavior(DBehaviorIterator* self)

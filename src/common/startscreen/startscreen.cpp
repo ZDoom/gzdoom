@@ -458,7 +458,7 @@ int FStartScreen::DrawChar(FBitmap& screen, double x, double y, unsigned charnum
 		dest[5] = color_array[(srcbyte >> 2) & 1];
 		dest[6] = color_array[(srcbyte >> 1) & 1];
 		dest[7] = color_array[(srcbyte) & 1];
-		if (size == 16)
+		if (size == 2)
 		{
 			srcbyte = *src++;
 

@@ -123,8 +123,7 @@ class Behavior native play abstract version("4.15.1")
 class BehaviorIterator native abstract final version("4.15.1")
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
-	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
-	native static BehaviorIterator CreateClientSide(class<Behavior> type = null, class<Actor> ownerType = null);
+	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null, bool clientSide = false);
 
 	native Behavior Next();
 	native void Reinit();
@@ -827,7 +826,7 @@ class Actor : Thinker native
 	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null);
 	native bool TestMobjLocation();
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
-	native static clearscope Actor SpawnClientside(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
+	native static clearscope Actor SpawnClientSide(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnMissileXYZ(Vector3 pos, Actor dest, Class<Actor> type, bool checkspawn = true, Actor owner = null);
 	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);

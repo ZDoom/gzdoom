@@ -473,7 +473,7 @@ void G_NewInit ()
 	// Destroy thinkers that may remain after change level failure
 	// Usually, the list contains just a sentinel when such error occurred
 	primaryLevel->Thinkers.DestroyThinkersInList(STAT_TRAVELLING);
-	primaryLevel->ClientsideThinkers.DestroyThinkersInList(STAT_TRAVELLING); // This isn't currently supported, but maybe in the future
+	primaryLevel->ClientSideThinkers.DestroyThinkersInList(STAT_TRAVELLING); // This isn't currently supported, but maybe in the future
 
 	G_ClearSnapshots ();
 	netgame = false;
@@ -603,7 +603,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	for (auto Level : AllLevels())
 	{
 		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
-		Level->ClientsideThinkers.DestroyThinkersInList(STAT_STATIC);
+		Level->ClientSideThinkers.DestroyThinkersInList(STAT_STATIC);
 	}
 
 	if (paused)
@@ -1753,7 +1753,7 @@ void FLevelLocals::LinkActorToLevel(AActor& mo)
 static int RemoveTravellingObjects(FLevelLocals& level, TArray<DThinker*>& toCallBack, bool clientSide)
 {
 	int failNum = 0;
-	auto it = clientSide ? level.GetClientsideThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING) : level.GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
+	auto it = clientSide ? level.GetClientSideThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING) : level.GetThinkerIterator<DThinker>(NAME_None, STAT_TRAVELLING);
 	DThinker* th = nullptr;
 	while ((th = it.Next()) != nullptr)
 	{
@@ -1868,7 +1868,7 @@ int FLevelLocals::FinishTravel()
 	// remaining thinkers that were set to travel when they left if recovering from a snapshot,
 	// otherwise they'll pile up infinitely.
 	Thinkers.CleanUpTravellers(savegamerestore);
-	ClientsideThinkers.CleanUpTravellers(savegamerestore);
+	ClientSideThinkers.CleanUpTravellers(savegamerestore);
 
 	// Some ZScript will be called here so we have to do this last.
 	for (size_t i = 0u; i < MAXPLAYERS; ++i)
@@ -2424,7 +2424,7 @@ void FLevelLocals::Mark()
 		GC::Mark(localEventManager->LastEventHandler);
 	}
 	Thinkers.MarkRoots();
-	ClientsideThinkers.MarkRoots();
+	ClientSideThinkers.MarkRoots();
 	canvasTextureInfo.Mark();
 	for (auto &c : CorpseQueue)
 	{

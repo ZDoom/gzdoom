@@ -743,7 +743,7 @@ void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned in
 
 void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
 {
-	if (ent->IsNetworked() || ent->IsClientside())
+	if (ent->IsNetworked() || ent->IsClientSide())
 		return;
 
 	// Slot 0 is reserved for the world.
@@ -833,16 +833,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetNetworkID, GetNetworkID)
 	ACTION_RETURN_INT(self->GetNetworkID());
 }
 
-static int IsClientside(DObject* self)
+static int IsClientSide(DObject* self)
 {
-	return self->IsClientside();
+	return self->IsClientSide();
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, IsClientside, IsClientside)
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, IsClientSide, IsClientSide)
 {
 	PARAM_SELF_PROLOGUE(DObject);
 
-	ACTION_RETURN_BOOL(self->IsClientside());
+	ACTION_RETURN_BOOL(self->IsClientSide());
 }
 
 static void EnableNetworking(DObject* const self, const bool enable)

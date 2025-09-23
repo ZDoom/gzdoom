@@ -161,7 +161,7 @@ target_compile_definitions(zmusiclite PRIVATE ZMUSIC_LITE=1 PUBLIC $<$<STREQUAL:
 set_target_properties(zmusic zmusiclite
 PROPERTIES
 	MACOSX_RPATH ON
-	PUBLIC_HEADER ../include/zmusic.h
+	PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../include/zmusic.h
 	VERSION ${PROJECT_VERSION}
 	SOVERSION ${PROJECT_VERSION_MAJOR}
 )

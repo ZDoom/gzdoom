@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,28 +33,25 @@
 **
 */
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
+#include "c_cvars.h"
+#include "c_dispatch.h"
 #include "cmdlib.h"
 #include "configfile.h"
-#include "c_console.h"
-#include "c_dispatch.h"
-#include "c_cvars.h"
-#include "i_protocol.h"
 #include "engineerrors.h"
-#include "printf.h"
-#include "palutil.h"
-#include "i_interface.h"
 #include "gstrings.h"
+#include "i_interface.h"
+#include "i_protocol.h"
+#include "palutil.h"
+#include "printf.h"
 
 #include "dobject.h"
-#include "dobjtype.h"
 #include "dobjgc.h"
+#include "dobjtype.h"
 
 #include "vm.h"
-
-
 
 struct FLatchedValue
 {
@@ -86,34 +84,34 @@ void C_InitCVars(int which)
 		{
 		default:
 			return;
-			
+
 		case CVAR_Int:
 		{
-			using callbacktype = void (*)(FIntCVar &);
+			using callbacktype = void (*)(FIntCVar &, int);
 			newcvar = new FIntCVar(cvInfo->name, cvInfo->defaultval.Int, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
 		case CVAR_Bool:
 		{
-			using callbacktype = void (*)(FBoolCVar &);
+			using callbacktype = void (*)(FBoolCVar &, bool);
 			newcvar = new FBoolCVar(cvInfo->name, cvInfo->defaultval.Bool, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
 		case CVAR_Float:
 		{
-			using callbacktype = void (*)(FFloatCVar &);
+			using callbacktype = void (*)(FFloatCVar &, float);
 			newcvar = new FFloatCVar(cvInfo->name, cvInfo->defaultval.Float, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
 		case CVAR_String:
 		{
-			using callbacktype = void (*)(FStringCVar &);
+			using callbacktype = void (*)(FStringCVar &, const char *);
 			newcvar = new FStringCVar(cvInfo->name, cvInfo->defaultval.String, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
 		case CVAR_Color:
 		{
-			using callbacktype = void (*)(FColorCVar &);
+			using callbacktype = void (*)(FColorCVar &, int);
 			newcvar = new FColorCVar(cvInfo->name, cvInfo->defaultval.Int, cvInfo->flags, reinterpret_cast<callbacktype>(cvInfo->callbackp), cvInfo->description);
 			break;
 		}
@@ -157,11 +155,11 @@ void C_UninitCVars()
 	}
 }
 
-FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBaseCVar &), const char *descr)
+FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void *callback, const char *descr)
 {
 	if (var_name != nullptr && (flags & CVAR_SERVERINFO))
 	{
-		// This limitation is imposed by network protocol which uses only 6 bits 
+		// This limitation is imposed by network protocol which uses only 6 bits
 		// for name's length with terminating null character
 		static const size_t NAME_LENGHT_MAX = 63;
 
@@ -171,8 +169,6 @@ FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBa
 				"Its length should not exceed %zu characters.\n", var_name, NAME_LENGHT_MAX);
 		}
 	}
-
-
 
 	m_Callback = callback;
 	Flags = 0;
@@ -221,7 +217,7 @@ FBaseCVar::~FBaseCVar ()
 	}
 }
 
-void FBaseCVar::SetCallback(void (*callback)(FBaseCVar&))
+void FBaseCVar::SetCallback(void *callback)
 {
 	m_Callback = callback;
 }
@@ -263,11 +259,10 @@ const char *FBaseCVar::GetHumanStringDefault(int precision) const
 
 void FBaseCVar::ForceSet (UCVarValue value, ECVarType type, bool nouserinfosend)
 {
-	DoSet (value, type);
+	auto prev = DoSet(value, type);
 	if ((Flags & CVAR_USERINFO) && !nouserinfosend && !(Flags & CVAR_IGNORE))
 		if (callbacks && callbacks->UserInfoChanged) callbacks->UserInfoChanged(this);
-	if (m_UseCallback)
-		Callback ();
+	if (m_UseCallback) DoCallback(prev);
 
 	if ((Flags & CVAR_ARCHIVE) && !(Flags & CVAR_UNSAFECONTEXT))
 	{
@@ -350,14 +345,14 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 #else
 	case CVAR_Float:		res = (int)value.Float; break;
 #endif
-	case CVAR_String:		
+	case CVAR_String:
 		{
 			if (stricmp (value.String, "true") == 0)
 				res = 1;
 			else if (stricmp (value.String, "false") == 0)
 				res = 0;
 			else
-				res = (int)strtoll (value.String, NULL, 0); 
+				res = (int)strtoll (value.String, NULL, 0);
 			break;
 		}
 	default:				res = 0; break;
@@ -619,7 +614,7 @@ void FBaseCVar::EnableCallbacks ()
 		auto cvar = pair->Value;
 		if (!(cvar->Flags & CVAR_NOINITCALL))
 		{
-			cvar->Callback ();
+			cvar->Callback();
 		}
 	}
 }
@@ -661,8 +656,8 @@ void FBaseCVar::DisableCallbacks ()
 // Boolean cvar implementation
 //
 
-FBoolCVar::FBoolCVar (const char *name, bool def, uint32_t flags, void (*callback)(FBoolCVar &), const char* descr)
-: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback), descr)
+FBoolCVar::FBoolCVar (const char *name, bool def, uint32_t flags, void (*callback)(FBoolCVar &, bool), const char* descr)
+: FBaseCVar (name, flags, reinterpret_cast<void *>(callback), descr)
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -710,17 +705,19 @@ void FBoolCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	}
 }
 
-void FBoolCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FBoolCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	Value = ToBool (value, type);
+	bool newval = ToBool(value, type), oldval = Value;
+	Value = newval;
+	return oldval;
 }
 
 //
 // Integer cvar implementation
 //
 
-FIntCVar::FIntCVar (const char *name, int def, uint32_t flags, void (*callback)(FIntCVar &), const char* descr)
-: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback), descr)
+FIntCVar::FIntCVar (const char *name, int def, uint32_t flags, void (*callback)(FIntCVar &, int), const char* descr)
+: FBaseCVar (name, flags, reinterpret_cast<void *>(callback), descr)
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -768,17 +765,19 @@ void FIntCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	}
 }
 
-void FIntCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FIntCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	Value = ToInt (value, type);
+	int newval = ToInt(value, type), oldval = Value;
+	Value = newval;
+	return oldval;
 }
 
 //
 // Floating point cvar implementation
 //
 
-FFloatCVar::FFloatCVar (const char *name, float def, uint32_t flags, void (*callback)(FFloatCVar &), const char* descr)
-: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback), descr)
+FFloatCVar::FFloatCVar (const char *name, float def, uint32_t flags, void (*callback)(FFloatCVar &, float), const char* descr)
+: FBaseCVar (name, flags, reinterpret_cast<void *>(callback), descr)
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -846,17 +845,19 @@ void FFloatCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	}
 }
 
-void FFloatCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FFloatCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	Value = ToFloat (value, type);
+	float newval = ToFloat(value, type), oldval = Value;
+	Value = newval;
+	return oldval;
 }
 
 //
 // String cvar implementation
 //
 
-FStringCVar::FStringCVar (const char *name, const char *def, uint32_t flags, void (*callback)(FStringCVar &), const char* descr)
-: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback), descr)
+FStringCVar::FStringCVar (const char *name, const char *def, uint32_t flags, void (*callback)(FStringCVar &, const char *), const char* descr)
+: FBaseCVar (name, flags, reinterpret_cast<void *>(callback), descr)
 {
 	mDefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -910,17 +911,19 @@ void FStringCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	}
 }
 
-void FStringCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FStringCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	mValue = ToString (value, type);
+	mOldValue = mValue;
+	mValue = ToString(value, type);
+	return mOldValue.GetChars();
 }
 
 //
 // Color cvar implementation
 //
 
-FColorCVar::FColorCVar (const char *name, int def, uint32_t flags, void (*callback)(FColorCVar &), const char* descr)
-: FIntCVar (name, def, flags, reinterpret_cast<void (*)(FIntCVar &)>(callback), descr)
+FColorCVar::FColorCVar (const char *name, int def, uint32_t flags, void (*callback)(FColorCVar &, int), const char* descr)
+: FIntCVar (name, def, flags, reinterpret_cast<void (*)(FIntCVar &, int)>(reinterpret_cast<void *>(callback)), descr)
 {
 }
 
@@ -949,9 +952,11 @@ void FColorCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	}
 }
 
-void FColorCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FColorCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	Value = ToInt2 (value, type);
+	int newval = ToInt2(value, type), oldval = Value;
+	Value = newval;
+	return oldval;
 }
 
 UCVarValue FColorCVar::FromInt2 (int value, ECVarType type)
@@ -1114,9 +1119,9 @@ void FFlagCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	ValueVar.SetGenericRepDefault (def, CVAR_Int);
 }
 
-void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	bool newval = ToBool (value, type);
+	bool newval = ToBool (value, type), oldval = ValueVar;
 
 	// Server cvars that get changed by this need to use a special message, because
 	// changes are not processed until the next net update. This is a problem with
@@ -1125,7 +1130,7 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 	// another flag might have made to the same cvar earlier in the script.
 	if (ValueVar.GetFlags() && callbacks && callbacks->SendServerFlagChange)
 	{
-		if (callbacks->SendServerFlagChange(&ValueVar, BitNum, newval, false)) return;
+		if (callbacks->SendServerFlagChange(&ValueVar, BitNum, newval, false)) return oldval;
 	}
 	int val = *ValueVar;
 	if (newval)
@@ -1133,6 +1138,7 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 	else
 		val &= ~BitVal;
 	ValueVar = val;
+	return oldval;
 }
 
 //
@@ -1208,9 +1214,9 @@ void FMaskCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 	ValueVar.SetGenericRepDefault (def, CVAR_Int);
 }
 
-void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
+UCVarValue FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 {
-	int val = ToInt(value, type) << BitNum;
+	int val = ToInt(value, type) << BitNum, oldval = ValueVar;
 
 	// Server cvars that get changed by this need to use a special message, because
 	// changes are not processed until the next net update. This is a problem with
@@ -1238,6 +1244,8 @@ void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 		vval |= val;
 		ValueVar = vval;
 	}
+
+	return oldval;
 }
 
 
@@ -1587,7 +1595,7 @@ void FBaseCVar::CmdSet (const char *newval)
 	UCVarValue val;
 
 	// Casting away the const is safe in this case.
-	val.String = const_cast<char *>(newval);        
+	val.String = const_cast<char *>(newval);
 	SetGenericRep (val, CVAR_String);
 
 	if (GetFlags() & CVAR_NOSET)
@@ -1770,7 +1778,7 @@ void FBaseCVar::ListVars (const char *filter, int listtype)
 						Printf("\n");
 				else
 					Printf("\n");
-				
+
 
 			}
 		}
@@ -1856,7 +1864,7 @@ FZSIntCVar::FZSIntCVar(const char *name, int def, uint32_t flags, FName _classNa
 	: FIntCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
 { customCVarHandler = nullptr; }
 
-void FZSIntCVar::CallCVarCallback(FZSIntCVar &self)
+void FZSIntCVar::CallCVarCallback(FZSIntCVar &self, int /*prev*/)
 {
 	if (!self.customCVarHandler) {
 		I_Error("Handler for CustomIntCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
@@ -1879,7 +1887,7 @@ void FZSIntCVar::InstantiateZSCVar()
 		I_Error("Instantiating CVar '%s': Class '%s' %s",cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomIntCVar" : "does not exist"));
 	}
 	customCVarHandler = classPtr->CreateNew();
-	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+	SetCallback(reinterpret_cast<void *>(FZSIntCVar::CallCVarCallback));
 }
 
 void FZSIntCVar::MarkZSCVar()
@@ -1914,7 +1922,7 @@ FZSFloatCVar::FZSFloatCVar(const char *name, float def, uint32_t flags, FName _c
 	: FFloatCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
 { customCVarHandler = nullptr; }
 
-void FZSFloatCVar::CallCVarCallback(FZSFloatCVar &self)
+void FZSFloatCVar::CallCVarCallback(FZSFloatCVar &self, float /*prev*/)
 {
 	if (!self.customCVarHandler) {
 		I_Error("Handler for CustomFloatCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
@@ -1939,7 +1947,7 @@ void FZSFloatCVar::InstantiateZSCVar()
 		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomFloatCVar" : "does not exist"));
 	}
 	customCVarHandler = classPtr->CreateNew();
-	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+	SetCallback(reinterpret_cast<void *>(FZSFloatCVar::CallCVarCallback));
 }
 
 void FZSFloatCVar::MarkZSCVar()
@@ -1976,7 +1984,7 @@ FZSStringCVar::FZSStringCVar(const char *name, const char * def, uint32_t flags,
 	: FStringCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
 { customCVarHandler = nullptr; }
 
-void FZSStringCVar::CallCVarCallback(FZSStringCVar &self)
+void FZSStringCVar::CallCVarCallback(FZSStringCVar &self, const char * /*prev*/)
 {
 	if (!self.customCVarHandler) {
 		I_Error("Handler for CustomStringCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
@@ -1999,7 +2007,7 @@ void FZSStringCVar::InstantiateZSCVar()
 		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomStringCVar" : "does not exist"));
 	}
 	customCVarHandler = classPtr->CreateNew();
-	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+	SetCallback(reinterpret_cast<void *>(FZSStringCVar::CallCVarCallback));
 }
 
 void FZSStringCVar::MarkZSCVar()
@@ -2016,7 +2024,7 @@ UCVarValue FZSStringCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type
 		VMReturn ret(&val);
 		VMCall(func, param, 3, &ret, 1);
 	}
-	
+
 	char * str = new char[val.Len() + 1];
 	memcpy(str, val.GetChars(), val.Len() * sizeof(char));
 	str[val.Len()] = '\0';
@@ -2038,7 +2046,7 @@ FZSBoolCVar::FZSBoolCVar(const char *name, bool def, uint32_t flags, FName _clas
 	: FBoolCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
 { customCVarHandler = nullptr; }
 
-void FZSBoolCVar::CallCVarCallback(FZSBoolCVar &self)
+void FZSBoolCVar::CallCVarCallback(FZSBoolCVar &self, bool /*prev*/)
 {
 	if (!self.customCVarHandler) {
 		I_Error("Handler for CustomBoolCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
@@ -2063,7 +2071,7 @@ void FZSBoolCVar::InstantiateZSCVar()
 		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomBoolCVar" : "does not exist"));
 	}
 	customCVarHandler = classPtr->CreateNew();
-	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+	SetCallback(reinterpret_cast<void *>(FZSBoolCVar::CallCVarCallback));
 }
 
 void FZSBoolCVar::MarkZSCVar()
@@ -2100,7 +2108,7 @@ FZSColorCVar::FZSColorCVar(const char *name, int def, uint32_t flags, FName _cla
 	: FColorCVar(name,def,flags,nullptr,descr) , cvarName(name) , className(_className)
 { customCVarHandler = nullptr; }
 
-void FZSColorCVar::CallCVarCallback(FZSColorCVar &self)
+void FZSColorCVar::CallCVarCallback(FZSColorCVar &self, int /*prev*/)
 {
 	if (!self.customCVarHandler) {
 		I_Error("Handler for CustomColorCVar '%s' of class '%s' was Destroyed", self.cvarName.GetChars(), self.className.GetChars());
@@ -2123,7 +2131,7 @@ void FZSColorCVar::InstantiateZSCVar()
 		I_Error("Instantiating CVar '%s': Class '%s' %s", cvarName.GetChars(), className.GetChars(), (classPtr ? "is not a descendant of CustomColorCVar" : "does not exist"));
 	}
 	customCVarHandler = classPtr->CreateNew();
-	SetCallback(reinterpret_cast<void (*)(FBaseCVar &)>(CallCVarCallback));
+	SetCallback(reinterpret_cast<void *>(FZSColorCVar::CallCVarCallback));
 }
 
 void FZSColorCVar::MarkZSCVar()
@@ -2145,3 +2153,4 @@ UCVarValue FZSColorCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type)
 	v.Int = val;
 	return v;
 }
+

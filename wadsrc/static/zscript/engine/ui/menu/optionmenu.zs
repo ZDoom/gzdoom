@@ -477,7 +477,7 @@ class OptionMenu : Menu
 		int firstSelectable = -1;
 		int lastSelectable = -1;
 		int visible = 0;
-		for (int i = mDesc.mScrollPos; visible < MaxItems && i <= last; i++)
+		for (int i = max(0, mDesc.mScrollPos); visible < MaxItems && i <= last; i++)
 		{
 			if (!mDesc.mItems[i].Visible()) continue;
 			visible++;

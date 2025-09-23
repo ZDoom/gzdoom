@@ -275,7 +275,7 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 //
 //==========================================================================
 
-void FThinkerCollection::RunClientsideThinkers(FLevelLocals* Level)
+void FThinkerCollection::RunClientSideThinkers(FLevelLocals* Level)
 {
 	int i, count;
 
@@ -290,7 +290,7 @@ void FThinkerCollection::RunClientsideThinkers(FLevelLocals* Level)
 	}
 
 	auto recreateLights = [=]() {
-		auto it = Level->GetClientsideThinkerIterator<AActor>();
+		auto it = Level->GetClientSideThinkerIterator<AActor>();
 
 		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
 		while (auto ac = it.Next())
@@ -942,9 +942,9 @@ DThinker *FLevelLocals::FirstThinker(int statnum)
 	return Thinkers.FirstThinker(statnum);
 }
 
-DThinker* FLevelLocals::FirstClientsideThinker(int statnum)
+DThinker* FLevelLocals::FirstClientSideThinker(int statnum)
 {
-	return ClientsideThinkers.FirstThinker(statnum);
+	return ClientSideThinkers.FirstThinker(statnum);
 }
 
 //==========================================================================
@@ -958,8 +958,8 @@ void DThinker::ChangeStatNum(int statnum)
 	if ((unsigned)statnum > MAX_STATNUM)
 		statnum = MAX_STATNUM;
 	Remove();
-	if (IsClientside())
-		Level->ClientsideThinkers.Link(this, statnum);
+	if (IsClientSide())
+		Level->ClientSideThinkers.Link(this, statnum);
 	else
 		Level->Thinkers.Link(this, statnum);
 	// Let us relink it back properly when we're done travelling.
@@ -1163,7 +1163,7 @@ size_t DThinker::PropagateMark()
 
 FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, bool clientside) : Level(l)
 {
-	m_ThinkerPool = clientside ? &Level->ClientsideThinkers : &Level->Thinkers;
+	m_ThinkerPool = clientside ? &Level->ClientSideThinkers : &Level->Thinkers;
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		m_Stat = STAT_FIRST_THINKING;
@@ -1186,7 +1186,7 @@ FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int sta
 
 FThinkerIterator::FThinkerIterator (FLevelLocals *l, const PClass *type, int statnum, DThinker *prev, bool clientside) : Level(l)
 {
-	m_ThinkerPool = clientside ? &Level->ClientsideThinkers : &Level->Thinkers;
+	m_ThinkerPool = clientside ? &Level->ClientSideThinkers : &Level->Thinkers;
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		m_Stat = STAT_FIRST_THINKING;

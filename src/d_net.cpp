@@ -66,7 +66,7 @@
 #include "version.h"
 #include "vm.h"
 
-void P_RunClientsideLogic();
+void P_RunClientSideLogic();
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2234,7 +2234,7 @@ void TryRunTics()
 		// If we actually did have some tics available, make sure the UI
 		// still has a chance to run.
 		for (int i = 0; i < totalTics; ++i)
-			P_RunClientsideLogic();
+			P_RunClientSideLogic();
 
 		return;
 	}
@@ -2275,7 +2275,7 @@ void TryRunTics()
 	// These should use the actual tics since they're not actually tied to the gameplay logic.
 	// Make sure it always comes after so the HUD has the correct game state when updating.
 	for (int i = 0; i < totalTics; ++i)
-		P_RunClientsideLogic();
+		P_RunClientSideLogic();
 }
 
 void Net_NewClientTic()

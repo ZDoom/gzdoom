@@ -300,7 +300,7 @@ void FLevelLocals::ClearLevelData(bool fullgc)
 	TravellingThinkers.Clear();
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Thinkers.DestroyAllThinkers(fullgc);
-	ClientsideThinkers.DestroyAllThinkers(fullgc);
+	ClientSideThinkers.DestroyAllThinkers(fullgc);
 	ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 
 	total_monsters = total_items = total_secrets =
@@ -651,7 +651,7 @@ void P_Shutdown ()
 	for (auto Level : AllLevels())
 	{
 		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
-		Level->ClientsideThinkers.DestroyThinkersInList(STAT_STATIC);
+		Level->ClientSideThinkers.DestroyThinkersInList(STAT_STATIC);
 	}
 	P_FreeLevelData ();
 	// [ZZ] delete global event handlers

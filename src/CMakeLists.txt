@@ -1427,17 +1427,18 @@ add_custom_command(TARGET zdoom POST_BUILD
 if ( NOT ZMUSIC_SYSTEM_INSTALL AND (NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS))
 	# bring zmusic in
 	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>
-		DEPENDS zmusic )
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			$<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>)
 	if ( NOT WIN32 )
 		add_custom_command(TARGET zdoom POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE_NAME:zmusic> $<TARGET_SONAME_FILE_NAME:zmusic>
-			COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_SONAME_FILE_NAME:zmusic> $<TARGET_LINKER_FILE_NAME:zmusic>
-			WORKING_DIRECTORY $<TARGET_FILE_DIR:zdoom>
-			DEPENDS zmusic )
+			COMMAND ${CMAKE_COMMAND} -E create_symlink
+				$<TARGET_FILE_NAME:zmusic> $<TARGET_SONAME_FILE_NAME:zmusic>
+			COMMAND ${CMAKE_COMMAND} -E create_symlink
+				$<TARGET_SONAME_FILE_NAME:zmusic> $<TARGET_LINKER_FILE_NAME:zmusic>
+			WORKING_DIRECTORY $<TARGET_FILE_DIR:zdoom>)
 	endif()
+	add_dependencies(zdoom zmusic)
 endif()
-
 
 if (VCPKG_TOOLCHAIN)
 	x_vcpkg_install_local_dependencies(TARGETS zdoom DESTINATION ".")

@@ -51,7 +51,7 @@ struct BoneOverrideComponent
 		double prev_interp_amt = interplen > 0.0 ? std::clamp(((tic - switchtic) / interplen), 0.0, 1.0) : 1.0;
 		double prev_interp_amt_inv = 1.0 - prev_interp_amt;
 
-		prev = mode > 0 ? Lerp(prev, cur, prev_interp_amt, prev_interp_amt_inv) : DefVal<T>();
+		prev = mode > 0 ? Lerp(prev, cur, (float)prev_interp_amt, (float)prev_interp_amt_inv) : DefVal<T>();
 
 		// might break slightly if value is switched from absolute to additive before interpolation finishes,
 		// but shouldn't matter too much, since people will probably mostly stick to one single mode per value
@@ -111,16 +111,41 @@ struct BoneOverride
 	{
 		return from + to;
 	}
+	
+	static inline FVector3 MultVec3(const FVector3 &from, const FVector3 &to)
+	{
+		return FVector3(from.X * to.X, from.Y * to.Y, from.Z * to.Z);
+	}
 
 	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> translation;
 	BoneOverrideComponent<FQuaternion, &InterpolateQuat, &AddQuat> rotation;
-	BoneOverrideComponent<FVector3, &LerpVec3, &AddVec3> scaling;
+	BoneOverrideComponent<FVector3, &LerpVec3, &MultVec3> scaling;
 
 	void Modify(TRS &trs, double tic) const
 	{
 		translation.Modify(trs.translation, tic);
 		rotation.Modify(trs.rotation, tic);
 		scaling.Modify(trs.scaling, tic);
+	}
+
+	void Set(const TRS &trs, double tic, double newInterplen, int newMode)
+	{
+		translation.Set(trs.translation, tic, newInterplen, newMode);
+		rotation.Set(trs.rotation, tic, newInterplen, newMode);
+		scaling.Set(trs.scaling, tic, newInterplen, newMode);
+	}
+
+	void Overwrite(const TRS &trs, int newMode)
+	{
+		translation = {};
+		rotation = {};
+		scaling = {};
+
+		translation.mode = rotation.mode = scaling.mode = newMode;
+
+		translation.cur = trs.translation;
+		rotation.cur = trs.rotation;
+		scaling.cur = trs.scaling;
 	}
 };
 
@@ -147,6 +172,12 @@ struct ModelAnim
 static_assert(sizeof(ModelAnim) == sizeof(double) * 6);
 
 using ModelAnimFrame = std::variant<std::nullptr_t, ModelAnimFrameInterp, ModelAnimFramePrecalculatedIQM>;
+
+struct AnimInfo
+{
+	ModelAnim curAnim;
+	ModelAnimFrame prevAnim = nullptr; // used for interpolation when switching anims
+};
 
 double getCurrentFrame(const ModelAnim &anim, double tic, bool *looped);
 void calcFrame(const ModelAnim &anim, double tic, ModelAnimFrameInterp &inter);

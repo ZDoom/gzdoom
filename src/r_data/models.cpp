@@ -382,10 +382,10 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 	if(is_decoupled)
 	{
 		smfNext = smf = &BaseSpriteModelFrames[(data != nullptr && data->modelDef != nullptr) ? data->modelDef : actor->GetClass()];
-		if(data && !(data->curAnim.flags & MODELANIM_NONE))
+		if(data && !(data->anims.curAnim.flags & MODELANIM_NONE))
 		{
-			calcFrames(data->curAnim, tic, decoupled_frame, inter);
-			decoupled_frame_prev = &data->prevAnim;
+			calcFrames(data->anims.curAnim, tic, decoupled_frame, inter);
+			decoupled_frame_prev = &data->anims.prevAnim;
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))

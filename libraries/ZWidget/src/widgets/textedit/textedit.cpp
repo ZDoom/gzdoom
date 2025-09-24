@@ -337,7 +337,7 @@ bool TextEdit::OnMouseUp(const Point& pos, InputKey key)
 
 void TextEdit::OnKeyChar(std::string chars)
 {
-	if (!chars.empty() && !(chars[0] >= 0 && chars[0] < 32))
+	if (!readonly && !chars.empty() && !(chars[0] >= 0 && chars[0] < 32))
 	{
 		if (FuncBeforeEditChanged)
 			FuncBeforeEditChanged();

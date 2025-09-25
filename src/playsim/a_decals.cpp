@@ -640,7 +640,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 
 DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double iy, double iz, side_t *wall, F3DFloor * ffloor) const
 {
-	DBaseDecal *decal = Level->CreateThinker<DBaseDecal>(iz);
+	DBaseDecal *decal = Level->CreateClientsideThinker<DBaseDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -734,8 +734,8 @@ DBaseDecal* DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplat
 
 			StaticCreate (Level, tpl_low, pos, wall, ffloor, lowercolor, translation, permanent);
 		}
-		if (!permanent) decal = Level->CreateThinker<DImpactDecal>(pos.Z);
-		else decal = Level->CreateThinker<DBaseDecal>(pos.Z);
+		if (!permanent) decal = Level->CreateClientsideThinker<DImpactDecal>(pos.Z);
+		else decal = Level->CreateClientsideThinker<DBaseDecal>(pos.Z);
 		if (decal == NULL)
 		{
 			return NULL;
@@ -785,7 +785,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 		return NULL;
 	}
 
-	DImpactDecal *decal = Level->CreateThinker<DImpactDecal>(iz);
+	DImpactDecal *decal = Level->CreateClientsideThinker<DImpactDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())

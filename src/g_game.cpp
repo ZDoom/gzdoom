@@ -1395,7 +1395,7 @@ void FLevelLocals::PlayerReborn (int player)
 	int 		itemcount;
 	int 		secretcount;
 	int			chasecam;
-	uint8_t		currclass;
+	int			currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	AActor *actor;
 	PClassActor *cls;

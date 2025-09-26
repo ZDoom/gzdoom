@@ -36,8 +36,8 @@
 **
 */
 
-#include <SDL.h>
-#include <SDL_gamecontroller.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_gamecontroller.h>
 #include <cstdint>
 #include <cstdlib>
 

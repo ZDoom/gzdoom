@@ -674,12 +674,12 @@ double Joy_ManageThumbstick(
 		// Make the dead zone the new 0.
 		ret_dist = (magnitude - deadzone) / (1.0 - deadzone);
 
-		const CubicBezier curve = {
+		const CubicBezier curve = {{
 			(float)((xy_lerp * curve_x.x1) + ((1.0 - xy_lerp) * curve_y.x1)),
 			(float)((xy_lerp * curve_x.y1) + ((1.0 - xy_lerp) * curve_y.y1)),
 			(float)((xy_lerp * curve_x.x2) + ((1.0 - xy_lerp) * curve_y.x2)),
 			(float)((xy_lerp * curve_x.y2) + ((1.0 - xy_lerp) * curve_y.y2))
-		};
+		}};
 
 		ret_dist = Joy_ApplyResponseCurveBezier(curve, ret_dist);
 

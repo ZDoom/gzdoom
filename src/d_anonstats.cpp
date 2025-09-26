@@ -22,7 +22,7 @@ extern FString sys_ostype;
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 #else // !__APPLE__
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #endif // __APPLE__
 #include <sys/socket.h>
 #include <sys/types.h>

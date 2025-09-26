@@ -20,7 +20,6 @@
 # this module will try to find on your behalf.) Also for OS X, this
 # module will automatically add the -framework Cocoa on your behalf.
 #
-#
 # Additional Note: If you see an empty SDL2_LIBRARY_TEMP in your configuration
 # and no SDL2_LIBRARY, it means CMake did not find your SDL2 library
 # (SDL2.dll, libsdl2.so, SDL2.framework, etc).
@@ -28,7 +27,6 @@
 # Similarly, if you see an empty SDL2MAIN_LIBRARY, you should set this value
 # as appropriate. These values are used to generate the final SDL2_LIBRARY
 # variable, but when these values are unset, SDL2_LIBRARY does not get created.
-#
 #
 # $SDL2DIR is an environment variable that would
 # correspond to the ./configure --prefix=$SDL2DIR
@@ -50,30 +48,26 @@
 # SDL2_LIBRARY to override this selection or set the CMake environment
 # CMAKE_INCLUDE_PATH to modify the search paths.
 #
-# Note that the header path has changed from SDL2/SDL.h to just SDL.h
-# This needed to change because "proper" SDL2 convention
-# is #include "SDL.h", not <SDL2/SDL.h>. This is done for portability
-# reasons because not all systems place things in SDL2/ (see FreeBSD).
-#
 # Ported by Johnny Patterson. This is a literal port for SDL2 of the FindSDL.cmake
 # module with the minor edit of changing "SDL" to "SDL2" where necessary. This
 # was not created for redistribution, and exists temporarily pending official
 # SDL2 CMake modules.
 
-FIND_PATH(SDL2_INCLUDE_DIR SDL.h
+FIND_PATH(SDL2_INCLUDE_DIR SDL2/SDL.h
   HINTS
   $ENV{SDL2DIR}
-  PATH_SUFFIXES include/SDL2 include
+  PATH_SUFFIXES include
   PATHS
   ~/Library/Frameworks
   /Library/Frameworks
-  /usr/local/include/SDL2
-  /usr/include/SDL2
+  /usr/local
+  /usr
   /sw # Fink
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
+  /opt/homebrew
   /opt
-  /boot/system/develop/headers/SDL2 #Hiaku OS
+  /boot/system/develop/headers #Haiku OS
 )
 #MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
 
@@ -86,10 +80,10 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   /sw
   /opt/local
   /opt/csw
+  /opt/homebrew
   /opt
-  /system/lib #Hiaku OS
+  /system/lib #Haiku OS
 )
-
 #MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
 
 IF(NOT SDL2_BUILDING_LIBRARY)
@@ -107,6 +101,7 @@ IF(NOT SDL2_BUILDING_LIBRARY)
       /sw
       /opt/local
       /opt/csw
+      /opt/homebrew
       /opt
     )
   ENDIF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")

@@ -2898,7 +2898,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native uint oldbuttons;
 	native int health;
 	native clearscope int inventorytics;
-	native uint8 CurrentPlayerClass;
+	native int CurrentPlayerClass;
 	native int frags[MAXPLAYERS];
 	native int fragcount;
 	native int lastkilltime;

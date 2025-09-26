@@ -1,7 +1,8 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2005-2016 Christoph Oelckers
+// Copyright 2005-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -937,7 +938,10 @@ void MapLoader::FixHoles()
 				DPrintf(DMSG_NOTIFY, "Adding dummy subsector for sector %d\n", Index(segloop[0]->Subsector->render_sector));
 
 				subsector_t &sub = Level->subsectors[newssstart++];
-				memset(&sub, 0, sizeof(sub));
+
+				sub.sprites.Clear();
+				memset((void*)&sub, 0, sizeof(sub));
+
 				sub.sector = segloop[0]->frontsector;
 				sub.render_sector = segloop[0]->Subsector->render_sector;
 				sub.numlines = segloop.Size();

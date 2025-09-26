@@ -5,6 +5,7 @@
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2018 Christoph Oelckers
 // Copyright 2010 James Haley
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -595,7 +596,12 @@ void MapLoader::LoadZNodes(FileReader &data, int glnodes)
 	uint32_t currSeg;
 	uint32_t numSubs = data.ReadUInt32();
 	Level->subsectors.Alloc(numSubs);
-	memset (&Level->subsectors[0], 0, Level->subsectors.Size()*sizeof(subsector_t));
+
+	for (i = 0; i < Level->subsectors.Size(); i++)
+	{
+		Level->subsectors[i].sprites.Clear();
+		memset((void*)&Level->subsectors[i], 0, sizeof(subsector_t));
+	}
 
 	for (i = currSeg = 0; i < numSubs; ++i)
 	{
@@ -1012,9 +1018,13 @@ bool MapLoader::LoadSubsectors (MapData * map)
 	auto &subsectors = Level->subsectors;
 	subsectors.Alloc(numsubsectors);
 	auto &fr = map->Reader(ML_SSECTORS);
-		
-	memset (&subsectors[0], 0, numsubsectors*sizeof(subsector_t));
-	
+
+	for (unsigned i = 0; i < numsubsectors; i++)
+	{
+		subsectors[i].sprites.Clear();
+		memset((void*)&subsectors[i], 0, sizeof(subsector_t));
+	}
+
 	for (unsigned i = 0; i < numsubsectors; i++)
 	{
 		subsectortype subd;

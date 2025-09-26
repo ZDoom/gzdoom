@@ -5,9 +5,9 @@
 
 Timer::Timer(Widget* owner) : OwnerObj(owner)
 {
-	PrevTimerObj = owner->FirstTimerObj;
-	if (PrevTimerObj)
-		PrevTimerObj->PrevTimerObj = this;
+	NextTimerObj = owner->FirstTimerObj;
+	if (NextTimerObj)
+		NextTimerObj->PrevTimerObj = this;
 	owner->FirstTimerObj = this;
 }
 

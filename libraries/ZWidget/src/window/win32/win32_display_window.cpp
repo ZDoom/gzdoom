@@ -1,5 +1,6 @@
 
 #include "win32_display_window.h"
+#include <zwidget/core/image.h>
 #include <windowsx.h>
 #include <stdexcept>
 #include <cmath>
@@ -30,11 +31,11 @@
 
 // Code for delay loading DPI related functions, needed for continued Windows 7 compatibility.
 typedef BOOL (WINAPI *PFN_AdjustWindowRectExForDpi)(
-    LPRECT lpRect,
-    DWORD dwStyle,
-    BOOL bMenu,
-    DWORD dwExStyle,
-    UINT dpi
+	LPRECT lpRect,
+	DWORD dwStyle,
+	BOOL bMenu,
+	DWORD dwExStyle,
+	UINT dpi
 );
 
 typedef UINT (WINAPI *PFN_GetDpiForWindow)(HWND hwnd);
@@ -44,39 +45,36 @@ static PFN_GetDpiForWindow pGetDpiForWindow = nullptr;
 
 static void DPIDelayLoad()
 {
-    HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
-    if (hUser32) {
-        pAdjustWindowRectExForDpi = (PFN_AdjustWindowRectExForDpi)
-            GetProcAddress(hUser32, "AdjustWindowRectExForDpi");
-		pGetDpiForWindow = (PFN_GetDpiForWindow)
-			GetProcAddress(hUser32, "GetDpiForWindow");
-    }
+	HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
+	if (hUser32)
+	{
+		pAdjustWindowRectExForDpi = (PFN_AdjustWindowRectExForDpi)GetProcAddress(hUser32, "AdjustWindowRectExForDpi");
+		pGetDpiForWindow = (PFN_GetDpiForWindow)GetProcAddress(hUser32, "GetDpiForWindow");
+	}
 }
 
-static BOOL DelayLoadAdjustWindowRectExForDpi(
-    LPRECT lpRect,
-    DWORD dwStyle,
-    BOOL bMenu,
-    DWORD dwExStyle,
-    HWND hwnd
-) {
+static BOOL DelayLoadAdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, HWND hwnd)
+{
 	DPIDelayLoad();
-    if (pAdjustWindowRectExForDpi) {
-        return pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle,
-                                         pGetDpiForWindow(hwnd));
-    } else {
-        return AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
-    }
+	if (pAdjustWindowRectExForDpi)
+	{
+		return pAdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle,
+										 pGetDpiForWindow(hwnd));
+	}
+	else
+	{
+		return AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+	}
 }
 
 static double DelayLoadGetDpiScale(HWND hwnd)
 {
 	DPIDelayLoad();
-    if (pGetDpiForWindow) {
-        return pGetDpiForWindow(hwnd) / 96.0;
-    } else {
-        return 1.0;
-    }
+	if (pGetDpiForWindow) {
+		return pGetDpiForWindow(hwnd) / 96.0;
+	} else {
+		return 1.0;
+	}
 }
 
 Win32DisplayWindow::Win32DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, Win32DisplayWindow* owner, RenderAPI renderAPI) : WindowHost(windowHost), PopupWindow(popupWindow)
@@ -120,12 +118,106 @@ Win32DisplayWindow::~Win32DisplayWindow()
 		WindowHandle.hwnd = 0;
 	}
 
+	if (SmallIcon)
+		DestroyCursor(SmallIcon);
+	if (LargeIcon)
+		DestroyCursor(LargeIcon);
+
 	Windows.erase(WindowsIterator);
 }
 
 void Win32DisplayWindow::SetWindowTitle(const std::string& text)
 {
 	SetWindowText(WindowHandle.hwnd, to_utf16(text).c_str());
+}
+
+static HICON CreateIconFromImageList(HDC hdc, const std::vector<std::shared_ptr<Image>>& images, int desiredSize)
+{
+	if (images.empty())
+		return 0;
+
+	Image* image = images.front().get();
+	for (const auto& i : images)
+	{
+		int curdist = std::abs(image->GetWidth() - desiredSize);
+		int dist = std::abs(i->GetWidth() - desiredSize);
+		if (dist < curdist)
+			image = i.get();
+	}
+
+	int width = image->GetWidth();
+	int height = image->GetHeight();
+	std::vector<uint32_t> pixels(width * height * 4);
+
+	if (image->GetFormat() == ImageFormat::R8G8B8A8)
+	{
+		int count = width * height;
+		const uint32_t* src = (const uint32_t*)image->GetData();
+		uint32_t* dest = pixels.data();
+		for (int i = 0; i < count; i++)
+		{
+			uint32_t r = src[i] & 0xff;
+			uint32_t g = (src[i] >> 8) & 0xff;
+			uint32_t b = (src[i] >> 16) & 0xff;
+			uint32_t a = (src[i] >> 24) & 0xff;
+			dest[i] = (a << 24) | (r << 16) | (g << 8) | b;
+		}
+	}
+	else if (image->GetFormat() == ImageFormat::B8G8R8A8)
+	{
+		memcpy(pixels.data(), image->GetData(), width * height * 4);
+	}
+	else
+	{
+		return 0;
+	}
+
+	BITMAPV5HEADER bmp_header = {};
+	bmp_header.bV5Size = sizeof(BITMAPV5HEADER);
+	bmp_header.bV5Width = width;
+	bmp_header.bV5Height = height;
+	bmp_header.bV5Planes = 1;
+	bmp_header.bV5BitCount = 32;
+	bmp_header.bV5Compression = BI_RGB;
+
+	HBITMAP bitmap = CreateDIBitmap(hdc, (BITMAPINFOHEADER*)&bmp_header, CBM_INIT, pixels.data(), (BITMAPINFO*)&bmp_header, DIB_RGB_COLORS);
+	if (!bitmap)
+		return 0;
+
+	ICONINFO iconinfo = {};
+	iconinfo.fIcon = TRUE;
+	iconinfo.hbmColor = bitmap;
+	iconinfo.hbmMask = bitmap;
+	HICON icon = CreateIconIndirect(&iconinfo);
+	DeleteObject(bitmap);
+	return icon;
+}
+
+void Win32DisplayWindow::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	double dpiScale = GetDpiScale();
+
+	if (SmallIcon)
+	{
+		DestroyCursor(SmallIcon);
+		SmallIcon = {};
+	}
+	if (LargeIcon)
+	{
+		DestroyCursor(LargeIcon);
+		LargeIcon = {};
+	}
+
+	HDC hdc = GetDC(WindowHandle.hwnd);
+	if (hdc)
+	{
+		SmallIcon = CreateIconFromImageList(hdc, images, (int)std::round(16 * dpiScale));
+		LargeIcon = CreateIconFromImageList(hdc, images, (int)std::round(32 * dpiScale));
+		ReleaseDC(WindowHandle.hwnd, hdc);
+	}
+
+	SendMessage(WindowHandle.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)SmallIcon);
+	SendMessage(WindowHandle.hwnd, WM_SETICON, ICON_BIG, (LPARAM)LargeIcon);
 }
 
 void Win32DisplayWindow::SetBorderColor(uint32_t bgra8)

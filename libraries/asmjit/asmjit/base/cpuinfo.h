@@ -37,15 +37,17 @@ public:
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE CpuFeatures() noexcept { reset(); }
-  ASMJIT_INLINE CpuFeatures(const CpuFeatures& other) noexcept { init(other); }
+  ASMJIT_INLINE CpuFeatures() noexcept : _bits{} {}
+
+  ASMJIT_INLINE CpuFeatures(const CpuFeatures& other) noexcept = default;
+  ASMJIT_INLINE CpuFeatures& operator=(const CpuFeatures& other) noexcept = default;
 
   // --------------------------------------------------------------------------
   // [Init / Reset]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE void init(const CpuFeatures& other) noexcept { ::memcpy(this, &other, sizeof(*this)); }
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void init(const CpuFeatures& other) noexcept { *this = other; }
+  ASMJIT_INLINE void reset() noexcept { *this = CpuFeatures{}; }
 
   // --------------------------------------------------------------------------
   // [Ops]
@@ -248,8 +250,21 @@ public:
   // [Construction / Destruction]
   // --------------------------------------------------------------------------
 
-  ASMJIT_INLINE CpuInfo() noexcept { reset(); }
-  ASMJIT_INLINE CpuInfo(const CpuInfo& other) noexcept { init(other); }
+  ASMJIT_INLINE CpuInfo() noexcept:
+    _archInfo{},
+    _vendorId{},
+    _family{},
+    _model{},
+    _stepping{},
+    _hwThreadsCount{},
+    _features{},
+    _vendorString{},
+    _brandString{},
+    _x86Data{}
+  {}
+
+  ASMJIT_INLINE CpuInfo(const CpuInfo& other) noexcept = default;
+  ASMJIT_INLINE CpuInfo& operator=(const CpuInfo& other) noexcept = default;
 
   // --------------------------------------------------------------------------
   // [Init / Reset]
@@ -260,8 +275,8 @@ public:
     _archInfo.init(archType, archMode);
   }
 
-  ASMJIT_INLINE void init(const CpuInfo& other) noexcept { ::memcpy(this, &other, sizeof(*this)); }
-  ASMJIT_INLINE void reset() noexcept { ::memset(this, 0, sizeof(*this)); }
+  ASMJIT_INLINE void init(const CpuInfo& other) noexcept { *this = other; }
+  ASMJIT_INLINE void reset() noexcept { *this = CpuInfo{}; }
 
   // --------------------------------------------------------------------------
   // [Detect]

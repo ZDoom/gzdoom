@@ -354,7 +354,7 @@ public:
 										// is used during levels
 
 	int			inventorytics = 0;
-	uint8_t		CurrentPlayerClass = 0;		// class # for this player instance
+	int			CurrentPlayerClass = 0;		// class # for this player instance
 
 	int			frags[MAXPLAYERS] = {};		// kills of other players
 	int			fragcount = 0;				// [RH] Cumulative frags for this player

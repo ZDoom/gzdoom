@@ -146,6 +146,8 @@ set(ZWIDGET_X11_SOURCES
 	src/window/x11/x11_display_backend.h
 	src/window/x11/x11_display_window.cpp
 	src/window/x11/x11_display_window.h
+	src/window/x11/x11_connection.cpp
+	src/window/x11/x11_connection.h
 )
 
 set(ZWIDGET_WAYLAND_SOURCES
@@ -155,6 +157,10 @@ set(ZWIDGET_WAYLAND_SOURCES
 	src/window/wayland/wayland_display_window.h
 	src/window/wayland/wl_fractional_scaling_protocol.cpp
 	src/window/wayland/wl_fractional_scaling_protocol.hpp
+	src/window/wayland/wl_cursor_shape.cpp
+	src/window/wayland/wl_cursor_shape.hpp
+	src/window/wayland/wl_xdg_toplevel_icon.cpp
+	src/window/wayland/wl_xdg_toplevel_icon.hpp
 )
 
 source_group("src" REGULAR_EXPRESSION "${CMAKE_CURRENT_SOURCE_DIR}/src/.+")
@@ -253,9 +259,8 @@ else()
 	endif()
 endif()
 
-if(SDL2_FOUND)
+if(SDL2_FOUND AND NOT WIN32)
 	set(ZWIDGET_SOURCES ${ZWIDGET_SOURCES} ${ZWIDGET_SDL2_SOURCES})
-	set(ZWIDGET_LIBS ${ZWIDGET_LIBS} ${SDL2_LIBRARIES} -lSDL2)
 	set(ZWIDGET_DEFINES ${ZWIDGET_DEFINES} -DUSE_SDL2)
 endif()
 
@@ -270,10 +275,17 @@ target_compile_options(zwidget PRIVATE ${ZWIDGET_COMPILE_OPTIONS})
 target_compile_definitions(zwidget PRIVATE ${ZWIDGET_DEFINES})
 target_include_directories(zwidget PRIVATE ${ZWIDGET_INCLUDE_DIRS})
 target_link_options(zwidget PRIVATE ${ZWIDGET_LINK_OPTIONS})
-target_link_libraries(zwidget ${ZWIDGET_LIBS})
+target_link_libraries(zwidget PRIVATE ${ZWIDGET_LIBS})
+if(SDL2_FOUND)
+	if(TARGET SDL2::SDL2)
+		target_link_libraries(zwidget PRIVATE SDL2::SDL2)
+	else() # needed for gzdoom compat for now
+		target_include_directories(zwidget PRIVATE ${SDL2_INCLUDE_DIR} ${SDL2_INCLUDE_DIRS})
+		target_link_libraries(zwidget PRIVATE ${SDL2_LIBRARY})
+	endif()
+endif()
 set_target_properties(zwidget PROPERTIES CXX_STANDARD 20)
 target_compile_options(zwidget PRIVATE ${CXX_WARNING_FLAGS})
-target_include_directories(zwidget PRIVATE ${SDL2_INCLUDE_DIRS})
 
 if(MSVC)
 	set_property(TARGET zwidget PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -282,10 +294,6 @@ endif()
 option(ZWIDGET_BUILD_EXAMPLE "Build the zwidget example application" ON)
 
 if(ZWIDGET_BUILD_EXAMPLE)
-	if (UNIX AND NOT APPLE)
-		find_package(SDL2 REQUIRED)
-	endif()
-
 	add_executable(zwidget_example WIN32
 		example/example.cpp
 		example/picopng.cpp
@@ -313,6 +321,10 @@ if(ZWIDGET_BUILD_EXAMPLE)
 		target_link_libraries(zwidget_example PRIVATE "-framework Cocoa -framework OpenGL")
 	else()
 		target_link_libraries(zwidget_example PRIVATE ${ZWIDGET_LIBS})
+	endif()
+
+	if(SDL2_FOUND)
+		target_link_libraries(zwidget_example PRIVATE SDL2::SDL2)
 	endif()
 
 	set_target_properties(zwidget_example PROPERTIES CXX_STANDARD 20)

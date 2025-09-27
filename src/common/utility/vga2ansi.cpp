@@ -1,4 +1,5 @@
 // Copyright (c) 2025 Rachael Alexanderson
+// Copyright (c) 2025 GZDoom Maintainers and Contributors
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -98,7 +99,7 @@ void vga_to_ansi(const uint8_t *buf)
 	bool truecolor = true;
 #else
 	const char *ct = getenv("COLORTERM");
-	bool truecolor = ct && (strcmp(ct, "truecolor") || strcmp(ct, "24bit"));
+	bool truecolor = ct && (strcmp(ct, "truecolor")==0 || strcmp(ct, "24bit")==0);
 #endif
 
 	for (int row = 0; row < 25; ++row) 

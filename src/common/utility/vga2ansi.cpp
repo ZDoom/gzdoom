@@ -50,6 +50,8 @@ static void CPrint(const char* in)
 }
 #endif
 
+enum class Support { NONE, BASIC, FULL };
+
 static const char *ansi_esc[2] = {"\x1b[", ";"};
 static const char *ansi_end[2] = {"", "m"};
 
@@ -96,10 +98,18 @@ void ibm437_to_utf8(char* result, char in);
 void vga_to_ansi(const uint8_t *buf) 
 {
 #ifdef _WIN32
-	bool truecolor = true;
+	// FIXME: support for alternative terminals and old windows
+	Support termcaps = Support::FULL;
 #else
-	const char *ct = getenv("COLORTERM");
-	bool truecolor = ct && (strcmp(ct, "truecolor")==0 || strcmp(ct, "24bit")==0);
+	const char *term = getenv("TERM");
+	const char *cterm = getenv("COLORTERM");
+
+	Support termcaps =
+		(!term || strcmp(term, "dumb")==0)
+			? Support::NONE
+			: (cterm && (strcmp(cterm, "truecolor")==0 || strcmp(cterm, "24bit")==0))
+				? Support::FULL
+				: Support::BASIC;
 #endif
 
 	for (int row = 0; row < 25; ++row) 
@@ -116,32 +126,35 @@ void vga_to_ansi(const uint8_t *buf)
 			bool blink = !!(attr & 0x80);
 			bool spacer = (ch == 0) || (ch == 32) || (ch == 255);
 
-			// Output color if changed
-			if ((fg != last_fg) && !spacer)
+			if (termcaps != Support::NONE)
 			{
-				ansi_ctrl(1);
-				if (truecolor)
-					CPrint(ansi_tc_fg[fg]);
-				else
-					CPrint(ansi_fg[fg]);
-				last_fg = fg;
+				// Output color if changed
+				if ((fg != last_fg) && !spacer)
+				{
+					ansi_ctrl(1);
+					if (termcaps == Support::FULL)
+						CPrint(ansi_tc_fg[fg]);
+					else
+						CPrint(ansi_fg[fg]);
+					last_fg = fg;
+				}
+				if (bg != last_bg)
+				{
+					ansi_ctrl(1);
+					if (termcaps == Support::FULL)
+						CPrint(ansi_tc_bg[bg]);
+					else
+						CPrint(ansi_bg[bg]);
+					last_bg = bg;
+				}
+				if (blink != last_blink)
+				{
+					ansi_ctrl(1);
+					CPrint(ansi_flash[blink]);
+					last_blink = blink;
+				}
+				ansi_ctrl(0);
 			}
-			if (bg != last_bg) 
-			{
-				ansi_ctrl(1);
-				if (truecolor)
-					CPrint(ansi_tc_bg[bg]);
-				else
-					CPrint(ansi_bg[bg]);
-				last_bg = bg;
-			}
-			if (blink != last_blink)
-			{
-				ansi_ctrl(1);
-				CPrint(ansi_flash[blink]);
-				last_blink = blink;
-			}
-			ansi_ctrl(0);
 
 			// Output character, convert CP437 to UTF-8
 			if (spacer)
@@ -153,7 +166,9 @@ void vga_to_ansi(const uint8_t *buf)
 				CPrint(result);
 			}
 		}
-		CPrint("\x1b[0m\n"); // Reset colors and end the line
+		if (termcaps != Support::NONE)
+			CPrint("\x1b[0m"); // Reset colors
+		CPrint("\n");
 	}
 }
 

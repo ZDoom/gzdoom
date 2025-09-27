@@ -309,9 +309,9 @@ TArray<FString> I_GetSteamPath()
 		"Doom 2/rerelease/DOOM II_Data/StreamingAssets",
 		"Doom 2/finaldoombase",
         "Master Levels of Doom/doom2",
-		"Heretic + Hexen/base/heretic",                      // vanilla WAD included with the 2025 Kex port
-		"Heretic + Hexen/base/hexen",                        // vanilla WAD included with the 2025 Kex port
-		"Heretic + Hexen/base/hexendk"                       // vanilla WAD included with the 2025 Kex port
+		"Heretic + Hexen/dos/base/heretic",                  // vanilla WAD included with the 2025 Kex port
+		"Heretic + Hexen/dos/base/hexen",                    // vanilla WAD included with the 2025 Kex port
+		"Heretic + Hexen/dos/base/hexendk"                   // vanilla WAD included with the 2025 Kex port
 	};
 
 	FString steamPath;

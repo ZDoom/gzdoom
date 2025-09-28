@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
 ** Copyright 2009 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,24 +33,22 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "d_main.h"
-#include "gi.h"
+
 #include "cmdlib.h"
-#include "doomstat.h"
-#include "i_system.h"
+#include "d_main.h"
+#include "engineerrors.h"
 #include "filesystem.h"
+#include "findfile.h"
+#include "fs_findfile.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "i_interface.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "sc_man.h"
-#include "v_video.h"
-#include "gameconfigfile.h"
 #include "version.h"
-#include "engineerrors.h"
-#include "v_text.h"
-#include "fs_findfile.h"
-#include "findfile.h"
-#include "i_interface.h"
-#include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
 EXTERN_CVAR(String, queryiwad_key);
@@ -770,22 +769,29 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// If we still haven't found a suitable IWAD let's error out.
 	if (picks.Size() == 0)
 	{
-		I_FatalError ("Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
-					  "Did you install " GAMENAME " properly? You can do either of the following:\n"
-					  "\n"
+		const char *gamedir, *cfgfile, *extrasteps = "";
+
 #if defined(_WIN32)
-					  "1. Place one or more of these wads in the same directory as " GAMENAME ".\n"
-					  "2. Edit your " GAMENAMELOWERCASE "-username.ini and add the directories of your iwads\n"
-					  "to the list beneath [IWADSearch.Directories]");
+		gamedir = "the same directory as " GAMENAME ".";
+		cfgfile = GAMENAMELOWERCASE "-username.ini";
 #elif defined(__APPLE__)
-					  "1. Place one or more of these wads in ~/Library/Application Support/" GAMENAMELOWERCASE "/\n"
-					  "2. Edit your ~/Library/Preferences/" GAMENAMELOWERCASE ".ini and add the directories\n"
-					  "of your iwads to the list beneath [IWADSearch.Directories]");
+		gamedir = "~/Library/Application Support/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/Library/Preferences/" GAMENAMELOWERCASE ".ini";
 #else
-					  "1. Place one or more of these wads in ~/.config/" GAMENAMELOWERCASE "/.\n"
-					  "2. Edit your ~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"
-					  "iwads to the list beneath [IWADSearch.Directories]");
+		gamedir = "~/.config/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini";
 #endif
+
+		I_FatalError(
+			"Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
+			"Did you install " GAMENAME " properly? You can do either of the following:\n"
+			"\n"
+			"1. Place one or more of these wads in %s\n"
+			"2. Edit your %s and add the\n"
+			"directories of your iwads to the list beneath [IWADSearch.Directories]"
+			"%s\n",
+			gamedir, cfgfile, extrasteps
+		);
 	}
 	int pick = 0;
 

@@ -777,6 +777,10 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 #elif defined(__APPLE__)
 		gamedir = "~/Library/Application Support/" GAMENAMELOWERCASE "/";
 		cfgfile = "~/Library/Preferences/" GAMENAMELOWERCASE ".ini";
+#elif defined(IS_FLATPAK)
+		gamedir = "~/.var/app/" APPID "/.config/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/.var/app/" APPID "/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini";
+		extrasteps = "\n3. Validate your Flatpak permissions, so that Flatpak has access to your directories with wads";
 #else
 		gamedir = "~/.config/" GAMENAMELOWERCASE "/";
 		cfgfile = "~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini";

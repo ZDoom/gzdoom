@@ -772,8 +772,8 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		const char *gamedir, *cfgfile, *extrasteps = "";
 
 #if defined(_WIN32)
-		gamedir = "the same directory as " GAMENAME ".";
-		cfgfile = GAMENAMELOWERCASE "-username.ini";
+		gamedir = "Documents\\My Games\\" GAMENAME "\\";
+		cfgfile = GAMENAMELOWERCASE "-[username].ini"; // I kinda want to grab the actual username here from windows
 #elif defined(__APPLE__)
 		gamedir = "~/Library/Application Support/" GAMENAMELOWERCASE "/";
 		cfgfile = "~/Library/Preferences/" GAMENAMELOWERCASE ".ini";

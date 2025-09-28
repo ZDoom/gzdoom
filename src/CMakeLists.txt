@@ -312,6 +312,8 @@ endif()
 
 # Flags
 
+option(BUILD_FLATPAK "Enable Flatpak-specific build options" OFF)
+
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
@@ -1275,6 +1277,9 @@ set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS 
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
+if(BUILD_FLATPAK)
+	target_compile_definitions(zdoom PRIVATE IS_FLATPAK=1)
+endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.

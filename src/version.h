@@ -97,6 +97,7 @@ const char *GetVersionString();
 #define GAMENAME "GZDoom"
 #define WGAMENAME L"GZDoom"
 #define GAMENAMELOWERCASE "gzdoom"
+#define APPID "org.zdoom.GZDoom"
 #define QUERYIWADDEFAULT true
 #define FORUM_URL "http://forum.zdoom.org/"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"

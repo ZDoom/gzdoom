@@ -968,6 +968,7 @@ set (PCH_SOURCES
 	launcher/playgamepage.cpp
 	launcher/settingspage.cpp
 	launcher/networkpage.cpp
+	launcher/releasepage.cpp
 
 	common/audio/sound/i_sound.cpp
 	common/audio/sound/oalsound.cpp

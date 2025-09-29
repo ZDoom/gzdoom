@@ -71,6 +71,7 @@ struct FStartupSelectionInfo
 	int DefaultIWAD = 0;
 	FString DefaultArgs = {};
 	bool bSaveArgs = true;
+	bool isNewRelease = true;
 
 	// Settings
 	int DefaultStartFlags = 0;
@@ -78,6 +79,7 @@ struct FStartupSelectionInfo
 	FString DefaultLanguage = "auto";
 	int DefaultBackend = 1;
 	bool DefaultFullscreen = true;
+	bool notifyNewRelease = true;
 
 	// Net game info
 	int DefaultNetIWAD = 0;

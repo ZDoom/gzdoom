@@ -10,6 +10,7 @@ class LauncherButtonbar;
 class PlayGamePage;
 class SettingsPage;
 class NetworkPage;
+class ReleasePage;
 struct WadStuff;
 struct FStartupSelectionInfo;
 
@@ -38,6 +39,7 @@ private:
 	PlayGamePage* PlayGame = nullptr;
 	SettingsPage* Settings = nullptr;
 	NetworkPage* Network = nullptr;
+	ReleasePage* Release = nullptr;
 
 	FStartupSelectionInfo* Info = nullptr;
 

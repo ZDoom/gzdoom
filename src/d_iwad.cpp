@@ -34,6 +34,7 @@
 **
 */
 
+#include "c_cvars.h"
 #include "cmdlib.h"
 #include "d_main.h"
 #include "engineerrors.h"
@@ -668,9 +669,16 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				break;
 			}
 		}
+
+		// -iwad not found
+		if (mFoundWads.Size() == numFoundWads)
+		{
+			D_FileNotFound(REQUIRE_IWAD, "game iwad", iwadparm);
+
+			// Revert back to standard behavior
+			iwadparm = nullptr;
+		}
 	}
-	// -iwad not found or not specified. Revert back to standard behavior.
-	if (mFoundWads.Size() == numFoundWads) iwadparm = nullptr;
 
 	// Check for symbolic links leading to non-existent files and for files that are unreadable.
 	for (unsigned int i = 0; i < mFoundWads.Size(); i++)

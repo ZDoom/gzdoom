@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2016 Randy Heit
 ** Copyright 2005-2020 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions
@@ -32,17 +33,23 @@
 **
 */
 
-#include "findfile.h"
-#include "zstring.h"
-#include "cmdlib.h"
-#include "printf.h"
-#include "configfile.h"
-#include "i_system.h"
-#include "fs_findfile.h"
-
 #ifdef __unix__
 #include <sys/stat.h>
 #endif // __unix__
+
+#include "c_cvars.h"
+#include "cmdlib.h"
+#include "configfile.h"
+#include "findfile.h"
+#include "fs_findfile.h"
+#include "i_system.h"
+#include "printf.h"
+#include "zstring.h"
+
+CUSTOM_CVARD(Int, i_exit_on_not_found, REQUIRE_IWAD|REQUIRE_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG, "Exits game if a specified file is not found") {
+	int masked = self & REQUIRE_ALL;
+	if (self != masked) self = masked;
+};
 
 //==========================================================================
 //
@@ -133,25 +140,40 @@ void D_AddWildFile(std::vector<std::string>& wadfiles, const char* value, const 
 	{
 		return;
 	}
+
 	const char* wadfile = BaseFileSearch(value, extension, false, config);
 
 	if (wadfile != nullptr)
 	{
 		D_AddFile(wadfiles, wadfile, true, -1, config, optional);
+		return;
 	}
-	else 
+
+	// Try pattern matching
+	FileSys::FileList list;
+	auto path = ExtractFilePath(value);
+	auto name = ExtractFileBase(value, true);
+	if (path.IsEmpty()) path = ".";
+
+	bool found = false;
+	if (FileSys::ScanDirectory(list, path.GetChars(), name.GetChars(), true))
 	{
-		// Try pattern matching
-		FileSys::FileList list;
-		auto path = ExtractFilePath(value);
-		auto name = ExtractFileBase(value, true);
-		if (path.IsEmpty()) path = ".";
-		if (FileSys::ScanDirectory(list, path.GetChars(), name.GetChars(), true))
-		{ 
-			for(auto& entry : list)
-			{
-				D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config, optional);
-			}
+		for(auto& entry : list)
+		{
+			D_AddFile(wadfiles, entry.FilePath.c_str(), true, -1, config, optional);
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		if (optional)
+		{
+			D_FileNotFound(REQUIRE_OPTFILE, "optional wad", value);
+		}
+		else
+		{
+			D_FileNotFound(REQUIRE_FILE, "wad", value);
 		}
 	}
 }
@@ -295,3 +317,24 @@ const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinpr
 	return nullptr;
 }
 
+
+//==========================================================================
+//
+// D_FileNotFound
+//
+// Prints warning that a file is not found. If test flag in
+// i_exit_on_not_found is set, exits game with fatal error.
+//
+//==========================================================================
+
+void D_FileNotFound(EFileRequirements test, const char* type, const char* file)
+{
+	Printf("%s not found: %s\n", type, file);
+
+	if (!(i_exit_on_not_found & test)) return;
+
+	I_FatalError(
+		"Cannot find %s \'%s\'\n"
+		"To ignore this error and continue, set cvar i_exit_on_not_found to %d\n"
+	, type, file, i_exit_on_not_found-test);
+}

@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -73,6 +74,10 @@ EXTERN_CVAR (Int, autosavecount)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR (Int, vid_maxfps)
+
+EXTERN_FARG(loadgame);
+
+FARG(extratic, "", "", "", "");
 
 extern uint8_t		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern FString	savedescription;
@@ -1862,7 +1867,7 @@ void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 	WriteInt32(rngseed, stream);
 	C_WriteCVars(stream, CVAR_SERVERINFO, true);
 
-	auto load = Args->CheckValue("-loadgame");
+	auto load = Args->CheckValue(FArg_loadgame);
 	if (load != nullptr)
 	{
 		WriteInt8(1, stream);
@@ -1873,6 +1878,7 @@ void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 		WriteInt8(0, stream);
 	}
 }
+
 
 void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 {
@@ -1885,10 +1891,10 @@ void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 		auto load = ReadString(stream);
 		// Don't override the existing argument in case they need to use
 		// a custom savefile name.
-		if (!Args->CheckParm("-loadgame"))
+		if (!Args->CheckParm(FArg_loadgame))
 		{
-			Args->AppendArg("-loadgame");
-			Args->AppendArg(load);
+			Args->AppendArg(FArg_loadgame);
+			Args->AppendRawArg(load);
 		}
 	}
 
@@ -1902,7 +1908,7 @@ bool D_CheckNetGame()
 	if (!I_InitNetwork())
 		return false;
 
-	if (Args->CheckParm("-extratic"))
+	if (Args->CheckParm(FArg_extratic))
 		net_extratic = true;
 
 	players[Net_Arbitrator].settings_controller = true;

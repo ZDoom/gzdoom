@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,9 +33,50 @@
 **
 */
 
-#include <string.h>
+#include <cassert>
 #include "m_argv.h"
+#include "name.h"
+#include "tarray.h"
 #include "zstring.h"
+
+#ifdef __linux
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
+FArg::FArg(
+	const char * _name,
+	const char * _section,
+	const char * _summary,
+	const char * _usage,
+	const char * _details,
+	bool _advanced
+):
+	name(_name),
+	section(_section),
+	summary(_summary),
+	usage(_usage),
+	advanced(_advanced)
+{
+	assert(FArg::Available().CheckKey(name) == nullptr);
+
+	if (section == "")
+	{
+		section = "Unknown";
+		advanced = true;
+	}
+
+	details = (strlen(_details) > 0)
+		? _details
+		: _summary;
+
+	FArg::Available().Insert(name, this);
+}
 
 //===========================================================================
 //
@@ -65,7 +107,7 @@ FArgs::FArgs(const FArgs &other)
 
 FArgs::FArgs(int argc, char **argv)
 {
-	SetArgs(argc, argv);
+	SetRawArgs(argc, argv);
 }
 
 //===========================================================================
@@ -76,7 +118,7 @@ FArgs::FArgs(int argc, char **argv)
 
 FArgs::FArgs(int argc, const char** argv)
 {
-	SetArgs(argc, const_cast<char **>(argv));	// Thanks, C++, for the inflexible const casting rules...
+	SetRawArgs(argc, const_cast<char **>(argv));	// Thanks, C++, for the inflexible const casting rules...
 }
 
 //===========================================================================
@@ -87,10 +129,8 @@ FArgs::FArgs(int argc, const char** argv)
 
 FArgs::FArgs(int argc, FString *argv)
 {
-	AppendArgs(argc, argv);
+	AppendRawArgs(argc, argv);
 }
-
-
 
 //===========================================================================
 //
@@ -106,11 +146,11 @@ FArgs &FArgs::operator=(const FArgs &other)
 
 //===========================================================================
 //
-// FArgs :: SetArgs
+// FArgs :: SetRawArgs
 //
 //===========================================================================
 
-void FArgs::SetArgs(int argc, char **argv)
+void FArgs::SetRawArgs(int argc, char **argv)
 {
 	Argv.Resize(argc);
 	for (int i = 0; i < argc; ++i)
@@ -139,26 +179,28 @@ void FArgs::FlushArgs()
 //
 //===========================================================================
 
-int stricmp(const char** check, const char* str)
+
+int FArgs::CheckParm(const FArg check, int start) const
+{
+	const FArg * array[] = { &check, nullptr };
+	return CheckParm(array, start);
+}
+
+int FArgs::TestArgList(const FArg** check, const char* str)
 {
 	for (int i = 0; check[i]; i++)
 	{
-		if (!stricmp(check[i], str)) return 0;
+		const char * name = check[i]->name.GetChars();
+		if (!stricmp(name, str)) return 0;
 	}
 	return 1;	// we do not care about order here.
 }
 
-int FArgs::CheckParm(const char* check, int start) const
-{
-	const char* array[] = { check, nullptr };
-	return CheckParm(array, start);
-}
-
-int FArgs::CheckParm(const char** check, int start) const
+int FArgs::CheckParm(const FArg ** check, int start) const
 {
 	for (unsigned i = start; i < Argv.Size(); ++i)
 	{
-		if (0 == stricmp(check, Argv[i].GetChars()))
+		if (0 == TestArgList(check, Argv[i].GetChars()))
 		{
 			return i;
 		}
@@ -175,7 +217,7 @@ int FArgs::CheckParm(const char** check, int start) const
 //
 //===========================================================================
 
-int FArgs::CheckParmList(const char *check, FString **strings, int start) const
+int FArgs::CheckParmList(const FArg check, FString **strings, int start) const
 {
 	unsigned int i, parmat = CheckParm(check, start);
 
@@ -210,7 +252,7 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 //
 //===========================================================================
 
-const char *FArgs::CheckValue(const char *check) const
+const char * FArgs::CheckValue(const FArg check) const
 {
 	int i = CheckParm(check);
 
@@ -234,7 +276,7 @@ const char *FArgs::CheckValue(const char *check) const
 //
 //===========================================================================
 
-FString FArgs::TakeValue(const char *check)
+FString FArgs::TakeValue(const FArg check)
 {
 	int i = CheckParm(check);
 	FString out;
@@ -260,13 +302,13 @@ FString FArgs::TakeValue(const char *check)
 //
 //===========================================================================
 
-void FArgs::RemoveArgs(const char *check)
+void FArgs::RemoveArgs(const FArg check)
 {
 	int i = CheckParm(check);
 
 	if (i > 0 && i < (int)Argv.Size() - 1)
 	{
-		do 
+		do
 		{
 			RemoveArg(i);
 		}
@@ -313,6 +355,21 @@ int FArgs::NumArgs() const
 
 //===========================================================================
 //
+// FArgs :: AppendRawArg
+//
+// Adds another argument to argv. Invalidates any previous results from
+// GetArgList(). This is to only be used for parsing text from external
+// sources, not from internal sources
+//
+//===========================================================================
+
+void FArgs::AppendRawArg(FString arg)
+{
+	Argv.Push(arg);
+}
+
+//===========================================================================
+//
 // FArgs :: AppendArg
 //
 // Adds another argument to argv. Invalidates any previous results from
@@ -320,20 +377,22 @@ int FArgs::NumArgs() const
 //
 //===========================================================================
 
-void FArgs::AppendArg(FString arg)
+void FArgs::AppendArg(const FArg arg)
 {
-	Argv.Push(arg);
+	Argv.Push(arg.name.GetChars());
 }
 
 //===========================================================================
 //
-// FArgs :: AppendArgs
+// FArgs :: AppendRawArgs
 //
-// Adds an array of FStrings to argv.
+// Adds an array of FStrings to argv. Invalidates any previous results from
+// GetArgList(). This is to only be used for parsing text from external
+// sources, not from internal sources
 //
 //===========================================================================
 
-void FArgs::AppendArgs(int argc, const FString *argv)
+void FArgs::AppendRawArgs(int argc, const FString *argv)
 {
 	if (argv != NULL && argc > 0)
 	{
@@ -347,14 +406,16 @@ void FArgs::AppendArgs(int argc, const FString *argv)
 
 //===========================================================================
 //
-// FArgs :: AppendArgsString
+// FArgs :: AppendRawArgsString
 //
-// Adds extra args as a space-separated string, supporting simple quoting, and inserting -file args into the right place
+// Adds extra args as a space-separated string, supporting simple quoting,
+// and inserting -file args into the right place. Invalidates any previous
+// results from GetArgList(). This is to only be used for parsing text from
+// externalw sources, not from internal sources
 //
 //===========================================================================
 
-
-void FArgs::AppendArgsString(FString argv)
+void FArgs::AppendRawArgsString(FString argv)
 {
 	auto file_index = Argv.Find("-file");
 	auto files_end = file_index + 1;
@@ -477,10 +538,32 @@ void FArgs::RemoveArg(int argindex)
 //
 //===========================================================================
 
-void FArgs::CollectFiles(const char* param, const char* extension)
+void FArgs::CollectFiles(const FArg arg, const char* extension)
 {
+	const char * param = arg.name.GetChars();
 	const char* array[] = { param, nullptr };
 	CollectFiles(param, array, extension);
+}
+
+int stricmp(const char** check, const char* str)
+{
+	for (int i = 0; check[i]; i++)
+	{
+		if (!stricmp(check[i], str)) return 0;
+	}
+	return 1;	// we do not care about order here.
+}
+
+int _CheckParm(TArray<FString> Argv, const char ** check, int start)
+{
+	for (unsigned i = start; i < Argv.Size(); ++i)
+	{
+		if (0 == stricmp(check, Argv[i].GetChars()))
+		{
+			return i;
+		}
+	}
+	return 0;
 }
 
 void FArgs::CollectFiles(const char *finalname, const char **param, const char *extension)
@@ -516,7 +599,7 @@ void FArgs::CollectFiles(const char *finalname, const char **param, const char *
 	}
 
 	// Step 2: Find each occurence of -param and add its arguments to work.
-	while ((i = CheckParm(param, i)) > 0)
+	while ((i = _CheckParm(Argv, param, i)) > 0)
 	{
 		Argv.Delete(i);
 		while (i < Argv.Size() && Argv[i][0] != '-' && Argv[i][0] != '+')
@@ -538,7 +621,7 @@ void FArgs::CollectFiles(const char *finalname, const char **param, const char *
 	if (work.Size() > 0)
 	{
 		Argv.Push(finalname);
-		AppendArgs(work.Size(), &work[0]);
+		AppendRawArgs(work.Size(), &work[0]);
 	}
 }
 
@@ -552,7 +635,7 @@ void FArgs::CollectFiles(const char *finalname, const char **param, const char *
 //
 //===========================================================================
 
-FArgs *FArgs::GatherFiles(const char *param) const
+FArgs *FArgs::GatherFiles(const FArg param) const
 {
 	FString *files;
 	int filecount;

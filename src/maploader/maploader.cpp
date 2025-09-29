@@ -95,6 +95,11 @@ enum
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 
+FARG(blockmap, "", "", "", "");
+FARG(enablelightmaps, "", "", "", "");
+
+EXTERN_FARG(xlat);
+
 inline bool P_LoadBuildMap(uint8_t *mapdata, size_t len, FMapThing **things, int *numthings)
 {
 	return false;
@@ -2603,7 +2608,7 @@ void MapLoader::LoadBlockMap (MapData * map)
 
 	if (ForceNodeBuild || genblockmap ||
 		count/2 >= 0x10000 || count == 0 ||
-		Args->CheckParm("-blockmap")
+		Args->CheckParm(FArg_blockmap)
 		)
 	{
 		DPrintf (DMSG_SPAMMY, "Generating BLOCKMAP\n");
@@ -2973,7 +2978,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		else
 		{
 			// Has the user overridden the game's default translator with a commandline parameter?
-			translator = Args->CheckValue("-xlat");
+			translator = Args->CheckValue(FArg_xlat);
 			if (translator == nullptr)
 			{
 				// Use the game's default.
@@ -3366,7 +3371,7 @@ void MapLoader::LoadLightmap(MapData *map)
 	Level->LPWidth = 0;
 	Level->LPHeight = 0;
 
-	if (!Args->CheckParm("-enablelightmaps"))
+	if (!Args->CheckParm(FArg_enablelightmaps))
 		return;		// this feature is still too early WIP to allow general access
 
 	if (!map->Size(ML_LIGHTMAP))

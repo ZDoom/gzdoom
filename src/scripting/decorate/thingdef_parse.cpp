@@ -6,6 +6,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 2002-2016 Christoph Oelckers
 ** Copyright 2004-2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -53,6 +54,7 @@
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
 EXTERN_CVAR(Bool, strictdecorate);
 
+FARG(allowdecoratecrossincludes, "", "", "", "");
 
 //==========================================================================
 //
@@ -1280,7 +1282,7 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 		{
 			sc.MustGetString();
 			// This check needs to remain overridable for testing purposes.
-			if (fileSystem.GetFileContainer(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
+			if (fileSystem.GetFileContainer(sc.LumpNum) == 0 && !Args->CheckParm(FArg_allowdecoratecrossincludes))
 			{
 				int includefile = fileSystem.GetFileContainer(fileSystem.CheckNumForFullName(sc.String, true));
 				if (includefile != 0)

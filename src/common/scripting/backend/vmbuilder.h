@@ -2,6 +2,7 @@
 #define VMUTIL_H
 
 #include "dobject.h"
+#include "m_argv.h"
 #include "vmintern.h"
 #include <vector>
 #include <functional>

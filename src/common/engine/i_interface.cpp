@@ -1,3 +1,28 @@
+/*
+** i_interface.cpp
+**
+**---------------------------------------------------------------------------
+**
+** Copyright 2020 Christoph Oelckers
+** Copyright 2020-2025 GZDoom Maintainers and Contributors
+**
+** This program is free software: you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation, either version 3 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program.  If not, see http://www.gnu.org/licenses/
+**
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "i_interface.h"
 #include "st_start.h"
 #include "gamestate.h"
@@ -166,9 +191,9 @@ int FStartupSelectionInfo::SaveInfo()
 		}
 
 		if (!DefaultNetArgs.IsEmpty())
-			Args->AppendArgsString(DefaultNetArgs);
+			Args->AppendRawArgsString(DefaultNetArgs);
 		if (!AdditionalNetArgs.IsEmpty())
-			Args->AppendArgsString(AdditionalNetArgs);
+			Args->AppendRawArgsString(AdditionalNetArgs);
 
 		return DefaultNetIWAD;
 	}
@@ -178,7 +203,7 @@ int FStartupSelectionInfo::SaveInfo()
 	defaultargs = saveargs ? DefaultArgs.GetChars() : "";
 
 	if (!DefaultArgs.IsEmpty())
-		Args->AppendArgsString(DefaultArgs);
+		Args->AppendRawArgsString(DefaultArgs);
 
 	return DefaultIWAD;
 }

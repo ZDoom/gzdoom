@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 2006-2007 Randy Heit
 ** Copyright 2006-2022 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -342,10 +343,11 @@ FStartScreen* CreateHereticStartScreen(int max_progress);
 FStartScreen* CreateStrifeStartScreen(int max_progress);
 FStartScreen* CreateGenericStartScreen(int max_progress);
 
+FARG(nostartup, "", "", "", "");
 
 FStartScreen* GetGameStartScreen(int max_progress)
 {
-	if (!Args->CheckParm("-nostartup"))
+	if (!Args->CheckParm(FArg_nostartup))
 	{
 		try
 		{

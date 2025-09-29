@@ -53,6 +53,8 @@
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
 
+extern const char * const BACKEND = "Cocoa";
+
 // ---------------------------------------------------------------------------
 
 EXTERN_CVAR(Int,  vid_defwidth )
@@ -132,7 +134,7 @@ static bool ReadSystemVersionFromPlist(NSOperatingSystemVersion& version)
 }
 
 FString sys_ostype;
-void I_DetectOS()
+FString I_DetectOS()
 {
 	NSOperatingSystemVersion version = {};
 
@@ -185,11 +187,13 @@ void I_DetectOS()
 		"Unknown";
 #endif
 
-	Printf("%s running macOS %s %d.%d.%d (%s) %s\n", model, name,
+	FString nicename = FStringf("%s running macOS %s %d.%d.%d (%s) %s", model, name,
 		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
 		   release, architecture);
 
 	sys_ostype.Format("macOS %d.%d %s", int(version.majorVersion), int(version.minorVersion), name);
+
+	return nicename;
 }
 
 

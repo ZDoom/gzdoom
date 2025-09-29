@@ -1,4 +1,3 @@
-
 #ifndef __I_SYSTEM__
 #define __I_SYSTEM__
 
@@ -12,7 +11,7 @@ struct WadStuff;
 struct FStartupSelectionInfo;
 
 // [RH] Detects the OS the game is running under.
-void I_DetectOS (void);
+FString I_DetectOS (void);
 
 // Called by DoomMain.
 void CalculateCPUSpeed (void);

@@ -5,6 +5,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -36,6 +37,7 @@
 #include <stdlib.h>
 #include "cmdlib.h"
 #include "codegen.h"
+#include "sc_man.h"
 #include "v_text.h"
 #include "filesystem.h"
 #include "v_video.h"
@@ -4691,14 +4693,37 @@ ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-//
+// Deprecated in favour of FxLtEqGt
 //
 //==========================================================================
 
 FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
-	: FxBinary(TK_LtGtEq, l, r)
+	: FxLtEqGt(l, r)
+{}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxLtEqGt::FxLtEqGt(FxExpression *l, FxExpression *r)
+	: FxBinary(TK_LtEqGt, l, r)
 {
 	ValueType = TypeSInt32;
+}
+
+//==========================================================================
+//
+// Deprecated in favour of FxLtEqGt
+//
+//==========================================================================
+
+FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
+{
+	ScriptPosition.Message(MSG_WARNING, "<>= is deprecated in favour of <=>");
+
+	return FxLtEqGt::Resolve(ctx);
 }
 
 //==========================================================================
@@ -4707,7 +4732,7 @@ FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
 //
 //==========================================================================
 
-FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
+FxExpression *FxLtEqGt::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
@@ -4725,7 +4750,7 @@ FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "<>= expects two numeric operands");
+		ScriptPosition.Message(MSG_ERROR, "<=> expects two numeric operands");
 		delete this;
 		return nullptr;
 	}
@@ -4744,11 +4769,22 @@ FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 
 //==========================================================================
 //
-//
+// Deprecated in favour of FxLtEqGt
 //
 //==========================================================================
 
 ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
+{
+	return FxLtEqGt::Emit(build);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxLtEqGt::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);

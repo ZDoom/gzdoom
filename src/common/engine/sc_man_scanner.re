@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 2005-2016 Randy Heit
 ** Copyright 2005-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -272,6 +273,7 @@ std2:
 		"!="						{ RET(TK_Neq); }
 		"~=="						{ RET(TK_ApproxEq); }
 		"<>="						{ RET(TK_LtGtEq); }
+		"<=>"						{ RET(TK_LtGtEq); }
 		"**"						{ RET(TK_MulMul); }
 		"::"						{ RET(TK_ColonColon); }
 		"->"						{ RET(TK_Arrow); }

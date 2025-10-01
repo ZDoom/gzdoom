@@ -8,6 +8,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -1112,7 +1113,22 @@ public:
 //
 //==========================================================================
 
-class FxLtGtEq : public FxBinary
+class FxLtEqGt : public FxBinary
+{
+public:
+	FxLtEqGt(FxExpression*, FxExpression*);
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxLtGtEq : public FxLtEqGt
 {
 public:
 	FxLtGtEq(FxExpression*, FxExpression*);

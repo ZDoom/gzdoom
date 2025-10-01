@@ -4,6 +4,7 @@
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
 ** Copyright 2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -3321,6 +3322,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 
 		case PEX_LTGTEQ:
 			return new FxLtGtEq(left, right);
+
+		case PEX_LTEQGT:
+			return new FxLtEqGt(left, right);
 
 		case PEX_ArrayAccess:
 			return new FxArrayElement(left, right);

@@ -273,7 +273,7 @@ std2:
 		"!="						{ RET(TK_Neq); }
 		"~=="						{ RET(TK_ApproxEq); }
 		"<>="						{ RET(TK_LtGtEq); }
-		"<=>"						{ RET(TK_LtGtEq); }
+		"<=>"						{ RET(TK_LtEqGt); }
 		"**"						{ RET(TK_MulMul); }
 		"::"						{ RET(TK_ColonColon); }
 		"->"						{ RET(TK_Arrow); }

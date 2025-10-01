@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
 ** Copyright 2016-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -154,7 +155,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 %left OROR.
 %left ANDAND.
 %left EQEQ NEQ APPROXEQ.
-%left LT GT LTEQ GTEQ LTGTEQ IS.
+%left LT GT LTEQ GTEQ LTGTEQ LTEQGT IS.
 %left DOTDOT.
 %left OR.		/* Note that this is like the Ruby precedence for these */
 %left XOR.		/* three operators and not the C precedence, since */
@@ -1759,7 +1760,12 @@ expr(X) ::= expr(A) GTEQ expr(B).		/* a >= b */
 	BINARY_EXPR(A,B,PEX_GTEQ);
 	X = expr2;
 }
-expr(X) ::= expr(A) LTGTEQ expr(B).		/* a <>= b */
+expr(X) ::= expr(A) LTEQGT expr(B).		/* a <=> b */
+{
+	BINARY_EXPR(A,B,PEX_LTEQGT);
+	X = expr2;
+}
+expr(X) ::= expr(A) LTGTEQ expr(B).		/* a <>= b (deprecated in favour of <=>)*/
 {
 	BINARY_EXPR(A,B,PEX_LTGTEQ);
 	X = expr2;

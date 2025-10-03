@@ -50,6 +50,7 @@
 #include "m_joy.h"
 #include "utf8.h"
 #include "v_video.h"
+#include "version.h"
 
 bool GUICapture;
 static bool NativeMouse = true;
@@ -309,14 +310,14 @@ void MessagePump (const SDL_Event &sev)
 	{
 		const int threshold = 1;
 
+		static SDL_Window *window;
 		static unsigned eventTimestamp;
-		static bool seenKeyEvent;
-		static bool seenJoyEvent;
+		static bool seenKeyEvent, seenJoyEvent;
 		static int duplicateEvents;
 
 		if (eventTimestamp == 0)
 		{
-			eventTimestamp = duplicateEvents= 0;
+			eventTimestamp = duplicateEvents = 0;
 			seenKeyEvent = seenJoyEvent = false;
 
 			if (joykey_stop_conflict == 1)
@@ -337,6 +338,7 @@ void MessagePump (const SDL_Event &sev)
 			{
 				case SDL_KEYDOWN:
 					seenKeyEvent = true;
+					if (!window) window = SDL_GetWindowFromID(sev.key.windowID);
 					break;
 				case SDL_JOYBUTTONDOWN:
 				case SDL_CONTROLLERBUTTONDOWN:
@@ -346,8 +348,23 @@ void MessagePump (const SDL_Event &sev)
 
 			if (seenJoyEvent && seenKeyEvent && ++duplicateEvents >= threshold)
 			{
-				// TODO: notify the user that we did this
 				joykey_stop_conflict = 1;
+
+				// TODO: use CustomMessageBox https://github.com/ZDoom/gzdoom/pull/1821
+				if (window) SDL_HideWindow(window);
+				SDL_ShowSimpleMessageBox(
+					SDL_MESSAGEBOX_INFORMATION,
+					GAMENAME,
+					"Simultaneous input from a gamepad and keyboard detected!\n"
+					"All keyboard/mouse input has been temporarily disabled.\n"
+					"\n"
+					"If using a handheld PC, try switching from DESKTOP to GAMEPAD bindings.\n"
+					"This can generally be done by holding down START.\n"
+					"\n"
+					"To disable this detection, set joykey_stop_conflict to 0.",
+					window
+				);
+				if (window) SDL_ShowWindow(window);
 			}
 		}
 	}

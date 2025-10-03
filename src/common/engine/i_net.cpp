@@ -972,7 +972,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 		MaxClients = 2u;
 	}
 
-	if (MaxClients > MAXPLAYERS)
+	if (MaxClients > (int)MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %lu", MaxClients, MAXPLAYERS);
 
 	GenerateGameID();
@@ -1029,7 +1029,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	NetBuffer[1] = PRE_GO;
 	NetBuffer[2] = NetMode;
 	NetBufferLength = 3u;
-	for (size_t client = 1u; client < MaxClients; ++client)
+	for (size_t client = 1u; client < (size_t)MaxClients; ++client)
 	{
 		if (Connected[client].Status != CSTAT_NONE)
 			SendPacket(Connected[client].Address);

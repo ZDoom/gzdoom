@@ -1018,7 +1018,7 @@ bool FCompressedBuffer::Decompress(char* destbuffer)
 		FileReader frz;
 		if (OpenDecompressor(frz, mr, mSize, mMethod))
 		{
-			return frz.Read(destbuffer, mSize) != mSize;
+			return frz.Read(destbuffer, mSize) != (FileSys::FileReader::Size)mSize;
 		}
 	}
 	return false;

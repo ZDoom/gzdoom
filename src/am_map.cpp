@@ -2844,7 +2844,7 @@ void DAutomap::drawPlayers ()
 		return;
 	}
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		player_t *p = &players[i];
 		AMColor color;
@@ -2855,7 +2855,7 @@ void DAutomap::drawPlayers ()
 		}
 
 		// We don't always want to show allies on the automap.
-		if (dmflags2 & DF2_NO_AUTOMAP_ALLIES && i != consoleplayer)
+		if (dmflags2 & DF2_NO_AUTOMAP_ALLIES && (int)i != consoleplayer)
 			continue;
 		
 		if (deathmatch && !demoplayback &&

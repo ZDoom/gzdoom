@@ -61,6 +61,8 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
+int WorldPaused();
+
 void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame *smf, const FState* curState, int curTics, double tic, FTranslationID translation, AActor* actor);
 
 void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
@@ -134,7 +136,7 @@ VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(AActor * actor, float x, float y
 
 	double tic = actor->Level->totaltime;
 
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}
@@ -396,7 +398,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			if (!WorldPaused() && !Level->isFrozen())
 			{
 				ticFraction = ticFrac;
 			}
@@ -643,7 +645,7 @@ static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpri
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, int curTics, double ticFrac, FTranslationID translation, AActor* actor)
 {
 	double tic = actor->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}

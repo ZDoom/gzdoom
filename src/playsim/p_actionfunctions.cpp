@@ -6256,6 +6256,12 @@ class DPrecalculatedAnimationFrame : public DAnimationFrame
 	DECLARE_CLASS(DPrecalculatedAnimationFrame, DAnimationFrame);
 public:
 	TArray<TRS> frameData;
+
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		arc("frameData", frameData);
+	}
 };
 
 DEFINE_FIELD(DPrecalculatedAnimationFrame, frameData);
@@ -6269,6 +6275,14 @@ public:
 	float inter;	// = -1.0f;
 	int frame1;		// = -1;
 	int frame2;		// = -1;
+
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		arc("inter", inter);
+		arc("frame1", frame1);
+		arc("frame2", frame2);
+	}
 };
 
 DEFINE_FIELD(DInterpolatedFrame, inter);
@@ -6289,6 +6303,19 @@ public:
 	int flags;				// = MODELANIM_NONE;
 	double startTic;		// = 0; // when the current animation started (changing framerates counts as restarting) (or when animation starts if interpolating from previous animation)
 	double switchOffset;	// = 0; // when the animation was changed -- where to interpolate the switch from
+
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		arc("firstFrame", firstFrame);
+		arc("lastFrame", lastFrame);
+		arc("loopFrame", loopFrame);
+		arc("framerate", framerate);
+		arc("startFrame", startFrame);
+		arc("flags", flags);
+		arc("startTic", startTic);
+		arc("switchOffset", switchOffset);
+	}
 };
 
 DEFINE_FIELD(DAnimationSequence, firstFrame);
@@ -6309,6 +6336,14 @@ class DAnimationLayer : public DObject
 public:
 	TObjPtr<DAnimationSequence*> curAnim;
 	TObjPtr<DAnimationFrame*> prevAnim;
+
+	void Serialize(FSerializer& arc) override
+	{
+		Super::Serialize(arc);
+		// TODO move these objects to the header file to clean up this ugly mess
+		arc("curAnim", *curAnim.ForceGetRaw());
+		arc("prevAnim", *prevAnim.ForceGetRaw());
+	}
 };
 
 DEFINE_FIELD(DAnimationLayer, curAnim);
@@ -7153,6 +7188,151 @@ DEFINE_ACTION_FUNCTION(AActor, CalculateAnimationUI)
 	RestoreAnimLayer(layer, nativeAnims);
 
 	ACTION_RETURN_POINTER(calc);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CalculateAnimationFrame)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(iframe, DInterpolatedFrame);
+
+	if(iframe == nullptr)
+	{
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	FModel * mdl = FindFModel(self);
+
+	if(!mdl)
+	{
+		ACTION_RETURN_POINTER(nullptr);
+	}
+
+	ModelAnimFrame frame = mdl->PrecalculateFrame(nullptr, {iframe->inter, iframe->frame1, iframe->frame2}, -1, mdl->AttachAnimationData());
+	assert(std::holds_alternative<ModelAnimFramePrecalculatedIQM>(frame));
+
+	DPrecalculatedAnimationFrame * dframe = (DPrecalculatedAnimationFrame*)RUNTIME_CLASS(DPrecalculatedAnimationFrame)->CreateNew();
+	dframe->frameData = std::move(std::get<ModelAnimFramePrecalculatedIQM>(frame).precalcBones);
+
+	ACTION_RETURN_POINTER(dframe);
+}
+
+void FindAnimationFrameInternal(DAnimationLayer * layer, double tic, DAnimationFrame * &frame1, DInterpolatedFrame * &frame2, float &inter)
+{
+	if(layer != nullptr && tic >= 0)
+	{
+		AnimInfo nativeAnims = AnimLayerToAnimInfo(layer);
+
+		ModelAnimFrameInterp to;
+
+		calcFrames(nativeAnims.curAnim, tic, to, inter);
+
+		RestoreAnimLayer(layer, nativeAnims);
+
+		frame2 = (DInterpolatedFrame*)RUNTIME_CLASS(DInterpolatedFrame)->CreateNew();
+
+		frame2->inter = to.inter;
+		frame2->frame1 = to.frame1;
+		frame2->frame2 = to.frame2;
+
+		if(inter >= 0)
+		{
+			frame1 = layer->prevAnim;
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(AActor, FindAnimationFrameAt)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(layer, DAnimationLayer);
+	PARAM_FLOAT(tic);
+
+	DAnimationFrame *frame1 = nullptr;
+	DInterpolatedFrame *frame2 = nullptr;
+	float inter = -1;
+
+	FindAnimationFrameInternal(layer, tic, frame1, frame2, inter);
+
+	if(numret > 2)
+	{
+		ret[2].SetFloat(inter);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetObject(frame2);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetObject(frame1);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, FindAnimationFrame)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(layer, DAnimationLayer);
+
+	DAnimationFrame *frame1 = nullptr;
+	DInterpolatedFrame *frame2 = nullptr;
+	float inter = -1;
+
+	FindAnimationFrameInternal(layer, self->Level->totaltime + 1, frame1, frame2, inter);
+
+	if(numret > 2)
+	{
+		ret[2].SetFloat(inter);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetObject(frame2);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetObject(frame1);
+	}
+
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(AActor, FindAnimationFrameUI)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(layer, DAnimationLayer);
+
+	DAnimationFrame *frame1 = nullptr;
+	DInterpolatedFrame *frame2 = nullptr;
+	float inter = -1;
+
+	double tic = self->Level->totaltime;
+	if (!WorldPaused() && !self->Level->isFrozen())
+	{
+		tic += I_GetTimeFrac();
+	}
+
+	FindAnimationFrameInternal(layer, tic, frame1, frame2, inter);
+
+	if(numret > 2)
+	{
+		ret[2].SetFloat(inter);
+	}
+
+	if(numret > 1)
+	{
+		ret[1].SetObject(frame2);
+	}
+
+	if(numret > 0)
+	{
+		ret[0].SetObject(frame1);
+	}
+
+	return numret;
 }
 
 

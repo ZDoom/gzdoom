@@ -1589,6 +1589,23 @@ class Actor : Thinker native
 	native version("4.15.1") static clearscope PrecalculatedAnimationFrame BlendAnimationFrames(PrecalculatedAnimationFrame a, PrecalculatedAnimationFrame b, double t);
 	native version("4.15.1") static clearscope PrecalculatedAnimationFrame OffsetAnimationFrame(PrecalculatedAnimationFrame frame, PrecalculatedAnimationFrame offset);
 	
+	native version("4.15.1") clearscope PrecalculatedAnimationFrame CalculateAnimationFrame(readonly<InterpolatedFrame> frame);
+
+	// tic should be Level.totaltime + fractic
+	//
+	// returns AnimationFrame frame1, InterpolatedFrame frame2, double inter
+	// frame1 is the frame to interpolate from, it may be either a PrecalculatedAnimationFrame or a InterpolatedFrame, if inter is -1, frame1 will be null, and frame2 should be used in full instead
+	// frame2 is the frame to interpolate to, always an InterpolatedFrame
+	// inter is the ratio between frame1 and frame2, if the animation isn't interpolating, it will be 1 and frame 1 will be null
+	// frame1/2 will both be null if an invalid tic or layer are passed
+	// 
+	// NOTE: while interpolating, an animation may need to perform up to 4-way blending if both frame1 and frame2 are InterpolatedFrame
+	//
+	native version("4.15.1") static clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrameAt(readonly<AnimationLayer> layer, double tic);
+	
+	native version("4.15.1") clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrame(readonly<AnimationLayer> layer);
+	native version("4.15.1") clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrameUI(readonly<AnimationLayer> layer);
+
 	native version("4.15.1") void SetBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") ui void SetBonesUI(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
 	native version("4.15.1") ui void OverwriteBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD); // no interpolation, faster

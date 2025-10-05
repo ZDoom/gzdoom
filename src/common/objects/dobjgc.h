@@ -261,12 +261,18 @@ public:
 	{
 		return pp;
 	}
+	
+
+	DObject** ForceGetRaw() const noexcept	//for situations where the read barrier needs to be skipped.
+	{
+		return &o;
+	}
 
 	constexpr operator T() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	constexpr T &operator*() noexcept
+	constexpr std::remove_pointer<T> &operator*() noexcept
 	{
 		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);

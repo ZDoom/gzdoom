@@ -1817,6 +1817,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, BoneOverride &mod, Bon
 	return arc;
 }
 
+FSerializer &Serialize(FSerializer &arc, const char *key, TRS &trs, TRS *def)
+{
+	arc.BeginObject(key);
+	arc("translation", trs.translation);
+	arc("rotation", trs.rotation);
+	arc("scaling", trs.scaling);
+	arc.EndObject();
+	return arc;
+}
+
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelOverride &mo, ModelOverride *def)
 {
 	arc.BeginObject(key);

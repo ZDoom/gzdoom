@@ -6354,6 +6354,8 @@ FModel * FindFModel(AActor * self)
 	}
 }
 
+int WorldPaused();
+
 bool SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac, AnimInfo *anims = nullptr, TArray<TRS> * prevAnimOld = nullptr)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");
@@ -6388,7 +6390,7 @@ bool SetAnimationInternal(AActor * self, FName animName, double framerate, int s
 	}
 
 	double tic = self->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
+	if (!WorldPaused() && !self->Level->isFrozen())
 	{
 		tic += ticFrac;
 	}
@@ -6556,7 +6558,7 @@ void SetAnimationFrameRateInternal(AActor * self, double framerate, double ticFr
 	if(!anims) anims = &self->modelData->anims;
 
 	double tic = self->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !self->Level->isFrozen())
+	if (!WorldPaused() && !self->Level->isFrozen())
 	{
 		tic += ticFrac;
 	}

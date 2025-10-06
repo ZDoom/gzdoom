@@ -26,6 +26,12 @@ PRIVATE
 	chips/nuked/ym3438.c
 	chips/mamefm/emu2149.c
 	chips/mame/mame_ym2612fm.c
+	chips/ym2612_lle.cpp
+	chips/nuked_lle/nopn2.c
+	chips/nuked_lle/fmopna_2612.c
+	chips/ymf276_lle.cpp
+	chips/nuked_lle/nopn2f.c
+	chips/nuked_lle/fmopn2.c
 	wopn/wopn_file.c
 )
 
@@ -52,6 +58,9 @@ target_compile_definitions(opn
 PRIVATE
 	# we play with out own sequencer
 	OPNMIDI_DISABLE_MIDI_SEQUENCER
+	OPNMIDI_ENABLE_OPN2_LLE_EMULATOR
+	# Not enabling OPNA-LLE emulator since it's too heavy for the real-time playback on the rest of machines
+	# OPNMIDI_ENABLE_OPNA_LLE_EMULATOR
 )
 
 target_include_directories(opn PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

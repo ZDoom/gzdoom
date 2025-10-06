@@ -27,7 +27,8 @@
 #include "adlmidi_cvt.hpp"
 #include "file_reader.hpp"
 #ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
-#include "midi_sequencer.hpp"
+#   define BWMIDI_ENABLE_OPL_MUSIC_SUPPORT
+#   include "midi_sequencer.hpp"
 #endif
 #include "wopl/wopl_file.h"
 
@@ -177,6 +178,8 @@ bool MIDIplay::LoadMIDI_post()
     Synth &synth = *m_synth;
     MidiSequencer &seq = *m_sequencer;
     MidiSequencer::FileFormat format = seq.getFormat();
+    bool setToOPL2 = false;
+
     if(format == MidiSequencer::Format_CMF)
     {
         const std::vector<MidiSequencer::CmfInstrument> &instruments = seq.getRawCmfInstruments();
@@ -225,6 +228,7 @@ bool MIDIplay::LoadMIDI_post()
         synth.m_rhythmMode = true;
         synth.m_musicMode = Synth::MODE_CMF;
         synth.m_volumeScale = Synth::VOLUME_NATIVE;
+        setToOPL2 = true;
 
         synth.m_numChips = 1;
         synth.m_numFourOps = 0;
@@ -238,12 +242,13 @@ bool MIDIplay::LoadMIDI_post()
         synth.m_numChips = 1;
         synth.m_numFourOps = 0;
     }
-    else if(format == MidiSequencer::Format_IMF)
+    else if(format == MidiSequencer::Format_IMF || format == MidiSequencer::Format_KLM)
     {
         //std::fprintf(stderr, "Done reading IMF file\n");
         synth.m_numFourOps  = 0; //Don't use 4-operator channels for IMF playing!
         synth.m_rhythmMode = false;//Don't enforce rhythm-mode when it's unneeded
         synth.m_musicMode = Synth::MODE_IMF;
+        setToOPL2 = true;
 
         synth.m_numChips = 1;
         synth.m_numFourOps = 0;
@@ -266,6 +271,9 @@ bool MIDIplay::LoadMIDI_post()
     m_chipChannels.clear();
     m_chipChannels.resize(synth.m_numChannels);
 
+    if(setToOPL2)
+        synth.toggleOPL3(false);
+
     return true;
 }
 
@@ -273,16 +281,20 @@ bool MIDIplay::LoadMIDI(const std::string &filename)
 {
     FileAndMemReader file;
     file.openFile(filename.c_str());
+
     if(!LoadMIDI_pre())
         return false;
+
     MidiSequencer &seq = *m_sequencer;
     if(!seq.loadMIDI(file))
     {
         errorStringOut = seq.getErrorString();
         return false;
     }
+
     if(!LoadMIDI_post())
         return false;
+
     return true;
 }
 
@@ -290,16 +302,20 @@ bool MIDIplay::LoadMIDI(const void *data, size_t size)
 {
     FileAndMemReader file;
     file.openData(data, size);
+
     if(!LoadMIDI_pre())
         return false;
+
     MidiSequencer &seq = *m_sequencer;
     if(!seq.loadMIDI(file))
     {
         errorStringOut = seq.getErrorString();
         return false;
     }
+
     if(!LoadMIDI_post())
         return false;
+
     return true;
 }
 

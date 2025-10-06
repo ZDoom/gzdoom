@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,10 +112,21 @@ static int load_xm_pattern(struct module_data *m, int num, int version,
 
 	for (j = 0; j < r; j++) {
 		for (k = 0; k < mod->chn; k++) {
-			/*
-			if ((pat - patbuf) >= xph.datasize)
-				break;
-			*/
+			/* Some XMs have cleanly truncated patterns. See:
+			 * Balrog/f0rtify.xm; Decayer-9/purification.xm;
+			 * Falcon (PL)/eaten vinyl.xm; Headcrasher/microcosm.xm;
+			 * Jazztiz/ta-da-da-da.xm; Jisemdu/smile.xm;
+			 * Markus Plomgren/cool jazzy jeff!!!.xm;
+			 * Orange/optical.xm; Skyraver/spirit of life.xm;
+			 * Sonic (UK)'s atomic_subculture.xm, luvdup.xm,
+			 * phuture.xm; Teemu/speed.xm; Warhawk/anaconda.xm.
+			 */
+			if ((pat - patbuf) == (ptrdiff_t)xph.datasize) {
+				D_(D_WARN "early pattern %d end (row:%d/%d, ch:%d/%d)",
+				   num, j, r, k, mod->chn
+				);
+				goto early_pattern_end;
+			}
 
 			event = &EVENT(num, k, j);
 
@@ -307,7 +318,7 @@ static int load_xm_pattern(struct module_data *m, int num, int version,
 			event->vol = 0;
 		}
 	}
-
+early_pattern_end:
 	return 0;
 
 err:
@@ -417,14 +428,12 @@ static int oggdec(struct module_data *m, HIO_HANDLE *f, struct xmp_sample *xxs, 
 	n = stb_vorbis_decode_memory(data, len, &ch, &rate, &pcm16);
 	free(data);
 
-	if (n <= 0) {
+	if (n < 0 || ch != 1) {
 		free(pcm16);
 		return -1;
 	}
 
-	xxs->len = n;
-
-	if ((xxs->flg & XMP_SAMPLE_16BIT) == 0) {
+	if ((xxs->flg & XMP_SAMPLE_16BIT) == 0 && n > 0) {
 		uint8 *pcm = (uint8 *)pcm16;
 
 		for (i = 0; i < n; i++) {
@@ -437,6 +446,11 @@ static int oggdec(struct module_data *m, HIO_HANDLE *f, struct xmp_sample *xxs, 
 		}
 		pcm16 = (int16 *)pcm;
 	}
+	if (xxs->flg & XMP_SAMPLE_STEREO) {
+		/* OXM stereo is a single channel non-interleaved stream. */
+		n >>= 1;
+	}
+	xxs->len = n;
 
 	flags |= SAMPLE_FLAG_NOLOAD;
 #ifdef WORDS_BIGENDIAN
@@ -684,7 +698,7 @@ static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
 				xxs->lpe >>= 1;
 			}
 			if (xsh[j].type & XM_SAMPLE_STEREO) {
-				/* xxs->flg |= XMP_SAMPLE_STEREO; */
+				xxs->flg |= XMP_SAMPLE_STEREO;
 				xxs->len >>= 1;
 				xxs->lps >>= 1;
 				xxs->lpe >>= 1;
@@ -693,14 +707,15 @@ static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
 			xxs->flg |= xsh[j].type & XM_LOOP_FORWARD ? XMP_SAMPLE_LOOP : 0;
 			xxs->flg |= xsh[j].type & XM_LOOP_PINGPONG ? XMP_SAMPLE_LOOP | XMP_SAMPLE_LOOP_BIDIR : 0;
 
-			D_(D_INFO "  size:%06x loop start:%06x loop end:%06x %c V%02x F%+04d P%02x R%+03d %s",
+			D_(D_INFO "  size:%06x loop start:%06x loop end:%06x %c V%02x F%+04d P%02x R%+03d %s%s",
 			   mod->xxs[sub->sid].len,
 			   mod->xxs[sub->sid].lps,
 			   mod->xxs[sub->sid].lpe,
 			   mod->xxs[sub->sid].flg & XMP_SAMPLE_LOOP_BIDIR ? 'B' :
 			   mod->xxs[sub->sid].flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
 			   sub->vol, sub->fin, sub->pan, sub->xpo,
-			   mod->xxs[sub->sid].flg & XMP_SAMPLE_16BIT ? " (16 bit)" : "");
+			   mod->xxs[sub->sid].flg & XMP_SAMPLE_16BIT ? " (16 bit)" : "",
+			   xxs->flg & XMP_SAMPLE_STEREO ? " (stereo)" : "");
 		}
 
 		/* Read actual sample data */
@@ -741,12 +756,6 @@ static int load_instruments(struct module_data *m, int version, HIO_HANDLE *f)
 					total_sample_size += 16 + ((xsh[j].length + 1) >> 1);
 				} else {
 					total_sample_size += xsh[j].length;
-				}
-
-				/* TODO: implement stereo samples.
-				 * For now, just skip the right channel. */
-				if (xsh[j].type & XM_SAMPLE_STEREO) {
-					hio_seek(f, xsh[j].length >> 1, SEEK_CUR);
 				}
 			}
 		}
@@ -816,10 +825,6 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		return -1;
 	}
 
-	if (xfh.restart > 255) {
-		D_(D_CRIT "bad restart position: %d", xfh.restart);
-		return -1;
-	}
 	if (xfh.channels > XMP_MAX_CHANNELS) {
 		D_(D_CRIT "bad channel count: %d", xfh.channels);
 		return -1;
@@ -852,7 +857,7 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 	mod->chn = xfh.channels;
 	mod->pat = xfh.patterns;
 	mod->ins = xfh.instruments;
-	mod->rst = xfh.restart;
+	mod->rst = xfh.restart >= xfh.songlen ? 0 : xfh.restart;
 	mod->spd = xfh.tempo;
 	mod->bpm = xfh.bpm;
 	mod->trk = mod->chn * mod->pat + 1;
@@ -1006,6 +1011,8 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		libxmp_set_type(m, "ModPlug Tracker 1.16 XM %d.%02d",
 				xfh.version >> 8, xfh.version & 0xff);
 
+		m->quirk &= ~QUIRK_FT2BUGS;
+		m->flow_mode = FLOW_MODE_MPT_116;
 		m->mvolbase = 48;
 		m->mvol = 48;
 		libxmp_apply_mpt_preamp(m);
@@ -1016,7 +1023,7 @@ static int xm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		mod->xxc[i].pan = 0x80;
 	}
 
-	m->quirk |= QUIRKS_FT2;
+	m->quirk |= QUIRKS_FT2 | QUIRK_FT2ENV;
 	m->read_event_type = READ_EVENT_FT2;
 
 	return 0;

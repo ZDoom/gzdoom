@@ -3,39 +3,52 @@
 
 #if !NSF_EMU_APU_ONLY
 	#include "Nes_Namco_Apu.h"
+	#include "Nes_Fds_Apu.h"
+	#include "Nes_Mmc5_Apu.h"
 #endif
 
 #include "blargg_source.h"
 
 int Nsf_Emu::cpu_read( nes_addr_t addr )
 {
-	int result;
-	
+	int result, i;
+
 	result = cpu::low_mem [addr & 0x7FF];
 	if ( !(addr & 0xE000) )
 		goto exit;
-	
+
 	result = *cpu::get_code( addr );
 	if ( addr > 0x7FFF )
 		goto exit;
-	
+
 	result = sram [addr & (sizeof sram - 1)];
 	if ( addr > 0x5FFF )
 		goto exit;
-	
+
 	if ( addr == Nes_Apu::status_addr )
 		return apu.read_status( cpu::time() );
-	
+
 	#if !NSF_EMU_APU_ONLY
 		if ( addr == Nes_Namco_Apu::data_reg_addr && namco )
 			return namco->read_data();
+
+		if ( (unsigned) (addr - Nes_Fds_Apu::io_addr) < Nes_Fds_Apu::io_size && fds )
+			return fds->read( time(), addr );
+
+		i = addr - 0x5C00;
+		if ( (unsigned) i < mmc5->exram_size && mmc5 )
+			return mmc5->exram [i];
+
+		i = addr - 0x5205;
+		if ( (unsigned) i < 2 && mmc5 )
+			return ((mmc5_mul [0] * mmc5_mul [1]) >> (i * 8)) & 0xFF;
 	#endif
-	
+
 	result = addr >> 8; // simulate open bus
-	
+
 	if ( addr != 0x2002 )
 		debug_printf( "Read unmapped $%.4X\n", (unsigned) addr );
-	
+
 exit:
 	return result;
 }
@@ -58,14 +71,14 @@ void Nsf_Emu::cpu_write( nes_addr_t addr, int data )
 			return;
 		}
 	}
-	
+
 	if ( unsigned (addr - Nes_Apu::start_addr) <= Nes_Apu::end_addr - Nes_Apu::start_addr )
 	{
 		GME_APU_HOOK( this, addr - Nes_Apu::start_addr, data );
 		apu.write_register( cpu::time(), addr, data );
 		return;
 	}
-	
+
 	unsigned bank = addr - bank_select_addr;
 	if ( bank < bank_count )
 	{
@@ -75,7 +88,7 @@ void Nsf_Emu::cpu_write( nes_addr_t addr, int data )
 		cpu::map_code( (bank + 8) * bank_size, bank_size, rom.at_addr( offset ) );
 		return;
 	}
-	
+
 	cpu_write_misc( addr, data );
 }
 

@@ -27,7 +27,7 @@ struct xm_file_header {
 	uint8 tracker[20];	/* Tracker name */
 	uint16 version;		/* Version number, minor-major */
 	uint32 headersz;	/* Header size */
-	uint16 songlen;		/* Song length (in patten order table) */
+	uint16 songlen;		/* Song length (in pattern order table) */
 	uint16 restart;		/* Restart position */
 	uint16 channels;	/* Number of channels (2,4,6,8,10,...,32) */
 	uint16 patterns;	/* Number of patterns (max 256) */

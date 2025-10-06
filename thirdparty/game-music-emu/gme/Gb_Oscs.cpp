@@ -54,12 +54,12 @@ bool Gb_Env::write_register( int reg, int data )
 	case 1:
 		length = 64 - (regs [1] & 0x3F);
 		break;
-	
+
 	case 2:
 		if ( !(data >> 4) )
 			enabled = false;
 		break;
-	
+
 	case 4:
 		if ( data & trigger )
 		{
@@ -92,12 +92,12 @@ void Gb_Square::clock_sweep()
 		sweep_delay = sweep_period;
 		regs [3] = sweep_freq & 0xFF;
 		regs [4] = (regs [4] & ~0x07) | (sweep_freq >> 8 & 0x07);
-		
+
 		int offset = sweep_freq >> (regs [0] & shift_mask);
 		if ( regs [0] & 0x08 )
 			offset = -offset;
 		sweep_freq += offset;
-		
+
 		if ( sweep_freq < 0 )
 		{
 			sweep_freq = 0;
@@ -114,13 +114,13 @@ void Gb_Square::run( blip_time_t time, blip_time_t end_time, int playing )
 {
 	if ( sweep_freq == 2048 )
 		playing = false;
-	
+
 	static unsigned char const table [4] = { 1, 2, 4, 6 };
 	int const duty = table [regs [1] >> 6];
 	int amp = volume & playing;
 	if ( phase >= duty )
 		amp = -amp;
-	
+
 	int frequency = this->frequency();
 	if ( unsigned (frequency - 1) > 2040 ) // frequency < 1 || frequency > 2041
 	{
@@ -128,7 +128,7 @@ void Gb_Square::run( blip_time_t time, blip_time_t end_time, int playing )
 		amp = volume >> 1;
 		playing = false;
 	}
-	
+
 	{
 		int delta = amp - last_amp;
 		if ( delta )
@@ -137,11 +137,11 @@ void Gb_Square::run( blip_time_t time, blip_time_t end_time, int playing )
 			synth->offset( time, delta, output );
 		}
 	}
-	
+
 	time += delay;
 	if ( !playing )
 		time = end_time;
-	
+
 	if ( time < end_time )
 	{
 		int const period = (2048 - frequency) * 4;
@@ -159,7 +159,7 @@ void Gb_Square::run( blip_time_t time, blip_time_t end_time, int playing )
 			time += period;
 		}
 		while ( time < end_time );
-		
+
 		this->phase = phase;
 		last_amp = delta >> 1;
 	}
@@ -174,7 +174,7 @@ void Gb_Noise::run( blip_time_t time, blip_time_t end_time, int playing )
 	int tap = 13 - (regs [3] & 8);
 	if ( bits >> tap & 2 )
 		amp = -amp;
-	
+
 	{
 		int delta = amp - last_amp;
 		if ( delta )
@@ -183,16 +183,16 @@ void Gb_Noise::run( blip_time_t time, blip_time_t end_time, int playing )
 			synth->offset( time, delta, output );
 		}
 	}
-	
+
 	time += delay;
 	if ( !playing )
 		time = end_time;
-	
+
 	if ( time < end_time )
 	{
 		static unsigned char const table [8] = { 8, 16, 32, 48, 64, 80, 96, 112 };
 		int period = table [regs [3] & 7] << (regs [3] >> 4);
-		
+
 		// keep parallel resampled time to eliminate time conversion in the loop
 		Blip_Buffer* const output = this->output;
 		const blip_resampled_time_t resampled_period =
@@ -200,7 +200,7 @@ void Gb_Noise::run( blip_time_t time, blip_time_t end_time, int playing )
 		blip_resampled_time_t resampled_time = output->resampled_time( time );
 		unsigned bits = this->bits;
 		int delta = amp * 2;
-		
+
 		do
 		{
 			unsigned changed = (bits >> tap) + 1;
@@ -215,7 +215,7 @@ void Gb_Noise::run( blip_time_t time, blip_time_t end_time, int playing )
 			resampled_time += resampled_period;
 		}
 		while ( time < end_time );
-		
+
 		this->bits = bits;
 		last_amp = delta >> 1;
 	}
@@ -232,15 +232,15 @@ inline void Gb_Wave::write_register( int reg, int data )
 		if ( !(data & 0x80) )
 			enabled = false;
 		break;
-	
+
 	case 1:
 		length = 256 - regs [1];
 		break;
-	
+
 	case 2:
 		volume = data >> 5 & 3;
 		break;
-	
+
 	case 4:
 		if ( data & trigger & regs [0] )
 		{
@@ -258,14 +258,14 @@ void Gb_Wave::run( blip_time_t time, blip_time_t end_time, int playing )
 	int frequency;
 	{
 		int amp = (wave [wave_pos] >> volume_shift & playing) * 2;
-		
+
 		frequency = this->frequency();
 		if ( unsigned (frequency - 1) > 2044 ) // frequency < 1 || frequency > 2045
 		{
 			amp = 30 >> volume_shift & playing;
 			playing = false;
 		}
-		
+
 		int delta = amp - last_amp;
 		if ( delta )
 		{
@@ -273,17 +273,17 @@ void Gb_Wave::run( blip_time_t time, blip_time_t end_time, int playing )
 			synth->offset( time, delta, output );
 		}
 	}
-	
+
 	time += delay;
 	if ( !playing )
 		time = end_time;
-	
+
 	if ( time < end_time )
 	{
 		Blip_Buffer* const output = this->output;
 		int const period = (2048 - frequency) * 2;
 	 	int wave_pos = (this->wave_pos + 1) & (wave_size - 1);
-	 	
+
 		do
 		{
 			int amp = (wave [wave_pos] >> volume_shift) * 2;
@@ -297,7 +297,7 @@ void Gb_Wave::run( blip_time_t time, blip_time_t end_time, int playing )
 			time += period;
 		}
 		while ( time < end_time );
-		
+
 		this->wave_pos = (wave_pos - 1) & (wave_size - 1);
 	}
 	delay = time - end_time;
@@ -312,7 +312,7 @@ void Gb_Apu::write_osc( int index, int reg, int data )
 	switch ( index )
 	{
 	case 0:
-		sq = &square1;
+		sq = &square1; // FALLTHRU
 	case 1:
 		if ( sq->write_register( reg, data ) && index == 0 )
 		{
@@ -324,11 +324,11 @@ void Gb_Apu::write_osc( int index, int reg, int data )
 			}
 		}
 		break;
-	
+
 	case 2:
 		wave.write_register( reg, data );
 		break;
-	
+
 	case 3:
 		if ( noise.write_register( reg, data ) )
 			noise.bits = 0x7FFF;

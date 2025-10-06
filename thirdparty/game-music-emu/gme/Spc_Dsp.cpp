@@ -155,9 +155,9 @@ inline void Spc_Dsp::init_counter()
 	// counters start out with this synchronization
 	m.counters [0] =     1;
 	m.counters [1] =     0;
-	m.counters [2] = -0x20u;
+	m.counters [2] =  uMinus(0x20u);
 	m.counters [3] =  0x0B;
-	
+
 	int n = 2;
 	for ( int i = 1; i < 32; i++ )
 	{
@@ -190,18 +190,32 @@ void Spc_Dsp::run( int clock_count )
 	m.phase = new_phase & 31;
 	if ( !count )
 		return;
-	
+
 	uint8_t* const ram = m.ram;
+#ifdef SPC_ISOLATED_ECHO_BUFFER
+	uint8_t* const echo_ram = m.echo_ram;
+#endif
 	uint8_t const* const dir = &ram [REG(dir) * 0x100];
 	int const slow_gaussian = (REG(pmon) >> 1) | REG(non);
 	int const noise_rate = REG(flg) & 0x1F;
-	
+
 	// Global volume
 	int mvoll = (int8_t) REG(mvoll);
 	int mvolr = (int8_t) REG(mvolr);
+	int evoll = (int8_t) REG(evoll);
+	int evolr = (int8_t) REG(evolr);
+
+	if ( !m.echo_enable)
+	{
+		mvoll = 127;
+		mvolr = 127;
+		evoll = 0;
+		evolr = 0;
+	}
+
 	if ( mvoll * mvolr < m.surround_threshold )
 		mvoll = -mvoll; // eliminate surround
-	
+
 	do
 	{
 		// KON/KOFF reading
@@ -209,20 +223,20 @@ void Spc_Dsp::run( int clock_count )
 		{
 			m.new_kon &= ~m.kon;
 			m.kon    = m.new_kon;
-			m.t_koff = REG(koff); 
+			m.t_koff = REG(koff);
 		}
-		
+
 		run_counter( 1 );
 		run_counter( 2 );
 		run_counter( 3 );
-		
+
 		// Noise
 		if ( !READ_COUNTER( noise_rate ) )
 		{
 			int feedback = (m.noise << 13) ^ (m.noise << 14);
 			m.noise = (feedback & 0x4000) ^ (m.noise >> 1);
 		}
-		
+
 		// Voices
 		int pmon_input = 0;
 		int main_out_l = 0;
@@ -235,20 +249,20 @@ void Spc_Dsp::run( int clock_count )
 		do
 		{
 			#define SAMPLE_PTR(i) GET_LE16A( &dir [VREG(v_regs,srcn) * 4 + i * 2] )
-			
+
 			int brr_header = ram [v->brr_addr];
 			int kon_delay = v->kon_delay;
-			
+
 			// Pitch
 			int pitch = GET_LE16A( &VREG(v_regs,pitchl) ) & 0x3FFF;
 			if ( REG(pmon) & vbit )
 				pitch += ((pmon_input >> 5) * pitch) >> 10;
-			
+
 			// KON phases
 			if ( --kon_delay >= 0 )
 			{
 				v->kon_delay = kon_delay;
-				
+
 				// Get ready to start BRR decoding on next sample
 				if ( kon_delay == 4 )
 				{
@@ -257,20 +271,20 @@ void Spc_Dsp::run( int clock_count )
 					v->buf_pos    = v->buf;
 					brr_header    = 0; // header is ignored on this sample
 				}
-				
+
 				// Envelope is never run during KON
 				v->env        = 0;
 				v->hidden_env = 0;
-				
+
 				// Disable BRR decoding until last three samples
 				v->interp_pos = (kon_delay & 3 ? 0x4000 : 0);
-				
+
 				// Pitch is never added during KON
 				pitch = 0;
 			}
-			
+
 			int env = v->env;
-			
+
 			// Gaussian interpolation
 			{
 				int output = 0;
@@ -281,9 +295,9 @@ void Spc_Dsp::run( int clock_count )
 					int offset = (unsigned) v->interp_pos >> 3 & 0x1FE;
 					short const* fwd = interleved_gauss       + offset;
 					short const* rev = interleved_gauss + 510 - offset; // mirror left half of gaussian
-					
+
 					int const* in = &v->buf_pos [(unsigned) v->interp_pos >> 12];
-					
+
 					if ( !(slow_gaussian & vbit) ) // 99%
 					{
 						// Faster approximation when exact sample value isn't necessary for pitch mod
@@ -303,44 +317,44 @@ void Spc_Dsp::run( int clock_count )
 							output += (rev [1] * in [2]) >> 11;
 							output = (int16_t) output;
 							output += (rev [0] * in [3]) >> 11;
-							
+
 							CLAMP16( output );
 							output &= ~1;
 						}
 						output = (output * env) >> 11 & ~1;
 					}
-					
+
 					// Output
 					int l = output * v->volume [0];
 					int r = output * v->volume [1];
-					
+
 					main_out_l += l;
 					main_out_r += r;
-					
+
 					if ( REG(eon) & vbit )
 					{
 						echo_out_l += l;
 						echo_out_r += r;
 					}
 				}
-				
+
 				pmon_input = output;
 				VREG(v_regs,outx) = (uint8_t) (output >> 8);
 			}
-			
+
 			// Soft reset or end of sample
 			if ( REG(flg) & 0x80 || (brr_header & 3) == 1 )
 			{
 				v->env_mode = env_release;
 				env         = 0;
 			}
-			
+
 			if ( m.every_other_sample )
 			{
 				// KOFF
 				if ( m.t_koff & vbit )
 					v->env_mode = env_release;
-				
+
 				// KON
 				if ( m.kon & vbit )
 				{
@@ -349,7 +363,7 @@ void Spc_Dsp::run( int clock_count )
 					REG(endx) &= ~vbit;
 				}
 			}
-			
+
 			// Envelope
 			if ( !v->kon_delay )
 			{
@@ -375,7 +389,7 @@ void Spc_Dsp::run( int clock_count )
 							env--;
 							env -= env >> 8;
 							rate = env_data & 0x1F;
-							
+
 							// optimized handling
 							v->hidden_env = env;
 							if ( READ_COUNTER( rate ) )
@@ -425,13 +439,13 @@ void Spc_Dsp::run( int clock_count )
 							}
 						}
 					}
-					
+
 					// Sustain level
 					if ( (env >> 8) == (env_data >> 5) && v->env_mode == env_decay )
 						v->env_mode = env_sustain;
-					
+
 					v->hidden_env = env;
-					
+
 					// unsigned cast because linear decrease going negative also triggers this
 					if ( (unsigned) env > 0x7FF )
 					{
@@ -439,13 +453,13 @@ void Spc_Dsp::run( int clock_count )
 						if ( v->env_mode == env_attack )
 							v->env_mode = env_decay;
 					}
-					
+
 					if ( !READ_COUNTER( rate ) )
 						v->env = env; // nothing else is controlled by the counter
 				}
 			}
 		exit_env:
-			
+
 			{
 				// Apply pitch
 				int old_pos = v->interp_pos;
@@ -453,14 +467,14 @@ void Spc_Dsp::run( int clock_count )
 				if ( interp_pos > 0x7FFF )
 					interp_pos = 0x7FFF;
 				v->interp_pos = interp_pos;
-				
+
 				// BRR decode if necessary
 				if ( old_pos >= 0x4000 )
 				{
 					// Arrange the four input nybbles in 0xABCD order for easy decoding
 					int nybbles = ram [(v->brr_addr + v->brr_offset) & 0xFFFF] * 0x100 +
 							ram [(v->brr_addr + v->brr_offset + 1) & 0xFFFF];
-					
+
 					// Advance read position
 					int const brr_block_size = 9;
 					int brr_offset = v->brr_offset;
@@ -479,9 +493,9 @@ void Spc_Dsp::run( int clock_count )
 						brr_offset  = 1;
 					}
 					v->brr_offset = brr_offset;
-					
+
 					// Decode
-					
+
 					// 0: >>1  1: <<0  2: <<1 ... 12: <<11  13-15: >>4 <<11
 					static unsigned char const shifts [16 * 2] = {
 						13,12,12,12,12,12,12,12,12,12,12, 12, 12, 16, 16, 16,
@@ -490,18 +504,18 @@ void Spc_Dsp::run( int clock_count )
 					int const scale = brr_header >> 4;
 					int const right_shift = shifts [scale];
 					int const left_shift  = shifts [scale + 16];
-					
+
 					// Write to next four samples in circular buffer
 					int* pos = v->buf_pos;
 					int* end;
-					
+
 					// Decode four samples
 					for ( end = pos + 4; pos < end; pos++, nybbles <<= 4 )
 					{
 						// Extract upper nybble and scale appropriately. Every cast is
 						// necessary to maintain correctness and avoid undef behavior
 						int s = int16_t(uint16_t((int16_t) nybbles >> right_shift) << left_shift);
-						
+
 						// Apply IIR filter (8 is the most commonly used)
 						int const filter = brr_header & 0x0C;
 						int const p1 = pos [brr_buf_size - 1];
@@ -526,13 +540,13 @@ void Spc_Dsp::run( int clock_count )
 							s += p1 >> 1;
 							s += (-p1) >> 5;
 						}
-						
+
 						// Adjust and write sample
 						CLAMP16( s );
 						s = (int16_t) (s * 2);
 						pos [brr_buf_size] = pos [0] = s; // second copy simplifies wrap-around
 					}
-					
+
 					if ( pos >= &v->buf [brr_buf_size] )
 						pos = v->buf;
 					v->buf_pos = pos;
@@ -545,33 +559,38 @@ skip_brr:
 			v++;
 		}
 		while ( vbit < 0x100 );
-		
+
 		// Echo position
 		int echo_offset = m.echo_offset;
+#ifdef SPC_ISOLATED_ECHO_BUFFER
+		// And here, we win no awards for accuracy, but gain playback of dodgy Super Mario World mod SPCs
+		uint8_t* const echo_ptr = &echo_ram [(REG(esa) * 0x100 + echo_offset) & 0xFFFF];
+#else
 		uint8_t* const echo_ptr = &ram [(REG(esa) * 0x100 + echo_offset) & 0xFFFF];
+#endif
 		if ( !echo_offset )
 			m.echo_length = (REG(edl) & 0x0F) * 0x800;
 		echo_offset += 4;
 		if ( echo_offset >= m.echo_length )
 			echo_offset = 0;
 		m.echo_offset = echo_offset;
-		
+
 		// FIR
 		int echo_in_l = GET_LE16SA( echo_ptr + 0 );
 		int echo_in_r = GET_LE16SA( echo_ptr + 2 );
-		
+
 		int (*echo_hist_pos) [2] = m.echo_hist_pos;
 		if ( ++echo_hist_pos >= &m.echo_hist [echo_hist_size] )
 			echo_hist_pos = m.echo_hist;
 		m.echo_hist_pos = echo_hist_pos;
-		
+
 		echo_hist_pos [0] [0] = echo_hist_pos [8] [0] = echo_in_l;
 		echo_hist_pos [0] [1] = echo_hist_pos [8] [1] = echo_in_r;
-		
+
 		#define CALC_FIR_( i, in )  ((in) * (int8_t) REG(fir + i * 0x10))
 		echo_in_l = CALC_FIR_( 7, echo_in_l );
 		echo_in_r = CALC_FIR_( 7, echo_in_r );
-		
+
 		#define CALC_FIR( i, ch )   CALC_FIR_( i, echo_hist_pos [i + 1] [ch] )
 		#define DO_FIR( i )\
 			echo_in_l += CALC_FIR( i, 0 );\
@@ -586,39 +605,39 @@ skip_brr:
 		DO_FIR( 4 );
 		DO_FIR( 5 );
 		DO_FIR( 6 );
-		
+
 		// Echo out
 		if ( !(REG(flg) & 0x20) )
 		{
 			int l = (echo_out_l >> 7) + ((echo_in_l * (int8_t) REG(efb)) >> 14);
 			int r = (echo_out_r >> 7) + ((echo_in_r * (int8_t) REG(efb)) >> 14);
-			
+
 			// just to help pass more validation tests
 			#if SPC_MORE_ACCURACY
 				l &= ~1;
 				r &= ~1;
 			#endif
-			
+
 			CLAMP16( l );
 			CLAMP16( r );
-			
+
 			SET_LE16A( echo_ptr + 0, l );
 			SET_LE16A( echo_ptr + 2, r );
 		}
-		
+
 		// Sound out
-		int l = (main_out_l * mvoll + echo_in_l * (int8_t) REG(evoll)) >> 14;
-		int r = (main_out_r * mvolr + echo_in_r * (int8_t) REG(evolr)) >> 14;
-		
+		int l = (main_out_l * mvoll + echo_in_l * evoll) >> 14;
+		int r = (main_out_r * mvolr + echo_in_r * evolr) >> 14;
+
 		CLAMP16( l );
 		CLAMP16( r );
-		
+
 		if ( (REG(flg) & 0x40) )
 		{
 			l = 0;
 			r = 0;
 		}
-		
+
 		sample_t* out = m.out;
 		WRITE_SAMPLES( l, r, out );
 		m.out = out;
@@ -639,26 +658,32 @@ void Spc_Dsp::mute_voices( int mask )
 	}
 }
 
+Spc_Dsp::Spc_Dsp()
+{
+	memset(&m, 0, sizeof(state_t));
+}
+
 void Spc_Dsp::init( void* ram_64k )
 {
 	m.ram = (uint8_t*) ram_64k;
 	mute_voices( 0 );
 	disable_surround( false );
+	disable_echo( false );
 	set_output( 0, 0 );
 	reset();
-	
+
+	// be sure this sign-extends
+	blaarg_static_assert( (int16_t) 0x8000 == -0x8000, "This compiler doesn't sign-extend during integer promotion" );
+
+	// be sure right shift preserves sign
+	blaarg_static_assert( (-1 >> 1) == -1, "This compiler doesn't preserve sign on right-shift" );
+
 	#ifndef NDEBUG
-		// be sure this sign-extends
-		assert( (int16_t) 0x8000 == -0x8000 );
-		
-		// be sure right shift preserves sign
-		assert( (-1 >> 1) == -1 );
-		
 		// check clamp macro
 		int i;
 		i = +0x8000; CLAMP16( i ); assert( i == +0x7FFF );
 		i = -0x8001; CLAMP16( i ); assert( i == -0x8000 );
-		
+
 		blargg_verify_byte_order();
 	#endif
 }
@@ -666,13 +691,13 @@ void Spc_Dsp::init( void* ram_64k )
 void Spc_Dsp::soft_reset_common()
 {
 	require( m.ram ); // init() must have been called already
-	
+
 	m.noise              = 0x4000;
 	m.echo_hist_pos      = m.echo_hist;
 	m.every_other_sample = 1;
 	m.echo_offset        = 0;
 	m.phase              = 0;
-	
+
 	init_counter();
 }
 
@@ -686,7 +711,7 @@ void Spc_Dsp::load( uint8_t const regs [register_count] )
 {
 	memcpy( m.regs, regs, sizeof m.regs );
 	memset( &m.regs [register_count], 0, offsetof (state_t,ram) - register_count );
-	
+
 	// Internal state
 	int i;
 	for ( i = voice_count; --i >= 0; )
@@ -696,7 +721,7 @@ void Spc_Dsp::load( uint8_t const regs [register_count] )
 		v.buf_pos    = v.buf;
 	}
 	m.new_kon = REG(kon);
-	
+
 	mute_voices( m.mute_mask );
 	soft_reset_common();
 }

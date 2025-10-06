@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -148,9 +148,9 @@ static void fix_effect(struct xmp_event *e, int parm)
 		e->fxp = (EX_TREMOLO_WF << 4) | (parm & 0x0f);
 		break;
 	case 0x19:	/* 19 xxx Retrig Note */
-		if (parm < 0x10) {
-			e->fxt = FX_EXTENDED;
-			e->fxp = (EX_RETRIG << 4) | (parm & 0x0f);
+		if (parm < 0x100) {
+			e->fxt = FX_RETRIG;
+			e->fxp = parm & 0xff;
 		} else {
 			/* ignore */
 			e->fxt = 0;

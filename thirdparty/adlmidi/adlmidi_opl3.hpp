@@ -395,6 +395,12 @@ public:
      */
     void reset(int emulator, unsigned long PCM_RATE, void *audioTickHandler);
 
+    /**
+     * @brief Toggles the OPL3 mode on or off. On OPL3 chips the OPL3 mode is on, but if need OPL2 mode, then this function can be used.
+     * @param en Enable OPL3 mode or set OPL2 mode
+     */
+    void toggleOPL3(bool en);
+
     void initChip(size_t chip);
 
 #ifdef ADLMIDI_ENABLE_HW_SERIAL

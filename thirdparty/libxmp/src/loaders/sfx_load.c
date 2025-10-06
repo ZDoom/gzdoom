@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,11 +82,48 @@ struct sfx_header2 {
 	uint8 order[128];	/* Order list */
 };
 
+static void sfx_translate_effect(struct xmp_event *event, int fxt, int fxp)
+{
+	event->fxp = fxp;
+
+	switch (fxt) {
+	case 0x01:	/* Arpeggio */
+		event->fxt = FX_ARPEGGIO;
+		break;
+	case 0x02:	/* Pitch bend */
+		if (event->fxp >> 4) {
+			event->fxt = FX_PORTA_DN;
+			event->fxp >>= 4;
+		} else if (event->fxp & 0x0f) {
+			event->fxt = FX_PORTA_UP;
+			event->fxp &= 0x0f;
+		}
+		break;
+	case 0x5:	/* Add to volume */
+		event->fxt = FX_VOL_ADD;
+		break;
+	case 0x6:	/* Subtract from volume */
+		event->fxt = FX_VOL_SUB;
+		break;
+	case 0x7:	/* Add semitones to period */
+		event->fxt = FX_PITCH_ADD;
+		break;
+	case 0x8:	/* Subtract semitones from period */
+		event->fxt = FX_PITCH_SUB;
+		break;
+	case 0x3:	/* LED on */
+	case 0x4:	/* LED off */
+	default:
+		event->fxt = event->fxp = 0;
+		break;
+	}
+}
+
 static int sfx_13_20_load(struct module_data *m, HIO_HANDLE *f, const int nins,
 			  const int start)
 {
 	struct xmp_module *mod = &m->mod;
-	int i, j;
+	int i, j, k;
 	struct xmp_event *event;
 	struct sfx_header sfx;
 	struct sfx_header2 sfx2;
@@ -190,47 +227,18 @@ static int sfx_13_20_load(struct module_data *m, HIO_HANDLE *f, const int nins,
 		if (libxmp_alloc_pattern_tracks(mod, i, 64) < 0)
 			return -1;
 
-		for (j = 0; j < 64 * mod->chn; j++) {
-			event = &EVENT(i, j % mod->chn, j / mod->chn);
-			if (hio_read(ev, 1, 4, f) < 4) {
-				D_(D_CRIT "read error at pat %d", i);
-				return -1;
-			}
-
-			event->note = libxmp_period_to_note((LSN(ev[0]) << 8) | ev[1]);
-			event->ins = (MSN(ev[0]) << 4) | MSN(ev[2]);
-			event->fxp = ev[3];
-
-			switch (LSN(ev[2])) {
-			case 0x01:	/* Arpeggio */
-				event->fxt = FX_ARPEGGIO;
-				break;
-			case 0x02:	/* Pitch bend */
-				if (event->fxp >> 4) {
-					event->fxt = FX_PORTA_DN;
-					event->fxp >>= 4;
-				} else if (event->fxp & 0x0f) {
-					event->fxt = FX_PORTA_UP;
-					event->fxp &= 0x0f;
+		for (j = 0; j < 64; j++) {
+			for (k = 0; k < mod->chn; k++) {
+				event = &EVENT(i, k, j);
+				if (hio_read(ev, 1, 4, f) < 4) {
+					D_(D_CRIT "read error at pat %d", i);
+					return -1;
 				}
-				break;
-			case 0x5:	/* Add to volume */
-				event->fxt = FX_VOL_ADD;
-				break;
-			case 0x6:	/* Subtract from volume */
-				event->fxt = FX_VOL_SUB;
-				break;
-			case 0x7:	/* Add semitones to period */
-				event->fxt = FX_PITCH_ADD;
-				break;
-			case 0x8:	/* Subtract semitones from period */
-				event->fxt = FX_PITCH_SUB;
-				break;
-			case 0x3:	/* LED on */
-			case 0x4:	/* LED off */
-			default:
-				event->fxt = event->fxp = 0;
-				break;
+
+				event->note = libxmp_period_to_note((LSN(ev[0]) << 8) | ev[1]);
+				event->ins = (MSN(ev[0]) << 4) | MSN(ev[2]);
+
+				sfx_translate_effect(event, LSN(ev[2]), ev[3]);
 			}
 		}
 	}

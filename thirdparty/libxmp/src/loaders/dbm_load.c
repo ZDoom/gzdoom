@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -300,11 +300,11 @@ static int get_patt(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 
 		while (sz > 0) {
 			//printf("  offset=%x,  sz = %d, ", hio_tell(f), sz);
+			--sz;
 			c = hio_read8(f);
 			if (hio_error(f))
 				return -1;
 
-			if (--sz <= 0) break;
 			//printf("c = %02x\n", c);
 
 			if (c == 0) {
@@ -313,8 +313,8 @@ static int get_patt(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 			}
 			c--;
 
+			if (--sz < 0) break;
 			n = hio_read8(f);
-			if (--sz <= 0) break;
 			//printf("    n = %d\n", n);
 
 			if (c >= mod->chn || r >= mod->xxp[i]->rows) {
@@ -325,30 +325,24 @@ static int get_patt(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 
 			memset(event, 0, sizeof (struct xmp_event));
 
-			if (n & 0x01) {
+			if ((n & 0x01) && (--sz >= 0)) {
 				x = hio_read8(f);
 				event->note = 13 + MSN(x) * 12 + LSN(x);
-				if (--sz <= 0) break;
 			}
-			if (n & 0x02) {
+			if ((n & 0x02) && (--sz >= 0)) {
 				event->ins = hio_read8(f);
-				if (--sz <= 0) break;
 			}
-			if (n & 0x04) {
+			if ((n & 0x04) && (--sz >= 0)) {
 				event->fxt = hio_read8(f);
-				if (--sz <= 0) break;
 			}
-			if (n & 0x08) {
+			if ((n & 0x08) && (--sz >= 0)) {
 				event->fxp = hio_read8(f);
-				if (--sz <= 0) break;
 			}
-			if (n & 0x10) {
+			if ((n & 0x10) && (--sz >= 0)) {
 				event->f2t = hio_read8(f);
-				if (--sz <= 0) break;
 			}
-			if (n & 0x20) {
+			if ((n & 0x20) && (--sz >= 0)) {
 				event->f2p = hio_read8(f);
-				if (--sz <= 0) break;
 			}
 
 			dbm_translate_effect(event, &event->fxt, &event->fxp);

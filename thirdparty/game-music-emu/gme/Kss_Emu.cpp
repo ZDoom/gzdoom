@@ -4,6 +4,7 @@
 
 #include "blargg_endian.h"
 #include <string.h>
+#include <algorithm>
 
 /* Copyright (C) 2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -18,8 +19,11 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
 
-long const clock_rate = 3579545;
-int const osc_count = Ay_Apu::osc_count + Scc_Apu::osc_count;
+static long const clock_rate = 3579545;
+static int const osc_count = Ay_Apu::osc_count + Scc_Apu::osc_count;
+
+using std::min;
+using std::max;
 
 Kss_Emu::Kss_Emu()
 {
@@ -31,13 +35,13 @@ Kss_Emu::Kss_Emu()
 		"Wave 1", "Wave 2", "Wave 3", "Wave 4", "Wave 5"
 	};
 	set_voice_names( names );
-	
+
 	static int const types [osc_count] = {
 		wave_type | 0, wave_type | 1, wave_type | 2,
 		wave_type | 3, wave_type | 4, wave_type | 5, wave_type | 6, wave_type | 7
 	};
 	set_voice_types( types );
-	
+
 	memset( unmapped_read, 0xFF, sizeof unmapped_read );
 }
 
@@ -80,9 +84,9 @@ static blargg_err_t check_kss_header( void const* header )
 struct Kss_File : Gme_Info_
 {
 	Kss_Emu::header_t header_;
-	
+
 	Kss_File() { set_type( gme_kss_type ); }
-	
+
 	blargg_err_t load_( Data_Reader& in )
 	{
 		blargg_err_t err = in.read( &header_, Kss_Emu::header_size );
@@ -90,7 +94,7 @@ struct Kss_File : Gme_Info_
 			return (err == in.eof_error ? gme_wrong_file_type : err);
 		return check_kss_header( &header_ );
 	}
-	
+
 	blargg_err_t track_info_( track_info_t* out, int ) const
 	{
 		copy_kss_fields( header_, out );
@@ -102,7 +106,7 @@ static Music_Emu* new_kss_emu () { return BLARGG_NEW Kss_Emu ; }
 static Music_Emu* new_kss_file() { return BLARGG_NEW Kss_File; }
 
 static gme_type_t_ const gme_kss_type_ = { "MSX", 256, &new_kss_emu, &new_kss_file, "KSS", 0x03 };
-BLARGG_EXPORT extern gme_type_t const gme_kss_type = &gme_kss_type_;
+extern gme_type_t const gme_kss_type = &gme_kss_type_;
 
 
 // Setup
@@ -121,12 +125,12 @@ void Kss_Emu::update_gain()
 blargg_err_t Kss_Emu::load_( Data_Reader& in )
 {
 	memset( &header_, 0, sizeof header_ );
-	assert( offsetof (header_t,device_flags) == header_size - 1 );
-	assert( offsetof (ext_header_t,msx_audio_vol) == ext_header_size - 1 );
+	blaarg_static_assert( offsetof (header_t,device_flags) == header_size - 1, "KSS Header layout incorrect!" );
+	blaarg_static_assert( offsetof (ext_header_t,msx_audio_vol) == ext_header_size - 1, "KSS Extended Header layout incorrect!" );
 	RETURN_ERR( rom.load( in, header_size, STATIC_CAST(header_t*,&header_), 0 ) );
-	
+
 	RETURN_ERR( check_kss_header( header_.tag ) );
-	
+
 	if ( header_.tag [3] == 'C' )
 	{
 		if ( header_.extra_header )
@@ -147,19 +151,19 @@ blargg_err_t Kss_Emu::load_( Data_Reader& in )
 		if ( header_.extra_header > 0x10 )
 			set_warning( "Unknown data in header" );
 	}
-	
+
 	if ( header_.device_flags & 0x09 )
 		set_warning( "FM sound not supported" );
-	
+
 	scc_enabled = 0xC000;
 	if ( header_.device_flags & 0x04 )
 		scc_enabled = 0;
-	
+
 	if ( header_.device_flags & 0x02 && !sn )
 		CHECK_ALLOC( sn = BLARGG_NEW( Sms_Apu ) );
-	
+
 	set_voice_count( osc_count );
-	
+
 	return setup_buffer( ::clock_rate );
 }
 
@@ -197,7 +201,7 @@ blargg_err_t Kss_Emu::start_track_( int track )
 
 	memset( ram, 0xC9, 0x4000 );
 	memset( ram + 0x4000, 0, sizeof ram - 0x4000 );
-	
+
 	// copy driver code to lo RAM
 	static byte const bios [] = {
 		0xD3, 0xA0, 0xF5, 0x7B, 0xD3, 0xA1, 0xF1, 0xC9, // $0001: WRTPSG
@@ -209,7 +213,7 @@ blargg_err_t Kss_Emu::start_track_( int track )
 	};
 	memcpy( ram + 0x01, bios,    sizeof bios );
 	memcpy( ram + 0x93, vectors, sizeof vectors );
-	
+
 	// copy non-banked data into RAM
 	unsigned load_addr = get_le16( header_.load_addr );
 	long orig_load_size = get_le16( header_.load_size );
@@ -218,9 +222,9 @@ blargg_err_t Kss_Emu::start_track_( int track )
 	if ( load_size != orig_load_size )
 		set_warning( "Excessive data size" );
 	memcpy( ram + load_addr, rom.begin() + header_.extra_header, load_size );
-	
+
 	rom.set_addr( -load_size - header_.extra_header );
-	
+
 	// check available bank data
 	blargg_long const bank_size = this->bank_size();
 	int max_banks = (rom.file_size() - load_size + bank_size - 1) / bank_size;
@@ -233,11 +237,11 @@ blargg_err_t Kss_Emu::start_track_( int track )
 	//debug_printf( "load_size : $%X\n", load_size );
 	//debug_printf( "bank_size : $%X\n", bank_size );
 	//debug_printf( "bank_count: %d (%d claimed)\n", bank_count, header_.bank_mode & 0x7F );
-	
+
 	ram [idle_addr] = 0xFF;
 	cpu::reset( unmapped_write, unmapped_read );
 	cpu::map_mem( 0, mem_size, ram, ram );
-	
+
 	ay.reset();
 	scc.reset();
 	if ( sn )
@@ -252,18 +256,18 @@ blargg_err_t Kss_Emu::start_track_( int track )
 	gain_updated = false;
 	update_gain();
 	ay_latch = 0;
-	
+
 	return 0;
 }
 
 void Kss_Emu::set_bank( int logical, int physical )
 {
 	unsigned const bank_size = this->bank_size();
-	
+
 	unsigned addr = 0x8000;
 	if ( logical && bank_size == 8 * 1024 )
 		addr = 0xA000;
-	
+
 	physical -= header_.first_bank;
 	if ( (unsigned) physical >= (unsigned) bank_count )
 	{
@@ -287,12 +291,12 @@ void Kss_Emu::cpu_write( unsigned addr, int data )
 	case 0x9000:
 		set_bank( 0, data );
 		return;
-	
+
 	case 0xB000:
 		set_bank( 1, data );
 		return;
 	}
-	
+
 	int scc_addr = (addr & 0xDFFF) ^ 0x9800;
 	if ( scc_addr < scc.reg_count )
 	{
@@ -300,7 +304,7 @@ void Kss_Emu::cpu_write( unsigned addr, int data )
 		scc.write( time(), scc_addr, data );
 		return;
 	}
-	
+
 	debug_printf( "LD ($%04X),$%02X\n", addr, data );
 }
 
@@ -320,12 +324,12 @@ void kss_cpu_out( Kss_Cpu* cpu, cpu_time_t time, unsigned addr, int data )
 	case 0xA0:
 		emu.ay_latch = data & 0x0F;
 		return;
-	
+
 	case 0xA1:
 		GME_APU_HOOK( &emu, emu.ay_latch, data );
 		emu.ay.write( time, emu.ay_latch, data );
 		return;
-	
+
 	case 0x06:
 		if ( emu.sn && (emu.header_.device_flags & 0x04) )
 		{
@@ -333,7 +337,7 @@ void kss_cpu_out( Kss_Cpu* cpu, cpu_time_t time, unsigned addr, int data )
 			return;
 		}
 		break;
-	
+
 	case 0x7E:
 	case 0x7F:
 		if ( emu.sn )
@@ -343,11 +347,11 @@ void kss_cpu_out( Kss_Cpu* cpu, cpu_time_t time, unsigned addr, int data )
 			return;
 		}
 		break;
-	
+
 	case 0xFE:
 		emu.set_bank( 0, data );
 		return;
-	
+
 	#ifndef NDEBUG
 	case 0xF1: // FM data
 		if ( data )
@@ -357,7 +361,7 @@ void kss_cpu_out( Kss_Cpu* cpu, cpu_time_t time, unsigned addr, int data )
 		return;
 	#endif
 	}
-	
+
 	debug_printf( "OUT $%04X,$%02X\n", addr, data );
 }
 
@@ -367,7 +371,7 @@ int kss_cpu_in( Kss_Cpu*, cpu_time_t, unsigned addr )
 	//switch ( addr & 0xFF )
 	//{
 	//}
-	
+
 	debug_printf( "IN $%04X\n", addr );
 	return 0;
 }
@@ -382,7 +386,7 @@ blargg_err_t Kss_Emu::run_clocks( blip_time_t& duration, int )
 		cpu::run( min( duration, next_play ) );
 		if ( r.pc == idle_addr )
 			set_time( end );
-		
+
 		if ( time() >= next_play )
 		{
 			next_play += play_period;
@@ -394,7 +398,7 @@ blargg_err_t Kss_Emu::run_clocks( blip_time_t& duration, int )
 					if ( scc_accessed )
 						update_gain();
 				}
-				
+
 				ram [--r.sp] = idle_addr >> 8;
 				ram [--r.sp] = idle_addr & 0xFF;
 				r.pc = get_le16( header_.play_addr );
@@ -402,7 +406,7 @@ blargg_err_t Kss_Emu::run_clocks( blip_time_t& duration, int )
 			}
 		}
 	}
-	
+
 	duration = time();
 	next_play -= duration;
 	check( next_play >= 0 );
@@ -411,6 +415,6 @@ blargg_err_t Kss_Emu::run_clocks( blip_time_t& duration, int )
 	scc.end_frame( duration );
 	if ( sn )
 		sn->end_frame( duration );
-	
+
 	return 0;
 }

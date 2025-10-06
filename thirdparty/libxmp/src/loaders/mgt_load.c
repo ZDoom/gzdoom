@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,6 +195,12 @@ static int mgt_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	D_(D_INFO "Stored tracks: %d", mod->trk);
 
 	/* Tracks */
+
+	/* Sanity check */
+	if (trk_ptr >= hio_size(f)) {
+		D_(D_CRIT "track pointer past EOF, can't load tracks");
+		return -1;
+	}
 
 	for (i = 1; i < mod->trk; i++) {
 		int offset, rows;

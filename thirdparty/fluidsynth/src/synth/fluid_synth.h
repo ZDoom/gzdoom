@@ -41,21 +41,21 @@
  *
  *                         DEFINES
  */
-#define FLUID_NUM_PROGRAMS      128
-#define DRUM_INST_BANK		128
+#define FLUID_NUM_PROGRAMS 128
+#define DRUM_INST_BANK 128
 
-#define FLUID_UNSET_PROGRAM     128     /* Program number used to unset a preset */
+#define FLUID_UNSET_PROGRAM 128  /* Program number used to unset a preset */
 
-#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.2f      /**< Default reverb room size */
-#define FLUID_REVERB_DEFAULT_DAMP 0.0f          /**< Default reverb damping */
-#define FLUID_REVERB_DEFAULT_WIDTH 0.5f         /**< Default reverb width */
-#define FLUID_REVERB_DEFAULT_LEVEL 0.9f         /**< Default reverb level */
+#define FLUID_REVERB_DEFAULT_DAMP 0.3f      /**< Default reverb damping */
+#define FLUID_REVERB_DEFAULT_LEVEL 0.7f     /**< Default reverb level */
+#define FLUID_REVERB_DEFAULT_ROOMSIZE 0.5f  /**< Default reverb room size */
+#define FLUID_REVERB_DEFAULT_WIDTH 0.8f     /**< Default reverb width */
 
-#define FLUID_CHORUS_DEFAULT_N 3                                /**< Default chorus voice count */
-#define FLUID_CHORUS_DEFAULT_LEVEL 2.0f                         /**< Default chorus level */
-#define FLUID_CHORUS_DEFAULT_SPEED 0.3f                         /**< Default chorus speed */
-#define FLUID_CHORUS_DEFAULT_DEPTH 8.0f                         /**< Default chorus depth */
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE         /**< Default chorus waveform type */
+#define FLUID_CHORUS_DEFAULT_DEPTH 4.25f                 /**< Default chorus depth */
+#define FLUID_CHORUS_DEFAULT_LEVEL 0.6f                  /**< Default chorus level */
+#define FLUID_CHORUS_DEFAULT_N 3                         /**< Default chorus voice count */
+#define FLUID_CHORUS_DEFAULT_SPEED 0.2f                  /**< Default chorus speed */
+#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE  /**< Default chorus waveform type */
 
 /***************************************************************
  *
@@ -79,6 +79,13 @@ enum fluid_synth_status
     FLUID_SYNTH_PLAYING,
     FLUID_SYNTH_QUIET,
     FLUID_SYNTH_STOPPED
+};
+
+enum fluid_msgs_note_cut
+{
+    FLUID_MSGS_DISABLED = 0,
+    FLUID_MSGS_DRUM_CUT = 1,
+    FLUID_MSGS_ALL_CUT  = 2
 };
 
 #define SYNTH_REVERB_CHANNEL 0
@@ -115,8 +122,7 @@ struct _fluid_synth_t
     int midi_channels;                 /**< the number of MIDI channels (>= 16) */
     int bank_select;                   /**< the style of Bank Select MIDI messages */
     int audio_channels;                /**< the number of audio channels (1 channel=left+right) */
-    int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth.
-					  Typically equal to audio_channels. */
+    int audio_groups;                  /**< the number of (stereo) 'sub'groups from the synth. Typically equal to audio_channels. */
     int effects_channels;              /**< the number of effects channels (>= 2) */
     int effects_groups;                /**< the number of effects units (>= 1) */
     int state;                         /**< the synthesizer state */
@@ -164,6 +170,9 @@ struct _fluid_synth_t
     fluid_ladspa_fx_t *ladspa_fx;      /**< Effects unit for LADSPA support */
     enum fluid_iir_filter_type custom_filter_type; /**< filter type of the user-defined filter currently used for all voices */
     enum fluid_iir_filter_flags custom_filter_flags; /**< filter type of the user-defined filter currently used for all voices */
+    enum fluid_msgs_note_cut msgs_note_cut_mode;
+
+    fluid_iir_sincos_t iir_sincos_table[SINCOS_TAB_SIZE]; /**< Table of sin/cos values for IIR filter */
 };
 
 /**
@@ -232,10 +241,6 @@ void delete_fluid_sample_timer(fluid_synth_t *synth, fluid_sample_timer_t *timer
 void fluid_sample_timer_reset(fluid_synth_t *synth, fluid_sample_timer_t *timer);
 
 void fluid_synth_process_event_queue(fluid_synth_t *synth);
-
-int fluid_synth_set_gen2(fluid_synth_t *synth, int chan,
-                         int param, float value,
-                         int absolute, int normalized);
 
 int
 fluid_synth_process_LOCAL(fluid_synth_t *synth, int len, int nfx, float *fx[],

@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,6 +87,7 @@ const struct format_loader libxmp_loader_stm = {
 static int stm_test(HIO_HANDLE * f, char *t, const int start)
 {
 	uint8 buf[8];
+	uint16 version;
 
 	hio_seek(f, start + 20, SEEK_SET);
 	if (hio_read(buf, 1, 8, f) < 8)
@@ -95,11 +96,24 @@ static int stm_test(HIO_HANDLE * f, char *t, const int start)
 	if (libxmp_test_name(buf, 8, 0))	/* Tracker name should be ASCII */
 		return -1;
 
-	if (hio_read8(f) != 0x1a)
+	/* EOF should be 0x1a. putup10.stm and putup11.stm have 2 instead. */
+	buf[0] = hio_read8(f);
+	if (buf[0] != 0x1a && buf[0] != 0x02)
 		return -1;
 
 	if (hio_read8(f) > STM_TYPE_MODULE)
 		return -1;
+
+	buf[0] = hio_read8(f);
+	buf[1] = hio_read8(f);
+	version = (100 * buf[0]) + buf[1];
+
+	if (version != 110 &&
+	    version != 200 && version != 210 &&
+	    version != 220 && version != 221) {
+		D_(D_CRIT "Unknown version: %d", version);
+		return -1;
+	}
 
 	hio_seek(f, start + 60, SEEK_SET);
 	if (hio_read(buf, 1, 4, f) < 4)
@@ -387,21 +401,20 @@ static int stm_load(struct module_data *m, HIO_HANDLE * f, const int start)
 			char tmpname[32];
 			const char *instname = mod->xxi[i].name;
 
-			if (!instname[0] || !m->dirname)
+			if (libxmp_copy_name_for_fopen(tmpname, instname, 32) != 0)
 				continue;
 
-			if (libxmp_copy_name_for_fopen(tmpname, instname, 32))
+			if (!libxmp_find_instrument_file(m, sn, sizeof(sn), tmpname))
 				continue;
 
-			snprintf(sn, XMP_MAXPATH, "%s%s", m->dirname, tmpname);
-			s = hio_open(sn, "rb");
-			if (s != NULL) {
-				if (libxmp_load_sample(m, s, SAMPLE_FLAG_UNS, &mod->xxs[i], NULL) < 0) {
-					hio_close(s);
-					return -1;
-				}
+			if ((s = hio_open(sn, "rb")) == NULL)
+				continue;
+
+			if (libxmp_load_sample(m, s, SAMPLE_FLAG_UNS, &mod->xxs[i], NULL) < 0) {
 				hio_close(s);
+				return -1;
 			}
+			hio_close(s);
 		} else {
 			hio_seek(f, start + (sfh.ins[i].rsvd1 << 4), SEEK_SET);
 			if (libxmp_load_sample(m, f, 0, &mod->xxs[i], NULL) < 0)

@@ -31,7 +31,7 @@ static void gen_sinc( double rolloff, int width, double offset, double spacing, 
 	double const to_w = maxh * 2 / width;
 	double const pow_a_n = pow( rolloff, maxh );
 	scale /= maxh * 2;
-	
+
 	double angle = (count / 2 - 1 + offset) * -step;
 	while ( count-- )
 	{
@@ -45,7 +45,7 @@ static void gen_sinc( double rolloff, int width, double offset, double spacing, 
 					pow_a_n * rolloff * cos( (maxh - 1) * angle );
 			double den = 1 - rolloff_cos_a - rolloff_cos_a + rolloff * rolloff;
 			double sinc = scale * num / den - scale;
-			
+
 			out [-1] = (short) (cos( w ) * sinc + sinc);
 		}
 		angle += step;
@@ -83,11 +83,11 @@ blargg_err_t Fir_Resampler_::buffer_size( int new_size )
 	clear();
 	return 0;
 }
-	
+
 double Fir_Resampler_::time_ratio( double new_factor, double rolloff, double gain )
 {
 	ratio_ = new_factor;
-	
+
 	double fstep = 0.0;
 	{
 		double least_error = 2;
@@ -106,14 +106,14 @@ double Fir_Resampler_::time_ratio( double new_factor, double rolloff, double gai
 			}
 		}
 	}
-	
+
 	skip_bits = 0;
-	
+
 	step = stereo * (int) floor( fstep );
-	
+
 	ratio_ = fstep;
 	fstep = fmod( fstep, 1.0 );
-	
+
 	double filter = (ratio_ < 1.0) ? 1.0 : 1.0 / ratio_;
 	double pos = 0.0;
 	input_per_cycle = 0;
@@ -122,7 +122,7 @@ double Fir_Resampler_::time_ratio( double new_factor, double rolloff, double gai
 		gen_sinc( rolloff, int (width_ * filter + 1) & ~1, pos, filter,
 				double (0x7FFF * gain * filter),
 				(int) width_, impulses + i * width_ );
-		
+
 		pos += fstep;
 		input_per_cycle += step;
 		if ( pos >= 0.9999999 )
@@ -132,16 +132,16 @@ double Fir_Resampler_::time_ratio( double new_factor, double rolloff, double gai
 			input_per_cycle++;
 		}
 	}
-	
+
 	clear();
-	
+
 	return ratio_;
 }
 
 int Fir_Resampler_::input_needed( blargg_long output_count ) const
 {
 	blargg_long input_count = 0;
-	
+
 	unsigned long skip = skip_bits >> imp_phase;
 	int remain = res - imp_phase;
 	while ( (output_count -= 2) > 0 )
@@ -155,7 +155,7 @@ int Fir_Resampler_::input_needed( blargg_long output_count ) const
 		}
 		output_count -= 2;
 	}
-	
+
 	long input_extra = input_count - (write_pos - &buf [(width_ - 1) * stereo]);
 	if ( input_extra < 0 )
 		input_extra = 0;
@@ -167,7 +167,7 @@ int Fir_Resampler_::avail_( blargg_long input_count ) const
 	int cycle_count = input_count / input_per_cycle;
 	int output_count = cycle_count * res * stereo;
 	input_count -= cycle_count * input_per_cycle;
-	
+
 	blargg_ulong skip = skip_bits >> imp_phase;
 	int remain = res - imp_phase;
 	while ( input_count >= 0 )
@@ -188,12 +188,14 @@ int Fir_Resampler_::skip_input( long count )
 {
 	int remain = write_pos - buf.begin();
 	int max_count = remain - width_ * stereo;
+	if ( max_count < 0 )
+		max_count = 0;
 	if ( count > max_count )
 		count = max_count;
-	
+
 	remain -= count;
 	write_pos = &buf [remain];
 	memmove( buf.begin(), &buf [count], remain * sizeof buf [0] );
-	
+
 	return count;
 }

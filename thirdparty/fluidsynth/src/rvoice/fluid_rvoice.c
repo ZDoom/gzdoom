@@ -96,12 +96,12 @@ fluid_rvoice_calc_amp(fluid_rvoice_t *voice)
     }
 
     /* Volume increment to go from voice->amp to target_amp in FLUID_BUFSIZE steps */
-    voice->dsp.amp_incr = (target_amp - voice->dsp.amp) / FLUID_BUFSIZE;
+    voice->resonant_filter.amp_incr = (target_amp - voice->resonant_filter.amp) / FLUID_BUFSIZE;
 
     fluid_check_fpe("voice_write amplitude calculation");
 
     /* no volume and not changing? - No need to process */
-    if((voice->dsp.amp == 0.0f) && (voice->dsp.amp_incr == 0.0f))
+    if ((voice->resonant_filter.amp == 0.0f) && (voice->resonant_filter.amp_incr == 0.0f))
     {
         return -1;
     }
@@ -354,11 +354,13 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     /******************* amplitude **********************/
 
     count = fluid_rvoice_calc_amp(voice);
-
-    if(count <= 0)
+    if(count == 0)
     {
-        return count; /* return -1 if voice is quiet, 0 if voice has finished */
+        // Voice has finished, remove from dsp loop
+        return 0;
     }
+    // else if count is negative, still process the voice
+
 
     /******************* phase **********************/
 
@@ -420,10 +422,38 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         voice->dsp.phase_incr = 1;
     }
 
+    /* loop mode release? if not in release, the voice is silent
+     * note: this intentionally processes the volenv before returning silence,
+     * since that's what polyphone does (PR #1400) */
+    if(voice->dsp.samplemode == FLUID_START_ON_RELEASE && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE)
+    {
+        return -1;
+    }
+
     /* voice is currently looping? */
     is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
                      && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE);
+
+    /*************** resonant filter ******************/
+    // Only "prepare" the filter here, the filter itself will be applied in the dsp_interpolation routines below.
+    // This is to satisfy SF2 Section 9.1.8, particularly, the filtered output must be gain-adjusted by the volEnv.
+    // Applying the filter after applying the gain from the volEnv might cause audible clicks for when turning off
+    // voices that are filtered by a high Q, see https://github.com/FluidSynth/fluidsynth/issues/1427
+    //
+    // Note that at this point we are using voice->dsp.output_rate which is set to the synth's output rate, because
+    // the filter will receive the interpolated waveform.
+
+    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
+                          fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
+                          modenv_val * voice->envlfo.modenv_to_fc);
+
+    fluid_check_fpe("voice_write IIR coefficients");
+
+    /* additional custom filter - only uses the fixed modulator, no lfos... */
+    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
+
+    fluid_check_fpe("voice_write IIR (custom) coefficients");
 
     /*********************** run the dsp chain ************************
      * The sample is mixed with the output buffer.
@@ -431,44 +461,26 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
      * Depending on the position in the loop and the loop size, this
      * may require several runs. */
 
-    switch(voice->dsp.interp_method)
+    if(count < 0)
     {
-    case FLUID_INTERP_NONE:
-        count = fluid_rvoice_dsp_interpolate_none(&voice->dsp, dsp_buf, is_looping);
-        break;
-
-    case FLUID_INTERP_LINEAR:
-        count = fluid_rvoice_dsp_interpolate_linear(&voice->dsp, dsp_buf, is_looping);
-        break;
-
-    case FLUID_INTERP_4THORDER:
-    default:
-        count = fluid_rvoice_dsp_interpolate_4th_order(&voice->dsp, dsp_buf, is_looping);
-        break;
-
-    case FLUID_INTERP_7THORDER:
-        count = fluid_rvoice_dsp_interpolate_7th_order(&voice->dsp, dsp_buf, is_looping);
-        break;
+        // The voice is quite, i.e. either in delay phase or zero volume.
+        // We need to update the rvoice's dsp phase, as the delay phase shall not "postpone" the sound, rather
+        // it should be played silently, see https://github.com/FluidSynth/fluidsynth/issues/1312
+        return fluid_rvoice_dsp_silence(voice, dsp_buf, is_looping);
     }
+
+    count = fluid_rvoice_dsp_interpolate(voice, dsp_buf, is_looping);
 
     fluid_check_fpe("voice_write interpolation");
 
-    if(count == 0)
+    if (count == 0)
     {
+        // voice has finished
         return count;
     }
-
-    /*************** resonant filter ******************/
-
-    fluid_iir_filter_calc(&voice->resonant_filter, voice->dsp.output_rate,
-                          fluid_lfo_get_val(&voice->envlfo.modlfo) * voice->envlfo.modlfo_to_fc +
-                          modenv_val * voice->envlfo.modenv_to_fc);
-
-    fluid_iir_filter_apply(&voice->resonant_filter, dsp_buf, count);
-
-    /* additional custom filter - only uses the fixed modulator, no lfos... */
-    fluid_iir_filter_calc(&voice->resonant_custom_filter, voice->dsp.output_rate, 0);
-    fluid_iir_filter_apply(&voice->resonant_custom_filter, dsp_buf, count);
+    
+    fluid_iir_filter_apply(&voice->resonant_filter, &voice->resonant_custom_filter, dsp_buf, count);
+    fluid_check_fpe("voice_filter fluid_iir_filter_apply()");
 
     return count;
 }
@@ -538,9 +550,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_reset)
     voice->dsp.has_looped = 0;
     voice->envlfo.ticks = 0;
     voice->envlfo.noteoff_ticks = 0;
-    voice->dsp.amp = 0.0f; /* The last value of the volume envelope, used to
-                            calculate the volume increment during
-                            processing */
 
     /* legato initialization */
     voice->dsp.pitchoffset = 0.0;   /* portamento initialization */

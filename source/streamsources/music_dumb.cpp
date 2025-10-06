@@ -527,7 +527,7 @@ static long DUMBCALLBACK dumbfile_mem_get_size(void *f)
 	return s->size;
 }
 
-static DUMBFILE_SYSTEM mem_dfs = {
+static const DUMBFILE_SYSTEM mem_dfs = {
 	NULL, // open
 	&dumbfile_mem_skip,
 	&dumbfile_mem_getc,

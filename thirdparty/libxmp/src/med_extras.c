@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -147,7 +147,7 @@ void libxmp_med_play_extras(struct context_data *ctx, struct channel_data *xc, i
 	 * FX_MED_HOLD effect and ce->hold set to 1. On the last row, see
 	 * if ce->hold_count is set (meaning that a note was held) and
 	 * ce->hold is 0 (meaning that it's not held anymore). Then
-	 * procceed with normal frame counting until decay.
+	 * proceed with normal frame counting until decay.
 	 */
 
 	if (ce->hold_count) {		/* was held in the past */
@@ -385,10 +385,10 @@ int libxmp_med_new_module_extras(struct module_data *m)
 
 	me = (struct med_module_extras *)m->extra;
 
-	me->vol_table = (uint8 **) calloc(sizeof(uint8 *), mod->ins);
+	me->vol_table = (uint8 **) calloc(mod->ins, sizeof(uint8 *));
 	if (me->vol_table == NULL)
 		return -1;
-	me->wav_table = (uint8 **) calloc(sizeof(uint8 *), mod->ins);
+	me->wav_table = (uint8 **) calloc(mod->ins, sizeof(uint8 *));
 	if (me->wav_table == NULL)
 		return -1;
 

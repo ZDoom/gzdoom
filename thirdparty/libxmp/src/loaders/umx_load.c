@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ typedef int _check_hdrsize[2 * (offsetof(struct upkg_hdr, gen) == UPKG_HDR_SIZE)
 #define UMUSIC_WAV	4
 #define UMUSIC_MP2	5
 
-static const char *mustype[] = {
+static const char *const mustype[] = {
 	"IT", "S3M", "XM", "MOD",
 	"WAV", "MP2", NULL
 };

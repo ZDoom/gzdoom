@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -299,7 +299,7 @@ int libxmp_copy_name_for_fopen(char *dest, const char *name, int n)
 	 * malicious when given to fopen. This should only be used on song files.
 	 */
 	if (!strcmp(name, ".") || strstr(name, "..") ||
-	    name[0] == '\\' || name[0] == '/' || name[0] == ':')
+	    name[0] == '\\' || name[0] == '/' || name[0] == ':' || name[0] == '\0')
 		return -1;
 
 	for (i = 0; i < n - 1; i++) {
@@ -432,18 +432,27 @@ void libxmp_disable_continue_fx(struct xmp_event *event)
 int libxmp_check_filename_case(const char *dir, const char *name, char *new_name, int size)
 {
 	char path[XMP_MAXPATH];
+	int ret;
+
+	if (dir[0] == '\0')
+		dir = ".";
+
 	snprintf(path, sizeof(path), "%s/%s", dir, name);
 	if (! (libxmp_get_filetype(path) & XMP_FILETYPE_FILE))
 		return 0;
-	strncpy(new_name, name, size);
-	return 1;
+	ret = snprintf(new_name, size, "%s", name);
+	return (ret < size);
 }
 #else /* target has dirent */
 int libxmp_check_filename_case(const char *dir, const char *name, char *new_name, int size)
 {
 	int found = 0;
+	int ret = size;
 	DIR *dirp;
 	struct dirent *d;
+
+	if (dir[0] == '\0')
+		dir = ".";
 
 	dirp = opendir(dir);
 	if (dirp == NULL)
@@ -452,26 +461,56 @@ int libxmp_check_filename_case(const char *dir, const char *name, char *new_name
 	while ((d = readdir(dirp)) != NULL) {
 		if (!strcasecmp(d->d_name, name)) {
 			found = 1;
-			strncpy(new_name, d->d_name, size);
+			ret = snprintf(new_name, size, "%s", d->d_name);
 			break;
 		}
 	}
 
 	closedir(dirp);
 
-	return found;
+	return found ? (ret < size) : 0;
 }
 #endif
 
-void libxmp_get_instrument_path(struct module_data *m, char *path, int size)
+static const char *libxmp_get_instrument_path(struct module_data *m)
 {
+	const char *env;
 	if (m->instrument_path) {
-		strncpy(path, m->instrument_path, size);
-	} else if (getenv("XMP_INSTRUMENT_PATH")) {
-		strncpy(path, getenv("XMP_INSTRUMENT_PATH"), size);
-	} else {
-		strncpy(path, ".", size);
+		return m->instrument_path;
 	}
+	env = getenv("XMP_INSTRUMENT_PATH");
+	if (env) {
+		return env;
+	}
+	return NULL;
+}
+
+int libxmp_find_instrument_file(struct module_data *m, char *path_dest,
+				int path_dest_len, const char *ins_name)
+{
+	const char *ins_path;
+	char name[256];
+	int ret;
+
+	ins_path = libxmp_get_instrument_path(m);
+	if (ins_path != NULL &&
+	    libxmp_check_filename_case(ins_path, ins_name, name, sizeof(name))) {
+		ret = snprintf(path_dest, path_dest_len, "%s/%s", ins_path, name);
+		path_dest[path_dest_len - 1] = '\0';
+		return (ret < path_dest_len);
+	}
+
+	/* Try the module dir if the instrument path didn't work. */
+	if (m->dirname != NULL &&
+	    libxmp_check_filename_case(m->dirname, ins_name, name, sizeof(name))) {
+		ret = snprintf(path_dest, path_dest_len, "%s%s", m->dirname, name);
+		path_dest[path_dest_len - 1] = '\0';
+		return (ret < path_dest_len);
+	}
+
+	D_(D_WARN "instrument '%s' not found (ins_path: '%s') (m->dirname: '%s')",
+	   ins_name, ins_path ? ins_path : "NULL", m->dirname ? m->dirname : "NULL");
+	return 0;
 }
 #endif /* LIBXMP_CORE_PLAYER */
 
@@ -585,8 +624,13 @@ void libxmp_apply_mpt_preamp(struct module_data *m)
 
 char *libxmp_strdup(const char *src)
 {
-	size_t len = strlen(src) + 1;
-	char *buf = (char *) malloc(len);
+	size_t len;
+	char *buf;
+	if (src == NULL) {
+		return NULL;
+	}
+	len = strlen(src) + 1;
+	buf = (char *) malloc(len);
 	if (buf) {
 		memcpy(buf, src, len);
 	}

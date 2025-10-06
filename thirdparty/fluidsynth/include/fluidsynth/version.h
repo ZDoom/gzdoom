@@ -31,9 +31,9 @@ extern "C" {
  *
  * @{
  */
-#define FLUIDSYNTH_VERSION       "2.2.8"           /**< String constant of libfluidsynth version. */
+#define FLUIDSYNTH_VERSION       "2.4.8"           /**< String constant of libfluidsynth version. */
 #define FLUIDSYNTH_VERSION_MAJOR 2     /**< libfluidsynth major version integer constant. */
-#define FLUIDSYNTH_VERSION_MINOR 2     /**< libfluidsynth minor version integer constant. */
+#define FLUIDSYNTH_VERSION_MINOR 4     /**< libfluidsynth minor version integer constant. */
 #define FLUIDSYNTH_VERSION_MICRO 8     /**< libfluidsynth micro version integer constant. */
 
 FLUIDSYNTH_API void fluid_version(int *major, int *minor, int *micro);

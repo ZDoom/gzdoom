@@ -23,11 +23,11 @@ Classic_Emu::Classic_Emu()
 	buf           = 0;
 	stereo_buffer = 0;
 	voice_types   = 0;
-	
+
 	// avoid inconsistency in our duplicated constants
-	assert( (int) wave_type  == (int) Multi_Buffer::wave_type );
-	assert( (int) noise_type == (int) Multi_Buffer::noise_type );
-	assert( (int) mixed_type == (int) Multi_Buffer::mixed_type );
+	blaarg_static_assert( (int) wave_type  == (int) Multi_Buffer::wave_type, "wave_type inconsistent across two classes using it" );
+	blaarg_static_assert( (int) noise_type == (int) Multi_Buffer::noise_type, "noise_type inconsistent across two classes using it"  );
+	blaarg_static_assert( (int) mixed_type == (int) Multi_Buffer::mixed_type, "mixed_type inconsistent across two classes using it"  );
 }
 
 Classic_Emu::~Classic_Emu()
@@ -42,7 +42,7 @@ void Classic_Emu::set_equalizer_( equalizer_t const& eq )
 	if ( buf )
 		buf->bass_freq( (int) equalizer().bass );
 }
-	
+
 blargg_err_t Classic_Emu::set_sample_rate_( long rate )
 {
 	if ( !buf )
@@ -130,12 +130,12 @@ blargg_err_t Rom_Data_::load_rom_data_( Data_Reader& in,
 		int header_size, void* header_out, int fill, long pad_size )
 {
 	long file_offset = pad_size - header_size;
-	
+
 	rom_addr = 0;
 	mask     = 0;
 	size_    = 0;
 	rom.clear();
-	
+
 	file_size_ = in.remain();
 	if ( file_size_ <= header_size ) // <= because there must be data after header
 		return gme_wrong_file_type;
@@ -147,20 +147,20 @@ blargg_err_t Rom_Data_::load_rom_data_( Data_Reader& in,
 		rom.clear();
 		return err;
 	}
-	
+
 	file_size_ -= header_size;
 	memcpy( header_out, &rom [file_offset], header_size );
-	
+
 	memset( rom.begin()         , fill, pad_size );
 	memset( rom.end() - pad_size, fill, pad_size );
-	
+
 	return 0;
 }
 
 void Rom_Data_::set_addr_( long addr, int unit )
 {
 	rom_addr = addr - unit - pad_extra;
-	
+
 	long rounded = (addr + file_size_ + unit - 1) / unit * unit;
 	if ( rounded <= 0 )
 	{
@@ -174,7 +174,7 @@ void Rom_Data_::set_addr_( long addr, int unit )
 			shift++;
 		mask = (1L << shift) - 1;
 	}
-	
+
 	if ( addr < 0 )
 		addr = 0;
 	size_ = rounded;

@@ -22,9 +22,9 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 // Tones above this frequency are treated as disabled tone at half volume.
 // Power of two is more efficient (avoids division).
-unsigned const inaudible_freq = 16384;
+static unsigned const inaudible_freq = 16384;
 
-int const period_factor = 16;
+static int const period_factor = 16;
 
 static byte const amp_table [16] =
 {
@@ -35,10 +35,10 @@ static byte const amp_table [16] =
 	ENTRY(0.022097),ENTRY(0.031250),ENTRY(0.044194),ENTRY(0.062500),
 	ENTRY(0.088388),ENTRY(0.125000),ENTRY(0.176777),ENTRY(0.250000),
 	ENTRY(0.353553),ENTRY(0.500000),ENTRY(0.707107),ENTRY(1.000000),
-	
+
 	/*
 	// Measured from an AY-3-8910A chip with date code 8611.
-	
+
 	// Direct voltages without any load (very linear)
 	ENTRY(0.000000),ENTRY(0.046237),ENTRY(0.064516),ENTRY(0.089785),
 	ENTRY(0.124731),ENTRY(0.173118),ENTRY(0.225806),ENTRY(0.329032),
@@ -88,7 +88,7 @@ Ay_Apu::Ay_Apu()
 			flags >>= 2;
 		}
 	}
-	
+
 	output( 0 );
 	volume( 1.0 );
 	reset();
@@ -99,7 +99,7 @@ void Ay_Apu::reset()
 	last_time   = 0;
 	noise.delay = 0;
 	noise.lfsr  = 1;
-	
+
 	osc_t* osc = &oscs [osc_count];
 	do
 	{
@@ -110,7 +110,7 @@ void Ay_Apu::reset()
 		osc->phase    = 0;
 	}
 	while ( osc != oscs );
-	
+
 	for ( int i = sizeof regs; --i >= 0; )
 		regs [i] = 0;
 	regs [7] = 0xFF;
@@ -120,14 +120,14 @@ void Ay_Apu::reset()
 void Ay_Apu::write_data_( int addr, int data )
 {
 	assert( (unsigned) addr < reg_count );
-	
+
 	if ( (unsigned) addr >= 14 )
 	{
 		#ifdef debug_printf
 			debug_printf( "Wrote to I/O port %02X\n", (int) addr );
 		#endif
 	}
-	
+
 	// envelope mode
 	if ( addr == 13 )
 	{
@@ -138,7 +138,7 @@ void Ay_Apu::write_data_( int addr, int data )
 		env.delay = 0; // will get set to envelope period in run_until()
 	}
 	regs [addr] = data;
-	
+
 	// handle period changes accurately
 	int i = addr >> 1;
 	if ( i < osc_count )
@@ -147,24 +147,24 @@ void Ay_Apu::write_data_( int addr, int data )
 				regs [i * 2] * period_factor;
 		if ( !period )
 			period = period_factor;
-		
+
 		// adjust time of next timer expiration based on change in period
 		osc_t& osc = oscs [i];
 		if ( (osc.delay += period - osc.period) < 0 )
 			osc.delay = 0;
 		osc.period = period;
 	}
-	
+
 	// TODO: same as above for envelope timer, and it also has a divide by two after it
 }
 
-int const noise_off = 0x08;
-int const tone_off  = 0x01;
+static int const noise_off = 0x08;
+static int const tone_off  = 0x01;
 
 void Ay_Apu::run_until( blip_time_t final_end_time )
 {
 	require( final_end_time >= last_time );
-	
+
 	// noise period and initial values
 	blip_time_t const noise_period_factor = period_factor * 2; // verified
 	blip_time_t noise_period = (regs [6] & 0x1F) * noise_period_factor;
@@ -172,7 +172,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 		noise_period = noise_period_factor;
 	blip_time_t const old_noise_delay = noise.delay;
 	blargg_ulong const old_noise_lfsr = noise.lfsr;
-	
+
 	// envelope period
 	blip_time_t const env_period_factor = period_factor * 2; // verified
 	blip_time_t env_period = (regs [12] * 0x100L + regs [11]) * env_period_factor;
@@ -180,19 +180,19 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 		env_period = env_period_factor; // same as period 1 on my AY chip
 	if ( !env.delay )
 		env.delay = env_period;
-	
+
 	// run each osc separately
 	for ( int index = 0; index < osc_count; index++ )
 	{
 		osc_t* const osc = &oscs [index];
 		int osc_mode = regs [7] >> index;
-		
+
 		// output
 		Blip_Buffer* const osc_output = osc->output;
 		if ( !osc_output )
 			continue;
 		osc_output->set_modified();
-		
+
 		// period
 		int half_vol = 0;
 		blip_time_t inaudible_period = (blargg_ulong) (osc_output->clock_rate() +
@@ -202,7 +202,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 			half_vol = 1; // Actually around 60%, but 50% is close enough
 			osc_mode |= tone_off;
 		}
-		
+
 		// envelope
 		blip_time_t start_time = last_time;
 		blip_time_t end_time   = final_end_time;
@@ -218,7 +218,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 				end_time = start_time + env.delay;
 				if ( end_time >= final_end_time )
 					end_time = final_end_time;
-				
+
 				//if ( !(regs [12] | regs [11]) )
 				//  debug_printf( "Used envelope period 0\n" );
 			}
@@ -231,7 +231,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 		{
 			osc_mode = noise_off | tone_off;
 		}
-		
+
 		// tone time
 		blip_time_t const period = osc->period;
 		blip_time_t time = start_time + osc->delay;
@@ -241,7 +241,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 			time += count * period;
 			osc->phase ^= count & 1;
 		}
-		
+
 		// noise time
 		blip_time_t ntime = final_end_time;
 		blargg_ulong noise_lfsr = 1;
@@ -252,7 +252,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 			//if ( (regs [6] & 0x1F) == 0 )
 			//  debug_printf( "Used noise period 0\n" );
 		}
-		
+
 		// The following efficiently handles several cases (least demanding first):
 		// * Tone, noise, and envelope disabled, where channel acts as 4-bit DAC
 		// * Just tone or just noise, envelope disabled
@@ -260,7 +260,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 		// * Tone and noise disabled, envelope enabled with high frequency
 		// * Tone and noise together
 		// * Tone and noise together with envelope
-		
+
 		// This loop only runs one iteration if envelope is disabled. If envelope
 		// is being used as a waveform (tone and noise disabled), this loop will
 		// still be reasonably efficient since the bulk of it will be skipped.
@@ -278,7 +278,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 					synth_.offset( start_time, delta, osc_output );
 				}
 			}
-			
+
 			// Run wave and noise interleved with each catching up to the other.
 			// If one or both are disabled, their "current time" will be past end time,
 			// so there will be no significant performance hit.
@@ -299,7 +299,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 						while ( ntime <= end ) // must advance *past* time to avoid hang
 						{
 							int changed = noise_lfsr + 1;
-							noise_lfsr = (-(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
+							noise_lfsr = (uMinus(noise_lfsr & 1) & 0x12000) ^ (noise_lfsr >> 1);
 							if ( changed & 2 )
 							{
 								delta = -delta;
@@ -316,7 +316,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 						if ( remain >= 0 )
 							ntime += noise_period + count * noise_period;
 					}
-					
+
 					// run tone
 					end = end_time;
 					if ( end_time > ntime ) end = ntime;
@@ -337,7 +337,7 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 					{
 						// loop usually runs less than once
 						//SUB_CASE_COUNTER( (time < end) * (end - time + period - 1) / period );
-						
+
 						while ( time < end )
 						{
 							time += period;
@@ -346,36 +346,36 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 					}
 				}
 				while ( time < end_time || ntime < end_time );
-				
+
 				osc->last_amp = (delta + volume) >> 1;
 				if ( !(osc_mode & tone_off) )
 					osc->phase = phase;
 			}
-			
+
 			if ( end_time >= final_end_time )
 				break; // breaks first time when envelope is disabled
-			
+
 			// next envelope step
 			if ( ++osc_env_pos >= 0 )
 				osc_env_pos -= 32;
 			volume = env.wave [osc_env_pos] >> half_vol;
-			
+
 			start_time = end_time;
 			end_time += env_period;
 			if ( end_time > final_end_time )
 				end_time = final_end_time;
 		}
 		osc->delay = time - final_end_time;
-		
+
 		if ( !(osc_mode & noise_off) )
 		{
 			noise.delay = ntime - final_end_time;
 			noise.lfsr = noise_lfsr;
 		}
 	}
-	
+
 	// TODO: optimized saw wave envelope?
-	
+
 	// maintain envelope phase
 	blip_time_t remain = final_end_time - last_time - env.delay;
 	if ( remain >= 0 )
@@ -390,6 +390,6 @@ void Ay_Apu::run_until( blip_time_t final_end_time )
 	env.delay = -remain;
 	assert( env.delay > 0 );
 	assert( env.pos < 0 );
-	
+
 	last_time = final_end_time;
 }

@@ -30,7 +30,7 @@ extern "C" {
 
 #define OPNMIDI_VERSION_MAJOR       1
 #define OPNMIDI_VERSION_MINOR       6
-#define OPNMIDI_VERSION_PATCHLEVEL  0
+#define OPNMIDI_VERSION_PATCHLEVEL  1
 
 #define OPNMIDI_TOSTR_I(s) #s
 #define OPNMIDI_TOSTR(s) OPNMIDI_TOSTR_I(s)
@@ -418,9 +418,20 @@ extern OPNMIDI_DECLSPEC void opn2_setChipType(struct OPN2_MIDIPlayer *device, in
 extern OPNMIDI_DECLSPEC int opn2_getChipType(struct OPN2_MIDIPlayer *device);
 
 /**
- * @brief Override Enable(1) or Disable(0) scaling of modulator volumes. -1 - use bank default scaling of modulator volumes
+ * @brief Override Enable(1) or Disable(0) scaling of modulators by volumes. -1 - use bank default scaling of modulator volumes
  * @param device Instance of the library
  * @param smod 0 - disabled, 1 - enabled
+ *
+ * When this feature is enabled, all the modulators will scale together with the volume
+ * that will cuase an effect of sound smoothing. However, it's better to use the CC74
+ * to explicitly control the volume of modulators when it's needed, otherwise using
+ * of this feature causes a lot of problems. It's possible that this feature will be
+ * removed eventually and this function will become useless.
+ *
+ * IMPORTANT: If you develop music player or plugin, or integrate this to somewhere,
+ * suggested to don't add binding to this feature and keep it always disabled.
+ *
+ * Details: https://github.com/Wohlstand/libOPNMIDI/issues/125
  */
 extern OPNMIDI_DECLSPEC void opn2_setScaleModulators(struct OPN2_MIDIPlayer *device, int smod);
 
@@ -582,6 +593,14 @@ enum Opn2_Emulator
     OPNMIDI_VGM_DUMPER,
     /*! Nuked OPN2 (YM2612 mode) */
     OPNMIDI_EMU_NUKED_YM2612,
+    /*! Very low-level variant of Nuked OPN2 (YM2612) */
+    OPNMIDI_EMU_NUKED_YM2612_LLE,
+    /*! Very low-level variant of Nuked OPNA (YM2608) */
+    OPNMIDI_EMU_NUKED_YM2608_LLE,
+    /*! Very low-level variant of Nuked OPN2 (YM3438) */
+    OPNMIDI_EMU_NUKED_YM3438_LLE,
+    /*! Very low-level variant of Nuked OPN2 (YMF276) */
+    OPNMIDI_EMU_NUKED_YMF276_LLE,
     /*! Count instrument on the level */
     OPNMIDI_EMU_end,
 

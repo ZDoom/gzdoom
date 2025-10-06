@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -95,6 +95,34 @@ struct ult_event {
 };
 
 
+static void ult_translate_effect(uint8 *fxt, uint8 *fxp)
+{
+    switch (*fxt) {
+    case 0x03:			/* Tone portamento */
+	*fxt = FX_ULT_TPORTA;
+	break;
+    case 0x05:			/* 'Special' effect */
+    case 0x06:			/* Reserved */
+	*fxt = *fxp = 0;
+	break;
+    case 0x0b:			/* Pan */
+	*fxt = FX_SETPAN;
+	*fxp <<= 4;
+	break;
+    case 0x09:			/* Sample offset */
+/* TODO: fine sample offset (requires new effect or 2 more effect lanes) */
+	*fxp <<= 2;
+	break;
+    case 0x0f:			/* Speed/BPM */
+	/* 00:    default speed (6)/BPM (125)
+	 * 01-2f: set speed
+	 * 30-ff: set BPM
+	 */
+	*fxt = FX_ULT_TEMPO;
+	break;
+    }
+}
+
 static int ult_load(struct module_data *m, HIO_HANDLE *f, const int start)
 {
     struct xmp_module *mod = &m->mod;
@@ -124,7 +152,20 @@ static int ult_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
     MODULE_INFO();
 
-    hio_seek(f, ufh.msgsize * 32, SEEK_CUR);
+    if (ufh.msgsize > 0) {
+	if ((m->comment = (char *)malloc(ufh.msgsize * 33)) != NULL) {
+	    char *pos = m->comment;
+	    for (i = 0; i < (int)ufh.msgsize; i++) {
+		if (hio_read(pos, 1, 32, f) < 32)
+		    return -1;
+		pos[32] = '\n';
+		pos += 33;
+	    }
+	    *(--pos) = '\0';
+	} else {
+	    hio_seek(f, ufh.msgsize * 32, SEEK_CUR);
+	}
+    }
 
     mod->ins = mod->smp = hio_read8(f);
     /* mod->flg |= XXM_FLG_LINEAR; */
@@ -308,42 +349,8 @@ static int ult_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		event->fxp = ue.fxp;
 		event->f2p = ue.f2p;
 
-		switch (event->fxt) {
-		case 0x03:		/* Tone portamento */
-		    event->fxt = FX_ULT_TPORTA;
-		    break;
-		case 0x05:		/* 'Special' effect */
-		case 0x06:		/* Reserved */
-		    event->fxt = event->fxp = 0;
-		    break;
-		case 0x0b:		/* Pan */
-		    event->fxt = FX_SETPAN;
-		    event->fxp <<= 4;
-		    break;
-		case 0x09:		/* Sample offset */
-/* TODO: fine sample offset */
-		    event->fxp <<= 2;
-		    break;
-		}
-
-		switch (event->f2t) {
-		case 0x03:		/* Tone portamento */
-		    event->f2t = FX_ULT_TPORTA;
-		    break;
-		case 0x05:		/* 'Special' effect */
-		case 0x06:		/* Reserved */
-		    event->f2t = event->f2p = 0;
-		    break;
-		case 0x0b:		/* Pan */
-		    event->f2t = FX_SETPAN;
-		    event->f2p <<= 4;
-		    break;
-		case 0x09:		/* Sample offset */
-/* TODO: fine sample offset */
-		    event->f2p <<= 2;
-		    break;
-		}
-
+		ult_translate_effect(&event->fxt, &event->fxp);
+		ult_translate_effect(&event->f2t, &event->f2p);
 	    }
 	}
     }

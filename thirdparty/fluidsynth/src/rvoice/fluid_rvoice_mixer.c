@@ -60,7 +60,7 @@ struct _fluid_mixer_buffers_t
      */
     fluid_real_t *left_buf;
 
-    /** dito, but for right part of a stereo channel */
+    /** ditto, but for right part of a stereo channel */
     fluid_real_t *right_buf;
 
     /** buffer to store the left part of a stereo effects channel to.
@@ -130,15 +130,12 @@ static int fluid_rvoice_mixer_set_threads(fluid_rvoice_mixer_t *mixer, int threa
 static FLUID_INLINE void
 fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcount)
 {
-    const int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
-    int i, f;
-    int dry_count = mixer->buffers.buf_count; /* dry buffers count */
-    int mix_fx_to_out = mixer->mix_fx_to_out; /* get mix_fx_to_out mode */
-    int dry_idx = 0; /* dry buffer index */
-    int buf_idx;  /* buffer index */
-    int samp_idx; /* sample index in buffer */
-    int sample_count; /* sample count to process */
-
+    // Making those variables const causes gcc to fail with "variable is predetermined ‘shared’ for ‘shared’".
+    // Not explicitly marking them shared makes it fail for clang and MSVC...
+    /*const*/ int fx_channels_per_unit = mixer->buffers.fx_buf_count / mixer->fx_units;
+    /*const*/ int dry_count = mixer->buffers.buf_count; /* dry buffers count */
+    /*const*/ int mix_fx_to_out = mixer->mix_fx_to_out; /* get mix_fx_to_out mode */
+    
     void (*reverb_process_func)(fluid_revmodel_t *rev, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
     void (*chorus_process_func)(fluid_chorus_t *chorus, const fluid_real_t *in, fluid_real_t *left_out, fluid_real_t *right_out);
 
@@ -170,7 +167,6 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
 
         reverb_process_func = fluid_revmodel_processmix;
         chorus_process_func = fluid_chorus_processmix;
-
     }
     else
     {
@@ -182,73 +178,92 @@ fluid_rvoice_mixer_process_fx(fluid_rvoice_mixer_t *mixer, int current_blockcoun
         chorus_process_func = fluid_chorus_processreplace;
     }
 
-
-    if(mixer->with_reverb)
+    if(mixer->with_reverb || mixer->with_chorus)
     {
-        for(f = 0; f < mixer->fx_units; f++)
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
+        int fx_mixer_threads = mixer->fx_units;
+        fluid_clip(fx_mixer_threads, 1, mixer->thread_count + 1);
+        #pragma omp parallel default(none) shared(mixer, reverb_process_func, chorus_process_func, dry_count, current_blockcount, mix_fx_to_out, fx_channels_per_unit) firstprivate(in_rev, in_ch, out_rev_l, out_rev_r, out_ch_l, out_ch_r) num_threads(fx_mixer_threads)
+#endif
         {
-            if(!mixer->fx[f].reverb_on)
+            int i, f;
+            int buf_idx;  /* buffer index */
+            int samp_idx; /* sample index in buffer */
+            int dry_idx = 0; /* dry buffer index */
+            int sample_count; /* sample count to process */
+            if(mixer->with_reverb)
             {
-                continue; /* this reverb unit is disabled */
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
+                #pragma omp for schedule(static)
+#endif
+                for(f = 0; f < mixer->fx_units; f++)
+                {
+                    if(!mixer->fx[f].reverb_on)
+                    {
+                        continue; /* this reverb unit is disabled */
+                    }
+
+                    buf_idx = f * fx_channels_per_unit + SYNTH_REVERB_CHANNEL;
+                    samp_idx = buf_idx * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                    sample_count = current_blockcount * FLUID_BUFSIZE;
+
+                    /* in mix mode, map fx out_rev at index f to a dry buffer at index dry_idx */
+                    if(mix_fx_to_out)
+                    {
+                        /* dry buffer mapping, should be done more flexible in the future */
+                        dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                    }
+
+                    for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
+                    {
+                        reverb_process_func(mixer->fx[f].reverb,
+                                            &in_rev[samp_idx],
+                                            mix_fx_to_out ? &out_rev_l[dry_idx + i] : &out_rev_l[samp_idx],
+                                            mix_fx_to_out ? &out_rev_r[dry_idx + i] : &out_rev_r[samp_idx]);
+                    }
+                } // implicit omp barrier - required, because out_rev_l aliases with out_ch_l
+
+                fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref, 0,
+                            current_blockcount * FLUID_BUFSIZE);
             }
 
-            buf_idx = f * fx_channels_per_unit + SYNTH_REVERB_CHANNEL;
-            samp_idx = buf_idx * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
-            sample_count = current_blockcount * FLUID_BUFSIZE;
-
-            /* in mix mode, map fx out_rev at index f to a dry buffer at index dry_idx */
-            if(mix_fx_to_out)
+            if(mixer->with_chorus)
             {
-                /* dry buffer mapping, should be done more flexible in the future */
-                dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
-            }
+#if ENABLE_MIXER_THREADS && !defined(WITH_PROFILING)
+                #pragma omp for schedule(static)
+#endif
+                for(f = 0; f < mixer->fx_units; f++)
+                {
+                    if(!mixer->fx[f].chorus_on)
+                    {
+                        continue; /* this chorus unit is disabled */
+                    }
 
-            for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
-            {
-                reverb_process_func(mixer->fx[f].reverb,
-                                    &in_rev[samp_idx],
-                                    mix_fx_to_out ? &out_rev_l[dry_idx + i] : &out_rev_l[samp_idx],
-                                    mix_fx_to_out ? &out_rev_r[dry_idx + i] : &out_rev_r[samp_idx]);
+                    buf_idx = f * fx_channels_per_unit + SYNTH_CHORUS_CHANNEL;
+                    samp_idx = buf_idx * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                    sample_count = current_blockcount * FLUID_BUFSIZE;
+
+                    /* in mix mode, map fx out_ch at index f to a dry buffer at index dry_idx */
+                    if(mix_fx_to_out)
+                    {
+                        /* dry buffer mapping, should be done more flexible in the future */
+                        dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
+                    }
+
+                    for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
+                    {
+                        chorus_process_func(mixer->fx[f].chorus,
+                                            &in_ch [samp_idx],
+                                            mix_fx_to_out ? &out_ch_l[dry_idx + i] : &out_ch_l[samp_idx],
+                                            mix_fx_to_out ? &out_ch_r[dry_idx + i] : &out_ch_r[samp_idx]);
+                    }
+                }
+
+                fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref, 0,
+                            current_blockcount * FLUID_BUFSIZE);
             }
         }
-
-        fluid_profile(FLUID_PROF_ONE_BLOCK_REVERB, prof_ref, 0,
-                      current_blockcount * FLUID_BUFSIZE);
     }
-
-    if(mixer->with_chorus)
-    {
-        for(f = 0; f < mixer->fx_units; f++)
-        {
-            if(!mixer->fx[f].chorus_on)
-            {
-                continue; /* this chorus unit is disabled */
-            }
-
-            buf_idx = f * fx_channels_per_unit + SYNTH_CHORUS_CHANNEL;
-            samp_idx = buf_idx * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
-            sample_count = current_blockcount * FLUID_BUFSIZE;
-
-            /* in mix mode, map fx out_ch at index f to a dry buffer at index dry_idx */
-            if(mix_fx_to_out)
-            {
-                /* dry buffer mapping, should be done more flexible in the future */
-                dry_idx = (f % dry_count) * FLUID_MIXER_MAX_BUFFERS_DEFAULT * FLUID_BUFSIZE;
-            }
-
-            for(i = 0; i < sample_count; i += FLUID_BUFSIZE, samp_idx += FLUID_BUFSIZE)
-            {
-                chorus_process_func(mixer->fx[f].chorus,
-                                    &in_ch [samp_idx],
-                                    mix_fx_to_out ? &out_ch_l[dry_idx + i] : &out_ch_l[samp_idx],
-                                    mix_fx_to_out ? &out_ch_r[dry_idx + i] : &out_ch_r[samp_idx]);
-            }
-        }
-
-        fluid_profile(FLUID_PROF_ONE_BLOCK_CHORUS, prof_ref, 0,
-                      current_blockcount * FLUID_BUFSIZE);
-    }
-
 }
 
 /**
@@ -575,7 +590,6 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_add_voice)
 
     /* This should never happen */
     FLUID_LOG(FLUID_ERR, "Trying to exceed polyphony in fluid_rvoice_mixer_add_voice");
-    return;
 }
 
 static int
@@ -645,7 +659,7 @@ DECLARE_FLUID_RVOICE_FUNCTION(fluid_rvoice_mixer_set_polyphony)
 #endif
 
     handler->polyphony = value;
-    return /*FLUID_OK*/;
+    /*return FLUID_OK*/;
 }
 
 

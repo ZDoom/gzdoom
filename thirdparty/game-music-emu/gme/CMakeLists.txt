@@ -8,6 +8,7 @@ set(libgme_SRCS Blip_Buffer.cpp
                 Effects_Buffer.cpp
                 Fir_Resampler.cpp
                 gme.cpp
+                gme.h
                 Gme_File.cpp
                 M3u_Playlist.cpp
                 Multi_Buffer.cpp
@@ -107,12 +108,30 @@ endif()
 if (USE_GME_NSF OR USE_GME_NSFE)
     set(libgme_SRCS ${libgme_SRCS}
                 Nes_Apu.cpp
+                Nes_Apu.h
                 Nes_Cpu.cpp
+                Nes_Cpu.h
                 Nes_Fme7_Apu.cpp
+                Nes_Fme7_Apu.h
                 Nes_Namco_Apu.cpp
+                Nes_Namco_Apu.h
                 Nes_Oscs.cpp
+                Nes_Oscs.h
                 Nes_Vrc6_Apu.cpp
+                Nes_Vrc6_Apu.h
+                Nes_Fds_Apu.cpp
+                Nes_Fds_Apu.h
+                Nes_Vrc7_Apu.cpp
+                Nes_Vrc7_Apu.h
+                ext/emu2413.c
+                ext/emu2413.h
+                ext/panning.c
+                ext/panning.h
+                ext/emutypes.h
+                ext/2413tone.h
+                ext/vrc7tone.h
                 Nsf_Emu.cpp
+                Nsf_Emu.h
         )
 endif()
 

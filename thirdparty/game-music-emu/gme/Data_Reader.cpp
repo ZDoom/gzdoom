@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <algorithm>
 
 /* Copyright (C) 2005-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
@@ -21,12 +22,14 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #include "blargg_source.h"
 
 #ifdef HAVE_ZLIB_H
-// [ZMusic] Use miniz.
 #include <miniz.h>
 #include <stdlib.h>
 #include <errno.h>
 static const unsigned char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 #endif /* HAVE_ZLIB_H */
+
+using std::min;
+using std::max;
 
 const char Data_Reader::eof_error [] = "Unexpected end of file";
 
@@ -302,7 +305,7 @@ blargg_err_t Callback_Reader::read( void* out, long count )
 
 // Std_File_Reader
 
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
+#ifdef HAVE_ZLIB_H
 
 static const char* get_gzip_eof( const char* path, long* eof )
 {
@@ -334,7 +337,7 @@ static const char* get_gzip_eof( const char* path, long* eof )
 
 Std_File_Reader::Std_File_Reader() :
 	file_( nullptr )
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
 	, size_( 0 )
 #endif
 { }
@@ -343,7 +346,7 @@ Std_File_Reader::~Std_File_Reader() { close(); }
 
 blargg_err_t Std_File_Reader::open( const char* path )
 {
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
 	// zlib transparently handles uncompressed data if magic header
 	// not present but we still need to grab size
 	RETURN_ERR( get_gzip_eof( path, &size_ ) );
@@ -359,21 +362,23 @@ blargg_err_t Std_File_Reader::open( const char* path )
 
 long Std_File_Reader::size() const
 {
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
-	if ( file_ )
-		return size_; // Set for both compressed and uncompressed modes
-#endif
+	if ( !file_ )
+		return -1L;
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
+	return size_; // Set for both compressed and uncompressed modes
+#else
 	long pos = tell();
 	fseek( (FILE*) file_, 0, SEEK_END );
 	long result = tell();
 	fseek( (FILE*) file_, pos, SEEK_SET );
 	return result;
+#endif
 }
 
 long Std_File_Reader::read_avail( void* p, long s )
 {
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
-	if ( file_ && s > 0 && s <= UINT_MAX ) {
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
+	if ( file_ && s > 0 && static_cast<unsigned long>(s) <= UINT_MAX ) {
 		return gzread( reinterpret_cast<gzFile>(file_),
 			p, static_cast<unsigned>(s) );
 	}
@@ -387,59 +392,62 @@ long Std_File_Reader::read_avail( void* p, long s )
 
 blargg_err_t Std_File_Reader::read( void* p, long s )
 {
-	RETURN_VALIDITY_CHECK( s > 0 && s <= UINT_MAX );
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
-	if ( file_ )
-	{
-		const auto &gzfile = reinterpret_cast<gzFile>( file_ );
-		if ( s == gzread( gzfile, p, static_cast<unsigned>( s ) ) )
-			return nullptr;
-		if ( gzeof( gzfile ) )
-			return eof_error;
-		return "Couldn't read from GZ file";
-	}
-#endif
+	if ( !file_ )
+		return "NULL FILE pointer";
+
+	RETURN_VALIDITY_CHECK( s > 0 && static_cast<unsigned long>(s) <= UINT_MAX );
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
+	const auto &gzfile = reinterpret_cast<gzFile>( file_ );
+	if ( s == gzread( gzfile, p, static_cast<unsigned>( s ) ) )
+		return nullptr;
+	if ( gzeof( gzfile ) )
+		return eof_error;
+	return "Couldn't read from GZ file";
+#else
 	const auto &file = reinterpret_cast<FILE*>( file_ );
 	if ( s == static_cast<long>( fread( p, 1, static_cast<size_t>(s), file ) ) )
 		return 0;
 	if ( feof( file ) )
 		return eof_error;
 	return "Couldn't read from file";
+#endif
 }
 
 long Std_File_Reader::tell() const
 {
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
-	if ( file_ )
-		return gztell( reinterpret_cast<gzFile>( file_ ) );
-#endif
+	if ( !file_ )
+		return -1L;
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
+	return gztell( reinterpret_cast<gzFile>( file_ ) );
+#else
 	return ftell( reinterpret_cast<FILE*>( file_ ) );
+#endif
 }
 
 blargg_err_t Std_File_Reader::seek( long n )
 {
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
-	if ( file_ )
-	{
-		if ( gzseek( reinterpret_cast<gzFile>( file_ ), n, SEEK_SET ) >= 0 )
-			return nullptr;
-		if ( n > size_ )
-			return eof_error;
-		return "Error seeking in GZ file";
-	}
-#endif
+	if ( !file_ )
+		return "NULL FILE pointer";
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
+	if ( gzseek( reinterpret_cast<gzFile>( file_ ), n, SEEK_SET ) >= 0 )
+		return nullptr;
+	if ( n > size_ )
+		return eof_error;
+	return "Error seeking in GZ file";
+#else
 	if ( !fseek( reinterpret_cast<FILE*>( file_ ), n, SEEK_SET ) )
 		return nullptr;
 	if ( n > size() )
 		return eof_error;
 	return "Error seeking in file";
+#endif
 }
 
 void Std_File_Reader::close()
 {
 	if ( file_ )
 	{
-#if 0//[ZDOOM:unneeded]def HAVE_ZLIB_H
+#if 0 //[ZMusic not needed]def HAVE_ZLIB_H
 		gzclose( reinterpret_cast<gzFile>( file_ ) );
 #else
 		fclose( reinterpret_cast<FILE*>( file_ ) );
@@ -447,4 +455,3 @@ void Std_File_Reader::close()
 		file_ = nullptr;
 	}
 }
-

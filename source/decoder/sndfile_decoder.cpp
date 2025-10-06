@@ -43,11 +43,11 @@ FModule SndFileModule{"SndFile"};
 
 
 #ifdef _WIN32
-static const char* libnames[] = { "sndfile.dll", "libsndfile-1.dll" };
+static const char* const libnames[] = { "sndfile.dll", "libsndfile-1.dll" };
 #elif defined(__APPLE__)
-static const char* libnames[] = { "libsndfile.1.dylib" };
+static const char* const libnames[] = { "libsndfile.1.dylib" };
 #else
-static const char* libnames[] = { "libsndfile.so.1" };
+static const char* const libnames[] = { "libsndfile.so.1" };
 #endif
 
 extern "C" int IsSndFilePresent()

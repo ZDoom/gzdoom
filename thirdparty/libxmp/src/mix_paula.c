@@ -115,8 +115,8 @@ static void do_clock(struct paula_state *paula, int cycles)
 } while (0)
 
 #define MIX_STEREO() do { \
-	*(buffer++) += smp_in * vr; \
 	*(buffer++) += smp_in * vl; \
+	*(buffer++) += smp_in * vr; \
 } while (0)
 
 #define VAR_NORM(x) \
@@ -134,28 +134,28 @@ static void do_clock(struct paula_state *paula, int cycles)
     vl <<= 8; \
     vr <<= 8
 
-MIXER(mono_a500)
+MIXER(monoout_mono_a500)
 {
 	VAR_PAULA_MONO(int8);
 
 	LOOP { PAULA_SIMULATION(0); MIX_MONO(); }
 }
 
-MIXER(mono_a500_filter)
+MIXER(monoout_mono_a500_filter)
 {
 	VAR_PAULA_MONO(int8);
 
 	LOOP { PAULA_SIMULATION(1); MIX_MONO(); }
 }
 
-MIXER(stereo_a500)
+MIXER(stereoout_mono_a500)
 {
 	VAR_PAULA(int8);
 
 	LOOP { PAULA_SIMULATION(0); MIX_STEREO(); }
 }
 
-MIXER(stereo_a500_filter)
+MIXER(stereoout_mono_a500_filter)
 {
 	VAR_PAULA(int8);
 

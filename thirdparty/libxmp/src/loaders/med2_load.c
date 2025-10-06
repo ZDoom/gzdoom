@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
  * MED 1.12 is in Fish disk #255
  */
 
+#include "med.h"
 #include "loader.h"
 #include "../period.h"
 
@@ -184,58 +185,9 @@ static int med2_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	D_(D_INFO "Instruments    : %d ", mod->ins);
 
 	for (i = 0; i < 31; i++) {
-		char path[XMP_MAXPATH];
-		char ins_path[256];
-		char ins_name[32];
-		char name[256];
-		HIO_HANDLE *s = NULL;
-		int found = 0;
-
-		if (libxmp_copy_name_for_fopen(ins_name, mod->xxi[i].name, 32) != 0)
-			continue;
-
-		libxmp_get_instrument_path(m, ins_path, 256);
-		if (libxmp_check_filename_case(ins_path, ins_name, name, 256)) {
-			snprintf(path, XMP_MAXPATH, "%s/%s", ins_path, name);
-			found = 1;
-		}
-
-		/* Try the module dir if the instrument path didn't work. */
-		if (!found && m->dirname != NULL &&
-		    libxmp_check_filename_case(m->dirname, ins_name, name, 256)) {
-			snprintf(path, XMP_MAXPATH, "%s%s", m->dirname, name);
-			found = 1;
-		}
-
-		if (found) {
-			if ((s = hio_open(path,"rb")) != NULL) {
-				mod->xxs[i].len = hio_size(s);
-			}
-		}
-
-		if (mod->xxs[i].len > 0) {
-			mod->xxi[i].nsm = 1;
-		}
-
-		if (!strlen(mod->xxi[i].name) && !mod->xxs[i].len) {
-			if (s != NULL) {
-				hio_close(s);
-			}
-			continue;
-		}
-
-		D_(D_INFO "[%2X] %-32.32s %04x %04x %04x %c V%02x",
-			i, mod->xxi[i].name, mod->xxs[i].len, mod->xxs[i].lps,
-			mod->xxs[i].lpe,
-			mod->xxs[i].flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
-			mod->xxi[i].sub[0].vol);
-
-		if (s != NULL) {
-			int ret = libxmp_load_sample(m, s, 0, &mod->xxs[i], NULL);
-			hio_close(s);
-			if (ret < 0) {
-				return -1;
-			}
+		if (med_load_external_instrument(f, m, i)) {
+			D_(D_CRIT "error loading instrument %d", i);
+			return -1;
 		}
 	}
 

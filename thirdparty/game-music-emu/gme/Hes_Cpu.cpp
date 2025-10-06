@@ -37,14 +37,16 @@ int const ram_addr = 0x2000;
 #endif
 
 // status flags
-int const st_n = 0x80;
-int const st_v = 0x40;
-int const st_t = 0x20;
-int const st_b = 0x10;
-int const st_d = 0x08;
-int const st_i = 0x04;
-int const st_z = 0x02;
-int const st_c = 0x01;
+enum {
+    st_n = 0x80,
+    st_v = 0x40,
+    st_t = 0x20,
+    st_b = 0x10,
+    st_d = 0x08,
+    st_i = 0x04,
+    st_z = 0x02,
+    st_c = 0x01
+};
 
 void Hes_Cpu::reset()
 {
@@ -262,6 +264,7 @@ possibly_out_of_time:
 	case 0xFF:
 		if ( pc == idle_addr + 1 )
 			goto idle_done;
+		// FALLTHRU
 	case 0x0F: // BBRn
 	case 0x1F:
 	case 0x2F:
@@ -289,7 +292,7 @@ possibly_out_of_time:
 		goto loop;
 
 	case 0x7C: // JMP (ind+X)
-		data += x;
+		data += x; // FALLTHRU
 	case 0x6C:{// JMP (ind)
 		data += 0x100 * GET_MSB();
 		pc = GET_LE16( &READ_PROG( data ) );
@@ -341,7 +344,7 @@ possibly_out_of_time:
 	}
 
 	case 0x95: // STA zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x); // FALLTHRU
 	case 0x85: // STA zp
 		pc++;
 		WRITE_LOW( data, a );
@@ -441,7 +444,7 @@ possibly_out_of_time:
 // Bit operations
 
 	case 0x3C: // BIT abs,x
-		data += x;
+		data += x; // FALLTHRU
 	case 0x2C:{// BIT abs
 		uint_fast16_t addr;
 		ADD_PAGE( addr );
@@ -451,9 +454,9 @@ possibly_out_of_time:
 		goto bit_common;
 	}
 	case 0x34: // BIT zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x); // FALLTHRU
 	case 0x24: // BIT zp
-		data = READ_LOW( data );
+		data = READ_LOW( data ); // FALLTHRU
 	case 0x89: // BIT imm
 		nz = data;
 	bit_common:
@@ -550,7 +553,7 @@ possibly_out_of_time:
 // Load/store
 
 	case 0x9E: // STZ abs,x
-		data += x;
+		data += x; // FALLTHRU
 	case 0x9C: // STZ abs
 		ADD_PAGE( data );
 		pc++;
@@ -560,30 +563,30 @@ possibly_out_of_time:
 		goto loop;
 
 	case 0x74: // STZ zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x); // FALLTHRU
 	case 0x64: // STZ zp
 		pc++;
 		WRITE_LOW( data, 0 );
 		goto loop;
 
 	case 0x94: // STY zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x); // FALLTHRU
 	case 0x84: // STY zp
 		pc++;
 		WRITE_LOW( data, y );
 		goto loop;
 
 	case 0x96: // STX zp,y
-		data = uint8_t (data + y);
+		data = uint8_t (data + y); // FALLTHRU
 	case 0x86: // STX zp
 		pc++;
 		WRITE_LOW( data, x );
 		goto loop;
 
 	case 0xB6: // LDX zp,y
-		data = uint8_t (data + y);
+		data = uint8_t (data + y); // FALLTHRU
 	case 0xA6: // LDX zp
-		data = READ_LOW( data );
+		data = READ_LOW( data ); // FALLTHRU
 	case 0xA2: // LDX #imm
 		pc++;
 		x = data;
@@ -591,9 +594,9 @@ possibly_out_of_time:
 		goto loop;
 
 	case 0xB4: // LDY zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x); // FALLTHRU
 	case 0xA4: // LDY zp
-		data = READ_LOW( data );
+		data = READ_LOW( data ); // FALLTHRU
 	case 0xA0: // LDY #imm
 		pc++;
 		y = data;
@@ -603,6 +606,7 @@ possibly_out_of_time:
 	case 0xBC: // LDY abs,X
 		data += x;
 		PAGE_CROSS_PENALTY( data );
+		// FALLTHRU
 	case 0xAC:{// LDY abs
 		uint_fast16_t addr = data + 0x100 * GET_MSB();
 		pc += 2;
@@ -641,7 +645,7 @@ possibly_out_of_time:
 	}
 
 	case 0xE4: // CPX zp
-		data = READ_LOW( data );
+		data = READ_LOW( data ); // FALLTHRU
 	case 0xE0: // CPX #imm
 	cpx_data:
 		nz = x - data;
@@ -660,7 +664,7 @@ possibly_out_of_time:
 	}
 
 	case 0xC4: // CPY zp
-		data = READ_LOW( data );
+		data = READ_LOW( data ); // FALLTHRU
 	case 0xC0: // CPY #imm
 	cpy_data:
 		nz = y - data;
@@ -673,7 +677,7 @@ possibly_out_of_time:
 
 #define ARITH_ADDR_MODES( op )\
 	case op - 0x04: /* (ind,x) */\
-		data = uint8_t (data + x);\
+		data = uint8_t (data + x);/*FALLTHRU*/\
 	case op + 0x0D: /* (ind) */\
 		data = 0x100 * READ_LOW( uint8_t (data + 1) ) + READ_LOW( data );\
 		goto ptr##op;\
@@ -684,7 +688,7 @@ possibly_out_of_time:
 		goto ptr##op;\
 	}\
 	case op + 0x10: /* zp,X */\
-		data = uint8_t (data + x);\
+		data = uint8_t (data + x);/*FALLTHRU*/\
 	case op + 0x00: /* zp */\
 		data = READ_LOW( data );\
 		goto imm##op;\
@@ -693,14 +697,15 @@ possibly_out_of_time:
 		goto ind##op;\
 	case op + 0x18: /* abs,X */\
 		data += x;\
-	ind##op:\
-		PAGE_CROSS_PENALTY( data );\
+		goto ind##op;/*WORKAROUND: Mute a fallthrough warning*/\
+	ind##op:/*FALLTHRU*/\
+		PAGE_CROSS_PENALTY( data );/*FALLTHRU*/\
 	case op + 0x08: /* abs */\
-		ADD_PAGE( data );\
+		ADD_PAGE( data );/*FALLTHRU*/\
 	ptr##op:\
 		FLUSH_TIME();\
 		data = READ( data );\
-		CACHE_TIME();\
+		CACHE_TIME();/*FALLTHRU*/\
 	case op + 0x04: /* imm */\
 	imm##op:
 
@@ -733,6 +738,7 @@ possibly_out_of_time:
 		goto adc_imm;
 
 	ARITH_ADDR_MODES( 0x65 ) // ADC
+		/*FALLTHRU*/
 	adc_imm: {
 		if ( status & st_d )
 			debug_printf( "Decimal mode not supported\n" );
@@ -749,7 +755,7 @@ possibly_out_of_time:
 // Shift/rotate
 
 	case 0x4A: // LSR A
-		c = 0;
+		c = 0; // FALLTHRU
 	case 0x6A: // ROR A
 		nz = c >> 1 & 0x80;
 		c = a << 8;
@@ -773,9 +779,9 @@ possibly_out_of_time:
 	}
 
 	case 0x5E: // LSR abs,X
-		data += x;
+		data += x;/*FALLTHRU*/
 	case 0x4E: // LSR abs
-		c = 0;
+		c = 0;/*FALLTHRU*/
 	case 0x6E: // ROR abs
 	ror_abs: {
 		ADD_PAGE( data );
@@ -791,9 +797,9 @@ possibly_out_of_time:
 		goto rol_abs;
 
 	case 0x1E: // ASL abs,X
-		data += x;
+		data += x;/*FALLTHRU*/
 	case 0x0E: // ASL abs
-		c = 0;
+		c = 0;/*FALLTHRU*/
 	case 0x2E: // ROL abs
 	rol_abs:
 		ADD_PAGE( data );
@@ -815,9 +821,9 @@ possibly_out_of_time:
 		goto ror_zp;
 
 	case 0x56: // LSR zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x);/*FALLTHRU*/
 	case 0x46: // LSR zp
-		c = 0;
+		c = 0;/*FALLTHRU*/
 	case 0x66: // ROR zp
 	ror_zp: {
 		int temp = READ_LOW( data );
@@ -831,9 +837,9 @@ possibly_out_of_time:
 		goto rol_zp;
 
 	case 0x16: // ASL zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x);/*FALLTHRU*/
 	case 0x06: // ASL zp
-		c = 0;
+		c = 0;/*FALLTHRU*/
 	case 0x26: // ROL zp
 	rol_zp:
 		nz = c >> 8 & 1;
@@ -863,15 +869,15 @@ possibly_out_of_time:
 		INC_DEC_AXY( y, -1 )
 
 	case 0xF6: // INC zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x);/*FALLTHRU*/
 	case 0xE6: // INC zp
 		nz = 1;
 		goto add_nz_zp;
 
 	case 0xD6: // DEC zp,x
-		data = uint8_t (data + x);
+		data = uint8_t (data + x);/*FALLTHRU*/
 	case 0xC6: // DEC zp
-		nz = (unsigned) -1;
+		nz = (uint_fast16_t)-1;
 	add_nz_zp:
 		nz += READ_LOW( data );
 	write_nz_zp:
@@ -896,7 +902,7 @@ possibly_out_of_time:
 	case 0xCE: // DEC abs
 		data = GET_ADDR();
 	dec_ptr:
-		nz = (unsigned) -1;
+		nz = (uint_fast16_t) -1;
 	inc_common:
 		FLUSH_TIME();
 		nz += READ( data );
@@ -1033,7 +1039,7 @@ possibly_out_of_time:
 // Flags
 
 	case 0x38: // SEC
-		c = (unsigned) ~0;
+		c = (uint_fast16_t) ~0;
 		goto loop;
 
 	case 0x18: // CLC

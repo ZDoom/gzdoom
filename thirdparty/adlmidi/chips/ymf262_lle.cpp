@@ -27,7 +27,7 @@ Ymf262LLEOPL3::Ymf262LLEOPL3() :
     OPLChipBaseT()
 {
     m_chip = nopl3_init(14318182, m_rate);
-    setRate(m_rate);
+    Ymf262LLEOPL3::setRate(m_rate);
 }
 
 Ymf262LLEOPL3::~Ymf262LLEOPL3()
@@ -50,8 +50,7 @@ void Ymf262LLEOPL3::reset()
 
 void Ymf262LLEOPL3::writeReg(uint16_t addr, uint8_t data)
 {
-    nopl3_write(m_chip, 2 * ((addr >> 8) & 3), addr);
-    nopl3_write(m_chip, 1, data);
+    nopl3_write_buf(m_chip, addr, data);
 }
 
 void Ymf262LLEOPL3::writePan(uint16_t addr, uint8_t data)

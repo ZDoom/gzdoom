@@ -30,7 +30,7 @@ extern "C" {
 
 #define ADLMIDI_VERSION_MAJOR       1
 #define ADLMIDI_VERSION_MINOR       6
-#define ADLMIDI_VERSION_PATCHLEVEL  0
+#define ADLMIDI_VERSION_PATCHLEVEL  1
 
 #define ADLMIDI_TOSTR_I(s) #s
 #define ADLMIDI_TOSTR(s) ADLMIDI_TOSTR_I(s)
@@ -550,9 +550,20 @@ extern ADLMIDI_DECLSPEC void adl_setHTremolo(struct ADL_MIDIPlayer *device, int 
 extern ADLMIDI_DECLSPEC int adl_getHTremolo(struct ADL_MIDIPlayer *device);
 
 /**
- * @brief Override Enable(1) or Disable(0) scaling of modulator volumes. -1 - use bank default scaling of modulator volumes
+ * @brief Override Enable(1) or Disable(0) scaling of modulators by volumes. -1 - use bank default scaling of modulator volumes
  * @param device Instance of the library
  * @param smod 0 - disabled, 1 - enabled
+ *
+ * When this feature is enabled, all the modulators will scale together with the volume
+ * that will cuase an effect of sound smoothing. However, it's better to use the CC74
+ * to explicitly control the volume of modulators when it's needed, otherwise using
+ * of this feature causes a lot of problems. It's possible that this feature will be
+ * removed eventually and this function will become useless.
+ *
+ * IMPORTANT: If you develop music player or plugin, or integrate this to somewhere,
+ * suggested to don't add binding to this feature and keep it always disabled.
+ *
+ * Details: https://github.com/Wohlstand/libOPNMIDI/issues/125
  */
 extern ADLMIDI_DECLSPEC void adl_setScaleModulators(struct ADL_MIDIPlayer *device, int smod);
 

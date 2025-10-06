@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -194,6 +194,7 @@ static int mmd3_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	 * convert header
 	 */
 	m->c4rate = C4_NTSC_RATE;
+	m->quirk |= QUIRK_RTONCE; /* FF1 */
 	m->quirk |= song.flags & FLAG_STSLIDE ? 0 : QUIRK_VSALL | QUIRK_PBALL;
 	hexvol = song.flags & FLAG_VOLHEX;
 	med_8ch = song.flags & FLAG_8CHANNEL;
@@ -383,10 +384,7 @@ static int mmd3_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
 	mod->trk = mod->pat * mod->chn;
 
-	if (ver == 2)
-		libxmp_set_type(m, "OctaMED v5 MMD2");
-	else
-		libxmp_set_type(m, "OctaMED Soundstudio MMD%c", '0' + ver);
+	mmd_tracker_version(m, ver, 0, expdata_offset ? &expdata : NULL);
 
 	MODULE_INFO();
 

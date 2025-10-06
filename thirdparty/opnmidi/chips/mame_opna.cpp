@@ -171,6 +171,11 @@ const char *MameOPNA::emulatorName()
     return "MAME YM2608";  // git 2018-12-15 rev 8ab05c0
 }
 
+bool MameOPNA::hasFullPanning()
+{
+    return true;
+}
+
 uint8_t MameOPNA::Impl::cbInternalReadByte(device_t *dev, offs_t off)
 {
     (void)dev;

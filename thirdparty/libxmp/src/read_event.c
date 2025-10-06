@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
 #include "effects.h"
 #include "virtual.h"
 #include "period.h"
+#include "rng.h"
 
 #ifndef LIBXMP_CORE_PLAYER
 #include "med_extras.h"
@@ -175,7 +176,13 @@ static void set_period(struct context_data *ctx, int note,
 {
 	struct module_data *m = &ctx->m;
 
-	if (sub != NULL && note >= 0) {
+	/* TODO: blocking period updates on whether or not the event has a
+	 * valid instrument seems suspicious, but almost every format uses
+	 * this. Only allow Protracker to update without it for now. */
+	if (sub == NULL && !HAS_QUIRK(QUIRK_PROTRACK))
+		return;
+
+	if (note >= 0) {
 		double per = libxmp_note_to_period(ctx, note, xc->finetune,
 							xc->per_adj);
 
@@ -220,6 +227,8 @@ static void set_period_ft2(struct context_data *ctx, int note,
 #define IS_TONEPORTA(x) ((x) == FX_TONEPORTA || (x) == FX_TONE_VSLIDE)
 #endif
 
+#define IS_MOD_RETRIG(x,p) ((x) == FX_EXTENDED && MSN(p) == EX_RETRIG && LSN(p) != 0)
+
 #define set_patch(ctx,chn,ins,smp,note) \
 	libxmp_virt_setpatch(ctx, chn, ins, smp, note, 0, 0, 0, 0)
 
@@ -230,18 +239,24 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 	struct xmp_module *mod = &m->mod;
 	struct channel_data *xc = &p->xc_data[chn];
 	int note;
-	struct xmp_subinstrument *sub;
+	struct xmp_subinstrument *sub = NULL;
 	int new_invalid_ins = 0;
+	int new_swap_ins = 0;
 	int is_toneporta;
+	int is_retrig;
 	int use_ins_vol;
 
 	xc->flags = 0;
 	note = -1;
 	is_toneporta = 0;
+	is_retrig = 0;
 	use_ins_vol = 0;
 
 	if (IS_TONEPORTA(e->fxt) || IS_TONEPORTA(e->f2t)) {
 		is_toneporta = 1;
+	}
+	if (IS_MOD_RETRIG(e->fxt, e->fxp) || IS_MOD_RETRIG(e->f2t, e->f2p)) {
+		is_retrig = 1;
 	}
 
 	/* Check instrument */
@@ -258,6 +273,18 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 		if (IS_VALID_INSTRUMENT(ins)) {
 			sub = get_subinstrument(ctx, ins, e->note - 1);
 
+			if (sub != NULL) {
+				new_swap_ins = 1;
+
+				/* Finetune is always loaded, but only applies
+				 * when the period is updated by a note/porta
+				 * (OpenMPT finetune.mod, PortaSwapPT.mod). */
+				if (HAS_QUIRK(QUIRK_PROTRACK)) {
+					xc->finetune = sub->fin;
+					xc->ins = ins;
+				}
+			}
+
 			if (is_toneporta) {
 				/* Get new instrument volume */
 				if (sub != NULL) {
@@ -272,16 +299,26 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 			} else {
 				xc->ins = ins;
 				xc->ins_fade = mod->xxi[ins].rls;
-
-				if (sub != NULL) {
-					if (HAS_QUIRK(QUIRK_PROTRACK)) {
-						xc->finetune = sub->fin;
-					}
-				}
 			}
 		} else {
 			new_invalid_ins = 1;
-			libxmp_virt_resetchannel(ctx, chn);
+
+			/* Invalid instruments do not reset the channel in
+			 * Protracker; instead, they set the current sample
+			 * to the invalid sample, which stops the current
+			 * sample at the end of its loop.
+			 *
+			 * OpenMPT PTInstrSwap.mod: uses a null sample to pause
+			 * a looping sample, plays several on a channel with no note.
+			 *
+			 * OpenMPT PTSwapEmpty.mod: repeatedly pauses and
+			 * restarts a sample using a null sample.
+			 */
+			if (!HAS_QUIRK(QUIRK_PROTRACK) || is_retrig) {
+				libxmp_virt_resetchannel(ctx, chn);
+			} else {
+				libxmp_virt_queuepatch(ctx, chn, -1, -1, 0);
+			}
 		}
 	}
 
@@ -299,26 +336,46 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 
 			sub = get_subinstrument(ctx, xc->ins, xc->key);
 
-			if (!new_invalid_ins && sub != NULL) {
+			if (sub != NULL) {
 				int transp = mod->xxi[xc->ins].map[xc->key].xpo;
 				int smp;
 
 				note = xc->key + sub->xpo + transp;
 				smp = sub->sid;
 
-				if (!IS_VALID_SAMPLE(smp)) {
+				if (new_invalid_ins || !IS_VALID_SAMPLE(smp)) {
 					smp = -1;
 				}
 
 				if (smp >= 0 && smp < mod->smp) {
 					set_patch(ctx, chn, xc->ins, smp, note);
+					new_swap_ins = 0;
 					xc->smp = smp;
 				}
 			} else {
 				xc->flags = 0;
 				use_ins_vol = 0;
+				note = xc->key;
 			}
 		}
+
+		if (note >= 0) {
+			xc->note = note;
+			SET_NOTE(NOTE_SET);
+		}
+	}
+
+	/* Protracker 1/2 sample swap occurs when a sample number is
+	 * encountered without a note or with a note and toneporta. The new
+	 * instrument is switched to when the current sample reaches its loop
+	 * end. A valid note must have been played in this channel before.
+	 *
+	 * Empty samples can also be set, which stops the sample at the end
+	 * of its loop (see above).
+	 */
+	if (new_swap_ins && sub && HAS_QUIRK(QUIRK_PROTRACK) && TEST_NOTE(NOTE_SET)) {
+		libxmp_virt_queuepatch(ctx, chn, e->ins - 1, sub->sid, xc->note);
+		xc->smp = sub->sid;
 	}
 
 	sub = get_subinstrument(ctx, xc->ins, xc->key);
@@ -353,9 +410,13 @@ static int read_event_mod(struct context_data *ctx, struct xmp_event *e, int chn
 		return 0;
 	}
 
-	if (note >= 0) {
-		xc->note = note;
+	if (note >= 0 && !new_invalid_ins) {
 		libxmp_virt_voicepos(ctx, chn, xc->offset.val);
+	} else if (new_swap_ins && is_retrig && HAS_QUIRK(QUIRK_PROTRACK)) {
+		/* Protracker: an instrument number with no note and retrigger
+		 * triggers the new sample on tick 0. Other effects that set
+		 * RETRIG should not. (OpenMPT InstrSwapRetrigger.mod) */
+		libxmp_virt_voicepos(ctx, chn, 0);
 	}
 
 	if (TEST(OFFSET)) {
@@ -1234,7 +1295,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 			rvv = sub->rvv & 0xff;
 			if (rvv) {
 				CLAMP(rvv, 0, 100);
-				xc->rvv = rand() % (rvv + 1);
+				xc->rvv = libxmp_get_random(&ctx->rng, rvv + 1);
 			} else {
 				xc->rvv = 0;
 			}
@@ -1243,7 +1304,7 @@ static int read_event_it(struct context_data *ctx, struct xmp_event *e, int chn)
 			rvv = (sub->rvv & 0xff00) >> 8;
 			if (rvv) {
 				CLAMP(rvv, 0, 64);
-				xc->rpv = rand() % (rvv + 1) - (rvv / 2);
+				xc->rpv = libxmp_get_random(&ctx->rng, rvv + 1) - (rvv / 2);
 			} else {
 				xc->rpv = 0;
 			}

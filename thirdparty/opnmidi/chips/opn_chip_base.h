@@ -82,6 +82,11 @@ public:
     virtual void generateAndMix32(int32_t *output, size_t frames) = 0;
 
     virtual const char* emulatorName() = 0;
+    /**
+     * @brief Does emulator has the per-channel full-panning extension?
+     * @return true if emulator has this extension, false if emulator has only original behaviour
+     */
+    virtual bool hasFullPanning() = 0;
 private:
     OPNChipBase(const OPNChipBase &c);
     OPNChipBase &operator=(const OPNChipBase &c);

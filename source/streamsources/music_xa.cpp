@@ -49,13 +49,13 @@ typedef struct XASector {
     SoundGroup SoundGroups[18];
 } XASector;
 
-static double K0[4] = {
+static const double K0[4] = {
     0.0,
     0.9375,
     1.796875,
     1.53125
 };
-static double K1[4] = {
+static const double K1[4] = {
     0.0,
     0.0,
     -0.8125,

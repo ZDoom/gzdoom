@@ -335,7 +335,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 	}
 	if (selectedDevice != requestedDevice && (selectedDevice != lastSelectedDevice || requestedDevice != lastRequestedDevice))
 	{
-		static const char *devnames[] = {
+		static const char *const devnames[] = {
 			"System Default",
 			"OPL",
 			"",

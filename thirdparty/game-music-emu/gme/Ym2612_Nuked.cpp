@@ -2,6 +2,8 @@
 
 // Based on Nuked OPN2 ym3438.c and ym3438.h
 
+#ifdef VGM_YM2612_NUKED
+
 #include "Ym2612_Nuked.h"
 
 /*
@@ -1839,7 +1841,7 @@ const char *Ym2612_Nuked_Emu::set_rate(double sample_rate, double clock_rate)
 void Ym2612_Nuked_Emu::reset()
 {
 	Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t*>(impl);
-	if ( !chip_r ) Ym2612_NukedImpl::OPN2_Reset( chip_r, static_cast<Bit32u>(prev_sample_rate), static_cast<Bit32u>(prev_clock_rate) );
+	if ( chip_r ) Ym2612_NukedImpl::OPN2_Reset( chip_r, static_cast<Bit32u>(prev_sample_rate), static_cast<Bit32u>(prev_clock_rate) );
 }
 
 void Ym2612_Nuked_Emu::mute_voices(int mask)
@@ -1868,5 +1870,7 @@ void Ym2612_Nuked_Emu::run(int pair_count, Ym2612_Nuked_Emu::sample_t *out)
 {
 	Ym2612_NukedImpl::ym3438_t *chip_r = reinterpret_cast<Ym2612_NukedImpl::ym3438_t*>(impl);
 	if ( !chip_r ) return;
-	Ym2612_NukedImpl::OPN2_GenerateStream(chip_r, out, pair_count);
+	Ym2612_NukedImpl::OPN2_GenerateStreamMix(chip_r, out, pair_count);
 }
+
+#endif /* VGM_YM2612_NUKED */

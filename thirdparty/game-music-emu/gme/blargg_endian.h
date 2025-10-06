@@ -19,36 +19,12 @@
 
 // BLARGG_BIG_ENDIAN, BLARGG_LITTLE_ENDIAN: Determined automatically, otherwise only
 // one may be #defined to 1. Only needed if something actually depends on byte order.
-#if !defined (BLARGG_BIG_ENDIAN) && !defined (BLARGG_LITTLE_ENDIAN)
-#ifdef __GLIBC__
-	// GCC handles this for us
-	#include <endian.h>
-	#if __BYTE_ORDER == __LITTLE_ENDIAN
-		#define BLARGG_LITTLE_ENDIAN 1
-	#elif __BYTE_ORDER == __BIG_ENDIAN
-		#define BLARGG_BIG_ENDIAN 1
-	#endif
-#else
-
-#if defined (LSB_FIRST) || defined (__LITTLE_ENDIAN__) || BLARGG_CPU_X86 || \
-		(defined (LITTLE_ENDIAN) && LITTLE_ENDIAN+0 != 1234)
-	#define BLARGG_LITTLE_ENDIAN 1
+// BLARGG_BIG_ENDIAN or BLARGG_LITTLE_ENDIAN must be defined by the build system.
+#if !defined(BLARGG_BIG_ENDIAN) && !defined(BLARGG_LITTLE_ENDIAN)
+	#define BLARGG_LITTLE_ENDIAN 1	// little endian can now be assumed the default.
 #endif
-
-#if defined (MSB_FIRST)     || defined (__BIG_ENDIAN__) || defined (WORDS_BIGENDIAN) || \
-	defined (__sparc__)     ||  BLARGG_CPU_POWERPC || \
-	(defined (BIG_ENDIAN) && BIG_ENDIAN+0 != 4321)
-	#define BLARGG_BIG_ENDIAN 1
-#elif !defined (__mips__)
-	// No endian specified; assume little-endian, since it's most common
-	#define BLARGG_LITTLE_ENDIAN 1
-#endif
-#endif
-#endif
-
-#if BLARGG_LITTLE_ENDIAN && BLARGG_BIG_ENDIAN
-	#undef BLARGG_LITTLE_ENDIAN
-	#undef BLARGG_BIG_ENDIAN
+#if defined(BLARGG_BIG_ENDIAN) && defined(BLARGG_LITTLE_ENDIAN)
+	#error BLARGG_LITTLE_ENDIAN and BLARGG_BIG_ENDIAN are both defined.
 #endif
 
 inline void blargg_verify_byte_order()
@@ -132,7 +108,7 @@ inline void set_be32( void* p, blargg_ulong n )
 		#define GET_BE32( addr )        (*(uint32_t*) (addr))
 		#define SET_BE16( addr, data )  (void) (*(uint16_t*) (addr) = (data))
 		#define SET_BE32( addr, data )  (void) (*(uint32_t*) (addr) = (data))
-		
+
 		#if BLARGG_CPU_POWERPC
 			// PowerPC has special byte-reversed instructions
 			#if defined (__MWERKS__)
@@ -142,7 +118,7 @@ inline void set_be32( void* p, blargg_ulong n )
 				#define SET_LE32( addr, in )    (__stwbrx( in, addr, 0 ))
 			#elif defined (__GNUC__)
 				#define GET_LE16( addr )        ({unsigned short ppc_lhbrx_; __asm__ volatile( "lhbrx %0,0,%1" : "=r" (ppc_lhbrx_) : "r" (addr) : "memory" ); ppc_lhbrx_;})
-				#define GET_LE32( addr )        ({unsigned short ppc_lwbrx_; __asm__ volatile( "lwbrx %0,0,%1" : "=r" (ppc_lwbrx_) : "r" (addr) : "memory" ); ppc_lwbrx_;})
+				#define GET_LE32( addr )        ({unsigned int ppc_lwbrx_; __asm__ volatile( "lwbrx %0,0,%1" : "=r" (ppc_lwbrx_) : "r" (addr) : "memory" ); ppc_lwbrx_;})
 				#define SET_LE16( addr, in )    ({__asm__ volatile( "sthbrx %0,0,%1" : : "r" (in), "r" (addr) : "memory" );})
 				#define SET_LE32( addr, in )    ({__asm__ volatile( "stwbrx %0,0,%1" : : "r" (in), "r" (addr) : "memory" );})
 			#endif

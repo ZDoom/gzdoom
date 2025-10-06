@@ -179,15 +179,15 @@ void FMOPL3_Clock(fmopl3_t *chip)
     {
         if (chip->reg_sel1 && !bank_masked)
             chip->reg_test0 = chip->data_latch & 255;
+
         if (chip->reg_sel2 && !bank_masked)
             chip->reg_timer1 = chip->data_latch & 255;
+
         if (chip->reg_sel3 && !bank_masked)
             chip->reg_timer2 = chip->data_latch & 255;
 
         if (chip->reg_sel8 && !bank_masked)
-        {
             chip->reg_notesel = (chip->data_latch & 64) != 0;
-        }
 
         if (chip->reg_selbd && !bank_masked)
         {

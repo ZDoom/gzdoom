@@ -13,21 +13,25 @@ public:
 	blargg_err_t load( const char* path );
 	blargg_err_t load( Data_Reader& in );
 	blargg_err_t load( void const* data, long size );
-	
+
 	// Line number of first parse error, 0 if no error. Any lines with parse
 	// errors are ignored.
 	int first_error() const { return first_error_; }
-	
+
 	struct info_t
 	{
 		const char* title;
+		const char* artist;
+		const char* date;
 		const char* composer;
+		const char* sequencer;
 		const char* engineer;
 		const char* ripping;
 		const char* tagging;
+		const char* copyright;
 	};
 	info_t const& info() const { return info_; }
-	
+
 	struct entry_t
 	{
 		const char* file; // filename without stupid ::TYPE suffix
@@ -36,7 +40,7 @@ public:
 		bool decimal_track; // true if track was specified in hex
 		// integers are -1 if not present
 		int track;  // 1-based
-		int length; // seconds
+		int length; // milliseconds
 		int intro;
 		int loop;
 		int fade;
@@ -44,15 +48,15 @@ public:
 	};
 	entry_t const& operator [] ( int i ) const { return entries [i]; }
 	int size() const { return entries.size(); }
-	
+
 	void clear();
-	
+
 private:
 	blargg_vector<entry_t> entries;
 	blargg_vector<char> data;
 	int first_error_;
 	info_t info_;
-	
+
 	blargg_err_t parse();
 	blargg_err_t parse_();
 };

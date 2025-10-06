@@ -10,6 +10,16 @@
 extern const char *const mmd_inst_type[];
 #endif
 
+#define MED_VER_210		0x0210
+#define MED_VER_300		0x0300
+#define MED_VER_320		0x0320
+#define MED_VER_OCTAMED_200	0x2000
+#define MED_VER_OCTAMED_400	0x4000
+#define MED_VER_OCTAMED_500	0x5000
+#define MED_VER_OCTAMED_502	0x5002
+#define MED_VER_OCTAMED_SS_1	0x6000
+#define MED_VER_OCTAMED_SS_2	0x7000
+
 /* Structures as defined in the MED/OctaMED MMD0 and MMD1 file formats,
  * revision 1, described by Teijo Kinnunen in Apr 25 1992
  */
@@ -327,8 +337,11 @@ int mmd_alloc_tables(struct module_data *, int, struct SynthInstr *);
 
 int mmd_load_instrument(HIO_HANDLE *, struct module_data *, int, int,
 		struct MMD0exp *, struct InstrExt *, struct MMD0sample *, int);
+int med_load_external_instrument(HIO_HANDLE *, struct module_data *, int);
 
+int mmd_convert_tempo(int tempo, int bpm_on, int med_8ch);
 void mmd_set_bpm(struct module_data *, int, int, int, int);
 void mmd_info_text(HIO_HANDLE *, struct module_data *, int);
+int mmd_tracker_version(struct module_data *, int, int, struct MMD0exp *);
 
 #endif /* LIBXMP_MED_H */

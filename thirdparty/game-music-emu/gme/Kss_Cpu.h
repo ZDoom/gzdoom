@@ -17,35 +17,35 @@ class Kss_Cpu {
 public:
 	// Clear registers and map all pages to unmapped
 	void reset( void* unmapped_write, void const* unmapped_read );
-	
+
 	// Map memory. Start and size must be multiple of page_size.
-	enum { page_size = 0x2000 };
+	static const unsigned int page_size = 0x2000;
 	void map_mem( unsigned addr, blargg_ulong size, void* write, void const* read );
-	
+
 	// Map address to page
 	uint8_t* write( unsigned addr );
 	uint8_t const* read( unsigned addr );
-	
+
 	// Run until specified time is reached. Returns true if suspicious/unsupported
 	// instruction was encountered at any point during run.
 	bool run( cpu_time_t end_time );
-	
+
 	// Time of beginning of next instruction
 	cpu_time_t time() const             { return state->time + state->base; }
-	
+
 	// Alter current time. Not supported during run() call.
 	void set_time( cpu_time_t t )       { state->time = t - state->base; }
 	void adjust_time( int delta )       { state->time += delta; }
-	
+
 	#if BLARGG_BIG_ENDIAN
 		struct regs_t { uint8_t b, c, d, e, h, l, flags, a; };
 	#else
 		struct regs_t { uint8_t c, b, e, d, l, h, a, flags; };
 	#endif
-	BOOST_STATIC_ASSERT( sizeof (regs_t) == 8 );
-	
+	static_assert( sizeof (regs_t) == 8, "Invalid registers size, padding issue?" );
+
 	struct pairs_t { uint16_t bc, de, hl, fa; };
-	
+
 	// Registers are not updated until run() returns
 	struct registers_t {
 		uint16_t pc;
@@ -67,16 +67,16 @@ public:
 		uint8_t im;
 	};
 	//registers_t r; (below for efficiency)
-	
-	enum { idle_addr = 0xFFFF };
-	
+
+	static const unsigned int idle_addr = 0xFFFF;
+
 	// can read this far past end of a page
-	enum { cpu_padding = 0x100 };
-	
+	static const unsigned int cpu_padding = 0x100;
+
 public:
 	Kss_Cpu();
-	enum { page_shift = 13 };
-	enum { page_count = 0x10000 >> page_shift };
+	static const unsigned int page_shift = 13;
+	static const int page_count = 0x10000 >> page_shift;
 private:
 	uint8_t szpc [0x200];
 	cpu_time_t end_time_;

@@ -13,10 +13,10 @@ class Multi_Buffer {
 public:
 	Multi_Buffer( int samples_per_frame );
 	virtual ~Multi_Buffer() { }
-	
+
 	// Set the number of channels available
 	virtual blargg_err_t set_channel_count( int );
-	
+
 	// Get indexed channel, from 0 to channel count - 1
 	struct channel_t {
 		Blip_Buffer* center;
@@ -26,31 +26,31 @@ public:
 	enum { type_index_mask = 0xFF };
 	enum { wave_type = 0x100, noise_type = 0x200, mixed_type = wave_type | noise_type };
 	virtual channel_t channel( int index, int type ) = 0;
-	
+
 	// See Blip_Buffer.h
 	virtual blargg_err_t set_sample_rate( long rate, int msec = blip_default_length ) = 0;
 	virtual void clock_rate( long ) = 0;
 	virtual void bass_freq( int ) = 0;
 	virtual void clear() = 0;
 	long sample_rate() const;
-	
+
 	// Length of buffer, in milliseconds
 	int length() const;
-	
+
 	// See Blip_Buffer.h
 	virtual void end_frame( blip_time_t ) = 0;
-	
+
 	// Number of samples per output frame (1 = mono, 2 = stereo)
 	int samples_per_frame() const;
-	
+
 	// Count of changes to channel configuration. Incremented whenever
 	// a change is made to any of the Blip_Buffers for any channel.
 	unsigned channels_changed_count() { return channels_changed_count_; }
-	
+
 	// See Blip_Buffer.h
 	virtual long read_samples( blip_sample_t*, long ) = 0;
 	virtual long samples_avail() const = 0;
-	
+
 public:
 	BLARGG_DISABLE_NOTHROW
 protected:
@@ -59,7 +59,7 @@ private:
 	// noncopyable
 	Multi_Buffer( const Multi_Buffer& );
 	Multi_Buffer& operator = ( const Multi_Buffer& );
-	
+
 	unsigned channels_changed_count_;
 	long sample_rate_;
 	int length_;
@@ -73,7 +73,7 @@ class Mono_Buffer : public Multi_Buffer {
 public:
 	// Buffer used for all channels
 	Blip_Buffer* center() { return &buf; }
-	
+
 public:
 	Mono_Buffer();
 	~Mono_Buffer();
@@ -90,12 +90,12 @@ public:
 // Uses three buffers (one for center) and outputs stereo sample pairs.
 class Stereo_Buffer : public Multi_Buffer {
 public:
-	
+
 	// Buffers used for all channels
 	Blip_Buffer* center()       { return &bufs [0]; }
 	Blip_Buffer* left()         { return &bufs [1]; }
 	Blip_Buffer* right()        { return &bufs [2]; }
-	
+
 public:
 	Stereo_Buffer();
 	~Stereo_Buffer();
@@ -105,17 +105,17 @@ public:
 	void clear();
 	channel_t channel( int, int ) { return chan; }
 	void end_frame( blip_time_t );
-	
+
 	long samples_avail() const { return bufs [0].samples_avail() * 2; }
 	long read_samples( blip_sample_t*, long );
-	
+
 private:
 	enum { buf_count = 3 };
 	Blip_Buffer bufs [buf_count];
 	channel_t chan;
 	int stereo_added;
 	int was_stereo;
-	
+
 	void mix_stereo_no_center( blip_sample_t*, blargg_long );
 	void mix_stereo( blip_sample_t*, blargg_long );
 	void mix_mono( blip_sample_t*, blargg_long );

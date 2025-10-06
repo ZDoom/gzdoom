@@ -43,4 +43,12 @@
 /* client: */
 #define STB_VORBIS_HEADER_ONLY
 #include "vorbis.c"
+
+#else
+
+#ifdef _MSC_VER
+#pragma warning(disable:4456) /* shadowing (hides previous local decl) */
+#pragma warning(disable:4457) /* shadowing (hides function parameter.) */
+#endif
+
 #endif

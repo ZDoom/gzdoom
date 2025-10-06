@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
 #include "effects.h"
 #include "hmn_extras.h"
 
-static uint8 megaarp[16][16] = {
+static const uint8 megaarp[16][16] = {
 	{  0,  3,  7, 12, 15, 12,  7,  3,  0,  3,  7, 12, 15, 12,  7,  3 },
 	{  0,  4,  7, 12, 16, 12,  7,  4,  0,  4,  7, 12, 16, 12,  7,  4 },
 	{  0,  3,  8, 12, 15, 12,  8,  3,  0,  3,  8, 12, 15, 12,  8,  3 },
@@ -65,7 +65,7 @@ void libxmp_hmn_play_extras(struct context_data *ctx, struct channel_data *xc, i
 	}
 
 	xxi = &m->mod.xxi[xc->ins];
-	pos = ce->datapos;
+	pos = ce->datapos & 63; /* TODO: how are out of bounds values handled? */
 	waveform = HMN_INSTRUMENT_EXTRAS(m->mod.xxi[xc->ins])->data[pos];
 	volume = HMN_INSTRUMENT_EXTRAS(m->mod.xxi[xc->ins])->progvolume[pos] & 0x7f;
 

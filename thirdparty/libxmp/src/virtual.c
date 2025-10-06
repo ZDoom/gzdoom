@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -156,16 +156,14 @@ void libxmp_virt_off(struct context_data *ctx)
 {
 	struct player_data *p = &ctx->p;
 #ifdef LIBXMP_PAULA_SIMULATOR
-	struct module_data *m = &ctx->m;
 	int i;
 #endif
 
 #ifdef LIBXMP_PAULA_SIMULATOR
 	/* Free Paula simulator state */
-	if (IS_AMIGA_MOD()) {
-		for (i = 0; i < p->virt.maxvoc; i++) {
-			free(p->virt.voice_array[i].paula);
-		}
+	/* Player type may have been changed; always free this. */
+	for (i = 0; i < p->virt.maxvoc; i++) {
+		free(p->virt.voice_array[i].paula);
 	}
 #endif
 
@@ -554,6 +552,38 @@ int libxmp_virt_setpatch(struct context_data *ctx, int chn, int ins, int smp,
 	p->virt.voice_array[voc].key = key;
 
 	return chn;
+}
+
+int libxmp_virt_queuepatch(struct context_data *ctx, int chn, int ins, int smp, int note)
+{
+	/* Protracker 1/2 implements instrument swap in a strange way--the
+	 * volume/finetune take effect immediately but the sample change
+	 * does not apply until the current playing sample reaches the end of
+	 * its loop (or stops, if it's a one-off). */
+	struct player_data *p = &ctx->p;
+	int voc;
+
+	if ((uint32)chn >= p->virt.virt_channels) {
+		return -1;
+	}
+
+	if (ins < 0) {
+		smp = -1;
+	}
+
+	voc = p->virt.virt_channel[chn].map;
+	if (voc > FREE) {
+		libxmp_mixer_queuepatch(ctx, voc, smp);
+		if (ins >= 0) {
+			p->virt.voice_array[voc].ins = ins;
+		}
+		return chn;
+	}
+	/* Original sample stopped--start a new note. */
+	if (smp < 0) {
+		return -1;
+	}
+	return libxmp_virt_setpatch(ctx, chn, ins, smp, note, 0, 0, 0, 0);
 }
 
 void libxmp_virt_setperiod(struct context_data *ctx, int chn, double period)

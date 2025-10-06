@@ -21,7 +21,6 @@
  */
 
 #include "nuked_fmopl3.h"
-#include <stdint.h>
 #include <stdlib.h>
 #include "nopl3.h"
 
@@ -30,9 +29,10 @@
 #define RSM_FRAC 10
 
 typedef struct _opl3_writebuf {
-    uint64_t time;
     uint8_t reg;
     uint8_t data;
+    uint8_t reg_2;
+    uint8_t data_2;
 } opl3_writebuf;
 
 typedef struct {
@@ -46,51 +46,41 @@ typedef struct {
     int shifter_ab;
 
     int32_t rateratio;
-    int32_t samplecnt;
-    int oldsample[2];
 
-    uint64_t writebuf_samplecnt;
     uint32_t writebuf_cur;
     uint32_t writebuf_last;
-    uint64_t writebuf_lasttime;
     opl3_writebuf writebuf[OPL_WRITEBUF_SIZE];
+    int32_t  writebuf_size;
 } nopl3_t;
 
-void nopl3_cycle(nopl3_t *chip)
+static void nopl3_cycle(nopl3_t *chip, int size)
 {
     int i;
-    for (i = 0; i < 576/4; i++)
+    for (i = 0; i < (size * 576) / 8; i++)
     {
         chip->chip.input.mclk = i & 1;
         FMOPL3_Clock(&chip->chip);
 
         if (chip->o_sy && !chip->chip.o_sy)
         {
-
             if (chip->o_smpac && !chip->chip.o_smpac)
             {
                 chip->sample_a = chip->shifter_ab & 0xffff;
                 if (chip->sample_a & 0x8000)
-                {
                     chip->sample_a &= 0x7fff;
-                }
                 else
-                {
                     chip->sample_a |= ~0x7fff;
-                }
             }
+
             if (chip->o_smpbd && !chip->chip.o_smpbd)
             {
                 chip->sample_b = chip->shifter_ab & 0xffff;
                 if (chip->sample_b & 0x8000)
-                {
                     chip->sample_b &= 0x7fff;
-                }
                 else
-                {
                     chip->sample_b |= ~0x7fff;
-                }
             }
+
             chip->shifter_ab = (chip->shifter_ab >> 1) | (chip->chip.o_doab << 15);
 
             chip->o_smpac = chip->chip.o_smpac;
@@ -138,18 +128,14 @@ void nopl3_reset(void *chip)
 
     chip2->chip.input.ic = 0;
     for (i = 0; i < 100; i++)
-    {
-        nopl3_cycle(chip2);
-    }
+        nopl3_cycle(chip2, 2);
+
     chip2->chip.input.ic = 1;
     for (i = 0; i < 100; i++)
-    {
-        nopl3_cycle(chip2);
-    }
-
+        nopl3_cycle(chip2, 2);
 }
 
-void nopl3_write2(nopl3_t *chip, int port, int val)
+static void nopl3_write2(nopl3_t *chip, int port, int val)
 {
     chip->chip.input.address = port;
     chip->chip.input.data_i = val;
@@ -159,77 +145,38 @@ void nopl3_write2(nopl3_t *chip, int port, int val)
     FMOPL3_Clock(&chip->chip); /* propagate */
 }
 
-void nopl3_getsample(void *chip, short *sndptr, int numsamples)
-{
-    nopl3_t* chip2 = chip;
-    int i, buf0, buf1;
-    short *p = sndptr;
-    opl3_writebuf* writebuf;
-
-    for (i = 0; i < numsamples; i++)
-    {
-        while (chip2->samplecnt >= chip2->rateratio)
-        {
-            chip2->oldsample[0] = chip2->sample_a;
-            chip2->oldsample[1] = chip2->sample_b;
-            nopl3_cycle(chip2);
-
-            while ((writebuf = &chip2->writebuf[chip2->writebuf_cur]), writebuf->time <= chip2->writebuf_samplecnt)
-            {
-                if (!(writebuf->reg & 4))
-                {
-                    break;
-                }
-                writebuf->reg &= 3;
-                nopl3_write2(chip2, writebuf->reg, writebuf->data);
-                chip2->writebuf_cur = (chip2->writebuf_cur + 1) % OPL_WRITEBUF_SIZE;
-            }
-            chip2->writebuf_samplecnt++;
-            chip2->samplecnt -= chip2->rateratio;
-        }
-
-        buf0 = (chip2->oldsample[0] * (chip2->rateratio - chip2->samplecnt)
-            + chip2->sample_a * chip2->samplecnt) / chip2->rateratio;
-        buf1 = (chip2->oldsample[1] * (chip2->rateratio - chip2->samplecnt)
-            + chip2->sample_b * chip2->samplecnt) / chip2->rateratio;
-        chip2->samplecnt += 1 << RSM_FRAC;
-        *p++ = buf1;
-        *p++ = buf0;
-    }
-}
-
 void nopl3_getsample_one_native(void *chip, short *sndptr)
 {
     nopl3_t* chip2 = chip;
     short *p = sndptr;
     opl3_writebuf* writebuf;
 
-    chip2->oldsample[0] = chip2->sample_a;
-    chip2->oldsample[1] = chip2->sample_b;
-    nopl3_cycle(chip2);
-
-    while ((writebuf = &chip2->writebuf[chip2->writebuf_cur]), writebuf->time <= chip2->writebuf_samplecnt)
+    /* Address */
+    if (chip2->writebuf_size > 0)
     {
-        if (!(writebuf->reg & 4))
-            break;
+        writebuf = &chip2->writebuf[chip2->writebuf_cur];
 
         writebuf->reg &= 3;
         nopl3_write2(chip2, writebuf->reg, writebuf->data);
-        chip2->writebuf_cur = (chip2->writebuf_cur + 1) % OPL_WRITEBUF_SIZE;
-    }
+        nopl3_cycle(chip2, 1);
 
-    chip2->writebuf_samplecnt++;
-    chip2->samplecnt -= chip2->rateratio;
-    chip2->samplecnt += 1 << RSM_FRAC;
+        writebuf->reg_2 &= 3;
+        nopl3_write2(chip2, writebuf->reg_2, writebuf->data_2);
+        nopl3_cycle(chip2, 1);
+
+        chip2->writebuf_cur = (chip2->writebuf_cur + 1) % OPL_WRITEBUF_SIZE;
+        --chip2->writebuf_size;
+    }
+    else
+        nopl3_cycle(chip2, 2);
 
     *p++ = chip2->sample_b;
     *p++ = chip2->sample_a;
 }
 
-void nopl3_write(void *chip, int port, int val)
+void nopl3_write_buf(void *chip, unsigned short addr, unsigned char val)
 {
     nopl3_t* chip2 = chip;
-    uint64_t time1, time2;
     opl3_writebuf *writebuf;
     uint32_t writebuf_last;
 
@@ -239,23 +186,20 @@ void nopl3_write(void *chip, int port, int val)
     if (writebuf->reg & 4)
     {
         nopl3_write2(chip2, writebuf->reg & 1, writebuf->data);
-        nopl3_cycle(chip2);
+        nopl3_cycle(chip2, 1);
+
+        nopl3_write2(chip2, writebuf->reg_2 & 1, writebuf->data_2);
+        nopl3_cycle(chip2, 1);
 
         chip2->writebuf_cur = (writebuf_last + 1) % OPL_WRITEBUF_SIZE;
-        chip2->writebuf_samplecnt = writebuf->time;
+        --chip2->writebuf_size;
     }
 
-    writebuf->reg = port | 4;
-    writebuf->data = val;
-    time1 = chip2->writebuf_lasttime + OPL_WRITEBUF_DELAY;
-    time2 = chip2->writebuf_samplecnt;
+    writebuf->reg = (2 * ((addr >> 8) & 3)) | 4;
+    writebuf->data = addr & 0xFF;
+    writebuf->reg_2 =  1 | 4;
+    writebuf->data_2 = val;
 
-    if (time1 < time2)
-    {
-        time1 = time2;
-    }
-
-    writebuf->time = time1;
-    chip2->writebuf_lasttime = time1;
     chip2->writebuf_last = (writebuf_last + 1) % OPL_WRITEBUF_SIZE;
+    ++chip2->writebuf_size;
 }

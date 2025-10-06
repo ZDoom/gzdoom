@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,7 +149,6 @@ static void libxmp_far_update_tempo(struct context_data *ctx, int fine_change)
 	    me->coarse_tempo, &me->fine_tempo, &speed, &bpm) == 0) {
 		p->speed = speed;
 		p->bpm = bpm;
-		p->frame_time = m->time_factor * m->rrate / p->bpm;
 	}
 }
 

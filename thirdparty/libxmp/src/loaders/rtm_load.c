@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ struct RTMMHeader {		/* Real Tracker Music Module */
 	uint16 npattern;	/* number of patterns */
 	uint8 speed;		/* initial speed */
 	uint8 tempo;		/* initial tempo */
-	char panning[32];	/* initial pannings (for S3M compatibility) */
+	int8 panning[32];	/* initial pannings (for S3M compatibility) */
 	uint32 extraDataSize;	/* length of data after the header */
 
 /* version 1.12 */
@@ -84,10 +84,10 @@ struct RTINHeader {		/* Real Tracker Instrument */
 	uint8 table[120];	/* sample number for each note */
 	struct Envelope volumeEnv;
 	struct Envelope panningEnv;
-	char vibflg;		/* vibrato type */
-	char vibsweep;		/* vibrato sweep */
-	char vibdepth;		/* vibrato depth */
-	char vibrate;		/* vibrato rate */
+	int8 vibflg;		/* vibrato type */
+	int8 vibsweep;		/* vibrato sweep */
+	int8 vibdepth;		/* vibrato depth */
+	int8 vibrate;		/* vibrato rate */
 	uint16 volfade;
 
 /* version 1.10 */
@@ -97,10 +97,10 @@ struct RTINHeader {		/* Real Tracker Instrument */
 	uint8 midiEnable;
 
 /* version 1.12 */
-	char midiTranspose;
+	int8 midiTranspose;
 	uint8 midiBenderRange;
 	uint8 midiBaseVolume;
-	char midiUseVelocity;
+	int8 midiUseVelocity;
 };
 
 struct RTSMHeader {		/* Real Tracker Sample */
@@ -116,7 +116,7 @@ struct RTSMHeader {		/* Real Tracker Sample */
 	uint32 loopend;
 	uint32 basefreq;
 	uint8 basenote;
-	char panning;		/* Panning from -64 to 64 */
+	int8 panning;		/* Panning from -64 to 64 */
 };
 
 
@@ -467,10 +467,21 @@ static int rtm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 			sub->xpo += 48 - rs.basenote;
 			sub->vol = rs.defaultvolume * rs.basevolume / 0x40;
 			sub->pan = 0x80 + rs.panning * 2;
-			sub->vwf = ri.vibflg;
-			sub->vde = ri.vibdepth << 2;
-			sub->vra = ri.vibrate;
-			sub->vsw = ri.vibsweep;
+			/* Autovibrato oddities:
+			 * Wave:  TODO: 0 sine, 1 square, 2 ramp down, 3 ramp up
+			 *        All invalid values are also ramp up.
+			 * Depth: the UI limits it 0-15, but higher values
+			 *        work. Negatives are very broken.
+			 * Rate:  the UI limits 0-63; but higher and negative
+			 *        values actually work how you would expect!
+			 *        Rate is half as fast as libxmp currently.
+			 * Sweep: the UI limits 0-255 but loads as signed.
+			 *        During playback, it is treated as unsigned.
+			 */
+			sub->vwf = MIN((uint8)ri.vibflg, 3);
+			sub->vde = MAX(ri.vibdepth, 0) << 2;
+			sub->vra = (ri.vibrate + (ri.vibrate > 0)) >> 1;
+			sub->vsw = (uint8)ri.vibsweep;
 			sub->sid = smpnum;
 
 			if (smpnum >= mod->smp) {

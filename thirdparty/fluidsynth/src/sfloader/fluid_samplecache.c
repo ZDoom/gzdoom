@@ -48,9 +48,9 @@ struct _fluid_samplecache_entry_t
     int sample_type;
     /*  End of cache key members */
 
+    int sample_count;
     short *sample_data;
     char *sample_data24;
-    int sample_count;
 
     int num_references;
     int mlocked;

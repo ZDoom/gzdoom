@@ -14,11 +14,11 @@ class Sap_Cpu {
 public:
 	// Clear all registers and keep pointer to 64K memory passed in
 	void reset( void* mem_64k );
-	
+
 	// Run until specified time is reached. Returns true if suspicious/unsupported
 	// instruction was encountered at any point during run.
 	bool run( sap_time_t end_time );
-	
+
 	// Registers are not updated until run() returns (except I flag in status)
 	struct registers_t {
 		uint16_t pc;
@@ -29,20 +29,20 @@ public:
 		uint8_t sp;
 	};
 	registers_t r;
-	
+
 	enum { idle_addr = 0xFEFF };
-	
+
 	// Time of beginning of next instruction to be executed
 	sap_time_t time() const             { return state->time + state->base; }
 	void set_time( sap_time_t t )       { state->time = t - state->base; }
 	void adjust_time( int delta )       { state->time += delta; }
-	
+
 	sap_time_t irq_time() const         { return irq_time_; }
 	void set_irq_time( sap_time_t );
-	
+
 	sap_time_t end_time() const         { return end_time_; }
 	void set_end_time( sap_time_t );
-	
+
 public:
 	Sap_Cpu() { state = &state_; }
 	enum { irq_inhibit = 0x04 };
@@ -56,7 +56,7 @@ private:
 	sap_time_t irq_time_;
 	sap_time_t end_time_;
 	uint8_t* mem;
-	
+
 	inline sap_time_t update_end_time( sap_time_t end, sap_time_t irq );
 };
 

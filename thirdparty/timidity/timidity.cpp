@@ -822,7 +822,7 @@ void Renderer::MarkInstrument(int banknum, int percussion, int instr)
 }
 
 
-static void default_cmsg(int type, int verbosity_level, const char* fmt, ...)
+void printMessage(int type, int verbosity_level, const char* fmt, ...)
 {
 	if (verbosity_level >= VERB_NOISY) return;	// Don't waste time on diagnostics.
 
@@ -831,9 +831,6 @@ static void default_cmsg(int type, int verbosity_level, const char* fmt, ...)
 	ZMusic_Print(type, fmt, args);
 	va_end(args);
 }
-
-// Allow hosting applications to capture the messages and deal with them themselves.
-void (*printMessage)(int type, int verbosity_level, const char* fmt, ...) = default_cmsg;
 
 
 }

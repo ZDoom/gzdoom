@@ -21,7 +21,7 @@
 #include "fluid_sys.h"
 
 
-#if WITH_READLINE
+#if READLINE_SUPPORT
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
@@ -30,7 +30,7 @@
 #include "fluid_rtkit.h"
 #endif
 
-#if HAVE_PTHREAD_H && !defined(WIN32)
+#if HAVE_PTHREAD_H && !defined(_WIN32)
 // Do not include pthread on windows. It includes winsock.h, which collides with ws2tcpip.h from fluid_sys.h
 // It isn't need on Windows anyway.
 #include <pthread.h>
@@ -132,7 +132,7 @@ fluid_default_log_function(int level, const char *message, void *data)
 {
     FILE *out;
 
-#if defined(WIN32)
+#if defined(_WIN32)
     out = stdout;
 #else
     out = stderr;
@@ -228,7 +228,7 @@ void* fluid_alloc(size_t len)
  */
 FILE *fluid_fopen(const char *filename, const char *mode)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     wchar_t *wpath = NULL, *wmode = NULL;
     FILE *file = NULL;
     int length;
@@ -420,7 +420,7 @@ fluid_utime(void)
      * used instead.
      * see: https://bugzilla.gnome.org/show_bug.cgi?id=783340
      */
-#if defined(WITH_PROFILING) &&  defined(WIN32) &&\
+#if defined(WITH_PROFILING) &&  defined(_WIN32) &&\
 	/* glib < 2.53.3 */\
 	(GLIB_MINOR_VERSION <= 53 && (GLIB_MINOR_VERSION < 53 || GLIB_MICRO_VERSION < 3))
     /* use high precision performance counter. */
@@ -449,7 +449,7 @@ fluid_utime(void)
 
 
 
-#if defined(WIN32)      /* Windoze specific stuff */
+#if defined(_WIN32)      /* Windoze specific stuff */
 
 void
 fluid_thread_self_set_prio(int prio_level)
@@ -590,11 +590,11 @@ void fluid_clear_fpe_i386(void)
 
 /*
   -----------------------------------------------------------------------------
-  Shell task side |    Profiling interface              |  Audio task side
+  Shell task side |    Profiling interface               |  Audio task side
   -----------------------------------------------------------------------------
-  profiling       |    Internal    |      |             |      Audio
-  command   <---> |<-- profling -->| Data |<--macros -->| <--> rendering
-  shell           |    API         |      |             |      API
+  profiling       |    Internal     |      |             |      Audio
+  command   <---> |<-- profiling -->| Data |<--macros -->| <--> rendering
+  shell           |    API          |      |             |      API
 
 */
 /* default parameters for shell command "prof_start" in fluid_sys.c */
@@ -864,7 +864,7 @@ int fluid_profile_is_cancel_req(void)
 {
 #ifdef FLUID_PROFILE_CANCEL
 
-#if defined(WIN32)      /* Windows specific stuff */
+#if defined(_WIN32)      /* Windows specific stuff */
     /* Profile cancellation is supported for Windows */
     /* returns TRUE if key <ENTER> is depressed */
     return(GetAsyncKeyState(VK_RETURN) & 0x1);
@@ -1308,7 +1308,7 @@ int
 fluid_istream_readline(fluid_istream_t in, fluid_ostream_t out, char *prompt,
                        char *buf, int len)
 {
-#if WITH_READLINE
+#if READLINE_SUPPORT
 
     if(in == fluid_get_stdin())
     {
@@ -1357,7 +1357,7 @@ fluid_istream_gets(fluid_istream_t in, char *buf, int len)
 
     while(--len > 0)
     {
-#ifndef WIN32
+#ifndef _WIN32
         n = read(in, &c, 1);
 
         if(n == -1)
@@ -1447,7 +1447,7 @@ fluid_ostream_printf(fluid_ostream_t out, const char *format, ...)
 
     buf[4095] = 0;
 
-#ifndef WIN32
+#ifndef _WIN32
     return write(out, buf, FLUID_STRLEN(buf));
 #else
     {
@@ -1567,7 +1567,7 @@ static fluid_thread_return_t fluid_server_socket_run(void *data)
         {
             if(server_socket->cont)
             {
-                FLUID_LOG(FLUID_ERR, "Failed to accept connection: %d", fluid_socket_get_error());
+                FLUID_LOG(FLUID_ERR, "Got error %d while trying to accept connection", fluid_socket_get_error());
             }
 
             server_socket->cont = 0;
@@ -1606,12 +1606,12 @@ fluid_server_socket_t *
 new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 {
     fluid_server_socket_t *server_socket;
+    struct sockaddr_in addr4;
 #ifdef IPV6_SUPPORT
-    struct sockaddr_in6 addr;
-#else
-    struct sockaddr_in addr;
+    struct sockaddr_in6 addr6;
 #endif
-
+    const struct sockaddr *addr;
+    size_t addr_size;
     fluid_socket_t sock;
 
     fluid_return_val_if_fail(func != NULL, NULL);
@@ -1621,40 +1621,48 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
         return NULL;
     }
 
+    FLUID_MEMSET(&addr4, 0, sizeof(addr4));
+    addr4.sin_family = AF_INET;
+    addr4.sin_port = htons((uint16_t)port);
+    addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+
 #ifdef IPV6_SUPPORT
-    sock = socket(AF_INET6, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin6_family = AF_INET6;
-    addr.sin6_port = htons((uint16_t)port);
-    addr.sin6_addr = in6addr_any;
-#else
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(sock == INVALID_SOCKET)
-    {
-        FLUID_LOG(FLUID_ERR, "Failed to create server socket: %d", fluid_socket_get_error());
-        fluid_socket_cleanup();
-        return NULL;
-    }
-
-    FLUID_MEMSET(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons((uint16_t)port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    FLUID_MEMSET(&addr6, 0, sizeof(addr6));
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_port = htons((uint16_t)port);
+    addr6.sin6_addr = in6addr_any;
 #endif
 
-    if(bind(sock, (const struct sockaddr *) &addr, sizeof(addr)) == SOCKET_ERROR)
+#ifdef IPV6_SUPPORT
+    sock = socket(AF_INET6, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr6;
+    addr_size = sizeof(addr6);
+
+    if(sock == INVALID_SOCKET)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to bind server socket: %d", fluid_socket_get_error());
+        FLUID_LOG(FLUID_WARN, "Got error %d while trying to create IPv6 server socket (will try with IPv4)", fluid_socket_get_error());
+
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        addr = (const struct sockaddr *) &addr4;
+        addr_size = sizeof(addr4);
+    }
+
+#else
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    addr = (const struct sockaddr *) &addr4;
+    addr_size = sizeof(addr4);
+#endif
+
+    if(sock == INVALID_SOCKET)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while trying to create server socket", fluid_socket_get_error());
+        fluid_socket_cleanup();
+        return NULL;
+    }
+    
+    if(bind(sock, addr, (int) addr_size) == SOCKET_ERROR)
+    {
+        FLUID_LOG(FLUID_ERR, "Got error %d while trying to bind server socket", fluid_socket_get_error());
         fluid_socket_close(sock);
         fluid_socket_cleanup();
         return NULL;
@@ -1662,7 +1670,7 @@ new_fluid_server_socket(int port, fluid_server_func_t func, void *data)
 
     if(listen(sock, SOMAXCONN) == SOCKET_ERROR)
     {
-        FLUID_LOG(FLUID_ERR, "Failed to listen on server socket: %d", fluid_socket_get_error());
+        FLUID_LOG(FLUID_ERR, "Got error %d while trying to listen on server socket", fluid_socket_get_error());
         fluid_socket_close(sock);
         fluid_socket_cleanup();
         return NULL;
@@ -1757,7 +1765,7 @@ FILE* fluid_file_open(const char* path, const char** errMsg)
 
 fluid_long_long_t fluid_file_tell(FILE* f)
 {
-#ifdef WIN32
+#ifdef _WIN32
     // On Windows, long is only a 32 bit integer. Thus ftell() does not support to handle files >2GiB.
     // We should use _ftelli64() in this case, however its availability depends on MS CRT and might not be
     // available on WindowsXP, Win98, etc.
@@ -1777,11 +1785,18 @@ fluid_long_long_t fluid_file_tell(FILE* f)
 #endif
 }
 
-#ifdef WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 // not thread-safe!
+#define FLUID_WINDOWS_MEX_ERROR_LEN    1024
+
 char* fluid_get_windows_error(void)
 {
-    static TCHAR err[1024];
+#ifdef _UNICODE
+    TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+    static char ascii_err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#else
+    static TCHAR err[FLUID_WINDOWS_MEX_ERROR_LEN];
+#endif
 
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,
@@ -1792,8 +1807,6 @@ char* fluid_get_windows_error(void)
                   NULL);
 
 #ifdef _UNICODE
-    static char ascii_err[sizeof(err)];
-
     WideCharToMultiByte(CP_UTF8, 0, err, -1, ascii_err, sizeof(ascii_err)/sizeof(ascii_err[0]), 0, 0);
     return ascii_err;
 #else

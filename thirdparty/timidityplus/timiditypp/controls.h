@@ -52,7 +52,7 @@ inline bool RC_IS_SKIP_FILE(int rc)
 }
 
 
-extern void (*printMessage)(int type, int verbosity_level, const char* fmt, ...);
+extern void printMessage(int type, int verbosity_level, const char* fmt, ...);
 
 
 }

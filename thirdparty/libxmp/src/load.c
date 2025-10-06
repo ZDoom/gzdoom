@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -181,7 +181,7 @@ int xmp_test_module_from_memory(const void *mem, long size, struct xmp_test_info
 		return -XMP_ERROR_INVALID;
 	}
 
-	if ((h = hio_open_mem(mem, size, 0)) == NULL)
+	if ((h = hio_open_const_mem(mem, size)) == NULL)
 		return -XMP_ERROR_SYSTEM;
 
 	ret = test_module(info, h);
@@ -426,7 +426,7 @@ int xmp_load_module_from_memory(xmp_context opaque, const void *mem, long size)
 		return -XMP_ERROR_INVALID;
 	}
 
-	if ((h = hio_open_mem(mem, size, 0)) == NULL)
+	if ((h = hio_open_const_mem(mem, size)) == NULL)
 		return -XMP_ERROR_SYSTEM;
 
 	if (ctx->state > XMP_STATE_UNLOADED)

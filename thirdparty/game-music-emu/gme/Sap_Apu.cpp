@@ -17,7 +17,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
 
-int const max_frequency = 12000; // pure waves above this frequency are silenced
+static int const max_frequency = 12000; // pure waves above this frequency are silenced
 
 static void gen_poly( blargg_ulong mask, int count, byte* out )
 {
@@ -30,7 +30,7 @@ static void gen_poly( blargg_ulong mask, int count, byte* out )
 		{
 			// implemented using "Galios configuration"
 			bits |= (n & 1) << b;
-			n = (n >> 1) ^ (mask & -(n & 1));
+			n = (n >> 1) ^ (mask & uMinus(n & 1));
 		}
 		while ( b++ < 7 );
 		*out++ = bits;
@@ -39,11 +39,11 @@ static void gen_poly( blargg_ulong mask, int count, byte* out )
 }
 
 // poly5
-int const poly5_len = (1 <<  5) - 1;
-blargg_ulong const poly5_mask = (1UL << poly5_len) - 1;
-blargg_ulong const poly5 = 0x167C6EA1;
+static int const poly5_len = (1 <<  5) - 1;
+static blargg_ulong const poly5_mask = (1UL << poly5_len) - 1;
+static blargg_ulong const poly5 = 0x167C6EA1;
 
-inline blargg_ulong run_poly5( blargg_ulong in, int shift )
+static inline blargg_ulong run_poly5( blargg_ulong in, int shift )
 {
 	return (in << shift & poly5_mask) | (in >> (poly5_len - shift));
 }
@@ -56,12 +56,12 @@ Sap_Apu_Impl::Sap_Apu_Impl()
 	gen_poly( POLY_MASK(  4, 1, 0 ), sizeof poly4,  poly4  );
 	gen_poly( POLY_MASK(  9, 5, 0 ), sizeof poly9,  poly9  );
 	gen_poly( POLY_MASK( 17, 5, 0 ), sizeof poly17, poly17 );
-	
+
 	if ( 0 ) // comment out to recauculate poly5 constant
 	{
 		byte poly5 [4];
 		gen_poly( POLY_MASK(  5, 2, 0 ), sizeof poly5,  poly5  );
-		blargg_ulong n = poly5 [3] * 0x1000000L + poly5 [2] * 0x10000L + 
+		blargg_ulong n = poly5 [3] * 0x1000000L + poly5 [2] * 0x10000L +
 				poly5 [1] * 0x100L + poly5 [0];
 		blargg_ulong rev = n & 1;
 		for ( int i = 1; i < poly5_len; i++ )
@@ -85,7 +85,7 @@ void Sap_Apu::reset( Sap_Apu_Impl* new_impl )
 	poly4_pos = 0;
 	polym_pos = 0;
 	control   = 0;
-	
+
 	for ( int i = 0; i < osc_count; i++ )
 		memset( &oscs [i], 0, offsetof (osc_t,output) );
 }
@@ -96,11 +96,11 @@ inline void Sap_Apu::calc_periods()
 	int divider = 28;
 	if ( this->control & 1 )
 		divider = 114;
-	
+
 	for ( int i = 0; i < osc_count; i++ )
 	{
 		osc_t* const osc = &oscs [i];
-		
+
 		int const osc_reload = osc->regs [0]; // cache
 		blargg_long period = (osc_reload + 1) * divider;
 		static byte const fast_bits [osc_count] = { 1 << 6, 1 << 4, 1 << 5, 1 << 3 };
@@ -112,7 +112,7 @@ inline void Sap_Apu::calc_periods()
 				period = osc_reload * 0x100L + osc [-1].regs [0] + 7;
 				if ( !(this->control & fast_bits [i - 1]) )
 					period = (period - 6) * divider;
-				
+
 				if ( (osc [-1].regs [1] & 0x1F) > 0x10 )
 					debug_printf( "Use of slave channel in 16-bit mode not supported\n" );
 			}
@@ -125,7 +125,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 {
 	calc_periods();
 	Sap_Apu_Impl* const impl = this->impl; // cache
-	
+
 	// 17/9-bit poly selection
 	byte const* polym = impl->poly17;
 	int polym_len = poly17_len;
@@ -135,19 +135,19 @@ void Sap_Apu::run_until( blip_time_t end_time )
 		polym = impl->poly9;
 	}
 	polym_pos %= polym_len;
-	
+
 	for ( int i = 0; i < osc_count; i++ )
 	{
 		osc_t* const osc = &oscs [i];
 		blip_time_t time = last_time + osc->delay;
 		blip_time_t const period = osc->period;
-		
+
 		// output
 		Blip_Buffer* output = osc->output;
 		if ( output )
 		{
 			output->set_modified();
-			
+
 			int const osc_control = osc->regs [1]; // cache
 			int volume = (osc_control & 0x0F) * 2;
 			if ( !volume || osc_control & 0x10 || // silent, DAC mode, or inaudible frequency
@@ -155,14 +155,14 @@ void Sap_Apu::run_until( blip_time_t end_time )
 			{
 				if ( !(osc_control & 0x10) )
 					volume >>= 1; // inaudible frequency = half volume
-				
+
 				int delta = volume - osc->last_amp;
 				if ( delta )
 				{
 					osc->last_amp = volume;
 					impl->synth.offset( last_time, delta, output );
 				}
-				
+
 				// TODO: doesn't maintain high pass flip-flop (very minor issue)
 			}
 			else
@@ -182,7 +182,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 						volume = -volume;
 					}
 				}
-				
+
 				if ( time < end_time || time2 < end_time )
 				{
 					// poly source
@@ -206,7 +206,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 						poly_pos = (poly_pos + osc->delay) % poly_len;
 					}
 					poly_inc -= poly_len; // allows more optimized inner loop below
-					
+
 					// square/poly5 wave
 					blargg_ulong wave = poly5;
 					check( poly5 & 1 ); // low bit is set for pure wave
@@ -216,7 +216,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 						wave = run_poly5( wave, (osc->delay + poly5_pos) % poly5_len );
 						poly5_inc = period % poly5_len;
 					}
-					
+
 					// Run wave and high pass interleved with each catching up to the other.
 					// Disabled high pass has no performance effect since inner wave loop
 					// makes no compromise for high pass, and only runs once in that case.
@@ -238,7 +238,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 						}
 						while ( time2 <= time ) // must advance *past* time to avoid hang
 							time2 += period2;
-						
+
 						// run wave
 						blip_time_t end = end_time;
 						if ( end > time2 )
@@ -262,11 +262,11 @@ void Sap_Apu::run_until( blip_time_t end_time )
 						}
 					}
 					while ( time < end_time || time2 < end_time );
-					
+
 					osc->phase = poly_pos;
 					osc->last_amp = osc_last_amp;
 				}
-				
+
 				osc->invert = 0;
 				if ( volume < 0 )
 				{
@@ -276,7 +276,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 				}
 			}
 		}
-		
+
 		// maintain divider
 		blip_time_t remain = end_time - time;
 		if ( remain > 0 )
@@ -287,7 +287,7 @@ void Sap_Apu::run_until( blip_time_t end_time )
 		}
 		osc->delay = time - end_time;
 	}
-	
+
 	// advance polies
 	blip_time_t duration = end_time - last_time;
 	last_time = end_time;
@@ -329,6 +329,6 @@ void Sap_Apu::end_frame( blip_time_t end_time )
 {
 	if ( end_time > last_time )
 		run_until( end_time );
-	
+
 	last_time -= end_time;
 }

@@ -155,7 +155,7 @@ int tf_getc(timidity_file *tf)
 	return read == 0 ? EOF : c;
 }
 
-void default_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
+void printMessage(int type, int verbosity_level, const char* fmt, ...)
 {
 	if (verbosity_level >= VERB_DEBUG) return;	// Don't waste time on diagnostics.
 
@@ -164,8 +164,5 @@ void default_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
 	ZMusic_Print(type, fmt, args);
 	va_end(args);
 }
-
-// Allow hosting applications to capture the messages and deal with them themselves.
-void (*printMessage)(int type, int verbosity_level, const char* fmt, ...) = default_ctl_cmsg;
 
 }

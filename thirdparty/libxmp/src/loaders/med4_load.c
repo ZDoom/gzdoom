@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,6 +61,13 @@ static void fix_effect(struct xmp_event *event, int hexvol)
 	case 0x03:	/* portamento */
 	case 0x04:	/* vibrato? */
 		break;
+	case 0x09:	/* set speed (3.00+) */
+		if (event->fxp >= 0x01 && event->fxp <= 0x20) {
+			event->fxt = FX_SPEED;
+		} else {
+			event->fxt = event->fxp = 0;
+		}
+		break;
 	case 0x0c:	/* set volume (BCD) */
 		if (!hexvol) {
 			event->fxp = MSN(event->fxp) * 10 + LSN(event->fxp);
@@ -70,25 +77,28 @@ static void fix_effect(struct xmp_event *event, int hexvol)
 		event->fxt = FX_VOLSLIDE;
 		break;
 	case 0x0f:	/* tempo/break */
-		if (event->fxp == 0)
+		if (event->fxp == 0) {
 			event->fxt = FX_BREAK;
-		if (event->fxp == 0xff) {
+		} else if (event->fxp == 0xff) {
 			event->fxp = event->fxt = 0;
 			event->vol = 1;
 		} else if (event->fxp == 0xf1) {
+			/* Retrigger once on tick 3 */
 			event->fxt = FX_EXTENDED;
 			event->fxp = (EX_RETRIG << 4) | 3;
 		} else if (event->fxp == 0xf2) {
-			event->fxt = FX_EXTENDED;
-			event->fxp = (EX_CUT << 4) | 3;
-		} else if (event->fxp == 0xf3) {
+			/* Delay until tick 3 */
 			event->fxt = FX_EXTENDED;
 			event->fxp = (EX_DELAY << 4) | 3;
-		} else if (event->fxp > 0xf0) {
-			event->fxp = event->fxt = 0;
-		} else if (event->fxp > 10) {
+		} else if (event->fxp == 0xf3) {
+			/* Retrigger every 2 ticks (TODO: buggy) */
+			event->fxt = FX_MED_RETRIG;
+			event->fxp = 0x02;
+		} else if (event->fxp <= 0xf0) {
 			event->fxt = FX_S3M_BPM;
-			event->fxp = 125 * event->fxp / 33;
+			event->fxp = mmd_convert_tempo(event->fxp, 0, 0);
+		} else {
+			event->fxp = event->fxt = 0;
 		}
 		break;
 	default:
@@ -165,6 +175,319 @@ struct temp_inst {
 	int transpose;
 };
 
+static int med4_sample_check(struct module_data *m, int pos, int needed)
+{
+	if (pos + needed > m->mod.smp) {
+		if (pos + needed > MAX_SAMPLES)
+			return -1;
+		if (libxmp_realloc_samples(m, pos + needed + 64) < 0)
+			return -1;
+	}
+	return 0;
+}
+
+static int med4_load_sampled_instrument(HIO_HANDLE *f, struct module_data *m,
+	int i, int length, int *smp_idx, struct temp_inst *temp_inst)
+{
+	struct xmp_module *mod = &m->mod;
+	struct xmp_instrument *xxi;
+	struct xmp_subinstrument *sub;
+	struct xmp_sample *xxs;
+	int j, k;
+
+	xxi = &mod->xxi[i];
+
+	xxi->nsm = 1;
+	if (libxmp_alloc_subinstrument(mod, i, 1) < 0)
+		return -1;
+
+	sub = &xxi->sub[0];
+
+	sub->vol = temp_inst[i].volume;
+	sub->pan = 0x80;
+	sub->xpo = temp_inst[i].transpose;
+	sub->sid = *smp_idx;
+
+	/* May need to add samples due to external synths. */
+	if (med4_sample_check(m, *smp_idx, 1) < 0)
+		return -1;
+
+	xxs = &mod->xxs[*smp_idx];
+
+	xxs->len = length;
+	xxs->lps = temp_inst[i].loop_start;
+	xxs->lpe = temp_inst[i].loop_end;
+	xxs->flg = temp_inst[i].loop_end > 2 ? XMP_SAMPLE_LOOP : 0;
+
+	D_(D_INFO "  %04x %04x %04x %c V%02x %+03d",
+			xxs->len, mod->xxs[*smp_idx].lps, xxs->lpe,
+			xxs->flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
+			sub->vol, sub->xpo);
+
+	if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0)
+		return -1;
+
+	/* Limit range to 3 octave (see MED.El toro) */
+	for (j = 0; j < 9; j++) {
+		for (k = 0; k < 12; k++) {
+			int xpo = 0;
+
+			if (j < 4)
+				xpo = 12 * (4 - j);
+			else if (j > 6)
+				xpo = -12 * (j - 6);
+
+			xxi->map[12 * j + k].xpo = xpo;
+		}
+	}
+
+	(*smp_idx)++;
+	return 0;
+}
+
+/* This is very similar to MMD1 synth/hybrid instruments,
+ * but just different enough to be reimplemented here.
+ */
+static int med4_load_synth_instrument(HIO_HANDLE *f, struct module_data *m,
+	int i, int type, int *smp_idx, struct temp_inst *temp_inst)
+{
+	struct xmp_module *mod = &m->mod;
+	struct xmp_instrument *xxi;
+	struct xmp_subinstrument *sub;
+	struct xmp_sample *xxs;
+	struct med_instrument_extras *ie;
+	struct SynthInstr synth;
+	int j;
+	int type2;
+	long pos;
+
+	pos = hio_tell(f);
+	if (pos < 0)
+		return -1;
+
+	if (hio_read32b(f) != MAGIC4('M','S','H',0))
+		return -1;
+
+	type2 = (int16)hio_read16b(f);
+	if (type2 != -1 && type2 != -2) {
+		D_(D_WARN "invalid type %04x on synth/hybrid %d", type2, i);
+		return -1;
+	}
+	if (type != type2) {
+		D_(D_WARN "type mismatch on synth/hybrid %d: %04x != %04x", i, type, type2);
+	}
+
+	hio_read16b(f);	/* ? - 0000 */
+	hio_read16b(f);	/* ? - 0000 */
+	synth.rep = hio_read16b(f);		/* ? */
+	synth.replen = hio_read16b(f);	/* ? */
+	synth.voltbllen = hio_read16b(f);
+	synth.wftbllen = hio_read16b(f);
+	synth.volspeed = hio_read8(f);
+	synth.wfspeed = hio_read8(f);
+	synth.wforms = hio_read16b(f);
+
+	if (synth.wforms == 0xffff)
+		return 0;
+
+	/* Sanity check */
+	if (synth.voltbllen > 128 ||
+	    synth.wftbllen > 128 ||
+	    synth.wforms > 64) {
+		return -1;
+	}
+
+	hio_read(synth.voltbl, 1, synth.voltbllen, f);
+	hio_read(synth.wftbl, 1, synth.wftbllen, f);
+
+	for (j = 0; j < synth.wforms; j++)
+		synth.wf[j] = hio_read32b(f);
+
+	if (hio_error(f))
+		return -1;
+
+	D_(D_INFO "  VS:%02x WS:%02x WF:%02x %02x %+03d %3.3s",
+			synth.volspeed, synth.wfspeed,
+			synth.wforms & 0xff,
+			temp_inst[i].volume,
+			temp_inst[i].transpose /*,
+			exp_smp.finetune*/,
+			type == -1 ? "Syn" : "Hyb");
+
+	xxi = &mod->xxi[i];
+
+	if (libxmp_med_new_instrument_extras(xxi) != 0)
+		return -1;
+
+	xxi->nsm = synth.wforms;
+	if (libxmp_alloc_subinstrument(mod, i, synth.wforms) < 0)
+		return -1;
+
+	ie = MED_INSTRUMENT_EXTRAS(*xxi);
+	ie->vts = synth.volspeed;
+	ie->wts = synth.wfspeed;
+	ie->vtlen = synth.voltbllen;
+	ie->wtlen = synth.wftbllen;
+
+	/* Synth may be external--can't always calculate ahead of time. */
+	if (med4_sample_check(m, *smp_idx, synth.wforms) < 0)
+		return -1;
+
+	j = 0;
+	if (type == -2 && synth.wforms > 0) { /* Hybrid */
+		uint32 length;
+
+		hio_seek(f, pos + synth.wf[0], SEEK_SET);
+
+		length = hio_read32b(f);
+		if (hio_read16b(f) != 0) {
+			D_(D_CRIT "hybrid %d has non-sample at pos 0", i);
+			return -1;
+		}
+
+		sub = &xxi->sub[0];
+
+		sub->pan = 0x80;
+		sub->vol = temp_inst[i].volume;
+		sub->xpo = temp_inst[i].transpose;
+		sub->sid = *smp_idx;
+		sub->fin = 0 /*exp_smp.finetune*/;
+
+		xxs = &mod->xxs[*smp_idx];
+
+		xxs->len = length;
+		xxs->lps = temp_inst[i].loop_start;
+		xxs->lpe = temp_inst[i].loop_end;
+		xxs->flg = temp_inst[i].loop_end > 2 ?
+					XMP_SAMPLE_LOOP : 0;
+
+		D_(D_INFO "  %05x %05x %05x %02x %+03d",
+				xxs->len, xxs->lps, xxs->lpe,
+				sub->vol, sub->xpo /*, sub->fin >> 4*/);
+
+		if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0) {
+			D_(D_CRIT "failed to load hybrid %d sample", i);
+			return -1;
+		}
+
+		(*smp_idx)++;
+		j++;
+	}
+
+	for (; j < synth.wforms; j++) {
+		/* Sanity check */
+		if (*smp_idx >= mod->smp) {
+			D_(D_CRIT "internal error");
+			return -1;
+		}
+
+		sub = &xxi->sub[j];
+
+		sub->pan = 0x80;
+		sub->vol = 64;
+		sub->xpo = -24;
+		sub->sid = *smp_idx;
+		sub->fin = 0 /*exp_smp.finetune*/;
+
+		hio_seek(f, pos + synth.wf[j], SEEK_SET);
+
+		xxs = &mod->xxs[*smp_idx];
+
+		xxs->len = hio_read16b(f) * 2;
+		xxs->lps = 0;
+		xxs->lpe = xxs->len;
+		xxs->flg = XMP_SAMPLE_LOOP;
+
+		if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0) {
+			D_(D_CRIT "failed to load synth/hybrid %d waveform %d", i, j);
+			return -1;
+		}
+
+		(*smp_idx)++;
+	}
+
+	if (mmd_alloc_tables(m, i, &synth) != 0) {
+		D_(D_CRIT "failed to initialize synth/hybrid %d tables", i);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int med4_load_instrument(HIO_HANDLE *f, struct module_data *m,
+	int i, int length, int type, int *smp_idx, struct temp_inst *temp_inst)
+{
+	if (type == 0) {			/* Sampled */
+		return med4_load_sampled_instrument(f, m, i, length,
+			smp_idx, temp_inst);
+	}
+
+	if (type == -1 || type == -2) {		/* Synthetic or Hybrid */
+		long pos = hio_tell(f);
+		if (pos < 0) {
+			return -1;
+		}
+
+		if (med4_load_synth_instrument(f, m, i, type,
+		    smp_idx, temp_inst) < 0) {
+			return -1;
+		}
+
+		hio_seek(f, pos + length, SEEK_SET);
+		return 0;
+	}
+
+	/* Skip unknown instrument type */
+	hio_seek(f, length, SEEK_CUR);
+	return 0;
+}
+
+static int med4_load_external_instrument(HIO_HANDLE *f, struct module_data *m,
+	int i, int *smp_idx, struct temp_inst *temp_inst)
+{
+	char path[XMP_MAXPATH];
+	char ins_name[32];
+	HIO_HANDLE *s = NULL;
+	int length;
+	int ret;
+
+	if (libxmp_copy_name_for_fopen(ins_name, m->mod.xxi[i].name, 32) != 0)
+		return 0;
+
+	if (!libxmp_find_instrument_file(m, path, sizeof(path), ins_name))
+		return 0;
+
+	if ((s = hio_open(path, "rb")) == NULL) {
+		return 0;
+	}
+
+	length = hio_size(s);
+	if (length == 0) {
+		hio_close(s);
+		return 0;
+	}
+
+	if (length >= 6) {
+		/* May be an external synth/hybrid */
+		uint32 magic = hio_read32b(s);
+		int type = (int16)hio_read16b(s);
+		hio_seek(s, 0, SEEK_SET);
+
+		if (magic == MAGIC4('M','S','H',0) &&
+		    (type == -1 || type == -2)) {
+			ret = med4_load_synth_instrument(s, m, i, type,
+				smp_idx, temp_inst);
+
+			hio_close(s);
+			return ret;
+		}
+	}
+
+	ret = med4_load_sampled_instrument(s, m, i, length, smp_idx, temp_inst);
+	hio_close(s);
+	return ret;
+}
+
 static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 {
 	struct xmp_module *mod = &m->mod;
@@ -172,7 +495,7 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	uint8 m0;
 	uint64 mask;
 	int transp, masksz;
-	int32 pos;
+	long pos;
 	int vermaj, vermin;
 	uint8 trkvol[16], buf[1024];
 	struct xmp_event *event;
@@ -299,16 +622,14 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	 * secondary tempo can be used now).
 	 */
 	tempo = hio_read16b(f);
-	if (tempo <= 10) {
-		mod->spd = tempo;
-		mod->bpm = 125;
-	} else {
-		mod->bpm = 125 * tempo / 33;
-	}
 	transp = hio_read8s(f);
 	flags = hio_read8s(f);
 	mod->spd = hio_read16b(f);
 
+	mod->bpm = mmd_convert_tempo(tempo, 0, 0);
+	m->time_factor = MED_TIME_FACTOR;
+
+	m->quirk |= QUIRK_RTONCE; /* FF1 */
 	if (~flags & 0x20)	/* sliding */
 		m->quirk |= QUIRK_VSALL | QUIRK_PBALL;
 
@@ -505,14 +826,42 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	/*
 	 * Load samples
 	 */
-	mask = hio_read32b(f);
-	if (mask == MAGIC4('M','E','D','V')) {
-		mod->smp = 0;
+	if (~flags & FLAG_INSTRSATT) {
+		/* Song file */
+		/* Arbitrary initial count -- may grow during load. */
+		mod->smp = mod->ins;
 
 		if (libxmp_init_instrument(m) < 0)
 			return -1;
-		hio_seek(f, -4, SEEK_CUR);
+
+		smp_idx = 0;
+		for (i = 0; i < num_ins; i++) {
+			struct xmp_instrument *xxi = &mod->xxi[i];
+
+			strncpy((char *)xxi->name, temp_inst[i].name, 32);
+			xxi->name[31] = '\0';
+
+			D_(D_INFO "[%2X] %-32.32s ???", i, xxi->name);
+
+			if (med4_load_external_instrument(f, m, i,
+			    &smp_idx, temp_inst) < 0) {
+				return -1;
+			}
+		}
+
+		/* Shrink samples to used */
+		if (mod->smp > smp_idx) {
+			if (libxmp_realloc_samples(m, smp_idx) < 0)
+				return -1;
+		}
 		goto parse_iff;
+	}
+
+	/* Internal samples */
+	mask = hio_read32b(f);
+	if (mask == MAGIC4('M','E','D','V')) {
+		D_(D_CRIT "invalid module MED4 with no samples");
+		return -1;
 	}
 	mask <<= 32;
 	mask |= hio_read32b(f);
@@ -534,9 +883,9 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 			_len = hio_read32b(f);
 			_type = (int16)hio_read16b(f);
 
-			if (_type == 0 || _type == -2) {
+			if (_type == 0) {
 				num_smp++;
-			} else if (_type == -1) {
+			} else if (_type == -1 || _type == -2) {
 				if (_len < 22) {
 					D_(D_CRIT "invalid synth %d length", i);
 					return -1;
@@ -546,7 +895,7 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 				_len -= 22;
 			}
 
-			if (_len < 0) {
+			if (_len < 0 || _len > hio_size(f)) {
 				D_(D_CRIT "invalid sample %d length", i);
 				return -1;
 			}
@@ -566,11 +915,7 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	smp_idx = 0;
 	for (i = 0; mask != 0 && i < num_ins; i++, mask <<= 1) {
 		int length, type;
-		struct SynthInstr synth;
 		struct xmp_instrument *xxi;
-		struct xmp_subinstrument *sub;
-		struct xmp_sample *xxs;
-		struct med_instrument_extras *ie;
 
 		if ((int64)mask > 0) {
 			continue;
@@ -584,235 +929,12 @@ static int med4_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		strncpy((char *)xxi->name, temp_inst[i].name, 32);
 		xxi->name[31] = '\0';
 
-		D_(D_INFO "\n[%2X] %-32.32s %d", i, xxi->name, type);
+		D_(D_INFO "[%2X] %-32.32s %d", i, xxi->name, type);
 
-		/* This is very similar to MMD1 synth/hybrid instruments,
-		 * but just different enough to be reimplemented here.
-		 */
-
-		if (type == -2) {			/* Hybrid */
-			pos = hio_tell(f);
-			if (pos < 0) {
-				return -1;
-			}
-
-			hio_read32b(f);	/* ? - MSH 00 */
-			hio_read16b(f);	/* ? - ffff */
-			hio_read16b(f);	/* ? - 0000 */
-			hio_read16b(f);	/* ? - 0000 */
-			synth.rep = hio_read16b(f);		/* ? */
-			synth.replen = hio_read16b(f);	/* ? */
-			synth.voltbllen = hio_read16b(f);
-			synth.wftbllen = hio_read16b(f);
-			synth.volspeed = hio_read8(f);
-			synth.wfspeed = hio_read8(f);
-			synth.wforms = hio_read16b(f);
-
-			/* Sanity check */
-			if (synth.voltbllen > 128 ||
-			    synth.wftbllen > 128 ||
-			    synth.wforms > 256) {
-				return -1;
-			}
-
-			hio_read(synth.voltbl, 1, synth.voltbllen, f);
-			hio_read(synth.wftbl, 1, synth.wftbllen, f);
-			if (hio_error(f))
-				return -1;
-
-			hio_seek(f, pos + hio_read32b(f), SEEK_SET);
-			length = hio_read32b(f);
-			type = hio_read16b(f);
-
-			if (libxmp_med_new_instrument_extras(xxi) != 0)
-				return -1;
-
-			xxi->nsm = 1;
-			if (libxmp_alloc_subinstrument(mod, i, 1) < 0)
-				return -1;
-
-			sub = &xxi->sub[0];
-
-			ie = MED_INSTRUMENT_EXTRAS(*xxi);
-			ie->vts = synth.volspeed;
-			ie->wts = synth.wfspeed;
-			ie->vtlen = synth.voltbllen;
-			ie->wtlen = synth.wftbllen;
-
-			sub->pan = 0x80;
-			sub->vol = temp_inst[i].volume;
-			sub->xpo = temp_inst[i].transpose;
-			sub->sid = smp_idx;
-			sub->fin = 0 /*exp_smp.finetune*/;
-
-			xxs = &mod->xxs[smp_idx];
-
-			xxs->len = length;
-			xxs->lps = temp_inst[i].loop_start;
-			xxs->lpe = temp_inst[i].loop_end;
-			xxs->flg = temp_inst[i].loop_end > 2 ?
-						XMP_SAMPLE_LOOP : 0;
-
-			D_(D_INFO "  %05x %05x %05x %02x %+03d",
-					xxs->len, xxs->lps, xxs->lpe,
-					sub->vol, sub->xpo /*, sub->fin >> 4*/);
-
-			if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0)
-				return -1;
-
-			smp_idx++;
-
-			if (mmd_alloc_tables(m, i, &synth) != 0)
-				return -1;
-
-			continue;
-		}
-
-		if (type == -1) {		/* Synthetic */
-			pos = hio_tell(f);
-			if (pos < 0) {
-				return -1;
-			}
-
-			hio_read32b(f);	/* ? - MSH 00 */
-			hio_read16b(f);	/* ? - ffff */
-			hio_read16b(f);	/* ? - 0000 */
-			hio_read16b(f);	/* ? - 0000 */
-			synth.rep = hio_read16b(f);		/* ? */
-			synth.replen = hio_read16b(f);	/* ? */
-			synth.voltbllen = hio_read16b(f);
-			synth.wftbllen = hio_read16b(f);
-			synth.volspeed = hio_read8(f);
-			synth.wfspeed = hio_read8(f);
-			synth.wforms = hio_read16b(f);
-
-			if (synth.wforms == 0xffff)
-				continue;
-
-			/* Sanity check */
-			if (synth.voltbllen > 128 ||
-			    synth.wftbllen > 128 ||
-			    synth.wforms > 64) {
-				return -1;
-			}
-
-			hio_read(synth.voltbl, 1, synth.voltbllen, f);
-			hio_read(synth.wftbl, 1, synth.wftbllen, f);
-
-			for (j = 0; j < synth.wforms; j++)
-				synth.wf[j] = hio_read32b(f);
-
-			if (hio_error(f))
-				return -1;
-
-			D_(D_INFO "  VS:%02x WS:%02x WF:%02x %02x %+03d",
-					synth.volspeed, synth.wfspeed,
-					synth.wforms & 0xff,
-					temp_inst[i].volume,
-					temp_inst[i].transpose /*,
-					exp_smp.finetune*/);
-
-			if (libxmp_med_new_instrument_extras(&mod->xxi[i]) != 0)
-				return -1;
-
-			mod->xxi[i].nsm = synth.wforms;
-			if (libxmp_alloc_subinstrument(mod, i, synth.wforms) < 0)
-				return -1;
-
-			ie = MED_INSTRUMENT_EXTRAS(*xxi);
-			ie->vts = synth.volspeed;
-			ie->wts = synth.wfspeed;
-			ie->vtlen = synth.voltbllen;
-			ie->wtlen = synth.wftbllen;
-
-			for (j = 0; j < synth.wforms; j++) {
-				/* Sanity check */
-				if (smp_idx >= num_smp) {
-					return -1;
-				}
-
-				sub = &xxi->sub[j];
-
-				sub->pan = 0x80;
-				sub->vol = 64;
-				sub->xpo = -24;
-				sub->sid = smp_idx;
-				sub->fin = 0 /*exp_smp.finetune*/;
-
-				hio_seek(f, pos + synth.wf[j], SEEK_SET);
-
-				xxs = &mod->xxs[smp_idx];
-
-				xxs->len = hio_read16b(f) * 2;
-				xxs->lps = 0;
-				xxs->lpe = xxs->len;
-				xxs->flg = XMP_SAMPLE_LOOP;
-
-				if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0) {
-					return -1;
-				}
-
-				smp_idx++;
-			}
-
-			if (mmd_alloc_tables(m, i, &synth) != 0)
-				return -1;
-
-			hio_seek(f, pos + length, SEEK_SET);
-			continue;
-		}
-
-		if (type != 0) {
-			hio_seek(f, length, SEEK_CUR);
-			continue;
-		}
-
-		/* instr type is sample */
-		xxi->nsm = 1;
-		if (libxmp_alloc_subinstrument(mod, i, 1) < 0)
+		if (med4_load_instrument(f, m, i, length, type,
+		    &smp_idx, temp_inst) < 0) {
 			return -1;
-
-		sub = &xxi->sub[0];
-
-		sub->vol = temp_inst[i].volume;
-		sub->pan = 0x80;
-		sub->xpo = temp_inst[i].transpose;
-		sub->sid = smp_idx;
-
-		/* Sanity check */
-		if (smp_idx >= mod->smp)
-			return -1;
-
-		xxs = &mod->xxs[smp_idx];
-
-		xxs->len = length;
-		xxs->lps = temp_inst[i].loop_start;
-		xxs->lpe = temp_inst[i].loop_end;
-		xxs->flg = temp_inst[i].loop_end > 2 ? XMP_SAMPLE_LOOP : 0;
-
-		D_(D_INFO "  %04x %04x %04x %c V%02x %+03d",
-				xxs->len, mod->xxs[smp_idx].lps, xxs->lpe,
-				xxs->flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
-				sub->vol, sub->xpo);
-
-		if (libxmp_load_sample(m, f, 0, xxs, NULL) < 0)
-			return -1;
-
-		/* Limit range to 3 octave (see MED.El toro) */
-		for (j = 0; j < 9; j++) {
-			for (k = 0; k < 12; k++) {
-				int xpo = 0;
-
-				if (j < 4)
-					xpo = 12 * (4 - j);
-				else if (j > 6)
-					xpo = -12 * (j - 6);
-
-				xxi->map[12 * j + k].xpo = xpo;
-			}
 		}
-
-		smp_idx++;
 	}
 
 	/* Not sure what this was supposed to be, but it isn't present in

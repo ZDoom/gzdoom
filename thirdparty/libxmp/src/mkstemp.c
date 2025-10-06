@@ -41,22 +41,23 @@
  * SUCH DAMAGE.
  */
 
-#include <fcntl.h>
-#include <errno.h>
-
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-#endif
-#if defined(_MSC_VER) || defined(__WATCOMC__)
+#include <io.h>
+#include <process.h>
+#elif defined(__WATCOMC__)
 #include <io.h>
 #else
 #include <unistd.h>
 #endif
-#ifdef _MSC_VER
-#include <process.h>
+
+#include <fcntl.h>
+#include <errno.h>
+
+#ifdef _WIN32
 #define open _open
 #endif
 #ifndef O_BINARY

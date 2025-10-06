@@ -32,7 +32,7 @@ class YmFmOPNA final : public OPNChipBaseT<YmFmOPNA>
     void *m_intf;
     void *m_output;
 
-    static const size_t c_queueSize = 500;
+    static const size_t c_queueSize = 2048;
 
     struct Reg
     {
@@ -55,6 +55,7 @@ public:
     void nativePostGenerate() override {}
     void nativeGenerate(int16_t *frame) override;
     const char *emulatorName() override;
+    bool hasFullPanning() override;
 };
 
 #endif // YMFM_OPNA_H

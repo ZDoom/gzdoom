@@ -28,7 +28,7 @@ class YmFmOPN2 final : public OPNChipBaseT<YmFmOPN2>
     void *m_chip;
     void *m_intf;
 
-    static const size_t c_queueSize = 500;
+    static const size_t c_queueSize = 2048;
 
     struct Reg
     {
@@ -54,6 +54,7 @@ public:
     void nativePostGenerate() override {}
     void nativeGenerate(int16_t *frame) override;
     const char *emulatorName() override;
+    bool hasFullPanning() override;
 };
 
 #endif // YMFM_OPN2_H

@@ -116,7 +116,7 @@ struct _fluid_voice_t
 };
 
 
-fluid_voice_t *new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate);
+fluid_voice_t *new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate, fluid_iir_sincos_t *sincos_table);
 void delete_fluid_voice(fluid_voice_t *voice);
 
 void fluid_voice_start(fluid_voice_t *voice);

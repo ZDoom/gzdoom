@@ -109,3 +109,8 @@ const char *GensOPN2::emulatorName()
 {
     return "GENS/GS II OPN2";
 }
+
+bool GensOPN2::hasFullPanning()
+{
+    return true;
+}

@@ -56,15 +56,15 @@ void Gb_Cpu::reset( void* unmapped )
 {
 	check( state == &state_ );
 	state = &state_;
-	
+
 	state_.remain = 0;
-	
+
 	for ( int i = 0; i < page_count + 1; i++ )
 		set_code_page( i, (uint8_t*) unmapped );
-	
+
 	memset( &r, 0, sizeof r );
 	//interrupts_enabled = false;
-	
+
 	blargg_verify_byte_order();
 }
 
@@ -73,7 +73,7 @@ void Gb_Cpu::map_code( gb_addr_t start, unsigned size, void* data )
 	// address range must begin and end on page boundaries
 	require( start % page_size == 0 );
 	require( size % page_size == 0 );
-	
+
 	unsigned first_page = start / page_size;
 	for ( unsigned i = size / page_size; i--; )
 		set_code_page( first_page + i, (uint8_t*) data + i * page_size );
@@ -84,10 +84,11 @@ void Gb_Cpu::map_code( gb_addr_t start, unsigned size, void* data )
 #define READ_FAST( addr, out )  CPU_READ_FAST( this, (addr), s.remain, out )
 #define READ_PROG( addr )       (s.code_map [(addr) >> page_shift] [PAGE_OFFSET( addr )])
 
-unsigned const z_flag = 0x80;
-unsigned const n_flag = 0x40;
-unsigned const h_flag = 0x20;
-unsigned const c_flag = 0x10;
+
+static unsigned const z_flag = 0x80;
+static unsigned const n_flag = 0x40;
+static unsigned const h_flag = 0x20;
+static unsigned const c_flag = 0x10;
 
 bool Gb_Cpu::run( blargg_long cycle_count )
 {
@@ -95,41 +96,41 @@ bool Gb_Cpu::run( blargg_long cycle_count )
 	state_t s;
 	this->state = &s;
 	memcpy( &s, &this->state_, sizeof s );
-	
+
 #if BLARGG_BIG_ENDIAN
-	#define R8( n ) (r8_ [n]) 
+	#define R8( n ) (r8_ [n])
 #elif BLARGG_LITTLE_ENDIAN
-	#define R8( n ) (r8_ [(n) ^ 1]) 
+	#define R8( n ) (r8_ [(n) ^ 1])
 #else
 	#error "Byte order of CPU must be known"
 #endif
-	
+
 	union {
 		core_regs_t rg; // individual registers
-		
+
 		struct {
 			uint16_t bc, de, hl, unused; // pairs
 		} rp;
-		
+
 		uint8_t r8_ [8]; // indexed registers (use R8 macro due to endian dependence)
 		uint16_t r16 [4]; // indexed pairs
 	};
-	BOOST_STATIC_ASSERT( sizeof rg == 8 && sizeof rp == 8 );
-	
+	static_assert( sizeof rg == 8 && sizeof rp == 8, "Unhandled word size" );
+
 	rg = r;
 	unsigned pc = r.pc;
 	unsigned sp = r.sp;
 	unsigned flags = r.flags;
-	
+
 loop:
-	
+
 	check( (unsigned long) pc < 0x10000 );
 	check( (unsigned long) sp < 0x10000 );
 	check( (flags & ~0xF0) == 0 );
-	
+
 	uint8_t const* instr = s.code_map [pc >> page_shift];
 	unsigned op;
-	
+
 	// TODO: eliminate this special case
 	#if BLARGG_NONPORTABLE
 		op = instr [pc];
@@ -140,19 +141,19 @@ loop:
 		op = *instr++;
 		pc++;
 	#endif
-	
+
 #define GET_ADDR()  GET_LE16( instr )
-	
+
 	if ( !--s.remain )
 		goto stop;
-	
+
 	unsigned data;
 	data = *instr;
-	
+
 	#ifdef GB_CPU_LOG_H
 		gb_cpu_log( "new", pc - 1, op, data, instr [1] );
 	#endif
-	
+
 	switch ( op )
 	{
 
@@ -170,44 +171,44 @@ loop:
 
 	case 0x20: // JR NZ
 		BRANCH( !(flags & z_flag) )
-	
+
 	case 0x21: // LD HL,IMM (common)
 		rp.hl = GET_ADDR();
 		pc += 2;
 		goto loop;
-	
+
 	case 0x28: // JR Z
 		BRANCH( flags & z_flag )
-	
+
 	{
 		unsigned temp;
 	case 0xF0: // LD A,(0xFF00+imm)
 		temp = data | 0xFF00;
 		pc++;
 		goto ld_a_ind_comm;
-	
+
 	case 0xF2: // LD A,(0xFF00+C)
 		temp = rg.c | 0xFF00;
 		goto ld_a_ind_comm;
-	
+
 	case 0x0A: // LD A,(BC)
 		temp = rp.bc;
 		goto ld_a_ind_comm;
-	
+
 	case 0x3A: // LD A,(HL-)
 		temp = rp.hl;
 		rp.hl = temp - 1;
 		goto ld_a_ind_comm;
-	
+
 	case 0x1A: // LD A,(DE)
 		temp = rp.de;
 		goto ld_a_ind_comm;
-	
+
 	case 0x2A: // LD A,(HL+) (common)
 		temp = rp.hl;
 		rp.hl = temp + 1;
 		goto ld_a_ind_comm;
-		
+
 	case 0xFA: // LD A,IND16 (common)
 		temp = GET_ADDR();
 		pc += 2;
@@ -215,11 +216,11 @@ loop:
 		READ_FAST( temp, rg.a );
 		goto loop;
 	}
-	
+
 	case 0xBE: // CMP (HL)
 		data = READ( rp.hl );
 		goto cmp_comm;
-	
+
 	case 0xB8: // CMP B
 	case 0xB9: // CMP C
 	case 0xBA: // CMP D
@@ -228,7 +229,7 @@ loop:
 	case 0xBD: // CMP L
 		data = R8( op & 7 );
 		goto cmp_comm;
-	
+
 	case 0xFE: // CMP IMM
 		pc++;
 	cmp_comm:
@@ -254,13 +255,13 @@ loop:
 		READ_FAST( addr, R8( (op >> 3) & 7 ) );
 		goto loop;
 	}
-	
+
 	case 0xC4: // CNZ (next-most-common)
 		pc += 2;
 		if ( flags & z_flag )
 			goto loop;
 	call:
-		pc -= 2;
+		pc -= 2; // FALLTHRU
 	case 0xCD: // CALL (most-common)
 		data = pc + 2;
 		pc = GET_ADDR();
@@ -270,17 +271,18 @@ loop:
 		sp = (sp - 1) & 0xFFFF;
 		WRITE( sp, data & 0xFF );
 		goto loop;
-	
+
 	case 0xC8: // RNZ (next-most-common)
 		if ( !(flags & z_flag) )
 			goto loop;
+		// FALLTHRU
 	case 0xC9: // RET (most common)
 	ret:
 		pc = READ( sp );
 		pc += 0x100 * READ( sp + 1 );
 		sp = (sp + 2) & 0xFFFF;
 		goto loop;
-	
+
 	case 0x00: // NOP
 	case 0x40: // LD B,B
 	case 0x49: // LD C,C
@@ -290,14 +292,14 @@ loop:
 	case 0x6D: // LD L,L
 	case 0x7F: // LD A,A
 		goto loop;
-	
+
 // CB Instructions
 
 	case 0xCB:
 		pc++;
 		// now data is the opcode
 		switch ( data ) {
-			
+
 		{
 			int temp;
 		case 0x46: // BIT b,(HL)
@@ -313,7 +315,7 @@ loop:
 				READ_FAST( addr, temp );
 				goto bit_comm;
 			}
-		
+
 		case 0x40: case 0x41: case 0x42: case 0x43: // BIT b,r
 		case 0x44: case 0x45: case 0x47: case 0x48:
 		case 0x49: case 0x4A: case 0x4B: case 0x4C:
@@ -336,7 +338,7 @@ loop:
 			flags ^= (temp << bit) & z_flag;
 			goto loop;
 		}
-		
+
 		case 0x86: // RES b,(HL)
 		case 0x8E:
 		case 0x96:
@@ -361,7 +363,7 @@ loop:
 			WRITE( rp.hl, temp | bit );
 			goto loop;
 		}
-		
+
 		case 0xC0: case 0xC1: case 0xC2: case 0xC3: // SET b,r
 		case 0xC4: case 0xC5: case 0xC7: case 0xC8:
 		case 0xC9: case 0xCA: case 0xCB: case 0xCC:
@@ -395,13 +397,13 @@ loop:
 		case 0xBB: case 0xBC: case 0xBD: case 0xBF:
 			R8( data & 7 ) &= ~(1 << ((data >> 3) & 7));
 			goto loop;
-		
+
 		{
 			int temp;
 		case 0x36: // SWAP (HL)
 			temp = READ( rp.hl );
 			goto swap_comm;
-		
+
 		case 0x30: // SWAP B
 		case 0x31: // SWAP C
 		case 0x32: // SWAP D
@@ -415,7 +417,7 @@ loop:
 			flags = 0;
 			goto shift_comm;
 		}
-		
+
 // Shift/Rotate
 
 		case 0x06: // RLC (HL)
@@ -423,31 +425,32 @@ loop:
 		case 0x26: // SLA (HL)
 			op = READ( rp.hl );
 			goto rl_comm;
-		
+
 		case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x27: // SLA A
 		case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x07: // RLC A
 		case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x17: // RL A
 			op = R8( data & 7 );
 			goto rl_comm;
-		
+
 		case 0x3E: // SRL (HL)
-			data += 0x10; // bump up to 0x4n to avoid preserving sign bit
+			data += 0x10; /* fallthrough */ // bump up to 0x4n to avoid preserving sign bit
 		case 0x1E: // RR (HL)
 		case 0x0E: // RRC (HL)
 		case 0x2E: // SRA (HL)
 			op = READ( rp.hl );
 			goto rr_comm;
-		
+
 		case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3F: // SRL A
-			data += 0x10; // bump up to 0x4n
+			data += 0x10; /* fallthrough */ // bump up to 0x4n
 		case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1F: // RR A
 		case 0x08: case 0x09: case 0x0A: case 0x0B: case 0x0C: case 0x0D: case 0x0F: // RRC A
 		case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2F: // SRA A
 			op = R8( data & 7 );
 			goto rr_comm;
-		
+
 	} // CB op
 	assert( false ); // unhandled CB op
+	// fallthrough
 
 	case 0x07: // RLCA
 	case 0x17: // RLA
@@ -461,7 +464,7 @@ loop:
 			op |= op >> 8;
 		// SLA doesn't fill lower bit
 		goto shift_comm;
-	
+
 	case 0x0F: // RRCA
 	case 0x1F: // RRA
 		data = op;
@@ -514,7 +517,7 @@ loop:
 		data++;
 		WRITE( data, sp >> 8 );
 		goto loop;
-	
+
 	case 0xF9: // LD SP,HL
 		sp = rp.hl;
 		goto loop;
@@ -523,20 +526,20 @@ loop:
 		sp = GET_ADDR();
 		pc += 2;
 		goto loop;
-	
+
 	case 0x01: // LD BC,IMM
 	case 0x11: // LD DE,IMM
 		r16 [op >> 4] = GET_ADDR();
 		pc += 2;
 		goto loop;
-	
+
 	{
 		unsigned temp;
 	case 0xE0: // LD (0xFF00+imm),A
 		temp = data | 0xFF00;
 		pc++;
 		goto write_data_rg_a;
-	
+
 	case 0xE2: // LD (0xFF00+C),A
 		temp = rg.c | 0xFF00;
 		goto write_data_rg_a;
@@ -545,20 +548,20 @@ loop:
 		temp = rp.hl;
 		rp.hl = temp - 1;
 		goto write_data_rg_a;
-	
+
 	case 0x02: // LD (BC),A
 		temp = rp.bc;
 		goto write_data_rg_a;
-	
+
 	case 0x12: // LD (DE),A
 		temp = rp.de;
 		goto write_data_rg_a;
-	
+
 	case 0x22: // LD (HL+),A
 		temp = rp.hl;
 		rp.hl = temp + 1;
 		goto write_data_rg_a;
-		
+
 	case 0xEA: // LD IND16,A (common)
 		temp = GET_ADDR();
 		pc += 2;
@@ -566,42 +569,42 @@ loop:
 		WRITE( temp, rg.a );
 		goto loop;
 	}
-	
+
 	case 0x06: // LD B,IMM
 		rg.b = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x0E: // LD C,IMM
 		rg.c = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x16: // LD D,IMM
 		rg.d = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x1E: // LD E,IMM
 		rg.e = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x26: // LD H,IMM
 		rg.h = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x2E: // LD L,IMM
 		rg.l = data;
 		pc++;
 		goto loop;
-	
+
 	case 0x36: // LD (HL),IMM
 		WRITE( rp.hl, data );
 		pc++;
 		goto loop;
-	
+
 	case 0x3E: // LD A,IMM
 		rg.a = data;
 		pc++;
@@ -614,7 +617,7 @@ loop:
 	case 0x23: // INC HL
 		r16 [op >> 4]++;
 		goto loop;
-	
+
 	case 0x33: // INC SP
 		sp = (sp + 1) & 0xFFFF;
 		goto loop;
@@ -624,18 +627,18 @@ loop:
 	case 0x2B: // DEC HL
 		r16 [op >> 4]--;
 		goto loop;
-	
+
 	case 0x3B: // DEC SP
 		sp = (sp - 1) & 0xFFFF;
 		goto loop;
-	
+
 	case 0x34: // INC (HL)
 		op = rp.hl;
 		data = READ( op );
 		data++;
 		WRITE( op, data & 0xFF );
 		goto inc_comm;
-	
+
 	case 0x04: // INC B
 	case 0x0C: // INC C (common)
 	case 0x14: // INC D
@@ -648,14 +651,14 @@ loop:
 	inc_comm:
 		flags = (flags & c_flag) | (((data & 15) - 1) & h_flag) | ((data >> 1) & z_flag);
 		goto loop;
-	
+
 	case 0x35: // DEC (HL)
 		op = rp.hl;
 		data = READ( op );
 		data--;
 		WRITE( op, data & 0xFF );
 		goto dec_comm;
-	
+
 	case 0x05: // DEC B
 	case 0x0D: // DEC C
 	case 0x15: // DEC D
@@ -678,7 +681,7 @@ loop:
 	{
 		blargg_ulong temp; // need more than 16 bits for carry
 		unsigned prev;
-		
+
 	case 0xF8: // LD HL,SP+imm
 		temp = int8_t (data); // sign-extend to 16 bits
 		pc++;
@@ -686,7 +689,7 @@ loop:
 		temp += sp;
 		prev = sp;
 		goto add_16_hl;
-	
+
 	case 0xE8: // ADD SP,IMM
 		temp = int8_t (data); // sign-extend to 16 bits
 		pc++;
@@ -699,7 +702,7 @@ loop:
 	case 0x39: // ADD HL,SP
 		temp = sp;
 		goto add_hl_comm;
-	
+
 	case 0x09: // ADD HL,BC
 	case 0x19: // ADD HL,DE
 	case 0x29: // ADD HL,HL
@@ -715,11 +718,11 @@ loop:
 		flags |= (((temp & 0x0FFF) - (prev & 0x0FFF)) >> 7) & h_flag;
 		goto loop;
 	}
-	
+
 	case 0x86: // ADD (HL)
 		data = READ( rp.hl );
 		goto add_comm;
-	
+
 	case 0x80: // ADD B
 	case 0x81: // ADD C
 	case 0x82: // ADD D
@@ -729,7 +732,7 @@ loop:
 	case 0x87: // ADD A
 		data = R8( op & 7 );
 		goto add_comm;
-	
+
 	case 0xC6: // ADD IMM
 		pc++;
 	add_comm:
@@ -748,7 +751,7 @@ loop:
 	case 0x8E: // ADC (HL)
 		data = READ( rp.hl );
 		goto adc_comm;
-	
+
 	case 0x88: // ADC B
 	case 0x89: // ADC C
 	case 0x8A: // ADC D
@@ -758,7 +761,7 @@ loop:
 	case 0x8F: // ADC A
 		data = R8( op & 7 );
 		goto adc_comm;
-	
+
 	case 0xCE: // ADC IMM
 		pc++;
 	adc_comm:
@@ -769,7 +772,7 @@ loop:
 	case 0x96: // SUB (HL)
 		data = READ( rp.hl );
 		goto sub_comm;
-	
+
 	case 0x90: // SUB B
 	case 0x91: // SUB C
 	case 0x92: // SUB D
@@ -779,7 +782,7 @@ loop:
 	case 0x97: // SUB A
 		data = R8( op & 7 );
 		goto sub_comm;
-	
+
 	case 0xD6: // SUB IMM
 		pc++;
 	sub_comm:
@@ -791,7 +794,7 @@ loop:
 	case 0x9E: // SBC (HL)
 		data = READ( rp.hl );
 		goto sbc_comm;
-	
+
 	case 0x98: // SBC B
 	case 0x99: // SBC C
 	case 0x9A: // SBC D
@@ -801,7 +804,7 @@ loop:
 	case 0x9F: // SBC A
 		data = R8( op & 7 );
 		goto sbc_comm;
-	
+
 	case 0xDE: // SBC IMM
 		pc++;
 	sbc_comm:
@@ -819,14 +822,14 @@ loop:
 	case 0xA5: // AND L
 		data = R8( op & 7 );
 		goto and_comm;
-	
+
 	case 0xA6: // AND (HL)
 		data = READ( rp.hl );
-		pc--;
+		pc--; // FALLTHRU
 	case 0xE6: // AND IMM
 		pc++;
 	and_comm:
-		rg.a &= data;
+		rg.a &= data; // FALLTHRU
 	case 0xA7: // AND A
 		flags = h_flag | (((rg.a - 1) >> 1) & z_flag);
 		goto loop;
@@ -839,14 +842,14 @@ loop:
 	case 0xB5: // OR L
 		data = R8( op & 7 );
 		goto or_comm;
-	
+
 	case 0xB6: // OR (HL)
 		data = READ( rp.hl );
-		pc--;
+		pc--; // FALLTHRU
 	case 0xF6: // OR IMM
 		pc++;
 	or_comm:
-		rg.a |= data;
+		rg.a |= data; // FALLTHRU
 	case 0xB7: // OR A
 		flags = ((rg.a - 1) >> 1) & z_flag;
 		goto loop;
@@ -859,10 +862,10 @@ loop:
 	case 0xAD: // XOR L
 		data = R8( op & 7 );
 		goto xor_comm;
-	
+
 	case 0xAE: // XOR (HL)
 		data = READ( rp.hl );
-		pc--;
+		pc--; // FALLTHRU
 	case 0xEE: // XOR IMM
 		pc++;
 	xor_comm:
@@ -871,7 +874,7 @@ loop:
 		data--;
 		flags = (data >> 1) & z_flag;
 		goto loop;
-	
+
 	case 0xAF: // XOR A
 		rg.a = 0;
 		flags = z_flag;
@@ -879,7 +882,7 @@ loop:
 
 // Stack
 
-	case 0xF1: // POP FA
+	case 0xF1: // POP AF
 	case 0xC1: // POP BC
 	case 0xD1: // POP DE
 	case 0xE1: // POP HL (common)
@@ -888,48 +891,50 @@ loop:
 		sp = (sp + 2) & 0xFFFF;
 		if ( op != 0xF1 )
 			goto loop;
-		flags = rg.flags & 0xF0;
+		flags = rg.a & 0xF0;
+		rg.a = rg.flags;
 		goto loop;
-	
+
 	case 0xC5: // PUSH BC
 		data = rp.bc;
 		goto push;
-	
+
 	case 0xD5: // PUSH DE
 		data = rp.de;
 		goto push;
-	
+
 	case 0xE5: // PUSH HL
 		data = rp.hl;
 		goto push;
-	
-	case 0xF5: // PUSH FA
-		data = (flags << 8) | rg.a;
+
+	case 0xF5: // PUSH AF
+		data = (rg.a << 8) | flags;
 		goto push;
 
 // Flow control
-	
+
 	case 0xFF:
 		if ( pc == idle_addr + 1 )
 			goto stop;
+		// FALLTHRU
 	case 0xC7: case 0xCF: case 0xD7: case 0xDF:  // RST
 	case 0xE7: case 0xEF: case 0xF7:
 		data = pc;
 		pc = (op & 0x38) + rst_base;
 		goto push;
-	
+
 	case 0xCC: // CZ
 		pc += 2;
 		if ( flags & z_flag )
 			goto call;
 		goto loop;
-	
+
 	case 0xD4: // CNC
 		pc += 2;
 		if ( !(flags & c_flag) )
 			goto call;
 		goto loop;
-	
+
 	case 0xDC: // CC
 		pc += 2;
 		if ( flags & c_flag )
@@ -939,17 +944,17 @@ loop:
 	case 0xD9: // RETI
 		//interrupts_enabled = 1;
 		goto ret;
-	
+
 	case 0xC0: // RZ
 		if ( !(flags & z_flag) )
 			goto ret;
 		goto loop;
-	
+
 	case 0xD0: // RNC
 		if ( !(flags & c_flag) )
 			goto ret;
 		goto loop;
-	
+
 	case 0xD8: // RC
 		if ( flags & c_flag )
 			goto ret;
@@ -957,13 +962,13 @@ loop:
 
 	case 0x18: // JR
 		BRANCH( true )
-	
+
 	case 0x30: // JR NC
 		BRANCH( !(flags & c_flag) )
-	
+
 	case 0x38: // JR C
 		BRANCH( flags & c_flag )
-	
+
 	case 0xE9: // JP_HL
 		pc = rp.hl;
 		goto loop;
@@ -971,13 +976,13 @@ loop:
 	case 0xC3: // JP (next-most-common)
 		pc = GET_ADDR();
 		goto loop;
-	
+
 	case 0xC2: // JP NZ
 		pc += 2;
 		if ( !(flags & z_flag) )
 			goto jp_taken;
 		goto loop;
-	
+
 	case 0xCA: // JP Z (most common)
 		pc += 2;
 		if ( !(flags & z_flag) )
@@ -986,13 +991,13 @@ loop:
 		pc -= 2;
 		pc = GET_ADDR();
 		goto loop;
-	
+
 	case 0xD2: // JP NC
 		pc += 2;
 		if ( !(flags & c_flag) )
 			goto jp_taken;
 		goto loop;
-	
+
 	case 0xDA: // JP C
 		pc += 2;
 		if ( flags & c_flag )
@@ -1034,21 +1039,21 @@ loop:
 		s.remain++;
 		goto stop;
 	}
-	
+
 	// If this fails then the case above is missing an opcode
 	assert( false );
-	
+
 stop:
 	pc--;
-	
+
 	// copy state back
 	STATIC_CAST(core_regs_t&,r) = rg;
 	r.pc = pc;
 	r.sp = sp;
 	r.flags = flags;
-	
+
 	this->state = &state_;
 	memcpy( &this->state_, &s, sizeof this->state_ );
-	
+
 	return s.remain > 0;
 }

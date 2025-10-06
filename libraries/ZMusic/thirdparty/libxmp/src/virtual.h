@@ -16,6 +16,7 @@ void	libxmp_virt_off		(struct context_data *);
 int	libxmp_virt_mute	(struct context_data *, int, int);
 int	libxmp_virt_setpatch	(struct context_data *, int, int, int, int,
 				 int, int, int, int);
+int	libxmp_virt_queuepatch	(struct context_data *, int, int, int, int);
 int	libxmp_virt_cvt8bit	(void);
 void	libxmp_virt_setnote	(struct context_data *, int, int);
 void	libxmp_virt_setsmp	(struct context_data *, int, int);

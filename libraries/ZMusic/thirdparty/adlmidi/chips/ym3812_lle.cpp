@@ -27,7 +27,7 @@ Ym3812LLEOPL2::Ym3812LLEOPL2() :
     OPLChipBaseT()
 {
     m_chip = nopl2_init(14318182, m_rate);
-    setRate(m_rate);
+    Ym3812LLEOPL2::setRate(m_rate);
 }
 
 Ym3812LLEOPL2::~Ym3812LLEOPL2()
@@ -50,8 +50,7 @@ void Ym3812LLEOPL2::reset()
 
 void Ym3812LLEOPL2::writeReg(uint16_t addr, uint8_t data)
 {
-    nopl2_write(m_chip, 2 * ((addr >> 8) & 3), addr);
-    nopl2_write(m_chip, 1, data);
+    nopl2_write_buf(m_chip, addr, data);
 }
 
 void Ym3812LLEOPL2::writePan(uint16_t addr, uint8_t data)

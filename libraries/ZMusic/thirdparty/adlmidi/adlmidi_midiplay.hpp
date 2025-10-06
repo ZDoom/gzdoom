@@ -248,12 +248,13 @@ public:
             Phys *phys_find_or_create(uint16_t chip_chan)
             {
                 Phys *ph = phys_find(chip_chan);
-                if(!ph) {
-                    if(chip_channels_count < MaxNumPhysItemCount) {
-                        ph = &chip_channels[chip_channels_count++];
-                        ph->chip_chan = chip_chan;
-                    }
+
+                if(!ph && chip_channels_count < MaxNumPhysItemCount)
+                {
+                    ph = &chip_channels[chip_channels_count++];
+                    ph->chip_chan = chip_chan;
                 }
+
                 return ph;
             }
 

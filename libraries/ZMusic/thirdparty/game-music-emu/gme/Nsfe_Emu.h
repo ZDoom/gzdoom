@@ -11,7 +11,7 @@
 class Nsfe_Info {
 public:
 	blargg_err_t load( Data_Reader&, Nsf_Emu* );
-	
+
 	struct info_t : Nsf_Emu::header_t
 	{
 		char game      [256];
@@ -19,15 +19,15 @@ public:
 		char copyright [256];
 		char dumper    [256];
 	} info;
-	
+
 	void disable_playlist( bool = true );
-	
+
 	blargg_err_t track_info_( track_info_t* out, int track ) const;
-	
+
 	int remap_track( int i ) const;
-	
+
 	void unload();
-	
+
 	Nsfe_Info();
 	~Nsfe_Info();
 private:
@@ -42,7 +42,7 @@ private:
 class Nsfe_Emu : public Nsf_Emu {
 public:
 	static gme_type_t static_type() { return gme_nsfe_type; }
-	
+
 public:
 	// deprecated
 	struct header_t { char tag [4]; };

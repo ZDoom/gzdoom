@@ -74,7 +74,7 @@ static bool event_compare(const fluid_event_t& left, const fluid_event_t& right)
         //  * possible values of ltype in rows,
         //  * the boolean values to indicate whether leftIsBeforeRight,
         //  * X meaning any other event type, and
-        //  * the '*' means that it could be zero, but making it 1 simplyfies the boolean expression.
+        //  * the '*' means that it could be zero, but making it 1 simplifies the boolean expression.
         //
         // | ltype \ rtype | SYSR | UNREG | BANK | PROG | NOTEON | X  |
         // |      SYSR     |  1   |   1   |   1  |   1  |   1    | 1  |

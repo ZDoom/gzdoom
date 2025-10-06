@@ -26,18 +26,18 @@ public:
 	    byte loop_start [4]; // in 1/60 seconds, 0 if not looped
 	    byte packed [4];
 	};
-	
+
 	// Header for currently loaded file
 	header_t const& header() const { return header_; }
-	
+
 	static gme_type_t static_type() { return gme_gym_type; }
-	
+
 public:
 	// deprecated
 	using Music_Emu::load;
 	blargg_err_t load( header_t const& h, Data_Reader& in ) // use Remaining_Reader
 			{ return load_remaining_( &h, sizeof h, in ); }
-	enum { gym_rate = 60 }; 
+	enum { gym_rate = 60 };
 	long track_length() const; // use track_info()
 
 public:
@@ -63,14 +63,14 @@ private:
 	double fm_sample_rate;
 	blargg_long clocks_per_frame;
 	void parse_frame();
-	
+
 	// dac (pcm)
 	int dac_amp;
 	int prev_dac_count;
 	bool dac_enabled;
 	bool dac_muted;
 	void run_dac( int );
-	
+
 	// sound
 	Blip_Buffer blip_buf;
 	Ym2612_Emu fm;

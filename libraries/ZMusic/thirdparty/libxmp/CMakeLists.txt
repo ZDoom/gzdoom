@@ -29,6 +29,8 @@ add_library(libxmp OBJECT
     src/memio.c
     src/tempfile.c
     src/mix_paula.c
+	src/flow.c
+	src/rng.c
     src/win32.c
     src/loaders/common.c
     src/loaders/iff.c

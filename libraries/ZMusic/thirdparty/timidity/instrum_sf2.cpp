@@ -169,20 +169,20 @@ static void ParseGen(SFFile *sf2, timidity_file *f, uint32_t chunkid, uint32_t c
 static void ParseInst(SFFile *sf2, timidity_file *f, uint32_t chunkid, uint32_t chunklen);
 static void ParseShdr(SFFile *sf2, timidity_file *f, uint32_t chunkid, uint32_t chunklen);
 
-ListHandler INFOHandlers[] =
+static const ListHandler INFOHandlers[] =
 {
 	{ ID_ifil, ParseIfil },
 	{ 0, 0 }
 };
 
-ListHandler SdtaHandlers[] =
+static const ListHandler SdtaHandlers[] =
 {
 	{ ID_smpl, ParseSmpl },
 	{ ID_sm24, ParseSm24 },
 	{ 0, 0 }
 };
 
-ListHandler PdtaHandlers[] =
+static const ListHandler PdtaHandlers[] =
 {
 	{ ID_phdr, ParsePhdr },
 	{ ID_pbag, ParseBag },
@@ -338,9 +338,9 @@ static void ParseIfil(SFFile *sf2, timidity_file *f, uint32_t chunkid, uint32_t 
 	sf2->MinorVersion = minor;
 }
 
-static void ParseLIST(SFFile *sf2, timidity_file *f, uint32_t chunklen, ListHandler *handlers)
+static void ParseLIST(SFFile *sf2, timidity_file *f, uint32_t chunklen, const ListHandler *handlers)
 {
-	ListHandler *handler;
+	const ListHandler *handler;
 	uint32_t id;
 	uint32_t len;
 

@@ -177,7 +177,7 @@ static void fluid_voice_swap_rvoice(fluid_voice_t *voice)
     voice->overflow_sample = voice->sample;
 }
 
-static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate)
+static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t output_rate, fluid_iir_sincos_t* sincos_table)
 {
     fluid_rvoice_param_t param[MAX_EVENT_PARAMS];
 
@@ -200,9 +200,11 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t out
     param[0].i = FLUID_IIR_LOWPASS;
     param[1].i = 0;
     fluid_iir_filter_init(&voice->rvoice->resonant_filter, param);
+    voice->rvoice->resonant_filter.sincos_table = sincos_table;
 
     param[0].i = FLUID_IIR_DISABLED;
     fluid_iir_filter_init(&voice->rvoice->resonant_custom_filter, param);
+    voice->rvoice->resonant_custom_filter.sincos_table = sincos_table;
 
     param[0].real = output_rate;
     fluid_rvoice_set_output_rate(voice->rvoice, param);
@@ -212,7 +214,7 @@ static void fluid_voice_initialize_rvoice(fluid_voice_t *voice, fluid_real_t out
  * new_fluid_voice
  */
 fluid_voice_t *
-new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
+new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate, fluid_iir_sincos_t *sincos_table)
 {
     fluid_voice_t *voice;
     voice = FLUID_NEW(fluid_voice_t);
@@ -247,9 +249,9 @@ new_fluid_voice(fluid_rvoice_eventhandler_t *handler, fluid_real_t output_rate)
     voice->output_rate = output_rate;
 
     /* Initialize both the rvoice and overflow_rvoice */
-    fluid_voice_initialize_rvoice(voice, output_rate);
+    fluid_voice_initialize_rvoice(voice, output_rate, sincos_table);
     fluid_voice_swap_rvoice(voice);
-    fluid_voice_initialize_rvoice(voice, output_rate);
+    fluid_voice_initialize_rvoice(voice, output_rate, sincos_table);
 
     return voice;
 }
@@ -859,15 +861,12 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
         break;
 
     case GEN_FILTERFC:
-        /* The resonance frequency is converted from absolute cents to
-         * midicents .val and .mod are both used, this permits real-time
-         * modulation.  The allowed range is tested in the 'fluid_ct2hz'
-         * function [PH,20021214]
-         */
+        fluid_clip(x, FRES_MIN, FRES_MAX);
         UPDATE_RVOICE_GENERIC_R1(fluid_iir_filter_set_fres, &voice->rvoice->resonant_filter, x);
         break;
 
     case GEN_FILTERQ:
+        fluid_clip(x, 0.f, 960.f);
         UPDATE_RVOICE_GENERIC_R1(fluid_iir_filter_set_q, &voice->rvoice->resonant_filter, x);
         break;
 
@@ -906,7 +905,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = (4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate);
+        x = (4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate);
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, modlfo, x);
         break;
 
@@ -917,7 +916,7 @@ fluid_voice_update_param(fluid_voice_t *voice, int gen)
          * - the delay into a sample delay
          */
         fluid_clip(x, -16000.0f, 4500.0f);
-        x = 4.0f * FLUID_BUFSIZE * fluid_act2hz(x) / voice->output_rate;
+        x = 4.0f * FLUID_BUFSIZE * fluid_ct2hz_real(x) / voice->output_rate;
         UPDATE_RVOICE_ENVLFO_R1(fluid_lfo_set_incr, viblfo, x);
         break;
 
@@ -1404,13 +1403,11 @@ fluid_voice_kill_excl(fluid_voice_t *voice)
     fluid_voice_gen_set(voice, GEN_EXCLUSIVECLASS, 0);
 
     /* Speed up the volume envelope */
-    /* The value was found through listening tests with hi-hat samples. */
-    fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -200);
+    /* The previously-used value of "-200" was found through listening tests
+       with hi-hat samples. This was changed to "-2000" after "-200" was shown
+       to cause too long cut times in most cases. */
+    fluid_voice_gen_set(voice, GEN_VOLENVRELEASE, -2000);
     fluid_voice_update_param(voice, GEN_VOLENVRELEASE);
-
-    /* Speed up the modulation envelope */
-    fluid_voice_gen_set(voice, GEN_MODENVRELEASE, -200);
-    fluid_voice_update_param(voice, GEN_MODENVRELEASE);
 
     at_tick = fluid_channel_get_min_note_length_ticks(voice->channel);
     UPDATE_RVOICE_I1(fluid_rvoice_noteoff, at_tick);
@@ -1791,7 +1788,7 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
                3)absolute value of amount.
 
                When at least one source mapping is bipolar:
-			     min_val is -|amount| regardless the sign of amount.
+                 min_val is -|amount| regardless the sign of amount.
                When both sources mapping are unipolar:
                  min_val is -|amount|, if amount is negative.
                  min_val is 0, if amount is positive
@@ -1833,9 +1830,6 @@ fluid_voice_get_lower_boundary_for_attenuation(fluid_voice_t *voice)
 
     return lower_bound;
 }
-
-
-
 
 int fluid_voice_set_param(fluid_voice_t *voice, int gen, fluid_real_t nrpn_value)
 {

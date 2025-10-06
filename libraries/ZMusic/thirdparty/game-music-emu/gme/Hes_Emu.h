@@ -25,10 +25,10 @@ public:
 		byte addr [4];
 		byte unused [4];
 	};
-	
+
 	// Header for currently loaded file
 	header_t const& header() const { return header_; }
-	
+
 	static gme_type_t static_type() { return gme_hes_type; }
 
 public:
@@ -45,7 +45,7 @@ protected:
 	void unload();
 public: private: friend class Hes_Cpu;
 	byte* write_pages [page_count + 1]; // 0 if unmapped or I/O space
-	
+
 	int cpu_read_( hes_addr_t );
 	int cpu_read( hes_addr_t );
 	void cpu_write_( hes_addr_t, int data );
@@ -59,7 +59,7 @@ private:
 	hes_time_t play_period;
 	hes_time_t last_frame_hook;
 	int timer_base;
-	
+
 	struct {
 		hes_time_t last_time;
 		blargg_long count;
@@ -68,25 +68,25 @@ private:
 		byte enabled;
 		byte fired;
 	} timer;
-	
+
 	struct {
 		hes_time_t next_vbl;
 		byte latch;
 		byte control;
 	} vdp;
-	
+
 	struct {
 		hes_time_t timer;
 		hes_time_t vdp;
 		byte disables;
 	} irq;
-	
+
 	void recalc_timer_load();
-	
+
 	// large items
 	Hes_Apu apu;
 	byte sgx [3 * page_size + cpu_padding];
-	
+
 	void irq_changed();
 	void run_until( hes_time_t );
 };

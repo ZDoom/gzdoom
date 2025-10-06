@@ -164,7 +164,7 @@ static Quantity **config_parse_modulation(const char *name, int line, const char
 	char buf[128], *delim;
 	Quantity **mod_list;
 	int i, j;
-	static const char * qtypestr[] = { "tremolo", "vibrato" };
+	static const char * const qtypestr[] = { "tremolo", "vibrato" };
 	static const uint16_t qtypes[] = {
 		QUANTITY_UNIT_TYPE(TREMOLO_SWEEP), QUANTITY_UNIT_TYPE(TREMOLO_RATE), QUANTITY_UNIT_TYPE(DIRECT_INT),
 		QUANTITY_UNIT_TYPE(VIBRATO_SWEEP), QUANTITY_UNIT_TYPE(VIBRATO_RATE), QUANTITY_UNIT_TYPE(DIRECT_INT)

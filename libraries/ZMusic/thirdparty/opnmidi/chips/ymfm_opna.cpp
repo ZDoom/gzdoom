@@ -21,6 +21,7 @@
 #include "ymfm_opna.h"
 #include "ymfm/ymfm_opn.h"
 #include <cstring>
+#include <assert.h>
 
 struct YmFmOPNA_Private
 {
@@ -98,6 +99,7 @@ void YmFmOPNA_Private::writeReg(uint32_t port, uint16_t addr, uint8_t data)
         m_headPos = 0;
 
     ++m_queueCount;
+    assert(m_queueCount < (long)YmFmOPNA::c_queueSize);
 }
 
 void YmFmOPNA::writePan(uint16_t /*addr*/, uint8_t /*data*/)
@@ -159,4 +161,9 @@ void YmFmOPNA_Private::nativeGenerate(int16_t *frame, void *m_chip, void *m_outp
 const char *YmFmOPNA::emulatorName()
 {
     return "YMFM OPNA";
+}
+
+bool YmFmOPNA::hasFullPanning()
+{
+    return false;
 }

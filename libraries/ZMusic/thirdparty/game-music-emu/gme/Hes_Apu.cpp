@@ -17,7 +17,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #include "blargg_source.h"
 
-bool const center_waves = true; // reduces asymmetry and clamping when starting notes
+static bool const center_waves = true; // reduces asymmetry and clamping when starting notes
 
 Hes_Apu::Hes_Apu()
 {
@@ -32,7 +32,7 @@ Hes_Apu::Hes_Apu()
 		osc->chans [2] = 0;
 	}
 	while ( osc != oscs );
-	
+
 	reset();
 }
 
@@ -40,7 +40,7 @@ void Hes_Apu::reset()
 {
 	latch   = 0;
 	balance = 0xFF;
-	
+
 	Hes_Osc* osc = &oscs [osc_count];
 	do
 	{
@@ -59,7 +59,7 @@ void Hes_Apu::osc_output( int index, Blip_Buffer* center, Blip_Buffer* left, Bli
 	oscs [index].chans [0] = center;
 	oscs [index].chans [1] = left;
 	oscs [index].chans [2] = right;
-	
+
 	Hes_Osc* osc = &oscs [osc_count];
 	do
 	{
@@ -75,7 +75,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 	if ( osc_outputs_0 && control & 0x80 )
 	{
 		int dac = this->dac;
-		
+
 		int const volume_0 = volume [0];
 		{
 			int delta = dac * volume_0 - last_amp [0];
@@ -83,7 +83,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 				synth_.offset( last_time, delta, osc_outputs_0 );
 			osc_outputs_0->set_modified();
 		}
-		
+
 		Blip_Buffer* const osc_outputs_1 = outputs [1];
 		int const volume_1 = volume [1];
 		if ( osc_outputs_1 )
@@ -93,7 +93,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 				synth_.offset( last_time, delta, osc_outputs_1 );
 			osc_outputs_1->set_modified();
 		}
-		
+
 		blip_time_t time = last_time + delay;
 		if ( time < end_time )
 		{
@@ -106,10 +106,10 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 					unsigned noise_lfsr = this->noise_lfsr;
 					do
 					{
-						int new_dac = 0x1F & -(noise_lfsr >> 1 & 1);
+						int new_dac = 0x1F & uMinus(noise_lfsr >> 1 & 1);
 						// Implemented using "Galios configuration"
 						// TODO: find correct LFSR algorithm
-						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & -(noise_lfsr & 1));
+						noise_lfsr = (noise_lfsr >> 1) ^ (0xE008 & uMinus(noise_lfsr & 1));
 						//noise_lfsr = (noise_lfsr >> 1) ^ (0x6000 & -(noise_lfsr & 1));
 						int delta = new_dac - dac;
 						if ( delta )
@@ -122,7 +122,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 						time += period;
 					}
 					while ( time < end_time );
-					
+
 					this->noise_lfsr = noise_lfsr;
 					assert( noise_lfsr );
 				}
@@ -160,7 +160,6 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 						//if ( !(volume_0 | volume_1) )
 						//  debug_printf( "Used period 0\n" );
 					}
-					
 					// maintain phase when silent
 					blargg_long count = (end_time - time + period - 1) / period;
 					phase += count; // phase will be masked below
@@ -173,7 +172,7 @@ void Hes_Osc::run_until( synth_t& synth_, blip_time_t end_time )
 		if ( time < 0 )
 			time = 0;
 		delay = time;
-		
+
 		this->dac = dac;
 		last_amp [0] = dac * volume_0;
 		last_amp [1] = dac * volume_1;
@@ -195,18 +194,18 @@ void Hes_Apu::balance_changed( Hes_Osc& osc )
 		ENTRY( 0.594604 ),ENTRY( 0.707107 ),ENTRY( 0.840896 ),ENTRY( 1.000000 ),
 		#undef ENTRY
 	};
-	
+
 	int vol = (osc.control & 0x1F) - 0x1E * 2;
-	
+
 	int left  = vol + (osc.balance >> 3 & 0x1E) + (balance >> 3 & 0x1E);
 	if ( left  < 0 ) left  = 0;
-	
+
 	int right = vol + (osc.balance << 1 & 0x1E) + (balance << 1 & 0x1E);
 	if ( right < 0 ) right = 0;
-	
+
 	left  = log_table [left ];
 	right = log_table [right];
-	
+
 	// optimizing for the common case of being centered also allows easy
 	// panning using Effects_Buffer
 	osc.outputs [0] = osc.chans [0]; // center
@@ -216,13 +215,13 @@ void Hes_Apu::balance_changed( Hes_Osc& osc )
 		osc.outputs [0] = osc.chans [1]; // left
 		osc.outputs [1] = osc.chans [2]; // right
 	}
-	
+
 	if ( center_waves )
 	{
 		osc.last_amp [0] += (left  - osc.volume [0]) * 16;
 		osc.last_amp [1] += (right - osc.volume [1]) * 16;
 	}
-	
+
 	osc.volume [0] = left;
 	osc.volume [1] = right;
 }
@@ -238,7 +237,7 @@ void Hes_Apu::write_data( blip_time_t time, int addr, int data )
 		if ( balance != data )
 		{
 			balance = data;
-			
+
 			Hes_Osc* osc = &oscs [osc_count];
 			do
 			{
@@ -258,23 +257,23 @@ void Hes_Apu::write_data( blip_time_t time, int addr, int data )
 		case 0x802:
 			osc.period = (osc.period & 0xF00) | data;
 			break;
-		
+
 		case 0x803:
 			osc.period = (osc.period & 0x0FF) | ((data & 0x0F) << 8);
 			break;
-		
+
 		case 0x804:
 			if ( osc.control & 0x40 & ~data )
 				osc.phase = 0;
 			osc.control = data;
 			balance_changed( osc );
 			break;
-		
+
 		case 0x805:
 			osc.balance = data;
 			balance_changed( osc );
 			break;
-		
+
 		case 0x806:
 			data &= 0x1F;
 			if ( !(osc.control & 0x40) )
@@ -287,15 +286,15 @@ void Hes_Apu::write_data( blip_time_t time, int addr, int data )
 				osc.dac = data;
 			}
 			break;
-		
-		 case 0x807:
-		 	if ( &osc >= &oscs [4] )
-		 		osc.noise = data;
-		 	break;
-		 
-		 case 0x809:
-		 	if ( !(data & 0x80) && (data & 0x03) != 0 )
-		 		debug_printf( "HES LFO not supported\n" );
+
+		case 0x807:
+			if ( &osc >= &oscs [4] )
+				osc.noise = data;
+			break;
+
+		case 0x809:
+			if ( !(data & 0x80) && (data & 0x03) != 0 )
+				debug_printf( "HES LFO not supported\n" );
 		}
 	}
 }

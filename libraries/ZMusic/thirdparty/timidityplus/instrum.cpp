@@ -623,7 +623,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 	if (!tf) 
 	{
 		int name_len, ext_len;
-		static const char *patch_ext[] = { ".pat", 0 };
+		static const char * const patch_ext[] = { ".pat", nullptr };
 
 		noluck = 1;
 		name_len = (int)strlen(name);

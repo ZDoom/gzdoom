@@ -14,7 +14,7 @@ public:
 	// Equalizer profiles for US NES and Japanese Famicom
 	static equalizer_t const nes_eq;
 	static equalizer_t const famicom_eq;
-	
+
 	// NSF file header
 	enum { header_size = 0x80 };
 	struct header_t
@@ -36,12 +36,12 @@ public:
 		byte chip_flags;
 		byte unused [4];
 	};
-	
+
 	// Header for currently loaded file
 	header_t const& header() const { return header_; }
-	
+
 	static gme_type_t static_type() { return gme_nsf_type; }
-	
+
 public:
 	// deprecated
 	using Music_Emu::load;
@@ -68,36 +68,42 @@ protected:
 	nes_addr_t play_addr;
 	double clock_rate_;
 	bool pal_only;
-	
+
 	// timing
 	Nes_Cpu::registers_t saved_state;
 	nes_time_t next_play;
 	nes_time_t play_period;
 	int play_extra;
 	int play_ready;
-	
+
 	enum { rom_begin = 0x8000 };
 	enum { bank_select_addr = 0x5FF8 };
 	enum { bank_size = 0x1000 };
 	Rom_Data<bank_size> rom;
-	
+
 public: private: friend class Nes_Cpu;
 	void cpu_jsr( nes_addr_t );
 	int cpu_read( nes_addr_t );
 	void cpu_write( nes_addr_t, int );
 	void cpu_write_misc( nes_addr_t, int );
 	enum { badop_addr = bank_select_addr };
-	
+
 private:
+	byte mmc5_mul [2];
+
 	class Nes_Namco_Apu* namco;
 	class Nes_Vrc6_Apu*  vrc6;
 	class Nes_Fme7_Apu*  fme7;
+	class Nes_Fds_Apu*   fds;
+	class Nes_Mmc5_Apu*  mmc5;
+	class Nes_Vrc7_Apu*  vrc7;
 	Nes_Apu apu;
+	blargg_vector<const char*> apu_names;
 	static int pcm_read( void*, nes_addr_t );
 	blargg_err_t init_sound();
-	
+
 	header_t header_;
-	
+
 	enum { sram_addr = 0x6000 };
 	byte sram [0x2000];
 	byte unmapped_code [Nes_Cpu::page_size + 8];

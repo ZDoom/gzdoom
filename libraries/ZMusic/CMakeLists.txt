@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.13...3.19)
 
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
 if (VCPKG_LIBSNDFILE)
 	list(APPEND VCPKG_MANIFEST_FEATURES "vcpkg-libsndfile")
 endif()
 
 project(ZMusic
-	VERSION 1.2.0
+	VERSION 1.3.0
 	LANGUAGES C CXX
 )
 

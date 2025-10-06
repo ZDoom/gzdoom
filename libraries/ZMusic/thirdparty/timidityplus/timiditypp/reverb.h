@@ -234,6 +234,14 @@ typedef struct _EffectList {
 	struct _EffectList *next_ef;
 } EffectList;
 
+
+#ifdef _MSC_VER
+// needed on MSVC to make Reverb::effects_engine truly const.
+// Due to Reverb being forward declared the default cannot be statically set up.
+#pragma pointers_to_members( full_generality, single_inheritance )
+#endif
+
+
 struct _EffectEngine {
 	int type;
 	const char *name;
@@ -548,8 +556,7 @@ struct multi_eq_xg_t
 };
 
 
-
-class Reverb
+class Reverb final
 {
 	double REV_INP_LEV;
 

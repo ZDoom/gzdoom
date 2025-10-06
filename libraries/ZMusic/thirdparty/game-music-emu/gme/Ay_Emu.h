@@ -25,7 +25,7 @@ public:
 		byte first_track;
 		byte track_info [2];
 	};
-	
+
 	static gme_type_t static_type() { return gme_ay_type; }
 public:
 	Ay_Emu();
@@ -45,7 +45,7 @@ protected:
 	void update_eq( blip_eq_t const& );
 private:
 	file_t file;
-	
+
 	cpu_time_t play_period;
 	cpu_time_t next_play;
 	Blip_Buffer* beeper_output;
@@ -55,7 +55,7 @@ private:
 	int cpc_latch;
 	bool spectrum_mode;
 	bool cpc_mode;
-	
+
 	// large items
 	struct {
 		byte padding1 [0x100];

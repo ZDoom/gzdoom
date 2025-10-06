@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ const char *const mmd_inst_type[] = {
 };
 #endif
 
-static int mmd_convert_tempo(int tempo, int bpm_on, int med_8ch)
+int mmd_convert_tempo(int tempo, int bpm_on, int med_8ch)
 {
 	const int tempos_compat[10] = {
 		195, 97, 65, 49, 39, 32, 28, 24, 22, 20
@@ -224,8 +224,11 @@ void mmd_xlat_fx(struct xmp_event *event, int bpm_on, int bpmlen, int med_8ch,
 			event->fxp = (EX_DELAY << 4) | 3;
 			break;
 		case 0xf3:	/* Play note three times */
-			event->fxt = FX_EXTENDED;
-			event->fxp = (EX_RETRIG << 4) | 2;
+			/* Actually just retriggers every 2 ticks, except
+			 * for a bug in OctaMED <=4.00 where it will retrigger
+			 * on (tick & 7) >= 2 (TODO: verify). */
+			event->fxt = FX_MED_RETRIG;
+			event->fxp = 0x02;
 			break;
 		case 0xf8:	/* Turn filter off */
 		case 0xf9:	/* Turn filter on */
@@ -347,15 +350,12 @@ void mmd_xlat_fx(struct xmp_event *event, int bpm_on, int bpmlen, int med_8ch,
 		 * delay the note any number of ticks, and initiate fast
 		 * retrigger. Level 1 = note delay value, level 2 = retrigger
 		 * value.
+		 * Unlike FF1/FF3, this does nothing on a line with no note.
 		 */
-		if (MSN(event->fxp)) {
-			/* delay */
-			event->fxt = FX_EXTENDED;
-			event->fxp = 0xd0 | (event->fxp >> 4);
-		} else if (LSN(event->fxp)) {
-			/* retrig */
-			event->fxt = FX_EXTENDED;
-			event->fxp = 0x90 | (event->fxp & 0x0f);
+		if (event->fxp != 0 && event->note != 0) {
+			event->fxt = FX_MED_RETRIG;
+		} else {
+			event->fxt = event->fxp = 0;
 		}
 		break;
 	case 0x20:
@@ -459,9 +459,9 @@ static void mmd_load_instrument_common(
 
 		if (instr->type & S_16) {
 			info->flg |= XMP_SAMPLE_16BIT;
+			/* Length is (bytes / channels) but the
+			 * loop is measured in sample frames. */
 			info->length >>= 1;
-			info->rep >>= 1;
-			info->replen >>= 1;
 		}
 
 		/* STEREO means that this is a stereo sample. The sample
@@ -471,10 +471,7 @@ static void mmd_load_instrument_common(
 		* usage for both samples is length * 2 bytes.
 		*/
 		if (instr->type & STEREO) {
-			D_(D_WARN "stereo sample unsupported");
-			/* TODO: implement stereo sample support.
-			info.flg |= XMP_SAMPLE_STEREO;
-			*/
+			info->flg |= XMP_SAMPLE_STEREO;
 		}
 	}
 }
@@ -986,6 +983,48 @@ int mmd_load_instrument(HIO_HANDLE *f, struct module_data *m, int i, int smp_idx
 	return smp_idx;
 }
 
+/* Load an external instrument (pre-MMD when the internal instruments flag is
+ * not set). Returns 0 on successfully loading or if the instrument can't be
+ * found. Returns -1 if an instrument is found but fails to load. */
+int med_load_external_instrument(HIO_HANDLE *f, struct module_data *m, int i)
+{
+	struct xmp_module *mod = &m->mod;
+	char path[XMP_MAXPATH];
+	char ins_name[32];
+	HIO_HANDLE *s = NULL;
+
+	if (libxmp_copy_name_for_fopen(ins_name, mod->xxi[i].name, 32) != 0)
+		return 0;
+
+	D_(D_INFO "[%2X] %-32.32s ---- %04x %04x %c V%02x",
+		i, mod->xxi[i].name, mod->xxs[i].lps, mod->xxs[i].lpe,
+		mod->xxs[i].flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
+		mod->xxi[i].sub[0].vol);
+
+	if (!libxmp_find_instrument_file(m, path, sizeof(path), ins_name))
+		return 0;
+
+	if ((s = hio_open(path, "rb")) == NULL) {
+		return 0;
+	}
+
+	mod->xxs[i].len = hio_size(s);
+	if (mod->xxs[i].len == 0) {
+		hio_close(s);
+		return 0;
+	}
+	mod->xxi[i].nsm = 1;
+
+	D_(D_INFO "     %-32s %04x", "(OK)", mod->xxs[i].len);
+
+	if (libxmp_load_sample(m, s, 0, &mod->xxs[i], NULL) < 0) {
+		hio_close(s);
+		return -1;
+	}
+	hio_close(s);
+	return 0;
+}
+
 
 void mmd_set_bpm(struct module_data *m, int med_8ch, int deftempo,
 						int bpm_on, int bpmlen)
@@ -1025,4 +1064,71 @@ void mmd_info_text(HIO_HANDLE *f, struct module_data *m, int offset)
 			m->comment[len] = 0;
 		}
 	}
+}
+
+/* Determine an approximate tracker version from an MMD module since, unlike
+ * MED4, they don't store any useful tracker information. If expdata is not
+ * present in the module, it should be passed as NULL.
+ */
+int mmd_tracker_version(struct module_data *m, int mmdver, int mmdc,
+	struct MMD0exp *expdata)
+{
+	struct xmp_module *mod = &m->mod;
+	int soundstudio = 0;
+	int medver = 0;
+	int s_ext_entrsz = 0;
+	int mmdch = '0' + mmdver;
+
+	if (expdata) {
+		D_(D_INFO "expdata.s_ext_entrsz = %d", expdata->s_ext_entrsz);
+		D_(D_INFO "expdata.i_ext_entrsz = %d", expdata->i_ext_entrsz);
+		s_ext_entrsz = expdata->s_ext_entrsz;
+	} else {
+		D_(D_INFO "expdata = NULL");
+	}
+
+	if (s_ext_entrsz > 18) {		/* s_ext_entrsz == 24 */
+		medver = MED_VER_OCTAMED_SS_2;
+		soundstudio = 2;
+	} else if (mmdver >= 3) {
+		medver = MED_VER_OCTAMED_SS_1;
+		soundstudio = 1;
+	} else if (s_ext_entrsz > 10) {		/* s_ext_entrsz == 18 */
+		medver = MED_VER_OCTAMED_SS_1;
+		soundstudio = 1;
+	} else if (s_ext_entrsz > 8) {		/* s_ext_entrsz == 10 */
+		medver = MED_VER_OCTAMED_502;
+	} else if (s_ext_entrsz > 4) {		/* s_ext_entrsz == 8 */
+		medver = MED_VER_OCTAMED_500;
+	} else if (mmdver >= 2) {
+		medver = MED_VER_OCTAMED_500;
+	} else if (mmdver >= 1) {
+		medver = MED_VER_OCTAMED_400;
+	} else if (mod->chn > 4) {
+		medver = MED_VER_OCTAMED_200;
+	} else if (s_ext_entrsz > 2) {		/* s_ext_entrsz == 4 */
+		medver = MED_VER_320;
+	} else if (expdata != NULL) {		/* s_ext_entrsz == 2 */
+		/* MED 3.00 and 3.10 i_ext_entrsz always 0? */
+		medver = MED_VER_300;
+	} else {
+		medver = MED_VER_210;
+	}
+
+	if (mmdc) {
+		mmdch = 'C';
+	}
+
+	if (soundstudio == 2) {
+		libxmp_set_type(m, "MED Soundstudio 2.00 MMD%c", mmdch);
+	} else if (soundstudio == 1) {
+		libxmp_set_type(m, "OctaMED Soundstudio MMD%c", mmdch);
+	} else if (medver > MED_VER_320) {
+		libxmp_set_type(m, "OctaMED %d.%02x MMD%c",
+				medver >> 12, medver & 0xff, mmdch);
+	} else {
+		libxmp_set_type(m, "MED %d.%02x MMD%c",
+				medver >> 8, medver & 0xff, mmdch);
+	}
+	return medver;
 }

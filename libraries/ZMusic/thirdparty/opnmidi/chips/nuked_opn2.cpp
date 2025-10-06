@@ -74,3 +74,8 @@ const char *NukedOPN2::emulatorName()
 {
     return m_isym3438 ? "Nuked OPN2 (3438)" : "Nuked OPN2 (2612)";
 }
+
+bool NukedOPN2::hasFullPanning()
+{
+    return true;
+}

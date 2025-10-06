@@ -33,10 +33,9 @@ void nopl2_set_rate(void *chip, int clock, int samplerate);
 void nopl2_shutdown(void *chip);
 void nopl2_reset(void *chip);
 
-void nopl2_getsample(void *chip, short *sndptr, int numsamples);
 void nopl2_getsample_one_native(void *chip, short *sndptr);
 
-void nopl2_write(void *chip, int port, int val);
+void nopl2_write_buf(void *chip, unsigned short addr, unsigned char val);
 
 #ifdef __cplusplus
 }

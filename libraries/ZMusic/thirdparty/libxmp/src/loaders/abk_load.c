@@ -322,7 +322,7 @@ static int read_abk_pattern(HIO_HANDLE *f, struct xmp_event *events, uint32 patt
             {
                 /* old note format.*/
                 /* old note format is 2 x 2 byte words with bit 14 set on the first word */
-                /* WORD 1: 0x4XDD | X = dont care, D = delay to apply after note. (Usually in 7FDD form).
+                /* WORD 1: 0x4XDD | X = don't care, D = delay to apply after note. (Usually in 7FDD form).
                  * WORD 2: 0xXPPP | PPP = Amiga Period */
 
                 delay = patdata & 0xff;

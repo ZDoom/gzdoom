@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 
-#define OPL_WRITEBUF_SIZE   1024
+#define OPL_WRITEBUF_SIZE   2048
 #define OPL_WRITEBUF_DELAY  2
 
 typedef uintptr_t       Bitu;

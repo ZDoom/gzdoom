@@ -66,7 +66,8 @@
  *  - width (0 to 100): controls the left/right output separation.
  *    When 0, there are no separation and the signal on left and right.
  *    output is the same. This sounds like a monophonic signal.
- *    When 100, the separation between left and right is maximum.
+ *    When 1, the separation between left and right is maximum.
+ *    When 100 the perception of this separation is further "exaggerated".
  *
  *  - level (0 to 1), controls the output level reverberation.
  *
@@ -229,9 +230,9 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 -----------------------------------------------------------------------------*/
 
 /*-- Reverberation time settings ----------------------------------
- MIN_DC_REV_TIME est defined egal to the minimum value of freeverb:
- MAX_DC_REV_TIME est defined egal to the maximum value of freeverb:
- T60DC is computed from gi and the longuest delay line in freeverb: L8 = 1617
+ MIN_DC_REV_TIME est defined equal to the minimum value of freeverb:
+ MAX_DC_REV_TIME est defined equal to the maximum value of freeverb:
+ T60DC is computed from gi and the longest delay line in freeverb: L8 = 1617
  T60 = -3 * Li * T / log10(gi)
  T60 = -3 * Li *  / (log10(gi) * sr)
 
@@ -314,7 +315,7 @@ a flatter response on comb filter. So the input gain is set to 0.1 rather 1.0. *
 
   N: the matrix dimension (i.e NBR_DELAYS).
   P: permutation matrix.
-  u: is a colomn vector of 1.
+  u: is a column vector of 1.
 
 */
 #define FDN_MATRIX_FACTOR (fluid_real_t)(-2.0 / NBR_DELAYS)
@@ -435,7 +436,7 @@ static void set_mod_frequency(sinus_modulator *mod,
 
     a = (2 * FLUID_M_PI / 360) * phase;
 
-    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-intial angle) */
+    mod->buffer2 = FLUID_SIN(a - w); /* y(n-1) = sin(-initial angle) */
     mod->buffer1 = FLUID_SIN(a); /* y(n) = sin(initial phase) */
     mod->reset_buffer2 = FLUID_SIN(FLUID_M_PI / 2 - w); /* reset value for PI/2 */
 }

@@ -82,3 +82,8 @@ const char *PMDWinOPNA::emulatorName()
 {
     return "PMDWin OPNA";  // git 2018-05-11 rev 255ef52
 }
+
+bool PMDWinOPNA::hasFullPanning()
+{
+    return true;
+}

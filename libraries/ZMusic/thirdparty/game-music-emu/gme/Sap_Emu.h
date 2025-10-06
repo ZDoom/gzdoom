@@ -43,21 +43,21 @@ public: private: friend class Sap_Cpu;
 	void cpu_write_( sap_addr_t, int );
 private:
 	info_t info;
-	
+
 	byte const* file_end;
 	sap_time_t scanline_period;
 	sap_time_t next_play;
 	sap_time_t time_mask;
 	Sap_Apu apu;
 	Sap_Apu apu2;
-	
+
 	// large items
 	struct {
 		byte padding1 [0x100];
 		byte ram [0x10000 + 0x100];
 	} mem;
 	Sap_Apu_Impl apu_impl;
-	
+
 	sap_time_t play_period() const;
 	void call_play();
 	void cpu_jsr( sap_addr_t );

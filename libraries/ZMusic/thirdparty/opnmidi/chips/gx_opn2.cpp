@@ -82,3 +82,8 @@ const char *GXOPN2::emulatorName()
 {
     return "Genesis Plus GX";
 }
+
+bool GXOPN2::hasFullPanning()
+{
+    return true;
+}

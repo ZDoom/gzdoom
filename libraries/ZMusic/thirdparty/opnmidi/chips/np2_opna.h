@@ -42,6 +42,7 @@ public:
     void nativePostGenerate() override {}
     void nativeGenerateN(int16_t *output, size_t frames) override;
     const char *emulatorName() override;
+    bool hasFullPanning() override;
     enum { resamplerPostAttenuate = 2 };
 };
 

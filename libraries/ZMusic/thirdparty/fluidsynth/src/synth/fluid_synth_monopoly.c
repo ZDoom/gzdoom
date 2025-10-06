@@ -410,7 +410,7 @@ int fluid_synth_noteoff_mono_LOCAL(fluid_synth_t *synth, int chan, int key)
                 fluid_channel_breath_msb(channel))
         {
             /* legato playing detection */
-            if(channel->mode  & FLUID_CHANNEL_LEGATO_PLAYING)
+            if (channel->mode & FLUID_CHANNEL_LEGATO_PLAYING && channel->preset != NULL)
             {
                 /* the list contains others notes */
                 if(i_prev >= 0)

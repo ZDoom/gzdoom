@@ -16,27 +16,27 @@ class Ay_Cpu {
 public:
 	// Clear all registers and keep pointer to 64K memory passed in
 	void reset( void* mem_64k );
-	
+
 	// Run until specified time is reached. Returns true if suspicious/unsupported
 	// instruction was encountered at any point during run.
 	bool run( cpu_time_t end_time );
-	
+
 	// Time of beginning of next instruction
 	cpu_time_t time() const             { return state->time + state->base; }
-	
+
 	// Alter current time. Not supported during run() call.
 	void set_time( cpu_time_t t )       { state->time = t - state->base; }
 	void adjust_time( int delta )       { state->time += delta; }
-	
+
 	#if BLARGG_BIG_ENDIAN
 		struct regs_t { uint8_t b, c, d, e, h, l, flags, a; };
 	#else
 		struct regs_t { uint8_t c, b, e, d, l, h, a, flags; };
 	#endif
-	BOOST_STATIC_ASSERT( sizeof (regs_t) == 8 );
-	
+	static_assert( sizeof (regs_t) == 8, "Invalid register size, padding issue?" );
+
 	struct pairs_t { uint16_t bc, de, hl, fa; };
-	
+
 	// Registers are not updated until run() returns
 	struct registers_t {
 		uint16_t pc;
@@ -58,10 +58,10 @@ public:
 		uint8_t im;
 	};
 	//registers_t r; (below for efficiency)
-	
+
 	// can read this far past end of memory
 	enum { cpu_padding = 0x100 };
-	
+
 public:
 	Ay_Cpu();
 private:

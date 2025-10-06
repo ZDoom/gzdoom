@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -126,7 +126,7 @@ static int iff_chunk(iff_handle opaque, struct module_data *m, HIO_HANDLE *f, vo
 	return iff_process(opaque, m, id, size, f, parm);
 }
 
-iff_handle libxmp_iff_new()
+iff_handle libxmp_iff_new(void)
 {
 	struct iff_data *data;
 

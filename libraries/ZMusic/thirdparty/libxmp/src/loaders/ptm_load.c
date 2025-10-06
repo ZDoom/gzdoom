@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,6 +48,14 @@ struct ptm_file_header {
 };
 
 struct ptm_instrument_header {
+#define PTM_INS_NONE		0
+#define PTM_INS_SAMPLE		1
+#define PTM_INS_OPL		2 /* unused */
+#define PTM_INS_MIDI		3 /* unused */
+#define PTM_INS_TYPE(x)		((x) & 3)
+#define PTM_INS_LOOP		(1 << 2)
+#define PTM_INS_LOOP_BIDIR	(1 << 3)
+#define PTM_INS_LOOP_16BIT	(1 << 4)
 	uint8 type;		/* Sample type */
 	uint8 dosname[12];	/* DOS file name */
 	uint8 vol;		/* Volume */
@@ -190,9 +198,6 @@ static int ptm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 			return -1;
 		}
 
-		if ((pih.type & 3) != 1)
-			continue;
-
 		if (libxmp_alloc_subinstrument(mod, i, 1) < 0) {
 			return -1;
 		}
@@ -204,18 +209,19 @@ static int ptm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		xxs->lps = pih.loopbeg;
 		xxs->lpe = pih.loopend;
 
-		if (mod->xxs[i].len > 0) {
+		if (mod->xxs[i].len > 0 &&
+		    PTM_INS_TYPE(pih.type) == PTM_INS_SAMPLE) {
 			mod->xxi[i].nsm = 1;
 		}
 
 		xxs->flg = 0;
-		if (pih.type & 0x04) {
+		if (pih.type & PTM_INS_LOOP) {
 			xxs->flg |= XMP_SAMPLE_LOOP;
 		}
-		if (pih.type & 0x08) {
+		if (pih.type & PTM_INS_LOOP_BIDIR) {
 			xxs->flg |= XMP_SAMPLE_LOOP | XMP_SAMPLE_LOOP_BIDIR;
 		}
-		if (pih.type & 0x10) {
+		if (pih.type & PTM_INS_LOOP_16BIT) {
 			xxs->flg |= XMP_SAMPLE_16BIT;
 			xxs->len >>= 1;
 			xxs->lps >>= 1;
@@ -231,7 +237,7 @@ static int ptm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
 		D_(D_INFO "[%2X] %-28.28s %05x%c%05x %05x %c V%02x %5d",
 		   i, mod->xxi[i].name, mod->xxs[i].len,
-		   pih.type & 0x10 ? '+' : ' ',
+		   pih.type & PTM_INS_LOOP_16BIT ? '+' : ' ',
 		   xxs->lps, xxs->lpe, xxs->flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
 		   sub->vol, pih.c4spd);
 
@@ -307,6 +313,9 @@ static int ptm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 					event->fxt = event->fxp = 0;
 
 				switch (event->fxt) {
+				case 0x0d:	/* Break (hex parameter) */
+					event->fxp = FX_IT_BREAK;
+					break;
 				case 0x0e:	/* Extended effect */
 					if (MSN(event->fxp) == 0x8) {	/* Pan set */
 						event->fxt = FX_SETPAN;
@@ -366,6 +375,11 @@ static int ptm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		mod->xxc[i].pan = pfh.chset[i] << 4;
 
 	m->quirk |= QUIRKS_ST3;
+	/* Has none of ST3's loop quirks; loop jumps unset prior breaks.
+	 * TODO: there is an obscure bug where loop jumps take precedence over
+	 * position jumps *ONLY WHEN THE PLAYER IS AT SPEED 1*.
+	 * TODO: jumps are always to row 0. */
+	m->flow_mode = FLOW_LOOP_GLOBAL | FLOW_LOOP_UNSET_BREAK;
 	m->read_event_type = READ_EVENT_ST3;
 
 	return 0;

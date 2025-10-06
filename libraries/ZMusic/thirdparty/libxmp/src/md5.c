@@ -34,7 +34,7 @@
 	(cp)[1] = (value) >> 8;						\
 	(cp)[0] = (value); } while (0)
 
-static uint8 PADDING[MD5_BLOCK_LENGTH] = {
+static const uint8 PADDING[MD5_BLOCK_LENGTH] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

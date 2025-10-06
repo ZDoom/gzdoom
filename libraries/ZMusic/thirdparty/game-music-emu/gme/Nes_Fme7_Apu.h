@@ -9,7 +9,7 @@
 
 struct fme7_apu_state_t
 {
-	enum { reg_count = 14 };
+	static const unsigned int reg_count = 14;
 	uint8_t regs [reg_count];
 	uint8_t phases [3]; // 0 or 1
 	uint8_t latch;
@@ -23,23 +23,23 @@ public:
 	void volume( double );
 	void treble_eq( blip_eq_t const& );
 	void output( Blip_Buffer* );
-	enum { osc_count = 3 };
+	static const int osc_count = 3;
 	void osc_output( int index, Blip_Buffer* );
 	void end_frame( blip_time_t );
 	void save_state( fme7_apu_state_t* ) const;
 	void load_state( fme7_apu_state_t const& );
-	
+
 	// Mask and addresses of registers
-	enum { addr_mask = 0xE000 };
-	enum { data_addr = 0xE000 };
-	enum { latch_addr = 0xC000 };
-	
+	static const unsigned int addr_mask = 0xE000;
+	static const unsigned int data_addr = 0xE000;
+	static const unsigned int latch_addr = 0xC000;
+
 	// (addr & addr_mask) == latch_addr
 	void write_latch( int );
-	
+
 	// (addr & addr_mask) == data_addr
 	void write_data( blip_time_t, int data );
-	
+
 public:
 	Nes_Fme7_Apu();
 	BLARGG_DISABLE_NOTHROW
@@ -47,18 +47,18 @@ private:
 	// noncopyable
 	Nes_Fme7_Apu( const Nes_Fme7_Apu& );
 	Nes_Fme7_Apu& operator = ( const Nes_Fme7_Apu& );
-	
+
 	static unsigned char const amp_table [16];
-	
+
 	struct {
 		Blip_Buffer* output;
 		int last_amp;
 	} oscs [osc_count];
 	blip_time_t last_time;
-	
-	enum { amp_range = 192 }; // can be any value; this gives best error/quality tradeoff
+
+	static const unsigned int amp_range = 192; // can be any value; this gives best error/quality tradeoff
 	Blip_Synth<blip_good_quality,1> synth;
-	
+
 	void run_until( blip_time_t );
 };
 
@@ -102,7 +102,7 @@ inline void Nes_Fme7_Apu::write_data( blip_time_t time, int data )
 		#endif
 		return;
 	}
-	
+
 	run_until( time );
 	regs [latch] = data;
 }
@@ -111,7 +111,7 @@ inline void Nes_Fme7_Apu::end_frame( blip_time_t time )
 {
 	if ( time > last_time )
 		run_until( time );
-	
+
 	assert( last_time >= time );
 	last_time -= time;
 }

@@ -25,7 +25,8 @@
 #include "adlmidi_opl3.hpp"
 #include "adlmidi_private.hpp"
 #ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
-#include "midi_sequencer.hpp"
+#   define BWMIDI_ENABLE_OPL_MUSIC_SUPPORT
+#   include "midi_sequencer.hpp"
 #endif
 
 // Minimum life time of percussion notes
@@ -496,6 +497,9 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
     if(isBlankNote)
     {
         // Don't even try to play the blank instrument! But, insert the dummy note.
+        if(midiChan.activenotes.size() >= midiChan.activenotes.capacity())
+            return false; // Overflow!
+
         MIDIchannel::notes_iterator i = midiChan.ensure_create_activenote(note);
         MIDIchannel::NoteInfo &dummy = i->value;
         dummy.isBlank = true;
@@ -629,6 +633,9 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
         velocity = static_cast<uint8_t>(std::floor(static_cast<float>(velocity) * 0.8f));
 
     // Allocate active note for MIDI channel
+    if(midiChan.activenotes.size() >= midiChan.activenotes.capacity())
+        return false; // Overflow!
+
     MIDIchannel::notes_iterator ir = midiChan.ensure_create_activenote(note);
     MIDIchannel::NoteInfo &ni = ir->value;
     ni.vol     = velocity;
@@ -1718,7 +1725,12 @@ void MIDIplay::killOrEvacuate(size_t from_channel,
             }
 
             info.phys_erase(static_cast<uint16_t>(from_channel));
-            info.phys_ensure_find_or_create(cs)->assign(jd.ins);
+
+            MIDIchannel::NoteInfo::Phys* ps = info.phys_find_or_create(cs);
+            if(!ps) // Overflow
+                continue;
+
+            ps->assign(jd.ins);
             m_chipChannels[cs].users.push_back(jd);
 #ifndef NDEBUG
             if(!m_setup.enableAutoArpeggio)

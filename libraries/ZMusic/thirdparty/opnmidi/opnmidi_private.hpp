@@ -185,6 +185,13 @@ inline int32_t opn2_cvtU32(int32_t x)
     return (uint32_t)opn2_cvtS32(x) - (uint32_t)INT32_MIN;
 }
 
+template<typename T>
+void opn2_fill_vector(std::vector<T > &v, const T &value)
+{
+    for(typename std::vector<T>::iterator it = v.begin(); it != v.end(); ++it)
+        *it = value;
+}
+
 #if defined(ADLMIDI_AUDIO_TICK_HANDLER)
 extern void opn2_audioTickHandler(void *instance, uint32_t chipId, uint32_t rate);
 #endif

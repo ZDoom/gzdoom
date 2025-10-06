@@ -63,6 +63,57 @@ private:
     //! LFO setup registry cache
     uint8_t                     m_regLFOSetup;
 
+    //! Does loaded emulator supports soft panning?
+    bool m_softPanningSup;
+
+    /*!
+     * \brief Current state of the synth (if values matched to setup, chips and arrays won't be fully re-created)
+     */
+    struct State
+    {
+        int         emulator;
+        uint32_t    numChips;
+        unsigned long pcm_rate;
+        OPNFamily   familyType;
+
+        State()
+        {
+            clear();
+        }
+
+        void clear()
+        {
+            emulator = -2;
+            numChips = 0;
+            pcm_rate = 0;
+            familyType = OPNChip_OPN2;
+        }
+
+        bool cmp_rate(unsigned long rate)
+        {
+            bool ret = pcm_rate != rate;
+
+            if(ret)
+                pcm_rate = rate;
+
+            return ret;
+        }
+
+        bool cmp(int emu, uint32_t chips, OPNFamily family)
+        {
+            bool ret = emu != emulator || chips != numChips || family != familyType;
+
+            if(ret)
+            {
+                emulator = emu;
+                numChips = chips;
+                familyType = family;
+            }
+
+            return ret;
+        }
+    } m_curState;
+
 public:
     /**
      * @brief MIDI bank entry
@@ -259,6 +310,8 @@ public:
      * @param audioTickHandler PCM-accurate clock hook
      */
     void reset(int emulator, unsigned long PCM_RATE, OPNFamily family, void *audioTickHandler);
+
+    void initChip(size_t chip);
 
     /**
      * @brief Gets the family of current chips

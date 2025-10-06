@@ -40,6 +40,7 @@ public:
     void nativePostGenerate() override {}
     void nativeGenerate(int16_t *frame) override;
     const char *emulatorName() override;
+    bool hasFullPanning() override;
     // amplitude scale factors to use in resampling
     enum { resamplerPreAmplify = 11, resamplerPostAttenuate = 2 };
 };

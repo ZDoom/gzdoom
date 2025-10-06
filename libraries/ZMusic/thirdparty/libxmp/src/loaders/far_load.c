@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-/* Based on the Farandole Composer format specifications by Daniel Potter.
+/* Based on the Farandole Composer format specifications by Megan Potter.
  *
  * "(...) this format is for EDITING purposes (storing EVERYTHING you're
  * working on) so it may include information not completely neccessary."
@@ -54,8 +54,8 @@ struct far_header2 {
 struct far_instrument {
 	uint8 name[32];		/* Instrument name */
 	uint32 length;		/* Length of sample (up to 64Kb) */
-	uint8 finetune;		/* Finetune (unsuported) */
-	uint8 volume;		/* Volume (unsuported?) */
+	uint8 finetune;		/* Finetune (unsupported) */
+	uint8 volume;		/* Volume (unsupported?) */
 	uint32 loop_start;	/* Loop start */
 	uint32 loopend;		/* Loop end */
 	uint8 sampletype;	/* 1=16 bit sample */
@@ -412,8 +412,8 @@ static int far_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
 	hio_read(fih.name, 32, 1, f);	/* Instrument name */
 	fih.length = hio_read32l(f);	/* Length of sample (up to 64Kb) */
-	fih.finetune = hio_read8(f);	/* Finetune (unsuported) */
-	fih.volume = hio_read8(f);	/* Volume (unsuported?) */
+	fih.finetune = hio_read8(f);	/* Finetune (unsupported) */
+	fih.volume = hio_read8(f);	/* Volume (unsupported?) */
 	fih.loop_start = hio_read32l(f);/* Loop start */
 	fih.loopend = hio_read32l(f);	/* Loop end */
 	fih.sampletype = hio_read8(f);	/* 1=16 bit sample */

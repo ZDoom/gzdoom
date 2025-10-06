@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "loader.h"
 #include "mod.h"
 #include "../period.h"
+#include "../rng.h"
 
 static int flt_test(HIO_HANDLE *, char *, const int);
 static int flt_load(struct module_data *, HIO_HANDLE *, const int);
@@ -118,7 +119,8 @@ static int read_am_instrument(struct module_data *m, HIO_HANDLE *nt, int i)
 	struct xmp_envelope *vol_env = &xxi->aei;
 	struct xmp_envelope *freq_env = &xxi->fei;
 	struct am_instrument am;
-	char *wave;
+	struct rng_state rng;
+	const int8 *wave;
 	int a, b;
 	int8 am_noise[1024];
 
@@ -154,7 +156,7 @@ static int read_am_instrument(struct module_data *m, HIO_HANDLE *nt, int i)
 		xxs->len = 32;
 		xxs->lps = 0;
 		xxs->lpe = 32;
-		wave = (char *)&am_waveform[am.wf][0];
+		wave = &am_waveform[am.wf][0];
 	} else {
 		int j;
 
@@ -162,10 +164,11 @@ static int read_am_instrument(struct module_data *m, HIO_HANDLE *nt, int i)
 		xxs->lps = 0;
 		xxs->lpe = 1024;
 
+		libxmp_init_random(&rng);
 		for (j = 0; j < 1024; j++)
-			am_noise[j] = rand() % 256;
+			am_noise[j] = libxmp_get_random(&rng, 256);
 
-		wave = (char *)&am_noise[0];
+		wave = &am_noise[0];
 	}
 
 	xxs->flg = XMP_SAMPLE_LOOP;
@@ -418,8 +421,8 @@ static int flt_load(struct module_data *m, HIO_HANDLE * f, const int start)
 	 *  format possible, since it can be loaded in a normal 4 channel
 	 *  tracker if you should want to rip sounds or patterns. So, in a
 	 *  8 track FLT8 module, patterns 00 and 01 is "really" pattern 00.
-	 *  Patterns 02 and 03 together is "really" pattern 01. Thats it.
-	 *  Oh well, I didnt have the time to implement all effect commands
+	 *  Patterns 02 and 03 together is "really" pattern 01. That's it.
+	 *  Oh well, I didn't have the time to implement all effect commands
 	 *  either, so some FLT8 modules would play back badly (I think
 	 *  especially the portamento command uses a different "scale" than
 	 *  the normal portamento command, that would be hard to patch).

@@ -2,6 +2,8 @@
 
 // Based on Mame YM2612 ym2612.c
 
+#ifdef VGM_YM2612_MAME
+
 #include "Ym2612_MAME.h"
 
 /*
@@ -360,7 +362,7 @@ static stream_sample_t *DUMMYBUF = NULL;
 #define BUILD_OPN (BUILD_YM2203||BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B||BUILD_YM2612||BUILD_YM3438)
 #define BUILD_OPN_PRESCALER (BUILD_YM2203||BUILD_YM2608)
 
-#define RSM_ENABLE 0
+#define RSM_ENABLE 1
 #define RSM_FRAC 10
 
 /* globals */
@@ -2578,7 +2580,7 @@ void ym2612_pre_generate(void *chip)
 	refresh_fc_eg_chan( OPN, &cch[5] );
 }
 
-void ym2612_generate_one_native(void *chip, FMSAMPLE buffer[])
+void ym2612_generate_one_native(void *chip, FMSAMPLE buffer[2])
 {
 	YM2612 *F2612 = (YM2612 *)chip;
 	FM_OPN *OPN   = &F2612->OPN;
@@ -2819,7 +2821,7 @@ static void * ym2612_init(void *param, int clock, int rate,
 	F2612->OPN.ST.clock = clock;
 #if RSM_ENABLE
 	F2612->OPN.ST.rate = 53267;
-	F2612->OPN.ST.rateratio = (INT32)(UINT32)((((UINT64)144 * rate) << RSM_FRAC) / clock);
+	F2612->OPN.ST.rateratio = (INT32)(UINT32)((((UINT64)144 * rate) << RSM_FRAC) / 7670454);
 	F2612->OPN.ST.framecnt = 1 << RSM_FRAC;
 	memset(&(F2612->OPN.ST.cur_sample), 0x00, sizeof(FMSAMPLE) * 2);
 	memset(&(F2612->OPN.ST.prev_sample), 0x00, sizeof(FMSAMPLE) * 2);
@@ -3104,5 +3106,8 @@ void Ym2612_MAME_Emu::write1(int addr, int data)
 
 void Ym2612_MAME_Emu::run(int pair_count, Ym2612_MAME_Emu::sample_t *out)
 {
-	if ( impl ) Ym2612_MameImpl::ym2612_generate( impl, out, pair_count, 0);
+	(void) &Ym2612_MameImpl::TimerBOver; // squelch clang warning, which appears to be from a config choice
+	if ( impl ) Ym2612_MameImpl::ym2612_generate( impl, out, pair_count, 1);
 }
+
+#endif /* VGM_YM2612_MAME */

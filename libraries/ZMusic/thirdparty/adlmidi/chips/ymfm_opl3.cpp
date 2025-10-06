@@ -21,6 +21,7 @@
 #include "ymfm_opl3.h"
 #include "ymfm/ymfm_opl.h"
 #include <cstring>
+#include <assert.h>
 
 YmFmOPL3::YmFmOPL3() :
     OPLChipBaseT(),
@@ -66,6 +67,7 @@ void YmFmOPL3::writeReg(uint16_t addr, uint8_t data)
         m_headPos = 0;
 
     ++m_queueCount;
+    assert(m_queueCount <= (long)c_queueSize);
 }
 
 void YmFmOPL3::nativeGenerate(int16_t *frame)
@@ -73,7 +75,7 @@ void YmFmOPL3::nativeGenerate(int16_t *frame)
     ymfm::ymf262 *chip_r = reinterpret_cast<ymfm::ymf262*>(m_chip);
     ymfm::ymf262::output_data frames_i;
 
-    uint32_t addr1 = 0xffff, addr2 = 0xffff;
+    uint16_t addr1 = 0xffff, addr2 = 0xffff;
     uint8_t data1 = 0, data2 = 0;
 
     // see if there is data to be written; if so, extract it and dequeue

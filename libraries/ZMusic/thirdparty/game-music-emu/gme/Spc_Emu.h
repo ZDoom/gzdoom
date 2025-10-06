@@ -14,7 +14,7 @@ public:
 	// The Super Nintendo hardware samples at 32kHz. Other sample rates are
 	// handled by resampling the 32kHz output; emulation accuracy is not affected.
 	enum { native_sample_rate = 32000 };
-	
+
 	// SPC file header
 	enum { header_size = 0x100 };
 	struct header_t
@@ -37,15 +37,15 @@ public:
 		byte emulator;
 		byte unused2 [46];
 	};
-	
+
 	// Header for currently loaded file
 	header_t const& header() const { return *(header_t const*) file_data; }
-	
+
 	// Prevents channels and global volumes from being phase-negated
 	void disable_surround( bool disable = true );
-	
+
 	static gme_type_t static_type() { return gme_spc_type; }
-	
+
 public:
 	// deprecated
 	using Music_Emu::load;
@@ -65,6 +65,7 @@ protected:
 	blargg_err_t play_( long, sample_t* );
 	blargg_err_t skip_( long );
 	void mute_voices_( int );
+	void disable_echo_( bool disable );
 	void set_tempo_( double );
 	void enable_accuracy_( bool );
 private:
@@ -73,7 +74,7 @@ private:
 	Fir_Resampler<24> resampler;
 	SPC_Filter filter;
 	Snes_Spc apu;
-	
+
 	blargg_err_t play_and_filter( long count, sample_t out [] );
 };
 

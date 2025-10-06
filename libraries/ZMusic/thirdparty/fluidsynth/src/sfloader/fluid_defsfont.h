@@ -66,7 +66,7 @@ struct _fluid_zone_range_t
 };
 
 /* Stored on a preset zone to keep track of the inst zones that could start a voice
- * and their combined preset zone/instument zone ranges */
+ * and their combined preset zone/instrument zone ranges */
 struct _fluid_voice_zone_t
 {
     fluid_inst_zone_t *inst_zone;
@@ -182,7 +182,7 @@ fluid_preset_zone_t *new_fluid_preset_zone(char *name);
 void delete_fluid_list_mod(fluid_mod_t *mod);
 void delete_fluid_preset_zone(fluid_preset_zone_t *zone);
 fluid_preset_zone_t *fluid_preset_zone_next(fluid_preset_zone_t *zone);
-int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
+int fluid_preset_zone_import_sfont(fluid_preset_zone_t *zone, fluid_preset_zone_t *global_zone, SFZone *sfzone, fluid_defsfont_t *defssfont, SFData *sfdata);
 fluid_inst_t *fluid_preset_zone_get_inst(fluid_preset_zone_t *zone);
 
 /*
@@ -221,7 +221,7 @@ struct _fluid_inst_zone_t
 fluid_inst_zone_t *new_fluid_inst_zone(char *name);
 void delete_fluid_inst_zone(fluid_inst_zone_t *zone);
 fluid_inst_zone_t *fluid_inst_zone_next(fluid_inst_zone_t *zone);
-int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata);
+int fluid_inst_zone_import_sfont(fluid_inst_zone_t *inst_zone, fluid_inst_zone_t *global_inst_zone, SFZone *sfzone, fluid_defsfont_t *defsfont, SFData *sfdata);
 fluid_sample_t *fluid_inst_zone_get_sample(fluid_inst_zone_t *zone);
 
 

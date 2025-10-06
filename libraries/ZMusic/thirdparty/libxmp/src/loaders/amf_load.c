@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,17 +106,20 @@ static int amf_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	if (ver == 0x09 || ver == 0x0a)
 		hio_read(buf, 1, 16, f);	/* channel remap table */
 
-	if (ver >= 0x0d) {
-		if (hio_read(buf, 1, 32, f) != 32)	/* panning table */
+	if (ver >= 0x0b) {
+		int pan_len = ver >= 0x0c ? 32 : 16;
+
+		if (hio_read(buf, 1, pan_len, f) != pan_len)	/* panning table */
 			return -1;
 
-		for (i = 0; i < 32; i++) {
-			mod->xxc->pan = 0x80 + 2 * (int8)buf[i];
+		for (i = 0; i < pan_len; i++) {
+			mod->xxc[i].pan = 0x80 + 2 * (int8)buf[i];
 		}
+	}
+
+	if (ver >= 0x0d) {
 		mod->bpm = hio_read8(f);
 		mod->spd = hio_read8(f);
-	} else if (ver >= 0x0b) {
-		hio_read(buf, 1, 16, f);
 	}
 
 	m->c4rate = C4_NTSC_RATE;

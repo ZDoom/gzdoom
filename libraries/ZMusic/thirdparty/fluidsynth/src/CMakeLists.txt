@@ -1,6 +1,6 @@
 # FluidSynth - A Software Synthesizer
 #
-# Copyright (C) 2003-2010 Peter Hanappe and others.
+# Copyright (C) 2003-2025 Peter Hanappe and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -55,11 +55,12 @@ set ( fluidsynth_SOURCES
     rvoice/fluid_chorus.h
     rvoice/fluid_iir_filter.c
     rvoice/fluid_iir_filter.h
+    rvoice/fluid_iir_filter_impl.cpp
     rvoice/fluid_lfo.c
     rvoice/fluid_lfo.h
     rvoice/fluid_rvoice.h
     rvoice/fluid_rvoice.c
-    rvoice/fluid_rvoice_dsp.c
+    rvoice/fluid_rvoice_dsp.cpp
     rvoice/fluid_rvoice_event.h
     rvoice/fluid_rvoice_event.c
     rvoice/fluid_rvoice_mixer.h

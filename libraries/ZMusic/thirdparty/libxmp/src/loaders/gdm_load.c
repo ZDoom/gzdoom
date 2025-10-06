@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -444,6 +444,11 @@ static int gdm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	}
 
 	m->quirk |= QUIRK_ARPMEM | QUIRK_FINEFX;
+
+	/* BWSB actually gets several aspects of this wrong, but this
+	 * seems to be the intent. No original GDMs exist so it's not
+	 * likely there's a reason to simulate its mistakes here. */
+	m->flow_mode = FLOW_MODE_ST3_321;
 
 	return 0;
 }

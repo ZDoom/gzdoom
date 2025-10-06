@@ -39,6 +39,7 @@ public:
     void nativePostGenerate() override {}
     void nativeGenerate(int16_t *frame) override;
     const char *emulatorName() override;
+    bool hasFullPanning() override;
 };
 
 #endif // MAME_OPN2_H

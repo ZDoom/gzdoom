@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -434,7 +434,15 @@ static int get_samp(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 	m->vol_table = libxmp_arch_vol_table;
 	m->volbase = 0xff;
 
+	/* Clean bad loops */
+	if (mod->xxs[i].lps < 0 || mod->xxs[i].lps >= mod->xxs[i].len) {
+		mod->xxs[i].lps = mod->xxs[i].lpe = 0;
+	}
+
 	if (mod->xxs[i].lpe > 2) {
+		if (mod->xxs[i].lpe > mod->xxs[i].len - mod->xxs[i].lps) {
+			mod->xxs[i].lpe = mod->xxs[i].len - mod->xxs[i].lps;
+		}
 		mod->xxs[i].flg = XMP_SAMPLE_LOOP;
 		mod->xxs[i].lpe = mod->xxs[i].lps + mod->xxs[i].lpe;
 	} else if (mod->xxs[i].lpe == 2 && mod->xxs[i].lps > 0) {

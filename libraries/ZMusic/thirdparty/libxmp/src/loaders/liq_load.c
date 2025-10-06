@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,19 @@
 
 /* Liquid Tracker module loader based on the format description written
  * by Nir Oren. Tested with Shell.liq sent by Adi Sapir.
+ *
+ * TODO:
+ * - Vibrato, tremolo intensities wrong?
+ * - Gxx allows values >64 :(
+ * - MCx sets volume to 0
+ * - MDx doesn't delay volume?
+ * - MEx repeated tick 0s don't act like tick 0
+ * - Nxx has some bizarre behavior that prevents it from working between
+ *   patterns sometimes and sometimes causes notes to drop out?
+ * - Pxx shares effect memory with Lxy, possibly other related awful things.
+ * - LIQ portamento is 4x more fine than S3M-compatibility portamento?
+ *   (i.e. LIQ-mode UF1 seems equivalent to S3M-mode UE1). LT's S3M loader
+ *   renames notes down by two octaves which is possibly implicated here.
  */
 
 #include "loader.h"
@@ -40,6 +53,8 @@ struct liq_header {
 	uint16 low;		/* Lowest note (Amiga Period*4) */
 	uint16 high;		/* Uppest note (Amiga Period*4) */
 	uint16 chn;		/* Number of channels */
+/*#define LIQ_FLAG_CUT_ON_LIMIT		0x01 */
+#define LIQ_FLAG_SCREAM_TRACKER_COMPAT	0x02
 	uint32 flags;		/* Module flags */
 	uint16 pat;		/* Number of patterns saved */
 	uint16 ins;		/* Number of instruments */
@@ -61,6 +76,9 @@ struct liq_instrument {
 	uint32 loopend;		/* Sample loop end */
 	uint32 c2spd;		/* C2SPD */
 	uint8 vol;		/* Volume */
+#define LIQ_SAMPLE_16BIT	0x01
+#define LIQ_SAMPLE_STEREO	0x02
+#define LIQ_SAMPLE_SIGNED	0x04
 	uint8 flags;		/* Flags */
 	uint8 pan;		/* Pan */
 	uint8 midi_ins;		/* General MIDI instrument */
@@ -70,7 +88,8 @@ struct liq_instrument {
 	uint16 comp;		/* Compression algorithm */
 	uint32 crc;		/* CRC */
 	uint8 midi_ch;		/* MIDI channel */
-	uint8 rsvd[11];		/* Reserved */
+	uint8 loop_type;	/* -1 or 0: normal, 1: ping pong*/
+	uint8 rsvd[10];		/* Reserved */
 	uint8 filename[25];	/* DOS file name */
 };
 
@@ -120,7 +139,7 @@ static const uint8 fx[25] = {
 	FX_PORTA_DN,
 	NONE,
 	FX_FINE_VIBRATO,
-	NONE,
+	FX_GLOBALVOL,
 	NONE,
 	NONE,
 	FX_JUMP,
@@ -129,9 +148,9 @@ static const uint8 fx[25] = {
 	FX_EXTENDED,
 	FX_TONEPORTA,
 	FX_OFFSET,
-	NONE,			/* FIXME: Pan */
+	FX_SETPAN,
 	NONE,
-	NONE, /*FX_MULTI_RETRIG,*/
+	FX_RETRIG,
 	FX_S3M_SPEED,
 	FX_TREMOLO,
 	FX_PORTA_UP,
@@ -142,8 +161,7 @@ static const uint8 fx[25] = {
 };
 
 
-/* Effect translation */
-static void xlat_fx(int c, struct xmp_event *e)
+static void liq_translate_effect(struct xmp_event *e)
 {
     uint8 h = MSN (e->fxp), l = LSN (e->fxp);
 
@@ -154,14 +172,18 @@ static void xlat_fx(int c, struct xmp_event *e)
     }
 
     switch (e->fxt = fx[e->fxt]) {
+    case FX_GLOBALVOL:			/* Global volume (decimal) */
+	l = (e->fxp >> 4) * 10 + (e->fxp & 0x0f);
+	e->fxp = l;
+	break;
     case FX_EXTENDED:			/* Extended effects */
 	switch (h) {
 	case 0x3:			/* Glissando */
 	    e->fxp = l | (EX_GLISS << 4);
 	    break;
 	case 0x4:			/* Vibrato wave */
-	    if (l == 3)
-		l++;
+	    if ((l & 3) == 3)
+		l--;
 	    e->fxp = l | (EX_VIBRATO_WF << 4);
 	    break;
 	case 0x5:			/* Finetune */
@@ -171,8 +193,8 @@ static void xlat_fx(int c, struct xmp_event *e)
 	    e->fxp = l | (EX_PATTERN_LOOP << 4);
 	    break;
 	case 0x7:			/* Tremolo wave */
-	    if (l == 3)
-		l++;
+	    if ((l & 3) == 3)
+		l--;
 	    e->fxp = l | (EX_TREMOLO_WF << 4);
 	    break;
 	case 0xc:			/* Cut */
@@ -189,49 +211,85 @@ static void xlat_fx(int c, struct xmp_event *e)
 	    break;
 	}
 	break;
+    case FX_SETPAN:			/* Pan control */
+	l = (e->fxp >> 4) * 10 + (e->fxp & 0x0f);
+	if (l == 70) {
+	    /* TODO: if the effective value is 70, reset ALL channels to
+	    * default pan positions. */
+	    e->fxt = e->fxp = 0;
+	} else if (l == 66) {
+	    e->fxt = FX_SURROUND;
+	    e->fxp = 1;
+	} else if (l <= 64) {
+	    e->fxp = l * 0xff / 64;
+	} else {
+	    e->fxt = e->fxp = 0;
+	}
+	break;
     case NONE:				/* No effect */
 	e->fxt = e->fxp = 0;
 	break;
     }
 }
 
+static int liq_translate_note(uint8 note, struct xmp_event *event)
+{
+    if (note == 0xfe) {
+	event->note = XMP_KEY_OFF;
+    } else {
+	/* 1.00+ format documents claim a 9 octave range, but Liquid Tracker
+	 * <=1.50 only allows the use of the first 7. 0.00 should be within
+	 * the NO range of 5 octaves. Either way, they convert the same for
+	 * now, so just ignore any note that libxmp can't handle. */
+	if (note > 107) {
+	    D_(D_CRIT "invalid note %d", note);
+	    return -1;
+	}
+	if (note + 36 >= XMP_MAX_KEYS) {
+	    D_(D_CRIT "note %d outside of libxmp range, ignoring", note);
+	    return 0;
+	}
+	event->note = note + 1 + 36;
+    }
+    return 0;
+}
 
 static int decode_event(uint8 x1, struct xmp_event *event, HIO_HANDLE *f)
 {
-    uint8 x2;
+    uint8 x2 = 0;
 
     memset (event, 0, sizeof (struct xmp_event));
 
     if (x1 & 0x01) {
 	x2 = hio_read8(f);
-	if (x2 == 0xfe)
-	    event->note = XMP_KEY_OFF;
-	else
-	    event->note = x2 + 1 + 36;
+	if (liq_translate_note(x2, event) < 0)
+	    return -1;
     }
 
     if (x1 & 0x02)
 	event->ins = hio_read8(f) + 1;
 
     if (x1 & 0x04)
-	event->vol = hio_read8(f);
+	event->vol = hio_read8(f) + 1;
 
     if (x1 & 0x08)
 	event->fxt = hio_read8(f) - 'A';
+    else
+	event->fxt = NONE;
 
     if (x1 & 0x10)
 	event->fxp = hio_read8(f);
+    else
+	event->fxp = 0xff;
 
     D_(D_INFO "  event: %02x %02x %02x %02x %02x",
 	event->note, event->ins, event->vol, event->fxt, event->fxp);
 
     /* Sanity check */
-    if (event->note > 107 && event->note != XMP_KEY_OFF)
+    if (event->ins > 100 || event->vol > 65)
 	return -1;
 
-    if (event->ins > 100 || event->vol > 64 || event->fxt > 26)
-	return -1;
-
+    liq_translate_effect(event);
     return 0;
 }
 
@@ -246,6 +304,8 @@ static int liq_load(struct module_data *m, HIO_HANDLE *f, const int start)
     uint8 x1, x2;
     uint32 pmag;
     char tracker_name[21];
+    int num_channels_stored;
+    int num_orders_stored;
 
     LOAD_INIT();
 
@@ -275,7 +335,15 @@ static int liq_load(struct module_data *m, HIO_HANDLE *f, const int start)
     if ((lh.version >> 8) == 0) {
 	lh.hdrsz = lh.len;
 	lh.len = 0;
-	hio_seek(f, -2, SEEK_CUR);
+	/* Skip 3 of 5 undocumented bytes (already read 2). */
+	hio_seek(f, 3, SEEK_CUR);
+	num_channels_stored = 64;
+	num_orders_stored = 256;
+	if (lh.chn > 64)
+	    return -1;
+    } else {
+	num_channels_stored = lh.chn;
+	num_orders_stored = lh.len;
     }
 
     if (lh.len > 256) {
@@ -305,37 +373,42 @@ static int liq_load(struct module_data *m, HIO_HANDLE *f, const int start)
     snprintf(mod->type, XMP_NAME_SIZE, "%s LIQ %d.%02d",
 		tracker_name, lh.version >> 8, lh.version & 0x00ff);
 
-    if (lh.version > 0) {
-	for (i = 0; i < mod->chn; i++) {
-	    uint8 pan = hio_read8(f);
+    for (i = 0; i < mod->chn; i++) {
+	uint8 pan = hio_read8(f);
 
-            if (pan >= 64) {
-	        if (pan == 64) {
-                    pan = 63;
-                } else if (pan == 66) {
-		    pan = 31;
-                    mod->xxc[i].flg |= XMP_CHANNEL_SURROUND;
-                } else {
-                    /* Sanity check */
-                    return -1;
-                }
-            }
-
-	    mod->xxc[i].pan = pan << 2;
+	if (pan < 64) {
+	    pan <<= 2;
+	} else if (pan == 64) {
+	    pan = 0xff;
+	} else if (pan == 66) {
+	    pan = 0x80;
+	    mod->xxc[i].flg |= XMP_CHANNEL_SURROUND;
+	} else {
+	    /* Sanity check */
+	    D_(D_CRIT "invalid channel %d panning value %d", i, pan);
+	    return -1;
 	}
 
-	for (i = 0; i < mod->chn; i++)
-	    mod->xxc[i].vol = hio_read8(f);
+	mod->xxc[i].pan = pan;
+    }
+    if (i < num_channels_stored) {
+	hio_seek(f, num_channels_stored - i, SEEK_CUR);
+    }
 
-	hio_read(mod->xxo, 1, mod->len, f);
+    for (i = 0; i < mod->chn; i++) {
+	mod->xxc[i].vol = hio_read8(f);
+    }
+    if (i < num_channels_stored) {
+	hio_seek(f, num_channels_stored - i, SEEK_CUR);
+    }
 
-	/* Skip 1.01 echo pools */
-	hio_seek(f, lh.hdrsz - (0x6d + mod->chn * 2 + mod->len), SEEK_CUR);
-    } else {
-	hio_seek(f, start + 0xf0, SEEK_SET);
-	hio_read (mod->xxo, 1, 256, f);
-	hio_seek(f, start + lh.hdrsz, SEEK_SET);
+    hio_read(mod->xxo, 1, num_orders_stored, f);
 
+    /* Skip 1.01 echo pools */
+    hio_seek(f, start + lh.hdrsz, SEEK_SET);
+
+    /* Version 0.00 doesn't store length. */
+    if (lh.version < 0x100) {
 	for (i = 0; i < 256; i++) {
 	    if (mod->xxo[i] == 0xff)
 		break;
@@ -362,10 +435,13 @@ static int liq_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	    return -1;
 
 	pmag = hio_read32b(f);
-	if (pmag == 0x21212121)		/* !!!! */
-	    continue;
-	if (pmag != 0x4c500000)		/* LP\0\0 */
+	/* In spite of the documentation's claims, a magic of !!!! doesn't
+	 * do anything special here. Liquid Tracker expects a full pattern
+	 * specification regardless of the magic and no modules use !!!!. */
+	if (pmag != MAGIC4('L','P',0,0)) {
+	    D_(D_CRIT "invalid pattern %d magic %08x", i, pmag);
 	    return -1;
+	}
 
 	hio_read(lp.name, 30, 1, f);
 	lp.rows = hio_read16l(f);
@@ -404,7 +480,6 @@ read_event:
 	if (x2) {
 	    if (decode_event(x1, event, f) < 0)
 		return -1;
-	    xlat_fx (channel, event);
 	    x2--;
 	    goto next_row;
 	}
@@ -454,7 +529,6 @@ test_event:
 	    D_(D_INFO "  [packed data]");
 	    if (decode_event(x1, event, f) < 0)
 		return -1;
-	    xlat_fx (channel, event);
 	    goto next_row;
 	}
 
@@ -463,7 +537,6 @@ test_event:
 	    D_(D_INFO "  [packed data - repeat %d times]", x2);
 	    if (decode_event(x1, event, f) < 0)
 		return -1;
-	    xlat_fx (channel, event);
 	    goto next_row;
 	}
 
@@ -472,7 +545,6 @@ test_event:
 	    D_(D_INFO "  [packed data - repeat %d times, keep note]", x2);
 	    if (decode_event(x1, event, f) < 0)
 		return -1;
-	    xlat_fx (channel, event);
 	    while (x2) {
 	        row++;
 
@@ -488,10 +560,8 @@ test_event:
 
 	/* unpacked data */
 	D_ (D_INFO "  [unpacked data]");
-	if (x1 < 0xfe)
-	    event->note = 1 + 36 + x1;
-	else if (x1 == 0xfe)
-	    event->note = XMP_KEY_OFF;
+	if (liq_translate_note(x1, event) < 0)
+	    return -1;
 
 	x1 = hio_read8(f);
 	if (x1 > 100) {
@@ -503,7 +573,7 @@ test_event:
 
 	x1 = hio_read8(f);
 	if (x1 != 0xff)
-	    event->vol = x1;
+	    event->vol = x1 + 1;
 
 	x1 = hio_read8(f);
 	if (x1 != 0xff)
@@ -512,22 +582,14 @@ test_event:
 	x1 = hio_read8(f);
 	event->fxp = x1;
 
-	/* Sanity check */
-	if (event->fxt > 24) {
-		return -1;
-	}
-
-	xlat_fx(channel, event);
-
 	D_(D_INFO "  event: %02x %02x %02x %02x %02x\n",
 	    event->note, event->ins, event->vol, event->fxt, event->fxp);
 
 	/* Sanity check */
-	if (event->note > 119 && event->note != XMP_KEY_OFF)
-		return -1;
-
 	if (event->ins > 100 || event->vol > 65)
-		return -1;
+	    return -1;
+
+	liq_translate_effect(event);
 
 next_row:
 	row++;
@@ -559,20 +621,20 @@ next_pattern:
 	struct xmp_instrument *xxi = &mod->xxi[i];
 	struct xmp_subinstrument *sub;
 	struct xmp_sample *xxs = &mod->xxs[i];
-	unsigned char b[4];
+	uint32 ldss_magic;
 
 	if (libxmp_alloc_subinstrument(mod, i, 1) < 0)
 	    return -1;
 
 	sub = &xxi->sub[0];
 
-	if (hio_read(b, 1, 4, f) < 4)
-	    return -1;
-
-	if (b[0] == '?' && b[1] == '?' && b[2] == '?' && b[3] == '?')
+	ldss_magic = hio_read32b(f);
+	if (ldss_magic == MAGIC4('?','?','?','?'))
 	    continue;
-	if (b[0] != 'L' || b[1] != 'D' || b[2] != 'S' || b[3] != 'S')
+	if (ldss_magic != MAGIC4('L','D','S','S')) {
+	    D_(D_CRIT "invalid instrument %d magic %08x", i, ldss_magic);
 	    return -1;
+	}
 
 	li.version = hio_read16l(f);
 	hio_read(li.name, 30, 1, f);
@@ -597,7 +659,8 @@ next_pattern:
 	li.crc = hio_read32l(f);
 
 	li.midi_ch = hio_read8(f);
-	hio_read(li.rsvd, 11, 1, f);
+	li.loop_type = hio_read8(f);
+	hio_read(li.rsvd, 1, 10, f);
 	hio_read(li.filename, 25, 1, f);
 
 	/* Sanity check */
@@ -612,31 +675,50 @@ next_pattern:
 	xxs->lps = li.loopstart;
 	xxs->lpe = li.loopend;
 
-	if (li.flags & 0x01) {
-	    xxs->flg = XMP_SAMPLE_16BIT;
+	/* Note: LIQ_SAMPLE_SIGNED is ignored by Liquid Tracker 1.50;
+	 * all samples are interpreted as signed. */
+	if (li.flags & LIQ_SAMPLE_16BIT) {
+	    xxs->flg |= XMP_SAMPLE_16BIT;
+	    xxs->len >>= 1;
+	    xxs->lps >>= 1;
+	    xxs->lpe >>= 1;
+	}
+	/* Storage is the same as S3M i.e. left then right. The shareware
+	 * version mixes stereo samples to mono, as stereo samples were
+	 * listed as a registered feature (yet to be verified). */
+	if (li.flags & LIQ_SAMPLE_STEREO) {
+	    xxs->flg |= XMP_SAMPLE_STEREO;
 	    xxs->len >>= 1;
 	    xxs->lps >>= 1;
 	    xxs->lpe >>= 1;
 	}
 
-	if (li.loopend > 0)
-	    xxs->flg = XMP_SAMPLE_LOOP;
+	if (li.loopend > 0) {
+	    xxs->flg |= XMP_SAMPLE_LOOP;
+	    if (li.loop_type == 1) {
+		xxs->flg |= XMP_SAMPLE_LOOP_BIDIR;
+	    }
+	}
 
-	/* FIXME: LDSS 1.0 have global vol == 0 ? */
-	/* if (li.gvl == 0) */
-	li.gvl = 0x40;
+	/* Global volume was added(?) in LDSS 1.01 and, like the channel
+	 * volume, has a range of 0-64 with 32=100%. */
+	if (li.version < 0x101) {
+	    li.gvl = 0x20;
+	}
 
 	sub->vol = li.vol;
 	sub->gvl = li.gvl;
 	sub->pan = li.pan;
 	sub->sid = i;
 
-	libxmp_instrument_name(mod, i, li.name, 31);
+	libxmp_instrument_name(mod, i, li.name, 30);
 
-	D_(D_INFO "[%2X] %-30.30s %05x%c%05x %05x %c %02x %02x %2d.%02d %5d",
+	D_(D_INFO "[%2X] %-30.30s %05x%c%05x %05x %c%c%c %02x %02x %2d.%02d %5d",
 		i, mod->xxi[i].name, mod->xxs[i].len,
 		xxs->flg & XMP_SAMPLE_16BIT ? '+' : ' ', xxs->lps, xxs->lpe,
-		xxs[i].flg & XMP_SAMPLE_LOOP ? 'L' : ' ', sub->vol, sub->gvl,
+		xxs->flg & XMP_SAMPLE_STEREO ? 's' : ' ',
+		xxs->flg & XMP_SAMPLE_LOOP ? 'L' : ' ',
+		xxs->flg & XMP_SAMPLE_LOOP_BIDIR ? 'B' : ' ', sub->vol, sub->gvl,
 		li.version >> 8, li.version & 0xff, li.c2spd);
 
 	libxmp_c2spd_to_note(li.c2spd, &sub->xpo, &sub->fin);
@@ -649,8 +731,21 @@ next_pattern:
 	    return -1;
     }
 
-    m->quirk |= QUIRKS_ST3;
+    m->quirk |= QUIRK_FINEFX | QUIRK_RTONCE;
+    m->flow_mode = (lh.flags & LIQ_FLAG_SCREAM_TRACKER_COMPAT) ?
+		   FLOW_MODE_LIQUID_COMPAT : FLOW_MODE_LIQUID;
     m->read_event_type = READ_EVENT_ST3;
+
+    /* Channel volume and instrument global volume are both "normally" 32 and
+     * can be increased to 64, effectively allowing per-channel and
+     * per-instrument gain of 2x each. Simulate this by keeping the original
+     * volumes while increasing mix volume by 2x each.
+     *
+     * The global volume effect also (unintentionally?) has gain functionality
+     * in the sense that values >64 are not ignored. This isn't supported yet.
+     */
+    m->mvol = 48 * 2 * 2;
+    m->mvolbase = 48;
 
     return 0;
 }

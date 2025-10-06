@@ -72,6 +72,16 @@
 #include "chips/ymfm_opna.h"
 #endif
 
+// LLE variant of Nuked OPN2 Emulator
+#ifdef OPNMIDI_ENABLE_OPN2_LLE_EMULATOR
+#include "chips/ym2612_lle.h"
+#include "chips/ymf276_lle.h"
+#endif
+
+// LLE variant of Nuked OPNA Emulator
+#ifdef OPNMIDI_ENABLE_OPNA_LLE_EMULATOR
+#include "chips/ym2608_lle.h"
+#endif
 
 // VGM File dumper
 #ifdef OPNMIDI_MIDI2VGM
@@ -101,6 +111,14 @@ static const unsigned opn2_emulatorSupport = 0
 #endif
 #ifndef OPNMIDI_DISABLE_MAME_2608_EMULATOR
     | (1u << OPNMIDI_EMU_MAME_2608)
+#endif
+#ifdef OPNMIDI_ENABLE_OPN2_LLE_EMULATOR
+    | (1u << OPNMIDI_EMU_NUKED_YM2612_LLE)
+    | (1u << OPNMIDI_EMU_NUKED_YM3438_LLE)
+    | (1u << OPNMIDI_EMU_NUKED_YMF276_LLE)
+#endif
+#ifdef OPNMIDI_ENABLE_OPNA_LLE_EMULATOR
+    | (1u << OPNMIDI_EMU_NUKED_YM2608_LLE)
 #endif
 //#ifndef OPNMIDI_DISABLE_PMDWIN_EMULATOR
 //    | (1u << OPNMIDI_EMU_PMDWIN)
@@ -223,6 +241,7 @@ const OpnInstMeta OPN2::m_emptyInstrument = makeEmptyInstrument();
 
 OPN2::OPN2() :
     m_regLFOSetup(0),
+    m_softPanningSup(false),
     m_numChips(1),
     m_scaleModulators(false),
     m_runAtPcmRate(false),
@@ -516,7 +535,8 @@ void OPN2::setPan(size_t c, uint8_t value)
     getOpnChannel(c, chip, port, cc);
     const OpnTimbre &adli = m_insCache[c];
     uint8_t val = 0;
-    if(m_softPanning)
+
+    if(m_softPanningSup && m_softPanning)
     {
         val = (OPN_PANNING_BOTH & 0xC0) | (adli.lfosens & 0x3F);
         writePan(chip, c % 6, value);
@@ -531,15 +551,28 @@ void OPN2::setPan(size_t c, uint8_t value)
         writePan(chip, c % 6, 64);
         writeRegI(chip, port, 0xB4 + cc, val);
     }
+
     m_regLFOSens[c] = val;
 }
 
 void OPN2::silenceAll() // Silence all OPL channels.
 {
+    size_t      chip;
+    uint8_t     port;
+    uint32_t    cc;
+
     for(size_t c = 0; c < m_numChannels; ++c)
     {
+        getOpnChannel(c, chip, port, cc);
+
         noteOff(c);
         touchNote(c, 0);
+
+        for(uint8_t op = 0; op < 4; op++)
+        {
+            writeRegI(chip, port, 0x30 + (0x10 * 1) + (op * 4) + cc, 0x7F);
+            writeRegI(chip, port, 0x30 + (0x10 * 5) + (op * 4) + cc, 0xFF);
+        }
     }
 }
 
@@ -608,18 +641,42 @@ void OPN2::clearChips()
 
 void OPN2::reset(int emulator, unsigned long PCM_RATE, OPNFamily family, void *audioTickHandler)
 {
+    bool rebuild_needed = m_curState.cmp(emulator, m_numChips, family);
+
+    if(rebuild_needed)
+        clearChips();
+
 #if !defined(ADLMIDI_AUDIO_TICK_HANDLER)
     ADL_UNUSED(audioTickHandler);
 #endif
-    clearChips();
-    m_insCache.clear();
-    m_regLFOSens.clear();
+
 #ifdef OPNMIDI_MIDI2VGM
     if(emulator == OPNMIDI_VGM_DUMPER && (m_numChips > 2))
         m_numChips = 2;// VGM Dumper can't work in multichip mode
 #endif
-    m_chips.clear();
-    m_chips.resize(m_numChips, AdlMIDI_SPtr<OPNChipBase>());
+
+    const struct OpnTimbre defaultInsCache =
+    {
+        {
+            {0, 0x7F, 0, 0, 0, 0xFF, 0},
+            {0, 0x7F, 0, 0, 0, 0xFF, 0},
+            {0, 0x7F, 0, 0, 0, 0xFF, 0},
+            {0, 0x7F, 0, 0, 0, 0xFF, 0}
+        }, 0, 0, 0
+    };
+
+    if(rebuild_needed)
+    {
+        m_insCache.clear();
+        m_regLFOSens.clear();
+        m_chips.clear();
+        m_chips.resize(m_numChips, AdlMIDI_SPtr<OPNChipBase>());
+    }
+    else
+    {
+        opn2_fill_vector<OpnTimbre>(m_insCache, defaultInsCache);
+        opn2_fill_vector<uint8_t>(m_regLFOSens, 0);
+    }
 
 #ifdef OPNMIDI_MIDI2VGM
     m_loopStartHook = NULL;
@@ -628,7 +685,19 @@ void OPN2::reset(int emulator, unsigned long PCM_RATE, OPNFamily family, void *a
     m_loopEndHookData = NULL;
 #endif
 
-    for(size_t i = 0; i < m_chips.size(); i++)
+    if(!rebuild_needed)
+    {
+        bool newRate = m_curState.cmp_rate(PCM_RATE);
+
+        for(size_t i = 0; i < m_numChips; ++i)
+        {
+            if(newRate)
+                m_chips[i]->setRate(PCM_RATE, m_chips[i]->nativeClockRate());
+
+            initChip(i);
+        }
+    }
+    else for(size_t i = 0; i < m_chips.size(); i++)
     {
         OPNChipBase *chip = NULL;
 
@@ -680,6 +749,22 @@ void OPN2::reset(int emulator, unsigned long PCM_RATE, OPNFamily family, void *a
             chip = new YmFmOPNA(family);
             break;
 #endif
+#ifdef OPNMIDI_ENABLE_OPN2_LLE_EMULATOR
+        case OPNMIDI_EMU_NUKED_YM2612_LLE:
+            chip = new Ym2612LLEOPN2(family);
+            break;
+        case OPNMIDI_EMU_NUKED_YM3438_LLE:
+            chip = new Ymf276LLEOPN2(family, false);
+            break;
+        case OPNMIDI_EMU_NUKED_YMF276_LLE:
+            chip = new Ymf276LLEOPN2(family, true);
+            break;
+#endif
+#ifdef OPNMIDI_ENABLE_OPNA_LLE_EMULATOR
+        case OPNMIDI_EMU_NUKED_YM2608_LLE:
+            chip = new Ym2608LLEOPNA(family);
+            break;
+#endif
 //#ifndef OPNMIDI_DISABLE_PMDWIN_EMULATOR
 //        case OPNMIDI_EMU_PMDWIN:
 //            chip = new PMDWinOPNA(family);
@@ -721,24 +806,30 @@ void OPN2::reset(int emulator, unsigned long PCM_RATE, OPNFamily family, void *a
     m_regLFOSetup = regLFOSetup;
 
     for(size_t chip = 0; chip < m_numChips; ++chip)
-    {
-        writeReg(chip, 0, 0x22, regLFOSetup);//push current LFO state
-        writeReg(chip, 0, 0x27, 0x00);  //set Channel 3 normal mode
-        writeReg(chip, 0, 0x2B, 0x00);  //Disable DAC
-        //Shut up all channels
-        writeReg(chip, 0, 0x28, 0x00); //Note Off 0 channel
-        writeReg(chip, 0, 0x28, 0x01); //Note Off 1 channel
-        writeReg(chip, 0, 0x28, 0x02); //Note Off 2 channel
-        writeReg(chip, 0, 0x28, 0x04); //Note Off 3 channel
-        writeReg(chip, 0, 0x28, 0x05); //Note Off 4 channel
-        writeReg(chip, 0, 0x28, 0x06); //Note Off 5 channel
-    }
+        initChip(chip);
 
     silenceAll();
 #ifdef OPNMIDI_MIDI2VGM
     if(m_loopStartHook) // Post-initialization Loop Start hook (fix for loop edge passing clicks)
         m_loopStartHook(m_loopStartHookData);
 #endif
+}
+
+void OPN2::initChip(size_t chip)
+{
+    if(chip == 0)
+        m_softPanningSup = m_chips[chip]->hasFullPanning();
+
+    writeReg(chip, 0, 0x22, m_regLFOSetup);//push current LFO state
+    writeReg(chip, 0, 0x27, 0x00);  //set Channel 3 normal mode
+    writeReg(chip, 0, 0x2B, 0x00);  //Disable DAC
+    //Shut up all channels
+    writeReg(chip, 0, 0x28, 0x00); //Note Off 0 channel
+    writeReg(chip, 0, 0x28, 0x01); //Note Off 1 channel
+    writeReg(chip, 0, 0x28, 0x02); //Note Off 2 channel
+    writeReg(chip, 0, 0x28, 0x04); //Note Off 3 channel
+    writeReg(chip, 0, 0x28, 0x05); //Note Off 4 channel
+    writeReg(chip, 0, 0x28, 0x06); //Note Off 5 channel
 }
 
 OPNFamily OPN2::chipFamily() const

@@ -21,6 +21,7 @@
 #include "ymfm_opn2.h"
 #include "ymfm/ymfm_opn.h"
 #include <cstring>
+#include <assert.h>
 
 YmFmOPN2::YmFmOPN2(OPNFamily f) :
     OPNChipBaseT(f),
@@ -66,6 +67,7 @@ void YmFmOPN2::writeReg(uint32_t port, uint16_t addr, uint8_t data)
         m_headPos = 0;
 
     ++m_queueCount;
+    assert(m_queueCount < (long)c_queueSize);
 }
 
 void YmFmOPN2::writePan(uint16_t addr, uint8_t data)
@@ -112,4 +114,9 @@ void YmFmOPN2::nativeGenerate(int16_t *frame)
 const char *YmFmOPN2::emulatorName()
 {
     return "YMFM OPN2";
+}
+
+bool YmFmOPN2::hasFullPanning()
+{
+    return true;
 }

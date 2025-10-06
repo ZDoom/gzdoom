@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2022 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -163,7 +163,7 @@ static int mtm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		xxs->lps = mih.loop_start;
 		xxs->lpe = mih.loopend;
 		xxs->flg = (xxs->lpe > 2) ? XMP_SAMPLE_LOOP : 0;	/* 1 == Forward loop */
-		if (mfh.attr & 1) {
+		if (mih.attr & 1) {
 			xxs->flg |= XMP_SAMPLE_16BIT;
 			xxs->len >>= 1;
 			xxs->lps >>= 1;
@@ -171,7 +171,7 @@ static int mtm_load(struct module_data *m, HIO_HANDLE *f, const int start)
 		}
 
 		sub->vol = mih.volume;
-		sub->fin = mih.finetune;
+		sub->fin = (int8)(mih.finetune << 4);
 		sub->pan = 0x80;
 		sub->sid = i;
 

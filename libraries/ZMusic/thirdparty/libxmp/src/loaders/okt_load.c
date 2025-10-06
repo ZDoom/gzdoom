@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -103,6 +103,37 @@ static const int fx[32] = {
 	FX_NSLIDE_UP,		/* 30 */
 	FX_VOLSET		/* 31 */
 };
+
+static int okt_translate_effect(struct xmp_event *event, int fxt, int fxp)
+{
+	if (fxt >= ARRAY_SIZE(fx)) {
+		return -1;
+	}
+	event->fxt = fx[fxt];
+	event->fxp = fxp;
+
+	if ((event->fxt == FX_VOLSET) && (event->fxp > 0x40)) {
+		if (event->fxp <= 0x50) {
+			event->fxt = FX_VOLSLIDE;
+			event->fxp -= 0x40;
+		} else if (event->fxp <= 0x60) {
+			event->fxt = FX_VOLSLIDE;
+			event->fxp = (event->fxp - 0x50) << 4;
+		} else if (event->fxp <= 0x70) {
+			event->fxt = FX_F_VSLIDE_DN;
+			event->fxp = event->fxp - 0x60;
+		} else if (event->fxp <= 0x80) {
+			event->fxt = FX_F_VSLIDE_UP;
+			event->fxp = event->fxp - 0x70;
+		}
+	}
+	if (event->fxt == FX_ARPEGGIO)	/* Arpeggio fixup */
+		event->fxp = (((24 - MSN(event->fxp)) % 12) << 4) | LSN(event->fxp);
+	if (event->fxt == NONE)
+		event->fxt = event->fxp = 0;
+
+	return 0;
+}
 
 static int get_cmod(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 {
@@ -250,7 +281,7 @@ static int get_pbod(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 	struct local_data *data = (struct local_data *)parm;
 	struct xmp_event *e;
 	uint16 rows;
-	int j;
+	int j, k;
 
 	/* Sanity check */
 	if (!data->has_slen || !data->has_cmod) {
@@ -271,46 +302,33 @@ static int get_pbod(struct module_data *m, int size, HIO_HANDLE *f, void *parm)
 	if (libxmp_alloc_pattern_tracks(mod, data->pattern, rows) < 0)
 		return -1;
 
-	for (j = 0; j < rows * mod->chn; j++) {
-		uint8 note, ins, fxt;
+	for (j = 0; j < rows; j++) {
+		for (k = 0; k < mod->chn; k++) {
+			uint8 note, ins;
+			uint8 c[4];
 
-		e = &EVENT(data->pattern, j % mod->chn, j / mod->chn);
-		memset(e, 0, sizeof(struct xmp_event));
+			e = &EVENT(data->pattern, k, j);
+			memset(e, 0, sizeof(struct xmp_event));
 
-		note = hio_read8(f);
-		ins = hio_read8(f);
+			if (hio_read(c, 1, 4, f) < 4) {
+				D_(D_CRIT "read error in PBOD %d", data->pattern);
+				return -1;
+			}
 
-		if (note) {
-			e->note = 48 + note;
-			e->ins = 1 + ins;
-		}
+			note = c[0];
+			ins = c[1];
 
-		fxt = hio_read8(f);
-		if (fxt >= ARRAY_SIZE(fx)) {
-			return -1;
-		}
-		e->fxt = fx[fxt];
-		e->fxp = hio_read8(f);
+			if (note) {
+				e->note = 48 + note;
+				e->ins = 1 + ins;
+			}
 
-		if ((e->fxt == FX_VOLSET) && (e->fxp > 0x40)) {
-			if (e->fxp <= 0x50) {
-				e->fxt = FX_VOLSLIDE;
-				e->fxp -= 0x40;
-			} else if (e->fxp <= 0x60) {
-				e->fxt = FX_VOLSLIDE;
-				e->fxp = (e->fxp - 0x50) << 4;
-			} else if (e->fxp <= 0x70) {
-				e->fxt = FX_F_VSLIDE_DN;
-				e->fxp = e->fxp - 0x60;
-			} else if (e->fxp <= 0x80) {
-				e->fxt = FX_F_VSLIDE_UP;
-				e->fxp = e->fxp - 0x70;
+			if (okt_translate_effect(e, c[2], c[3]) < 0) {
+				D_(D_CRIT "bad effect in PBOD %d: %02x %02x",
+				   data->pattern, c[2], c[3]);
+				return -1;
 			}
 		}
-		if (e->fxt == FX_ARPEGGIO)	/* Arpeggio fixup */
-			e->fxp = (((24 - MSN(e->fxp)) % 12) << 4) | LSN(e->fxp);
-		if (e->fxt == NONE)
-			e->fxt = e->fxp = 0;
 	}
 	data->pattern++;
 

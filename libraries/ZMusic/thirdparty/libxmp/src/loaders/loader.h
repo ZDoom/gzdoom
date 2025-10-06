@@ -14,7 +14,7 @@
 #define SAMPLE_FLAG_NOLOAD	0x0010	/* Get from buffer, don't load */
 #define SAMPLE_FLAG_BIGEND	0x0040	/* Big-endian */
 #define SAMPLE_FLAG_VIDC	0x0080	/* Archimedes VIDC logarithmic */
-/*#define SAMPLE_FLAG_STEREO	0x0100	   Interleaved stereo sample */
+#define SAMPLE_FLAG_INTERLEAVED	0x0100	/* Interleaved stereo sample */
 #define SAMPLE_FLAG_FULLREP	0x0200	/* Play full sample before looping */
 #define SAMPLE_FLAG_ADLIB	0x1000	/* Adlib synth instrument */
 #define SAMPLE_FLAG_HSC		0x2000	/* HSC Adlib synth instrument */
@@ -48,7 +48,7 @@ void	libxmp_decode_protracker_event	(struct xmp_event *, const uint8 *);
 void	libxmp_decode_noisetracker_event(struct xmp_event *, const uint8 *);
 void	libxmp_disable_continue_fx	(struct xmp_event *);
 int	libxmp_check_filename_case	(const char *, const char *, char *, int);
-void	libxmp_get_instrument_path	(struct module_data *, char *, int);
+int	libxmp_find_instrument_file	(struct module_data *, char *, int, const char *);
 void	libxmp_set_type			(struct module_data *, const char *, ...);
 int	libxmp_load_sample		(struct module_data *, HIO_HANDLE *, int,
 					 struct xmp_sample *, const void *);

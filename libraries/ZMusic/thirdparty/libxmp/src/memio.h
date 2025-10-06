@@ -8,12 +8,13 @@ typedef struct {
 	const unsigned char *start;
 	ptrdiff_t pos;
 	ptrdiff_t size;
-	int free_after_use;
+	void *ptr_free;
 } MFILE;
 
 LIBXMP_BEGIN_DECLS
 
-MFILE  *mopen(const void *, long, int);
+MFILE  *mopen(void *, long, int);
+MFILE  *mcopen(const void *, long);
 int     mgetc(MFILE *stream);
 size_t  mread(void *, size_t, size_t, MFILE *);
 int     mseek(MFILE *, long, int);

@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
  * Tue, 30 Jun 1998 20:23:11 +0200
  * Reported by John v/d Kamp <blade_@dds.nl>:
  * I have this song from Purple Motion called wcharts.s3m, the global
- * volume was set to 0, creating a devide by 0 error in xmp. There should
+ * volume was set to 0, creating a divide by 0 error in xmp. There should
  * be an extra test if it's 0 or not.
  *
  * Claudio's fix: global volume ignored
@@ -377,14 +377,17 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 
 	/* Default pan positions */
 
-	for (i = 0, sfh.dp -= 0xfc; !sfh.dp /* && n */  && (i < 32); i++) {
-		uint8 x = hio_read8(f);
-		if (x & S3M_PAN_SET) {
-			mod->xxc[i].pan = (x << 4) & 0xff;
+	if (sfh.dp == 0xfc) {
+		for (i = 0; i < 32; i++) {
+			uint8 x = hio_read8(f);
+			if (x & S3M_PAN_SET) {
+				mod->xxc[i].pan = (x << 4) & 0xff;
+			}
 		}
 	}
 
 	m->c4rate = C4_NTSC_RATE;
+	m->flow_mode = FLOW_MODE_ST3_321;
 
 	if (sfh.version == 0x1300) {
 		m->quirk |= QUIRK_VSALL;
@@ -393,15 +396,40 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 #ifndef LIBXMP_CORE_PLAYER
 	switch (sfh.version >> 12) {
 	case 1:
-		snprintf(tracker_name, 40, "Scream Tracker %d.%02x",
-			 (sfh.version & 0x0f00) >> 8, sfh.version & 0xff);
-		m->quirk |= QUIRK_ST3BUGS;
+		if (sfh.version == 0x1320 && sfh.special == 0 && (sfh.ordnum & 0x0f) == 0 && sfh.uc == 0 && (sfh.flags & ~0x50) == 0 && sfh.dp == 0xfc) {
+			if ((sfh.mv & 0x80) != 0) {
+				strcpy(tracker_name, "ModPlug Tracker / OpenMPT 1.17");
+			} else {
+				/* MPT 1.0 alpha5 doesn't set the stereo flag, but MPT 1.0 alpha6 does. */
+				strcpy(tracker_name, "ModPlug Tracker 1.0 alpha");
+			}
+			m->flow_mode = FLOW_MODE_MPT_116;
+		} else if(sfh.version == 0x1320 && sfh.special == 0 && sfh.uc == 0 && sfh.flags == 0 && sfh.dp == 0) {
+			if (sfh.gv == 64 && sfh.mv == 48) {
+				strcpy(tracker_name, "PlayerPRO");
+			} else { // Always stereo
+				strcpy(tracker_name, "Velvet Studio");
+			}
+		} else {
+			snprintf(tracker_name, 40, "Scream Tracker %d.%02x",
+				 (sfh.version & 0x0f00) >> 8, sfh.version & 0xff);
+			m->quirk |= QUIRK_ST3BUGS;
+			if (sfh.version < 0x1303) {
+				m->flow_mode = FLOW_MODE_ST3_301;
+			}
+		}
 		break;
 	case 2:
-		snprintf(tracker_name, 40, "Imago Orpheus %d.%02x",
-			 (sfh.version & 0x0f00) >> 8, sfh.version & 0xff);
+		if (sfh.version == 0x2013) {
+			strcpy(tracker_name, "PlayerPRO"); /* PlayerPRO on Intel doesn't byte-swap the tracker ID bytes */
+		} else {
+			snprintf(tracker_name, 40, "Imago Orpheus %d.%02x",
+				 (sfh.version & 0x0f00) >> 8, sfh.version & 0xff);
+			m->flow_mode = FLOW_MODE_ORPHEUS;
+		}
 		break;
 	case 3:
+		m->flow_mode = FLOW_MODE_IT_210;
 		if (sfh.version == 0x3216) {
 			strcpy(tracker_name, "Impulse Tracker 2.14v3");
 		} else if (sfh.version == 0x3217) {
@@ -512,7 +540,7 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 	}
 
 	D_(D_INFO "Stereo enabled: %s", stereo ? "yes" : "no");
-	D_(D_INFO "Pan settings: %s", sfh.dp ? "no" : "yes");
+	D_(D_INFO "Pan settings: %s", (sfh.dp == 0xfc) ? "yes" : "no");
 
 	if (libxmp_init_instrument(m) < 0)
 		goto err3;
@@ -613,9 +641,12 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 		xxs->lps = sih.loopbeg;
 		xxs->lpe = sih.loopend;
 
-		xxs->flg = sih.flags & 1 ? XMP_SAMPLE_LOOP : 0;
+		xxs->flg = (sih.flags & S3M_SAMP_LOOP) ? XMP_SAMPLE_LOOP : 0;
 
-		if (sih.flags & 4) {
+		if (sih.flags & S3M_SAMP_STEREO) {
+			xxs->flg |= XMP_SAMPLE_STEREO;
+		}
+		if (sih.flags & S3M_SAMP_16BIT) {
 			xxs->flg |= XMP_SAMPLE_16BIT;
 		}
 
@@ -629,9 +660,10 @@ static int s3m_load(struct module_data *m, HIO_HANDLE * f, const int start)
 
 		libxmp_instrument_name(mod, i, sih.name, 28);
 
-		D_(D_INFO "[%2X] %-28.28s %04x%c%04x %04x %c V%02x %5d",
+		D_(D_INFO "[%2X] %-28.28s %04x%c%c %04x %04x %c V%02x %5d",
 		   i, mod->xxi[i].name, mod->xxs[i].len,
 		   xxs->flg & XMP_SAMPLE_16BIT ? '+' : ' ',
+		   xxs->flg & XMP_SAMPLE_STEREO ? 's' : ' ',
 		   xxs->lps, mod->xxs[i].lpe,
 		   xxs->flg & XMP_SAMPLE_LOOP ? 'L' : ' ', sub->vol, sih.c2spd);
 

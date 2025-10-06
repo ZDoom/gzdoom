@@ -96,7 +96,7 @@ struct channel_data {
 	double per_adj;		/* MED period/pitch adjustment factor hack */
 	int finetune;		/* Guess what */
 	int ins;		/* Instrument number */
-	int old_ins;		/* Last instruemnt */
+	int old_ins;		/* Last instrument */
 	int smp;		/* Sample number */
 	int mastervol;		/* Master vol -- for IT track vol effect */
 	int delay;		/* Note delay in frames */
@@ -201,11 +201,12 @@ struct channel_data {
 		int slide;	/* Frequency slide value */
 		double fslide;	/* Fine frequency slide value */
 		int memory;	/* Portamento effect memory */
+		int down_memory;/* Portamento down effect memory (XM) */
 	} freq;
 
 	struct {
 		double target;	/* Target period for tone portamento */
-		int dir;	/* Tone portamento up/down directionh */
+		int dir;	/* Tone portamento up/down direction */
 		int slide;	/* Delta for tone portamento */
 		int memory;	/* Tone portamento effect memory */
 		int note_memory;/* Tone portamento note memory (ULT) */
@@ -214,6 +215,8 @@ struct channel_data {
 	struct {
 		int up_memory;	/* FT2 has separate memories for these */
 		int down_memory;/* cases (see Porta-LinkMem.xm) */
+		int xf_up_memory;
+		int xf_down_memory;
 	} fine_porta;
 
 	struct {
@@ -278,5 +281,14 @@ void	libxmp_process_fx	(struct context_data *, struct channel_data *,
 				 int, struct xmp_event *, int);
 void	libxmp_filter_setup	(int, int, int, int*, int*, int *);
 int	libxmp_read_event	(struct context_data *, struct xmp_event *, int);
+
+void	libxmp_process_pattern_loop	(struct context_data *,
+	struct flow_control *f, int, int, int);
+void	libxmp_process_pattern_jump	(struct context_data *,
+	struct flow_control *f, int);
+void	libxmp_process_pattern_break	(struct context_data *,
+	struct flow_control *f, int);
+void	libxmp_process_line_jump	(struct context_data *,
+	struct flow_control *f, int, int);
 
 #endif /* LIBXMP_PLAYER_H */

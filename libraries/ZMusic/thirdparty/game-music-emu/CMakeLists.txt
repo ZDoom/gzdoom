@@ -84,8 +84,9 @@ if (COMPILER_IS_GNUCXX_COMPATIBLE)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wextra")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-    # Assume we have visibility support on any compiler that supports C++11
-    add_definitions (-DLIBGME_VISIBILITY)
+    # Assume we have visibility support on any compiler that supports C++11 
+    # [ZMusic] we do not want to export this interface, so do not unhide the API functions.
+    #add_definitions (-DLIBGME_VISIBILITY)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
 
     # Try to protect against undefined behavior from signed integer overflow

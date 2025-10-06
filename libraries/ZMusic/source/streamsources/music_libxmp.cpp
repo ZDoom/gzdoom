@@ -66,7 +66,7 @@ static unsigned long xmp_read(void *dest, unsigned long len, unsigned long nmemb
 	return length / len;
 }
 
-static struct xmp_callbacks callbacks =
+static const struct xmp_callbacks callbacks =
 {
 	xmp_read,
 	[](void *priv, long offset, int whence) -> int { return ((MusicIO::FileInterface*)priv)->seek(offset, whence); },

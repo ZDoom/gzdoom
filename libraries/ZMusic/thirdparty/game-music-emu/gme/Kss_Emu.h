@@ -27,7 +27,7 @@ public:
 		byte extra_header;
 		byte device_flags;
 	};
-	
+
 	enum { ext_header_size = 0x10 };
 	struct ext_header_t
 	{
@@ -40,12 +40,12 @@ public:
 		byte msx_music_vol;
 		byte msx_audio_vol;
 	};
-	
+
 	struct composite_header_t : header_t, ext_header_t { };
-	
+
 	// Header for currently loaded file
 	composite_header_t const& header() const { return header_; }
-	
+
 	static gme_type_t static_type() { return gme_kss_type; }
 public:
 	Kss_Emu();
@@ -62,29 +62,29 @@ protected:
 private:
 	Rom_Data<page_size> rom;
 	composite_header_t header_;
-	
+
 	bool scc_accessed;
 	bool gain_updated;
 	void update_gain();
-	
+
 	unsigned scc_enabled; // 0 or 0xC000
 	int bank_count;
 	void set_bank( int logical, int physical );
 	blargg_long bank_size() const { return (16 * 1024L) >> (header_.bank_mode >> 7 & 1); }
-	
+
 	blip_time_t play_period;
 	blip_time_t next_play;
 	int ay_latch;
-	
+
 	friend void kss_cpu_out( class Kss_Cpu*, cpu_time_t, unsigned addr, int data );
 	friend int  kss_cpu_in( class Kss_Cpu*, cpu_time_t, unsigned addr );
 	void cpu_write( unsigned addr, int data );
 	friend void kss_cpu_write( class Kss_Cpu*, unsigned addr, int data );
-	
+
 	// large items
-	enum { mem_size = 0x10000 };
+	static const unsigned int mem_size = 0x10000;
 	byte ram [mem_size + cpu_padding];
-	
+
 	Ay_Apu ay;
 	Scc_Apu scc;
 	Sms_Apu* sn;

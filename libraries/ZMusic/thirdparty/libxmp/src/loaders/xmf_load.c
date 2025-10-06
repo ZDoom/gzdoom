@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 2023 Alice Rowan <petrifiedrowan@gmail.com>
+ * Copyright (C) 2023-2025 Alice Rowan <petrifiedrowan@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -136,8 +136,8 @@ static int xmf_test(HIO_HANDLE *f, char *t, const int start)
 	samples_start = 0x1103 + num_channels + num_patterns * num_channels * 64 * 6;
 	length = hio_size(f);
 	if (length < samples_start || (size_t)length - samples_start < samples_length) {
-		D_(D_WARN "not XMF: file length %ld is shorter than required %zu",
-		 length, (size_t)samples_start + samples_length);
+		D_(D_WARN "not XMF: file length %ld is shorter than required %lu",
+		 length, (unsigned long)samples_start + samples_length);
 		return -1;
 	}
 
@@ -211,7 +211,6 @@ static void xmf_translate_effect(struct xmp_event *event, uint8 effect, uint8 pa
 		switch (param >> 4) {
 		case 0x01:		/* fine slide up */
 		case 0x02:		/* fine slide down */
-		case 0x06:		/* pattern loop (broken) */
 		case 0x09:		/* note retrigger (TODO: only once) */
 		case 0x0c:		/* note cut */
 		case 0x0d:		/* note delay */
@@ -224,6 +223,10 @@ static void xmf_translate_effect(struct xmp_event *event, uint8 effect, uint8 pa
 		case 0x04:		/* vibrato waveform */
 			param &= 3;
 			param = param < 3 ? param : 2;
+			xmf_insert_effect(event, effect, param, chn);
+			break;
+
+		case 0x06:		/* pattern loop */
 			xmf_insert_effect(event, effect, param, chn);
 			break;
 

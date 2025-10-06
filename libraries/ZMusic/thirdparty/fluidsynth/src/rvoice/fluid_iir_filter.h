@@ -23,20 +23,28 @@
 
 #include "fluidsynth_priv.h"
 
-typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
+// Uncomment to get debug logging for filter parameters
+// #define DBG_FILTER
+#ifdef DBG_FILTER
+#define LOG_FILTER(...) FLUID_LOG(FLUID_DBG, __VA_ARGS__)
+#else
+#define LOG_FILTER(...) 
+#endif
 
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
-DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
+#define Q_MIN ((fluid_real_t)0.001)
 
-void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
-                            fluid_real_t *dsp_buf, int dsp_buf_count);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
+// Calculate the filter coefficients with single precision
+typedef float IIR_COEFF_T;
 
-void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
-                           fluid_real_t output_rate,
-                           fluid_real_t fres_mod);
+typedef struct _sincos_t
+{
+    IIR_COEFF_T sin;
+    IIR_COEFF_T cos;
+} fluid_iir_sincos_t;
 
 /* We can't do information hiding here, as fluid_voice_t includes the struct
    without a pointer. */
@@ -48,28 +56,65 @@ struct _fluid_iir_filter_t
     /* filter coefficients */
     /* The coefficients are normalized to a0. */
     /* b0 and b2 are identical => b02 */
-    fluid_real_t b02;              /* b0 / a0 */
-    fluid_real_t b1;              /* b1 / a0 */
-    fluid_real_t a1;              /* a0 / a0 */
-    fluid_real_t a2;              /* a1 / a0 */
+    IIR_COEFF_T b02;             /* b0 / a0 */
+    IIR_COEFF_T b1;              /* b1 / a0 */
+    IIR_COEFF_T a1;              /* a0 / a0 */
+    IIR_COEFF_T a2;              /* a1 / a0 */
 
-    fluid_real_t b02_incr;
-    fluid_real_t b1_incr;
-    fluid_real_t a1_incr;
-    fluid_real_t a2_incr;
-    int filter_coeff_incr_count;
-    int compensate_incr;		/* Flag: If set, must compensate history */
     fluid_real_t hist1, hist2;      /* Sample history for the IIR filter */
-    int filter_startup;             /* Flag: If set, the filter will be set directly.
-					   Else it changes smoothly. */
+    int filter_startup;             /* Flag: If set, the filter parameters will be set directly. Else it changes smoothly. */
 
-    fluid_real_t fres;              /* the resonance frequency, in cents (not absolute cents) */
-    fluid_real_t last_fres;         /* Current resonance frequency of the IIR filter */
-    /* Serves as a flag: A deviation between fres and last_fres */
-    /* indicates, that the filter has to be recalculated. */
-    fluid_real_t q_lin;             /* the q-factor on a linear scale */
-    fluid_real_t filter_gain;       /* Gain correction factor, depends on q */
+    fluid_real_t fres;              /* The desired resonance frequency, in absolute cents, this filter is currently set to */
+    fluid_real_t last_fres;         /* The filter's current (smoothed out) resonance frequency in Hz, which will converge towards its target fres once fres_incr_count has become zero */
+    fluid_real_t fres_incr;         /* The linear increment of fres each sample */
+    int fres_incr_count;            /* The number of samples left for the smoothed last_fres adjustment to complete */
+
+    fluid_real_t last_q;            /* The filter's current (smoothed) Q-factor (or "bandwidth", or "resonance-friendlyness") on a linear scale. Just like fres, this will converge towards its target Q once q_incr_count has become zero. */
+    fluid_real_t q_incr;            /* The linear increment of q each sample */
+    int q_incr_count;               /* The number of samples left for the smoothed Q adjustment to complete */
+#ifdef DBG_FILTER
+    fluid_real_t target_fres;       /* The filter's target fres, that last_fres should converge towards - for debugging only */
+    fluid_real_t target_q;          /* The filter's target Q - for debugging only */
+#endif
+
+    // the final gain amplifier to be applied by the last filter in the chain, zero for all other filters
+    fluid_real_t amp;                /* current linear amplitude */
+    fluid_real_t amp_incr;           /* amplitude increment value for the next FLUID_BUFSIZE samples */
+
+    fluid_iir_sincos_t *sincos_table; /* pointer to the precalculated sin and cos values, owned by the synth */
 };
 
+enum
+{
+    CENTS_STEP = 1 /* cents */,
+    FRES_MIN = 1500 /* cents */,
+    FRES_MAX = 13500 /* cents */,
+    SINCOS_TAB_SIZE = ((FRES_MAX /* upper fc in cents */ - FRES_MIN /* lower fc in cents */) / CENTS_STEP)
+                      +
+                      1 /* add one because asking for FRES_MAX cents must yield a valid coefficient */,
+};
+
+
+typedef struct _fluid_iir_filter_t fluid_iir_filter_t;
+
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_init);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_fres);
+DECLARE_FLUID_RVOICE_FUNCTION(fluid_iir_filter_set_q);
+
+void fluid_iir_filter_init_table(fluid_iir_sincos_t *sincos_table, fluid_real_t sample_rate);
+
+void fluid_iir_filter_reset(fluid_iir_filter_t *iir_filter);
+
+void fluid_iir_filter_calc(fluid_iir_filter_t *iir_filter,
+                           fluid_real_t output_rate, fluid_real_t fres_mod);
+
+void fluid_iir_filter_apply(fluid_iir_filter_t *iir_filter,
+                            fluid_iir_filter_t *custom_filter,
+                            fluid_real_t *dsp_buf,
+                            unsigned int count);
+
+#ifdef __cplusplus
+}
+#endif
 #endif
 

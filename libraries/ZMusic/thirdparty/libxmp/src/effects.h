@@ -49,6 +49,10 @@
 #define EX_PATT_DELAY	0x0e
 #define EX_INVLOOP	0x0f
 
+/* XM extended effects 2 */
+#define XX_XF_PORTA_UP	0x01
+#define XX_XF_PORTA_DN	0x02
+
 #ifndef LIBXMP_CORE_PLAYER
 /* Oktalyzer effects */
 #define FX_OKT_ARP3	0x70
@@ -88,7 +92,8 @@
 #define FX_FAR_RETRIG	0x6d	/* FAR retrigger */
 #define FX_FAR_DELAY	0x6e	/* FAR note offset */
 
-/* Other frequency based effects (ULT, etc) */
+/* ULT effects */
+#define FX_ULT_TEMPO	0x5f
 #define FX_ULT_TPORTA   0x6f
 #endif
 
@@ -117,6 +122,7 @@
 #define FX_HOLD_DECAY	0x90
 #define FX_SETPITCH	0x91
 #define FX_VIBRATO2	0x92
+#define FX_MED_RETRIG	0x93
 
 /* PTM effects */
 #define FX_NSLIDE_DN	0x9c	/* IMF/PTM note slide down */
@@ -138,6 +144,7 @@
 #define FX_PITCH_ADD	0xb8	/* SFX add steps to current note */
 #define FX_PITCH_SUB	0xb9	/* SFX add steps to current note */
 #define FX_LINE_JUMP	0xba	/* Archimedes jump to line in current order */
+#define FX_RETRIG	0xbb	/* Retrigger with extended range (LIQ, DSym) */
 #endif
 
 #define FX_SURROUND	0x8d	/* S3M/IT */

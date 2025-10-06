@@ -28,11 +28,11 @@ class YmFmOPL3 final : public OPLChipBaseT<YmFmOPL3>
     void *m_chip;
     void *m_intf;
 
-    static const size_t c_queueSize = 500;
+    static const size_t c_queueSize = 2048;
 
     struct Reg
     {
-        uint32_t addr;
+        uint16_t addr;
         uint8_t data;
     };
 

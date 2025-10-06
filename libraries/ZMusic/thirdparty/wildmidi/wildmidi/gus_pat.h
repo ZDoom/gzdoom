@@ -32,7 +32,7 @@ namespace WildMidi
 
 class SoundFontReaderInterface;
 /* Guspat Envelope Rate Timings */
-extern float env_time_table[];
+extern float const env_time_table[];
 
 }
 

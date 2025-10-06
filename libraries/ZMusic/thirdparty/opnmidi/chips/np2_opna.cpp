@@ -90,6 +90,18 @@ const char *NP2OPNA<FM::OPNB>::emulatorName()
     return "Neko Project II Kai OPNB";  // git 2018-10-28 rev e1c0609
 }
 
+template<>
+bool NP2OPNA<FM::OPNA>::hasFullPanning()
+{
+    return true;
+}
+
+template<>
+bool NP2OPNA<FM::OPNB>::hasFullPanning()
+{
+    return true;
+}
+
 // template class NP2OPNA<FM::OPN2>;
 template class NP2OPNA<FM::OPNA>;
 template class NP2OPNA<FM::OPNB>;

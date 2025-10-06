@@ -1,12 +1,17 @@
 #pragma once
 #define ZMUSIC_INTERNAL
 
-#if defined(_MSC_VER) && !defined(ZMUSIC_STATIC)
-#define DLL_EXPORT __declspec(dllexport)
-#define DLL_IMPORT __declspec(dllexport)	// without this the compiler complains.
+#if !defined(ZMUSIC_STATIC)
+    #if defined(_WIN32)
+        #define DLL_EXPORT __declspec(dllexport)
+        #define DLL_IMPORT __declspec(dllexport)	// without this the compiler complains.
+    #else
+        #define DLL_EXPORT __attribute__((visibility("default")))
+        #define DLL_IMPORT
+    #endif
 #else
-#define DLL_EXPORT
-#define DLL_IMPORT
+    #define DLL_EXPORT
+    #define DLL_IMPORT
 #endif
 
 typedef class MIDISource *ZMusic_MidiSource;

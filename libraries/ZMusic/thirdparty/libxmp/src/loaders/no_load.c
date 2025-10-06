@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2021 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2024 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,9 @@
 
 /* Nir Oren's Liquid Tracker old "NO" format. I have only one NO module,
  * Moti Radomski's "Time after time" from ftp.modland.com.
+ *
+ * Another NO "Waste of Time" is bundled with The Liquid Tracker 0.80b, and
+ * a converter called MOD2LIQ is bundled with The Liquid Player 1.00.
  */
 
 
@@ -39,6 +42,7 @@ const struct format_loader libxmp_loader_no = {
 
 static int no_test(HIO_HANDLE *f, char *t, const int start)
 {
+	uint8 buf[33];
 	int nsize, pat, chn;
 	int i;
 
@@ -47,27 +51,26 @@ static int no_test(HIO_HANDLE *f, char *t, const int start)
 	if (hio_read32b(f) != 0x4e4f0000)		/* NO 0x00 0x00 */
 		return -1;
 
-	nsize = hio_read8(f);
-	if (nsize != 20)
+	if (hio_read(buf, 1, 33, f) < 33)
+		return -1;
+
+	nsize = buf[0];
+	if (nsize > 29)
 		return -1;
 
 	/* test title */
 	for (i = 0; i < nsize; i++) {
-		if (hio_read8(f) == 0)
+		if (buf[i + 1] == '\0')
 			return -1;
 	}
 
-	hio_seek(f, 9, SEEK_CUR);
-
 	/* test number of patterns */
-	pat = hio_read8(f);
+	pat = buf[30];
 	if (pat == 0)
 		return -1;
 
-	hio_read8(f);
-
 	/* test number of channels */
-	chn = hio_read8(f);
+	chn = buf[32];
 	if (chn <= 0 || chn > 16)
 		return -1;
 
@@ -79,29 +82,151 @@ static int no_test(HIO_HANDLE *f, char *t, const int start)
 }
 
 
+/* Note that 0.80b or slightly earlier started translating these in the
+ * editor to the new Liquid Module effects. It's not clear if the saving
+ * format was modified at this point, but 0.80b and 0.82b are not aware
+ * of the Liquid Module format.
+ *
+ * TODO: the changelog alleges an Fxx (05h) global volume effect was added
+ * in 0.67b, which would be present in releases 0.68b and 0.69b only.
+ */
 static const uint8 fx[15] = {
-	FX_ARPEGGIO,
-	0,
+	FX_SPEED,
+	FX_VIBRATO,
 	FX_BREAK,
+	FX_PORTA_DN,
+	FX_PORTA_UP,
 	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
+	FX_ARPEGGIO,
+	FX_SETPAN,
+	0, /* special */
+	FX_JUMP,
+	FX_TREMOLO,
+	FX_VOLSLIDE,
+	0, /* special */
+	FX_TONEPORTA,
+	FX_OFFSET
 };
 
+/* These are all FX_EXTENDED but in a custom order. */
+static const uint8 fx_misc2[16] = {
+	EX_F_PORTA_UP,
+	EX_F_PORTA_DN,
+	EX_F_VSLIDE_UP,
+	EX_F_VSLIDE_DN,
+	EX_VIBRATO_WF,
+	EX_TREMOLO_WF,
+	EX_RETRIG,
+	EX_CUT,
+	EX_DELAY,
+	0,
+	0,
+	EX_PATTERN_LOOP,
+	EX_PATT_DELAY,
+	0,
+	0,
+	0
+};
+
+static void no_translate_effect(struct xmp_event *event, int fxt, int fxp)
+{
+	int value;
+	switch (fxt) {
+	case 0x0:				/* Axx Set Speed/BPM */
+	case 0x1:				/* Bxy Vibrato */
+	case 0x2:				/* Cxx Cut (break) */
+	case 0x3:				/* Dxx Porta Down */
+	case 0x4:				/* Exx Porta Up */
+	case 0x6:				/* Gxx Arpeggio */
+	case 0x9:				/* Jxx Jump Position */
+	case 0xa:				/* Kxy Tremolo */
+	case 0xb:				/* Lxy Volslide (fine 0.80b+ only) */
+	case 0xd:				/* Nxx Note Portamento */
+	case 0xe:				/* Oxx Sample Offset */
+		event->fxt = fx[fxt];
+		event->fxp = fxp;
+		break;
+
+	case 0x7:				/* Hxx Pan Control */
+		/* Value is decimal, effective values >64 are ignored */
+		value = MSN(fxp) * 10 + LSN(fxp);
+		if (value == 70) {
+			/* TODO: reset panning H70 (H6A also works)
+			 * this resets ALL channels to default pan. */
+		} else if (value <= 64) {
+			event->fxt = FX_SETPAN;
+			event->fxp = value * 0xff / 64;
+		}
+		break;
+
+	case 0x8:				/* Ixy Misc 1 */
+		switch (MSN(fxp)) {
+		case 0x0:			/* I0y Vibrato + volslide up */
+			event->fxt = FX_VIBRA_VSLIDE;
+			event->fxp = LSN(fxp) << 4;
+			break;
+		case 0x1:			/* I1y Vibrato + volslide down */
+			event->fxt = FX_VIBRA_VSLIDE;
+			event->fxp = LSN(fxp);
+			break;
+		case 0x2:			/* I2y Noteporta + volslide up */
+			event->fxt = FX_TONE_VSLIDE;
+			event->fxp = LSN(fxp) << 4;
+			break;
+		case 0x3:			/* I3y Noteporta + volslide down */
+			event->fxt = FX_TONE_VSLIDE;
+			event->fxp = LSN(fxp);
+			break;
+		/* TODO: if these were ever implemented they were after 0.64b
+		 * and before 0.80b only, i.e. versions not available to test. */
+		case 0x4:			/* I4y Tremolo + volslide up */
+			event->fxt = FX_TREMOLO;
+			event->fxp = 0;
+			event->f2t = FX_VOLSLIDE;
+			event->f2p = LSN(fxp) << 4;
+			break;
+		case 0x5:			/* I5y Tremolo + volslide down */
+			event->fxt = FX_TREMOLO;
+			event->fxp = 0;
+			event->f2t = FX_VOLSLIDE;
+			event->f2p = LSN(fxp);
+			break;
+		}
+		break;
+
+	case 0xc:				/* Mxy Misc 2 */
+		value = MSN(fxp);
+		fxp = LSN(fxp);
+		switch (value) {
+		case 0x4:			/* M4x Vibrato Waveform */
+		case 0x5:			/* M5x Tremolo Waveform */
+			if ((fxp & 3) == 3) {
+				fxp--;
+			}
+			/* fall-through */
+
+		case 0x0:			/* M0y Fine Porta Up */
+		case 0x1:			/* M1y Fine Porta Down */
+		case 0x2:			/* M2y Fine Volslide Up */
+		case 0x3:			/* M3y Fine Volslide Down */
+		case 0x6:			/* M6y Note Retrigger */
+		case 0x7:			/* M7y Note Cut */
+		case 0x8:			/* M8y Note Delay */
+		case 0xb:			/* MBy Pattern Loop */
+		case 0xc:			/* MCy Pattern Delay */
+			event->fxt = FX_EXTENDED;
+			event->fxp = (fx_misc2[value] << 4) | fxp;
+			break;
+		}
+		break;
+	}
+}
 
 static int no_load(struct module_data *m, HIO_HANDLE *f, const int start)
 {
 	struct xmp_module *mod = &m->mod;
 	struct xmp_event *event;
+	uint8 buf[46];
 	int i, j, k;
 	int nsize;
 
@@ -112,17 +237,10 @@ static int no_load(struct module_data *m, HIO_HANDLE *f, const int start)
 	libxmp_set_type(m, "Liquid Tracker");
 
 	nsize = hio_read8(f);
-	for (i = 0; i < nsize; i++) {
-		uint8 x = hio_read8(f);
-		if (i < XMP_NAME_SIZE)
-			mod->name[i] = x;
-	}
+	if (hio_read(mod->name, 1, 29, f) < 29)
+		return -1;
+	mod->name[nsize] = '\0';
 
-	hio_read16l(f);
-	hio_read16l(f);
-	hio_read16l(f);
-	hio_read16l(f);
-	hio_read8(f);
 	mod->pat = hio_read8(f);
 	hio_read8(f);
 	mod->chn = hio_read8(f);
@@ -151,44 +269,26 @@ static int no_load(struct module_data *m, HIO_HANDLE *f, const int start)
 
 	/* Read instrument names */
 	for (i = 0; i < mod->ins; i++) {
-		int hasname, c2spd;
+		int c2spd;
 
 		if (libxmp_alloc_subinstrument(mod, i, 1) < 0)
 			return -1;
 
-		nsize = hio_read8(f);
-		if (hio_error(f)) {
+		if (hio_read(buf, 1, 46, f) < 46)
 			return -1;
-		}
 
-		hasname = 0;
-		for (j = 0; j < nsize; j++) {
-			uint8 x = hio_read8(f);
-			if (x != 0x20)
-				hasname = 1;
-			if (j < 32)
-				mod->xxi[i].name[j] = x;
-		}
-		if (!hasname)
-			mod->xxi[i].name[0] = 0;
+		nsize = MIN(buf[0], 30);
+		libxmp_instrument_name(mod, i, buf + 1, nsize);
 
-		hio_read32l(f);
-		hio_read32l(f);
-		mod->xxi[i].sub[0].vol = hio_read8(f);
-		c2spd = hio_read16l(f);
-		mod->xxs[i].len = hio_read16l(f);
-		mod->xxs[i].lps = hio_read16l(f);
-		mod->xxs[i].lpe = hio_read16l(f);
-		hio_read32l(f);
-		hio_read16l(f);
+		mod->xxi[i].sub[0].vol = buf[31];
+		c2spd = readmem16l(buf + 32);
+		mod->xxs[i].len = readmem32l(buf + 34);
+		mod->xxs[i].lps = readmem32l(buf + 38);
+		mod->xxs[i].lpe = readmem32l(buf + 42);
 
 		if (mod->xxs[i].len > 0)
 			mod->xxi[i].nsm = 1;
 
-		/*
-		mod->xxs[i].lps = 0;
-		mod->xxs[i].lpe = 0;
-		*/
 		mod->xxs[i].flg = mod->xxs[i].lpe > 0 ? XMP_SAMPLE_LOOP : 0;
 		mod->xxi[i].sub[0].fin = 0;
 		mod->xxi[i].sub[0].pan = 0x80;
@@ -227,14 +327,13 @@ static int no_load(struct module_data *m, HIO_HANDLE *f, const int start)
 				fxp = (x & 0xff000000) >> 24;
 
 				if (note != 0x3f)
-					event->note = 36 + note;
+					event->note = 37 + note;
 				if (ins != 0x7f)
 					event->ins = 1 + ins;
 				if (vol != 0x7f)
-					event->vol = vol;
+					event->vol = 1 + vol;
 				if (fxt != 0x0f) {
-					event->fxt = fx[fxt];
-					event->fxp = fxp;
+					no_translate_effect(event, fxt, fxp);
 				}
 			}
 		}
@@ -250,8 +349,13 @@ static int no_load(struct module_data *m, HIO_HANDLE *f, const int start)
 			return -1;
 	}
 
-	m->quirk |= QUIRKS_ST3;
+	m->quirk |= QUIRK_FINEFX | QUIRK_RTONCE;
+	m->flow_mode = FLOW_MODE_LIQUID;
 	m->read_event_type = READ_EVENT_ST3;
+
+	for (i = 0; i < mod->chn; i++) {
+		mod->xxc[i].pan = DEFPAN((i & 1) ? 0xff : 0x00);
+	}
 
 	return 0;
 }

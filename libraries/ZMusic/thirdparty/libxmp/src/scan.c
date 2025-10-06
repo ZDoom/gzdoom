@@ -1,5 +1,5 @@
 /* Extended Module Player
- * Copyright (C) 1996-2023 Claudio Matsuoka and Hipolito Carraro Jr
+ * Copyright (C) 1996-2025 Claudio Matsuoka and Hipolito Carraro Jr
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,7 @@
 
 #include "common.h"
 #include "effects.h"
+#include "player.h"
 #include "mixer.h"
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -47,9 +48,6 @@
 #endif
 
 #define VBLANK_TIME_THRESHOLD	480000 /* 8 minutes */
-
-#define S3M_END		0xff
-#define S3M_SKIP	0xfe
 
 
 static int scan_module(struct context_data *ctx, int ep, int chain)
@@ -64,11 +62,11 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
     int orders_since_last_valid, any_valid;
     int gvl, bpm, speed, base_time, chn;
     int frame_count;
-    double time, start_time;
-    int loop_chn, loop_num, inside_loop, line_jump;
+    double time, start_time, time_calc;
+    int inside_loop, line_jump;
     int pdelay = 0;
-    int loop_count[XMP_MAX_CHANNELS];
-    int loop_row[XMP_MAX_CHANNELS];
+    struct flow_control f;
+    struct pattern_loop loop[XMP_MAX_CHANNELS];
     int i, pat;
     int has_marker;
     struct ord_data *info;
@@ -89,12 +87,19 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 			mod->xxp[pat]->rows ? mod->xxp[pat]->rows : 1);
     }
 
+    /* Use a temporary flow_control so the scan can borrow the player's
+     * Pattern Loop handler. */
+    memset(&f, 0, sizeof(f));
+    f.loop = loop;
     for (i = 0; i < mod->chn; i++) {
-	loop_count[i] = 0;
-	loop_row[i] = -1;
+	loop[i].start = 0;
+	loop[i].count = 0;
     }
-    loop_num = 0;
-    loop_chn = -1;
+    f.loop_dest = -1;
+    f.loop_param = -1;
+    f.loop_start = -1;
+    f.loop_count = 0;
+    f.loop_active_num = 0;
     line_jump = 0;
 
     gvl = mod->gvl;
@@ -161,7 +166,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	    }
 
 	    pat = mod->xxo[ord];
-	    if (has_marker && pat == S3M_END) {
+	    if (has_marker && pat == XMP_MARK_END) {
 		break;
 	    }
 	}
@@ -170,14 +175,29 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 	info = &m->xxo_info[ord];
 
 	/* Allow more complex order reuse only in main sequence */
-	if (ep != 0 && p->sequence_control[ord] != 0xff) {
+	if (ep != 0 && p->sequence_control[ord] != NO_SEQUENCE) {
+	    /* Currently to detect the end of the sequence, the player needs the
+	     * end to be a real position and row, so skip invalid and S3M_SKIP.
+	     * "amazonas-dynomite mix.it" by Skaven has a sequence (9) where an
+	     * S3M_END repeats into an S3M_SKIP.
+	     *
+	     * Two sequences (7 and 8) in "alien incident - leohou2.s3m" by
+	     * Purple Motion share the same S3M_END due to an off-by-one jump,
+	     * so check S3M_END here too.
+	     */
+	    if (pat >= mod->pat) {
+		if (has_marker && pat == XMP_MARK_END) {
+			ord = mod->len;
+		}
+		continue;
+	    }
 	    break;
 	}
 	p->sequence_control[ord] = chain;
 
 	/* All invalid patterns skipped, only S3M_END aborts replay */
 	if (pat >= mod->pat) {
-	    if (has_marker && pat == S3M_END) {
+	    if (has_marker && pat == XMP_MARK_END) {
 		ord = mod->len;
 	        continue;
 	    }
@@ -187,6 +207,16 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
         if (break_row >= mod->xxp[pat]->rows) {
             break_row = 0;
         }
+
+	/* Changing patterns may reset loop vars. */
+	if (HAS_FLOW_MODE(FLOW_LOOP_PATTERN_RESET)) {
+	    f.loop_start = -1;
+	    f.loop_count = 0;
+	    for (i = 0; i < mod->chn; i++) {
+		f.loop[i].start = 0;
+		f.loop[i].count = 0;
+	    }
+	}
 
         /* Loops can cross pattern boundaries, so check if we're not looping */
         if (m->scan_cnt[ord][break_row] && !inside_loop) {
@@ -203,7 +233,9 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
             info->gvl = gvl;
             info->bpm = bpm;
             info->speed = speed;
-            info->time = time + m->time_factor * frame_count * base_time / bpm;
+	    /* TODO: double ord_data::time */
+	    time_calc = time + m->time_factor * frame_count * base_time / bpm;
+            info->time = time_calc > (double)INT_MAX ? INT_MAX : (int)time_calc;
 #ifndef LIBXMP_CORE_PLAYER
             info->st26_speed = st26_speed;
 #endif
@@ -247,7 +279,7 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		goto end_module;
 	    }
 
-	    if (!loop_num && !line_jump && m->scan_cnt[ord][row]) {
+	    if (!f.loop_active_num && !line_jump && m->scan_cnt[ord][row]) {
 		row_count--;
 		goto end_module;
 	    }
@@ -269,13 +301,17 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		if (row >= tracks[chn]->rows)
 		    continue;
 
-		//event = &EVENT(mod->xxo[ord], chn, row);
+		/* event = &EVENT(mod->xxo[ord], chn, row); */
 		event = &tracks[chn]->event[row];
 
 		f1 = event->fxt;
 		p1 = event->fxp;
 		f2 = event->f2t;
 		p2 = event->f2p;
+
+		if (f1 == 0 && f2 == 0) {
+			continue;
+		}
 
 		if (f1 == FX_GLOBALVOL || f2 == FX_GLOBALVOL) {
 		    gvl = (f1 == FX_GLOBALVOL) ? p1 : p2;
@@ -388,6 +424,44 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 				bpm = far_bpm;
 			}
 		}
+
+		/* ULT tempo processing */
+
+		if (f1 == FX_ULT_TEMPO || f2 == FX_ULT_TEMPO) {
+		    int parm2 = 0;
+		    parm = 0;
+		    if (f2 == FX_ULT_TEMPO) {
+			if (p2 == 0) {
+				parm = 6;
+				parm2 = 125;
+			} else if (p2 < 0x30) {
+				parm = p2;
+			} else {
+				parm2 = p2;
+			}
+		    }
+		    if (f1 == FX_ULT_TEMPO) {
+			if (p1 == 0) {
+				parm = 6;
+				parm2 = 125;
+			} else if (p1 < 0x30) {
+				parm = p1;
+			} else {
+				parm2 = p1;
+			}
+		    }
+		    frame_count += row_count * speed;
+		    row_count = 0;
+		    if (parm > 0) {
+			speed = parm;
+			st26_speed = 0;
+		    }
+		    if (parm2 > 0) {
+			time += m->time_factor * frame_count * base_time / bpm;
+			frame_count = 0;
+			bpm = parm2;
+		    }
+		}
 #endif
 
 		if ((f1 == FX_S3M_SPEED && p1) || (f2 == FX_S3M_SPEED && p2)) {
@@ -457,35 +531,52 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 			frame_count += (p1 & 0x0f) * speed;
 		}
 
-		if (f1 == FX_IT_BREAK) {
-		    break_row = p1;
-		    last_row = 0;
+		if (f1 == FX_IT_BREAK || f2 == FX_IT_BREAK) {
+		    parm = (f1 == FX_IT_BREAK) ? p1 : p2;
+		    libxmp_process_pattern_break(ctx, &f, parm);
+		    /* TODO: fully replace these variables with f */
+		    if (f.pbreak) {
+			break_row = f.jumpline;
+			last_row = 0;
+		    }
 		}
 #endif
 
 		if (f1 == FX_JUMP || f2 == FX_JUMP) {
-		    ord2 = (f1 == FX_JUMP) ? p1 : p2;
-		    break_row = 0;
-		    last_row = 0;
+		    libxmp_process_pattern_jump(ctx, &f, (f1 == FX_JUMP ? p1 : p2));
+		    /* TODO: fully replace these variables with f */
+		    if (f.pbreak) {
+			ord2 = f.jump;
+			break_row = f.jumpline;
+			last_row = 0;
 
-		    /* prevent infinite loop, see OpenMPT PatLoop-Various.xm */
-		    inside_loop = 0;
+			/* prevent infinite loop, see OpenMPT PatLoop-Various.xm */
+			inside_loop = 0;
+		    }
+
 		}
 
 		if (f1 == FX_BREAK || f2 == FX_BREAK) {
 		    parm = (f1 == FX_BREAK) ? p1 : p2;
-		    break_row = 10 * MSN(parm) + LSN(parm);
-		    last_row = 0;
+		    parm = 10 * MSN(parm) + LSN(parm);
+		    libxmp_process_pattern_break(ctx, &f, parm);
+		    /* TODO: fully replace these variables with f */
+		    if (f.pbreak) {
+			break_row = f.jumpline;
+			last_row = 0;
+		    }
 		}
 
 #ifndef LIBXMP_CORE_PLAYER
 		/* Archimedes line jump */
 		if (f1 == FX_LINE_JUMP || f2 == FX_LINE_JUMP) {
+		    libxmp_process_line_jump(ctx, &f, ord,
+					     (f1 == FX_LINE_JUMP ? p1 : p2));
 		    /* Don't set order if preceded by jump or break. */
+		    /* TODO: fully replace these variables with f */
 		    if (last_row > 0)
 			ord2 = ord;
-		    parm = (f1 == FX_LINE_JUMP) ? p1 : p2;
-		    break_row = parm;
+		    break_row = f.jumpline;
 		    last_row = 0;
 		    line_jump = 1;
 		}
@@ -497,43 +588,35 @@ static int scan_module(struct context_data *ctx, int ep, int chain)
 		    if ((parm >> 4) == EX_PATT_DELAY) {
 			if (m->read_event_type != READ_EVENT_ST3 || !pdelay) {
 			    pdelay = parm & 0x0f;
-			    frame_count += pdelay * speed;
                         }
 		    }
 
 		    if ((parm >> 4) == EX_PATTERN_LOOP) {
-			if (parm &= 0x0f) {
-			    /* Loop end */
-			    if (loop_count[chn]) {
-				if (--loop_count[chn]) {
-				    /* next iteraction */
-				    loop_chn = chn;
-				} else {
-				    /* finish looping */
-				    loop_num--;
-				    inside_loop = 0;
-				    if (m->quirk & QUIRK_S3MLOOP)
-					loop_row[chn] = row;
-				}
-			    } else {
-				loop_count[chn] = parm;
-				loop_chn = chn;
-				loop_num++;
-			    }
-			} else {
-			    /* Loop start */
-			    loop_row[chn] = row - 1;
+			/* QUIRK_FT2BUGS may set break_row */
+			f.jumpline = break_row;
+			libxmp_process_pattern_loop(ctx, &f, chn, row, LSN(parm));
+			break_row = f.jumpline;
+
+			/* Attempt to detect the inside of a loop.
+			 * TODO: this won't detect all cases. */
+			if (LSN(parm) > 0 && f.loop_dest < 0) {
+			    inside_loop = 0;
+			} else if (LSN(parm) == 0) {
 			    inside_loop = 1;
-			    if (HAS_QUIRK(QUIRK_FT2BUGS))
-				break_row = row;
 			}
 		    }
 		}
 	    }
 
-	    if (loop_chn >= 0) {
-		row = loop_row[loop_chn];
-		loop_chn = -1;
+	    if (pdelay > 0) {
+		frame_count += pdelay * speed;
+	    }
+
+	    f.loop_param = -1;
+	    if (f.loop_dest >= 0) {
+		/* -1 as it will be incremented immediately by the loop. */
+		row = f.loop_dest - 1;
+		f.loop_dest = -1;
 	    }
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -585,7 +668,9 @@ end_module:
     time -= start_time;
     frame_count += row_count * speed;
 
-    return (time + m->time_factor * frame_count * base_time / bpm);
+    /* TODO: double scan_data::time */
+    time_calc = time + m->time_factor * frame_count * base_time / bpm;
+    return time_calc > (double)INT_MAX ? INT_MAX : (int)time_calc;
 }
 
 static void reset_scan_data(struct context_data *ctx)
@@ -594,7 +679,7 @@ static void reset_scan_data(struct context_data *ctx)
 	for (i = 0; i < XMP_MAX_MOD_LENGTH; i++) {
 		ctx->m.xxo_info[i].time = -1;
 	}
-	memset(ctx->p.sequence_control, 0xff, XMP_MAX_MOD_LENGTH);
+	memset(ctx->p.sequence_control, NO_SEQUENCE, XMP_MAX_MOD_LENGTH);
 }
 
 #ifndef LIBXMP_CORE_PLAYER
@@ -641,6 +726,8 @@ static void compare_vblank_scan(struct context_data *ctx)
 int libxmp_get_sequence(struct context_data *ctx, int ord)
 {
 	struct player_data *p = &ctx->p;
+	if (ord < 0 || ord > ctx->m.mod.len)
+		return NO_SEQUENCE;
 	return p->sequence_control[ord];
 }
 
@@ -687,7 +774,7 @@ int libxmp_scan_sequences(struct context_data *ctx)
 		/* Scan song starting at given entry point */
 		/* Check if any patterns left */
 		for (i = 0; i < mod->len; i++) {
-			if (p->sequence_control[i] == 0xff) {
+			if (p->sequence_control[i] == NO_SEQUENCE) {
 				break;
 			}
 		}
@@ -711,10 +798,29 @@ int libxmp_scan_sequences(struct context_data *ctx)
 	}
 	m->num_sequences = seq;
 
+	/* Correct playback time calculation to match new base tempo factor. */
+	p->current_time = p->current_time * (m->time_factor / p->scan_time_factor);
+	p->scan_time_factor = m->time_factor;
+
 	/* Now place entry points in the public accessible array */
 	for (i = 0; i < m->num_sequences; i++) {
 		m->seq_data[i].entry_point = temp_ep[i];
 		m->seq_data[i].duration = p->scan[i].time;
+	}
+	/* Wipe the remaining entries so the player doesn't think they're
+	 * valid e.g. when handling end-of-module markers. */
+	for (; i < MAX_SEQUENCES; i++) {
+		m->seq_data[i].entry_point = 0;
+		m->seq_data[i].duration = 0;
+	}
+	/* Correct any zero-length temporary sequences from the scan.
+	 * There's no "correct" sequence for these, so copy whichever
+	 * valid sequence precedes the affected position. */
+	for (i = 0; i < mod->len; i++) {
+		if (p->sequence_control[i] >= m->num_sequences) {
+			p->sequence_control[i] =
+				(i > 0) ? p->sequence_control[i - 1] : 0;
+		}
 	}
 
 	return 0;

@@ -7,15 +7,16 @@
 #define SMIX_SHIFT	16
 #define SMIX_MASK	0xffff
 
-#define FILTER_SHIFT	16
+#define FILTER_SHIFT	22
 #define ANTICLICK_SHIFT	3
 
 #ifdef LIBXMP_PAULA_SIMULATOR
 #include "paula.h"
 #endif
 
-#define MIXER(f) void libxmp_mix_##f(struct mixer_voice *vi, int *buffer, \
-	int count, int vl, int vr, int step, int ramp, int delta_l, int delta_r)
+#define MIXER(f) void libxmp_mix_##f(struct mixer_voice * LIBXMP_RESTRICT vi, \
+	int * LIBXMP_RESTRICT buffer, int count, int vl, int vr, int step, int ramp, \
+	int delta_l, int delta_r)
 
 struct mixer_voice {
 	int chn;		/* channel number */
@@ -43,11 +44,17 @@ struct mixer_voice {
 #define SAMPLE_LOOP	(1 << 2)
 #define VOICE_REVERSE	(1 << 3)
 #define VOICE_BIDIR	(1 << 4)
+#define SAMPLE_QUEUED	(1 << 5)
+#define SAMPLE_PAUSED	(1 << 6)
 	int flags;		/* flags */
 	void *sptr;		/* sample pointer */
 #ifdef LIBXMP_PAULA_SIMULATOR
 	struct paula_state *paula; /* paula simulation state */
 #endif
+
+	struct {		/* Protracker queued instrument change */
+		int smp;
+	} queued;
 
 #ifndef LIBXMP_CORE_DISABLE_IT
 	struct {
@@ -73,11 +80,13 @@ int	libxmp_mixer_numvoices	(struct context_data *, int);
 void	libxmp_mixer_softmixer	(struct context_data *);
 void	libxmp_mixer_reset	(struct context_data *);
 void	libxmp_mixer_setpatch	(struct context_data *, int, int, int);
+void	libxmp_mixer_queuepatch	(struct context_data *, int, int);
 void	libxmp_mixer_voicepos	(struct context_data *, int, double, int);
 double	libxmp_mixer_getvoicepos(struct context_data *, int);
 void	libxmp_mixer_setnote	(struct context_data *, int, int);
 void	libxmp_mixer_setperiod	(struct context_data *, int, double);
 void	libxmp_mixer_release	(struct context_data *, int, int);
 void	libxmp_mixer_reverse	(struct context_data *, int, int);
+int	libxmp_mixer_get_ticksize(int freq, double time_factor, double rrate, int bpm);
 
 #endif /* LIBXMP_MIXER_H */

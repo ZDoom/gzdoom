@@ -21,7 +21,7 @@ public:
 	void end_frame( blip_time_t );
 	void save_state( vrc6_apu_state_t* ) const;
 	void load_state( vrc6_apu_state_t const& );
-	
+
 	// Oscillator 0 write-only registers are at $9000-$9002
 	// Oscillator 1 write-only registers are at $A000-$A002
 	// Oscillator 2 write-only registers are at $B000-$B002
@@ -29,7 +29,7 @@ public:
 	enum { base_addr = 0x9000 };
 	enum { addr_step = 0x1000 };
 	void write_osc( blip_time_t, int osc, int reg, int data );
-	
+
 public:
 	Nes_Vrc6_Apu();
 	BLARGG_DISABLE_NOTHROW
@@ -37,7 +37,7 @@ private:
 	// noncopyable
 	Nes_Vrc6_Apu( const Nes_Vrc6_Apu& );
 	Nes_Vrc6_Apu& operator = ( const Nes_Vrc6_Apu& );
-	
+
 	struct Vrc6_Osc
 	{
 		uint8_t regs [3];
@@ -46,19 +46,19 @@ private:
 		int last_amp;
 		int phase;
 		int amp; // only used by saw
-		
+
 		int period() const
 		{
 			return (regs [2] & 0x0F) * 0x100L + regs [1] + 1;
 		}
 	};
-	
+
 	Vrc6_Osc oscs [osc_count];
 	blip_time_t last_time;
-	
+
 	Blip_Synth<blip_med_quality,1> saw_synth;
 	Blip_Synth<blip_good_quality,1> square_synth;
-	
+
 	void run_until( blip_time_t );
 	void run_square( Vrc6_Osc& osc, blip_time_t );
 	void run_saw( blip_time_t );

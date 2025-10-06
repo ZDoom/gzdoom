@@ -78,3 +78,8 @@ const char *MameOPN2::emulatorName()
 {
     return "MAME YM2612";
 }
+
+bool MameOPN2::hasFullPanning()
+{
+    return true;
+}

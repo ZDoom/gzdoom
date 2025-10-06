@@ -46,20 +46,41 @@
 fluid_real_t
 fluid_ct2hz_real(fluid_real_t cents)
 {
-    if(FLUID_UNLIKELY(cents < 0))
+    fluid_real_t mult;
+    int fac, rem;
+    int icents = (int)cents;
+
+    // Offset the input argument by 300 cents, so that if cents==6900 +300 gives 7200 cents,
+    // which is nicely divisible by 1200 and yields 2^6, which just perfectly matches the
+    // 440/2^6 Hz reference value of our lookup table. Magic.
+    icents += 300u;
+
+    // don't use stdlib div() here, it turned out have poor performance
+    fac = icents / 1200;
+
+    // Calculating the modulo of negative numbers is implementation-defined behavior in C!
+    // So make sure all these calculations are unsigned!
+    if(icents < 0)
     {
-        return (fluid_real_t) 1.0;
+        rem = -(signed)(((unsigned)-icents) % 1200u);
     }
     else
     {
-        unsigned int mult, fac, rem;
-        unsigned int icents = (unsigned int)cents;
-        icents += 300u;
+        rem = (signed)((unsigned)icents) % 1200u;
+    }
 
-        // don't use stdlib div() here, it turned out have poor performance
-        fac = icents / 1200u;
-        rem = icents % 1200u;
+    // Handle negative remainder values
+    if (rem < 0)
+    {
+        // Bump rem back into positive range so that it fits our lookup table indexing below
+        rem += 1200;
+        // Since we've bumped the reminder up by a whole, we need to decrement the factor
+        --fac;
+    }
 
+    // Compute the first factor (mult) using powers of two
+    if (fac >= 0)
+    {
         // Think of "mult" as the factor that we multiply (440/2^6)Hz with,
         // or in other words mult is the "first factor" of the above
         // functions comment.
@@ -69,10 +90,20 @@ fluid_ct2hz_real(fluid_real_t cents)
         // which is much more than ever needed. For bigger values, just
         // safely wrap around (the & is just a replacement for the quick
         // modulo operation % 32).
-        mult = 1u << (fac & (sizeof(mult)*8u - 1u));
+        mult = 1u << (fac & (sizeof(unsigned int)*8u - 1u));
 
         // don't use ldexp() either (poor performance)
         return mult * fluid_ct2hz_tab[rem];
+    }
+    else
+    {
+        // Same mult calculation as for positive case, but here we need to take the inverse of it.
+        // We could do:
+        // mult = 1.0 / fast_shift
+        // return mult * lookuptable
+        // instead, already multiply in the lookup table here, do the division and save the multiplication
+        mult = fluid_ct2hz_tab[rem] / (fluid_real_t)(1u << ((-fac) & (sizeof(unsigned int) * 8u - 1u)));
+        return mult;
     }
 }
 
@@ -111,9 +142,20 @@ fluid_cb2amp(fluid_real_t cb)
      */
 
     /* minimum attenuation: 0 dB */
-    if(cb < 0)
+    if(FLUID_UNLIKELY(cb < 0))
     {
-        return 1.0;
+        /* Issue #1374: it seems that by using modLfoToVolEnv, the attenuation can become negative and
+         * therefore the signal needs to be amplified.
+         * In such a rare case, calculate the attenuation on the fly.
+         *
+         * This behavior is backed by the spec saying:
+         * modLfoToVolume: "A positive number indicates a positive LFO excursion increases volume;
+         * a negative number indicates a positive excursion decreases volume.
+         * [...] For example, a value of 100 indicates that the volume will first rise ten dB, then fall ten dB."
+         *
+         * And in order to rise, a negative attenuation must be permitted.
+         */
+        return FLUID_POW(10.0f, cb / -200.0f);
     }
 
     if(cb >= FLUID_CB_AMP_SIZE)
@@ -150,7 +192,7 @@ fluid_tc2sec_delay(fluid_real_t tc)
         tc = (fluid_real_t) 5000.0f;
     }
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
 }
 
 /*
@@ -178,7 +220,7 @@ fluid_tc2sec_attack(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
 }
 
 /*
@@ -189,6 +231,29 @@ fluid_tc2sec(fluid_real_t tc)
 {
     /* No range checking here! */
     return FLUID_POW(2.f, tc / 1200.f);
+}
+
+/*
+ * fluid_sec2tc
+ * 
+ * seconds to timecents
+ */
+fluid_real_t
+fluid_sec2tc(fluid_real_t sec)
+{
+    fluid_real_t res;
+    if(sec <= 0)
+    {
+        // would require a complex solution of fluid_tc2sec(), but this is real-only
+        return -32768.f;
+    }
+    
+    res = (1200.f / M_LN2) * FLUID_LOGF(sec);
+    if(res < -32768.f)
+    {
+        res = -32768.f;
+    }
+    return res;
 }
 
 /*
@@ -216,25 +281,27 @@ fluid_tc2sec_release(fluid_real_t tc)
         tc = (fluid_real_t) 8000.f;
     };
 
-    return FLUID_POW(2.f, tc / 1200.f);
+    return fluid_tc2sec(tc);
+}
+
+/**
+ * The inverse operation, converting from Hertz to cents
+ */
+fluid_real_t fluid_hz2ct(fluid_real_t f)
+{
+    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f);
 }
 
 /*
  * fluid_act2hz
  *
  * Convert from absolute cents to Hertz
- * 
- * The inverse operation, converting from Hertz to cents, was unused and implemented as
- *
-fluid_hz2ct(fluid_real_t f)
-{
-    return 6900.f + (1200.f / FLUID_M_LN2) * FLUID_LOGF(f / 440.0f));
-}
  */
-fluid_real_t
-fluid_act2hz(fluid_real_t c)
+double
+fluid_act2hz(double c)
 {
-    return 8.176f * FLUID_POW(2.f, c / 1200.f);
+    // do not use FLUID_POW, otherwise the unit tests will fail when compiled in single precision
+    return 8.1757989156437073336828122976032719176391831357 * pow(2.f, c / 1200.f);
 }
 
 /*
@@ -298,16 +365,17 @@ fluid_real_t fluid_balance(fluid_real_t balance, int left)
 fluid_real_t
 fluid_concave(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_concave_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_concave_tab[(int) val];
+    return fluid_concave_tab[ival] + (fluid_concave_tab[ival + 1] - fluid_concave_tab[ival]) * (val - ival);
 }
 
 /*
@@ -316,15 +384,17 @@ fluid_concave(fluid_real_t val)
 fluid_real_t
 fluid_convex(fluid_real_t val)
 {
+    int ival = (int)val;
     if(val < 0.f)
     {
         return 0.f;
     }
-    else if(val >= (fluid_real_t)FLUID_VEL_CB_SIZE)
+    else if (ival >= FLUID_VEL_CB_SIZE - 1)
     {
-        return 1.f;
+        return fluid_convex_tab[FLUID_VEL_CB_SIZE - 1];
     }
 
-    return fluid_convex_tab[(int) val];
+    // interpolation between convex steps: fixes bad sounds with modenv and filter cutoff
+    return fluid_convex_tab[ival] + (fluid_convex_tab[ival + 1] - fluid_convex_tab[ival]) * (val - ival);
 }
 

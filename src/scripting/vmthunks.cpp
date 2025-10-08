@@ -60,6 +60,7 @@
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "d_net.h"
 
 extern int paused;
 extern bool pauseext;
@@ -502,9 +503,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
-int WorldPaused()
+int WorldPaused(bool checkLag)
 {
-	if (paused)
+	if (paused || (checkLag && Net_IsWaiting()))
 		return true;
 
 	if (netgame || gamestate != GS_LEVEL)
@@ -516,7 +517,8 @@ int WorldPaused()
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, WorldPaused, WorldPaused)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_BOOL(WorldPaused());
+	PARAM_BOOL(checkLag);
+	ACTION_RETURN_BOOL(WorldPaused(checkLag));
 }
 
 static sector_t *PointInSectorXY(FLevelLocals *self, double x, double y)

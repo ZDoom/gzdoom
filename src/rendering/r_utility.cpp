@@ -913,7 +913,7 @@ static void R_DoActorTickerAngleChanges(player_t* const player, DRotator& angles
 EXTERN_CVAR(Float, chase_dist)
 EXTERN_CVAR(Float, chase_height)
 
-int WorldPaused();
+int WorldPaused(bool checkLag);
 
 void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AActor* const actor)
 {
@@ -1039,7 +1039,7 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(camPos)->sector;
 	}
 
-	if (!WorldPaused())
+	if (!WorldPaused(true))
 	{
 		FQuakeJiggers jiggers;
 		int intensity = DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers);

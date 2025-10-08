@@ -35,6 +35,7 @@
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
 #include "texturemanager.h"
+#include "d_net.h"
 
 #include "hw_models.h"
 #include "hw_dynlightdata.h"
@@ -93,7 +94,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 		state.AlphaFunc(Alpha_GEqual, 0);
 
 		FHWModelRenderer renderer(this, state, huds->lightindex);
-		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / -4., 0), huds->pivot, huds->mframe, Viewpoint.TicFrac);
+		RenderHUDModel(&renderer, huds->weapon, huds->translation, huds->rotation + FVector3(huds->mx / 4., (huds->my - WEAPONTOP) / -4., 0), huds->pivot, huds->mframe, Net_ModifyObjectFrac(huds->weapon, Viewpoint.TicFrac));
 		state.SetVertexBuffer(screen->mVertexData);
 	}
 	else
@@ -164,7 +165,7 @@ static bool isBright(DPSprite *psp)
 static WeaponPosition2D GetWeaponPosition2D(player_t *player, double ticFrac)
 {
 	WeaponPosition2D w;
-	P_BobWeapon(player, &w.bobx, &w.boby, ticFrac);
+	P_BobWeapon(player, &w.bobx, &w.boby, Net_ModifyFrac(ticFrac));
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	if ((w.weapon = player->FindPSprite(PSP_WEAPON)) != nullptr)
@@ -176,8 +177,9 @@ static WeaponPosition2D GetWeaponPosition2D(player_t *player, double ticFrac)
 		}
 		else
 		{
-			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
-			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
+			const double frac = Net_ModifyObjectFrac(w.weapon, ticFrac);
+			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * frac);
+			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * frac);
 		}
 	}
 	else
@@ -191,7 +193,7 @@ static WeaponPosition2D GetWeaponPosition2D(player_t *player, double ticFrac)
 static WeaponPosition3D GetWeaponPosition3D(player_t *player, double ticFrac)
 {
 	WeaponPosition3D w;
-	P_BobWeapon3D(player, &w.translation, &w.rotation, ticFrac);
+	P_BobWeapon3D(player, &w.translation, &w.rotation, Net_ModifyFrac(ticFrac));
 
 	// Interpolate the main weapon layer once so as to be able to add it to other layers.
 	if ((w.weapon = player->FindPSprite(PSP_WEAPON)) != nullptr)
@@ -203,8 +205,9 @@ static WeaponPosition3D GetWeaponPosition3D(player_t *player, double ticFrac)
 		}
 		else
 		{
-			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * ticFrac);
-			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * ticFrac);
+			const double frac = Net_ModifyObjectFrac(w.weapon, ticFrac);
+			w.wx = (float)(w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * frac);
+			w.wy = (float)(w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * frac);
 		}
 		
 		auto weaponActor = w.weapon->GetCaller();
@@ -705,6 +708,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 	auto oldlightmode = lightmode;
 	if (isSoftwareLighting(oldlightmode)) SetFallbackLightMode();
 
+	const double bobFrac = Net_ModifyFrac(vp.TicFrac);
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
@@ -724,7 +728,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 		if(ModifyBobLayer && (psp->Flags & PSPF_ADDBOB))
 		{
 			DVector2 out;
-			VMValue param[] = { weap.weapon->GetCaller() , bobxy.X , bobxy.Y , psp->GetID() , vp.TicFrac };
+			VMValue param[] = { weap.weapon->GetCaller() , bobxy.X , bobxy.Y , psp->GetID() , bobFrac };
 			VMReturn ret(&out);
 
 			VMCall(ModifyBobLayer, param, 5, &ret, 1);
@@ -733,7 +737,8 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 			weap.boby = out.Y;
 		}
 
-		FVector2 spos = BobWeapon2D(weap, psp, vp.TicFrac);
+		const double frac = Net_ModifyObjectFrac(psp, vp.TicFrac);
+		FVector2 spos = BobWeapon2D(weap, psp, frac);
 
 		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
 		hudsprite.lightindex = -1;
@@ -743,7 +748,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 			GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
 		}
 
-		if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, vp.TicFrac)) continue;
+		if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player, min<double>(bobFrac, frac))) continue;
 		hudsprites.Push(hudsprite);
 	}
 	lightmode = oldlightmode;
@@ -791,6 +796,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 	auto oldlightmode = lightmode;
 	if (isSoftwareLighting(oldlightmode)) SetFallbackLightMode();
 
+	const double bobFrac = Net_ModifyFrac(vp.TicFrac);
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
@@ -813,7 +819,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 			returns[0].Vec3At(&t);
 			returns[1].Vec3At(&r);
 
-			VMValue param[] = { weap.weapon->GetCaller() , translation.X, translation.Y, translation.Z, rotation.X, rotation.Y, rotation.Z, psp->GetID() , vp.TicFrac };
+			VMValue param[] = { weap.weapon->GetCaller() , translation.X, translation.Y, translation.Z, rotation.X, rotation.Y, rotation.Z, psp->GetID() , bobFrac };
 			VMCall(ModifyBobLayer3D, param, 9, returns, 2);
 
 			weap.translation = FVector3(t);
@@ -826,7 +832,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 
 			VMReturn ret(&p);
 
-			VMValue param[] = { weap.weapon->GetCaller() , pivot.X, pivot.Y, pivot.Z, psp->GetID() , vp.TicFrac };
+			VMValue param[] = { weap.weapon->GetCaller() , pivot.X, pivot.Y, pivot.Z, psp->GetID() , bobFrac };
 			VMCall(ModifyBobPivotLayer3D, param, 6, &ret, 1);
 
 			weap.pivot = FVector3(p);
@@ -834,9 +840,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 
 		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
 
-		//FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, vp.TicFrac);
-
-		FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, vp.TicFrac);
+		FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, Net_ModifyObjectFrac(psp, vp.TicFrac));
 
 		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
 		hudsprite.lightindex = -1;
@@ -935,7 +939,7 @@ void HWDrawInfo::PrepareTargeterSprites(double ticfrac)
 		{
 			hudsprite.weapon = psp;
 			
-			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player, ticfrac))
+			if (hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player, Net_ModifyObjectFrac(psp, ticfrac)))
 			{
 				hudsprites.Push(hudsprite);
 			}

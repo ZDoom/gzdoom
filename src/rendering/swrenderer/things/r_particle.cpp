@@ -79,7 +79,7 @@ namespace swrenderer
 		int 				x1, x2, y1, y2;
 		sector_t*			heightsec = NULL;
 
-		double timefrac = thread->Viewport->viewpoint.TicFrac;
+		double timefrac = Net_ModifyParticleFrac(particle, thread->Viewport->viewpoint.TicFrac);
 		if (paused || thread->Viewport->viewpoint.ViewLevel->isFrozen())
 			timefrac = 0.;
 

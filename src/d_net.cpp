@@ -96,6 +96,14 @@ enum EReadyType
 	RT_HOST_ONLY,
 };
 
+enum ELagType
+{
+	LAG_NONE,
+	LAG_PREDICTING,
+	LAG_WAITING,
+	LAG_SKIPPING,
+};
+
 // NETWORKING
 //
 // gametic is the tic about to (or currently being) run.
@@ -139,9 +147,10 @@ static uint64_t	LevelStartAck = 0u; // Used by the host to determine if everyone
 static int FullLatencyCycle = MAXSENDTICS * 3;	// Give ~3 seconds to gather latency info about clients on boot up.
 static int LastLatencyUpdate = 0;				// Update average latency every ~1 second.
 
+static ELagType	LagState = LAG_NONE;	// What kind of lag the game is currently getting.
 static int 	EnterTic = 0;
 static int	LastEnterTic = 0;
-static bool bCommandsReset = false;	// If true, commands were recently cleared. Don't generate any more tics.
+static bool bCommandsReset = false;		// If true, commands were recently cleared. Don't generate any more tics.
 
 static int	CommandsAhead = 0;		// In packet server mode, the host will let us know if we're outpacing them.
 static int	SkipCommandTimer = 0;	// Tracker for when to check for skipping commands. ~0.5 seconds in a row of being ahead will start skipping.
@@ -387,6 +396,7 @@ void Net_ClearBuffers()
 	LocalNetBufferSize = 0u;
 	Net_Arbitrator = 0;
 
+	LagState = LAG_NONE;
 	MutedClients = 0u;
 	CurrentLobbyID = 0u;
 	NetworkClients.Clear();
@@ -499,6 +509,27 @@ void Net_AdvanceCutscene()
 	CutsceneCountdown = 0;
 	if (consoleplayer == Net_Arbitrator)
 		Net_WriteInt8(DEM_ENDSCREENJOB);
+}
+
+bool Net_IsWaiting()
+{
+	return LagState == LAG_WAITING;
+}
+
+// This is needed for handling PSprite bobbing specifically since it's predicted.
+double Net_ModifyFrac(double ticFrac)
+{
+	return LagState < LAG_WAITING ? ticFrac : 1.0;
+}
+
+double Net_ModifyObjectFrac(DObject* obj, double ticFrac)
+{
+	return LagState == LAG_NONE || LagState == LAG_SKIPPING || obj->IsClientside() ? ticFrac : 1.0;
+}
+
+double Net_ModifyParticleFrac(particle_t* part, double ticFrac)
+{
+	return LagState == LAG_NONE || LagState == LAG_SKIPPING ? ticFrac : 0.0;
 }
 
 void Net_ResetCommands(bool midTic)
@@ -2218,14 +2249,20 @@ void TryRunTics()
 	{
 		// If we're in between a tic, try and balance things out.
 		if (totalTics <= 0)
+		{
 			TicStabilityWait();
+		}
 		else
+		{
 			P_ClearLevelInterpolation();
+			LagState = LAG_WAITING;
+		}
 
 		// If we actually advanced a command, update the player's position (even if a
 		// tic passes this isn't guaranteed to happen since it's capped to 35 in advance).
 		if (ClientTic > startCommand)
 		{
+			LagState = LAG_PREDICTING;
 			P_UnPredictPlayer();
 			P_PredictPlayer(&players[consoleplayer]);
 			S_UpdateSounds(players[consoleplayer].camera);	// Update sounds only after predicting the client's newest position.
@@ -2239,6 +2276,7 @@ void TryRunTics()
 		return;
 	}
 
+	LagState = ClientTic > startCommand ? LAG_NONE : LAG_SKIPPING;
 	for (auto client : NetworkClients)
 		players[client].waiting = false;
 

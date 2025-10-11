@@ -119,9 +119,9 @@ Win32DisplayWindow::~Win32DisplayWindow()
 	}
 
 	if (SmallIcon)
-		DestroyCursor(SmallIcon);
+		DestroyIcon(SmallIcon);
 	if (LargeIcon)
-		DestroyCursor(LargeIcon);
+		DestroyIcon(LargeIcon);
 
 	Windows.erase(WindowsIterator);
 }
@@ -131,7 +131,7 @@ void Win32DisplayWindow::SetWindowTitle(const std::string& text)
 	SetWindowText(WindowHandle.hwnd, to_utf16(text).c_str());
 }
 
-static HICON CreateIconFromImageList(HDC hdc, const std::vector<std::shared_ptr<Image>>& images, int desiredSize)
+static HICON CreateIconFromImageList(const std::vector<std::shared_ptr<Image>>& images, int desiredSize)
 {
 	if (images.empty())
 		return 0;
@@ -147,13 +147,32 @@ static HICON CreateIconFromImageList(HDC hdc, const std::vector<std::shared_ptr<
 
 	int width = image->GetWidth();
 	int height = image->GetHeight();
-	std::vector<uint32_t> pixels(width * height * 4);
+	uint32_t* pixels = nullptr;
+
+	HDC hdc = CreateCompatibleDC(0);
+	if (!hdc)
+		return 0;
+
+	BITMAPV5HEADER bmp_header = {};
+	bmp_header.bV5Size = sizeof(BITMAPV5HEADER);
+	bmp_header.bV5Width = width;
+	bmp_header.bV5Height = height;
+	bmp_header.bV5Planes = 1;
+	bmp_header.bV5BitCount = 32;
+	bmp_header.bV5Compression = BI_RGB;
+
+	HBITMAP bitmap = CreateDIBSection(hdc, (BITMAPINFO*)&bmp_header, DIB_RGB_COLORS, (void**)&pixels, 0, 0);
+	if (!bitmap)
+	{
+		DeleteDC(hdc);
+		return 0;
+	}
 
 	if (image->GetFormat() == ImageFormat::R8G8B8A8)
 	{
 		int count = width * height;
 		const uint32_t* src = (const uint32_t*)image->GetData();
-		uint32_t* dest = pixels.data();
+		uint32_t* dest = pixels;
 		for (int i = 0; i < count; i++)
 		{
 			uint32_t r = src[i] & 0xff;
@@ -165,24 +184,14 @@ static HICON CreateIconFromImageList(HDC hdc, const std::vector<std::shared_ptr<
 	}
 	else if (image->GetFormat() == ImageFormat::B8G8R8A8)
 	{
-		memcpy(pixels.data(), image->GetData(), width * height * 4);
+		memcpy(pixels, image->GetData(), width * height * 4);
 	}
 	else
 	{
+		DeleteObject(bitmap);
+		DeleteDC(hdc);
 		return 0;
 	}
-
-	BITMAPV5HEADER bmp_header = {};
-	bmp_header.bV5Size = sizeof(BITMAPV5HEADER);
-	bmp_header.bV5Width = width;
-	bmp_header.bV5Height = height;
-	bmp_header.bV5Planes = 1;
-	bmp_header.bV5BitCount = 32;
-	bmp_header.bV5Compression = BI_RGB;
-
-	HBITMAP bitmap = CreateDIBitmap(hdc, (BITMAPINFOHEADER*)&bmp_header, CBM_INIT, pixels.data(), (BITMAPINFO*)&bmp_header, DIB_RGB_COLORS);
-	if (!bitmap)
-		return 0;
 
 	ICONINFO iconinfo = {};
 	iconinfo.fIcon = TRUE;
@@ -190,6 +199,7 @@ static HICON CreateIconFromImageList(HDC hdc, const std::vector<std::shared_ptr<
 	iconinfo.hbmMask = bitmap;
 	HICON icon = CreateIconIndirect(&iconinfo);
 	DeleteObject(bitmap);
+	DeleteDC(hdc);
 	return icon;
 }
 
@@ -199,22 +209,17 @@ void Win32DisplayWindow::SetWindowIcon(const std::vector<std::shared_ptr<Image>>
 
 	if (SmallIcon)
 	{
-		DestroyCursor(SmallIcon);
+		DestroyIcon(SmallIcon);
 		SmallIcon = {};
 	}
 	if (LargeIcon)
 	{
-		DestroyCursor(LargeIcon);
+		DestroyIcon(LargeIcon);
 		LargeIcon = {};
 	}
 
-	HDC hdc = GetDC(WindowHandle.hwnd);
-	if (hdc)
-	{
-		SmallIcon = CreateIconFromImageList(hdc, images, (int)std::round(16 * dpiScale));
-		LargeIcon = CreateIconFromImageList(hdc, images, (int)std::round(32 * dpiScale));
-		ReleaseDC(WindowHandle.hwnd, hdc);
-	}
+	SmallIcon = CreateIconFromImageList(images, (int)std::round(16 * dpiScale));
+	LargeIcon = CreateIconFromImageList(images, (int)std::round(32 * dpiScale));
 
 	SendMessage(WindowHandle.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)SmallIcon);
 	SendMessage(WindowHandle.hwnd, WM_SETICON, ICON_BIG, (LPARAM)LargeIcon);
@@ -693,6 +698,22 @@ LRESULT Win32DisplayWindow::OnWindowMessage(UINT msg, WPARAM wparam, LPARAM lpar
 		if (MouseLocked)
 		{
 			::ShowCursor(TRUE);
+		}
+	}
+	else if (msg == WM_GETICON)
+	{
+		// Windows 11 2025H2 Disaster Edition broke DefWindowProc's implementation of WM_GETICON
+		// The icon doesn't always get set, so we return the icon ourselves now.
+		// Note that we still call WM_SETICON when changing the icons as that will put it in the caption bar.
+
+		// int dpi = lparam;
+		if (wparam == ICON_BIG)
+		{
+			return (LRESULT)LargeIcon;
+		}
+		else if (wparam == ICON_SMALL || wparam == ICON_SMALL2)
+		{
+			return (LRESULT)SmallIcon;
 		}
 	}
 	else if (msg == WM_CLOSE)

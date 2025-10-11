@@ -126,6 +126,7 @@ public:
 	wayland::data_device_manager_t m_DataDeviceManager;
 	wayland::xdg_wm_base_t m_XDGWMBase;
 	wayland::zwp_pointer_constraints_v1_t m_PointerConstraints;
+	// TODO: XDG_Activation seems to be for activating OTHER XDG_Toplevels. Do we need this?
 	wayland::xdg_activation_v1_t m_XDGActivation;
 	wayland::zxdg_decoration_manager_v1_t m_XDGDecorationManager;
 	wayland::fractional_scale_manager_v1_t m_FractionalScaleManager;

@@ -258,8 +258,6 @@ void WaylandDisplayBackend::ConnectDeviceEvents()
 		xkb_state_key_get_utf8(m_KeyboardState, key + 8, buf, sizeof(buf));
 
 		OnKeyboardCharEvent(buf, state);
-
-		//m_DataDevice.set_selection(m_DataSource, m_KeyboardSerial);
 	};
 
 	m_waylandPointer.on_enter() = [this](uint32_t serial, wayland::surface_t surfaceEntered, double surfaceX, double surfaceY) {
@@ -274,6 +272,8 @@ void WaylandDisplayBackend::ConnectDeviceEvents()
 				if (win->GetWindowSurface() == surfaceEntered)
 				{
 					m_MouseFocusWindow = win;
+					ShowCursor(!m_MouseFocusWindow->m_LockedPointer);
+					break;
 				}
 			}
 		}
@@ -486,13 +486,18 @@ void WaylandDisplayBackend::OnMouseLeaveEvent()
 	{
 		m_MouseFocusWindow->windowHost->OnWindowMouseLeave();
 		//m_MouseFocusWindow = nullptr; // Borks up the menus
+		ShowCursor(!m_MouseFocusWindow->m_LockedPointer);
 	}
 }
 
 void WaylandDisplayBackend::OnMousePressEvent(InputKey button)
 {
 	if (m_MouseFocusWindow)
+	{
 		m_MouseFocusWindow->windowHost->OnWindowMouseDown(m_MouseFocusWindow->m_SurfaceMousePos, button);
+		ShowCursor(m_MouseFocusWindow->m_LockedPointer);
+	}
+
 }
 
 void WaylandDisplayBackend::OnMouseReleaseEvent(InputKey button)

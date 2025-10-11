@@ -393,9 +393,6 @@ Uint32 SDL2DisplayWindow::ExecTimer(Uint32 interval, void* execID)
 
 void* SDL2DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-	// is this guard needed?
-	// CheckInitSDL();
-
 	void* execID = (void*)(uintptr_t)++TimerIDs;
 	void* id = (void*)(uintptr_t)SDL_AddTimer(timeoutMilliseconds, SDL2DisplayWindow::ExecTimer, execID);
 
@@ -409,9 +406,6 @@ void* SDL2DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void(
 
 void SDL2DisplayWindow::StopTimer(void* timerID)
 {
-	// is this guard needed?
-	// CheckInitSDL();
-
 	SDL_RemoveTimer((SDL_TimerID)(uintptr_t)timerID);
 
 	auto execID = TimerHandles.find(timerID);
@@ -424,17 +418,20 @@ void SDL2DisplayWindow::StopTimer(void* timerID)
 
 SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)
 {
-	int windowID;
+	static int windowID;
+
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT:     windowID = event.window.windowID; break;
-	case SDL_TEXTINPUT:       windowID = event.text.windowID;   break;
-	case SDL_KEYUP:           windowID = event.key.windowID;    break;
-	case SDL_KEYDOWN:         windowID = event.key.windowID;    break;
-	case SDL_MOUSEBUTTONUP:   windowID = event.button.windowID; break;
-	case SDL_MOUSEBUTTONDOWN: windowID = event.button.windowID; break;
-	case SDL_MOUSEWHEEL:      windowID = event.wheel.windowID;  break;
-	case SDL_MOUSEMOTION:     windowID = event.motion.windowID; break;
+	case SDL_WINDOWEVENT:          windowID = event.window.windowID; break;
+	case SDL_TEXTINPUT:            windowID = event.text.windowID;   break;
+	case SDL_KEYUP:                windowID = event.key.windowID;    break;
+	case SDL_KEYDOWN:              windowID = event.key.windowID;    break;
+	case SDL_MOUSEBUTTONUP:        windowID = event.button.windowID; break;
+	case SDL_MOUSEBUTTONDOWN:      windowID = event.button.windowID; break;
+	case SDL_MOUSEWHEEL:           windowID = event.wheel.windowID;  break;
+	case SDL_MOUSEMOTION:          windowID = event.motion.windowID; break;
+	case SDL_CONTROLLERBUTTONUP:   break; // use last event
+	case SDL_CONTROLLERBUTTONDOWN: break; // use last event
 	default:
 		if (event.type == PaintEventNumber) windowID = event.user.windowID;
 		else return nullptr;
@@ -453,16 +450,34 @@ void SDL2DisplayWindow::DispatchEvent(const SDL_Event& event)
 	SDL2DisplayWindow* window = FindEventWindow(event);
 	if (!window) return;
 
+	static bool dropJoyDown, joyDown, keyDown;
+	static unsigned long eventFrame = 0;
+
+	if (eventFrame != event.common.timestamp / 10) // millis / 10
+	{
+		eventFrame = event.common.timestamp / 10;
+		joyDown = keyDown = false;
+	}
+
+	if (event.type == SDL_CONTROLLERBUTTONDOWN) joyDown = true;
+	if (event.type == SDL_KEYDOWN) keyDown = true;
+	if (joyDown && keyDown) dropJoyDown = true;
+
+	// steamdeck desktop mode fires double events
+	if (dropJoyDown && event.type == SDL_CONTROLLERBUTTONDOWN) return;
+
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT:     window->OnWindowEvent    (event.window); break;
-	case SDL_TEXTINPUT:       window->OnTextInput      (event.text);   break;
-	case SDL_KEYUP:           window->OnKeyUp          (event.key);    break;
-	case SDL_KEYDOWN:         window->OnKeyDown        (event.key);    break;
-	case SDL_MOUSEBUTTONUP:   window->OnMouseButtonUp  (event.button); break;
-	case SDL_MOUSEBUTTONDOWN: window->OnMouseButtonDown(event.button); break;
-	case SDL_MOUSEWHEEL:      window->OnMouseWheel     (event.wheel);  break;
-	case SDL_MOUSEMOTION:     window->OnMouseMotion    (event.motion); break;
+	case SDL_WINDOWEVENT:          window->OnWindowEvent    (event.window);  break;
+	case SDL_TEXTINPUT:            window->OnTextInput      (event.text);    break;
+	case SDL_KEYUP:                window->OnKeyUp          (event.key);     break;
+	case SDL_KEYDOWN:              window->OnKeyDown        (event.key);     break;
+	case SDL_MOUSEBUTTONUP:        window->OnMouseButtonUp  (event.button);  break;
+	case SDL_MOUSEBUTTONDOWN:      window->OnMouseButtonDown(event.button);  break;
+	case SDL_MOUSEWHEEL:           window->OnMouseWheel     (event.wheel);   break;
+	case SDL_MOUSEMOTION:          window->OnMouseMotion    (event.motion);  break;
+	case SDL_CONTROLLERBUTTONUP:   window->OnJoyButtonUp    (event.cbutton); break;
+	case SDL_CONTROLLERBUTTONDOWN: window->OnJoyButtonDown  (event.cbutton); break;
 	default:
 		if (event.type == PaintEventNumber) window->OnPaintEvent();
 	}
@@ -511,6 +526,16 @@ void SDL2DisplayWindow::OnWindowEvent(const SDL_WindowEvent& event)
 void SDL2DisplayWindow::OnTextInput(const SDL_TextInputEvent& event)
 {
 	WindowHost->OnWindowKeyChar(event.text);
+}
+
+void SDL2DisplayWindow::OnJoyButtonUp(const SDL_ControllerButtonEvent& event)
+{
+	WindowHost->OnWindowKeyUp(GameControllerButtonToInputKey((SDL_GameControllerButton)event.button));
+}
+
+void SDL2DisplayWindow::OnJoyButtonDown(const SDL_ControllerButtonEvent& event)
+{
+	WindowHost->OnWindowKeyDown(GameControllerButtonToInputKey((SDL_GameControllerButton)event.button));
 }
 
 void SDL2DisplayWindow::OnKeyUp(const SDL_KeyboardEvent& event)
@@ -599,113 +624,133 @@ InputKey SDL2DisplayWindow::ScancodeToInputKey(SDL_Scancode keycode)
 {
 	switch (keycode)
 	{
-		case SDL_SCANCODE_BACKSPACE: return InputKey::Backspace;
-		case SDL_SCANCODE_TAB: return InputKey::Tab;
-		case SDL_SCANCODE_CLEAR: return InputKey::OEMClear;
-		case SDL_SCANCODE_RETURN: return InputKey::Enter;
-		case SDL_SCANCODE_MENU: return InputKey::Alt;
-		case SDL_SCANCODE_PAUSE: return InputKey::Pause;
-		case SDL_SCANCODE_ESCAPE: return InputKey::Escape;
-		case SDL_SCANCODE_SPACE: return InputKey::Space;
-		case SDL_SCANCODE_END: return InputKey::End;
-		case SDL_SCANCODE_PAGEDOWN: return InputKey::PageDown;
-		case SDL_SCANCODE_HOME: return InputKey::Home;
-		case SDL_SCANCODE_PAGEUP: return InputKey::PageUp;
-		case SDL_SCANCODE_LEFT: return InputKey::Left;
-		case SDL_SCANCODE_UP: return InputKey::Up;
-		case SDL_SCANCODE_RIGHT: return InputKey::Right;
-		case SDL_SCANCODE_DOWN: return InputKey::Down;
-		case SDL_SCANCODE_SELECT: return InputKey::Select;
-		case SDL_SCANCODE_PRINTSCREEN: return InputKey::Print;
-		case SDL_SCANCODE_EXECUTE: return InputKey::Execute;
-		case SDL_SCANCODE_INSERT: return InputKey::Insert;
-		case SDL_SCANCODE_DELETE: return InputKey::Delete;
-		case SDL_SCANCODE_HELP: return InputKey::Help;
-		case SDL_SCANCODE_0: return InputKey::_0;
-		case SDL_SCANCODE_1: return InputKey::_1;
-		case SDL_SCANCODE_2: return InputKey::_2;
-		case SDL_SCANCODE_3: return InputKey::_3;
-		case SDL_SCANCODE_4: return InputKey::_4;
-		case SDL_SCANCODE_5: return InputKey::_5;
-		case SDL_SCANCODE_6: return InputKey::_6;
-		case SDL_SCANCODE_7: return InputKey::_7;
-		case SDL_SCANCODE_8: return InputKey::_8;
-		case SDL_SCANCODE_9: return InputKey::_9;
-		case SDL_SCANCODE_A: return InputKey::A;
-		case SDL_SCANCODE_B: return InputKey::B;
-		case SDL_SCANCODE_C: return InputKey::C;
-		case SDL_SCANCODE_D: return InputKey::D;
-		case SDL_SCANCODE_E: return InputKey::E;
-		case SDL_SCANCODE_F: return InputKey::F;
-		case SDL_SCANCODE_G: return InputKey::G;
-		case SDL_SCANCODE_H: return InputKey::H;
-		case SDL_SCANCODE_I: return InputKey::I;
-		case SDL_SCANCODE_J: return InputKey::J;
-		case SDL_SCANCODE_K: return InputKey::K;
-		case SDL_SCANCODE_L: return InputKey::L;
-		case SDL_SCANCODE_M: return InputKey::M;
-		case SDL_SCANCODE_N: return InputKey::N;
-		case SDL_SCANCODE_O: return InputKey::O;
-		case SDL_SCANCODE_P: return InputKey::P;
-		case SDL_SCANCODE_Q: return InputKey::Q;
-		case SDL_SCANCODE_R: return InputKey::R;
-		case SDL_SCANCODE_S: return InputKey::S;
-		case SDL_SCANCODE_T: return InputKey::T;
-		case SDL_SCANCODE_U: return InputKey::U;
-		case SDL_SCANCODE_V: return InputKey::V;
-		case SDL_SCANCODE_W: return InputKey::W;
-		case SDL_SCANCODE_X: return InputKey::X;
-		case SDL_SCANCODE_Y: return InputKey::Y;
-		case SDL_SCANCODE_Z: return InputKey::Z;
-		case SDL_SCANCODE_KP_0: return InputKey::NumPad0;
-		case SDL_SCANCODE_KP_1: return InputKey::NumPad1;
-		case SDL_SCANCODE_KP_2: return InputKey::NumPad2;
-		case SDL_SCANCODE_KP_3: return InputKey::NumPad3;
-		case SDL_SCANCODE_KP_4: return InputKey::NumPad4;
-		case SDL_SCANCODE_KP_5: return InputKey::NumPad5;
-		case SDL_SCANCODE_KP_6: return InputKey::NumPad6;
-		case SDL_SCANCODE_KP_7: return InputKey::NumPad7;
-		case SDL_SCANCODE_KP_8: return InputKey::NumPad8;
-		case SDL_SCANCODE_KP_9: return InputKey::NumPad9;
-		// case SDL_SCANCODE_KP_ENTER: return InputKey::NumPadEnter;
-		// case SDL_SCANCODE_KP_MULTIPLY: return InputKey::Multiply;
-		// case SDL_SCANCODE_KP_PLUS: return InputKey::Add;
-		case SDL_SCANCODE_SEPARATOR: return InputKey::Separator;
-		// case SDL_SCANCODE_KP_MINUS: return InputKey::Subtract;
-		case SDL_SCANCODE_KP_PERIOD: return InputKey::NumPadPeriod;
-		// case SDL_SCANCODE_KP_DIVIDE: return InputKey::Divide;
-		case SDL_SCANCODE_F1: return InputKey::F1;
-		case SDL_SCANCODE_F2: return InputKey::F2;
-		case SDL_SCANCODE_F3: return InputKey::F3;
-		case SDL_SCANCODE_F4: return InputKey::F4;
-		case SDL_SCANCODE_F5: return InputKey::F5;
-		case SDL_SCANCODE_F6: return InputKey::F6;
-		case SDL_SCANCODE_F7: return InputKey::F7;
-		case SDL_SCANCODE_F8: return InputKey::F8;
-		case SDL_SCANCODE_F9: return InputKey::F9;
-		case SDL_SCANCODE_F10: return InputKey::F10;
-		case SDL_SCANCODE_F11: return InputKey::F11;
-		case SDL_SCANCODE_F12: return InputKey::F12;
-		case SDL_SCANCODE_F13: return InputKey::F13;
-		case SDL_SCANCODE_F14: return InputKey::F14;
-		case SDL_SCANCODE_F15: return InputKey::F15;
-		case SDL_SCANCODE_F16: return InputKey::F16;
-		case SDL_SCANCODE_F17: return InputKey::F17;
-		case SDL_SCANCODE_F18: return InputKey::F18;
-		case SDL_SCANCODE_F19: return InputKey::F19;
-		case SDL_SCANCODE_F20: return InputKey::F20;
-		case SDL_SCANCODE_F21: return InputKey::F21;
-		case SDL_SCANCODE_F22: return InputKey::F22;
-		case SDL_SCANCODE_F23: return InputKey::F23;
-		case SDL_SCANCODE_F24: return InputKey::F24;
+		case SDL_SCANCODE_BACKSPACE:    return InputKey::Backspace;
+		case SDL_SCANCODE_TAB:          return InputKey::Tab;
+		case SDL_SCANCODE_CLEAR:        return InputKey::OEMClear;
+		case SDL_SCANCODE_RETURN:       return InputKey::Enter;
+		case SDL_SCANCODE_MENU:         return InputKey::Alt;
+		case SDL_SCANCODE_PAUSE:        return InputKey::Pause;
+		case SDL_SCANCODE_ESCAPE:       return InputKey::Escape;
+		case SDL_SCANCODE_SPACE:        return InputKey::Space;
+		case SDL_SCANCODE_END:          return InputKey::End;
+		case SDL_SCANCODE_PAGEDOWN:     return InputKey::PageDown;
+		case SDL_SCANCODE_HOME:         return InputKey::Home;
+		case SDL_SCANCODE_PAGEUP:       return InputKey::PageUp;
+		case SDL_SCANCODE_LEFT:         return InputKey::Left;
+		case SDL_SCANCODE_UP:           return InputKey::Up;
+		case SDL_SCANCODE_RIGHT:        return InputKey::Right;
+		case SDL_SCANCODE_DOWN:         return InputKey::Down;
+		case SDL_SCANCODE_SELECT:       return InputKey::Select;
+		case SDL_SCANCODE_PRINTSCREEN:  return InputKey::Print;
+		case SDL_SCANCODE_EXECUTE:      return InputKey::Execute;
+		case SDL_SCANCODE_INSERT:       return InputKey::Insert;
+		case SDL_SCANCODE_DELETE:       return InputKey::Delete;
+		case SDL_SCANCODE_HELP:         return InputKey::Help;
+		case SDL_SCANCODE_0:            return InputKey::_0;
+		case SDL_SCANCODE_1:            return InputKey::_1;
+		case SDL_SCANCODE_2:            return InputKey::_2;
+		case SDL_SCANCODE_3:            return InputKey::_3;
+		case SDL_SCANCODE_4:            return InputKey::_4;
+		case SDL_SCANCODE_5:            return InputKey::_5;
+		case SDL_SCANCODE_6:            return InputKey::_6;
+		case SDL_SCANCODE_7:            return InputKey::_7;
+		case SDL_SCANCODE_8:            return InputKey::_8;
+		case SDL_SCANCODE_9:            return InputKey::_9;
+		case SDL_SCANCODE_A:            return InputKey::A;
+		case SDL_SCANCODE_B:            return InputKey::B;
+		case SDL_SCANCODE_C:            return InputKey::C;
+		case SDL_SCANCODE_D:            return InputKey::D;
+		case SDL_SCANCODE_E:            return InputKey::E;
+		case SDL_SCANCODE_F:            return InputKey::F;
+		case SDL_SCANCODE_G:            return InputKey::G;
+		case SDL_SCANCODE_H:            return InputKey::H;
+		case SDL_SCANCODE_I:            return InputKey::I;
+		case SDL_SCANCODE_J:            return InputKey::J;
+		case SDL_SCANCODE_K:            return InputKey::K;
+		case SDL_SCANCODE_L:            return InputKey::L;
+		case SDL_SCANCODE_M:            return InputKey::M;
+		case SDL_SCANCODE_N:            return InputKey::N;
+		case SDL_SCANCODE_O:            return InputKey::O;
+		case SDL_SCANCODE_P:            return InputKey::P;
+		case SDL_SCANCODE_Q:            return InputKey::Q;
+		case SDL_SCANCODE_R:            return InputKey::R;
+		case SDL_SCANCODE_S:            return InputKey::S;
+		case SDL_SCANCODE_T:            return InputKey::T;
+		case SDL_SCANCODE_U:            return InputKey::U;
+		case SDL_SCANCODE_V:            return InputKey::V;
+		case SDL_SCANCODE_W:            return InputKey::W;
+		case SDL_SCANCODE_X:            return InputKey::X;
+		case SDL_SCANCODE_Y:            return InputKey::Y;
+		case SDL_SCANCODE_Z:            return InputKey::Z;
+		case SDL_SCANCODE_KP_0:         return InputKey::NumPad0;
+		case SDL_SCANCODE_KP_1:         return InputKey::NumPad1;
+		case SDL_SCANCODE_KP_2:         return InputKey::NumPad2;
+		case SDL_SCANCODE_KP_3:         return InputKey::NumPad3;
+		case SDL_SCANCODE_KP_4:         return InputKey::NumPad4;
+		case SDL_SCANCODE_KP_5:         return InputKey::NumPad5;
+		case SDL_SCANCODE_KP_6:         return InputKey::NumPad6;
+		case SDL_SCANCODE_KP_7:         return InputKey::NumPad7;
+		case SDL_SCANCODE_KP_8:         return InputKey::NumPad8;
+		case SDL_SCANCODE_KP_9:         return InputKey::NumPad9;
+		// case SDL_SCANCODE_KP_ENTER:     return InputKey::NumPadEnter;
+		// case SDL_SCANCODE_KP_MULTIPLY:  return InputKey::Multiply;
+		// case SDL_SCANCODE_KP_PLUS:      return InputKey::Add;
+		case SDL_SCANCODE_SEPARATOR:    return InputKey::Separator;
+		// case SDL_SCANCODE_KP_MINUS:     return InputKey::Subtract;
+		case SDL_SCANCODE_KP_PERIOD:    return InputKey::NumPadPeriod;
+		// case SDL_SCANCODE_KP_DIVIDE:    return InputKey::Divide;
+		case SDL_SCANCODE_F1:           return InputKey::F1;
+		case SDL_SCANCODE_F2:           return InputKey::F2;
+		case SDL_SCANCODE_F3:           return InputKey::F3;
+		case SDL_SCANCODE_F4:           return InputKey::F4;
+		case SDL_SCANCODE_F5:           return InputKey::F5;
+		case SDL_SCANCODE_F6:           return InputKey::F6;
+		case SDL_SCANCODE_F7:           return InputKey::F7;
+		case SDL_SCANCODE_F8:           return InputKey::F8;
+		case SDL_SCANCODE_F9:           return InputKey::F9;
+		case SDL_SCANCODE_F10:          return InputKey::F10;
+		case SDL_SCANCODE_F11:          return InputKey::F11;
+		case SDL_SCANCODE_F12:          return InputKey::F12;
+		case SDL_SCANCODE_F13:          return InputKey::F13;
+		case SDL_SCANCODE_F14:          return InputKey::F14;
+		case SDL_SCANCODE_F15:          return InputKey::F15;
+		case SDL_SCANCODE_F16:          return InputKey::F16;
+		case SDL_SCANCODE_F17:          return InputKey::F17;
+		case SDL_SCANCODE_F18:          return InputKey::F18;
+		case SDL_SCANCODE_F19:          return InputKey::F19;
+		case SDL_SCANCODE_F20:          return InputKey::F20;
+		case SDL_SCANCODE_F21:          return InputKey::F21;
+		case SDL_SCANCODE_F22:          return InputKey::F22;
+		case SDL_SCANCODE_F23:          return InputKey::F23;
+		case SDL_SCANCODE_F24:          return InputKey::F24;
 		case SDL_SCANCODE_NUMLOCKCLEAR: return InputKey::NumLock;
-		case SDL_SCANCODE_SCROLLLOCK: return InputKey::ScrollLock;
-		case SDL_SCANCODE_LSHIFT: return InputKey::LShift;
-		case SDL_SCANCODE_RSHIFT: return InputKey::RShift;
-		case SDL_SCANCODE_LCTRL: return InputKey::LControl;
-		case SDL_SCANCODE_RCTRL: return InputKey::RControl;
-		case SDL_SCANCODE_GRAVE: return InputKey::Tilde;
-		default: return InputKey::None;
+		case SDL_SCANCODE_SCROLLLOCK:   return InputKey::ScrollLock;
+		case SDL_SCANCODE_LSHIFT:       return InputKey::LShift;
+		case SDL_SCANCODE_RSHIFT:       return InputKey::RShift;
+		case SDL_SCANCODE_LCTRL:        return InputKey::LControl;
+		case SDL_SCANCODE_RCTRL:        return InputKey::RControl;
+		case SDL_SCANCODE_GRAVE:        return InputKey::Tilde;
+		default:                        return InputKey::None;
+	}
+}
+
+InputKey SDL2DisplayWindow::GameControllerButtonToInputKey(SDL_GameControllerButton button)
+{
+	switch (button)
+	{
+		case SDL_CONTROLLER_BUTTON_DPAD_UP:       return InputKey::Up;
+		case SDL_CONTROLLER_BUTTON_DPAD_DOWN:     return InputKey::Down;
+		case SDL_CONTROLLER_BUTTON_DPAD_LEFT:     return InputKey::Left;
+		case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:    return InputKey::Right;
+		case SDL_CONTROLLER_BUTTON_A:             return InputKey::Enter;
+		case SDL_CONTROLLER_BUTTON_B:             return InputKey::Backspace;
+		case SDL_CONTROLLER_BUTTON_X:             return InputKey::Space;
+		case SDL_CONTROLLER_BUTTON_Y:             return InputKey::Escape;
+		case SDL_CONTROLLER_BUTTON_START:         return InputKey::Enter;
+		case SDL_CONTROLLER_BUTTON_BACK:          return InputKey::Escape;
+		case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:  return InputKey::Tab;
+		case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return InputKey::Tab;
+		default:                                  return InputKey::None;
 	}
 }
 
@@ -713,110 +758,110 @@ SDL_Scancode SDL2DisplayWindow::InputKeyToScancode(InputKey inputkey)
 {
 	switch (inputkey)
 	{
-		case InputKey::Backspace: return SDL_SCANCODE_BACKSPACE;
-		case InputKey::Tab: return SDL_SCANCODE_TAB;
-		case InputKey::OEMClear: return SDL_SCANCODE_CLEAR;
-		case InputKey::Enter: return SDL_SCANCODE_RETURN;
-		case InputKey::Alt: return SDL_SCANCODE_MENU;
-		case InputKey::Pause: return SDL_SCANCODE_PAUSE;
-		case InputKey::Escape: return SDL_SCANCODE_ESCAPE;
-		case InputKey::Space: return SDL_SCANCODE_SPACE;
-		case InputKey::End: return SDL_SCANCODE_END;
-		case InputKey::Home: return SDL_SCANCODE_HOME;
-		case InputKey::Left: return SDL_SCANCODE_LEFT;
-		case InputKey::Up: return SDL_SCANCODE_UP;
-		case InputKey::Right: return SDL_SCANCODE_RIGHT;
-		case InputKey::Down: return SDL_SCANCODE_DOWN;
-		case InputKey::Select: return SDL_SCANCODE_SELECT;
-		case InputKey::Print: return SDL_SCANCODE_PRINTSCREEN;
-		case InputKey::Execute: return SDL_SCANCODE_EXECUTE;
-		case InputKey::Insert: return SDL_SCANCODE_INSERT;
-		case InputKey::Delete: return SDL_SCANCODE_DELETE;
-		case InputKey::Help: return SDL_SCANCODE_HELP;
-		case InputKey::_0: return SDL_SCANCODE_0;
-		case InputKey::_1: return SDL_SCANCODE_1;
-		case InputKey::_2: return SDL_SCANCODE_2;
-		case InputKey::_3: return SDL_SCANCODE_3;
-		case InputKey::_4: return SDL_SCANCODE_4;
-		case InputKey::_5: return SDL_SCANCODE_5;
-		case InputKey::_6: return SDL_SCANCODE_6;
-		case InputKey::_7: return SDL_SCANCODE_7;
-		case InputKey::_8: return SDL_SCANCODE_8;
-		case InputKey::_9: return SDL_SCANCODE_9;
-		case InputKey::A: return SDL_SCANCODE_A;
-		case InputKey::B: return SDL_SCANCODE_B;
-		case InputKey::C: return SDL_SCANCODE_C;
-		case InputKey::D: return SDL_SCANCODE_D;
-		case InputKey::E: return SDL_SCANCODE_E;
-		case InputKey::F: return SDL_SCANCODE_F;
-		case InputKey::G: return SDL_SCANCODE_G;
-		case InputKey::H: return SDL_SCANCODE_H;
-		case InputKey::I: return SDL_SCANCODE_I;
-		case InputKey::J: return SDL_SCANCODE_J;
-		case InputKey::K: return SDL_SCANCODE_K;
-		case InputKey::L: return SDL_SCANCODE_L;
-		case InputKey::M: return SDL_SCANCODE_M;
-		case InputKey::N: return SDL_SCANCODE_N;
-		case InputKey::O: return SDL_SCANCODE_O;
-		case InputKey::P: return SDL_SCANCODE_P;
-		case InputKey::Q: return SDL_SCANCODE_Q;
-		case InputKey::R: return SDL_SCANCODE_R;
-		case InputKey::S: return SDL_SCANCODE_S;
-		case InputKey::T: return SDL_SCANCODE_T;
-		case InputKey::U: return SDL_SCANCODE_U;
-		case InputKey::V: return SDL_SCANCODE_V;
-		case InputKey::W: return SDL_SCANCODE_W;
-		case InputKey::X: return SDL_SCANCODE_X;
-		case InputKey::Y: return SDL_SCANCODE_Y;
-		case InputKey::Z: return SDL_SCANCODE_Z;
-		case InputKey::NumPad0: return SDL_SCANCODE_KP_0;
-		case InputKey::NumPad1: return SDL_SCANCODE_KP_1;
-		case InputKey::NumPad2: return SDL_SCANCODE_KP_2;
-		case InputKey::NumPad3: return SDL_SCANCODE_KP_3;
-		case InputKey::NumPad4: return SDL_SCANCODE_KP_4;
-		case InputKey::NumPad5: return SDL_SCANCODE_KP_5;
-		case InputKey::NumPad6: return SDL_SCANCODE_KP_6;
-		case InputKey::NumPad7: return SDL_SCANCODE_KP_7;
-		case InputKey::NumPad8: return SDL_SCANCODE_KP_8;
-		case InputKey::NumPad9: return SDL_SCANCODE_KP_9;
-		// case InputKey::NumPadEnter: return SDL_SCANCODE_KP_ENTER;
-		// case InputKey::Multiply return SDL_SCANCODE_KP_MULTIPLY:;
-		// case InputKey::Add: return SDL_SCANCODE_KP_PLUS;
-		case InputKey::Separator: return SDL_SCANCODE_SEPARATOR;
-		// case InputKey::Subtract: return SDL_SCANCODE_KP_MINUS;
-		case InputKey::NumPadPeriod: return SDL_SCANCODE_KP_PERIOD;
-		// case InputKey::Divide: return SDL_SCANCODE_KP_DIVIDE;
-		case InputKey::F1: return SDL_SCANCODE_F1;
-		case InputKey::F2: return SDL_SCANCODE_F2;
-		case InputKey::F3: return SDL_SCANCODE_F3;
-		case InputKey::F4: return SDL_SCANCODE_F4;
-		case InputKey::F5: return SDL_SCANCODE_F5;
-		case InputKey::F6: return SDL_SCANCODE_F6;
-		case InputKey::F7: return SDL_SCANCODE_F7;
-		case InputKey::F8: return SDL_SCANCODE_F8;
-		case InputKey::F9: return SDL_SCANCODE_F9;
-		case InputKey::F10: return SDL_SCANCODE_F10;
-		case InputKey::F11: return SDL_SCANCODE_F11;
-		case InputKey::F12: return SDL_SCANCODE_F12;
-		case InputKey::F13: return SDL_SCANCODE_F13;
-		case InputKey::F14: return SDL_SCANCODE_F14;
-		case InputKey::F15: return SDL_SCANCODE_F15;
-		case InputKey::F16: return SDL_SCANCODE_F16;
-		case InputKey::F17: return SDL_SCANCODE_F17;
-		case InputKey::F18: return SDL_SCANCODE_F18;
-		case InputKey::F19: return SDL_SCANCODE_F19;
-		case InputKey::F20: return SDL_SCANCODE_F20;
-		case InputKey::F21: return SDL_SCANCODE_F21;
-		case InputKey::F22: return SDL_SCANCODE_F22;
-		case InputKey::F23: return SDL_SCANCODE_F23;
-		case InputKey::F24: return SDL_SCANCODE_F24;
-		case InputKey::NumLock: return SDL_SCANCODE_NUMLOCKCLEAR;
-		case InputKey::ScrollLock: return SDL_SCANCODE_SCROLLLOCK;
-		case InputKey::LShift: return SDL_SCANCODE_LSHIFT;
-		case InputKey::RShift: return SDL_SCANCODE_RSHIFT;
-		case InputKey::LControl: return SDL_SCANCODE_LCTRL;
-		case InputKey::RControl: return SDL_SCANCODE_RCTRL;
-		case InputKey::Tilde: return SDL_SCANCODE_GRAVE;
-		default: return (SDL_Scancode)0;
+		case InputKey::Backspace:     return SDL_SCANCODE_BACKSPACE;
+		case InputKey::Tab:           return SDL_SCANCODE_TAB;
+		case InputKey::OEMClear:      return SDL_SCANCODE_CLEAR;
+		case InputKey::Enter:         return SDL_SCANCODE_RETURN;
+		case InputKey::Alt:           return SDL_SCANCODE_MENU;
+		case InputKey::Pause:         return SDL_SCANCODE_PAUSE;
+		case InputKey::Escape:        return SDL_SCANCODE_ESCAPE;
+		case InputKey::Space:         return SDL_SCANCODE_SPACE;
+		case InputKey::End:           return SDL_SCANCODE_END;
+		case InputKey::Home:          return SDL_SCANCODE_HOME;
+		case InputKey::Left:          return SDL_SCANCODE_LEFT;
+		case InputKey::Up:            return SDL_SCANCODE_UP;
+		case InputKey::Right:         return SDL_SCANCODE_RIGHT;
+		case InputKey::Down:          return SDL_SCANCODE_DOWN;
+		case InputKey::Select:        return SDL_SCANCODE_SELECT;
+		case InputKey::Print:         return SDL_SCANCODE_PRINTSCREEN;
+		case InputKey::Execute:       return SDL_SCANCODE_EXECUTE;
+		case InputKey::Insert:        return SDL_SCANCODE_INSERT;
+		case InputKey::Delete:        return SDL_SCANCODE_DELETE;
+		case InputKey::Help:          return SDL_SCANCODE_HELP;
+		case InputKey::_0:            return SDL_SCANCODE_0;
+		case InputKey::_1:            return SDL_SCANCODE_1;
+		case InputKey::_2:            return SDL_SCANCODE_2;
+		case InputKey::_3:            return SDL_SCANCODE_3;
+		case InputKey::_4:            return SDL_SCANCODE_4;
+		case InputKey::_5:            return SDL_SCANCODE_5;
+		case InputKey::_6:            return SDL_SCANCODE_6;
+		case InputKey::_7:            return SDL_SCANCODE_7;
+		case InputKey::_8:            return SDL_SCANCODE_8;
+		case InputKey::_9:            return SDL_SCANCODE_9;
+		case InputKey::A:             return SDL_SCANCODE_A;
+		case InputKey::B:             return SDL_SCANCODE_B;
+		case InputKey::C:             return SDL_SCANCODE_C;
+		case InputKey::D:             return SDL_SCANCODE_D;
+		case InputKey::E:             return SDL_SCANCODE_E;
+		case InputKey::F:             return SDL_SCANCODE_F;
+		case InputKey::G:             return SDL_SCANCODE_G;
+		case InputKey::H:             return SDL_SCANCODE_H;
+		case InputKey::I:             return SDL_SCANCODE_I;
+		case InputKey::J:             return SDL_SCANCODE_J;
+		case InputKey::K:             return SDL_SCANCODE_K;
+		case InputKey::L:             return SDL_SCANCODE_L;
+		case InputKey::M:             return SDL_SCANCODE_M;
+		case InputKey::N:             return SDL_SCANCODE_N;
+		case InputKey::O:             return SDL_SCANCODE_O;
+		case InputKey::P:             return SDL_SCANCODE_P;
+		case InputKey::Q:             return SDL_SCANCODE_Q;
+		case InputKey::R:             return SDL_SCANCODE_R;
+		case InputKey::S:             return SDL_SCANCODE_S;
+		case InputKey::T:             return SDL_SCANCODE_T;
+		case InputKey::U:             return SDL_SCANCODE_U;
+		case InputKey::V:             return SDL_SCANCODE_V;
+		case InputKey::W:             return SDL_SCANCODE_W;
+		case InputKey::X:             return SDL_SCANCODE_X;
+		case InputKey::Y:             return SDL_SCANCODE_Y;
+		case InputKey::Z:             return SDL_SCANCODE_Z;
+		case InputKey::NumPad0:       return SDL_SCANCODE_KP_0;
+		case InputKey::NumPad1:       return SDL_SCANCODE_KP_1;
+		case InputKey::NumPad2:       return SDL_SCANCODE_KP_2;
+		case InputKey::NumPad3:       return SDL_SCANCODE_KP_3;
+		case InputKey::NumPad4:       return SDL_SCANCODE_KP_4;
+		case InputKey::NumPad5:       return SDL_SCANCODE_KP_5;
+		case InputKey::NumPad6:       return SDL_SCANCODE_KP_6;
+		case InputKey::NumPad7:       return SDL_SCANCODE_KP_7;
+		case InputKey::NumPad8:       return SDL_SCANCODE_KP_8;
+		case InputKey::NumPad9:       return SDL_SCANCODE_KP_9;
+		// case InputKey::NumPadEnter:   return SDL_SCANCODE_KP_ENTER;
+		// case InputKey::Multiply       return SDL_SCANCODE_KP_MULTIPLY:;
+		// case InputKey::Add:           return SDL_SCANCODE_KP_PLUS;
+		case InputKey::Separator:     return SDL_SCANCODE_SEPARATOR;
+		// case InputKey::Subtract:      return SDL_SCANCODE_KP_MINUS;
+		case InputKey::NumPadPeriod:  return SDL_SCANCODE_KP_PERIOD;
+		// case InputKey::Divide:        return SDL_SCANCODE_KP_DIVIDE;
+		case InputKey::F1:            return SDL_SCANCODE_F1;
+		case InputKey::F2:            return SDL_SCANCODE_F2;
+		case InputKey::F3:            return SDL_SCANCODE_F3;
+		case InputKey::F4:            return SDL_SCANCODE_F4;
+		case InputKey::F5:            return SDL_SCANCODE_F5;
+		case InputKey::F6:            return SDL_SCANCODE_F6;
+		case InputKey::F7:            return SDL_SCANCODE_F7;
+		case InputKey::F8:            return SDL_SCANCODE_F8;
+		case InputKey::F9:            return SDL_SCANCODE_F9;
+		case InputKey::F10:           return SDL_SCANCODE_F10;
+		case InputKey::F11:           return SDL_SCANCODE_F11;
+		case InputKey::F12:           return SDL_SCANCODE_F12;
+		case InputKey::F13:           return SDL_SCANCODE_F13;
+		case InputKey::F14:           return SDL_SCANCODE_F14;
+		case InputKey::F15:           return SDL_SCANCODE_F15;
+		case InputKey::F16:           return SDL_SCANCODE_F16;
+		case InputKey::F17:           return SDL_SCANCODE_F17;
+		case InputKey::F18:           return SDL_SCANCODE_F18;
+		case InputKey::F19:           return SDL_SCANCODE_F19;
+		case InputKey::F20:           return SDL_SCANCODE_F20;
+		case InputKey::F21:           return SDL_SCANCODE_F21;
+		case InputKey::F22:           return SDL_SCANCODE_F22;
+		case InputKey::F23:           return SDL_SCANCODE_F23;
+		case InputKey::F24:           return SDL_SCANCODE_F24;
+		case InputKey::NumLock:       return SDL_SCANCODE_NUMLOCKCLEAR;
+		case InputKey::ScrollLock:    return SDL_SCANCODE_SCROLLLOCK;
+		case InputKey::LShift:        return SDL_SCANCODE_LSHIFT;
+		case InputKey::RShift:        return SDL_SCANCODE_RSHIFT;
+		case InputKey::LControl:      return SDL_SCANCODE_LCTRL;
+		case InputKey::RControl:      return SDL_SCANCODE_RCTRL;
+		case InputKey::Tilde:         return SDL_SCANCODE_GRAVE;
+		default:                      return SDL_SCANCODE_UNKNOWN;
 	}
 }

@@ -31,6 +31,14 @@ WaylandDisplayWindow::WaylandDisplayWindow(WaylandDisplayBackend* backend, Displ
 		m_XDGSurface.ack_configure(serial);
 	};
 
+	m_WindowActivationToken = backend->m_XDGActivation.get_activation_token();
+	m_WindowActivationToken.on_done() = [&](const std::string& newActivationToken)
+	{
+		m_ActivationTokenString = newActivationToken;
+	};
+
+	m_WindowActivationToken.set_surface(m_AppSurface);
+
 	if (popupWindow)
 	{
 		InitializePopup();
@@ -97,6 +105,8 @@ void WaylandDisplayWindow::InitializePopup()
 
 	wayland::xdg_positioner_t popupPositioner = backend->m_XDGWMBase.create_positioner();
 
+	// TODO: We gotta figure out a way to make positioner actually position the menu
+	// Maybe somehow get the clicked menu's rectangle relative to the window's surface?
 	popupPositioner.set_anchor(wayland::xdg_positioner_anchor::bottom);
 	popupPositioner.set_anchor_rect(0, 0, 1, 30);
 	popupPositioner.set_size(1, 1);
@@ -212,19 +222,10 @@ void WaylandDisplayWindow::Hide()
 
 void WaylandDisplayWindow::Activate()
 {
-	// To do: this needs to be in the backend instance if all windows share the activation token
-	wayland::xdg_activation_token_v1_t xdgActivationToken = backend->m_XDGActivation.get_activation_token();
+	m_WindowActivationToken.set_serial(backend->GetKeyboardSerial(), backend->m_waylandSeat);
+	m_WindowActivationToken.commit(); // This will set our token string
 
-	std::string tokenString;
-
-	xdgActivationToken.on_done() = [&tokenString] (std::string obtainedString) {
-		tokenString = obtainedString;
-	};
-
-	xdgActivationToken.set_surface(m_AppSurface);
-	xdgActivationToken.commit();  // This will set our token string
-
-	backend->m_XDGActivation.activate(tokenString, m_AppSurface);
+	backend->m_XDGActivation.activate(m_ActivationTokenString, m_AppSurface);
 	backend->m_FocusWindow = this;
 	backend->m_MouseFocusWindow = this;
 	windowHost->OnWindowActivated();

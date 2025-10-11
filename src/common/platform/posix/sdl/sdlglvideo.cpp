@@ -85,6 +85,7 @@ EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR(Bool, vk_debug)
+EXTERN_FARG(glversion);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -541,7 +542,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
 	int glveridx = 0;
 	int i;
 
-	const char *version = Args->CheckValue("-glversion");
+	const char *version = Args->CheckValue(FArg_glversion);
 	if (version != NULL)
 	{
 		double gl_version = strtod(version, NULL) + 0.01;

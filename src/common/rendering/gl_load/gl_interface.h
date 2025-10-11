@@ -1,6 +1,7 @@
 #ifndef R_RENDER
 #define R_RENDER
 
+#include "m_argv.h"
 struct RenderContext
 {
 	unsigned int flags;
@@ -14,6 +15,8 @@ struct RenderContext
 };
 
 extern RenderContext gl;
+
+EXTERN_FARG(glversion);
 
 #endif
 

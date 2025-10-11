@@ -31,6 +31,7 @@
 
 #include "doomtype.h"
 #include "gametype.h"
+#include "m_argv.h"
 #include "startupinfo.h"
 #include "c_cvars.h"
 #include <csignal>
@@ -39,6 +40,20 @@ extern bool		advancedemo;
 extern volatile sig_atomic_t gameloop_abort;
 EXTERN_CVAR(Bool, hud_toggled);
 void D_ToggleHud();
+
+EXTERN_FARG(version);
+EXTERN_FARG(v);
+EXTERN_FARG(help);
+EXTERN_FARG(h);
+EXTERN_FARG(doshelp);
+EXTERN_FARG(help_all);
+EXTERN_FARG(devparm);
+EXTERN_FARG(dumpjit);
+EXTERN_FARG(norun);
+EXTERN_FARG(loadgame);
+EXTERN_FARG(iwad);
+EXTERN_FARG(xlat);
+EXTERN_FARG(savedir);
 
 struct event_t;
 

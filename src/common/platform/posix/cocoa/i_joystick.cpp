@@ -49,6 +49,7 @@
 
 EXTERN_CVAR(Bool, joy_axespolling)
 EXTERN_CVAR(Bool, use_joystick)
+EXTERN_FARG(nojoy);
 
 namespace
 {
@@ -1322,7 +1323,7 @@ void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
 	// As M_LoadDefaults() was already called at this moment,
 	// the order of atterm's functions will be correct
 
-	if (NULL == s_joystickManager && !Args->CheckParm("-nojoy"))
+	if (NULL == s_joystickManager && !Args->CheckParm(FArg_nojoy))
 	{
 		s_joystickManager = new IOKitJoystickManager;
 	}

@@ -60,6 +60,10 @@ EXTERN_CVAR(String, language)
 
 CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
 
+EXTERN_FARG(iwad);
+EXTERN_FARG(host);
+EXTERN_FARG(join);
+
 bool foundprio = false; // global to prevent iwad box from appearing
 
 //==========================================================================
@@ -608,7 +612,7 @@ FString FIWadManager::IWADPathFileSearch(const FString &file)
 
 int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
 {
-	const char *iwadparm = Args->CheckValue ("-iwad");
+	const char *iwadparm = Args->CheckValue (FArg_iwad);
 	FString custwad;
 
 	CollectSearchPaths();
@@ -800,7 +804,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	int pick = 0;
 
 	// Present the IWAD selection box.
-	bool alwaysshow = (queryiwad && !Args->CheckParm("-iwad") && !foundprio);
+	bool alwaysshow = (queryiwad && !Args->CheckParm(FArg_iwad) && !foundprio);
 
 	if (!havepicked && (alwaysshow || picks.Size() > 1))
 	{
@@ -863,7 +867,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	{
 		// For net games all wads must be explicitly named to make it easier for the host to know
 		// exactly what's being loaded.
-		if (i_loadsupportwad && !Args->CheckParm("-join") && !Args->CheckParm("-host"))
+		if (i_loadsupportwad && !Args->CheckParm(FArg_join) && !Args->CheckParm(FArg_host))
 		{
 			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
 

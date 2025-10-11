@@ -3,7 +3,10 @@
 //
 // $Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// Copyright 1993-1996 by id Software, Inc.
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -78,6 +81,7 @@
 #include "c_cvars.h"
 #include "i_net.h"
 #include "m_random.h"
+#include "version.h"
 
 /* [Petteri] Get more portable: */
 #ifndef __WIN32__
@@ -103,6 +107,25 @@ const char* neterror(void);
 #else
 #define neterror() strerror(errno)
 #endif
+
+FARG(host, "Multiplayer", "Designates the machine as the host for a multiplayer game.", "x",
+	"This machine will function as a host for a multiplayer game with x players (including this"
+	" machine). It will wait for other machines to connect using the -join. parameter and then"
+	" start the game when everyone is connected.");
+FARG(join, "Multiplayer", "Connects to a multiplayer host.", "host's IP address[:host's port]",
+	 "Connect to a host for a multiplayer game.");
+FARG(dup, "Multiplayer", "Send less player movement commands over the network.", "x",
+	"Causes " GAMENAME " to transmit fewer player movement commands across the network. Valid"
+	" values range from 1–9. For example, -dup 2 would cause " GAMENAME " to send half as many"
+	" movements as normal.");
+FARG(port, "Multiplayer", "Specifies an alternative IP port for a network game.", "x",
+	"Specifies an alternate IP port for this machine to use during a network game. By default,"
+	" port 5029 is used.");
+FARG(netmode, "Multiplayer", "Changes the network mode", "0|1",
+	"Changes the network mode the game uses (Peer-to-Peer or Packet Server). More information on"
+	" each mode can be found on the Multiplayer page.");
+FARG(password, "", "", "",
+	"");
 
 // As per http://support.microsoft.com/kb/q192599/ the standard
 // size for network buffers is 8k.
@@ -1267,33 +1290,33 @@ static bool JoinGame(int arg)
 bool I_InitNetwork()
 {
 	// set up for network
-	const char* v = Args->CheckValue("-dup");
+	const char* v = Args->CheckValue(FArg_dup);
 	if (v != nullptr)
 		TicDup = clamp<int>(atoi(v), 1, MAXTICDUP);
 
-	v = Args->CheckValue("-port");
+	v = Args->CheckValue(FArg_port);
 	if (v != nullptr)
 	{
 		GamePort = atoi(v);
 		Printf("Using alternate port %d\n", GamePort);
 	}
 
-	v = Args->CheckValue("-netmode");
+	v = Args->CheckValue(FArg_netmode);
 	if (v != nullptr)
 		NetMode = atoi(v) ? NET_PacketServer : NET_PeerToPeer;
 
-	net_password = Args->CheckValue("-password");
+	net_password = Args->CheckValue(FArg_password);
 
 	// parse network game options,
 	//		player 1: -host <numplayers>
 	//		player x: -join <player 1's address>
 	int arg = -1;
-	if ((arg = Args->CheckParm("-host")))
+	if ((arg = Args->CheckParm(FArg_host)))
 	{
 		if (!HostGame(arg + 1, v != nullptr))
 			return false;
 	}
-	else if ((arg = Args->CheckParm("-join")))
+	else if ((arg = Args->CheckParm(FArg_join)))
 	{
 		if (!JoinGame(arg + 1))
 			return false;

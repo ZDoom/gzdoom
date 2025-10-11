@@ -32,12 +32,12 @@
 **
 */
 
-enum GrayCheckMode {
-	Gray = 0,
-	Hide = 1,
-	Inv = 2,
-	GrayInv = Gray | Inv,
-	HideInv = Hide | Inv,
+enum GrayCheckMode
+{
+	None = 0, // ?
+	Gray = 1 << 0,
+	Hide = 1 << 1,
+	Inv  = 1 << 2,
 };
 
 class OptionMenuItem : MenuItemBase
@@ -54,7 +54,7 @@ class OptionMenuItem : MenuItemBase
 		bool center = false,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(0, 0, command);
@@ -62,7 +62,19 @@ class OptionMenuItem : MenuItemBase
 		mCentered = center;
 		mGrayCheck = graycheck;
 		mGrayCheckVal = graycheckVal;
-		mGrayCheckMode = graycheckMode;
+		switch (graycheckMode)
+		{
+		case 'Gray':    mGrayCheckMode = Gray;     break;
+		case 'Hide':    mGrayCheckMode = Hide;     break;
+		case 'GrayInv': mGrayCheckMode = Gray|Inv; break;
+		case 'HideInv': mGrayCheckMode = Hide|Inv; break;
+		default:
+			ThrowAbortException(
+				"Unknown graycheckMode '%s'. Expected Gray|Hide|GrayInv|HideInv",
+				graycheckMode
+			);
+			break;
+		}
 	}
 
 	protected void drawText(int x, int y, int color, String text, bool grayed = false)
@@ -305,7 +317,7 @@ class OptionMenuItemOptionBase : OptionMenuItem
 		CVar graycheck,
 		int center,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = 1
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, false, graycheck, graycheckVal, graycheckMode);
@@ -411,7 +423,7 @@ class OptionMenuItemOption : OptionMenuItemOptionBase
 		CVar graycheck = null,
 		int center = 0,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, values, graycheck, center, graycheckVal, graycheckMode);
@@ -805,7 +817,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		Name command = 'none',
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, false, graycheck, graycheckVal, graycheckMode);
@@ -971,7 +983,7 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 		int showval = 1,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, min, max, step, showval, command, graycheck, graycheckVal, graycheckMode);
@@ -1017,7 +1029,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 		Name command,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, false, graycheck, graycheckVal, graycheckMode);
@@ -1102,7 +1114,7 @@ class OptionMenuFieldBase : OptionMenuItem
 		Name command,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, false, graycheck, graycheckVal, graycheckMode);
@@ -1171,7 +1183,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		Name command,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, graycheck, graycheckVal, graycheckMode);
@@ -1252,7 +1264,7 @@ class OptionMenuItemNumberField : OptionMenuFieldBase
 		float step = 1,
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, graycheck, graycheckVal, graycheckMode);
@@ -1323,7 +1335,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		String negone = "",
 		CVar graycheck = null,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, min, max, step, 0, graycheck, graycheckVal, graycheckMode);
@@ -1400,7 +1412,7 @@ class OptionMenuItemFlagOption : OptionMenuItemOption
 		CVar greycheck = null,
 		int center = 0,
 		int graycheckVal = 0,
-		GrayCheckMode graycheckMode = Gray
+		name graycheckMode = 'Gray'
 	)
 	{
 		Super.Init(label, command, values, greycheck, center, graycheckVal, graycheckMode);

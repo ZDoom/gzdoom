@@ -701,13 +701,15 @@ FileReader FResourceFile::GetEntryReader(uint32_t entry, int readertype, int rea
 		}
 		else
 		{
-			FileReader fri;
-			if (readertype == READER_NEW || !mainThread) fri.OpenFile(FileName, Entries[entry].Position, Entries[entry].CompressedSize);
-			else fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
-			int flags = DCF_TRANSFEROWNER | DCF_EXCEPTIONS;
-			if (readertype == READER_CACHED) flags |= DCF_CACHED;
-			else if (readerflags & READERFLAG_SEEKABLE) flags |= DCF_SEEKABLE;
-			OpenDecompressor(fr, fri, Entries[entry].Length, Entries[entry].Method, flags);
+				FileReader fri;
+				auto buf = Reader.GetBuffer();
+				if (buf != nullptr) fri.OpenMemory(buf + Entries[entry].Position, Entries[entry].CompressedSize);
+				else if (readertype == READER_NEW || !mainThread) fri.OpenFile(FileName, Entries[entry].Position, Entries[entry].CompressedSize);
+				else fri.OpenFilePart(Reader, Entries[entry].Position, Entries[entry].CompressedSize);
+				int flags = DCF_TRANSFEROWNER | DCF_EXCEPTIONS;
+				if (readertype == READER_CACHED) flags |= DCF_CACHED;
+				else if (readerflags & READERFLAG_SEEKABLE) flags |= DCF_SEEKABLE;
+				OpenDecompressor(fr, fri, Entries[entry].Length, Entries[entry].Method, flags);
 		}
 	}
 	return fr;

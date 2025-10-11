@@ -1,5 +1,0 @@
-graphic INTERPIC, 560, 200
-{
-	patch INTER_E4, 0, 0 { }
-}
-

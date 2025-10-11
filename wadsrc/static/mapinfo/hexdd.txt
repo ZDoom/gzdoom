@@ -1,8 +1,0 @@
-include "mapinfo/hexen.txt"
-
-cluster 3
-{
-	hub
-	music = "hub"
-	pic = "interpic"
-}

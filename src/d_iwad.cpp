@@ -34,6 +34,7 @@
 **
 */
 
+#include "c_cvars.h"
 #include "cmdlib.h"
 #include "d_main.h"
 #include "engineerrors.h"
@@ -59,6 +60,7 @@ EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
 CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
+EXTERN_CVAR(Int, i_exit_on_not_found);
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -668,9 +670,16 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				break;
 			}
 		}
+
+		// -iwad not found
+		if (mFoundWads.Size() == numFoundWads)
+		{
+			D_FileNotFound(REQUIRE_IWAD, "game iwad", iwadparm);
+
+			// Revert back to standard behavior
+			iwadparm = nullptr;
+		}
 	}
-	// -iwad not found or not specified. Revert back to standard behavior.
-	if (mFoundWads.Size() == numFoundWads) iwadparm = nullptr;
 
 	// Check for symbolic links leading to non-existent files and for files that are unreadable.
 	for (unsigned int i = 0; i < mFoundWads.Size(); i++)
@@ -821,6 +830,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 		if (i_loadsupportwad) flags |= 16;
 
 		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
+		info.DefaultFileLoadBehaviour = i_exit_on_not_found;
 		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
 			pick = info.SaveInfo();
@@ -829,6 +839,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			autoloadbrightmaps = !!(info.DefaultStartFlags & 4);
 			autoloadwidescreen = !!(info.DefaultStartFlags & 8);
 			i_loadsupportwad = !!(info.DefaultStartFlags & 16);
+			i_exit_on_not_found = info.DefaultFileLoadBehaviour;
 		}
 		else
 		{

@@ -195,7 +195,7 @@ public:
 
 	void ActivateInStasisPlat(int tag);
 	bool CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
-	void ActivateInStasisCeiling(int tag);
+	bool ActivateInStasisCeiling(int tag);
 	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 	void DoDeferedScripts();
 	void AdjustPusher(int tag, int magnitude, int angle, bool wind);

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <list>
 #include <unordered_map>
 #include <zwidget/window/window.h>
 #include <zwidget/window/sdl2nativehandle.h>
@@ -67,12 +66,15 @@ public:
 	void OnMouseButtonDown(const SDL_MouseButtonEvent& event);
 	void OnMouseWheel(const SDL_MouseWheelEvent& event);
 	void OnMouseMotion(const SDL_MouseMotionEvent& event);
+	void OnJoyButtonUp(const SDL_ControllerButtonEvent& event);
+	void OnJoyButtonDown(const SDL_ControllerButtonEvent& event);
 	void OnPaintEvent();
 	static void OnTimerEvent(const SDL_UserEvent& event);
 
 	InputKey GetMouseButtonKey(const SDL_MouseButtonEvent& event);
 
 	static InputKey ScancodeToInputKey(SDL_Scancode keycode);
+	static InputKey GameControllerButtonToInputKey(SDL_GameControllerButton button);
 	static SDL_Scancode InputKeyToScancode(InputKey inputkey);
 
 	template<typename T>

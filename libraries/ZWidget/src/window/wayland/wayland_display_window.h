@@ -192,6 +192,9 @@ private:
 	std::vector<std::shared_ptr<SharedMemHelper>> appIconSharedMems;
 	std::vector<wayland::buffer_t> appIconBuffers;
 
+	wayland::xdg_activation_token_v1_t m_WindowActivationToken;
+	std::string m_ActivationTokenString;
+
 	bool isFullscreen = false;
 
 	// Helper functions

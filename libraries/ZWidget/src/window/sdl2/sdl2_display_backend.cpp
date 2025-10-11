@@ -1,4 +1,3 @@
-
 #include "sdl2_display_backend.h"
 #include "sdl2_display_window.h"
 #include <stdexcept>
@@ -17,7 +16,7 @@ namespace X11DPI
 
 SDL2DisplayBackend::SDL2DisplayBackend()
 {
-	int result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+	int result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 	if (result != 0)
 		throw std::runtime_error(std::string("Unable to initialize SDL:") + SDL_GetError());
 
@@ -55,6 +54,11 @@ SDL2DisplayBackend::SDL2DisplayBackend()
 		}
 	}
 #endif
+
+	for (auto i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		SDL_GameControllerOpen(i);
+	}
 }
 
 std::unique_ptr<DisplayWindow> SDL2DisplayBackend::Create(DisplayWindowHost* windowHost, bool popupWindow, DisplayWindow* owner, RenderAPI renderAPI)

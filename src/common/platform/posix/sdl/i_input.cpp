@@ -50,11 +50,21 @@
 #include "m_joy.h"
 #include "utf8.h"
 #include "v_video.h"
+#include "version.h"
 
 bool GUICapture;
 static bool NativeMouse = true;
 
-CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, use_mouse, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVARD (Int, joykey_stop_conflict, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG,
+	"Detect joypad/keyboard conflicts, dropping events as needed. "
+	"Useful for handheld PCs such as the SteamDeck. "
+	"-1: auto-detect, 0: disabled, 1: detected, 2: forced"
+)
+{
+	if (self < -1) self = -1;
+	else if (self > 2) self = 2;
+}
 
 extern int WaitingForKey;
 
@@ -262,6 +272,9 @@ static void MouseRead ()
 	}
 
 	SDL_GetRelativeMouseState (&x, &y);
+
+	if (joykey_stop_conflict > 0) return;
+
 	PostMouseMove (x, y);
 }
 
@@ -272,7 +285,7 @@ static void I_CheckNativeMouse ()
 	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
-	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
+	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse() && joykey_stop_conflict <= 0)
 		wantNative = true;
 
 	if (wantNative != NativeMouse)
@@ -286,11 +299,75 @@ static void I_CheckNativeMouse ()
 	}
 }
 
+
 void MessagePump (const SDL_Event &sev)
 {
 	static int lastx = 0, lasty = 0;
 	int x, y;
 	event_t event = { 0,0,0,0,0,0,0 };
+
+	if (joykey_stop_conflict == -1 || joykey_stop_conflict == 1)
+	{
+		const int threshold = 1;
+
+		static SDL_Window *window;
+		static unsigned eventTimestamp;
+		static bool seenKeyEvent, seenJoyEvent;
+		static int duplicateEvents;
+
+		if (eventTimestamp == 0)
+		{
+			eventTimestamp = duplicateEvents = 0;
+			seenKeyEvent = seenJoyEvent = false;
+
+			if (joykey_stop_conflict == 1)
+				joykey_stop_conflict = -1;
+		}
+
+		if (joykey_stop_conflict == -1)
+		{
+			if (eventTimestamp != sev.common.timestamp)
+			{
+				if (seenKeyEvent != seenJoyEvent)
+					duplicateEvents = 0;
+				eventTimestamp = sev.common.timestamp;
+				seenKeyEvent = seenJoyEvent = false;
+			}
+
+			switch (sev.type)
+			{
+				case SDL_KEYDOWN:
+					seenKeyEvent = true;
+					if (!window) window = SDL_GetWindowFromID(sev.key.windowID);
+					break;
+				case SDL_JOYBUTTONDOWN:
+				case SDL_CONTROLLERBUTTONDOWN:
+					seenJoyEvent = true;
+					break;
+			}
+
+			if (seenJoyEvent && seenKeyEvent && ++duplicateEvents >= threshold)
+			{
+				joykey_stop_conflict = 1;
+
+				// TODO: use CustomMessageBox https://github.com/ZDoom/gzdoom/pull/1821
+				if (window) SDL_HideWindow(window);
+				SDL_ShowSimpleMessageBox(
+					SDL_MESSAGEBOX_INFORMATION,
+					GAMENAME,
+					"Simultaneous input from a gamepad and keyboard detected!\n"
+					"All keyboard/mouse input has been temporarily disabled.\n"
+					"\n"
+					"If using a handheld PC, try switching from DESKTOP to GAMEPAD bindings.\n"
+					"This can generally be done by holding down START.\n"
+					"\n"
+					"To disable this detection, set joykey_stop_conflict to 0.",
+					window
+				);
+				if (window) SDL_ShowWindow(window);
+			}
+		}
+	}
 
 	switch (sev.type)
 	{
@@ -304,6 +381,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
+		if (joykey_stop_conflict > 0 && sev.type == SDL_MOUSEBUTTONDOWN) break;
 		if (!GUICapture)
 		{
 			event.type = sev.type == SDL_MOUSEBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
@@ -373,6 +451,7 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEMOTION:
+		if (joykey_stop_conflict > 0) break;
 		if (GUICapture)
 		{
 			event.data1 = sev.motion.x;
@@ -393,6 +472,7 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEWHEEL:
+		if (joykey_stop_conflict > 0) break;
 		if (GUICapture)
 		{
 			event.type = EV_GUI_Event;
@@ -426,6 +506,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
+		if (joykey_stop_conflict > 0 && sev.type == SDL_KEYDOWN) break;
 		if (!GUICapture)
 		{
 			if (sev.key.repeat)
@@ -512,6 +593,7 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_TEXTINPUT:
+		if (joykey_stop_conflict > 0 && sev.type == SDL_TEXTINPUT) break;
 		if (GUICapture)
 		{
 			int size;

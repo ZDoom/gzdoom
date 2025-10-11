@@ -360,6 +360,7 @@ static bool DoScanDirectory(FileList& list, const char* dirpath, const char* mat
 			continue;
 		}
 		auto fn = FS_FindName(&find);
+		printf("Adding %s", fn);
 
 		if (attr & FA_DIREC)
 		{

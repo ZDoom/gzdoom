@@ -1,7 +1,7 @@
 #ifndef _RE2C_IR_REGEXP_ENCODING_UTF16_UTF16_
 #define _RE2C_IR_REGEXP_ENCODING_UTF16_UTF16_
 
-#include "src/util/c99_stdint.h"
+#include <stdint.h>
 
 namespace re2c {
 

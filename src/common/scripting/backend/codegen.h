@@ -1113,25 +1113,10 @@ public:
 //
 //==========================================================================
 
-class FxLtEqGt : public FxBinary
+class FxSpaceship : public FxBinary
 {
 public:
-	FxLtEqGt(FxExpression*, FxExpression*);
-	FxExpression *Resolve(FCompileContext&);
-
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-class FxLtGtEq : public FxLtEqGt
-{
-public:
-	FxLtGtEq(FxExpression*, FxExpression*);
+	FxSpaceship(int, FxExpression*, FxExpression*);
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

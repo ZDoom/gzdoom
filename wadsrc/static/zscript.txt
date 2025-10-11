@@ -295,6 +295,7 @@ version "4.15.1"
 #include "zscript/ui/menu/playerdisplay.zs"
 #include "zscript/ui/menu/playermenu.zs"
 #include "zscript/ui/menu/readthis.zs"
+#include "zscript/ui/menu/videooptionsmenu.zs"
 
 #include "zscript/ui/statscreen/statscreen.zs"
 #include "zscript/ui/statscreen/statscreen_coop.zs"

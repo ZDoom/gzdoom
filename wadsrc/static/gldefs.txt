@@ -1,0 +1,12 @@
+HardwareShader PostProcess Screen
+{
+	Name "GammaTestPattern"
+	Shader "shaders/glsl/gammatest.fp" 330
+	Uniform float uInvGamma
+	Uniform float uWhitePoint
+	Uniform float uBlackPoint
+	Uniform int uXmin
+	Uniform int uXmax
+	Uniform int uYmin
+	Uniform int uYmax
+}

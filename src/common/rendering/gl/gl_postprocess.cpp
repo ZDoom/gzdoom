@@ -195,6 +195,8 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->Contrast = 1.0f;
 		mPresentShader->Uniforms->Brightness = 0.0f;
 		mPresentShader->Uniforms->Saturation = 1.0f;
+		mPresentShader->Uniforms->BlackPoint = 0.0f;
+		mPresentShader->Uniforms->WhitePoint = 1.0f;
 	}
 	else
 	{
@@ -202,6 +204,8 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
 		mPresentShader->Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
 		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
+		mPresentShader->Uniforms->BlackPoint = clamp<float>(vid_blackpoint, 0.f, 1.f);
+		mPresentShader->Uniforms->WhitePoint = clamp<float>(vid_whitepoint, 0.f, 1.f);
 		mPresentShader->Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
 	if (vid_hdr_active && framebuffer->IsFullscreen())

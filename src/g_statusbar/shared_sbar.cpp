@@ -71,8 +71,6 @@
 #define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
-int WorldPaused(bool checkLag);
-
 IMPLEMENT_CLASS(DBaseStatusBar, false, true)
 
 IMPLEMENT_POINTERS_START(DBaseStatusBar)

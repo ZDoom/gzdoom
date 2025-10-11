@@ -6390,8 +6390,6 @@ FModel * FindFModel(AActor * self)
 	}
 }
 
-int WorldPaused();
-
 bool SetAnimationInternal(AActor * self, FName animName, double framerate, int startFrame, int loopFrame, int endFrame, int interpolateTics, int flags, double ticFrac, AnimInfo *anims = nullptr, TArray<TRS> * prevAnimOld = nullptr)
 {
 	if(!self) ThrowAbortException(X_READ_NIL, "In function parameter self");

@@ -913,8 +913,6 @@ static void R_DoActorTickerAngleChanges(player_t* const player, DRotator& angles
 EXTERN_CVAR(Float, chase_dist)
 EXTERN_CVAR(Float, chase_height)
 
-int WorldPaused(bool checkLag);
-
 void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AActor* const actor)
 {
 	viewPoint.TicFrac = I_GetTimeFrac();

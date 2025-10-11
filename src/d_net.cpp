@@ -524,7 +524,7 @@ double Net_ModifyFrac(double ticFrac)
 
 double Net_ModifyObjectFrac(DObject* obj, double ticFrac)
 {
-	return LagState == LAG_NONE || LagState == LAG_SKIPPING || obj->IsClientside() ? ticFrac : 1.0;
+	return LagState == LAG_NONE || LagState == LAG_SKIPPING || obj->IsClientSide() ? ticFrac : 1.0;
 }
 
 double Net_ModifyParticleFrac(particle_t* part, double ticFrac)

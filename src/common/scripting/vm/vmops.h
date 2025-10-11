@@ -2,6 +2,8 @@
 #define xx(op, name, mode, alt, kreg, ktype) OP_##op,
 #endif
 
+// clang-format off
+
 // first row is the opcode
 // second row is the disassembly name
 // third row is the disassembly flags
@@ -294,3 +296,5 @@ xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER)
 xx(NULLCHECK, nullcheck, RP,	NOP, 0, 0) // EmitNullPointerThrow(pA)
 
 #undef xx
+
+// clang-format on

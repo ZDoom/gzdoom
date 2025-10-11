@@ -1,0 +1,11 @@
+BasedOnStyle: Microsoft
+UseTab: AlignWithSpaces
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+
+# use these to disable formatting, when needed
+# // clang-format off
+# // clang-format on

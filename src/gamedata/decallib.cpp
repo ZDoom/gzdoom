@@ -99,7 +99,7 @@ struct FDecalAnimator
 {
 	FDecalAnimator (const char *name);
 	virtual ~FDecalAnimator ();
-	virtual DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const = 0;
+	virtual DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const = 0;
 
 	FName Name;
 };
@@ -107,7 +107,7 @@ struct FDecalAnimator
 struct FDecalFaderAnim : public FDecalAnimator
 {
 	FDecalFaderAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
+	DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const;
 
 	int DecayStart;
 	int DecayTime;
@@ -116,7 +116,7 @@ struct FDecalFaderAnim : public FDecalAnimator
 struct FDecalColorerAnim : public FDecalAnimator
 {
 	FDecalColorerAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
+	DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const;
 
 	int DecayStart;
 	int DecayTime;
@@ -126,7 +126,7 @@ struct FDecalColorerAnim : public FDecalAnimator
 struct FDecalStretcherAnim : public FDecalAnimator
 {
 	FDecalStretcherAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
+	DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const;
 
 	int StretchStart;
 	int StretchTime;
@@ -136,7 +136,7 @@ struct FDecalStretcherAnim : public FDecalAnimator
 struct FDecalSliderAnim : public FDecalAnimator
 {
 	FDecalSliderAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
+	DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const;
 
 	int SlideStart;
 	int SlideTime;
@@ -146,7 +146,7 @@ struct FDecalSliderAnim : public FDecalAnimator
 struct FDecalCombinerAnim : public FDecalAnimator
 {
 	FDecalCombinerAnim (const char *name) : FDecalAnimator (name) {}
-	DThinker *CreateThinker (DBaseDecal *actor, side_t *wall) const;
+	DThinker* CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const;
 
 	int FirstAnimator;
 	int NumAnimators;
@@ -994,7 +994,7 @@ void FDecalTemplate::ApplyToDecal (DBaseDecal *decal, side_t *wall) const
 	}
 	if (Animator != NULL)
 	{
-		Animator->CreateThinker (decal, wall);
+		Animator->CreateClientsideThinker(decal, wall);
 	}
 }
 
@@ -1088,10 +1088,10 @@ FDecalAnimator::~FDecalAnimator ()
 {
 }
 
-DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
+DThinker *FDecalFaderAnim::CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
-	DDecalFader *fader = Level->CreateThinker<DDecalFader> (actor);
+	DDecalFader *fader = Level->CreateClientsideThinker<DDecalFader> (actor);
 
 	fader->TimeToStartDecay = Level->maptime + DecayStart;
 	fader->TimeToEndDecay = fader->TimeToStartDecay + DecayTime;
@@ -1099,10 +1099,10 @@ DThinker *FDecalFaderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
 	return fader;
 }
 
-DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
+DThinker *FDecalStretcherAnim::CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
-	DDecalStretcher *thinker = Level->CreateThinker<DDecalStretcher> (actor);
+	DDecalStretcher *thinker = Level->CreateClientsideThinker<DDecalStretcher> (actor);
 
 	thinker->TimeToStart = Level->maptime + StretchStart;
 	thinker->TimeToStop = thinker->TimeToStart + StretchTime;
@@ -1131,10 +1131,10 @@ DThinker *FDecalStretcherAnim::CreateThinker (DBaseDecal *actor, side_t *wall) c
 	return thinker;
 }
 
-DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
+DThinker *FDecalSliderAnim::CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
-	DDecalSlider *thinker = Level->CreateThinker<DDecalSlider> (actor);
+	DDecalSlider *thinker = Level->CreateClientsideThinker<DDecalSlider> (actor);
 
 	thinker->TimeToStart = Level->maptime + SlideStart;
 	thinker->TimeToStop = thinker->TimeToStart + SlideTime;
@@ -1144,13 +1144,13 @@ DThinker *FDecalSliderAnim::CreateThinker (DBaseDecal *actor, side_t *wall) cons
 	return thinker;
 }
 
-DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
+DThinker *FDecalCombinerAnim::CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const
 {
 	DThinker *thinker = NULL;
 
 	for (int i = 0; i < NumAnimators; ++i)
 	{
-		thinker = AnimatorList[FirstAnimator+i]->CreateThinker (actor, wall);
+		thinker = AnimatorList[FirstAnimator+i]->CreateClientsideThinker(actor, wall);
 	}
 	return thinker;
 }
@@ -1169,10 +1169,10 @@ FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 	return NULL;
 }
 
-DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
+DThinker *FDecalColorerAnim::CreateClientsideThinker(DBaseDecal *actor, side_t *wall) const
 {
 	auto Level = actor->Level;
-	DDecalColorer *Colorer = Level->CreateThinker<DDecalColorer>(actor);
+	DDecalColorer *Colorer = Level->CreateClientsideThinker<DDecalColorer>(actor);
 
 	Colorer->TimeToStartDecay = Level->maptime + DecayStart;
 	Colorer->TimeToEndDecay = Colorer->TimeToStartDecay + DecayTime;

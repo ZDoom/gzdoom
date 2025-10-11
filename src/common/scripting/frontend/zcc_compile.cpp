@@ -3316,10 +3316,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast, bool substitute)
 			return ModifyAssign(new FxBitOp(tok, new FxAssignSelf(*ast), right), left);
 
 		case PEX_LTGTEQ:
-			return new FxLtGtEq(left, right);
-
 		case PEX_LTEQGT:
-			return new FxLtEqGt(left, right);
+			return new FxSpaceship(tok, left, right);
 
 		case PEX_ArrayAccess:
 			return new FxArrayElement(left, right);

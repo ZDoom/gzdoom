@@ -4693,46 +4693,23 @@ ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-// Deprecated in favour of FxLtEqGt
-//
-//==========================================================================
-
-FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
-	: FxLtEqGt(l, r)
-{}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
 
-FxLtEqGt::FxLtEqGt(FxExpression *l, FxExpression *r)
-	: FxBinary(TK_LtEqGt, l, r)
+FxSpaceship::FxSpaceship(int op, FxExpression *l, FxExpression *r)
+	: FxBinary(op, l, r)
 {
 	ValueType = TypeSInt32;
 }
 
 //==========================================================================
 //
-// Deprecated in favour of FxLtEqGt
-//
-//==========================================================================
-
-FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
-{
-	ScriptPosition.Message(MSG_WARNING, "<>= is deprecated in favour of <=>");
-
-	return FxLtEqGt::Resolve(ctx);
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
 
-FxExpression *FxLtEqGt::Resolve(FCompileContext& ctx)
+FxExpression *FxSpaceship::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
@@ -4744,13 +4721,28 @@ FxExpression *FxLtEqGt::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
+	if(ctx.Version >= MakeVersion(4, 15, 1))
+	{
+		if(Operator == TK_LtGtEq)
+		{
+			ScriptPosition.Message(MSG_WARNING, "<>= is deprecated in favor of <=>");
+		}
+	}
+	else if(Operator == TK_LtEqGt)
+	{
+		ScriptPosition.Message(MSG_ERROR, "<=> requires ZScript version 4.15.1 or above");
+		delete this;
+		return nullptr;
+	}
+
+
 	if (left->IsNumeric() && right->IsNumeric())
 	{
 		Promote(ctx);
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "<=> expects two numeric operands");
+		ScriptPosition.Message(MSG_ERROR, "%s expects two numeric operands", (Operator == TK_LtEqGt) ? "<=>" : "<>=");
 		delete this;
 		return nullptr;
 	}
@@ -4769,22 +4761,11 @@ FxExpression *FxLtEqGt::Resolve(FCompileContext& ctx)
 
 //==========================================================================
 //
-// Deprecated in favour of FxLtEqGt
-//
-//==========================================================================
-
-ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
-{
-	return FxLtEqGt::Emit(build);
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
 
-ExpEmit FxLtEqGt::Emit(VMFunctionBuilder *build)
+ExpEmit FxSpaceship::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);

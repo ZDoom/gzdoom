@@ -10,7 +10,7 @@ gameinfo
 	finalemusic = "$MUSIC_VICTOR"
 	finaleflat = "FLOOR4_8"
 	finalepage = "HELP2", "VICTORY2", "ENDPIC"
-	infopage = "HELP1", "HELP2"
+	infopage = "HELP1", "HELP2", "*"
 	quitsound = "menu/quit1"
 	borderflat = "FLOOR7_2"
 	drawreadthis = true

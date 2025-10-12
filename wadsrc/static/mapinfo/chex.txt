@@ -14,7 +14,7 @@ gameinfo
 	finalemusic = "$MUSIC_VICTOR"
 	finaleflat = "FLOOR4_8"
 	finalepage = "CREDIT", "VICTORY2", "ENDPIC"
-	infopage = "HELP1", "CREDIT"
+	infopage = "HELP1", "*", "CREDIT"
 	quitsound = "menu/quit1"
 	borderflat = "CEIL5_1"
 	border = DoomBorder

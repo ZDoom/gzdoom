@@ -51,6 +51,7 @@
 #include "events.h"
 #include "i_system.h"
 #include "screenjob.h"
+#include "texturemanager.h"
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
@@ -2676,7 +2677,7 @@ void G_ClearMapinfo()
 //
 //==========================================================================
 
-void G_ParseMapInfo (FString basemapinfo)
+void G_ParseMapInfo(FString basemapinfo)
 {
 	int lump, lastlump = 0;
 	level_info_t gamedefaults;
@@ -2693,7 +2694,7 @@ void G_ParseMapInfo (FString basemapinfo)
 			int length = fileSystem.FileLength(comp);
 			if (length == 7 && !strnicmp("vanilla", data, 7))
 			{
-				flags1 = 
+				flags1 =
 					COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
 					COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_DEHHEALTH | COMPATF_CROSSDROPOFF |
 					COMPATF_LIGHT | COMPATF_MASKEDMIDTEX |
@@ -2740,7 +2741,7 @@ void G_ParseMapInfo (FString basemapinfo)
 		int baselump = fileSystem.GetNumForFullName(basemapinfo.GetChars());
 		if (fileSystem.GetFileContainer(baselump) > 0)
 		{
-			I_FatalError("File %s is overriding core lump %s.", 
+			I_FatalError("File %s is overriding core lump %s.",
 				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
@@ -2749,12 +2750,12 @@ void G_ParseMapInfo (FString basemapinfo)
 	gamedefaults.compatmask |= flags1;
 	gamedefaults.compatflags2 |= flags2;
 	gamedefaults.compatmask2 |= flags2;
-	
-	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", "UMAPINFO", NULL };
+
+	static const char* mapinfonames[] = { "MAPINFO", "ZMAPINFO", "UMAPINFO", NULL };
 	int nindex;
 
 	// Parse any extra MAPINFOs.
-	while ((lump = fileSystem.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
+	while ((lump = fileSystem.FindLumpMulti(mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
 		if (nindex == 0)
 		{
@@ -2791,11 +2792,11 @@ void G_ParseMapInfo (FString basemapinfo)
 
 	if (AllEpisodes.Size() == 0)
 	{
-		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
+		I_FatalError("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
 	}
 	if (AllSkills.Size() == 0)
 	{
-		I_FatalError ("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
+		I_FatalError("You cannot use clearskills in a MAPINFO if you do not define any new skills after it.");
 	}
 
 	// Find any and all secret maps.
@@ -2815,6 +2816,34 @@ void G_ParseMapInfo (FString basemapinfo)
 			li->flags3 |= LEVEL3_SECRET;
 		}
 	}
+}
+
+void G_AddBoomHelpScreens()
+{
+	// Now add Boom's dynamic help screens to the infopages array if it got marked accordingly.
+	// Doing this manually via config files would be a bit inconvenient for 100 file names, 
+	// so use a "*" entry in the list of help screens to insert these.
+	for (unsigned i = 0; i < gameinfo.infoPages.Size(); i++)
+	{
+		auto help = gameinfo.infoPages[i];
+		if (!strcmp(help.GetChars(), "*"))
+		{
+			gameinfo.infoPages.Delete(i);
+			for (int ii = 1; ii <= 99; ii++)
+			{
+				// only add the screens that exist.
+				FStringf helpxx("HELP%02d", ii);
+				auto texid = TexMan.CheckForTexture(helpxx.GetChars(), ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
+				if (texid.Exists())
+				{
+					gameinfo.infoPages.Insert(i++, FName(helpxx));
+				}
+			}
+			break;
+		}
+	}
+	
+
 }
 
 DEFINE_GLOBAL(AllEpisodes)

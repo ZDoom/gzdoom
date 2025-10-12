@@ -4,6 +4,6 @@ gameinfo
 {
 	creditpage = "CREDIT"
 	finalepage = "CREDIT", "VICTORY2", "ENDPIC"
-	infopage = "HELP1", "CREDIT"
+	infopage = "HELP1", "*", "CREDIT"
 }
 

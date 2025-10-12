@@ -506,6 +506,7 @@ FString CalcMapName (int episode, int level);
 
 void G_ClearMapinfo();
 void G_ParseMapInfo (FString basemapinfo);
+void G_AddBoomHelpScreens();
 
 enum ESkillProperty
 {

@@ -37,6 +37,7 @@ class ReadThisMenu : GenericMenu
 {
 	int mScreen;
 	int mInfoTic;
+	int mDirection;
 
 	//=============================================================================
 	//
@@ -49,6 +50,7 @@ class ReadThisMenu : GenericMenu
 		Super.Init(parent);
 		mScreen = 1;
 		mInfoTic = gametic;
+		mDirection = 1;
 	}
 
 	override void Drawer()
@@ -65,12 +67,12 @@ class ReadThisMenu : GenericMenu
 		
 		if (!tex.IsValid())
 		{
-			tex = TexMan.CheckForTexture(gameinfo.infoPages[mScreen-1], TexMan.Type_MiscPatch);
+			tex = TexMan.CheckForTexture(gameinfo.infoPages[mScreen - 1], TexMan.Type_MiscPatch);
 		}
 
-		if (mScreen > 1)
+		if (mScreen - mDirection >= 1 &&  mScreen - mDirection <= gameinfo.infoPages.Size())
 		{
-			prevpic = TexMan.CheckForTexture(gameinfo.infoPages[mScreen-2], TexMan.Type_MiscPatch);
+			prevpic = TexMan.CheckForTexture(gameinfo.infoPages[mScreen - 1 - mDirection], TexMan.Type_MiscPatch);
 		}
 
 		screen.Dim(0, 1.0, 0,0, screen.GetWidth(), screen.GetHeight());
@@ -98,7 +100,20 @@ class ReadThisMenu : GenericMenu
 			MenuSound("menu/choose");
 			mScreen++;
 			mInfoTic = gametic;
+			mDirection = 1;
 			if (Level.F1Pic.Length() != 0 || mScreen > gameinfo.infoPages.Size())
+			{
+				Close();
+			}
+			return true;
+		}
+		else if (mkey == MKEY_Clear)
+		{
+			MenuSound("menu/choose");
+			mScreen--;
+			mInfoTic = gametic;
+			mDirection = -1;
+			if (Level.F1Pic.Length() != 0 || mScreen <= 0)
 			{
 				Close();
 			}

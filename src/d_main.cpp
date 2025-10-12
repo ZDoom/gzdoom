@@ -3337,7 +3337,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	}
 
 	TexMan.Init();
-	
+
 	if (!(batchrun || norun)) Printf ("V_Init: allocate screen.\n");
 	if (!(restart || norun))
 	{
@@ -3404,6 +3404,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	}, CheckForHacks, InitBuildTiles);
 	PatchTextures();
 	TexAnim.Init();
+	G_AddBoomHelpScreens();
 	C_InitConback(TexMan.CheckForTexture(gameinfo.BorderFlat.GetChars(), ETextureType::Flat), true, 0.25);
 
 	FixWideStatusBar();

@@ -154,6 +154,14 @@ struct FConnection
 	sockaddr_in Address = {};
 	uint64_t InfoAck = 0u;
 	bool bHasGameInfo = false;
+
+	void Clear()
+	{
+		Status = CSTAT_NONE;
+		Address = {};
+		InfoAck = 0u;
+		bHasGameInfo = false;
+	}
 };
 
 bool netgame = false;
@@ -468,7 +476,7 @@ void I_NetDone()
 
 void I_ClearClient(size_t client)
 {
-	memset(&Connected[client], 0, sizeof(Connected[client]));
+	Connected[client].Clear();
 }
 
 static int FindClient(const sockaddr_in& address)
@@ -972,7 +980,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 		MaxClients = 2u;
 	}
 
-	if (MaxClients > MAXPLAYERS)
+	if ((unsigned)MaxClients > MAXPLAYERS)
 		I_FatalError("Cannot host a game with %u players. The limit is currently %lu", MaxClients, MAXPLAYERS);
 
 	GenerateGameID();
@@ -1029,7 +1037,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	NetBuffer[1] = PRE_GO;
 	NetBuffer[2] = NetMode;
 	NetBufferLength = 3u;
-	for (size_t client = 1u; client < MaxClients; ++client)
+	for (size_t client = 1u; client < (size_t)MaxClients; ++client)
 	{
 		if (Connected[client].Status != CSTAT_NONE)
 			SendPacket(Connected[client].Address);

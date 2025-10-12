@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2010-2017 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,10 +33,15 @@
 **
 */
 
-#include "v_video.h"
+#include "c_cvars.h"
 #include "menu.h"
 #include "vm.h"
 
+// by request of Nash
+CVARD(Bool, silence_menu_scroll, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when using mouse wheel");
+CVARD(Bool, silence_menu_hover, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Silences cursor movement when implicitly selecting with mouse");
+
+CVARD(Int, menu_overscroll, 8, CVAR_GLOBALCONFIG | CVAR_ARCHIVE, "Number of lines you can scroll past the bottom of a menu");
 
 //=============================================================================
 //

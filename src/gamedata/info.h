@@ -150,7 +150,7 @@ public:
 		}
 		return Tics + pr_statetics.GenRand32() % (TicRange + 1);
 	}
-	inline int GetClientsideTics() const
+	inline int GetClientSideTics() const
 	{
 		if (TicRange == 0)
 		{

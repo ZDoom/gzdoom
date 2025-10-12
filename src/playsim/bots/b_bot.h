@@ -120,7 +120,7 @@ public:
 	void Init ();
 	void End();
 	bool SpawnBot (const char *name, int color = NOCOLOR);
-	void TryAddBot (FLevelLocals *Level, uint8_t **stream, int player);
+	void TryAddBot (FLevelLocals *Level, TArrayView<uint8_t>& stream, int player);
 	void RemoveAllBots (FLevelLocals *Level, bool fromlist);
 	bool LoadBots ();
 	void ForgetBots ();
@@ -154,7 +154,7 @@ public:
 
 private:
 	//(b_game.cpp)
-	bool DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skill);
+	bool DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, botskill_t skill);
 
 protected:
 	bool	 ctf;

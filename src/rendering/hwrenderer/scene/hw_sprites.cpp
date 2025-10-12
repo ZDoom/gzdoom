@@ -44,6 +44,7 @@
 #include "vectors.h"
 #include "texturemanager.h"
 #include "basics.h"
+#include "d_net.h"
 
 #include "hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
@@ -314,8 +315,16 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 					state.SetDynLight(probe->Red, probe->Green, probe->Blue);
 			}
 
+			if(actor && (actor->flags9 & MF9_DECOUPLEDANIMATIONS))
+			{
+				IFVIRTUALPTR(actor, AActor, AnimateBones)
+				{
+					CallVM<void>(func, actor, di->Viewpoint.TicFrac);
+				}
+			}
+
 			FHWModelRenderer renderer(di, state, dynlightindex);
-			RenderModel(&renderer, x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
+			RenderModel(&renderer, x, y, z, modelframe, actor, Net_ModifyObjectFrac(actor, di->Viewpoint.TicFrac));
 			state.SetVertexBuffer(screen->mVertexData);
 		}
 	}
@@ -405,11 +414,14 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 
 		return true;
 	}
-	
+
+	// [DVR] +ANGLEDROLL
+	const bool AngledRoll = (actor != nullptr && actor->renderflags2 & RF2_ANGLEDROLL);
+
 	// [BB] Billboard stuff
 	const bool drawWithXYBillboard = ((particle && gl_billboard_particles && !(particle->flags & SPF_NO_XY_BILLBOARD)) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		//&& di->mViewActor != nullptr
-		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
+		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD)))) && !AngledRoll;
 
 	const bool drawBillboardFacingCamera = hw_force_cambbpref ? gl_billboard_faces_camera :
 		gl_billboard_faces_camera
@@ -516,17 +528,35 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 				// Compute center of sprite
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				float rollDegrees = Angles.Roll.Degrees();
+				float pitchDegrees = 0.0;
+
+				if (AngledRoll)
+				{
+					rollDegrees = fmodf(rollDegrees, 360.0f);
+					DAngle ang = di->Viewpoint.Angles.Yaw + actor->Angles.Yaw + actor->AngledRollOffset - DAngle::fromDeg(90.0);
+					angleRad = ang.Radians();
+					FVector3 relPos = center - FVector3(di->Viewpoint.Pos);
+					if (useOffsets) relPos += FVector3(xx, yy, zz);
+
+					Matrix3x4 rolltilt;
+					rolltilt.MakeIdentity();
+					ang = actor->Angles.Yaw + actor->AngledRollOffset;
+					rolltilt.Rotate(ang.Cos(), ang.Sin(), 0.0, -rollDegrees);
+					pitchDegrees = 270.0 - DVector3(rolltilt * relPos).Angle().Degrees();
+				}
 
 				mat.Translate(center.X, center.Z, center.Y);
-				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
 				if (useOffsets) mat.Translate(xx, zz, yy);
+				mat.Scale(1.0, 1.0/pixelstretch, 1.0);	// unstretch sprite by level aspect ratio
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, -HWAngles.Yaw.Degrees()); // Cancel regular Y-billboarding
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
-				if (useOffsets) mat.Translate(-xx, -zz, -yy);
+				if (AngledRoll) mat.Rotate(0.0, 1.0, 0.0, pitchDegrees); // New Y-billboarding about rolled z-axis
 				mat.Scale(1.0, pixelstretch, 1.0);	// stretch sprite by level aspect ratio
+				if (useOffsets) mat.Translate(-xx, -zz, -yy);
 				mat.Translate(-center.X, -center.Z, -center.Y);
 			}
 
-			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.IsOrtho())
+			if (actor && (actor->renderflags2 & RF2_ISOMETRICSPRITES) && di->Viewpoint.bDoOrtho)
 			{
 				float angleRad = (FAngle::fromDeg(270.) - HWAngles.Yaw).Radians();
 				mat.Translate(center.X, center.Z, center.Y);
@@ -787,7 +817,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	const auto &vp = di->Viewpoint;
 	AActor *camera = vp.camera;
 
-	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
+	const double alpha = thing->InterpolatedAlpha(vp.TicFrac);
+	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(alpha))
 	{
 		if (!(thing->flags & MF_STEALTH) || !di->isStealthVision() || thing == camera)
 			return;
@@ -800,7 +831,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 
 	int spritenum = thing->sprite;
-	DVector2 sprscale(thing->Scale.X, thing->Scale.Y);
+	DVector2 sprscale = thing->InterpolatedScale(vp.TicFrac);
 	if (thing->player != nullptr)
 	{
 		P_CheckPlayerSprite(thing, spritenum, sprscale);
@@ -916,7 +947,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// [RH] Make floatbobbing a renderer-only effect.
 	else
 	{
-		float fz = thing->GetBobOffset(vp.TicFrac);
+		float fz = thing->GetBobOffset(Net_ModifyObjectFrac(thing, vp.TicFrac));
 		z += fz;
 	}
 
@@ -928,8 +959,22 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (!modelframe)
 	{
 		bool mirror = false;
+		bool backfaced = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
-		if (di->Viewpoint.IsOrtho()) ang = vp.Angles.Yaw;
+		if (di->Viewpoint.bDoOrtho) ang = vp.Angles.Yaw;
+		else if (actor && thing->renderflags2 & RF2_ANGLEDROLL)
+		{
+			Matrix3x4 rolltilt;
+			rolltilt.MakeIdentity();
+			DAngle tempang = thing->Angles.Yaw + thing->AngledRollOffset;
+			rolltilt.Rotate(tempang.Cos(), tempang.Sin(), 0.0, -thing->Angles.Roll.Degrees());
+			tempang = DVector3(rolltilt * FVector3(thingpos - vp.Pos)).Angle();
+			backfaced = fabs((ang - tempang).Degrees()) > 90.0;
+			if (backfaced) // (ang - tempang).Cos() < 0.0)
+			{
+				ang = DAngle::fromDeg(180.0) - ang;
+			}
+		}
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -1122,6 +1167,15 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 	if(thing->renderflags2 & RF2_ISOMETRICSPRITES) depth = depth * vp.PitchCos - vp.PitchSin * z2; // Helps with stacking actors with small xy offsets
+	if(actor && (thing->renderflags2 & RF2_ANGLEDROLL) && !(thing->renderflags & RF_ROLLCENTER))
+	{
+		double rollsin = thing->Angles.Roll.Sin();
+		DAngle tempang2 = thing->Angles.Yaw + thing->AngledRollOffset + DAngle::fromDeg(rollsin < 0.0
+																						? 90.0 : -90.0);
+		double r2 = 0.5 * fabs((z2 - z1) * rollsin);
+		depth = (float)((x + r2 * tempang2.Cos() - vp.Pos.X) * vp.TanCos
+						+ (y + r2 * tempang2.Sin() - vp.Pos.Y) * vp.TanSin);
+	}
 	if (isSpriteShadow) depth += 1.f/65536.f; // always sort shadows behind the sprite.
 
 	if (gl_spriteclip == -1 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE) // perform anamorphosis
@@ -1171,7 +1225,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		z1 = z1 * spbias + vpz * vpbias;
 		x2 = x2 * spbias + vpx * vpbias;
 		y2 = y2 * spbias + vpy * vpbias;
-		z2 = z2 * spbias + vpz * vpbias;		
+		z2 = z2 * spbias + vpz * vpbias;
 	}
 
 	// light calculation
@@ -1237,7 +1291,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	translation = thing->Translation;
 
 	OverrideShader = -1;
-	trans = thing->Alpha;
+	trans = alpha;
 	hw_styleflags = STYLEHW_Normal;
 
 	if (RenderStyle.BlendOp >= STYLEOP_Fuzz && RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
@@ -1473,7 +1527,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	ThingColor.a = 255;
 	const auto& vp = di->Viewpoint;
 
-	double timefrac = vp.TicFrac;
+	double timefrac = Net_ModifyParticleFrac(particle, vp.TicFrac);
 	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
 
@@ -1601,7 +1655,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	translation = spr->Translation;
 
 	const auto& vp = di->Viewpoint;
-	double timefrac = vp.TicFrac;
+	double timefrac = Net_ModifyObjectFrac(spr, vp.TicFrac);
 
 	if (paused || spr->isFrozen())
 		timefrac = 0.;

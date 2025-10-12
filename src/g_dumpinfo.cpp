@@ -76,31 +76,12 @@ CCMD(listlights)
 			if (dl->target)
 			{
 				FTextureID spr = sprites[dl->target->sprite].GetSpriteFrame(dl->target->frame, 0, nullAngle, nullptr);
-				Printf(", frame = %s ", TexMan.GetGameTexture(spr)->GetName().GetChars());
+				Printf(", frame = %s\n", TexMan.GetGameTexture(spr)->GetName().GetChars());
 			}
 			
-			
-			FLightNode * node;
-			
-			node=dl->touching_sides;
-			
-			while (node)
-			{
-				walls++;
-				allwalls++;
-				node = node->nextTarget;
-			}
-			
-			
-			node = dl->touching_sector;
-			
-			while (node)
-			{
-				allsectors++;
-				sectors++;
-				node = node->nextTarget;
-			}
+			/*
 			Printf("- %d walls, %d sectors\n", walls, sectors);
+			*/
 			
 		}
 		Printf("%i dynamic lights, %d shadowmapped, %d walls, %d sectors\n\n\n", i, shadowcount, allwalls, allsectors);
@@ -347,7 +328,7 @@ CCMD(dumplinktable)
 
 CCMD(printinv)
 {
-	int pnum = consoleplayer;
+	unsigned int pnum = consoleplayer;
 
 #ifdef _DEBUG
 	// Only allow peeking on other players' inventory in debug builds.
@@ -446,7 +427,7 @@ CCMD(listsnapshots)
 		FCompressedBuffer *snapshot = &wadlevelinfos[i].Snapshot;
 		if (snapshot->mBuffer != nullptr)
 		{
-			Printf("%s (%u -> %u bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
+			Printf("%s (%lu -> %lu bytes)\n", wadlevelinfos[i].MapName.GetChars(), snapshot->mCompressedSize, snapshot->mSize);
 		}
 	}
 }

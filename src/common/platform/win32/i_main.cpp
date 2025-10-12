@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -40,6 +41,7 @@
 #include <objbase.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <csignal>
 
 #include <processenv.h>
 #include <shellapi.h>
@@ -100,6 +102,7 @@ void CreateCrashLog (const char *custominfo, DWORD customsize);
 void DisplayCrashLog ();
 void DestroyCustomCursor();
 int GameMain();
+void SignalHandler(int signal);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -181,6 +184,11 @@ int DoMain (HINSTANCE hInstance)
 	TIMECAPS tc;
 	DEVMODE displaysettings;
 
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+	// signal(SIGHUP, SignalHandler);
+	// signal(SIGQUIT, SignalHandler);
+
 	// Do not use the multibyte __argv here because we want UTF-8 arguments
 	// and those can only be done by converting the Unicode variants.
 	Args = new FArgs();
@@ -202,7 +210,7 @@ int DoMain (HINSTANCE hInstance)
 
 		if (GetConsoleMode(StdOut, &mode))
 		{
-			if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+			if (SetConsoleMode(StdOut, mode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 				FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
 		}
 	}
@@ -247,7 +255,7 @@ int DoMain (HINSTANCE hInstance)
 				DWORD mode;
 				if (GetConsoleMode(StdOut, &mode))
 				{
-					if (SetConsoleMode(StdOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+					if (SetConsoleMode(StdOut, mode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 						FancyStdOut = IsWindows10OrGreater(); // Windows 8.1 and lower do not understand ANSI formatting.
 				}
 			}
@@ -339,7 +347,7 @@ int DoMain (HINSTANCE hInstance)
 			}
 			else if (StdOut == nullptr)
 			{
-				mainwindow.ShowErrorPane(nullptr);
+				mainwindow.ShowErrorPane("");
 			}
 		}
 	}

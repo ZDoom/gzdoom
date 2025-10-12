@@ -526,6 +526,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
 	ACTION_RETURN_INT(StringCharLower(ch));
 }
 
+static int StringIsInt(FString *self)
+{
+	return self->IsInt();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IsInt, StringIsInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_INT(self->IsInt());
+}
+
+static int StringIsDouble(FString *self)
+{
+	return self->IsFloat();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IsDouble, StringIsDouble)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_INT(self->IsFloat());
+}
 
 static int StringToInt(FString *self, int base)
 {

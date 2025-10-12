@@ -1,0 +1,25 @@
+ZMusic is licensed under the GPLv3.
+
+The majority of original code uses a BSD-like lincese. See bsd.txt.
+
+libADL and libOPN are licensed under the GPLv3.
+
+WildMidi is licensed under the LGPLv3. See lgplv3.txt
+
+This software uses the 'zlib' general purpose compression library by
+Jean-loup Gailly and Mark Adler.
+
+This software uses the game_music_emu library, which is covered by the GNU Lesser
+General Public License. See lgplv21.txt.
+
+This software uses the "Dynamic Universal Music Bibliotheque" library for
+MOD music playback. See dumb.txt for original license. The version used,
+however, has been heavily modified from its original form and is the same
+version used by the foobar2000 component foo_dumb as of mid-2008, found at
+http://kode54.foobar2000.org/.
+
+
+ZMusic Lite is a feature reduced version that omits all content that is not
+compatible with the LGPL v2.1. Use this if your project cannot comply with the GPL.
+This means that most of the available MIDI synths, except FluidSynth, have been removed
+and that the playback of native OPL file types is disabled.

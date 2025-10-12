@@ -1,7 +1,8 @@
 //
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2005-2016 Christoph Oelckers
+// Copyright 2005-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,6 +20,7 @@
 //
 //--------------------------------------------------------------------------
 //
+
 /*
 ** gl_models.cpp
 **
@@ -132,7 +134,7 @@ VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(AActor * actor, float x, float y
 
 	double tic = actor->Level->totaltime;
 
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}
@@ -380,10 +382,10 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 	if(is_decoupled)
 	{
 		smfNext = smf = &BaseSpriteModelFrames[(data != nullptr && data->modelDef != nullptr) ? data->modelDef : actor->GetClass()];
-		if(data && !(data->curAnim.flags & MODELANIM_NONE))
+		if(data && !(data->anims.curAnim.flags & MODELANIM_NONE))
 		{
-			calcFrames(data->curAnim, tic, decoupled_frame, inter);
-			decoupled_frame_prev = &data->prevAnim;
+			calcFrames(data->anims.curAnim, tic, decoupled_frame, inter);
+			decoupled_frame_prev = &data->anims.prevAnim;
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))
@@ -394,7 +396,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			if (!WorldPaused() && !Level->isFrozen())
 			{
 				ticFraction = ticFrac;
 			}
@@ -558,7 +560,7 @@ bool CalcModelOverrides(int i, const FSpriteModelFrame *smf, DActorModelData* da
 		out.skinid = smf->skinIDs[i];
 	}
 
-	return (out.modelid >= 0 && out.modelid < Models.size());
+	return (out.modelid >= 0 && out.modelid < Models.SSize());
 }
 
 
@@ -641,7 +643,7 @@ static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpri
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, int curTics, double ticFrac, FTranslationID translation, AActor* actor)
 {
 	double tic = actor->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}
@@ -694,7 +696,7 @@ void InitModels()
 	{
 		FVoxelModel *md = (FVoxelModel*)Models[VoxelDefs[i]->Voxel->VoxelIndex];
 		FSpriteModelFrame smf;
-		memset(&smf, 0, sizeof(smf));
+		memset((void*)&smf, 0, sizeof(smf));
 		smf.isVoxel = true;
 		smf.modelsAmount = 1;
 		smf.modelframes.Alloc(1);
@@ -772,7 +774,7 @@ void ParseModelDefLump(int Lump)
 			sc.MustGetString();
 
 			FSpriteModelFrame smf;
-			memset(&smf, 0, sizeof(smf));
+			memset((void*)&smf, 0, sizeof(smf));
 			smf.xscale=smf.yscale=smf.zscale=1.f;
 
 			auto type = PClass::FindClass(sc.String);
@@ -1187,7 +1189,7 @@ FSpriteModelFrame * FindModelFrameRaw(const AActor * actorDefaults, const PClass
 	{
 		FSpriteModelFrame smf;
 
-		memset(&smf, 0, sizeof(smf));
+		memset((void*)&smf, 0, sizeof(smf));
 		smf.type = ti;
 		smf.sprite = sprite;
 		smf.frame = frame;

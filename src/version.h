@@ -60,7 +60,7 @@ const char *GetVersionString();
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "225"
+#define LASTRUNVERSION "226"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
@@ -97,6 +97,7 @@ const char *GetVersionString();
 #define GAMENAME "GZDoom"
 #define WGAMENAME L"GZDoom"
 #define GAMENAMELOWERCASE "gzdoom"
+#define APPID "org.zdoom.GZDoom"
 #define QUERYIWADDEFAULT true
 #define FORUM_URL "http://forum.zdoom.org/"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"

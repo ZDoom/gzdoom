@@ -3,20 +3,20 @@
 #include <zwidget/core/widget.h>
 #include "gstrings.h"
 
-// #define RENDER_BACKENDS
+#define RENDER_BACKENDS
 
 class LauncherWindow;
 class TextLabel;
 class CheckboxLabel;
 class ListView;
+struct FStartupSelectionInfo;
 
 class SettingsPage : public Widget
 {
 public:
-	SettingsPage(LauncherWindow* launcher, int* autoloadflags);
+	SettingsPage(LauncherWindow* launcher, const FStartupSelectionInfo& info);
 	void UpdateLanguage();
-
-	void Save();
+	void SetValues(FStartupSelectionInfo& info) const;
 
 private:
 	void OnLanguageChanged(int i);
@@ -33,6 +33,7 @@ private:
 	CheckboxLabel* LightsCheckbox = nullptr;
 	CheckboxLabel* BrightmapsCheckbox = nullptr;
 	CheckboxLabel* WidescreenCheckbox = nullptr;
+	CheckboxLabel* SupportWadsCheckbox = nullptr;
 #ifdef RENDER_BACKENDS
 	TextLabel* BackendLabel = nullptr;
 	CheckboxLabel* VulkanCheckbox = nullptr;
@@ -40,8 +41,6 @@ private:
 	CheckboxLabel* GLESCheckbox = nullptr;
 #endif
 	ListView* LangList = nullptr;
-
-	int* AutoloadFlags = nullptr;
 
 	TArray<std::pair<FString, FString>> languages;
 	bool hideLanguage = false;

@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1999-2016 Randy Heit
 ** Copyright 2019-2020 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,18 +35,18 @@
 */
 
 #include <dirent.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <fnmatch.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
-#include <stdarg.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 
 #ifdef __linux__
 #include <asm/unistd.h>
@@ -57,19 +58,19 @@
 #include <termios.h>
 #endif
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
-#include "version.h"
-#include "cmdlib.h"
-#include "m_argv.h"
-#include "i_sound.h"
-#include "i_interface.h"
-#include "v_font.h"
 #include "c_cvars.h"
-#include "palutil.h"
-#include "st_start.h"
-#include "printf.h"
+#include "cmdlib.h"
+#include "i_interface.h"
+#include "i_sound.h"
 #include "launcherwindow.h"
+#include "m_argv.h"
+#include "palutil.h"
+#include "printf.h"
+#include "st_start.h"
+#include "v_font.h"
+#include "version.h"
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
@@ -79,6 +80,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
+CVAR(String, queryiwad_key, "shift", CVAR_GLOBALCONFIG | CVAR_ARCHIVE);
 CVAR(Bool, con_printansi, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR(Bool, con_4bitansi, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 EXTERN_CVAR(Bool, longsavemessages)
@@ -215,10 +217,15 @@ void CleanProgressBar()
 }
 
 static int ProgressBarCurPos, ProgressBarMaxPos;
+static bool ProgressBarComplete;
 
 void RedrawProgressBar(int CurPos, int MaxPos)
 {
 	if (!isatty(STDOUT_FILENO)) return;
+
+	if (ProgressBarComplete && CurPos >= MaxPos) return;
+	ProgressBarComplete = CurPos >= MaxPos; // draw once
+
 	CleanProgressBar();
 	struct winsize sizeOfWindow;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &sizeOfWindow);
@@ -302,17 +309,55 @@ void I_PrintStr(const char *cp)
 	if (StartWindow) RedrawProgressBar(ProgressBarCurPos,ProgressBarMaxPos);
 }
 
-int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags, FString &extraArgs)
+bool HoldingQueryKey(const char* key)
+{
+	int code = 0;
+
+	if (!stricmp(key, "shift"))
+		code = SDL_SCANCODE_LSHIFT;
+	else if (!stricmp(key, "control") || !stricmp(key, "ctrl"))
+		code = SDL_SCANCODE_LCTRL;
+
+	if (!code) return false;
+
+	auto window = SDL_CreateWindow(
+		"HoldingQueryKey",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		1, 1,
+		SDL_WINDOW_HIDDEN
+	);
+
+	if (!window) return false;
+
+	SDL_PumpEvents();
+
+	auto keys = SDL_GetKeyboardState(nullptr);
+	bool state = (code == SDL_SCANCODE_LCTRL && (keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL]))
+		|| (code == SDL_SCANCODE_LSHIFT && (keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT]));
+
+	SDL_DestroyWindow(window);
+
+	return state;
+}
+
+bool I_PickIWad (bool showwin, FStartupSelectionInfo& info)
 {
 	if (!showwin)
 	{
-		return defaultiwad;
+		return true;
 	}
 
 #ifdef __APPLE__
-	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
+	const int ret = I_PickIWad_Cocoa(&(*info.Wads)[0], (int)info.Wads->Size(), showwin, info.DefaultIWAD);
+	if (ret >= 0)
+	{
+		info.DefaultIWAD = ret;
+		return true;
+	}
+	return false;
 #else
-	return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags, &extraArgs);
+	return LauncherWindow::ExecModal(info);
 #endif
 }
 

@@ -97,6 +97,7 @@ typedef int SOCKET;
 #endif
 
 #ifdef __WIN32__
+# include "common/scripting/dap/GameEventEmit.h"
 typedef int socklen_t;
 const char* neterror(void);
 #else
@@ -191,10 +192,10 @@ size_t Net_SetEngineInfo(uint8_t*& stream);
 bool Net_VerifyEngine(uint8_t*& stream);
 void Net_SetupUserInfo();
 const char* Net_GetClientName(int client, unsigned int charLimit);
-size_t Net_SetUserInfo(int client, uint8_t*& stream);
-size_t Net_ReadUserInfo(int client, uint8_t*& stream);
-size_t Net_ReadGameInfo(uint8_t*& stream);
-size_t Net_SetGameInfo(uint8_t*& stream);
+void Net_SetUserInfo(int client, TArrayView<uint8_t>& stream);
+void Net_ReadUserInfo(int client, TArrayView<uint8_t>& stream);
+void Net_ReadGameInfo(TArrayView<uint8_t>& stream);
+void Net_SetGameInfo(TArrayView<uint8_t>& stream);
 
 static SOCKET CreateUDPSocket()
 {
@@ -267,8 +268,10 @@ static void StartNetwork(bool autoPort)
 {
 #ifdef __WIN32__
 	WSADATA data;
-	if (WSAStartup(0x0101, &data))
-		I_FatalError("Couldn't initialize Windows sockets");
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()) {
+		if (WSAStartup(0x0101, &data))
+			I_FatalError("Couldn't initialize Windows sockets");
+	}
 #endif
 
 	netgame = true;
@@ -293,7 +296,9 @@ void CloseNetwork()
 		netgame = false;
 	}
 #ifdef __WIN32__
-	WSACleanup();
+	if (!DebugServer::RuntimeEvents::IsDebugServerRunning()){
+		WSACleanup();
+	}
 #endif
 }
 
@@ -489,7 +494,7 @@ static void SendPacket(const sockaddr_in& to)
 	// Huge packets should be sent out as sequences, not as one big packet, otherwise it's prone
 	// to high amounts of congestion and reordering needed.
 	if (NetBufferLength > MAX_MSGLEN)
-		I_FatalError("Netbuffer overflow: Tried to send %u bytes of data", NetBufferLength);
+		I_FatalError("Netbuffer overflow: Tried to send %lu bytes of data", NetBufferLength);
 
 	assert(!(NetBuffer[0] & NCMD_COMPRESSED));
 
@@ -833,7 +838,7 @@ static bool Host_CheckForConnections(void* connected)
 		{
 			if (Connected[RemoteClient].Status == CSTAT_CONNECTING)
 			{
-				uint8_t* stream = &NetBuffer[2];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[2], MAX_MSGLEN-2);
 				Net_ReadUserInfo(RemoteClient, stream);
 				Connected[RemoteClient].Status = CSTAT_WAITING;
 				I_NetClientConnected(RemoteClient, 16u);
@@ -886,8 +891,9 @@ static bool Host_CheckForConnections(void* connected)
 				memcpy(&NetBuffer[3], GameID, 8);
 				NetBufferLength = 11u;
 
-				uint8_t* stream = &NetBuffer[NetBufferLength];
-				NetBufferLength += Net_SetGameInfo(stream);
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+				Net_SetGameInfo(stream);
+				NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 				SendPacket(con.Address);
 				clientReady = false;
 			}
@@ -911,8 +917,9 @@ static bool Host_CheckForConnections(void* connected)
 							NetBufferLength += addrSize;
 						}
 
-						uint8_t* stream = &NetBuffer[NetBufferLength];
-						NetBufferLength += Net_SetUserInfo(i, stream);
+						TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+						Net_SetUserInfo(i, stream);
+						NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 						SendPacket(con.Address);
 					}
 					clientReady = false;
@@ -966,7 +973,7 @@ static bool HostGame(int arg, bool forcedNetMode)
 	}
 
 	if (MaxClients > MAXPLAYERS)
-		I_FatalError("Cannot host a game with %u players. The limit is currently %u", MaxClients, MAXPLAYERS);
+		I_FatalError("Cannot host a game with %u players. The limit is currently %lu", MaxClients, MAXPLAYERS);
 
 	GenerateGameID();
 	NetworkClients += 0;
@@ -1131,7 +1138,7 @@ static bool Guest_ContactHost(void* unused)
 			{
 				TicDup = clamp<int>(NetBuffer[2], 1, MAXTICDUP);
 				memcpy(GameID, &NetBuffer[3], 8);
-				uint8_t* stream = &NetBuffer[11];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[11], MAX_MSGLEN - 11);
 				Net_ReadGameInfo(stream);
 				Connected[consoleplayer].bHasGameInfo = true;
 			}
@@ -1158,7 +1165,7 @@ static bool Guest_ContactHost(void* unused)
 				{
 					Connected[c].Status = CSTAT_READY;
 				}
-				uint8_t* stream = &NetBuffer[byte];
+				TArrayView<uint8_t> stream = TArrayView(&NetBuffer[byte], MAX_MSGLEN - byte);
 				Net_ReadUserInfo(c, stream);
 				SetClientAck(consoleplayer, c, true);
 
@@ -1199,8 +1206,9 @@ static bool Guest_ContactHost(void* unused)
 			NetBuffer[1] = PRE_USER_INFO;
 			NetBufferLength = 2u;
 
-			uint8_t* stream = &NetBuffer[NetBufferLength];
-			NetBufferLength += Net_SetUserInfo(consoleplayer, stream);
+			TArrayView<uint8_t> stream = TArrayView(&NetBuffer[NetBufferLength], MAX_MSGLEN - NetBufferLength);
+			Net_SetUserInfo(consoleplayer, stream);
+			NetBufferLength += stream.Data() - &NetBuffer[NetBufferLength];
 			SendPacket(Connected[0].Address);
 		}
 		else if (con.Status == CSTAT_WAITING)
@@ -1239,7 +1247,7 @@ static bool JoinGame(int arg)
 		throw CExitEvent(0);
 	}
 
-	for (size_t i = 1u; i < MaxClients; ++i)
+	for (int i = 1u; i < MaxClients; ++i)
 	{
 		if (Connected[i].Status != CSTAT_NONE)
 			Connected[i].Status = CSTAT_READY;

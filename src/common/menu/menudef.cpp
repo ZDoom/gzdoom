@@ -135,6 +135,23 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 	ACTION_RETURN_STRING(val);
 }
 
+DEFINE_ACTION_FUNCTION(FOptionValues, GetTooltip)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(grp);
+	PARAM_UINT(index);
+	FString val;
+	FOptionValues** pGrp = OptionValues.CheckKey(grp);
+	if (pGrp != nullptr)
+	{
+		if (index < (*pGrp)->mValues.Size())
+		{
+			val = (*pGrp)->mValues[index].Tooltip;
+		}
+	}
+	ACTION_RETURN_STRING(val);
+}
+
 
 void DeinitMenus()
 {
@@ -275,9 +292,11 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 
 static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &sizecompatible, int insertIndex)
 {
+	bool isValidTooltip = false;
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
+		bool foundWidget = false;
 		sc.MustGetString();
 		if (sc.Compare("else"))
 		{
@@ -395,6 +414,12 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 				desc->mFontColor2 = OptionSettings.mFontColorValue;
 			}
 		}
+		else if (sc.Compare("TooltipFont"))
+		{
+			sc.MustGetString();
+			FFont* newfont = V_GetFont(sc.String);
+			if (newfont != nullptr) desc->mTooltipFont = newfont;
+		}
 		else if (sc.Compare("NetgameMessage"))
 		{
 			sc.MustGetString();
@@ -434,6 +459,14 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 		else if (sc.Compare("CenterText"))
 		{
 			desc->mCenterText = true;
+		}
+		else if (sc.Compare("Tooltip"))
+		{
+			if (!isValidTooltip)
+				sc.ScriptError("Tooltips can only be defined after a list menu widget");
+
+			sc.MustGetString();
+			desc->mItems.Last()->mTooltip = sc.String;
 		}
 		else
 		{
@@ -511,20 +544,33 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 						}
 						else if (args[i]->isIntCompatible())
 						{
-							char *endp;
-							int v = (int)strtoll(sc.String, &endp, 0);
-							if (*endp != 0)
+							int v;
+
+							if (sc.Compare("true"))
 							{
-								// special check for font color ranges.
-								v = V_FindFontColor(sc.String);
-								if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+								v = 1;
+							}
+							else if (sc.Compare("false"))
+							{
+								v = 0;
+							}
+							else
+							{
+								char *endp;
+								v = (int)strtoll(sc.String, &endp, 0);
+								if (*endp != 0)
 								{
-									// todo: check other data types that may get used.
-									sc.ScriptError("Integer expected, got %s", sc.String);
+									// special check for font color ranges.
+									v = V_FindFontColor(sc.String);
+									if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+									{
+										// todo: check other data types that may get used.
+										sc.ScriptError("Integer expected, got %s", sc.String);
+									}
 								}
 							}
-							if (args[i] == TypeBool) v = !!v;
-							params.Push(v);
+								if (args[i] == TypeBool) v = !!v;
+								params.Push(v);
 						}
 						else if (args[i]->isFloat())
 						{
@@ -601,6 +647,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 						if (desc->mSelectedItem == -1) desc->mSelectedItem = desc->mItems.Size() - 1;
 					}
 					success = true;
+					foundWidget = true;
 				}
 			}
 			if (!success)
@@ -608,6 +655,7 @@ static void DoParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc, bool &s
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
+		isValidTooltip = foundWidget;
 	}
 	for (auto &p : desc->mItems)
 	{
@@ -768,6 +816,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mFont = DefaultListMenuSettings->mFont;
 	desc->mFontColor = DefaultListMenuSettings->mFontColor;
 	desc->mFontColor2 = DefaultListMenuSettings->mFontColor2;
+	desc->mTooltipFont = DefaultListMenuSettings->mTooltipFont;
 	desc->mClass = nullptr;
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
@@ -872,6 +921,11 @@ static void ParseOptionValue(FScanner &sc)
 		sc.MustGetStringName(",");
 		sc.MustGetString();
 		pair.Text = strbin1(sc.String);
+		if (sc.CheckString(","))
+		{
+			sc.MustGetString();
+			pair.Tooltip = strbin1(sc.String);
+		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != nullptr && *pOld != nullptr) 
@@ -903,6 +957,11 @@ static void ParseOptionString(FScanner &sc)
 		sc.MustGetStringName(",");
 		sc.MustGetString();
 		pair.Text = strbin1(sc.String);
+		if (sc.CheckString(","))
+		{
+			sc.MustGetString();
+			pair.Tooltip = strbin1(sc.String);
+		}
 	}
 	FOptionValues **pOld = OptionValues.CheckKey(optname);
 	if (pOld != nullptr && *pOld != nullptr) 
@@ -970,9 +1029,11 @@ static void ParseOptionSettings(FScanner &sc)
 
 static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int insertIndex)
 {
+	bool isValidTooltip = false;
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
+		bool foundWidget = false;
 		sc.MustGetString();
 		if (sc.Compare("else"))
 		{
@@ -1053,6 +1114,20 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 		{
 			desc->mDontBlur = true;
 		}
+		else if (sc.Compare("TooltipFont"))
+		{
+			sc.MustGetString();
+			FFont* newfont = V_GetFont(sc.String);
+			if (newfont != nullptr) desc->mTooltipFont = newfont;
+		}
+		else if (sc.Compare("Tooltip"))
+		{
+			if (!isValidTooltip)
+				sc.ScriptError("Tooltips can only be defined after an option menu widget");
+
+			sc.MustGetString();
+			desc->mItems.Last()->mTooltip = sc.String;
+		}
 		else
 		{
 			bool success = false;
@@ -1114,19 +1189,32 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 						}
 						else if (args[i]->isIntCompatible())
 						{
-							char *endp;
-							int v = (int)strtoll(sc.String, &endp, 0);
-							if (*endp != 0)
+							int v;
+
+							if (sc.Compare("true"))
 							{
-								// special check for font color ranges.
-								v = V_FindFontColor(sc.String);
-								if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+								v = 1;
+							}
+							else if (sc.Compare("false"))
+							{
+								v = 0;
+							}
+							else
+							{
+								char *endp;
+								v = (int)strtoll(sc.String, &endp, 0);
+								if (*endp != 0)
 								{
-									// todo: check other data types that may get used.
-									sc.ScriptError("Integer expected, got %s", sc.String);
+									// special check for font color ranges.
+									v = V_FindFontColor(sc.String);
+									if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+									{
+										// todo: check other data types that may get used.
+										sc.ScriptError("Integer expected, got %s", sc.String);
+									}
+									// Color ranges need to be marked for option menu items to support an older feature where a boolean number could be passed instead.
+									v |= 0x12340000;
 								}
-								// Color ranges need to be marked for option menu items to support an older feature where a boolean number could be passed instead.
-								v |= 0x12340000;
 							}
 							if (args[i] == TypeBool) v = !!v;
 							params.Push(v);
@@ -1189,6 +1277,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 					}
 
 					success = true;
+					foundWidget = true;
 				}
 			}
 			if (!success)
@@ -1196,6 +1285,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc, int i
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
+		isValidTooltip = foundWidget;
 	}
 	for (auto &p : desc->mItems)
 	{
@@ -1215,6 +1305,7 @@ static void ParseOptionMenu(FScanner &sc)
 
 	DOptionMenuDescriptor *desc = Create<DOptionMenuDescriptor>();
 	desc->mFont = BigUpper;
+	desc->mTooltipFont = DefaultOptionMenuSettings->mTooltipFont;
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
 	desc->mScrollPos = 0;
@@ -1403,16 +1494,29 @@ static void ParseImageScrollerBody(FScanner& sc, DImageScrollerDescriptor* desc)
 						}
 						else if (args[i]->isIntCompatible())
 						{
-							char* endp;
-							int v = (int)strtoll(sc.String, &endp, 0);
-							if (*endp != 0)
+							int v;
+
+							if (sc.Compare("true"))
 							{
-								// special check for font color ranges.
-								v = V_FindFontColor(sc.String);
-								if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+								v = 1;
+							}
+							else if (sc.Compare("false"))
+							{
+								v = 0;
+							}
+							else
+							{
+								char* endp;
+								v = (int)strtoll(sc.String, &endp, 0);
+								if (*endp != 0)
 								{
-									// todo: check other data types that may get used.
-									sc.ScriptError("Integer expected, got %s", sc.String);
+									// special check for font color ranges.
+									v = V_FindFontColor(sc.String);
+									if (v == CR_UNTRANSLATED && !sc.Compare("untranslated"))
+									{
+										// todo: check other data types that may get used.
+										sc.ScriptError("Integer expected, got %s", sc.String);
+									}
 								}
 							}
 							if (args[i] == TypeBool) v = !!v;
@@ -1500,6 +1604,7 @@ static void ParseImageScroller(FScanner& sc)
 	desc->mAnimated = false;
 	desc->virtWidth = 320;
 	desc->virtHeight = 200;
+	desc->mTooltipFont = NewConsoleFont;
 
 	ParseImageScrollerBody(sc, desc);
 	bool scratch = ReplaceMenu(sc, desc);

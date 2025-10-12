@@ -1,0 +1,131 @@
+--- opal.cpp.orig	2019-02-23 20:32:00.477658789 +0100
++++ opal.cpp	2019-02-23 20:46:36.745113958 +0100
+@@ -13,6 +13,7 @@
+         - Percussion mode
+ 
+ */
++#define OPAL_HAVE_SOFT_PANNING 1 /* libADLMIDI */
+ 
+ 
+ 
+@@ -133,6 +134,7 @@
+             void            SetOctave(uint16_t oct);
+             void            SetLeftEnable(bool on);
+             void            SetRightEnable(bool on);
++            void            SetPan(uint8_t pan);
+             void            SetFeedback(uint16_t val);
+             void            SetModulationType(uint16_t type);
+ 
+@@ -158,6 +160,7 @@
+             Channel *       ChannelPair;
+             bool            Enable;
+             bool            LeftEnable, RightEnable;
++            uint16_t        LeftPan, RightPan;
+     };
+ 
+     public:
+@@ -166,6 +169,7 @@
+ 
+         void                SetSampleRate(int sample_rate);
+         void                Port(uint16_t reg_num, uint8_t val);
++        void                Pan(uint16_t reg_num, uint8_t pan);
+         void                Sample(int16_t *left, int16_t *right);
+ 
+     protected:
+@@ -191,6 +195,7 @@
+         static const uint16_t   RateTables[4][8];
+         static const uint16_t   ExpTable[256];
+         static const uint16_t   LogSinTable[256];
++        static const uint16_t   PanLawTable[128];
+ };
+ //--------------------------------------------------------------------------------------------------
+ const uint16_t Opal::RateTables[4][8] = {
+@@ -237,6 +242,28 @@
+        7,    7,    6,    6,    5,    5,    5,    4,    4,    4,    3,    3,    3,    2,    2,    2,
+        2,    1,    1,    1,    1,    1,    1,    1,    0,    0,    0,    0,    0,    0,    0,    0,
+ };
++//--------------------------------------------------------------------------------------------------
++const uint16_t Opal::PanLawTable[128] =
++{
++    65535, 65529, 65514, 65489, 65454, 65409, 65354, 65289,
++    65214, 65129, 65034, 64929, 64814, 64689, 64554, 64410,
++    64255, 64091, 63917, 63733, 63540, 63336, 63123, 62901,
++    62668, 62426, 62175, 61914, 61644, 61364, 61075, 60776,
++    60468, 60151, 59825, 59489, 59145, 58791, 58428, 58057,
++    57676, 57287, 56889, 56482, 56067, 55643, 55211, 54770,
++    54320, 53863, 53397, 52923, 52441, 51951, 51453, 50947,
++    50433, 49912, 49383, 48846, 48302, 47750, 47191,
++    46340, // Center left
++    46340, // Center right
++    45472, 44885, 44291, 43690, 43083, 42469, 41848, 41221,
++    40588, 39948, 39303, 38651, 37994, 37330, 36661, 35986,
++    35306, 34621, 33930, 33234, 32533, 31827, 31116, 30400,
++    29680, 28955, 28225, 27492, 26754, 26012, 25266, 24516,
++    23762, 23005, 22244, 21480, 20713, 19942, 19169, 18392,
++    17613, 16831, 16046, 15259, 14469, 13678, 12884, 12088,
++    11291, 10492, 9691, 8888, 8085, 7280, 6473, 5666,
++    4858, 4050, 3240, 2431, 1620, 810, 0
++};
+ 
+ 
+ 
+@@ -342,6 +369,10 @@
+     for (int i = 0; i < NumOperators; i++)
+         Op[i].ComputeRates();
+ 
++    // Initialise channel panning at center.
++    for (int i = 0; i < NumChannels; i++)
++        Chan[i].SetPan(64);
++
+     SetSampleRate(sample_rate);
+ }
+ 
+@@ -533,6 +564,19 @@
+ 
+ 
+ //==================================================================================================
++// Set panning on the channel designated by the register number.
++// This is extended functionality.
++//==================================================================================================
++void Opal::Pan(uint16_t reg_num, uint8_t pan)
++{
++    uint8_t high = (reg_num >> 8) & 1;
++    uint8_t regm = reg_num & 0xff;
++    Chan[9 * high + (regm & 0x0f)].SetPan(pan);
++}
++
++
++
++//==================================================================================================
+ // Generate sample.  Every time you call this you will get two signed 16-bit samples (one for each
+ // stereo channel) which will sound correct when played back at the sample rate given when the
+ // class was constructed.
+@@ -727,6 +771,9 @@
+ 
+     left = LeftEnable ? out : 0;
+     right = RightEnable ? out : 0;
++
++    left = left * LeftPan / 65536;
++    right = right * RightPan / 65536;
+ }
+ 
+ 
+@@ -793,6 +840,18 @@
+ }
+ 
+ 
++
++//==================================================================================================
++// Pan the channel to the position given.
++//==================================================================================================
++void Opal::Channel::SetPan(uint8_t pan)
++{
++    pan &= 127;
++    LeftPan = PanLawTable[pan];
++    RightPan = PanLawTable[127 - pan];
++}
++
++
+ 
+ //==================================================================================================
+ // Set the channel feedback amount.

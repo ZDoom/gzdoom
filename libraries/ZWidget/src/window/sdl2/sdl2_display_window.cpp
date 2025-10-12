@@ -1,4 +1,3 @@
-
 #include "sdl2_display_window.h"
 #include <stdexcept>
 #include <SDL2/SDL_vulkan.h>
@@ -7,29 +6,9 @@ Uint32 SDL2DisplayWindow::PaintEventNumber = 0xffffffff;
 bool SDL2DisplayWindow::ExitRunLoop;
 std::unordered_map<int, SDL2DisplayWindow*> SDL2DisplayWindow::WindowList;
 
-class InitSDL
+SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, SDL2DisplayWindow* owner, RenderAPI renderAPI, double uiscale) : WindowHost(windowHost), UIScale(uiscale)
 {
-public:
-	InitSDL()
-	{
-		int result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
-		if (result != 0)
-			throw std::runtime_error(std::string("Unable to initialize SDL:") + SDL_GetError());
-
-		SDL2DisplayWindow::PaintEventNumber = SDL_RegisterEvents(1);
-	}
-};
-
-static void CheckInitSDL()
-{
-	static InitSDL initsdl;
-}
-
-SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWindow, SDL2DisplayWindow* owner, RenderAPI renderAPI) : WindowHost(windowHost)
-{
-	CheckInitSDL();
-
-	unsigned int flags = SDL_WINDOW_HIDDEN /*| SDL_WINDOW_ALLOW_HIGHDPI*/;
+	unsigned int flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE /*| SDL_WINDOW_ALLOW_HIGHDPI*/;
 	if (renderAPI == RenderAPI::Vulkan)
 		flags |= SDL_WINDOW_VULKAN;
 	else if (renderAPI == RenderAPI::OpenGL)
@@ -53,7 +32,7 @@ SDL2DisplayWindow::SDL2DisplayWindow(DisplayWindowHost* windowHost, bool popupWi
 		if (result != 0)
 			throw std::runtime_error(std::string("Unable to create SDL window:") + SDL_GetError());
 	}
-	
+
 	WindowList[SDL_GetWindowID(Handle.window)] = this;
 }
 
@@ -93,8 +72,7 @@ std::vector<std::string> SDL2DisplayWindow::GetVulkanInstanceExtensions()
 VkSurfaceKHR SDL2DisplayWindow::CreateVulkanSurface(VkInstance instance)
 {
 	VkSurfaceKHR surfaceHandle = {};
-	SDL_Vulkan_CreateSurface(Handle.window, instance, &surfaceHandle);
-	if (surfaceHandle)
+	if (SDL_Vulkan_CreateSurface(Handle.window, instance, &surfaceHandle) != SDL_TRUE)
 		throw std::runtime_error("Could not create vulkan surface");
 	return surfaceHandle;
 }
@@ -102,6 +80,12 @@ VkSurfaceKHR SDL2DisplayWindow::CreateVulkanSurface(VkInstance instance)
 void SDL2DisplayWindow::SetWindowTitle(const std::string& text)
 {
 	SDL_SetWindowTitle(Handle.window, text.c_str());
+}
+
+void SDL2DisplayWindow::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	// To do: call SDL_SetWindowIcon for the highest resolution image (or maybe the first 32x32 or higher? not sure what is best here)
+	// To do: when this is upgraded to SDL3, call SDL_AddSurfaceAlternateImage for all the images
 }
 
 void SDL2DisplayWindow::SetWindowFrame(const Rect& box)
@@ -121,8 +105,8 @@ void SDL2DisplayWindow::SetClientFrame(const Rect& box)
 	int w = (int)std::round(box.width * uiscale);
 	int h = (int)std::round(box.height * uiscale);
 
-	SDL_SetWindowPosition(Handle.window, x, y);
 	SDL_SetWindowSize(Handle.window, w, h);
+	SDL_SetWindowPosition(Handle.window, x, y);
 }
 
 void SDL2DisplayWindow::Show()
@@ -288,7 +272,8 @@ int SDL2DisplayWindow::GetPixelHeight() const
 double SDL2DisplayWindow::GetDpiScale() const
 {
 	// SDL2 doesn't really support this properly. SDL_GetDisplayDPI returns the wrong information according to the docs.
-	return 1.0;
+	// We currently cheat by asking X11 directly. See the SDL2DisplayBackend constructor.
+	return UIScale;
 }
 
 void SDL2DisplayWindow::PresentBitmap(int width, int height, const uint32_t* pixels)
@@ -360,8 +345,6 @@ void SDL2DisplayWindow::SetClipboardText(const std::string& text)
 
 void SDL2DisplayWindow::ProcessEvents()
 {
-	CheckInitSDL();
-
 	SDL_Event event;
 	while (SDL_PollEvent(&event) != 0)
 	{
@@ -371,8 +354,6 @@ void SDL2DisplayWindow::ProcessEvents()
 
 void SDL2DisplayWindow::RunLoop()
 {
-	CheckInitSDL();
-
 	ExitRunLoop = false;
 	while (!ExitRunLoop)
 	{
@@ -385,38 +366,60 @@ void SDL2DisplayWindow::RunLoop()
 
 void SDL2DisplayWindow::ExitLoop()
 {
-	CheckInitSDL();
-
 	ExitRunLoop = true;
 }
 
-Size SDL2DisplayWindow::GetScreenSize()
+std::unordered_map<void *, std::function<void()>> SDL2DisplayWindow::Timers;
+std::unordered_map<void *, void *> SDL2DisplayWindow::TimerHandles;
+unsigned long SDL2DisplayWindow::TimerIDs = 0;
+Uint32 TimerEventID = SDL_RegisterEvents(1);
+
+Uint32 SDL2DisplayWindow::ExecTimer(Uint32 interval, void* execID)
 {
-	CheckInitSDL();
+	// cancel event and stop loop if function not found
+	if (Timers.find(execID) == Timers.end())
+		return 0;
 
-	SDL_Rect rect = {};
-	int result = SDL_GetDisplayBounds(0, &rect);
-	if (result != 0)
-		throw std::runtime_error(std::string("Unable to get screen size:") + SDL_GetError());
+	SDL_Event timerEvent;
+	SDL_zero(timerEvent);
 
-	double uiscale = 1.0; // SDL2 doesn't really support this properly. SDL_GetDisplayDPI returns the wrong information according to the docs.
-	return Size(rect.w / uiscale, rect.h / uiscale);
+	timerEvent.user.type = TimerEventID;
+	timerEvent.user.data1 = execID;
+
+	SDL_PushEvent(&timerEvent);
+
+	return interval;
 }
 
 void* SDL2DisplayWindow::StartTimer(int timeoutMilliseconds, std::function<void()> onTimer)
 {
-	CheckInitSDL();
+	// is this guard needed?
+	// CheckInitSDL();
 
-	// To do: implement timers
+	void* execID = (void*)(uintptr_t)++TimerIDs;
+	void* id = (void*)(uintptr_t)SDL_AddTimer(timeoutMilliseconds, SDL2DisplayWindow::ExecTimer, execID);
 
-	return nullptr;
+	if (!id) return id;
+
+	Timers.insert({execID, onTimer});
+	TimerHandles.insert({id, execID});
+
+	return id;
 }
 
 void SDL2DisplayWindow::StopTimer(void* timerID)
 {
-	CheckInitSDL();
+	// is this guard needed?
+	// CheckInitSDL();
 
-	// To do: implement timers
+	SDL_RemoveTimer((SDL_TimerID)(uintptr_t)timerID);
+
+	auto execID = TimerHandles.find(timerID);
+	if (execID == TimerHandles.end())
+		return;
+
+	Timers.erase(execID->second);
+	TimerHandles.erase(timerID);
 }
 
 SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)
@@ -424,14 +427,14 @@ SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)
 	int windowID;
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT: windowID = event.window.windowID; break;
-	case SDL_TEXTINPUT: windowID = event.text.windowID; break;
-	case SDL_KEYUP: windowID = event.key.windowID; break;
-	case SDL_KEYDOWN: windowID = event.key.windowID; break;
-	case SDL_MOUSEBUTTONUP: windowID = event.button.windowID; break;
+	case SDL_WINDOWEVENT:     windowID = event.window.windowID; break;
+	case SDL_TEXTINPUT:       windowID = event.text.windowID;   break;
+	case SDL_KEYUP:           windowID = event.key.windowID;    break;
+	case SDL_KEYDOWN:         windowID = event.key.windowID;    break;
+	case SDL_MOUSEBUTTONUP:   windowID = event.button.windowID; break;
 	case SDL_MOUSEBUTTONDOWN: windowID = event.button.windowID; break;
-	case SDL_MOUSEWHEEL: windowID = event.wheel.windowID; break;
-	case SDL_MOUSEMOTION: windowID = event.motion.windowID; break;
+	case SDL_MOUSEWHEEL:      windowID = event.wheel.windowID;  break;
+	case SDL_MOUSEMOTION:     windowID = event.motion.windowID; break;
 	default:
 		if (event.type == PaintEventNumber) windowID = event.user.windowID;
 		else return nullptr;
@@ -443,19 +446,23 @@ SDL2DisplayWindow* SDL2DisplayWindow::FindEventWindow(const SDL_Event& event)
 
 void SDL2DisplayWindow::DispatchEvent(const SDL_Event& event)
 {
+	// timers are created in a non-window context
+	if (event.type == TimerEventID)
+		return OnTimerEvent(event.user);
+
 	SDL2DisplayWindow* window = FindEventWindow(event);
 	if (!window) return;
 
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT: window->OnWindowEvent(event.window); break;
-	case SDL_TEXTINPUT: window->OnTextInput(event.text); break;
-	case SDL_KEYUP: window->OnKeyUp(event.key); break;
-	case SDL_KEYDOWN: window->OnKeyDown(event.key); break;
-	case SDL_MOUSEBUTTONUP: window->OnMouseButtonUp(event.button); break;
+	case SDL_WINDOWEVENT:     window->OnWindowEvent    (event.window); break;
+	case SDL_TEXTINPUT:       window->OnTextInput      (event.text);   break;
+	case SDL_KEYUP:           window->OnKeyUp          (event.key);    break;
+	case SDL_KEYDOWN:         window->OnKeyDown        (event.key);    break;
+	case SDL_MOUSEBUTTONUP:   window->OnMouseButtonUp  (event.button); break;
 	case SDL_MOUSEBUTTONDOWN: window->OnMouseButtonDown(event.button); break;
-	case SDL_MOUSEWHEEL: window->OnMouseWheel(event.wheel); break;
-	case SDL_MOUSEMOTION: window->OnMouseMotion(event.motion); break;
+	case SDL_MOUSEWHEEL:      window->OnMouseWheel     (event.wheel);  break;
+	case SDL_MOUSEMOTION:     window->OnMouseMotion    (event.motion); break;
 	default:
 		if (event.type == PaintEventNumber) window->OnPaintEvent();
 	}
@@ -465,13 +472,39 @@ void SDL2DisplayWindow::OnWindowEvent(const SDL_WindowEvent& event)
 {
 	switch (event.event)
 	{
-		case SDL_WINDOWEVENT_CLOSE: WindowHost->OnWindowClose(); break;
-		case SDL_WINDOWEVENT_MOVED: WindowHost->OnWindowGeometryChanged(); break;
-		case SDL_WINDOWEVENT_RESIZED: WindowHost->OnWindowGeometryChanged(); break;
-		case SDL_WINDOWEVENT_SHOWN: WindowHost->OnWindowPaint(); break;
-		case SDL_WINDOWEVENT_EXPOSED: WindowHost->OnWindowPaint(); break;
-		case SDL_WINDOWEVENT_FOCUS_GAINED: WindowHost->OnWindowActivated(); break;
-		case SDL_WINDOWEVENT_FOCUS_LOST: WindowHost->OnWindowDeactivated(); break;
+		case SDL_WINDOWEVENT_CLOSE:
+			WindowHost->OnWindowClose();
+			break;
+
+		case SDL_WINDOWEVENT_MOVED:
+		case SDL_WINDOWEVENT_SIZE_CHANGED:
+		case SDL_WINDOWEVENT_RESIZED:
+			WindowHost->OnWindowGeometryChanged();
+			break;
+
+		case SDL_WINDOWEVENT_SHOWN:
+		case SDL_WINDOWEVENT_EXPOSED:
+			WindowHost->OnWindowPaint();
+			break;
+
+		case SDL_WINDOWEVENT_FOCUS_GAINED:
+		case SDL_WINDOWEVENT_FOCUS_LOST:
+			WindowHost->OnWindowDeactivated();
+			break;
+
+		case SDL_WINDOWEVENT_NONE:
+		case SDL_WINDOWEVENT_HIDDEN:
+		case SDL_WINDOWEVENT_MINIMIZED:
+		case SDL_WINDOWEVENT_MAXIMIZED:
+		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_WINDOWEVENT_ENTER:
+		case SDL_WINDOWEVENT_LEAVE:
+		case SDL_WINDOWEVENT_TAKE_FOCUS:
+		case SDL_WINDOWEVENT_HIT_TEST:
+		case SDL_WINDOWEVENT_ICCPROF_CHANGED:
+		case SDL_WINDOWEVENT_DISPLAY_CHANGED:
+			// nope
+			break;
 	}
 }
 
@@ -523,11 +556,15 @@ void SDL2DisplayWindow::OnMouseButtonDown(const SDL_MouseButtonEvent& event)
 
 void SDL2DisplayWindow::OnMouseWheel(const SDL_MouseWheelEvent& event)
 {
-	InputKey key = (event.y > 0) ? InputKey::MouseWheelUp : (event.y < 0) ? InputKey::MouseWheelDown : InputKey::None;
-	if (key != InputKey::None)
-	{
-		WindowHost->OnWindowMouseWheel(GetMousePos(event), key);
-	}
+	int x = 0, y = 0;
+	SDL_GetMouseState(&x, &y);
+	double uiscale = GetDpiScale();
+	Point mousepos(x / uiscale, y / uiscale);
+
+	if (event.y > 0)
+		WindowHost->OnWindowMouseWheel(mousepos, InputKey::MouseWheelUp);
+	else if (event.y < 0)
+		WindowHost->OnWindowMouseWheel(mousepos, InputKey::MouseWheelDown);
 }
 
 void SDL2DisplayWindow::OnMouseMotion(const SDL_MouseMotionEvent& event)
@@ -547,6 +584,17 @@ void SDL2DisplayWindow::OnPaintEvent()
 	WindowHost->OnWindowPaint();
 }
 
+void SDL2DisplayWindow::OnTimerEvent(const SDL_UserEvent& event)
+{
+	auto func = Timers.find(event.data1);
+
+	// incase timer was cancelled before we get here
+	if (func == Timers.end())
+		return;
+
+	func->second();
+}
+
 InputKey SDL2DisplayWindow::ScancodeToInputKey(SDL_Scancode keycode)
 {
 	switch (keycode)
@@ -560,7 +608,9 @@ InputKey SDL2DisplayWindow::ScancodeToInputKey(SDL_Scancode keycode)
 		case SDL_SCANCODE_ESCAPE: return InputKey::Escape;
 		case SDL_SCANCODE_SPACE: return InputKey::Space;
 		case SDL_SCANCODE_END: return InputKey::End;
+		case SDL_SCANCODE_PAGEDOWN: return InputKey::PageDown;
 		case SDL_SCANCODE_HOME: return InputKey::Home;
+		case SDL_SCANCODE_PAGEUP: return InputKey::PageUp;
 		case SDL_SCANCODE_LEFT: return InputKey::Left;
 		case SDL_SCANCODE_UP: return InputKey::Up;
 		case SDL_SCANCODE_RIGHT: return InputKey::Right;
@@ -768,5 +818,5 @@ SDL_Scancode SDL2DisplayWindow::InputKeyToScancode(InputKey inputkey)
 		case InputKey::RControl: return SDL_SCANCODE_RCTRL;
 		case InputKey::Tilde: return SDL_SCANCODE_GRAVE;
 		default: return (SDL_Scancode)0;
-	}	
+	}
 }

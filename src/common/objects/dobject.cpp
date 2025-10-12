@@ -333,10 +333,22 @@ void DObject::Destroy ()
 	GC::WriteBarrier(this);
 }
 
-DEFINE_ACTION_FUNCTION(DObject, Destroy)
+// This will be here until prediction can be reworked.
+// TODO: Fix prediction by serializing instead of using this terrible memcpy method.
+bool bPredictionGuard = false;
+
+static void NativeDestroy(DObject* self)
+{
+	if (bPredictionGuard && !(self->ObjectFlags & OF_ClientSide) && ((self->ObjectFlags & OF_Networked) || self->IsKindOf(NAME_Thinker)))
+		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Destroyed non-client-side Object %s while predicting\n", self->GetClass()->TypeName.GetChars());
+	if (!(self->ObjectFlags & OF_EuthanizeMe))
+		self->Destroy();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, Destroy, NativeDestroy)
 {
 	PARAM_SELF_PROLOGUE(DObject);
-	self->Destroy();
+	NativeDestroy(self);
 	return 0;	
 }
 
@@ -409,6 +421,67 @@ size_t DObject::PropagateMark()
 		return info->Size;
 	}
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DObject::ClearNativePointerFields(const TArrayView<FName>& types)
+{
+	auto cls = GetClass();
+	if (cls->VMType == nullptr)
+		return;
+
+	auto it = cls->VMType->Symbols.GetIterator();
+	TMap<FName, PSymbol*>::Pair* sym = nullptr;
+	while (it.NextPair(sym))
+	{
+		auto field = dyn_cast<PField>(sym->Value);
+		if (field == nullptr)
+			continue;
+
+		PType* base = field->Type;
+		PType* t = base;
+		if (base->isArray() && !base->isStaticArray())
+			t = static_cast<PArray*>(base)->ElementType;
+		else if (base->isDynArray())
+			t = static_cast<PDynArray*>(base)->ElementType;
+		else if (base->isMap())
+			t = static_cast<PMap*>(base)->ValueType;
+
+		if (!t->isRealPointer())
+			continue;
+
+		auto pType = static_cast<PPointer*>(t)->PointedType;
+		if (!pType->isStruct() || !static_cast<PStruct*>(pType)->isNative || types.Find(static_cast<PStruct*>(pType)->TypeName) >= types.Size())
+			continue;
+
+		if (base->isArray() && !base->isStaticArray())
+		{
+			auto arr = (void**)ScriptVar(sym->Key, nullptr);
+			const size_t count = static_cast<PArray*>(base)->ElementCount;
+			for (size_t i = 0u; i < count; ++i)
+				arr[i] = nullptr;
+		}
+		else if (base->isDynArray())
+		{
+			static_cast<TArray<void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+		}
+		else if (base->isMap())
+		{
+			if (static_cast<PMap*>(base)->BackingClass == PMap::MAP_I32_PTR)
+				static_cast<ZSMap<int, void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+			else
+				static_cast<ZSMap<FString, void*>*>(ScriptVar(sym->Key, nullptr))->Clear();
+		}
+		else
+		{
+			PointerVar<void>(sym->Key) = nullptr;
+		}
+	}
 }
 
 //==========================================================================
@@ -574,6 +647,7 @@ void DObject::Serialize(FSerializer &arc)
 	SerializeFlag("spawned", OF_Spawned);
 	SerializeFlag("networked", OF_Networked);
 	SerializeFlag("clientside", OF_ClientSide);
+	SerializeFlag("travelling", OF_Travelling);
 		
 	ObjectFlags |= OF_SerialSuccess;
 
@@ -669,7 +743,7 @@ void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned in
 
 void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
 {
-	if (ent->IsNetworked() || ent->IsClientside())
+	if (ent->IsNetworked() || ent->IsClientSide())
 		return;
 
 	// Slot 0 is reserved for the world.
@@ -759,16 +833,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, GetNetworkID, GetNetworkID)
 	ACTION_RETURN_INT(self->GetNetworkID());
 }
 
-static int IsClientside(DObject* self)
+static int IsClientSide(DObject* self)
 {
-	return self->IsClientside();
+	return self->IsClientSide();
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DObject, IsClientside, IsClientside)
+DEFINE_ACTION_FUNCTION_NATIVE(DObject, IsClientSide, IsClientSide)
 {
 	PARAM_SELF_PROLOGUE(DObject);
 
-	ACTION_RETURN_BOOL(self->IsClientside());
+	ACTION_RETURN_BOOL(self->IsClientSide());
 }
 
 static void EnableNetworking(DObject* const self, const bool enable)

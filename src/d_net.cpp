@@ -26,54 +26,47 @@
 //-----------------------------------------------------------------------------
 
 #include <stddef.h>
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "version.h"
-#include "menu.h"
-#include "i_video.h"
-#include "i_net.h"
-#include "g_game.h"
-#include "c_console.h"
-#include "d_netinf.h"
-#include "d_net.h"
-#include "cmdlib.h"
-#include "m_cheat.h"
-#include "p_local.h"
-#include "c_dispatch.h"
-#include "sbar.h"
-#include "gi.h"
-#include "m_misc.h"
-#include "gameconfigfile.h"
-#include "p_acs.h"
-#include "p_trace.h"
-#include "a_sharedglobal.h"
-#include "st_start.h"
-#include "teaminfo.h"
-#include "p_conversation.h"
-#include "d_eventbase.h"
-#include "p_enemy.h"
-#include "m_argv.h"
-#include "p_lnspec.h"
-#include "p_spec.h"
-#include "hardware.h"
-#include "r_utility.h"
 #include "a_keys.h"
-#include "intermission/intermission.h"
-#include "g_levellocals.h"
+#include "a_sharedglobal.h"
 #include "actorinlines.h"
-#include "events.h"
-#include "i_time.h"
-#include "i_system.h"
-#include "vm.h"
-#include "gstrings.h"
-#include "s_music.h"
-#include "screenjob.h"
+#include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_eventbase.h"
 #include "d_main.h"
+#include "d_net.h"
+#include "d_netinf.h"
+#include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "gstrings.h"
 #include "i_interface.h"
+#include "i_net.h"
+#include "i_system.h"
+#include "i_time.h"
+#include "m_argv.h"
+#include "m_cheat.h"
+#include "menu.h"
+#include "p_conversation.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_spec.h"
+#include "p_trace.h"
+#include "r_utility.h"
+#include "s_music.h"
 #include "savegamemanager.h"
+#include "sbar.h"
+#include "screenjob.h"
+#include "version.h"
+#include "vm.h"
 
-void P_RunClientsideLogic();
+void P_RunClientSideLogic();
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -101,6 +94,14 @@ enum EReadyType
 	RT_VOTE,
 	RT_ANYONE,
 	RT_HOST_ONLY,
+};
+
+enum ELagType
+{
+	LAG_NONE,
+	LAG_PREDICTING,
+	LAG_WAITING,
+	LAG_SKIPPING,
 };
 
 // NETWORKING
@@ -146,9 +147,10 @@ static uint64_t	LevelStartAck = 0u; // Used by the host to determine if everyone
 static int FullLatencyCycle = MAXSENDTICS * 3;	// Give ~3 seconds to gather latency info about clients on boot up.
 static int LastLatencyUpdate = 0;				// Update average latency every ~1 second.
 
+static ELagType	LagState = LAG_NONE;	// What kind of lag the game is currently getting.
 static int 	EnterTic = 0;
 static int	LastEnterTic = 0;
-static bool bCommandsReset = false;	// If true, commands were recently cleared. Don't generate any more tics.
+static bool bCommandsReset = false;		// If true, commands were recently cleared. Don't generate any more tics.
 
 static int	CommandsAhead = 0;		// In packet server mode, the host will let us know if we're outpacing them.
 static int	SkipCommandTimer = 0;	// Tracker for when to check for skipping commands. ~0.5 seconds in a row of being ahead will start skipping.
@@ -158,7 +160,7 @@ void D_ProcessEvents(void);
 void G_BuildTiccmd(usercmd_t *cmd);
 void D_DoAdvanceDemo(void);
 
-static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always);
+static void RunScript(TArrayView<uint8_t>& stream, AActor *pawn, int snum, int argn, int always);
 
 extern	bool	 advancedemo;
 
@@ -248,7 +250,7 @@ private:
 		DPrintf(DMSG_NOTIFY, "Expanding special size to %zu\n", MaxSize);
 
 		for (auto& stream : Streams)
-			Streams->Grow(MaxSize);
+			stream.Grow(MaxSize);
 
 		CurrentStream = Streams[CurrentClientTic % BACKUPTICS].Stream + CurrentSize;
 	}
@@ -297,7 +299,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(1);
-			WriteInt8(it, &CurrentStream);
+			UncheckedWriteInt8(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -307,7 +309,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(2);
-			WriteInt16(it, &CurrentStream);
+			UncheckedWriteInt16(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -317,7 +319,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(4);
-			WriteInt32(it, &CurrentStream);
+			UncheckedWriteInt32(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -327,7 +329,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(8);
-			WriteInt64(it, &CurrentStream);
+			UncheckedWriteInt64(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -337,7 +339,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(4);
-			WriteFloat(it, &CurrentStream);
+			UncheckedWriteFloat(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -347,7 +349,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(8);
-			WriteDouble(it, &CurrentStream);
+			UncheckedWriteDouble(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -357,7 +359,7 @@ public:
 		if (CurrentStream != nullptr)
 		{
 			AddBytes(strlen(it) + 1);
-			WriteString(it, &CurrentStream);
+			UncheckedWriteString(it, &CurrentStream);
 		}
 		return *this;
 	}
@@ -367,7 +369,7 @@ void Net_ClearBuffers()
 {
 	CloseNetwork();
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		playeringame[i] = false;
 		players[i].waiting = players[i].inconsistant = false;
@@ -394,6 +396,7 @@ void Net_ClearBuffers()
 	LocalNetBufferSize = 0u;
 	Net_Arbitrator = 0;
 
+	LagState = LAG_NONE;
 	MutedClients = 0u;
 	CurrentLobbyID = 0u;
 	NetworkClients.Clear();
@@ -508,6 +511,27 @@ void Net_AdvanceCutscene()
 		Net_WriteInt8(DEM_ENDSCREENJOB);
 }
 
+bool Net_IsWaiting()
+{
+	return LagState == LAG_WAITING;
+}
+
+// This is needed for handling PSprite bobbing specifically since it's predicted.
+double Net_ModifyFrac(double ticFrac)
+{
+	return LagState < LAG_WAITING ? ticFrac : 1.0;
+}
+
+double Net_ModifyObjectFrac(DObject* obj, double ticFrac)
+{
+	return LagState == LAG_NONE || LagState == LAG_SKIPPING || obj->IsClientSide() ? ticFrac : 1.0;
+}
+
+double Net_ModifyParticleFrac(particle_t* part, double ticFrac)
+{
+	return LagState == LAG_NONE || LagState == LAG_SKIPPING ? ticFrac : 0.0;
+}
+
 void Net_ResetCommands(bool midTic)
 {
 	bCommandsReset = midTic;
@@ -579,7 +603,7 @@ static size_t GetNetBufferSize()
 	}
 
 	// Header info
-	int totalBytes = 10;
+	unsigned int totalBytes = 10;
 	if (NetBuffer[0] & NCMD_QUITTERS)
 		totalBytes += NetBuffer[totalBytes] + 1;
 
@@ -603,24 +627,24 @@ static size_t GetNetBufferSize()
 	if (NetBufferLength < totalBytes + playerCount * padding)
 		return totalBytes + playerCount * padding;
 
-	uint8_t* skipper = &NetBuffer[totalBytes];
+	TArrayView<uint8_t> skipper = TArrayView(&NetBuffer[totalBytes], MAX_MSGLEN - totalBytes);
 	for (int p = 0; p < playerCount; ++p)
 	{
-		++skipper;
+		AdvanceStream(skipper, 1);
 		if (NetMode == NET_PacketServer && RemoteClient == Net_Arbitrator)
-			skipper += 2;
+			AdvanceStream(skipper, 2);
 
 		for (int i = 0; i < ranTics; ++i)
-			skipper += 3;
+			AdvanceStream(skipper, 3);
 
 		for (int i = 0; i < numTics; ++i)
 		{
-			++skipper;
+			AdvanceStream(skipper, 1);
 			SkipUserCmdMessage(skipper);
 		}
 	}
 
-	return int(skipper - NetBuffer);
+	return int(skipper.Data() - NetBuffer);
 }
 
 //
@@ -673,7 +697,7 @@ static bool HGetPacket()
 	size_t sizeCheck = GetNetBufferSize();
 	if (NetBufferLength != sizeCheck)
 	{
-		Printf("Incorrect packet size %d (expected %d)\n", NetBufferLength, sizeCheck);
+		Printf("Incorrect packet size %zu (expected %zu)\n", NetBufferLength, sizeCheck);
 		return false;
 	}
 
@@ -992,14 +1016,19 @@ static void GetPackets()
 			// Each tic within a given packet is given a sequence number to ensure that things were put
 			// back together correctly. Normally this wouldn't matter as much but since we need to keep
 			// clients in lock step a misordered packet will instantly cause a desync.
-			TArray<uint8_t*> data = {};
+			TArray<TArrayView<uint8_t>> data = {}; // each contained TArrayView represents a packet.
 			for (int t = 0; t < totalTics; ++t)
 			{
 				// Try and reorder the tics if they're all there but end up out of order.
 				const int ofs = NetBuffer[curByte++];
-				data.Insert(ofs, &NetBuffer[curByte]);
-				uint8_t* skipper = &NetBuffer[curByte];
-				curByte += SkipUserCmdMessage(skipper);
+
+				TArrayView<uint8_t> skipper = TArrayView(&NetBuffer[curByte], MAX_MSGLEN - curByte);
+				SkipUserCmdMessage(skipper);
+
+				TArrayView<uint8_t> packet = TArrayView(&NetBuffer[curByte], skipper.Data() - &NetBuffer[curByte]);
+				data.Insert(ofs, packet);
+
+				curByte += skipper.Data() - &NetBuffer[curByte];
 			}
 
 			// If it's from a previous waiting period, the commands are no longer relevant.
@@ -1722,38 +1751,29 @@ void NetUpdate(int tics)
 
 				// Client commands.
 
-				uint8_t* cmd = &NetBuffer[size];
+				TArrayView<uint8_t> cmd = TArrayView(&NetBuffer[size], MAX_MSGLEN - size);
 				for (int i = 0; i < playerCount; ++i)
 				{
-					cmd[0] = playerNums[i];
-					++cmd;
+					WriteInt8(playerNums[i], cmd);
 
 					auto& clientState = ClientStates[playerNums[i]];
 					// Time used to track latency since in packet server mode we want each
 					// client's latency to the server itself.
 					if (NetMode == NET_PacketServer && consoleplayer == Net_Arbitrator)
 					{
-						cmd[0] = (clientState.AverageLatency >> 8);
-						++cmd;
-						cmd[0] = clientState.AverageLatency;
-						++cmd;
+						WriteInt16(clientState.AverageLatency, cmd);
 					}
 
 					for (int r = 0; r < sendCon; ++r)
 					{
-						cmd[0] = r;
-						++cmd;
+						WriteInt8(r, cmd);
 						const int tic = (baseConsistency + curTicOfs + r) % BACKUPTICS;
-						cmd[0] = (clientState.LocalConsistency[tic] >> 8);
-						++cmd;
-						cmd[0] = clientState.LocalConsistency[tic];
-						++cmd;
+						WriteInt16(clientState.LocalConsistency[tic], cmd);
 					}
 
 					for (int t = 0; t < sendTics; ++t)
 					{
-						cmd[0] = t;
-						++cmd;
+						WriteInt8(t, cmd);
 
 						int curTic = sequenceNum + curTicOfs + t, lastTic = curTic - 1;
 						if (playerNums[i] == consoleplayer)
@@ -1763,11 +1783,7 @@ void NetUpdate(int tics)
 							// Write out the net events before the user commands so inputs can
 							// be used as a marker for when the given command ends.
 							auto& stream = NetEvents.Streams[curTic % BACKUPTICS];
-							if (stream.Used)
-							{
-								memcpy(cmd, stream.Stream, stream.Used);
-								cmd += stream.Used;
-							}
+							WriteBytes(TArrayView(stream.Stream, stream.Used), cmd);
 
 							WriteUserCmdMessage(LocalCmds[realTic],
 								realLastTic >= 0 ? &LocalCmds[realLastTic] : nullptr, cmd);
@@ -1776,13 +1792,8 @@ void NetUpdate(int tics)
 						{
 							auto& netTic = clientState.Tics[curTic % BACKUPTICS];
 
-							int len;
-							uint8_t* data = netTic.Data.GetData(&len);
-							if (data != nullptr)
-							{
-								memcpy(cmd, data, len);
-								cmd += len;
-							}
+							auto data = netTic.Data.GetTArrayView();
+							WriteBytes(data, cmd);
 
 							WriteUserCmdMessage(netTic.Command,
 								lastTic >= 0 ? &clientState.Tics[lastTic % BACKUPTICS].Command : nullptr, cmd);
@@ -1790,9 +1801,9 @@ void NetUpdate(int tics)
 					}
 				}
 
-				HSendPacket(client, int(cmd - NetBuffer));
+				HSendPacket(client, int(cmd.Data() - NetBuffer));
 				if (net_extratic && !isSelf)
-					HSendPacket(client, int(cmd - NetBuffer));
+					HSendPacket(client, int(cmd.Data() - NetBuffer));
 			}
 		}
 	}
@@ -1834,70 +1845,55 @@ const char* Net_GetClientName(int client, unsigned int charLimit = 0u)
 	return players[client].userinfo.GetName(charLimit);
 }
 
-size_t Net_SetUserInfo(int client, uint8_t*& stream)
+void Net_SetUserInfo(int client, TArrayView<uint8_t>& stream)
 {
 	auto str = D_GetUserInfoStrings(client, true);
-	const size_t userSize = str.Len() + 1;
-	memcpy(stream, str.GetChars(), userSize);
-	return userSize;
+	WriteFString(str, stream);
 }
 
-size_t Net_ReadUserInfo(int client, uint8_t*& stream)
+void Net_ReadUserInfo(int client, TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	D_ReadUserInfoStrings(client, &stream, false);
-	return stream - start;
+	D_ReadUserInfoStrings(client, stream, false);
 }
 
-size_t Net_SetGameInfo(uint8_t*& stream)
+void Net_SetGameInfo(TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	WriteString(startmap.GetChars(), &stream);
-	WriteInt32(rngseed, &stream);
-	C_WriteCVars(&stream, CVAR_SERVERINFO, true);
+	WriteFString(startmap, stream);
+	WriteInt32(rngseed, stream);
+	C_WriteCVars(stream, CVAR_SERVERINFO, true);
 
 	auto load = Args->CheckValue("-loadgame");
 	if (load != nullptr)
 	{
-		stream[0] = true;
-		const size_t len = strlen(load) + 1;
-		memcpy(&stream[1], load, len);
-		stream += len;
+		WriteInt8(1, stream);
+		WriteString(load, stream);
 	}
 	else
 	{
-		stream[0] = false;
+		WriteInt8(0, stream);
 	}
-
-	return (stream + 1) - start;
 }
 
-size_t Net_ReadGameInfo(uint8_t*& stream)
+void Net_ReadGameInfo(TArrayView<uint8_t>& stream)
 {
-	const uint8_t* start = stream;
-	startmap = ReadStringConst(&stream);
-	rngseed = ReadInt32(&stream);
-	C_ReadCVars(&stream);
+	startmap = ReadStringConst(stream);
+	rngseed = ReadInt32(stream);
+	C_ReadCVars(stream);
 
-	if (stream[0])
+	if (ReadInt8(stream))
 	{
-		++stream;
-		const size_t len = strlen((char*)stream) + 1;
+		auto load = ReadString(stream);
 		// Don't override the existing argument in case they need to use
 		// a custom savefile name.
 		if (!Args->CheckParm("-loadgame"))
 		{
 			Args->AppendArg("-loadgame");
-			Args->AppendArg((char*)stream);
+			Args->AppendArg(load);
 		}
-		stream += len;
-	}
-	else
-	{
-		++stream;
 	}
 
-	return stream - start;
+	// Reset this immediately so any further RNG calls the engine has to make will be synced.
+	FRandom::StaticClearRandom();
 }
 
 // Connects players to each other if needed.
@@ -2125,7 +2121,7 @@ static bool ShouldStabilizeTick()
 {
 	return gameaction != ga_recordgame && gameaction != ga_newgame && gameaction != ga_newgame2
 			&& gameaction != ga_loadgame && gameaction != ga_loadgamehidecon && gameaction != ga_autoloadgame && gameaction != ga_loadgameplaydemo
-			&& gameaction != ga_savegame && gameaction != ga_autosave
+			&& gameaction != ga_savegame && gameaction != ga_autosave && gameaction != ga_quicksave
 			&& gameaction != ga_worlddone && gameaction != ga_completed && gameaction != ga_screenshot && gameaction != ga_fullconsole;
 }
 
@@ -2253,14 +2249,20 @@ void TryRunTics()
 	{
 		// If we're in between a tic, try and balance things out.
 		if (totalTics <= 0)
+		{
 			TicStabilityWait();
+		}
 		else
+		{
 			P_ClearLevelInterpolation();
+			LagState = LAG_WAITING;
+		}
 
 		// If we actually advanced a command, update the player's position (even if a
 		// tic passes this isn't guaranteed to happen since it's capped to 35 in advance).
 		if (ClientTic > startCommand)
 		{
+			LagState = LAG_PREDICTING;
 			P_UnPredictPlayer();
 			P_PredictPlayer(&players[consoleplayer]);
 			S_UpdateSounds(players[consoleplayer].camera);	// Update sounds only after predicting the client's newest position.
@@ -2269,11 +2271,12 @@ void TryRunTics()
 		// If we actually did have some tics available, make sure the UI
 		// still has a chance to run.
 		for (int i = 0; i < totalTics; ++i)
-			P_RunClientsideLogic();
+			P_RunClientSideLogic();
 
 		return;
 	}
 
+	LagState = ClientTic > startCommand ? LAG_NONE : LAG_SKIPPING;
 	for (auto client : NetworkClients)
 		players[client].waiting = false;
 
@@ -2310,7 +2313,7 @@ void TryRunTics()
 	// These should use the actual tics since they're not actually tied to the gameplay logic.
 	// Make sure it always comes after so the HUD has the correct game state when updating.
 	for (int i = 0; i < totalTics; ++i)
-		P_RunClientsideLogic();
+		P_RunClientSideLogic();
 }
 
 void Net_NewClientTic()
@@ -2412,6 +2415,11 @@ uint8_t *FDynamicBuffer::GetData(int *len)
 	return m_Len ? m_Data : nullptr;
 }
 
+TArrayView<uint8_t> FDynamicBuffer::GetTArrayView()
+{
+	return TArrayView(m_Data, m_Len);
+}
+
 static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 {
 	AActor *actor;
@@ -2447,7 +2455,7 @@ static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
-void Net_DoCommand(int cmd, uint8_t **stream, int player)
+void Net_DoCommand(int cmd, TArrayView<uint8_t>& stream, int player)
 {
 	uint8_t pos = 0;
 	const char* s = nullptr;
@@ -2476,9 +2484,9 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 				if (deathmatch && teamplay)
 					Printf(PRINT_CHAT, "(All) ");
 				if ((who & MSG_BOLD) && !cl_noboldchat)
-					Printf(PRINT_CHAT, TEXTCOLOR_BOLD "* %s" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, s);
+					Printf(PRINT_CHAT, TEXTCOLOR_BOLD "* %s [%d]" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, player, s);
 				else
-					Printf(PRINT_CHAT, "%s" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, s);
+					Printf(PRINT_CHAT, "%s [%d]" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, player, s);
 
 				if (!cl_nochatsound)
 					S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1.0f, ATTN_NONE);
@@ -2492,9 +2500,9 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 				if (deathmatch && teamplay)
 					Printf(PRINT_TEAMCHAT, "(Team) ");
 				if ((who & MSG_BOLD) && !cl_noboldchat)
-					Printf(PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* %s" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, s);
+					Printf(PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* %s [%d]" TEXTCOLOR_BOLD "%s" TEXTCOLOR_BOLD "\n", name, player, s);
 				else
-					Printf(PRINT_TEAMCHAT, "%s" TEXTCOLOR_TEAMCHAT ": %s" TEXTCOLOR_TEAMCHAT "\n", name, s);
+					Printf(PRINT_TEAMCHAT, "%s [%d]" TEXTCOLOR_TEAMCHAT ": %s" TEXTCOLOR_TEAMCHAT "\n", name, player, s);
 
 				if (!cl_nochatsound)
 					S_Sound(CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1.0f, ATTN_NONE);
@@ -2714,7 +2722,7 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 					if (typeinfo && typeinfo->IsDescendantOf("VisualThinker"))
 					{
 						DVector3 spawnpos = source->Vec3Angle(source->radius * 4, source->Angles.Yaw, 8.);
-						auto vt = DVisualThinker::NewVisualThinker(source->Level, typeinfo);
+						auto vt = DVisualThinker::NewVisualThinker(source->Level, typeinfo, false);
 						if (vt)
 						{
 							vt->PT.Pos = spawnpos;
@@ -2859,8 +2867,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 		{
 			uint8_t playernum = ReadInt8(stream);
 			players[playernum].settings_controller = true;
-			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf("%s has been added to the controller list.\n", players[playernum].userinfo.GetName());
+			if (consoleplayer == playernum)
+				Printf("You can now control game settings\n");
+			else if (consoleplayer == Net_Arbitrator)
+				Printf("%s [%d] is now a settings controller\n", players[playernum].userinfo.GetName(), playernum);
 		}
 		break;
 
@@ -2868,8 +2878,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 		{
 			uint8_t playernum = ReadInt8(stream);
 			players[playernum].settings_controller = false;
-			if (consoleplayer == playernum || consoleplayer == Net_Arbitrator)
-				Printf("%s has been removed from the controller list.\n", players[playernum].userinfo.GetName());
+			if (consoleplayer == playernum)
+				Printf("You can no longer control game settings\n");
+			else if (consoleplayer == Net_Arbitrator)
+				Printf("%s [%d] is no longer a settings controller\n", players[playernum].userinfo.GetName(), playernum);
 		}
 		break;
 
@@ -3021,11 +3033,10 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 			{
 				I_Error("You have been kicked from the game");
 			}
-			else
+			else if (NetworkClients.InGame(pNum))
 			{
-				Printf("%s has been kicked from the game\n", players[pNum].userinfo.GetName());
-				if (NetworkClients.InGame(pNum))
-					DisconnectClient(pNum);
+				Printf("%s [%d] has been kicked from the game\n", players[pNum].userinfo.GetName(), pNum);
+				DisconnectClient(pNum);
 			}
 		}
 		break;
@@ -3037,7 +3048,7 @@ void Net_DoCommand(int cmd, uint8_t **stream, int player)
 }
 
 // Used by DEM_RUNSCRIPT, DEM_RUNSCRIPT2, and DEM_RUNNAMEDSCRIPT
-static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always)
+static void RunScript(TArrayView<uint8_t>& stream, AActor *pawn, int snum, int argn, int always)
 {
 	// Scripts can be invoked without a level loaded, e.g. via puke(name) CCMD in fullscreen console
 	if (pawn == nullptr)
@@ -3058,44 +3069,44 @@ static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int al
 // not to execute them. Right now this is making setting up net commands a nightmare.
 // Reads through the network stream but doesn't actually execute any command. Used for getting the size of a stream.
 // The skip amount is the number of bytes the command possesses. This should mirror the bytes in Net_DoCommand().
-void Net_SkipCommand(int cmd, uint8_t **stream)
+void Net_SkipCommand(int cmd, TArrayView<uint8_t>& stream)
 {
 	size_t skip = 0;
 	switch (cmd)
 	{
 		case DEM_SAY:
-			skip = strlen((char *)(*stream + 1)) + 2;
+			skip = strlen((char *)(stream.Data() + 1)) + 2;
 			break;
 
 		case DEM_ADDBOT:
-			skip = strlen((char *)(*stream + 1)) + 6;
+			skip = strlen((char *)(stream.Data() + 1)) + 6;
 			break;
 
 		case DEM_GIVECHEAT:
 		case DEM_TAKECHEAT:
-			skip = strlen((char *)(*stream)) + 5;
+			skip = strlen((char *)(stream.Data())) + 5;
 			break;
 
 		case DEM_SETINV:
-			skip = strlen((char *)(*stream)) + 6;
+			skip = strlen((char *)(stream.Data())) + 6;
 			break;
 
 		case DEM_NETEVENT:
-			skip = strlen((char *)(*stream)) + 15;
+			skip = strlen((char *)(stream.Data())) + 15;
 			break;
 
 		case DEM_ZSC_CMD:
-			skip = strlen((char*)(*stream)) + 1;
-			skip += (((*stream)[skip] << 8) | (*stream)[skip + 1]) + 2;
+			skip = strlen((char*)(stream.Data())) + 1;
+			skip += (stream[skip] << 8) | (stream[skip + 1]) + 2;
 			break;
 
 		case DEM_SUMMON2:
 		case DEM_SUMMONFRIEND2:
 		case DEM_SUMMONFOE2:
-			skip = strlen((char *)(*stream)) + 26;
+			skip = strlen((char *)(stream.Data())) + 26;
 			break;
 		case DEM_CHANGEMAP2:
-			skip = strlen((char *)(*stream + 1)) + 2;
+			skip = strlen((char *)(stream.Data() + 1)) + 2;
 			break;
 		case DEM_MUSICCHANGE:
 		case DEM_PRINT:
@@ -3111,7 +3122,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 		case DEM_MORPHEX:
 		case DEM_KILLCLASSCHEAT:
 		case DEM_MDK:
-			skip = strlen((char *)(*stream)) + 1;
+			skip = strlen((char *)(stream.Data())) + 1;
 			break;
 
 		case DEM_WARPCHEAT:
@@ -3138,14 +3149,14 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 			break;
 
 		case DEM_SAVEGAME:
-			skip = strlen((char *)(*stream)) + 1;
-			skip += strlen((char *)(*stream) + skip) + 1;
+			skip = strlen((char *)(stream.Data())) + 1;
+			skip += strlen((char *)(stream.Data()) + skip) + 1;
 			break;
 
 		case DEM_SINFCHANGEDXOR:
 		case DEM_SINFCHANGED:
 			{
-				uint8_t t = **stream;
+				uint8_t t = stream[0];
 				skip = 1 + (t & 63);
 				if (cmd == DEM_SINFCHANGED)
 				{
@@ -3159,7 +3170,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 						skip += 4;
 						break;
 					case CVAR_String:
-						skip += strlen((char*)(*stream + skip)) + 1;
+						skip += strlen((char*)(stream.Data() + skip)) + 1;
 						break;
 					}
 				}
@@ -3172,16 +3183,16 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 
 		case DEM_RUNSCRIPT:
 		case DEM_RUNSCRIPT2:
-			skip = 3 + *(*stream + 2) * 4;
+			skip = 3 + *(stream.Data() + 2) * 4;
 			break;
 
 		case DEM_RUNNAMEDSCRIPT:
-			skip = strlen((char *)(*stream)) + 2;
-			skip += ((*(*stream + skip - 1)) & 127) * 4;
+			skip = strlen((char *)(stream.Data())) + 2;
+			skip += ((*(stream.Data() + skip - 1)) & 127) * 4;
 			break;
 
 		case DEM_RUNSPECIAL:
-			skip = 3 + *(*stream + 2) * 4;
+			skip = 3 + *(stream.Data() + 2) * 4;
 			break;
 
 		case DEM_CONVREPLY:
@@ -3192,14 +3203,14 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 		case DEM_SETSLOTPNUM:
 			{
 				skip = 2 + (cmd == DEM_SETSLOTPNUM);
-				for (int numweapons = (*stream)[skip-1]; numweapons > 0; --numweapons)
-					skip += 1 + ((*stream)[skip] >> 7);
+				for (int numweapons = stream[skip-1]; numweapons > 0; --numweapons)
+					skip += 1 + (stream[skip] >> 7);
 			}
 			break;
 
 		case DEM_ADDSLOT:
 		case DEM_ADDSLOTDEFAULT:
-			skip = 2 + ((*stream)[1] >> 7);
+			skip = 2 + (stream[1] >> 7);
 			break;
 
 		case DEM_SETPITCHLIMIT:
@@ -3207,7 +3218,7 @@ void Net_SkipCommand(int cmd, uint8_t **stream)
 			break;
 	}
 
-	*stream += skip;
+	AdvanceStream(stream, skip);
 }
 
 // This was taken out of shared_hud, because UI code shouldn't do low level calculations that may change if the backing implementation changes.
@@ -3287,7 +3298,7 @@ CCMD(pings)
 {
 	if (!netgame)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
@@ -3298,37 +3309,21 @@ CCMD(pings)
 	for (auto client : NetworkClients)
 	{
 		if ((NetMode == NET_PeerToPeer && client != consoleplayer) || (NetMode == NET_PacketServer && client != Net_Arbitrator))
-			Printf("%ums %s\n", ClientStates[client].AverageLatency, players[client].userinfo.GetName());
-	}
-}
-
-CCMD(listplayers)
-{
-	if (!netgame)
-	{
-		Printf("Not currently in a net game\n");
-		return;
-	}
-
-	for (auto client : NetworkClients)
-	{
-		if (client == consoleplayer)
-			Printf("* ");
-		Printf("%s - %d\n", players[client].userinfo.GetName(), client);
+			Printf("%ums %s [%d]\n", ClientStates[client].AverageLatency, players[client].userinfo.GetName(), client);
 	}
 }
 
 CCMD(kick)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: kick <player number>\n");
+		Printf("Usage: kick <client numbers>\nRemove these clients from the game\n");
 		return;
 	}
 
 	if (!netgame)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
@@ -3336,99 +3331,102 @@ CCMD(kick)
 	// the host can grant.
 	if (consoleplayer != Net_Arbitrator)
 	{
-		Printf("Only the host is allowed to kick other players\n");
+		Printf("This command is only accessible to the host\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad client number %s\n", argv[i]);
+		else if (cNum != consoleplayer && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto cNum : cNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!NetworkClients.InGame(cNum))
+		{
+			Printf("Client %d is not in game\n", cNum);
+		}
+		else
+		{
+			Net_WriteInt8(DEM_KICK);
+			Net_WriteInt8(cNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player is not currently in the game\n");
-		return;
-	}
-
-	Net_WriteInt8(DEM_KICK);
-	Net_WriteInt8(pNum);
 }
 
 CCMD(mute)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: mute <player number> - Don't receive messages from this player\n");
+		Printf("Usage: mute <player numbers>\nDisable messages from these players\n");
 		return;
 	}
 
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> pNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int pNum = -1;
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
+			pNums.Push(pNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto pNum : pNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!playeringame[pNum])
+		{
+			Printf("Player %d is not in game\n", pNum);
+		}
+		else
+		{
+			MutedClients |= (uint64_t)1u << pNum;
+			Printf("Muted player %s [%d]\n", players[pNum].userinfo.GetName(), pNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player is not currently in the game\n");
-		return;
-	}
-
-	MutedClients |= (uint64_t)1u << pNum;
 }
 
 CCMD(muteall)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	for (auto client : NetworkClients)
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (client != consoleplayer)
-			MutedClients |= (uint64_t)1u << client;
+		if (playeringame[i] && i != consoleplayer)
+			MutedClients |= (uint64_t)1u << i;
 	}
 }
 
 CCMD(listmuted)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
 	bool found = false;
-	for (auto client : NetworkClients)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (MutedClients & ((uint64_t)1u << client))
+		if (MutedClients & ((uint64_t)1u << i))
 		{
 			found = true;
-			Printf("%s - %d\n", players[client].userinfo.GetName(), client);
+			Printf("%d. %s\n", i, players[i].userinfo.GetName());
 		}
 	}
 
@@ -3438,39 +3436,47 @@ CCMD(listmuted)
 
 CCMD(unmute)
 {
-	if (argv.argc() == 1)
+	if (argv.argc() < 2)
 	{
-		Printf("Usage: unmute <player number> - Allow messages from this player again\n");
+		Printf("Usage: unmute <player numbers>\nAllow messages from these players again\n");
 		return;
 	}
 
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
-	int pNum = -1;
-	if (!C_IsValidInt(argv[1], pNum))
+	TArray<int> pNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
 	{
-		Printf("A player number must be provided. Use listplayers for more information\n");
-		return;
+		int pNum = -1;
+		if (!C_IsValidInt(argv[i], pNum) || pNum < 0 || pNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (pNum != consoleplayer && pNums.Find(pNum) >= pNums.Size())
+			pNums.Push(pNum);
 	}
 
-	if (pNum == consoleplayer || pNum < 0 || pNum >= MAXPLAYERS)
+	for (auto pNum : pNums)
 	{
-		Printf("Invalid player number provided\n");
-		return;
+		if (!playeringame[pNum])
+		{
+			Printf("Player %d is not in game\n", pNum);
+		}
+		else
+		{
+			MutedClients &= ~((uint64_t)1u << pNum);
+			Printf("Unmuted player %s [%d]\n", players[pNum].userinfo.GetName(), pNum);
+		}
 	}
-
-	MutedClients &= ~((uint64_t)1u << pNum);
 }
 
 CCMD(unmuteall)
 {
-	if (!netgame)
+	if (!multiplayer)
 	{
-		Printf("Not currently in a net game\n");
+		Printf("This command can only be used when playing in multiplayer\n");
 		return;
 	}
 
@@ -3479,108 +3485,158 @@ CCMD(unmuteall)
 
 //==========================================================================
 //
-// Network_Controller
+// Net_ChangeSettingsControllers
 //
 // Implement players who have the ability to change settings in a network
 // game.
 //
 //==========================================================================
 
-static void Network_Controller(int pNum, bool add)
+static void Net_ChangeSettingsControllers(const TArray<int>& cNums, bool add)
 {
 	if (!netgame)
 	{
-		Printf("This command can only be used when playing a net game.\n");
+		Printf("This command can only be used when playing in a net game\n");
 		return;
 	}
 
 	if (consoleplayer != Net_Arbitrator)
 	{
-		Printf("This command is only accessible to the host.\n");
+		Printf("This command is only accessible to the host\n");
 		return;
 	}
 
-	if (pNum == Net_Arbitrator)
+	for (auto cNum : cNums)
 	{
-		Printf("The host cannot change their own settings controller status.\n");
-		return;
+		if (cNum == Net_Arbitrator)
+		{
+			Printf("The host cannot change their own settings controller status\n");
+		}
+		else if (!NetworkClients.InGame(cNum))
+		{
+			Printf("Client %d is not in game\n", cNum);
+		}
+		else if (players[cNum].settings_controller && add)
+		{
+			Printf("Client %d is already a settings controller\n", cNum);
+		}
+		else if (!players[cNum].settings_controller && !add)
+		{
+			Printf("Client %d is already not a settings controller\n", cNum);
+		}
+		else
+		{
+			Net_WriteInt8(add ? DEM_ADDCONTROLLER : DEM_DELCONTROLLER);
+			Net_WriteInt8(cNum);
+		}
 	}
-
-	if (!NetworkClients.InGame(pNum))
-	{
-		Printf("Player %d is not a valid client\n", pNum);
-		return;
-	}
-
-	if (players[pNum].settings_controller && add)
-	{
-		Printf("%s is already on the setting controller list.\n", players[pNum].userinfo.GetName());
-		return;
-	}
-
-	if (!players[pNum].settings_controller && !add)
-	{
-		Printf("%s is not on the setting controller list.\n", players[pNum].userinfo.GetName());
-		return;
-	}
-
-	Net_WriteInt8(add ? DEM_ADDCONTROLLER : DEM_DELCONTROLLER);
-	Net_WriteInt8(pNum);
 }
 
 //==========================================================================
 //
-// CCMD net_addcontroller
+// CCMD addsettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_addcontroller)
+CCMD(addsettingscontrollers)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: net_addcontroller <player num>\n");
+		Printf("Usage: addsettingscontrollers <client numbers>\nAllow these clients to control game settings\n");
 		return;
 	}
 
-	Network_Controller(atoi (argv[1]), true);
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
+	{
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad client number %s\n", argv[i]);
+		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
+	}
+
+	Net_ChangeSettingsControllers(cNums, true);
 }
 
 //==========================================================================
 //
-// CCMD net_removecontroller
+// CCMD removesettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_removecontroller)
+CCMD(removesettingscontrollers)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: net_removecontroller <player num>\n");
+		Printf("Usage: removesettingscontrollers <client numbers>\nRemove the ability for these clients to control game settings\n");
 		return;
 	}
 
-	Network_Controller(atoi(argv[1]), false);
+	TArray<int> cNums = {};
+	for (size_t i = 1u; i < argv.argc(); ++i)
+	{
+		int cNum = -1;
+		if (!C_IsValidInt(argv[i], cNum) || cNum < 0 || cNum >= MAXPLAYERS)
+			Printf("Bad player number %s\n", argv[i]);
+		else if (cNum != Net_Arbitrator && cNums.Find(cNum) >= cNums.Size())
+			cNums.Push(cNum);
+	}
+
+	Net_ChangeSettingsControllers(cNums, false);
 }
 
 //==========================================================================
 //
-// CCMD net_listcontrollers
+// CCMD removeallsettingscontrollers
 //
 //==========================================================================
 
-CCMD(net_listcontrollers)
+CCMD(removeallsettingscontrollers)
+{
+	TArray<int> cNums = {};
+	for (auto client : NetworkClients)
+	{
+		if (client != Net_Arbitrator && players[client].settings_controller)
+			cNums.Push(client);
+	}
+
+	Net_ChangeSettingsControllers(cNums, false);
+}
+
+//==========================================================================
+//
+// CCMD listsettingscontrollers
+//
+//==========================================================================
+
+CCMD(listsettingscontrollers)
 {
 	if (!netgame)
 	{
-		Printf ("This command can only be used when playing a net game.\n");
+		Printf("This command can only be used when playing in a net game\n");
+		return;
+	}
+
+	TArray<int> cNums = {};
+	for (auto client : NetworkClients)
+	{
+		if (client != Net_Arbitrator && players[client].settings_controller)
+			cNums.Push(client);
+	}
+
+	if (!cNums.Size())
+	{
+		Printf("No other settings controllers\n");
 		return;
 	}
 
 	Printf("The following players can change the game settings:\n");
-
-	for (auto client : NetworkClients)
+	for (auto cNum : cNums)
 	{
-		if (players[client].settings_controller)
-			Printf("- %s\n", players[client].userinfo.GetName());
+		Printf("%d. %s", cNum, players[cNum].userinfo.GetName());
+		if (cNum == consoleplayer)
+			Printf(" [*]");
+		Printf("\n");
 	}
 }

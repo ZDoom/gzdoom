@@ -60,6 +60,7 @@
 #include "s_music.h"
 #include "texturemanager.h"
 #include "v_draw.h"
+#include "d_net.h"
 
 extern int paused;
 extern bool pauseext;
@@ -502,21 +503,22 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, RemoveForceField, RemoveForceField)
 	 return 0;
  }
 
-int WorldPaused()
+int WorldPaused(bool checkLag)
 {
-	if (paused)
+	if (paused || (checkLag && Net_IsWaiting()))
 		return true;
 
 	if (netgame || gamestate != GS_LEVEL)
 		return false;
 
-	return pauseext || menuactive == MENU_On || ConsoleState != c_up;
+	return pauseext || menuactive == MENU_On || ConsoleState == c_down || ConsoleState == c_falling;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, WorldPaused, WorldPaused)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_BOOL(WorldPaused());
+	PARAM_BOOL(checkLag);
+	ACTION_RETURN_BOOL(WorldPaused(checkLag));
 }
 
 static sector_t *PointInSectorXY(FLevelLocals *self, double x, double y)
@@ -2671,24 +2673,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, setFrozen, setFrozen)
 	return 0;
 }
 
-static DThinker* CreateClientsideThinker(FLevelLocals* self, PClass* type, int statnum)
+static DThinker* CreateThinker(FLevelLocals* self, PClass* type, int statnum, bool clientSide)
 {
 	if (type->IsDescendantOf(NAME_Actor))
 	{
-		ThrowAbortException(X_OTHER, "Clientside Actors cannot be created from this function");
+		ThrowAbortException(X_OTHER, "Actors cannot be created from this function");
+		return nullptr;
+	}
+	else if (type->IsDescendantOf(NAME_VisualThinker))
+	{
+		ThrowAbortException(X_OTHER, "VisualThinkers cannot be created from this function");
 		return nullptr;
 	}
 
-	return self->CreateClientsideThinker(type, statnum);
+	return clientSide ? self->CreateClientSideThinker(type, statnum) : self->CreateThinker(type, statnum);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateClientsideThinker, CreateClientsideThinker)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateThinker, CreateThinker)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_POINTER_NOT_NULL(type, PClass);
 	PARAM_INT(statnum);
+	PARAM_BOOL(clientSide);
 
-	ACTION_RETURN_OBJECT(CreateClientsideThinker(self, type, statnum));
+	ACTION_RETURN_OBJECT(CreateThinker(self, type, statnum, clientSide));
 }
 
 //=====================================================================================

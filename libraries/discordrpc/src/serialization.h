@@ -13,6 +13,11 @@
 #pragma warning(disable : 5045) // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif                          // __MINGW32__
 
+#define RAPIDJSON_48BITPOINTER_OPTIMIZATION 0
+#define RAPIDJSON_HAS_CXX11_RVALUE_REFS 1
+#define RAPIDJSON_HAS_CXX11_RANGE_FOR 1
+#define RAPIDJSON_PARSE_DEFAULT_FLAGS kParseFullPrecisionFlag
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
@@ -138,7 +143,8 @@ using MallocAllocator = rapidjson::CrtAllocator;
 using PoolAllocator = rapidjson::MemoryPoolAllocator<MallocAllocator>;
 using UTF8 = rapidjson::UTF8<char>;
 // Writer appears to need about 16 bytes per nested object level (with 64bit size_t)
-using StackAllocator = FixedLinearAllocator<2048>;
+//using StackAllocator = FixedLinearAllocator<2048>;
+using StackAllocator = MallocAllocator;
 constexpr size_t WriterNestingLevels = 2048 / (2 * sizeof(size_t));
 using JsonWriterBase =
   rapidjson::Writer<DirectStringBuffer, UTF8, UTF8, StackAllocator, rapidjson::kWriteNoFlags>;
@@ -158,6 +164,7 @@ public:
 };
 
 using JsonDocumentBase = rapidjson::GenericDocument<UTF8, PoolAllocator, StackAllocator>;
+/*
 class JsonDocument : public JsonDocumentBase {
 public:
     static const int kDefaultChunkCapacity = 32 * 1024;
@@ -177,7 +184,8 @@ public:
     {
     }
 };
-
+*/
+using JsonDocument = JsonDocumentBase;
 using JsonValue = rapidjson::GenericValue<UTF8, PoolAllocator>;
 
 inline JsonValue* GetObjMember(JsonValue* obj, const char* name)

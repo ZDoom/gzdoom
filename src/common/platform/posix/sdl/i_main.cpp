@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2007 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,24 +35,24 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <SDL.h>
-#include <unistd.h>
-#include <signal.h>
-#include <new>
-#include <sys/param.h>
+#include <SDL2/SDL.h>
+#include <csignal>
 #include <locale.h>
+#include <new>
+#include <signal.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
-#include "engineerrors.h"
-#include "m_argv.h"
 #include "c_console.h"
-#include "version.h"
 #include "cmdlib.h"
 #include "engineerrors.h"
-#include "i_system.h"
 #include "i_interface.h"
+#include "i_system.h"
+#include "m_argv.h"
 #include "printf.h"
+#include "version.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -71,6 +72,7 @@ void Linux_I_FatalError(const char* errortext);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 int GameMain();
+void SignalHandler(int signal);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -154,6 +156,11 @@ int main (int argc, char **argv)
 		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", GetCrashInfo);
 	}
 #endif // !__APPLE__
+
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+	// signal(SIGHUP, SignalHandler);
+	// signal(SIGQUIT, SignalHandler);
 
 	printf(GAMENAME" %s - %s - SDL version\nCompiled on %s\n",
 		GetVersionString(), GetGitTime(), __DATE__);

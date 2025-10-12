@@ -1,5 +1,7 @@
 #pragma once
+
 #include <string>
+
 #include "zstring.h"
 
 struct FCommandBuffer
@@ -31,8 +33,8 @@ public:
 	unsigned CalcCellSize(unsigned length);
 	unsigned CharsForCells(unsigned cellin, bool *overflow);
 	void MakeStartPosGood();
-	void CursorStart();
-	void CursorEnd();
+	bool CursorStart();
+	bool CursorEnd();
 
 private:
 	void MoveCursorLeft()

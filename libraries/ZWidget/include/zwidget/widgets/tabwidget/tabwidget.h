@@ -8,6 +8,7 @@
 
 class TabBar;
 class TabBarTab;
+class TabBarSpacer;
 class TabWidgetStack;
 class TextLabel;
 class ImageBox;
@@ -74,6 +75,14 @@ private:
 
 	int CurrentIndex = -1;
 	std::vector<TabBarTab*> Tabs;
+	TabBarSpacer* leftSpacer = nullptr;
+	TabBarSpacer* rightSpacer = nullptr;
+};
+
+class TabBarSpacer : public Widget
+{
+public:
+	TabBarSpacer(Widget* parent);
 };
 
 class TabBarTab : public Widget

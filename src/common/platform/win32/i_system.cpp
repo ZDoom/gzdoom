@@ -350,6 +350,17 @@ static void SetQueryIWad(HWND dialog)
 	queryiwad = query;
 }
 
+bool HoldingQueryKey(const char* key)
+{
+	int vkey = 0;
+	if (!stricmp(key, "shift"))
+		vkey = VK_SHIFT;
+	else if (!stricmp(key, "control") || !stricmp(key, "ctrl"))
+		vkey = VK_CONTROL;
+
+	return vkey && GetAsyncKeyState(vkey);
+}
+
 //==========================================================================
 //
 // I_PickIWad
@@ -358,26 +369,13 @@ static void SetQueryIWad(HWND dialog)
 //
 //==========================================================================
 
-int I_PickIWad(WadStuff *wads, int numwads, bool showwin, int defaultiwad, int& autoloadflags, FString &extraArgs)
+bool I_PickIWad(bool showwin, FStartupSelectionInfo& info)
 {
-	int vkey;
-	if (stricmp(queryiwad_key, "shift") == 0)
+	if (showwin)
 	{
-		vkey = VK_SHIFT;
+		return LauncherWindow::ExecModal(info);
 	}
-	else if (stricmp(queryiwad_key, "control") == 0 || stricmp (queryiwad_key, "ctrl") == 0)
-	{
-		vkey = VK_CONTROL;
-	}
-	else
-	{
-		vkey = 0;
-	}
-	if (showwin || (vkey != 0 && GetAsyncKeyState(vkey)))
-	{
-		return LauncherWindow::ExecModal(wads, numwads, defaultiwad, &autoloadflags, &extraArgs);
-	}
-	return defaultiwad;
+	return true;
 }
 
 //==========================================================================

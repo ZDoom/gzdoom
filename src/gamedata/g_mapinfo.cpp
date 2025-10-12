@@ -399,7 +399,7 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 		PClassActor *type = PClass::FindActor(RedirectType);
 		if (type != NULL)
 		{
-			for (int i = 0; i < MAXPLAYERS; ++i)
+			for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 			{
 				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
@@ -421,7 +421,7 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 			if (var->GetFlags() & CVAR_USERINFO)
 			{
 				// user sync'd cvar, check for all players
-				for (int i = 0; i < MAXPLAYERS; ++i)
+				for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 				{
 					if (playeringame[i] && (var = GetCVar(i, RedirectCVAR.GetChars())))
 					{
@@ -1942,6 +1942,8 @@ MapFlagHandlers[] =
 	{ "compat_nombf21",					MITYPE_COMPATFLAG, 0, COMPATF2_NOMBF21 },
 	{ "compat_voodoozombies",			MITYPE_COMPATFLAG, 0, COMPATF2_VOODOO_ZOMBIES },
 	{ "compat_noacsargcheck",			MITYPE_COMPATFLAG, 0, COMPATF2_NOACSARGCHECK },
+	{ "compat_novdolllockmsg",			MITYPE_COMPATFLAG, 0, COMPATF2_NOVDOLLLOCKMSG },
+
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

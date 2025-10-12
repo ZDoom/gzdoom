@@ -7,8 +7,9 @@
 #include <zwidget/widgets/textlabel/textlabel.h>
 #include <zwidget/widgets/listview/listview.h>
 #include <zwidget/widgets/lineedit/lineedit.h>
+#include <zwidget/widgets/checkboxlabel/checkboxlabel.h>
 
-PlayGamePage::PlayGamePage(LauncherWindow* launcher, WadStuff* wads, int numwads, int defaultiwad) : Widget(nullptr), Launcher(launcher)
+PlayGamePage::PlayGamePage(LauncherWindow* launcher, const FStartupSelectionInfo& info) : Widget(nullptr), Launcher(launcher)
 {
 	WelcomeLabel = new TextLabel(this);
 	VersionLabel = new TextLabel(this);
@@ -17,44 +18,43 @@ PlayGamePage::PlayGamePage(LauncherWindow* launcher, WadStuff* wads, int numwads
 	ParametersLabel = new TextLabel(this);
 	GamesList = new ListView(this);
 	ParametersEdit = new LineEdit(this);
+	SaveArgsCheckbox = new CheckboxLabel(this);
 
-	for (int i = 0; i < numwads; i++)
+	SaveArgsCheckbox->SetChecked(info.bSaveArgs);
+	if (!info.DefaultArgs.IsEmpty())
+		ParametersEdit->SetText(info.DefaultArgs.GetChars());
+
+	for (const auto& wad : *info.Wads)
 	{
-		const char* filepart = strrchr(wads[i].Path.GetChars(), '/');
-		if (filepart == NULL)
-			filepart = wads[i].Path.GetChars();
+		const char* filepart = strrchr(wad.Path.GetChars(), '/');
+		if (filepart == nullptr)
+			filepart = wad.Path.GetChars();
 		else
-			filepart++;
+			++filepart;
 
 		FString work;
-		if (*filepart) work.Format("%s (%s)", wads[i].Name.GetChars(), filepart);
-		else work = wads[i].Name.GetChars();
+		if (*filepart)
+			work.Format("%s (%s)", wad.Name.GetChars(), filepart);
+		else
+			work = wad.Name.GetChars();
 
 		GamesList->AddItem(work.GetChars());
 	}
 
-	if (defaultiwad >= 0 && defaultiwad < numwads)
+	if (info.DefaultIWAD >= 0 && info.DefaultIWAD < info.Wads->SSize())
 	{
-		GamesList->SetSelectedItem(defaultiwad);
-		GamesList->ScrollToItem(defaultiwad);
+		GamesList->SetSelectedItem(info.DefaultIWAD);
+		GamesList->ScrollToItem(info.DefaultIWAD);
 	}
 
 	GamesList->OnActivated = [=]() { OnGamesListActivated(); };
 }
 
-void PlayGamePage::SetExtraArgs(const std::string& args)
+void PlayGamePage::SetValues(FStartupSelectionInfo& info) const
 {
-	ParametersEdit->SetText(args);
-}
-
-std::string PlayGamePage::GetExtraArgs()
-{
-	return ParametersEdit->GetText();
-}
-
-int PlayGamePage::GetSelectedGame()
-{
-	return GamesList->GetSelectedItem();
+	info.DefaultIWAD = GamesList->GetSelectedItem();
+	info.DefaultArgs = ParametersEdit->GetText();
+	info.bSaveArgs = SaveArgsCheckbox->GetChecked();
 }
 
 void PlayGamePage::UpdateLanguage()
@@ -67,6 +67,7 @@ void PlayGamePage::UpdateLanguage()
 	FString versionText = GStrings.GetString("PICKER_VERSION");
 	versionText.Substitute("%s", GetVersionString());
 	VersionLabel->SetText(versionText.GetChars());
+	SaveArgsCheckbox->SetText(GStrings.GetString("PICKER_REMPARM"));
 }
 
 void PlayGamePage::OnGamesListActivated()
@@ -83,30 +84,30 @@ void PlayGamePage::OnGeometryChanged()
 {
 	double y = 10.0;
 
-	WelcomeLabel->SetFrameGeometry(0.0, y, GetWidth(), WelcomeLabel->GetPreferredHeight());
-	y += WelcomeLabel->GetPreferredHeight();
+	const double halfW = GetWidth() * 0.5;
+	WelcomeLabel->SetFrameGeometry(0.0, y, halfW, WelcomeLabel->GetPreferredHeight());
+	VersionLabel->SetFrameGeometry(halfW, y, halfW, VersionLabel->GetPreferredHeight());
 
-	VersionLabel->SetFrameGeometry(20.0, y - VersionLabel->GetPreferredHeight(), GetWidth() - 19.0, VersionLabel->GetPreferredHeight());
-
-	y += 10.0;
+	y += VersionLabel->GetPreferredHeight() + 10.0;
 
 	SelectLabel->SetFrameGeometry(0.0, y, GetWidth(), SelectLabel->GetPreferredHeight());
 	y += SelectLabel->GetPreferredHeight();
 
-	double listViewTop = y;
+	const double listViewTop = y;
 
-	y = GetHeight() - 10.0;
+	y = GetHeight() - SaveArgsCheckbox->GetPreferredHeight();
+	SaveArgsCheckbox->SetFrameGeometry(0.0, y, GetWidth(), SaveArgsCheckbox->GetPreferredHeight());
 
-	double editHeight = 24.0;
-	y -= editHeight;
+	const double editHeight = 24.0;
+	y -= editHeight + 2.0;
 	ParametersEdit->SetFrameGeometry(0.0, y, GetWidth(), editHeight);
-	y -= 5.0;
 
-	double labelHeight = ParametersLabel->GetPreferredHeight();
+	const double labelHeight = ParametersLabel->GetPreferredHeight();
 	y -= labelHeight;
 	ParametersLabel->SetFrameGeometry(0.0, y, GetWidth(), labelHeight);
-	y -= 10.0;
 
-	double listViewBottom = y - 10.0;
-	GamesList->SetFrameGeometry(0.0, listViewTop, GetWidth(), std::max(listViewBottom - listViewTop, 0.0));
+	y -= 20.0;
+	GamesList->SetFrameGeometry(0.0, listViewTop, GetWidth(), std::max(y - listViewTop, 0.0));
+
+	Launcher->UpdatePlayButton();
 }

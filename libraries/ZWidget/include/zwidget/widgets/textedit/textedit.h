@@ -83,6 +83,11 @@ private:
 		SpanLayout layout;
 		Rect box;
 		bool invalidated = true;
+
+		Line(const TextEdit *self)
+		{
+			layout.SetSelectionColors(self->selectionFG, self->selectionBG);
+		}
 	};
 
 	struct ivec2
@@ -96,9 +101,10 @@ private:
 		bool operator!=(const ivec2& b) const { return x != b.x || y != b.y; }
 	};
 
+	Colorf selectionBG, selectionFG;
 	Scrollbar* vert_scrollbar;
 	Timer* timer = nullptr;
-	std::vector<Line> lines = { Line() };
+	std::vector<Line> lines = { Line{this} };
 	ivec2 cursor_pos = { 0, 0 };
 	int max_length = -1;
 	bool mouse_selecting = false;

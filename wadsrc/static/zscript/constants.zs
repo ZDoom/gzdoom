@@ -726,6 +726,8 @@ enum EParticleFlags
 	SPF_ROLLCENTER				= 1 << 13,
 	SPF_STRETCHPIXELS			= 1 << 14,
 	SPF_ALLOWSHADERS			= 1 << 15,
+	SPF_FADE_IN_OUT				= 1 << 16,
+	SPF_FADE_IN_HOLD_OUT		= 1 << 17,
 
 	SPF_RELATIVE				= SPF_RELPOS|SPF_RELVEL|SPF_RELACCEL|SPF_RELANG
 };
@@ -1150,6 +1152,12 @@ enum EGameAction
 	ga_screenshot,
 	ga_togglemap,
 	ga_fullconsole,
+	ga_resumeconversation,
+	ga_intro,
+	ga_intermission,
+	ga_titleloop,
+	ga_mapwarp,
+	ga_quicksave,
 };
 
 enum EPuffFlags

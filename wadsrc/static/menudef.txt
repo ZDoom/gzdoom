@@ -365,9 +365,11 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
 	Submenu "$OPTMNU_HUD",				"HUDOptions"
+	Submenu "$OPTMNU_HAPTICS",			"HapticsOptions"
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
+	Submenu "$OPTMNU_ACCESSIBILITY",	"AccessibilityOptions"
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
@@ -383,7 +385,6 @@ OptionMenu "OptionsMenu" protected
 	Command "$OPTMNU_OPENCONFIG",		"openconfig"
 	Command "$OPTMNU_OPENSCREENSHOTS",	"openscreenshots"
 	Command "$OPTMNU_OPENSAVES",		"opensaves"
-	StaticText " "
 }
 
 //-------------------------------------------------------------------------------------------
@@ -806,7 +807,6 @@ OptionMenu "MouseOptions" protected
 	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"
 }
 
-
 //-------------------------------------------------------------------------------------------
 //
 // Joystick Menu
@@ -818,12 +818,17 @@ OptionMenu "JoystickOptionsDefaults" protected
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
 	Option "$JOYMNU_NOMENU", "m_blockcontrollers", "YesNo"
+	ScaleSlider "$JOYMNU_HAPTICS", "haptics_strength", 0, 10, 1, "$OPTVAL_OFF", 0, "m_simpleoptions_view", 0, 1
 	IfOption(Windows)
 	{
 		Option "$JOYMNU_DINPUT", "joy_dinput", "YesNo"
 		Option "$JOYMNU_XINPUT", "joy_xinput", "YesNo"
 		Option "$JOYMNU_PS2", "joy_ps2raw", "YesNo"
 	}
+	StaticText ""
+	Slider "$JOYMNU_TURNSPEED",			"cl_analog_sensitivity_yaw", 0, 2.5, 0.1
+	Slider "$JOYMNU_LOOKSPEED",			"cl_analog_sensitivity_pitch", 0, 2.5, 0.1
+	Option "$JOYMNU_ANALOGSTRAFERUN",	"cl_analog_straferun", "OnOff"
 	StaticText ""
 	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED1", "ConnectMessage1"
@@ -835,6 +840,15 @@ OptionMenu "JoystickOptionsDefaults" protected
 OptionMenu "JoystickOptions" protected
 {
 	Title "$JOYMNU_OPTIONS"
+}
+
+OptionValue "JoyAxisCurveNames"
+{
+	-1, "$OPTVAL_CUSTOM"
+	0, "$OPTVAL_DEFAULT"
+	1, "$OPTVAL_LINEAR"
+	2, "$OPTVAL_QUADRATIC"
+	3, "$OPTVAL_CUBIC"
 }
 
 OptionValue "JoyAxisMapNames"
@@ -859,7 +873,6 @@ OptionMenu "JoystickConfigMenu" protected
 	Class "JoystickConfigMenu"
 	// Will be filled in by joystick code.
 }
-
 
 //-------------------------------------------------------------------------------------------
 //
@@ -1006,7 +1019,6 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_QUAKEINTENSITY",			"r_quakeintensity", 0.0, 1.0, 0.05, 2
 	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
 }
-
 
 //-------------------------------------------------------------------------------------------
 //
@@ -1230,6 +1242,34 @@ OptionMenu "AltHUDOptions" protected
 
 //-------------------------------------------------------------------------------------------
 //
+// Haptics menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionValue HapticsCompatTypes
+{
+	0, "$OPTVAL_WARN"
+	1, "$OPTVAL_NONE"
+	2, "$OPTVAL_MATCH"
+	3, "$OPTVAL_ALL"
+}
+
+OptionMenu "HapticsOptions" protected
+{
+	Title		"$HAPMNU_TITLE"
+
+	ScaleSlider	"$JOYMNU_HAPTICS",			"haptics_strength",		0, 10, 1, "$OPTVAL_OFF"
+	Option 		"$HAPMNU_COMPAT",			"haptics_compat",		"HapticsCompatTypes"
+	StaticText	""
+	StaticText	"$HAPMNU_OPTIONS"
+	Option		"$HAPMNU_OPT_MENU",			"haptics_do_menus",		"OnOff"
+	Option		"$HAPMNU_OPT_ACTION",		"haptics_do_action",	"OnOff"
+	Option		"$HAPMNU_OPT_DAMAGE",		"haptics_do_damage",	"OnOff"
+	Option		"$HAPMNU_OPT_WORLD",		"haptics_do_world",		"OnOff"
+}
+
+//-------------------------------------------------------------------------------------------
+//
 // Misc menu
 //
 //-------------------------------------------------------------------------------------------
@@ -1311,6 +1351,9 @@ OptionMenu "MiscOptions" protected
 
 	StaticText " "
 	Option "$MISCMNU_ALWAYSTALLY",				"sv_alwaystally", "AlwaysTally"
+
+	StaticText " "
+	Option "$MISCMNU_DISCORDRPC",				"i_discordrpc",	"OnOff"
 	
 }
 
@@ -1563,7 +1606,6 @@ OptionMenu ColorPickerMenu protected
 //
 //-------------------------------------------------------------------------------------------
 
-
 OptionValue MessageLevels
 {
 	0.0, "$OPTVAL_ITEMPICKUP"
@@ -1678,7 +1720,6 @@ OptionValue  JumpCrouchFreeLook
 	2, "$OPTVAL_ON"
 }
 
-
 OptionMenu GameplayOptions protected
 {
 	Position -35
@@ -1779,7 +1820,6 @@ OptionMenu CoopOptions protected
  *
  *=======================================*/
 
-
 OptionValue CompatModes
 {
 	0, "$OPTVAL_DEFAULT"
@@ -1874,7 +1914,6 @@ OptionMenu "CompatPhysicsMenu" protected
 	Class "CompatibilityMenu"
 }
 
-
 OptionMenu "CompatRenderMenu" protected
 {
 	Position -35
@@ -1914,7 +1953,6 @@ OptionValue SampleRates
 	48000,	"$OPTVAL_48000HZ"
 }
 
-
 OptionValue BufferSizes
 {
 	   0, "$OPTVAL_DEFAULT"
@@ -1926,7 +1964,6 @@ OptionValue BufferSizes
 	2048, "$OPTVAL_2048SAMPLES"
 	4096, "$OPTVAL_4096SAMPLES"
 }
-
 
 OptionValue BufferCounts
 {
@@ -1943,7 +1980,6 @@ OptionValue BufferCounts
 	  11, "11"
 	  12, "12"
 }
-
 
 OptionString ALDevices
 {
@@ -1967,7 +2003,6 @@ OptionString SpeakerModes
 	"7.1",		"$OPTSTR_7POINT1"
 }
 
-
 OptionString Resamplers
 {
 	"NoInterp",		"$OPTSTR_NOINTERPOLATION"
@@ -1976,7 +2011,6 @@ OptionString Resamplers
 	"Spline",		"$OPTSTR_SPLINE"
 }
 
-
 OptionMenu OpenALSoundItems protected
 {
 	Title "$OPENALMNU_TITLE"
@@ -1984,7 +2018,6 @@ OptionMenu OpenALSoundItems protected
 	Option "$OPENALMNU_ENABLEEFX",			"snd_efx",			"OnOff"
 	Option "$OPENALMNU_RESAMPLER",			"snd_alresampler",	"ALResamplers"
 }
-
 
 OptionValue MidiDevices
 {
@@ -2034,7 +2067,6 @@ OptionValue OplCores
 	2, "$OPTVAL_JAVAOPL3"
 	3, "$OPTVAL_NUKEDOPL3"
 }
-
 
 OptionMenu AdvSoundOptions protected
 {
@@ -2093,13 +2125,11 @@ OptionMenu OPNMIDICustomBanksMenu protected
 	Title "$ADVSNDMNU_OPNBANKFILE"
 }
 
-
 /*=======================================
  *
  * Module Replayer Options Menu
  *
  *=======================================*/
-
 
 OptionValue ModQuality
 {
@@ -2113,7 +2143,6 @@ OptionValue ModQuality
 	7.0, "$OPTVAL_SINC"
 }
 
-
 OptionValue ModVolumeRamps
 {
 	0.0, "$OPTVAL_NONE"
@@ -2126,7 +2155,6 @@ OptionValue ModReplayers
 	0.0, "$OPTVAL_LIBXMP"
 	1.0, "$OPTVAL_DUMB"
 }
-
 
 OptionMenu ModReplayerOptions protected
 {
@@ -2213,6 +2241,7 @@ OptionMenu ModReplayerOptions protected
  	Title "$ADVSNDMNU_OPLSYNTHESIS"
 	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
+	Slider "$ADVSNDMNU_OPLGAIN",		 	"opl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
  }
 
@@ -2232,6 +2261,24 @@ OptionMenu ModReplayerOptions protected
 	11, "$ADLVLMODEL_HMIOLD"
  }
 
+ OptionValue OpnVolumeModels
+ {
+	0, "$OPNVLMODEL_AUTO"
+	1, "$OPNVLMODEL_GENERIC"
+	2, "$OPNVLMODEL_NATIVE"
+	3, "$OPNVLMODEL_DMX"
+	4, "$OPNVLMODEL_APOGEE"
+	5, "$OPNVLMODEL_WIN9X"
+ }
+
+ OptionValue AdlChanAllocs
+ {
+	-1, "$ADLCHANALLOC_AUTO"
+	0, "$ADLCHANALLOC_OFFDELAY"
+	1, "$ADLCHANALLOC_SAMEINST"
+	2, "$ADLCHANALLOC_ANYREL"
+ }
+
  OptionValue ADLOplCores
  {
 	0, "$OPTVAL_NUKEDOPL3"
@@ -2239,43 +2286,85 @@ OptionMenu ModReplayerOptions protected
 	2, "$OPTVAL_DOSBOXOPL3"
 	3, "$OPTVAL_OPALOPL3"
 	4, "$OPTVAL_JAVAOPL3"
+	5, "$OPTVAL_ESFMu"
+	6, "$OPTVAL_MAMEOPL2"
+	7, "$OPTVAL_YMFMOPL2"
+	8, "$OPTVAL_YMFMOPL3"
+	9, "$OPTVAL_LLENUKEDOPL2"
+	10, "$OPTVAL_LLENUKEDOPL3"
  }
 
  OptionValue OpnCores
  {
 	0, "$OPTVAL_MAMEOPN2"
-	1, "$OPTVAL_NUKEDOPN2"
+	1, "$OPTVAL_NUKEDOPN2YM3438"
 	2, "$OPTVAL_GENSOPN2"
+	3, "$OPTVAL_YMFMOPN2"
 	4, "$OPTVAL_NP2OPNA"
 	5, "$OPTVAL_MAMEOPNA"
-	6, "$OPTVAL_PMDWINOPNA"
+	6, "$OPTVAL_YMFMOPNA"
+	// 7'th is a VGM Dumper, it should NEVER been used during normal runtime
+	8, "$OPTVAL_NUKEDOPN2YM2612"
  }
 
  OptionMenu ADLOptions protected
  {
 	Title "$ADVSNDMNU_ADLMIDI"
+	Slider "$ADVSNDMNU_ADLGAIN",		 "adl_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "adl_fullpan", "OnOff"
 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "adl_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "adl_auto_arpeggio", "OnOff"
 	StaticText ""
 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
 	StaticText ""
 	Option "$ADVSNDMNU_ADLCUSTOMBANK", 	 "adl_use_custom_bank", "OnOff"
+	Option "$ADVSNDMNU_ADLUSEWADBANK", 	 "adl_use_genmidi", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPLBANKFILE", "adl_custom_bank", "ADLMIDICustomBanksMenu"
  }
 
  OptionMenu OPNOptions protected
  {
 	Title "$ADVSNDMNU_OPNMIDI"
+	Slider "$ADVSNDMNU_OPNGAIN",		 "opn_gain", 0, 10, 0.1, 1
 	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
 	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
 	Option "$ADVSNDMNU_OPLFULLPAN", 	 "opn_fullpan", "OnOff"
+	Option "$ADVSNDMNU_VLMODEL",		 "opn_volume_model", "OpnVolumeModels"
+	Option "$ADVSNDMNU_CHANALLOC",		 "opn_chan_alloc", "AdlChanAllocs"
+	Option "$ADVSNDMNU_AUTOARPEGGIO", 	 "opn_auto_arpeggio", "OnOff"
 	StaticText ""
 	Option "$ADVSNDMNU_OPNCUSTOMBANK", 	 "opn_use_custom_bank", "OnOff"
 	LabeledSubmenu "$ADVSNDMNU_OPNBANKFILE", "opn_custom_bank", "OPNMIDICustomBanksMenu"
+ }
+ 
+ /*=======================================
+ *
+ * Accessibility Menu
+ *
+ *=======================================*/
+ 
+ OptionMenu AccessibilityOptions protected
+ {
+	Title "$ACCMNU_TITLE"
+	
+	StaticText "$ACCMNU_TOOLTIP"
+	Slider "$ACCMNU_TOOLTIP_LINES", "m_tooltip_lines", 1, 4, 1, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_SPEED", "m_tooltip_speed", 1.0, 5.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_DELAY", "m_tooltip_delay", 3.0, 15.0, 1.0, 0
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Slider "$ACCMNU_TOOLTIP_ALPHA", "m_tooltip_alpha", 0.2, 0.9, 0.05, 2
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Option "$ACCMNU_TOOLTIP_CAP", "m_tooltip_capwidth", "OnOff"
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
+	Option "$ACCMNU_TOOLIP_SCALE", "m_tooltip_small", "OffOn"
+	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
  }
 
 /*=======================================
@@ -2326,7 +2415,6 @@ OptionValue ScaleModes
 	4, "1280x800"
 	5, "$OPTVAL_CUSTOM"
 	1, "$OPTVAL_LOWEST"
-	7, "$OPTVAL_LOWEST12"
 }
 OptionValue CropAspect
 {
@@ -2344,7 +2432,6 @@ OptionValue MaxFps
 	144, "$OPTVAL_144FPS"
 	200, "$OPTVAL_200FPS"
 }
-
 
 OptionMenu VideoModeMenu protected
 {
@@ -2586,7 +2673,6 @@ OptionValue "BillboardModes"
 	1, "$OPTVAL_XYAXIS"
 }
 
-
 OptionValue "Particles"
 {
 	0, "$OPTVAL_SQUARE"
@@ -2679,7 +2765,6 @@ OptionValue ShadowMapFilter
 	3, "$OPTVAL_PCF_HIGH"
 }
 
-
 OptionMenu "GLTextureGLOptions" protected
 {
 	Title "$GLTEXMNU_TITLE"
@@ -2729,6 +2814,7 @@ OptionMenu "OpenGLOptions" protected
 	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
 	Option "$GLPREFMNU_FOGFORCEFULLBRIGHT",		gl_brightfog,					"YesNo"
 	Slider "$GLPREFMNU_WPNLIGHTSTR",			gl_weaponlight,					0,32, 2
+	Option "$GLPREFMNU_WPNPURELIGHT",			gl_weapon_purelightlevel,		"OnOff"
 	Option "$GLPREFMNU_ENVIRONMENTMAPMIRROR",	gl_mirror_envmap,				"OnOff"
 	Option "$GLPREFMNU_ENV",					gl_enhanced_nightvision,		"OnOff"
 	Option "$GLPREFMNU_ENVSTEALTH",				gl_enhanced_nv_stealth,			"EnhancedStealth"

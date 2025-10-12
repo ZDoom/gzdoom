@@ -39,6 +39,8 @@
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
 
+void I_GetWindowEvent();
+
 void I_GetEvent();
 
 enum
@@ -118,7 +120,7 @@ protected:
 class FJoystickCollection : public FInputDevice
 {
 public:
-	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;
+	virtual void AddAxes(float axes[NUM_AXIS_CODES]) = 0;
 	virtual void GetDevices(TArray<IJoystickConfig *> &sticks) = 0;
 	virtual IJoystickConfig *Rescan() = 0;
 };

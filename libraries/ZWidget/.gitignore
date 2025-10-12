@@ -1,0 +1,6 @@
+# build artifacts
+/build
+
+# misc cache/backup/swap files
+.cache
+*~

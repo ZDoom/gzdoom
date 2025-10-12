@@ -322,7 +322,7 @@ void P_FreeStrifeConversations ()
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle)
 {
 	AActor *oldtarget;
-	int i;
+	unsigned int i;
 
 	// Make sure this is actually a player.
 	if (pc == nullptr || pc->player == nullptr || npc == nullptr || !pc->Level->isPrimaryLevel()) return;
@@ -377,7 +377,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	while (CurNode->ItemCheck.Size() > 0 && CurNode->ItemCheck[0].Item != NULL)
 	{
 		bool jump = true;
-		for (i = 0; i < (int)CurNode->ItemCheck.Size(); ++i)
+		for (i = 0; i < CurNode->ItemCheck.Size(); ++i)
 		{
 			if(!CheckStrifeItem (pc->player, CurNode->ItemCheck[i].Item, CurNode->ItemCheck[i].Amount))
 			{
@@ -446,7 +446,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 
 void P_ResumeConversation ()
 {
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;
@@ -667,7 +667,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 //
 //============================================================================
 
-void P_ConversationCommand (int netcode, int pnum, uint8_t **stream)
+void P_ConversationCommand (int netcode, int pnum, TArrayView<uint8_t>& stream)
 {
 	player_t *player = &players[pnum];
 
@@ -761,3 +761,4 @@ DEFINE_FIELD(FStrifeDialogueReply, LogString);
 DEFINE_FIELD(FStrifeDialogueReply, NextNode);
 DEFINE_FIELD(FStrifeDialogueReply, LogNumber);
 DEFINE_FIELD(FStrifeDialogueReply, NeedsGold);
+DEFINE_FIELD(FStrifeDialogueReply, CloseDialog);

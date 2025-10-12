@@ -9,7 +9,7 @@ TabWidget::TabWidget(Widget* parent) : Widget(parent)
 	Bar = new TabBar(this);
 	PageStack = new TabWidgetStack(this);
 
-	Bar->OnCurrentChanged = [=]() { OnBarCurrentChanged(); };
+	Bar->OnCurrentChanged = [this]() { OnBarCurrentChanged(); };
 }
 
 int TabWidget::AddTab(Widget* page, const std::string& label)
@@ -112,6 +112,9 @@ void TabWidget::OnGeometryChanged()
 TabBar::TabBar(Widget* parent) : Widget(parent)
 {
 	SetStyleClass("tabbar");
+
+	leftSpacer = new TabBarSpacer(this);
+	rightSpacer = new TabBarSpacer(this);
 }
 
 int TabBar::AddTab(const std::string& label)
@@ -124,7 +127,7 @@ int TabBar::AddTab(const std::shared_ptr<Image>& icon, const std::string& label)
 	TabBarTab* tab = new TabBarTab(this);
 	tab->SetIcon(icon);
 	tab->SetText(label);
-	tab->OnClick = [=]() { OnTabClicked(tab); };
+	tab->OnClick = [this,tab]() { OnTabClicked(tab); };
 	int pageIndex = (int)Tabs.size();
 	Tabs.push_back(tab);
 	if (CurrentIndex == -1)
@@ -188,12 +191,25 @@ void TabBar::OnGeometryChanged()
 	double w = GetWidth();
 	double h = GetHeight();
 	double x = 0.0;
+
+	leftSpacer->SetFrameGeometry(Rect::xywh(x, 0.0, GetStyleDouble("spacer-left"), h));
+	x += GetStyleDouble("spacer-left");
+
 	for (TabBarTab* tab : Tabs)
 	{
 		double tabWidth = tab->GetNoncontentLeft() + tab->GetPreferredWidth() + tab->GetNoncontentRight();
 		tab->SetFrameGeometry(Rect::xywh(x, 0.0, tabWidth, h));
 		x += tabWidth;
 	}
+
+	rightSpacer->SetFrameGeometry(Rect::xywh(x, 0.0, std::max(w - x, 0.0), h));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+TabBarSpacer::TabBarSpacer(Widget* parent) : Widget(parent)
+{
+	SetStyleClass("tabbar-spacer");
 }
 
 /////////////////////////////////////////////////////////////////////////////

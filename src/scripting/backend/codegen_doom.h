@@ -110,3 +110,20 @@ public:
 	FxMultiNameState(const char *statestring, const FScriptPosition &pos, PClassActor *checkclass = nullptr);
 	FxExpression *Resolve(FCompileContext&);
 };
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxFStateOffset : public FxExpression
+{
+	FxExpression* State;
+	FxExpression* Offset;
+public:
+	FxFStateOffset(FxExpression* state, FxExpression* offset, const FScriptPosition& pos);
+	~FxFStateOffset();
+	FxExpression* Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder* build);
+};

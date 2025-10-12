@@ -209,10 +209,10 @@ namespace swrenderer
 			float lit_green = 0;
 			float lit_blue = 0;
 			auto Level = vis->sector->Level;
-			auto flatLightList = Level->lightlists.flat_dlist.CheckKey(vis->section);
-			if (flatLightList)
+
+			if (Level->lightlists.flat_dlist.SSize() > vis->section->Index())
 			{
-				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*flatLightList);
+				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(Level->lightlists.flat_dlist[vis->section->Index()]);
 				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
 				while (it.NextPair(pair))
 				{

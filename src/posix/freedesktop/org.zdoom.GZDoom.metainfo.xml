@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component type="desktop-application">
+  <id>org.zdoom.GZDoom</id>
+  <launchable type="desktop-id">org.zdoom.GZDoom.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
+
+  <name>GZDoom</name>
+  <developer id="org.zdoom.GZDoom">
+    <name>ZDoom team</name>
+    <url>https://github.com/zdoom/GZDDoom/graphs/contributors</url>
+  </developer>
+  <summary>Game engine for Classic Doom</summary>
+
+  <url type="homepage">https://zdoom.org/index</url>
+  <url type="bugtracker">https://github.com/ZDoom/gzdoom/issues</url>
+  <url type="help">https://zdoom.org/wiki/Main_Page</url>
+  <url type="faq">https://zdoom.org/about</url>
+  <url type="contact">https://forum.zdoom.org/</url>
+  <url type="vcs-browser">https://github.com/ZDoom/gzdoom</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#999999</color>
+    <color type="primary" scheme_preference="dark">#222222</color>
+  </branding>
+
+  <description>
+    <p>GZDoom is a source port for the modern era, supporting current hardware and operating systems
+      and sporting a vast array of user options. Make Doom your own again!</p>
+    <p>In addition to Doom, GZDoom supports Heretic, Hexen, Strife, Chex Quest, and fan-created
+      games like Harmony and Hacx. Meet the entire idTech 1 family!</p>
+    <p>Experience mind-bending user-created mods, made possible by ZDoom's advanced mapping features
+      and the ZScript language for complex game mechanics and behaviors. Or make a mod of your own!</p>
+    <ul>
+        <li>Can play all Doom engine games, including Ultimate Doom, Doom II, Heretic,
+          Hexen, Strife, and more</li>
+        <li>Supports all the editing features of Hexen. (ACS, hubs, new map format, etc.)</li>
+        <li>Supports most of the Boom editing features</li>
+        <li>Features complete translations of Doom, Heretic, Hexen, Strife and other games into
+          over ten different languages with Unicode support for Latin, Cyrillic, and Hangul so far</li>
+        <li>All Doom limits are gone</li>
+        <li>Several softsynths for MUS and MIDI playback, including an OPL softsynth for
+          an authentic "oldschool" flavor</li>
+        <li>High resolutions</li>
+        <li>Quake-style console and key bindings</li>
+        <li>Crosshairs</li>
+        <li>Free look (look up/down)</li>
+        <li>Jumping, crouching, swimming, and flying</li>
+        <li>Network games for up to 64 players, including team-based gameplay</li>
+        <li>Support for the Bloodbath announcer from the classic Monolith game Blood</li>
+        <li>Walk over/under monsters and other things</li>
+    </ul>
+    <p>Commercial data files are required to run the supported games. For more info about all
+      supported games and their data files, see Help -&gt; List of supported games.</p>
+    <p>For the Flatpak distribution of GZDoom, all file access is restricted to
+      <code>~/.var/app/org.zdoom.GZDoom/.config/gzdoom</code> by default for security reasons.
+      You will need to place your IWADs and PWADS there, or use an application like Flatseal
+      to give GZDoom additional permissions.</p>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_doom.png</image>
+      <caption>Doom screenshot</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_strife.png</image>
+      <caption>Strife screenshot</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_heretic.png</image>
+      <caption>Heretic screenshot</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://cdn.jsdelivr.net/gh/ZDoom/gzdoom@master/src/posix/freedesktop/screenshot_hexen.png</image>
+      <caption>Hexen screenshot</caption>
+    </screenshot>
+  </screenshots>
+
+  <supports>
+    <control>gamepad</control>
+  </supports>
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </recommends>
+  <provides>
+    <binary>gzdoom</binary>
+  </provides>
+
+  <keywords>
+    <keyword>retro</keyword>
+    <keyword>fps</keyword>
+    <keyword>vulkan</keyword>
+    <keyword>shooter</keyword>
+    <keyword>sourceport</keyword>
+    <keyword>doom</keyword>
+  </keywords>
+
+  <categories>
+    <category>Game</category>
+    <category>Shooter</category>
+  </categories>
+
+  <releases>
+    <release version="4.14.2" date="2025-05-03">
+      <description>
+        <p>This update delivers various bug fixes, performance optimizations, and significantly expands modding capabilities.</p>
+        <ul>
+        <li>Ortho + OOB fixes and improvements</li>
+        <li>Revert clipper to older code path when not in Ortho/OOB (speed improvement)</li>
+        <li>Fix to some crashes and memory leaks</li>
+        <li>Exposed DDoor to ZScript, Exposed DPlat to ZScript, Exposed more of the Ceiling thinker, Exposed more of the Floor thinker, Exposed DElevator to ZScript.</li>
+        <li>Exported: GetLumpContainer, GetContainerName, GetLumpFullPath for WADS struct, useful for debugging custom-made parsers and identifying where problems may arise.</li>
+        <li>Added autoSwitch parameter to A_ReFire</li>
+        <li>add a few commonly-used gzdoom-specific properties to the dehacked parser</li>
+        <li>many more fixes and improvements</li>
+        </ul>
+      </description>
+      <url>https://forum.zdoom.org/viewtopic.php?t=80447</url>
+    </release>
+    <release version="4.14.1" date="2025-03-01" />
+    <release version="4.14.0" date="2024-12-17" />
+    <release version="4.13.2" date="2024-10-31" />
+    <release version="4.13.1" date="2024-10-20" />
+    <release version="4.13.0" date="2024-10-12" />
+    <release version="4.12.2" date="2024-04-28" />
+    <release version="4.12.1" date="2024-04-21" />
+    <release version="4.12.0" date="2024-04-21" />
+    <release version="4.11.3" date="2023-10-26" />
+    <release version="4.11.2" date="2023-10-25" />
+    <release version="4.11.1" date="2023-10-10" />
+    <release version="4.11.0" date="2023-09-25" />
+    <release version="4.10.0" date="2022-12-04" />
+    <release version="4.9.0" date="2022-11-05" />
+    <release version="4.8.2" date="2022-07-04" />
+    <release version="4.8.1" date="2022-06-26" />
+    <release version="4.8.0" date="2022-06-06" />
+    <release version="4.7.1" date="2021-10-20" />
+    <release version="4.7.0" date="2021-09-22" />
+    <release version="4.6.1" date="2021-07-25" />
+    <release version="4.6.0" date="2021-05-22" />
+    <release version="4.5.0" date="2020-10-31" />
+    <release version="4.4.2" date="2020-06-16" />
+    <release version="4.4.1" date="2020-06-10" />
+    <release version="4.4.0" date="2020-06-07" />
+    <release version="4.3.3" date="2020-01-20" />
+    <release version="4.3.2" date="2020-01-12" />
+    <release version="4.3.1" date="2020-01-05" />
+    <release version="4.2.4" date="2019-11-03" />
+    <release version="4.2.3" date="2019-10-20" />
+    <release version="4.2.1" date="2019-09-11" />
+    <release version="4.2.0" date="2019-09-10" />
+  </releases>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-fantasy">intense</content_attribute>
+    <content_attribute id="violence-bloodshed">intense</content_attribute>
+    <content_attribute id="violence-desecration">moderate</content_attribute>
+  </content_rating>
+
+</component>

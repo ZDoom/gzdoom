@@ -184,23 +184,13 @@ protected:
 
 struct FLightNode
 {
-	FLightNode ** prevTarget;
-	FLightNode * nextTarget;
-	FLightNode ** prevLight;
-	FLightNode * nextLight;
 	FDynamicLight * lightsource;
-	union
-	{
-		side_t * targLine;
-		subsector_t * targSubsector;
-		void * targ;
-	};
 };
 
 struct FDynamicLightTouchLists
 {
-	TMap<FSection*, FSection*> flat_tlist;
-	TMap<side_t*, side_t*> wall_tlist;
+	TArray<FSection*> flat_tlist;
+	TArray<side_t*> wall_tlist;
 };
 
 struct FDynamicLight
@@ -281,8 +271,7 @@ public:
 	sector_t *Sector;
 	FLevelLocals *Level;
 	TObjPtr<AActor *> target;
-	FLightNode * touching_sides;
-	FLightNode * touching_sector;
+
 	float radius;			// The maximum size the light can be with its current settings.
 	float m_currentRadius;	// The current light size.
 	int m_tickCount;

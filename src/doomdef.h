@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,6 +31,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "gi.h"
 #include "i_net.h"
 
 //
@@ -48,7 +51,6 @@ typedef enum
 	undetermined	// Well, no IWAD found.
   
 } GameMode_t;
-
 
 // If rangecheck is undefined, most parameter validation debugging code
 // will not be compiled
@@ -73,8 +75,6 @@ inline int Tics2Seconds(int tics)
 	return tics / TICRATE;
 }
 
-
-
 typedef float skill_t;
 
 /*
@@ -87,8 +87,6 @@ enum ESkillLevels
 	sk_nightmare
 };
 */
-
-
 
 #define TELEFOGHEIGHT			(gameinfo.telefogheight)
 
@@ -241,7 +239,7 @@ enum : unsigned int
 	COMPATF2_VOODOO_ZOMBIES = 1 << 15,	// [RL0] allow playerinfo, playerpawn, and voodoo health to all be different, and skip killing the player's mobj if a voodoo doll dies to allow voodoo zombies
 	COMPATF2_FDTELEPORT		= 1 << 16,	// Emulate Final Doom's teleporter z glitch.
 	COMPATF2_NOACSARGCHECK	= 1 << 17,	// Disable arg count checking for ACS
-
+	COMPATF2_NOVDOLLLOCKMSG = 1 << 18,	// Voodoo dolls no longer trigger lock messages
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -272,7 +270,6 @@ enum
 #define ORIG_FRICTION_FACTOR	(2048/65536.)	// original value
 #define FRICTION_LOW			(0xf900/65536.)
 #define FRICTION_FLY			(0xeb00/65536.)
-
 
 #define BLINKTHRESHOLD (4*32)
 

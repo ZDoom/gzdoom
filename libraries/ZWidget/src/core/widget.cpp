@@ -1,4 +1,3 @@
-
 #include "core/widget.h"
 #include "core/timer.h"
 #include "core/colorf.h"
@@ -34,6 +33,12 @@ Widget::Widget(Widget* parent, WidgetType type, RenderAPI renderAPI) : Type(type
 
 Widget::~Widget()
 {
+	for (auto subscription: Subscriptions)
+		subscription->Subscribers.erase(this);
+
+	for (auto subscriber: Subscribers)
+		subscriber->Subscriptions.erase(this);
+
 	if (DispCanvas)
 		DispCanvas->detach();
 
@@ -44,6 +49,24 @@ Widget::~Widget()
 		delete FirstTimerObj;
 
 	DetachFromParent();
+}
+
+void Widget::Subscribe(Widget* subscriber)
+{
+	Subscribers.insert(subscriber);
+	subscriber->Subscriptions.insert(this);
+}
+
+void Widget::Unsubscribe(Widget* subscriber)
+{
+	Subscribers.erase(subscriber);
+	subscriber->Subscriptions.erase(this);
+}
+
+void Widget::NotifySubscribers(const WidgetEvent type)
+{
+	for (auto subscriber: Subscribers)
+		subscriber->Notify(this, type);
 }
 
 void Widget::SetCanvas(std::unique_ptr<Canvas> canvas)
@@ -150,6 +173,18 @@ void Widget::SetWindowTitle(const std::string& text)
 	}
 }
 
+std::vector<std::shared_ptr<Image>> Widget::GetWindowIcon() const
+{
+	return WindowIcon;
+}
+
+void Widget::SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images)
+{
+	WindowIcon = images;
+	if (DispWindow)
+		DispWindow->SetWindowIcon(WindowIcon);
+}
+
 Size Widget::GetSize() const
 {
 	return ContentGeometry.size();
@@ -206,10 +241,12 @@ void Widget::Show()
 	if (Type != WidgetType::Child)
 	{
 		DispWindow->Show();
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 	}
 	else if (HiddenFlag)
 	{
 		HiddenFlag = false;
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 		Update();
 	}
 }
@@ -260,11 +297,15 @@ void Widget::Hide()
 	if (Type != WidgetType::Child)
 	{
 		if (DispWindow)
+		{
 			DispWindow->Hide();
+			NotifySubscribers(WidgetEvent::VisibilityChange);
+		}
 	}
 	else if (!HiddenFlag)
 	{
 		HiddenFlag = true;
+		NotifySubscribers(WidgetEvent::VisibilityChange);
 		Update();
 	}
 }
@@ -336,7 +377,7 @@ void Widget::Repaint()
 	Widget* w = Window();
 	if (w->DispCanvas)
 	{
-		w->DispCanvas->begin(WindowBackground);
+		w->DispCanvas->begin(w->WindowBackground);
 		w->Paint(w->DispCanvas.get());
 		w->DispCanvas->end();
 	}
@@ -409,7 +450,7 @@ bool Widget::IsVisible()
 void Widget::SetFocus()
 {
 	Widget* window = Window();
-	if (window)
+	if (window && window->FocusWidget != this)
 	{
 		if (window->FocusWidget)
 			window->FocusWidget->OnLostFocus();

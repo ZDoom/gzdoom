@@ -632,7 +632,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 				player->Bot->t_respawn = (pr_botrespawn()%15)+((Level->BotInfo.botnum-1)*2)+TICRATE+1;
 
 			//Added by MC: Discard enemies.
-			for (int i = 0; i < MAXPLAYERS; i++)
+			for (unsigned int i = 0; i < MAXPLAYERS; i++)
 			{
 				DBot *Bot = Level->Players[i]->Bot;
 				if (Bot != nullptr && this == Bot->enemy)

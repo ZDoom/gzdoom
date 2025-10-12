@@ -16,6 +16,7 @@ struct FDoorAnimation;
 struct FPolyObj;
 struct FInterpolator;
 struct FLevelLocals;
+class FDecalBase;
 
 class FDoomSerializer : public FSerializer
 {
@@ -59,6 +60,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimat
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&font, FLevelLocals **def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDecalBase *&decal, FDecalBase **def);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
 {
 	return Serialize(arc, key, state, def, nullptr);

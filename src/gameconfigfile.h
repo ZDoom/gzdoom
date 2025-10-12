@@ -68,6 +68,7 @@ private:
 	void ReadCVars (unsigned flags);
 
 	bool bModSetup;
+	bool b226ResetGamepad;
 
 	char section[64];
 	char *subsection;

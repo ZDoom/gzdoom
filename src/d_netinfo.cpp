@@ -249,9 +249,9 @@ void D_PickRandomTeam (int player)
 {
 	static char teamline[8] = "\\team\\X";
 
-	uint8_t *foo = (uint8_t *)teamline;
+	auto foo = TArrayView((uint8_t *)teamline, sizeof(teamline));
 	teamline[6] = (char)D_PickRandomTeam() + '0';
-	D_ReadUserInfoStrings (player, &foo, teamplay);
+	D_ReadUserInfoStrings (player, foo, teamplay);
 }
 
 int D_PickRandomTeam ()
@@ -265,7 +265,7 @@ int D_PickRandomTeam ()
 	int numTeams = 0;
 	int team;
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
@@ -380,7 +380,7 @@ int D_GetFragCount (player_t *player)
 		// Count total frags for this player's team
 		int count = 0;
 
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i] && players[i].userinfo.GetTeam() == team)
 			{
@@ -393,7 +393,7 @@ int D_GetFragCount (player_t *player)
 
 void D_SetupUserInfo ()
 {
-	int i;
+	unsigned int i;
 	userinfo_t *coninfo;
 
 	// Reset everybody's userinfo to a default state.
@@ -581,7 +581,7 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	Net_WriteString (foo);
 }
 
-static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)
+static const char *SetServerVar (char *name, ECVarType type, TArrayView<uint8_t>& stream, bool singlebit)
 {
 	FBaseCVar *var = FindCVar (name, NULL);
 	UCVarValue value;
@@ -711,7 +711,7 @@ bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 	return false;
 }
 
-void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
+void D_DoServerInfoChange (TArrayView<uint8_t>& stream, bool singlebit)
 {
 	const char *value;
 	char name[64];
@@ -723,8 +723,8 @@ void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
 	len &= 0x3f;
 	if (len == 0)
 		return;
-	memcpy (name, *stream, len);
-	*stream += len;
+	auto dst = TArrayView((uint8_t*)name, len);
+	ReadBytes(dst, stream);
 	name[len] = 0;
 
 	if ( (value = SetServerVar (name, (ECVarType)type, stream, singlebit)) && netgame)
@@ -808,12 +808,12 @@ FString D_GetUserInfoStrings(int pnum, bool compact)
 	return result;
 }
 
-void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
+void D_ReadUserInfoStrings (int pnum, TArrayView<uint8_t>& stream, bool update)
 {
 	userinfo_t *info = &players[pnum].userinfo;
 	TArray<FName> compact_names(info->CountUsed());
 	FBaseCVar **cvar_ptr;
-	const char *ptr = *((const char **)stream);
+	const char *ptr = (const char *)stream.Data();
 	const char *breakpt;
 	FString value;
 	bool compact;
@@ -944,7 +944,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			}
 		}
 	}
-	*stream += strlen (*((char **)stream)) + 1;
+	AdvanceStream(stream, strlen((char*)stream.Data()) + 1);
 }
 
 void WriteUserInfo(FSerializer &arc, userinfo_t &info)
@@ -1016,50 +1016,75 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	}
 }
 
-CCMD (playerinfo)
+CCMD(playerinfo)
 {
-	if (argv.argc() < 2)
+	TArray<int> inGame = {};
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
-		int i;
+		if (playeringame[i])
+			inGame.Push(i);
+	}
 
-		for (i = 0; i < MAXPLAYERS; i++)
+	const bool isMulti = inGame.Size() > 1;
+	if (isMulti && argv.argc() < 2)
+	{
+		for (auto i : inGame)
 		{
-			if (playeringame[i])
+			Printf("%d. %s", i, players[i].userinfo.GetName());
+			if (i == consoleplayer || i == Net_Arbitrator || players[i].Bot != nullptr || players[i].settings_controller)
 			{
-				Printf("%d. %s\n", i, players[i].userinfo.GetName());
+				Printf(" [");
+				if (i == consoleplayer)
+					Printf("*");
+				if (i == Net_Arbitrator)
+					Printf("H");
+				if (players[i].Bot != nullptr)
+					Printf("B");
+				else if (players[i].settings_controller && i != Net_Arbitrator)
+					Printf("C");
+				Printf("]");
 			}
+			Printf("\n");
 		}
+		Printf("Pass a player number for more info\n");
 	}
 	else
 	{
-		int i = atoi(argv[1]);
-
-		if (i < 0 || i >= MAXPLAYERS)
+		int i = -1;
+		if (!isMulti)
 		{
-			Printf("Bad player number\n");
+			i = consoleplayer;
+		}
+		else if (!C_IsValidInt(argv[1], i) || i < 0 || i >= MAXPLAYERS)
+		{
+			Printf("Bad player number %s\n", argv[1]);
 			return;
 		}
-		userinfo_t *ui = &players[i].userinfo;
 
 		if (!playeringame[i])
 		{
-			Printf(TEXTCOLOR_ORANGE "Player %d is not in the game\n", i);
+			Printf("Player %d is not in game\n", i);
 			return;
 		}
 
+		const userinfo_t& info = players[i].userinfo;
+
 		// Print special info
-		Printf("%20s: %s\n",      "Name", ui->GetName());
-		Printf("%20s: %s (%d)\n", "Team", ui->GetTeam() == TEAM_NONE ? "None" : Teams[ui->GetTeam()].GetName(), ui->GetTeam());
-		Printf("%20s: %s (%d)\n", "Skin", Skins[ui->GetSkin()].Name.GetChars(), ui->GetSkin());
-		Printf("%20s: %s (%d)\n", "Gender", GenderNames[ui->GetGender()], ui->GetGender());
+		Printf("%20s: %s\n",	  "Host", i == Net_Arbitrator ? "Yes" : "No");
+		Printf("%20s: %s\n",	  "Console Player", i == consoleplayer ? "Yes" : "No");
+		Printf("%20s: %s\n",	  "Bot", players[i].Bot != nullptr ? "Yes" : "No");
+		Printf("%20s: %s\n",	  "Settings Controller", players[i].settings_controller && players[i].Bot == nullptr ? "Yes" : "No");
+		Printf("%20s: %s\n",      "Name", info.GetName());
+		Printf("%20s: %s (%d)\n", "Team", info.GetTeam() == TEAM_NONE ? "None" : Teams[info.GetTeam()].GetName(), info.GetTeam());
+		Printf("%20s: %s (%d)\n", "Skin", Skins[info.GetSkin()].Name.GetChars(), info.GetSkin());
+		Printf("%20s: %s (%d)\n", "Gender", GenderNames[info.GetGender()], info.GetGender());
 		Printf("%20s: %s (%d)\n", "PlayerClass",
-			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->GetDisplayName().GetChars(),
-			ui->GetPlayerClassNum());
+			info.GetPlayerClassNum() == -1 ? "Random" : info.GetPlayerClassType()->GetDisplayName().GetChars(),
+			info.GetPlayerClassNum());
 
 		// Print generic info
-		TMapIterator<FName, FBaseCVar *> it(*ui);
-		TMap<FName, FBaseCVar *>::Pair *pair;
-
+		TMap<FName, FBaseCVar*>::ConstIterator it = { info };
+		TMap<FName, FBaseCVar*>::ConstPair* pair = nullptr;
 		while (it.NextPair(pair))
 		{
 			if (pair->Key != NAME_Name && pair->Key != NAME_Team && pair->Key != NAME_Skin &&
@@ -1068,10 +1093,9 @@ CCMD (playerinfo)
 				Printf("%20s: %s\n", pair->Key.GetChars(), pair->Value->GetHumanString());
 			}
 		}
-		if (argv.argc() > 2)
-		{
+
+		if (argv.argc() > 2 || (!isMulti && argv.argc() > 1))
 			PrintMiscActorInfo(players[i].mo);
-		}
 	}
 }
 

@@ -37,47 +37,47 @@
 
 #include <assert.h>
 
-#include "templates.h"
-#include "doomdef.h"
-#include "p_local.h"
-#include "d_player.h"
-#include "p_spec.h"
-#include "p_acs.h"
-#include "p_saveg.h"
-#include "p_lnspec.h"
-#include "p_enemy.h"
+#include "a_morph.h"
+#include "a_sharedglobal.h"
+#include "actorinlines.h"
+#include "actorptrselect.h"
+#include "c_bind.h"
 #include "c_console.h"
 #include "c_dispatch.h"
+#include "cmdlib.h"
+#include "d_player.h"
+#include "decallib.h"
+#include "doomdef.h"
+#include "filesystem.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "m_png.h"
+#include "p_acs.h"
+#include "p_effect.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_saveg.h"
+#include "p_setup.h"
+#include "p_spec.h"
+#include "p_terrain.h"
+#include "po_man.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "s_music.h"
 #include "s_sndseq.h"
 #include "sbar.h"
-#include "a_sharedglobal.h"
-#include "filesystem.h"
-#include "r_sky.h"
-#include "gstrings.h"
-#include "gi.h"
-#include "g_game.h"
-#include "c_bind.h"
-#include "cmdlib.h"
-#include "m_png.h"
-#include "p_setup.h"
-#include "po_man.h"
-#include "actorptrselect.h"
-#include "serializer_doom.h"
-#include "serialize_obj.h"
-#include "decallib.h"
-#include "p_terrain.h"
-#include "version.h"
-#include "p_effect.h"
-#include "r_utility.h"
-#include "a_morph.h"
-#include "thingdef.h"
-#include "g_levellocals.h"
-#include "actorinlines.h"
-#include "types.h"
 #include "scriptutil.h"
-#include "s_music.h"
-#include "v_video.h"
+#include "serialize_obj.h"
+#include "serializer_doom.h"
+#include "templates.h"
 #include "texturemanager.h"
+#include "thingdef.h"
+#include "types.h"
+#include "v_video.h"
+#include "version.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -470,7 +470,7 @@
 		PCD_TRANSLATIONRANGE4,
 		PCD_TRANSLATIONRANGE5,
 
-/*381*/	PCODE_COMMAND_COUNT
+/*385*/	PCODE_COMMAND_COUNT
 	};
 
 	// Some constants used by ACS scripts
@@ -652,10 +652,35 @@ struct CallReturn
 	unsigned int EntryInstrCount;
 };
 
-
-static bool IsClientSideScript(const ScriptPtr& script)
+// Only objects owned by the client are allowed to call client-side scripts. These same scripts must be ignored from
+// objects belonging to other clients since the nature of them calling after the client is backed up will be as though
+// they were never called at all. For things with no activator, assume it's from a frontend script and the modder knows
+// what they're doing.
+static bool CanCreateClientSideScripts(const AActor* activator)
 {
-	return (script.Flags & SCRIPTF_ClientSide);
+	return activator == nullptr || activator->IsClientSide() || (activator->player != nullptr && activator->player->mo == activator);
+}
+
+static AActor* GetScriptOwner(AActor& activator)
+{
+	return activator.player != nullptr ? activator.player->mo : &activator;
+}
+
+static bool ShouldIgnoreClientSideScript(AActor* activator)
+{
+	if (activator == nullptr || activator->IsClientSide())
+		return false;
+
+	AActor* owner = GetScriptOwner(*activator);
+	return !owner->Level->isConsolePlayer(owner);
+}
+
+// Even if it's marked as such, don't allow things that don't belong to clients to be called locally. Treat
+// them like server calls (in the future they may be ignored entirely since a proper ownership system is
+// preferred).
+static bool IsClientSideScript(const AActor* activator, const ScriptPtr& script)
+{
+	return (script.Flags & SCRIPTF_ClientSide) && CanCreateClientSideScripts(activator);
 }
 
 class DLevelScript : public DObject
@@ -790,7 +815,7 @@ private:
 };
 
 static DLevelScript *P_GetScriptGoing (FLevelLocals *Level, AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	const int *args, int argcount, int flags, bool clientside);
+	const int *args, int argcount, int flags);
 
 
 struct FBehavior::ArrayInfo
@@ -1751,7 +1776,7 @@ static int UseInventory (FLevelLocals *Level, AActor *activator, const char *typ
 	}
 	if (activator == NULL)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (Level->PlayerInGame(i))
 				ret += DoUseInv (Level->Players[i]->mo, info);
@@ -3328,7 +3353,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 		if (ptr->Type == type)
 		{
 			DLevelScript *runningScript = P_GetScriptGoing (Level, activator, NULL, ptr->Number,
-				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0, IsClientSideScript(*ptr));
+				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0);
 			if (nullptr != runningScript && runNow)
 			{
 				runningScript->RunScript();
@@ -3728,7 +3753,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 
 int DLevelScript::CountPlayers ()
 {
-	int count = 0, i;
+	unsigned int count = 0, i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (Level->PlayerInGame(i))
@@ -3881,7 +3906,7 @@ void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
 	bool fadingFrom = a1 >= 0;
 	float fr1 = 0, fg1 = 0, fb1 = 0, fa1 = 0;
 	float fr2, fg2, fb2, fa2;
-	int i;
+	unsigned int i;
 
 	fr2 = (float)r2 / 255.f;
 	fg2 = (float)g2 / 255.f;
@@ -10164,7 +10189,7 @@ scriptwait:
 
 		case PCD_CHECKPLAYERCAMERA:
 			{
-				int playernum = STACK(1);
+				unsigned int playernum = STACK(1);
 
 				if (playernum < 0 || playernum >= MAXPLAYERS || !Level->PlayerInGame(playernum) ||
 					Level->Players[playernum]->camera == nullptr || Level->Players[playernum]->camera->player != nullptr)
@@ -10419,8 +10444,14 @@ scriptwait:
 #undef PushtoStack
 
 static DLevelScript *P_GetScriptGoing (FLevelLocals *l, AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	const int *args, int argcount, int flags, bool clientside)
+	const int *args, int argcount, int flags)
 {
+	// Intentionally not checking netgame status here as this should be consistent between singleplayer
+	// and multiplayer (this is how it will work should client/server ever get in, so force it now).
+	const bool clientside = IsClientSideScript(who, *code);
+	if (clientside && ShouldIgnoreClientSideScript(who))
+		return nullptr;
+
 	DACSThinker *controller = clientside ? l->ClientSideACSThinker : l->ACSThinker;
 	DLevelScript **running;
 
@@ -10445,7 +10476,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 	if (clientside)
 	{
 		if (Level->ClientSideACSThinker == nullptr)
-			Level->ClientSideACSThinker = Level->CreateClientsideThinker<DACSThinker>();
+			Level->ClientSideACSThinker = Level->CreateClientSideThinker<DACSThinker>();
 
 		bClientSide = true;
 	}
@@ -10535,7 +10566,7 @@ void FLevelLocals::DoDeferedScripts ()
 				nullptr, def->script,
 				scriptdata, module,
 				def->args, 3,
-				def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0, IsClientSideScript(*scriptdata));
+				def->type == acsdefered_t::defexealways ? ACS_ALWAYS : 0);
 			break;
 
 		case acsdefered_t::defsuspend:
@@ -10581,7 +10612,9 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 	}
 }
 
-EXTERN_CVAR (Bool, sv_cheats)
+// Allow debugging by default in singleplayer, but give the option to test request denials.
+CVAR(Bool, allowsingleplayerscripts, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, sv_allowallscripts, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 
 int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {
@@ -10592,30 +10625,30 @@ int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, 
 
 		if ((scriptdata = Level->Behaviors.FindScript (script, module)) != NULL)
 		{
-			if ((flags & ACS_NET) && netgame && !sv_cheats)
+			// Make sure only scripts flagged as Net can be ran if requesting one.
+			if ((flags & ACS_NET) && !(scriptdata->Flags & SCRIPTF_Net)
+				&& !sv_allowallscripts && (netgame || !allowsingleplayerscripts))
 			{
-				// If playing multiplayer and cheats are disallowed, check to
-				// make sure only net scripts are run.
-				if (!(scriptdata->Flags & SCRIPTF_Net))
+				if (who->Level->isConsolePlayer(who))
+				{
+					Printf(PRINT_BOLD, "Non-net scripts are currently not requestable\n");
+				}
+				else if (consoleplayer == Net_Arbitrator && !IsClientSideScript(who, *scriptdata))
 				{
 					Printf(PRINT_BOLD, "%s tried to puke %s (\n",
 						who->player->userinfo.GetName(), ScriptPresentation(script).GetChars());
 					for (int i = 0; i < argcount; ++i)
 					{
-						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount-1 ? "" : ", ");
+						Printf(PRINT_BOLD, "%d%s", args[i], i == argcount - 1 ? "" : ", ");
 					}
 					Printf(PRINT_BOLD, ")\n");
-					return false;
 				}
+				
+				return false;
 			}
 
-			DLevelScript* runningScript = nullptr;
-			const bool clientside = IsClientSideScript(*scriptdata);
-			if (!(flags & ACS_NET) || !clientside || (who && Level->isConsolePlayer(who->player->mo)))
-			{
-				runningScript = P_GetScriptGoing(Level, who, where, script,
-					scriptdata, module, args, argcount, flags, clientside);
-			}
+			DLevelScript* runningScript = P_GetScriptGoing(Level, who, where, script,
+				scriptdata, module, args, argcount, flags);
 
 			if (runningScript != NULL)
 			{
@@ -10847,7 +10880,7 @@ static void ShowProfileData(TArray<ProfileCollector> &profiles, int ilimit,
 
 	if (ilimit > 0)
 	{
-		Printf(TEXTCOLOR_ORANGE "Top %lld %ss:\n", ilimit, typelabels[functions]);
+		Printf(TEXTCOLOR_ORANGE "Top %d %ss:\n", ilimit, typelabels[functions]);
 		limit = (unsigned int)ilimit;
 	}
 	else

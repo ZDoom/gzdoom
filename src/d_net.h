@@ -35,6 +35,7 @@
 #include <queue>
 
 uint64_t I_msTime();
+struct particle_t;
 
 enum EChatType
 {
@@ -65,6 +66,7 @@ public:
 
 	void SetData(const uint8_t* data, int len);
 	uint8_t* GetData(int* len = nullptr);
+	TArrayView<uint8_t> GetTArrayView();
 
 private:
 	uint8_t* m_Data;
@@ -149,14 +151,18 @@ void Net_WriteDouble(double);
 void Net_WriteString(const char *);
 void Net_WriteBytes(const uint8_t *, int len);
 
-void Net_DoCommand(int cmd, uint8_t **stream, int player);
-void Net_SkipCommand(int cmd, uint8_t **stream);
+void Net_DoCommand(int cmd, TArrayView<uint8_t>& stream, int player);
+void Net_SkipCommand(int cmd, TArrayView<uint8_t>& stream);
 
 bool Net_CheckCutsceneReady();
 void Net_AdvanceCutscene();
 void Net_ResetCommands(bool midTic);
 void Net_SetWaiting();
 void Net_ClearBuffers();
+bool Net_IsWaiting();
+double Net_ModifyFrac(double ticFrac);
+double Net_ModifyObjectFrac(DObject* obj, double ticFrac);
+double Net_ModifyParticleFrac(particle_t* part, double ticFrac);
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 

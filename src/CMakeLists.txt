@@ -60,6 +60,7 @@ if( WIN32 )
 		wsock32
 		winmm
 		dinput8
+		Xinput
 		ole32
 		user32
 		gdi32
@@ -133,6 +134,7 @@ else()
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
 		find_package( SDL2 REQUIRED )
 		include_directories( SYSTEM "${SDL2_INCLUDE_DIR}" )
+		link_directories(${SDL2_LINK_DIR})
 		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${SDL2_LIBRARY}" )
 	endif()
 
@@ -288,8 +290,8 @@ endif()
 
 # Check for functions that may or may not exist.
 
-require_stricmp()
-require_strnicmp()
+gz_require_stricmp()
+gz_require_strnicmp()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
@@ -310,6 +312,8 @@ endif()
 
 # Flags
 
+option(BUILD_FLATPAK "Enable Flatpak-specific build options" OFF)
+
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
@@ -327,31 +331,7 @@ endif()
 list( APPEND PROJECT_LIBRARIES "zwidget" )
 list( APPEND PROJECT_LIBRARIES "webp" )
 
-# ZMUSIC
-
-if( MSVC )
-	find_package( ZMusic )
-else()
-	find_package( ZMusic REQUIRED )
-endif()
-
 message("Building for target architecture: ${TARGET_ARCHITECTURE}")
-
-if( MSVC AND NOT ZMUSIC_FOUND )
-	# Use prebuilt library
-	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
-	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
-	set( ZMUSIC_LIBRARIES zmusic )
-	if( X64 )
-		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
-	elseif( ARM64 )
-		link_directories( ${ZMUSIC_ROOT_PATH}/arm64 )
-	else()
-		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
-	endif()
-	set( ZMUSIC_FOUND TRUE )
-endif()
-
 
 # VPX
 
@@ -389,6 +369,13 @@ if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
 	include_directories( SYSTEM "${ASMJIT_INCLUDE_DIR}" )
 	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${ASMJIT_LIBRARIES}")
+endif()
+
+if ( CPPDAP_FOUND )
+	include_directories( SYSTEM "${CPPDAP_INCLUDE_DIR}" )
+	set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} "${CPPDAP_LIBRARIES}")
+else()
+	message( SEND_ERROR "Could not find cppdap" )
 endif()
 
 # Start defining source files for ZDoom
@@ -605,6 +592,9 @@ file( GLOB HEADER_FILES
 	common/rendering/vulkan/textures/*.h
 	common/scripting/core/*h
 	common/scripting/vm/*h
+	common/scripting/dap/*.h
+	common/scripting/dap/Nodes/*.h
+	common/scripting/dap/Protocol/*.h
 	common/scripting/jit/*h
 	common/scripting/interface/*.h
 	common/scripting/backend/*.h
@@ -976,6 +966,7 @@ set (PCH_SOURCES
 	launcher/launcherbuttonbar.cpp
 	launcher/playgamepage.cpp
 	launcher/settingspage.cpp
+	launcher/networkpage.cpp
 
 	common/audio/sound/i_sound.cpp
 	common/audio/sound/oalsound.cpp
@@ -1071,7 +1062,7 @@ set (PCH_SOURCES
 	common/cutscenes/movieplayer.cpp
 	common/cutscenes/screenjob.cpp
 	common/utility/engineerrors.cpp
-	common/utility/i_module.cpp
+	
 	common/utility/gitinfo.cpp
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
@@ -1085,6 +1076,7 @@ set (PCH_SOURCES
 	common/utility/name.cpp
 	common/utility/r_memory.cpp
 	common/utility/writezip.cpp
+	common/utility/vga2ansi.cpp
 	common/thirdparty/base64.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
@@ -1101,10 +1093,12 @@ set (PCH_SOURCES
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
 	common/engine/i_net.cpp
+	common/engine/i_protocol.cpp
 	common/engine/i_interface.cpp
 	common/engine/renderstyle.cpp
 	common/engine/v_colortables.cpp
 	common/engine/serializer.cpp
+	common/engine/m_haptics.cpp
 	common/engine/m_joy.cpp
 	common/engine/m_random.cpp
 	common/objects/autosegs.cpp
@@ -1173,7 +1167,30 @@ set (PCH_SOURCES
 	common/scripting/frontend/zcc_parser.cpp
 	common/scripting/backend/vmbuilder.cpp
 	common/scripting/backend/codegen.cpp
-	
+	common/scripting/dap/BreakpointManager.cpp
+	common/scripting/dap/DebugExecutionManager.cpp
+	common/scripting/dap/DebugServer.cpp
+	common/scripting/dap/IdHandleBase.cpp
+	common/scripting/dap/IdMap.cpp
+	common/scripting/dap/IdProvider.cpp
+	common/scripting/dap/Nodes/ArrayStateNode.cpp
+	common/scripting/dap/Nodes/CVarScopeStateNode.cpp
+	common/scripting/dap/Nodes/LocalScopeStateNode.cpp
+	common/scripting/dap/Nodes/GlobalScopeStateNode.cpp
+	common/scripting/dap/Nodes/ObjectStateNode.cpp
+	common/scripting/dap/Nodes/StackFrameStateNode.cpp
+	common/scripting/dap/Nodes/StackStateNode.cpp
+	common/scripting/dap/Nodes/StateNodeBase.cpp
+	common/scripting/dap/Nodes/StructStateNode.cpp
+	common/scripting/dap/Nodes/ValueStateNode.cpp
+	common/scripting/dap/PexCache.cpp
+	common/scripting/dap/Protocol/struct_extensions.cpp
+	common/scripting/dap/RuntimeEvents.cpp
+	common/scripting/dap/RuntimeState.cpp
+	common/scripting/dap/ZScriptDebugger.cpp
+	common/scripting/dap/Nodes/RegistersScopeStateNode.cpp
+	common/scripting/dap/Nodes/StatePointerNode.cpp
+	common/scripting/dap/Nodes/DummyNode.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1181,6 +1198,10 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
 )
+
+if( ZMUSIC_SYSTEM_INSTALL OR NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
+	set ( PCH_SOURCES ${PCH_SOURCES} common/utility/i_module.cpp )
+endif()
 
 if( ${HAVE_VM_JIT} )
 	set( PCH_SOURCES ${PCH_SOURCES} ${VM_JIT_SOURCES} )
@@ -1256,6 +1277,9 @@ set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS 
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
+if(BUILD_FLATPAK)
+	target_compile_definitions(zdoom PRIVATE IS_FLATPAK=1)
+endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
@@ -1270,7 +1294,6 @@ if( UNIX )
 endif()
 
 target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
-
 include_directories(
 	BEFORE
 	.
@@ -1335,6 +1358,7 @@ include_directories(
 	../libraries/ZVulkan/include
 	../libraries/ZWidget/include
 	../libraries/webp/include
+	../libraries/range_map/include
 	${SYSTEM_SOURCES_DIR}
 )
 
@@ -1405,6 +1429,21 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
+if ( NOT ZMUSIC_SYSTEM_INSTALL AND (NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS))
+	# bring zmusic in
+	add_custom_command(TARGET zdoom POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>
+		DEPENDS zmusic )
+	if ( NOT WIN32 )
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE_NAME:zmusic> $<TARGET_SONAME_FILE_NAME:zmusic>
+			COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_SONAME_FILE_NAME:zmusic> $<TARGET_LINKER_FILE_NAME:zmusic>
+			WORKING_DIRECTORY $<TARGET_FILE_DIR:zdoom>
+			DEPENDS zmusic )
+	endif()
+endif()
+
+
 if (VCPKG_TOOLCHAIN)
 	x_vcpkg_install_local_dependencies(TARGETS zdoom DESTINATION ".")
 endif()
@@ -1417,6 +1456,26 @@ endif()
 install(DIRECTORY "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_banks"
 		DESTINATION ${INSTALL_SOUNDFONT_PATH}
 		COMPONENT "Soundfont resources")
+
+# Install Linux desktop launcher, icon and metadata
+if( UNIX AND NOT APPLE )
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.desktop
+			DESTINATION share/applications
+			PERMISSIONS WORLD_EXECUTE WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.metainfo.xml
+			DESTINATION share/metainfo
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.svg
+			DESTINATION share/icons/hicolor/scalable/apps
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom-mime.xml
+			DESTINATION share/mime/packages
+			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
+	# note:
+	# A post-install script would most likely need to run the following to register the desktop and mime files with the system
+	# update-mime-database /usr/local/share/mime
+	# update-desktop-database
+endif()
 
 if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
@@ -1443,6 +1502,17 @@ if( APPLE )
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()
 	# if placed in the directory with the main executable
 	set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rpath @executable_path" )
+endif()
+
+if ( NOT ZMUSIC_SYSTEM_INSTALL )
+	if ( WIN32 OR APPLE )
+		# nothing to do
+	else()
+		install(TARGETS zmusic
+			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			COMPONENT "Game executable"
+		)
+	endif()
 endif()
 
 if( WIN32 )

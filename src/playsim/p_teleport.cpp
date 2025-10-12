@@ -5,6 +5,7 @@
 // Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,11 +29,10 @@
 
 #include "d_player.h"
 #include "doomdef.h"
-#include "vm.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
-#include "gi.h"
 #include "r_utility.h"
+#include "vm.h"
 
 #define FUDGEFACTOR		10
 
@@ -189,6 +189,13 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 		if (resetpitch)
 		{
 			player->mo->Angles.Pitch = nullAngle;
+		}
+		if (player->mo == players[consoleplayer].mo || player->mo == players[consoleplayer].camera)
+		{
+			IFVIRTUALPTR(player->mo, AActor, PlayerTeleportedMakeRumble)
+			{
+				CallVM<void>(func, player->mo);
+			}
 		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))

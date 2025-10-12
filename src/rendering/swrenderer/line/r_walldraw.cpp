@@ -207,60 +207,23 @@ namespace swrenderer
 		drawerargs.DrawWall(Thread);
 	}
 
-	FLightNode* RenderWallPart::GetLightList()
+	TMap<FDynamicLight*, std::unique_ptr<FLightNode>>* RenderWallPart::GetLightList()
 	{
-		while (light_list)
-		{
-			// Clear out the wall part light list
-			FLightNode *next = nullptr;
-			if (light_list->nextLight) next = light_list->nextLight;
-			delete light_list;
-			if (next) light_list = next;
-		}
-
 		CameraLight* cameraLight = CameraLight::Instance();
 		if ((cameraLight->FixedLightLevel() >= 0) || cameraLight->FixedColormap())
+		{
 			return nullptr; // [SP] Don't draw dynlights if invul/lightamp active
+		}
 		else if (curline && curline->sidedef)
 		{
 			auto Level = curline->Subsector->sector->Level;
-			auto wallLightList = Level->lightlists.wall_dlist.CheckKey(curline->sidedef);
-			if (wallLightList)
+
+			if (Level->lightlists.wall_dlist.SSize() > curline->sidedef->Index())
 			{
-				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Iterator it(*wallLightList);
-				TMap<FDynamicLight *, std::unique_ptr<FLightNode>>::Pair *pair;
-				while (it.NextPair(pair))
-				{
-					auto node = pair->Value.get();
-					if (!node) continue;
-
-					if (node->lightsource->IsActive())
-					{
-						bool found = false;
-						FLightNode *light_node = light_list;
-						while (light_node)
-						{
-							if (light_node->lightsource == node->lightsource)
-							{
-								found = true;
-								break;
-							}
-							light_node = light_node->nextLight;
-						}
-						if (!found)
-						{
-							FLightNode *newlight = new FLightNode;
-							newlight->nextLight = light_list;
-							newlight->lightsource = node->lightsource;
-							light_list = newlight;
-						}
-					}
-				}
+				return &Level->lightlists.wall_dlist[curline->sidedef->Index()];
 			}
-
-			return light_list;
 		}
-		else
-			return nullptr;
+
+		return nullptr;
 	}
 }

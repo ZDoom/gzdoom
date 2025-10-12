@@ -1951,6 +1951,7 @@ DEFINE_FIELD(AActor, WorldOffset)
 DEFINE_FIELD(AActor, Prev)
 DEFINE_FIELD(AActor, SpriteAngle)
 DEFINE_FIELD(AActor, SpriteRotation)
+DEFINE_FIELD(AActor, AngledRollOffset)
 DEFINE_FIELD(AActor, VisibleStartAngle)
 DEFINE_FIELD(AActor, VisibleStartPitch)
 DEFINE_FIELD(AActor, VisibleEndAngle)
@@ -2204,6 +2205,7 @@ DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, vel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, accel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startalpha);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, fadestep);
+DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, fadeoutstep);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, startroll);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollvel);
 DEFINE_FIELD_X(FSpawnParticleParams, FSpawnParticleParams, rollacc);
@@ -2214,7 +2216,7 @@ static void SpawnParticle(FLevelLocals *Level, FSpawnParticleParams *params)
 		params->color, params->startalpha, params->lifetime,
 		params->size, params->fadestep, params->sizestep,
 		params->flags, params->texture, ERenderStyle(params->style),
-		params->startroll, params->rollvel, params->rollacc);
+		params->startroll, params->rollvel, params->rollacc, params->fadeoutstep);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnParticle, SpawnParticle)

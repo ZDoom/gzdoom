@@ -2,6 +2,7 @@
 
 #include "vm.h"
 #include <csetjmp>
+#include <range_map/range_map.h>
 
 class VMScriptFunction;
 
@@ -239,6 +240,7 @@ extern const VMOpInfo OpInfo[NUM_OPS];
 // VM frame layout:
 //	VMFrame header
 //  parameter stack		- 16 byte boundary, 16 bytes each
+//  program counter
 //	double registers	- 8 bytes each
 //	string registers	- 4 or 8 bytes each
 //	address registers	- 4 or 8 bytes each
@@ -249,6 +251,7 @@ struct VMFrame
 {
 	VMFrame *ParentFrame;
 	VMFunction *Func;
+	const VMOP *PC = nullptr;
 	VM_UBYTE NumRegD;
 	VM_UBYTE NumRegF;
 	VM_UBYTE NumRegS;
@@ -360,6 +363,9 @@ public:
 		assert(Blocks != NULL && Blocks->LastFrame != NULL);
 		return Blocks->LastFrame;
 	}
+  bool HasFrames() {
+    return Blocks != NULL && Blocks->LastFrame != NULL;
+  }
 	static int OffsetLastFrame() { return (int)(ptrdiff_t)offsetof(BlockHeader, LastFrame); }
 private:
 	enum { BLOCK_SIZE = 4096 };		// Default block size
@@ -436,13 +442,24 @@ extern int (*VMExec)(VMFunction *func, VMValue *params, int numparams, VMReturn 
 void VMFillParams(VMValue *params, VMFrame *callee, int numparam);
 
 void VMDumpConstants(FILE *out, const VMScriptFunction *func);
-void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func);
+void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction *func, uint64_t starting_offset = 0);
 
 extern thread_local VMFrameStack GlobalVMStack;
 
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
 typedef int(*JitFuncPtr)(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);
+
+struct VMLocalVariable
+{
+	FName Name;
+	PType * type;
+	int VarFlags;
+	int RegCount;
+	int RegNum;
+	int LineNumber;
+	int StackOffset;
+};
 
 class VMScriptFunction : public VMFunction
 {
@@ -473,13 +490,14 @@ public:
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
-
+	TArray<std::pair<std::pair<const VMOP *, const VMOP *>, TArray<VMLocalVariable>>> LocalVariableBlocks; // map of local variable blocks to their [start, end) instruction
 	bool blockJit = false; // function triggers Jit bugs, block compilation until bugs are fixed
 
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);
 	int AllocExtraStack(PType *type);
 	int PCToLine(const VMOP *pc);
+	TArray<VMLocalVariable> GetLocalVariableBlocksAt(const VMOP *pc);
 
 private:
 	static int FirstScriptCall(VMFunction *func, VMValue *params, int numparams, VMReturn *ret, int numret);

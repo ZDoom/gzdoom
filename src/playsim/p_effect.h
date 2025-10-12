@@ -79,6 +79,8 @@ enum EParticleFlags
 	SPF_ROLLCENTER				= 1 << 13,
 	SPF_STRETCHPIXELS			= 1 << 14,
 	SPF_ALLOWSHADERS			= 1 << 15,
+	SPF_FADE_IN_OUT				= 1 << 16,
+	SPF_FADE_IN_HOLD_OUT		= 1 << 17,
 };
 
 class DVisualThinker;
@@ -96,12 +98,14 @@ struct particle_t
     ERenderStyle style; //+4 = 88
     float Roll, RollVel, RollAcc; //+12 = 100
     uint16_t    tnext, snext, tprev; //+6 = 106
-	uint16_t flags; //+2 = 108
-	// uint32_t padding; //+4 = 112
+	// uint16_t padding; //+2 = 108
+	uint32_t flags; //+4 = 112
 	FStandaloneAnimation animData; //+16 = 128
+	float	fadeoutstep; //+4 = 132
+	// float padding2; //+4 = 136
 };
 
-static_assert(sizeof(particle_t) == 128, "Only LP64/LLP64 is supported");
+static_assert(sizeof(particle_t) == 136, "Only LP64/LLP64 is supported");
 
 const uint16_t NO_PARTICLE = 0xffff;
 
@@ -134,13 +138,14 @@ struct FSpawnParticleParams
 
 	double startalpha;
 	double fadestep;
+	double fadeoutstep;
 
 	double startroll;
 	double rollvel;
 	double rollacc;
 };
 
-void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, double fadestep, double sizestep, int flags = 0, FTextureID texture = FNullTextureID(), ERenderStyle style = STYLE_None, double startroll = 0, double rollvel = 0, double rollacc = 0);
+void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, double fadestep, double sizestep, int flags = 0, FTextureID texture = FNullTextureID(), ERenderStyle style = STYLE_None, double startroll = 0, double rollvel = 0, double rollacc = 0, double fadeoutstep = 0);
 
 void P_InitEffects (void);
 

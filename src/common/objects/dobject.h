@@ -245,6 +245,9 @@ public:
 	template<class T> T*& PointerVar(FName field);
 	inline int* IntArray(FName field);
 
+	// Make sure native data is wiped correctly since it has no read barriers.
+	void ClearNativePointerFields(const TArrayView<FName>& types);
+
 	// This is only needed for swapping out PlayerPawns and absolutely nothing else!
 	virtual size_t PointerSubstitution (DObject *old, DObject *notOld, bool nullOnFail);
 
@@ -359,12 +362,14 @@ private:
 public:
 	inline bool IsNetworked() const { return (ObjectFlags & OF_Networked); }
 	inline uint32_t GetNetworkID() const { return _networkID; }
-	inline bool IsClientside() const { return (ObjectFlags & OF_ClientSide); }
+	inline bool IsClientSide() const { return (ObjectFlags & OF_ClientSide); }
 	void SetNetworkID(const uint32_t id);
 	void ClearNetworkID();
 	void RemoveFromNetwork();
 	virtual void EnableNetworking(const bool enable);
 };
+
+extern bool bPredictionGuard;
 
 // This is the only method aside from calling CreateNew that should be used for creating DObjects
 // to ensure that the Class pointer is always set.

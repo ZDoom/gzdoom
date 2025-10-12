@@ -657,10 +657,39 @@ Lock 3 Chex
 	Mapcolor 255 255 0
 }
 
+Lock 4 Chex
+{
+	//$Title "Red skull"
+	RedSkull
+	Message "$PD_REDS"
+	RemoteMessage "$PD_REDSO"
+	Mapcolor 255 0 0
+}
+
+
+Lock 5 Chex
+{
+	//$Title "Blue skull"
+	BlueSkull
+	Message "$PD_BLUES"
+	RemoteMessage "$PD_BLUESO"
+	Mapcolor 0 0 255
+}
+
+
+Lock 6 Chex
+{
+	//$Title "Yellow skull"
+	YellowSkull
+	Message "$PD_YELLOWS"
+	RemoteMessage "$PD_YELLOWSO"
+	Mapcolor 255 255 0
+}
+
 Lock 129 Chex
 {
 	//$Title "Red key"
-	ChexRedCard
+	Any { ChexRedCard RedSkull }
 	Message "$PD_REDK"
 	RemoteMessage "$PD_REDO"
 	Mapcolor 255 0 0
@@ -670,7 +699,7 @@ Lock 129 Chex
 Lock 130 Chex
 {
 	//$Title "Blue key"
-	ChexBlueCard
+	Any { ChexBlueCard BlueSkull }
 	Message "$PD_BLUEK"
 	RemoteMessage "$PD_BLUEO"
 	Mapcolor 0 0 255
@@ -680,8 +709,60 @@ Lock 130 Chex
 Lock 131 Chex
 {
 	//$Title "Yellow key"
-	ChexYellowCard
+	Any { ChexYellowCard YellowSkull }
 	Message "$PD_YELLOWK"
 	RemoteMessage "$PD_YELLOWO"
 	Mapcolor 255 255 0
+}
+
+Lock 132 Chex
+{
+	//$Title "Red key"
+	Any { ChexRedCard RedSkull }
+	Message "$PD_REDK"
+	RemoteMessage "$PD_REDO"
+	Mapcolor 255 0 0
+}
+
+
+Lock 133 Chex
+{
+	//$Title "Blue key"
+	Any { ChexBlueCard BlueSkull }
+	Message "$PD_BLUEK"
+	RemoteMessage "$PD_BLUEO"
+	Mapcolor 0 0 255
+}
+
+
+Lock 134 Chex
+{
+	//$Title "Yellow key"
+	Any { ChexYellowCard YellowSkull }
+	Message "$PD_YELLOWK"
+	RemoteMessage "$PD_YELLOWO"
+	Mapcolor 255 255 0
+}
+
+Lock 229 Chex
+{
+	//$Title "One of each color"
+	Any { ChexBlueCard BlueSkull KeyBlue}
+	Any { ChexYellowCard YellowSkull KeyYellow}
+	Any { ChexRedCard RedSkull KeyGreen}
+	Message "$PD_ALL3"
+	RemoteMessage "$PD_ALL3O"
+}
+
+Lock 101 Doom
+{
+	//$Title "All keys"
+	ChexBlueCard 
+	ChexBlueSkull
+	ChexYellowCard 
+	YellowSkull
+	RedCard 
+	RedSkull
+	Message "$PD_ALL6"
+	RemoteMessage "$PD_ALL6O"
 }

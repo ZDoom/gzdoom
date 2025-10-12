@@ -7,6 +7,7 @@
 #include <X11/cursorfont.h>
 #include <X11/keysymdef.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/XInput2.h>
 #include <map>
 
 class X11DisplayWindow : public DisplayWindow
@@ -16,6 +17,7 @@ public:
 	~X11DisplayWindow();
 
 	void SetWindowTitle(const std::string& text) override;
+	void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images) override;
 	void SetWindowFrame(const Rect& box) override;
 	void SetClientFrame(const Rect& box) override;
 	void Show() override;
@@ -59,13 +61,6 @@ public:
 	std::vector<std::string> GetVulkanInstanceExtensions() override;
 	VkSurfaceKHR CreateVulkanSurface(VkInstance instance) override;
 
-	static void ProcessEvents();
-	static void RunLoop();
-	static void ExitLoop();
-	static Size GetScreenSize();
-	static void* StartTimer(int timeoutMilliseconds, std::function<void()> onTimer);
-	static void StopTimer(void* timerID);
-
 private:
 	void UpdateCursor();
 
@@ -85,17 +80,13 @@ private:
 	void OnSelectionClear(XEvent* event);
 	void OnSelectionNotify(XEvent* event);
 	void OnSelectionRequest(XEvent* event);
+	bool OnXInputEvent(XEvent* event);
 
 	void CreateBackbuffer(int width, int height);
 	void DestroyBackbuffer();
 
 	InputKey GetInputKey(XEvent* event);
 	Point GetMousePos(XEvent* event);
-
-	static bool WaitForEvents(int timeout);
-	static void DispatchEvent(XEvent* event);
-
-	static void CheckNeedsUpdate();
 
 	std::vector<uint8_t> GetWindowProperty(Atom property, Atom &actual_type, int &actual_format, unsigned long &item_count);
 
@@ -117,8 +108,13 @@ private:
 
 	int ClientSizeX = 0;
 	int ClientSizeY = 0;
-	int MouseX = -1;
-	int MouseY = -1;
+
+	struct
+	{
+		int LastX = -1;
+		int LastY = -1;
+		bool Focused = false;
+	} RawInput;
 
 	Pixmap cursor_bitmap = None;
 	Cursor hidden_cursor = None;
@@ -138,5 +134,6 @@ private:
 
 	bool needsUpdate = false;
 
+	friend class X11Connection;
 	friend class X11DisplayBackend;
 };

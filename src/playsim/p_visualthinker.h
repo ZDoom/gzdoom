@@ -55,7 +55,7 @@ public:
 	void OnDestroy() override;
 	DVisualThinker* GetNext() const;
 
-	static DVisualThinker* NewVisualThinker(FLevelLocals* Level, PClass* type);
+	static DVisualThinker* NewVisualThinker(FLevelLocals* Level, PClass* type, bool clientSide);
 	void SetTranslation(FName trname);
 	int GetRenderStyle() const;
 	bool isFrozen();

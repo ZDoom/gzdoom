@@ -43,6 +43,7 @@ xx(LTEQ,			TK_Leq)
 xx(GT,				'>')
 xx(GTEQ,			TK_Geq)
 xx(LTGTEQ,			TK_LtGtEq)
+xx(LTEQGT,			TK_LtEqGt)
 xx(Is,				TK_Is)
 
 xx(EQEQ,			TK_Eq)

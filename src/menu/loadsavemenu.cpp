@@ -102,6 +102,7 @@ void FSavegameManager::ReadSaveStrings()
 						FString iwad = arc.GetString("Game WAD");
 						FString title = arc.GetString("Title");
 						FString creationtime = arc.GetString("Creation Time");
+						FString uuid = arc.GetString("GameUUID");
 
 
 						if (engine.Compare(GAMESIG) != 0 || savever > SAVEVER)
@@ -128,6 +129,7 @@ void FSavegameManager::ReadSaveStrings()
 
 						FSaveGameNode *node = new FSaveGameNode;
 						node->Filename = entry.FilePath.c_str();
+						node->UUID = uuid;
 						node->bOldVersion = oldVer;
 						node->bMissingWads = missing;
 						node->SaveTitle = title;

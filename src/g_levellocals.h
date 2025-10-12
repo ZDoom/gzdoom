@@ -61,8 +61,9 @@
 
 struct FGlobalDLightLists
 {
-	TMap<FSection*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
-	TMap<side_t*, TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
+	//TODO add TSet and switch from TMap to TSet
+	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> flat_dlist;
+	TArray<TMap<FDynamicLight*, std::unique_ptr<FLightNode>>> wall_dlist;
 };
 
 //============================================================================
@@ -194,7 +195,7 @@ public:
 
 	void ActivateInStasisPlat(int tag);
 	bool CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
-	void ActivateInStasisCeiling(int tag);
+	bool ActivateInStasisCeiling(int tag);
 	bool CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line, double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 	void DoDeferedScripts();
 	void AdjustPusher(int tag, int magnitude, int angle, bool wind);
@@ -256,7 +257,7 @@ public:
 	void SpawnExtraPlayers();
 	void Serialize(FSerializer &arc, bool hubload);
 	DThinker *FirstThinker (int statnum);
-	DThinker* FirstClientsideThinker(int statnum);
+	DThinker* FirstClientSideThinker(int statnum);
 
 	// g_Game
 	void PlayerReborn (int player);
@@ -270,7 +271,11 @@ public:
 	FPlayerStart *PickPlayerStart(int playernum, int flags = 0);
 	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
 	void StartTravel();
+	void AddToTravellingList(DThinker* th);
+	void MoveTravellers();
 	int FinishTravel();
+	void UnlinkActorFromLevel(AActor& mo);
+	void LinkActorToLevel(AActor& mo);
 	void ChangeLevel(const char *levelname, int position, int flags, int nextSkill = -1);
 	const char *GetSecretExitMap();
 	void ExitLevel(int position, bool keepFacing);
@@ -310,12 +315,12 @@ public:
 	{
 		return TThinkerIterator<T>(this, subtype, statnum, prev, false);
 	}
-	template<class T> TThinkerIterator<T> GetClientsideThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM + 1)
+	template<class T> TThinkerIterator<T> GetClientSideThinkerIterator(FName subtype = NAME_None, int statnum = MAX_STATNUM + 1)
 	{
 		if (subtype == NAME_None) return TThinkerIterator<T>(this, statnum, true);
 		else return TThinkerIterator<T>(this, subtype, statnum, true);
 	}
-	template<class T> TThinkerIterator<T> GetClientsideThinkerIterator(FName subtype, int statnum, AActor* prev)
+	template<class T> TThinkerIterator<T> GetClientSideThinkerIterator(FName subtype, int statnum, AActor* prev)
 	{
 		return TThinkerIterator<T>(this, subtype, statnum, prev, true);
 	}
@@ -456,6 +461,8 @@ public:
 
 	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
 	{
+		if (bPredictionGuard)
+			DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Spawned non-client-side Thinker %s while predicting\n", cls->TypeName.GetChars());
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
@@ -472,20 +479,20 @@ public:
 		return thinker;
 	}
 
-	DThinker* CreateClientsideThinker(PClass* cls, int statnum = STAT_DEFAULT)
+	DThinker* CreateClientSideThinker(PClass* cls, int statnum = STAT_DEFAULT)
 	{
 		DThinker* thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned | OF_ClientSide | OF_Transient;
-		ClientsideThinkers.Link(thinker, statnum);
+		ClientSideThinkers.Link(thinker, statnum);
 		thinker->Level = this;
 		return thinker;
 	}
 
 	template<typename T, typename... Args>
-	T* CreateClientsideThinker(Args&&... args)
+	T* CreateClientSideThinker(Args&&... args)
 	{
-		auto thinker = static_cast<T*>(CreateClientsideThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
+		auto thinker = static_cast<T*>(CreateClientSideThinker(RUNTIME_CLASS(T), T::DEFAULT_STAT));
 		thinker->Construct(std::forward<Args>(args)...);
 		return thinker;
 	}
@@ -621,7 +628,7 @@ public:
 	// This needs to be done better, but for now it should be good enough.
 	bool PlayerInGame(player_t *player)
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		for (unsigned int i = 0; i < MAXPLAYERS; i++)
 		{
 			if (player == Players[i]) return PlayerInGame(i);
 		}
@@ -630,7 +637,7 @@ public:
 
 	int PlayerNum(player_t *player)
 	{
-		for (int i = 0; i < MAXPLAYERS; i++)
+		for (unsigned int i = 0; i < MAXPLAYERS; i++)
 		{
 			if (player == Players[i]) return i;
 		}
@@ -725,7 +732,8 @@ public:
 	TArray<particle_t>	Particles;
 	TArray<uint16_t>	ParticlesInSubsec;
 	FThinkerCollection Thinkers;
-	FThinkerCollection ClientsideThinkers;
+	FThinkerCollection ClientSideThinkers;
+	TArray<DThinker*> TravellingThinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 
@@ -762,7 +770,7 @@ public:
 	DVisualThinker* VisualThinkerHead = nullptr;
 
 	// links to global game objects
-	TArray<DBehavior*> ActorBehaviors;
+	TArray<DBehavior*> ActorBehaviors, ClientSideActorBehaviors;
 	TArray<TObjPtr<AActor *>> CorpseQueue;
 	TObjPtr<DFraggleThinker *> FraggleScriptThinker = MakeObjPtr<DFraggleThinker*>(nullptr);
 	TObjPtr<DACSThinker*> ACSThinker = MakeObjPtr<DACSThinker*>(nullptr);
@@ -780,7 +788,10 @@ public:
 		if (b.Level == nullptr)
 		{
 			b.Level = this;
-			ActorBehaviors.Push(&b);
+			if (b.IsClientSide())
+				ClientSideActorBehaviors.Push(&b);
+			else
+				ActorBehaviors.Push(&b);
 		}
 	}
 
@@ -789,7 +800,10 @@ public:
 		if (b.Level == this)
 		{
 			b.Level = nullptr;
-			ActorBehaviors.Delete(ActorBehaviors.Find(&b));
+			if (b.IsClientSide())
+				ClientSideActorBehaviors.Delete(ClientSideActorBehaviors.Find(&b));
+			else
+				ActorBehaviors.Delete(ActorBehaviors.Find(&b));
 		}
 	}
 

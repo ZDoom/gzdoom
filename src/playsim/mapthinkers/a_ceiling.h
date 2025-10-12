@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dsectoreffect.h"
+
 //
 // P_CEILING
 //

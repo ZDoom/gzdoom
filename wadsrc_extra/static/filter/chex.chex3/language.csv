@@ -961,3 +961,8 @@ hazır olacağınızı biliyorsunuz!"
 Rescue on Bazoik,M_EPI1,,,,Záchrana na Bazoiku,Redning på Bazoik,Rettung auf Bazoik,,Savo sur Bazojko,Rescate en Bazoik,,Pelastustehtävä Bazoikissa,Sauvetage sur Bazoik,Spas na Bazoiku,Mentőakció a Bazoik-on,Salvataggio su Bazoik,バゾイクからのきゅうしゅつ,바조이크의 대동굴,Redding op Bazoik,Redning på Bazoik,Ratunek na Bazoik,Resgate em Bazoik,,Misiune de Salvare pe Bazoik,Спасение на Базоике,,Räddning på Bazoik,Bazoik'te Kurtarma
 Terror in Chex City,M_EPI2,,,,Hrůza v Chex City,Terror i Chex City,,,Teruro en Chex-Urbo,Terror en Chex City,,Kauhua Chex-kaupungissa,Terreur à Chex City,Teror u gradu Chexu,Terror Chexvárosban,Terrore a Chex City,チェックスシティーのきょうふ,첵스 시티의 공포,Terreur in Chex City,Terror i Chex City,Terror w Mieście Chex,Terror em Chexópolis,,Teroare în Orașul Chex,Террор в городе Chex,,Terror i Chex City,Chex Şehrinde Terör
 Invasion!,M_EPI3,,,,Invaze!,,,,Invado!,¡Invasión!,,Invaasio!,,Invazija!,Invázió!,Invasione!,しんにゅう!,대침공!,,Invasjon!,Inwazja,A Invasão!,,Invazie!,Вторжение!,,,İstila!
+,,Note: chex3.wad currently does not have Tag properties defined for the following! Added for completeness' sake (or for mods to utilize),,,,,,,,,,,,,,,,,,,,,,,,,,
+Ultra Goggles,TAG_GOGGLES,,,,,,,,Plejaj okulvitroj,,,,,,,,,,,,,Ultra Óculos,,,,,,
+Blue Flemkey,TAG_BLUEFLEMKEY,,,,,,,,Blua mukŝlosilo,,,,,,,,,,,,,Flemchave Azul,,,,,,
+Yellow Flemkey,TAG_YELLOWFLEMKEY,,,,,,,,Flava mukŝlosilo,,,,,,,,,,,,,Flemchave Amarela,,,,,,
+Red Flemkey,TAG_REDFLEMKEY,,,,,,,,Ruĝa mukŝlosilo,,,,,,,,,,,,,Flemchave Vermelha,,,,,,

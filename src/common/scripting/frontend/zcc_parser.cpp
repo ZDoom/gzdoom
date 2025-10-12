@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -154,6 +155,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Leq,			ZCC_LTEQ);
 	TOKENDEF (TK_Geq,			ZCC_GTEQ);
 	TOKENDEF (TK_LtGtEq,		ZCC_LTGTEQ);
+	TOKENDEF (TK_LtEqGt,		ZCC_LTEQGT);
 	TOKENDEF (TK_Is,			ZCC_IS);
 	TOKENDEF (TK_DotDot,		ZCC_DOTDOT);
 	TOKENDEF (TK_Ellipsis,		ZCC_ELLIPSIS);

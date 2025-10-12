@@ -143,6 +143,15 @@ class Weapon : StateProvider
 		}
 		return -1, 0;
 	}
+
+	
+	// [AA] Called when the weapon is selected, including
+	// PowerWeaponLevel2 activation:
+	virtual void OnSelect(bool fromPowerup = false) {}
+	
+	// [AA] Called when the weapon is deselected, including
+	// PowerWeaponLevel2 running out or being tossed:
+	virtual void OnDeselect(bool fromPowerup = false, bool onToss = false) {}
 	
 	virtual State GetReadyState ()
 	{
@@ -690,6 +699,13 @@ class Weapon : StateProvider
 		{
 			return SisterWeapon.CreateTossable (amt);
 		}
+		
+		// [AA] This weapon was selected and its amount is about to become 0:
+		if (Amount == 1 && Owner != NULL && Owner.Player != NULL && Owner.Player.ReadyWeapon == self)
+		{
+			OnDeselect(onToss: true);
+		}
+		
 		let copy = Weapon(Super.CreateTossable (-1));
 
 		if (copy != NULL)
@@ -868,6 +884,7 @@ class Weapon : StateProvider
 				if (player.PendingWeapon == NULL ||	player.PendingWeapon == WP_NOCHANGE)
 				{
 					player.refire = 0;
+					OnDeselect(fromPowerup: true);
 					player.ReadyWeapon = SisterWeapon;
 					player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());
 				}
@@ -878,6 +895,7 @@ class Weapon : StateProvider
 				if (psp != null && psp.Caller == player.ReadyWeapon && psp.CurState.InStateSequence(ready))
 				{
 					// If the weapon changes but the state does not, we have to manually change the PSprite's caller here.
+					OnDeselect(fromPowerup: true);
 					psp.Caller = SisterWeapon;
 					player.ReadyWeapon = SisterWeapon;
 				}
@@ -886,6 +904,7 @@ class Weapon : StateProvider
 					if (player.PendingWeapon == NULL || player.PendingWeapon == WP_NOCHANGE)
 					{
 						// Something went wrong. Initiate a regular weapon change.
+						OnDeselect(fromPowerup: true);
 						player.refire = 0;
 						player.ReadyWeapon = SisterWeapon;
 						player.SetPsprite(PSP_WEAPON, SisterWeapon.GetReadyState());

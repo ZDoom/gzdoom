@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2009 Randy Heit
 ** Copyright 2009 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,34 +33,32 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "d_main.h"
-#include "gi.h"
+
 #include "cmdlib.h"
-#include "doomstat.h"
-#include "i_system.h"
+#include "d_main.h"
+#include "engineerrors.h"
 #include "filesystem.h"
+#include "findfile.h"
+#include "fs_findfile.h"
+#include "gameconfigfile.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "i_interface.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "sc_man.h"
-#include "v_video.h"
-#include "gameconfigfile.h"
 #include "version.h"
-#include "engineerrors.h"
-#include "v_text.h"
-#include "fs_findfile.h"
-#include "findfile.h"
-#include "i_interface.h"
-#include "gstrings.h"
 
 EXTERN_CVAR(Bool, queryiwad);
-EXTERN_CVAR(String, defaultiwad);
+EXTERN_CVAR(String, queryiwad_key);
 EXTERN_CVAR(Bool, disableautoload)
 EXTERN_CVAR(Bool, autoloadlights)
 EXTERN_CVAR(Bool, autoloadbrightmaps)
 EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
-CVAR(Int, i_loadsupportwad, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // 0=never, 1=singleplayer only, 2=always
+CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
 
 bool foundprio = false; // global to prevent iwad box from appearing
 
@@ -468,6 +467,11 @@ void FIWadManager::CollectSearchPaths()
 				FString nice = NicePath(value);
 				if (nice.Len() > 0) mSearchPaths.Push(nice);
 			}
+			else if (stricmp(key, "RecursivePath") == 0)
+			{
+				FString nice = NicePath(value);
+				if (nice.Len() > 0) mRecursiveSearchPaths.Push(nice);
+			}
 		}
 	}
 	mSearchPaths.Append(I_GetGogPaths());
@@ -476,6 +480,11 @@ void FIWadManager::CollectSearchPaths()
 
 	// Unify and remove trailing slashes
 	for (auto &str : mSearchPaths)
+	{
+		FixPathSeperator(str);
+		if (str.Back() == '/') str.Truncate(str.Len() - 1);
+	}
+	for (auto& str : mRecursiveSearchPaths)
 	{
 		FixPathSeperator(str);
 		if (str.Back() == '/') str.Truncate(str.Len() - 1);
@@ -490,11 +499,11 @@ void FIWadManager::CollectSearchPaths()
 //
 //==========================================================================
 
-void FIWadManager::AddIWADCandidates(const char *dir)
+void FIWadManager::AddIWADCandidates(const char *dir, bool nosubdir)
 {
 	FileSys::FileList list;
 
-	if (FileSys::ScanDirectory(list, dir, "*", true))
+	if (FileSys::ScanDirectory(list, dir, "*", nosubdir))
 	{
 		for(auto& entry : list)
 		{
@@ -533,8 +542,16 @@ void FIWadManager::ValidateIWADs()
 {
 	TArray<int> returns;
 	unsigned originalsize = mIWadInfos.Size();
-	for (auto &p : mFoundWads)
+
+	// Iterating normally will give CheckIWADInfo name conflicts priority to
+	// whatever file is found first, rather than the file that the user
+	// specifically requests with -iwad, because IdentifyVersion appends
+	// the -iwad file to the end of the list. (And it's annoying to change
+	// to be the other way around.)
+	for (int i = mFoundWads.SSize() - 1; i >= 0; i--)
 	{
+		auto &p = mFoundWads[i];
+
 		int index;
 		auto x = strrchr(p.mFullPath.GetChars(), '.');
 		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, ".ipk7")))
@@ -580,11 +597,14 @@ FString FIWadManager::IWADPathFileSearch(const FString &file)
 		FString f = path + "/" + file;
 		if(FileExists(f)) return f;
 	}
+	for (const FString& path : mRecursiveSearchPaths)
+	{
+		FString f = RecursiveFileExists(path, file);
+		if (f.IsNotEmpty()) return f;
+	}
 
 	return "";
 }
-
-CVAR(String, extra_args, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad)
 {
@@ -597,6 +617,10 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	for (auto &dir : mSearchPaths)
 	{
 		AddIWADCandidates(dir.GetChars());
+	}
+	for (auto& dir : mRecursiveSearchPaths)
+	{
+		AddIWADCandidates(dir.GetChars(), false);
 	}
 	unsigned numFoundWads = mFoundWads.Size();
 
@@ -624,6 +648,14 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				{
 					FStringf fullpath("%s/%s", dir.GetChars(), custwad.GetChars());
 					if (FileExists(fullpath))
+					{
+						mFoundWads.Push({ fullpath, "", -1 });
+					}
+				}
+				for (const auto& dir : mRecursiveSearchPaths)
+				{
+					FString fullpath = RecursiveFileExists(dir, custwad);
+					if (fullpath.IsNotEmpty())
 					{
 						mFoundWads.Push({ fullpath, "", -1 });
 					}
@@ -701,7 +733,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 				picks.Clear();
 				picks.Push(found);
 				pickedprio = mIWadInfos[found.mInfoIndex].prio;
-				foundprio = true;
+				foundprio = !HoldingQueryKey(queryiwad_key);
 			}
 		}
 	}
@@ -737,91 +769,72 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 	// If we still haven't found a suitable IWAD let's error out.
 	if (picks.Size() == 0)
 	{
-		I_FatalError ("Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
-					  "Did you install " GAMENAME " properly? You can do either of the following:\n"
-					  "\n"
+		const char *gamedir, *cfgfile, *extrasteps = "";
+
 #if defined(_WIN32)
-					  "1. Place one or more of these wads in the same directory as " GAMENAME ".\n"
-					  "2. Edit your " GAMENAMELOWERCASE "-username.ini and add the directories of your iwads\n"
-					  "to the list beneath [IWADSearch.Directories]");
+		gamedir = "Documents\\My Games\\" GAMENAME "\\";
+		cfgfile = GAMENAMELOWERCASE "-[username].ini"; // I kinda want to grab the actual username here from windows
 #elif defined(__APPLE__)
-					  "1. Place one or more of these wads in ~/Library/Application Support/" GAMENAMELOWERCASE "/\n"
-					  "2. Edit your ~/Library/Preferences/" GAMENAMELOWERCASE ".ini and add the directories\n"
-					  "of your iwads to the list beneath [IWADSearch.Directories]");
+		gamedir = "~/Library/Application Support/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/Library/Preferences/" GAMENAMELOWERCASE ".ini";
+#elif defined(IS_FLATPAK)
+		gamedir = "~/.var/app/" APPID "/.config/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/.var/app/" APPID "/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini";
+		extrasteps = "\n3. Validate your Flatpak permissions, so that Flatpak has access to your directories with wads";
 #else
-					  "1. Place one or more of these wads in ~/.config/" GAMENAMELOWERCASE "/.\n"
-					  "2. Edit your ~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"
-					  "iwads to the list beneath [IWADSearch.Directories]");
+		gamedir = "~/.config/" GAMENAMELOWERCASE "/";
+		cfgfile = "~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini";
 #endif
+
+		I_FatalError(
+			"Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
+			"Did you install " GAMENAME " properly? You can do either of the following:\n"
+			"\n"
+			"1. Place one or more of these wads in %s\n"
+			"2. Edit your %s and add the\n"
+			"directories of your iwads to the list beneath [IWADSearch.Directories]"
+			"%s\n",
+			gamedir, cfgfile, extrasteps
+		);
 	}
 	int pick = 0;
 
 	// Present the IWAD selection box.
 	bool alwaysshow = (queryiwad && !Args->CheckParm("-iwad") && !foundprio);
 
-	if (alwaysshow || picks.Size() > 1)
+	if (!havepicked && (alwaysshow || picks.Size() > 1))
 	{
-		// Locate the user's prefered IWAD, if it was found.
-		if (defaultiwad[0] != '\0')
+		TArray<WadStuff> wads;
+		for (auto & found : picks)
 		{
-			for (unsigned i = 0; i < picks.Size(); ++i)
-			{
-				FString &basename = mIWadInfos[picks[i].mInfoIndex].Name;
-				if (basename.CompareNoCase(defaultiwad) == 0)
-				{
-					pick = i;
-					break;
-				}
-			}
+			WadStuff stuff;
+			stuff.Name = mIWadInfos[found.mInfoIndex].Name;
+			stuff.Path = ExtractFileBase(found.mFullPath.GetChars());
+			wads.Push(stuff);
 		}
-		if (alwaysshow || picks.Size() > 1)
+
+		int flags = 0;
+		if (disableautoload) flags |= 1;
+		if (autoloadlights) flags |= 2;
+		if (autoloadbrightmaps) flags |= 4;
+		if (autoloadwidescreen) flags |= 8;
+		if (i_loadsupportwad) flags |= 16;
+
+		FStartupSelectionInfo info = FStartupSelectionInfo(wads, *Args, flags);
+		if (I_PickIWad(queryiwad || HoldingQueryKey(queryiwad_key), info))
 		{
-			if (!havepicked)
-			{
-				TArray<WadStuff> wads;
-				for (auto & found : picks)
-				{
-					WadStuff stuff;
-					stuff.Name = mIWadInfos[found.mInfoIndex].Name;
-					stuff.Path = ExtractFileBase(found.mFullPath.GetChars());
-					wads.Push(stuff);
-				}
-				int flags = 0;;
-
-				if (disableautoload) flags |= 1;
-				if (autoloadlights) flags |= 2;
-				if (autoloadbrightmaps) flags |= 4;
-				if (autoloadwidescreen) flags |= 8;
-
-				FString extraArgs = *extra_args;
-
-				pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags, extraArgs);
-				if (pick >= 0)
-				{
-					extraArgs.StripLeftRight();
-
-					extra_args = extraArgs.GetChars();
-					
-					if(extraArgs.Len() > 0)
-					{
-						Args->AppendArgsString(extraArgs);
-					}
-
-					disableautoload = !!(flags & 1);
-					autoloadlights = !!(flags & 2);
-					autoloadbrightmaps = !!(flags & 4);
-					autoloadwidescreen = !!(flags & 8);
-
-					// The newly selected IWAD becomes the new default
-					defaultiwad = mIWadInfos[picks[pick].mInfoIndex].Name.GetChars();
-				}
-				else
-				{
-					return -1;
-				}
-				havepicked = true;
-			}
+			pick = info.SaveInfo();
+			disableautoload = !!(info.DefaultStartFlags & 1);
+			autoloadlights = !!(info.DefaultStartFlags & 2);
+			autoloadbrightmaps = !!(info.DefaultStartFlags & 4);
+			autoloadwidescreen = !!(info.DefaultStartFlags & 8);
+			i_loadsupportwad = !!(info.DefaultStartFlags & 16);
 		}
+		else
+		{
+			return -1;
+		}
+		havepicked = true;
 	}
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
@@ -830,7 +843,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
 	int iwadnum = 1;
-	if (optional_wad && D_AddFile(wadfiles, optional_wad, true, -1, GameConfig))
+	if (optional_wad && D_AddFile(wadfiles, optional_wad, true, -1, GameConfig, true))
 	{
 		iwadnum++;
 	}
@@ -848,15 +861,15 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	if(info.SupportWAD.IsNotEmpty())
 	{
-		bool wantsnetgame = (Args->CheckParm("-join") || Args->CheckParm("-host"));
-
-		if ((!wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
+		// For net games all wads must be explicitly named to make it easier for the host to know
+		// exactly what's being loaded.
+		if (i_loadsupportwad && !Args->CheckParm("-join") && !Args->CheckParm("-host"))
 		{
 			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
 
 			if(supportWAD.IsNotEmpty())
 			{
-				D_AddFile(wadfiles, supportWAD.GetChars(), true, -1, GameConfig);
+				D_AddFile(wadfiles, supportWAD.GetChars(), true, -1, GameConfig, true);
 			}
 		}
 	}

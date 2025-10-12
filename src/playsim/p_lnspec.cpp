@@ -3,7 +3,9 @@
 ** Handles line specials
 **
 **---------------------------------------------------------------------------
+**
 ** Copyright 1998-2007 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -28,36 +30,36 @@
 ** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**
 **---------------------------------------------------------------------------
 **
 ** Each function returns true if it caused something to happen
 ** or false if it could not perform the desired action.
 */
 
-#include "doomstat.h"
-#include "p_local.h"
-#include "p_lnspec.h"
-#include "p_enemy.h"
-#include "g_level.h"
-#include "v_palette.h"
-#include "a_sharedglobal.h"
-#include "a_lightning.h"
 #include "a_keys.h"
-#include "gi.h"
-#include "p_conversation.h"
-#include "p_3dmidtex.h"
-#include "d_net.h"
+#include "a_sharedglobal.h"
 #include "d_event.h"
-#include "gstrings.h"
-#include "po_man.h"
+#include "d_net.h"
 #include "d_player.h"
-#include "r_utility.h"
+#include "doomstat.h"
 #include "fragglescript/t_fs.h"
-#include "p_spec.h"
+#include "g_level.h"
 #include "g_levellocals.h"
-#include "vm.h"
+#include "gi.h"
+#include "gstrings.h"
+#include "p_3dmidtex.h"
+#include "p_conversation.h"
 #include "p_destructible.h"
+#include "p_enemy.h"
+#include "p_lnspec.h"
+#include "p_local.h"
+#include "p_spec.h"
+#include "po_man.h"
+#include "r_utility.h"
 #include "s_sndseq.h"
+#include "v_palette.h"
+#include "vm.h"
 
 // Remaps EE sector change types to Generic_Floor values. According to the Eternity Wiki:
 /*
@@ -70,7 +72,6 @@
     6 : Copy texture and type; numeric model.  ( = 2+4)
 */
 static const uint8_t ChangeMap[8] = { 0, 1, 5, 3, 7, 2, 6, 0 };
-
 
 #define FUNC(a) static int a (FLevelLocals *Level, line_t *ln, AActor *it, bool backSide, \
 	int arg0, int arg1, int arg2, int arg3, int arg4)
@@ -134,7 +135,7 @@ FName MODtoDamageType (int mod)
 	}
 }
 
-int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle);
+int NativeStartConversation(AActor* self, AActor* player, bool faceTalker, bool saveAngle, bool rumble);
 
 FUNC(LS_NOP)
 {
@@ -585,7 +586,6 @@ FUNC(LS_Floor_Stop)
 	return Level->EV_StopFloor(arg0, ln);
 }
 
-
 FUNC(LS_Stairs_BuildDown)
 // Stair_BuildDown (tag, speed, height, delay, reset)
 {
@@ -648,7 +648,6 @@ FUNC(LS_Stairs_BuildUpDoomSync)
 	return Level->EV_BuildStairs (arg0, DFloor::buildUp, ln,
 						   arg2, SPEED(arg1), 0, arg3, 0, DFloor::stairSync);
 }
-
 
 FUNC(LS_Generic_Stairs)
 // Generic_Stairs (tag, speed, step, dir/igntxt, reset)
@@ -896,7 +895,6 @@ FUNC(LS_Ceiling_Stop)
 	return Level->EV_StopCeiling(arg0, ln);
 }
 
-
 FUNC(LS_Generic_Ceiling)
 // Generic_Ceiling (tag, speed, height, target, change/model/direct/crush)
 {
@@ -1037,7 +1035,6 @@ FUNC(LS_Plat_RaiseAndStayTx0)
 			type = gameinfo.gametype == GAME_Heretic? DPlat::platRaiseAndStayLockout : DPlat::platRaiseAndStay;
 			break;
 	}
-
 
 	return Level->EV_DoPlat (arg0, ln, type, 0, SPEED(arg1), 0, 0, 1);
 }
@@ -1824,7 +1821,6 @@ FUNC(LS_Thing_Stop)
 	return ok;
 }
 
-
 FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay, chasegoal)
 {
@@ -2036,8 +2032,6 @@ FUNC(LS_FS_Execute)
 	return T_RunScript(Level, arg0, it);
 }
 
-
-
 FUNC(LS_FloorAndCeiling_LowerByValue)
 // FloorAndCeiling_LowerByValue (tag, speed, height)
 {
@@ -2242,9 +2236,6 @@ FUNC(LS_Sector_ChangeFlags)
 	return rtn;
 }
 
-
-
-
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
 {
@@ -2305,7 +2296,6 @@ FUNC(LS_Sector_SetLink)
 
 void SetWallScroller(FLevelLocals *Level, int id, int sidechoice, double dx, double dy, EScrollPos Where);
 void SetScroller(FLevelLocals *Level, int tag, EScroll type, double dx, double dy);
-
 
 FUNC(LS_Scroll_Texture_Both)
 // Scroll_Texture_Both (id, left, right, up, down)
@@ -2838,7 +2828,6 @@ FUNC(LS_Line_SetAutomapStyle)
 	return false;
 }
 
-
 FUNC(LS_ChangeCamera)
 // ChangeCamera (tid, who, revert?)
 {
@@ -3018,7 +3007,7 @@ FUNC(LS_SetPlayerProperty)
 					if (power != 4)
 					{
 						auto item = p->mo->GiveInventoryType ((PClass::FindActor(powers[power])));
-						if (item != NULL && power == 0 && arg1 == 1) 
+						if (item != NULL && power == 0 && arg1 == 1)
 						{
 							item->ColorVar(NAME_BlendColor) = MakeSpecialColormap(INVERSECOLORMAP);
 						}
@@ -3179,7 +3168,7 @@ FUNC(LS_TranslucentLine)
 
 FUNC(LS_Autosave)
 {
-	if (gameaction != ga_savegame)
+	if (gameaction != ga_savegame && gameaction != ga_quicksave)
 	{
 		Level->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 		Net_WriteInt8 (DEM_CHECKAUTOSAVE);
@@ -3403,7 +3392,7 @@ FUNC(LS_StartConversation)
 		return false;
 	}
 
-	return NativeStartConversation(target, it, !!arg1, true);
+	return NativeStartConversation(target, it, !!arg1, true, false); // TODO: expose rumble?
 }
 
 FUNC(LS_Thing_SetConversation)
@@ -3457,7 +3446,6 @@ FUNC(LS_Sector_SetPlaneReflection)
 
 	return true;
 }
-
 
 FUNC(LS_SetGlobalFogParameter)
 // SetGlobalFogParameter (type, value)
@@ -3962,7 +3950,6 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 	return 0;
 }
 
-
 //==========================================================================
 //
 // P_ExecuteSpecial
@@ -3991,6 +3978,7 @@ int P_ExecuteSpecial(FLevelLocals *Level, int			num,
 // Execute a line special / script
 //
 //==========================================================================
+
 DEFINE_ACTION_FUNCTION(FLevelLocals, ExecuteSpecial)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);

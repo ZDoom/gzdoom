@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 1998-2016 Randy Heit
 ** Copyright 2002-2019 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -36,15 +37,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-#include "s_soundinternal.h"
-#include "m_swap.h"
-#include "superfasthash.h"
-#include "s_music.h"
-#include "m_random.h"
-#include "printf.h"
 #include "c_cvars.h"
 #include "gamestate.h"
+#include "i_soundinternal.h"
+#include "m_haptics.h"
+#include "m_random.h"
+#include "m_swap.h"
+#include "printf.h"
+#include "s_music.h"
+#include "s_soundinternal.h"
 
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -475,6 +476,11 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// Attenuate the attenuation based on the sound.
 	attenuation *= sfx->Attenuation;
 
+#if 0
+	// sound debug printout
+	Printf("sound: '%s' -> '%s' %g\n", soundEngine->GetSoundName(org_id), soundEngine->GetSoundName(sound_id), attenuation);
+#endif
+
 	// The passed rolloff overrides any sound-specific rolloff.
 	if (forcedrolloff != NULL && forcedrolloff->MinDistance != 0)
 	{
@@ -607,6 +613,14 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	else
 	{
 		chanflags |= CHANF_LISTENERZ | CHANF_JUSTSTARTED;
+	}
+	if (chanflags & CHANF_RUMBLE && !(chanflags & CHANF_NORUMBLE))
+	{
+		// I would love to use attenuation here, but it seems weird.
+		// Pistol's attenuation is always 1, but it's not silent.
+		// I'm not sure why that is.
+		// Joy_Rumble(soundEngine->GetSoundName(org_id), (chanflags&CHANF_IS3D)? attenuation: 0);
+		Joy_Rumble(soundEngine->GetSoundName(org_id));
 	}
 	if (chan != NULL)
 	{
@@ -1008,7 +1022,6 @@ void SoundEngine::RelinkSound (int sourcetype, const void *from, const void *to,
 		chan = next;
 	}
 }
-
 
 //==========================================================================
 //
@@ -1450,7 +1463,6 @@ void SoundEngine::Reset()
 	RestoreEvictedChannels();
 }
 
-
 //==========================================================================
 //
 // S_FindSound
@@ -1560,7 +1572,6 @@ FSoundID SoundEngine::AddSoundLump(const char* logicalname, int lump, int Curren
 	return id;
 }
 
-
 //==========================================================================
 //
 // S_FindSoundTentative
@@ -1580,7 +1591,6 @@ FSoundID SoundEngine::FindSoundTentative(const char* name, int nearlimit)
 	}
 	return id;
 }
-
 
 //==========================================================================
 //
@@ -1694,7 +1704,6 @@ void SoundEngine::HashSounds()
 	}
 	S_rnd.ShrinkToFit();
 
-
 }
 
 void SoundEngine::AddRandomSound(FSoundID Owner, TArray<FSoundID> list)
@@ -1728,7 +1737,6 @@ void S_SoundReset()
 #include "i_net.h"
 #include "i_interface.h"
 
-
 CCMD(cachesound)
 {
 	if (argv.argc() < 2)
@@ -1745,7 +1753,6 @@ CCMD(cachesound)
 		}
 	}
 }
-
 
 CCMD(listsoundchannels)
 {
@@ -1844,8 +1851,6 @@ void S_SetSoundPaused(int state)
 	}
 }
 
-
-
 CCMD(snd_status)
 {
 	GSnd->PrintStatus();
@@ -1875,5 +1880,4 @@ ADD_STAT(sound)
 {
 	return GSnd->GatherStats();
 }
-
 

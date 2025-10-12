@@ -12,7 +12,7 @@ Class VisualThinker : Thinker native
 	native TranslationID	Translation;
 	native int16			LightLevel;
 	
-	native uint16			Flags;
+	native uint				Flags;
 	native int				VisualThinkerFlags;
     
     FlagDef                 FlipOffsetX :       VisualThinkerFlags, 0;
@@ -37,11 +37,11 @@ Class VisualThinker : Thinker native
 	native protected void UpdateSpriteInfo(); // needs to be called every time the texture is updated if the thinker uses SPF_LOCAL_ANIM and is set to a non-ticking statnum (or if Tick is overriden and doesn't call Super.Tick())
 
 	static VisualThinker Spawn(Class<VisualThinker> type, TextureID tex, Vector3 pos, Vector3 vel = (0,0,0), double alpha = 1.0, int flags = 0,
-						  double roll = 0.0, Vector2 scale = (1,1), Vector2 offset = (0,0), int style = STYLE_Normal, TranslationID trans = 0, int VisualThinkerFlags = 0)
+						  double roll = 0.0, Vector2 scale = (1,1), Vector2 offset = (0,0), int style = STYLE_Normal, TranslationID trans = 0, int VisualThinkerFlags = 0, bool clientSide = false)
 	{
 		if (!Level)	return null;
 
-		let p = level.SpawnVisualThinker(type);
+		let p = level.SpawnVisualThinker(type, clientSide);
 		if (p)
 		{
 			p.Texture = tex;

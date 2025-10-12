@@ -151,6 +151,7 @@ struct gameinfo_t
 	FName BasicArmorClass;
 	FName HexenArmorClass;
 	FString PauseSign;
+	bool UsePauseString;
 	FString Endoom;
 	double Armor2Percent;
 	FString quitSound;
@@ -217,6 +218,7 @@ struct gameinfo_t
 	bool nomergepickupmsg;
 	bool mHideParTimes;
 	CutsceneDef IntroScene;
+	double BloodSplatDecalDistance;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

@@ -64,21 +64,14 @@ dpadup togglemap
 pad_start menu_main
 pad_back pause
 lthumb crouch
-
-// Generic gamepad bindings
-joy1 +use
-joy4 +jump
-axis6plus +attack
-axis3plus +altattack
-joy5 weapprev
-joy6 weapnext
-pov1left invprev
-pov1right invnext
-pov1down invuse
-pov1up togglemap
-joy8 menu_main
-joy7 pause
-joy10 crouch
+lstickleft +moveleft
+lstickright +moveright
+lstickup +forward
+lstickdown +back
+rstickleft +left
+rstickright +right
+rstickup +lookup
+rstickdown +lookdown
 
 /* Default automap bindings */
 mapbind f am_togglefollow
@@ -108,13 +101,3 @@ mapbind dpadup +am_panup
 mapbind dpaddown +am_pandown
 mapbind lshoulder +am_zoomout
 mapbind rshoulder +am_zoomin
-
-mapbind joy3 am_togglefollow
-mapbind joy1 am_setmark
-mapbind joy2 am_clearmarks
-mapbind pov1right +am_panright
-mapbind pov1left +am_panleft
-mapbind pov1up +am_panup
-mapbind pov1down +am_pandown
-mapbind joy5 +am_zoomout
-mapbind joy6 +am_zoomin

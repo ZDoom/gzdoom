@@ -301,6 +301,18 @@ void P_ThinkParticles (FLevelLocals *Level)
 		}
 		
 		particle->alpha -= particle->fadestep;
+		if (	(!!(particle->flags & SPF_FADE_IN_OUT) && particle->alpha >= 1.0)
+			 || (!!(particle->flags & SPF_FADE_IN_HOLD_OUT) && (particle->ttl * fabs(particle->fadeoutstep)) <= std::min(1.0f, fabs(particle->alpha)))
+		) { // [Jay] if SPF_FADE_IN_HOLD_OUT, hold until the fade out would line up with ttl
+			particle->alpha = std::min(1.0f, fabs(particle->alpha));
+			particle->fadestep = particle->fadeoutstep;
+			particle->flags &= ~(SPF_FADE_IN_OUT|SPF_FADE_IN_HOLD_OUT);
+		}
+
+		// It looks really glitchy if the alpha is allowed to overshoot
+		if (particle->alpha > 1.0)
+			particle->alpha = 1.0;
+
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
@@ -345,7 +357,7 @@ void P_ThinkParticles (FLevelLocals *Level)
 }
 
 void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
-	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc)
+	double fadestep, double sizestep, int flags, FTextureID texture, ERenderStyle style, double startroll, double rollvel, double rollacc, double fadeoutstep)
 {
 	particle_t *particle = NewParticle(Level, !!(flags & SPF_REPLACE));
 
@@ -356,8 +368,21 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 		particle->Acc = FVector3(accel);
 		particle->color = ParticleColor(color);
 		particle->alpha = float(startalpha);
-		if ((fadestep < 0 && !(flags & SPF_NEGATIVE_FADESTEP)) || fadestep <= -1.0) particle->fadestep = FADEFROMTTL(lifetime);
-		else particle->fadestep = float(fadestep);
+		if ((flags & SPF_FADE_IN_OUT) || (flags & SPF_FADE_IN_HOLD_OUT))
+			particle->fadeoutstep = fadeoutstep;
+		if ((fadestep < 0 && !(flags & SPF_NEGATIVE_FADESTEP)) || fadestep <= -1.0)
+		{
+			particle->fadestep = FADEFROMTTL(lifetime);
+			if (flags & SPF_FADE_IN_OUT)
+				particle->fadestep *= (float)-2;
+			else if (flags & SPF_FADE_IN_HOLD_OUT)
+				particle->fadestep *= (float)-3;
+			particle->fadeoutstep = -particle->fadestep;
+		}
+		else
+		{
+			particle->fadestep = float(fadestep);
+		}
 		particle->ttl = lifetime;
 		particle->size = size;
 		particle->sizestep = sizestep;
@@ -1033,7 +1058,7 @@ DVisualThinker* DVisualThinker::GetNext() const
 	return _next;
 }
 
-DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* type)
+DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* type, bool clientSide)
 {
 	if (type == nullptr)
 	{
@@ -1050,7 +1075,7 @@ DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* ty
 		return nullptr;
 	}
 
-	auto zs = static_cast<DVisualThinker*>(Level->CreateThinker(type, DVisualThinker::DEFAULT_STAT));
+	auto zs = static_cast<DVisualThinker*>(clientSide ? Level->CreateClientSideThinker(type, DVisualThinker::DEFAULT_STAT) : Level->CreateThinker(type, DVisualThinker::DEFAULT_STAT));
 	zs->Construct();
 
 	IFOVERRIDENVIRTUALPTRNAME(zs, NAME_VisualThinker, BeginPlay)
@@ -1065,9 +1090,9 @@ DVisualThinker* DVisualThinker::NewVisualThinker(FLevelLocals* Level, PClass* ty
 	return zs;
 }
 
-static DVisualThinker* SpawnVisualThinker(FLevelLocals* Level, PClass* type)
+static DVisualThinker* SpawnVisualThinker(FLevelLocals* Level, PClass* type, bool clientSide)
 {
-	return DVisualThinker::NewVisualThinker(Level, type);
+	return DVisualThinker::NewVisualThinker(Level, type, clientSide);
 }
 
 void DVisualThinker::UpdateSector(subsector_t * newSubsector)
@@ -1101,7 +1126,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SpawnVisualThinker, SpawnVisualThink
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_CLASS_NOT_NULL(type, DVisualThinker);
-	DVisualThinker* zs = SpawnVisualThinker(self, type);
+	PARAM_BOOL(clientSide);
+	DVisualThinker* zs = SpawnVisualThinker(self, type, clientSide);
 	ACTION_RETURN_OBJECT(zs);
 }
 
@@ -1364,13 +1390,18 @@ void DVisualThinker::Serialize(FSerializer& arc)
 		("lightlevel", LightLevel)
 		("animData", PT.animData)
 		("flags", PT.flags)
-		("visualThinkerFlags", flags)
-		("next", _next)
-		("prev", _prev);
+		("visualThinkerFlags", flags);
     
     if(arc.isReading())
     {
         UpdateSector();
+		_prev = _next = nullptr;
+		if (Level->VisualThinkerHead != nullptr)
+		{
+			Level->VisualThinkerHead->_prev = this;
+			_next = Level->VisualThinkerHead;
+		}
+		Level->VisualThinkerHead = this;
     }
 }
 

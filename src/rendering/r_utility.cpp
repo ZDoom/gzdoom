@@ -4,6 +4,7 @@
 // Copyright 1994-1996 Raven Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,47 +33,39 @@
 #include <stdlib.h>
 #include <math.h>
 
-
-#include "doomdef.h"
-#include "d_net.h"
-#include "doomstat.h"
-#include "m_random.h"
-#include "m_bbox.h"
-#include "r_sky.h"
-#include "st_stuff.h"
-#include "c_dispatch.h"
-#include "v_video.h"
-#include "stats.h"
-#include "i_video.h"
 #include "a_sharedglobal.h"
-#include "p_3dmidtex.h"
-#include "r_data/r_interpolate.h"
-#include "po_man.h"
-#include "p_effect.h"
-#include "st_start.h"
-#include "v_font.h"
-#include "swrenderer/r_renderer.h"
-#include "serializer.h"
-#include "r_utility.h"
-#include "d_player.h"
-#include "p_local.h"
-#include "g_levellocals.h"
-#include "p_maputl.h"
-#include "sbar.h"
-#include "vm.h"
-#include "i_time.h"
 #include "actorinlines.h"
-#include "g_game.h"
-#include "i_system.h"
-#include "v_draw.h"
-#include "i_interface.h"
 #include "d_main.h"
+#include "d_net.h"
+#include "d_player.h"
+#include "doomstat.h"
+#include "g_game.h"
+#include "g_levellocals.h"
+#include "i_interface.h"
+#include "i_time.h"
+#include "i_video.h"
+#include "m_haptics.h"
+#include "m_random.h"
+#include "p_3dmidtex.h"
+#include "p_effect.h"
+#include "p_local.h"
+#include "p_maputl.h"
+#include "r_data/r_interpolate.h"
+#include "r_sky.h"
+#include "r_utility.h"
+#include "sbar.h"
+#include "serializer.h"
+#include "swrenderer/r_renderer.h"
+#include "v_draw.h"
+#include "v_video.h"
+#include "vm.h"
 
 const float MY_SQRT2    = float(1.41421356237309504880); // sqrt(2)
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, haptics_do_world)
 
 // TYPES -------------------------------------------------------------------
 
@@ -282,7 +275,6 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	{
 		viewwindow.centerxwide = viewwindow.centerx * AspectMultiplier(viewwindow.WidescreenRatio) / 48;
 	}
-
 
 	DAngle fov = viewpoint.FieldOfView;
 
@@ -550,7 +542,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 			const int prevPortalGroup = viewLvl->PointInRenderSubsector(iView->Old.Pos)->sector->PortalGroup;
 			const int curPortalGroup = viewLvl->PointInRenderSubsector(iView->New.Pos)->sector->PortalGroup;
 
-			if (viewPoint.IsAllowedOoB() && prevPortalGroup != curPortalGroup) viewPoint.Pos = iView->New.Pos;
+			if (viewPoint.bDoOob && prevPortalGroup != curPortalGroup) viewPoint.Pos = iView->New.Pos;
 			else
 			{
 				const DVector2 portalOffset = viewLvl->Displacements.getOffset(prevPortalGroup, curPortalGroup);
@@ -567,7 +559,7 @@ void R_InterpolateView(FRenderViewpoint& viewPoint, const player_t* const player
 
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewPoint.sector = viewLvl->PointInRenderSubsector(viewPoint.Pos)->sector;
-	if (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer())
+	if (!viewPoint.bDoOob || !V_IsHardwareRenderer())
 	{
 		bool moved = false;
 		while (!viewPoint.sector->PortalBlocksMovement(sector_t::ceiling))
@@ -712,7 +704,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 	ViewVector3D.Y = v.Y * PitchCos;
 	ViewVector3D.Z = -PitchSin;
 
-	if (IsOrtho() || IsAllowedOoB()) // These auto-ensure that camera and camera->ViewPos exist
+	if (bDoOrtho || bDoOob) // These auto-ensure that camera and camera->ViewPos exist
 	{
 		if (camera->tracer != NULL)
 		{
@@ -724,7 +716,7 @@ void FRenderViewpoint::SetViewAngle(const FViewWindow& viewWindow)
 		}
 	}
 
-	if (IsOrtho() && (camera->ViewPos->Offset.XY().Length() > 0.0))
+	if (bDoOrtho && (camera->ViewPos->Offset.XY().Length() > 0.0))
 	{
 		ScreenProj = 1.34396 / camera->ViewPos->Offset.Length() / tan (FieldOfView.Radians()*0.5); // [DVR] Estimated. +/-1 should be top/bottom of screen.
 		ScreenProjX = ScreenProj * 0.5 / viewWindow.WidescreenRatio;
@@ -855,7 +847,6 @@ bool R_GetViewInterpolationStatus()
 	return NoInterpolateView;
 }
 
-
 //==========================================================================
 //
 // R_ClearInterpolationPath
@@ -922,8 +913,6 @@ static void R_DoActorTickerAngleChanges(player_t* const player, DRotator& angles
 EXTERN_CVAR(Float, chase_dist)
 EXTERN_CVAR(Float, chase_height)
 
-int WorldPaused();
-
 void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AActor* const actor)
 {
 	viewPoint.TicFrac = I_GetTimeFrac();
@@ -952,6 +941,9 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 
 	if (viewPoint.camera == nullptr)
 		I_Error("You lost your body. Bad dehacked work is likely to blame.");
+
+	viewPoint.bDoOob = viewPoint.IsAllowedOoB();
+	viewPoint.bDoOrtho = viewPoint.IsOrtho();
 
 	InterpolationViewer* const iView = FindPastViewer(viewPoint.camera);
 	// Always reset these back to zero.
@@ -1045,11 +1037,18 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 		viewPoint.sector = viewPoint.ViewLevel->PointInRenderSubsector(camPos)->sector;
 	}
 
-	if (!WorldPaused())
+	if (!WorldPaused(true))
 	{
 		FQuakeJiggers jiggers;
-		if (DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers) > 0)
+		int intensity = DEarthquake::StaticGetQuakeIntensities(viewPoint.TicFrac, viewPoint.camera, jiggers);
+		if (intensity > 0)
 		{
+			if (haptics_do_world)
+			{
+				// f(0)->1 f(9)->0
+				Joy_Rumble("world/quake", (9.0-intensity)/9);
+			}
+
 			const double quakeFactor = r_quakeintensity;
 			if (jiggers.RollIntensity || jiggers.RollWave)
 				iView->AngleOffsets.Roll = DAngle::fromDeg(QuakePower(quakeFactor, jiggers.RollIntensity, jiggers.RollWave));
@@ -1101,14 +1100,14 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 
 	// Keep the view within the sector's floor and ceiling
 	// But allow VPSF_ALLOWOUTOFBOUNDS camera viewpoints to go out of bounds when using hardware renderer
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::ceiling) && (!viewPoint.bDoOob || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->ceilingplane.ZatPoint(viewPoint.Pos) - 4.0;
 		if (viewPoint.Pos.Z > z)
 			viewPoint.Pos.Z = z;
 	}
 
-	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!viewPoint.IsAllowedOoB() || !V_IsHardwareRenderer()))
+	if (viewPoint.sector->PortalBlocksMovement(sector_t::floor) && (!viewPoint.bDoOob || !V_IsHardwareRenderer()))
 	{
 		const double z = viewPoint.sector->floorplane.ZatPoint(viewPoint.Pos) + 4.0;
 		if (viewPoint.Pos.Z < z)
@@ -1211,7 +1210,6 @@ void R_SetupFrame(FRenderViewpoint& viewPoint, const FViewWindow& viewWindow, AA
 	viewPoint.ViewActor = viewPoint.showviewer ? nullptr : actor;
 }
 
-
 CUSTOM_CVAR(Float, maxviewpitch, 90.f, CVAR_ARCHIVE | CVAR_SERVERINFO)
 {
 	if (self>90.f) self = 90.f;
@@ -1262,6 +1260,5 @@ bool R_ShouldDrawSpriteShadow(AActor *thing)
 		}
 	}
 	return doit;
-
 
 }

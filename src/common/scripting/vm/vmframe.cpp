@@ -43,6 +43,7 @@
 #include "jit.h"
 #include "c_cvars.h"
 #include "version.h"
+#include "common/scripting/dap/GameEventEmit.h"
 
 #ifdef HAVE_VM_JIT
 #ifdef __DragonFly__
@@ -272,6 +273,25 @@ int VMScriptFunction::PCToLine(const VMOP *pc)
 		}
 	}
 	return -1;
+}
+
+TArray<VMLocalVariable> VMScriptFunction::GetLocalVariableBlocksAt(const VMOP *pc)
+{
+	TArray<VMLocalVariable> ret;
+	// LocalVariableBlocks should already be sorted by start address.
+	std::vector<std::pair<const VMOP*, const VMOP*>> ranges;
+	for (auto &block : LocalVariableBlocks)
+	{
+		if (pc >= block.first.first && pc < block.first.second)
+		{
+			ranges.push_back(block.first);
+			for (auto &var : block.second)
+			{
+				ret.Push(var);
+			}
+		}
+	}
+	return ret;
 }
 
 static bool CanJit(VMScriptFunction *func)
@@ -557,9 +577,9 @@ VMFrame *VMFrameStack::PopFrame()
 
 void VMCheckParamCount(VMFunction* func, int retcount, int argcount)
 {
-	if (func->Proto->ReturnTypes.Size() != retcount)
+	if (func->Proto->ReturnTypes.SSize() != retcount)
 		I_FatalError("Incorrect return value passed to %s", func->PrintableName);
-	if (func->Proto->ArgumentTypes.Size() != argcount)
+	if (func->Proto->ArgumentTypes.SSize() != argcount)
 		I_FatalError("Incorrect parameter count passed to %s", func->PrintableName);
 }
 
@@ -827,7 +847,9 @@ void CVMAbortException::MaybePrintMessage()
 {
 	va_list ap;
 	va_start(ap, moreinfo);
-	throw CVMAbortException(reason, moreinfo, ap);
+	CVMAbortException err(reason, moreinfo, ap);
+	DebugServer::RuntimeEvents::EmitExceptionEvent(reason, err.GetMessage(), err.stacktrace.GetChars());
+	throw err;
 }
 
 [[noreturn]] void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...)
@@ -838,6 +860,7 @@ void CVMAbortException::MaybePrintMessage()
 	CVMAbortException err(reason, moreinfo, ap);
 
 	err.stacktrace.AppendFormat("Called from %s at %s, line %d\n", sfunc->PrintableName, sfunc->SourceFileName.GetChars(), sfunc->PCToLine(line));
+	DebugServer::RuntimeEvents::EmitExceptionEvent(reason, err.GetMessage(), err.stacktrace.GetChars());
 	throw err;
 }
 

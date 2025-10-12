@@ -186,7 +186,7 @@ void FCajunMaster::Init ()
 //Called on each level exit (from g_game.c).
 void FCajunMaster::End ()
 {
-	int i;
+	unsigned int i;
 
 	//Arrange wanted botnum and their names, so they can be spawned next level.
 	getspawned.Clear();
@@ -319,7 +319,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
+void FCajunMaster::TryAddBot (FLevelLocals *Level, TArrayView<uint8_t>& stream, int player)
 {
 	int botshift = ReadInt8 (stream);
 	char *info = ReadString (stream);
@@ -342,7 +342,7 @@ void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
 		}
 	}
 
-	if (DoAddBot (Level,(uint8_t *)info, skill))
+	if (DoAddBot (Level, TArrayView((uint8_t*)info, strlen(info)+1), skill))
 	{
 		//Increment this.
 		botnum++;
@@ -363,9 +363,9 @@ void FCajunMaster::TryAddBot (FLevelLocals *Level, uint8_t **stream, int player)
 	delete[] info;
 }
 
-bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skill)
+bool FCajunMaster::DoAddBot (FLevelLocals *Level, TArrayView<uint8_t> info, botskill_t skill)
 {
-	int bnum;
+	unsigned int bnum;
 
 	for (bnum = 0; bnum < MAXPLAYERS; bnum++)
 	{
@@ -377,11 +377,11 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skil
 
 	if (bnum == MAXPLAYERS)
 	{
-		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
+		Printf ("The maximum of %lu players/bots has been reached\n", MAXPLAYERS);
 		return false;
 	}
 
-	D_ReadUserInfoStrings (bnum, &info, false);
+	D_ReadUserInfoStrings (bnum, info, false);
 
 	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
 	players[bnum].Bot = Level->CreateThinker<DBot>();
@@ -403,7 +403,7 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skil
 
 void FCajunMaster::RemoveAllBots (FLevelLocals *Level, bool fromlist)
 {
-	int i, j;
+	unsigned int i, j;
 
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{

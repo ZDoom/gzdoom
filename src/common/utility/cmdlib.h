@@ -34,6 +34,7 @@ char(&_ArraySizeHelper(T(&array)[N]))[N];
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
 bool FileExists (const char *filename);
+FString RecursiveFileExists(const FString& path, const FString& file);
 inline bool FileExists(const FString& filename)
 {
 	return FileExists(filename.GetChars());

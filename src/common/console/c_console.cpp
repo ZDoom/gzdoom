@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,38 +33,33 @@
 **
 */
 
-#include <string>
-
-
-#include "version.h"
 #include "c_bind.h"
+#include "c_commandbuffer.h"
 #include "c_console.h"
+#include "c_consolebuffer.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
-#include "gamestate.h"
-#include "v_text.h"
-#include "filesystem.h"
-#include "d_gui.h"
+#include "c_notifybufferbase.h"
 #include "cmdlib.h"
+#include "common/scripting/dap/GameEventEmit.h"
 #include "d_eventbase.h"
-#include "c_consolebuffer.h"
+#include "d_gui.h"
+#include "g_input.h"
+#include "gamestate.h"
+#include "i_interface.h"
+#include "i_system.h"
+#include "i_time.h"
+#include "menu.h"
+#include "menustate.h"
+#include "printf.h"
+#include "texturemanager.h"
 #include "utf8.h"
 #include "v_2ddrawer.h"
 #include "v_draw.h"
 #include "v_font.h"
-#include "printf.h"
-#include "i_time.h"
-#include "texturemanager.h"
-#include "v_draw.h"
-#include "i_interface.h"
+#include "v_text.h"
 #include "v_video.h"
-#include "i_system.h"
-#include "menu.h"
-#include "menustate.h"
-#include "v_2ddrawer.h"
-#include "c_notifybufferbase.h"
-#include "g_input.h"
-#include "c_commandbuffer.h"
+#include "version.h"
 #include "vm.h"
 
 #define LEFTMARGIN 8
@@ -138,6 +134,9 @@ CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
 	if (self < 0.f) self = 0.f;
 	if (self > 1.f) self = 1.f;
 }
+
+CUSTOM_CVARD(Bool, con_quick_home_end, true, CVAR_ARCHIVE, "Use HOME/END keys to scroll when cursor is at start/end of line already")
+{}
 
 // Show developer messages if true.
 CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -421,7 +420,7 @@ int PrintString (int iprintlevel, const char *outline)
 	{
 		return 0;
 	}
-	if (printlevel != PRINT_LOG || Logfile != nullptr)
+	if (printlevel != PRINT_LOG || !(iprintlevel & PRINT_NODAPEVENT) || Logfile != nullptr)
 	{
 		// Convert everything coming through here to UTF-8 so that all console text is in a consistent format
 		int count;
@@ -443,6 +442,10 @@ int PrintString (int iprintlevel, const char *outline)
 		if (Logfile != nullptr && !(iprintlevel & PRINT_NOLOG))
 		{
 			WriteLineToLog(Logfile, outline);
+		}
+		if (!(iprintlevel & PRINT_NODAPEVENT))
+		{
+			DebugServer::RuntimeEvents::EmitLogEvent(iprintlevel, outline);
 		}
 		return count;
 	}
@@ -625,12 +628,12 @@ void C_DrawConsole ()
 			if (textScale == 1)
 				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() - 8 -
 					CurrentConsoleFont->StringWidth (GetVersionString()),
-					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
+					round((float)ConBottom / textScale) - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(), TAG_DONE);
 			else
-				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() / textScale - 8 -
+				DrawText(twod, CurrentConsoleFont, CR_ORANGE, (float)twod->GetWidth() / textScale - 8 -
 					CurrentConsoleFont->StringWidth(GetVersionString()),
-					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
+					round((float)ConBottom / textScale) - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(),
 					DTA_VirtualWidth, twod->GetWidth() / textScale,
 					DTA_VirtualHeight, twod->GetHeight() / textScale,
@@ -757,6 +760,11 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 	int data1 = ev->data1;
 	bool keepappending = false;
 
+	int page_height = (twod->GetHeight()-4)/active_con_scale(twod) /
+		((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
+	int total_lines = conbuffer->GetFormattedLineCount();
+	int top_row = total_lines - page_height - 1;
+
 	switch (ev->subtype)
 	{
 	default:
@@ -806,74 +814,47 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_PGUP:
-			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
-			{ // Scroll console buffer up one page
-				RowAdjust += (twod->GetHeight()-4)/active_con_scale(twod) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
-			}
-			else if (RowAdjust < conbuffer->GetFormattedLineCount())
+			if (ev->subtype == EV_GUI_WheelUp)
 			{ // Scroll console buffer up
-				if (ev->subtype == EV_GUI_WheelUp)
-				{
-					RowAdjust += 3;
-				}
-				else
-				{
-					RowAdjust++;
-				}
-				if (RowAdjust > conbuffer->GetFormattedLineCount())
-				{
-					RowAdjust = conbuffer->GetFormattedLineCount();
-				}
+				if (ev->data3 & (GKM_SHIFT|GKM_CTRL)) RowAdjust += 1;
+				else RowAdjust += 3;
+
+				if (RowAdjust > total_lines) RowAdjust = total_lines;
+			}
+			else
+			{ // Scroll console buffer up one page
+				RowAdjust += page_height;
+
+				if (RowAdjust > top_row) RowAdjust = top_row; // intentionally different than scroll behavior
 			}
 			break;
 
 		case GK_PGDN:
-			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
-			{ // Scroll console buffer down one page
-				const int scrollamt = (twod->GetHeight()-4)/active_con_scale(twod) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
-				if (RowAdjust < scrollamt)
-				{
-					RowAdjust = 0;
-				}
-				else
-				{
-					RowAdjust -= scrollamt;
-				}
-			}
-			else if (RowAdjust > 0)
+			if (ev->subtype == EV_GUI_WheelDown)
 			{ // Scroll console buffer down
-				if (ev->subtype == EV_GUI_WheelDown)
-				{
-					RowAdjust = max (0, RowAdjust - 3);
-				}
-				else
-				{
-					RowAdjust--;
-				}
+				if (ev->data3 & (GKM_SHIFT|GKM_CTRL)) RowAdjust -= 1;
+				else RowAdjust -= 3;
 			}
+			else
+			{ // Scroll console buffer down one page
+				RowAdjust -= page_height;
+			}
+			if (RowAdjust < 0) RowAdjust = 0;
 			break;
 
 		case GK_HOME:
-			if (ev->data3 & GKM_CTRL)
+			if ((ev->data3 & (GKM_CTRL|GKM_SHIFT))
+				|| (!buffer.CursorStart() && con_quick_home_end)) // Try to move cursor to start of line
 			{ // Move to top of console buffer
-				RowAdjust = conbuffer->GetFormattedLineCount();
-			}
-			else
-			{ // Move cursor to start of line
-				buffer.CursorStart();
+				RowAdjust = top_row;
 			}
 			break;
 
 		case GK_END:
-			if (ev->data3 & GKM_CTRL)
+			if ((ev->data3 & (GKM_CTRL|GKM_SHIFT))
+				|| (!buffer.CursorEnd() && con_quick_home_end)) // Try to move cursor to end of line
 			{ // Move to bottom of console buffer
 				RowAdjust = 0;
-			}
-			else
-			{ // Move cursor to end of line
-				buffer.CursorEnd();
 			}
 			break;
 
@@ -902,39 +883,53 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			break;
 
 		case GK_UP:
-			// Move to previous entry in the command history
-			if (HistPos == NULL)
+			if (ev->data3 & GKM_SHIFT)
 			{
-				HistPos = HistHead;
-			}
-			else if (HistPos->Older)
-			{
-				HistPos = HistPos->Older;
-			}
-
-			if (HistPos)
-			{
-				buffer.SetString(HistPos->String);
-			}
-
-			TabbedLast = false;
-			TabbedList = false;
-			break;
-
-		case GK_DOWN:
-			// Move to next entry in the command history
-			if (HistPos && HistPos->Newer)
-			{
-				HistPos = HistPos->Newer;
-				buffer.SetString(HistPos->String);
+				RowAdjust = min (total_lines, RowAdjust + 1); // match mousewheel
 			}
 			else
 			{
-				HistPos = NULL;
-				buffer.SetString("");
+				// Move to previous entry in the command history
+				if (HistPos == NULL)
+				{
+					HistPos = HistHead;
+				}
+				else if (HistPos->Older)
+				{
+					HistPos = HistPos->Older;
+				}
+
+				if (HistPos)
+				{
+					buffer.SetString(HistPos->String);
+				}
+
+				TabbedLast = false;
+				TabbedList = false;
 			}
-			TabbedLast = false;
-			TabbedList = false;
+			break;
+
+		case GK_DOWN:
+			if (ev->data3 & GKM_SHIFT)
+			{
+				RowAdjust = max (0, RowAdjust - 1);
+			}
+			else
+			{
+				// Move to next entry in the command history
+				if (HistPos && HistPos->Newer)
+				{
+					HistPos = HistPos->Newer;
+					buffer.SetString(HistPos->String);
+				}
+				else
+				{
+					HistPos = NULL;
+					buffer.SetString("");
+				}
+				TabbedLast = false;
+				TabbedList = false;
+			}
 			break;
 
 		case 'X':
@@ -1184,4 +1179,3 @@ CCMD(toggleconsole)
 {
 	C_ToggleConsole();
 }
-

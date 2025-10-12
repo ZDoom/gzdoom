@@ -13,11 +13,14 @@ TextEdit::TextEdit(Widget* parent) : Widget(parent)
 {
 	SetStyleClass("textedit");
 
+	selectionBG = GetStyleColor("selection-color");
+	selectionFG = GetStyleColor("color");
+
 	timer = new Timer(this);
-	timer->FuncExpired = [=]() { OnTimerExpired(); };
+	timer->FuncExpired = [this]() { OnTimerExpired(); };
 
 	scroll_timer = new Timer(this);
-	scroll_timer->FuncExpired = [=]() { OnScrollTimerExpired(); };
+	scroll_timer->FuncExpired = [this]() { OnScrollTimerExpired(); };
 
 	SetCursor(StandardCursor::ibeam);
 
@@ -175,13 +178,13 @@ void TextEdit::SetText(const std::string& text)
 	std::string::size_type end = text.find('\n');
 	while (end != std::string::npos)
 	{
-		TextEdit::Line line;
+		TextEdit::Line line{this};
 		line.text = text.substr(start, end - start);
 		lines.push_back(line);
 		start = end + 1;
 		end = text.find('\n', start);
 	}
-	TextEdit::Line line;
+	TextEdit::Line line{this};
 	line.text = text.substr(start);
 	lines.push_back(line);
 
@@ -197,13 +200,13 @@ void TextEdit::AddText(const std::string& text)
 	std::string::size_type end = text.find('\n');
 	while (end != std::string::npos)
 	{
-		TextEdit::Line line;
+		TextEdit::Line line{this};
 		line.text = text.substr(start, end - start);
 		lines.push_back(line);
 		start = end + 1;
 		end = text.find('\n', start);
 	}
-	TextEdit::Line line;
+	TextEdit::Line line{this};
 	line.text = text.substr(start);
 	lines.push_back(line);
 
@@ -434,7 +437,7 @@ void TextEdit::OnKeyDown(InputKey key)
 		if (GetKeyState(InputKey::Shift) && selection_length == 0)
 			selection_start = cursor_pos;
 
-		if (cursor_pos.y < lines.size() - 1)
+		if (cursor_pos.y < (int)lines.size() - 1)
 		{
 			cursor_pos.y++;
 			cursor_pos.x = std::min(lines[cursor_pos.y].text.size(), (size_t)cursor_pos.x);
@@ -578,7 +581,7 @@ void TextEdit::OnLostFocus()
 void TextEdit::CreateComponents()
 {
 	vert_scrollbar = new Scrollbar(this);
-	vert_scrollbar->FuncScroll = [=]() { OnVerticalScroll(); };
+	vert_scrollbar->FuncScroll = [this]() { OnVerticalScroll(); };
 	vert_scrollbar->SetVisible(false);
 	vert_scrollbar->SetVertical();
 }
@@ -714,10 +717,10 @@ TextEdit::ivec2 TextEdit::FindNextBreakCharacter(ivec2 search_start)
 	if (search_start.x >= int(lines[search_start.y].text.size()) - 1)
 		return ivec2(lines[search_start.y].text.size(), search_start.y);
 
-	int pos = lines[search_start.y].text.find_first_of(break_characters, search_start.x);
+	size_t pos = lines[search_start.y].text.find_first_of(break_characters, search_start.x);
 	if (pos == std::string::npos)
 		return ivec2(lines[search_start.y].text.size(), search_start.y);
-	return ivec2(pos, search_start.y);
+	return ivec2((int)pos, search_start.y);
 }
 
 TextEdit::ivec2 TextEdit::FindPreviousBreakCharacter(ivec2 search_start)
@@ -725,10 +728,10 @@ TextEdit::ivec2 TextEdit::FindPreviousBreakCharacter(ivec2 search_start)
 	search_start.x--;
 	if (search_start.x <= 0)
 		return ivec2(0, search_start.y);
-	int pos = lines[search_start.y].text.find_last_of(break_characters, search_start.x);
+	size_t pos = lines[search_start.y].text.find_last_of(break_characters, search_start.x);
 	if (pos == std::string::npos)
 		return ivec2(0, search_start.y);
-	return ivec2(pos, search_start.y);
+	return ivec2((int)pos, search_start.y);
 }
 
 void TextEdit::InsertText(ivec2 pos, const std::string& str)
@@ -741,7 +744,7 @@ void TextEdit::InsertText(ivec2 pos, const std::string& str)
 	}
 
 	// checking if insert exceeds max length
-	if (ToOffset(ivec2(lines[lines.size() - 1].text.size(), lines.size() - 1)) + str.length() > max_length)
+	if (ToOffset(ivec2((int)lines[lines.size() - 1].text.size(), (int)lines.size() - 1)) + str.length() > (size_t)max_length)
 	{
 		return;
 	}
@@ -759,7 +762,7 @@ void TextEdit::InsertText(ivec2 pos, const std::string& str)
 
 		pos.x += next_newline - start;
 
-		Line line;
+		Line line{this};
 		line.text = lines[pos.y].text.substr(pos.x);
 		lines.insert(lines.begin() + pos.y + 1, line);
 		lines[pos.y].text = lines[pos.y].text.substr(0, pos.x);
@@ -836,9 +839,9 @@ void TextEdit::Del()
 			lines[cursor_pos.y].invalidated = true;
 			Update();
 		}
-		else if (cursor_pos.y + 1 < lines.size())
+		else if (cursor_pos.y + 1 < (int)lines.size())
 		{
-			selection_start = ivec2(lines[cursor_pos.y].text.length(), cursor_pos.y);
+			selection_start = ivec2((int)lines[cursor_pos.y].text.length(), cursor_pos.y);
 			selection_length = 1;
 			DeleteSelectedText();
 		}
@@ -866,6 +869,11 @@ void TextEdit::OnTimerExpired()
 void TextEdit::OnGeometryChanged()
 {
 	Canvas* canvas = GetCanvas();
+
+	for (auto& line : lines)
+	{
+		line.invalidated = true;
+	}
 
 	vertical_text_align = canvas->verticalTextAlign();
 
@@ -899,7 +907,7 @@ bool TextEdit::InputMaskAcceptsInput(ivec2 cursor_pos, const std::string& str)
 
 std::string::size_type TextEdit::ToOffset(ivec2 pos) const
 {
-	if (pos.y < lines.size())
+	if (pos.y < (int)lines.size())
 	{
 		std::string::size_type offset = 0;
 		for (int line = 0; line < pos.y; line++)
@@ -922,7 +930,7 @@ std::string::size_type TextEdit::ToOffset(ivec2 pos) const
 TextEdit::ivec2 TextEdit::FromOffset(std::string::size_type offset) const
 {
 	int line_offset = 0;
-	for (int line = 0; line < lines.size(); line++)
+	for (int line = 0; line < (int)lines.size(); line++)
 	{
 		if (offset <= line_offset + lines[line].text.size())
 		{
@@ -979,9 +987,9 @@ void TextEdit::LayoutLines(Canvas* canvas)
 			line.invalidated = false;
 		}
 
-		if (sel_start != sel_end && sel_start.y <= i && sel_end.y >= i)
+		if (sel_start != sel_end && sel_start.y <= (int)i && sel_end.y >= (int)i)
 		{
-			line.layout.SetSelectionRange(sel_start.y < i ? 0 : sel_start.x, sel_end.y > i ? line.text.size() : sel_end.x);
+			line.layout.SetSelectionRange(sel_start.y < (int)i ? 0 : sel_start.x, sel_end.y > (int)i ? line.text.size() : sel_end.x);
 		}
 		else
 		{
@@ -991,7 +999,7 @@ void TextEdit::LayoutLines(Canvas* canvas)
 		line.layout.HideCursor();
 		if (HasFocus())
 		{
-			if (cursor_blink_visible && cursor_pos.y == i)
+			if (cursor_blink_visible && cursor_pos.y == (int)i)
 			{
 				line.layout.SetCursorPos(cursor_pos.x);
 				line.layout.SetCursorColor(textColor);
@@ -1030,6 +1038,7 @@ TextEdit::ivec2 TextEdit::GetCharacterIndex(Point mouse_wincoords)
 				return ivec2(clamp(result.offset, (size_t)0, line.text.size()), i);
 			case SpanLayout::HitTestResult::outside_left:
 				return ivec2(0, i);
+			default:
 			case SpanLayout::HitTestResult::outside_right:
 				return ivec2(line.text.size(), i);
 			}

@@ -120,11 +120,11 @@ public:
 
 void P_PlaybackKeyConfWeapons(FWeaponSlots *slots);
 void Net_WriteWeapon(PClassActor *type);
-PClassActor *Net_ReadWeapon(uint8_t **stream);
+PClassActor *Net_ReadWeapon(TArrayView<uint8_t>& stream);
 
 void P_SetupWeapons_ntohton();
-void P_WriteDemoWeaponsChunk(uint8_t **demo);
-void P_ReadDemoWeaponsChunk(uint8_t **demo);
+void P_WriteDemoWeaponsChunk(TArrayView<uint8_t>& demo);
+void P_ReadDemoWeaponsChunk(TArrayView<uint8_t>& demo);
 
 
 enum class EBobStyle

@@ -28,6 +28,8 @@ enum EMenuKey
 	MKEY_Right,
 	MKEY_PageUp,
 	MKEY_PageDown,
+	MKEY_Home,
+	MKEY_End,
 	//----------------- Keys past here do not repeat.
 	MKEY_Enter,
 	MKEY_Back,		// Back to previous menu
@@ -65,6 +67,7 @@ public:
 	PClass *mClass = nullptr;
 	bool mProtected = false;
 	TArray<DMenuItemBase *> mItems;
+	FFont* mTooltipFont = nullptr;
 
 	size_t PropagateMark() override;
 };
@@ -238,6 +241,10 @@ public:
 	bool Animated;
 	bool AnimatedTransition;
 	bool NoFade;
+	FString mCurrentTooltip;
+	double mTooltipScrollTimer;
+	double mTooltipScrollOffset;
+	FFont* mTooltipFont;
 	static int InMenu;
 
 	DMenu(DMenu *parent = NULL);
@@ -264,6 +271,7 @@ public:
 	double mXpos, mYpos;
 	FName mAction;
 	int mEnabled;
+	FString mTooltip;
 
 	bool Activate();
 	bool SetString(int i, const char *s);
@@ -286,6 +294,7 @@ struct FOptionValues
 		double Value;
 		FString TextValue;
 		FString Text;
+		FString Tooltip;
 	};
 
 	TArray<Pair> mValues;

@@ -38,35 +38,31 @@
 ** executable, so it saves space on disk as well as in memory.
 */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h>
 
-#include "doomtype.h"
-
-#include "doomstat.h"
-#include "info.h"
-#include "d_dehacked.h"
-#include "g_level.h"
-#include "cmdlib.h"
-#include "gstrings.h"
-#include "filesystem.h"
-#include "d_player.h"
-#include "r_state.h"
-#include "c_dispatch.h"
-#include "decallib.h"
 #include "a_sharedglobal.h"
+#include "actorptrselect.h"
+#include "cmdlib.h"
+#include "codegen.h"
+#include "d_dehacked.h"
+#include "decallib.h"
+#include "doomstat.h"
+#include "doomtype.h"
 #include "engineerrors.h"
+#include "filesystem.h"
+#include "g_levellocals.h"
+#include "gstrings.h"
+#include "info.h"
+#include "m_argv.h"
 #include "p_effect.h"
+#include "r_state.h"
 #include "serializer.h"
 #include "thingdef.h"
-#include "v_text.h"
-#include "vmbuilder.h"
 #include "types.h"
-#include "m_argv.h"
-#include "actorptrselect.h"
-#include "g_levellocals.h"
+#include "vmbuilder.h"
 
 extern TArray<PalEntry> TranslationColors;
 
@@ -252,6 +248,8 @@ struct MBFParamState
 	int pointer;
 	int argsused;
 	int64_t* args;
+	FString PatchName;
+	int SourceLineNumber;
 
 	PClassActor* GetTypeArg(int i)
 	{
@@ -428,6 +426,7 @@ DehSpriteMappings[] =
 static char* PatchFile, * PatchPt;
 FString PatchName;
 static int PatchSize;
+static int LineNumber;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
 static bool  including, includenotext;
@@ -729,7 +728,7 @@ static char *igets (void)
 
 	if (*PatchPt == '\n')
 		*PatchPt++ = 0;
-
+	LineNumber++;
 	return line;
 }
 
@@ -1068,7 +1067,7 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int, MBFPara
 
 // Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump, MBFParamState* pstate)
+static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump, MBFParamState* pstate, int index)
 {
 	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
@@ -1116,13 +1115,30 @@ static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &di
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		funcsym->Variants[0].Implementation = sfunc;
+		sfunc->SourceFileName = pstate->PatchName;
 		sfunc->Proto = funcsym->Variants[0].Proto;
 		sfunc->RegTypes = regts;	// These functions are built after running the script compiler so they don't get this info.
+		int codeSize = buildit.GetAddress();
+		FxFunctionCall expr(pstate->PatchName, NAME_None, FArgumentList(), FScriptPosition(pstate->PatchName, pstate->SourceLineNumber));
+		buildit.BeginStatement(&expr);
 		buildit.MakeFunction(sfunc);
+		buildit.EndStatement();
+		sfunc->LineInfo[0].InstructionIndex = 0;
 		sfunc->NumArgs = numargs;
 		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
-		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2).GetChars());
+		FString sanitizedPatchName = pstate->PatchName.GetChars();
+		sanitizedPatchName.ReplaceChars(':', '_');
+		sanitizedPatchName.ReplaceChars('.', '_');
+		sanitizedPatchName.ReplaceChars('-', '_');
+		sanitizedPatchName.ReplaceChars(' ', '_');
+		sanitizedPatchName.ReplaceChars('\\', '_');
+		sanitizedPatchName.ReplaceChars('/', '_');
+		sanitizedPatchName.ReplaceChars('*', '_');
+		sanitizedPatchName.ReplaceChars('?', '_');
+		sanitizedPatchName.ReplaceChars('"', '_');
+		sfunc->PrintableName = ClassDataAllocator.Strdup(FStringf("Dehacked.%s.%d.%s.%d.%d", sanitizedPatchName.GetChars(), index, MBFCodePointers[codepointer].name.GetChars(), value1, value2).GetChars());
+		sfunc->QualifiedName = sfunc->PrintableName;
 
 		disasmdump.Write(sfunc, sfunc->PrintableName);
 
@@ -2403,6 +2419,8 @@ static int SetPointer(FState *state, PFunction *sym, int frame = 0)
 			if (sym->SymbolName == MBFCodePointers[i].name)
 			{
 				MBFParamState newstate = { state, int(i) };
+				newstate.PatchName = PatchName;
+				newstate.SourceLineNumber = LineNumber;
 				return MBFParamStates.Push(newstate);
 			}
 		}
@@ -3032,7 +3050,7 @@ static int PatchSoundNames (int dummy, int flags)
 		stripwhite(Line2);
 		FString newname = skipwhite (Line2);
 		ReplaceSoundName((int)strtoll(Line1, nullptr, 10), newname.GetChars());
-		DPrintf (DMSG_SPAMMY, "Sound %d set to:\n%s\n", Line1, newname.GetChars());
+		DPrintf (DMSG_SPAMMY, "Sound %p set to:\n%s\n", Line1, newname.GetChars()); // should %p be %s ?
 	}
 
 	return result;
@@ -3067,7 +3085,7 @@ static int PatchSpriteNames (int dummy, int flags)
 			int v = GetSpriteIndex(newname.GetChars());
 			memcpy(OrgSprNames[line1val].c, sprites[v].name, 5);
 
-			DPrintf (DMSG_SPAMMY, "Sprite %d set to:\n%s\n", Line1, newname.GetChars());
+			DPrintf (DMSG_SPAMMY, "Sprite %p set to:\n%s\n", Line1, newname.GetChars()); // should %p be %s ?
 		}
 		
 		return result;
@@ -3292,6 +3310,7 @@ static bool DoDehPatch(int flags)
 	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName.GetChars());
 
 	int cont;
+	LineNumber = 0;
 
 	dversion = pversion = -1;
 	cont = 0;
@@ -3400,7 +3419,7 @@ static void UnloadDehSupp ()
 	// Handle MBF params here, before the required arrays are cleared
 	for (unsigned int i=0; i < MBFParamStates.Size(); i++)
 	{
-		SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump, &MBFParamStates[i]);
+		SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump, &MBFParamStates[i], i);
 	}
 	stateargs.Clear();
 	MBFParamStates.Clear();

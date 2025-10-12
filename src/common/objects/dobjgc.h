@@ -28,6 +28,7 @@ enum EObjectFlags
 	OF_Released			= 1 << 13,		// Object was released from the GC system and should not be processed by GC function
 	OF_Networked		= 1 << 14,		// Object has a unique network identifier that makes it synchronizable between all clients.
 	OF_ClientSide		= 1 << 15,		// Object is owned by a specific client rather than the server
+	OF_Travelling		= 1 << 16,		// Object is currently moving from one level to another
 };
 
 template<class T> class TObjPtr;
@@ -260,12 +261,18 @@ public:
 	{
 		return pp;
 	}
+	
+
+	DObject** ForceGetRaw() const noexcept	//for situations where the read barrier needs to be skipped.
+	{
+		return &o;
+	}
 
 	constexpr operator T() noexcept
 	{
 		return GC::ReadBarrier(pp);
 	}
-	constexpr T &operator*() noexcept
+	constexpr std::remove_pointer<T> &operator*() noexcept
 	{
 		T q = GC::ReadBarrier(pp);
 		assert(q != NULL);

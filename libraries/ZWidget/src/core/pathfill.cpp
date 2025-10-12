@@ -255,7 +255,7 @@ PathFillRasterizer::Extent PathFillRasterizer::FindExtent(const PathScanline* sc
 
 void PathFillRasterizer::Clear()
 {
-	for (size_t y = first_scanline; y < last_scanline; y++)
+	for (int y = first_scanline; y < last_scanline; y++)
 	{
 		auto& scanline = scanlines[y];
 		if (!scanline.edges.empty())

@@ -4,6 +4,7 @@
 #include <memory>
 #include <variant>
 #include <unordered_map>
+#include <unordered_set>
 #include "canvas.h"
 #include "rect.h"
 #include "colorf.h"
@@ -11,12 +12,20 @@
 
 class Canvas;
 class Timer;
+class Dropdown;
 
 enum class WidgetType
 {
 	Child,
 	Window,
 	Popup
+};
+
+enum class WidgetEvent
+{
+	VisibilityChange,
+
+	// TODO: add more events
 };
 
 class Widget : DisplayWindowHost
@@ -31,8 +40,8 @@ public:
 	std::string GetWindowTitle() const;
 	void SetWindowTitle(const std::string& text);
 
-	// Icon GetWindowIcon() const;
-	// void SetWindowIcon(const Icon& icon);
+	std::vector<std::shared_ptr<Image>> GetWindowIcon() const;
+	void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images);
 
 	// Widget content box
 	Size GetSize() const;
@@ -92,6 +101,9 @@ public:
 	void ShowMinimized();
 	void ShowNormal();
 	void Hide();
+
+	void Subscribe(Widget* subscriber);
+	void Unsubscribe(Widget* subscriber);
 
 	void ActivateWindow();
 
@@ -178,6 +190,8 @@ protected:
 	virtual void OnLostFocus() { }
 	virtual void OnEnableChanged() { }
 
+	virtual void Notify(Widget* source, const WidgetEvent type) { };
+
 private:
 	void DetachFromParent();
 
@@ -201,6 +215,8 @@ private:
 	void OnWindowDeactivated() override;
 	void OnWindowDpiScaleChanged() override;
 
+	void NotifySubscribers(const WidgetEvent type);
+
 	WidgetType Type = {};
 
 	Widget* ParentObj = nullptr;
@@ -217,6 +233,7 @@ private:
 	Colorf WindowBackground = Colorf::fromRgba8(240, 240, 240);
 
 	std::string WindowTitle;
+	std::vector<std::shared_ptr<Image>> WindowIcon;
 	std::unique_ptr<DisplayWindow> DispWindow;
 	std::unique_ptr<Canvas> DispCanvas;
 	Widget* FocusWidget = nullptr;
@@ -234,8 +251,12 @@ private:
 	Widget(const Widget&) = delete;
 	Widget& operator=(const Widget&) = delete;
 
+	std::unordered_set<Widget*> Subscribers;
+	std::unordered_set<Widget*> Subscriptions;
+
 	friend class Timer;
 	friend class OpenFileDialog;
 	friend class OpenFolderDialog;
 	friend class SaveFileDialog;
+	friend class Dropdown;
 };

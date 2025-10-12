@@ -5,6 +5,7 @@
 **---------------------------------------------------------------------------
 ** Copyright 2003 Timothy Stump
 ** Copyright 2005-2018 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,24 +33,16 @@
 **---------------------------------------------------------------------------
 **
 */
-#include <ctype.h>
 
 #include "sc_man.h"
 
+#include "a_dynlight.h"
 #include "filesystem.h"
 #include "gi.h"
-#include "r_state.h"
-#include "stats.h"
-#include "v_text.h"
-#include "g_levellocals.h"
-#include "a_dynlight.h"
-#include "v_video.h"
-#include "skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
-#include "hw_material.h"
+#include "skyboxtexture.h"
 #include "texturemanager.h"
-#include "gameconfigfile.h"
-#include "m_argv.h"
+#include "v_video.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
@@ -65,7 +58,7 @@ struct ExtraUniformCVARData
 	FString Uniform;
 	double* vec4 = nullptr;
 	ExtraUniformCVARData* Next = nullptr;
-	void (*OldCallback)(FBaseCVar &);
+	void *OldCallback = nullptr;
 };
 
 static void do_uniform_set(DVector4 value, ExtraUniformCVARData* data)
@@ -94,18 +87,18 @@ static void do_uniform_set(DVector4 value, ExtraUniformCVARData* data)
 }
 
 template<typename T>
-void uniform_callback1(T &self)
+void uniform_callback1(T &self, typename T::ValueType prev)
 {
 	auto data = (ExtraUniformCVARData*)self.GetExtraDataPointer2();
-	if(data->OldCallback) data->OldCallback(self);
+	if(data->OldCallback) (reinterpret_cast<void (*)(T&, typename T::ValueType)>(data->OldCallback))(self, prev);
 
 	do_uniform_set(DVector4(*self, 0.0, 0.0, 1.0), data);
 }
 
-void uniform_callback_color(FColorCVar &self)
+void uniform_callback_color(FColorCVar &self, FColorCVar::ValueType prev)
 {
 	auto data = (ExtraUniformCVARData*)self.GetExtraDataPointer2();
-	if(data->OldCallback) data->OldCallback(self);
+	if(data->OldCallback) (reinterpret_cast<void (*)(FColorCVar&, FColorCVar::ValueType)>(data->OldCallback))(self, prev);
 
 	PalEntry col;
 	col.d = *self;
@@ -1647,7 +1640,8 @@ class GLDefsParser
 							sc.MustGetFloat();
 							Values[3] = sc.Float;
 							break;
-
+						case PostProcessUniformType::Undefined:
+							break; // shhhhh
 						}
 					}
 
@@ -1668,7 +1662,7 @@ class GLDefsParser
 						int cvarflags = CVAR_MOD|CVAR_ARCHIVE|CVAR_VIRTUAL;
 						FBaseCVar *cvar;
 						FString cvarname;
-						void (*callback)(FBaseCVar&) = nullptr;
+						void *callback = nullptr;
 
 						if(ok)
 						{
@@ -1695,7 +1689,7 @@ class GLDefsParser
 								}
 								else
 								{
-									callback = (void (*)(FBaseCVar&))(&uniform_callback1<FIntCVar>);
+									callback = reinterpret_cast<void*>(&uniform_callback1<FIntCVar>);
 									Values[0] = cvar->GetGenericRep(CVAR_Int).Int;
 								}
 								break;
@@ -1707,7 +1701,7 @@ class GLDefsParser
 								}
 								else
 								{
-									callback = (void (*)(FBaseCVar&))(&uniform_callback1<FFloatCVar>);
+									callback = reinterpret_cast<void*>(&uniform_callback1<FFloatCVar>);
 									Values[0] = cvar->GetGenericRep(CVAR_Float).Float;
 								}
 								break;
@@ -1719,7 +1713,7 @@ class GLDefsParser
 								}
 								else
 								{
-									callback = (void (*)(FBaseCVar&))uniform_callback_color;
+									callback = reinterpret_cast<void*>(uniform_callback_color);
 
 									PalEntry col;
 									col.d = cvar->GetGenericRep(CVAR_Int).Int;

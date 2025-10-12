@@ -26,6 +26,7 @@ class Widget;
 class OpenFileDialog;
 class SaveFileDialog;
 class OpenFolderDialog;
+class Image;
 
 enum class StandardCursor
 {
@@ -163,6 +164,7 @@ public:
 	virtual ~DisplayWindow() = default;
 
 	virtual void SetWindowTitle(const std::string& text) = 0;
+	virtual void SetWindowIcon(const std::vector<std::shared_ptr<Image>>& images) = 0;
 	virtual void SetWindowFrame(const Rect& box) = 0;
 	virtual void SetClientFrame(const Rect& box) = 0;
 	virtual void Show() = 0;

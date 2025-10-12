@@ -231,6 +231,29 @@ public:
 			ConstructEmpty(0, Count - 1);
 		}
 	}
+	
+	TArray (std::initializer_list<T> list)
+	{
+		Most = list.size();
+		Count = list.size();
+
+		if (Count > 0)
+		{
+			Array = (T *)M_Malloc (sizeof(T) * Count);
+
+			const T* it = list.begin();
+
+			for (unsigned int i = 0; i < Count; ++i)
+			{
+				::new(&Array[i]) T(*it++);
+			}
+		}
+		else
+		{
+			Array = nullptr;
+		}
+	}
+
 	TArray (const TArray<T,TT> &other)
 	{
 		DoCopy (other);
@@ -382,36 +405,14 @@ public:
 	// exact = false returns the closest match, to be used for, ex., insertions, exact = true returns Size() when no match, like Find does
 	unsigned int SortedFind(const T& item, bool exact = true) const
 	{
-		if(Count == 0) return 0;
-		if(Count == 1) return (item < Array[0]) ? 0 : 1;
-
-		unsigned int lo = 0;
-		unsigned int hi = Count - 1;
-
-		while(lo <= hi)
-		{
-			int mid = lo + ((hi - lo) / 2);
-
-			if(Array[mid] < item)
-			{
-				lo = mid + 1;
-			}
-			else if(item < Array[mid])
-			{
-				hi = mid - 1;
-			}
-			else
-			{
-				return mid;
-			}
-		}
+		unsigned int index = (unsigned int)(std::lower_bound(begin(), end(), item) - begin());
 		if(exact)
 		{
-			return Count;
+			return (index < Count && Array[index] == item) ? index : Count;
 		}
 		else
 		{
-			return (lo == Count || (item < Array[lo])) ? lo : lo + 1;
+			return index;
 		}
 	}
 
@@ -421,37 +422,14 @@ public:
 	template<typename Func>
 	unsigned int SortedFind(const T& item, Func &&lt, bool exact = true) const
 	{
-		if(Count == 0) return 0;
-		if(Count == 1) return lt(item, Array[0]) ? 0 : 1;
-
-		unsigned int lo = 0;
-		unsigned int hi = Count - 1;
-
-		while(lo <= hi)
-		{
-			int mid = lo + ((hi - lo) / 2);
-
-			if(std::invoke(lt, Array[mid], item))
-			{
-				lo = mid + 1;
-			}
-			else if(std::invoke(lt, item, Array[mid]))
-			{
-				if(mid == 0) break; // prevent negative overflow due to unsigned numbers
-				hi = mid - 1;
-			}
-			else
-			{
-				return mid;
-			}
-		}
+		unsigned int index = (std::lower_bound(begin(), end(), item, lt) - begin());
 		if(exact)
 		{
-			return Count;
+			return (index < Count && !std::invoke(lt, Array[index], item) && !std::invoke(lt, item, Array[index])) ? index : Count;
 		}
 		else
 		{
-			return (lo == Count || std::invoke(lt, item, Array[lo])) ? lo : lo + 1;
+			return index;
 		}
 	}
 
@@ -1171,6 +1149,12 @@ public:
 	typedef struct { const KT Key; VT Value; } Pair;
 	typedef const Pair ConstPair;
 
+  // STL-standard type traits for iteration
+  using iterator = Iterator;
+  using const_iterator = ConstIterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
 	typedef KT KeyType;
 	typedef VT ValueType;
 
@@ -1211,6 +1195,69 @@ public:
 		TransferFrom(o);
 		return *this;
 	}
+
+  iterator begin()
+  {
+    return iterator(*this);
+  }
+  const_iterator begin() const
+  {
+    return const_iterator(*this);
+  }
+  const_iterator cbegin() const
+  {
+    return const_iterator(*this);
+  }
+
+  iterator end()
+  {
+    auto it = iterator(*this, Size);
+    return it;
+  }
+
+  const_iterator end() const
+  {
+    auto it = const_iterator(
+            *this,
+            Size
+    );
+    return it;
+  }
+
+  const_iterator cend() const
+  {
+    auto it = const_iterator(
+            *this,
+            Size
+    );
+    return it;
+  }
+
+  reverse_iterator rbegin()
+  {
+    return reverse_iterator(end());
+  }
+  const_reverse_iterator rbegin() const
+  {
+    return const_reverse_iterator(end());
+  }
+  const_reverse_iterator crbegin() const
+  {
+    return const_reverse_iterator(cend());
+  }
+
+  reverse_iterator rend()
+  {
+    return reverse_iterator(begin());
+  }
+  const_reverse_iterator rend() const
+  {
+    return const_reverse_iterator(begin());
+  }
+  const_reverse_iterator crend() const
+  {
+    return const_reverse_iterator(cbegin());
+  }
 
 	//=======================================================================
 	//
@@ -1669,11 +1716,51 @@ protected:
 template<class KT, class VT, class MapType=TMap<KT,VT> >
 class TMapIterator
 {
+  friend class TMap<KT,VT>;
 public:
-	TMapIterator(MapType &map)
+  // STL standard type traits for iteration
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = typename MapType::Pair;
+  using difference_type = ptrdiff_t;
+  using pointer = value_type*;
+  using reference = value_type&;
+
+  TMapIterator(MapType &map)
 		: Map(map), Position(0)
 	{
 	}
+protected:
+  explicit TMapIterator(MapType &map, hash_t position)
+        : Map(map), Position(position)
+  {
+  }
+public:
+
+  // Comparison operators
+  bool operator==(const TMapIterator& other) const { return Position == other.Position; }
+  bool operator!=(const TMapIterator& other) const { return Position != other.Position; }
+  bool operator< (const TMapIterator& other) const { return Position < other.Position; }
+  bool operator> (const TMapIterator& other) const { return Position > other.Position; }
+  bool operator<=(const TMapIterator& other) const { return Position <= other.Position; }
+  bool operator>=(const TMapIterator& other) const { return Position >= other.Position; }
+
+  // Arithmetic operators
+  TMapIterator& operator++() { Position++; return *this; }
+  TMapIterator operator++(int) { TMapIterator tmp(*this); tmp++; return tmp;}
+  TMapIterator& operator--() { Position--; return *this; }
+  TMapIterator operator--(int) { TMapIterator tmp(*this); tmp--; return tmp;}
+  TMapIterator& operator+=(difference_type n) { Position += n; return *this; }
+  TMapIterator operator+(difference_type n) const { TMapIterator tmp(*this); tmp += n; return tmp; }
+  TMapIterator& operator-=(difference_type n) { Position -= n; return *this; }
+  TMapIterator operator-(difference_type n) const { TMapIterator tmp(*this); tmp -= n; return tmp; }
+  difference_type operator-(const TMapIterator& other) const { return Position - other.Position; }
+
+  // Random access operators
+  value_type& operator[](difference_type n) { return *Map.Nodes[Position + n]; }
+  const value_type& operator[](difference_type n) const { return *Map.Nodes[Position + n]; }
+
+  value_type& operator*() const { return *reinterpret_cast<value_type *>(&Map.Nodes[Position].Pair); }
+  value_type* operator->() { return reinterpret_cast<value_type *>(&Map.Nodes[Position].Pair); }
 
 	//=======================================================================
 	//

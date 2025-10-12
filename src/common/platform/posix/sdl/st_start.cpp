@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2006-2007 Randy Heit
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,14 +35,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <unistd.h>
+#include <csignal>
+#include <stdio.h>
 #include <sys/time.h>
 #include <termios.h>
+#include <unistd.h>
 
+#include "basics.h"
 #include "st_start.h"
-#include "i_system.h"
-#include "c_cvars.h"
-#include "engineerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -53,7 +54,7 @@ class FTTYStartupScreen : public FStartupScreen
 		FTTYStartupScreen(int max_progress);
 		~FTTYStartupScreen();
 
-		void Progress() override;
+		void Progress(int amount = 1) override;
 
 		void NetInit(const char* message, bool host) override;
 		void NetMessage(const char* message) override;
@@ -79,6 +80,7 @@ class FTTYStartupScreen : public FStartupScreen
 
 extern void RedrawProgressBar(int CurPos, int MaxPos);
 extern void CleanProgressBar();
+extern volatile sig_atomic_t gameloop_abort;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -137,12 +139,9 @@ FTTYStartupScreen::~FTTYStartupScreen()
 //
 //===========================================================================
 
-void FTTYStartupScreen::Progress()
+void FTTYStartupScreen::Progress(int advance)
 {
-	if (CurPos < MaxPos)
-	{
-		++CurPos;
-	}
+	CurPos = min(CurPos + advance, MaxPos);
 	RedrawProgressBar(CurPos, MaxPos);
 }
 
@@ -240,6 +239,7 @@ void FTTYStartupScreen::NetProgress(int cur, int limit)
 
 void FTTYStartupScreen::NetDone()
 {	
+	CurPos = MaxPos;
 	CleanProgressBar();
 	// Restore stdin settings
 	if (DidNetInit)
@@ -292,7 +292,7 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 	char k;
 	bool stdin_eof = false;
 
-	for (;;)
+	while (!gameloop_abort)
 	{
 		// Don't flood the network with packets on startup.
 		tv.tv_sec = 0;
@@ -330,11 +330,13 @@ bool FTTYStartupScreen::NetLoop(bool (*loopCallback)(void *), void *data)
 			{
 				if (k == 'q' || k == 'Q')
 				{
-					fprintf (stderr, "\nNetwork game synchronization aborted.");
-					return false;
+					break;
 				}
 			}
 		}
 	}
+
+	fprintf (stderr, "\nNetwork game synchronization aborted.\n");
+	return false;
 }
 

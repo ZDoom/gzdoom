@@ -120,6 +120,7 @@ public:
 	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
 
 	ptrdiff_t FileLength (int lump) const;
+  uint32_t FileHash (int lump) const;
 	int GetFileFlags (int lump);					// Return the flags for this lump
 	const char* GetFileShortName(int lump) const;
 	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name

@@ -53,6 +53,8 @@ struct FRenderViewpoint
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
 	bool			bForceNoViewer; // Never show the camera Actor.
+	bool			bDoOob;
+	bool			bDoOrtho;
 	void SetViewAngle(const FViewWindow& viewWindow);
 	bool IsAllowedOoB();				// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ALLOWOUTOFBOUNDS flag set
 	bool IsOrtho();					// Checks if camera actor exists, has viewpos, and viewpos has VPSF_ORTHOGRAPHIC flag set
@@ -146,5 +148,7 @@ extern void R_FreePastViewers ();
 extern void R_ClearPastViewer (AActor *actor);
 
 bool R_ShouldDrawSpriteShadow(AActor *thing);
+
+int WorldPaused(bool checkLag = true);
 
 #endif

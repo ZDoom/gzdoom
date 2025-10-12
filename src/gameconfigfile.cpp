@@ -48,6 +48,7 @@
 #include "gi.h"
 #include "d_main.h"
 #include "v_video.h"
+#include "m_joy.h"
 #if !defined _MSC_VER && !defined __APPLE__
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_MSC_VER && !__APPLE__
@@ -71,6 +72,11 @@ EXTERN_CVAR (Bool, vid_scale_linear)
 EXTERN_CVAR(Float, m_sensitivity_x)
 EXTERN_CVAR(Float, m_sensitivity_y)
 EXTERN_CVAR(Int, adl_volume_model)
+EXTERN_CVAR(Int, adl_chan_alloc)
+EXTERN_CVAR(Bool, adl_auto_arpeggio)
+EXTERN_CVAR(Int, opn_volume_model)
+EXTERN_CVAR(Int, opn_chan_alloc)
+EXTERN_CVAR(Bool, opn_auto_arpeggio)
 EXTERN_CVAR (Int, gl_texture_hqresize_targets)
 EXTERN_CVAR(Int, wipetype)
 EXTERN_CVAR(Bool, i_pauseinbackground)
@@ -587,6 +593,12 @@ void FGameConfigFile::DoGlobalSetup ()
 				m_sensitivity_y = (float)yfact;
 
 				adl_volume_model = 0;
+				adl_chan_alloc = -1;
+				adl_auto_arpeggio = false;
+
+				opn_volume_model = 0;
+				opn_chan_alloc = -1;
+				opn_auto_arpeggio = false;
 
 				// if user originally wanted the in-game textures resized, set model skins to resize too
 				int old_targets = gl_texture_hqresize_targets;
@@ -625,6 +637,13 @@ void FGameConfigFile::DoGlobalSetup ()
 					v.Int = v.Int == 16 ? 2 : v.Int == 8 ? 1 : 0;
 					var->SetGenericRep(v, CVAR_Int);
 				}
+			}
+			if (last < 226)
+			{
+				// We can't handle key config yet, because
+				// the files aren't fully loaded. Just queue
+				// up a flag to do this later.
+				b226ResetGamepad = true;
 			}
 		}
 	}
@@ -731,6 +750,35 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 			}
 		}
 	}
+
+	if (b226ResetGamepad == true)
+	{
+		b226ResetGamepad = false;
+
+		// Multiple gamepad reworks were done during
+		// this version. There is not any particularly
+		// good way to transfer older settings, so we
+		// are just going to reset them completely.
+		TArray<IJoystickConfig *> sticks;
+		I_GetJoysticks(sticks);
+
+		// Reset analog stick settings
+		for (int joy = 0; joy < sticks.SSize(); joy++)
+		{
+			sticks[joy]->Reset();
+		}
+
+		// Reset digital binds
+		TArray<int> keys_to_reset;
+		keys_to_reset.Reserve(NUM_AXIS_CODES);
+		for (int i = 0; i < NUM_AXIS_CODES; i++)
+		{
+			keys_to_reset[i] = KeyAxisMapping[i];
+		}
+
+		C_SetDefaultBindings(&keys_to_reset);
+	}
+
 	OkayToWrite = true;
 }
 
@@ -954,9 +1002,8 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	val.Bool = true;
 	con_centernotify->SetGenericRepDefault (val, CVAR_Bool);
 	snd_pitched->SetGenericRepDefault (val, CVAR_Bool);
-	val.Int = 9;
-	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_WHITE;
+	msg0color->SetGenericRepDefault (val, CVAR_Int);
 	msgmidcolor->SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_YELLOW;
 	msgmidcolor2->SetGenericRepDefault (val, CVAR_Int);

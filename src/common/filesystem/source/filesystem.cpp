@@ -744,6 +744,24 @@ ptrdiff_t FileSystem::FileLength (int lump) const
 
 //==========================================================================
 //
+// FileHash
+//
+// Returns the file hash.
+//
+//==========================================================================
+
+uint32_t FileSystem::FileHash (int lump) const
+{
+  if ((size_t)lump >= NumEntries)
+  {
+    return -1;
+  }
+  const auto &lump_p = FileInfo[lump];
+  return lump_p.resfile->GetEntryHash(lump_p.resindex);
+}
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================
@@ -1229,13 +1247,16 @@ unsigned FileSystem::GetFilesInFolder(const char *inpath, std::vector<FolderEntr
 void FileSystem::ReadFile (int lump, void *dest)
 {
 	auto lumpr = OpenFileReader (lump);
-	auto size = lumpr.GetLength ();
-	auto numread = lumpr.Read (dest, size);
-
-	if (numread != size)
+	if (lumpr.mReader != nullptr)
 	{
-		throw FileSystemException("W_ReadFile: only read %td of %td on '%s'\n",
-			numread, size, FileInfo[lump].LongName);
+		auto size = lumpr.GetLength ();
+		auto numread = lumpr.Read (dest, size);
+
+		if (numread != size)
+		{
+			throw FileSystemException("W_ReadFile: only read %td of %td on '%s'\n",
+				numread, size, FileInfo[lump].LongName);
+		}
 	}
 }
 

@@ -12,6 +12,7 @@ struct FSaveGameNode
 	FString SaveTitle;
 	FString Filename;
 	FString CreationTime;
+	FString UUID;
 	bool bOldVersion = false;
 	bool bMissingWads = false;
 	bool bNoDelete = false;
@@ -57,6 +58,7 @@ public:
 	FSaveGameNode *GetSavegame(int i);
 	void InsertNewSaveNode();
 	bool RemoveNewSaveNode();
+	int RemoveUUIDSaveSlots();
 
 };
 

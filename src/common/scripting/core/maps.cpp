@@ -36,7 +36,11 @@ template<typename M> void MapCopy(M * self, M * other)
     {
         MAP_GC_WRITE_BARRIER(other);
     }
-    *self = *other; // how does this handle self->info? TODO double check.
+    auto tmp = self->info;
+
+    *self = *other;
+
+    self->info = tmp;
     self->info->rev++;
 }
 

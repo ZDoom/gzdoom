@@ -254,7 +254,7 @@ CCMD (chase)
 {
 	if (demoplayback)
 	{
-		int i;
+		unsigned int i;
 
 		if (chasedemo)
 		{
@@ -1365,6 +1365,7 @@ CCMD (mapinfo)
 	if (myLevel->Music.IsNotEmpty())
 		Printf("               Music: %s%s\n", myLevel->Music[0] == '$'? "D_" : "", testlocalised(myLevel->Music.GetChars()));
 
+	if (myLevel->pixelstretch != 0.0) // yes, we're making a dummy if statement to fix the misleading indentation warnings
 		Printf("        PixelStretch: %f\n", myLevel->pixelstretch);
 
 	if (myLevel->RedirectType != NAME_None)
@@ -1379,6 +1380,7 @@ CCMD (mapinfo)
 	if (myLevel->RedirectCVARMapName.IsNotEmpty())
 		Printf(" CVAR_Redirect (Map): %s\n", myLevel->RedirectCVARMapName.GetChars());
 
+	if ((int8_t)myLevel->lightmode != -128) // yes, we're making a dummy if statement to fix the misleading indentation warnings
 		Printf("           LightMode: %i\n", (int8_t)myLevel->lightmode);
 
 	if (players[consoleplayer].mo && players[consoleplayer].mo->Level)

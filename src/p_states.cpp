@@ -33,15 +33,14 @@
 **
 **
 */
+
 #include "actor.h"
-#include "cmdlib.h"
 #include "c_dispatch.h"
-#include "v_text.h"
-#include "thingdef.h"
+#include "cmdlib.h"
+#include "codegen.h"
 #include "r_state.h"
 #include "templates.h"
-#include "codegen.h"
-
+#include "thingdef.h"
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
 FStateLabelStorage StateLabels;
@@ -1097,16 +1096,18 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 		if (state != NULL)
 		{
 			const PClassActor *owner = FState::StaticFindStateOwner(state);
+			auto pfx = prefix.GetChars();
+			auto label = StateList->Labels[i].Label.GetChars();
 			if (owner == NULL)
 			{
 				if (state->DehIndex >= 0)
-					Printf(PRINT_LOG, "%s%s: DehExtra %d\n", prefix.GetChars(), state->DehIndex);
+					Printf(PRINT_LOG, "%s%s: DehExtra %d\n", pfx, label, state->DehIndex);
 				else
-					Printf(PRINT_LOG, "%s%s: invalid\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars());
+					Printf(PRINT_LOG, "%s%s: invalid\n", pfx, label);
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(state).GetChars());
+				Printf(PRINT_LOG, "%s%s: %s\n", pfx, label, FState::StaticGetStateName(state).GetChars());
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)

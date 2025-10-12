@@ -3,13 +3,16 @@
 #include "core/colorf.h"
 #include <stdexcept>
 
+#define HIDE_SMALL_BAR false
+#define HIDE_SMALL_THUMB true
+
 Scrollbar::Scrollbar(Widget* parent) : Widget(parent)
 {
 	SetStyleClass("scrollbar");
 	UpdatePartPositions();
 
 	mouse_down_timer = new Timer(this);
-	mouse_down_timer->FuncExpired = [=]() { OnTimerExpired(); };
+	mouse_down_timer->FuncExpired = [this]() { OnTimerExpired(); };
 }
 
 Scrollbar::~Scrollbar()
@@ -295,7 +298,15 @@ void Scrollbar::OnPaint(Canvas* canvas)
 	part_button_increment.render_box(canvas, rect_button_increment);
 	*/
 
-	canvas->fillRect(Rect::shrink(Rect::xywh(0.0, 0.0, GetWidth(), GetHeight()), 4.0, 0.0, 4.0, 0.0), GetStyleColor("track-color"));
+	auto height = GetHeight();
+	auto paint = rect_thumb.height < height;
+
+	if (HIDE_SMALL_BAR && !paint) return;
+
+	canvas->fillRect(Rect::shrink(Rect::xywh(0.0, 0.0, GetWidth(), height), 4.0, 0.0, 4.0, 0.0), GetStyleColor("track-color"));
+
+	if (HIDE_SMALL_THUMB && !paint) return;
+
 	canvas->fillRect(Rect::shrink(rect_thumb, 4.0, 0.0, 4.0, 0.0), GetStyleColor("thumb-color"));
 }
 

@@ -141,19 +141,35 @@ WidgetTheme* WidgetTheme::GetTheme()
 	return CurrentTheme.get();
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-DarkWidgetTheme::DarkWidgetTheme()
+WidgetTheme::WidgetTheme(const struct SimpleTheme &theme)
 {
+
+	auto bgMain   = theme.bgMain;   // background
+	auto fgMain   = theme.fgMain;   //
+	auto bgLight  = theme.bgLight;  // headers / inputs
+	auto fgLight  = theme.fgLight;  //
+	auto bgAction = theme.bgAction; // interactive elements
+	auto fgAction = theme.fgAction; //
+	auto bgHover  = theme.bgHover;  // hover / highlight
+	auto fgHover  = theme.fgHover;  //
+	auto bgActive = theme.bgActive; // click
+	auto fgActive = theme.fgActive; //
+	auto border   = theme.border;   // around elements
+	auto divider  = theme.divider;  // between elements
+
+	auto none   = Colorf::transparent();
+
 	auto widget = RegisterStyle(std::make_unique<BasicWidgetStyle>(), "widget");
-	auto textlabel = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textlabel");
+	/*auto textlabel =*/ RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textlabel");
 	auto pushbutton = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "pushbutton");
 	auto lineedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "lineedit");
 	auto textedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textedit");
 	auto listview = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "listview");
+	auto dropdown = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "dropdown");
 	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
 	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
 	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
+	auto tabbar_spacer = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-spacer");
 	auto tabwidget_stack = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabwidget-stack");
 	auto checkbox_label = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "checkbox-label");
 	auto menubar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menubar");
@@ -165,219 +181,177 @@ DarkWidgetTheme::DarkWidgetTheme()
 	auto statusbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "statusbar");
 
 	widget->SetString("font-family", "NotoSans");
-	widget->SetColor("color", Colorf::fromRgba8(226, 223, 219));
-	widget->SetColor("window-background", Colorf::fromRgba8(51, 51, 51));
-	widget->SetColor("window-border", Colorf::fromRgba8(51, 51, 51));
-	widget->SetColor("window-caption-color", Colorf::fromRgba8(33, 33, 33));
-	widget->SetColor("window-caption-text-color", Colorf::fromRgba8(226, 223, 219));
+	widget->SetColor("color", fgMain);
+	widget->SetColor("window-background", bgMain);
+	widget->SetColor("window-border", bgMain);
+	widget->SetColor("window-caption-color", bgLight);
+	widget->SetColor("window-caption-text-color", fgLight);
 
 	pushbutton->SetDouble("noncontent-left", 10.0);
 	pushbutton->SetDouble("noncontent-top", 5.0);
 	pushbutton->SetDouble("noncontent-right", 10.0);
 	pushbutton->SetDouble("noncontent-bottom", 5.0);
-	pushbutton->SetColor("background-color", Colorf::fromRgba8(68, 68, 68));
-	pushbutton->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
-	pushbutton->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
-	pushbutton->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
-	pushbutton->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
-	pushbutton->SetColor("hover", "background-color", Colorf::fromRgba8(78, 78, 78));
-	pushbutton->SetColor("down", "background-color", Colorf::fromRgba8(88, 88, 88));
+	pushbutton->SetColor("color", fgAction);
+	pushbutton->SetColor("background-color", bgAction);
+	pushbutton->SetColor("border-left-color", border);
+	pushbutton->SetColor("border-top-color", border);
+	pushbutton->SetColor("border-right-color", border);
+	pushbutton->SetColor("border-bottom-color", border);
+	pushbutton->SetColor("hover", "color", fgHover);
+	pushbutton->SetColor("hover", "background-color", bgHover);
+	pushbutton->SetColor("down", "color", fgActive);
+	pushbutton->SetColor("down", "background-color", bgActive);
 
 	lineedit->SetDouble("noncontent-left", 5.0);
 	lineedit->SetDouble("noncontent-top", 3.0);
 	lineedit->SetDouble("noncontent-right", 5.0);
 	lineedit->SetDouble("noncontent-bottom", 3.0);
-	lineedit->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
-	lineedit->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
-	lineedit->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
-	lineedit->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
-	lineedit->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
-	lineedit->SetColor("selection-color", Colorf::fromRgba8(100, 100, 100));
-	lineedit->SetColor("no-focus-selection-color", Colorf::fromRgba8(68, 68, 68));
+	lineedit->SetColor("color", fgLight);
+	lineedit->SetColor("background-color", bgLight);
+	lineedit->SetColor("border-left-color", border);
+	lineedit->SetColor("border-top-color", border);
+	lineedit->SetColor("border-right-color", border);
+	lineedit->SetColor("border-bottom-color", border);
+	lineedit->SetColor("selection-color", bgHover);
+	lineedit->SetColor("no-focus-selection-color", bgHover);
 
 	textedit->SetDouble("noncontent-left", 8.0);
 	textedit->SetDouble("noncontent-top", 8.0);
 	textedit->SetDouble("noncontent-right", 8.0);
 	textedit->SetDouble("noncontent-bottom", 8.0);
-	textedit->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
-	textedit->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
-	textedit->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
-	textedit->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
-	textedit->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
+	textedit->SetColor("color", fgLight);
+	textedit->SetColor("background-color", bgLight);
+	textedit->SetColor("border-left-color", border);
+	textedit->SetColor("border-top-color", border);
+	textedit->SetColor("border-right-color", border);
+	textedit->SetColor("border-bottom-color", border);
+	textedit->SetColor("selection-color", bgHover);
 
 	listview->SetDouble("noncontent-left", 10.0);
 	listview->SetDouble("noncontent-top", 10.0);
 	listview->SetDouble("noncontent-right", 3.0);
 	listview->SetDouble("noncontent-bottom", 10.0);
-	listview->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
-	listview->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
-	listview->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
-	listview->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
-	listview->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
-	listview->SetColor("selection-color", Colorf::fromRgba8(100, 100, 100));
+	listview->SetColor("color", fgLight);
+	listview->SetColor("background-color", bgLight);
+	listview->SetColor("border-left-color", border);
+	listview->SetColor("border-top-color", border);
+	listview->SetColor("border-right-color", border);
+	listview->SetColor("border-bottom-color", border);
+	listview->SetColor("selection-color", bgHover);
 
-	scrollbar->SetColor("track-color", Colorf::fromRgba8(33, 33, 33));
-	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(58, 58, 58));
+	dropdown->SetDouble("noncontent-left", 5.0);
+	dropdown->SetDouble("noncontent-top", 5.0);
+	dropdown->SetDouble("noncontent-right", 5.0);
+	dropdown->SetDouble("noncontent-bottom", 5.0);
+	dropdown->SetColor("color", fgLight);
+	dropdown->SetColor("background-color", bgLight);
+	dropdown->SetColor("border-left-color", border);
+	dropdown->SetColor("border-top-color", border);
+	dropdown->SetColor("border-right-color", border);
+	dropdown->SetColor("border-bottom-color", border);
+	dropdown->SetColor("arrow-color", border);
 
-	tabbar->SetDouble("noncontent-left", 20.0);
-	tabbar->SetDouble("noncontent-right", 20.0);
-	tabbar->SetColor("background-color", Colorf::fromRgba8(38, 38, 38));
+	scrollbar->SetColor("track-color", divider);
+	scrollbar->SetColor("thumb-color", border);
+
+	tabbar->SetDouble("spacer-left", 20.0);
+	tabbar->SetDouble("spacer-right", 20.0);
+	tabbar->SetColor("background-color", bgLight);
 
 	tabbar_tab->SetDouble("noncontent-left", 15.0);
 	tabbar_tab->SetDouble("noncontent-right", 15.0);
-	tabbar_tab->SetColor("hover", "background-color", Colorf::fromRgba8(45, 45, 45));
-	tabbar_tab->SetColor("active", "background-color", Colorf::fromRgba8(51, 51, 51));
+	tabbar_tab->SetDouble("noncontent-top", 1.0);
+	tabbar_tab->SetDouble("noncontent-bottom", 1.0);
+	tabbar_tab->SetColor("color", fgMain);
+	tabbar_tab->SetColor("background-color", bgMain);
+	tabbar_tab->SetColor("border-left-color", divider);
+	tabbar_tab->SetColor("border-top-color", divider);
+	tabbar_tab->SetColor("border-right-color", divider);
+	tabbar_tab->SetColor("border-bottom-color", border);
+	tabbar_tab->SetColor("hover", "color", fgAction);
+	tabbar_tab->SetColor("hover", "background-color", bgAction);
+	tabbar_tab->SetColor("active", "background-color", bgMain);
+	tabbar_tab->SetColor("active", "border-left-color", border);
+	tabbar_tab->SetColor("active", "border-top-color", border);
+	tabbar_tab->SetColor("active", "border-right-color", border);
+	tabbar_tab->SetColor("active", "border-bottom-color", none);
+
+	tabbar_spacer->SetDouble("noncontent-bottom", 1.0);
+	tabbar_spacer->SetColor("border-bottom-color", border);
 
 	tabwidget_stack->SetDouble("noncontent-left", 20.0);
 	tabwidget_stack->SetDouble("noncontent-top", 5.0);
 	tabwidget_stack->SetDouble("noncontent-right", 20.0);
 	tabwidget_stack->SetDouble("noncontent-bottom", 5.0);
 
-	checkbox_label->SetColor("checked-outer-border-color", Colorf::fromRgba8(100, 100, 100));
-	checkbox_label->SetColor("checked-inner-border-color", Colorf::fromRgba8(51, 51, 51));
-	checkbox_label->SetColor("checked-color", Colorf::fromRgba8(226, 223, 219));
-	checkbox_label->SetColor("unchecked-outer-border-color", Colorf::fromRgba8(99, 99, 99));
-	checkbox_label->SetColor("unchecked-inner-border-color", Colorf::fromRgba8(51, 51, 51));
+	checkbox_label->SetColor("checked-outer-border-color", border);
+	checkbox_label->SetColor("checked-inner-border-color", bgMain);
+	checkbox_label->SetColor("checked-color", fgMain);
+	checkbox_label->SetColor("unchecked-outer-border-color", border);
+	checkbox_label->SetColor("unchecked-inner-border-color", bgMain);
 
-	menubar->SetColor("background-color", Colorf::fromRgba8(33, 33, 33));
-	toolbar->SetColor("background-color", Colorf::fromRgba8(33, 33, 33));
-	statusbar->SetColor("background-color", Colorf::fromRgba8(33, 33, 33));
+	menubar->SetColor("background-color", bgLight);
+	toolbar->SetColor("background-color", bgLight);
+	statusbar->SetColor("background-color", bgLight);
 
-	toolbarbutton->SetColor("hover", "background-color", Colorf::fromRgba8(78, 78, 78));
-	toolbarbutton->SetColor("down", "background-color", Colorf::fromRgba8(88, 88, 88));
+	toolbarbutton->SetColor("hover", "color", fgHover);
+	toolbarbutton->SetColor("hover", "background-color", bgHover);
+	toolbarbutton->SetColor("down", "color", fgActive);
+	toolbarbutton->SetColor("down", "background-color", bgActive);
 
-	menubaritem->SetColor("color", Colorf::fromRgba8(226, 223, 219));
-	menubaritem->SetColor("hover", "background-color", Colorf::fromRgba8(78, 78, 78));
-	menubaritem->SetColor("hover", "color", Colorf::fromRgba8(0, 0, 0));
-	menubaritem->SetColor("down", "background-color", Colorf::fromRgba8(88, 88, 88));
-	menubaritem->SetColor("down", "color", Colorf::fromRgba8(0, 0, 0));
+	menubaritem->SetColor("color", fgMain);
+	menubaritem->SetColor("hover", "color", fgHover);
+	menubaritem->SetColor("hover", "background-color", bgHover);
+	menubaritem->SetColor("down", "color", fgActive);
+	menubaritem->SetColor("down", "background-color", bgActive);
 
 	menu->SetDouble("noncontent-left", 5.0);
 	menu->SetDouble("noncontent-top", 5.0);
 	menu->SetDouble("noncontent-right", 5.0);
 	menu->SetDouble("noncontent-bottom", 5.0);
-	menu->SetColor("border-left-color", Colorf::fromRgba8(100, 100, 100));
-	menu->SetColor("border-top-color", Colorf::fromRgba8(100, 100, 100));
-	menu->SetColor("border-right-color", Colorf::fromRgba8(100, 100, 100));
-	menu->SetColor("border-bottom-color", Colorf::fromRgba8(100, 100, 100));
+	menu->SetColor("color", fgMain);
+	menu->SetColor("background-color", bgMain);
+	menu->SetColor("border-left-color", border);
+	menu->SetColor("border-top-color", border);
+	menu->SetColor("border-right-color", border);
+	menu->SetColor("border-bottom-color", border);
 
-	menuitem->SetColor("hover", "background-color", Colorf::fromRgba8(78, 78, 78));
-	menuitem->SetColor("down", "background-color", Colorf::fromRgba8(88, 88, 88));
+	menuitem->SetColor("hover", "color", fgHover);
+	menuitem->SetColor("hover", "background-color", bgHover);
+	menuitem->SetColor("down", "color", fgActive);
+	menuitem->SetColor("down", "background-color", bgActive);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-LightWidgetTheme::LightWidgetTheme()
-{
-	auto widget = RegisterStyle(std::make_unique<BasicWidgetStyle>(), "widget");
-	auto textlabel = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textlabel");
-	auto pushbutton = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "pushbutton");
-	auto lineedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "lineedit");
-	auto textedit = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "textedit");
-	auto listview = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "listview");
-	auto scrollbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "scrollbar");
-	auto tabbar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar");
-	auto tabbar_tab = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabbar-tab");
-	auto tabwidget_stack = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "tabwidget-stack");
-	auto checkbox_label = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "checkbox-label");
-	auto menubar = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menubar");
-	auto menubaritem = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menubaritem");
-	auto menu = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menu");
-	auto menuitem = RegisterStyle(std::make_unique<BasicWidgetStyle>(widget), "menuitem");
+DarkWidgetTheme::DarkWidgetTheme(): WidgetTheme({
+	Colorf::fromRgb(0x2A2A2A), // background
+	Colorf::fromRgb(0xE2DFDB), //
+	Colorf::fromRgb(0x212121), // headers / inputs
+	Colorf::fromRgb(0xE2DFDB), //
+	Colorf::fromRgb(0x444444), // interactive elements
+	Colorf::fromRgb(0xFFFFFF), //
+	Colorf::fromRgb(0xC83C00), // hover / highlight
+	Colorf::fromRgb(0xFFFFFF), //
+	Colorf::fromRgb(0xBBBBBB), // click
+	Colorf::fromRgb(0x000000), //
+	Colorf::fromRgb(0x646464), // around elements
+	Colorf::fromRgb(0x555555)  // between elements
+}) {};
 
-	widget->SetString("font-family", "NotoSans");
-	widget->SetColor("color", Colorf::fromRgba8(0, 0, 0));
-	widget->SetColor("window-background", Colorf::fromRgba8(240, 240, 240));
-	widget->SetColor("window-border", Colorf::fromRgba8(100, 100, 100));
-	widget->SetColor("window-caption-color", Colorf::fromRgba8(70, 70, 70));
-	widget->SetColor("window-caption-text-color", Colorf::fromRgba8(226, 223, 219));
+/////////////////////////////////////////////////////////////////////////////
 
-	pushbutton->SetDouble("noncontent-left", 10.0);
-	pushbutton->SetDouble("noncontent-top", 5.0);
-	pushbutton->SetDouble("noncontent-right", 10.0);
-	pushbutton->SetDouble("noncontent-bottom", 5.0);
-	pushbutton->SetColor("background-color", Colorf::fromRgba8(210, 210, 210));
-	pushbutton->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
-	pushbutton->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
-	pushbutton->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
-	pushbutton->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
-	pushbutton->SetColor("hover", "background-color", Colorf::fromRgba8(200, 200, 200));
-	pushbutton->SetColor("down", "background-color", Colorf::fromRgba8(190, 190, 190));
-
-	lineedit->SetDouble("noncontent-left", 5.0);
-	lineedit->SetDouble("noncontent-top", 3.0);
-	lineedit->SetDouble("noncontent-right", 5.0);
-	lineedit->SetDouble("noncontent-bottom", 3.0);
-	lineedit->SetColor("background-color", Colorf::fromRgba8(255, 255, 255));
-	lineedit->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
-	lineedit->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
-	lineedit->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
-	lineedit->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
-	lineedit->SetColor("selection-color", Colorf::fromRgba8(210, 210, 255));
-	lineedit->SetColor("no-focus-selection-color", Colorf::fromRgba8(240, 240, 255));
-
-	textedit->SetDouble("noncontent-left", 8.0);
-	textedit->SetDouble("noncontent-top", 8.0);
-	textedit->SetDouble("noncontent-right", 8.0);
-	textedit->SetDouble("noncontent-bottom", 8.0);
-	textedit->SetColor("background-color", Colorf::fromRgba8(255, 255, 255));
-	textedit->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
-	textedit->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
-	textedit->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
-	textedit->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
-
-	listview->SetDouble("noncontent-left", 10.0);
-	listview->SetDouble("noncontent-top", 10.0);
-	listview->SetDouble("noncontent-right", 3.0);
-	listview->SetDouble("noncontent-bottom", 10.0);
-	listview->SetColor("background-color", Colorf::fromRgba8(230, 230, 230));
-	listview->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
-	listview->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
-	listview->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
-	listview->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
-	listview->SetColor("selection-color", Colorf::fromRgba8(200, 200, 200));
-
-	scrollbar->SetColor("track-color", Colorf::fromRgba8(210, 210, 220));
-	scrollbar->SetColor("thumb-color", Colorf::fromRgba8(180, 180, 180));
-
-	tabbar->SetDouble("noncontent-left", 20.0);
-	tabbar->SetDouble("noncontent-right", 20.0);
-	tabbar->SetColor("background-color", Colorf::fromRgba8(220, 220, 220));
-
-	tabbar_tab->SetDouble("noncontent-left", 15.0);
-	tabbar_tab->SetDouble("noncontent-right", 15.0);
-	tabbar_tab->SetColor("hover", "background-color", Colorf::fromRgba8(210, 210, 210));
-	tabbar_tab->SetColor("active", "background-color", Colorf::fromRgba8(240, 240, 240));
-
-	tabwidget_stack->SetDouble("noncontent-left", 20.0);
-	tabwidget_stack->SetDouble("noncontent-top", 5.0);
-	tabwidget_stack->SetDouble("noncontent-right", 20.0);
-	tabwidget_stack->SetDouble("noncontent-bottom", 5.0);
-
-	checkbox_label->SetColor("checked-outer-border-color", Colorf::fromRgba8(155, 155, 155));
-	checkbox_label->SetColor("checked-inner-border-color", Colorf::fromRgba8(200, 200, 200));
-	checkbox_label->SetColor("checked-color", Colorf::fromRgba8(50, 50, 50));
-	checkbox_label->SetColor("unchecked-outer-border-color", Colorf::fromRgba8(156, 156, 156));
-	checkbox_label->SetColor("unchecked-inner-border-color", Colorf::fromRgba8(200, 200, 200));
-
-	menubar->SetColor("background-color", Colorf::fromRgba8(70, 70, 70));
-
-	menubaritem->SetColor("color", Colorf::fromRgba8(226, 223, 219));
-	menubaritem->SetColor("hover", "background-color", Colorf::fromRgba8(200, 200, 200));
-	menubaritem->SetColor("hover", "color", Colorf::fromRgba8(0, 0, 0));
-	menubaritem->SetColor("down", "background-color", Colorf::fromRgba8(190, 190, 190));
-	menubaritem->SetColor("down", "color", Colorf::fromRgba8(0, 0, 0));
-
-	menu->SetDouble("noncontent-left", 5.0);
-	menu->SetDouble("noncontent-top", 5.0);
-	menu->SetDouble("noncontent-right", 5.0);
-	menu->SetDouble("noncontent-bottom", 5.0);
-	menu->SetColor("background-color", Colorf::fromRgba8(255, 255, 255));
-	menu->SetColor("border-left-color", Colorf::fromRgba8(155, 155, 155));
-	menu->SetColor("border-top-color", Colorf::fromRgba8(155, 155, 155));
-	menu->SetColor("border-right-color", Colorf::fromRgba8(155, 155, 155));
-	menu->SetColor("border-bottom-color", Colorf::fromRgba8(155, 155, 155));
-
-	menuitem->SetColor("hover", "background-color", Colorf::fromRgba8(200, 200, 200));
-	menuitem->SetColor("down", "background-color", Colorf::fromRgba8(190, 190, 190));
-}
+LightWidgetTheme::LightWidgetTheme(): WidgetTheme({
+	Colorf::fromRgb(0xF0F0F0), // background
+	Colorf::fromRgb(0x191919), //
+	Colorf::fromRgb(0xFAFAFA), // headers / inputs
+	Colorf::fromRgb(0x191919), //
+	Colorf::fromRgb(0xC8C8C8), // interactive elements
+	Colorf::fromRgb(0x000000), //
+	Colorf::fromRgb(0xD2D2FF), // hover / highlight
+	Colorf::fromRgb(0x000000), //
+	Colorf::fromRgb(0xC7B4FF), // click
+	Colorf::fromRgb(0x000000), //
+	Colorf::fromRgb(0xA0A0A0), // around elements
+	Colorf::fromRgb(0xB9B9B9)  // between elements
+}) {};

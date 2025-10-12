@@ -6,6 +6,7 @@
 #include <functional>
 
 class Scrollbar;
+class Dropdown;
 
 class ListView : public Widget
 {
@@ -22,6 +23,10 @@ public:
 	void SetSelectedItem(int index);
 	void ScrollToItem(int index);
 
+	double GetPreferredWidth();
+	double GetPreferredHeight();
+	double GetMinimumHeight() const;
+
 	void Activate();
 
 	std::function<void(int)> OnChanged;
@@ -36,9 +41,13 @@ protected:
 	void OnGeometryChanged() override;
 	void OnScrollbarScroll();
 
+	static double getItemHeight();
+
 	Scrollbar* scrollbar = nullptr;
 
 	std::vector<std::vector<std::string>> items;
 	std::vector<double> columnwidths;
 	int selectedItem = 0;
+
+	friend Dropdown;
 };

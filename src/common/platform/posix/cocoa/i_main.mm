@@ -3,6 +3,7 @@
  **
  **---------------------------------------------------------------------------
  ** Copyright 2012-2018 Alexey Lysiuk
+ ** Copyright 2017-2025 GZDoom Maintainers and Contributors
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -34,35 +35,34 @@
 #include "i_common.h"
 #include "s_soundinternal.h"
 
-#include <sys/sysctl.h>
+#include <csignal>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include "c_console.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
+#include "engineerrors.h"
 #include "i_system.h"
 #include "m_argv.h"
-#include "st_console.h"
-#include "version.h"
 #include "printf.h"
 #include "s_music.h"
-#include "engineerrors.h"
+#include "st_console.h"
+#include "version.h"
 #include "zstring.h"
-
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
 
-
 // ---------------------------------------------------------------------------
-
 
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
 
 int GameMain();
-// ---------------------------------------------------------------------------
+void SignalHandler(int signal);
 
+// ---------------------------------------------------------------------------
 
 void Mac_I_FatalError(const char* const message)
 {
@@ -160,18 +160,12 @@ void I_DetectOS()
 			case 16: name = "Big Sur";     break;
 		}
 		break;
-	case 11:
-		name = "Big Sur";
-		break;
-	case 12:
-		name = "Monterey";
-		break;
-	case 13:
-		name = "Ventura";
-		break;
-	case 14:
-		name = "Sonoma";
-		break;
+	case 11: name = "Big Sur";             break;
+	case 12: name = "Monterey";            break;
+	case 13: name = "Ventura";             break;
+	case 14: name = "Sonoma";              break;
+	case 15: name = "Sequoia";             break;
+	case 26: name = "Tahoe";               break;
 	}
 
 	char release[16] = "unknown";
@@ -209,6 +203,11 @@ TArray<FString> s_argv;
 
 int DoMain(int argc, char** argv)
 {
+	signal(SIGINT, SignalHandler);
+	signal(SIGTERM, SignalHandler);
+	// signal(SIGHUP, SignalHandler);
+	// signal(SIGQUIT, SignalHandler);
+
 	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n\n",
 		GetVersionString(), GetGitTime(), __DATE__);
 

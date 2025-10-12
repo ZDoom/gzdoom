@@ -69,7 +69,31 @@ CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, m_cleanscale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Option Search
 CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
+// Tooltip
+CVAR(Bool, m_tooltip_capwidth, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, m_tooltip_small, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, m_tooltip_lines, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 1)
+		self = 1;
+}
+CUSTOM_CVAR(Float, m_tooltip_delay, 9.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0.0f)
+		self = 0.1f;
+}
+CUSTOM_CVAR(Float, m_tooltip_speed, 3.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0.0f)
+		self = 0.1f;
+}
+CUSTOM_CVAR(Float, m_tooltip_alpha, 0.6f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.0f)
+		self = 0.0f;
+	else if (self > 1.0f)
+		self = 1.0f;
+}
 
 static DMenu *GetCurrentMenu()
 {
@@ -159,6 +183,7 @@ void DListMenuDescriptor::Reset()
 	mFont = NULL;
 	mFontColor = CR_UNTRANSLATED;
 	mFontColor2 = CR_UNTRANSLATED;
+	mTooltipFont = NewConsoleFont;
 	mFromEngine = false;
 	mVirtWidth = mVirtHeight = -1;	// default to clean scaling
 }
@@ -179,6 +204,7 @@ void DOptionMenuDescriptor::Reset()
 	mIndent = 0;
 	mDontDim = 0;
 	mFont = BigUpper;
+	mTooltipFont = NewConsoleFont;
 }
 
 void M_MarkMenus()
@@ -267,6 +293,10 @@ DMenu::DMenu(DMenu *parent)
 	mMouseCapture = false;
 	mBackbuttonSelected = false;
 	DontDim = false;
+	mTooltipFont = nullptr;
+	mTooltipScrollOffset = 0.0;
+	mTooltipScrollTimer = 0.0;
+	mCurrentTooltip = "";
 	GC::WriteBarrier(this, parent);
 }
 
@@ -694,6 +724,9 @@ bool M_Responder (event_t *ev)
 				case GK_BACKSPACE:		mkey = MKEY_Clear;		break;
 				case GK_PGUP:			mkey = MKEY_PageUp;		break;
 				case GK_PGDN:			mkey = MKEY_PageDown;	break;
+				case GK_HOME:			mkey = MKEY_Home;		break;
+				case GK_END:			mkey = MKEY_End;		break;
+
 				default:
 					if (!keyup)
 					{
@@ -706,7 +739,7 @@ bool M_Responder (event_t *ev)
 		else if (menuactive != MENU_WaitKey && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 		{
 			// eat blocked controller events without dispatching them.
-			if (ev->data1 >= KEY_FIRSTJOYBUTTON && m_blockcontrollers) return true;
+			if (ev->data1 >= KEY_FIRSTJOYBUTTON && m_blockcontrollers && ev->type == EV_KeyDown) return true;
 
 			keyup = ev->type == EV_KeyUp;
 
@@ -800,7 +833,7 @@ bool M_Responder (event_t *ev)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu(NAME_Mainmenu, -1);
+				M_SetMenu(NAME_MainMenu, -1);
 				return true;
 			}
 			return false;
@@ -809,7 +842,7 @@ bool M_Responder (event_t *ev)
 				 ConsoleState != c_down && gamestate != GS_LEVEL && m_use_mouse)
 		{
 			M_StartControlPanel(true);
-			M_SetMenu(NAME_Mainmenu, -1);
+			M_SetMenu(NAME_MainMenu, -1);
 			return true;
 		}
 	}
@@ -1055,15 +1088,21 @@ DEFINE_FIELD(DMenu, DontBlur);
 DEFINE_FIELD(DMenu, AnimatedTransition);
 DEFINE_FIELD(DMenu, Animated);
 DEFINE_FIELD(DMenu, NoFade);
+DEFINE_FIELD(DMenu, mCurrentTooltip)
+DEFINE_FIELD(DMenu, mTooltipScrollTimer)
+DEFINE_FIELD(DMenu, mTooltipScrollOffset)
+DEFINE_FIELD(DMenu, mTooltipFont)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
 DEFINE_FIELD(DMenuDescriptor, mClass)
+DEFINE_FIELD(DMenuDescriptor, mTooltipFont)
 
 DEFINE_FIELD(DMenuItemBase, mXpos)
 DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
+DEFINE_FIELD(DMenuItemBase, mTooltip)
 
 DEFINE_FIELD(DListMenuDescriptor, mItems)
 DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)

@@ -6,6 +6,7 @@
 
 class MenuItemBase : Object native ui version("2.4")
 {
+	protected native string mTooltip;
 	protected native double mXpos, mYpos;
 	protected native Name mAction;
 	native int mEnabled;
@@ -21,7 +22,8 @@ class MenuItemBase : Object native ui version("2.4")
 	virtual bool CheckCoordinate(int x, int y) { return false; }
 	virtual void Ticker() {}
 	virtual void Drawer(bool selected) {}
-	virtual bool Selectable() {return false; }
+	virtual bool Selectable() { return false; }
+	virtual bool Visible() { return true; }
 	virtual bool Activate() { return false; }
 	virtual Name, int GetAction() { return mAction, 0; }
 	virtual bool SetString(int i, String s) { return false; }
@@ -36,6 +38,7 @@ class MenuItemBase : Object native ui version("2.4")
 	virtual int GetIndent() { return 0; }
 	virtual int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected) { return indent; }
 
+	string GetTooltip() const { return mTooltip; }
 	void OffsetPositionY(double ydelta) { mYpos += ydelta; }
 	double GetY() { return mYpos; }
 	double GetX() { return mXpos; }

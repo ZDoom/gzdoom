@@ -58,7 +58,6 @@ void P_RandomChaseDir(AActor *actor);;
 int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams *params);
 
 AActor *P_DropItem (AActor *source, PClassActor *type, int special, int chance);
-void P_TossItem (AActor *item);
 int P_LookForMonsters(AActor *actor);
 int P_LookForTID(AActor *actor, INTBOOL allaround, FLookExParams *params);
 int P_LookForEnemies(AActor *actor, INTBOOL allaround, FLookExParams *params);
@@ -76,9 +75,5 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn = nullAngle, DAngle max
 class FSoundID;
 
 int CheckBossDeath (AActor *);
-int P_Massacre (bool baddies = false, PClassActor *cls = nullptr);
-
-#define SKULLSPEED (20.)
-void A_SkullAttack(AActor *self, double speed);
 
 #endif //__P_ENEMY_H__

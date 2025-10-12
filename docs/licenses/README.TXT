@@ -8,18 +8,8 @@ GPL v3 with permission.
 
 The majority of original code uses a BSD-like lincese. See bsd.txt.
 
-The OpenGL renderer is released under the LGPL v3, except some bits
-of code that were inherited from ZDoomGL.
-
 Some code was taken from the Eternity Engine.
 Copyright (c) James Haley, Stephen McGranahan, et al.
-
-This software is based in part on the work of the Independent JPEG Group.
-
-This software uses the 'zlib' general purpose compression library by
-Jean-loup Gailly and Mark Adler.
-
-This software uses the gdtoa package, see gdtoa.txt.
 
 This software uses the game_music_emu library, which is covered by the GNU Lesser
 General Public License. See lgpl.txt.
@@ -32,3 +22,8 @@ http://kode54.foobar2000.org/.
 
 All script code in gzdoom.pk3 is licensed under the GPL v3 unless noted 
 otherwise.
+
+Please note that the content of brightmaps.pk3, game_support.pk3 and game_widescreen_gfx.pk3
+is based on copyrighted game content and subject to some restrictions.
+Please see the license notes in the respective files/subfolders.
+

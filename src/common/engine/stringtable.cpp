@@ -290,7 +290,7 @@ void FStringTable::LoadLanguage (int lumpnum, const char* buffer, size_t size)
 	FScanner sc;
 	bool hasDefaultEntry = false;
 
-	sc.OpenMem("LANGUAGE", buffer, (int)size);
+	sc.OpenMem(fileSystem.GetFileFullPath(lumpnum).c_str(), buffer, (int)size);
 	sc.SetCMode (true);
 	while (sc.GetString ())
 	{

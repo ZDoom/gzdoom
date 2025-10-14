@@ -90,7 +90,7 @@ namespace swrenderer
 		void Add3DFloorLine(seg_t *line, sector_t *frontsector);
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
-		bool IsPotentiallyVisible(AActor *thing);
+		bool IsPotentiallyVisible(AActor *thing, double ticFrac);
 		bool GetThingSprite(AActor *thing, ThingSprite &sprite);
 
 		subsector_t *InSubsector = nullptr;

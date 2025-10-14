@@ -415,9 +415,9 @@ void HUDSprite::SetBright(bool isbelow)
 //
 //==========================================================================
 
-bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *viewsector, WeaponLighting &lighting)
+bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *viewsector, WeaponLighting &lighting, double ticFrac)
 {
-	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
+	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->InterpolatedAlpha(ticFrac));
 
 	visstyle_t vis;
 
@@ -723,7 +723,7 @@ void HWDrawInfo::PreparePlayerSprites2D(sector_t * viewsector, area_t in_area)
 		hudsprite.mframe = smf;
 		hudsprite.weapon = psp;
 
-		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light, vp.TicFrac)) continue;
 
 		if(ModifyBobLayer && (psp->Flags & PSPF_ADDBOB))
 		{
@@ -838,7 +838,7 @@ void HWDrawInfo::PreparePlayerSprites3D(sector_t * viewsector, area_t in_area)
 			weap.pivot = FVector3(p);
 		}
 
-		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light, vp.TicFrac)) continue;
 
 		FVector2 spos = BobWeapon3D(weap, psp, hudsprite.translation, hudsprite.rotation, hudsprite.pivot, Net_ModifyObjectFrac(psp, vp.TicFrac));
 

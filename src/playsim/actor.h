@@ -1396,6 +1396,8 @@ public:
 
 	// [RH] Used to interpolate the view to get >35 FPS
 	DVector3 Prev;
+	// TODO: Reduce the size of these, this much accuracy isn't needed. Unfortunately a lot
+	// of this data is built around using doubles so this will require changing a lot of things.
 	DRotator PrevAngles;
 	DVector2 PrevScale;
 	double PrevAlpha;

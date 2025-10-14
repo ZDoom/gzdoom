@@ -2865,7 +2865,7 @@ void DAutomap::drawPlayers ()
 			continue;
 		}
 
-		if (p->mo->Alpha < 1.)
+		if (p->mo->InterpolatedAlpha(r_viewpoint.TicFrac) < 1.)
 		{
 			color = AMColors[AMColors.AlmostBackgroundColor];
 		}
@@ -3001,11 +3001,12 @@ void DAutomap::drawThings ()
 
 					if (texture == nullptr) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
-					const double spriteXScale = (t->Scale.X * (10. / 16.) * scale_mtof);
-					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
+					const DVector2 scale = t->InterpolatedScale(r_viewpoint.TicFrac);
+					const double spriteXScale = (scale.X * (10. / 16.) * scale_mtof);
+					const double spriteYScale = (scale.Y * (10. / 16.) * scale_mtof);
 
 					if (am_thingrenderstyles) DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
-						spriteXScale, spriteYScale, t->Translation, t->Alpha, t->fillcolor, t->RenderStyle);
+						spriteXScale, spriteYScale, t->Translation, t->InterpolatedAlpha(r_viewpoint.TicFrac), t->fillcolor, t->RenderStyle);
 					else DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
 				}

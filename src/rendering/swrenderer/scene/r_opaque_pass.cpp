@@ -927,7 +927,7 @@ namespace swrenderer
 				}
 			}
 
-			if (IsPotentiallyVisible(thing))
+			if (IsPotentiallyVisible(thing, Thread->Viewport->viewpoint.TicFrac))
 			{
 				ThingSprite sprite;
 				int spritenum = thing->sprite;
@@ -988,13 +988,13 @@ namespace swrenderer
 		}
 	}
 
-	bool RenderOpaquePass::IsPotentiallyVisible(AActor *thing)
+	bool RenderOpaquePass::IsPotentiallyVisible(AActor *thing, double ticFrac)
 	{
 		// Don't waste time projecting sprites that are definitely not visible.
 		if (thing == nullptr ||
 			(thing->renderflags & RF_INVISIBLE) ||
 			(thing->renderflags & RF_MAYBEINVISIBLE) ||
-			!thing->RenderStyle.IsVisible(thing->Alpha) ||
+			!thing->RenderStyle.IsVisible(thing->InterpolatedAlpha(ticFrac)) ||
 			!thing->IsVisibleToPlayer() ||
 			!thing->IsInsideVisibleAngles())
 		{
@@ -1050,7 +1050,7 @@ namespace swrenderer
 		sprite.spritenum = thing->sprite;
 		sprite.tex = nullptr;
 		sprite.voxel = nullptr;
-		sprite.spriteScale = DVector2(thing->Scale.X, thing->Scale.Y);
+		sprite.spriteScale = thing->InterpolatedScale(Thread->Viewport->viewpoint.TicFrac);
 		sprite.renderflags = thing->renderflags;
 
 		if (thing->player != nullptr)

@@ -31,6 +31,7 @@
  **
  */
 
+#include <Cocoa/Cocoa.h>
 #include "i_common.h"
 #include "c_cvars.h"
 #include "i_interface.h"
@@ -209,3 +210,13 @@ void I_OpenShellFolder(const char* folder)
 	[filemgr changeCurrentDirectoryPath:currentpath];
 }
 
+bool I_IsDarkMode()
+{
+	// currently the new startup popup on Mac is not active, so this won't get used
+    NSAppearance *appearance = [NSApp effectiveAppearance];
+    NSAppearanceName name = [appearance bestMatchFromAppearancesWithNames:@[
+        NSAppearanceNameAqua,
+        NSAppearanceNameDarkAqua
+    ]];
+    return [name isEqualToString:NSAppearanceNameDarkAqua];
+}

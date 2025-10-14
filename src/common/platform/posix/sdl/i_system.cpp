@@ -437,3 +437,77 @@ void I_OpenShellFolder(const char* infolder)
 	free(curdir);
 }
 
+// This is what ChatGPT told me for detecting dark mode on Linux
+#if 1
+bool IsDarkMode_GNOME()
+{
+    FILE* pipe = popen("gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null", "r");
+    if (!pipe) return false;
+
+    char buffer[128] = {0};
+    fgets(buffer, sizeof(buffer), pipe);
+    pclose(pipe);
+
+    return strstr(buffer, "dark") != nullptr;
+}
+
+bool IsDarkMode_GNOME_Old()
+{
+    FILE* pipe = popen("gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null", "r");
+    if (!pipe) return false;
+
+    char buffer[128] = {0};
+    fgets(buffer, sizeof(buffer), pipe);
+    pclose(pipe);
+
+    return strstr(buffer, "dark") != nullptr;
+}
+
+bool IsDarkMode_KDE()
+{
+    std::ifstream file(std::string(getenv("HOME")) + "/.config/kdeglobals");
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (line.rfind("ColorScheme=", 0) == 0)
+        {
+            return line.find("Dark") != std::string::npos;
+        }
+    }
+    return false;
+}
+
+bool IsDarkMode_XDG()
+{
+    FILE* pipe = popen(
+        "gdbus call --session --dest org.freedesktop.portal.Desktop "
+        "--object-path /org/freedesktop/portal/desktop "
+        "--method org.freedesktop.portal.Settings.Read "
+        "org.freedesktop.appearance color-scheme 2>/dev/null", "r");
+    if (!pipe) return false;
+
+    char buffer[256] = {0};
+    fgets(buffer, sizeof(buffer), pipe);
+    pclose(pipe);
+
+    return strstr(buffer, "uint32 2") != nullptr;
+}
+#endif
+
+bool I_IsDarkMode()
+{
+#if 1
+    if (IsDarkMode_XDG())
+        return true;
+
+    if (IsDarkMode_GNOME())
+        return true;
+
+    if (IsDarkMode_GNOME_Old())
+        return true;
+
+    if (IsDarkMode_KDE())
+        return true;
+#endif
+	return false
+}

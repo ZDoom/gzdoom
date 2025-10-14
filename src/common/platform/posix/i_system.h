@@ -62,5 +62,7 @@ inline void I_SetThreadNumaNode(std::thread &thread, int numaNode) { }
 FString I_GetCWD();
 bool I_ChDir(const char* path);
 void I_OpenShellFolder(const char*);
+bool I_IsDarkMode();
+
 
 #endif

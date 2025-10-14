@@ -41,6 +41,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fstream>
 
 #include <fcntl.h>
 #include <stdarg.h>
@@ -509,5 +510,5 @@ bool I_IsDarkMode()
     if (IsDarkMode_KDE())
         return true;
 #endif
-	return false
+	return false;
 }

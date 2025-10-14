@@ -71,6 +71,7 @@ EXTERN_CVAR(Bool, show_messages)
 EXTERN_CVAR(Bool, haptics_do_menus)
 EXTERN_CVAR(Float, hud_scalefactor)
 
+// no longer used, but retained for scripts that access these CVARs.
 CVAR(Bool, m_simpleoptions, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Bool, m_simpleoptions_view, true, 0);
 
@@ -261,21 +262,6 @@ bool M_SetSpecialMenu(FName& menu, int param)
 
 	case NAME_PlayerMenu:
 		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
-		break;
-
-	case NAME_OptionsMenu:
-		if (m_simpleoptions_view != m_simpleoptions)
-			m_simpleoptions_view->SetGenericRep(m_simpleoptions->ToInt(), CVAR_Bool);
-		if (m_simpleoptions) menu = NAME_OptionsMenuSimple;
-		break;
-
-	case NAME_OptionsMenuSimple:
-		if (!m_simpleoptions_view) m_simpleoptions_view->SetGenericRep(true, CVAR_Bool);
-		break;
-
-	case NAME_OptionsMenuFull:
-		if (m_simpleoptions_view) m_simpleoptions_view->SetGenericRep(false, CVAR_Bool);
-		menu = NAME_OptionsMenu;
 		break;
 
 	case NAME_ReadthisMenu:

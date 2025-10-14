@@ -361,7 +361,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
 	Submenu "$OPTMNU_MULTIPLAYER",		"MultiplayerMenu"
-	Submenu "$OPTMNU_ACCESSIBILITY",	"AccessibilityOptions"
+	//Submenu "$OPTMNU_ACCESSIBILITY",	"AccessibilityOptions" // not really usable yet.
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_SYSTEM",			"SystemMenu"
 	StaticText " "
@@ -982,7 +982,7 @@ OptionMenu "HapticsOptions" protected
 	Title "$ACCMNU_TITLE"
 	
 	StaticText "$ACCMNU_TOOLTIP"
-	Slider "$ACCMNU_TOOLTIP_LINES", "m_tooltip_lines", 1, 4, 1, 0
+	Slider "$ACCMNU_TOOLTIP_LINES", "m_tooltip_lines", 0, 4, 1, 0
 	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"
 	Slider "$ACCMNU_TOOLTIP_SPEED", "m_tooltip_speed", 1.0, 5.0, 1.0, 0
 	Tooltip "$ACCMNU_TOOLTIP_EXAMPLE"

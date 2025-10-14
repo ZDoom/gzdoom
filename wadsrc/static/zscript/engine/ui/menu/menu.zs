@@ -465,7 +465,8 @@ class Menu : Object native ui version("2.4")
 				}
 			}
 
-			DrawTooltip();
+			if (m_tooltip_lines > 0)
+				DrawTooltip();
 		}
 	}
 

@@ -72,10 +72,10 @@ CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Tooltip
 CVAR(Bool, m_tooltip_capwidth, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_tooltip_small, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CUSTOM_CVAR(Int, m_tooltip_lines, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, m_tooltip_lines, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 1)
-		self = 1;
+	if (self < 0)
+		self = 0;	// 0 means 'off'
 }
 CUSTOM_CVAR(Float, m_tooltip_delay, 9.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {

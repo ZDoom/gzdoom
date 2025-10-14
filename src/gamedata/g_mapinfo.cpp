@@ -2156,13 +2156,14 @@ static int GetDefaultLevelNum(const char *mapname, int &id24num)
 	else if (mapname[0] == 'E' &&
 			mapname[1] >= '0' && mapname[1] <= '9' &&
 			mapname[2] == 'M' &&
-			mapname[3] >= '0' && mapname[3] <= '9' &&
-			strlen(mapname) == 4)
+			mapname[3] >= '0' && mapname[3] <= '9' && strlen(mapname) <= 5)
 	{
+		// ID24 allows levelnums >= 10
+		// The old ZDoom default does not - its value range is too small.
 		int epinum = mapname[1] - '1';
-		int mapnum = mapname[3] - '0';
+		int mapnum = atoi(mapname + 3);
 		id24num = mapnum;
-		return epinum*10 + mapnum;
+		if (strlen(mapname) == 4) return epinum*10 + mapnum;
 	}
 	return 0;
 }

@@ -2141,22 +2141,27 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 //
 //==========================================================================
 
-static int GetDefaultLevelNum(const char *mapname)
+static int GetDefaultLevelNum(const char *mapname, int &id24num)
 {
 	if (!strnicmp (mapname, "MAP", 3) && strlen(mapname) <= 5)
 	{
 		int mapnum = atoi (mapname + 3);
 
 		if (mapnum >= 1 && mapnum <= 99)
+		{
+			id24num = mapnum;
 			return mapnum;
+		}
 	}
 	else if (mapname[0] == 'E' &&
 			mapname[1] >= '0' && mapname[1] <= '9' &&
 			mapname[2] == 'M' &&
-			mapname[3] >= '0' && mapname[3] <= '9')
+			mapname[3] >= '0' && mapname[3] <= '9' &&
+			strlen(mapname) == 4)
 	{
 		int epinum = mapname[1] - '1';
 		int mapnum = mapname[3] - '0';
+		id24num = mapnum;
 		return epinum*10 + mapnum;
 	}
 	return 0;
@@ -2272,7 +2277,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	// Set up levelnum now so that you can use Teleport_NewMap specials
 	// to teleport to maps with standard names without needing a levelnum.
-	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->MapName.GetChars());
+	levelinfo->levelnum = GetDefaultLevelNum(levelinfo->MapName.GetChars(), levelinfo->id24_levelnum);
 
 	// Does this map have a song defined via SNDINFO's $map command?
 	// Set that as this map's default music if it does.
@@ -2449,11 +2454,10 @@ static void SetLevelNum (level_info_t *info, int num)
 		if (wadlevelinfos[i].levelnum == num)
 		{
 			wadlevelinfos[i].levelnum = 0;
-			wadlevelinfos[i].broken_id24_levelnum = 0;
 		}
 	}
 	info->levelnum = num;
-	info->broken_id24_levelnum = num;	// at least make it work - somehow.
+	info->id24_levelnum = 0;	// no more special handling if we have an explicit definition.
 }
 
 //==========================================================================

@@ -842,19 +842,3 @@ void I_OpenShellFolder(const char* infolder)
 	}
 }
 
-bool I_IsDarkMode()
-{
-    DWORD value = 1; // default to light
-    DWORD size = sizeof(value);
-
-    HKEY hKey;
-    if (RegOpenKeyExW(HKEY_CURRENT_USER,
-                      L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                      0, KEY_READ, &hKey) == ERROR_SUCCESS)
-    {
-        RegQueryValueExW(hKey, L"AppsUseLightTheme", nullptr, nullptr, reinterpret_cast<LPBYTE>(&value), &size);
-        RegCloseKey(hKey);
-    }
-
-    return value == 0; // 0 means dark mode
-}

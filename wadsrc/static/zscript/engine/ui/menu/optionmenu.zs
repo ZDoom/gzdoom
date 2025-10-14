@@ -911,10 +911,6 @@ class OptionMenu : Menu
 
 		ScreenArea box;
 		GetTooltipArea(box);
-		if (m_tooltip_lines == 0)
-		{
-			box.y = Screen.GetHeight();
-		}
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
 		LastRow = box.y - OptionHeight() * CleanYfac_1;
 		int rowheight = OptionMenuSettings.mLinespacing * CleanYfac_1 + 1;

@@ -81,7 +81,6 @@ int I_GetNumaNodeThreadCount(int numaNode);
 void I_SetThreadNumaNode(std::thread &thread, int numaNode);
 
 void I_OpenShellFolder(const char*);
-bool I_IsDarkMode();
 FString I_GetCWD();
 bool I_ChDir(const char* path);
 

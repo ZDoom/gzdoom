@@ -5,14 +5,13 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "zstring.h"
-#include "i_system.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
-CUSTOM_CVARD(Int, ui_theme, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "launcher theme. 0: auto, 1: dark, 2: light")
+CUSTOM_CVARD(Int, ui_theme, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "launcher theme. 0: auto, 1: dark, 2: light")
 {
 	if (self < 0) self = 0;
 	if (self > 2) self = 2;
@@ -31,24 +30,17 @@ void InitWidgetResources(const char* filename)
 	if (!WidgetResources)
 		I_FatalError("Unable to open %s", filename);
 
-	bool use_dark = ui_theme == 1 || (ui_theme == 0 && I_IsDarkMode());
+	bool use_dark = ui_theme != 2;
 
-	if (use_dark)
+	if (ui_theme == 0)
 	{
-		WidgetTheme::SetTheme(std::unique_ptr<WidgetTheme>(new WidgetTheme{{
-			Colorf::fromRgb(0x2A2A2A), // background
-			Colorf::fromRgb(0xE2DFDB), //
-			Colorf::fromRgb(0x212121), // headers / inputs
-			Colorf::fromRgb(0xE2DFDB), //
-			Colorf::fromRgb(0x444444), // interactive elements
-			Colorf::fromRgb(0xFFFFFF), //
-			Colorf::fromRgb(0x555555), // hover / highlight
-			Colorf::fromRgb(0xFFFFFF), //
-			Colorf::fromRgb(0xBBBBBB), // click
-			Colorf::fromRgb(0x000000), //
-			Colorf::fromRgb(0x646464), // around elements
-			Colorf::fromRgb(0x555555)  // between elements
-		}}));
+		// TODO: detect system theme
+	}
+
+	if (use_dark) // light
+	{
+		// TODO: make a nice theme
+		WidgetTheme::SetTheme(std::make_unique<DarkWidgetTheme>());
 	}
 	else
 	{

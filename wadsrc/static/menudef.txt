@@ -2193,6 +2193,7 @@ OptionMenu OpenALSoundItems protected
 
 OptionValue MidiDevices
 {
+	// No longer in use but kept around in case some mods use it.
 	// filled in by the sound code
 }
 
@@ -2207,7 +2208,7 @@ OptionMenu SoundOptions protected
 	StaticText " "
 	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05, 2
 	StaticText " "
-	Option "$SNDMNU_MIDIDEVICE",		"snd_mididevice", "MidiDevices"
+	Submenu "$SNDMNU_MIDIDEVICE",		"MidiDevicesMenu"
 	StaticText " "
 	Option "$SNDMNU_UNDERWATERREVERB",	"snd_waterreverb", "OnOff"
 	Option "$SNDMNU_RANDOMIZEPITCHES",	"snd_pitched", "OnOff"
@@ -2215,6 +2216,12 @@ OptionMenu SoundOptions protected
 	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
 	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
+}
+
+OptionMenu MidiDevicesMenu protected
+{
+	title "$SNDMNU_MIDIDEVICE"
+	// filled in by the sound code
 }
 
 /*=======================================

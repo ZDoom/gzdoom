@@ -45,16 +45,24 @@
 
 EXTERN_CVAR(Int, snd_mididevice)
 
-void I_BuildMIDIMenuList(FOptionValues* opt)
+void I_BuildMIDIMenuList(FOptionValues* opt, DMenuDescriptor* menu)
 {
 	int amount;
 	auto list = ZMusic_GetMidiDevices(&amount);
 
 	for (int i = 0; i < amount; i++)
 	{
-		FOptionValues::Pair* pair = &opt->mValues[opt->mValues.Reserve(1)];
-		pair->Text = list[i].Name;
-		pair->Value = (float)list[i].ID;
+		if (opt)
+		{
+			FOptionValues::Pair* pair = &opt->mValues[opt->mValues.Reserve(1)];
+			pair->Text = list[i].Name;
+			pair->Value = (float)list[i].ID;
+		}
+		if (menu)
+		{
+			auto it = CreateOptionMenuItemCommand(list[i].Name, FStringf("snd_mididevice %d", list[i].ID), true);
+			static_cast<DOptionMenuDescriptor*>(menu)->mItems.Push(it);
+		}
 	}
 }
 

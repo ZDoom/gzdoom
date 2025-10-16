@@ -40,12 +40,12 @@
 #include "c_cvars.h"
 #include "gamestate.h"
 #include "i_soundinternal.h"
-#include "m_haptics.h"
 #include "m_random.h"
 #include "m_swap.h"
 #include "printf.h"
 #include "s_music.h"
 #include "s_soundinternal.h"
+#include "i_interface.h"
 
 CVARD(Bool, snd_enabled, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "enables/disables sound effects")
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -620,7 +620,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		// Pistol's attenuation is always 1, but it's not silent.
 		// I'm not sure why that is.
 		// Joy_Rumble(soundEngine->GetSoundName(org_id), (chanflags&CHANF_IS3D)? attenuation: 0);
-		Joy_Rumble(soundEngine->GetSoundName(org_id));
+		if (sysCallbacks.Rumble) sysCallbacks.Rumble(soundEngine->GetSoundName(org_id));
 	}
 	if (chan != NULL)
 	{

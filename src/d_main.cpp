@@ -119,6 +119,7 @@
 #include "vm.h"
 #include "wi_stuff.h"
 #include "wipe.h"
+#include "m_haptics.h"
 #include "zwidget/window/window.h"
 
 #ifdef __unix__
@@ -3742,7 +3743,8 @@ static int D_DoomMain_Internal (void)
 		OkForLocalization,
 		[]() ->FConfigFile* { return GameConfig; },
 		nullptr, 
-		RemapUserTranslation
+		RemapUserTranslation,
+		[](const char* s) {Joy_Rumble(s); }
 	};
 
 	std::set_new_handler(NewFailure);

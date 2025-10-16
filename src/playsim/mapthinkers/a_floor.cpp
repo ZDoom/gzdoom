@@ -96,22 +96,6 @@ void DFloor::Serialize(FSerializer &arc)
 		("instant", m_Instant);
 }
 
-DEFINE_FIELD(DFloor, m_Type)
-DEFINE_FIELD(DFloor, m_Crush)
-DEFINE_FIELD(DFloor, m_Direction)
-DEFINE_FIELD(DFloor, m_NewSpecial)
-DEFINE_FIELD(DFloor, m_Texture)
-DEFINE_FIELD(DFloor, m_FloorDestDist)
-DEFINE_FIELD(DFloor, m_Speed)
-DEFINE_FIELD(DFloor, m_ResetCount)
-DEFINE_FIELD(DFloor, m_OrgDist)
-DEFINE_FIELD(DFloor, m_Delay)
-DEFINE_FIELD(DFloor, m_PauseTime)
-DEFINE_FIELD(DFloor, m_StepTime)
-DEFINE_FIELD(DFloor, m_PerStepTime)
-DEFINE_FIELD(DFloor, m_Hexencrush)
-DEFINE_FIELD(DFloor, m_Instant)
-
 //==========================================================================
 //
 // MOVE A FLOOR TO ITS DESTINATION (UP OR DOWN)
@@ -903,12 +887,6 @@ void DElevator::Serialize(FSerializer &arc)
 		("interp_ceiling", m_Interp_Ceiling);
 }
 
-DEFINE_FIELD(DElevator, m_Type)
-DEFINE_FIELD(DElevator, m_Direction)
-DEFINE_FIELD(DElevator, m_FloorDestDist)
-DEFINE_FIELD(DElevator, m_CeilingDestDist)
-DEFINE_FIELD(DElevator, m_Speed)
-
 //==========================================================================
 //
 //
@@ -979,7 +957,7 @@ void DElevator::Tick ()
 		}
 	}
 
-	if (res == EMoveResult::pastdest)	// if destination height achieved
+	if (res == EMoveResult::pastdest)	// if destination height acheived
 	{
 		// make floor stop sound
 		SN_StopSequence (m_Sector, CHAN_FLOOR);

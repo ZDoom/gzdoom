@@ -40,7 +40,6 @@
 #include "g_levellocals.h"
 #include "animations.h"
 #include "texturemanager.h"
-#include "vm.h"
 
 EXTERN_CVAR(Bool, net_repeatableactioncooldown)
 
@@ -66,17 +65,6 @@ void DDoor::Serialize(FSerializer &arc)
 		("topcountdown", m_TopCountdown)
 		("lighttag", m_LightTag);
 }
-
-DEFINE_FIELD(DDoor, m_Type)
-DEFINE_FIELD(DDoor, m_TopDist)
-DEFINE_FIELD(DDoor, m_BotSpot)
-DEFINE_FIELD(DDoor, m_BotDist)
-DEFINE_FIELD(DDoor, m_OldFloorDist)
-DEFINE_FIELD(DDoor, m_Speed)
-DEFINE_FIELD(DDoor, m_Direction)
-DEFINE_FIELD(DDoor, m_TopWait)
-DEFINE_FIELD(DDoor, m_TopCountdown)
-DEFINE_FIELD(DDoor, m_LightTag)
 
 //============================================================================
 //

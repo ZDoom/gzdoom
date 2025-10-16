@@ -38,6 +38,8 @@ public:
 	bool IsLift() const { return m_Type == platDownWaitUpStay || m_Type == platDownWaitUpStayStone; }
 	void Construct(sector_t *sector);
 
+protected:
+
 	double	 	m_Speed;
 	double	 	m_Low;
 	double	 	m_High;
@@ -48,7 +50,6 @@ public:
 	int			m_Crush;
 	int 		m_Tag;
 	EPlatType	m_Type;
-protected:
 
 	void PlayPlatSound (const char *sound);
 	const char *GetSoundByType () const;

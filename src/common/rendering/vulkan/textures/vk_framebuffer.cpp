@@ -39,10 +39,6 @@ VkFramebufferManager::VkFramebufferManager(VulkanRenderDevice* fb) : fb(fb)
 	SwapChainImageAvailableSemaphore = SemaphoreBuilder()
 		.DebugName("SwapChainImageAvailableSemaphore")
 		.Create(fb->device.get());
-
-	RenderFinishedSemaphore = SemaphoreBuilder()
-		.DebugName("RenderFinishedSemaphore")
-		.Create(fb->device.get());
 }
 
 VkFramebufferManager::~VkFramebufferManager()
@@ -63,6 +59,14 @@ void VkFramebufferManager::AcquireImage()
 		CurrentExclusiveFullscreen = exclusiveFullscreen;
 
 		SwapChain->Create(CurrentWidth, CurrentHeight, CurrentVSync ? 2 : 3, CurrentVSync, CurrentHdr, CurrentExclusiveFullscreen);
+
+		RenderFinishedSemaphores.clear();
+		for (int i = 0; i < SwapChain->ImageCount(); i++)
+		{
+			RenderFinishedSemaphores.push_back(SemaphoreBuilder()
+				.DebugName("RenderFinishedSemaphore")
+				.Create(fb->device.get()));
+		}
 	}
 
 	PresentImageIndex = SwapChain->AcquireImage(SwapChainImageAvailableSemaphore.get());
@@ -75,5 +79,5 @@ void VkFramebufferManager::AcquireImage()
 void VkFramebufferManager::QueuePresent()
 {
 	if (PresentImageIndex != -1)
-		SwapChain->QueuePresent(PresentImageIndex, RenderFinishedSemaphore.get());
+		SwapChain->QueuePresent(PresentImageIndex, RenderFinishedSemaphores[PresentImageIndex].get());
 }

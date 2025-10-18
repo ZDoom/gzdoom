@@ -4,6 +4,7 @@
 #include "zvulkan/vulkanobjects.h"
 #include <array>
 #include <map>
+#include <vector>
 
 class VulkanRenderDevice;
 enum class PPFilterMode;
@@ -24,7 +25,7 @@ public:
 	int PresentImageIndex = -1;
 
 	std::unique_ptr<VulkanSemaphore> SwapChainImageAvailableSemaphore;
-	std::unique_ptr<VulkanSemaphore> RenderFinishedSemaphore;
+	std::vector<std::unique_ptr<VulkanSemaphore>> RenderFinishedSemaphores;
 
 private:
 	VulkanRenderDevice* fb = nullptr;

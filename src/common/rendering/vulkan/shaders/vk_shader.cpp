@@ -188,7 +188,7 @@ static const char *shaderBindings = R"(
 	#endif
 
 	// This must match the HWViewpointUniforms struct
-	layout(set = 1, binding = 0, std140) uniform ViewpointUBO {
+	layout(set = 1, binding = 0, std140) uniform readonly ViewpointUBO {
 		mat4 ProjectionMatrix;
 		mat4 ViewMatrix;
 		mat4 NormalViewMatrix;
@@ -209,7 +209,7 @@ static const char *shaderBindings = R"(
 		float uThickFogMultiplier;
 	};
 
-	layout(set = 1, binding = 1, std140) uniform MatricesUBO {
+	layout(set = 1, binding = 1, std140) uniform readonly MatricesUBO {
 		mat4 ModelMatrix;
 		mat4 NormalModelMatrix;
 		mat4 TextureMatrix;
@@ -248,18 +248,18 @@ static const char *shaderBindings = R"(
 		vec4 padding1, padding2, padding3;
 	};
 
-	layout(set = 1, binding = 2, std140) uniform StreamUBO {
+	layout(set = 1, binding = 2, std140) uniform readonly StreamUBO {
 		StreamData data[MAX_STREAM_DATA];
 	};
 
 	// light buffers
-	layout(set = 1, binding = 3, std430) buffer LightBufferSSO
+	layout(set = 1, binding = 3, std430) buffer readonly LightBufferSSO
 	{
 	    vec4 lights[];
 	};
 
 	// bone matrix buffers
-	layout(set = 1, binding = 4, std430) buffer BoneBufferSSO
+	layout(set = 1, binding = 4, std430) buffer readonly BoneBufferSSO
 	{
 	    mat4 bones[];
 	};

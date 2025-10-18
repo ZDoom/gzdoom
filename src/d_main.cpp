@@ -3847,6 +3847,30 @@ static int D_DoomMain_Internal (void)
 		}
 		lastIWAD = iwad;
 
+		if (GameStartupInfo.DiscordAppId.GetChars())
+		{
+			const char* check = GameStartupInfo.DiscordAppId.GetChars();
+			uint32_t addr = 0;
+			while (check[addr])
+			{
+				if (check[addr] < '0' || check[addr] > '9')
+					I_FatalError("DiscordAppId must be a numerical value!\n");
+				addr++;
+			}
+		}
+
+		if (GameStartupInfo.SteamAppId.GetChars())
+		{
+			const char* check = GameStartupInfo.SteamAppId.GetChars();
+			uint32_t addr = 0;
+			while (check[addr])
+			{
+				if (check[addr] < '0' || check[addr] > '9')
+					I_FatalError("SteamAppId must be a numerical value!\n");
+				addr++;
+			}
+		}
+
 		int ret = D_InitGame(iwad_info, allwads, pwads);
 		pwads.clear();
 		pwads.shrink_to_fit();

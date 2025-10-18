@@ -17,7 +17,7 @@ struct WadStuff;
 struct FStartupSelectionInfo;
 
 #ifndef SHARE_DIR
-#define SHARE_DIR "/usr/local/share/"
+#define SHARE_DIR "/usr/local/share"
 #endif
 
 void CalculateCPUSpeed(void);

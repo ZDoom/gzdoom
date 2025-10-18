@@ -44,30 +44,74 @@
 
 extern bool netgame;
 
+//===========================================================================
+//
+// M_GetDocumentsPath												Unix
+//
+// Returns the path to the default documents directory.
+//
+//===========================================================================
+
+FString M_GetDocumentsPath()
+{
+	if (std::getenv("XDG_DATA_HOME")) {
+		return NicePath("$XDG_DATA_HOME/" GAMENAMELOWERCASE);
+	}
+	else
+	{
+		return NicePath("$HOME/" GAME_DIR "/");
+	}
+}
+
+//===========================================================================
+//
+// M_GetConfigPath														Unix
+//
+// Returns the path to the default configuration file directory.
+//
+//===========================================================================
+
+FString M_GetConfigPath()
+{
+	if (std::getenv("XDG_CONFIG_HOME")) {
+		return NicePath("$XDG_CONFIG_HOME/" GAMENAMELOWERCASE);
+	}
+	else
+	{
+		return NicePath("$HOME/.config/");
+	}
+}
+
+//===========================================================================
+//
+// GetUserFile														Unix
+//
+// Get the full path to a file in the user data directory.
+//
+//===========================================================================
 
 FString GetUserFile (const char *file)
 {
-	FString path;
 	struct stat info;
 
-	path = NicePath("$HOME/" GAME_DIR "/");
+	FString path = M_GetDocumentsPath();
 
 	if (stat (path.GetChars(), &info) == -1)
 	{
 		struct stat extrainfo;
 
 		// Sanity check for $HOME/.config
-		FString configPath = NicePath("$HOME/.config/");
+		FString configPath = M_GetConfigPath();
 		if (stat (configPath.GetChars(), &extrainfo) == -1)
 		{
 			if (mkdir (configPath.GetChars(), S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 			{
-				I_FatalError ("Failed to create $HOME/.config directory:\n%s", strerror(errno));
+				I_FatalError ("Failed to create %s directory:\n%s", configPath.GetChars(), strerror(errno));
 			}
 		}
 		else if (!S_ISDIR(extrainfo.st_mode))
 		{
-			I_FatalError ("$HOME/.config must be a directory");
+			I_FatalError ("%s must be a directory", configPath.GetChars());
 		}
 
 		// This can be removed after a release or two
@@ -112,9 +156,8 @@ FString GetUserFile (const char *file)
 
 FString M_GetAppDataPath(bool create)
 {
-	// Don't use GAME_DIR and such so that ZDoom and its child ports can
-	// share the node cache.
-	FString path = NicePath("$HOME/.config/" GAMENAMELOWERCASE);
+	FString configPath = M_GetConfigPath() + GAMENAMELOWERCASE;
+	FString path = NicePath(configPath.GetChars());
 	if (create)
 	{
 		CreatePath(path.GetChars());
@@ -132,13 +175,23 @@ FString M_GetAppDataPath(bool create)
 
 FString M_GetCachePath(bool create)
 {
+	FString path;
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath("$HOME/.config/zdoom/cache");
+	if (std::getenv("XDG_CACHE_HOME"))
+	{
+		path = NicePath("$XDG_CACHE_HOME/zdoom");
+	}
+	else
+	{
+		path = NicePath("$HOME/.config/zdoom/cache");
+	}
+
 	if (create)
 	{
 		CreatePath(path.GetChars());
 	}
+
 	return path;
 }
 
@@ -157,7 +210,7 @@ FString M_GetAutoexecPath()
 
 //===========================================================================
 //
-// M_GetConfigPath														Unix
+// M_GetConfigFilePath													Unix
 //
 // Returns the path to the config file. On Windows, this can vary for reading
 // vs writing. i.e. If $PROGDIR/zdoom-<user>.ini does not exist, it will try
@@ -165,9 +218,10 @@ FString M_GetAutoexecPath()
 //
 //===========================================================================
 
-FString M_GetConfigPath(bool for_reading)
+FString M_GetConfigFilePath(bool for_reading)
 {
-	return GetUserFile(GAMENAMELOWERCASE ".ini");
+	FString configFile = M_GetConfigPath() +  "/" + GAMENAMELOWERCASE + ".ini";
+	return configFile;
 }
 
 //===========================================================================
@@ -180,7 +234,7 @@ FString M_GetConfigPath(bool for_reading)
 
 FString M_GetScreenshotsPath()
 {
-	return NicePath("$HOME/" GAME_DIR "/screenshots/");
+	return M_GetDocumentsPath() + "screenshots/";
 }
 
 //===========================================================================
@@ -193,23 +247,14 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	FString pName = "$HOME/" GAME_DIR "/savegames/";
 	if (netgame)
-		pName << "netgame/";
-	return NicePath(pName.GetChars());
-}
-
-//===========================================================================
-//
-// M_GetDocumentsPath												Unix
-//
-// Returns the path to the default documents directory.
-//
-//===========================================================================
-
-FString M_GetDocumentsPath()
-{
-	return NicePath("$HOME/" GAME_DIR "/");
+	{
+		return M_GetDocumentsPath() + "savegames/netgame/";
+	}
+	else
+	{
+		return M_GetDocumentsPath() + "savegames/";
+	}
 }
 
 //===========================================================================

@@ -393,6 +393,15 @@ bool HWSprite::CalculateVertices(HWDrawInfo* di, FVector3* v, DVector3* vp)
 		pitch.Normalized180();
 
 		mat.Translate(x, z, y);
+		// Account for zshift in hw_flats.cpp due to flat stencils used to render reflective flats
+		if ((actor->Sector->GetReflect(sector_t::floor) > 0) && (z == actor->floorz))
+		{
+			mat.Translate(0, 0.1f, 0);
+		}
+		else if ((actor->Sector->GetReflect(sector_t::ceiling) > 0) && (z == actor->ceilingz))
+		{
+			mat.Translate(0, -0.1f, 0);
+		}
 		mat.Rotate(0, 1, 0, 270. - Angles.Yaw.Degrees());
 		mat.Rotate(1, 0, 0, pitch.Degrees());
 

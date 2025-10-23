@@ -3850,25 +3850,37 @@ static int D_DoomMain_Internal (void)
 		if (GameStartupInfo.DiscordAppId.GetChars())
 		{
 			const char* check = GameStartupInfo.DiscordAppId.GetChars();
-			uint32_t addr = 0;
-			while (check[addr])
+			uint32_t index = 0;
+			bool failedcheck = false;
+			while (!failedcheck && check[index])
 			{
-				if (check[addr] < '0' || check[addr] > '9')
-					I_FatalError("DiscordAppId must be a numerical value!\n");
-				addr++;
+				if (check[index] < '0' || check[index] > '9')
+				{
+					Printf(TEXTCOLOR_RED "DiscordAppId must be a numerical value!\n");
+					failedcheck = true;
+				}
+				index++;
 			}
+			if (failedcheck)
+				GameStartupInfo.DiscordAppId = '\0';
 		}
 
 		if (GameStartupInfo.SteamAppId.GetChars())
 		{
 			const char* check = GameStartupInfo.SteamAppId.GetChars();
-			uint32_t addr = 0;
-			while (check[addr])
+			uint32_t index = 0;
+			bool failedcheck = false;
+			while (!failedcheck && check[index])
 			{
-				if (check[addr] < '0' || check[addr] > '9')
-					I_FatalError("SteamAppId must be a numerical value!\n");
-				addr++;
+				if (check[index] < '0' || check[index] > '9')
+				{
+					Printf(TEXTCOLOR_RED "SteamAppId must be a numerical value!\n");
+					failedcheck = true;
+				}
+				index++;
 			}
+			if (failedcheck)
+				GameStartupInfo.SteamAppId = '\0';
 		}
 
 		int ret = D_InitGame(iwad_info, allwads, pwads);

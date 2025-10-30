@@ -754,7 +754,7 @@ Lock 229 Chex
 	RemoteMessage "$PD_ALL3O"
 }
 
-Lock 101 Doom
+Lock 101 Chex
 {
 	//$Title "All keys"
 	ChexBlueCard 

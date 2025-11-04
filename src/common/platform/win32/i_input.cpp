@@ -128,7 +128,6 @@ bool win32EnableInput = true;
 
 EXTERN_CVAR(Bool, i_pauseinbackground);
 
-CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 static void I_CheckGUICapture ()
 {

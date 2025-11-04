@@ -53,7 +53,7 @@ EXTERN_CVAR(Int, m_use_mouse)
 
 CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CVAR(Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, k_allowfullscreentoggle)
 
 extern int paused;
 extern bool ToggleFullscreen;

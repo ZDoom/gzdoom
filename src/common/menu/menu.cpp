@@ -69,31 +69,7 @@ CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, m_cleanscale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // Option Search
 CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-// Tooltip
-CVAR(Bool, m_tooltip_capwidth, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, m_tooltip_small, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CUSTOM_CVAR(Int, m_tooltip_lines, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0)
-		self = 0;	// 0 means 'off'
-}
-CUSTOM_CVAR(Float, m_tooltip_delay, 9.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self <= 0.0f)
-		self = 0.1f;
-}
-CUSTOM_CVAR(Float, m_tooltip_speed, 3.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self <= 0.0f)
-		self = 0.1f;
-}
-CUSTOM_CVAR(Float, m_tooltip_alpha, 0.6f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0.0f)
-		self = 0.0f;
-	else if (self > 1.0f)
-		self = 1.0f;
-}
+
 
 static DMenu *GetCurrentMenu()
 {
@@ -180,7 +156,6 @@ void DListMenuDescriptor::Reset()
 	mFont = NULL;
 	mFontColor = CR_UNTRANSLATED;
 	mFontColor2 = CR_UNTRANSLATED;
-	mTooltipFont = NewConsoleFont;
 	mFromEngine = false;
 	mVirtWidth = mVirtHeight = -1;	// default to clean scaling
 }
@@ -201,7 +176,6 @@ void DOptionMenuDescriptor::Reset()
 	mIndent = 0;
 	mDontDim = 0;
 	mFont = BigUpper;
-	mTooltipFont = NewConsoleFont;
 }
 
 void M_MarkMenus()
@@ -290,10 +264,6 @@ DMenu::DMenu(DMenu *parent)
 	mMouseCapture = false;
 	mBackbuttonSelected = false;
 	DontDim = false;
-	mTooltipFont = nullptr;
-	mTooltipScrollOffset = 0.0;
-	mTooltipScrollTimer = 0.0;
-	mCurrentTooltip = "";
 	GC::WriteBarrier(this, parent);
 }
 
@@ -1044,21 +1014,15 @@ DEFINE_FIELD(DMenu, DontDim);
 DEFINE_FIELD(DMenu, DontBlur);
 DEFINE_FIELD(DMenu, AnimatedTransition);
 DEFINE_FIELD(DMenu, Animated);
-DEFINE_FIELD(DMenu, mCurrentTooltip)
-DEFINE_FIELD(DMenu, mTooltipScrollTimer)
-DEFINE_FIELD(DMenu, mTooltipScrollOffset)
-DEFINE_FIELD(DMenu, mTooltipFont)
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
 DEFINE_FIELD(DMenuDescriptor, mClass)
-DEFINE_FIELD(DMenuDescriptor, mTooltipFont)
 
 DEFINE_FIELD(DMenuItemBase, mXpos)
 DEFINE_FIELD(DMenuItemBase, mYpos)
 DEFINE_FIELD(DMenuItemBase, mAction)
 DEFINE_FIELD(DMenuItemBase, mEnabled)
-DEFINE_FIELD(DMenuItemBase, mTooltip)
 
 DEFINE_FIELD(DListMenuDescriptor, mItems)
 DEFINE_FIELD(DListMenuDescriptor, mSelectedItem)

@@ -94,7 +94,6 @@ class ListMenu : Menu
 		Animated = mDesc.mAnimated;
 		DontBlur = mDesc.mDontBlur;
 		DontDim = mDesc.mDontDim;
-		mTooltipFont = mDesc.mTooltipFont;
 		if (desc.mCenter)
 		{
 			double center = 160;
@@ -125,9 +124,6 @@ class ListMenu : Menu
 		{
 			mDesc.mItems[i].OnMenuCreated();
 		}
-
-		if (mDesc.mSelectedItem >= 0)
-			UpdateTooltip(mDesc.mItems[mDesc.mSelectedItem].GetTooltip());
 	}
 
 	//=============================================================================
@@ -166,7 +162,6 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
-					UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem].GetTooltip());
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -176,7 +171,6 @@ class ListMenu : Menu
 				if (mDesc.mitems[i].Selectable() && mDesc.mItems[i].CheckHotkey(ch))
 				{
 					mDesc.mSelectedItem = i;
-					UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem].GetTooltip());
 					MenuSound("menu/cursor");
 					return true;
 				}
@@ -206,7 +200,6 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
-			else UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem].GetTooltip());
 			MenuSound("menu/cursor");
 			return true;
 
@@ -218,7 +211,6 @@ class ListMenu : Menu
 			}
 			while (!mDesc.mItems[mDesc.mSelectedItem].Selectable() && mDesc.mSelectedItem != startedAt);
 			if (mDesc.mSelectedItem == startedAt) mDesc.mSelectedItem = oldSelect;
-			else UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem].GetTooltip());
 			MenuSound("menu/cursor");
 			return true;
 
@@ -282,7 +274,6 @@ class ListMenu : Menu
 							//MenuSound("menu/cursor");
 						}
 						mDesc.mSelectedItem = i;
-						UpdateTooltip(mDesc.mitems[mDesc.mSelectedItem].GetTooltip());
 						mDesc.mItems[i].MouseEvent(type, x, y);
 						return true;
 					}
@@ -290,7 +281,6 @@ class ListMenu : Menu
 			}
 		}
 		mDesc.mSelectedItem = -1;
-		UpdateTooltip("");
 		return Super.MouseEvent(type, x, y);
 	}
 

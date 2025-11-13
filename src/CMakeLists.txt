@@ -1383,6 +1383,10 @@ else()
 	)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set_target_properties(zdoom PROPERTIES LINK_FLAGS "-z nostart-stop-gc")
+endif()
+
 if( MSVC )
 	option ( CONSOLE_MODE "Compile as a console application" OFF )
 	if ( CONSOLE_MODE )

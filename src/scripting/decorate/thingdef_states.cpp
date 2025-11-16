@@ -475,7 +475,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 	{
 		FxExpression *call = ParseAction(sc, state, statestring, bag);
 		endswithret = true;
-		return new FxReturnStatement(call, sc);
+		return call;
 	}
 
 	const FScriptPosition pos(sc);
@@ -572,7 +572,7 @@ FxExpression* ParseAction(FScanner &sc, FState state, FString statestring, Bagga
 	{
 		FArgumentList args;
 		ParseFunctionParameters(sc, bag.Info, args, afd, statestring, &bag.statedef);
-		call = new FxFunctionCall(symname, NAME_None, std::move(args), sc);
+		call = new FxVMFunctionCall(new FxSelf(sc), afd, args, FScriptPosition(sc), true);
 		return call;
 	}
 	sc.ScriptError("Invalid parameter '%s'\n", sc.String);

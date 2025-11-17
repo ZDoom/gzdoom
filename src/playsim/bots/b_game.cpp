@@ -500,6 +500,7 @@ FString M_GetCajunPath(const char* botfilename)
 	{
 		// Then check in SHARE_DIR/botfilename.
 		path = SHARE_DIR;
+		path << "/";
 		path << botfilename;
 		if (!FileExists(path))
 		{

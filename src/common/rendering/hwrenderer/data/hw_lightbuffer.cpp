@@ -135,7 +135,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 int FLightBuffer::GetBinding(unsigned int index, size_t* pOffset, size_t* pSize)
 {
 	// this function will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start.
-	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
+	unsigned int offset = mBlockAlign ? (index / mBlockAlign) * mBlockAlign : 0;
 
 	*pOffset = offset * ELEMENT_SIZE;
 	*pSize = mBlockSize * ELEMENT_SIZE;

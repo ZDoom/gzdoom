@@ -109,6 +109,7 @@
 #include "startscreen.h"
 #include "swrenderer/r_swcolormaps.h"
 #include "teaminfo.h"
+#include "touchcontrols.h"
 #include "texturemanager.h"
 #include "types.h"
 #include "v_draw.h"
@@ -882,6 +883,8 @@ static void DrawRateStuff()
 
 static void DrawOverlays()
 {
+	Touch_Draw(gamestate == GS_LEVEL && !demoplayback &&
+		!(sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture()));
 	C_DrawConsole ();
 	M_Drawer ();
 	DrawRateStuff();

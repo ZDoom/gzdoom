@@ -101,3 +101,16 @@ mapbind dpadup +am_panup
 mapbind dpaddown +am_pandown
 mapbind lshoulder +am_zoomout
 mapbind rshoulder +am_zoomin
+
+/* Virtual touchscreen controls */
+touch_fire +attack
+touch_use +use
+touch_jump +jump
+touch_crouch +crouch
+touch_weapnext weapnext
+touch_weapprev weapprev
+touch_up +forward
+touch_down +back
+touch_left +moveleft
+touch_right +moveright
+touch_run +speed

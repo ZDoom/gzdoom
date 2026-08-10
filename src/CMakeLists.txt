@@ -1088,6 +1088,7 @@ set (PCH_SOURCES
 	common/thirdparty/libsmackerdec/src/SmackerDecoder.cpp
 	common/engine/cycler.cpp
 	common/engine/d_event.cpp
+	common/engine/touchcontrols.cpp
 	common/engine/date.cpp
 	common/engine/stats.cpp
 	common/engine/sc_man.cpp

@@ -379,6 +379,7 @@ OptionMenu "InputMenu" protected
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
+	Submenu "$OPTMNU_TOUCH",			"TouchOptions"
 
 	IfOption(Windows)
 	{
@@ -871,6 +872,22 @@ OptionMenu "MouseOptions" protected
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 	Option "$MOUSEMNU_LOOKSPRING",		"lookspring", "OnOff"
 	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Touchscreen options menu
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu "TouchOptions" protected
+{
+	Title "$TCHMNU_TITLE"
+	Option "$TCHMNU_ENABLE",			"touch_enable", "AutoOffOn"
+	StaticText 	""
+	Slider "$TCHMNU_SCALE",				"touch_scale", 0.5, 2.0, 0.1
+	Slider "$TCHMNU_OPACITY",			"touch_alpha", 0.1, 1.0, 0.05
+	Slider "$TCHMNU_SENSITIVITY",		"touch_sensitivity", 0.1, 4.0, 0.1
 }
 
 

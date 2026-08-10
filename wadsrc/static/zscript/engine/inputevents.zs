@@ -242,7 +242,19 @@ struct InputEvent native play version("2.4")
         Key_Pad_Misc1 = 0x1C9,
         Key_Pad_Touchpad = 0x1CA,
 
-        Num_Keys = 0x1CB
+        Key_Touch_Fire = 0x1CB,
+        Key_Touch_Use = 0x1CC,
+        Key_Touch_Jump = 0x1CD,
+        Key_Touch_Crouch = 0x1CE,
+        Key_Touch_WeapNext = 0x1CF,
+        Key_Touch_WeapPrev = 0x1D0,
+        Key_Touch_Up = 0x1D1,
+        Key_Touch_Down = 0x1D2,
+        Key_Touch_Left = 0x1D3,
+        Key_Touch_Right = 0x1D4,
+        Key_Touch_Run = 0x1D5,
+
+        Num_Keys = 0x1D6
     }
     
     //

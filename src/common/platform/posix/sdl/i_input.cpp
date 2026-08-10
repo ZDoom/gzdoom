@@ -39,6 +39,7 @@
 
 #include "c_buttons.h"
 #include "c_console.h"
+#include "c_dispatch.h"
 #include "c_cvars.h"
 #include "d_gui.h"
 #include "dikeys.h"
@@ -48,6 +49,7 @@
 #include "keydef.h"
 #include "m_haptics.h"
 #include "m_joy.h"
+#include "touchcontrols.h"
 #include "utf8.h"
 #include "v_video.h"
 
@@ -226,6 +228,29 @@ static TMap<SDL_Scancode, uint8_t> InitKeyScanMap ()
 }
 static const TMap<SDL_Scancode, uint8_t> KeyScanToDIK(InitKeyScanMap());
 
+// Simulates finger events for testing touch controls without touch hardware,
+// e.g. bind f1 "touchtest down 0.86 0.775". Coordinates are window fractions.
+CCMD (touchtest)
+{
+	if (argv.argc() < 2) return;
+
+	SDL_Event ev = {};
+	if (strcmp(argv[1], "down") == 0) ev.type = SDL_FINGERDOWN;
+	else if (strcmp(argv[1], "move") == 0) ev.type = SDL_FINGERMOTION;
+	else if (strcmp(argv[1], "up") == 0) ev.type = SDL_FINGERUP;
+	else return;
+
+	static float lastx, lasty;
+	ev.tfinger.fingerId = 1;
+	ev.tfinger.x = argv.argc() > 3 ? (float)atof(argv[2]) : lastx;
+	ev.tfinger.y = argv.argc() > 3 ? (float)atof(argv[3]) : lasty;
+	ev.tfinger.dx = ev.tfinger.x - lastx;
+	ev.tfinger.dy = ev.tfinger.y - lasty;
+	lastx = ev.tfinger.x;
+	lasty = ev.tfinger.y;
+	SDL_PushEvent(&ev);
+}
+
 static void I_CheckGUICapture ()
 {
 	bool wantCapt = sysCallbacks.WantGuiCapture && sysCallbacks.WantGuiCapture();
@@ -233,6 +258,7 @@ static void I_CheckGUICapture ()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
+		Touch_ReleaseAll();
 		if (wantCapt)
 		{
 			buttonMap.ResetButtonStates();
@@ -270,7 +296,10 @@ static void I_CheckNativeMouse ()
 	bool focus = SDL_GetKeyboardFocus() != NULL;
 
 	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
-	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
+	// Never capture the mouse in relative mode while touch controls are on: SDL
+	// synthesizes mouse input from touches in relative mode even with
+	// SDL_HINT_TOUCH_MOUSE_EVENTS off, so every touch would also click mouse1.
+	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame || Touch_Enabled());
 
 	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
 		wantNative = true;
@@ -300,10 +329,54 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_WINDOWEVENT:
 		extern void ProcessSDLWindowEvent(const SDL_WindowEvent &);
 		ProcessSDLWindowEvent(sev.window);
+		if (sev.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+		{
+			Touch_ReleaseAll();
+		}
 		break;
+
+	case SDL_FINGERDOWN:
+	case SDL_FINGERUP:
+	case SDL_FINGERMOTION:
+	{
+		Touch_SetAvailable();
+
+		int16_t tx = int16_t(sev.tfinger.x * screen->GetClientWidth());
+		int16_t ty = int16_t(sev.tfinger.y * screen->GetClientHeight());
+		screen->ScaleCoordsFromWindow(tx, ty);
+
+		if (GUICapture)
+		{
+			// Taps act as left mouse clicks in menus and the console.
+			event.type = EV_GUI_Event;
+			event.data1 = tx;
+			event.data2 = ty;
+			event.subtype = EV_GUI_MouseMove;
+			D_PostEvent(&event);
+			if (sev.type != SDL_FINGERMOTION)
+			{
+				event.subtype = sev.type == SDL_FINGERDOWN ? EV_GUI_LButtonDown : EV_GUI_LButtonUp;
+				D_PostEvent(&event);
+			}
+		}
+		else if (Touch_Enabled())
+		{
+			if (sev.type == SDL_FINGERDOWN)
+				Touch_FingerDown(sev.tfinger.fingerId, tx, ty);
+			else if (sev.type == SDL_FINGERMOTION)
+				Touch_FingerMotion(sev.tfinger.fingerId, tx, ty,
+					sev.tfinger.dx * screen->GetClientWidth(),
+					sev.tfinger.dy * screen->GetClientHeight());
+			else
+				Touch_FingerUp(sev.tfinger.fingerId);
+		}
+		break;
+	}
 
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
+		if (sev.button.which == SDL_TOUCH_MOUSEID)
+			break;	// touches are handled by the touch controls
 		if (!GUICapture)
 		{
 			event.type = sev.type == SDL_MOUSEBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
@@ -373,6 +446,8 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEMOTION:
+		if (sev.motion.which == SDL_TOUCH_MOUSEID)
+			break;	// touches are handled by the touch controls
 		if (GUICapture)
 		{
 			event.data1 = sev.motion.x;

@@ -149,7 +149,11 @@ const char *KeyNames[NUM_KEYS] =
 	"LShoulder","RShoulder","LTrigger","RTrigger",
 	"Pad_A", "Pad_B", "Pad_X", "Pad_Y",
 	"Paddle_1", "Paddle_2", "Paddle_3", "Paddle_4",
-	"Guide", "Pad_Misc", "Pad_Touchpad"
+	"Guide", "Pad_Misc", "Pad_Touchpad",
+
+	"Touch_Fire", "Touch_Use", "Touch_Jump", "Touch_Crouch",	// 0x1cb
+	"Touch_WeapNext", "Touch_WeapPrev", "Touch_Up", "Touch_Down",	// 0x1cf
+	"Touch_Left", "Touch_Right", "Touch_Run"				// 0x1d3
 };
 
 FKeyBindings Bindings;

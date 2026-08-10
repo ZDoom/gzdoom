@@ -751,6 +751,23 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 		}
 	}
 
+	// Configs written before the touch keys existed leave them all unbound;
+	// restore their defaults in that case.
+	// ponytail: re-defaults touch keys when all unbound; use a config version flag if permanent unbind is ever needed
+	{
+		TArray<int> touchkeys;
+		bool anybound = false;
+		for (int key = KEY_TOUCH_FIRE; key <= KEY_TOUCH_RUN; ++key)
+		{
+			touchkeys.Push(key);
+			anybound |= !Bindings.GetBinding(key).IsEmpty();
+		}
+		if (!anybound)
+		{
+			C_SetDefaultBindings(&touchkeys);
+		}
+	}
+
 	if (b226ResetGamepad == true)
 	{
 		b226ResetGamepad = false;

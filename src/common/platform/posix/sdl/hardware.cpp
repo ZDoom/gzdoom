@@ -68,6 +68,8 @@ void I_InitGraphics ()
 	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 #endif // __APPLE__
 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+	// Touches are handled by the touch controls; don't let SDL turn them into mouse events.
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 
 	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
 	{

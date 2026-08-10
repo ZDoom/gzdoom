@@ -10,34 +10,35 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - name: Visual Studio 2022
-          os: windows-2022
+        - name: Visual Studio 2026
+          os: windows-2025
           build_type: Release
 
-        - name: Visual Studio 2022
-          os: windows-2022
+        - name: Visual Studio 2026
+          os: windows-2025
           build_type: Debug
 
         - name: macOS
-          os: macos-14
-          deps_cmdline: brew install libvpx molten-vk vulkan-volk
+          os: macos-15
+          extra_options: -DDYN_OPENAL=OFF -DOPENAL_INCLUDE_DIR=/opt/homebrew/opt/openal-soft/include/AL -DOPENAL_LIBRARY=/opt/homebrew/opt/openal-soft/lib/libopenal.dylib -DCMAKE_BUILD_RPATH=/opt/homebrew/lib
+          deps_cmdline: brew install sdl2 libvpx molten-vk vulkan-headers vulkan-loader openal-soft libsndfile
           build_type: Release
 
         - name: macOS
-          os: macos-14
-          extra_options: -G Xcode -DDYN_OPENAL=OFF
-          deps_cmdline: brew install libvpx molten-vk vulkan-volk
+          os: macos-15
+          extra_options: -DDYN_OPENAL=OFF -DOPENAL_INCLUDE_DIR=/opt/homebrew/opt/openal-soft/include/AL -DOPENAL_LIBRARY=/opt/homebrew/opt/openal-soft/lib/libopenal.dylib -DCMAKE_BUILD_RPATH=/opt/homebrew/lib
+          deps_cmdline: brew install sdl2 libvpx molten-vk vulkan-headers vulkan-loader openal-soft libsndfile
           build_type: Debug
 
-        - name: Linux GCC 9 # oldest version available
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=gcc-9 -DCMAKE_CXX_COMPILER=g++-9
+        - name: Linux GCC 13 # oldest version available
+          os: ubuntu-26.04
+          extra_options: -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk2.0-dev libwebp-dev
           build_type: RelWithDebInfo
 
-        - name: Linux GCC 12 # last known good
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12
+        - name: Linux GCC 15 # last known good
+          os: ubuntu-26.04
+          extra_options: -DCMAKE_C_COMPILER=gcc-15 -DCMAKE_CXX_COMPILER=g++-15
           deps_cmdline: sudo apt-get update && sudo apt-get install libsdl2-dev libvpx-dev libgtk-3-dev libwebp-dev
           build_type: MinSizeRel
           export_appimage: true
@@ -49,16 +50,16 @@ jobs:
           build_type: Release
           export_appimage: true
 
-        - name: Linux Clang 11 # oldest version available
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=clang-11 -DCMAKE_CXX_COMPILER=clang++-11 -DDYN_OPENAL=OFF
-          deps_cmdline: sudo apt-get update && sudo apt-get install clang-11 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
+        - name: Linux Clang 20 # oldest version available
+          os: ubuntu-26.04
+          extra_options: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20 -DDYN_OPENAL=OFF
+          deps_cmdline: sudo apt-get update && sudo apt-get install clang-20 libsdl2-dev libvpx-dev libopenal-dev libwebp-dev
           build_type: Debug
 
-        - name: Linux Clang 15 # last known good
-          os: ubuntu-22.04
-          extra_options: -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15
-          deps_cmdline: sudo apt-get update && sudo apt-get install clang-15 libsdl2-dev libvpx-dev libwebp-dev
+        - name: Linux Clang 22 # last known good
+          os: ubuntu-26.04
+          extra_options: -DCMAKE_C_COMPILER=clang-22 -DCMAKE_CXX_COMPILER=clang++-22
+          deps_cmdline: sudo apt-get update && sudo apt-get install clang-22 libsdl2-dev libvpx-dev libwebp-dev
           build_type: Release
           export_appimage: true
 
@@ -70,7 +71,7 @@ jobs:
           export_appimage: true
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install Dependencies
       shell: bash
@@ -82,7 +83,7 @@ jobs:
 
     - name: Git describe
       id: ghd
-      uses: proudust/gh-describe@v2
+      uses: proudust/gh-describe@v2.2.0
 
     - name: Configure
       shell: bash
@@ -104,9 +105,6 @@ jobs:
         if [[ "${{ runner.os }}" == 'Windows' ]]; then
           cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 ${{ matrix.config.build_type }}/zmusic.dll package
         elif [[ "${{ runner.os }}" == 'macOS' ]]; then
-          if [[ "${{ matrix.config.build_type }}" != 'Release' ]]; then
-            mv ${{ matrix.config.build_type }}/gzdoom.app gzdoom.app
-          fi
           cp -r gzdoom.app package
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
           if [[ -n "${{ matrix.config.export_appimage }}" ]]; then
@@ -121,14 +119,14 @@ jobs:
 
             export GIT_DESCRIBE="${{ steps.ghd.outputs.describe }}"
             ./appimage-builder --skip-tests --recipe ../tools/AppImageBuilder.yml
-            cp *.AppImage package
+            cp ./*.AppImage package
           else
-            cp gzdoom *.pk3 libzmusic.so* package
+            cp gzdoom ./*.pk3 libzmusic.so* package
           fi
         fi
 
     - name: Upload Package
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         path: build/package
         name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}

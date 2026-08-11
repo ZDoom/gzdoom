@@ -39,6 +39,10 @@
 #include "x86.h"
 #endif
 
+#if defined __e2k__
+#include "x86intrin.h" // get __rdtsc
+#endif
+
 #if !defined _WIN32 && !defined __APPLE__
 
 #ifdef NO_CLOCK_GETTIME
@@ -91,6 +95,8 @@ inline uint64_t rdtsc()
 		return tsc;
 	}
 	return 0;
+#elif defined __e2k__
+	return (uint64_t)__rdtsc();
 #else
 	return 0;
 #endif // __amd64__

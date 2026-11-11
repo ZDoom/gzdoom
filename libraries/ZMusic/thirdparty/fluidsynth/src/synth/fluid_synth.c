@@ -4914,7 +4914,7 @@ fluid_synth_check_finished_voices(fluid_synth_t *synth)
 
     while(NULL != (fv = fluid_rvoice_eventhandler_get_finished_voice(synth->eventhandler)))
     {
-        for(j = 0; j < synth->polyphony; j++)
+        for(j = 0; j < synth->nvoice; j++)
         {
             if(synth->voice[j]->rvoice == fv)
             {
